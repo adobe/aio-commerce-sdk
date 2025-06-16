@@ -11,6 +11,7 @@ governing permissions and limitations under the License.
 */
 
 import { getImsAuthProvider, ImsAuthParams } from './imsAuth';
+import { getToken } from '@adobe/aio-lib-ims';
 
 jest.mock('@adobe/aio-lib-ims', () => ({
   context: jest.requireActual('@adobe/aio-lib-ims').context,
@@ -28,10 +29,9 @@ describe('getImsAuthProvider', () => {
   };
 
   test('should export token when all required params are provided', async () => {
-    const { getToken } = require('@adobe/aio-lib-ims');
     const authToken = 'supersecrettoken';
 
-    getToken.mockResolvedValue(authToken);
+    jest.mocked(getToken).mockResolvedValue(authToken);
 
     const imsProvider = await getImsAuthProvider(params);
     expect(imsProvider).toBeDefined();

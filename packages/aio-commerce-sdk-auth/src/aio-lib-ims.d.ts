@@ -10,6 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Types for `@adobe/aio-lib-ims`, can be removed once the library is published with types.
  * @see https://github.com/adobe/aio-lib-ims/blob/86698a983d893b8f33d39dd32a61b165f3f6018c/types/index.d.ts
@@ -219,3 +220,4 @@ declare module '@adobe/aio-lib-ims' {
     protected contextKeys(): Promise<string[]>;
   }
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
