@@ -9,70 +9,70 @@ the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTA
 OF ANY KIND, either express or implied. See the License for the specific language
 governing permissions and limitations under the License.
 */
-import { ClientCredentials } from 'simple-oauth2';
+import { context, getToken } from '@adobe/aio-lib-ims';
+import { allNonEmpty } from './params';
 
-export interface ImsAuthParams {
-  clientId: string;
-  clientSecret: string;
-  scopes: Array<string>;
-  host?: string;
-}
+export type ImsAuthParam =
+  | 'OAUTH_CLIENT_ID'
+  | 'OAUTH_CLIENT_SECRETS'
+  | 'OAUTH_TECHNICAL_ACCOUNT_ID'
+  | 'OAUTH_TECHNICAL_ACCOUNT_EMAIL'
+  | 'OAUTH_IMS_ORG_ID'
+  | 'OAUTH_SCOPES'
+  | 'OAUTH_ENV'
+  | 'OAUTH_CTX';
 
-export interface ImsAuthHeaders {
-  Authorization: string;
-  'x-api-key': string;
-}
+export type ImsAuthParams = Partial<Record<ImsAuthParam, string>>;
+export type ImsAccessToken = string;
 
-export interface ImsToken {
-  accessToken: string;
-  expiresIn?: number;
-  refreshToken?: string;
-  tokenType?: string;
-  headers: () => ImsAuthHeaders;
+export type ImsAuthHeader = 'Authorization' | 'x-api-key';
+export type ImsAuthHeaders = Record<ImsAuthHeader, string>;
+
+export interface ImsAuthProvider {
+  getHeaders: () => Promise<ImsAuthHeaders>;
+  getAccessToken: () => Promise<ImsAccessToken>;
 }
 
 /**
- * Generate access token to connect with Adobe tools (e.g. IO Events)
- *
- * @param {object} params includes env parameters
- * @returns {Promise<ImsToken>} returns the access token
- * @throws {Error} in case of any failure
+ * If the required IMS parameters are present, this function returns an ImsAuthProvider.
+ * @param {ImsAuthParams} params includes IMS parameters
+ * @returns {ImsAuthProvider} returns the IMS auth provider
  */
-export async function getImsAccessToken({
-  clientId,
-  clientSecret,
-  scopes,
-  host = 'https://ims-na1.adobelogin.com',
-}: ImsAuthParams): Promise<ImsToken> {
-  const client = new ClientCredentials({
-    client: {
-      id: clientId,
-      secret: clientSecret,
-    },
-    auth: {
-      tokenHost: host,
-      tokenPath: '/ims/token/v3',
-    },
-    options: {
-      bodyFormat: 'form',
-      authorizationMethod: 'body',
-    },
-  });
+export async function getImsAuthProvider(params: ImsAuthParams): Promise<ImsAuthProvider | undefined> {
+  const config = resolveImsConfig(params);
+  if (config) {
+    const contextName = params.OAUTH_CTX ?? 'aio-commerce-sdk-creds';
+    await context.set(contextName, config);
 
-  try {
-    const {
-      token: { access_token: accessToken, refresh_token: refreshToken, token_type: tokenType, expires_in: expiresIn },
-    } = await client.getToken({
-      scope: scopes,
-    });
     return {
-      accessToken,
-      refreshToken,
-      tokenType,
-      expiresIn,
-      headers: () => ({ Authorization: `Bearer ${accessToken}`, 'x-api-key': clientId }),
+      getAccessToken: async () => getToken(contextName, {}),
+      getHeaders: async () => {
+        const accessToken = await getToken(contextName, {});
+        return { Authorization: `Bearer ${accessToken}`, 'x-api-key': config.client_id };
+      },
     };
-  } catch (error) {
-    throw new Error(`Unable to get access token ${error.message}`);
+  }
+}
+
+function resolveImsConfig(params: ImsAuthParams) {
+  if (
+    allNonEmpty(params, [
+      'OAUTH_CLIENT_ID',
+      'OAUTH_CLIENT_SECRETS',
+      'OAUTH_TECHNICAL_ACCOUNT_ID',
+      'OAUTH_TECHNICAL_ACCOUNT_EMAIL',
+      'OAUTH_IMS_ORG_ID',
+      'OAUTH_SCOPES',
+    ])
+  ) {
+    return {
+      client_id: params.OAUTH_CLIENT_ID!,
+      client_secrets: JSON.parse(params.OAUTH_CLIENT_SECRETS ?? '[]') as string[],
+      technical_account_id: params.OAUTH_TECHNICAL_ACCOUNT_ID!,
+      technical_account_email: params.OAUTH_TECHNICAL_ACCOUNT_EMAIL!,
+      ims_org_id: params.OAUTH_IMS_ORG_ID!,
+      scopes: JSON.parse(params.OAUTH_SCOPES ?? '[]') as string[],
+      environment: params.OAUTH_ENV ?? 'prod',
+    };
   }
 }

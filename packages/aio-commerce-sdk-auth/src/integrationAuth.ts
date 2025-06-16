@@ -11,52 +11,69 @@ governing permissions and limitations under the License.
 */
 import crypto from 'crypto';
 import OAuth1a from 'oauth-1.0a';
+import { allNonEmpty } from './params';
 
-export interface IntegrationAuthParams {
-  consumerKey: string;
-  consumerSecret: string;
-  accessToken: string;
-  accessTokenSecret: string;
-}
+export type IntegrationAuthParam =
+  | 'COMMERCE_CONSUMER_KEY'
+  | 'COMMERCE_CONSUMER_SECRET'
+  | 'COMMERCE_ACCESS_TOKEN'
+  | 'COMMERCE_ACCESS_TOKEN_SECRET';
+
+export type IntegrationAuthParams = Partial<Record<IntegrationAuthParam, string>>;
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-export interface IntegrationAuthHeaders {
-  Authorization: string;
-}
+export type IntegrationAuthHeader = 'Authorization';
+export type IntegrationAuthHeaders = Record<IntegrationAuthHeader, string>;
 
-export interface IntegrationAccessToken {
-  headers: (url: string, method: HttpMethod) => IntegrationAuthHeaders;
+export interface IntegrationAuthProvider {
+  getHeaders: (method: HttpMethod, url: string) => IntegrationAuthHeaders;
 }
 
 /**
- * Generate access token to connect with Adobe Commerce using Commerce Integrations which is based on OAuth 1.0a.
- * @param {object} params includes integration parameters
- * @returns {IntegrationAccessToken} returns the access token headers
+ * If the required integration parameters are present, this function returns an IntegrationAuthProvider.
+ * @param {IntegrationAuthParams} params includes integration parameters
+ * @returns {IntegrationAuthProvider} returns the integration auth provider
  */
-export function getIntegrationAccessToken({
-  consumerKey,
-  consumerSecret,
-  accessToken,
-  accessTokenSecret,
-}: IntegrationAuthParams): IntegrationAccessToken {
-  const oauth = new OAuth1a({
-    consumer: {
-      key: consumerKey,
-      secret: consumerSecret,
-    },
-    signature_method: 'HMAC-SHA256',
-    hash_function: (baseString, key) => crypto.createHmac('sha256', key).update(baseString).digest('base64'),
-  });
+export function getIntegrationAuthProvider(params: IntegrationAuthParams): IntegrationAuthProvider | undefined {
+  const config = resolveIntegrationConfig(params);
+  if (config) {
+    const oauth = new OAuth1a({
+      consumer: {
+        key: params.COMMERCE_CONSUMER_KEY!,
+        secret: params.COMMERCE_CONSUMER_SECRET!,
+      },
+      signature_method: 'HMAC-SHA256',
+      hash_function: (baseString, key) => crypto.createHmac('sha256', key).update(baseString).digest('base64'),
+    });
 
-  const oauthToken = {
-    key: accessToken,
-    secret: accessTokenSecret,
-  };
+    const oauthToken = {
+      key: params.COMMERCE_ACCESS_TOKEN!,
+      secret: params.COMMERCE_ACCESS_TOKEN_SECRET!,
+    };
 
-  return {
-    headers(url: string, method: HttpMethod) {
-      return oauth.toHeader(oauth.authorize({ url, method }, oauthToken));
-    },
-  };
+    return {
+      getHeaders(method: HttpMethod, url: string) {
+        return oauth.toHeader(oauth.authorize({ url, method }, oauthToken));
+      },
+    };
+  }
+}
+
+function resolveIntegrationConfig(params: IntegrationAuthParams) {
+  if (
+    allNonEmpty(params, [
+      'COMMERCE_CONSUMER_KEY',
+      'COMMERCE_CONSUMER_SECRET',
+      'COMMERCE_ACCESS_TOKEN',
+      'COMMERCE_ACCESS_TOKEN_SECRET',
+    ])
+  ) {
+    return {
+      consumerKey: params.COMMERCE_CONSUMER_KEY,
+      consumerSecret: params.COMMERCE_CONSUMER_SECRET,
+      accessToken: params.COMMERCE_ACCESS_TOKEN,
+      accessTokenSecret: params.COMMERCE_ACCESS_TOKEN_SECRET,
+    };
+  }
 }

@@ -10,8 +10,57 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-describe('imsAuth', () => {
-  test('should export getImsAccessToken', () => {
-    // TODO
+import { getImsAuthProvider, ImsAuthParams } from './imsAuth';
+
+jest.mock('@adobe/aio-lib-ims', () => ({
+  context: jest.requireActual('@adobe/aio-lib-ims').context,
+  getToken: jest.fn(),
+}));
+
+describe('getImsAuthProvider', () => {
+  const params: ImsAuthParams = {
+    OAUTH_CLIENT_ID: 'test-client-id',
+    OAUTH_CLIENT_SECRETS: JSON.stringify(['supersecret']),
+    OAUTH_TECHNICAL_ACCOUNT_ID: 'test-technical-account-id',
+    OAUTH_TECHNICAL_ACCOUNT_EMAIL: 'test-email@example.com',
+    OAUTH_IMS_ORG_ID: 'test-org-id',
+    OAUTH_SCOPES: JSON.stringify(['scope1', 'scope2']),
+  };
+
+  test('should export token when all required params are provided', async () => {
+    const { getToken } = require('@adobe/aio-lib-ims');
+    const authToken = 'supersecrettoken';
+
+    getToken.mockResolvedValue(authToken);
+
+    const imsProvider = await getImsAuthProvider(params);
+    expect(imsProvider).toBeDefined();
+
+    const retrievedToken = await imsProvider!.getAccessToken();
+    expect(retrievedToken).toEqual(authToken);
+
+    const headers = await imsProvider!.getHeaders();
+    expect(headers).toHaveProperty('Authorization', `Bearer ${authToken}`);
+    expect(headers).toHaveProperty('x-api-key', params.OAUTH_CLIENT_ID);
+  });
+
+  [
+    'OAUTH_CLIENT_ID',
+    'OAUTH_CLIENT_SECRETS',
+    'OAUTH_TECHNICAL_ACCOUNT_ID',
+    'OAUTH_TECHNICAL_ACCOUNT_EMAIL',
+    'OAUTH_IMS_ORG_ID',
+    'OAUTH_SCOPES',
+  ].forEach((param) => {
+    test(`should return undefined when ${param} is missing`, async () => {
+      const incompleteParams = {
+        ...params,
+        [param]: undefined,
+      };
+
+      const imsProvider = await getImsAuthProvider(incompleteParams);
+
+      expect(imsProvider).toBeUndefined();
+    });
   });
 });
