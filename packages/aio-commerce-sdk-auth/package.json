@@ -15,7 +15,7 @@
   "module": "./dist-es/index.js",
   "types": "./dist-types/index.d.ts",
   "dependencies": {
-    "@adobe/aio-lib-ims": "^7.0.2",
+    "@adobe/aio-lib-ims": "^8.1.0",
     "oauth-1.0a": "^2.2.6"
   },
   "scripts": {
