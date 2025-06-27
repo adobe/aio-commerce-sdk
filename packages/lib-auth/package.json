@@ -14,6 +14,7 @@
   ],
 
   "scripts": {
+    "check-types": "tsc --noEmit && echo '✅ No type errors found.'",
     "test": "vitest run",
     "test:watch": "vitest"
   },
