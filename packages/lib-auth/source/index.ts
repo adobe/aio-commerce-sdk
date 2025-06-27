@@ -10,5 +10,5 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-export * from "./ims-auth";
-export * from "./integration-auth";
+export * from "./lib/ims-auth";
+export * from "./lib/integration-auth";

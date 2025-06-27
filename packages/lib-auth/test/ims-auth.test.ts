@@ -13,7 +13,7 @@ governing permissions and limitations under the License.
 import { getToken } from "@adobe/aio-lib-ims";
 import { describe, expect, test, vi } from "vitest";
 
-import { getImsAuthProvider, type ImsAuthParams } from "../source/ims-auth";
+import { getImsAuthProvider, type ImsAuthParams } from "~/lib/ims-auth";
 
 vi.mock("@adobe/aio-lib-ims", async () => ({
   context: (await vi.importActual("@adobe/aio-lib-ims")).context,

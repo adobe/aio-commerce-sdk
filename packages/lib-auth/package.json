@@ -2,6 +2,7 @@
   "name": "@aio-commerce-sdk/lib-auth",
   "version": "1.0.0",
   "author": "Adobe Inc.",
+
   "license": "Apache-2.0",
   "description": "Authentication utilities for Adobe Commerce apps deployed in Adobe App Builder.",
   "keywords": [
@@ -11,16 +12,17 @@
     "adobe-commerce",
     "adobe-ims"
   ],
-  "main": "./dist-cjs/index.js",
-  "module": "./dist-es/index.js",
-  "types": "./dist-types/index.d.ts",
+
   "scripts": {
-    "test": "vitest"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
+
   "dependencies": {
     "@adobe/aio-lib-ims": "^8.1.0",
     "oauth-1.0a": "^2.2.6"
   },
+
   "devDependencies": {
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "@types/node": "^24.0.4",
