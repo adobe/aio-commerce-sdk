@@ -1,8 +1,10 @@
 {
-  "name": "@adobe/aio-commerce-sdk-auth",
-  "version": "0.1.0",
-  "description": "Authentication utilities for Adobe Commerce apps deployed in Adobe AppBuilder.",
+  "name": "@aio-commerce-sdk/lib-auth",
+  "version": "1.0.0",
+  "author": "Adobe Inc.",
+
   "license": "Apache-2.0",
+  "description": "Authentication utilities for Adobe Commerce apps deployed in Adobe App Builder.",
   "keywords": [
     "aio",
     "adobe-io",
@@ -10,14 +12,11 @@
     "adobe-commerce",
     "adobe-ims"
   ],
-  "author": "Adobe Inc.",
+
   "main": "./dist-cjs/index.js",
   "module": "./dist-es/index.js",
   "types": "./dist-types/index.d.ts",
-  "dependencies": {
-    "@adobe/aio-lib-ims": "^8.1.0",
-    "oauth-1.0a": "^2.2.6"
-  },
+
   "scripts": {
     "build": "concurrently 'npm:build:cjs' 'npm:build:es' 'npm:build:types'",
     "build:cjs": "tsc -p tsconfig.cjs.json",
@@ -25,5 +24,15 @@
     "build:types": "tsc -p tsconfig.types.json",
     "test": "jest --passWithNoTests --coverage --verbose --config ../../jest.config.js",
     "clean": "rimraf ./dist-* && rimraf *.tsbuildinfo"
+  },
+
+  "dependencies": {
+    "@adobe/aio-lib-ims": "^8.1.0",
+    "oauth-1.0a": "^2.2.6"
+  },
+
+  "devDependencies": {
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "vitest": "^3.2.4"
   }
 }
