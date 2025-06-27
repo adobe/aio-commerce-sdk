@@ -16,7 +16,8 @@
   ],
 
   "scripts": {
-    "turbo": "turbo"
+    "turbo": "turbo",
+    "turbo:generate:workspace": "turbo generate workspace"
   },
 
   "devDependencies": {
