@@ -10,26 +10,26 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { getImsAuthProvider, ImsAuthParams } from './imsAuth';
-import { getToken } from '@adobe/aio-lib-ims';
+import { getToken } from "@adobe/aio-lib-ims";
+import { getImsAuthProvider, type ImsAuthParams } from "../source/ims-auth";
 
-jest.mock('@adobe/aio-lib-ims', () => ({
-  context: jest.requireActual('@adobe/aio-lib-ims').context,
+jest.mock("@adobe/aio-lib-ims", () => ({
+  context: jest.requireActual("@adobe/aio-lib-ims").context,
   getToken: jest.fn(),
 }));
 
-describe('getImsAuthProvider', () => {
+describe("getImsAuthProvider", () => {
   const params: ImsAuthParams = {
-    AIO_COMMERCE_IMS_CLIENT_ID: 'test-client-id',
-    AIO_COMMERCE_IMS_CLIENT_SECRETS: JSON.stringify(['supersecret']),
-    AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: 'test-technical-account-id',
-    AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: 'test-email@example.com',
-    AIO_COMMERCE_IMS_IMS_ORG_ID: 'test-org-id',
-    AIO_COMMERCE_IMS_SCOPES: JSON.stringify(['scope1', 'scope2']),
+    AIO_COMMERCE_IMS_CLIENT_ID: "test-client-id",
+    AIO_COMMERCE_IMS_CLIENT_SECRETS: JSON.stringify(["supersecret"]),
+    AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+    AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+    AIO_COMMERCE_IMS_IMS_ORG_ID: "test-org-id",
+    AIO_COMMERCE_IMS_SCOPES: JSON.stringify(["scope1", "scope2"]),
   };
 
-  test('should export token when all required params are provided', async () => {
-    const authToken = 'supersecrettoken';
+  test("should export token when all required params are provided", async () => {
+    const authToken = "supersecrettoken";
 
     jest.mocked(getToken).mockResolvedValue(authToken);
 
@@ -40,17 +40,20 @@ describe('getImsAuthProvider', () => {
     expect(retrievedToken).toEqual(authToken);
 
     const headers = await imsProvider!.getHeaders();
-    expect(headers).toHaveProperty('Authorization', `Bearer ${authToken}`);
-    expect(headers).toHaveProperty('x-api-key', params.AIO_COMMERCE_IMS_CLIENT_ID);
+    expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
+    expect(headers).toHaveProperty(
+      "x-api-key",
+      params.AIO_COMMERCE_IMS_CLIENT_ID,
+    );
   });
 
   [
-    'AIO_COMMERCE_IMS_CLIENT_ID',
-    'AIO_COMMERCE_IMS_CLIENT_SECRETS',
-    'AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID',
-    'AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL',
-    'AIO_COMMERCE_IMS_IMS_ORG_ID',
-    'AIO_COMMERCE_IMS_SCOPES',
+    "AIO_COMMERCE_IMS_CLIENT_ID",
+    "AIO_COMMERCE_IMS_CLIENT_SECRETS",
+    "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID",
+    "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL",
+    "AIO_COMMERCE_IMS_IMS_ORG_ID",
+    "AIO_COMMERCE_IMS_SCOPES",
   ].forEach((param) => {
     test(`should return undefined when ${param} is missing`, async () => {
       const incompleteParams = {
