@@ -2,7 +2,10 @@
   "name": "@adobe/aio-commerce-sdk",
   "version": "0.1.0",
   "author": "Adobe Inc.",
-  
+  "engines": {
+    "node": ">=22"
+  },
+
   "license": "Apache-2.0",
   "description": "Utilities for Adobe Commerce apps deployed in Adobe AppBuilder.",
   "keywords": [
@@ -12,7 +15,13 @@
     "adobe-commerce"
   ],
 
-  "engines": {
-    "node": ">=22"
-  }
+  "scripts": {
+    "turbo": "turbo"
+  },
+
+  "devDependencies": {
+    "turbo": "^2.5.4"
+  },
+
+  "packageManager": "pnpm@10.4.1"
 }
