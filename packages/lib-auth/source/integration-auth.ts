@@ -9,64 +9,99 @@ the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTA
 OF ANY KIND, either express or implied. See the License for the specific language
 governing permissions and limitations under the License.
 */
-import crypto from 'crypto';
-import OAuth1a from 'oauth-1.0a';
-import { allNonEmpty } from './params';
 
-export type IntegrationAuthParam =
-  | 'AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY'
-  | 'AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET'
-  | 'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN'
-  | 'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET';
+import crypto from "node:crypto";
+import OAuth1a from "oauth-1.0a";
 
-export type IntegrationAuthParams = Partial<Record<IntegrationAuthParam, string>>;
+import { allNonEmpty } from "./params";
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
+const INTEGRATION_AUTH_HEADERS = ["Authorization"] as const;
+const INTEGRATION_AUTH_PARAMS = [
+  "AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY",
+  "AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET",
+  "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN",
+  "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET",
+] as const;
 
-export type IntegrationAuthHeader = 'Authorization';
+/** Defines a union of allowed integration authentication parameters. */
+export type IntegrationAuthParam = (typeof INTEGRATION_AUTH_PARAMS)[number];
+
+/** Defines a key-value map of integration authentication parameters. */
+export type IntegrationAuthParams = Partial<
+  Record<IntegrationAuthParam, string>
+>;
+
+/** Defines a union of allowed integration authentication headers. */
+export type IntegrationAuthHeader = (typeof INTEGRATION_AUTH_HEADERS)[number];
+
+/** Defines a key-value map of integration authentication headers. */
 export type IntegrationAuthHeaders = Record<IntegrationAuthHeader, string>;
 
+type HttpMethod = (typeof HTTP_METHODS)[number];
+
+/** Defines an authentication provider for integration authentication. */
 export interface IntegrationAuthProvider {
   getHeaders: (method: HttpMethod, url: string) => IntegrationAuthHeaders;
 }
 
 /**
- * If the required integration parameters are present, this function returns an IntegrationAuthProvider.
- * @param {IntegrationAuthParams} params includes integration parameters
- * @returns {IntegrationAuthProvider} returns the integration auth provider
+ * If the required integration parameters are present, this function returns an {@link IntegrationAuthProvider}.
+ * @param params includes integration parameters
  */
-export function getIntegrationAuthProvider(params: IntegrationAuthParams): IntegrationAuthProvider | undefined {
+export function getIntegrationAuthProvider(params: IntegrationAuthParams) {
   const config = resolveIntegrationConfig(params);
   if (config) {
     const oauth = new OAuth1a({
       consumer: {
+<<<<<<< HEAD
         key: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY!,
         secret: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET!,
-      },
-      signature_method: 'HMAC-SHA256',
-      hash_function: (baseString, key) => crypto.createHmac('sha256', key).update(baseString).digest('base64'),
-    });
+=======
+        key: config.consumerKey,
+        secret: config.consumerSecret,
+>>>>>>> 95359bf (refactor(lib-auth): improve typings and fix lint issues)
+  }
+  ,
+      signature_method: "HMAC-SHA256",
+      hash_function: (baseString, key) =>
+        crypto.createHmac("sha256", key).update(baseString).digest("base64"),
+}
+)
 
-    const oauthToken = {
-      key: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN!,
+const oauthToken = {
+<<<<<<< HEAD
+      key
+: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN!,
       secret: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET!,
-    };
+=======
+      key: config.accessToken,
+      secret: config.accessTokenSecret,
+>>>>>>> 95359bf (refactor(lib-auth): improve typings and fix lint issues)
+    }
 
-    return {
+return {
       getHeaders(method: HttpMethod, url: string) {
         return oauth.toHeader(oauth.authorize({ url, method }, oauthToken));
       },
-    };
-  }
+    } satisfies IntegrationAuthProvider;
+}
 }
 
 function resolveIntegrationConfig(params: IntegrationAuthParams) {
   if (
     allNonEmpty(params, [
+<<<<<<< HEAD
       'AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY',
       'AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET',
       'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN',
       'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET',
+=======
+      "COMMERCE_CONSUMER_KEY",
+      "COMMERCE_CONSUMER_SECRET",
+      "COMMERCE_ACCESS_TOKEN",
+      "COMMERCE_ACCESS_TOKEN_SECRET",
+>>>>>>> 95359bf (refactor(lib-auth): improve typings and fix lint issues)
     ])
   ) {
     return {

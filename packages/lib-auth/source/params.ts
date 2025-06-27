@@ -13,21 +13,22 @@ governing permissions and limitations under the License.
 /**
  * Checks if the given value is non-empty.
  *
- * @param {string} name of the parameter. Required because of `aio app dev` compatibility: inputs mapped to undefined env vars come as $<input_name> in dev mode, but as '' in prod mode.
- * @param {string} value of the parameter.
- * @returns {boolean} returns true if the value is non-empty, false otherwise.
+ * @param name of the parameter. Required because of `aio app dev` compatibility: inputs mapped to undefined env vars come as $<input_name> in dev mode, but as '' in prod mode.
+ * @param value of the parameter.
  */
-export function nonEmpty(name: string, value: string | undefined): boolean {
+export function nonEmpty(name: string, value: string | undefined) {
   const v = value?.trim();
   return v !== undefined && v !== `$${name}`;
 }
 
 /**
  * Checks if all required parameters are non-empty.
- * @param {object} params action input parameters.
- * @param {string[]} required list of required parameter names.
- * @returns {boolean} returns true if all required parameters are non-empty, false otherwise.
+ * @param params action input parameters.
+ * @param required list of required parameter names.
  */
-export function allNonEmpty(params: Record<string, string | undefined>, required: string[]): boolean {
+export function allNonEmpty<const T extends string>(
+  params: Record<string, string | undefined>,
+  required: T[],
+): params is Required<Record<T, string> & Record<string, string>> {
   return required.every((name) => nonEmpty(name, params[name]));
 }
