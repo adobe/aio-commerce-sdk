@@ -17,12 +17,28 @@
 
   "scripts": {
     "turbo": "turbo",
-    "turbo:generate:workspace": "turbo generate workspace"
+    "prepare": "husky",
+    "format": "biome format --write --no-errors-on-unmatched",
+    "format:check": "biome check --linter-enabled=false --no-errors-on-unmatched",
+    "lint": "biome check --formatter-enabled=false --no-errors-on-unmatched",
+    "lint:fix": "biome lint --write --no-errors-on-unmatched"
   },
 
   "devDependencies": {
-    "turbo": "^2.5.4"
+    "@biomejs/biome": "2.0.5",
+    "husky": "^9.1.7",
+    "turbo": "^2.5.4",
+    "ultracite": "5.0.25"
   },
 
-  "packageManager": "pnpm@10.4.1"
+  "packageManager": "pnpm@10.4.1",
+  "lint-staged": {
+    "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+      "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --error-on-warnings"
+    ],
+
+    "*": [
+      "biome check --no-errors-on-unmatched --files-ignore-unknown=true --error-on-warnings"
+    ]
+  }
 }
