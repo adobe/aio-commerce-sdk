@@ -10,10 +10,15 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
+import { describe, expect, test } from "vitest";
 import {
   getIntegrationAuthProvider,
   type IntegrationAuthParams,
 } from "../source/integration-auth";
+
+/** Regex to match the OAuth 1.0a header format. */
+const OAUTH1_REGEX =
+  /^OAuth oauth_consumer_key="[^"]+", oauth_nonce="[^"]+", oauth_signature="[^"]+", oauth_signature_method="HMAC-SHA256", oauth_timestamp="[^"]+", oauth_token="[^"]+", oauth_version="1\.0"$/;
 
 describe("getIntegrationAuthProvider", () => {
   const params: IntegrationAuthParams = {
@@ -27,24 +32,31 @@ describe("getIntegrationAuthProvider", () => {
     const integrationProvider = getIntegrationAuthProvider(params);
     expect(integrationProvider).toBeDefined();
 
-    const headers = integrationProvider!.getHeaders(
+    const headers = integrationProvider?.getHeaders(
       "GET",
       "http://localhost/test",
     );
     expect(headers).toHaveProperty(
       "Authorization",
-      expect.stringMatching(
-        /^OAuth oauth_consumer_key="test-consumer-key", oauth_nonce="[^"]+", oauth_signature="[^"]+", oauth_signature_method="HMAC-SHA256", oauth_timestamp="[^"]+", oauth_token="test-access-token", oauth_version="1\.0"$/,
-      ),
+      expect.stringMatching(OAUTH1_REGEX),
     );
   });
 
+<<<<<<< HEAD:packages/lib-auth/test/integration-auth.ts
   [
     "AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY",
     "AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET",
     "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN",
     "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET",
   ].forEach((param) => {
+=======
+  for (const param of [
+    "COMMERCE_CONSUMER_KEY",
+    "COMMERCE_CONSUMER_SECRET",
+    "COMMERCE_ACCESS_TOKEN",
+    "COMMERCE_ACCESS_TOKEN_SECRET",
+  ]) {
+>>>>>>> 87c1283 (test(lib-auth): refactor for vitest):packages/lib-auth/test/integration-auth.test.ts
     test(`should return undefined when ${param} is missing`, () => {
       const incompleteParams = {
         ...params,
@@ -52,8 +64,7 @@ describe("getIntegrationAuthProvider", () => {
       };
 
       const integrationProvider = getIntegrationAuthProvider(incompleteParams);
-
       expect(integrationProvider).toBeUndefined();
     });
-  });
+  }
 });

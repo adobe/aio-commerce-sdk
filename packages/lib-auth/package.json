@@ -18,12 +18,7 @@
   "types": "./dist-types/index.d.ts",
 
   "scripts": {
-    "build": "concurrently 'npm:build:cjs' 'npm:build:es' 'npm:build:types'",
-    "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build:es": "tsc -p tsconfig.es.json",
-    "build:types": "tsc -p tsconfig.types.json",
-    "test": "jest --passWithNoTests --coverage --verbose --config ../../jest.config.js",
-    "clean": "rimraf ./dist-* && rimraf *.tsbuildinfo"
+    "test": "vitest"
   },
 
   "dependencies": {

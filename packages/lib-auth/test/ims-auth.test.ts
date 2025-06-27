@@ -11,11 +11,13 @@ governing permissions and limitations under the License.
 */
 
 import { getToken } from "@adobe/aio-lib-ims";
+import { describe, expect, test, vi } from "vitest";
+
 import { getImsAuthProvider, type ImsAuthParams } from "../source/ims-auth";
 
-jest.mock("@adobe/aio-lib-ims", () => ({
-  context: jest.requireActual("@adobe/aio-lib-ims").context,
-  getToken: jest.fn(),
+vi.mock("@adobe/aio-lib-ims", async () => ({
+  context: (await vi.importActual("@adobe/aio-lib-ims")).context,
+  getToken: vi.fn(),
 }));
 
 describe("getImsAuthProvider", () => {
@@ -30,16 +32,15 @@ describe("getImsAuthProvider", () => {
 
   test("should export token when all required params are provided", async () => {
     const authToken = "supersecrettoken";
-
-    jest.mocked(getToken).mockResolvedValue(authToken);
+    vi.mocked(getToken).mockResolvedValue(authToken);
 
     const imsProvider = await getImsAuthProvider(params);
     expect(imsProvider).toBeDefined();
 
-    const retrievedToken = await imsProvider!.getAccessToken();
+    const retrievedToken = await imsProvider?.getAccessToken();
     expect(retrievedToken).toEqual(authToken);
 
-    const headers = await imsProvider!.getHeaders();
+    const headers = await imsProvider?.getHeaders();
     expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
     expect(headers).toHaveProperty(
       "x-api-key",
@@ -47,6 +48,7 @@ describe("getImsAuthProvider", () => {
     );
   });
 
+<<<<<<< HEAD:packages/lib-auth/test/ims-auth.ts
   [
     "AIO_COMMERCE_IMS_CLIENT_ID",
     "AIO_COMMERCE_IMS_CLIENT_SECRETS",
@@ -55,6 +57,16 @@ describe("getImsAuthProvider", () => {
     "AIO_COMMERCE_IMS_IMS_ORG_ID",
     "AIO_COMMERCE_IMS_SCOPES",
   ].forEach((param) => {
+=======
+  for (const param of [
+    "OAUTH_CLIENT_ID",
+    "OAUTH_CLIENT_SECRETS",
+    "OAUTH_TECHNICAL_ACCOUNT_ID",
+    "OAUTH_TECHNICAL_ACCOUNT_EMAIL",
+    "OAUTH_IMS_ORG_ID",
+    "OAUTH_SCOPES",
+  ]) {
+>>>>>>> 87c1283 (test(lib-auth): refactor for vitest):packages/lib-auth/test/ims-auth.test.ts
     test(`should return undefined when ${param} is missing`, async () => {
       const incompleteParams = {
         ...params,
@@ -62,8 +74,7 @@ describe("getImsAuthProvider", () => {
       };
 
       const imsProvider = await getImsAuthProvider(incompleteParams);
-
       expect(imsProvider).toBeUndefined();
     });
-  });
+  }
 });
