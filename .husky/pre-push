@@ -1,0 +1,2 @@
+# Ensure all tests pass before pushing
+turbo test --no-cache
