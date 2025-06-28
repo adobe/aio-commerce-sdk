@@ -1,6 +1,7 @@
 {
   "name": "@adobe/aio-commerce-sdk",
   "version": "0.1.0",
+  "private": true,
   "author": "Adobe Inc.",
   "engines": {
     "node": ">=22"
