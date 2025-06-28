@@ -12,9 +12,9 @@
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
     "test": "turbo test",
     "build": "turbo build",
-    "postinstall": "turbo build",
     "check-types": "turbo check-types",
-    "pkg:lib-auth": "turbo --filter=@adobe/aio-commerce-lib-auth"
+    "pkg:lib-auth": "turbo --filter=@adobe/aio-commerce-lib-auth",
+    "pkg:sdk": "turbo --filter=@adobe/aio-commerce-sdk"
   },
 
   "devDependencies": {
