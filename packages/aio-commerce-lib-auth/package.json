@@ -36,10 +36,10 @@
 
   "scripts": {
     "build": "tsdown",
-    "format": "biome format --write --no-errors-on-unmatched",
-    "format:check": "biome check --linter-enabled=false --no-errors-on-unmatched",
-    "lint": "biome check --formatter-enabled=false --no-errors-on-unmatched",
-    "lint:fix": "biome lint --write --no-errors-on-unmatched",
+    "format": "pnpm -w format .",
+    "format:check": "pnpm -w format:check .",
+    "lint": "pnpm -w lint .",
+    "lint:fix": "pnpm -w lint:fix .",
     "check-types": "tsc --noEmit && echo '✅ No type errors found.'",
     "test": "vitest run",
     "test:watch": "vitest"

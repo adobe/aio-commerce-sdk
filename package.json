@@ -27,7 +27,10 @@
   "scripts": {
     "prepare": "husky",
     "turbo": "turbo",
-    "lint": "turbo lint",
+    "format": "biome format --write --no-errors-on-unmatched",
+    "format:check": "biome check --linter-enabled=false --no-errors-on-unmatched",
+    "lint": "biome check --formatter-enabled=false --no-errors-on-unmatched",
+    "lint:fix": "biome lint --write --no-errors-on-unmatched",
     "test": "turbo test",
     "build": "turbo build",
     "postinstall": "turbo build",
