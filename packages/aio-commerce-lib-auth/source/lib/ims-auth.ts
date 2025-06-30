@@ -15,14 +15,14 @@ import { allNonEmpty } from "./params";
 
 const IMS_AUTH_HEADERS = ["Authorization", "x-api-key"] as const;
 const IMS_AUTH_PARAMS = [
-  "OAUTH_CLIENT_ID",
-  "OAUTH_CLIENT_SECRETS",
-  "OAUTH_TECHNICAL_ACCOUNT_ID",
-  "OAUTH_TECHNICAL_ACCOUNT_EMAIL",
-  "OAUTH_IMS_ORG_ID",
-  "OAUTH_SCOPES",
-  "OAUTH_ENV",
-  "OAUTH_CTX",
+  "AIO_COMMERCE_IMS_CLIENT_ID",
+  "AIO_COMMERCE_IMS_CLIENT_SECRETS",
+  "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID",
+  "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL",
+  "AIO_COMMERCE_IMS_IMS_ORG_ID",
+  "AIO_COMMERCE_IMS_SCOPES",
+  "AIO_COMMERCE_IMS_ENV",
+  "AIO_COMMERCE_IMS_CTX",
 ] as const;
 
 /** Defines a union of allowed IMS authentication parameters. */
@@ -53,7 +53,7 @@ export async function getImsAuthProvider(params: ImsAuthParams) {
   const config = resolveImsConfig(params);
 
   if (config) {
-    const contextName = params.OAUTH_CTX ?? "aio-commerce-sdk-creds";
+    const contextName = params.AIO_COMMERCE_IMS_CTX ?? "aio-commerce-sdk-creds";
     await context.set(contextName, config);
 
     return {
@@ -72,24 +72,24 @@ export async function getImsAuthProvider(params: ImsAuthParams) {
 function resolveImsConfig(params: ImsAuthParams) {
   if (
     allNonEmpty(params, [
-      "OAUTH_CLIENT_ID",
-      "OAUTH_CLIENT_SECRETS",
-      "OAUTH_TECHNICAL_ACCOUNT_ID",
-      "OAUTH_TECHNICAL_ACCOUNT_EMAIL",
-      "OAUTH_IMS_ORG_ID",
-      "OAUTH_SCOPES",
+      "AIO_COMMERCE_IMS_CLIENT_ID",
+      "AIO_COMMERCE_IMS_CLIENT_SECRETS",
+      "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID",
+      "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL",
+      "AIO_COMMERCE_IMS_IMS_ORG_ID",
+      "AIO_COMMERCE_IMS_SCOPES",
     ])
   ) {
     return {
-      client_id: params.OAUTH_CLIENT_ID,
+      client_id: params.AIO_COMMERCE_IMS_CLIENT_ID,
       client_secrets: JSON.parse(
-        params.OAUTH_CLIENT_SECRETS ?? "[]",
+        params.AIO_COMMERCE_IMS_CLIENT_SECRETS ?? "[]",
       ) as string[],
-      technical_account_id: params.OAUTH_TECHNICAL_ACCOUNT_ID,
-      technical_account_email: params.OAUTH_TECHNICAL_ACCOUNT_EMAIL,
-      ims_org_id: params.OAUTH_IMS_ORG_ID,
-      scopes: JSON.parse(params.OAUTH_SCOPES ?? "[]") as string[],
-      environment: params.OAUTH_ENV ?? "prod",
+      technical_account_id: params.AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID,
+      technical_account_email: params.AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL,
+      ims_org_id: params.AIO_COMMERCE_IMS_IMS_ORG_ID,
+      scopes: JSON.parse(params.AIO_COMMERCE_IMS_SCOPES ?? "[]") as string[],
+      environment: params.AIO_COMMERCE_IMS_ENV ?? "prod",
     };
   }
 }

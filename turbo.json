@@ -1,8 +1,5 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-<<<<<<< HEAD
-  "tasks": {}
-=======
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -18,5 +15,4 @@
       "dependsOn": ["^test"]
     }
   }
->>>>>>> 0f0ab1e (chore(project, lib-auth): setup scripts and turbo)
 }

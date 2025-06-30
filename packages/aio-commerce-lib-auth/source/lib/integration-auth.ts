@@ -18,10 +18,10 @@ import { allNonEmpty } from "./params";
 const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
 const INTEGRATION_AUTH_HEADERS = ["Authorization"] as const;
 const INTEGRATION_AUTH_PARAMS = [
-  "COMMERCE_CONSUMER_KEY",
-  "COMMERCE_CONSUMER_SECRET",
-  "COMMERCE_ACCESS_TOKEN",
-  "COMMERCE_ACCESS_TOKEN_SECRET",
+  "AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY",
+  "AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET",
+  "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN",
+  "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET",
 ] as const;
 
 /** Defines a union of allowed integration authentication parameters. */
@@ -79,17 +79,17 @@ export function getIntegrationAuthProvider(params: IntegrationAuthParams) {
 function resolveIntegrationConfig(params: IntegrationAuthParams) {
   if (
     allNonEmpty(params, [
-      "COMMERCE_CONSUMER_KEY",
-      "COMMERCE_CONSUMER_SECRET",
-      "COMMERCE_ACCESS_TOKEN",
-      "COMMERCE_ACCESS_TOKEN_SECRET",
+      "AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY",
+      "AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET",
+      "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN",
+      "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET",
     ])
   ) {
     return {
-      consumerKey: params.COMMERCE_CONSUMER_KEY,
-      consumerSecret: params.COMMERCE_CONSUMER_SECRET,
-      accessToken: params.COMMERCE_ACCESS_TOKEN,
-      accessTokenSecret: params.COMMERCE_ACCESS_TOKEN_SECRET,
+      consumerKey: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY,
+      consumerSecret: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET,
+      accessToken: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN,
+      accessTokenSecret: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET,
     };
   }
 }
