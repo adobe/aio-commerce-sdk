@@ -2,6 +2,7 @@
   "name": "@adobe/aio-commerce-lib-auth",
   "version": "1.0.0",
   "author": "Adobe Inc.",
+  "type": "module",
 
   "license": "Apache-2.0",
   "description": "Authentication utilities for Adobe Commerce apps deployed in Adobe App Builder.",
@@ -55,5 +56,7 @@
     "@types/node": "^24.0.4",
     "tsdown": "^0.12.9",
     "vitest": "^3.2.4"
-  }
+  },
+
+  "sideEffects": false
 }
