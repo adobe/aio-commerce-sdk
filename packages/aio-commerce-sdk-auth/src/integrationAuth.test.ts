@@ -14,10 +14,10 @@ import { getIntegrationAuthProvider, IntegrationAuthParams } from './integration
 
 describe('getIntegrationAuthProvider', () => {
   const params: IntegrationAuthParams = {
-    COMMERCE_CONSUMER_KEY: 'test-consumer-key',
-    COMMERCE_CONSUMER_SECRET: 'test-consumer-secret',
-    COMMERCE_ACCESS_TOKEN: 'test-access-token',
-    COMMERCE_ACCESS_TOKEN_SECRET: 'test-access-token-secret',
+    AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY: 'test-consumer-key',
+    AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET: 'test-consumer-secret',
+    AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN: 'test-access-token',
+    AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET: 'test-access-token-secret',
   };
 
   test('should export getIntegrationAccessToken', () => {
@@ -34,10 +34,10 @@ describe('getIntegrationAuthProvider', () => {
   });
 
   [
-    'COMMERCE_CONSUMER_KEY',
-    'COMMERCE_CONSUMER_SECRET',
-    'COMMERCE_ACCESS_TOKEN',
-    'COMMERCE_ACCESS_TOKEN_SECRET',
+    'AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY',
+    'AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET',
+    'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN',
+    'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET',
   ].forEach((param) => {
     test(`should return undefined when ${param} is missing`, () => {
       const incompleteParams = {

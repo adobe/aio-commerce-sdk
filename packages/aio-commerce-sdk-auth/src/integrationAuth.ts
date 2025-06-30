@@ -14,14 +14,14 @@ import OAuth1a from 'oauth-1.0a';
 import { allNonEmpty } from './params';
 
 export type IntegrationAuthParam =
-  | 'COMMERCE_CONSUMER_KEY'
-  | 'COMMERCE_CONSUMER_SECRET'
-  | 'COMMERCE_ACCESS_TOKEN'
-  | 'COMMERCE_ACCESS_TOKEN_SECRET';
+  | 'AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY'
+  | 'AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET'
+  | 'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN'
+  | 'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET';
 
 export type IntegrationAuthParams = Partial<Record<IntegrationAuthParam, string>>;
 
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export type IntegrationAuthHeader = 'Authorization';
 export type IntegrationAuthHeaders = Record<IntegrationAuthHeader, string>;
@@ -40,16 +40,16 @@ export function getIntegrationAuthProvider(params: IntegrationAuthParams): Integ
   if (config) {
     const oauth = new OAuth1a({
       consumer: {
-        key: params.COMMERCE_CONSUMER_KEY!,
-        secret: params.COMMERCE_CONSUMER_SECRET!,
+        key: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY!,
+        secret: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET!,
       },
       signature_method: 'HMAC-SHA256',
       hash_function: (baseString, key) => crypto.createHmac('sha256', key).update(baseString).digest('base64'),
     });
 
     const oauthToken = {
-      key: params.COMMERCE_ACCESS_TOKEN!,
-      secret: params.COMMERCE_ACCESS_TOKEN_SECRET!,
+      key: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN!,
+      secret: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET!,
     };
 
     return {
@@ -63,17 +63,17 @@ export function getIntegrationAuthProvider(params: IntegrationAuthParams): Integ
 function resolveIntegrationConfig(params: IntegrationAuthParams) {
   if (
     allNonEmpty(params, [
-      'COMMERCE_CONSUMER_KEY',
-      'COMMERCE_CONSUMER_SECRET',
-      'COMMERCE_ACCESS_TOKEN',
-      'COMMERCE_ACCESS_TOKEN_SECRET',
+      'AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY',
+      'AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET',
+      'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN',
+      'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET',
     ])
   ) {
     return {
-      consumerKey: params.COMMERCE_CONSUMER_KEY,
-      consumerSecret: params.COMMERCE_CONSUMER_SECRET,
-      accessToken: params.COMMERCE_ACCESS_TOKEN,
-      accessTokenSecret: params.COMMERCE_ACCESS_TOKEN_SECRET,
+      consumerKey: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY,
+      consumerSecret: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET,
+      accessToken: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN,
+      accessTokenSecret: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET,
     };
   }
 }
