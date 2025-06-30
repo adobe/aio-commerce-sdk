@@ -1,11 +1,11 @@
 {
   "name": "@adobe/aio-commerce-sdk",
+  "type": "module",
   "version": "1.0.0",
   "author": "Adobe Inc.",
   "engines": {
     "node": ">=22"
   },
-
   "license": "Apache-2.0",
   "description": "Utilities for Adobe Commerce apps deployed in Adobe App Builder.",
   "keywords": [
@@ -14,43 +14,50 @@
     "commerce",
     "adobe-commerce"
   ],
-
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
-
   "repository": {
     "type": "git",
     "url": "https://github.com/adobe/aio-commerce-sdk.git"
   },
-
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/es/index.mjs",
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/es/index.js",
   "types": "./dist/es/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/es/index.mjs",
-      "require": "./dist/cjs/index.js"
+      "import": {
+        "types": "./dist/es/index.d.ts",
+        "default": "./dist/es/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
     },
     "./auth": {
-      "import": "./dist/es/auth.mjs",
-      "require": "./dist/cjs/auth.js",
-      "types": "./dist/es/auth.d.ts"
+      "import": {
+        "types": "./dist/es/auth.d.ts",
+        "default": "./dist/es/auth.js"
+      },
+      "require": {
+        "types": "./dist/cjs/auth.d.cts",
+        "default": "./dist/cjs/auth.cjs"
+      }
     },
     "./package.json": "./package.json"
   },
-
   "scripts": {
     "build": "tsdown",
     "check-types": "tsc --noEmit && echo '✅ No type errors found.'"
   },
-
   "dependencies": {
     "@adobe/aio-commerce-lib-auth": "workspace:*"
   },
-
   "devDependencies": {
-    "tsdown": "^0.12.9",
-    "@aio-commerce-sdk/config-typescript": "workspace:*"
-  }
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "@types/node": "^24.0.4",
+    "tsdown": "^0.12.9"
+  },
+  "sideEffects": false
 }

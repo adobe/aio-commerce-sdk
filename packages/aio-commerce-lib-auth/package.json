@@ -1,8 +1,12 @@
 {
   "name": "@adobe/aio-commerce-lib-auth",
-  "version": "1.0.0",
-  "author": "Adobe Inc.",
   "type": "module",
+  "version": "1.0.0",
+
+  "author": "Adobe Inc.",
+  "engines": {
+    "node": ">=22"
+  },
 
   "license": "Apache-2.0",
   "description": "Authentication utilities for Adobe Commerce apps deployed in Adobe App Builder.",
@@ -24,13 +28,19 @@
     "directory": "packages/aio-commerce-lib-auth"
   },
 
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/es/index.mjs",
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/es/index.js",
   "types": "./dist/es/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/es/index.mjs",
-      "require": "./dist/cjs/index.js"
+      "import": {
+        "types": "./dist/es/index.d.ts",
+        "default": "./dist/es/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
     },
     "./package.json": "./package.json"
   },
