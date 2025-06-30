@@ -13,7 +13,7 @@ governing permissions and limitations under the License.
 import { getToken } from "@adobe/aio-lib-ims";
 import { describe, expect, test, vi } from "vitest";
 
-import { getImsAuthProvider, type ImsAuthParams } from "../source/ims-auth";
+import { getImsAuthProvider, type ImsAuthParams } from "~/lib/ims-auth";
 
 vi.mock("@adobe/aio-lib-ims", async () => ({
   context: (await vi.importActual("@adobe/aio-lib-ims")).context,
@@ -48,14 +48,14 @@ describe("getImsAuthProvider", () => {
     );
   });
 
-  [
+  for (const param of [
     "AIO_COMMERCE_IMS_CLIENT_ID",
     "AIO_COMMERCE_IMS_CLIENT_SECRETS",
     "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID",
     "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL",
     "AIO_COMMERCE_IMS_IMS_ORG_ID",
     "AIO_COMMERCE_IMS_SCOPES",
-  ].forEach((param) => {
+  ]) {
     test(`should return undefined when ${param} is missing`, async () => {
       const incompleteParams = {
         ...params,

@@ -14,7 +14,7 @@ import { describe, expect, test } from "vitest";
 import {
   getIntegrationAuthProvider,
   type IntegrationAuthParams,
-} from "../source/integration-auth";
+} from "~/lib/integration-auth";
 
 /** Regex to match the OAuth 1.0a header format. */
 const OAUTH1_REGEX =
@@ -42,12 +42,12 @@ describe("getIntegrationAuthProvider", () => {
     );
   });
 
-  [
+  for (const param of [
     "AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY",
     "AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET",
     "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN",
     "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET",
-  ].forEach((param) => {
+  ]) {
     test(`should return undefined when ${param} is missing`, () => {
       const incompleteParams = {
         ...params,
