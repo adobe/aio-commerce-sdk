@@ -1,3 +1,5 @@
+# :warning: Archived, see: https://github.com/adobe/aio-commerce-sdk :warning:
+
 # aio-commerce-sdk
 
 Provides a collection of packages designed for use with Adobe App Builder in conjunction with Adobe Commerce.
