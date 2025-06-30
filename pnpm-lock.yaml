@@ -67,6 +67,9 @@ importers:
       '@aio-commerce-sdk/config-typescript':
         specifier: workspace:*
         version: link:../../configs/typescript
+      '@types/node':
+        specifier: ^24.0.4
+        version: 24.0.4
       tsdown:
         specifier: ^0.12.9
         version: 0.12.9(typescript@5.8.3)
