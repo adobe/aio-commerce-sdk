@@ -11,9 +11,15 @@ importers:
       '@biomejs/biome':
         specifier: 2.0.5
         version: 2.0.5
+      '@types/node':
+        specifier: ^24.0.4
+        version: 24.0.4
       husky:
         specifier: ^9.1.7
         version: 9.1.7
+      tsdown:
+        specifier: ^0.12.9
+        version: 0.12.9(typescript@5.8.3)
       turbo:
         specifier: ^2.5.4
         version: 2.5.4
@@ -23,6 +29,12 @@ importers:
       ultracite:
         specifier: 5.0.25
         version: 5.0.25(@types/node@24.0.4)
+
+  configs/tsdown:
+    devDependencies:
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../typescript
 
   configs/typescript:
     devDependencies:
@@ -45,15 +57,12 @@ importers:
         specifier: ^2.2.6
         version: 2.2.6
     devDependencies:
+      '@aio-commerce-sdk/config-tsdown':
+        specifier: workspace:*
+        version: link:../../configs/tsdown
       '@aio-commerce-sdk/config-typescript':
         specifier: workspace:*
         version: link:../../configs/typescript
-      '@types/node':
-        specifier: ^24.0.4
-        version: 24.0.4
-      tsdown:
-        specifier: ^0.12.9
-        version: 0.12.9(typescript@5.8.3)
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.0.4)(jiti@2.4.2)
@@ -64,15 +73,12 @@ importers:
         specifier: workspace:*
         version: link:../aio-commerce-lib-auth
     devDependencies:
+      '@aio-commerce-sdk/config-tsdown':
+        specifier: workspace:*
+        version: link:../../configs/tsdown
       '@aio-commerce-sdk/config-typescript':
         specifier: workspace:*
         version: link:../../configs/typescript
-      '@types/node':
-        specifier: ^24.0.4
-        version: 24.0.4
-      tsdown:
-        specifier: ^0.12.9
-        version: 0.12.9(typescript@5.8.3)
 
 packages:
 

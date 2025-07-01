@@ -1,0 +1,10 @@
+{
+  "name": "@aio-commerce-sdk/config-tsdown",
+  "description": "TSDown configuration for the AIO Commerce SDK",
+  "version": "1.0.0",
+  "private": true,
+
+  "devDependencies": {
+    "@aio-commerce-sdk/config-typescript": "workspace:*"
+  }
+}

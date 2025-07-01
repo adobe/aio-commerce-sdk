@@ -2,7 +2,6 @@
   "name": "@adobe/aio-commerce-sdk",
   "version": "1.0.0",
   "private": true,
-
   "scripts": {
     "prepare": "husky",
     "turbo": "turbo",
@@ -16,15 +15,15 @@
     "pkg:lib-auth": "turbo --filter=@adobe/aio-commerce-lib-auth",
     "pkg:sdk": "turbo --filter=@adobe/aio-commerce-sdk"
   },
-
   "devDependencies": {
     "@biomejs/biome": "2.0.5",
+    "@types/node": "^24.0.4",
     "husky": "^9.1.7",
+    "tsdown": "^0.12.9",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3",
     "ultracite": "5.0.25"
   },
-
   "packageManager": "pnpm@10.4.1",
   "lint-staged": {
     "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
