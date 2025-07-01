@@ -87,7 +87,7 @@ describe('getIntegrationAuthProvider', () => {
     const incompleteParams = {
       ...params,
       [param]: undefined,
-    };
+    } as Record<string, string>;
 
     expect(() => {
       getIntegrationAuthProvider(incompleteParams)

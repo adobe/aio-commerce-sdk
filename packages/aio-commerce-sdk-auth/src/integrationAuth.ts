@@ -12,7 +12,7 @@ governing permissions and limitations under the License.
 import crypto from 'crypto';
 import OAuth1a from 'oauth-1.0a';
 import * as v from 'valibot';
-import { prettyPrintIssues } from './utils';
+import { prettyPrint } from './utils';
 
 /**
  * The HTTP methods supported by Commerce.
@@ -26,27 +26,41 @@ export type HttpMethodInput = v.InferInput<typeof HttpMethodSchema>;
 const BaseUrlSchema = v.pipe(
   v.string(),
   v.nonEmpty('Missing commerce endpoint'),
-  v.url('The url is badly formatted.'),
-  v.title('Username'),
-  v.description(
-    'A username must be between 4 and 16 characters long and can only contain letters, numbers, underscores and hyphens.'
-  )
+  v.url('The url is badly formatted.')
 );
 
 const UrlSchema = v.union([BaseUrlSchema, v.instance(URL)])
 export type UriInput = v.InferInput<typeof UrlSchema>;
 
-export const IntegrationAuthParamsSchema = v.object({
-  'AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY': v.string(),
-  'AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET': v.string(),
-  'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN': v.string(),
-  'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET': v.string(),
-});
+const IntegrationAuthParamKeys = [
+  'AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY',
+  'AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET',
+  'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN',
+  'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET'
+];
+
+export const IntegrationAuthParamsSchema = v.pipe(
+  v.nonOptional(
+    v.object(
+      v.entriesFromList(IntegrationAuthParamKeys, v.string())
+    )
+  ),
+  v.metadata({
+    secrets: IntegrationAuthParamKeys
+  })
+);
 
 export type IntegrationAuthParamsInput = v.InferInput<typeof IntegrationAuthParamsSchema>;
 
 export type IntegrationAuthHeader = 'Authorization';
 export type IntegrationAuthHeaders = Record<IntegrationAuthHeader, string>;
+
+export interface IntegrationConfig {
+  consumerKey: string,
+  consumerSecret: string,
+  accessToken: string,
+  accessTokenSecret: string
+}
 
 export interface IntegrationAuthProvider {
   getHeaders: (method: HttpMethodInput, url: UriInput) => IntegrationAuthHeaders;
@@ -58,7 +72,14 @@ export interface IntegrationAuthProvider {
  * @returns {IntegrationAuthProvider} returns the integration auth provider
  */
 export function getIntegrationAuthProvider(params: IntegrationAuthParamsInput): IntegrationAuthProvider | undefined {
-  const config = resolveIntegrationConfig(params);
+  const validation = v.safeParse(IntegrationAuthParamsSchema, params);
+
+  if (!validation.success) {
+    console.error(prettyPrint('Failed to validate the provided integration parameters', validation));
+    throw new Error('Failed to validate the provided integration parameters. See the console for more details.');
+  }
+
+  const config = resolveIntegrationConfig(validation.output);
   if (config) {
     const oauth = new OAuth1a({
       consumer: {
@@ -78,8 +99,7 @@ export function getIntegrationAuthProvider(params: IntegrationAuthParamsInput): 
       getHeaders(method: HttpMethodInput, url: UriInput) {
         const validation = v.safeParse(UrlSchema, url);
         if (!validation.success) {
-          const issues = prettyPrintIssues(validation.issues);
-          console.error(`Failed to validate the provided commerce URL: \n ${issues}`)
+          console.error(prettyPrint('Failed to validate the provided commerce URL', validation));
           throw new Error('Failed to validate the provided commerce URL. See the console for more details.');
         }
 
@@ -96,21 +116,11 @@ export function getIntegrationAuthProvider(params: IntegrationAuthParamsInput): 
   }
 }
 
-function resolveIntegrationConfig(params: IntegrationAuthParamsInput) {
-  const validationResult = v.safeParse(IntegrationAuthParamsSchema, params);
-
-  if (!validationResult.success) {
-    const issues = prettyPrintIssues(validationResult.issues);
-    console.error(`Failed to validate the provided integration parameters: \n ${issues}`);
-    throw new Error('Failed to validate the provided integration parameters. See the console for more details.');
-  }
-
-  const finalParams = validationResult.output;
-
+function resolveIntegrationConfig(params: IntegrationAuthParamsInput): IntegrationConfig {
   return {
-    consumerKey: finalParams.AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY,
-    consumerSecret: finalParams.AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET,
-    accessToken: finalParams.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN,
-    accessTokenSecret: finalParams.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET,
+    consumerKey: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY,
+    consumerSecret: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET,
+    accessToken: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN,
+    accessTokenSecret: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET,
   };
 }

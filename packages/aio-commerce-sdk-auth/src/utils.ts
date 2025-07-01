@@ -1,5 +1,5 @@
-import { whiteBright, cyanBright } from 'ansis';
-import { BaseIssue, getDotPath } from 'valibot';
+import { whiteBright, cyanBright, dim } from 'ansis';
+import * as v from 'valibot';
 
 const LAST_RETURN_CHAR = '└── ';
 const RETURN_CHAR = '├── ';
@@ -12,20 +12,30 @@ const mapToText = {
   transformation: 'Transformation error',
 }
 
-export function composeIssue<TInput>(issue: BaseIssue<TInput>): string {
+export function composeIssue<TInput>(issue: v.BaseIssue<TInput>): string {
   const kindText = whiteBright(mapToText[issue.kind as IssueKind] || 'Unmapped issue kind');
 
-  const dotPath = getDotPath(issue);
-  const path = dotPath ? cyanBright(dotPath) + whiteBright(' →') : '';
+  const dotPath = v.getDotPath(issue);
+  const path = dotPath ? cyanBright(dotPath) + whiteBright(dim(' →')) : '';
   return `${kindText}: ${path} ${whiteBright(issue.message)}`;
 }
 
-export function prettyPrintIssues<TInput>(issues: BaseIssue<TInput>[]): string {
+export function prettyPrintIssues<TInput>(issues: v.BaseIssue<TInput>[]): string {
   const total = issues.length;
   return "\n" + issues
-    .map((issue: BaseIssue<TInput>, index: number) => {
+    .map((issue: v.BaseIssue<TInput>, index: number) => {
       const returnChar = cyanBright(index + 1 === total ? LAST_RETURN_CHAR : RETURN_CHAR);
       return `${returnChar} ${composeIssue(issue)}`;
     })
     .join('\n');
+}
+
+export function prettyPrint<TInput>(
+  message: string,
+  result: v.SafeParseResult<v.BaseSchemaAsync<TInput, TInput, v.BaseIssue<TInput>>>,
+): string {
+  return `${whiteBright(message)}:
+${JSON.stringify(result.output, null, 2)}
+${prettyPrintIssues(result.issues as v.BaseIssue<TInput>[])}
+   `;
 }
