@@ -1,0 +1,62 @@
+{
+  "name": "@adobe/aio-commerce-lib-auth",
+  "version": "1.0.0",
+  "author": "Adobe Inc.",
+  "type": "module",
+
+  "license": "Apache-2.0",
+  "description": "Authentication utilities for Adobe Commerce apps deployed in Adobe App Builder.",
+  "keywords": [
+    "aio",
+    "adobe-io",
+    "commerce",
+    "adobe-commerce",
+    "adobe-ims"
+  ],
+
+  "bugs": {
+    "url": "https://github.com/adobe/aio-commerce-sdk/issues"
+  },
+
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adobe/aio-commerce-sdk.git",
+    "directory": "packages/aio-commerce-lib-auth"
+  },
+
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/es/index.mjs",
+  "types": "./dist/es/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/es/index.mjs",
+      "require": "./dist/cjs/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+
+  "scripts": {
+    "build": "tsdown",
+    "format": "pnpm -w format .",
+    "format:check": "pnpm -w format:check .",
+    "lint": "pnpm -w lint .",
+    "lint:fix": "pnpm -w lint:fix .",
+    "check-types": "tsc --noEmit && echo '✅ No type errors found.'",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+
+  "dependencies": {
+    "@adobe/aio-lib-ims": "^8.1.0",
+    "oauth-1.0a": "^2.2.6"
+  },
+
+  "devDependencies": {
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "@types/node": "^24.0.4",
+    "tsdown": "^0.12.9",
+    "vitest": "^3.2.4"
+  },
+
+  "sideEffects": false
+}

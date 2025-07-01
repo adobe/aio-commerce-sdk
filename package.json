@@ -15,19 +15,34 @@
     "adobe-commerce"
   ],
 
+  "bugs": {
+    "url": "https://github.com/adobe/aio-commerce-sdk/issues"
+  },
+
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adobe/aio-commerce-sdk.git"
+  },
+
   "scripts": {
-    "turbo": "turbo",
     "prepare": "husky",
+    "turbo": "turbo",
     "format": "biome format --write --no-errors-on-unmatched",
     "format:check": "biome check --linter-enabled=false --no-errors-on-unmatched",
     "lint": "biome check --formatter-enabled=false --no-errors-on-unmatched",
-    "lint:fix": "biome lint --write --no-errors-on-unmatched"
+    "lint:fix": "biome lint --write --no-errors-on-unmatched",
+    "test": "turbo test",
+    "build": "turbo build",
+    "postinstall": "turbo build",
+    "check-types": "turbo check-types",
+    "pkg:lib-auth": "turbo --filter=@adobe/aio-commerce-lib-auth"
   },
 
   "devDependencies": {
     "@biomejs/biome": "2.0.5",
     "husky": "^9.1.7",
     "turbo": "^2.5.4",
+    "typescript": "^5.8.3",
     "ultracite": "5.0.25"
   },
 
@@ -36,7 +51,6 @@
     "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
       "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --error-on-warnings"
     ],
-
     "*": [
       "biome check --no-errors-on-unmatched --files-ignore-unknown=true --error-on-warnings"
     ]

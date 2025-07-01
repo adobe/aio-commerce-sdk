@@ -7,7 +7,6 @@
   "devDependencies": {
     "@tsconfig/node-lts": "^22.0.2",
     "@tsconfig/node-ts": "^23.6.1",
-    "@tsconfig/recommended": "^1.0.10",
-    "typescript": "^5.8.3"
+    "@tsconfig/recommended": "^1.0.10"
   }
 }
