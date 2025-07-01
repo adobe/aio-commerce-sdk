@@ -1,0 +1,21 @@
+{
+  "name": "@aio-commerce-sdk/tools",
+  "description": "Tools to streamline operations within the AIO Commerce SDK monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "create-package": "tsx ./lib/create-package.ts --tsconfig tsconfig.json"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "find-up": "^7.0.0",
+    "mustache": "^4.2.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@aio-commerce-sdk/config-tsdown": "workspace:*",
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "@types/mustache": "^4.2.6",
+    "tsx": "^4.20.3"
+  }
+}

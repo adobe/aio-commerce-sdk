@@ -13,7 +13,8 @@
     "build": "turbo build",
     "check-types": "turbo check-types",
     "pkg:lib-auth": "turbo --filter=@adobe/aio-commerce-lib-auth",
-    "pkg:sdk": "turbo --filter=@adobe/aio-commerce-sdk"
+    "pkg:sdk": "turbo --filter=@adobe/aio-commerce-sdk",
+    "pkg:tools": "pnpm --filter=@aio-commerce-sdk/tools"
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.5",

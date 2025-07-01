@@ -1,0 +1,14 @@
+{
+  "extends": "@aio-commerce-sdk/config-typescript/tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./lib/*"],
+      "~~/*": ["./*"]
+    }
+  },
+
+  "include": ["./lib/**/*"],
+  "exclude": ["node_modules", "dist", "templates"]
+}
