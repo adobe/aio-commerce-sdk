@@ -10,7 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { getIntegrationAuthProvider, IntegrationAuthParams } from './integrationAuth';
+import { getIntegrationAuthProvider, HttpMethodInput, IntegrationAuthParams } from './integrationAuth';
 
 describe('getIntegrationAuthProvider', () => {
   const params: IntegrationAuthParams = {
@@ -19,6 +19,51 @@ describe('getIntegrationAuthProvider', () => {
     AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN: 'test-access-token',
     AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET: 'test-access-token-secret',
   };
+
+  test.each([
+    ['localhost'],
+    ['http:://'],
+    ['https://'],
+    ['//example.com'],
+    ['http://user@:80'],
+  ])('should throw an Error on invalid [%s] URL', (url) => {
+    const integrationProvider = getIntegrationAuthProvider(params);
+    expect(integrationProvider).toBeDefined();
+
+    expect(() => {
+      integrationProvider!.getHeaders('GET', url);
+    }).toThrowError('Failed to validate the provided commerce URL. See the console for more details.');
+  });
+
+  test.each([
+    ['GET'],
+    ['POST'],
+    ['PUT'],
+    ['PATCH'],
+    ['DELETE'],
+    ['GET'],
+  ])('should not throw error on valid [%s] HttpMethodInput', (httpMethod) => {
+    const integrationProvider = getIntegrationAuthProvider(params);
+    expect(integrationProvider).toBeDefined();
+
+    expect(() => {
+      integrationProvider!.getHeaders((httpMethod as HttpMethodInput), 'http://localhost');
+    }).not.toThrowError();
+  });
+
+  test.each([
+    ['http://localhost'],
+    ['https://example.com/api'],
+    [new URL('http://localhost')],
+  ])('should not throw error on valid [%s] URL', (url) => {
+    const integrationProvider = getIntegrationAuthProvider(params);
+    expect(integrationProvider).toBeDefined();
+
+    expect(() => {
+      integrationProvider!.getHeaders('GET', url);
+    }).not.toThrowError();
+  });
+
 
   test('should export getIntegrationAccessToken', () => {
     const integrationProvider = getIntegrationAuthProvider(params);

@@ -16,7 +16,9 @@
   "types": "./dist-types/index.d.ts",
   "dependencies": {
     "@adobe/aio-lib-ims": "^8.1.0",
-    "oauth-1.0a": "^2.2.6"
+    "ansis": "^4.1.0",
+    "oauth-1.0a": "^2.2.6",
+    "valibot": "^1.1.0"
   },
   "scripts": {
     "build": "concurrently 'npm:build:cjs' 'npm:build:es' 'npm:build:types'",
