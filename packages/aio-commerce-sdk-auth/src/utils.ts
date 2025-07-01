@@ -1,5 +1,5 @@
-import ansis, { whiteBright, cyanBright } from 'ansis';
-import { BaseIssue } from 'valibot';
+import { whiteBright, cyanBright } from 'ansis';
+import { BaseIssue, getDotPath } from 'valibot';
 
 const LAST_RETURN_CHAR = '└── ';
 const RETURN_CHAR = '├── ';
@@ -15,30 +15,14 @@ const mapToText = {
 export function composeIssue<TInput>(issue: BaseIssue<TInput>): string {
   const kindText = whiteBright(mapToText[issue.kind as IssueKind] || 'Unmapped issue kind');
 
-  let received = '';
-
-  if (issue.expected) {
-    received = `Received: ${whiteBright(issue.received)} but expected: ${whiteBright(issue.expected)}`;
-  } else {
-    received = `Received: ${whiteBright(issue.received)}`;
-  }
-
-  let result = `${kindText} ${issue.path?.join('.')} - ${whiteBright(issue.message)}
-      | ${received}
-   `;
-
-
-  if (issue.issues) {
-    result += `\n${prettyPrintIssues(issue.issues)}`;
-  }
-
-  return result;
+  const dotPath = getDotPath(issue);
+  const path = dotPath ? cyanBright(dotPath) + whiteBright(' →') : '';
+  return `${kindText}: ${path} ${whiteBright(issue.message)}`;
 }
 
 export function prettyPrintIssues<TInput>(issues: BaseIssue<TInput>[]): string {
-  console.log(issues);
   const total = issues.length;
-  return issues
+  return "\n" + issues
     .map((issue: BaseIssue<TInput>, index: number) => {
       const returnChar = cyanBright(index + 1 === total ? LAST_RETURN_CHAR : RETURN_CHAR);
       return `${returnChar} ${composeIssue(issue)}`;

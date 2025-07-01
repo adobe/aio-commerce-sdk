@@ -10,10 +10,10 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { getIntegrationAuthProvider, HttpMethodInput, IntegrationAuthParams } from './integrationAuth';
+import { getIntegrationAuthProvider, HttpMethodInput, IntegrationAuthParamsInput } from './integrationAuth';
 
 describe('getIntegrationAuthProvider', () => {
-  const params: IntegrationAuthParams = {
+  const params: IntegrationAuthParamsInput = {
     AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY: 'test-consumer-key',
     AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET: 'test-consumer-secret',
     AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN: 'test-access-token',
@@ -78,21 +78,25 @@ describe('getIntegrationAuthProvider', () => {
     );
   });
 
-  [
-    'AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY',
-    'AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET',
-    'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN',
-    'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET',
-  ].forEach((param) => {
-    test(`should return undefined when ${param} is missing`, () => {
-      const incompleteParams = {
-        ...params,
-        [param]: undefined,
-      };
+  test.each([
+    ['AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY'],
+    ['AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET'],
+    ['AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN'],
+    ['AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET'],
+  ])(`should return undefined when %s is missing`, (param) => {
+    const incompleteParams = {
+      ...params,
+      [param]: undefined,
+    };
 
-      const integrationProvider = getIntegrationAuthProvider(incompleteParams);
+    expect(() => {
+      getIntegrationAuthProvider(incompleteParams)
+    }).toThrowError('Failed to validate the provided integration parameters. See the console for more details.');
+  });
 
-      expect(integrationProvider).toBeUndefined();
-    });
+  test('should return undefined when no params are provided', () => {
+    expect(() => {
+      getIntegrationAuthProvider({} as IntegrationAuthParamsInput);
+    }).toThrowError('Failed to validate the provided integration parameters. See the console for more details.');
   });
 });

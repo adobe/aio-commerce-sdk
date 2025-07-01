@@ -11,17 +11,8 @@ governing permissions and limitations under the License.
 */
 import crypto from 'crypto';
 import OAuth1a from 'oauth-1.0a';
-import { allNonEmpty } from './params';
 import * as v from 'valibot';
 import { prettyPrintIssues } from './utils';
-
-export type IntegrationAuthParam =
-  | 'AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY'
-  | 'AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET'
-  | 'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN'
-  | 'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET';
-
-export type IntegrationAuthParams = Partial<Record<IntegrationAuthParam, string>>;
 
 /**
  * The HTTP methods supported by Commerce.
@@ -45,6 +36,15 @@ const BaseUrlSchema = v.pipe(
 const UrlSchema = v.union([BaseUrlSchema, v.instance(URL)])
 export type UriInput = v.InferInput<typeof UrlSchema>;
 
+export const IntegrationAuthParamsSchema = v.object({
+  'AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY': v.string(),
+  'AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET': v.string(),
+  'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN': v.string(),
+  'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET': v.string(),
+});
+
+export type IntegrationAuthParamsInput = v.InferInput<typeof IntegrationAuthParamsSchema>;
+
 export type IntegrationAuthHeader = 'Authorization';
 export type IntegrationAuthHeaders = Record<IntegrationAuthHeader, string>;
 
@@ -54,24 +54,24 @@ export interface IntegrationAuthProvider {
 
 /**
  * If the required integration parameters are present, this function returns an IntegrationAuthProvider.
- * @param {IntegrationAuthParams} params includes integration parameters
+ * @param {IntegrationAuthParamsInput} params includes integration parameters
  * @returns {IntegrationAuthProvider} returns the integration auth provider
  */
-export function getIntegrationAuthProvider(params: IntegrationAuthParams): IntegrationAuthProvider | undefined {
+export function getIntegrationAuthProvider(params: IntegrationAuthParamsInput): IntegrationAuthProvider | undefined {
   const config = resolveIntegrationConfig(params);
   if (config) {
     const oauth = new OAuth1a({
       consumer: {
-        key: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY!,
-        secret: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET!,
+        key: config.consumerKey,
+        secret: config.consumerSecret,
       },
       signature_method: 'HMAC-SHA256',
       hash_function: (baseString, key) => crypto.createHmac('sha256', key).update(baseString).digest('base64'),
     });
 
     const oauthToken = {
-      key: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN!,
-      secret: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET!,
+      key: config.accessToken,
+      secret: config.accessTokenSecret,
     };
 
     return {
@@ -96,20 +96,21 @@ export function getIntegrationAuthProvider(params: IntegrationAuthParams): Integ
   }
 }
 
-function resolveIntegrationConfig(params: IntegrationAuthParams) {
-  if (
-    allNonEmpty(params, [
-      'AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY',
-      'AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET',
-      'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN',
-      'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET',
-    ])
-  ) {
-    return {
-      consumerKey: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY,
-      consumerSecret: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET,
-      accessToken: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN,
-      accessTokenSecret: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET,
-    };
+function resolveIntegrationConfig(params: IntegrationAuthParamsInput) {
+  const validationResult = v.safeParse(IntegrationAuthParamsSchema, params);
+
+  if (!validationResult.success) {
+    const issues = prettyPrintIssues(validationResult.issues);
+    console.error(`Failed to validate the provided integration parameters: \n ${issues}`);
+    throw new Error('Failed to validate the provided integration parameters. See the console for more details.');
   }
+
+  const finalParams = validationResult.output;
+
+  return {
+    consumerKey: finalParams.AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY,
+    consumerSecret: finalParams.AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET,
+    accessToken: finalParams.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN,
+    accessTokenSecret: finalParams.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET,
+  };
 }
