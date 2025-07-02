@@ -50,7 +50,7 @@ const createStringArraySchema = (
 
       try {
         JSON.parse(dataset.value as string);
-      } catch (e) {
+      } catch (_e) {
         jsonParseFails = true;
       }
 
