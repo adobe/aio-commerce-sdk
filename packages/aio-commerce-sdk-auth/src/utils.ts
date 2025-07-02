@@ -1,5 +1,6 @@
 import { whiteBright, cyanBright, dim } from 'ansis';
 import * as v from 'valibot';
+import * as console from 'node:console';
 
 const LAST_RETURN_CHAR = '└── ';
 const RETURN_CHAR = '├── ';
@@ -34,7 +35,6 @@ export function prettyPrint<TInput>(
   message: string,
   result: v.SafeParseResult<v.BaseSchemaAsync<TInput, TInput, v.BaseIssue<TInput>>>,
 ): string {
-
   return `${whiteBright(message)}:
 ${JSON.stringify(result.output, null, 2)}
 ${prettyPrintIssues(result.issues as v.BaseIssue<TInput>[])}

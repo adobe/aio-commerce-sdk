@@ -10,7 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { getImsAuthProvider, ImsAuthParams } from './imsAuth';
+import { getImsAuthProvider, ImsAuthEnv, ImsAuthParamsSchemaInput } from './imsAuth';
 import { getToken } from '@adobe/aio-lib-ims';
 
 jest.mock('@adobe/aio-lib-ims', () => ({
@@ -19,13 +19,15 @@ jest.mock('@adobe/aio-lib-ims', () => ({
 }));
 
 describe('getImsAuthProvider', () => {
-  const params: ImsAuthParams = {
+  const params: ImsAuthParamsSchemaInput = {
     AIO_COMMERCE_IMS_CLIENT_ID: 'test-client-id',
     AIO_COMMERCE_IMS_CLIENT_SECRETS: JSON.stringify(['supersecret']),
     AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: 'test-technical-account-id',
     AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: 'test-email@example.com',
     AIO_COMMERCE_IMS_IMS_ORG_ID: 'test-org-id',
     AIO_COMMERCE_IMS_SCOPES: JSON.stringify(['scope1', 'scope2']),
+    AIO_COMMERCE_IMS_ENV: ImsAuthEnv.STAGE,
+    AIO_COMMERCE_IMS_CTX: 'foo',
   };
 
   test('should export token when all required params are provided', async () => {
@@ -44,23 +46,33 @@ describe('getImsAuthProvider', () => {
     expect(headers).toHaveProperty('x-api-key', params.AIO_COMMERCE_IMS_CLIENT_ID);
   });
 
-  [
-    'AIO_COMMERCE_IMS_CLIENT_ID',
-    'AIO_COMMERCE_IMS_CLIENT_SECRETS',
-    'AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID',
-    'AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL',
-    'AIO_COMMERCE_IMS_IMS_ORG_ID',
-    'AIO_COMMERCE_IMS_SCOPES',
-  ].forEach((param) => {
-    test(`should return undefined when ${param} is missing`, async () => {
+  test.each([
+    ['AIO_COMMERCE_IMS_CLIENT_ID'],
+    ['AIO_COMMERCE_IMS_CLIENT_SECRETS'],
+    ['AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID'],
+    ['AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL'],
+    ['AIO_COMMERCE_IMS_IMS_ORG_ID'],
+    ['AIO_COMMERCE_IMS_SCOPES'],
+  ])(`should throw an Error when %s is missing`, async (param) => {
       const incompleteParams = {
         ...params,
         [param]: undefined,
       };
 
-      const imsProvider = await getImsAuthProvider(incompleteParams);
-
-      expect(imsProvider).toBeUndefined();
+      await expect(getImsAuthProvider(incompleteParams))
+        .rejects
+        .toThrow('Failed to validate the provided IMS parameters. See the console for more details.');
     });
+
+  test('should throw an Error when scopes does not begin or end with "[" "]"', async () => {
+
+    const incompleteParams = {
+      ...params,
+      AIO_COMMERCE_IMS_SCOPES: 'scope1, scope2', // Invalid JSON format
+    };
+
+    await expect(getImsAuthProvider(incompleteParams))
+      .rejects
+      .toThrow('Failed to validate the provided IMS parameters. See the console for more details.');
   });
 });

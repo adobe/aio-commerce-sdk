@@ -10,19 +10,76 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 import { context, getToken } from '@adobe/aio-lib-ims';
-import { allNonEmpty } from './params';
+import * as v from 'valibot';
+import { prettyPrint } from './utils';
+import * as console from 'node:console';
 
-export type ImsAuthParam =
-  | 'AIO_COMMERCE_IMS_CLIENT_ID'
-  | 'AIO_COMMERCE_IMS_CLIENT_SECRETS'
-  | 'AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID'
-  | 'AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL'
-  | 'AIO_COMMERCE_IMS_IMS_ORG_ID'
-  | 'AIO_COMMERCE_IMS_SCOPES'
-  | 'AIO_COMMERCE_IMS_ENV'
-  | 'AIO_COMMERCE_IMS_CTX';
+export enum ImsAuthEnv {
+  PROD = 'prod',
+  STAGE = 'stage',
+}
 
-export type ImsAuthParams = Partial<Record<ImsAuthParam, string>>;
+export interface ImsAuthConfig {
+  client_id: string,
+  client_secrets: string[],
+  technical_account_id: string,
+  technical_account_email: string,
+  ims_org_id: string,
+  scopes: string[],
+  environment: ImsAuthEnv,
+}
+
+const nonEmptyString = (message: string) => v.pipe(
+  v.string(),
+  v.nonEmpty(message)
+)
+
+export const ImsAuthParamsSchema =
+  v.message(
+    v.object({
+      AIO_COMMERCE_IMS_CLIENT_ID: v.nonOptional(nonEmptyString('Missing or invalid AIO_COMMERCE_IMS_CLIENT_ID')),
+      AIO_COMMERCE_IMS_CLIENT_SECRETS: v.pipe(
+        v.string(),
+        v.nonEmpty('Missing or invalid AIO_COMMERCE_IMS_CLIENT_SECRETS'),
+        v.startsWith('['),
+        v.endsWith(']'),
+        v.transform(JSON.parse)
+      ),
+      AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: nonEmptyString('Missing or invalid AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID'),
+      AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: nonEmptyString('Missing or invalid AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL'),
+      AIO_COMMERCE_IMS_IMS_ORG_ID: nonEmptyString('Missing or invalid AIO_COMMERCE_IMS_IMS_ORG_ID'),
+      AIO_COMMERCE_IMS_ENV: v.pipe(
+        v.string(),
+        v.transform((value) => {
+          if (value === 'stage') {
+            return ImsAuthEnv.STAGE;
+          }
+
+          return ImsAuthEnv.PROD; // Default to PROD if not specified
+        })
+      ),
+      AIO_COMMERCE_IMS_SCOPES: v.pipe(
+        v.string(),
+        v.nonEmpty('Missing or invalid AIO_COMMERCE_IMS_CLIENT_SECRETS'),
+        v.startsWith('['),
+        v.endsWith('['),
+        v.transform(JSON.parse)
+      ),
+      AIO_COMMERCE_IMS_CTX: v.pipe(
+        v.string(),
+        v.nonEmpty('Missing or invalid AIO_COMMERCE_IMS_CTX'),
+        v.transform((value) => value || 'aio-commerce-sdk-creds')
+      ),
+    }),
+    (issue) => {
+      if (issue.type === 'ends_with' || issue.type === 'starts_with') {
+        return issue.message;
+      }
+      return `Missing or invalid ims auth parameter ${issue.expected}`;
+    });
+
+export type ImsAuthParamsSchemaInput = v.InferInput<typeof ImsAuthParamsSchema>;
+
 export type ImsAccessToken = string;
 
 export type ImsAuthHeader = 'Authorization' | 'x-api-key';
@@ -35,13 +92,21 @@ export interface ImsAuthProvider {
 
 /**
  * If the required IMS parameters are present, this function returns an ImsAuthProvider.
- * @param {ImsAuthParams} params includes IMS parameters
+ * @param {ImsAuthParamsSchemaInput} params includes IMS parameters
  * @returns {ImsAuthProvider} returns the IMS auth provider
  */
-export async function getImsAuthProvider(params: ImsAuthParams): Promise<ImsAuthProvider | undefined> {
-  const config = resolveImsConfig(params);
+export async function getImsAuthProvider(params: ImsAuthParamsSchemaInput): Promise<ImsAuthProvider | undefined> {
+  const validation = v.safeParse(ImsAuthParamsSchema, params);
+
+  if (!validation.success) {
+    console.error(prettyPrint('Failed to validate the provided IMS parameters', validation));
+    throw new Error(
+      'Failed to validate the provided IMS parameters. See the console for more details.');
+  }
+  const config = resolveImsConfig(validation.output);
+
   if (config) {
-    const contextName = params.AIO_COMMERCE_IMS_CTX ?? 'aio-commerce-sdk-creds';
+    const contextName = params.AIO_COMMERCE_IMS_CTX;
     await context.set(contextName, config);
 
     return {
@@ -54,25 +119,14 @@ export async function getImsAuthProvider(params: ImsAuthParams): Promise<ImsAuth
   }
 }
 
-function resolveImsConfig(params: ImsAuthParams) {
-  if (
-    allNonEmpty(params, [
-      'AIO_COMMERCE_IMS_CLIENT_ID',
-      'AIO_COMMERCE_IMS_CLIENT_SECRETS',
-      'AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID',
-      'AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL',
-      'AIO_COMMERCE_IMS_IMS_ORG_ID',
-      'AIO_COMMERCE_IMS_SCOPES',
-    ])
-  ) {
-    return {
-      client_id: params.AIO_COMMERCE_IMS_CLIENT_ID!,
-      client_secrets: JSON.parse(params.AIO_COMMERCE_IMS_CLIENT_SECRETS ?? '[]') as string[],
-      technical_account_id: params.AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID!,
-      technical_account_email: params.AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL!,
-      ims_org_id: params.AIO_COMMERCE_IMS_IMS_ORG_ID!,
-      scopes: JSON.parse(params.AIO_COMMERCE_IMS_SCOPES ?? '[]') as string[],
-      environment: params.AIO_COMMERCE_IMS_ENV ?? 'prod',
-    };
-  }
+function resolveImsConfig(params: v.InferOutput<typeof ImsAuthParamsSchema>): ImsAuthConfig {
+  return {
+    client_id: params.AIO_COMMERCE_IMS_CLIENT_ID!,
+    client_secrets: params.AIO_COMMERCE_IMS_CLIENT_SECRETS,
+    technical_account_id: params.AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID!,
+    technical_account_email: params.AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL!,
+    ims_org_id: params.AIO_COMMERCE_IMS_IMS_ORG_ID!,
+    scopes: params.AIO_COMMERCE_IMS_SCOPES,
+    environment: params.AIO_COMMERCE_IMS_ENV,
+  };
 }

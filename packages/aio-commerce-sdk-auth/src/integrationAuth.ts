@@ -42,10 +42,10 @@ const IntegrationAuthParamKeys = [
 export const IntegrationAuthParamsSchema = v.nonOptional(
   v.message(
     v.object(
-      v.entriesFromList(IntegrationAuthParamKeys, v.pipe(v.string(), v.nonEmpty('Missing integration parameter'))),
+      v.entriesFromList(IntegrationAuthParamKeys, v.pipe(v.string(), v.nonEmpty('Missing commerce integration parameter'))),
     ),
     (issue) => {
-      return `Missing or invalid integration parameter ${issue.expected}`;
+      return `Missing or invalid commerce integration parameter ${issue.expected}`;
     })
 )
 

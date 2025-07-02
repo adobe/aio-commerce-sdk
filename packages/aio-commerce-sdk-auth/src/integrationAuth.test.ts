@@ -97,6 +97,6 @@ describe('getIntegrationAuthProvider', () => {
   test('should return undefined when no params are provided', () => {
     expect(() => {
       getIntegrationAuthProvider({} as IntegrationAuthParamsInput);
-    }).toThrowError('Failed to validate the provided integration parameters. See the console for more details.');
+    }).toThrow('Failed to validate the provided integration parameters. See the console for more details.');
   });
 });
