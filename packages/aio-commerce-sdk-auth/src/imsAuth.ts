@@ -34,17 +34,41 @@ const nonEmptyString = (message: string) => v.pipe(
   v.nonEmpty(message)
 )
 
+const createStringArraySchema = (
+  message?: string
+) => {
+  return v.pipe(
+    v.string(),
+    v.nonEmpty(`Missing or invalid`),
+    v.rawCheck(({ dataset, addIssue}) => {
+
+      if (!dataset.value || typeof dataset.value !== 'string' || (dataset.value as string).trim() === '') {
+        return;
+      }
+
+      let jsonParseFails = false;
+
+      try {
+        JSON.parse(dataset.value as string);
+      } catch (e) {
+        jsonParseFails = true;
+      }
+
+      if (!(dataset.value as string).startsWith('[') || !(dataset.value as string).endsWith(']') || jsonParseFails) {
+        addIssue({
+          message: message ?? `invalid JSON array, expected ["value1", "value2"]`,
+        });
+      }
+    }),
+    v.transform(JSON.parse)
+  );
+}
+
 export const ImsAuthParamsSchema =
   v.message(
     v.object({
       AIO_COMMERCE_IMS_CLIENT_ID: v.nonOptional(nonEmptyString('Missing or invalid AIO_COMMERCE_IMS_CLIENT_ID')),
-      AIO_COMMERCE_IMS_CLIENT_SECRETS: v.pipe(
-        v.string(),
-        v.nonEmpty('Missing or invalid AIO_COMMERCE_IMS_CLIENT_SECRETS'),
-        v.startsWith('['),
-        v.endsWith(']'),
-        v.transform(JSON.parse)
-      ),
+      AIO_COMMERCE_IMS_CLIENT_SECRETS: createStringArraySchema(),
       AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: nonEmptyString('Missing or invalid AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID'),
       AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: nonEmptyString('Missing or invalid AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL'),
       AIO_COMMERCE_IMS_IMS_ORG_ID: nonEmptyString('Missing or invalid AIO_COMMERCE_IMS_IMS_ORG_ID'),
@@ -58,13 +82,7 @@ export const ImsAuthParamsSchema =
           return ImsAuthEnv.PROD; // Default to PROD if not specified
         })
       ),
-      AIO_COMMERCE_IMS_SCOPES: v.pipe(
-        v.string(),
-        v.nonEmpty('Missing or invalid AIO_COMMERCE_IMS_CLIENT_SECRETS'),
-        v.startsWith('['),
-        v.endsWith('['),
-        v.transform(JSON.parse)
-      ),
+      AIO_COMMERCE_IMS_SCOPES: createStringArraySchema(),
       AIO_COMMERCE_IMS_CTX: v.pipe(
         v.string(),
         v.nonEmpty('Missing or invalid AIO_COMMERCE_IMS_CTX'),
@@ -72,9 +90,6 @@ export const ImsAuthParamsSchema =
       ),
     }),
     (issue) => {
-      if (issue.type === 'ends_with' || issue.type === 'starts_with') {
-        return issue.message;
-      }
       return `Missing or invalid ims auth parameter ${issue.expected}`;
     });
 

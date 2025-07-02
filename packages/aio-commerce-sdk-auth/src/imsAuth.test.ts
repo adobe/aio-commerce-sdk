@@ -64,11 +64,17 @@ describe('getImsAuthProvider', () => {
         .toThrow('Failed to validate the provided IMS parameters. See the console for more details.');
     });
 
-  test('should throw an Error when scopes does not begin or end with "[" "]"', async () => {
-
+  test.each([
+    ['[test, foo]', 'AIO_COMMERCE_IMS_SCOPES'],
+    ['[{test: "foo"}]', 'AIO_COMMERCE_IMS_SCOPES'],
+    ['["test"', 'AIO_COMMERCE_IMS_SCOPES'],
+    ['[test, foo]', 'AIO_COMMERCE_IMS_CLIENT_SECRETS'],
+    ['[{test: "foo"}]', 'AIO_COMMERCE_IMS_CLIENT_SECRETS'],
+    ['["test"', 'AIO_COMMERCE_IMS_CLIENT_SECRETS'],
+  ])(`should throw an Error when given %s as %s input"`, async (param, key) => {
     const incompleteParams = {
       ...params,
-      AIO_COMMERCE_IMS_SCOPES: 'scope1, scope2', // Invalid JSON format
+      [key]: param, // Invalid JSON format
     };
 
     await expect(getImsAuthProvider(incompleteParams))
