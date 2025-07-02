@@ -1,6 +1,5 @@
-import { whiteBright, cyanBright, dim } from 'ansis';
+import { yellowBright, whiteBright, cyanBright, dim } from 'ansis';
 import * as v from 'valibot';
-import * as console from 'node:console';
 
 const LAST_RETURN_CHAR = '└── ';
 const RETURN_CHAR = '├── ';
@@ -13,30 +12,30 @@ const mapToText = {
   transformation: 'Transformation error',
 }
 
-function composeIssue<TInput>(issue: v.BaseIssue<TInput>): string {
-  const kindText = whiteBright(mapToText[issue.kind as IssueKind] || 'Unmapped issue kind');
-
-  const dotPath = v.getDotPath(issue);
-  const path = dotPath ? cyanBright(dotPath) + whiteBright(dim(' →')) : '';
-  return `${kindText}: ${path} ${whiteBright(issue.message)}`;
-}
-
-function prettyPrintIssues<TInput>(issues: v.BaseIssue<TInput>[]): string {
+function issueToDisplay<TInput>(issues: v.BaseIssue<TInput>[]): string {
   const total = issues.length;
-  return "\n" + issues
-    .map((issue: v.BaseIssue<TInput>, index: number) => {
-      const returnChar = cyanBright(index + 1 === total ? LAST_RETURN_CHAR : RETURN_CHAR);
-      return `${returnChar} ${composeIssue(issue)}`;
-    })
-    .join('\n');
+  const lines: string[] = [];
+  let index = 0;
+  for (const issue of issues) {
+    index++;
+    const returnChar = cyanBright(index === total ? LAST_RETURN_CHAR : RETURN_CHAR);
+
+    // Inline composeIssue logic
+    const kindText = yellowBright(mapToText[issue.kind as IssueKind] || 'Unmapped issue kind');
+    const dotPath = v.getDotPath(issue);
+    const path = dotPath ? cyanBright(dotPath) + whiteBright(dim(' →')) : '';
+    const issueLine = `${kindText} ${whiteBright('at')} ${path} ${whiteBright(issue.message)}`;
+
+    lines.push(`${returnChar} ${issueLine}`);
+  }
+  return lines.join('\n');
 }
 
-export function prettyPrint<TInput>(
+export function summarize<TInput>(
   message: string,
   result: v.SafeParseResult<v.BaseSchemaAsync<TInput, TInput, v.BaseIssue<TInput>>>,
 ): string {
   return `${whiteBright(message)}:
-${JSON.stringify(result.output, null, 2)}
-${prettyPrintIssues(result.issues as v.BaseIssue<TInput>[])}
+${issueToDisplay(result.issues as v.BaseIssue<TInput>[])}
    `;
 }

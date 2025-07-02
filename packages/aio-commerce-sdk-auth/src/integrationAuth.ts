@@ -12,7 +12,7 @@ governing permissions and limitations under the License.
 import crypto from 'crypto';
 import OAuth1a from 'oauth-1.0a';
 import * as v from 'valibot';
-import { prettyPrint } from './utils';
+import { summarize } from './utils';
 
 /**
  * The HTTP methods supported by Commerce.
@@ -75,7 +75,7 @@ export function getIntegrationAuthProvider(params: IntegrationAuthParamsInput): 
 
   if (!validation.success) {
     console.error(
-      prettyPrint(
+      summarize(
         'Failed to validate the provided integration parameters', validation));
     throw new Error(
       'Failed to validate the provided integration parameters. See the console for more details.');
@@ -101,7 +101,7 @@ export function getIntegrationAuthProvider(params: IntegrationAuthParamsInput): 
       getHeaders(method: HttpMethodInput, url: UriInput) {
         const validation = v.safeParse(UrlSchema, url);
         if (!validation.success) {
-          console.error(prettyPrint('Failed to validate the provided commerce URL', validation));
+          console.error(summarize('Failed to validate the provided commerce URL', validation));
           throw new Error('Failed to validate the provided commerce URL. See the console for more details.');
         }
 

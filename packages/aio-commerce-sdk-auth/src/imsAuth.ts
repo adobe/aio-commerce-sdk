@@ -11,7 +11,7 @@ governing permissions and limitations under the License.
 */
 import { context, getToken } from '@adobe/aio-lib-ims';
 import * as v from 'valibot';
-import { prettyPrint } from './utils';
+import { summarize } from './utils';
 import * as console from 'node:console';
 
 export enum ImsAuthEnv {
@@ -99,7 +99,7 @@ export async function getImsAuthProvider(params: ImsAuthParamsSchemaInput): Prom
   const validation = v.safeParse(ImsAuthParamsSchema, params);
 
   if (!validation.success) {
-    console.error(prettyPrint('Failed to validate the provided IMS parameters', validation));
+    console.error(summarize('Failed to validate the provided IMS parameters', validation));
     throw new Error(
       'Failed to validate the provided IMS parameters. See the console for more details.');
   }
