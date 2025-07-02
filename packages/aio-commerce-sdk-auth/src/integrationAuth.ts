@@ -39,20 +39,15 @@ const IntegrationAuthParamKeys = [
   'AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET'
 ];
 
-export const IntegrationAuthParamsSchema = v.pipe(
-  v.nonOptional(
-    v.message(
+export const IntegrationAuthParamsSchema = v.nonOptional(
+  v.message(
     v.object(
       v.entriesFromList(IntegrationAuthParamKeys, v.pipe(v.string(), v.nonEmpty('Missing integration parameter'))),
     ),
-      (issue) => {
-        return `Missing or invalid integration parameter ${issue.expected}`;
-      })
-  ),
-  v.metadata({
-    secrets: IntegrationAuthParamKeys
-  })
-);
+    (issue) => {
+      return `Missing or invalid integration parameter ${issue.expected}`;
+    })
+)
 
 export type IntegrationAuthParamsInput = v.InferInput<typeof IntegrationAuthParamsSchema>;
 
