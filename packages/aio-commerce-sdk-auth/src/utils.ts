@@ -12,20 +12,6 @@ const mapToText = {
   transformation: 'Transformation error',
 }
 
-function maskSecrets(obj: unknown, maskKeys: string[]): unknown {
-  if (Array.isArray(obj)) {
-    return obj.map(item => maskSecrets(item, maskKeys));
-  } else if (obj && typeof obj === 'object') {
-    return Object.fromEntries(
-      Object.entries(obj).map(([key, value]) => [
-        key,
-        maskKeys.includes(key) ? '***' : maskSecrets(value, maskKeys),
-      ])
-    );
-  }
-  return obj;
-}
-
 function composeIssue<TInput>(issue: v.BaseIssue<TInput>): string {
   const kindText = whiteBright(mapToText[issue.kind as IssueKind] || 'Unmapped issue kind');
 
@@ -47,12 +33,10 @@ function prettyPrintIssues<TInput>(issues: v.BaseIssue<TInput>[]): string {
 export function prettyPrint<TInput>(
   message: string,
   result: v.SafeParseResult<v.BaseSchemaAsync<TInput, TInput, v.BaseIssue<TInput>>>,
-  maskKeys: string[] = []
 ): string {
-  const maskedOutput = maskSecrets(result.output, maskKeys);
 
   return `${whiteBright(message)}:
-${JSON.stringify(maskedOutput, null, 2)}
+${JSON.stringify(result.output, null, 2)}
 ${prettyPrintIssues(result.issues as v.BaseIssue<TInput>[])}
    `;
 }

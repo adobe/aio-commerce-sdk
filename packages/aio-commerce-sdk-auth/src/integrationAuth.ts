@@ -41,9 +41,13 @@ const IntegrationAuthParamKeys = [
 
 export const IntegrationAuthParamsSchema = v.pipe(
   v.nonOptional(
+    v.message(
     v.object(
-      v.entriesFromList(IntegrationAuthParamKeys, v.string())
-    )
+      v.entriesFromList(IntegrationAuthParamKeys, v.pipe(v.string(), v.nonEmpty('Missing integration parameter'))),
+    ),
+      (issue) => {
+        return `Missing or invalid integration parameter ${issue.expected}`;
+      })
   ),
   v.metadata({
     secrets: IntegrationAuthParamKeys
@@ -75,8 +79,11 @@ export function getIntegrationAuthProvider(params: IntegrationAuthParamsInput): 
   const validation = v.safeParse(IntegrationAuthParamsSchema, params);
 
   if (!validation.success) {
-    console.error(prettyPrint('Failed to validate the provided integration parameters', validation));
-    throw new Error('Failed to validate the provided integration parameters. See the console for more details.');
+    console.error(
+      prettyPrint(
+        'Failed to validate the provided integration parameters', validation));
+    throw new Error(
+      'Failed to validate the provided integration parameters. See the console for more details.');
   }
 
   const config = resolveIntegrationConfig(validation.output);
