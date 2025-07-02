@@ -12,7 +12,6 @@ governing permissions and limitations under the License.
 import { context, getToken } from '@adobe/aio-lib-ims';
 import * as v from 'valibot';
 import { summarize } from './utils';
-import * as console from 'node:console';
 
 export enum ImsAuthEnv {
   PROD = 'prod',
