@@ -84,14 +84,12 @@ describe('getIntegrationAuthProvider', () => {
     ['AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN'],
     ['AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET'],
   ])(`should return undefined when %s is missing`, (param) => {
-    const incompleteParams = {
-      ...params,
-      [param]: undefined,
-    } as Record<string, string>;
-
     expect(() => {
-      getIntegrationAuthProvider(incompleteParams)
-    }).toThrowError('Failed to validate the provided integration parameters. See the console for more details.');
+      getIntegrationAuthProvider({
+        ...params,
+        [param]: undefined,
+      } as IntegrationAuthParamsInput)
+    }).toThrow('Failed to validate the provided integration parameters. See the console for more details.');
   });
 
   test('should return undefined when no params are provided', () => {

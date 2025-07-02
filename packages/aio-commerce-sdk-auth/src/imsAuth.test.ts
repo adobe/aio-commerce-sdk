@@ -31,6 +31,12 @@ describe('getImsAuthProvider', () => {
   };
 
   test('should export token when all required params are provided', async () => {
+    await expect(getImsAuthProvider({} as ImsAuthParamsSchemaInput)).rejects.toThrow(
+      'Failed to validate the provided IMS parameters. See the console for more details.'
+    );
+  });
+
+  test('should throw an error when invalid params are provided', async () => {
     const authToken = 'supersecrettoken';
 
     jest.mocked(getToken).mockResolvedValue(authToken);
@@ -54,12 +60,10 @@ describe('getImsAuthProvider', () => {
     ['AIO_COMMERCE_IMS_IMS_ORG_ID'],
     ['AIO_COMMERCE_IMS_SCOPES'],
   ])(`should throw an Error when %s is missing`, async (param) => {
-      const incompleteParams = {
+      await expect(getImsAuthProvider({
         ...params,
         [param]: undefined,
-      };
-
-      await expect(getImsAuthProvider(incompleteParams))
+      }))
         .rejects
         .toThrow('Failed to validate the provided IMS parameters. See the console for more details.');
     });
@@ -72,12 +76,10 @@ describe('getImsAuthProvider', () => {
     ['[{test: "foo"}]', 'AIO_COMMERCE_IMS_CLIENT_SECRETS'],
     ['["test"', 'AIO_COMMERCE_IMS_CLIENT_SECRETS'],
   ])(`should throw an Error when given %s as %s input"`, async (param, key) => {
-    const incompleteParams = {
+    await expect(getImsAuthProvider({
       ...params,
-      [key]: param, // Invalid JSON format
-    };
-
-    await expect(getImsAuthProvider(incompleteParams))
+      [key]: param,
+    }))
       .rejects
       .toThrow('Failed to validate the provided IMS parameters. See the console for more details.');
   });
