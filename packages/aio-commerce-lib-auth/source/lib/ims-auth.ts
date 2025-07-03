@@ -27,7 +27,8 @@ import {
   array as vArray,
   message as vMessage,
 } from "valibot";
-import { ValidationError } from "./utils";
+import { Result } from "~/lib/result";
+import type { ValidationErrorType } from "./utils";
 
 const ImsAuthEnv = {
   PROD: "prod",
@@ -120,6 +121,11 @@ export interface ImsAuthProvider {
   getAccessToken: () => Promise<ImsAccessToken>;
 }
 
+export type ImsAuthProviderResult = Result<
+  ImsAuthProvider,
+  ValidationErrorType<unknown>
+>;
+
 /**
  * If the required IMS parameters are present, this function returns an ImsAuthProvider.
  * @param {ImsAuthParamsInput} params includes IMS parameters
@@ -127,31 +133,30 @@ export interface ImsAuthProvider {
  */
 export async function getImsAuthProvider(
   params: ImsAuthParamsInput,
-): Promise<ImsAuthProvider | undefined> {
+): Promise<ImsAuthProviderResult> {
   const validation = safeParse(ImsAuthParamsSchema, params);
 
   if (!validation.success) {
-    throw new ValidationError(
-      "Failed to validate the provided IMS parameters. See the console for more details.",
-      validation.issues,
-    );
+    return Result.fail({
+      _tag: "ValidationError",
+      message:
+        "Failed to validate the provided IMS parameters. See the console for more details.",
+      issues: validation.issues,
+    });
   }
+
   const config = resolveImsConfig(validation.output);
-
-  if (config) {
-    await context.set(config.context, config);
-
-    return {
-      getAccessToken: async () => getToken(config.context, {}),
-      getHeaders: async () => {
-        const accessToken = await getToken(config.context, {});
-        return {
-          Authorization: `Bearer ${accessToken}`,
-          "x-api-key": config.client_id,
-        };
-      },
-    };
-  }
+  await context.set(config.context, config);
+  return Result.success({
+    getAccessToken: async () => getToken(config.context, {}),
+    getHeaders: async () => {
+      const accessToken = await getToken(config.context, {});
+      return {
+        Authorization: `Bearer ${accessToken}`,
+        "x-api-key": config.client_id,
+      };
+    },
+  });
 }
 
 function resolveImsConfig(

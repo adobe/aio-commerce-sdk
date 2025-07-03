@@ -12,7 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 import {
-  getIntegrationAuthProvider,
+  getIntegrationAuthProviderWithParams,
   type IntegrationAuthParamsInput,
 } from "~/lib/integration-auth";
 
@@ -20,7 +20,7 @@ import {
 const OAUTH1_REGEX =
   /^OAuth oauth_consumer_key="[^"]+", oauth_nonce="[^"]+", oauth_signature="[^"]+", oauth_signature_method="HMAC-SHA256", oauth_timestamp="[^"]+", oauth_token="[^"]+", oauth_version="1\.0"$/;
 
-describe("getIntegrationAuthProvider", () => {
+describe("getIntegrationAuthProviderWithParams", () => {
   const params: IntegrationAuthParamsInput = {
     AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY: "test-consumer-key",
     AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET: "test-consumer-secret",
@@ -29,13 +29,10 @@ describe("getIntegrationAuthProvider", () => {
   };
 
   test("should export getIntegrationAccessToken", () => {
-    const integrationProvider = getIntegrationAuthProvider(params);
-    expect(integrationProvider).toBeDefined();
+    const result = getIntegrationAuthProviderWithParams(params);
 
-    const headers = integrationProvider?.getHeaders(
-      "GET",
-      "http://localhost/test",
-    );
+    expect(result.isSuccess()).toBeTruthy();
+    const headers = result.data.getHeaders("GET", "http://localhost/test");
     expect(headers).toHaveProperty(
       "Authorization",
       expect.stringMatching(OAUTH1_REGEX),
@@ -48,12 +45,14 @@ describe("getIntegrationAuthProvider", () => {
     "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN",
     "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET",
   ])("should throw error when %s is missing", (param) => {
-    expect(() =>
-      getIntegrationAuthProvider({
-        ...params,
-        [param]: undefined,
-      } as IntegrationAuthParamsInput),
-    ).toThrow(
+    const result = getIntegrationAuthProviderWithParams({
+      ...params,
+      [param]: undefined,
+    } as IntegrationAuthParamsInput);
+
+    expect(() => result.data).toThrow("Cannot get data from a Failure");
+    expect(result.error._tag).toEqual("ValidationError");
+    expect(result.error.message).toEqual(
       "Failed to validate the provided integration parameters. See the console for more details.",
     );
   });
@@ -65,11 +64,12 @@ describe("getIntegrationAuthProvider", () => {
     ["//example.com"],
     ["http://user@:80"],
   ])("should throw an Error on invalid [%s] URL", (url) => {
-    const integrationProvider = getIntegrationAuthProvider(params);
-    expect(integrationProvider).toBeDefined();
+    const result = getIntegrationAuthProviderWithParams(params);
+    expect(result.isSuccess()).toBeTruthy();
+    expect(result.data).toBeDefined();
 
     expect(() => {
-      integrationProvider?.getHeaders("GET", url);
+      result.data.getHeaders("GET", url);
     }).toThrow(
       "Failed to validate the provided commerce URL. See the console for more details.",
     );

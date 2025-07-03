@@ -12,9 +12,9 @@
 
 import crypto from "node:crypto";
 import OAuth1a from "oauth-1.0a";
-import type { InferInput } from "valibot";
 import {
   entriesFromList,
+  type InferInput,
   instance,
   nonEmpty,
   nonOptional,
@@ -22,12 +22,14 @@ import {
   picklist,
   pipe,
   safeParse,
+  safeParser,
   string,
   union,
   message as vMessage,
   url as vUrl,
 } from "valibot";
-import { ValidationError } from "./utils";
+import { Result } from "~/lib/result";
+import { ValidationError, type ValidationErrorType } from "./utils";
 
 /**
  * The HTTP methods supported by Commerce.
@@ -68,6 +70,10 @@ export const IntegrationAuthParamsSchema = nonOptional(
   ),
 );
 
+export const integrationAuthParamsParser = safeParser(
+  IntegrationAuthParamsSchema,
+);
+
 export type IntegrationAuthParamsInput = InferInput<
   typeof IntegrationAuthParamsSchema
 >;
@@ -89,66 +95,82 @@ export interface IntegrationAuthProvider {
   ) => IntegrationAuthHeaders;
 }
 
+export type IntegrationAuthProviderResult = Result<
+  IntegrationAuthProvider,
+  ValidationErrorType<unknown>
+>;
+
+/**
+ * If the required integration parameters are present, this function returns an IntegrationAuthProvider.
+ * @param {IntegrationConfig} config includes integration parameters
+ * @returns {IntegrationAuthProviderResult} Result<IntegrationAuthProvider, ValidationError>
+ */
+export function getIntegrationAuthProviderWithConfig(
+  config: IntegrationConfig,
+): IntegrationAuthProviderResult {
+  const oauth = new OAuth1a({
+    consumer: {
+      key: config.consumerKey,
+      secret: config.consumerSecret,
+    },
+    signature_method: "HMAC-SHA256",
+    hash_function: (baseString, key) =>
+      crypto.createHmac("sha256", key).update(baseString).digest("base64"),
+  });
+
+  const oauthToken = {
+    key: config.accessToken,
+    secret: config.accessTokenSecret,
+  };
+
+  return Result.success({
+    getHeaders(method, url) {
+      const validationHeaders = safeParse(UrlSchema, url);
+      if (!validationHeaders.success) {
+        throw new ValidationError(
+          "Failed to validate the provided commerce URL. See the console for more details.",
+          validationHeaders.issues,
+        );
+      }
+
+      let finalUrl: string;
+      if (url instanceof URL) {
+        finalUrl = url.toString();
+      } else {
+        finalUrl = url;
+      }
+
+      return oauth.toHeader(
+        oauth.authorize({ url: finalUrl, method }, oauthToken),
+      );
+    },
+  });
+}
+
 /**
  * If the required integration parameters are present, this function returns an IntegrationAuthProvider.
  * @param {IntegrationAuthParamsInput} params includes integration parameters
- * @returns {IntegrationAuthProvider} returns the integration auth provider
+ * @returns {IntegrationAuthProviderResult} Result<IntegrationAuthProvider, ValidationError>
  */
-export function getIntegrationAuthProvider(
+export function getIntegrationAuthProviderWithParams(
   params: IntegrationAuthParamsInput,
-): IntegrationAuthProvider | undefined {
+): IntegrationAuthProviderResult {
   const validation = safeParse(IntegrationAuthParamsSchema, params);
 
   if (!validation.success) {
-    throw new ValidationError(
-      "Failed to validate the provided integration parameters. See the console for more details.",
-      validation.issues,
-    );
+    return Result.fail({
+      _tag: "ValidationError",
+      message:
+        "Failed to validate the provided integration parameters. See the console for more details.",
+      issues: validation.issues,
+    });
   }
 
   const config = resolveIntegrationConfig(validation.output);
-  if (config) {
-    const oauth = new OAuth1a({
-      consumer: {
-        key: config.consumerKey,
-        secret: config.consumerSecret,
-      },
-      signature_method: "HMAC-SHA256",
-      hash_function: (baseString, key) =>
-        crypto.createHmac("sha256", key).update(baseString).digest("base64"),
-    });
-
-    const oauthToken = {
-      key: config.accessToken,
-      secret: config.accessTokenSecret,
-    };
-
-    return {
-      getHeaders(method: HttpMethodInput, url: UriInput) {
-        const validationHeaders = safeParse(UrlSchema, url);
-        if (!validationHeaders.success) {
-          throw new ValidationError(
-            "Failed to validate the provided commerce URL. See the console for more details.",
-            validationHeaders.issues,
-          );
-        }
-
-        let finalUrl: string;
-        if (url instanceof URL) {
-          finalUrl = url.toString();
-        } else {
-          finalUrl = url;
-        }
-
-        return oauth.toHeader(
-          oauth.authorize({ url: finalUrl, method }, oauthToken),
-        );
-      },
-    };
-  }
+  return getIntegrationAuthProviderWithConfig(config);
 }
 
-function resolveIntegrationConfig(
+export function resolveIntegrationConfig(
   params: IntegrationAuthParamsInput,
 ): IntegrationConfig {
   return {

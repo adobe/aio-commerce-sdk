@@ -18,6 +18,7 @@ import type {
   InferIssue,
 } from "valibot";
 import { getDotPath } from "valibot";
+import type { ErrorType } from "~/lib/result";
 
 const LAST_RETURN_CHAR = "└── ";
 const RETURN_CHAR = "├── ";
@@ -98,3 +99,9 @@ export class ValidationError<
     return summarize(this);
   }
 }
+
+export type ValidationErrorType<TIssue> = ErrorType & {
+  _tag: "ValidationError";
+  message: string;
+  issues: [BaseIssue<TIssue>, ...BaseIssue<TIssue>[]];
+};
