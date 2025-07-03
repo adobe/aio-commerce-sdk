@@ -11,7 +11,7 @@ governing permissions and limitations under the License.
 */
 import { context, getToken } from '@adobe/aio-lib-ims';
 import * as v from 'valibot';
-import { summarize } from './utils';
+import { ValidationError } from './utils';
 
 export enum ImsAuthEnv {
   PROD = 'prod',
@@ -113,9 +113,8 @@ export async function getImsAuthProvider(params: ImsAuthParamsSchemaInput): Prom
   const validation = v.safeParse(ImsAuthParamsSchema, params);
 
   if (!validation.success) {
-    console.error(summarize('Failed to validate the provided IMS parameters', validation));
-    throw new Error(
-      'Failed to validate the provided IMS parameters. See the console for more details.');
+    throw new ValidationError(
+      'Failed to validate the provided IMS parameters. See the console for more details.', validation.issues);
   }
   const config = resolveImsConfig(validation.output);
 

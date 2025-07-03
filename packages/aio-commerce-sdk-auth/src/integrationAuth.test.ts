@@ -32,7 +32,7 @@ describe('getIntegrationAuthProvider', () => {
 
     expect(() => {
       integrationProvider!.getHeaders('GET', url);
-    }).toThrowError('Failed to validate the provided commerce URL. See the console for more details.');
+    }).toThrow('Failed to validate the provided commerce URL. See the console for more details.');
   });
 
   test.each([
@@ -48,7 +48,7 @@ describe('getIntegrationAuthProvider', () => {
 
     expect(() => {
       integrationProvider!.getHeaders((httpMethod as HttpMethodInput), 'http://localhost');
-    }).not.toThrowError();
+    }).not.toThrow();
   });
 
   test.each([
@@ -61,7 +61,7 @@ describe('getIntegrationAuthProvider', () => {
 
     expect(() => {
       integrationProvider!.getHeaders('GET', url);
-    }).not.toThrowError();
+    }).not.toThrow();
   });
 
 

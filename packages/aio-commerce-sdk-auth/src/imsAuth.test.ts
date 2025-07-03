@@ -10,7 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { getImsAuthProvider, ImsAuthEnv, ImsAuthParamsSchemaInput } from './imsAuth';
+import { getImsAuthProvider, ImsAuthParamsSchemaInput } from './imsAuth';
 import { getToken } from '@adobe/aio-lib-ims';
 
 jest.mock('@adobe/aio-lib-ims', () => ({
@@ -26,7 +26,7 @@ describe('getImsAuthProvider', () => {
     AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: 'test-email@example.com',
     AIO_COMMERCE_IMS_IMS_ORG_ID: 'test-org-id',
     AIO_COMMERCE_IMS_SCOPES: JSON.stringify(['scope1', 'scope2']),
-    AIO_COMMERCE_IMS_ENV: ImsAuthEnv.STAGE,
+    AIO_COMMERCE_IMS_ENV: "stage",
     AIO_COMMERCE_IMS_CTX: 'foo',
   };
 

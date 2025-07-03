@@ -12,6 +12,12 @@ governing permissions and limitations under the License.
 
 import { yellowBright, whiteBright, cyanBright, dim } from 'ansis';
 import * as v from 'valibot';
+import type {
+  BaseIssue,
+  BaseSchema,
+  BaseSchemaAsync,
+  InferIssue,
+} from 'valibot';
 
 const LAST_RETURN_CHAR = '└── ';
 const RETURN_CHAR = '├── ';
@@ -43,11 +49,41 @@ function issueToDisplay<TInput>(issues: v.BaseIssue<TInput>[]): string {
   return lines.join('\n');
 }
 
-export function summarize<TInput>(
-  message: string,
-  result: v.SafeParseResult<v.BaseSchemaAsync<TInput, TInput, v.BaseIssue<TInput>>>,
+/**
+ * Summarizes the validation result by formatting the issues into a readable string.
+ * @param error
+ */
+export function summarize<TSchema extends
+    | BaseSchema<unknown, unknown, BaseIssue<unknown>>
+  | BaseSchemaAsync<unknown, unknown, BaseIssue<unknown>>,>(
+  error: ValidationError<TSchema>,
 ): string {
-  return `${whiteBright(message)}:
-${issueToDisplay(result.issues as v.BaseIssue<TInput>[])}
-   `;
+  return `${whiteBright(error.message)}\n${issueToDisplay(error.issues)}`;
+}
+
+/**
+ * A Validation error with useful information.
+ */
+export class ValidationError<
+  TSchema extends
+      | BaseSchema<unknown, unknown, BaseIssue<unknown>>
+    | BaseSchemaAsync<unknown, unknown, BaseIssue<unknown>>,
+> extends Error {
+  /**
+   * The error issues.
+   */
+  public readonly issues: [InferIssue<TSchema>, ...InferIssue<TSchema>[]];
+
+  /**
+   * Creates a Valibot error with useful information.
+   *
+   * @param message
+   * @param issues The error issues.
+   */
+  // @__NO_SIDE_EFFECTS__
+  constructor(message: string, issues: [InferIssue<TSchema>, ...InferIssue<TSchema>[]]) {
+    super(message);
+    this.name = 'ValidationError';
+    this.issues = issues;
+  }
 }

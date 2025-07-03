@@ -10,7 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { summarize } from './utils';
+import { summarize, ValidationError } from './utils';
 import  * as v from 'valibot';
 
 describe('summarize', () => {
@@ -29,7 +29,9 @@ describe('summarize', () => {
       nestedKey: 'nestedKey',
         }}};
     const result = v.safeParse(SimpleObjectSchema, test);
-    const output = summarize("Validation error", result);
+    const output = summarize(
+      new ValidationError(
+        "Validation error", result.issues as [v.BaseIssue<unknown>, ...v.BaseIssue<unknown>[]]));
     expect(output).toContain('key1');
     expect(output).toContain('key2');
     expect(output).toContain('key3.nestedKey.nestedKey');
