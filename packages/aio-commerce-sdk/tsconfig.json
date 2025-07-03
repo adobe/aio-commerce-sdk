@@ -6,5 +6,5 @@
     "outDir": "./dist"
   },
 
-  "include": ["source/**/*", "tsdown.config.ts"]
+  "include": ["tsdown.config.ts", "source/**/*"]
 }
