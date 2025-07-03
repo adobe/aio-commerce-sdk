@@ -18,6 +18,7 @@ import {
   nonOptional,
   object,
   optional,
+  parseJson,
   pipe,
   rawCheck,
   safeParse,
@@ -59,29 +60,16 @@ const createStringArraySchema = (message?: string) => {
       ) {
         return;
       }
-
-      let jsonParseFails = false;
-
       try {
         JSON.parse(dataset.value as string);
       } catch (_e) {
-        jsonParseFails = true;
-      }
-
-      if (
-        !(
-          (dataset.value as string).startsWith("[") &&
-          (dataset.value as string).endsWith("]")
-        ) ||
-        jsonParseFails
-      ) {
         addIssue({
           message:
             message ?? `invalid JSON array, expected ["value1", "value2"]`,
         });
       }
     }),
-    transform(JSON.parse),
+    parseJson(),
   );
 };
 
