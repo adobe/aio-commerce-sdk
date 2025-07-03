@@ -3,9 +3,12 @@
 
   "access": "public",
   "baseBranch": "main",
-  "changelog": "@changesets/cli/changelog",
-  "commit": false,
+  "changelog": [
+    "@changesets/changelog-github",
+    { "repo": "adobe/aio-commerce-sdk" }
+  ],
 
+  "commit": false,
   "fixed": [["@adobe/aio-commerce-*"]],
   "ignore": [],
   "linked": [],

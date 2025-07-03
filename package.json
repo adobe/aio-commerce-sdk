@@ -36,5 +36,8 @@
     "*": [
       "biome check --no-errors-on-unmatched --files-ignore-unknown=true --error-on-warnings"
     ]
+  },
+  "dependencies": {
+    "@changesets/changelog-github": "^0.5.1"
   }
 }
