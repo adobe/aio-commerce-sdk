@@ -6,8 +6,11 @@
 'pkg: aio-commerce-lib-auth':
   - packages/aio-commerce-lib-auth/**
 
-'generator':
+'generator:':
   - turbo/generators/**
 
-'config':
-  - configs/**
+'cfg: typescript':
+  - configs/typescript/**
+
+'cfg: tsdown':
+  - configs/tsdown/**
