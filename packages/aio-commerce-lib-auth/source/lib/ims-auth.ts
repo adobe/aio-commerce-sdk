@@ -24,6 +24,7 @@ import {
   safeParse,
   string,
   transform,
+  array as vArray,
   message as vMessage,
 } from "valibot";
 import { ValidationError } from "./utils";
@@ -70,6 +71,7 @@ const createStringArraySchema = (message?: string) => {
       }
     }),
     parseJson(),
+    vArray(string()),
   );
 };
 
