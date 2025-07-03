@@ -121,3 +121,15 @@ out
 
 # intellij
 .idea
+
+# Turbo
+.turbo
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+.cursor/*
+!.cursor/rules
