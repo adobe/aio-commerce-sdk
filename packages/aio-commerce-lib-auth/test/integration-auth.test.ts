@@ -13,7 +13,7 @@
 import { describe, expect, test } from "vitest";
 import {
   getIntegrationAuthProvider,
-  type IntegrationAuthParams,
+  type IntegrationAuthParamsInput,
 } from "~/lib/integration-auth";
 
 /** Regex to match the OAuth 1.0a header format. */
@@ -21,7 +21,7 @@ const OAUTH1_REGEX =
   /^OAuth oauth_consumer_key="[^"]+", oauth_nonce="[^"]+", oauth_signature="[^"]+", oauth_signature_method="HMAC-SHA256", oauth_timestamp="[^"]+", oauth_token="[^"]+", oauth_version="1\.0"$/;
 
 describe("getIntegrationAuthProvider", () => {
-  const params: IntegrationAuthParams = {
+  const params: IntegrationAuthParamsInput = {
     AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY: "test-consumer-key",
     AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET: "test-consumer-secret",
     AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN: "test-access-token",
@@ -42,20 +42,36 @@ describe("getIntegrationAuthProvider", () => {
     );
   });
 
-  for (const param of [
+  test.each([
     "AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY",
     "AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET",
     "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN",
     "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET",
-  ]) {
-    test(`should return undefined when ${param} is missing`, () => {
-      const incompleteParams = {
+  ])("should throw error when %s is missing", (param) => {
+    expect(() =>
+      getIntegrationAuthProvider({
         ...params,
         [param]: undefined,
-      };
+      } as IntegrationAuthParamsInput),
+    ).toThrow(
+      "Failed to validate the provided integration parameters. See the console for more details.",
+    );
+  });
 
-      const integrationProvider = getIntegrationAuthProvider(incompleteParams);
-      expect(integrationProvider).toBeUndefined();
-    });
-  }
+  test.each([
+    ["localhost"],
+    ["http:://"],
+    ["https://"],
+    ["//example.com"],
+    ["http://user@:80"],
+  ])("should throw an Error on invalid [%s] URL", (url) => {
+    const integrationProvider = getIntegrationAuthProvider(params);
+    expect(integrationProvider).toBeDefined();
+
+    expect(() => {
+      integrationProvider?.getHeaders("GET", url);
+    }).toThrow(
+      "Failed to validate the provided commerce URL. See the console for more details.",
+    );
+  });
 });
