@@ -4,7 +4,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "create-package": "turbo gen create-package"
+    "gen:create-package": "turbo gen create-package",
+    "check:types": "tsc --noEmit && echo '✅ No type errors found.'",
+    "check:format": "pnpm -w check:format .",
+    "format": "pnpm -w format .",
+    "lint": "pnpm -w lint .",
+    "lint:fix": "pnpm -w lint:fix ."
   },
   "dependencies": {
     "@clack/prompts": "^1.0.0-alpha.1",

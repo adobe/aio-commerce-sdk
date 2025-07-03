@@ -1,20 +1,19 @@
 {
   "name": "@adobe/aio-commerce-sdk",
-  "version": "1.0.0",
   "private": true,
   "scripts": {
     "prepare": "husky",
     "turbo": "turbo",
+    "check:format": "biome check --linter-enabled=false --no-errors-on-unmatched",
+    "check:types": "turbo check:types",
     "format": "biome format --write --no-errors-on-unmatched",
-    "format:check": "biome check --linter-enabled=false --no-errors-on-unmatched",
     "lint": "biome check --formatter-enabled=false --no-errors-on-unmatched",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
     "test": "turbo test",
     "build": "turbo build",
-    "check-types": "turbo check-types",
     "pkg:lib-auth": "turbo --filter=@adobe/aio-commerce-lib-auth",
     "pkg:sdk": "turbo --filter=@adobe/aio-commerce-sdk",
-    "pkg:tools": "pnpm --filter=@aio-commerce-sdk/tools"
+    "pkg:generators": "pnpm --filter=@aio-commerce-sdk/generators"
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.5",

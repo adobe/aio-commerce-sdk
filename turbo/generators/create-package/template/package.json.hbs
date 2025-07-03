@@ -25,11 +25,12 @@
 
   "scripts": {
     "build": "tsdown",
+    "check:format": "pnpm -w check:format .",
+    "check:types": "tsc --noEmit && echo '✅ No type errors found.'",
     "format": "pnpm -w format .",
-    "format:check": "pnpm -w format:check .",
     "lint": "pnpm -w lint .",
     "lint:fix": "pnpm -w lint:fix .",
-    "check-types": "tsc --noEmit && echo '✅ No type errors found.'"{{#if willContainTests}},
+    {{#if willContainTests}},
     "test": "vitest",
     "test:watch": "vitest --watch"
     {{/if}}

@@ -58,7 +58,11 @@
 
   "scripts": {
     "build": "tsdown",
-    "check-types": "tsc --noEmit && echo '✅ No type errors found.'"
+    "check:format": "pnpm -w check:format .",
+    "check:types": "tsc --noEmit && echo '✅ No type errors found.'",
+    "format": "pnpm -w format .",
+    "lint": "pnpm -w lint .",
+    "lint:fix": "pnpm -w lint:fix ."
   },
 
   "dependencies": {
