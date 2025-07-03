@@ -19,7 +19,7 @@ import {
   string,
 } from "valibot";
 import { describe, expect, test } from "vitest";
-import { summarize, ValidationError } from "~/lib/utils";
+import { ValidationError } from "~/lib/utils";
 
 describe("utils", () => {
   test("should summarize a list of issues with colors and structure", () => {
@@ -41,12 +41,10 @@ describe("utils", () => {
       },
     };
     const result = safeParse(SimpleObjectSchema, simpleObject);
-    const output = summarize(
-      new ValidationError(
-        "Validation error",
-        result.issues as [BaseIssue<unknown>, ...BaseIssue<unknown>[]],
-      ),
-    );
+    const output = new ValidationError(
+      "Validation error",
+      result.issues as [BaseIssue<unknown>, ...BaseIssue<unknown>[]],
+    ).toString();
     expect(output).toContain("key1");
     expect(output).toContain("key2");
     expect(output).toContain("key3.nestedKey.nestedKey");

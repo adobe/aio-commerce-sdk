@@ -93,4 +93,8 @@ export class ValidationError<
     this.name = "ValidationError";
     this.issues = issues;
   }
+
+  toString(): string {
+    return summarize(this);
+  }
 }
