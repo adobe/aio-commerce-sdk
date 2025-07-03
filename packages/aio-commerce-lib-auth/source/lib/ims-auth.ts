@@ -17,6 +17,7 @@ import {
   nonEmpty,
   nonOptional,
   object,
+  optional,
   pipe,
   rawCheck,
   safeParse,
@@ -41,6 +42,7 @@ export interface ImsAuthConfig {
   ims_org_id: string;
   scopes: string[];
   environment: ImsAuthEnv;
+  context: string;
 }
 
 const nonEmptyString = (message: string) => pipe(string(), nonEmpty(message));
@@ -99,7 +101,7 @@ export const ImsAuthParamsSchema = vMessage(
       "Missing or invalid AIO_COMMERCE_IMS_IMS_ORG_ID",
     ),
     AIO_COMMERCE_IMS_ENV: pipe(
-      string(),
+      optional(string(), ImsAuthEnv.PROD),
       transform((value) => {
         if (value === "stage") {
           return ImsAuthEnv.STAGE;
@@ -109,18 +111,14 @@ export const ImsAuthParamsSchema = vMessage(
       }),
     ),
     AIO_COMMERCE_IMS_SCOPES: createStringArraySchema(),
-    AIO_COMMERCE_IMS_CTX: pipe(
-      string(),
-      nonEmpty("Missing or invalid AIO_COMMERCE_IMS_CTX"),
-      transform((value) => value || "aio-commerce-sdk-creds"),
-    ),
+    AIO_COMMERCE_IMS_CTX: pipe(optional(string(), "aio-commerce-sdk-creds")),
   }),
   (issue) => {
     return `Missing or invalid ims auth parameter ${issue.expected}`;
   },
 );
 
-export type ImsAuthParamsSchemaInput = InferInput<typeof ImsAuthParamsSchema>;
+export type ImsAuthParamsInput = InferInput<typeof ImsAuthParamsSchema>;
 
 export type ImsAccessToken = string;
 
@@ -134,11 +132,11 @@ export interface ImsAuthProvider {
 
 /**
  * If the required IMS parameters are present, this function returns an ImsAuthProvider.
- * @param {ImsAuthParamsSchemaInput} params includes IMS parameters
+ * @param {ImsAuthParamsInput} params includes IMS parameters
  * @returns {ImsAuthProvider} returns the IMS auth provider
  */
 export async function getImsAuthProvider(
-  params: ImsAuthParamsSchemaInput,
+  params: ImsAuthParamsInput,
 ): Promise<ImsAuthProvider | undefined> {
   const validation = safeParse(ImsAuthParamsSchema, params);
 
@@ -151,13 +149,12 @@ export async function getImsAuthProvider(
   const config = resolveImsConfig(validation.output);
 
   if (config) {
-    const contextName = params.AIO_COMMERCE_IMS_CTX;
-    await context.set(contextName, config);
+    await context.set(config.context, config);
 
     return {
-      getAccessToken: async () => getToken(contextName, {}),
+      getAccessToken: async () => getToken(config.context, {}),
       getHeaders: async () => {
-        const accessToken = await getToken(contextName, {});
+        const accessToken = await getToken(config.context, {});
         return {
           Authorization: `Bearer ${accessToken}`,
           "x-api-key": config.client_id,
@@ -178,5 +175,6 @@ function resolveImsConfig(
     ims_org_id: params.AIO_COMMERCE_IMS_IMS_ORG_ID,
     scopes: params.AIO_COMMERCE_IMS_SCOPES,
     environment: params.AIO_COMMERCE_IMS_ENV,
+    context: params.AIO_COMMERCE_IMS_CTX,
   };
 }

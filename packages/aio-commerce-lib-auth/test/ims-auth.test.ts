@@ -13,10 +13,7 @@
 import { getToken } from "@adobe/aio-lib-ims";
 import { describe, expect, test, vi } from "vitest";
 
-import {
-  getImsAuthProvider,
-  type ImsAuthParamsSchemaInput,
-} from "~/lib/ims-auth";
+import { getImsAuthProvider, type ImsAuthParamsInput } from "~/lib/ims-auth";
 
 vi.mock("@adobe/aio-lib-ims", async () => ({
   context: (await vi.importActual("@adobe/aio-lib-ims")).context,
@@ -24,14 +21,14 @@ vi.mock("@adobe/aio-lib-ims", async () => ({
 }));
 
 describe("getImsAuthProvider", () => {
-  const params: ImsAuthParamsSchemaInput = {
+  const params = {
     AIO_COMMERCE_IMS_CLIENT_ID: "test-client-id",
     AIO_COMMERCE_IMS_CLIENT_SECRETS: JSON.stringify(["supersecret"]),
     AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
     AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
     AIO_COMMERCE_IMS_IMS_ORG_ID: "test-org-id",
     AIO_COMMERCE_IMS_SCOPES: JSON.stringify(["scope1", "scope2"]),
-  };
+  } as ImsAuthParamsInput;
 
   test("should export token when all required params are provided", async () => {
     const authToken = "supersecrettoken";
@@ -51,22 +48,47 @@ describe("getImsAuthProvider", () => {
     );
   });
 
-  for (const param of [
+  test("should throw error when provided with no params", async () => {
+    await expect(getImsAuthProvider({} as ImsAuthParamsInput)).rejects.toThrow(
+      "Failed to validate the provided IMS parameters. See the console for more details.",
+    );
+  });
+
+  test.each([
     "AIO_COMMERCE_IMS_CLIENT_ID",
     "AIO_COMMERCE_IMS_CLIENT_SECRETS",
     "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID",
     "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL",
     "AIO_COMMERCE_IMS_IMS_ORG_ID",
     "AIO_COMMERCE_IMS_SCOPES",
-  ]) {
-    test(`should return undefined when ${param} is missing`, async () => {
-      const incompleteParams = {
-        ...params,
-        [param]: undefined,
-      };
+  ])("should throw error when %s is missing", async (param) => {
+    const incompleteParams = {
+      ...params,
+      [param]: undefined,
+    };
 
-      const imsProvider = await getImsAuthProvider(incompleteParams);
-      expect(imsProvider).toBeUndefined();
-    });
-  }
+    await expect(
+      async () => await getImsAuthProvider(incompleteParams),
+    ).rejects.toThrow(
+      "Failed to validate the provided IMS parameters. See the console for more details.",
+    );
+  });
+
+  test.each([
+    ["[test, foo]", "AIO_COMMERCE_IMS_SCOPES"],
+    ['[{test: "foo"}]', "AIO_COMMERCE_IMS_SCOPES"],
+    ['["test"', "AIO_COMMERCE_IMS_SCOPES"],
+    ["[test, foo]", "AIO_COMMERCE_IMS_CLIENT_SECRETS"],
+    ['[{test: "foo"}]', "AIO_COMMERCE_IMS_CLIENT_SECRETS"],
+    ['["test"', "AIO_COMMERCE_IMS_CLIENT_SECRETS"],
+  ])(`should throw error when given %s as %s input"`, async (param, key) => {
+    await expect(
+      getImsAuthProvider({
+        ...params,
+        [key]: param,
+      }),
+    ).rejects.toThrow(
+      "Failed to validate the provided IMS parameters. See the console for more details.",
+    );
+  });
 });

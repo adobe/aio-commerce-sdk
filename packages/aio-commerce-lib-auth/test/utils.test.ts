@@ -21,8 +21,8 @@ import {
 import { describe, expect, test } from "vitest";
 import { summarize, ValidationError } from "~/lib/utils";
 
-describe("summarize", () => {
-  test("should format a list of issues with colors and structure", () => {
+describe("utils", () => {
+  test("should summarize a list of issues with colors and structure", () => {
     const SimpleObjectSchema = object({
       key1: string(),
       key2: number(),
