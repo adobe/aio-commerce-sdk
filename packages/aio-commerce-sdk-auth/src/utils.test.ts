@@ -35,5 +35,6 @@ describe('summarize', () => {
     expect(output).toContain('key1');
     expect(output).toContain('key2');
     expect(output).toContain('key3.nestedKey.nestedKey');
+    console.log(output);
   });
 });
