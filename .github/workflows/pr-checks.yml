@@ -1,0 +1,60 @@
+name: PR/Push Checks
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  check:
+    name: Turbo Check Tasks (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      # We want to run checks on all versions, even if some fail.
+      fail-fast: false
+      matrix:
+        # Previous LTS (Maintenance), Current LTS, Latest stable
+        node-version: ['lts/-1', 'lts/*', 'current']  
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Fetch all history for all branches so --affected can compare properly
+          fetch-depth: 0
+      
+      - name: Fetch target branch for PR
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin ${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+      
+      # pnpm version will be read from packageManager field in package.json
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm ci
+      
+        # See: https://turborepo.com/docs/reference/run#--affected
+      - name: Run Turbo tasks on affected packages
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # For PRs, compare the feature branch against the target branch
+            export TURBO_SCM_BASE=origin/${{ github.base_ref }}
+            export TURBO_SCM_HEAD=${{ github.sha }}
+            echo "Comparing $TURBO_SCM_HEAD against $TURBO_SCM_BASE"
+          else
+            # For pushes to main, compare against the previous commit
+            export TURBO_SCM_BASE=HEAD^1
+            export TURBO_SCM_HEAD=HEAD
+            echo "Comparing against previous commit"
+          fi
+          
+          pnpm turbo run check:format check:types lint test build --affected
