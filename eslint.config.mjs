@@ -10,26 +10,24 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 // @ts-check
-import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
+import eslint from "@eslint/js";
+import tseslint from "typescript-eslint";
 
 export default tseslint.config({
-  ignores: ['**/dist/**', '**/dist-*/**', 'jest.config.js'],
-  extends: [
-    eslint.configs.recommended, tseslint.configs.recommended
-  ],
+  ignores: ["**/dist/**", "**/dist-*/**", "jest.config.js"],
+  extends: [eslint.configs.recommended, tseslint.configs.recommended],
   rules: {
     "@typescript-eslint/no-unused-vars": [
       "error",
       {
-        "args": "all",
-        "argsIgnorePattern": "^_",
-        "caughtErrors": "all",
-        "caughtErrorsIgnorePattern": "^_",
-        "destructuredArrayIgnorePattern": "^_",
-        "varsIgnorePattern": "^_",
-        "ignoreRestSiblings": true
-      }
-    ]
-  }
+        args: "all",
+        argsIgnorePattern: "^_",
+        caughtErrors: "all",
+        caughtErrorsIgnorePattern: "^_",
+        destructuredArrayIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        ignoreRestSiblings: true,
+      },
+    ],
+  },
 });

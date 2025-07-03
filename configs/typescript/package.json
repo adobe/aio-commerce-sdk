@@ -1,0 +1,12 @@
+{
+  "name": "@aio-commerce-sdk/config-typescript",
+  "description": "Typescript configuration for the AIO Commerce SDK",
+  "version": "1.0.0",
+  "private": true,
+
+  "devDependencies": {
+    "@tsconfig/node-lts": "^22.0.2",
+    "@tsconfig/node-ts": "^23.6.1",
+    "@tsconfig/recommended": "^1.0.10"
+  }
+}
