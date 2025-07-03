@@ -1,0 +1,13 @@
+# See https://github.com/actions/labeler
+
+'pkg: aio-commerce-sdk':
+  - packages/aio-commerce-sdk/**
+
+'pkg: aio-commerce-lib-auth':
+  - packages/aio-commerce-lib-auth/**
+
+'generator':
+  - turbo/generators/**
+
+'config':
+  - configs/**

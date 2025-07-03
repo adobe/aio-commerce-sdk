@@ -2,6 +2,7 @@
   "name": "@adobe/aio-commerce-sdk",
   "private": true,
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "prepare": "husky",
     "turbo": "turbo",
     "check:format": "biome check --linter-enabled=false --no-errors-on-unmatched",
@@ -21,6 +22,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.5",
+    "@changesets/cli": "^2.29.5",
     "@turbo/gen": "^2.5.4",
     "@types/node": "^24.0.4",
     "husky": "^9.1.7",

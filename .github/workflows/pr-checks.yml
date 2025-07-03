@@ -6,6 +6,11 @@ on:
   push:
     branches: [ main ]
 
+# Automatically cancel in-progress jobs in the same branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request_target' && github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     name: Turbo Check Tasks (Node ${{ matrix.node-version }})
