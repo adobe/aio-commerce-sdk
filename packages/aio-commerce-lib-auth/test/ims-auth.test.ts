@@ -13,14 +13,17 @@
 import { getToken } from "@adobe/aio-lib-ims";
 import { describe, expect, test, vi } from "vitest";
 
-import { getImsAuthProvider, type ImsAuthParamsInput } from "~/lib/ims-auth";
+import {
+  getImsAuthProviderWithParams,
+  type ImsAuthParamsInput,
+} from "~/lib/ims-auth";
 
 vi.mock("@adobe/aio-lib-ims", async () => ({
   context: (await vi.importActual("@adobe/aio-lib-ims")).context,
   getToken: vi.fn(),
 }));
 
-describe("getImsAuthProvider", () => {
+describe("getImsAuthProviderWithParams", () => {
   const params = {
     AIO_COMMERCE_IMS_CLIENT_ID: "test-client-id",
     AIO_COMMERCE_IMS_CLIENT_SECRETS: JSON.stringify(["supersecret"]),
@@ -34,7 +37,7 @@ describe("getImsAuthProvider", () => {
     const authToken = "supersecrettoken";
     vi.mocked(getToken).mockResolvedValue(authToken);
 
-    const result = await getImsAuthProvider(params);
+    const result = await getImsAuthProviderWithParams(params);
     expect(result.data).toBeDefined();
     expect(() => result.error).toThrow("Cannot get error from a Success");
 
@@ -50,7 +53,7 @@ describe("getImsAuthProvider", () => {
   });
 
   test("should return a ValidationError", async () => {
-    const result = await getImsAuthProvider(
+    const result = await getImsAuthProviderWithParams(
       {} as unknown as ImsAuthParamsInput,
     );
     expect(() => result.data).toThrow("Cannot get data from a Failure");
@@ -66,7 +69,7 @@ describe("getImsAuthProvider", () => {
     "AIO_COMMERCE_IMS_IMS_ORG_ID",
     "AIO_COMMERCE_IMS_SCOPES",
   ])("should throw error when %s is missing", async (param) => {
-    const result = await getImsAuthProvider({
+    const result = await getImsAuthProviderWithParams({
       ...params,
       [param]: undefined,
     } as ImsAuthParamsInput);
@@ -86,7 +89,7 @@ describe("getImsAuthProvider", () => {
     ['[{test: "foo"}]', "AIO_COMMERCE_IMS_CLIENT_SECRETS"],
     ['["test"', "AIO_COMMERCE_IMS_CLIENT_SECRETS"],
   ])(`should throw error when given %s as %s input"`, async (param, key) => {
-    const result = await getImsAuthProvider({
+    const result = await getImsAuthProviderWithParams({
       ...params,
       [key]: param,
     } as ImsAuthParamsInput);

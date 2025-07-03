@@ -128,10 +128,29 @@ export type ImsAuthProviderResult = Result<
 
 /**
  * If the required IMS parameters are present, this function returns an ImsAuthProvider.
+ * @param {ImsAuthConfig} config includes IMS parameters
+ * @returns {ImsAuthProvider} returns the IMS auth provider
+ */
+export async function getImsAuthProviderWithConfig(config: ImsAuthConfig) {
+  await context.set(config.context, config);
+  return Result.success({
+    getAccessToken: async () => getToken(config.context, {}),
+    getHeaders: async () => {
+      const accessToken = await getToken(config.context, {});
+      return {
+        Authorization: `Bearer ${accessToken}`,
+        "x-api-key": config.client_id,
+      };
+    },
+  });
+}
+
+/**
+ * If the required IMS parameters are present, this function returns an ImsAuthProvider.
  * @param {ImsAuthParamsInput} params includes IMS parameters
  * @returns {ImsAuthProvider} returns the IMS auth provider
  */
-export async function getImsAuthProvider(
+export async function getImsAuthProviderWithParams(
   params: ImsAuthParamsInput,
 ): Promise<ImsAuthProviderResult> {
   const validation = safeParse(ImsAuthParamsSchema, params);
@@ -145,18 +164,9 @@ export async function getImsAuthProvider(
     });
   }
 
-  const config = resolveImsConfig(validation.output);
-  await context.set(config.context, config);
-  return Result.success({
-    getAccessToken: async () => getToken(config.context, {}),
-    getHeaders: async () => {
-      const accessToken = await getToken(config.context, {});
-      return {
-        Authorization: `Bearer ${accessToken}`,
-        "x-api-key": config.client_id,
-      };
-    },
-  });
+  return await getImsAuthProviderWithConfig(
+    resolveImsConfig(validation.output),
+  );
 }
 
 function resolveImsConfig(
