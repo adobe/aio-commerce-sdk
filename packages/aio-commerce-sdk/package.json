@@ -58,11 +58,12 @@
 
   "scripts": {
     "build": "tsdown",
-    "check:format": "pnpm -w check:format .",
-    "check:types": "tsc --noEmit && echo '✅ No type errors found.'",
+    "check:ci": "pnpm -w check:ci .",
     "format": "pnpm -w format .",
+    "format:check": "pnpm -w format:check .",
     "lint": "pnpm -w lint .",
-    "lint:fix": "pnpm -w lint:fix ."
+    "lint:fix": "pnpm -w lint:fix .",
+    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
   },
 
   "dependencies": {

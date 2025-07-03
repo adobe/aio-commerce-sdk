@@ -6,17 +6,17 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
-    "check:format": {
-      "dependsOn": ["^check:format"]
-    },
-    "check:types": {
-      "dependsOn": ["^check:types"]
+    "check:ci": {
+      "dependsOn": ["^check:ci"]
     },
     "lint": {
       "dependsOn": ["^lint"]
     },
     "test": {
       "dependsOn": ["^test"]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
     }
   }
 }
