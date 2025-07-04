@@ -7,7 +7,7 @@
     "turbo": "turbo",
     "build": "turbo build",
     "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
-    "format": "biome format --write --no-errors-on-unmatched && pnpm format:markdown",
+    "format": "biome format --write --no-errors-on-unmatched",
     "format:markdown": "pnpx prettier --write ./**/*.md",
     "format:check": "biome format --no-errors-on-unmatched",
     "lint": "biome lint --no-errors-on-unmatched",

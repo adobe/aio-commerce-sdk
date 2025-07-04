@@ -47,7 +47,7 @@ pnpm install
 
 ### Creating a new package
 
-Turborepo supports generating new packages via its `turbo gen` command. This repository implements a custom generator `create-package` for this purpose. To create a new package, run the following command:
+Turborepo supports generating new packages via its [`turbo gen`](https://turborepo.com/docs/guides/generating-code) command. This repository implements a custom generator `create-package` for this purpose. To create a new package, run the following command:
 
 ```shell
 # Or just `pnpm turbo gen` and select `create-package` from the list of generators.
@@ -55,6 +55,8 @@ pnpm turbo gen create-package
 ```
 
 This will prompt you for package configuration details, such as whether to include tests or set it as private, before generating the new package in the `packages` directory.
+
+![create-package generator](./assets/turbo-create-package.png)
 
 > [!NOTE]
 > The `create-package` generator will create the new package in the `packages` directory by default. If you want it in another directory, feel free to move it after it's created. But make sure of the following:
