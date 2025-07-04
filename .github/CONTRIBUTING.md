@@ -319,8 +319,7 @@ Assuming you want the SDK to re-export the `@adobe/aio-commerce-lib-auth` packag
    export * from "@adobe/aio-commerce-lib-auth";
    ```
 
-3. Add this new entrypoint to the [`tsdown.config.ts`](../packages/aio-commerce-sdk/tsdown.config.ts) file.
-4. Add it to the [`index.ts`](../packages/aio-commerce-sdk/index.ts) entrypoint with an aliased export.
+3. Add it to the [`index.ts`](../packages/aio-commerce-sdk/index.ts) entrypoint with an aliased export.
 
    ```ts
    export * as Auth from "@adobe/aio-commerce-lib-auth";
@@ -330,7 +329,7 @@ Assuming you want the SDK to re-export the `@adobe/aio-commerce-lib-auth` packag
    // export * as Other from "@adobe/aio-commerce-lib-other";
    ```
 
-5. Update the `package.json` file to account for the new entrypoint you created in step 2.
+4. Update the `package.json` file to account for the new entrypoint you created in step 2.
 
 Once these changes are released, consumers can access your library through two convenient patterns:
 
