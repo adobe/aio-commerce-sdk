@@ -70,7 +70,10 @@ While Node.js still supports CommonJS and many libraries continue to use it, ECM
 
 ### Documentation
 
-Each package should provide its own documentation through both written guides and inline code comments. We use JSDoc as our standard for documenting source code.
+Each package should provide its own documentation through both written guides (in Markdown) and inline code comments. We use JSDoc as our standard for documenting source code.
+
+> [!TIP]
+> To maintain consistent documentation, you can draft your content and use AI to rewrite it in the style of existing packages, providing them as reference examples.
 
 When working with JSDoc in TypeScript, keep these guidelines in mind:
 
