@@ -8,7 +8,7 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
 
-  "markdown.extension.toc.updateOnSave": false,
+  "markdown.extension.toc.levels": "1..2",
   "[markdown]": {
     "editor.unicodeHighlight.ambiguousCharacters": false,
     "editor.unicodeHighlight.invisibleCharacters": false,
