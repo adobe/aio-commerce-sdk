@@ -52,6 +52,8 @@
   },
   "scripts": {
     "build": "tsdown",
+    "assist": "pnpm -w assist .",
+    "assist:apply": "pnpm -w assist:apply .",
     "check:ci": "pnpm -w check:ci .",
     "format": "pnpm -w format .",
     "format:check": "pnpm -w format:check .",

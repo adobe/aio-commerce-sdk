@@ -5,6 +5,8 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky",
     "turbo": "turbo",
+    "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "build": "turbo build",
     "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
     "format": "biome format --write --no-errors-on-unmatched",
