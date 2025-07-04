@@ -11,8 +11,9 @@
 
   "license": "Apache-2.0",
   "description": "Description for {{scopedPackageName}}",
+  
+  {{#unless isPrivate}}
   "keywords": [],
-
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
@@ -22,6 +23,7 @@
     "url": "https://github.com/adobe/aio-commerce-sdk.git",
     "directory": "{{packageDir}}"
   },
+  {{/unless}}
 
   "scripts": {
     "build": "tsdown",

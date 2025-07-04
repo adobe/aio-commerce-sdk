@@ -24,7 +24,7 @@ In your App Builder application, you can use the library to authenticate users o
 In the runtime action you can generate an access token using the IMS Provider:
 
 ```typescript
-import { getImsAuthProvider } from '@adobe/aio-commerce-lib-auth';
+import { getImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
 
 export const main = async function (params: Record<string, unknown>) {
   // Generate the needed headers for API requests
@@ -40,12 +40,15 @@ export const main = async function (params: Record<string, unknown>) {
 In the runtime action you can generate an access token using the Integrations Provider:
 
 ```typescript
-import { getIntegrationsAuthProvider } from '@adobe/aio-commerce-lib-auth';
+import { getIntegrationsAuthProvider } from "@adobe/aio-commerce-lib-auth";
 
 export const main = async function (params: Record<string, unknown>) {
   // Generate the needed headers for API requests
   const integrationsAuth = getIntegrationsAuthProvider(params);
-  const headers = integrationsAuth.getHeaders('GET', 'http://localhost/rest/V1/orders');
+  const headers = integrationsAuth.getHeaders(
+    "GET",
+    "http://localhost/rest/V1/orders",
+  );
 
   return { statusCode: 200 };
 };

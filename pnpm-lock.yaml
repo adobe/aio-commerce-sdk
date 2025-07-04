@@ -76,6 +76,15 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.0.4)(jiti@2.4.2)(tsx@4.20.3)
 
+  packages/aio-commerce-lib-example:
+    devDependencies:
+      '@aio-commerce-sdk/config-tsdown':
+        specifier: workspace:*
+        version: link:../../configs/tsdown
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../../configs/typescript
+
   packages/aio-commerce-sdk:
     dependencies:
       '@adobe/aio-commerce-lib-auth':

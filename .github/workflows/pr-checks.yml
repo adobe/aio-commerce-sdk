@@ -2,9 +2,9 @@ name: PR/Push Checks
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
   push:
-    branches: [ main ]
+    branches: [main]
 
 # Automatically cancel in-progress jobs in the same branch.
 concurrency:
@@ -20,30 +20,30 @@ jobs:
       fail-fast: false
       matrix:
         # Previous LTS (Maintenance), Current LTS, Latest stable
-        node-version: ['lts/-1', 'lts/*', 'current']  
-    
+        node-version: ["lts/-1", "lts/*", "current"]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           # Fetch all history for all branches so --affected can compare properly
           fetch-depth: 0
-      
+
       - name: Fetch target branch for PR
         if: github.event_name == 'pull_request'
         run: |
           git fetch origin ${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
-      
+
       # pnpm version will be read from packageManager field in package.json
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-      
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      
+          cache: "pnpm"
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       
@@ -61,5 +61,5 @@ jobs:
             export TURBO_SCM_HEAD=HEAD
             echo "Comparing against previous commit"
           fi
-          
+
           pnpm turbo run check:ci typecheck lint test build --affected
