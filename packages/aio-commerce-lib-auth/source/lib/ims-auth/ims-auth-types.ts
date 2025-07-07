@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import type { ErrorType, Failure, Success } from "@adobe/aio-commerce-lib-core";
 import {
   type InferInput,
   nonEmpty,
@@ -24,7 +25,6 @@ import {
   array as vArray,
   message as vMessage,
 } from "valibot";
-import type { ErrorType, Failure, Success } from "~/lib/result";
 import { nonEmptyString } from "~/lib/validation";
 
 export const IMS_AUTH_ENV = {

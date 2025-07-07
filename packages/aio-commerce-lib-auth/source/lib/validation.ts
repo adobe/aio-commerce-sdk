@@ -10,9 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
+import type { ErrorType } from "@adobe/aio-commerce-lib-core";
 import { cyanBright, dim, whiteBright, yellowBright } from "ansis";
 import { type BaseIssue, getDotPath, nonEmpty, pipe, string } from "valibot";
-import type { ErrorType } from "~/lib/result";
 
 export const nonEmptyString = (message: string) =>
   pipe(string(), nonEmpty(message));

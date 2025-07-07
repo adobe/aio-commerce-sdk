@@ -10,13 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
+import { getData, getError } from "@adobe/aio-commerce-lib-core";
 import { describe, expect, test } from "vitest";
 import {
   getIntegrationAuthProvider,
   tryGetIntegrationAuthProvider,
 } from "~/lib/integration-auth";
 import type { IntegrationAuthParamsInput } from "~/lib/integration-auth/integration-auth-types";
-import { getData, getError } from "~/lib/result";
 
 /** Regex to match the OAuth 1.0a header format. */
 const OAUTH1_REGEX =

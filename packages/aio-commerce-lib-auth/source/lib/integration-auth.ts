@@ -11,6 +11,12 @@
  */
 
 import crypto from "node:crypto";
+import {
+  type Failure,
+  fail,
+  type Success,
+  succeed,
+} from "@adobe/aio-commerce-lib-core";
 import OAuth1a from "oauth-1.0a";
 import { safeParse } from "valibot";
 import {
@@ -23,7 +29,6 @@ import {
   type UriInput,
   UrlSchema,
 } from "~/lib/integration-auth/integration-auth-types";
-import { type Failure, fail, type Success, succeed } from "~/lib/result";
 import type { ValidationErrorType } from "~/lib/validation";
 
 export function getIntegrationAuthProvider(config: IntegrationConfig) {

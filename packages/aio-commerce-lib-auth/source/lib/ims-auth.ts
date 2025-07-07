@@ -10,6 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  type Failure,
+  fail,
+  getData,
+  isFailure,
+  type Success,
+  succeed,
+} from "@adobe/aio-commerce-lib-core";
 import { context, getToken } from "@adobe/aio-lib-ims";
 import { type InferOutput, safeParse } from "valibot";
 import {
@@ -21,14 +29,6 @@ import {
   ImsAuthParamsSchema,
   type ImsAuthProvider,
 } from "~/lib/ims-auth/ims-auth-types";
-import {
-  type Failure,
-  fail,
-  getData,
-  isFailure,
-  type Success,
-  succeed,
-} from "~/lib/result";
 import type { ValidationErrorType } from "~/lib/validation";
 
 async function tryGetAccessToken(
