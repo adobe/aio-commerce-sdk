@@ -1,0 +1,10 @@
+{
+  "extends": "@aio-commerce-sdk/config-typescript/tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": ".",
+    "outDir": "./dist"
+  },
+
+  "include": ["tsdown.config.ts", "source/**/*"]
+}

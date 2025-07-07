@@ -1,5 +1,5 @@
 {
-  "name": "@adobe/aio-commerce-lib-auth",
+  "name": "@adobe/aio-commerce-sdk",
   "type": "module",
   "version": "0.1.0",
   "private": false,
@@ -10,13 +10,14 @@
   },
 
   "license": "Apache-2.0",
-  "description": "Authentication utilities for Adobe Commerce apps deployed in Adobe App Builder.",
+  "description": "Utilities for Adobe Commerce apps deployed in Adobe App Builder.",
   "keywords": [
     "aio",
     "adobe-io",
     "commerce",
     "adobe-commerce",
-    "adobe-ims"
+    "adobe-commerce-sdk",
+    "aio-commerce-sdk"
   ],
 
   "bugs": {
@@ -25,8 +26,7 @@
 
   "repository": {
     "type": "git",
-    "url": "https://github.com/adobe/aio-commerce-sdk.git",
-    "directory": "packages/aio-commerce-lib-auth"
+    "url": "https://github.com/adobe/aio-commerce-sdk.git"
   },
 
   "main": "./dist/cjs/index.cjs",
@@ -43,29 +43,31 @@
         "default": "./dist/cjs/index.cjs"
       }
     },
+    "./auth": {
+      "import": {
+        "types": "./dist/es/auth.d.ts",
+        "default": "./dist/es/auth.js"
+      },
+      "require": {
+        "types": "./dist/cjs/auth.d.cts",
+        "default": "./dist/cjs/auth.cjs"
+      }
+    },
     "./package.json": "./package.json"
   },
 
   "scripts": {
     "build": "tsdown",
-    "format": "pnpm -w format .",
-    "format:check": "pnpm -w format:check .",
-    "lint": "pnpm -w lint .",
-    "lint:fix": "pnpm -w lint:fix .",
-    "check-types": "tsc --noEmit && echo '✅ No type errors found.'",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "check-types": "tsc --noEmit && echo '✅ No type errors found.'"
   },
 
   "dependencies": {
-    "@adobe/aio-lib-ims": "^8.1.0",
-    "oauth-1.0a": "^2.2.6"
+    "@adobe/aio-commerce-lib-auth": "workspace:*"
   },
 
   "devDependencies": {
     "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@aio-commerce-sdk/config-tsdown": "workspace:*",
-    "vitest": "^3.2.4"
+    "@aio-commerce-sdk/config-tsdown": "workspace:*"
   },
 
   "sideEffects": false

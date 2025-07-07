@@ -1,29 +1,7 @@
 {
   "name": "@adobe/aio-commerce-sdk",
-  "version": "0.1.0",
-  "author": "Adobe Inc.",
-  "engines": {
-    "node": ">=22"
-  },
-
-  "license": "Apache-2.0",
-  "description": "Utilities for Adobe Commerce apps deployed in Adobe App Builder.",
-  "keywords": [
-    "aio",
-    "adobe-io",
-    "commerce",
-    "adobe-commerce"
-  ],
-
-  "bugs": {
-    "url": "https://github.com/adobe/aio-commerce-sdk/issues"
-  },
-
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/adobe/aio-commerce-sdk.git"
-  },
-
+  "version": "1.0.0",
+  "private": true,
   "scripts": {
     "prepare": "husky",
     "turbo": "turbo",
@@ -33,19 +11,21 @@
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
     "test": "turbo test",
     "build": "turbo build",
-    "postinstall": "turbo build",
     "check-types": "turbo check-types",
-    "pkg:lib-auth": "turbo --filter=@adobe/aio-commerce-lib-auth"
+    "pkg:lib-auth": "turbo --filter=@adobe/aio-commerce-lib-auth",
+    "pkg:sdk": "turbo --filter=@adobe/aio-commerce-sdk",
+    "pkg:tools": "pnpm --filter=@aio-commerce-sdk/tools"
   },
-
   "devDependencies": {
     "@biomejs/biome": "2.0.5",
+    "@turbo/gen": "^2.5.4",
+    "@types/node": "^24.0.4",
     "husky": "^9.1.7",
+    "tsdown": "^0.12.9",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3",
     "ultracite": "5.0.25"
   },
-
   "packageManager": "pnpm@10.4.1",
   "lint-staged": {
     "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
