@@ -35,12 +35,13 @@ export const baseConfig = {
       const files = await readdir(OUT_DIR);
       const ctsFiles = files.filter((file) => file.endsWith(".d.cts"));
 
-      for (const file of ctsFiles) {
-        const sourcePath = `${OUT_DIR}/${file}`;
-        const targetPath = `${OUT_DIR}/cjs/${file}`;
-
-        rename(sourcePath, targetPath);
-      }
+      await Promise.all(
+        ctsFiles.map((file) => {
+          const sourcePath = `${OUT_DIR}/${file}`;
+          const targetPath = `${OUT_DIR}/cjs/${file}`;
+          return rename(sourcePath, targetPath);
+        })
+      );
     },
   },
 } satisfies UserConfig;
