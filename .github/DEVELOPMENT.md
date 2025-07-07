@@ -386,7 +386,7 @@ Here's a typical workflow when making changes:
 2. **Create a changeset**: Before opening a PR, run:
 
    ```shell
-   pnpx changeset
+   pnpm changeset
    ```
 
 This interactive command will:
