@@ -1,8 +1,14 @@
 {
   "name": "@aio-commerce-sdk/config-typescript",
   "description": "Typescript configuration for the AIO Commerce SDK",
+  "type": "module",
   "version": "1.0.0",
   "private": true,
+
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./package.json": "./package.json"
+  },
 
   "devDependencies": {
     "@tsconfig/node-lts": "^22.0.2",
