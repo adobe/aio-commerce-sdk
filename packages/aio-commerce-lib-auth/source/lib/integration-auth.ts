@@ -28,7 +28,7 @@ import {
   message as vMessage,
   url as vUrl,
 } from "valibot";
-import { fail, type Result, succeed } from "~/lib/result";
+import { type Failure, fail, type Success, succeed } from "~/lib/result";
 import { ValidationError, type ValidationErrorType } from "~/lib/validation";
 
 /**
@@ -95,19 +95,7 @@ export interface IntegrationAuthProvider {
   ) => IntegrationAuthHeaders;
 }
 
-export type IntegrationAuthProviderResult = Result<
-  IntegrationAuthProvider,
-  ValidationErrorType<unknown>
->;
-
-/**
- * If the required integration parameters are present, this function returns an IntegrationAuthProvider.
- * @param {IntegrationConfig} config includes integration parameters
- * @returns {IntegrationAuthProviderResult} Result<IntegrationAuthProvider, ValidationError>
- */
-export function getIntegrationAuthProviderWithConfig(
-  config: IntegrationConfig,
-): IntegrationAuthProviderResult {
+export function getIntegrationAuthProvider(config: IntegrationConfig) {
   const oauth = new OAuth1a({
     consumer: {
       key: config.consumerKey,
@@ -123,8 +111,8 @@ export function getIntegrationAuthProviderWithConfig(
     secret: config.accessTokenSecret,
   };
 
-  return succeed({
-    getHeaders(method, url) {
+  return {
+    getHeaders(method: HttpMethodInput, url: UriInput): IntegrationAuthHeaders {
       const validationHeaders = safeParse(UrlSchema, url);
       if (!validationHeaders.success) {
         throw new ValidationError(
@@ -144,17 +132,12 @@ export function getIntegrationAuthProviderWithConfig(
         oauth.authorize({ url: finalUrl, method }, oauthToken),
       );
     },
-  });
+  } satisfies IntegrationAuthProvider;
 }
 
-/**
- * If the required integration parameters are present, this function returns an IntegrationAuthProvider.
- * @param {IntegrationAuthParamsInput} params includes integration parameters
- * @returns {IntegrationAuthProviderResult} Result<IntegrationAuthProvider, ValidationError>
- */
-export function getIntegrationAuthProviderWithParams(
+export function tryGetIntegrationAuthProvider(
   params: IntegrationAuthParamsInput,
-): IntegrationAuthProviderResult {
+) {
   const validation = integrationAuthParamsParser(params);
 
   if (!validation.success) {
@@ -163,11 +146,12 @@ export function getIntegrationAuthProviderWithParams(
       message:
         "Failed to validate the provided integration parameters. See the console for more details.",
       issues: validation.issues,
-    });
+    }) satisfies Failure<ValidationErrorType<unknown>>;
   }
 
-  const config = resolveIntegrationConfig(validation.output);
-  return getIntegrationAuthProviderWithConfig(config);
+  return succeed(
+    getIntegrationAuthProvider(resolveIntegrationConfig(validation.output)),
+  ) satisfies Success<IntegrationAuthProvider>;
 }
 
 export function resolveIntegrationConfig(

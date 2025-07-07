@@ -13,8 +13,11 @@
 import { getToken } from "@adobe/aio-lib-ims";
 import { describe, expect, test, vi } from "vitest";
 
-import { getImsAuthProviderWithParams } from "~/lib/ims-auth";
-import type { ImsAuthParamsInput } from "~/lib/ims-auth/ims-auth-types";
+import { getImsAuthProvider, tryGetImsAuthProvider } from "~/lib/ims-auth";
+import {
+  IMS_AUTH_ENV,
+  type ImsAuthParamsInput,
+} from "~/lib/ims-auth/ims-auth-types";
 import { getData, getError, isSuccess } from "~/lib/result";
 
 vi.mock("@adobe/aio-lib-ims", async () => ({
@@ -22,82 +25,112 @@ vi.mock("@adobe/aio-lib-ims", async () => ({
   getToken: vi.fn(),
 }));
 
-describe("getImsAuthProviderWithParams", () => {
-  const params = {
-    AIO_COMMERCE_IMS_CLIENT_ID: "test-client-id",
-    AIO_COMMERCE_IMS_CLIENT_SECRETS: JSON.stringify(["supersecret"]),
-    AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-    AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
-    AIO_COMMERCE_IMS_IMS_ORG_ID: "test-org-id",
-    AIO_COMMERCE_IMS_SCOPES: JSON.stringify(["scope1", "scope2"]),
-  } as ImsAuthParamsInput;
+describe("ims auth", () => {
+  describe("getImsAuthProvider", () => {
+    test("should export token", async () => {
+      const authToken = "supersecrettoken";
+      vi.mocked(getToken).mockResolvedValue(authToken);
 
-  test("should export token when all required params are provided", async () => {
-    const authToken = "supersecrettoken";
-    vi.mocked(getToken).mockResolvedValue(authToken);
+      const config = {
+        client_id: "test-client-id",
+        client_secrets: ["supersecret"],
+        technical_account_id: "test-technical-account-id",
+        technical_account_email: "test-email@example.com",
+        ims_org_id: "test-org-id",
+        scopes: ["scope1", "scope2"],
+        environment: IMS_AUTH_ENV.PROD,
+        context: "test-context",
+      };
+      const imsAuthProvider = await getImsAuthProvider(config);
 
-    const result = await getImsAuthProviderWithParams(params);
-    expect(isSuccess(result)).toBeTruthy();
-    expect(getData(result)).toBeDefined();
-    expect(() => getError(result)).toThrow("Cannot get error from a Success");
+      expect(imsAuthProvider).toBeDefined();
 
-    const retrievedToken = await result.value.getAccessToken();
-    expect(retrievedToken).toEqual(authToken);
+      const retrievedToken = await imsAuthProvider.getAccessToken();
+      expect(retrievedToken).toEqual(authToken);
 
-    const headers = await result.value.getHeaders();
-    expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
-    expect(headers).toHaveProperty(
-      "x-api-key",
-      params.AIO_COMMERCE_IMS_CLIENT_ID,
-    );
+      const headers = await imsAuthProvider.getHeaders();
+      expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
+      expect(headers).toHaveProperty("x-api-key", config.client_id);
+    });
   });
 
-  test("should return a ValidationError", async () => {
-    const result = await getImsAuthProviderWithParams(
-      {} as unknown as ImsAuthParamsInput,
-    );
-    expect(() => getData(result)).toThrow("Cannot get data from a Failure");
-    expect(getError(result)).toBeDefined();
-    expect(getError(result)._tag).toEqual("ValidationError");
-  });
+  describe("tryGetImsAuthProvider", () => {
+    const params = {
+      AIO_COMMERCE_IMS_CLIENT_ID: "test-client-id",
+      AIO_COMMERCE_IMS_CLIENT_SECRETS: JSON.stringify(["supersecret"]),
+      AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+      AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+      AIO_COMMERCE_IMS_IMS_ORG_ID: "test-org-id",
+      AIO_COMMERCE_IMS_SCOPES: JSON.stringify(["scope1", "scope2"]),
+    } satisfies ImsAuthParamsInput;
 
-  test.each([
-    "AIO_COMMERCE_IMS_CLIENT_ID",
-    "AIO_COMMERCE_IMS_CLIENT_SECRETS",
-    "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID",
-    "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL",
-    "AIO_COMMERCE_IMS_IMS_ORG_ID",
-    "AIO_COMMERCE_IMS_SCOPES",
-  ])("should throw error when %s is missing", async (param) => {
-    const result = await getImsAuthProviderWithParams({
-      ...params,
-      [param]: undefined,
-    } as ImsAuthParamsInput);
+    test("should export token when all required params are provided", async () => {
+      const authToken = "supersecrettoken";
+      vi.mocked(getToken).mockResolvedValue(authToken);
 
-    expect(() => getData(result)).toThrow("Cannot get data from a Failure");
-    expect(getError(result)._tag).toEqual("ValidationError");
-    expect(getError(result).message).toEqual(
-      "Failed to validate the provided IMS parameters. See the console for more details.",
-    );
-  });
+      const result = await tryGetImsAuthProvider(params);
+      expect(isSuccess(result)).toBeTruthy();
+      expect(getData(result)).toBeDefined();
+      expect(() => getError(result)).toThrow("Cannot get error from a Success");
 
-  test.each([
-    ["[test, foo]", "AIO_COMMERCE_IMS_SCOPES"],
-    ['[{test: "foo"}]', "AIO_COMMERCE_IMS_SCOPES"],
-    ['["test"', "AIO_COMMERCE_IMS_SCOPES"],
-    ["[test, foo]", "AIO_COMMERCE_IMS_CLIENT_SECRETS"],
-    ['[{test: "foo"}]', "AIO_COMMERCE_IMS_CLIENT_SECRETS"],
-    ['["test"', "AIO_COMMERCE_IMS_CLIENT_SECRETS"],
-  ])(`should throw error when given %s as %s input"`, async (param, key) => {
-    const result = await getImsAuthProviderWithParams({
-      ...params,
-      [key]: param,
-    } as ImsAuthParamsInput);
+      const retrievedToken = await result.value.getAccessToken();
+      expect(retrievedToken).toEqual(authToken);
 
-    expect(() => getData(result)).toThrow("Cannot get data from a Failure");
-    expect(getError(result)._tag).toEqual("ValidationError");
-    expect(getError(result).message).toEqual(
-      "Failed to validate the provided IMS parameters. See the console for more details.",
-    );
+      const headers = await result.value.getHeaders();
+      expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
+      expect(headers).toHaveProperty(
+        "x-api-key",
+        params.AIO_COMMERCE_IMS_CLIENT_ID,
+      );
+    });
+
+    test("should return a ValidationError", async () => {
+      const result = await tryGetImsAuthProvider(
+        {} as unknown as ImsAuthParamsInput,
+      );
+      expect(() => getData(result)).toThrow("Cannot get data from a Failure");
+      expect(getError(result)).toBeDefined();
+      expect(getError(result)._tag).toEqual("ValidationError");
+    });
+
+    test.each([
+      "AIO_COMMERCE_IMS_CLIENT_ID",
+      "AIO_COMMERCE_IMS_CLIENT_SECRETS",
+      "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID",
+      "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL",
+      "AIO_COMMERCE_IMS_IMS_ORG_ID",
+      "AIO_COMMERCE_IMS_SCOPES",
+    ])("should throw error when %s is missing", async (param) => {
+      const result = await tryGetImsAuthProvider({
+        ...params,
+        [param]: undefined,
+      } satisfies ImsAuthParamsInput);
+
+      expect(() => getData(result)).toThrow("Cannot get data from a Failure");
+      expect(getError(result)._tag).toEqual("ValidationError");
+      expect(getError(result).message).toEqual(
+        "Failed to validate the provided IMS parameters. See the console for more details.",
+      );
+    });
+
+    test.each([
+      ["[test, foo]", "AIO_COMMERCE_IMS_SCOPES"],
+      ['[{test: "foo"}]', "AIO_COMMERCE_IMS_SCOPES"],
+      ['["test"', "AIO_COMMERCE_IMS_SCOPES"],
+      ["[test, foo]", "AIO_COMMERCE_IMS_CLIENT_SECRETS"],
+      ['[{test: "foo"}]', "AIO_COMMERCE_IMS_CLIENT_SECRETS"],
+      ['["test"', "AIO_COMMERCE_IMS_CLIENT_SECRETS"],
+    ])(`should throw error when given %s as %s input"`, async (param, key) => {
+      const result = await tryGetImsAuthProvider({
+        ...params,
+        [key]: param,
+      } as ImsAuthParamsInput);
+
+      expect(() => getData(result)).toThrow("Cannot get data from a Failure");
+      expect(getError(result)._tag).toEqual("ValidationError");
+      expect(getError(result).message).toEqual(
+        "Failed to validate the provided IMS parameters. See the console for more details.",
+      );
+    });
   });
 });

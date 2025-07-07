@@ -12,8 +12,9 @@
 
 import { describe, expect, test } from "vitest";
 import {
-  getIntegrationAuthProviderWithParams,
+  getIntegrationAuthProvider,
   type IntegrationAuthParamsInput,
+  tryGetIntegrationAuthProvider,
 } from "~/lib/integration-auth";
 import { getData, getError, isSuccess } from "~/lib/result";
 
@@ -21,58 +22,80 @@ import { getData, getError, isSuccess } from "~/lib/result";
 const OAUTH1_REGEX =
   /^OAuth oauth_consumer_key="[^"]+", oauth_nonce="[^"]+", oauth_signature="[^"]+", oauth_signature_method="HMAC-SHA256", oauth_timestamp="[^"]+", oauth_token="[^"]+", oauth_version="1\.0"$/;
 
-describe("getIntegrationAuthProviderWithParams", () => {
-  const params: IntegrationAuthParamsInput = {
-    AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY: "test-consumer-key",
-    AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET: "test-consumer-secret",
-    AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN: "test-access-token",
-    AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET: "test-access-token-secret",
-  };
+describe("integration auth", () => {
+  describe("getIntegrationAuthProvider", () => {
+    test("should export getIntegrationAuthProvider", () => {
+      const integrationAuthProvider = getIntegrationAuthProvider({
+        consumerKey: "test-consumer-key",
+        consumerSecret: "test-consumer-secret",
+        accessToken: "test-access-token",
+        accessTokenSecret: "test-access-token-secret",
+      });
 
-  test("should export getIntegrationAccessToken", () => {
-    const result = getIntegrationAuthProviderWithParams(params);
-
-    expect(isSuccess(result)).toBeTruthy();
-    const headers = result.value.getHeaders("GET", "http://localhost/test");
-    expect(headers).toHaveProperty(
-      "Authorization",
-      expect.stringMatching(OAUTH1_REGEX),
-    );
+      const headers = integrationAuthProvider.getHeaders(
+        "GET",
+        "http://localhost/test",
+      );
+      expect(headers).toHaveProperty(
+        "Authorization",
+        expect.stringMatching(OAUTH1_REGEX),
+      );
+    });
   });
 
-  test.each([
-    "AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY",
-    "AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET",
-    "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN",
-    "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET",
-  ])("should throw error when %s is missing", (param) => {
-    const result = getIntegrationAuthProviderWithParams({
-      ...params,
-      [param]: undefined,
-    } as IntegrationAuthParamsInput);
+  describe("tryGetIntegrationAuthProvider", () => {
+    const params: IntegrationAuthParamsInput = {
+      AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY: "test-consumer-key",
+      AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET: "test-consumer-secret",
+      AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN: "test-access-token",
+      AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET: "test-access-token-secret",
+    };
 
-    expect(() => getData(result)).toThrow("Cannot get data from a Failure");
-    expect(getError(result)._tag).toEqual("ValidationError");
-    expect(getError(result).message).toEqual(
-      "Failed to validate the provided integration parameters. See the console for more details.",
-    );
-  });
+    test("should export getIntegrationAccessToken", () => {
+      const result = tryGetIntegrationAuthProvider(params);
 
-  test.each([
-    ["localhost"],
-    ["http:://"],
-    ["https://"],
-    ["//example.com"],
-    ["http://user@:80"],
-  ])("should throw an Error on invalid [%s] URL", (url) => {
-    const result = getIntegrationAuthProviderWithParams(params);
-    expect(isSuccess(result)).toBeTruthy();
-    expect(result.value).toBeDefined();
+      expect(isSuccess(result)).toBeTruthy();
+      const headers = result.value.getHeaders("GET", "http://localhost/test");
+      expect(headers).toHaveProperty(
+        "Authorization",
+        expect.stringMatching(OAUTH1_REGEX),
+      );
+    });
 
-    expect(() => {
-      result.value.getHeaders("GET", url);
-    }).toThrow(
-      "Failed to validate the provided commerce URL. See the console for more details.",
-    );
+    test.each([
+      "AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY",
+      "AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET",
+      "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN",
+      "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET",
+    ])("should throw error when %s is missing", (param) => {
+      const result = tryGetIntegrationAuthProvider({
+        ...params,
+        [param]: undefined,
+      } as IntegrationAuthParamsInput);
+
+      expect(() => getData(result)).toThrow("Cannot get data from a Failure");
+      expect(getError(result)._tag).toEqual("ValidationError");
+      expect(getError(result).message).toEqual(
+        "Failed to validate the provided integration parameters. See the console for more details.",
+      );
+    });
+
+    test.each([
+      ["localhost"],
+      ["http:://"],
+      ["https://"],
+      ["//example.com"],
+      ["http://user@:80"],
+    ])("should throw an Error on invalid [%s] URL", (url) => {
+      const result = tryGetIntegrationAuthProvider(params);
+      expect(isSuccess(result)).toBeTruthy();
+      expect(result.value).toBeDefined();
+
+      expect(() => {
+        result.value.getHeaders("GET", url);
+      }).toThrow(
+        "Failed to validate the provided commerce URL. See the console for more details.",
+      );
+    });
   });
 });

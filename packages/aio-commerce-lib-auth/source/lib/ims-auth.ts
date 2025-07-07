@@ -17,7 +17,7 @@ import {
   type ImsAuthParamsInput,
   ImsAuthParamsSchema,
 } from "~/lib/ims-auth/ims-auth-types";
-import { fail, type Result, succeed } from "~/lib/result";
+import { type Failure, fail, type Success, succeed } from "~/lib/result";
 import type { ValidationErrorType } from "~/lib/validation";
 
 export type ImsAccessToken = string;
@@ -30,21 +30,9 @@ export interface ImsAuthProvider {
   getAccessToken: () => Promise<ImsAccessToken>;
 }
 
-export type ImsAuthProviderResult = Result<
-  ImsAuthProvider,
-  ValidationErrorType<unknown>
->;
-
-/**
- * If the required IMS parameters are present, this function returns an ImsAuthProvider.
- * @param {ImsAuthConfig} config includes IMS parameters
- * @returns {Promise} returns the ImsAuthProviderResult type
- */
-export async function getImsAuthProviderWithConfig(
-  config: ImsAuthConfig,
-): Promise<ImsAuthProviderResult> {
+export async function getImsAuthProvider(config: ImsAuthConfig) {
   await context.set(config.context, config);
-  return succeed({
+  return {
     getAccessToken: async () => getToken(config.context, {}),
     getHeaders: async () => {
       const accessToken = await getToken(config.context, {});
@@ -53,17 +41,10 @@ export async function getImsAuthProviderWithConfig(
         "x-api-key": config.client_id,
       };
     },
-  });
+  } satisfies ImsAuthProvider;
 }
 
-/**
- * If the required IMS parameters are present, this function returns an ImsAuthProvider.
- * @param {ImsAuthParamsInput} params includes IMS parameters
- * @returns {Promise} returns the ImsAuthProviderResult type
- */
-export async function getImsAuthProviderWithParams(
-  params: ImsAuthParamsInput,
-): Promise<ImsAuthProviderResult> {
+export async function tryGetImsAuthProvider(params: ImsAuthParamsInput) {
   const validation = safeParse(ImsAuthParamsSchema, params);
 
   if (!validation.success) {
@@ -72,15 +53,15 @@ export async function getImsAuthProviderWithParams(
       message:
         "Failed to validate the provided IMS parameters. See the console for more details.",
       issues: validation.issues,
-    });
+    }) satisfies Failure<ValidationErrorType<unknown>>;
   }
 
-  return await getImsAuthProviderWithConfig(
-    resolveImsConfig(validation.output),
-  );
+  return succeed(
+    await getImsAuthProvider(fromParams(validation.output)),
+  ) satisfies Success<ImsAuthProvider>;
 }
 
-function resolveImsConfig(
+function fromParams(
   params: InferOutput<typeof ImsAuthParamsSchema>,
 ): ImsAuthConfig {
   return {
