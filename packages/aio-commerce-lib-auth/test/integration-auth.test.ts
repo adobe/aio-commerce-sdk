@@ -16,7 +16,7 @@ import {
   type IntegrationAuthParamsInput,
   tryGetIntegrationAuthProvider,
 } from "~/lib/integration-auth";
-import { getData, getError, isSuccess } from "~/lib/result";
+import { getData, getError } from "~/lib/result";
 
 /** Regex to match the OAuth 1.0a header format. */
 const OAUTH1_REGEX =
@@ -32,9 +32,8 @@ describe("integration auth", () => {
         accessTokenSecret: "test-access-token-secret",
       });
 
-      const headers = integrationAuthProvider.getHeaders(
-        "GET",
-        "http://localhost/test",
+      const headers = getData(
+        integrationAuthProvider.getHeaders("GET", "http://localhost/test"),
       );
       expect(headers).toHaveProperty(
         "Authorization",
@@ -52,10 +51,10 @@ describe("integration auth", () => {
     };
 
     test("should export getIntegrationAccessToken", () => {
-      const result = tryGetIntegrationAuthProvider(params);
-
-      expect(isSuccess(result)).toBeTruthy();
-      const headers = result.value.getHeaders("GET", "http://localhost/test");
+      const result = getData(tryGetIntegrationAuthProvider(params));
+      const headers = getData(
+        result.getHeaders("GET", "http://localhost/test"),
+      );
       expect(headers).toHaveProperty(
         "Authorization",
         expect.stringMatching(OAUTH1_REGEX),
@@ -87,14 +86,14 @@ describe("integration auth", () => {
       ["//example.com"],
       ["http://user@:80"],
     ])("should throw an Error on invalid [%s] URL", (url) => {
-      const result = tryGetIntegrationAuthProvider(params);
-      expect(isSuccess(result)).toBeTruthy();
-      expect(result.value).toBeDefined();
+      const integrationAuthProvider = getData(
+        tryGetIntegrationAuthProvider(params),
+      );
+      const getHeadersResult = integrationAuthProvider.getHeaders("GET", url);
 
-      expect(() => {
-        result.value.getHeaders("GET", url);
-      }).toThrow(
-        "Failed to validate the provided commerce URL. See the console for more details.",
+      expect(getError(getHeadersResult)._tag).toEqual("ValidationError");
+      expect(getError(getHeadersResult).message).toEqual(
+        "Failed to validate the provided URL. See the console for more details.",
       );
     });
   });

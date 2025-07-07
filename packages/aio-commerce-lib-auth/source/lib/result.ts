@@ -31,16 +31,16 @@ export function fail<E extends ErrorType>(error: E): Failure<E> {
   return { type: SuccessOrFailure.FAILURE, error, value: undefined as never };
 }
 
-export function getData<T, E extends ErrorType>(result: Result<T, E>): T {
+export function getData<T, E extends ErrorType>(result: Result<T, E>) {
   if (result.type === SuccessOrFailure.SUCCESS) {
-    return result.value;
+    return result.value satisfies T;
   }
   throw new Error("Cannot get data from a Failure");
 }
 
-export function getError<T, E extends ErrorType>(result: Result<T, E>): E {
+export function getError<T, E extends ErrorType>(result: Result<T, E>) {
   if (result.type === SuccessOrFailure.FAILURE) {
-    return (result as Failure<E>).error;
+    return result.error satisfies E;
   }
   throw new Error("Cannot get error from a Success");
 }

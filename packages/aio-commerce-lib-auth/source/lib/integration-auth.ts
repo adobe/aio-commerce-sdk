@@ -29,7 +29,7 @@ import {
   url as vUrl,
 } from "valibot";
 import { type Failure, fail, type Success, succeed } from "~/lib/result";
-import { ValidationError, type ValidationErrorType } from "~/lib/validation";
+import type { ValidationErrorType } from "~/lib/validation";
 
 /**
  * The HTTP methods supported by Commerce.
@@ -92,7 +92,7 @@ export interface IntegrationAuthProvider {
   getHeaders: (
     method: HttpMethodInput,
     url: UriInput,
-  ) => IntegrationAuthHeaders;
+  ) => Success<IntegrationAuthHeaders> | Failure<ValidationErrorType<unknown>>;
 }
 
 export function getIntegrationAuthProvider(config: IntegrationConfig) {
@@ -112,13 +112,15 @@ export function getIntegrationAuthProvider(config: IntegrationConfig) {
   };
 
   return {
-    getHeaders(method: HttpMethodInput, url: UriInput): IntegrationAuthHeaders {
+    getHeaders(method: HttpMethodInput, url: UriInput) {
       const validationHeaders = safeParse(UrlSchema, url);
       if (!validationHeaders.success) {
-        throw new ValidationError(
-          "Failed to validate the provided commerce URL. See the console for more details.",
-          validationHeaders.issues,
-        );
+        return fail({
+          _tag: "ValidationError",
+          message:
+            "Failed to validate the provided URL. See the console for more details.",
+          issues: validationHeaders.issues,
+        }) satisfies Failure<ValidationErrorType<unknown>>;
       }
 
       let finalUrl: string;
@@ -128,9 +130,9 @@ export function getIntegrationAuthProvider(config: IntegrationConfig) {
         finalUrl = url;
       }
 
-      return oauth.toHeader(
-        oauth.authorize({ url: finalUrl, method }, oauthToken),
-      );
+      return succeed(
+        oauth.toHeader(oauth.authorize({ url: finalUrl, method }, oauthToken)),
+      ) satisfies Success<IntegrationAuthHeaders>;
     },
   } satisfies IntegrationAuthProvider;
 }
