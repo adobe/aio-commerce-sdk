@@ -1,8 +1,14 @@
 {
   "name": "@aio-commerce-sdk/config-tsdown",
   "description": "TSDown configuration for the AIO Commerce SDK",
+  "type": "module",
   "version": "1.0.0",
   "private": true,
+
+  "exports": {
+    "./tsdown.config.base": "./tsdown.config.base.ts",
+    "./package.json": "./package.json"
+  },
 
   "devDependencies": {
     "@aio-commerce-sdk/config-typescript": "workspace:*"

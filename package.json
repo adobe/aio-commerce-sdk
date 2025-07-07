@@ -1,23 +1,26 @@
 {
-  "name": "@adobe/aio-commerce-sdk",
-  "version": "1.0.0",
+  "name": "aio-commerce-sdk",
   "private": true,
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "prepare": "husky",
     "turbo": "turbo",
+    "build": "turbo build",
+    "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
     "format": "biome format --write --no-errors-on-unmatched",
-    "format:check": "biome check --linter-enabled=false --no-errors-on-unmatched",
-    "lint": "biome check --formatter-enabled=false --no-errors-on-unmatched",
+    "format:check": "biome format --no-errors-on-unmatched",
+    "lint": "biome lint --no-errors-on-unmatched",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
     "test": "turbo test",
-    "build": "turbo build",
-    "check-types": "turbo check-types",
+    "typecheck": "turbo typecheck",
     "pkg:lib-auth": "turbo --filter=@adobe/aio-commerce-lib-auth",
     "pkg:sdk": "turbo --filter=@adobe/aio-commerce-sdk",
-    "pkg:tools": "pnpm --filter=@aio-commerce-sdk/tools"
+    "pkg:generators": "pnpm --filter=@aio-commerce-sdk/generators"
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.5",
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.5",
     "@turbo/gen": "^2.5.4",
     "@types/node": "^24.0.4",
     "husky": "^9.1.7",
@@ -26,7 +29,7 @@
     "typescript": "^5.8.3",
     "ultracite": "5.0.25"
   },
-  "packageManager": "pnpm@10.4.1",
+  "packageManager": "pnpm@10.12.4",
   "lint-staged": {
     "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
       "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --error-on-warnings"

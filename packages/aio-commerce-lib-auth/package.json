@@ -48,11 +48,12 @@
 
   "scripts": {
     "build": "tsdown",
+    "check:ci": "pnpm -w check:ci .",
     "format": "pnpm -w format .",
     "format:check": "pnpm -w format:check .",
     "lint": "pnpm -w lint .",
     "lint:fix": "pnpm -w lint:fix .",
-    "check-types": "tsc --noEmit && echo '✅ No type errors found.'",
+    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'",
     "test": "vitest run",
     "test:watch": "vitest"
   },
