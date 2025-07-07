@@ -17,7 +17,15 @@ import {
   type ImsAuthParamsInput,
   ImsAuthParamsSchema,
 } from "~/lib/ims-auth/ims-auth-types";
-import { type Failure, fail, type Success, succeed } from "~/lib/result";
+import {
+  type ErrorType,
+  type Failure,
+  fail,
+  getData,
+  isFailure,
+  type Success,
+  succeed,
+} from "~/lib/result";
 import type { ValidationErrorType } from "~/lib/validation";
 
 export type ImsAccessToken = string;
@@ -25,23 +33,54 @@ export type ImsAccessToken = string;
 export type ImsAuthHeader = "Authorization" | "x-api-key";
 export type ImsAuthHeaders = Record<ImsAuthHeader, string>;
 
+export type ImsAuthErrorType<Error> = ErrorType & {
+  _tag: "ImsAuthError";
+  message: string;
+  error: Error;
+};
+
 export interface ImsAuthProvider {
-  getHeaders: () => Promise<ImsAuthHeaders>;
-  getAccessToken: () => Promise<ImsAccessToken>;
+  getAccessToken: () => Promise<
+    Success<ImsAccessToken> | Failure<ImsAuthErrorType<unknown>>
+  >;
+  getHeaders: () => Promise<
+    Success<ImsAuthHeaders> | Failure<ImsAuthErrorType<unknown>>
+  >;
+}
+
+async function tryGetAccessToken(
+  contextName: string,
+): Promise<Success<ImsAccessToken> | Failure<ImsAuthErrorType<unknown>>> {
+  try {
+    const accessToken = await getToken(contextName, {});
+    return succeed(accessToken) satisfies Success<ImsAccessToken>;
+  } catch (error) {
+    return fail({
+      _tag: "ImsAuthError",
+      message: "Failed to retrieve IMS access token.",
+      error,
+    }) satisfies Failure<ImsAuthErrorType<unknown>>;
+  }
 }
 
 export async function getImsAuthProvider(config: ImsAuthConfig) {
   await context.set(config.context, config);
   return {
-    getAccessToken: async () => getToken(config.context, {}),
+    getAccessToken: async () => tryGetAccessToken(config.context),
     getHeaders: async () => {
-      const accessToken = await getToken(config.context, {});
-      return {
+      const result = await tryGetAccessToken(config.context);
+
+      if (isFailure(result)) {
+        return result as Failure<ImsAuthErrorType<unknown>>;
+      }
+
+      const accessToken = getData(result);
+      return succeed({
         Authorization: `Bearer ${accessToken}`,
         "x-api-key": config.client_id,
-      };
+      }) satisfies Success<ImsAuthHeaders>;
     },
-  } satisfies ImsAuthProvider;
+  };
 }
 
 export async function tryGetImsAuthProvider(params: ImsAuthParamsInput) {

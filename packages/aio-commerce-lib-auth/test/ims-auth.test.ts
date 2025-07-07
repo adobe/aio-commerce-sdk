@@ -18,7 +18,7 @@ import {
   IMS_AUTH_ENV,
   type ImsAuthParamsInput,
 } from "~/lib/ims-auth/ims-auth-types";
-import { getData, getError, isSuccess } from "~/lib/result";
+import { getData, getError } from "~/lib/result";
 
 vi.mock("@adobe/aio-lib-ims", async () => ({
   context: (await vi.importActual("@adobe/aio-lib-ims")).context,
@@ -46,9 +46,9 @@ describe("ims auth", () => {
       expect(imsAuthProvider).toBeDefined();
 
       const retrievedToken = await imsAuthProvider.getAccessToken();
-      expect(retrievedToken).toEqual(authToken);
+      expect(getData(retrievedToken)).toEqual(authToken);
 
-      const headers = await imsAuthProvider.getHeaders();
+      const headers = getData(await imsAuthProvider.getHeaders());
       expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
       expect(headers).toHaveProperty("x-api-key", config.client_id);
     });
@@ -68,15 +68,11 @@ describe("ims auth", () => {
       const authToken = "supersecrettoken";
       vi.mocked(getToken).mockResolvedValue(authToken);
 
-      const result = await tryGetImsAuthProvider(params);
-      expect(isSuccess(result)).toBeTruthy();
-      expect(getData(result)).toBeDefined();
-      expect(() => getError(result)).toThrow("Cannot get error from a Success");
-
-      const retrievedToken = await result.value.getAccessToken();
+      const imsAuthProvider = getData(await tryGetImsAuthProvider(params));
+      const retrievedToken = getData(await imsAuthProvider.getAccessToken());
       expect(retrievedToken).toEqual(authToken);
 
-      const headers = await result.value.getHeaders();
+      const headers = getData(await imsAuthProvider.getHeaders());
       expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
       expect(headers).toHaveProperty(
         "x-api-key",
