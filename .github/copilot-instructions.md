@@ -120,7 +120,7 @@ alwaysApply: true
 - Don't use expressions where the operation doesn't change the value.
 - Don't destructure props inside JSX components in Solid projects.
 - Make sure Promise-like statements are handled appropriately.
-- Don't use **dirname and **filename in the global scope.
+- Don't use `__dirname` and `__filename` in the global scope.
 - Prevent import cycles.
 - Don't define React components inside other components.
 - Don't use event handlers on non-interactive elements.
