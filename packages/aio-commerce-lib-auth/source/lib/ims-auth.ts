@@ -17,6 +17,7 @@ import {
   isFailure,
   type Success,
   succeed,
+  type ValidationErrorType,
 } from "@adobe/aio-commerce-lib-core";
 import { context, getToken } from "@adobe/aio-lib-ims";
 import { type InferOutput, safeParse } from "valibot";
@@ -29,7 +30,6 @@ import {
   ImsAuthParamsSchema,
   type ImsAuthProvider,
 } from "~/lib/ims-auth/ims-auth-types";
-import type { ValidationErrorType } from "~/lib/validation";
 
 async function tryGetAccessToken(
   contextName: string,

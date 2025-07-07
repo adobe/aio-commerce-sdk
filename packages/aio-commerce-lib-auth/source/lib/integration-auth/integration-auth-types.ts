@@ -9,7 +9,11 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-import type { Failure, Success } from "@adobe/aio-commerce-lib-core";
+import type {
+  Failure,
+  Success,
+  ValidationErrorType,
+} from "@adobe/aio-commerce-lib-core";
 import {
   entriesFromList,
   type InferInput,
@@ -25,7 +29,6 @@ import {
   message as vMessage,
   url as vUrl,
 } from "valibot";
-import type { ValidationErrorType } from "~/lib/validation";
 
 /**
  * The HTTP methods supported by Commerce.

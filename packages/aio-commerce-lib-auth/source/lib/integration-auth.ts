@@ -16,6 +16,7 @@ import {
   fail,
   type Success,
   succeed,
+  type ValidationErrorType,
 } from "@adobe/aio-commerce-lib-core";
 import OAuth1a from "oauth-1.0a";
 import { safeParse } from "valibot";
@@ -29,7 +30,6 @@ import {
   type UriInput,
   UrlSchema,
 } from "~/lib/integration-auth/integration-auth-types";
-import type { ValidationErrorType } from "~/lib/validation";
 
 export function getIntegrationAuthProvider(config: IntegrationConfig) {
   const oauth = new OAuth1a({

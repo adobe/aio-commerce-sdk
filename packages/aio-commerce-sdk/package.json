@@ -62,7 +62,8 @@
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
   },
   "dependencies": {
-    "@adobe/aio-commerce-lib-auth": "workspace:*"
+    "@adobe/aio-commerce-lib-auth": "workspace:*",
+    "@adobe/aio-commerce-lib-core": "workspace:*"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-typescript": "workspace:*",
