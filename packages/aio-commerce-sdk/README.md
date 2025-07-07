@@ -23,18 +23,6 @@ The SDK currently includes:
 
 - **[@adobe/aio-commerce-lib-auth](../aio-commerce-lib-auth)**: Authentication utilities for Adobe Commerce apps, supporting both IMS and Commerce integrations authentication.
 
-### Architecture
-
-```mermaid
-graph TD
-    A["@adobe/aio-commerce-sdk"] --> B["@adobe/aio-commerce-lib-auth"]
-    A --> C["Future Libraries"]
-
-    style A fill:#f9f,stroke:#333,stroke-width:4px
-    style B fill:#bbf,stroke:#333,stroke-width:2px
-    style C fill:#ddd,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
-```
-
 ## Usage
 
 You can import libraries from the SDK in two ways:
