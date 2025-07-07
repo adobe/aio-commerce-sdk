@@ -10,19 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-export type {
-  ImsAuthConfig,
-  ImsAuthEnv,
-  ImsAuthParamsInput,
-} from "~/lib/ims-auth/ims-auth-types";
-export {
-  IMS_AUTH_ENV,
-  ImsAccessToken,
-  ImsAuthErrorType,
-  ImsAuthHeader,
-  ImsAuthHeaders,
-  ImsAuthParamsSchema,
-  ImsAuthProvider,
-} from "~/lib/ims-auth/ims-auth-types";
+export * from "~/lib/ims-auth/ims-auth-types";
 export * from "./lib/ims-auth";
 export * from "./lib/integration-auth";
+export * from "./lib/integration-auth/integration-auth-types";

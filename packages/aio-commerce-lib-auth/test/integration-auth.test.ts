@@ -13,9 +13,9 @@
 import { describe, expect, test } from "vitest";
 import {
   getIntegrationAuthProvider,
-  type IntegrationAuthParamsInput,
   tryGetIntegrationAuthProvider,
 } from "~/lib/integration-auth";
+import type { IntegrationAuthParamsInput } from "~/lib/integration-auth/integration-auth-types";
 import { getData, getError } from "~/lib/result";
 
 /** Regex to match the OAuth 1.0a header format. */

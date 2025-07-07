@@ -12,88 +12,19 @@
 
 import crypto from "node:crypto";
 import OAuth1a from "oauth-1.0a";
+import { safeParse } from "valibot";
 import {
-  entriesFromList,
-  type InferInput,
-  instance,
-  nonEmpty,
-  nonOptional,
-  object,
-  picklist,
-  pipe,
-  safeParse,
-  safeParser,
-  string,
-  union,
-  message as vMessage,
-  url as vUrl,
-} from "valibot";
+  type HttpMethodInput,
+  type IntegrationAuthHeaders,
+  type IntegrationAuthParamsInput,
+  type IntegrationAuthProvider,
+  type IntegrationConfig,
+  integrationAuthParamsParser,
+  type UriInput,
+  UrlSchema,
+} from "~/lib/integration-auth/integration-auth-types";
 import { type Failure, fail, type Success, succeed } from "~/lib/result";
 import type { ValidationErrorType } from "~/lib/validation";
-
-/**
- * The HTTP methods supported by Commerce.
- * This is used to determine which headers to include in the signing of the authorization header.
- */
-const AllowedHttpMethod = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
-
-export const HttpMethodSchema = picklist(AllowedHttpMethod);
-export type HttpMethodInput = InferInput<typeof HttpMethodSchema>;
-
-const BaseUrlSchema = pipe(
-  string(),
-  nonEmpty("Missing commerce endpoint"),
-  vUrl("The url is badly formatted."),
-);
-
-const UrlSchema = union([BaseUrlSchema, instance(URL)]);
-export type UriInput = InferInput<typeof UrlSchema>;
-
-const IntegrationAuthParamKeys = [
-  "AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY",
-  "AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET",
-  "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN",
-  "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET",
-];
-
-export const IntegrationAuthParamsSchema = nonOptional(
-  vMessage(
-    object(
-      entriesFromList(
-        IntegrationAuthParamKeys,
-        pipe(string(), nonEmpty("Missing commerce integration parameter")),
-      ),
-    ),
-    (issue) => {
-      return `Missing or invalid commerce integration parameter ${issue.expected}`;
-    },
-  ),
-);
-
-export const integrationAuthParamsParser = safeParser(
-  IntegrationAuthParamsSchema,
-);
-
-export type IntegrationAuthParamsInput = InferInput<
-  typeof IntegrationAuthParamsSchema
->;
-
-export type IntegrationAuthHeader = "Authorization";
-export type IntegrationAuthHeaders = Record<IntegrationAuthHeader, string>;
-
-export interface IntegrationConfig {
-  consumerKey: string;
-  consumerSecret: string;
-  accessToken: string;
-  accessTokenSecret: string;
-}
-
-export interface IntegrationAuthProvider {
-  getHeaders: (
-    method: HttpMethodInput,
-    url: UriInput,
-  ) => Success<IntegrationAuthHeaders> | Failure<ValidationErrorType<unknown>>;
-}
 
 export function getIntegrationAuthProvider(config: IntegrationConfig) {
   const oauth = new OAuth1a({
