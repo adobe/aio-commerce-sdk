@@ -381,7 +381,7 @@ We version packages using the `MAJOR.MINOR.PATCH` format:
 > [!IMPORTANT]
 > You don't need to manually handle versioning. If you run the below workflow correctly, Changesets will handle everything for you. Your only responsibility is to create a changeset and commit it in your PR.
 >
-> Not all PRs may require a version bump, specially if you're just changing an internal package or fixing some typos. Stick to the [semantic versioning rules](#semantic-versioning).
+> Not all PRs may require a version bump, for example, you may only want to change an internal package or fix some typos. These kind of changes should not require a version bump. Stick to the [semantic versioning rules](#semantic-versioning).
 
 > [!NOTE]
 > A Changesets bot is configured to warn on PRs that modify packages but don't include a changeset file. If you know your PR doesn't require a version bump at all, ignore the warning.
