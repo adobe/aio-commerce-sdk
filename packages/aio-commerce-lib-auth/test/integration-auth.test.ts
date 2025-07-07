@@ -15,6 +15,7 @@ import {
   getIntegrationAuthProviderWithParams,
   type IntegrationAuthParamsInput,
 } from "~/lib/integration-auth";
+import { getData, getError, isSuccess } from "~/lib/result";
 
 /** Regex to match the OAuth 1.0a header format. */
 const OAUTH1_REGEX =
@@ -31,8 +32,8 @@ describe("getIntegrationAuthProviderWithParams", () => {
   test("should export getIntegrationAccessToken", () => {
     const result = getIntegrationAuthProviderWithParams(params);
 
-    expect(result.isSuccess()).toBeTruthy();
-    const headers = result.data.getHeaders("GET", "http://localhost/test");
+    expect(isSuccess(result)).toBeTruthy();
+    const headers = result.value.getHeaders("GET", "http://localhost/test");
     expect(headers).toHaveProperty(
       "Authorization",
       expect.stringMatching(OAUTH1_REGEX),
@@ -50,9 +51,9 @@ describe("getIntegrationAuthProviderWithParams", () => {
       [param]: undefined,
     } as IntegrationAuthParamsInput);
 
-    expect(() => result.data).toThrow("Cannot get data from a Failure");
-    expect(result.error._tag).toEqual("ValidationError");
-    expect(result.error.message).toEqual(
+    expect(() => getData(result)).toThrow("Cannot get data from a Failure");
+    expect(getError(result)._tag).toEqual("ValidationError");
+    expect(getError(result).message).toEqual(
       "Failed to validate the provided integration parameters. See the console for more details.",
     );
   });
@@ -65,11 +66,11 @@ describe("getIntegrationAuthProviderWithParams", () => {
     ["http://user@:80"],
   ])("should throw an Error on invalid [%s] URL", (url) => {
     const result = getIntegrationAuthProviderWithParams(params);
-    expect(result.isSuccess()).toBeTruthy();
-    expect(result.data).toBeDefined();
+    expect(isSuccess(result)).toBeTruthy();
+    expect(result.value).toBeDefined();
 
     expect(() => {
-      result.data.getHeaders("GET", url);
+      result.value.getHeaders("GET", url);
     }).toThrow(
       "Failed to validate the provided commerce URL. See the console for more details.",
     );

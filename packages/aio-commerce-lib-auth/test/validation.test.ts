@@ -19,7 +19,8 @@ import {
   string,
 } from "valibot";
 import { describe, expect, test } from "vitest";
-import { ValidationError } from "~/lib/utils";
+
+import { ValidationError } from "~/lib/validation";
 
 describe("utils", () => {
   test("should summarize a list of issues with colors and structure", () => {

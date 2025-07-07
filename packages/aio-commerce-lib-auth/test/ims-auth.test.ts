@@ -13,10 +13,9 @@
 import { getToken } from "@adobe/aio-lib-ims";
 import { describe, expect, test, vi } from "vitest";
 
-import {
-  getImsAuthProviderWithParams,
-  type ImsAuthParamsInput,
-} from "~/lib/ims-auth";
+import { getImsAuthProviderWithParams } from "~/lib/ims-auth";
+import type { ImsAuthParamsInput } from "~/lib/ims-auth/ims-auth-types";
+import { getData, getError, isSuccess } from "~/lib/result";
 
 vi.mock("@adobe/aio-lib-ims", async () => ({
   context: (await vi.importActual("@adobe/aio-lib-ims")).context,
@@ -38,13 +37,14 @@ describe("getImsAuthProviderWithParams", () => {
     vi.mocked(getToken).mockResolvedValue(authToken);
 
     const result = await getImsAuthProviderWithParams(params);
-    expect(result.data).toBeDefined();
-    expect(() => result.error).toThrow("Cannot get error from a Success");
+    expect(isSuccess(result)).toBeTruthy();
+    expect(getData(result)).toBeDefined();
+    expect(() => getError(result)).toThrow("Cannot get error from a Success");
 
-    const retrievedToken = await result.data?.getAccessToken();
+    const retrievedToken = await result.value.getAccessToken();
     expect(retrievedToken).toEqual(authToken);
 
-    const headers = await result.data?.getHeaders();
+    const headers = await result.value.getHeaders();
     expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
     expect(headers).toHaveProperty(
       "x-api-key",
@@ -56,9 +56,9 @@ describe("getImsAuthProviderWithParams", () => {
     const result = await getImsAuthProviderWithParams(
       {} as unknown as ImsAuthParamsInput,
     );
-    expect(() => result.data).toThrow("Cannot get data from a Failure");
-    expect(result.error).toBeDefined();
-    expect(result.error._tag).toEqual("ValidationError");
+    expect(() => getData(result)).toThrow("Cannot get data from a Failure");
+    expect(getError(result)).toBeDefined();
+    expect(getError(result)._tag).toEqual("ValidationError");
   });
 
   test.each([
@@ -74,9 +74,9 @@ describe("getImsAuthProviderWithParams", () => {
       [param]: undefined,
     } as ImsAuthParamsInput);
 
-    expect(() => result.data).toThrow("Cannot get data from a Failure");
-    expect(result.error._tag).toEqual("ValidationError");
-    expect(result.error.message).toEqual(
+    expect(() => getData(result)).toThrow("Cannot get data from a Failure");
+    expect(getError(result)._tag).toEqual("ValidationError");
+    expect(getError(result).message).toEqual(
       "Failed to validate the provided IMS parameters. See the console for more details.",
     );
   });
@@ -94,9 +94,9 @@ describe("getImsAuthProviderWithParams", () => {
       [key]: param,
     } as ImsAuthParamsInput);
 
-    expect(() => result.data).toThrow("Cannot get data from a Failure");
-    expect(result.error._tag).toEqual("ValidationError");
-    expect(result.error.message).toEqual(
+    expect(() => getData(result)).toThrow("Cannot get data from a Failure");
+    expect(getError(result)._tag).toEqual("ValidationError");
+    expect(getError(result).message).toEqual(
       "Failed to validate the provided IMS parameters. See the console for more details.",
     );
   });

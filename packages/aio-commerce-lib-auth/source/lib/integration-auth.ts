@@ -28,8 +28,8 @@ import {
   message as vMessage,
   url as vUrl,
 } from "valibot";
-import { Result } from "~/lib/result";
-import { ValidationError, type ValidationErrorType } from "./utils";
+import { fail, type Result, succeed } from "~/lib/result";
+import { ValidationError, type ValidationErrorType } from "~/lib/validation";
 
 /**
  * The HTTP methods supported by Commerce.
@@ -123,7 +123,7 @@ export function getIntegrationAuthProviderWithConfig(
     secret: config.accessTokenSecret,
   };
 
-  return Result.success({
+  return succeed({
     getHeaders(method, url) {
       const validationHeaders = safeParse(UrlSchema, url);
       if (!validationHeaders.success) {
@@ -155,10 +155,10 @@ export function getIntegrationAuthProviderWithConfig(
 export function getIntegrationAuthProviderWithParams(
   params: IntegrationAuthParamsInput,
 ): IntegrationAuthProviderResult {
-  const validation = safeParse(IntegrationAuthParamsSchema, params);
+  const validation = integrationAuthParamsParser(params);
 
   if (!validation.success) {
-    return Result.fail({
+    return fail({
       _tag: "ValidationError",
       message:
         "Failed to validate the provided integration parameters. See the console for more details.",

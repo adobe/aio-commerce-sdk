@@ -11,105 +11,14 @@
  */
 
 import { context, getToken } from "@adobe/aio-lib-ims";
+import { type InferOutput, safeParse } from "valibot";
 import {
-  type InferInput,
-  type InferOutput,
-  nonEmpty,
-  nonOptional,
-  object,
-  optional,
-  parseJson,
-  pipe,
-  rawCheck,
-  safeParse,
-  string,
-  transform,
-  array as vArray,
-  message as vMessage,
-} from "valibot";
-import { Result } from "~/lib/result";
-import type { ValidationErrorType } from "./utils";
-
-const ImsAuthEnv = {
-  PROD: "prod",
-  STAGE: "stage",
-} as const;
-
-type ImsAuthEnv = (typeof ImsAuthEnv)[keyof typeof ImsAuthEnv];
-
-export interface ImsAuthConfig {
-  client_id: string;
-  client_secrets: string[];
-  technical_account_id: string;
-  technical_account_email: string;
-  ims_org_id: string;
-  scopes: string[];
-  environment: ImsAuthEnv;
-  context: string;
-}
-
-const nonEmptyString = (message: string) => pipe(string(), nonEmpty(message));
-
-const createStringArraySchema = (message?: string) => {
-  return pipe(
-    string(),
-    nonEmpty("Missing or invalid"),
-    rawCheck(({ dataset, addIssue }) => {
-      if (
-        !dataset.value ||
-        typeof dataset.value !== "string" ||
-        (dataset.value as string).trim() === ""
-      ) {
-        return;
-      }
-      try {
-        JSON.parse(dataset.value as string);
-      } catch (_e) {
-        addIssue({
-          message:
-            message ?? `invalid JSON array, expected ["value1", "value2"]`,
-        });
-      }
-    }),
-    parseJson(),
-    vArray(string()),
-  );
-};
-
-export const ImsAuthParamsSchema = vMessage(
-  object({
-    AIO_COMMERCE_IMS_CLIENT_ID: nonOptional(
-      nonEmptyString("Missing or invalid AIO_COMMERCE_IMS_CLIENT_ID"),
-    ),
-    AIO_COMMERCE_IMS_CLIENT_SECRETS: createStringArraySchema(),
-    AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: nonEmptyString(
-      "Missing or invalid AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID",
-    ),
-    AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: nonEmptyString(
-      "Missing or invalid AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL",
-    ),
-    AIO_COMMERCE_IMS_IMS_ORG_ID: nonEmptyString(
-      "Missing or invalid AIO_COMMERCE_IMS_IMS_ORG_ID",
-    ),
-    AIO_COMMERCE_IMS_ENV: pipe(
-      optional(string(), ImsAuthEnv.PROD),
-      transform((value) => {
-        if (value === "stage") {
-          return ImsAuthEnv.STAGE;
-        }
-
-        return ImsAuthEnv.PROD; // Default to PROD if not specified
-      }),
-    ),
-    AIO_COMMERCE_IMS_SCOPES: createStringArraySchema(),
-    AIO_COMMERCE_IMS_CTX: pipe(optional(string(), "aio-commerce-sdk-creds")),
-  }),
-  (issue) => {
-    return `Missing or invalid ims auth parameter ${issue.expected}`;
-  },
-);
-
-export type ImsAuthParamsInput = InferInput<typeof ImsAuthParamsSchema>;
+  type ImsAuthConfig,
+  type ImsAuthParamsInput,
+  ImsAuthParamsSchema,
+} from "~/lib/ims-auth/ims-auth-types";
+import { fail, type Result, succeed } from "~/lib/result";
+import type { ValidationErrorType } from "~/lib/validation";
 
 export type ImsAccessToken = string;
 
@@ -129,11 +38,13 @@ export type ImsAuthProviderResult = Result<
 /**
  * If the required IMS parameters are present, this function returns an ImsAuthProvider.
  * @param {ImsAuthConfig} config includes IMS parameters
- * @returns {ImsAuthProvider} returns the IMS auth provider
+ * @returns {Promise} returns the ImsAuthProviderResult type
  */
-export async function getImsAuthProviderWithConfig(config: ImsAuthConfig) {
+export async function getImsAuthProviderWithConfig(
+  config: ImsAuthConfig,
+): Promise<ImsAuthProviderResult> {
   await context.set(config.context, config);
-  return Result.success({
+  return succeed({
     getAccessToken: async () => getToken(config.context, {}),
     getHeaders: async () => {
       const accessToken = await getToken(config.context, {});
@@ -148,7 +59,7 @@ export async function getImsAuthProviderWithConfig(config: ImsAuthConfig) {
 /**
  * If the required IMS parameters are present, this function returns an ImsAuthProvider.
  * @param {ImsAuthParamsInput} params includes IMS parameters
- * @returns {ImsAuthProvider} returns the IMS auth provider
+ * @returns {Promise} returns the ImsAuthProviderResult type
  */
 export async function getImsAuthProviderWithParams(
   params: ImsAuthParamsInput,
@@ -156,7 +67,7 @@ export async function getImsAuthProviderWithParams(
   const validation = safeParse(ImsAuthParamsSchema, params);
 
   if (!validation.success) {
-    return Result.fail({
+    return fail({
       _tag: "ValidationError",
       message:
         "Failed to validate the provided IMS parameters. See the console for more details.",
