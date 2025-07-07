@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   check:
-    name: Turbo Check Tasks (Node ${{ matrix.node-version }})
+    name: Turbo Tasks (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     strategy:
       # We want to run checks on all versions, even if some fail.
@@ -45,7 +45,7 @@ jobs:
           cache: 'pnpm'
       
       - name: Install dependencies
-        run: pnpm ci
+        run: pnpm install --frozen-lockfile
       
         # See: https://turborepo.com/docs/reference/run#--affected
       - name: Run Turbo tasks on affected packages
