@@ -115,4 +115,4 @@ Remember that this configuration is primarily for type checking. The actual buil
 ## Related
 
 - [TypeScript Documentation](https://www.typescriptlang.org/docs/) - Official TypeScript docs
-- [Contributing Guide](../../.github/CONTRIBUTING.md#typescript) - TypeScript guidelines
+- [Development Guide](../../.github/DEVELOPMENT.md#typescript) - TypeScript guidelines

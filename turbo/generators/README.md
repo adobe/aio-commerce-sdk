@@ -78,5 +78,5 @@ Generators use [Handlebars](https://handlebarsjs.com/) for templating. Common pa
 ## Related
 
 - [Turborepo Generators](https://turbo.build/repo/docs/guides/generating-code) - Official documentation
-- [Contributing Guide](../../.github/CONTRIBUTING.md#creating-a-new-package) - Package creation guidelines
+- [Development Guide](../../.github/DEVELOPMENT.md#creating-a-new-package) - Package creation guidelines
 - [Handlebars Documentation](https://handlebarsjs.com/) - Template syntax reference

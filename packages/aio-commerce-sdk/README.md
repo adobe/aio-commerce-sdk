@@ -1,5 +1,8 @@
 # `@adobe/aio-commerce-sdk`
 
+> [!WARNING]
+> This package is a work in progress and is not yet ready for use yet. You may be able to install it, but if you do, expect breaking changes.
+
 Meta-package that re-exports Adobe Commerce SDK libraries for Adobe App Builder applications.
 
 This package serves as a convenient entry point for accessing commonly used Adobe Commerce libraries in App Builder projects, similar to how [`@adobe/aio-sdk`](https://github.com/adobe/aio-sdk) works for general App Builder development.
@@ -76,6 +79,6 @@ const integrationsAuth = getIntegrationsAuthProvider(params);
 
 ## Contributing
 
-This package is part of the Adobe Commerce SDK monorepo. See the [Contributing Guide](../../.github/CONTRIBUTING.md) for development setup and guidelines.
+This package is part of the Adobe Commerce SDK monorepo. See the [Contributing Guide](../../.github/CONTRIBUTING.md) and [Development Guide](../../.github/DEVELOPMENT.md) for development setup and guidelines.
 
-Refer to this section of the contributing guide if you want to add your library to the SDK: [Add it to the SDK (optional)](../../.github/CONTRIBUTING.md#add-it-to-the-sdk-optional)
+Refer to this section of the development guide if you want to add your library to the SDK: [Add it to the SDK (optional)](../../.github/DEVELOPMENT.md#add-it-to-the-sdk-optional)

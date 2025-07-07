@@ -121,4 +121,4 @@ Ensure all your entry points are listed in the `entry` array and that your `pack
 ## Related
 
 - [TSDown Documentation](https://tsdown.dev/) - Official TSDown documentation
-- [Contributing Guide](../../.github/CONTRIBUTING.md#configuring-the-build) - Build configuration guidelines
+- [Development Guide](../../.github/DEVELOPMENT.md#configuring-the-build) - Build configuration guidelines

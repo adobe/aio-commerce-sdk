@@ -70,6 +70,6 @@ Make sure your source files are in the `source/` directory and that you're exten
 ## Related
 
 - [Generators Package](../README.md) - Parent generators documentation
-- [Contributing Guide](../../../.github/CONTRIBUTING.md#creating-a-new-package) - Package creation guidelines
+- [Development Guide](../../../.github/DEVELOPMENT.md#creating-a-new-package) - Package creation guidelines
 - [TypeScript Config](../../../configs/typescript/README.md) - Base TypeScript configuration
 - [TSDown Config](../../../configs/tsdown/README.md) - Build configuration

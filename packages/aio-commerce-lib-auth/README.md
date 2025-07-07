@@ -1,5 +1,8 @@
 # `@adobe/aio-commerce-lib-auth`
 
+> [!WARNING]
+> This package is a work in progress and is not yet ready for use yet. You may be able to install it, but if you do, expect breaking changes.
+
 Authentication utilities for Adobe Commerce apps deployed in Adobe App Builder.
 
 This library provides a unified interface for authentication in Adobe Commerce App Builder applications, supporting multiple authentication mechanisms required for different integration scenarios.
@@ -60,4 +63,4 @@ export const main = async function (params: Record<string, unknown>) {
 
 ## Contributing
 
-This package is part of the Adobe Commerce SDK monorepo. See the [Contributing Guide](../../.github/CONTRIBUTING.md) for development setup and guidelines.
+This package is part of the Adobe Commerce SDK monorepo. See the [Contributing Guide](../../.github/CONTRIBUTING.md) and [Development Guide](../../.github/DEVELOPMENT.md) for development setup and guidelines.

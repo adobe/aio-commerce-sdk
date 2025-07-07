@@ -52,7 +52,7 @@ This project is built with modern tooling and best practices:
 
 ## Contributing
 
-We warmly welcome contributions! This project features a **comprehensive Contributing Guide** that covers everything you need to know:
+We warmly welcome contributions! This project features a [**comprehensive development guide**](./.github/DEVELOPMENT.md) that covers everything you need to know:
 
 The guide includes detailed information about:
 
@@ -63,13 +63,13 @@ The guide includes detailed information about:
 - **Building & Publishing** - Configuring builds and preparing releases
 - **Release Process** - Using changesets for version management
 
-Whether you're fixing a bug, adding a feature, or creating a new package, the Contributing Guide has you covered with clear instructions and best practices.
+See also the [Contributing Guide](./.github/CONTRIBUTING.md) for more information on contributing guidelines.
 
 ## Resources
 
 - [Adobe App Builder Documentation](https://developer.adobe.com/app-builder/docs/overview/)
 - [Adobe Commerce Documentation](https://developer.adobe.com/commerce/docs/)
-- [Contributing Guide](./.github/CONTRIBUTING.md)
+- [Development Guide](./.github/DEVELOPMENT.md)
 - [Code of Conduct](./CODE_OF_CONDUCT.md)
 
 ## License
