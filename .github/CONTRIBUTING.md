@@ -16,17 +16,18 @@ Thanks for choosing to contribute! The following are a set of guidelines to foll
 
 This project contains a collection of packages that together form the Adobe Commerce SDK for App Builder applications. Each library is designed as a standalone, self-contained package that can be used independently in any App Builder app, following the same pattern as the [`@adobe/aio-*`](https://github.com/adobe?q=aio-lib&type=all) libraries.
 
-In addition to these individual libraries, the [`aio-commerce-sdk`](../packages/aio-commerce-sdk) package serves as a meta-package that re-exports selected libraries for convenience, similar to how the [`@adobe/aio-sdk`](https://github.com/adobe/aio-sdk) package works.
+In addition to these individual libraries, there's also the [`aio-commerce-sdk`](../packages/aio-commerce-sdk) package, which serves as a meta-package that re-exports selected libraries for convenience, similar to how the [`@adobe/aio-sdk`](https://github.com/adobe/aio-sdk) package works.
 
 > [!IMPORTANT]
-> The SDK does not necessarily need to re-export every single library, but it should focus on re-exporting the most commonly used ones and those that are typically used together in the same context.
+> The SDK should focus on re-exporting the most commonly used libraries and those that work together in similar contexts, rather than re-exporting every available library.
 
 ### PNPM Monorepo
 
-This project is a [PNPM monorepo](https://pnpm.io/workspaces). PNPM is a faster and more efficient package manager for JavaScript compared to `npm`. When working with monorepos, `pnpm` is [recommended over `npm`](https://refine.dev/blog/pnpm-vs-npm-and-yarn/) for several key reasons:
+This project is a [PNPM monorepo](https://pnpm.io/workspaces). PNPM is a faster and more efficient package manager for JavaScript compared to `npm`. When working with monorepos, `pnpm` is [recommended over `npm`](https://refine.dev/blog/pnpm-vs-npm-and-yarn/), with two of the main reasons being:
 
 - Superior performance and space efficiency compared to `npm`
-- Strict dependency isolation that prevents cross-package access issues. Unlike `npm`'s flattened `node_modules` structure, which allows any package to access dependencies from anywhere in the monorepo (even when not declared in its `package.json`), `pnpm` maintains proper isolation.
+
+- Strict dependency isolation that prevents cross-package access issues. Unlike `npm`'s flattened `node_modules` structure, which allows any package to access dependencies from anywhere in the monorepo (even when not declared in its `package.json`), `pnpm` maintains proper isolation, preventing subtle, hard-to-trace bugs that commonly occur with `npm` in monorepo environments.
   - This prevents subtle, hard-to-trace bugs that commonly occur with `npm` in monorepo environments.
 
 ### Turborepo
@@ -34,7 +35,9 @@ This project is a [PNPM monorepo](https://pnpm.io/workspaces). PNPM is a faster 
 This project uses [Turborepo](https://turbo.build/repo/docs), a build system designed for managing production-ready monorepos. Turborepo optimizes your development workflow through several key features:
 
 - **Intelligent caching**: Turbo remembers the output of any task you run and skips work that's already been done.
+
 - **Smart task orchestration**: Automatically detects and respects dependencies between packages, ensuring tasks execute in the correct order (e.g., if `pkg-b` depends on `pkg-a`, Turbo builds `pkg-a` first when you build `pkg-b`).
+
 - **Parallel execution**: Maximizes resource utilization by running independent tasks simultaneously across all available cores.
 
 For detailed information on using Turborepo in this project, refer to the [official documentation](https://turbo.build/repo/docs).
@@ -42,17 +45,23 @@ For detailed information on using Turborepo in this project, refer to the [offic
 ## Prerequisites
 
 - **`node`**: See the [.nvmrc](../.nvmrc) file for the recommended [Node.js](https://nodejs.org/en) version.
+
 - **`pnpm`**: See the `packageManager` field in the [package.json](../package.json) file for the recommended [`pnpm`](https://pnpm.io/installation) version.
 
 ## Project Standards
 
 ### TypeScript
 
-This project is built exclusively with TypeScript and follows a TypeScript-first approach. We do not mix JavaScript and TypeScript files, and all source code has to be written in TypeScript. This ensures type safety, better developer experience, and consistent code quality across the entire codebase.
+This project uses TypeScript exclusively. All source code must be written in TypeScript to ensure type safety, a better developer experience, and consistent code quality across the entire codebase.
 
-Don't worry if you're not familiar with TypeScript, as the project provides a complete TypeScript development framework with pre-configured tooling, type definitions, and IDE integration that makes it easy to work with it.
+Don't worry if you're not familiar with the language, as the project provides a complete TypeScript development framework with pre-configured tooling, type definitions, and IDE integration that makes it easy to work with it.
 
 ### ESM Over CommonJS
+
+This project uses ECMAScript Modules (ESM) exclusively. All source code must be written in ESM to ensure compatibility with modern JavaScript and Node.js.
+
+> [!NOTE]
+> While we write all source code in ESM format, the build process generates bundles compatible with both ESM and CommonJS consumers. This dual compatibility is handled automatically by our build tool, TSDown. See [Configuring the build and exports](#configuring-the-build-and-exports) for more details.
 
 If you're unfamiliar with the difference between ESM and CommonJS, we recommend reading [this article](https://betterstack.com/community/guides/scaling-nodejs/commonjs-vs-esm/). In short, CommonJS (CJS, `require()`) is the legacy module system introduced in Node.js in 2009. It became the de facto standard for many years due to being the only module system supported in Node.js.
 
@@ -65,9 +74,6 @@ While Node.js still supports CommonJS and many libraries continue to use it, ECM
 
 - **Long-term compatibility with the ecosystem**: ESM is the standard module system of JavaScript. Node.js and modern tooling (e.g. Vite, Bun, Deno) are all centered around ESM going forward. Starting with ESM avoids future migration pain.
 
-> [!NOTE]
-> While we write all source code in ESM format, the build process generates bundles compatible with both ESM and CommonJS consumers. This dual compatibility is handled automatically by our build tool, TSDown. See [Configuring the build and exports](#configuring-the-build-and-exports) for more details.
-
 ### Documentation
 
 Each package should provide its own documentation through both written guides (in Markdown) and inline code comments. We use JSDoc as our standard for documenting source code.
@@ -78,10 +84,14 @@ Each package should provide its own documentation through both written guides (i
 When working with JSDoc in TypeScript, keep these guidelines in mind:
 
 - **Avoid duplicating type information**: TypeScript already provides static typing, so there's no need to repeat it.
-  - Use `@param name` instead of `@param {string} name`.
-  - Avoid `@returns {Type} description` or similar, just use `@returns description` if needed.
-- **Document public APIs only**: Internal helpers or types usually don't need detailed JSDoc unless complex or reused across modules.
+  - Use `@param name` instead of `@param {Type} name`.
+
+  - Avoid `@returns {Type} description` or similar, just use `@returns description`.
+
+- **Document public APIs at least**: Internal helpers or types usually don't need detailed JSDoc unless complex or reused across modules. But the exported symbols of a package should all be documented.
+
 - **Use `@example` for tricky usage**: If a function or method is used non-obviously, include an `@example` tag to show correct usage.
+
 - **Consistency matters**: Use consistent phrasing, punctuation, and formatting across packages. If you're unsure, follow conventions already used in existing packages.
 
 #### API Reference
@@ -114,7 +124,7 @@ This will prompt you for package configuration details, such as whether to inclu
 ![create-package generator](./assets/turbo-create-package.png)
 
 > [!NOTE]
-> The `create-package` generator will create the new package in the `packages` directory by default. If you want it in another directory, feel free to move it after it's created, or remove files that you don't need. But make sure of the following:
+> The `create-package` generator will create the new package in the `packages` directory by default. If you want it in another directory, feel free to move it after it's created. You may also want to remove files that you don't need. In any case, make sure of the following:
 >
 > - The `pnpm-workspace.yaml` file contains the directory where it has been moved (see [docs](https://pnpm.io/workspaces)).
 > - The `repository.directory` field in the `package.json` file is modified to reflect the new location (only applicable if the package is public).
@@ -152,16 +162,19 @@ If instead of using the workspace version of a package, you want to use a publis
 The above example shows how to:
 
 - Use a published version of a public package (`@adobe/aio-commerce-lib-example`) as a `dependency`.
+
 - Use the workspace version of a public package (`@adobe/aio-commerce-lib-other`) as a `dependency`.
+
 - Use the workspace version of a private package (`@aio-commerce-sdk/config-typescript`) as a `devDependency`.
 
 ### Code Style
 
 This project ensures a consistent code style by using [Biome](https://biomejs.dev/) for linting and formatting. Biome is a modern, fast, and configurable linter and formatter that replaces the usual combination of `eslint` and `prettier`. It works with JSON, JavaScript, and TypeScript ([among other languages](https://biomejs.dev/internals/language-support/)) out of the box, no plugins required.
 
-To avoid unnecessary debates around code style (since everyone has their preferences), we've configured it using the [`ultracite` preset](https://github.com/haydenbleasel/ultracite), an opinionated collection of rules carefully selected to maintain consistency. This preset is AI-ready, meaning it includes specialized rules that align with the code style, ensuring that AI-generated code also meets the standards. It includes:
+To avoid unnecessary debates around code style (since everyone has their preferences), we've configured it using the [`ultracite` preset](https://github.com/haydenbleasel/ultracite), an opinionated collection of rules carefully selected to maintain consistency. This preset is AI-ready, meaning it includes specialized AI-friendly rule files that align with the code style, ensuring that AI-generated code also meets the standards. These are:
 
 - An `ultracite.mdc` file in `.cursor/rules`, to be used by Cursor.
+
 - A `copilot-instructions.md` file in the `.github/` directory, to be used by GitHub Copilot.
 
 > [!IMPORTANT]
@@ -176,10 +189,10 @@ At the time of writing, Biome doesn't fully support linting and formatting Markd
 
 #### Pre-commit hook
 
-To ensure a consistent code style, we've configured a `pre-commit` hook via [`husky`](https://typicode.github.io/husky/). It uses [`lint-staged`](https://github.com/okonet/lint-staged) to lint and format your staged files. This hook is automatically installed when you run `pnpm install` the first time, and doesn't require any manual or additional configuration.
-
 > [!IMPORTANT]
 > This hook **WILL MODIFY** your staged files to try and fix the code style issues. It will only apply safe fixes and non-destructive changes. If you have some files that can't be automatically fixed by the tool, the commit will fail and you'll need to fix the issues manually.
+
+To ensure a consistent code style, we've configured a `pre-commit` hook via [`husky`](https://typicode.github.io/husky/). It uses [`lint-staged`](https://github.com/okonet/lint-staged) to lint and format your staged files. This hook is automatically installed when you run `pnpm install` the first time, and doesn't require any manual or additional configuration.
 
 ### Setup Your Editor
 
@@ -200,6 +213,8 @@ Because Cursor is a VSCode-based editor, it will automatically pick up the `.vsc
 
 </details>
 
+<p></p>
+
 <details>
 <summary><strong>JetBrains</strong></summary>
 <p></p>
@@ -218,7 +233,7 @@ Here are some guidelines to achieve a similar development experience:
 
 ## Testing
 
-> [!NOTE]
+> [!TIP]
 > The `create-package` generator will automatically setup testing for your package if you select to include it.
 
 Testing is conducted on a per-package basis. While not all packages require tests (particularly those without source code), you should include them whenever applicable.
@@ -233,24 +248,21 @@ This section guides you through preparing your package for release, covering bui
 
 ### Configuring the build
 
-Packages in this repository are built with [TSDown](https://tsdown.dev/), a specialized tool for TypeScript library development. TSDown enables dual-format bundling that supports both CommonJS and ESM consumers, while providing tree-shaking optimization, automatic type declaration generation, and additional modern build features.
+Packages in this repository are built with [TSDown](https://tsdown.dev/), a specialized tool for TypeScript library development. TSDown enables dual-format bundling that supports both CommonJS and ESM consumers (among other formats), while also providing tree-shaking optimization, automatic type declaration generation, and other modern build features.
 
 To configure the build, your package requires a `tsdown.config.ts` file in its root directory. We provide a default configuration through the `@aio-commerce-sdk/config-tsdown` package, which is automatically installed when scaffolding a package with the `create-package` generator.
 
 The default configuration should suffice for most use cases, requiring only that you specify the package entry points. To add additional entry points, simply include them in your `tsdown.config.ts` file. Refer to these packages for examples:
 
 - [`@aio-commerce-sdk/config-tsdown`](../configs/tsdown/tsdown.config.base.ts): default configuration
+
 - [`@adobe/aio-commerce-lib-auth`](../packages/lib-auth/tsdown.config.ts): single-entry public package example
+
 - [`@adobe/aio-commerce-sdk`](../packages/aio-commerce-sdk/tsdown.config.ts): multi-entry public package example
 
 After you have your TSDown configuration ready, you can run the `build` script to build your package, which will generate a `dist/` directory with the built files. Evaluate the output to make sure it's what you expect.
 
 ### Configuring the exports
-
-Once you have your build files, it's time to configure your `package.json` file to declare the files that your library exports. Here's a [really good guide](https://hirok.io/posts/package-json-exports) that elaborates on the topic. If you just want to make it work, copy the package exports from the below reference packages:
-
-- [`@adobe/aio-commerce-lib-auth`](../packages/lib-auth/package.json): single-entry public package example
-- [`@adobe/aio-commerce-sdk`](../packages/aio-commerce-sdk/package.json): multi-entry public package example
 
 > [!IMPORTANT]
 > At the end, your `package.json` should provide the following fields before considering your package ready for release:
@@ -260,16 +272,26 @@ Once you have your build files, it's time to configure your `package.json` file 
 > - `"main"`: The CommonJS entry point.
 > - `"module"`: The ESM entry point.
 
+Once you have your build files, it's time to configure your `package.json` file to declare the files that your library exports. Here's a [really good guide](https://hirok.io/posts/package-json-exports) that elaborates on the topic. If you just want to make it work, copy the package exports from the below reference packages:
+
+- [`@adobe/aio-commerce-lib-auth`](../packages/lib-auth/package.json): single-entry public package example
+
+- [`@adobe/aio-commerce-sdk`](../packages/aio-commerce-sdk/package.json): multi-entry public package example
+
 ### Tree-shaking
 
-Tree shaking is the process of removing unused code from the build. It's a way to reduce the size of your package and improve the performance of your library. If the consumer of your library is only using a subset of the code, a build tool like TSDown (or esbuild, Rollup, Webpack, etc.) will be able to remove the unused code from the build, reducing the size of the package and improving the performance of the resulting code.
+Tree shaking is the process of removing unused code from the build. It's a way to reduce the size of your package and improve the performance of your library. If the consumer of your library is only using a subset of the code exported by your package, a build tool like TSDown (or esbuild, Rollup, Webpack, etc.) will be able to remove the unused code from the build, reducing the size of the package and improving the performance of the resulting code.
 
 Contrary to popular belief, build tools can't just magically tree-shake everything. There are some rules that you need to follow to make sure that your package is tree-shakeable. It's not necessary to follow all the rules to the letter, but doing it will help the build tool generate a smaller, more optimized build.
 
 - **Prefer named exports over default exports**: Named exports offer better tree-shaking optimization because they allow bundlers to precisely track which parts of a module are used. Default exports may reduce tree-shaking efficiency because bundlers often treat them as a single entity, making it harder to remove unused parts within the module.
+
 - **Eliminate circular dependencies**: Circular references between modules prevent effective dead code elimination.
+
 - **Minimize dynamic imports**: Since dynamic imports cannot be statically analyzed, they bypass tree-shaking optimizations entirely.
+
 - **Limit re-exports**: When the same code is re-exported through multiple entry points, bundlers may struggle to identify and remove unused portions.
+
 - **Write side-effect-free code**: Code that produces side effects (global modifications, I/O operations, etc.) must be preserved by bundlers, preventing removal even when seemingly unused.
 
 #### How to declare `sideEffects`
@@ -308,21 +330,21 @@ This tells bundlers that only the specified files have side effects, while all o
 
 ### Add it to the SDK (optional)
 
-As explained in the [Overview](#overview) section, the `aio-commerce-sdk` package re-exports certain libraries for convenience. If you want your package to be part of the SDK, you need to make sure that your library is properly re-exported by the `aio-commerce-sdk` package.
+As explained in the [Overview](#overview) section, the [`@adobe/aio-commerce-sdk`](../packages/aio-commerce-sdk) package re-exports certain libraries for convenience. If you want your package to be part of the SDK, you need to make sure that your library is properly re-exported by the package.
 
 > [!IMPORTANT]
 > Since the `aio-commerce-sdk` combines multiple packages, dependencies **should be installed normally** without the `workspace:` protocol. Using workspace references would complicate version management significantly and cause the SDK to always depend on the local development version rather than published releases. With standard dependencies, releasing a new version of your package allows you to simply update the corresponding version in the SDK.
 
-Assuming you want the SDK to re-export the `@adobe/aio-commerce-lib-auth` package:
+Assuming you want the SDK to re-export the [`@adobe/aio-commerce-lib-auth`](../packages/aio-commerce-lib-auth) package:
 
-1. Add it as a `dependency` to the [`aio-commerce-sdk`](../packages/aio-commerce-sdk) package.
+1. Add it as a `dependency` to the [`@adobe/aio-commerce-sdk`](../packages/aio-commerce-sdk) package.
 2. Create a `source/auth.ts` file, and then re-export everything like this:
 
    ```ts
    export * from "@adobe/aio-commerce-lib-auth";
    ```
 
-3. Add it to the [`index.ts`](../packages/aio-commerce-sdk/index.ts) entrypoint with an aliased export.
+3. Add it also to the [`index.ts`](../packages/aio-commerce-sdk/index.ts) entrypoint with an aliased export.
 
    ```ts
    export * as Auth from "@adobe/aio-commerce-lib-auth";
@@ -332,7 +354,9 @@ Assuming you want the SDK to re-export the `@adobe/aio-commerce-lib-auth` packag
    // export * as Other from "@adobe/aio-commerce-lib-other";
    ```
 
-4. Update the `package.json` file to account for the new entrypoint you created in step 2.
+4. Update the `package.json` file to account for the new entrypoint you created in step 2, following the [exports](#configuring-the-exports) section.
+
+#### Usage
 
 Once these changes are released, consumers can access your library through two convenient patterns:
 
@@ -354,11 +378,13 @@ This project follows [Semantic Versioning](https://semver.org/) and uses [Change
 
 ### Semantic Versioning
 
-We version packages using the MAJOR.MINOR.PATCH format:
+We version packages using the `MAJOR.MINOR.PATCH` format:
 
-- **MAJOR**: Breaking changes that require consumers to update their code
-- **MINOR**: New features that are backward compatible
-- **PATCH**: Bug fixes and minor improvements
+- `MAJOR`: Breaking changes that require consumers to update their code
+
+- `MINOR`: New features that are backward compatible
+
+- `PATCH`: Bug fixes and minor improvements
 
 ### How Changesets Work
 
