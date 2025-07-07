@@ -20,17 +20,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       # pnpm version will be read from packageManager field in package.json
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: 'pnpm'
-      
+          cache: "pnpm"
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       
@@ -49,4 +49,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # TODO: Uncomment when ready to publish to NPM
           # NPM_TOKEN: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
-    

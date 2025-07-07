@@ -1,10 +1,11 @@
 {
   "name": "@aio-commerce-sdk/generators",
   "description": "Generators used to scaffold code within the AIO Commerce SDK monorepo",
-  "version": "1.0.0",
   "private": true,
   "scripts": {
     "gen:create-package": "turbo gen create-package",
+    "assist": "pnpm -w assist .",
+    "assist:apply": "pnpm -w assist:apply .",
     "check:ci": "pnpm -w check:ci .",
     "format": "pnpm -w format .",
     "format:check": "pnpm -w format:check .",

@@ -1,7 +1,9 @@
 {
   "name": "{{scopedPackageName}}",
   "type": "module",
+  {{#unless isPrivate}}
   "version": "1.0.0",
+  {{/unless}}
   "private": {{isPrivate}},
 
   "author": "Adobe Inc.",
@@ -11,8 +13,9 @@
 
   "license": "Apache-2.0",
   "description": "Description for {{scopedPackageName}}",
+  
+  {{#unless isPrivate}}
   "keywords": [],
-
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
@@ -22,9 +25,12 @@
     "url": "https://github.com/adobe/aio-commerce-sdk.git",
     "directory": "{{packageDir}}"
   },
+  {{/unless}}
 
   "scripts": {
     "build": "tsdown",
+    "assist": "pnpm -w assist .",
+    "assist:apply": "pnpm -w assist:apply .",
     "check:ci": "pnpm -w check:ci .",
     "format": "pnpm -w format .",
     "format:check": "pnpm -w format:check .",
