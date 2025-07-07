@@ -24,15 +24,32 @@ In your App Builder application, you can use the library to authenticate users o
 In the runtime action you can generate an access token using the IMS Provider:
 
 ```typescript
-import { tryGetImsAuthProvider } from '@adobe/aio-commerce-lib-auth';
+import { tryGetImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
 
-export const main = async function (params: Record<string, unknown>) {
-  // Generate the needed headers for API requests
-  const imsAuth = tryGetImsAuthProvider(params);
-  const headers = await imsAuth.getHeaders();
-
-  return { statusCode: 200 };
+const params = {
+  AIO_COMMERCE_IMS_CLIENT_ID: "...",
+  AIO_COMMERCE_IMS_CLIENT_SECRETS: "[\"secret1\",\"secret2\"]",
+  AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: "...",
+  AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: "...",
+  AIO_COMMERCE_IMS_IMS_ORG_ID: "...",
+  AIO_COMMERCE_IMS_ENV: "prod",
+  AIO_COMMERCE_IMS_SCOPES: "[\"scope1\",\"scope2\"]",
+  AIO_COMMERCE_IMS_CTX: "aio-commerce-sdk-creds"
 };
+
+const result = await tryGetImsAuthProvider(params);
+
+if (result.success) {
+  const imsAuthProvider = result.value;
+  const headersResult = await imsAuthProvider.getHeaders();
+  if (headersResult.success) {
+    // Use headersResult.value for API requests
+  } else {
+    // Handle header generation error
+  }
+} else {
+  // Handle parameter validation error
+}
 ```
 
 ### Integrations Provider
@@ -40,13 +57,26 @@ export const main = async function (params: Record<string, unknown>) {
 In the runtime action you can generate an access token using the Integrations Provider:
 
 ```typescript
-import { getIntegrationsAuthProvider } from '@adobe/aio-commerce-lib-auth';
+import { tryGetIntegrationAuthProvider } from "@adobe/aio-commerce-lib-auth";
 
-export const main = async function (params: Record<string, unknown>) {
-  // Generate the needed headers for API requests
-  const integrationsAuth = getIntegrationsAuthProvider(params);
-  const headers = integrationsAuth.getHeaders('GET', 'http://localhost/rest/V1/orders');
-
-  return { statusCode: 200 };
+const params = {
+  AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY: "...",
+  AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET: "...",
+  AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN: "...",
+  AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET: "..."
 };
+
+const result = tryGetIntegrationAuthProvider(params);
+
+if (result.success) {
+  const provider = result.value;
+  const headersResult = provider.getHeaders("GET", "https://example.com/rest/V1/orders");
+  if (headersResult.success) {
+    // Use headersResult.value for API requests
+  } else {
+    // Handle header generation error
+  }
+} else {
+  // Handle parameter validation error
+}
 ```
