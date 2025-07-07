@@ -45,7 +45,6 @@ For detailed information on using Turborepo in this project, refer to the [offic
 ## Prerequisites
 
 - **`node`**: See the [.nvmrc](../.nvmrc) file for the recommended [Node.js](https://nodejs.org/en) version.
-
 - **`pnpm`**: See the `packageManager` field in the [package.json](../package.json) file for the recommended [`pnpm`](https://pnpm.io/installation) version.
 
 ## Project Standards
@@ -85,7 +84,6 @@ When working with JSDoc in TypeScript, keep these guidelines in mind:
 
 - **Avoid duplicating type information**: TypeScript already provides static typing, so there's no need to repeat it.
   - Use `@param name` instead of `@param {Type} name`.
-
   - Avoid `@returns {Type} description` or similar, just use `@returns description`.
 
 - **Document public APIs at least**: Internal helpers or types usually don't need detailed JSDoc unless complex or reused across modules. But the exported symbols of a package should all be documented.
@@ -162,9 +160,7 @@ If instead of using the workspace version of a package, you want to use a publis
 The above example shows how to:
 
 - Use a published version of a public package (`@adobe/aio-commerce-lib-example`) as a `dependency`.
-
 - Use the workspace version of a public package (`@adobe/aio-commerce-lib-other`) as a `dependency`.
-
 - Use the workspace version of a private package (`@aio-commerce-sdk/config-typescript`) as a `devDependency`.
 
 ### Code Style
@@ -174,7 +170,6 @@ This project ensures a consistent code style by using [Biome](https://biomejs.de
 To avoid unnecessary debates around code style (since everyone has their preferences), we've configured it using the [`ultracite` preset](https://github.com/haydenbleasel/ultracite), an opinionated collection of rules carefully selected to maintain consistency. This preset is AI-ready, meaning it includes specialized AI-friendly rule files that align with the code style, ensuring that AI-generated code also meets the standards. These are:
 
 - An `ultracite.mdc` file in `.cursor/rules`, to be used by Cursor.
-
 - A `copilot-instructions.md` file in the `.github/` directory, to be used by GitHub Copilot.
 
 > [!IMPORTANT]
@@ -254,10 +249,9 @@ To configure the build, your package requires a `tsdown.config.ts` file in its r
 
 The default configuration should suffice for most use cases, requiring only that you specify the package entry points. To add additional entry points, simply include them in your `tsdown.config.ts` file. Refer to these packages for examples:
 
+<!-- prettier-ignore -->
 - [`@aio-commerce-sdk/config-tsdown`](../configs/tsdown/tsdown.config.base.ts): default configuration
-
 - [`@adobe/aio-commerce-lib-auth`](../packages/lib-auth/tsdown.config.ts): single-entry public package example
-
 - [`@adobe/aio-commerce-sdk`](../packages/aio-commerce-sdk/tsdown.config.ts): multi-entry public package example
 
 After you have your TSDown configuration ready, you can run the `build` script to build your package, which will generate a `dist/` directory with the built files. Evaluate the output to make sure it's what you expect.
@@ -275,7 +269,6 @@ After you have your TSDown configuration ready, you can run the `build` script t
 Once you have your build files, it's time to configure your `package.json` file to declare the files that your library exports. Here's a [really good guide](https://hirok.io/posts/package-json-exports) that elaborates on the topic. If you just want to make it work, copy the package exports from the below reference packages:
 
 - [`@adobe/aio-commerce-lib-auth`](../packages/lib-auth/package.json): single-entry public package example
-
 - [`@adobe/aio-commerce-sdk`](../packages/aio-commerce-sdk/package.json): multi-entry public package example
 
 ### Tree-shaking
@@ -381,9 +374,7 @@ This project follows [Semantic Versioning](https://semver.org/) and uses [Change
 We version packages using the `MAJOR.MINOR.PATCH` format:
 
 - `MAJOR`: Breaking changes that require consumers to update their code
-
 - `MINOR`: New features that are backward compatible
-
 - `PATCH`: Bug fixes and minor improvements
 
 ### How Changesets Work
