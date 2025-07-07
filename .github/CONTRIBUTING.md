@@ -2,7 +2,7 @@
 
 Thanks for choosing to contribute!
 
-The following are a set of guidelines to follow when contributing to this project.
+The following are a set of guidelines to follow when contributing to this project. See also the [Development Guide](./DEVELOPMENT.md) for more information on how to contribute.
 
 ## Code Of Conduct
 

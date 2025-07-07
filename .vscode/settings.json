@@ -8,6 +8,16 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
 
+  "markdown.extension.toc.levels": "1..2",
+  "[markdown]": {
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "editor.unicodeHighlight.invisibleCharacters": false,
+    "diffEditor.ignoreTrimWhitespace": false,
+    "editor.wordWrap": "on",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+
   "emmet.showExpandedAbbreviation": "never",
   "editor.codeActionsOnSave": {
     "source.fixAll.biome": "explicit",
