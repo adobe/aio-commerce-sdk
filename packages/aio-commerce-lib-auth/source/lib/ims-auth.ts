@@ -13,12 +13,15 @@
 import { context, getToken } from "@adobe/aio-lib-ims";
 import { type InferOutput, safeParse } from "valibot";
 import {
+  type ImsAccessToken,
   type ImsAuthConfig,
+  type ImsAuthErrorType,
+  type ImsAuthHeaders,
   type ImsAuthParamsInput,
   ImsAuthParamsSchema,
+  type ImsAuthProvider,
 } from "~/lib/ims-auth/ims-auth-types";
 import {
-  type ErrorType,
   type Failure,
   fail,
   getData,
@@ -27,26 +30,6 @@ import {
   succeed,
 } from "~/lib/result";
 import type { ValidationErrorType } from "~/lib/validation";
-
-export type ImsAccessToken = string;
-
-export type ImsAuthHeader = "Authorization" | "x-api-key";
-export type ImsAuthHeaders = Record<ImsAuthHeader, string>;
-
-export type ImsAuthErrorType<Error> = ErrorType & {
-  _tag: "ImsAuthError";
-  message: string;
-  error: Error;
-};
-
-export interface ImsAuthProvider {
-  getAccessToken: () => Promise<
-    Success<ImsAccessToken> | Failure<ImsAuthErrorType<unknown>>
-  >;
-  getHeaders: () => Promise<
-    Success<ImsAuthHeaders> | Failure<ImsAuthErrorType<unknown>>
-  >;
-}
 
 async function tryGetAccessToken(
   contextName: string,

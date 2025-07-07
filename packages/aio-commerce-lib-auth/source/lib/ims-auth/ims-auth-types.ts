@@ -24,6 +24,7 @@ import {
   array as vArray,
   message as vMessage,
 } from "valibot";
+import type { ErrorType, Failure, Success } from "~/lib/result";
 import { nonEmptyString } from "~/lib/validation";
 
 export const IMS_AUTH_ENV = {
@@ -61,7 +62,7 @@ const createStringArraySchema = (message?: string) => {
       } catch (_e) {
         addIssue({
           message:
-            message ?? `invalid JSON array, expected ["value1", "value2"]`,
+            message ?? 'invalid JSON array, expected ["value1", "value2"]',
         });
       }
     }),
@@ -91,7 +92,7 @@ export const ImsAuthParamsSchema = vMessage(
           return IMS_AUTH_ENV.STAGE;
         }
 
-        return IMS_AUTH_ENV.PROD; // Default to PROD if not specified
+        return IMS_AUTH_ENV.PROD;
       }),
     ),
     AIO_COMMERCE_IMS_SCOPES: createStringArraySchema(),
@@ -102,3 +103,20 @@ export const ImsAuthParamsSchema = vMessage(
   },
 );
 export type ImsAuthParamsInput = InferInput<typeof ImsAuthParamsSchema>;
+export type ImsAccessToken = string;
+export type ImsAuthHeader = "Authorization" | "x-api-key";
+export type ImsAuthHeaders = Record<ImsAuthHeader, string>;
+export type ImsAuthErrorType<Error> = ErrorType & {
+  _tag: "ImsAuthError";
+  message: string;
+  error: Error;
+};
+
+export interface ImsAuthProvider {
+  getAccessToken: () => Promise<
+    Success<ImsAccessToken> | Failure<ImsAuthErrorType<unknown>>
+  >;
+  getHeaders: () => Promise<
+    Success<ImsAuthHeaders> | Failure<ImsAuthErrorType<unknown>>
+  >;
+}

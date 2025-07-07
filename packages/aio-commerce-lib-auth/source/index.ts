@@ -17,8 +17,12 @@ export type {
 } from "~/lib/ims-auth/ims-auth-types";
 export {
   IMS_AUTH_ENV,
+  ImsAccessToken,
+  ImsAuthErrorType,
+  ImsAuthHeader,
+  ImsAuthHeaders,
   ImsAuthParamsSchema,
+  ImsAuthProvider,
 } from "~/lib/ims-auth/ims-auth-types";
-
 export * from "./lib/ims-auth";
 export * from "./lib/integration-auth";
