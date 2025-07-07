@@ -1,5 +1,5 @@
 {
-  "name": "@adobe/aio-commerce-sdk",
+  "name": "aio-commerce-sdk",
   "private": true,
   "scripts": {
     "preinstall": "npx only-allow pnpm",
