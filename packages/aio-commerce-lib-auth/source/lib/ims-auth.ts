@@ -54,7 +54,7 @@ export async function getImsAuthProvider(config: ImsAuthConfig) {
       const result = await tryGetAccessToken(config.context);
 
       if (isFailure(result)) {
-        return result as Failure<ImsAuthErrorType<unknown>>;
+        return result;
       }
 
       const accessToken = getData(result);

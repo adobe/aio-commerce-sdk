@@ -10,17 +10,10 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import {
-  type BaseIssue,
-  boolean,
-  number,
-  object,
-  safeParse,
-  string,
-} from "valibot";
+import { boolean, number, object, safeParse, string } from "valibot";
 import { describe, expect, test } from "vitest";
 
-import { ValidationError } from "~/lib/validation";
+import { summarize, type ValidationErrorType } from "~/lib/validation";
 
 describe("utils", () => {
   test("should summarize a list of issues with colors and structure", () => {
@@ -42,10 +35,10 @@ describe("utils", () => {
       },
     };
     const result = safeParse(SimpleObjectSchema, simpleObject);
-    const output = new ValidationError(
-      "Validation error",
-      result.issues as [BaseIssue<unknown>, ...BaseIssue<unknown>[]],
-    ).toString();
+    const output = summarize({
+      _tag: "ValidationError",
+      issues: result.issues,
+    } as unknown as ValidationErrorType<unknown>);
     expect(output).toContain("key1");
     expect(output).toContain("key2");
     expect(output).toContain("key3.nestedKey.nestedKey");

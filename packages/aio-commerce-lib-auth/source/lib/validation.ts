@@ -11,16 +11,7 @@
  */
 
 import { cyanBright, dim, whiteBright, yellowBright } from "ansis";
-import {
-  type BaseIssue,
-  type BaseSchema,
-  type BaseSchemaAsync,
-  getDotPath,
-  type InferIssue,
-  nonEmpty,
-  pipe,
-  string,
-} from "valibot";
+import { type BaseIssue, getDotPath, nonEmpty, pipe, string } from "valibot";
 import type { ErrorType } from "~/lib/result";
 
 export const nonEmptyString = (message: string) =>
@@ -61,46 +52,10 @@ function issueToDisplay<TInput>(issues: BaseIssue<TInput>[]): string {
  * Summarizes the validation result by formatting the issues into a readable string.
  * @param error
  */
-export function summarize<
-  TSchema extends
-    | BaseSchema<unknown, unknown, BaseIssue<unknown>>
-    | BaseSchemaAsync<unknown, unknown, BaseIssue<unknown>>,
->(error: ValidationError<TSchema>): string {
+export function summarize<TSchema>(
+  error: ValidationErrorType<TSchema>,
+): string {
   return `${whiteBright(error.message)}\n${issueToDisplay(error.issues)}`;
-}
-
-/**
- * A Validation error with useful information.
- */
-export class ValidationError<
-  TSchema extends
-    | BaseSchema<unknown, unknown, BaseIssue<unknown>>
-    | BaseSchemaAsync<unknown, unknown, BaseIssue<unknown>>,
-> extends Error {
-  /**
-   * The error issues.
-   */
-  readonly issues: [InferIssue<TSchema>, ...InferIssue<TSchema>[]];
-
-  /**
-   * Creates a Valibot error with useful information.
-   *
-   * @param message
-   * @param issues The error issues.
-   */
-  // @__NO_SIDE_EFFECTS__
-  constructor(
-    message: string,
-    issues: [InferIssue<TSchema>, ...InferIssue<TSchema>[]],
-  ) {
-    super(message);
-    this.name = "ValidationError";
-    this.issues = issues;
-  }
-
-  toString(): string {
-    return summarize(this);
-  }
 }
 
 export type ValidationErrorType<TIssue> = ErrorType & {

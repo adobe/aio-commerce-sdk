@@ -47,12 +47,12 @@ export function getError<T, E extends ErrorType>(result: Result<T, E>) {
 
 export function isSuccess<T, E extends ErrorType>(
   result: Result<T, E>,
-): boolean {
+): result is Success<T> {
   return result.type === SuccessOrFailure.SUCCESS;
 }
 
 export function isFailure<T, E extends ErrorType>(
   result: Result<T, E>,
-): boolean {
+): result is Failure<E> {
   return result.type === SuccessOrFailure.FAILURE;
 }
