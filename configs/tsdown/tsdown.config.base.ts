@@ -40,7 +40,7 @@ export const baseConfig = {
           const sourcePath = `${OUT_DIR}/${file}`;
           const targetPath = `${OUT_DIR}/cjs/${file}`;
           return rename(sourcePath, targetPath);
-        })
+        }),
       );
     },
   },
