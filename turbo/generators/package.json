@@ -1,0 +1,23 @@
+{
+  "name": "@aio-commerce-sdk/generators",
+  "description": "Generators used to scaffold code within the AIO Commerce SDK monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "gen:create-package": "turbo gen create-package",
+    "check:ci": "pnpm -w check:ci .",
+    "format": "pnpm -w format .",
+    "format:check": "pnpm -w format:check .",
+    "lint": "pnpm -w lint .",
+    "lint:fix": "pnpm -w lint:fix .",
+    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.0.0-alpha.1",
+    "ansis": "^4.1.0"
+  },
+  "devDependencies": {
+    "@aio-commerce-sdk/config-tsdown": "workspace:*",
+    "@aio-commerce-sdk/config-typescript": "workspace:*"
+  }
+}

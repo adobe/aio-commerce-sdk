@@ -1,0 +1,48 @@
+{
+  "name": "{{scopedPackageName}}",
+  "type": "module",
+  "version": "1.0.0",
+  "private": {{isPrivate}},
+
+  "author": "Adobe Inc.",
+  "engines": {
+    "node": ">=22"
+  },
+
+  "license": "Apache-2.0",
+  "description": "Description for {{scopedPackageName}}",
+  "keywords": [],
+
+  "bugs": {
+    "url": "https://github.com/adobe/aio-commerce-sdk/issues"
+  },
+
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adobe/aio-commerce-sdk.git",
+    "directory": "{{packageDir}}"
+  },
+
+  "scripts": {
+    "build": "tsdown",
+    "check:ci": "pnpm -w check:ci .",
+    "format": "pnpm -w format .",
+    "format:check": "pnpm -w format:check .",
+    "lint": "pnpm -w lint .",
+    "lint:fix": "pnpm -w lint:fix .",
+    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"{{#if willContainTests}},
+    "test": "vitest",
+    "test:watch": "vitest --watch"
+    {{/if}}
+  },
+
+  "dependencies": {},
+  "devDependencies": {
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "@aio-commerce-sdk/config-tsdown": "workspace:*"{{#if willContainTests}},
+    "vitest": "^2.0.0"
+    {{/if}}
+  },
+
+  "sideEffects": false
+}

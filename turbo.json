@@ -1,18 +1,22 @@
 {
   "$schema": "https://turborepo.com/schema.json",
+  "globalEnv": ["NODE_ENV", "CI"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
-    "check-types": {
-      "dependsOn": ["^check-types"]
+    "check:ci": {
+      "dependsOn": ["^check:ci"]
     },
     "lint": {
       "dependsOn": ["^lint"]
     },
     "test": {
       "dependsOn": ["^test"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build", "^typecheck"]
     }
   }
 }

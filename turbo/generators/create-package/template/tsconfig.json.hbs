@@ -11,5 +11,11 @@
     }
   },
 
-  "include": ["tsdown.config.ts", "source/**/*", "test/**/*"]
+  "include": [
+    "tsdown.config.ts", 
+    "source/**/*"
+    {{#if willContainTests}},
+    "tests/**/*"
+    {{/if}}
+  ]
 }

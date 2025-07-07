@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+
+  "access": "public",
+  "baseBranch": "main",
+  "changelog": [
+    "@changesets/changelog-github",
+    { "repo": "adobe/aio-commerce-sdk" }
+  ],
+
+  "commit": false,
+  "fixed": [["@adobe/aio-commerce-*"]],
+  "ignore": [],
+  "linked": [],
+
+  "updateInternalDependencies": "patch"
+}
