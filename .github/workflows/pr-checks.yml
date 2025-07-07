@@ -62,4 +62,4 @@ jobs:
             echo "Comparing against previous commit"
           fi
 
-          pnpm turbo run check:ci typecheck lint build test --affected
+          pnpm turbo run check:ci typecheck lint build install test --affected
