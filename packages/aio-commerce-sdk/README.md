@@ -21,7 +21,7 @@ The `@adobe/aio-commerce-sdk` is a meta-package that consolidates and re-exports
 
 The SDK currently includes:
 
-- **[@adobe/aio-commerce-lib-auth](../aio-commerce-lib-auth)**: Authentication utilities for Adobe Commerce apps, supporting both IMS and Commerce integrations authentication.
+- **[@adobe/aio-commerce-lib-auth](https://github.com/adobe/aio-commerce-sdk/tree/main/packages/aio-commerce-lib-auth)**: Authentication utilities for Adobe Commerce apps, supporting both IMS and Commerce integrations authentication.
 
 ## Usage
 
@@ -67,6 +67,6 @@ const integrationsAuth = getIntegrationsAuthProvider(params);
 
 ## Contributing
 
-This package is part of the Adobe Commerce SDK monorepo. See the [Contributing Guide](../../.github/CONTRIBUTING.md) and [Development Guide](../../.github/DEVELOPMENT.md) for development setup and guidelines.
+This package is part of the Adobe Commerce SDK monorepo. See the [Contributing Guide](https://github.com/adobe/aio-commerce-sdk/blob/main/.github/CONTRIBUTING.md) and [Development Guide](https://github.com/adobe/aio-commerce-sdk/blob/main/.github/DEVELOPMENT.md) for development setup and guidelines.
 
-Refer to this section of the development guide if you want to add your library to the SDK: [Add it to the SDK (optional)](../../.github/DEVELOPMENT.md#add-it-to-the-sdk-optional)
+Refer to this section of the development guide if you want to add your library to the SDK: [Add it to the SDK (optional)](https://github.com/adobe/aio-commerce-sdk/blob/main/.github/DEVELOPMENT.md#add-it-to-the-sdk-optional)
