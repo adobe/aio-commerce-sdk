@@ -1,21 +1,21 @@
 # See https://github.com/actions/labeler
 
 "pkg: aio-commerce-sdk":
-  - changed-files:
-    - any-glob-to-any-file: packages/aio-commerce-sdk/**
+- changed-files:
+  - any-glob-to-any-file: packages/aio-commerce-sdk/**
 
 "pkg: aio-commerce-lib-auth":
-  - changed-files:
-    - any-glob-to-any-file: packages/aio-commerce-lib-auth/**
+- changed-files:
+  - any-glob-to-any-file: packages/aio-commerce-lib-auth/**
 
-"generator:":
-  - changed-files:
-    - any-glob-to-any-file: turbo/generators/**
+"generator":
+- changed-files:
+  - any-glob-to-any-file: turbo/generators/**
 
 "cfg: typescript":
-  - changed-files:
-    - any-glob-to-any-file: configs/typescript/**
+- changed-files:
+  - any-glob-to-any-file: configs/typescript/**
 
 "cfg: tsdown":
-  - changed-files:
-    - any-glob-to-any-file: configs/tsdown/**
+- changed-files:
+  - any-glob-to-any-file: configs/tsdown/**
