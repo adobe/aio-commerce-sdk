@@ -250,7 +250,8 @@ The default configuration should suffice for most use cases, requiring only that
 
 <!-- prettier-ignore -->
 - [`@aio-commerce-sdk/config-tsdown`](../configs/tsdown/tsdown.config.base.ts): default configuration
-- [`@adobe/aio-commerce-lib-auth`](../packages/lib-auth/tsdown.config.ts): single-entry public package example
+- [`@adobe/aio-commerce-lib-auth`](../packages/aio-commerce-lib-auth/tsdown.config.ts): single-entry public package example
+- [`@adobe/aio-commerce-lib-core`](../packages/aio-commerce-lib-core/tsdown.config.ts): single-entry public package example
 - [`@adobe/aio-commerce-sdk`](../packages/aio-commerce-sdk/tsdown.config.ts): multi-entry public package example
 
 After you have your TSDown configuration ready, you can run the `build` script to build your package, which will generate a `dist/` directory with the built files. Evaluate the output to make sure it's what you expect.
@@ -267,7 +268,8 @@ After you have your TSDown configuration ready, you can run the `build` script t
 
 Once you have your build files, it's time to configure your `package.json` file to declare the files that your library exports. Here's a [really good guide](https://hirok.io/posts/package-json-exports) that elaborates on the topic. If you just want to make it work, copy the package exports from the below reference packages:
 
-- [`@adobe/aio-commerce-lib-auth`](../packages/lib-auth/package.json): single-entry public package example
+- [`@adobe/aio-commerce-lib-auth`](../packages/aio-commerce-lib-auth/package.json): single-entry public package example
+- [`@adobe/aio-commerce-lib-core`](../packages/aio-commerce-lib-auth/package.json): single-entry public package example
 - [`@adobe/aio-commerce-sdk`](../packages/aio-commerce-sdk/package.json): multi-entry public package example
 
 ### Tree-shaking
@@ -336,7 +338,7 @@ Assuming you want the SDK to re-export the [`@adobe/aio-commerce-lib-auth`](../p
    export * from "@adobe/aio-commerce-lib-auth";
    ```
 
-3. Add it also to the [`index.ts`](../packages/aio-commerce-sdk/index.ts) entrypoint with an aliased export.
+3. Add it also to the [`index.ts`](../packages/aio-commerce-sdk/source/index.ts) entrypoint with an aliased export.
 
    ```ts
    export * as Auth from "@adobe/aio-commerce-lib-auth";
