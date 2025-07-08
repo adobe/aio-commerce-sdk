@@ -3,5 +3,5 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig({
   ...baseConfig,
-  entry: ["./source/index.ts"],
+  entry: ["./source/lib/result.ts", "./source/lib/validation.ts"],
 });

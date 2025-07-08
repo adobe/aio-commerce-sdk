@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type { ErrorType, Result } from "@adobe/aio-commerce-lib-core";
+import type { ErrorType, Result } from "@adobe/aio-commerce-lib-core/result";
 import {
   type InferInput,
   nonEmpty,

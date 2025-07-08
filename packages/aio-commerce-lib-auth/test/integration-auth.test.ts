@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { getData, getError } from "@adobe/aio-commerce-lib-core";
+import { getData, getError } from "@adobe/aio-commerce-lib-core/result";
 import { describe, expect, test } from "vitest";
 import {
   getIntegrationAuthProvider,

@@ -18,8 +18,8 @@ import {
   type Result,
   type Success,
   succeed,
-  type ValidationErrorType,
-} from "@adobe/aio-commerce-lib-core";
+} from "@adobe/aio-commerce-lib-core/result";
+import type { ValidationErrorType } from "@adobe/aio-commerce-lib-core/validation";
 import { context, getToken } from "@adobe/aio-lib-ims";
 import { type InferOutput, safeParse } from "valibot";
 import {

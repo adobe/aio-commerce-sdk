@@ -13,7 +13,7 @@ governing permissions and limitations under the License.
 import { boolean, number, object, safeParse, string } from "valibot";
 import { describe, expect, test } from "vitest";
 
-import { summarize, type ValidationErrorType } from "../source";
+import { summarize, type ValidationErrorType } from "../source/lib/validation";
 
 describe("utils", () => {
   test("should summarize a list of issues with colors and structure", () => {

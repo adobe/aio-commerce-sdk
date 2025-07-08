@@ -22,14 +22,14 @@
   "module": "./dist/es/index.js",
   "types": "./dist/es/index.d.ts",
   "exports": {
-    ".": {
+    "./*": {
       "import": {
-        "types": "./dist/es/index.d.ts",
-        "default": "./dist/es/index.js"
+        "types": "./dist/es/*.d.ts",
+        "default": "./dist/es/*.js"
       },
       "require": {
-        "types": "./dist/cjs/index.d.cts",
-        "default": "./dist/cjs/index.cjs"
+        "types": "./dist/cjs/*.d.cts",
+        "default": "./dist/cjs/*.cjs"
       }
     },
     "./package.json": "./package.json"

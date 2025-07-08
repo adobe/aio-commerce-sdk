@@ -16,8 +16,8 @@ import {
   fail,
   type Success,
   succeed,
-  type ValidationErrorType,
-} from "@adobe/aio-commerce-lib-core";
+} from "@adobe/aio-commerce-lib-core/result";
+import type { ValidationErrorType } from "@adobe/aio-commerce-lib-core/validation";
 import OAuth1a from "oauth-1.0a";
 import { safeParse } from "valibot";
 import {

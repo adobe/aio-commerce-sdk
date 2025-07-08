@@ -9,11 +9,8 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-import type {
-  Failure,
-  Success,
-  ValidationErrorType,
-} from "@adobe/aio-commerce-lib-core";
+import type { Failure, Success } from "@adobe/aio-commerce-lib-core/result";
+import type { ValidationErrorType } from "@adobe/aio-commerce-lib-core/validation";
 import {
   entriesFromList,
   type InferInput,
