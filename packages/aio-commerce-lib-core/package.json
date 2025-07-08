@@ -9,7 +9,14 @@
   },
   "license": "Apache-2.0",
   "description": "Description for @adobe/aio-commerce-lib-core",
-  "keywords": [],
+  "keywords": [
+    "aio",
+    "adobe-io",
+    "commerce",
+    "adobe-commerce",
+    "adobe-commerce-sdk",
+    "aio-commerce-sdk"
+  ],
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
