@@ -39,7 +39,7 @@ if (isFailure(result)) {
 }
 ```
 
-## Pretty print Valida
+## Pretty print ValidationErrorType
 
 ```ts
 import { summarize } from "@adobe/aio-commerce-lib-core/validation";

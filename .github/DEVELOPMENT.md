@@ -269,7 +269,6 @@ After you have your TSDown configuration ready, you can run the `build` script t
 Once you have your build files, it's time to configure your `package.json` file to declare the files that your library exports. Here's a [really good guide](https://hirok.io/posts/package-json-exports) that elaborates on the topic. If you just want to make it work, copy the package exports from the below reference packages:
 
 - [`@adobe/aio-commerce-lib-auth`](../packages/aio-commerce-lib-auth/package.json): single-entry public package example
-- [`@adobe/aio-commerce-lib-core`](../packages/aio-commerce-lib-auth/package.json): single-entry public package example
 - [`@adobe/aio-commerce-sdk`](../packages/aio-commerce-sdk/package.json): multi-entry public package example
 
 ### Tree-shaking
