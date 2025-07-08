@@ -100,3 +100,7 @@ export const main = async function (params: Record<string, unknown>) {
   return { statusCode: 200 };
 };
 ```
+
+## Contributing
+
+This package is part of the Adobe Commerce SDK monorepo. See the [Contributing Guide](https://github.com/adobe/aio-commerce-sdk/blob/main/.github/CONTRIBUTING.md) and [Development Guide](https://github.com/adobe/aio-commerce-sdk/blob/main/.github/DEVELOPMENT.md) for development setup and guidelines.
