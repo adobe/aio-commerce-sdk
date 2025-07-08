@@ -24,7 +24,9 @@ import {
   array as vArray,
   message as vMessage,
 } from "valibot";
-import { nonEmptyString } from "~/lib/validation";
+
+export const nonEmptyString = (message: string) =>
+  pipe(string(), nonEmpty(message));
 
 export const IMS_AUTH_ENV = {
   PROD: "prod",
