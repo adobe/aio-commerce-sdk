@@ -73,6 +73,11 @@ export function getIntegrationAuthProvider(config: IntegrationConfig) {
   } satisfies IntegrationAuthProvider;
 }
 
+/**
+ * Creates an IMS Auth Provider based on the provided configuration.
+ * @param config {ImsAuthConfig} - The configuration for the IMS Auth Provider.
+ * @returns {IntegrationAuthProvider} - An object with methods to get access token and headers.
+ */
 export function tryGetIntegrationAuthProvider(
   params: IntegrationAuthParamsInput,
 ) {
@@ -92,7 +97,7 @@ export function tryGetIntegrationAuthProvider(
   ) satisfies Success<IntegrationAuthProvider>;
 }
 
-export function resolveIntegrationConfig(
+function resolveIntegrationConfig(
   params: IntegrationAuthParamsInput,
 ): IntegrationConfig {
   return {

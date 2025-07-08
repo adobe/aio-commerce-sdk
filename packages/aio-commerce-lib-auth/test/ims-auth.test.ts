@@ -64,7 +64,7 @@ describe("ims auth", () => {
       const authToken = "supersecrettoken";
       vi.mocked(getToken).mockResolvedValue(authToken);
 
-      const imsAuthProvider = getData(await tryGetImsAuthProvider(params));
+      const imsAuthProvider = getData(tryGetImsAuthProvider(params));
       const retrievedToken = getData(await imsAuthProvider.getAccessToken());
       expect(retrievedToken).toEqual(authToken);
 

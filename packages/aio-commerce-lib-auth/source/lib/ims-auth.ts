@@ -52,23 +52,30 @@ async function tryGetAccessToken(
  * @param config {ImsAuthConfig} - The configuration for the IMS Auth Provider.
  * @returns {ImsAuthProvider} - An object with methods to get access token and headers.
  */
-export async function getImsAuthProvider(config: ImsAuthConfig) {
-  await context.set(config.context, config);
+export function getImsAuthProvider(config: ImsAuthConfig) {
+  const getAccessToken = async () => {
+    const token = await tryGetAccessToken(config.context);
+    await context.set(config.context, config);
+    return token;
+  };
+
+  const getHeaders = async () => {
+    const result = await getAccessToken();
+
+    if (isFailure(result)) {
+      return result;
+    }
+
+    const accessToken = getData(result);
+    return succeed({
+      Authorization: `Bearer ${accessToken}`,
+      "x-api-key": config.client_id,
+    }) satisfies Success<ImsAuthHeaders>;
+  };
+
   return {
-    getAccessToken: async () => tryGetAccessToken(config.context),
-    getHeaders: async () => {
-      const result = await tryGetAccessToken(config.context);
-
-      if (isFailure(result)) {
-        return result;
-      }
-
-      const accessToken = getData(result);
-      return succeed({
-        Authorization: `Bearer ${accessToken}`,
-        "x-api-key": config.client_id,
-      }) satisfies Success<ImsAuthHeaders>;
-    },
+    getAccessToken,
+    getHeaders,
   };
 }
 
@@ -77,7 +84,7 @@ export async function getImsAuthProvider(config: ImsAuthConfig) {
  * @param params {ImsAuthParamsInput} - The parameters required to create the IMS Auth Provider.
  * @returns {Result} containing either the ImsAuthProvider or a Failure with validation errors.
  */
-export async function tryGetImsAuthProvider(params: ImsAuthParamsInput) {
+export function tryGetImsAuthProvider(params: ImsAuthParamsInput) {
   const validation = safeParse(ImsAuthParamsSchema, params);
 
   if (!validation.success) {
@@ -90,7 +97,7 @@ export async function tryGetImsAuthProvider(params: ImsAuthParamsInput) {
   }
 
   return succeed(
-    await getImsAuthProvider(fromParams(validation.output)),
+    getImsAuthProvider(fromParams(validation.output)),
   ) satisfies Success<ImsAuthProvider>;
 }
 
