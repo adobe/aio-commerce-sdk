@@ -106,6 +106,10 @@ describe("ims auth", () => {
       expect(getError(result).message).toEqual(
         "Failed to validate the provided IMS parameters. See the console for more details.",
       );
+      expect(getError(result)).toHaveProperty(
+        "issues.[0].message",
+        "Missing or invalid ims auth parameter string",
+      );
     });
 
     test.each([

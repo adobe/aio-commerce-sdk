@@ -25,31 +25,37 @@ In the runtime action you can generate an access token using the IMS Provider:
 
 ```typescript
 import { tryGetImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
+import { getError, getData, isFailure } from "@adobe/aio-commerce-lib-core";
 
-const params = {
-  AIO_COMMERCE_IMS_CLIENT_ID: "...",
-  AIO_COMMERCE_IMS_CLIENT_SECRETS: "[\"secret1\",\"secret2\"]",
-  AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: "...",
-  AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: "...",
-  AIO_COMMERCE_IMS_IMS_ORG_ID: "...",
-  AIO_COMMERCE_IMS_ENV: "prod",
-  AIO_COMMERCE_IMS_SCOPES: "[\"scope1\",\"scope2\"]",
-  AIO_COMMERCE_IMS_CTX: "aio-commerce-sdk-creds"
-};
+export const main = async function (params: Record<string, unknown>) {
+  const result = tryGetImsAuthProvider(params); // Validate parameters and get the integration auth provider
 
-const result = await tryGetImsAuthProvider(params);
-
-if (result.success) {
-  const imsAuthProvider = result.value;
-  const headersResult = await imsAuthProvider.getHeaders();
-  if (headersResult.success) {
-    // Use headersResult.value for API requests
-  } else {
-    // Handle header generation error
+  if (isFailure(result)) {
+    const error = getError(result);
+    return {
+      statusCode: 400,
+      body: {
+        error: `Unable to get IMS Auth Provider ${error.message}`,
+      },
+    };
   }
-} else {
-  // Handle parameter validation error
-}
+
+  const imsAuthProvider = getData(result);
+  const headersResult = imsAuthProvider.getHeaders();
+
+  if (isFailure(headersResult)) {
+    const error = getError(headersResult);
+    return {
+      statusCode: 400,
+      body: {
+        error: `Unable to get auth headers for IMS Auth Provider ${error.message}`,
+      },
+    };
+  }
+
+  // business logic e.g requesting orders
+  return { statusCode: 200 };
+};
 ```
 
 ### Integrations Provider
@@ -58,25 +64,39 @@ In the runtime action you can generate an access token using the Integrations Pr
 
 ```typescript
 import { tryGetIntegrationAuthProvider } from "@adobe/aio-commerce-lib-auth";
+import { getError, getData, isFailure } from "@adobe/aio-commerce-lib-core";
 
-const params = {
-  AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY: "...",
-  AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET: "...",
-  AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN: "...",
-  AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET: "..."
-};
+export const main = async function (params: Record<string, unknown>) {
+  const result = tryGetIntegrationAuthProvider(params); // Validate parameters and get the integration auth provider
 
-const result = tryGetIntegrationAuthProvider(params);
-
-if (result.success) {
-  const provider = result.value;
-  const headersResult = provider.getHeaders("GET", "https://example.com/rest/V1/orders");
-  if (headersResult.success) {
-    // Use headersResult.value for API requests
-  } else {
-    // Handle header generation error
+  if (isFailure(result)) {
+    const error = getError(result);
+    return {
+      statusCode: 400,
+      body: {
+        error: `Unable to get Integration Auth Provider ${error.message}`,
+      },
+    };
   }
-} else {
-  // Handle parameter validation error
-}
+
+  const integrationsAuth = getData(result);
+  const headersResult = integrationsAuth.getHeaders(
+    "GET",
+    "http://localhost/rest/V1/orders",
+  );
+
+  if (isFailure(headersResult)) {
+    const error = getError(headersResult);
+    return {
+      statusCode: 400,
+      body: {
+        error: `Unable to get auth headers for Integration Auth Provider ${error.message}`,
+      },
+    };
+  }
+
+  // business logic e.g requesting orders
+
+  return { statusCode: 200 };
+};
 ```

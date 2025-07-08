@@ -14,7 +14,6 @@ import type { ErrorType, Failure, Success } from "@adobe/aio-commerce-lib-core";
 import {
   type InferInput,
   nonEmpty,
-  nonOptional,
   object,
   optional,
   parseJson,
@@ -72,8 +71,8 @@ const createStringArraySchema = (message?: string) => {
 };
 export const ImsAuthParamsSchema = vMessage(
   object({
-    AIO_COMMERCE_IMS_CLIENT_ID: nonOptional(
-      nonEmptyString("Missing or invalid AIO_COMMERCE_IMS_CLIENT_ID"),
+    AIO_COMMERCE_IMS_CLIENT_ID: nonEmptyString(
+      "Missing or invalid AIO_COMMERCE_IMS_CLIENT_ID",
     ),
     AIO_COMMERCE_IMS_CLIENT_SECRETS: createStringArraySchema(),
     AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: nonEmptyString(
