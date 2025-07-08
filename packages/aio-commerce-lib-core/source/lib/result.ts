@@ -15,20 +15,13 @@ const SuccessOrFailure = {
   FAILURE: "failure",
 } as const;
 
-export type SuccessOrFailure =
-  (typeof SuccessOrFailure)[keyof typeof SuccessOrFailure];
-
-export type Success<T> = { type: SuccessOrFailure; value: T; error: never };
+export type Success<T> = { type: "success"; value: T; error: never };
 export type Failure<E extends ErrorType> = {
-  type: SuccessOrFailure;
+  type: "failure";
   value: never;
   error: E;
 };
-export type Result<T, E extends ErrorType> = {
-  type: SuccessOrFailure;
-  value: T;
-  error: E;
-};
+export type Result<T, E extends ErrorType> = Success<T> | Failure<E>;
 
 export type ErrorType = {
   _tag: string;
