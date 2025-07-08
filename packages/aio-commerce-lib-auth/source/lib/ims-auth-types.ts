@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type { ErrorType, Failure, Success } from "@adobe/aio-commerce-lib-core";
+import type { ErrorType, Result } from "@adobe/aio-commerce-lib-core";
 import {
   type InferInput,
   nonEmpty,
@@ -105,17 +105,15 @@ export type ImsAuthParamsInput = InferInput<typeof ImsAuthParamsSchema>;
 export type ImsAccessToken = string;
 export type ImsAuthHeader = "Authorization" | "x-api-key";
 export type ImsAuthHeaders = Record<ImsAuthHeader, string>;
-export type ImsAuthErrorType<Error> = ErrorType & {
+export type ImsAuthErrorType<TError> = ErrorType & {
   _tag: "ImsAuthError";
   message: string;
-  error: Error;
+  error: TError;
 };
 
 export interface ImsAuthProvider {
   getAccessToken: () => Promise<
-    Success<ImsAccessToken> | Failure<ImsAuthErrorType<unknown>>
+    Result<ImsAccessToken, ImsAuthErrorType<unknown>>
   >;
-  getHeaders: () => Promise<
-    Success<ImsAuthHeaders> | Failure<ImsAuthErrorType<unknown>>
-  >;
+  getHeaders: () => Promise<Result<ImsAuthHeaders, ImsAuthErrorType<unknown>>>;
 }

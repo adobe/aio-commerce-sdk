@@ -15,6 +15,7 @@ import {
   fail,
   getData,
   isFailure,
+  type Result,
   type Success,
   succeed,
   type ValidationErrorType,
@@ -33,7 +34,7 @@ import {
 
 async function tryGetAccessToken(
   contextName: string,
-): Promise<Success<ImsAccessToken> | Failure<ImsAuthErrorType<unknown>>> {
+): Promise<Result<ImsAccessToken, ImsAuthErrorType<unknown>>> {
   try {
     const accessToken = await getToken(contextName, {});
     return succeed(accessToken) satisfies Success<ImsAccessToken>;
