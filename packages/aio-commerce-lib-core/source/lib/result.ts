@@ -15,10 +15,9 @@ const SuccessOrFailure = {
   FAILURE: "failure",
 } as const;
 
-export type Success<T> = { type: "success"; value: T; error: never };
+export type Success<T> = { type: "success"; value: T };
 export type Failure<E extends ErrorType> = {
   type: "failure";
-  value: never;
   error: E;
 };
 export type Result<T, E extends ErrorType> = Success<T> | Failure<E>;
@@ -29,11 +28,11 @@ export type ErrorType = {
 };
 
 export function succeed<T>(value: T): Success<T> {
-  return { type: SuccessOrFailure.SUCCESS, value, error: undefined as never };
+  return { type: SuccessOrFailure.SUCCESS, value };
 }
 
 export function fail<E extends ErrorType>(error: E): Failure<E> {
-  return { type: SuccessOrFailure.FAILURE, error, value: undefined as never };
+  return { type: SuccessOrFailure.FAILURE, error };
 }
 
 export function getData<T, E extends ErrorType>(result: Result<T, E>) {
