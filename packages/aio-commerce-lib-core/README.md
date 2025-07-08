@@ -22,39 +22,39 @@ Within every AppBuilder action you can use the `Result<T, E>` type to handle suc
 
 #### Signatures
 
-- `isSuccess(result: Result<T, E>): result is { ok: true, value: T }`
-- `isFailure(result: Result<T, E>): result is { ok: false, error: E }`
-- `getData(result: Result<T, E>): T throws Error`
-- `getError(result: Result<T, E>): E throws Error`
-- `succeed(value: T): Result<T, E>`
-- `fail(error: E): Result<T, E>`
+- `isOk(result: Result<T, E>): result is { ok: true, value: T }`
+- `isErr(result: Result<T, E>): result is { ok: false, error: E }`
+- `unwrap(result: Result<T, E>): T throws Error`
+- `unwrapErr(result: Result<T, E>): E throws Error`
+- `ok(value: T): Result<T, E>`
+- `err(error: E): Result<T, E>`
 
 #### Use case
 
-- `isSuccess` and `isFailure` are type guards that let you branch logic based on the result.
-- `getData` returns the value if the result is a success, otherwise `undefined`.
-- `getError` returns the error if the result is a failure, otherwise `undefined`.
-- `succeed` and `fail` are helpers to create success and failure results.
+- `isOk` and `isErr` are type guards that let you branch logic based on the result.
+- `unwrap` returns the value if the result is a success, otherwise `undefined`.
+- `unwrapErr` returns the error if the result is a failure, otherwise `undefined`.
+- `ok` and `err` are helpers to create success and failure results.
 
 <hr/>
 
 ```ts
 import {
   type Result,
-  getData,
-  fail,
-  isSuccess,
-  succeed,
+  err,
+  isOk,
+  ok,
+  unwrap,
 } from "@adobe/aio-commerce-lib-core/result";
 
 // Simulated function returning a Result
 const fetchProduct = async (id: string): Result<Product, Error> => {
   const response = await api.getProductById(id);
   if (response.statusCode === 200) {
-    return succeed(response.data);
+    return ok(response.data);
   }
 
-  return fail({
+  return err({
     _tag: "ApiError",
     error: new Error(response.error),
     statusCode: response.statusCode,
@@ -68,15 +68,15 @@ export const main = async function (params: Record<string, unknown>) {
 };
 ```
 
-### Result - isSuccess
+### Result - isOk
 
-Here you can use the isFailure TypeGuard to check if the result is a failure, then handle the error by returning an appropriate response. Result is now typesafe, and you can access the value properties directly.
+Here you can use the isErr TypeGuard to check if the result is a failure, then handle the error by returning an appropriate response. Result is now typesafe, and you can access the value properties directly.
 
 ```ts
 export const main = async function (params: Record<string, unknown>) {
   // ... [PREVIOUS CODE]
-  // Use a the isSuccess TypeGuard to check if the result is a success
-  if (isSuccess(result)) {
+  // Use a the isOk TypeGuard to check if the result is a success
+  if (isOk(result)) {
     // typesafe access to the value properties
     const product = result.value;
     // product: { id: 'valid', name: 'Sample Product' }
@@ -88,15 +88,15 @@ export const main = async function (params: Record<string, unknown>) {
 };
 ```
 
-### Result - isFailure
+### Result - isErr
 
-In another example you can use the isFailure TypeGuard to check if the result is a failure, then handle the error by returning an appropriate response. Result is now typesafe, and you can access the error properties directly.
+In another example you can use the isErr TypeGuard to check if the result is a failure, then handle the error by returning an appropriate response. Result is now typesafe, and you can access the error properties directly.
 
 ```ts
 export const main = async function (params: Record<string, unknown>) {
   // Further down within the same action you can
-  // use a the isSuccess TypeGuard to check if the result is a success
-  if (isFailure(result)) {
+  // use a the isOk TypeGuard to check if the result is a success
+  if (isErr(result)) {
     // typesafe access to the error properties
     const error = result.error;
     // error: {

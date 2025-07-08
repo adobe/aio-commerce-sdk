@@ -9,7 +9,7 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-import type { Failure, Success } from "@adobe/aio-commerce-lib-core/result";
+import type { Result } from "@adobe/aio-commerce-lib-core/result";
 import type { ValidationErrorType } from "@adobe/aio-commerce-lib-core/validation";
 import {
   entriesFromList,
@@ -80,5 +80,5 @@ export interface IntegrationAuthProvider {
   getHeaders: (
     method: HttpMethodInput,
     url: UriInput,
-  ) => Success<IntegrationAuthHeaders> | Failure<ValidationErrorType>;
+  ) => Result<IntegrationAuthHeaders, ValidationErrorType>;
 }

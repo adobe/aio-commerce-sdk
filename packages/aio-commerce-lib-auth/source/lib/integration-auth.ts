@@ -12,10 +12,10 @@
 
 import crypto from "node:crypto";
 import {
-  type Failure,
-  fail,
-  type Success,
-  succeed,
+  type Err,
+  err,
+  type Ok,
+  ok,
 } from "@adobe/aio-commerce-lib-core/result";
 import type { ValidationErrorType } from "@adobe/aio-commerce-lib-core/validation";
 import OAuth1a from "oauth-1.0a";
@@ -31,6 +31,11 @@ import {
   UrlSchema,
 } from "~/lib/integration-auth-types";
 
+/**
+ * Creates an Integration Auth Provider based on the provided configuration.
+ * @param config {IntegrationConfig} - The configuration for the integration.
+ * @returns {IntegrationAuthProvider} - An object with methods to get headers for OAuth 1.0a authentication.
+ */
 export function getIntegrationAuthProvider(config: IntegrationConfig) {
   const oauth = new OAuth1a({
     consumer: {
@@ -51,12 +56,12 @@ export function getIntegrationAuthProvider(config: IntegrationConfig) {
     getHeaders(method: HttpMethodInput, url: UriInput) {
       const validationHeaders = safeParse(UrlSchema, url);
       if (!validationHeaders.success) {
-        return fail({
+        return err({
           _tag: "ValidationError",
           issues: validationHeaders.issues,
           message:
             "Failed to validate the provided URL. See the console for more details.",
-        }) satisfies Failure<ValidationErrorType>;
+        }) satisfies Err<ValidationErrorType>;
       }
 
       let finalUrl: string;
@@ -66,16 +71,16 @@ export function getIntegrationAuthProvider(config: IntegrationConfig) {
         finalUrl = url;
       }
 
-      return succeed(
+      return ok(
         oauth.toHeader(oauth.authorize({ url: finalUrl, method }, oauthToken)),
-      ) satisfies Success<IntegrationAuthHeaders>;
+      ) satisfies Ok<IntegrationAuthHeaders>;
     },
   } satisfies IntegrationAuthProvider;
 }
 
 /**
  * Creates an IMS Auth Provider based on the provided configuration.
- * @param config {ImsAuthConfig} - The configuration for the IMS Auth Provider.
+ * @param params {IntegrationAuthParamsInput} - The parameters required for integration authentication.
  * @returns {IntegrationAuthProvider} - An object with methods to get access token and headers.
  */
 export function tryGetIntegrationAuthProvider(
@@ -84,17 +89,17 @@ export function tryGetIntegrationAuthProvider(
   const validation = integrationAuthParamsParser(params);
 
   if (!validation.success) {
-    return fail({
+    return err({
       _tag: "ValidationError",
       issues: validation.issues,
       message:
         "Failed to validate the provided integration parameters. See the console for more details.",
-    }) satisfies Failure<ValidationErrorType>;
+    }) satisfies Err<ValidationErrorType>;
   }
 
-  return succeed(
+  return ok(
     getIntegrationAuthProvider(resolveIntegrationConfig(validation.output)),
-  ) satisfies Success<IntegrationAuthProvider>;
+  ) satisfies Ok<IntegrationAuthProvider>;
 }
 
 function resolveIntegrationConfig(

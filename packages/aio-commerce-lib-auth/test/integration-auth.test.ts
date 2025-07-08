@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { getData, getError } from "@adobe/aio-commerce-lib-core/result";
+import { unwrap, unwrapErr } from "@adobe/aio-commerce-lib-core/result";
 import { describe, expect, test } from "vitest";
 import {
   getIntegrationAuthProvider,
@@ -32,7 +32,7 @@ describe("integration auth", () => {
         accessTokenSecret: "test-access-token-secret",
       });
 
-      const headers = getData(
+      const headers = unwrap(
         integrationAuthProvider.getHeaders("GET", "http://localhost/test"),
       );
       expect(headers).toHaveProperty(
@@ -51,18 +51,16 @@ describe("integration auth", () => {
     };
 
     test("should export getIntegrationAccessToken", () => {
-      const result = getData(tryGetIntegrationAuthProvider(params));
-      const headers = getData(
-        result.getHeaders("GET", "http://localhost/test"),
-      );
+      const result = unwrap(tryGetIntegrationAuthProvider(params));
+      const headers = unwrap(result.getHeaders("GET", "http://localhost/test"));
       expect(headers).toHaveProperty(
         "Authorization",
         expect.stringMatching(OAUTH1_REGEX),
       );
     });
 
-    test("should fail with invalid params", () => {
-      const result = getError(tryGetIntegrationAuthProvider({}));
+    test("should err with invalid params", () => {
+      const result = unwrapErr(tryGetIntegrationAuthProvider({}));
       expect(result).toHaveProperty("_tag", "ValidationError");
       expect(result).toHaveProperty("issues", expect.any(Array));
       expect(result.issues.length).toEqual(4);
@@ -79,9 +77,9 @@ describe("integration auth", () => {
         [param]: undefined,
       } as IntegrationAuthParamsInput);
 
-      expect(() => getData(result)).toThrow("Cannot get data from a Failure");
-      expect(getError(result)._tag).toEqual("ValidationError");
-      expect(getError(result).message).toEqual(
+      expect(() => unwrap(result)).toThrow("Cannot get data from a Err");
+      expect(unwrapErr(result)._tag).toEqual("ValidationError");
+      expect(unwrapErr(result).message).toEqual(
         "Failed to validate the provided integration parameters. See the console for more details.",
       );
     });
@@ -93,13 +91,13 @@ describe("integration auth", () => {
       ["//example.com"],
       ["http://user@:80"],
     ])("should throw an Error on invalid [%s] URL", (url) => {
-      const integrationAuthProvider = getData(
+      const integrationAuthProvider = unwrap(
         tryGetIntegrationAuthProvider(params),
       );
       const getHeadersResult = integrationAuthProvider.getHeaders("GET", url);
 
-      expect(getError(getHeadersResult)._tag).toEqual("ValidationError");
-      expect(getError(getHeadersResult).message).toEqual(
+      expect(unwrapErr(getHeadersResult)._tag).toEqual("ValidationError");
+      expect(unwrapErr(getHeadersResult).message).toEqual(
         "Failed to validate the provided URL. See the console for more details.",
       );
     });

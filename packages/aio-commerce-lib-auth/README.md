@@ -25,13 +25,13 @@ In the runtime action you can generate an access token using the IMS Provider:
 
 ```typescript
 import { tryGetImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
-import { getError, getData, isFailure } from "@adobe/aio-commerce-lib-core";
+import { isErr, unwrapErr, unwrap } from "@adobe/aio-commerce-lib-core";
 
 export const main = async function (params: Record<string, unknown>) {
   const result = tryGetImsAuthProvider(params); // Validate parameters and get the integration auth provider
 
-  if (isFailure(result)) {
-    const error = getError(result);
+  if (isErr(result)) {
+    const error = unwrapErr(result);
     return {
       statusCode: 400,
       body: {
@@ -40,11 +40,11 @@ export const main = async function (params: Record<string, unknown>) {
     };
   }
 
-  const imsAuthProvider = getData(result);
+  const imsAuthProvider = unwrap(result);
   const headersResult = imsAuthProvider.getHeaders();
 
-  if (isFailure(headersResult)) {
-    const error = getError(headersResult);
+  if (isErr(headersResult)) {
+    const error = unwrapErr(headersResult);
     return {
       statusCode: 400,
       body: {
@@ -64,13 +64,13 @@ In the runtime action you can generate an access token using the Integrations Pr
 
 ```typescript
 import { tryGetIntegrationAuthProvider } from "@adobe/aio-commerce-lib-auth";
-import { getError, getData, isFailure } from "@adobe/aio-commerce-lib-core";
+import { isErr, unwrapErr, unwrap } from "@adobe/aio-commerce-lib-core";
 
 export const main = async function (params: Record<string, unknown>) {
   const result = tryGetIntegrationAuthProvider(params); // Validate parameters and get the integration auth provider
 
-  if (isFailure(result)) {
-    const error = getError(result);
+  if (isErr(result)) {
+    const error = unwrapErr(result);
     return {
       statusCode: 400,
       body: {
@@ -79,14 +79,14 @@ export const main = async function (params: Record<string, unknown>) {
     };
   }
 
-  const integrationsAuth = getData(result);
+  const integrationsAuth = unwrap(result);
   const headersResult = integrationsAuth.getHeaders(
     "GET",
     "http://localhost/rest/V1/orders",
   );
 
-  if (isFailure(headersResult)) {
-    const error = getError(headersResult);
+  if (isErr(headersResult)) {
+    const error = unwrapErr(headersResult);
     return {
       statusCode: 400,
       body: {

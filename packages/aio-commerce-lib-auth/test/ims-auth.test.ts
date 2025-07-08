@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { getData, getError } from "@adobe/aio-commerce-lib-core/result";
+import { unwrap, unwrapErr } from "@adobe/aio-commerce-lib-core/result";
 import { getToken } from "@adobe/aio-lib-ims";
 import { describe, expect, test, vi } from "vitest";
 import { getImsAuthProvider, tryGetImsAuthProvider } from "~/lib/ims-auth";
@@ -37,14 +37,13 @@ describe("ims auth", () => {
         environment: IMS_AUTH_ENV.PROD,
         context: "test-context",
       };
-      const imsAuthProvider = await getImsAuthProvider(config);
-
+      const imsAuthProvider = getImsAuthProvider(config);
       expect(imsAuthProvider).toBeDefined();
 
       const retrievedToken = await imsAuthProvider.getAccessToken();
-      expect(getData(retrievedToken)).toEqual(authToken);
+      expect(unwrap(retrievedToken)).toEqual(authToken);
 
-      const headers = getData(await imsAuthProvider.getHeaders());
+      const headers = unwrap(await imsAuthProvider.getHeaders());
       expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
       expect(headers).toHaveProperty("x-api-key", config.client_id);
     });
@@ -64,11 +63,11 @@ describe("ims auth", () => {
       const authToken = "supersecrettoken";
       vi.mocked(getToken).mockResolvedValue(authToken);
 
-      const imsAuthProvider = getData(tryGetImsAuthProvider(params));
-      const retrievedToken = getData(await imsAuthProvider.getAccessToken());
+      const imsAuthProvider = unwrap(tryGetImsAuthProvider(params));
+      const retrievedToken = unwrap(await imsAuthProvider.getAccessToken());
       expect(retrievedToken).toEqual(authToken);
 
-      const headers = getData(await imsAuthProvider.getHeaders());
+      const headers = unwrap(await imsAuthProvider.getHeaders());
       expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
       expect(headers).toHaveProperty(
         "x-api-key",
@@ -76,8 +75,8 @@ describe("ims auth", () => {
       );
     });
 
-    test("should fail with invalid params", async () => {
-      const result = getError(
+    test("should err with invalid params", async () => {
+      const result = unwrapErr(
         await tryGetImsAuthProvider({} as unknown as ImsAuthParamsInput),
       );
       expect(result).toHaveProperty("_tag", "ValidationError");
@@ -98,12 +97,12 @@ describe("ims auth", () => {
         [param]: undefined,
       } satisfies ImsAuthParamsInput);
 
-      expect(() => getData(result)).toThrow("Cannot get data from a Failure");
-      expect(getError(result)._tag).toEqual("ValidationError");
-      expect(getError(result).message).toEqual(
+      expect(() => unwrap(result)).toThrow("Cannot get data from a Err");
+      expect(unwrapErr(result)._tag).toEqual("ValidationError");
+      expect(unwrapErr(result).message).toEqual(
         "Failed to validate the provided IMS parameters. See the console for more details.",
       );
-      expect(getError(result)).toHaveProperty(
+      expect(unwrapErr(result)).toHaveProperty(
         "issues.[0].message",
         "Missing or invalid ims auth parameter string",
       );
@@ -122,9 +121,9 @@ describe("ims auth", () => {
         [key]: param,
       } as ImsAuthParamsInput);
 
-      expect(() => getData(result)).toThrow("Cannot get data from a Failure");
-      expect(getError(result)._tag).toEqual("ValidationError");
-      expect(getError(result).message).toEqual(
+      expect(() => unwrap(result)).toThrow("Cannot get data from a Err");
+      expect(unwrapErr(result)._tag).toEqual("ValidationError");
+      expect(unwrapErr(result).message).toEqual(
         "Failed to validate the provided IMS parameters. See the console for more details.",
       );
     });

@@ -11,13 +11,13 @@
  */
 
 import {
-  type Failure,
-  fail,
-  getData,
-  isFailure,
+  type Err,
+  err,
+  isErr,
+  type Ok,
+  ok,
   type Result,
-  type Success,
-  succeed,
+  unwrap,
 } from "@adobe/aio-commerce-lib-core/result";
 import type { ValidationErrorType } from "@adobe/aio-commerce-lib-core/validation";
 import { context, getToken } from "@adobe/aio-lib-ims";
@@ -37,13 +37,13 @@ async function tryGetAccessToken(
 ): Promise<Result<ImsAccessToken, ImsAuthErrorType<unknown>>> {
   try {
     const accessToken = await getToken(contextName, {});
-    return succeed(accessToken) satisfies Success<ImsAccessToken>;
+    return ok(accessToken) satisfies Ok<ImsAccessToken>;
   } catch (error) {
-    return fail({
+    return err({
       _tag: "ImsAuthError",
       message: "Failed to retrieve IMS access token.",
       error,
-    }) satisfies Failure<ImsAuthErrorType<unknown>>;
+    }) satisfies Err<ImsAuthErrorType<unknown>>;
   }
 }
 
@@ -62,15 +62,15 @@ export function getImsAuthProvider(config: ImsAuthConfig) {
   const getHeaders = async () => {
     const result = await getAccessToken();
 
-    if (isFailure(result)) {
+    if (isErr(result)) {
       return result;
     }
 
-    const accessToken = getData(result);
-    return succeed({
+    const accessToken = unwrap(result);
+    return ok({
       Authorization: `Bearer ${accessToken}`,
       "x-api-key": config.client_id,
-    }) satisfies Success<ImsAuthHeaders>;
+    }) satisfies Ok<ImsAuthHeaders>;
   };
 
   return {
@@ -82,23 +82,23 @@ export function getImsAuthProvider(config: ImsAuthConfig) {
 /**
  * Tries to get an IMS Auth Provider based on the provided parameters.
  * @param params {ImsAuthParamsInput} - The parameters required to create the IMS Auth Provider.
- * @returns {Result} containing either the ImsAuthProvider or a Failure with validation errors.
+ * @returns {Result} containing either the ImsAuthProvider or an Err with validation errors.
  */
 export function tryGetImsAuthProvider(params: ImsAuthParamsInput) {
   const validation = safeParse(ImsAuthParamsSchema, params);
 
   if (!validation.success) {
-    return fail({
+    return err({
       _tag: "ValidationError",
       issues: validation.issues,
       message:
         "Failed to validate the provided IMS parameters. See the console for more details.",
-    }) satisfies Failure<ValidationErrorType>;
+    }) satisfies Err<ValidationErrorType>;
   }
 
-  return succeed(
+  return ok(
     getImsAuthProvider(fromParams(validation.output)),
-  ) satisfies Success<ImsAuthProvider>;
+  ) satisfies Ok<ImsAuthProvider>;
 }
 
 function fromParams(
