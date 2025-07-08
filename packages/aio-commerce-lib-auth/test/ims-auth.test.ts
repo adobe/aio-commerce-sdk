@@ -76,13 +76,13 @@ describe("ims auth", () => {
       );
     });
 
-    test("should return a ValidationError", async () => {
-      const result = await tryGetImsAuthProvider(
-        {} as unknown as ImsAuthParamsInput,
+    test("should fail with invalid params", async () => {
+      const result = getError(
+        await tryGetImsAuthProvider({} as unknown as ImsAuthParamsInput),
       );
-      expect(() => getData(result)).toThrow("Cannot get data from a Failure");
-      expect(getError(result)).toBeDefined();
-      expect(getError(result)._tag).toEqual("ValidationError");
+      expect(result).toHaveProperty("_tag", "ValidationError");
+      expect(result).toHaveProperty("issues", expect.any(Array));
+      expect(result.issues.length).toEqual(6);
     });
 
     test.each([
