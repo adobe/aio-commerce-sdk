@@ -45,14 +45,12 @@ function issueToDisplay<TInput>(issues: BaseIssue<TInput>[]): string {
   return lines.join("\n");
 }
 
-export function summarize<TSchema>(
-  error: ValidationErrorType<TSchema>,
-): string {
+export function summarize(error: ValidationErrorType): string {
   return `${whiteBright(error.message)}\n${issueToDisplay(error.issues)}`;
 }
 
-export type ValidationErrorType<TIssue> = ErrorType & {
+export type ValidationErrorType = ErrorType & {
   _tag: "ValidationError";
   message: string;
-  issues: [BaseIssue<TIssue>, ...BaseIssue<TIssue>[]];
+  issues: [BaseIssue<unknown>, ...BaseIssue<unknown>[]];
 };

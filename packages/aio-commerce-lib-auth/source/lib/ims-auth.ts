@@ -72,10 +72,10 @@ export async function tryGetImsAuthProvider(params: ImsAuthParamsInput) {
   if (!validation.success) {
     return fail({
       _tag: "ValidationError",
+      issues: validation.issues,
       message:
         "Failed to validate the provided IMS parameters. See the console for more details.",
-      issues: validation.issues,
-    }) satisfies Failure<ValidationErrorType<unknown>>;
+    }) satisfies Failure<ValidationErrorType>;
   }
 
   return succeed(

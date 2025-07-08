@@ -53,10 +53,10 @@ export function getIntegrationAuthProvider(config: IntegrationConfig) {
       if (!validationHeaders.success) {
         return fail({
           _tag: "ValidationError",
+          issues: validationHeaders.issues,
           message:
             "Failed to validate the provided URL. See the console for more details.",
-          issues: validationHeaders.issues,
-        }) satisfies Failure<ValidationErrorType<unknown>>;
+        }) satisfies Failure<ValidationErrorType>;
       }
 
       let finalUrl: string;
@@ -81,10 +81,10 @@ export function tryGetIntegrationAuthProvider(
   if (!validation.success) {
     return fail({
       _tag: "ValidationError",
+      issues: validation.issues,
       message:
         "Failed to validate the provided integration parameters. See the console for more details.",
-      issues: validation.issues,
-    }) satisfies Failure<ValidationErrorType<unknown>>;
+    }) satisfies Failure<ValidationErrorType>;
   }
 
   return succeed(

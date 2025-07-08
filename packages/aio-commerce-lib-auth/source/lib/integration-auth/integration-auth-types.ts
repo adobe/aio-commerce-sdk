@@ -83,5 +83,5 @@ export interface IntegrationAuthProvider {
   getHeaders: (
     method: HttpMethodInput,
     url: UriInput,
-  ) => Success<IntegrationAuthHeaders> | Failure<ValidationErrorType<unknown>>;
+  ) => Success<IntegrationAuthHeaders> | Failure<ValidationErrorType>;
 }

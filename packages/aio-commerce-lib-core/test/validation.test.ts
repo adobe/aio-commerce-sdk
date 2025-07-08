@@ -13,7 +13,7 @@ governing permissions and limitations under the License.
 import { boolean, number, object, safeParse, string } from "valibot";
 import { describe, expect, test } from "vitest";
 
-import { summarize, type ValidationErrorType } from "~/lib/validation";
+import { summarize, type ValidationErrorType } from "../source";
 
 describe("utils", () => {
   test("should summarize a list of issues with colors and structure", () => {
@@ -38,7 +38,8 @@ describe("utils", () => {
     const output = summarize({
       _tag: "ValidationError",
       issues: result.issues,
-    } as unknown as ValidationErrorType<unknown>);
+      message: "Validation failed",
+    } satisfies ValidationErrorType);
     expect(output).toContain("key1");
     expect(output).toContain("key2");
     expect(output).toContain("key3.nestedKey.nestedKey");
