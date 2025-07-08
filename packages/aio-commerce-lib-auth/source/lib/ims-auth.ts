@@ -101,9 +101,7 @@ export function tryGetImsAuthProvider(params: ImsAuthParamsInput) {
   ) satisfies Ok<ImsAuthProvider>;
 }
 
-function fromParams(
-  params: InferOutput<typeof ImsAuthParamsSchema>,
-): ImsAuthConfig {
+function fromParams(params: InferOutput<typeof ImsAuthParamsSchema>) {
   return {
     client_id: params.AIO_COMMERCE_IMS_CLIENT_ID,
     client_secrets: params.AIO_COMMERCE_IMS_CLIENT_SECRETS,
@@ -113,5 +111,5 @@ function fromParams(
     scopes: params.AIO_COMMERCE_IMS_SCOPES,
     environment: params.AIO_COMMERCE_IMS_ENV,
     context: params.AIO_COMMERCE_IMS_CTX,
-  };
+  } satisfies ImsAuthConfig;
 }

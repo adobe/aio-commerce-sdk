@@ -79,7 +79,7 @@ export function getIntegrationAuthProvider(config: IntegrationConfig) {
 }
 
 /**
- * Creates an IMS Auth Provider based on the provided configuration.
+ * Tries to get an Integration Provider based on the provided parameters.
  * @param params {IntegrationAuthParamsInput} - The parameters required for integration authentication.
  * @returns {IntegrationAuthProvider} - An object with methods to get access token and headers.
  */
@@ -98,17 +98,15 @@ export function tryGetIntegrationAuthProvider(
   }
 
   return ok(
-    getIntegrationAuthProvider(resolveIntegrationConfig(validation.output)),
+    getIntegrationAuthProvider(fromParams(validation.output)),
   ) satisfies Ok<IntegrationAuthProvider>;
 }
 
-function resolveIntegrationConfig(
-  params: IntegrationAuthParamsInput,
-): IntegrationConfig {
+function fromParams(params: IntegrationAuthParamsInput) {
   return {
     consumerKey: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY,
     consumerSecret: params.AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET,
     accessToken: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN,
     accessTokenSecret: params.AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET,
-  };
+  } satisfies IntegrationConfig;
 }
