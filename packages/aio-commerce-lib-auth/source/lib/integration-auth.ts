@@ -29,7 +29,7 @@ import {
   integrationAuthParamsParser,
   type UriInput,
   UrlSchema,
-} from "~/lib/integration-auth/integration-auth-types";
+} from "~/lib/integration-auth-types";
 
 export function getIntegrationAuthProvider(config: IntegrationConfig) {
   const oauth = new OAuth1a({

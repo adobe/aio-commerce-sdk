@@ -16,7 +16,7 @@ import {
   getIntegrationAuthProvider,
   tryGetIntegrationAuthProvider,
 } from "~/lib/integration-auth";
-import type { IntegrationAuthParamsInput } from "~/lib/integration-auth/integration-auth-types";
+import type { IntegrationAuthParamsInput } from "~/lib/integration-auth-types";
 
 /** Regex to match the OAuth 1.0a header format. */
 const OAUTH1_REGEX =

@@ -14,10 +14,7 @@ import { getData, getError } from "@adobe/aio-commerce-lib-core";
 import { getToken } from "@adobe/aio-lib-ims";
 import { describe, expect, test, vi } from "vitest";
 import { getImsAuthProvider, tryGetImsAuthProvider } from "~/lib/ims-auth";
-import {
-  IMS_AUTH_ENV,
-  type ImsAuthParamsInput,
-} from "~/lib/ims-auth/ims-auth-types";
+import { IMS_AUTH_ENV, type ImsAuthParamsInput } from "~/lib/ims-auth-types";
 
 vi.mock("@adobe/aio-lib-ims", async () => ({
   context: (await vi.importActual("@adobe/aio-lib-ims")).context,

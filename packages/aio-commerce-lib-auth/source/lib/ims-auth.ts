@@ -29,7 +29,7 @@ import {
   type ImsAuthParamsInput,
   ImsAuthParamsSchema,
   type ImsAuthProvider,
-} from "~/lib/ims-auth/ims-auth-types";
+} from "~/lib/ims-auth-types";
 
 async function tryGetAccessToken(
   contextName: string,
