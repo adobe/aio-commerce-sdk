@@ -16,28 +16,14 @@ jobs:
           webhook-type: incoming-webhook
           payload: >
             {
-              "text": "<${{ github.event.repository.html_url }}|*Adobe Commerce SDK for App Builder*> has been released",
+              "text": "${{ github.event.release.name }} has been released. Release notes: ${{ github.event.release.html_url }}",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Published new version <${{ github.event.release.html_url }}|${{ github.event.release.name }}>"
+                    "text": ":adobe_commerce_02: `${{ github.event.release.name }}` has been released. Read the <${{ github.event.release.html_url }}| release notes → >"
                   }
-                },
-                {
-                    "type": "rich_text",
-                    "elements": [
-                        {
-                            "type": "rich_text_quote",
-                            "elements": [
-                                {
-                                    "type": "text",
-                                    "text": "${{ github.event.release.body }}"
-                                }
-                            ]
-                        }
-                    ]
                 }
               ]
             }
