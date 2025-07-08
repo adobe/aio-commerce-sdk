@@ -29,7 +29,7 @@ pnpm install @adobe/aio-commerce-lib-auth
 
 - **[`@adobe/aio-commerce-sdk`](./packages/aio-commerce-sdk)** - Meta-package that re-exports all SDK libraries
 - **[`@adobe/aio-commerce-lib-auth`](./packages/aio-commerce-lib-auth)** - Authentication utilities for IMS and Commerce integrations
-- **[`@adobe/aio-commerce-lib-core`](./packages/aio-commerce-lib-core)** - Authentication utilities for IMS and Commerce integrations
+- **[`@adobe/aio-commerce-lib-core`](./packages/aio-commerce-lib-core)** - Core utilities for AIO Commerce SDK Libraries
 
 ### Internal Packages
 
