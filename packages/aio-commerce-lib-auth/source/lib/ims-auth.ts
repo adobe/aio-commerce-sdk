@@ -47,6 +47,11 @@ async function tryGetAccessToken(
   }
 }
 
+/**
+ * Creates an IMS Auth Provider based on the provided configuration.
+ * @param config {ImsAuthConfig} - The configuration for the IMS Auth Provider.
+ * @returns {ImsAuthProvider} - An object with methods to get access token and headers.
+ */
 export async function getImsAuthProvider(config: ImsAuthConfig) {
   await context.set(config.context, config);
   return {
@@ -67,6 +72,11 @@ export async function getImsAuthProvider(config: ImsAuthConfig) {
   };
 }
 
+/**
+ * Tries to get an IMS Auth Provider based on the provided parameters.
+ * @param params {ImsAuthParamsInput} - The parameters required to create the IMS Auth Provider.
+ * @returns {Result} containing either the ImsAuthProvider or a Failure with validation errors.
+ */
 export async function tryGetImsAuthProvider(params: ImsAuthParamsInput) {
   const validation = safeParse(ImsAuthParamsSchema, params);
 
