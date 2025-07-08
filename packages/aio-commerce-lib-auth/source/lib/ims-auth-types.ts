@@ -105,15 +105,13 @@ export type ImsAuthParamsInput = InferInput<typeof ImsAuthParamsSchema>;
 export type ImsAccessToken = string;
 export type ImsAuthHeader = "Authorization" | "x-api-key";
 export type ImsAuthHeaders = Record<ImsAuthHeader, string>;
-export type ImsAuthErrorType<TError> = ErrorType & {
+export type ImsAuthErrorType<TError = unknown> = ErrorType & {
   _tag: "ImsAuthError";
   message: string;
   error: TError;
 };
 
 export interface ImsAuthProvider {
-  getAccessToken: () => Promise<
-    Result<ImsAccessToken, ImsAuthErrorType<unknown>>
-  >;
+  getAccessToken: () => Promise<Result<ImsAccessToken, ImsAuthErrorType>>;
   getHeaders: () => Promise<Result<ImsAuthHeaders, ImsAuthErrorType<unknown>>>;
 }
