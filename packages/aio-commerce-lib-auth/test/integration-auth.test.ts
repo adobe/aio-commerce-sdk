@@ -61,6 +61,13 @@ describe("integration auth", () => {
       );
     });
 
+    test("should fail with invalid params", () => {
+      const result = getError(tryGetIntegrationAuthProvider({}));
+      expect(result).toHaveProperty("_tag", "ValidationError");
+      expect(result).toHaveProperty("issues", expect.any(Array));
+      expect(result.issues.length).toEqual(4);
+    });
+
     test.each([
       "AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY",
       "AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET",
