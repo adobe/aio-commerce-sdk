@@ -22,7 +22,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": ":adobe_commerce_02: `${{ github.event.release.name }}` has been released. Read the <${{ github.event.release.html_url }}| release notes → >"
+                    "text": ":rocket: `${{ github.event.release.name }}` has been released.\nRead the <${{ github.event.release.html_url }}| release notes → >"
                   }
                 }
               ]
