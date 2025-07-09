@@ -1,4 +1,4 @@
-# @adobe/aio-commerce-lib-auth
+# @adobe/aio-commerce-lib-core
 
 ## 0.2.0
 
@@ -10,14 +10,3 @@
   - Refactor aio-commerce-lib-auth to use aio-commerce-lib-core
 
   Implements validation for the `aio-commerce-lib-auth` operations via `valibot`.
-
-### Patch Changes
-
-- Updated dependencies [[`aadbff1`](https://github.com/adobe/aio-commerce-sdk/commit/aadbff1acd08120f9d5cb8db4e3c849f552d8c79)]:
-  - @adobe/aio-commerce-lib-core@0.2.0
-
-## 0.1.0
-
-### Minor Changes
-
-- [#11](https://github.com/adobe/aio-commerce-sdk/pull/11) [`97e031f`](https://github.com/adobe/aio-commerce-sdk/commit/97e031ffc19d882293653c5bbbb0210a6d0199b2) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Initial alpha release. This release is not yet ready for use yet. You may be able to install it, but if you do, expect breaking changes.
