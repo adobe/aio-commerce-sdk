@@ -19,6 +19,8 @@ const LAST_RETURN_CHAR = "└── ";
 const RETURN_CHAR = "├── ";
 
 type IssueKind = "schema" | "validation" | "transformation";
+type ValidationErrorTag = `${string}ValidationError`;
+
 const ISSUE_KIND_TO_ERROR_TITLE: Record<IssueKind, string> = {
   schema: "Schema validation error",
   validation: "Input error",
@@ -59,28 +61,37 @@ export function summarizeValidationError(error: ValidationError) {
  * Creates a validation error.
  * @param message The validation error message.
  * @param issues The issues that occurred during validation.
+ * @param info Additional information about the error.
  * @returns A validation error.
  */
-export function makeValidationError(
-  message: string,
-  issues: [GenericIssue, ...GenericIssue[]],
-) {
+export function makeValidationError<
+  TIssues extends GenericIssue[] = GenericIssue[],
+  TInfo extends Record<string, unknown> = Record<string, unknown>,
+>(message: string, issues: TIssues, info: TInfo = {} as TInfo) {
   return {
     _tag: "ValidationError",
     message,
     issues,
-  } satisfies ValidationError;
+    ...info,
+  } satisfies ValidationErrorType<ValidationErrorTag, TIssues, TInfo>;
 }
 
-/**
- * Defines a validation error.
- * @param message The validation error message.
- * @param issues The issues that occurred during validation.
- */
-export type ValidationError = ErrorType<
-  "ValidationError",
-  {
+/** Defines a generic type used to instantiate custom validation error interfaces. */
+export type ValidationErrorType<
+  TErrorTag extends ValidationErrorTag = "ValidationError",
+  TIssues extends GenericIssue[] = GenericIssue[],
+  TInfo extends Record<string, unknown> = Record<string, unknown>,
+> = ErrorType<
+  TErrorTag,
+  TInfo & {
     message: string;
-    issues: [GenericIssue, ...GenericIssue[]];
+    issues: TIssues;
   }
+>;
+
+/** Defines a validation error. */
+export type ValidationError = ValidationErrorType<
+  ValidationErrorTag,
+  GenericIssue[],
+  Record<string, unknown>
 >;
