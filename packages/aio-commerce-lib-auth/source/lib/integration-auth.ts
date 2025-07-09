@@ -79,7 +79,7 @@ export function getIntegrationAuthProvider(config: IntegrationConfig) {
 }
 
 /**
- * Tries to get an Integration Provider based on the provided parameters.
+ * Tries to get an Integration Auth Provider based on the provided parameters.
  * @param params {IntegrationAuthParamsInput} - The parameters required for integration authentication.
  * @returns {IntegrationAuthProvider} - An object with methods to get access token and headers.
  */
