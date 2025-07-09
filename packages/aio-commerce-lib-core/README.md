@@ -35,8 +35,8 @@ Within every AppBuilder action you can use the `Result<T, E>` type to handle suc
 #### Use case
 
 - `isOk` and `isErr` are type guards that let you branch logic based on the result.
-- `unwrap` returns the value if the result is a success, otherwise `undefined`.
-- `unwrapErr` returns the error if the result is a failure, otherwise `undefined`.
+- `unwrap` returns the value if the result is a success, otherwise it throws.
+- `unwrapErr` returns the error if the result is a failure, otherwise it throws.
 - `ok` and `err` are helpers to create success and failure results.
 
 <hr/>
