@@ -10,5 +10,4 @@
  * governing permissions and limitations under the License.
  */
 export * as Auth from "@adobe/aio-commerce-lib-auth";
-export * from "@adobe/aio-commerce-lib-core/result";
-export * from "@adobe/aio-commerce-lib-core/validation";
+export * as Core from "@adobe/aio-commerce-lib-core";

@@ -38,14 +38,14 @@
         "default": "./dist/cjs/index.cjs"
       }
     },
-    "./auth": {
+    "./*": {
       "import": {
-        "types": "./dist/es/auth.d.ts",
-        "default": "./dist/es/auth.js"
+        "types": "./dist/es/*.d.ts",
+        "default": "./dist/es/*.js"
       },
       "require": {
-        "types": "./dist/cjs/auth.d.cts",
-        "default": "./dist/cjs/auth.cjs"
+        "types": "./dist/cjs/*.d.cts",
+        "default": "./dist/cjs/*.cjs"
       }
     },
     "./package.json": "./package.json"
