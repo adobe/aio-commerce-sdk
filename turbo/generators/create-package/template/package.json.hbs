@@ -37,7 +37,7 @@
     "lint": "pnpm -w lint .",
     "lint:fix": "pnpm -w lint:fix .",
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"{{#if willContainTests}},
-    "test": "vitest",
+    "test": "vitest run",
     "test:watch": "vitest --watch"
     {{/if}}
   },
