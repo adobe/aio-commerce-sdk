@@ -140,7 +140,7 @@ describe("IMS Authentication", () => {
       expect(error._tag).toEqual("ImsAuthValidationError");
       expect(error.issues).toHaveLength(1);
       expect(error.issues[0].message).toEqual(
-        `An error ocurred while parsing the JSON string array parameter ${key}`,
+        `An error occurred while parsing the JSON string array parameter ${key}`,
       );
     });
   });
