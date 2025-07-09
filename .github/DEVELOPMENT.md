@@ -251,7 +251,6 @@ The default configuration should suffice for most use cases, requiring only that
 <!-- prettier-ignore -->
 - [`@aio-commerce-sdk/config-tsdown`](../configs/tsdown/tsdown.config.base.ts): default configuration
 - [`@adobe/aio-commerce-lib-auth`](../packages/aio-commerce-lib-auth/tsdown.config.ts): single-entry public package example
-- [`@adobe/aio-commerce-lib-core`](../packages/aio-commerce-lib-core/tsdown.config.ts): single-entry public package example
 - [`@adobe/aio-commerce-sdk`](../packages/aio-commerce-sdk/tsdown.config.ts): multi-entry public package example
 
 After you have your TSDown configuration ready, you can run the `build` script to build your package, which will generate a `dist/` directory with the built files. Evaluate the output to make sure it's what you expect.
