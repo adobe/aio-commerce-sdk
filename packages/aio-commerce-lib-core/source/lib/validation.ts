@@ -11,46 +11,76 @@
  */
 
 import { cyanBright, dim, whiteBright, yellowBright } from "ansis";
-import { type BaseIssue, getDotPath } from "valibot";
+import { type BaseIssue, type GenericIssue, getDotPath } from "valibot";
+
 import type { ErrorType } from "./result";
 
 const LAST_RETURN_CHAR = "└── ";
 const RETURN_CHAR = "├── ";
+
 type IssueKind = "schema" | "validation" | "transformation";
-const mapToText = {
+const ISSUE_KIND_TO_ERROR_TITLE: Record<IssueKind, string> = {
   schema: "Schema validation error",
   validation: "Input error",
   transformation: "Transformation error",
 };
 
-function issueToDisplay<TInput>(issues: BaseIssue<TInput>[]): string {
-  const total = issues.length;
-  const lines: string[] = [];
-  let index = 0;
-  for (const issue of issues) {
-    index++;
+function issueToDisplay<TInput>(issues: BaseIssue<TInput>[]) {
+  const lines = issues.map((issue, index) => {
     const returnChar = cyanBright(
-      index === total ? LAST_RETURN_CHAR : RETURN_CHAR,
+      index === issues.length - 1 ? LAST_RETURN_CHAR : RETURN_CHAR,
     );
 
     const kindText = yellowBright(
-      mapToText[issue.kind as IssueKind] || "Unmapped issue kind",
+      ISSUE_KIND_TO_ERROR_TITLE[issue.kind as IssueKind] ||
+        "Unknown issue kind",
     );
+
     const dotPath = getDotPath(issue);
     const path = dotPath ? cyanBright(dotPath) + whiteBright(dim(" →")) : "";
     const issueLine = `${kindText} ${whiteBright("at")} ${path} ${whiteBright(issue.message)}`;
 
-    lines.push(`${returnChar} ${issueLine}`);
-  }
+    return `${returnChar} ${issueLine}`;
+  });
+
   return lines.join("\n");
 }
 
-export function summarize(error: ValidationErrorType): string {
+/**
+ * Summarizes a validation error by displaying the error message and the issues.
+ * @param error The validation error to summarize.
+ * @returns A pretty-printed string containing the summary of the validation error.
+ */
+export function summarizeValidationError(error: ValidationError) {
   return `${whiteBright(error.message)}\n${issueToDisplay(error.issues)}`;
 }
 
-export type ValidationErrorType = ErrorType & {
-  _tag: "ValidationError";
-  message: string;
-  issues: [BaseIssue<unknown>, ...BaseIssue<unknown>[]];
-};
+/**
+ * Creates a validation error.
+ * @param message The validation error message.
+ * @param issues The issues that occurred during validation.
+ * @returns A validation error.
+ */
+export function makeValidationError(
+  message: string,
+  issues: [GenericIssue, ...GenericIssue[]],
+) {
+  return {
+    _tag: "ValidationError",
+    message,
+    issues,
+  } satisfies ValidationError;
+}
+
+/**
+ * Defines a validation error.
+ * @param message The validation error message.
+ * @param issues The issues that occurred during validation.
+ */
+export type ValidationError = ErrorType<
+  "ValidationError",
+  {
+    message: string;
+    issues: [GenericIssue, ...GenericIssue[]];
+  }
+>;

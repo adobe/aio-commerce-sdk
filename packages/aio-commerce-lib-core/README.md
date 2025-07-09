@@ -1,23 +1,26 @@
-# @adobe/aio-commerce-lib-core
+# `@adobe/aio-commerce-lib-core`
 
 > [!WARNING]
 > This package is a work in progress and is not yet ready for use yet. You may be able to install it, but if you do, expect breaking changes.
 
-A utility library for handling result objects and error management in Adobe Commerce SDKs.
+This package provides core utilities for the Adobe Commerce SDK libraries.
 
 ## Installation
 
 ```shell
-npm install @adobe/aio-commerce-lib-core
+pnpm install @adobe/aio-commerce-lib-core
 ```
 
+## Overview
+
+This package provides core utilities for the Adobe Commerce SDK libraries.
+
+### Current Utilities
+
+- **[`Result`](./source/lib/result.ts)**: A type-safe way to handle success and failure cases, without relying on exceptions. Inspired by the Rust [`Result` type](https://doc.rust-lang.org/std/result/).
+- **[`Validation`](./source/lib/validation.ts)**: A set of utilities regarding validation, such as creating and pretty-printing validation errors.
+
 ## Usage
-
-In your App Builder application, you can use the library to bubble up errors and handle results in a consistent way. The reason for this library is to provide a structured way to handle success and failure cases without relying on exceptions, which can lead to cleaner and more maintainable code.
-
-- **Type safety:** Forces you to handle both success and error cases.
-- **No exceptions:** Avoids throwing/catching errors for control flow.
-- **Clarity:** Makes intent explicit and code easier to follow.
 
 ### Result
 
@@ -123,7 +126,8 @@ The summarize function helps you pretty-print validation errors for easier debug
 
 #### Signature
 
-- `summarize(error: ValidationErrorType): string` -
+- `summarizeValidationError(error: ValidationError): string` - Pretty-prints a validation error.
+- `makeValidationError(message: string, issues: [GenericIssue, ...GenericIssue[]]): ValidationError` - Creates a validation error.
 
 #### Use case
 
@@ -134,13 +138,8 @@ This prints a readable summary of all validation issues from unknown input data.
 ```ts
 import { summarize } from "@adobe/aio-commerce-lib-core/validation";
 
-const validationErrorType = {
-  _tag: "ValidationError",
-  message: "Invalid input",
-  issues: [...Issues],
-};
-
-console.error(summarize(validationErrorType));
+const validationError = makeValidationError("Invalid input", [...issues]);
+console.error(summarizeValidationError(validationError));
 
 // Output:
 // Invalid input

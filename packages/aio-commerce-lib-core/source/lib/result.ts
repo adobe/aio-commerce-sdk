@@ -15,47 +15,102 @@ const SuccessOrFailure = {
   FAILURE: "failure",
 } as const;
 
+/** Defines the tag of an error type. */
+export type ErrorTag = `${string}Error`;
+
+/** Defines a successful result. */
 export type Ok<T> = { type: "success"; value: T };
-export type Err<E extends ErrorType> = {
+
+/** Defines a failed result. */
+export type Err<E extends ErrorType<ErrorTag>> = {
   type: "failure";
   error: E;
 };
-export type Result<T, E extends ErrorType> = Ok<T> | Err<E>;
 
-export type ErrorType = {
-  _tag: string;
-  [key: string]: unknown;
+/** Defines a result that can be either a success or a failure. */
+export type Result<T, E extends ErrorType<ErrorTag>> = Ok<T> | Err<E>;
+
+/** Defines an error type that can contain any additional properties. */
+export type ErrorType<
+  TTag extends ErrorTag = `Error`,
+  TInfo extends Record<string, unknown> = Record<string, unknown>,
+> = TInfo & {
+  _tag: TTag;
 };
 
+/**
+ * Wraps the given value in a successful result.
+ * @param value The value to wrap.
+ * @returns A successful result containing the given value.
+ */
 export function ok<T>(value: T): Ok<T> {
   return { type: SuccessOrFailure.SUCCESS, value };
 }
 
-export function err<E extends ErrorType>(error: E): Err<E> {
+/**
+ * Wraps the given error in a failed result.
+ * @param error The error to wrap.
+ * @returns A failed result containing the given error.
+ */
+export function err<E extends ErrorType<ErrorTag>>(error: E): Err<E> {
   return { type: SuccessOrFailure.FAILURE, error };
 }
 
-export function unwrap<T, E extends ErrorType>(result: Result<T, E>) {
+/**
+ * Unwraps a result to retrive it's value.
+ * If the result is a failure, an error will be thrown.
+ *
+ * @param result The result to unwrap.
+ * @returns The value contained in the successful result.
+ * @throws An error if the result is a failure.
+ */
+export function unwrap<T, E extends ErrorType<ErrorTag>>(result: Result<T, E>) {
   if (result.type === SuccessOrFailure.SUCCESS) {
     return result.value satisfies T;
   }
-  throw new Error("Cannot get data from a Err");
+
+  throw new Error(
+    "Can't unwrap the value from this result because it's a failure",
+  );
 }
 
-export function unwrapErr<T, E extends ErrorType>(result: Result<T, E>) {
+/**
+ * Unwraps a result to retrive it's error.
+ * If the result is a success, an error will be thrown.
+ *
+ * @param result The result to unwrap.
+ * @returns The error contained in the failed result.
+ * @throws An error if the result is a success.
+ */
+export function unwrapErr<T, E extends ErrorType<ErrorTag>>(
+  result: Result<T, E>,
+) {
   if (result.type === SuccessOrFailure.FAILURE) {
     return result.error satisfies E;
   }
-  throw new Error("Cannot get error from a Ok");
+
+  throw new Error(
+    "Can't unwrap the error from this result because it's a success",
+  );
 }
 
-export function isOk<T, E extends ErrorType>(
+/**
+ * Checks if a result is a success.
+ * @param result The result to check.
+ * @returns True if the result is a success, false otherwise.
+ */
+export function isOk<T, E extends ErrorType<ErrorTag>>(
   result: Result<T, E>,
 ): result is Ok<T> {
   return result.type === SuccessOrFailure.SUCCESS;
 }
 
-export function isErr<T, E extends ErrorType>(
+/**
+ * Checks if a result is a failure.
+ * @param result The result to check.
+ * @returns True if the result is a failure, false otherwise.
+ */
+export function isErr<T, E extends ErrorType<ErrorTag>>(
   result: Result<T, E>,
 ): result is Err<E> {
   return result.type === SuccessOrFailure.FAILURE;

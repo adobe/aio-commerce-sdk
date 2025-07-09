@@ -8,14 +8,16 @@
     "node": ">=22"
   },
   "license": "Apache-2.0",
-  "description": "Description for @adobe/aio-commerce-lib-core",
+  "description": "Core utilities for AIO Commerce SDK Libraries",
   "keywords": [
     "aio",
     "adobe-io",
     "commerce",
     "adobe-commerce",
     "adobe-commerce-sdk",
-    "aio-commerce-sdk"
+    "aio-commerce-sdk",
+    "aio-commerce-lib-core",
+    "aio-commerce-sdk-lib-core"
   ],
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
@@ -29,14 +31,24 @@
   "module": "./dist/es/index.js",
   "types": "./dist/es/index.d.ts",
   "exports": {
-    "./*": {
+    ".": {
       "import": {
-        "types": "./dist/es/*.d.ts",
-        "default": "./dist/es/*.js"
+        "types": "./dist/es/index.d.ts",
+        "default": "./dist/es/index.js"
       },
       "require": {
-        "types": "./dist/cjs/*.d.cts",
-        "default": "./dist/cjs/*.cjs"
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
+    },
+    "./*": {
+      "import": {
+        "types": "./dist/es/lib/*.d.ts",
+        "default": "./dist/es/lib/*.js"
+      },
+      "require": {
+        "types": "./dist/cjs/lib/*.d.cts",
+        "default": "./dist/cjs/lib/*.cjs"
       }
     },
     "./package.json": "./package.json"
