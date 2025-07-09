@@ -110,9 +110,7 @@ export function getImsAuthProvider(config: ImsAuthConfig): ImsAuthProvider {
     );
 
     await context.set(config.context, snakeCasedConfig);
-    const token = await tryGetAccessToken(config.context);
-
-    return token;
+    return tryGetAccessToken(config.context);
   };
 
   const getHeaders = async () => {
