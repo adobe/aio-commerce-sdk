@@ -57,7 +57,7 @@ export function err<E extends ErrorType<ErrorTag>>(error: E): Err<E> {
 }
 
 /**
- * Unwraps a result to retrive it's value.
+ * Unwraps a result to retrieve its value.
  * If the result is a failure, an error will be thrown.
  *
  * @param result The result to unwrap.
