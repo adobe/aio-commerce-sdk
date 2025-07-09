@@ -54,9 +54,8 @@ async function tryGetAccessToken(
  */
 export function getImsAuthProvider(config: ImsAuthConfig) {
   const getAccessToken = async () => {
-    const token = await tryGetAccessToken(config.context);
     await context.set(config.context, config);
-    return token;
+    return tryGetAccessToken(config.context);
   };
 
   const getHeaders = async () => {
