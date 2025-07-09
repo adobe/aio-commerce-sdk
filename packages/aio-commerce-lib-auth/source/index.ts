@@ -10,7 +10,26 @@
  * governing permissions and limitations under the License.
  */
 
-export * from "./lib/ims-auth";
-export * from "./lib/ims-auth-types";
-export * from "./lib/integration-auth";
-export * from "./lib/integration-auth-types";
+export {
+  getImsAuthProvider,
+  type ImsAuthConfig,
+  type ImsAuthError,
+  type ImsAuthProvider,
+  tryGetImsAuthProvider,
+} from "./lib/ims-auth/provider";
+
+export {
+  IMS_AUTH_ENV,
+  type ImsAuthEnv,
+  type ImsAuthParams,
+} from "./lib/ims-auth/schema";
+
+export {
+  getIntegrationAuthProvider,
+  type IntegrationAuthError,
+  type IntegrationAuthProvider,
+  type IntegrationConfig,
+  tryGetIntegrationAuthProvider,
+} from "./lib/integration-auth/provider";
+
+export type { IntegrationAuthParams } from "./lib/integration-auth/schema";

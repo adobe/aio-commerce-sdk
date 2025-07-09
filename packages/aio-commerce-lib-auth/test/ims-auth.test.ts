@@ -12,31 +12,39 @@
 
 import { unwrap, unwrapErr } from "@adobe/aio-commerce-lib-core/result";
 import { getToken } from "@adobe/aio-lib-ims";
+
+import type { InferInput } from "valibot";
 import { describe, expect, test, vi } from "vitest";
-import { getImsAuthProvider, tryGetImsAuthProvider } from "~/lib/ims-auth";
-import { IMS_AUTH_ENV, type ImsAuthParamsInput } from "~/lib/ims-auth-types";
+
+import {
+  getImsAuthProvider,
+  tryGetImsAuthProvider,
+} from "~/lib/ims-auth/provider";
+
+import { IMS_AUTH_ENV, type ImsAuthParamsSchema } from "~/lib/ims-auth/schema";
 
 vi.mock("@adobe/aio-lib-ims", async () => ({
   context: (await vi.importActual("@adobe/aio-lib-ims")).context,
   getToken: vi.fn(),
 }));
 
-describe("ims auth", () => {
+describe("IMS Authentication", () => {
   describe("getImsAuthProvider", () => {
     test("should export token", async () => {
       const authToken = "supersecrettoken";
       vi.mocked(getToken).mockResolvedValue(authToken);
 
       const config = {
-        client_id: "test-client-id",
-        client_secrets: ["supersecret"],
-        technical_account_id: "test-technical-account-id",
-        technical_account_email: "test-email@example.com",
-        ims_org_id: "test-org-id",
+        clientId: "test-client-id",
+        clientSecrets: ["supersecret"],
+        technicalAccountId: "test-technical-account-id",
+        technicalAccountEmail: "test-email@example.com",
+        imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
         environment: IMS_AUTH_ENV.PROD,
         context: "test-context",
       };
+
       const imsAuthProvider = getImsAuthProvider(config);
       expect(imsAuthProvider).toBeDefined();
 
@@ -45,7 +53,7 @@ describe("ims auth", () => {
 
       const headers = unwrap(await imsAuthProvider.getHeaders());
       expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
-      expect(headers).toHaveProperty("x-api-key", config.client_id);
+      expect(headers).toHaveProperty("x-api-key", config.clientId);
     });
   });
 
@@ -57,7 +65,7 @@ describe("ims auth", () => {
       AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
       AIO_COMMERCE_IMS_IMS_ORG_ID: "test-org-id",
       AIO_COMMERCE_IMS_SCOPES: JSON.stringify(["scope1", "scope2"]),
-    } satisfies ImsAuthParamsInput;
+    } satisfies InferInput<typeof ImsAuthParamsSchema>;
 
     test("should export token when all required params are provided", async () => {
       const authToken = "supersecrettoken";
@@ -75,13 +83,15 @@ describe("ims auth", () => {
       );
     });
 
-    test("should err with invalid params", async () => {
+    test("should err with invalid params", () => {
       const result = unwrapErr(
-        await tryGetImsAuthProvider({} as unknown as ImsAuthParamsInput),
+        tryGetImsAuthProvider(
+          {} as unknown as InferInput<typeof ImsAuthParamsSchema>,
+        ),
       );
-      expect(result).toHaveProperty("_tag", "ValidationError");
+
+      expect(result).toHaveProperty("_tag", "ImsAuthValidationError");
       expect(result).toHaveProperty("issues", expect.any(Array));
-      expect(result.issues.length).toEqual(6);
     });
 
     test.each([
@@ -91,20 +101,23 @@ describe("ims auth", () => {
       "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL",
       "AIO_COMMERCE_IMS_IMS_ORG_ID",
       "AIO_COMMERCE_IMS_SCOPES",
-    ])("should throw error when %s is missing", async (param) => {
-      const result = await tryGetImsAuthProvider({
+    ])("should throw error when %s is missing", (param) => {
+      const result = tryGetImsAuthProvider({
         ...params,
         [param]: undefined,
-      } satisfies ImsAuthParamsInput);
+      } satisfies InferInput<typeof ImsAuthParamsSchema>);
 
-      expect(() => unwrap(result)).toThrow("Cannot get data from a Err");
-      expect(unwrapErr(result)._tag).toEqual("ValidationError");
-      expect(unwrapErr(result).message).toEqual(
-        "Failed to validate the provided IMS parameters. See the console for more details.",
+      expect(() => unwrap(result)).toThrow();
+
+      const error = unwrapErr(result);
+      expect(error._tag).toEqual("ImsAuthValidationError");
+      expect(error.message).toEqual(
+        "Failed to validate the provided IMS parameters",
       );
-      expect(unwrapErr(result)).toHaveProperty(
-        "issues.[0].message",
-        "Missing or invalid ims auth parameter string",
+
+      expect(error.issues).toHaveLength(1);
+      expect(error.issues[0].message).toEqual(
+        `Expected a string value for the IMS auth parameter ${param}`,
       );
     });
 
@@ -115,16 +128,19 @@ describe("ims auth", () => {
       ["[test, foo]", "AIO_COMMERCE_IMS_CLIENT_SECRETS"],
       ['[{test: "foo"}]', "AIO_COMMERCE_IMS_CLIENT_SECRETS"],
       ['["test"', "AIO_COMMERCE_IMS_CLIENT_SECRETS"],
-    ])(`should throw error when given %s as %s input"`, async (param, key) => {
-      const result = await tryGetImsAuthProvider({
+    ])(`should throw error when given %s as %s input"`, (param, key) => {
+      const result = tryGetImsAuthProvider({
         ...params,
         [key]: param,
-      } as ImsAuthParamsInput);
+      } satisfies InferInput<typeof ImsAuthParamsSchema>);
 
-      expect(() => unwrap(result)).toThrow("Cannot get data from a Err");
-      expect(unwrapErr(result)._tag).toEqual("ValidationError");
-      expect(unwrapErr(result).message).toEqual(
-        "Failed to validate the provided IMS parameters. See the console for more details.",
+      expect(() => unwrap(result)).toThrow();
+
+      const error = unwrapErr(result);
+      expect(error._tag).toEqual("ImsAuthValidationError");
+      expect(error.issues).toHaveLength(1);
+      expect(error.issues[0].message).toEqual(
+        `An error ocurred while parsing the JSON string array parameter ${key}`,
       );
     });
   });

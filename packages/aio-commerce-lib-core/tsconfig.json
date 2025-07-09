@@ -11,5 +11,5 @@
     }
   },
 
-  "include": ["tsdown.config.ts", "source/**/*", "tests/**/*"]
+  "include": ["tsdown.config.ts", "source/**/*", "test/**/*"]
 }
