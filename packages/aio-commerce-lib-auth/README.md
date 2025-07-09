@@ -32,13 +32,13 @@ In the runtime action you can generate an access token using the IMS Provider:
 
 ```typescript
 import { tryGetImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
-import { isErr, unwrapErr, unwrap } from "@adobe/aio-commerce-lib-core";
+import { isErr, unwrap } from "@adobe/aio-commerce-lib-core";
 
 export const main = async function (params: Record<string, unknown>) {
   const result = tryGetImsAuthProvider(params); // Validate parameters and get the integration auth provider
 
   if (isErr(result)) {
-    const error = unwrapErr(result);
+    const { error } = result;
     return {
       statusCode: 400,
       body: {
