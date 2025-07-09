@@ -8,8 +8,7 @@ import {
 
 import type { ValidationErrorType } from "@adobe/aio-commerce-lib-core/validation";
 import { context, getToken } from "@adobe/aio-lib-ims";
-
-import { snakeCase } from "es-toolkit";
+import type { SnakeCasedProperties } from "type-fest";
 import { type InferInput, type InferIssue, safeParse } from "valibot";
 
 import {
@@ -53,6 +52,19 @@ export interface ImsAuthConfig {
 export interface ImsAuthProvider {
   getAccessToken: () => Promise<Result<ImsAccessToken, ImsAuthError>>;
   getHeaders: () => Promise<Result<ImsAuthHeaders, ImsAuthError>>;
+}
+
+function snakeCaseImsAuthConfig(
+  config: ImsAuthConfig,
+): SnakeCasedProperties<ImsAuthConfig> {
+  return {
+    ...config,
+    client_id: config.clientId,
+    client_secrets: config.clientSecrets,
+    technical_account_id: config.technicalAccountId,
+    technical_account_email: config.technicalAccountEmail,
+    ims_org_id: config.imsOrgId,
+  };
 }
 
 function makeImsAuthValidationError(
@@ -105,9 +117,7 @@ async function tryGetAccessToken(
  */
 export function getImsAuthProvider(config: ImsAuthConfig): ImsAuthProvider {
   const getAccessToken = async () => {
-    const snakeCasedConfig = Object.fromEntries(
-      Object.entries(config).map(([key, value]) => [snakeCase(key), value]),
-    );
+    const snakeCasedConfig = snakeCaseImsAuthConfig(config);
 
     await context.set(config.context, snakeCasedConfig);
     return tryGetAccessToken(config.context);
