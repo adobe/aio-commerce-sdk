@@ -40,7 +40,7 @@ const jsonStringArray = (name: string) => {
       ),
       parseJson(),
     ),
-    `An error ocurred while parsing the JSON string array parameter ${name}`,
+    `An error occurred while parsing the JSON string array parameter ${name}`,
   );
 
   return pipe(
