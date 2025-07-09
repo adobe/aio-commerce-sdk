@@ -75,7 +75,7 @@ export function unwrap<T, E extends ErrorType<ErrorTag>>(result: Result<T, E>) {
 }
 
 /**
- * Unwraps a result to retrive it's error.
+ * Unwraps a result to retrieve its error.
  * If the result is a success, an error will be thrown.
  *
  * @param result The result to unwrap.
