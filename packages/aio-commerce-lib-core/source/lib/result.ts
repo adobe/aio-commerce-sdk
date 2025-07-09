@@ -115,3 +115,42 @@ export function isErr<T, E extends ErrorType<ErrorTag>>(
 ): result is Err<E> {
   return result.type === SuccessOrFailure.FAILURE;
 }
+
+/**
+ * Maps a successful result to another value.
+ * If the result is a failure, it is returned unchanged.
+ *
+ * @param result The result to map.
+ * @param fn A function to transform the success value.
+ * @returns A new {@link Result} with the transformed value or the original error.
+ */
+export function map<T, U, E extends ErrorType<ErrorTag>>(
+  result: Result<T, E>,
+  fn: (value: T) => U,
+): Result<U, E> {
+  if (isOk(result)) {
+    return ok(fn(result.value));
+  }
+
+  return result;
+}
+
+/**
+ * Maps a failed result's error to another error value.
+ * If the result is a success, it is returned unchanged.
+ *
+ * @param result The result to map.
+ * @param fn A function to transform the error value.
+ * @returns A new Result with the original value or transformed error.
+ */
+export function mapErr<
+  T,
+  E extends ErrorType<ErrorTag>,
+  F extends ErrorType<ErrorTag>,
+>(result: Result<T, E>, fn: (error: E) => F): Result<T, F> {
+  if (isErr(result)) {
+    return err(fn(result.error));
+  }
+
+  return result;
+}
