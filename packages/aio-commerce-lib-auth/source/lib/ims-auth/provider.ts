@@ -105,12 +105,13 @@ async function tryGetAccessToken(
  */
 export function getImsAuthProvider(config: ImsAuthConfig): ImsAuthProvider {
   const getAccessToken = async () => {
-    const token = await tryGetAccessToken(config.context);
     const snakeCasedConfig = Object.fromEntries(
       Object.entries(config).map(([key, value]) => [snakeCase(key), value]),
     );
 
     await context.set(config.context, snakeCasedConfig);
+    const token = await tryGetAccessToken(config.context);
+
     return token;
   };
 
