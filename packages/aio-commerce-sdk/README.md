@@ -27,7 +27,21 @@ The SDK currently includes:
 
 You can import libraries from the SDK in two ways:
 
-### 1. Namespaced Import (Recommended)
+### 1. Direct Sub-path Import (Recommended)
+
+Import directly from a specific library sub-path for better tree-shaking:
+
+```typescript
+import {
+  getImsAuthProvider,
+  getIntegrationsAuthProvider,
+} from "@adobe/aio-commerce-sdk/auth";
+
+const imsAuth = getImsAuthProvider(params);
+const integrationsAuth = getIntegrationsAuthProvider(params);
+```
+
+### 2. Namespaced Import
 
 Import all exports from a specific library under a namespace:
 
@@ -41,20 +55,6 @@ const headers = await imsAuth.getHeaders();
 // Use integrations authentication
 const integrationsAuth = Auth.getIntegrationsAuthProvider(params);
 const headers = integrationsAuth.getHeaders("GET", "https://example.com/api");
-```
-
-### 2. Direct Sub-path Import
-
-Import directly from a specific library sub-path for better tree-shaking:
-
-```typescript
-import {
-  getImsAuthProvider,
-  getIntegrationsAuthProvider,
-} from "@adobe/aio-commerce-sdk/auth";
-
-const imsAuth = getImsAuthProvider(params);
-const integrationsAuth = getIntegrationsAuthProvider(params);
 ```
 
 ## Benefits

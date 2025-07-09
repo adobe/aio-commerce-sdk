@@ -54,12 +54,15 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-lib-ims": "^8.1.0",
-    "oauth-1.0a": "^2.2.6"
+    "ansis": "^4.1.0",
+    "oauth-1.0a": "^2.2.6",
+    "valibot": "^1.1.0"
   },
   "devDependencies": {
-    "@aio-commerce-sdk/config-typescript": "workspace:*",
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
     "vitest": "^3.2.4"
   },
   "sideEffects": false

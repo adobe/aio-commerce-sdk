@@ -9,5 +9,7 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-export * as Auth from "@adobe/aio-commerce-lib-auth";
-export * as Core from "@adobe/aio-commerce-lib-core";
+
+// Export here the public API of the package.
+export * as Result from "./lib/result";
+export * as Validation from "./lib/validation";
