@@ -65,7 +65,7 @@ export const main = async function (params: Record<string, unknown>) {
   const headersResult = imsAuthProvider.getHeaders();
 
   if (isErr(headersResult)) {
-    const error = unwrapErr(headersResult);
+    const { error } = result;
     return {
       statusCode: 400,
       body: {
@@ -91,7 +91,7 @@ export const main = async function (params: Record<string, unknown>) {
   const result = tryGetIntegrationAuthProvider(params); // Validate parameters and get the integration auth provider
 
   if (isErr(result)) {
-    const error = unwrapErr(result);
+    const { error } = result;
     return {
       statusCode: 400,
       body: {
@@ -107,7 +107,7 @@ export const main = async function (params: Record<string, unknown>) {
   );
 
   if (isErr(headersResult)) {
-    const error = unwrapErr(headersResult);
+    const { error } = result;
     return {
       statusCode: 400,
       body: {
