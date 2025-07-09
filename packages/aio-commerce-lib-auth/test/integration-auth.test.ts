@@ -11,18 +11,24 @@
  */
 
 import { unwrap, unwrapErr } from "@adobe/aio-commerce-lib-core/result";
+import type { InferInput } from "valibot";
+
 import { describe, expect, test } from "vitest";
 import {
   getIntegrationAuthProvider,
   tryGetIntegrationAuthProvider,
-} from "~/lib/integration-auth";
-import type { IntegrationAuthParamsInput } from "~/lib/integration-auth-types";
+} from "~/lib/integration-auth/provider";
+
+import type {
+  IntegrationAuthParams,
+  IntegrationAuthParamsSchema,
+} from "~/lib/integration-auth/schema";
 
 /** Regex to match the OAuth 1.0a header format. */
 const OAUTH1_REGEX =
   /^OAuth oauth_consumer_key="[^"]+", oauth_nonce="[^"]+", oauth_signature="[^"]+", oauth_signature_method="HMAC-SHA256", oauth_timestamp="[^"]+", oauth_token="[^"]+", oauth_version="1\.0"$/;
 
-describe("integration auth", () => {
+describe("Commerce Integration Auth", () => {
   describe("getIntegrationAuthProvider", () => {
     test("should export getIntegrationAuthProvider", () => {
       const integrationAuthProvider = getIntegrationAuthProvider({
@@ -35,6 +41,7 @@ describe("integration auth", () => {
       const headers = unwrap(
         integrationAuthProvider.getHeaders("GET", "http://localhost/test"),
       );
+
       expect(headers).toHaveProperty(
         "Authorization",
         expect.stringMatching(OAUTH1_REGEX),
@@ -43,7 +50,7 @@ describe("integration auth", () => {
   });
 
   describe("tryGetIntegrationAuthProvider", () => {
-    const params: IntegrationAuthParamsInput = {
+    const params: IntegrationAuthParams = {
       AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY: "test-consumer-key",
       AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET: "test-consumer-secret",
       AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN: "test-access-token",
@@ -53,6 +60,7 @@ describe("integration auth", () => {
     test("should export getIntegrationAccessToken", () => {
       const result = unwrap(tryGetIntegrationAuthProvider(params));
       const headers = unwrap(result.getHeaders("GET", "http://localhost/test"));
+
       expect(headers).toHaveProperty(
         "Authorization",
         expect.stringMatching(OAUTH1_REGEX),
@@ -60,10 +68,12 @@ describe("integration auth", () => {
     });
 
     test("should err with invalid params", () => {
-      const result = unwrapErr(tryGetIntegrationAuthProvider({}));
-      expect(result).toHaveProperty("_tag", "ValidationError");
+      const result = unwrapErr(
+        tryGetIntegrationAuthProvider({} as unknown as IntegrationAuthParams),
+      );
+
+      expect(result).toHaveProperty("_tag", "IntegrationAuthValidationError");
       expect(result).toHaveProperty("issues", expect.any(Array));
-      expect(result.issues.length).toEqual(4);
     });
 
     test.each([
@@ -75,12 +85,19 @@ describe("integration auth", () => {
       const result = tryGetIntegrationAuthProvider({
         ...params,
         [param]: undefined,
-      } as IntegrationAuthParamsInput);
+      } satisfies InferInput<typeof IntegrationAuthParamsSchema>);
 
-      expect(() => unwrap(result)).toThrow("Cannot get data from a Err");
-      expect(unwrapErr(result)._tag).toEqual("ValidationError");
-      expect(unwrapErr(result).message).toEqual(
-        "Failed to validate the provided integration parameters. See the console for more details.",
+      expect(() => unwrap(result)).toThrow();
+
+      const error = unwrapErr(result);
+      expect(error._tag).toEqual("IntegrationAuthValidationError");
+      expect(error.message).toEqual(
+        "Failed to validate the provided integration parameters",
+      );
+
+      expect(error.issues).toHaveLength(1);
+      expect(error.issues[0].message).toEqual(
+        `Expected a string value for the Commerce Integration parameter ${param}`,
       );
     });
 
@@ -94,11 +111,13 @@ describe("integration auth", () => {
       const integrationAuthProvider = unwrap(
         tryGetIntegrationAuthProvider(params),
       );
-      const getHeadersResult = integrationAuthProvider.getHeaders("GET", url);
 
-      expect(unwrapErr(getHeadersResult)._tag).toEqual("ValidationError");
-      expect(unwrapErr(getHeadersResult).message).toEqual(
-        "Failed to validate the provided URL. See the console for more details.",
+      const getHeadersResult = integrationAuthProvider.getHeaders("GET", url);
+      const error = unwrapErr(getHeadersResult);
+
+      expect(error._tag).toEqual("IntegrationAuthValidationError");
+      expect(error.message).toEqual(
+        "Failed to validate the provided Adobe Commerce URL",
       );
     });
   });
