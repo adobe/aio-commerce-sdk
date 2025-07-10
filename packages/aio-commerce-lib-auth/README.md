@@ -17,7 +17,7 @@ The library supports two main authentication providers:
     - AIO_COMMERCE_IMS_CLIENT_SECRETS: string
     - AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: string
     - AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: string
-    - AIO_COMMERCE_IMS_IMS_ORG_ID: string
+    - AIO_COMMERCE_IMS_ORG_ID: string
     - AIO_COMMERCE_IMS_ENV: string e.g `'prod'` or `'stage'`
     - AIO_COMMERCE_IMS_SCOPES: string e.g `'["value1", "value2"]'`
     - AIO_COMMERCE_IMS_CTX: string
