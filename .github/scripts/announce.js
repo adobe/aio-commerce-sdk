@@ -36,7 +36,7 @@ function formatMrkdwnAnnouncement(publishedPackages) {
     const pkgRelease = `${pkg.name}@${pkg.version}`;
     const pkgReleaseUrl = `${repoUrl}/releases/tag/${pkgRelease}`;
     const pkgNpmUrl = `https://www.npmjs.com/package/${pkg.name}`;
-    announcement += `\u2007• \`${pkgRelease}\`. Read the <${pkgReleaseUrl}|release notes ⇗>. See on <${pkgNpmUrl}|npm ⇗>.\n`;
+    announcement += `\u2007• \`${pkgRelease}\`: Read the <${pkgReleaseUrl}|release notes⇗>. See on <${pkgNpmUrl}|npm⇗>.\n`;
   }
   return announcement.trimEnd();
 }
