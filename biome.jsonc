@@ -15,5 +15,13 @@
       "semicolons": "always",
       "trailingCommas": "all"
     }
+  },
+
+  "linter": {
+    "rules": {
+      "performance": {
+        "noNamespaceImport": "off"
+      }
+    }
   }
 }
