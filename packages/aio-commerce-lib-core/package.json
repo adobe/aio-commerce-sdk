@@ -53,6 +53,12 @@
     },
     "./package.json": "./package.json"
   },
+  "files": [
+    "dist",
+    "package.json",
+    "CHANGELOG.md",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsdown",
     "check:ci": "pnpm -w check:ci .",

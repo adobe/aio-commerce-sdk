@@ -41,7 +41,7 @@ describe("IMS Authentication", () => {
         technicalAccountEmail: "test-email@example.com",
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        environment: IMS_AUTH_ENV.PROD,
+        env: IMS_AUTH_ENV.PROD,
         context: "test-context",
       };
 
@@ -49,9 +49,9 @@ describe("IMS Authentication", () => {
       expect(imsAuthProvider).toBeDefined();
 
       const retrievedToken = await imsAuthProvider.getAccessToken();
-      expect(unwrap(retrievedToken)).toEqual(authToken);
+      expect(retrievedToken).toEqual(authToken);
 
-      const headers = unwrap(await imsAuthProvider.getHeaders());
+      const headers = await imsAuthProvider.getHeaders();
       expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
       expect(headers).toHaveProperty("x-api-key", config.clientId);
     });
@@ -63,7 +63,7 @@ describe("IMS Authentication", () => {
       AIO_COMMERCE_IMS_CLIENT_SECRETS: JSON.stringify(["supersecret"]),
       AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
-      AIO_COMMERCE_IMS_IMS_ORG_ID: "test-org-id",
+      AIO_COMMERCE_IMS_ORG_ID: "test-org-id",
       AIO_COMMERCE_IMS_SCOPES: JSON.stringify(["scope1", "scope2"]),
     } satisfies InferInput<typeof ImsAuthParamsSchema>;
 
@@ -72,10 +72,10 @@ describe("IMS Authentication", () => {
       vi.mocked(getToken).mockResolvedValue(authToken);
 
       const imsAuthProvider = unwrap(tryGetImsAuthProvider(params));
-      const retrievedToken = unwrap(await imsAuthProvider.getAccessToken());
+      const retrievedToken = await imsAuthProvider.getAccessToken();
       expect(retrievedToken).toEqual(authToken);
 
-      const headers = unwrap(await imsAuthProvider.getHeaders());
+      const headers = await imsAuthProvider.getHeaders();
       expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
       expect(headers).toHaveProperty(
         "x-api-key",
@@ -99,7 +99,7 @@ describe("IMS Authentication", () => {
       "AIO_COMMERCE_IMS_CLIENT_SECRETS",
       "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID",
       "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL",
-      "AIO_COMMERCE_IMS_IMS_ORG_ID",
+      "AIO_COMMERCE_IMS_ORG_ID",
       "AIO_COMMERCE_IMS_SCOPES",
     ])("should throw error when %s is missing", (param) => {
       const result = tryGetImsAuthProvider({

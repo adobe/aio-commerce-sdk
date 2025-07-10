@@ -13,7 +13,6 @@
 export {
   getImsAuthProvider,
   type ImsAuthConfig,
-  type ImsAuthError,
   type ImsAuthProvider,
   tryGetImsAuthProvider,
 } from "./lib/ims-auth/provider";

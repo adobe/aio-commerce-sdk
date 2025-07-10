@@ -37,14 +37,10 @@ export interface IntegrationConfig {
   accessTokenSecret: string;
 }
 
-type ValidationIssues =
-  | InferIssue<typeof IntegrationAuthParamsSchema>[]
-  | InferIssue<typeof UrlSchema>[];
-
 /** Defines an error type for the integration auth service. */
 export type IntegrationAuthError = ValidationErrorType<
   "IntegrationAuthValidationError",
-  ValidationIssues
+  InferIssue<typeof IntegrationAuthParamsSchema>[]
 >;
 
 /** Defines an authentication provider for Adobe Commerce integrations. */
@@ -52,12 +48,12 @@ export interface IntegrationAuthProvider {
   getHeaders: (
     method: HttpMethodInput,
     url: AdobeCommerceUri,
-  ) => Result<IntegrationAuthHeaders, IntegrationAuthError>;
+  ) => IntegrationAuthHeaders;
 }
 
 function makeIntegrationAuthValidationError(
   message: string,
-  issues: ValidationIssues,
+  issues: InferIssue<typeof IntegrationAuthParamsSchema>[],
 ) {
   return {
     _tag: "IntegrationAuthValidationError",
@@ -101,11 +97,8 @@ export function getIntegrationAuthProvider(
   const getHeaders = (method: HttpMethodInput, url: AdobeCommerceUri) => {
     const uriValidation = safeParse(UrlSchema, url);
     if (!uriValidation.success) {
-      return err(
-        makeIntegrationAuthValidationError(
-          "Failed to validate the provided Adobe Commerce URL",
-          uriValidation.issues,
-        ),
+      throw new Error(
+        `Failed to validate the provided Adobe Commerce URL: ${uriValidation.issues}`,
       );
     }
 
@@ -114,7 +107,7 @@ export function getIntegrationAuthProvider(
       oauth.authorize({ url: finalUrl, method }, oauthToken),
     );
 
-    return ok(headers);
+    return headers;
   };
 
   return {

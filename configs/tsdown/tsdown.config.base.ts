@@ -1,4 +1,7 @@
-import { readdir, rename } from "node:fs/promises";
+import { mkdir, rename, rm } from "node:fs/promises";
+import { dirname, join, relative } from "node:path";
+import { globby } from "globby";
+
 import type { UserConfig } from "tsdown";
 
 /** By default, TSDown will output the files to the `./dist` directory. */
@@ -32,14 +35,33 @@ export const baseConfig = {
     "build:done": async (_) => {
       // For some reason the types for CJS are being placed out of the CJS directory.
       // This is a workaround to move them into the CJS directory.
-      const files = await readdir(OUT_DIR);
-      const ctsFiles = files.filter((file) => file.endsWith(".d.cts"));
+      const files = await globby("**/*.d.cts", {
+        cwd: OUT_DIR,
+        absolute: true,
+      });
+
+      const migratedDirs = new Set<string>();
+      await Promise.all(
+        files.map(async (sourcePath) => {
+          const relativePath = relative(OUT_DIR, sourcePath);
+          const targetPath = join(OUT_DIR, "cjs", relativePath);
+
+          if (relativePath.includes("/")) {
+            const [root] = relativePath.split("/");
+            const migratedDir = join(OUT_DIR, root);
+
+            const [absoluteParent] = sourcePath.split(migratedDir);
+            migratedDirs.add(join(absoluteParent, migratedDir));
+          }
+
+          await mkdir(dirname(targetPath), { recursive: true });
+          await rename(sourcePath, targetPath);
+        }),
+      );
 
       await Promise.all(
-        ctsFiles.map((file) => {
-          const sourcePath = `${OUT_DIR}/${file}`;
-          const targetPath = `${OUT_DIR}/cjs/${file}`;
-          return rename(sourcePath, targetPath);
+        Array.from(migratedDirs).map(async (dir) => {
+          await rm(dir, { recursive: true });
         }),
       );
     },

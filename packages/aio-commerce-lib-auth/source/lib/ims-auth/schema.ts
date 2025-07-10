@@ -73,7 +73,7 @@ export const ImsAuthParamsSchema = object({
   AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: imsAuthParameter(
     "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL",
   ),
-  AIO_COMMERCE_IMS_IMS_ORG_ID: imsAuthParameter("AIO_COMMERCE_IMS_IMS_ORG_ID"),
+  AIO_COMMERCE_IMS_ORG_ID: imsAuthParameter("AIO_COMMERCE_IMS_ORG_ID"),
 
   AIO_COMMERCE_IMS_ENV: pipe(optional(ImsAuthEnvSchema, IMS_AUTH_ENV.PROD)),
   AIO_COMMERCE_IMS_CTX: pipe(optional(string(), "aio-commerce-sdk-creds")),

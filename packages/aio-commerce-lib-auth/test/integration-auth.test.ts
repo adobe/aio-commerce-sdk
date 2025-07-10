@@ -38,8 +38,9 @@ describe("Commerce Integration Auth", () => {
         accessTokenSecret: "test-access-token-secret",
       });
 
-      const headers = unwrap(
-        integrationAuthProvider.getHeaders("GET", "http://localhost/test"),
+      const headers = integrationAuthProvider.getHeaders(
+        "GET",
+        "http://localhost/test",
       );
 
       expect(headers).toHaveProperty(
@@ -59,7 +60,7 @@ describe("Commerce Integration Auth", () => {
 
     test("should export getIntegrationAccessToken", () => {
       const result = unwrap(tryGetIntegrationAuthProvider(params));
-      const headers = unwrap(result.getHeaders("GET", "http://localhost/test"));
+      const headers = result.getHeaders("GET", "http://localhost/test");
 
       expect(headers).toHaveProperty(
         "Authorization",
@@ -112,13 +113,7 @@ describe("Commerce Integration Auth", () => {
         tryGetIntegrationAuthProvider(params),
       );
 
-      const getHeadersResult = integrationAuthProvider.getHeaders("GET", url);
-      const error = unwrapErr(getHeadersResult);
-
-      expect(error._tag).toEqual("IntegrationAuthValidationError");
-      expect(error.message).toEqual(
-        "Failed to validate the provided Adobe Commerce URL",
-      );
+      expect(() => integrationAuthProvider.getHeaders("GET", url)).toThrow();
     });
   });
 });

@@ -4,13 +4,12 @@
   "type": "module",
   "version": "1.0.0",
   "private": true,
-
   "exports": {
     "./tsdown.config.base": "./tsdown.config.base.ts",
     "./package.json": "./package.json"
   },
-
   "devDependencies": {
+    "globby": "^14.1.0",
     "@aio-commerce-sdk/config-typescript": "workspace:*"
   }
 }
