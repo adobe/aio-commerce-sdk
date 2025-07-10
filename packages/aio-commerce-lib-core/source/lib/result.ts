@@ -39,30 +39,30 @@ export type ErrorType<
 };
 
 /**
- * Wraps the given value in a successful result.
+ * Wraps the given value in a successful {@link Result}.
  * @param value The value to wrap.
- * @returns A successful result containing the given value.
+ * @returns An {@link Ok} variant of {@link Result} containing the given value.
  */
 export function ok<T>(value: T): Ok<T> {
   return { type: SuccessOrFailure.SUCCESS, value };
 }
 
 /**
- * Wraps the given error in a failed result.
+ * Wraps the given error in a failed {@link Result}.
  * @param error The error to wrap.
- * @returns A failed result containing the given error.
+ * @returns An {@link Err} variant of {@link Result} containing the given error.
  */
 export function err<E extends ErrorType<ErrorTag>>(error: E): Err<E> {
   return { type: SuccessOrFailure.FAILURE, error };
 }
 
 /**
- * Unwraps a result to retrieve its value.
- * If the result is a failure, an error will be thrown.
+ * Unwraps a {@link Result} to retrieve its value.
+ * If the {@link Result} is an {@link Err} value, an error will be thrown.
  *
- * @param result The result to unwrap.
- * @returns The value contained in the successful result.
- * @throws An error if the result is a failure.
+ * @param result The {@link Result} to unwrap.
+ * @returns The value contained in the successful {@link Result}.
+ * @throws An error if the {@link Result} is an {@link Err} value.
  */
 export function unwrap<T, E extends ErrorType<ErrorTag>>(result: Result<T, E>) {
   if (result.type === SuccessOrFailure.SUCCESS) {
@@ -75,12 +75,12 @@ export function unwrap<T, E extends ErrorType<ErrorTag>>(result: Result<T, E>) {
 }
 
 /**
- * Unwraps a result to retrieve its error.
- * If the result is a success, an error will be thrown.
+ * Unwraps a {@link Result} to retrieve its error.
+ * If the {@link Result} is an {@link Ok} value, an error will be thrown.
  *
- * @param result The result to unwrap.
- * @returns The error contained in the failed result.
- * @throws An error if the result is a success.
+ * @param result The {@link Result} to unwrap.
+ * @returns The error contained in the failed {@link Result}.
+ * @throws An error if the {@link Result} is an {@link Ok} value.
  */
 export function unwrapErr<T, E extends ErrorType<ErrorTag>>(
   result: Result<T, E>,
@@ -95,9 +95,9 @@ export function unwrapErr<T, E extends ErrorType<ErrorTag>>(
 }
 
 /**
- * Checks if a result is a success.
- * @param result The result to check.
- * @returns True if the result is a success, false otherwise.
+ * Checks if a {@link Result} is a success.
+ * @param result The {@link Result} to check.
+ * @returns True if the {@link Result} is an {@link Ok} value, false otherwise.
  */
 export function isOk<T, E extends ErrorType<ErrorTag>>(
   result: Result<T, E>,
@@ -106,9 +106,9 @@ export function isOk<T, E extends ErrorType<ErrorTag>>(
 }
 
 /**
- * Checks if a result is a failure.
- * @param result The result to check.
- * @returns True if the result is a failure, false otherwise.
+ * Checks if a {@link Result} is a failure.
+ * @param result The {@link Result} to check.
+ * @returns True if the {@link Result} is an {@link Err} value, false otherwise.
  */
 export function isErr<T, E extends ErrorType<ErrorTag>>(
   result: Result<T, E>,
@@ -117,10 +117,10 @@ export function isErr<T, E extends ErrorType<ErrorTag>>(
 }
 
 /**
- * Maps a successful result to another value.
- * If the result is a failure, it is returned unchanged.
+ * Maps a successful {@link Result} to another value.
+ * If the {@link Result} is an {@link Err}, it is returned unchanged.
  *
- * @param result The result to map.
+ * @param result The {@link Result} to map.
  * @param fn A function to transform the success value.
  * @returns A new {@link Result} with the transformed value or the original error.
  */
@@ -136,12 +136,77 @@ export function map<T, U, E extends ErrorType<ErrorTag>>(
 }
 
 /**
- * Maps a failed result's error to another error value.
- * If the result is a success, it is returned unchanged.
+ * Maps a successful {@link Result} to an asynchronous value.
+ * If the {@link Result} is an {@link Err}, it is returned unchanged.
+ *
+ * @param result The {@link Result} to map.
+ * @param fn An async function to transform the success value.
+ * @returns A {@link Promise} of a new {@link Result} with the transformed value or the original error.
+ */
+export async function mapAsync<T, U, E extends ErrorType<ErrorTag>>(
+  result: Result<T, E>,
+  fn: (value: T) => Promise<U>,
+): Promise<Result<U, E>> {
+  if (isOk(result)) {
+    const transformed = await fn(result.value);
+    return ok(transformed);
+  }
+
+  return result;
+}
+
+/**
+ * Flat maps a successful {@link Result} to another {@link Result}.
+ * If the {@link Result} is an {@link Err}, it is returned unchanged.
+ *
+ * @param result The {@link Result} to flat map.
+ * @param fn A function that returns a {@link Result}.
+ * @returns The {@link Result} returned by fn or the original error.
+ */
+export function andThen<
+  T,
+  U,
+  E extends ErrorType<ErrorTag>,
+  F extends ErrorType<ErrorTag>,
+>(result: Result<T, E>, fn: (value: T) => Result<U, F>): Result<U, E | F> {
+  if (isOk(result)) {
+    return fn(result.value);
+  }
+
+  return result;
+}
+
+/**
+ * Flat maps a successful {@link Result} to another asynchronous {@link Result}.
+ * If the {@link Result} is an {@link Err}, it is returned unchanged.
+ *
+ * @param result The result to flat map.
+ * @param fn An async function that returns a {@link Result}.
+ * @returns A {@link Promise} of the {@link Result} returned by fn or the original error.
+ */
+export async function andThenAsync<
+  T,
+  U,
+  E extends ErrorType<ErrorTag>,
+  F extends ErrorType<ErrorTag>,
+>(
+  result: Result<T, E>,
+  fn: (value: T) => Promise<Result<U, F>>,
+): Promise<Result<U, E | F>> {
+  if (isOk(result)) {
+    return await fn(result.value);
+  }
+
+  return result;
+}
+
+/**
+ * Maps a failed {@link Result}'s error to another error value.
+ * If the {@link Result} is a success, it is returned unchanged.
  *
  * @param result The result to map.
  * @param fn A function to transform the error value.
- * @returns A new Result with the original value or transformed error.
+ * @returns A new {@link Result} with the original value or transformed error.
  */
 export function mapErr<
   T,
@@ -153,4 +218,38 @@ export function mapErr<
   }
 
   return result;
+}
+
+type MatchCallbacks<T, U, E extends ErrorType<ErrorTag>> = {
+  /**
+   * A function to execute if the result is an {@link Ok} value.
+   * @param value The value of the {@link Ok} result.
+   * @returns The value to return.
+   */
+  onSuccess: (value: T) => U;
+
+  /**
+   * A function to execute if the result is an {@link Err} value.
+   * @param error The error of the {@link Err} result.
+   * @returns The value to return.
+   */
+  onFailure: (error: E) => U;
+};
+
+/**
+ * Matches a {@link Result} to a value based on its type.
+ *
+ * @param result The result to match.
+ * @param callbacks The callbacks to execute based on the result type.
+ * @returns The value returned by the matching function.
+ */
+export function match<T, U, E extends ErrorType<ErrorTag>>(
+  result: Result<T, E>,
+  callbacks: MatchCallbacks<T, U, E>,
+): U {
+  if (isOk(result)) {
+    return callbacks.onSuccess(result.value);
+  }
+
+  return callbacks.onFailure(result.error);
 }

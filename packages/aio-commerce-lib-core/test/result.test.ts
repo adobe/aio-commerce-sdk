@@ -11,46 +11,110 @@
  */
 
 import { describe, expect, test } from "vitest";
-import { err, isErr, isOk, ok, unwrap, unwrapErr } from "~/lib/result";
+import * as Result from "~/lib/result";
 
 describe("aio-commerce-lib-core/result", () => {
   test("should wrap a value in a success result", () => {
-    const result = ok("success");
+    const result = Result.ok("success");
     expect(result).toEqual({ type: "success", value: "success" });
 
-    const value = unwrap(result);
+    const value = Result.unwrap(result);
     expect(value).toBe("success");
   });
 
   test("should wrap an error in a failure result", () => {
-    const result = err({ _tag: "Error", message: "error" });
+    const result = Result.err({ _tag: "Error", message: "error" });
     expect(result).toEqual({
       type: "failure",
       error: { _tag: "Error", message: "error" },
     });
 
-    const error = unwrapErr(result);
+    const error = Result.unwrapErr(result);
     expect(error).toEqual({ _tag: "Error", message: "error" });
   });
 
   test("should unwrap a success result", () => {
-    const result = ok("success");
-    const value = unwrap(result);
+    const result = Result.ok("success");
+    const value = Result.unwrap(result);
     expect(value).toBe("success");
   });
 
   test("should unwrap a failure result", () => {
-    const result = err({ _tag: "Error", message: "error" });
-    expect(() => unwrap(result)).toThrow();
+    const result = Result.err({ _tag: "Error", message: "error" });
+    expect(() => Result.unwrap(result)).toThrow();
   });
 
   test("should check if a result is a success", () => {
-    const result = ok("success");
-    expect(isOk(result)).toBe(true);
+    const result = Result.ok("success");
+    expect(Result.isOk(result)).toBe(true);
   });
 
   test("should check if a result is a failure", () => {
-    const result = err({ _tag: "Error", message: "error" });
-    expect(isErr(result)).toBe(true);
+    const result = Result.err({ _tag: "Error", message: "error" });
+    expect(Result.isErr(result)).toBe(true);
+  });
+
+  test("should map a success result", () => {
+    const result = Result.ok("success");
+    const mapped = Result.map(result, (x) => `${x} mapped`);
+    expect(mapped).toEqual({ type: "success", value: "success mapped" });
+  });
+
+  test("should not map a failure result", () => {
+    const result = Result.err({ _tag: "Error", message: "error" });
+    const mapped = Result.map(result, (x) => `${x} mapped`);
+    expect(mapped).toEqual({
+      type: "failure",
+      error: { _tag: "Error", message: "error" },
+    });
+  });
+
+  test("should map an async success result", async () => {
+    const result = Result.ok("success");
+    const mapped = await Result.mapAsync(result, async (x) => `${x} mapped`);
+    expect(mapped).toEqual({ type: "success", value: "success mapped" });
+  });
+
+  test("should not map an async failure result", async () => {
+    const result = Result.err({ _tag: "Error", message: "error" });
+    const mapped = await Result.mapAsync(result, async (x) => `${x} mapped`);
+    expect(mapped).toEqual({
+      type: "failure",
+      error: { _tag: "Error", message: "error" },
+    });
+  });
+
+  test("should `andThen` a success result", () => {
+    const result = Result.ok("success");
+    const then = Result.andThen(result, (x) => Result.ok(`${x} and then`));
+    expect(then).toEqual({ type: "success", value: "success and then" });
+  });
+
+  test("should not `andThen` a failure result", () => {
+    const result = Result.err({ _tag: "Error", message: "error" });
+    const then = Result.andThen(result, (x) => Result.ok(`${x} and then`));
+    expect(then).toEqual({
+      type: "failure",
+      error: { _tag: "Error", message: "error" },
+    });
+  });
+
+  test("should match a success result", () => {
+    const result = Result.ok("success");
+    const matched = Result.match(result, {
+      onSuccess: (x) => `${x} matched on success`,
+      onFailure: (x) => `${x} matched on failure`,
+    });
+    expect(matched).toEqual("success matched on success");
+  });
+
+  test("should match a failure result", () => {
+    const result = Result.err({ _tag: "Error", message: "error" });
+    const matched = Result.match(result, {
+      onSuccess: (x) => `${x} matched on success`,
+      onFailure: (x) => `${x.message} matched on failure`,
+    });
+
+    expect(matched).toEqual("error matched on failure");
   });
 });
