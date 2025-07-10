@@ -1,6 +1,7 @@
 import type { ErrorType } from "@adobe/aio-commerce-lib-core/result";
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/validation";
 import { context, getToken } from "@adobe/aio-lib-ims";
+
 import type { SnakeCasedProperties } from "type-fest";
 import { safeParse } from "valibot";
 
@@ -36,7 +37,9 @@ function snakeCaseImsAuthConfig(
   config: ImsAuthParams,
 ): SnakeCasedProperties<ImsAuthParams> {
   return {
-    ...config,
+    scopes: config.scopes,
+    env: config?.env ?? "prod",
+    context: config.context,
     client_id: config.clientId,
     client_secrets: config.clientSecrets,
     technical_account_id: config.technicalAccountId,
