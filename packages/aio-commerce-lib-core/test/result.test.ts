@@ -73,7 +73,7 @@ describe("aio-commerce-lib-core/result", () => {
     const result = Result.err({ _tag: "Error", message: "error" });
     const mapped = Result.mapErr(result, (x) => ({
       _tag: "MappedError",
-      message: `${x} mapped`,
+      message: `${x.message} mapped`,
     }));
 
     expect(mapped).toEqual({
