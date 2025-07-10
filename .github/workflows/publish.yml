@@ -33,7 +33,7 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Run Turbo Build on affected packages
         run: pnpm turbo build --affected
 
@@ -48,3 +48,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
+
+      - name: Generate Slack Announcement
+        id: announcement
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          SLACK_WEBHOOK_PAYLOAD="$(node .github/scripts/announce.js '${{ steps.changesets.outputs.publishedPackages }}')"
+          echo "SLACK_WEBHOOK_PAYLOAD=$SLACK_WEBHOOK_PAYLOAD" >> "$GITHUB_OUTPUT"
+
+      - name: Notify on Slack
+        uses: slackapi/slack-github-action@v2.1.0
+        if: steps.changesets.outputs.published == 'true'
+        with:
+          webhook: ${{ secrets.TEST_SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: ${{ steps.announcement.outputs.SLACK_WEBHOOK_PAYLOAD }}
