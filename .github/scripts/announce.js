@@ -31,7 +31,7 @@ function formatMrkdwnAnnouncement(publishedPackages) {
     return a.name.localeCompare(b.name);
   });
 
-  let announcement = `:rocket: New published packages for <${repoUrl}|Adobe Commerce SDK for App Builder>\n`;
+  let announcement = `:rocket: New published packages for <${repoUrl}|Adobe Commerce SDK for App Builder>\n\n`;
   for (const pkg of publishedPackages) {
     const pkgRelease = `${pkg.name}@${pkg.version}`;
     const pkgReleaseUrl = `${repoUrl}/releases/tag/${pkgRelease}`;
