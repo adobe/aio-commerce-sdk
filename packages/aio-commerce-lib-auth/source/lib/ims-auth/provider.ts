@@ -92,7 +92,7 @@ function fromParams(params: ImsAuthParams) {
     clientSecrets: params.AIO_COMMERCE_IMS_CLIENT_SECRETS,
     technicalAccountId: params.AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID,
     technicalAccountEmail: params.AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL,
-    imsOrgId: params.AIO_COMMERCE_IMS_IMS_ORG_ID,
+    imsOrgId: params.AIO_COMMERCE_IMS_ORG_ID,
     scopes: params.AIO_COMMERCE_IMS_SCOPES,
     environment: params.AIO_COMMERCE_IMS_ENV,
     context: params.AIO_COMMERCE_IMS_CTX,

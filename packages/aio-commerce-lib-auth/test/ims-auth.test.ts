@@ -63,7 +63,7 @@ describe("IMS Authentication", () => {
       AIO_COMMERCE_IMS_CLIENT_SECRETS: JSON.stringify(["supersecret"]),
       AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
-      AIO_COMMERCE_IMS_IMS_ORG_ID: "test-org-id",
+      AIO_COMMERCE_IMS_ORG_ID: "test-org-id",
       AIO_COMMERCE_IMS_SCOPES: JSON.stringify(["scope1", "scope2"]),
     } satisfies InferInput<typeof ImsAuthParamsSchema>;
 
@@ -99,7 +99,7 @@ describe("IMS Authentication", () => {
       "AIO_COMMERCE_IMS_CLIENT_SECRETS",
       "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID",
       "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL",
-      "AIO_COMMERCE_IMS_IMS_ORG_ID",
+      "AIO_COMMERCE_IMS_ORG_ID",
       "AIO_COMMERCE_IMS_SCOPES",
     ])("should throw error when %s is missing", (param) => {
       const result = tryGetImsAuthProvider({
