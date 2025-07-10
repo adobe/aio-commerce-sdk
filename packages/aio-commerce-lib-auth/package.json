@@ -40,6 +40,12 @@
     },
     "./package.json": "./package.json"
   },
+  "files": [
+    "dist",
+    "package.json",
+    "CHANGELOG.md",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsdown",
     "assist": "pnpm -w assist .",
