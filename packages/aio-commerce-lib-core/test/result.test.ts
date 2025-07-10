@@ -69,6 +69,19 @@ describe("aio-commerce-lib-core/result", () => {
     });
   });
 
+  test("should map error", () => {
+    const result = Result.err({ _tag: "Error", message: "error" });
+    const mapped = Result.mapErr(result, (x) => ({
+      _tag: "MappedError",
+      message: `${x} mapped`,
+    }));
+
+    expect(mapped).toEqual({
+      type: "failure",
+      error: { _tag: "MappedError", message: "error mapped" },
+    });
+  });
+
   test("should map an async success result", async () => {
     const result = Result.ok("success");
     const mapped = await Result.mapAsync(result, async (x) => `${x} mapped`);
@@ -93,6 +106,25 @@ describe("aio-commerce-lib-core/result", () => {
   test("should not `andThen` a failure result", () => {
     const result = Result.err({ _tag: "Error", message: "error" });
     const then = Result.andThen(result, (x) => Result.ok(`${x} and then`));
+    expect(then).toEqual({
+      type: "failure",
+      error: { _tag: "Error", message: "error" },
+    });
+  });
+
+  test("should `andThen` an async success result", async () => {
+    const result = Result.ok("success");
+    const then = await Result.andThenAsync(result, async (x) =>
+      Result.ok(`${x} and then`),
+    );
+    expect(then).toEqual({ type: "success", value: "success and then" });
+  });
+
+  test("should not `andThen` an async failure result", async () => {
+    const result = Result.err({ _tag: "Error", message: "error" });
+    const then = await Result.andThenAsync(result, async (x) =>
+      Result.ok(`${x} and then`),
+    );
     expect(then).toEqual({
       type: "failure",
       error: { _tag: "Error", message: "error" },
