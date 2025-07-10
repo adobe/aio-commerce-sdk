@@ -41,7 +41,7 @@ describe("IMS Authentication", () => {
         technicalAccountEmail: "test-email@example.com",
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        environment: IMS_AUTH_ENV.PROD,
+        env: IMS_AUTH_ENV.PROD,
         context: "test-context",
       };
 
@@ -49,9 +49,9 @@ describe("IMS Authentication", () => {
       expect(imsAuthProvider).toBeDefined();
 
       const retrievedToken = await imsAuthProvider.getAccessToken();
-      expect(unwrap(retrievedToken)).toEqual(authToken);
+      expect(retrievedToken).toEqual(authToken);
 
-      const headers = unwrap(await imsAuthProvider.getHeaders());
+      const headers = await imsAuthProvider.getHeaders();
       expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
       expect(headers).toHaveProperty("x-api-key", config.clientId);
     });
@@ -72,10 +72,10 @@ describe("IMS Authentication", () => {
       vi.mocked(getToken).mockResolvedValue(authToken);
 
       const imsAuthProvider = unwrap(tryGetImsAuthProvider(params));
-      const retrievedToken = unwrap(await imsAuthProvider.getAccessToken());
+      const retrievedToken = await imsAuthProvider.getAccessToken();
       expect(retrievedToken).toEqual(authToken);
 
-      const headers = unwrap(await imsAuthProvider.getHeaders());
+      const headers = await imsAuthProvider.getHeaders();
       expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
       expect(headers).toHaveProperty(
         "x-api-key",
