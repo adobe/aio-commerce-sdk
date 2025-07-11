@@ -25,6 +25,7 @@ The generator will guide you through the package creation process with the follo
 The generator creates a complete package structure:
 
 ```
+# or packages/internal/your-package-name/ if private
 packages/your-package-name/
 ├── source/
 │   └── index.ts          # Main entry point
@@ -45,6 +46,7 @@ packages/your-package-name/
 - **Published**: Yes, to NPM registry
 - **Usage**: For libraries intended for external consumption
 - **Example**: `@adobe/aio-commerce-lib-auth`
+- **Destination**: `packages/your-package-name/`
 
 ### Private Packages
 
@@ -52,6 +54,7 @@ packages/your-package-name/
 - **Published**: No, internal use only
 - **Usage**: For shared configurations, internal tools, etc.
 - **Example**: `@aio-commerce-sdk/config-typescript`
+- **Destination**: `packages/internal/your-package-name/`
 
 ## Troubleshooting
 

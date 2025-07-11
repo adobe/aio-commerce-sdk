@@ -121,7 +121,7 @@ This will prompt you for package configuration details, such as whether to inclu
 ![create-package generator](./assets/turbo-create-package.png)
 
 > [!NOTE]
-> The `create-package` generator will create the new package in the `packages` directory by default. If you want it in another directory, feel free to move it after it's created. You may also want to remove files that you don't need. In any case, make sure of the following:
+> The `create-package` generator will create the new package in the `packages` directory by default (or `packages/internal` if private). If you want it in another directory, feel free to move it after it's created. You may also want to remove files that you don't need. In any case, make sure of the following:
 >
 > - The `pnpm-workspace.yaml` file contains the directory where it has been moved (see [docs](https://pnpm.io/workspaces)).
 > - The `repository.directory` field in the `package.json` file is modified to reflect the new location (only applicable if the package is public).

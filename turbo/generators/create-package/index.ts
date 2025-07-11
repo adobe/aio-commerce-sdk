@@ -141,10 +141,14 @@ export function getGeneratorConfig(): PlopTypes.PlopGeneratorConfig {
     prompts,
     actions(data) {
       const packageData = data as PackageData;
+      const destination = packageData.isPrivate
+        ? "packages/{{name}}"
+        : "packages/internal/{{name}}";
+
       return [
         {
           type: "addMany",
-          destination: "packages/{{name}}",
+          destination,
           base: "create-package/template",
           stripExtensions: ["hbs"],
           templateFiles: getTemplateFiles(packageData),
