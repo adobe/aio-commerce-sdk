@@ -38,10 +38,14 @@ function getPackageData(options: WizardOptions) {
     ? `@aio-commerce-sdk/${name}`
     : `@adobe/${name}`;
 
+  const packageDir = isPrivate
+    ? `packages/internal/${name}`
+    : `packages/${name}`;
+
   return {
     packageName: name,
     scopedPackageName,
-    packageDir: `packages/${name}`,
+    packageDir,
     ...options,
   } satisfies PackageData;
 }
@@ -141,14 +145,10 @@ export function getGeneratorConfig(): PlopTypes.PlopGeneratorConfig {
     prompts,
     actions(data) {
       const packageData = data as PackageData;
-      const destination = packageData.isPrivate
-        ? "packages/{{name}}"
-        : "packages/internal/{{name}}";
-
       return [
         {
           type: "addMany",
-          destination,
+          destination: packageData.packageDir,
           base: "create-package/template",
           stripExtensions: ["hbs"],
           templateFiles: getTemplateFiles(packageData),
