@@ -1,31 +1,16 @@
-import {
-  type ErrorType,
-  err,
-  map,
-  ok,
-  type Result,
-} from "@adobe/aio-commerce-lib-core/result";
-
-import type { ValidationErrorType } from "@adobe/aio-commerce-lib-core/validation";
+import type { ErrorType } from "@adobe/aio-commerce-lib-core/result";
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/validation";
 import { context, getToken } from "@adobe/aio-lib-ims";
 import type { SnakeCasedProperties } from "type-fest";
-import { type InferInput, type InferIssue, safeParse } from "valibot";
+import { safeParse } from "valibot";
 
-import {
-  type ImsAuthEnv,
-  type ImsAuthParams,
-  ImsAuthParamsSchema,
-} from "./schema";
+import { type ImsAuthParams, ImsAuthParamsSchema } from "./schema";
 
-type ImsAccessToken = string;
+/** Defines the header keys used for IMS authentication. */
 type ImsAuthHeader = "Authorization" | "x-api-key";
-type ImsAuthHeaders = Record<ImsAuthHeader, string>;
 
-/** Defines a validation error type for the IMS auth service. */
-export type ImsAuthValidationError = ValidationErrorType<
-  "ImsAuthValidationError",
-  InferIssue<typeof ImsAuthParamsSchema>[]
->;
+/** Defines the headers required for IMS authentication. */
+type ImsAuthHeaders = Record<ImsAuthHeader, string>;
 
 /** Defines an error type for the IMS auth service. */
 export type ImsAuthError<TError = unknown> = ErrorType<
@@ -36,27 +21,20 @@ export type ImsAuthError<TError = unknown> = ErrorType<
   }
 >;
 
-/** Defines the configuration options to create an {@link ImsAuthProvider}. */
-export interface ImsAuthConfig {
-  clientId: string;
-  clientSecrets: string[];
-  technicalAccountId: string;
-  technicalAccountEmail: string;
-  imsOrgId: string;
-  scopes: string[];
-  environment: ImsAuthEnv;
-  context: string;
-}
-
 /** Defines an authentication provider for Adobe IMS. */
 export interface ImsAuthProvider {
-  getAccessToken: () => Promise<Result<ImsAccessToken, ImsAuthError>>;
-  getHeaders: () => Promise<Result<ImsAuthHeaders, ImsAuthError>>;
+  getAccessToken: () => Promise<string>;
+  getHeaders: () => Promise<ImsAuthHeaders>;
 }
 
+/**
+ * Converts IMS auth configuration properties to snake_case format.
+ * @param config The IMS auth configuration with camelCase properties.
+ * @returns The configuration with snake_case properties.
+ */
 function snakeCaseImsAuthConfig(
-  config: ImsAuthConfig,
-): SnakeCasedProperties<ImsAuthConfig> {
+  config: ImsAuthParams,
+): SnakeCasedProperties<ImsAuthParams> {
   return {
     ...config,
     client_id: config.clientId,
@@ -67,94 +45,97 @@ function snakeCaseImsAuthConfig(
   };
 }
 
-function makeImsAuthValidationError(
-  message: string,
-  issues: InferIssue<typeof ImsAuthParamsSchema>[],
-) {
-  return {
-    _tag: "ImsAuthValidationError",
-    message,
-    issues,
-  } satisfies ImsAuthValidationError;
-}
-
-function makeImsAuthError(message: string, error: unknown) {
-  return {
-    _tag: "ImsAuthError",
-    message,
-    error,
-  } satisfies ImsAuthError;
-}
-
-function fromParams(params: ImsAuthParams) {
-  return {
-    clientId: params.AIO_COMMERCE_IMS_CLIENT_ID,
-    clientSecrets: params.AIO_COMMERCE_IMS_CLIENT_SECRETS,
-    technicalAccountId: params.AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID,
-    technicalAccountEmail: params.AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL,
-    imsOrgId: params.AIO_COMMERCE_IMS_IMS_ORG_ID,
-    scopes: params.AIO_COMMERCE_IMS_SCOPES,
-    environment: params.AIO_COMMERCE_IMS_ENV,
-    context: params.AIO_COMMERCE_IMS_CTX,
-  } satisfies ImsAuthConfig;
-}
-
-async function tryGetAccessToken(
-  contextName: string,
-): Promise<Result<ImsAccessToken, ImsAuthError>> {
-  try {
-    const accessToken = await getToken(contextName, {});
-    return ok(accessToken);
-  } catch (error) {
-    return err(makeImsAuthError("Failed to retrieve IMS access token", error));
+/**
+ * Asserts the provided configuration for an Adobe IMS authentication provider. {@link ImsAuthParams}
+ * {@link ImsAuthProvider}
+ * @param config A record containing the configuration to validate.
+ * @throws {CommerceSdkValidationError} If the configuration is invalid.
+ * @example
+ * ```typescript
+ * const config = {
+ *   clientId: "your-client-id",
+ *   clientSecrets: ["your-client-secret"],
+ *   technicalAccountId: "your-technical-account-id",
+ *   technicalAccountEmail: "your-account@example.com",
+ *   imsOrgId: "your-ims-org-id@AdobeOrg",
+ *   scopes: ["AdobeID", "openid"],
+ *   environment: "prod", // or "stage"
+ *   context: "my-app-context"
+ * };
+ *
+ * // This will validate the config and throw if invalid
+ * assertImsAuthParams(config);
+ * ```
+ */
+export function assertImsAuthParams(
+  config: Record<string, unknown>,
+): asserts config is ImsAuthParams {
+  const result = safeParse(ImsAuthParamsSchema, config);
+  if (!result.success) {
+    throw new CommerceSdkValidationError(
+      "Invalid ImsAuthProvider configuration",
+      {
+        issues: result.issues,
+      },
+    );
   }
 }
 
 /**
  * Creates an {@link ImsAuthProvider} based on the provided configuration.
- * @param config The configuration for the IMS Auth Provider.
+ * @param config An {@link ImsAuthParams} parameter that contains the configuration for the IMS auth provider.
  * @returns An {@link ImsAuthProvider} instance that can be used to get access token and auth headers.
+ * @example
+ * ```typescript
+ * const config = {
+ *   clientId: "your-client-id",
+ *   clientSecrets: ["your-client-secret"],
+ *   technicalAccountId: "your-technical-account-id",
+ *   technicalAccountEmail: "your-account@example.com",
+ *   imsOrgId: "your-ims-org-id@AdobeOrg",
+ *   scopes: ["AdobeID", "openid"],
+ *   environment: "prod",
+ *   context: "my-app-context"
+ * };
+ *
+ * const authProvider = getImsAuthProvider(config);
+ *
+ * // Get access token
+ * const token = await authProvider.getAccessToken();
+ * console.log(token); // "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
+ *
+ * // Get headers for API requests
+ * const headers = await authProvider.getHeaders();
+ * console.log(headers);
+ * // {
+ * //   Authorization: "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...",
+ * //   "x-api-key": "your-client-id"
+ * // }
+ *
+ * // Use headers in API calls
+ * const response = await fetch('https://api.adobe.io/some-endpoint', {
+ *   headers: await authProvider.getHeaders()
+ * });
+ * ```
  */
-export function getImsAuthProvider(config: ImsAuthConfig): ImsAuthProvider {
+export function getImsAuthProvider(config: ImsAuthParams) {
   const getAccessToken = async () => {
     const snakeCasedConfig = snakeCaseImsAuthConfig(config);
 
     await context.set(config.context, snakeCasedConfig);
-    return tryGetAccessToken(config.context);
+    return getToken(config.context, {});
   };
 
   const getHeaders = async () => {
-    const result = await getAccessToken();
-    return map(result, (accessToken) => ({
+    const accessToken = await getAccessToken();
+    return {
       Authorization: `Bearer ${accessToken}`,
       "x-api-key": config.clientId,
-    }));
+    };
   };
 
   return {
     getAccessToken,
     getHeaders,
   };
-}
-
-/**
- * Tries to create an {@link ImsAuthProvider} based on the provided parameters.
- * @param params The parameters required to create the IMS Auth Provider.
- * @returns An {@link ImsAuthProvider} instance that can be used to get access token and auth headers.
- */
-export function tryGetImsAuthProvider(
-  params: InferInput<typeof ImsAuthParamsSchema>,
-): Result<ImsAuthProvider, ImsAuthValidationError> {
-  const validation = safeParse(ImsAuthParamsSchema, params);
-
-  if (!validation.success) {
-    return err(
-      makeImsAuthValidationError(
-        "Failed to validate the provided IMS parameters",
-        validation.issues,
-      ),
-    );
-  }
-
-  return ok(getImsAuthProvider(fromParams(validation.output)));
 }

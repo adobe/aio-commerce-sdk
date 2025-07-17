@@ -13,20 +13,40 @@
 import { cyanBright, dim, whiteBright, yellowBright } from "ansis";
 import { type BaseIssue, type GenericIssue, getDotPath } from "valibot";
 
-import type { ErrorType } from "./result";
+import {
+  CommerceSdkErrorBase,
+  type CommerceSdkErrorOptions,
+} from "~/lib/error";
 
 const LAST_RETURN_CHAR = "└── ";
 const RETURN_CHAR = "├── ";
 
+/** Defines the different types of validation issues that can occur. */
 type IssueKind = "schema" | "validation" | "transformation";
-type ValidationErrorTag = `${string}ValidationError`;
 
+/** Maps issue kinds to their corresponding error titles for display purposes. */
 const ISSUE_KIND_TO_ERROR_TITLE: Record<IssueKind, string> = {
   schema: "Schema validation error",
   validation: "Input error",
   transformation: "Transformation error",
 };
 
+/**
+ * Converts validation issues to a formatted display string.
+ * @param issues Array of validation issues to format.
+ * @returns A formatted string representation of the issues.
+ * @example
+ * ```typescript
+ * const issues = [
+ *   { kind: "validation", message: "Expected a string", path: ["name"] },
+ *   { kind: "schema", message: "Missing required field", path: ["email"] }
+ * ];
+ * const display = issueToDisplay(issues);
+ * console.log(display);
+ * // ├── Input error at name → Expected a string
+ * // └── Schema validation error at email → Missing required field
+ * ```
+ */
 function issueToDisplay<TInput>(issues: BaseIssue<TInput>[]) {
   const lines = issues.map((issue, index) => {
     const returnChar = cyanBright(
@@ -49,49 +69,63 @@ function issueToDisplay<TInput>(issues: BaseIssue<TInput>[]) {
 }
 
 /**
- * Summarizes a validation error by displaying the error message and the issues.
- * @param error The validation error to summarize.
+ * Prints a validation error to display with the error message and the issues.
+ * @param error {@link CommerceSdkValidationError} The validation error to summarize.
  * @returns A pretty-printed string containing the summary of the validation error.
+ * @example
+ * ```typescript
+ * const error = new CommerceSdkValidationError("Configuration validation failed", {
+ *   issues: [
+ *     { kind: "validation", message: "Expected a non-empty string", path: ["clientId"] },
+ *     { kind: "schema", message: "Missing required field", path: ["clientSecret"] }
+ *   ]
+ * });
+ *
+ * const displayText = displayValidationError(error);
+ * console.log(displayText);
+ * // Configuration validation failed
+ * // ├── Input error at clientId → Expected a non-empty string
+ * // └── Schema validation error at clientSecret → Missing required field
+ * ```
  */
-export function summarizeValidationError(error: ValidationError) {
+function displayValidationError(error: CommerceSdkValidationError) {
   return `${whiteBright(error.message)}\n${issueToDisplay(error.issues)}`;
 }
 
+/** Defines the base options for CommerceSdkValidationErrorOptions. */
+export type CommerceSdkValidationErrorOptions = CommerceSdkErrorOptions<{
+  issues: GenericIssue[];
+}>;
+
 /**
- * Creates a validation error.
- * @param message The validation error message.
- * @param issues The issues that occurred during validation.
- * @param info Additional information about the error.
- * @returns A validation error.
+ * Represents a validation error in the Commerce SDK.
+ * This error is thrown when the input does not conform to the expected schema.
+ * It contains a list of issues that describe the validation errors.
+ *
+ * @example
+ * ```ts
+ * const error = new CommerceSdkValidationError("Invalid input", {
+ *   issues: [
+ *     { kind: "validation", message: "Expected a non-empty string", path: "name" },
+ *   ],
+ * });
+ *
+ * console.log(error.display());
+ * ```
  */
-export function makeValidationError<
-  TIssues extends GenericIssue[] = GenericIssue[],
-  TInfo extends Record<string, unknown> = Record<string, unknown>,
->(message: string, issues: TIssues, info: TInfo = {} as TInfo) {
-  return {
-    _tag: "ValidationError",
-    message,
-    issues,
-    ...info,
-  } satisfies ValidationErrorType<ValidationErrorTag, TIssues, TInfo>;
-}
-
-/** Defines a generic type used to instantiate custom validation error interfaces. */
-export type ValidationErrorType<
-  TErrorTag extends ValidationErrorTag = "ValidationError",
-  TIssues extends GenericIssue[] = GenericIssue[],
-  TInfo extends Record<string, unknown> = Record<string, unknown>,
-> = ErrorType<
-  TErrorTag,
-  TInfo & {
-    message: string;
-    issues: TIssues;
+export class CommerceSdkValidationError extends CommerceSdkErrorBase {
+  constructor(
+    message: string,
+    { issues, ...options }: CommerceSdkValidationErrorOptions,
+  ) {
+    super(message, options);
+    this.issues = issues;
   }
->;
 
-/** Defines a validation error. */
-export type ValidationError = ValidationErrorType<
-  ValidationErrorTag,
-  GenericIssue[],
-  Record<string, unknown>
->;
+  readonly issues: GenericIssue[];
+
+  /** Returns a pretty string representation of the validation error. */
+  display() {
+    return displayValidationError(this);
+  }
+}
