@@ -33,12 +33,19 @@ Import directly from a specific library sub-path for better tree-shaking:
 
 ```typescript
 import {
+  assertImsAuthParams,
   getImsAuthProvider,
-  getIntegrationsAuthProvider,
+  assertIntegrationAuthParams,
+  getIntegrationAuthProvider,
 } from "@adobe/aio-commerce-sdk/auth";
 
+// Validate and create IMS auth provider
+assertImsAuthParams(params);
 const imsAuth = getImsAuthProvider(params);
-const integrationsAuth = getIntegrationsAuthProvider(params);
+
+// Validate and create integration auth provider
+assertIntegrationAuthParams(params);
+const integrationsAuth = getIntegrationAuthProvider(params);
 ```
 
 ### 2. Namespaced Import
@@ -49,11 +56,17 @@ Import all exports from a specific library under a namespace:
 import { Auth } from "@adobe/aio-commerce-sdk";
 
 // Use IMS authentication
+Auth.assertImsAuthParams(params);
 const imsAuth = Auth.getImsAuthProvider(params);
 const headers = await imsAuth.getHeaders();
+```
+
+```typescript
+import { Auth } from "@adobe/aio-commerce-sdk";
 
 // Use integrations authentication
-const integrationsAuth = Auth.getIntegrationsAuthProvider(params);
+Auth.assertIntegrationAuthParams(params);
+const integrationsAuth = Auth.getIntegrationAuthProvider(params);
 const headers = integrationsAuth.getHeaders("GET", "https://example.com/api");
 ```
 
