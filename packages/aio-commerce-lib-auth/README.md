@@ -45,37 +45,38 @@ In your App Builder application, you can use the library to authenticate users o
 In the runtime action you can generate an access token using the IMS Provider:
 
 ```typescript
-import { tryGetImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
-import { isErr, unwrap } from "@adobe/aio-commerce-lib-core";
+import {
+  assertImsAuthParams,
+  getImsAuthProvider,
+} from "@adobe/aio-commerce-lib-auth";
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core";
 
 export const main = async function (params: Record<string, unknown>) {
-  const result = tryGetImsAuthProvider(params); // Validate parameters and get the integration auth provider
+  try {
+    // Validate parameters and get the IMS auth provider
+    assertImsAuthParams(params);
+    const imsAuthProvider = getImsAuthProvider(params);
 
-  if (isErr(result)) {
-    const { error } = result;
-    return {
-      statusCode: 400,
-      body: {
-        error: `Unable to get IMS Auth Provider ${error.message}`,
-      },
-    };
+    // Get access token
+    const token = await imsAuthProvider.getAccessToken();
+
+    // Get headers for API requests
+    const headers = await imsAuthProvider.getHeaders();
+
+    // Use headers in your API calls
+    // business logic e.g requesting orders
+    return { statusCode: 200 };
+  } catch (error) {
+    if (error instanceof CommerceSdkValidationError) {
+      return {
+        statusCode: 400,
+        body: {
+          error: `Invalid IMS configuration: ${error.message}`,
+        },
+      };
+    }
+    throw error;
   }
-
-  const imsAuthProvider = unwrap(result);
-  const headersResult = imsAuthProvider.getHeaders();
-
-  if (isErr(headersResult)) {
-    const { error } = result;
-    return {
-      statusCode: 400,
-      body: {
-        error: `Unable to get auth headers for IMS Auth Provider ${error.message}`,
-      },
-    };
-  }
-
-  // business logic e.g requesting orders
-  return { statusCode: 200 };
 };
 ```
 
@@ -84,41 +85,38 @@ export const main = async function (params: Record<string, unknown>) {
 In the runtime action you can generate an access token using the Integrations Provider:
 
 ```typescript
-import { tryGetIntegrationAuthProvider } from "@adobe/aio-commerce-lib-auth";
-import { isErr, unwrapErr, unwrap } from "@adobe/aio-commerce-lib-core";
+import {
+  assertIntegrationAuthParams,
+  getIntegrationAuthProvider,
+} from "@adobe/aio-commerce-lib-auth";
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core";
 
 export const main = async function (params: Record<string, unknown>) {
-  const result = tryGetIntegrationAuthProvider(params); // Validate parameters and get the integration auth provider
+  try {
+    // Validate parameters and get the integration auth provider
+    assertIntegrationAuthParams(params);
+    const integrationsAuth = getIntegrationAuthProvider(params);
 
-  if (isErr(result)) {
-    const { error } = result;
-    return {
-      statusCode: 400,
-      body: {
-        error: `Unable to get Integration Auth Provider ${error.message}`,
-      },
-    };
+    // Get OAuth headers for API requests
+    const headers = integrationsAuth.getHeaders(
+      "GET",
+      "http://localhost/rest/V1/orders",
+    );
+
+    // Use headers in your API calls
+    // business logic e.g requesting orders
+    return { statusCode: 200 };
+  } catch (error) {
+    if (error instanceof CommerceSdkValidationError) {
+      return {
+        statusCode: 400,
+        body: {
+          error: `Invalid Integration configuration: ${error.message}`,
+        },
+      };
+    }
+    throw error;
   }
-
-  const integrationsAuth = unwrap(result);
-  const headersResult = integrationsAuth.getHeaders(
-    "GET",
-    "http://localhost/rest/V1/orders",
-  );
-
-  if (isErr(headersResult)) {
-    const { error } = result;
-    return {
-      statusCode: 400,
-      body: {
-        error: `Unable to get auth headers for Integration Auth Provider ${error.message}`,
-      },
-    };
-  }
-
-  // business logic e.g requesting orders
-
-  return { statusCode: 200 };
 };
 ```
 
