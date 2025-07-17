@@ -65,6 +65,17 @@ function snakeCaseImsAuthConfig(
  *
  * // This will validate the config and throw if invalid
  * assertImsAuthParams(config);
+ *
+ * // Example of a failing assert:
+ * try {
+ *   assertImsAuthParams({
+ *     clientId: "valid-client-id",
+ *     // Missing required fields like clientSecrets, technicalAccountId, etc.
+ *   });
+ * } catch (error) {
+ *   console.error(error.message); // "Invalid ImsAuthProvider configuration"
+ *   console.error(error.issues); // Array of validation issues
+ * }
  * ```
  */
 export function assertImsAuthParams(

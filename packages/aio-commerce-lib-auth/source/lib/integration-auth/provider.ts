@@ -56,6 +56,17 @@ export interface IntegrationAuthProvider {
  *
  * // This will validate the config and throw if invalid
  * assertIntegrationAuthParams(config);
+ *
+ * // Example of a failing assert:
+ * try {
+ *   assertIntegrationAuthParams({
+ *     consumerKey: "valid-consumer-key",
+ *     // Missing required fields like consumerSecret, accessToken, accessTokenSecret
+ *   });
+ * } catch (error) {
+ *   console.error(error.message); // "Invalid IntegrationAuthProvider configuration"
+ *   console.error(error.issues); // Array of validation issues
+ * }
  * ```
  */
 export function assertIntegrationAuthParams(
