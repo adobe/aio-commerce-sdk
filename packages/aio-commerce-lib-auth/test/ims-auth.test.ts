@@ -38,7 +38,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         technicalAccountEmail: "test-email@example.com",
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        env: IMS_AUTH_ENV.PROD,
+        environment: IMS_AUTH_ENV.PROD,
         context: "test-context",
       };
 

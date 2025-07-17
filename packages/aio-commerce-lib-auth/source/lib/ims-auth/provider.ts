@@ -5,7 +5,11 @@ import { context, getToken } from "@adobe/aio-lib-ims";
 import type { SnakeCasedProperties } from "type-fest";
 import { safeParse } from "valibot";
 
-import { type ImsAuthParams, ImsAuthParamsSchema } from "./schema";
+import {
+  type ImsAuthEnv,
+  type ImsAuthParams,
+  ImsAuthParamsSchema,
+} from "./schema";
 
 /** Defines the header keys used for IMS authentication. */
 type ImsAuthHeader = "Authorization" | "x-api-key";
@@ -28,17 +32,23 @@ export interface ImsAuthProvider {
   getHeaders: () => Promise<ImsAuthHeaders>;
 }
 
+/** The shape of the configuration expected by `aio-lib-ims`. */
+type ImsAuthConfig = Omit<
+  SnakeCasedProperties<ImsAuthParams>,
+  "environment"
+> & {
+  env: ImsAuthEnv;
+};
+
 /**
  * Converts IMS auth configuration properties to snake_case format.
  * @param config The IMS auth configuration with camelCase properties.
  * @returns The configuration with snake_case properties.
  */
-function snakeCaseImsAuthConfig(
-  config: ImsAuthParams,
-): SnakeCasedProperties<ImsAuthParams> {
+function toImsAuthConfig(config: ImsAuthParams): ImsAuthConfig {
   return {
     scopes: config.scopes,
-    env: config?.env ?? "prod",
+    env: config?.environment ?? "prod",
     context: config.context,
     client_id: config.clientId,
     client_secrets: config.clientSecrets,
@@ -68,7 +78,9 @@ function snakeCaseImsAuthConfig(
  *
  * // This will validate the config and throw if invalid
  * assertImsAuthParams(config);
- *
+ *```
+ * @example
+ * ```typescript
  * // Example of a failing assert:
  * try {
  *   assertImsAuthParams({
@@ -132,19 +144,19 @@ export function assertImsAuthParams(
  * });
  * ```
  */
-export function getImsAuthProvider(config: ImsAuthParams) {
+export function getImsAuthProvider(authParams: ImsAuthParams) {
   const getAccessToken = async () => {
-    const snakeCasedConfig = snakeCaseImsAuthConfig(config);
+    const imsAuthConfig = toImsAuthConfig(authParams);
 
-    await context.set(config.context, snakeCasedConfig);
-    return getToken(config.context, {});
+    await context.set(authParams.context, imsAuthConfig);
+    return getToken(authParams.context, {});
   };
 
   const getHeaders = async () => {
     const accessToken = await getAccessToken();
     return {
       Authorization: `Bearer ${accessToken}`,
-      "x-api-key": config.clientId,
+      "x-api-key": authParams.clientId,
     };
   };
 
