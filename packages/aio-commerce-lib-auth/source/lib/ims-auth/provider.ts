@@ -48,7 +48,7 @@ function snakeCaseImsAuthConfig(
 /**
  * Asserts the provided configuration for an Adobe IMS authentication provider. {@link ImsAuthParams}
  * {@link ImsAuthProvider}
- * @param config A record containing the configuration to validate.
+ * @param config {Record<PropertyKey, unknown>} The configuration to validate.
  * @throws {CommerceSdkValidationError} If the configuration is invalid.
  * @example
  * ```typescript
@@ -68,7 +68,7 @@ function snakeCaseImsAuthConfig(
  * ```
  */
 export function assertImsAuthParams(
-  config: Record<string, unknown>,
+  config: Record<PropertyKey, unknown>,
 ): asserts config is ImsAuthParams {
   const result = safeParse(ImsAuthParamsSchema, config);
   if (!result.success) {

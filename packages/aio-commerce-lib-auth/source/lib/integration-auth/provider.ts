@@ -43,7 +43,7 @@ export interface IntegrationAuthProvider {
 /**
  * Asserts the provided configuration for an Adobe Commerce integration authentication provider. {@link IntegrationAuthParams}
  * {@link IntegrationAuthProvider}
- * @param config {Record<string, unknown>} The configuration to validate.
+ * @param config {Record<PropertyKey, unknown>} The configuration to validate.
  * @throws {CommerceSdkValidationError} If the configuration is invalid.
  * @example
  * ```typescript
@@ -59,7 +59,7 @@ export interface IntegrationAuthProvider {
  * ```
  */
 export function assertIntegrationAuthParams(
-  config: Record<string, unknown>,
+  config: Record<PropertyKey, unknown>,
 ): asserts config is IntegrationAuthParams {
   const result = safeParse(IntegrationAuthParamsSchema, config);
   if (!result.success) {
