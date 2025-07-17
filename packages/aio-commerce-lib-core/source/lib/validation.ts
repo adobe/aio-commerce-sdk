@@ -114,6 +114,13 @@ export type CommerceSdkValidationErrorOptions = CommerceSdkErrorOptions<{
  * ```
  */
 export class CommerceSdkValidationError extends CommerceSdkErrorBase {
+  readonly issues: GenericIssue[];
+  /**
+   * Constructs a new CommerceSdkValidationError instance.
+   *
+   * @param message - A human-friendly description of the validation error.
+   * @param options - Options for the validation error, including the issues that caused the error.
+   */
   constructor(
     message: string,
     { issues, ...options }: CommerceSdkValidationErrorOptions,
@@ -121,8 +128,6 @@ export class CommerceSdkValidationError extends CommerceSdkErrorBase {
     super(message, options);
     this.issues = issues;
   }
-
-  readonly issues: GenericIssue[];
 
   /** Returns a pretty string representation of the validation error. */
   display() {
