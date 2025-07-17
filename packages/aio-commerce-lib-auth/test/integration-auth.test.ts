@@ -10,25 +10,17 @@
  * governing permissions and limitations under the License.
  */
 
-import { unwrap, unwrapErr } from "@adobe/aio-commerce-lib-core/result";
-import type { InferInput } from "valibot";
-
 import { describe, expect, test } from "vitest";
 import {
+  assertIntegrationAuthParams,
   getIntegrationAuthProvider,
-  tryGetIntegrationAuthProvider,
 } from "~/lib/integration-auth/provider";
-
-import type {
-  IntegrationAuthParams,
-  IntegrationAuthParamsSchema,
-} from "~/lib/integration-auth/schema";
 
 /** Regex to match the OAuth 1.0a header format. */
 const OAUTH1_REGEX =
   /^OAuth oauth_consumer_key="[^"]+", oauth_nonce="[^"]+", oauth_signature="[^"]+", oauth_signature_method="HMAC-SHA256", oauth_timestamp="[^"]+", oauth_token="[^"]+", oauth_version="1\.0"$/;
 
-describe("Commerce Integration Auth", () => {
+describe("aio-commerce-lib-auth/integration-auth", () => {
   describe("getIntegrationAuthProvider", () => {
     test("should export getIntegrationAuthProvider", () => {
       const integrationAuthProvider = getIntegrationAuthProvider({
@@ -38,8 +30,9 @@ describe("Commerce Integration Auth", () => {
         accessTokenSecret: "test-access-token-secret",
       });
 
-      const headers = unwrap(
-        integrationAuthProvider.getHeaders("GET", "http://localhost/test"),
+      const headers = integrationAuthProvider.getHeaders(
+        "GET",
+        "http://localhost/test",
       );
 
       expect(headers).toHaveProperty(
@@ -49,76 +42,45 @@ describe("Commerce Integration Auth", () => {
     });
   });
 
-  describe("tryGetIntegrationAuthProvider", () => {
-    const params: IntegrationAuthParams = {
-      AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY: "test-consumer-key",
-      AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET: "test-consumer-secret",
-      AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN: "test-access-token",
-      AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET: "test-access-token-secret",
+  describe("assertIntegrationAuthParams", () => {
+    test("should not throw with valid params", () => {
+      expect(() => {
+        assertIntegrationAuthParams({
+          consumerKey: "test-consumer-key",
+          consumerSecret: "test-consumer-secret",
+          accessToken: "test-access-token",
+          accessTokenSecret: "test-access-token-secret",
+        });
+      }).not.toThrow();
+    });
+
+    test("should throw CommerceSdkValidationError when invalid", () => {
+      expect(() => {
+        assertIntegrationAuthParams({});
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+  });
+
+  describe("assertIntegrationAuthParams edge cases", () => {
+    const validConfig = {
+      consumerKey: "test-consumer-key",
+      consumerSecret: "test-consumer-secret",
+      accessToken: "test-access-token",
+      accessTokenSecret: "test-access-token-secret",
     };
 
-    test("should export getIntegrationAccessToken", () => {
-      const result = unwrap(tryGetIntegrationAuthProvider(params));
-      const headers = unwrap(result.getHeaders("GET", "http://localhost/test"));
-
-      expect(headers).toHaveProperty(
-        "Authorization",
-        expect.stringMatching(OAUTH1_REGEX),
-      );
-    });
-
-    test("should err with invalid params", () => {
-      const result = unwrapErr(
-        tryGetIntegrationAuthProvider({} as unknown as IntegrationAuthParams),
-      );
-
-      expect(result).toHaveProperty("_tag", "IntegrationAuthValidationError");
-      expect(result).toHaveProperty("issues", expect.any(Array));
-    });
-
     test.each([
-      "AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY",
-      "AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET",
-      "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN",
-      "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET",
-    ])("should throw error when %s is missing", (param) => {
-      const result = tryGetIntegrationAuthProvider({
-        ...params,
-        [param]: undefined,
-      } satisfies InferInput<typeof IntegrationAuthParamsSchema>);
-
-      expect(() => unwrap(result)).toThrow();
-
-      const error = unwrapErr(result);
-      expect(error._tag).toEqual("IntegrationAuthValidationError");
-      expect(error.message).toEqual(
-        "Failed to validate the provided integration parameters",
-      );
-
-      expect(error.issues).toHaveLength(1);
-      expect(error.issues[0].message).toEqual(
-        `Expected a string value for the Commerce Integration parameter ${param}`,
-      );
-    });
-
-    test.each([
-      ["localhost"],
-      ["http:://"],
-      ["https://"],
-      ["//example.com"],
-      ["http://user@:80"],
-    ])("should throw an Error on invalid [%s] URL", (url) => {
-      const integrationAuthProvider = unwrap(
-        tryGetIntegrationAuthProvider(params),
-      );
-
-      const getHeadersResult = integrationAuthProvider.getHeaders("GET", url);
-      const error = unwrapErr(getHeadersResult);
-
-      expect(error._tag).toEqual("IntegrationAuthValidationError");
-      expect(error.message).toEqual(
-        "Failed to validate the provided Adobe Commerce URL",
-      );
+      ["consumerKey", { consumerKey: undefined }],
+      ["consumerSecret", { consumerSecret: undefined }],
+      ["accessToken", { accessToken: undefined }],
+      ["accessTokenSecret", { accessTokenSecret: undefined }],
+    ])("should throw when %s is missing", (_field, overrides) => {
+      expect(() => {
+        assertIntegrationAuthParams({
+          ...validConfig,
+          ...overrides,
+        });
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
     });
   });
 });

@@ -11,11 +11,10 @@
  */
 
 export {
+  assertImsAuthParams,
   getImsAuthProvider,
-  type ImsAuthConfig,
   type ImsAuthError,
   type ImsAuthProvider,
-  tryGetImsAuthProvider,
 } from "./lib/ims-auth/provider";
 
 export {
@@ -25,11 +24,9 @@ export {
 } from "./lib/ims-auth/schema";
 
 export {
+  assertIntegrationAuthParams,
   getIntegrationAuthProvider,
-  type IntegrationAuthError,
   type IntegrationAuthProvider,
-  type IntegrationConfig,
-  tryGetIntegrationAuthProvider,
 } from "./lib/integration-auth/provider";
 
 export type { IntegrationAuthParams } from "./lib/integration-auth/schema";

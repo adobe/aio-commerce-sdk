@@ -11,12 +11,11 @@
  */
 
 import {
-  type InferInput,
+  type InferOutput,
   instance,
   nonEmpty,
   nonOptional,
   object,
-  picklist,
   pipe,
   string,
   transform,
@@ -28,11 +27,13 @@ import {
  * The HTTP methods supported by Commerce.
  * This is used to determine which headers to include in the signing of the authorization header.
  */
-const AllowedHttpMethod = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
+export type HttpMethodInput = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-export const HttpMethodSchema = picklist(AllowedHttpMethod);
-export type HttpMethodInput = InferInput<typeof HttpMethodSchema>;
-
+/**
+ * Creates a validation schema for a required Commerce Integration string parameter.
+ * @param name The name of the parameter for error messages.
+ * @returns A validation pipeline that ensures the parameter is a non-empty string.
+ */
 const integrationAuthParameter = (name: string) =>
   pipe(
     string(
@@ -43,12 +44,14 @@ const integrationAuthParameter = (name: string) =>
     ),
   );
 
+/** Validation schema for the Adobe Commerce endpoint base URL. */
 const BaseUrlSchema = pipe(
   string("Expected a string for the Adobe Commerce endpoint"),
   nonEmpty("Expected a non-empty string for the Adobe Commerce endpoint"),
   vUrl("Expected a valid url for the Adobe Commerce endpoint"),
 );
 
+/** Validation schema that accepts either a URL string or URL instance and normalizes to string. */
 export const UrlSchema = pipe(
   union([BaseUrlSchema, instance(URL)]),
   transform((url) => {
@@ -58,30 +61,20 @@ export const UrlSchema = pipe(
     return url;
   }),
 );
-
-export type AdobeCommerceUri = InferInput<typeof UrlSchema>;
-
 /**
  * The schema for the Commerce Integration parameters.
  * This is used to validate the parameters passed to the Commerce Integration provider.
  */
 export const IntegrationAuthParamsSchema = nonOptional(
   object({
-    AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY: integrationAuthParameter(
-      "AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY",
-    ),
-    AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET: integrationAuthParameter(
-      "AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET",
-    ),
-    AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN: integrationAuthParameter(
-      "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN",
-    ),
-    AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET: integrationAuthParameter(
-      "AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET",
-    ),
+    consumerKey: integrationAuthParameter("consumerKey"),
+    consumerSecret: integrationAuthParameter("consumerSecret"),
+    accessToken: integrationAuthParameter("accessToken"),
+    accessTokenSecret: integrationAuthParameter("accessTokenSecret"),
   }),
 );
 
-export type IntegrationAuthParams = InferInput<
+/** Defines the parameters required for Commerce Integration authentication. */
+export type IntegrationAuthParams = InferOutput<
   typeof IntegrationAuthParamsSchema
 >;

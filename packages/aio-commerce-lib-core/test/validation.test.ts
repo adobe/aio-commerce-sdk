@@ -10,13 +10,17 @@
  * governing permissions and limitations under the License.
  */
 
-import { boolean, number, object, safeParse, string } from "valibot";
-import { describe, expect, test } from "vitest";
-
+import ansis from "ansis";
 import {
-  makeValidationError,
-  summarizeValidationError,
-} from "~/lib/validation";
+  boolean,
+  type GenericIssue,
+  number,
+  object,
+  safeParse,
+  string,
+} from "valibot";
+import { describe, expect, test } from "vitest";
+import { CommerceSdkValidationError } from "~/lib/validation";
 
 const SimpleObjectSchema = object({
   key1: string(),
@@ -38,34 +42,27 @@ const simpleObject = {
 
 describe("aio-commerce-lib-core/validation", () => {
   test("should summarize a list of issues with colors and structure", () => {
-    const result = safeParse(SimpleObjectSchema, simpleObject);
+    const result = safeParse(SimpleObjectSchema, simpleObject) as {
+      issues: GenericIssue[];
+    };
 
-    if (!result.success) {
-      // `result.issues` is only satisfied if the validation fails.
-      const validationError = makeValidationError(
-        "Validation failed",
-        result.issues,
-      );
+    const validationError = new CommerceSdkValidationError(
+      "Validation failed",
+      {
+        issues: result.issues,
+      },
+    );
 
-      const output = summarizeValidationError(validationError);
-      expect(output).toContain("key1");
-      expect(output).toContain("key2");
-      expect(output).toContain("key3.nestedKey.nestedKey");
-    }
-  });
+    const output = ansis.strip(validationError.display());
 
-  test("should make a validation error", () => {
-    const result = safeParse(SimpleObjectSchema, simpleObject);
-
-    if (!result.success) {
-      const validationError = makeValidationError(
-        "Validation failed",
-        result.issues,
-      );
-
-      expect(validationError._tag).toBe("ValidationError");
-      expect(validationError.message).toBe("Validation failed");
-      expect(validationError.issues.length).toBeGreaterThan(0);
-    }
+    expect(output).toMatch(
+      /Schema validation error at key1 → Invalid key: Expected "key1" but received undefined/g,
+    );
+    expect(output).toMatch(
+      /Schema validation error at key2 → Invalid key: Expected "key2" but received undefined/g,
+    );
+    expect(output).toMatch(
+      /Schema validation error at key3.nestedKey.nestedKey → Invalid type: Expected boolean but received/g,
+    );
   });
 });

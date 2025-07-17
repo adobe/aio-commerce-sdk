@@ -11,18 +11,23 @@
  */
 
 import {
+  email,
   type InferOutput,
+  minLength,
   nonEmpty,
   object,
   optional,
-  parseJson,
   pipe,
   string,
   array as vArray,
   enum as vEnum,
-  message as vMessage,
 } from "valibot";
 
+/**
+ * Creates a validation schema for a required IMS auth string parameter.
+ * @param name The name of the parameter for error messages.
+ * @returns A validation pipeline that ensures the parameter is a non-empty string.
+ */
 const imsAuthParameter = (name: string) =>
   pipe(
     string(`Expected a string value for the IMS auth parameter ${name}`),
@@ -31,20 +36,13 @@ const imsAuthParameter = (name: string) =>
     ),
   );
 
-const jsonStringArray = (name: string) => {
-  const jsonStringArraySchema = vMessage(
-    pipe(
-      string(`Expected a string value for the IMS auth parameter ${name}`),
-      nonEmpty(
-        `Expected a non-empty string value for the IMS auth parameter ${name}`,
-      ),
-      parseJson(),
-    ),
-    `An error occurred while parsing the JSON string array parameter ${name}`,
-  );
-
+/**
+ * Creates a validation schema for an IMS auth string array parameter.
+ * @param name The name of the parameter for error messages.
+ * @returns A validation pipeline that ensures the parameter is an array of strings.
+ */
+const stringArray = (name: string) => {
   return pipe(
-    jsonStringArraySchema,
     vArray(
       string(),
       `Expected a stringified JSON array value for the IMS auth parameter ${name}`,
@@ -58,26 +56,30 @@ export const IMS_AUTH_ENV = {
   STAGE: "stage",
 } as const;
 
+/** Validation schema for IMS auth environment values. */
 const ImsAuthEnvSchema = vEnum(IMS_AUTH_ENV);
 
 /** Defines the schema to validate the necessary parameters for the IMS auth service. */
 export const ImsAuthParamsSchema = object({
-  AIO_COMMERCE_IMS_CLIENT_ID: imsAuthParameter("AIO_COMMERCE_IMS_CLIENT_ID"),
-  AIO_COMMERCE_IMS_CLIENT_SECRETS: jsonStringArray(
-    "AIO_COMMERCE_IMS_CLIENT_SECRETS",
+  clientId: imsAuthParameter("clientId"),
+  clientSecrets: pipe(
+    stringArray("clientSecrets"),
+    minLength(1, "Expected at least one client secret for IMS auth"),
   ),
-  AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: imsAuthParameter(
-    "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID",
+  technicalAccountId: imsAuthParameter("technicalAccountId"),
+  technicalAccountEmail: pipe(
+    string(
+      "Expected a string value for the IMS auth parameter technicalAccountEmail",
+    ),
+    email("Expected a valid email format for technicalAccountEmail"),
   ),
-
-  AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: imsAuthParameter(
-    "AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL",
+  imsOrgId: imsAuthParameter("imsOrgId"),
+  environment: pipe(optional(ImsAuthEnvSchema, IMS_AUTH_ENV.PROD)),
+  context: pipe(optional(string(), "aio-commerce-sdk-creds")),
+  scopes: pipe(
+    stringArray("scopes"),
+    minLength(1, "Expected at least one scope for IMS auth"),
   ),
-  AIO_COMMERCE_IMS_IMS_ORG_ID: imsAuthParameter("AIO_COMMERCE_IMS_IMS_ORG_ID"),
-
-  AIO_COMMERCE_IMS_ENV: pipe(optional(ImsAuthEnvSchema, IMS_AUTH_ENV.PROD)),
-  AIO_COMMERCE_IMS_CTX: pipe(optional(string(), "aio-commerce-sdk-creds")),
-  AIO_COMMERCE_IMS_SCOPES: jsonStringArray("AIO_COMMERCE_IMS_SCOPES"),
 });
 
 /** Defines the parameters for the IMS auth service. */
