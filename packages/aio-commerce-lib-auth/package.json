@@ -26,7 +26,7 @@
   },
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/es/index.js",
-  "types": "./dist/es/index.d.ts",
+  "types": "./dist/cjs/index.d.cts",
   "exports": {
     ".": {
       "import": {
