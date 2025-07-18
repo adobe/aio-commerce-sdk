@@ -1,28 +1,41 @@
+/*
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
 import util from "node:util";
+
+/** Defines the base options for CommerceSdkErrorBase. */
+export type CommerceSdkErrorBaseOptions = ErrorOptions & {
+  traceId?: string;
+};
 
 /**
  * Helper type to define custom error options.
  * @example
  * ```ts
- * type ValidationErrorOptions = AioCommerceSdkErrorOptions<{
+ * type ValidationErrorOptions = CommerceSdkErrorOptions<{
  *   field: string;
  *   value: unknown;
  * }>;
  * ```
  */
-export type AioCommerceSdkErrorOptions<
+export type CommerceSdkErrorOptions<
   T extends Record<string, unknown> = Record<string, unknown>,
-> = ErrorOptions &
-  T & {
-    tag: `${string}Error`;
-    traceId?: string;
-  };
+> = CommerceSdkErrorBaseOptions & T;
 
 /**
  * Base class for all AioCommerceSdk errors.
  * @example
  * ```ts
- * class ValidationError extends AioCommerceSdkErrorBase {
+ * class ValidationError extends CommerceSdkErrorBase {
  *   constructor(message: string, options: ValidationErrorOptions) {
  *     super(message, options);
  *   }
@@ -37,19 +50,19 @@ export type AioCommerceSdkErrorOptions<
  * console.log(err.toJSON());
  * ```
  */
-export abstract class AioCommerceSdkErrorBase extends Error {
-  public readonly tag: string;
+export abstract class CommerceSdkErrorBase extends Error {
   public readonly traceId?: string;
 
   /**
-   * Constructs a new AioCommerceSdkErrorBase instance.
+   * Constructs a new CommerceSdkErrorBase instance.
    *
    * @param message - A human-friendly description of the error.
+   * @param traceId - An optional trace ID for tracking the error in logs.
    * @param options - Required error options.
    */
   public constructor(
     message: string,
-    { tag, traceId, ...options }: AioCommerceSdkErrorOptions,
+    { traceId, ...options }: CommerceSdkErrorBaseOptions,
   ) {
     super(message, options);
 
@@ -60,14 +73,25 @@ export abstract class AioCommerceSdkErrorBase extends Error {
       Error.captureStackTrace(this, new.target);
     }
 
-    this.name = "AioCommerceSdkError";
-    this.tag = tag;
+    // Automatically set the name based on the constructor name
+    this.name = new.target.name || "CommerceSdkError";
     this.traceId = traceId;
   }
 
-  /** Checks if the error is an AioCommerceSdkErrorBase instance. */
-  public static is(error: unknown): error is AioCommerceSdkErrorBase {
-    return error instanceof AioCommerceSdkErrorBase;
+  /**
+   * Checks if the error is any CommerceSdkErrorBase instance.
+   * @example
+   * ```ts
+   * class ValidationError extends CommerceSdkErrorBase {}
+   * const err = new ValidationError("Invalid", {});
+   *
+   * CommerceSdkErrorBase.isSdkError(err); // true
+   * ValidationError.isSdkError(err); // true
+   * CommerceSdkErrorBase.isSdkError(new Error("Regular")); // false
+   * ```
+   */
+  public static isSdkError(error: unknown): error is CommerceSdkErrorBase {
+    return error instanceof CommerceSdkErrorBase;
   }
 
   /** Returns the full stack trace of the error and its causes. */
@@ -88,7 +112,7 @@ export abstract class AioCommerceSdkErrorBase extends Error {
     let cause = this.cause;
 
     while (cause) {
-      if (cause instanceof Error) {
+      if (typeof cause === "object" && cause !== null && "cause" in cause) {
         cause = cause.cause;
       } else {
         break;
@@ -106,7 +130,6 @@ export abstract class AioCommerceSdkErrorBase extends Error {
       message: this.message,
       stack: this.fullStack,
       cause: this.cause,
-      tag: this.tag,
       traceId: this.traceId,
     };
   }
