@@ -1,5 +1,19 @@
 # @adobe/aio-commerce-lib-auth
 
+## 0.3.0
+
+### Minor Changes
+
+- [#22](https://github.com/adobe/aio-commerce-sdk/pull/22) [`9885eee`](https://github.com/adobe/aio-commerce-sdk/commit/9885eee5849ba7939b2067d3357e677beced3774) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Changes include:
+  - Removed `try*` methods from public interface
+  - Added `assert` methods that throw if required configuration is not provided
+  - Cleaned up unused types to reduce bundle size
+
+### Patch Changes
+
+- Updated dependencies [[`9885eee`](https://github.com/adobe/aio-commerce-sdk/commit/9885eee5849ba7939b2067d3357e677beced3774)]:
+  - @adobe/aio-commerce-lib-core@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
