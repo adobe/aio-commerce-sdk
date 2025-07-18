@@ -1,5 +1,4 @@
-import type { ErrorType } from "@adobe/aio-commerce-lib-core/result";
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/validation";
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { context, getToken } from "@adobe/aio-lib-ims";
 
 import type { SnakeCasedProperties } from "type-fest";
@@ -16,15 +15,6 @@ type ImsAuthHeader = "Authorization" | "x-api-key";
 
 /** Defines the headers required for IMS authentication. */
 type ImsAuthHeaders = Record<ImsAuthHeader, string>;
-
-/** Defines an error type for the IMS auth service. */
-export type ImsAuthError<TError = unknown> = ErrorType<
-  "ImsAuthError",
-  {
-    message: string;
-    error: TError;
-  }
->;
 
 /** Defines an authentication provider for Adobe IMS. */
 export interface ImsAuthProvider {

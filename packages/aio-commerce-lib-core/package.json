@@ -43,12 +43,12 @@
     },
     "./*": {
       "import": {
-        "types": "./dist/es/lib/*.d.ts",
-        "default": "./dist/es/lib/*.js"
+        "types": "./dist/es/lib/*/index.d.ts",
+        "default": "./dist/es/lib/*/index.js"
       },
       "require": {
-        "types": "./dist/cjs/lib/*.d.cts",
-        "default": "./dist/cjs/lib/*.cjs"
+        "types": "./dist/cjs/lib/*/index.d.cts",
+        "default": "./dist/cjs/lib/*/index.cjs"
       }
     },
     "./package.json": "./package.json"
