@@ -13,7 +13,6 @@
 export {
   assertImsAuthParams,
   getImsAuthProvider,
-  type ImsAuthError,
   type ImsAuthProvider,
 } from "./lib/ims-auth/provider";
 
