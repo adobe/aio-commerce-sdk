@@ -30,26 +30,34 @@ In your App Builder application, you can use the library to authenticate users o
 
 ```typescript
 import {
-  getImsAuthProvider,
   assertImsAuthParams,
+  getImsAuthProvider,
 } from "@adobe/aio-commerce-lib-auth";
+
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core";
 
 export const main = async function (params: Record<string, unknown>) {
   try {
+    // Validate parameters and get the IMS auth provider
     assertImsAuthParams(params);
-    const imsAuth = getImsAuthProvider(params);
+    const imsAuthProvider = getImsAuthProvider(params);
 
-    const headers = await imsAuth.getHeaders();
-    const response = await fetch("https://api.adobe.io/commerce/endpoint", {
-      headers,
-    });
+    const token = await imsAuthProvider.getAccessToken();
+    const headers = await imsAuthProvider.getHeaders();
 
-    return { statusCode: 200, body: await response.json() };
+    // Use headers in your API calls
+    // business logic e.g requesting orders
+    return { statusCode: 200 };
   } catch (error) {
-    return {
-      statusCode: 400,
-      body: { error: error.message },
-    };
+    if (error instanceof CommerceSdkValidationError) {
+      return {
+        statusCode: 400,
+        body: {
+          error: `Invalid IMS configuration: ${error.message}`,
+        },
+      };
+    }
+    throw error;
   }
 };
 ```
@@ -58,34 +66,38 @@ export const main = async function (params: Record<string, unknown>) {
 
 ```typescript
 import {
-  getIntegrationAuthProvider,
   assertIntegrationAuthParams,
+  getIntegrationAuthProvider,
 } from "@adobe/aio-commerce-lib-auth";
+
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core";
 
 export const main = async function (params: Record<string, unknown>) {
   try {
+    // Validate parameters and get the integration auth provider
     assertIntegrationAuthParams(params);
-
     const integrationsAuth = getIntegrationAuthProvider(params);
+
+    // Get OAuth headers for API requests
     const headers = integrationsAuth.getHeaders(
       "GET",
-      "https://your-store.com/rest/V1/orders",
+      "http://localhost/rest/V1/orders",
     );
 
-    const response = await fetch("https://your-store.com/rest/V1/orders", {
-      headers,
-    });
-
-    return { statusCode: 200, body: await response.json() };
+    // Use headers in your API calls
+    // business logic e.g requesting orders
+    return { statusCode: 200 };
   } catch (error) {
-    return {
-      statusCode: 400,
-      body: { error: error.message },
-    };
+    if (error instanceof CommerceSdkValidationError) {
+      return {
+        statusCode: 400,
+        body: {
+          error: `Invalid Integration configuration: ${error.message}`,
+        },
+      };
+    }
+    throw error;
   }
-
-  // business logic e.g requesting orders
-  return { statusCode: 200 };
 };
 ```
 
