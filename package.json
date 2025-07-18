@@ -10,7 +10,7 @@
     "build": "turbo build",
     "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
     "format": "biome format --write --no-errors-on-unmatched",
-    "format:markdown": "pnpx prettier --write ./**/*.md \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
+    "format:markdown": "pnpx prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
     "format:check": "biome format --no-errors-on-unmatched",
     "lint": "biome lint --no-errors-on-unmatched",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
@@ -39,7 +39,7 @@
       "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --error-on-warnings"
     ],
     "*.md": [
-      "pnpx prettier --write \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\""
+      "pnpx prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\""
     ],
     "*": [
       "biome check --no-errors-on-unmatched --files-ignore-unknown=true --error-on-warnings"

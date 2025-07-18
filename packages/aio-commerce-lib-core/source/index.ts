@@ -12,5 +12,3 @@
 
 // Export here the public API of the package.
 export * as Error from "./lib/error";
-export * as Result from "./lib/result";
-export * as Validation from "./lib/validation";

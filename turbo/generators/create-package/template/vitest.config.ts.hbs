@@ -1,16 +1,16 @@
 import { resolve } from "node:path";
+
+import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      "~": resolve(__dirname, "./source"),
-      "~~": resolve(__dirname, "./"),
-    },
-  },
-
+  plugins: [tsconfigPaths()],
   test: {
     globals: true,
     environment: "node",
+
+    coverage: {
+      enabled: true,
+    }
   },
 });

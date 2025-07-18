@@ -12,7 +12,7 @@
 
 import crypto from "node:crypto";
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/validation";
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 
 import OAuth1a from "oauth-1.0a";
 import { safeParse } from "valibot";
@@ -56,7 +56,9 @@ export interface IntegrationAuthProvider {
  *
  * // This will validate the config and throw if invalid
  * assertIntegrationAuthParams(config);
- *
+ * ```
+ * @example
+ * ```typescript
  * // Example of a failing assert:
  * try {
  *   assertIntegrationAuthParams({
@@ -108,12 +110,12 @@ export function assertIntegrationAuthParams(
  * ```
  */
 export function getIntegrationAuthProvider(
-  config: IntegrationAuthParams,
+  authParams: IntegrationAuthParams,
 ): IntegrationAuthProvider {
   const oauth = new OAuth1a({
     consumer: {
-      key: config.consumerKey,
-      secret: config.consumerSecret,
+      key: authParams.consumerKey,
+      secret: authParams.consumerSecret,
     },
     signature_method: "HMAC-SHA256",
     hash_function: (baseString, key) =>
@@ -121,8 +123,8 @@ export function getIntegrationAuthProvider(
   });
 
   const oauthToken = {
-    key: config.accessToken,
-    secret: config.accessTokenSecret,
+    key: authParams.accessToken,
+    secret: authParams.accessTokenSecret,
   };
 
   return {

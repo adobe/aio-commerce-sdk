@@ -18,7 +18,11 @@ import {
   getImsAuthProvider,
 } from "~/lib/ims-auth/provider";
 
-import { IMS_AUTH_ENV } from "~/lib/ims-auth/schema";
+import {
+  IMS_AUTH_ENV,
+  type ImsAuthEnv,
+  type ImsAuthParams,
+} from "~/lib/ims-auth/schema";
 
 vi.mock("@adobe/aio-lib-ims", async () => ({
   context: (await vi.importActual("@adobe/aio-lib-ims")).context,
@@ -71,10 +75,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       };
 
       const imsAuthProvider = getImsAuthProvider(config);
-
       await expect(imsAuthProvider.getAccessToken()).rejects.toThrow(
         errorMessage,
       );
+
       await expect(imsAuthProvider.getHeaders()).rejects.toThrow(errorMessage);
     });
   });
@@ -170,7 +174,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       expect(() => {
         assertImsAuthParams({
           ...validConfig,
-          environment: "invalid-env" as unknown as typeof IMS_AUTH_ENV.PROD,
+          environment: "invalid-env" as unknown as ImsAuthEnv,
         });
       }).toThrow("Invalid ImsAuthProvider configuration");
     });
@@ -188,10 +192,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       expect(() => {
         assertImsAuthParams({
           ...validConfig,
-          clientId: 123 as unknown as string,
-          clientSecrets: "not-an-array" as unknown as string[],
-          technicalAccountId: true as unknown as string,
-        });
+          clientId: 123,
+          clientSecrets: "not-an-array",
+          technicalAccountId: true,
+        } as unknown as ImsAuthParams);
       }).toThrow("Invalid ImsAuthProvider configuration");
     });
 
@@ -209,8 +213,8 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       expect(() => {
         assertImsAuthParams({
           ...validConfig,
-          clientId: null as unknown as string,
-        });
+          clientId: null,
+        } as unknown as ImsAuthParams);
       }).toThrow("Invalid ImsAuthProvider configuration");
     });
 

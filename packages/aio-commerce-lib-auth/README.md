@@ -11,29 +11,15 @@ This library provides a unified interface for authentication in Adobe Commerce A
 
 The library supports two main authentication providers:
 
-- **IMS Provider**: For authenticating users or services via Adobe Identity Management System (IMS) using OAuth2.
-  - Required Params
-    - AIO_COMMERCE_IMS_CLIENT_ID: string
-    - AIO_COMMERCE_IMS_CLIENT_SECRETS: string
-    - AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_ID: string
-    - AIO_COMMERCE_IMS_TECHNICAL_ACCOUNT_EMAIL: string
-    - AIO_COMMERCE_IMS_IMS_ORG_ID: string
-    - AIO_COMMERCE_IMS_ENV: string e.g `'prod'` or `'stage'`
-    - AIO_COMMERCE_IMS_SCOPES: string e.g `'["value1", "value2"]'`
-    - AIO_COMMERCE_IMS_CTX: string
-- **Integrations Provider**: For authenticating with Adobe Commerce integrations using OAuth 1.0a.
-  - Required params
-    - AIO_COMMERCE_INTEGRATIONS_CONSUMER_KEY: string
-    - AIO_COMMERCE_INTEGRATIONS_CONSUMER_SECRET: string
-    - AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN: string
-    - AIO_COMMERCE_INTEGRATIONS_ACCESS_TOKEN_SECRET: string
+- **IMS Provider**: For authenticating users or services via Adobe Identity Management System (IMS) using OAuth2
+- **Integrations Provider**: For authenticating with Adobe Commerce integrations using OAuth 1.0a
 
 These providers abstract the complexity of authentication, making it easy to obtain and use access tokens in your App Builder applications.
 
 ## Installation
 
 ```shell
-npm install @adobe/aio-commerce-lib-auth
+pnpm install @adobe/aio-commerce-lib-auth
 ```
 
 ## Usage
@@ -42,13 +28,12 @@ In your App Builder application, you can use the library to authenticate users o
 
 ### IMS Provider
 
-In the runtime action you can generate an access token using the IMS Provider:
-
 ```typescript
 import {
   assertImsAuthParams,
   getImsAuthProvider,
 } from "@adobe/aio-commerce-lib-auth";
+
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core";
 
 export const main = async function (params: Record<string, unknown>) {
@@ -57,10 +42,7 @@ export const main = async function (params: Record<string, unknown>) {
     assertImsAuthParams(params);
     const imsAuthProvider = getImsAuthProvider(params);
 
-    // Get access token
     const token = await imsAuthProvider.getAccessToken();
-
-    // Get headers for API requests
     const headers = await imsAuthProvider.getHeaders();
 
     // Use headers in your API calls
@@ -82,13 +64,12 @@ export const main = async function (params: Record<string, unknown>) {
 
 ### Integrations Provider
 
-In the runtime action you can generate an access token using the Integrations Provider:
-
 ```typescript
 import {
   assertIntegrationAuthParams,
   getIntegrationAuthProvider,
 } from "@adobe/aio-commerce-lib-auth";
+
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core";
 
 export const main = async function (params: Record<string, unknown>) {
@@ -119,6 +100,38 @@ export const main = async function (params: Record<string, unknown>) {
   }
 };
 ```
+
+## Error Handling
+
+The library uses validation to ensure all required parameters are provided and correctly formatted. When validation fails, a `CommerceSdkValidationError` is thrown with detailed information about what went wrong.
+
+```typescript
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+
+try {
+  assertImsAuthParams({
+    clientId: "valid-id",
+    // Missing required fields
+  });
+} catch (error) {
+  if (error instanceof CommerceSdkValidationError) {
+    console.error(error.display());
+    // Output:
+    // Invalid ImsAuthProvider configuration
+    // ├── Schema validation error at clientSecrets → Expected at least one client secret for IMS auth
+    // ├── Schema validation error at technicalAccountId → Expected a non-empty string value for the IMS auth parameter technicalAccountId
+    // └── Schema validation error at technicalAccountEmail → Expected a valid email format for technicalAccountEmail
+  }
+}
+```
+
+## Best Practices
+
+1. **Always validate parameters** - Use the `assert*` functions before creating providers
+2. **Handle errors gracefully** - Catch and properly handle validation and authentication errors
+3. **Store credentials securely** - Use environment variables or secure configuration management
+4. **Cache tokens when possible** - The IMS provider handles token lifecycle internally
+5. **Use TypeScript** - Leverage the full type safety provided by the library
 
 ## Contributing
 

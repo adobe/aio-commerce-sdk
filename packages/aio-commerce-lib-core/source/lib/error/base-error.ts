@@ -51,7 +51,7 @@ export type CommerceSdkErrorOptions<
  * ```
  */
 export abstract class CommerceSdkErrorBase extends Error {
-  readonly traceId?: string;
+  public readonly traceId?: string;
 
   /**
    * Constructs a new CommerceSdkErrorBase instance.
@@ -60,7 +60,7 @@ export abstract class CommerceSdkErrorBase extends Error {
    * @param traceId - An optional trace ID for tracking the error in logs.
    * @param options - Required error options.
    */
-  constructor(
+  public constructor(
     message: string,
     { traceId, ...options }: CommerceSdkErrorBaseOptions,
   ) {
@@ -73,17 +73,29 @@ export abstract class CommerceSdkErrorBase extends Error {
       Error.captureStackTrace(this, new.target);
     }
 
-    this.name = "AioCommerceSdkError";
+    // Automatically set the name based on the constructor name
+    this.name = new.target.name || "CommerceSdkError";
     this.traceId = traceId;
   }
 
-  /** Checks if the error is an CommerceSdkErrorBase instance. */
-  static is(error: unknown): error is CommerceSdkErrorBase {
+  /**
+   * Checks if the error is any CommerceSdkErrorBase instance.
+   * @example
+   * ```ts
+   * class ValidationError extends CommerceSdkErrorBase {}
+   * const err = new ValidationError("Invalid", {});
+   *
+   * CommerceSdkErrorBase.isSdkError(err); // true
+   * ValidationError.isSdkError(err); // true
+   * CommerceSdkErrorBase.isSdkError(new Error("Regular")); // false
+   * ```
+   */
+  public static isSdkError(error: unknown): error is CommerceSdkErrorBase {
     return error instanceof CommerceSdkErrorBase;
   }
 
   /** Returns the full stack trace of the error and its causes. */
-  get fullStack() {
+  public get fullStack() {
     let out = this.stack ?? "";
     let cause = this.cause;
 
@@ -96,11 +108,11 @@ export abstract class CommerceSdkErrorBase extends Error {
   }
 
   /** Returns the root cause of the error. */
-  get rootCause() {
+  public get rootCause() {
     let cause = this.cause;
 
     while (cause) {
-      if (cause instanceof Error) {
+      if (typeof cause === "object" && cause !== null && "cause" in cause) {
         cause = cause.cause;
       } else {
         break;
@@ -111,7 +123,7 @@ export abstract class CommerceSdkErrorBase extends Error {
   }
 
   /** Converts the error to a JSON-like representation. */
-  toJSON() {
+  public toJSON() {
     // This is needed, otherwise JSON.stringify returns '{}' 🤡
     return {
       name: this.name,
@@ -123,7 +135,7 @@ export abstract class CommerceSdkErrorBase extends Error {
   }
 
   /** Returns a pretty string representation of the error. */
-  toString(inspect = true) {
+  public toString(inspect = true) {
     if (inspect) {
       // This returns a pretty-printed string with more details than `toString`
       return util.inspect(this, {

@@ -3,7 +3,7 @@
 > [!WARNING]
 > This package is a work in progress and is not yet ready for use yet. You may be able to install it, but if you do, expect breaking changes.
 
-This package provides core utilities for the Adobe Commerce SDK libraries.
+This package provides core utilities used across the Adobe Commerce SDK.
 
 ## Installation
 
@@ -15,82 +15,132 @@ pnpm install @adobe/aio-commerce-lib-core
 
 This package provides core utilities for the Adobe Commerce SDK libraries.
 
-### Current Utilities
-
-- **[`Validation`](./source/lib/validation.ts)**: A set of utilities regarding validation, such as creating and pretty-printing validation errors.
-- **[`Error`](./source/lib/error.ts)**: Base error classes for the Commerce SDK.
+- **Error Handling**: Custom error classes with enhanced debugging capabilities
+- **Validation Errors**: Pretty-printable validation errors.
 
 ## Usage
 
-### Validation
+### Error Classes
 
-The `CommerceSdkValidationError` class helps you handle and display validation errors in a user-friendly way.
+The library provides custom error classes for consistent error handling across the SDK.
 
-#### Signature
+#### CommerceSdkErrorBase
 
-- `CommerceSdkValidationError(message: string, options: CommerceSdkValidationErrorOptions)` - Creates a validation error.
-- `error.display(): string` - Pretty-prints the validation error with all issues.
+Base class for all SDK errors with enhanced debugging capabilities:
 
-#### Use case
-
-This provides a structured way to handle validation errors and display them in a readable format.
-
-<hr/>
-
-```ts
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/validation";
-
-// Create a validation error with issues
-const validationError = new CommerceSdkValidationError("Invalid input", {
-  issues: [
-    {
-      kind: "validation",
-      message: "Expected a non-empty string",
-      path: ["clientId"],
-    },
-    {
-      kind: "schema",
-      message: "Missing required field",
-      path: ["clientSecret"],
-    },
-  ],
-});
-
-// Display the error with pretty formatting
-console.error(validationError.display());
-
-// Output:
-// Invalid input
-// ├── Input error at clientId → Expected a non-empty string
-// └── Schema validation error at clientSecret → Missing required field
-```
-
-### Error Handling
-
-The library provides base error classes that can be extended for specific error types.
-
-```ts
+```typescript
 import { CommerceSdkErrorBase } from "@adobe/aio-commerce-lib-core/error";
 
-// Custom error class
+// Create a custom error class
 class MyCustomError extends CommerceSdkErrorBase {
-  constructor(
-    message: string,
-    public readonly code: string,
-  ) {
-    super(message);
+  constructor(message: string, options?: { traceId?: string }) {
+    super(message, options || {});
   }
 }
 
-// Usage
+// Use the error
+const error = new MyCustomError("Something went wrong", {
+  traceId: "trace-123",
+  cause: originalError,
+});
+
+// Check if error is an SDK error
+if (CommerceSdkErrorBase.isSdkError(error)) {
+  console.log(error.fullStack); // Full stack trace including causes
+  console.log(error.rootCause); // Get the root cause
+  console.log(error.toJSON()); // JSON representation
+}
+```
+
+#### CommerceSdkValidationError
+
+Specialized error for validation failures with pretty-printing support:
+
+```typescript
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { safeParse } from "valibot";
+
+// When validation fails (`schema` and `data` are in scope somewhere)
+const result = safeParse(schema, data);
+if (!result.success) {
+  const error = new CommerceSdkValidationError("Invalid configuration", {
+    issues: result.issues,
+  });
+
+  // Pretty-print the validation errors
+  console.error(error.display());
+
+  // Output:
+  // Invalid configuration
+  // ├── Schema validation error at clientId → Expected a non-empty string value
+  // ├── Schema validation error at email → Expected a valid email format
+  // └── Input error at age → Expected a number greater than 18
+}
+```
+
+### Working with Validation Errors
+
+The validation error display shows a tree structure of all validation issues:
+
+```typescript
 try {
-  throw new MyCustomError("Something went wrong", "CUSTOM_ERROR");
+  // Some validation logic that throws CommerceSdkValidationError
+  validateConfig(params);
 } catch (error) {
-  if (error instanceof MyCustomError) {
-    console.error(`Error ${error.code}: ${error.message}`);
+  if (error instanceof CommerceSdkValidationError) {
+    console.error(error.display()); // with colors (default)
+    console.error(error.display(false)); // without colors (for logs)
+
+    // Access raw valibot issues
+    error.issues.forEach((issue) => {
+      console.log(`Issue at ${issue.path}: ${issue.message}`);
+    });
   }
 }
 ```
+
+## Best Practices
+
+1. **Extend base error class** for custom errors:
+
+   ```typescript
+   class ApiError extends CommerceSdkErrorBase {
+     constructor(
+       message: string,
+       public statusCode: number,
+       options?: CommerceSdkErrorBaseOptions,
+     ) {
+       super(message, options);
+     }
+   }
+   ```
+
+2. **Use validation errors** for anything related to validation:
+
+   ```typescript
+   import { safeParse } from "valibot";
+
+   function validateParams(params: unknown) {
+     const result = safeParse(schema, params);
+     if (!result.success) {
+       throw new CommerceSdkValidationError("Invalid parameters", {
+         issues: result.issues,
+       });
+     }
+     return result.output;
+   }
+   ```
+
+3. **Chain errors properly** using the `cause` option:
+   ```typescript
+   try {
+     await riskyOperation();
+   } catch (error) {
+     throw new MyCustomError("High-level operation failed", {
+       cause: error,
+     });
+   }
+   ```
 
 ## Contributing
 

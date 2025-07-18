@@ -29,7 +29,7 @@
   },
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/es/index.js",
-  "types": "./dist/es/index.d.ts",
+  "types": "./dist/cjs/index.d.cts",
   "exports": {
     ".": {
       "import": {
@@ -43,16 +43,22 @@
     },
     "./*": {
       "import": {
-        "types": "./dist/es/lib/*.d.ts",
-        "default": "./dist/es/lib/*.js"
+        "types": "./dist/es/lib/*/index.d.ts",
+        "default": "./dist/es/lib/*/index.js"
       },
       "require": {
-        "types": "./dist/cjs/lib/*.d.cts",
-        "default": "./dist/cjs/lib/*.cjs"
+        "types": "./dist/cjs/lib/*/index.d.cts",
+        "default": "./dist/cjs/lib/*/index.cjs"
       }
     },
     "./package.json": "./package.json"
   },
+  "files": [
+    "dist",
+    "package.json",
+    "CHANGELOG.md",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsdown",
     "check:ci": "pnpm -w check:ci .",

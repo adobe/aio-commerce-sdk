@@ -1,10 +1,14 @@
-import type { ErrorType } from "@adobe/aio-commerce-lib-core/result";
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/validation";
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { context, getToken } from "@adobe/aio-lib-ims";
+
 import type { SnakeCasedProperties } from "type-fest";
 import { safeParse } from "valibot";
 
-import { type ImsAuthParams, ImsAuthParamsSchema } from "./schema";
+import {
+  type ImsAuthEnv,
+  type ImsAuthParams,
+  ImsAuthParamsSchema,
+} from "./schema";
 
 /** Defines the header keys used for IMS authentication. */
 type ImsAuthHeader = "Authorization" | "x-api-key";
@@ -12,31 +16,30 @@ type ImsAuthHeader = "Authorization" | "x-api-key";
 /** Defines the headers required for IMS authentication. */
 type ImsAuthHeaders = Record<ImsAuthHeader, string>;
 
-/** Defines an error type for the IMS auth service. */
-export type ImsAuthError<TError = unknown> = ErrorType<
-  "ImsAuthError",
-  {
-    message: string;
-    error: TError;
-  }
->;
-
 /** Defines an authentication provider for Adobe IMS. */
 export interface ImsAuthProvider {
   getAccessToken: () => Promise<string>;
   getHeaders: () => Promise<ImsAuthHeaders>;
 }
 
+/** The shape of the configuration expected by `aio-lib-ims`. */
+type ImsAuthConfig = Omit<
+  SnakeCasedProperties<ImsAuthParams>,
+  "environment"
+> & {
+  env: ImsAuthEnv;
+};
+
 /**
  * Converts IMS auth configuration properties to snake_case format.
  * @param config The IMS auth configuration with camelCase properties.
  * @returns The configuration with snake_case properties.
  */
-function snakeCaseImsAuthConfig(
-  config: ImsAuthParams,
-): SnakeCasedProperties<ImsAuthParams> {
+function toImsAuthConfig(config: ImsAuthParams): ImsAuthConfig {
   return {
-    ...config,
+    scopes: config.scopes,
+    env: config?.environment ?? "prod",
+    context: config.context,
     client_id: config.clientId,
     client_secrets: config.clientSecrets,
     technical_account_id: config.technicalAccountId,
@@ -65,7 +68,9 @@ function snakeCaseImsAuthConfig(
  *
  * // This will validate the config and throw if invalid
  * assertImsAuthParams(config);
- *
+ *```
+ * @example
+ * ```typescript
  * // Example of a failing assert:
  * try {
  *   assertImsAuthParams({
@@ -129,19 +134,19 @@ export function assertImsAuthParams(
  * });
  * ```
  */
-export function getImsAuthProvider(config: ImsAuthParams) {
+export function getImsAuthProvider(authParams: ImsAuthParams) {
   const getAccessToken = async () => {
-    const snakeCasedConfig = snakeCaseImsAuthConfig(config);
+    const imsAuthConfig = toImsAuthConfig(authParams);
 
-    await context.set(config.context, snakeCasedConfig);
-    return getToken(config.context, {});
+    await context.set(authParams.context, imsAuthConfig);
+    return getToken(authParams.context, {});
   };
 
   const getHeaders = async () => {
     const accessToken = await getAccessToken();
     return {
       Authorization: `Bearer ${accessToken}`,
-      "x-api-key": config.clientId,
+      "x-api-key": authParams.clientId,
     };
   };
 

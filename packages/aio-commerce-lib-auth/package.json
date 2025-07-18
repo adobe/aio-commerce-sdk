@@ -26,7 +26,7 @@
   },
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/es/index.js",
-  "types": "./dist/es/index.d.ts",
+  "types": "./dist/cjs/index.d.cts",
   "exports": {
     ".": {
       "import": {
@@ -40,6 +40,12 @@
     },
     "./package.json": "./package.json"
   },
+  "files": [
+    "dist",
+    "package.json",
+    "CHANGELOG.md",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsdown",
     "assist": "pnpm -w assist .",
