@@ -1,0 +1,16 @@
+{
+  "name": "@aio-commerce-sdk/config-biome",
+  "description": "Biome configuration for the AIO Commerce SDK",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+
+  "exports": {
+    "./biome.jsonc": "./biome.jsonc",
+    "./package.json": "./package.json"
+  },
+
+  "devDependencies": {
+    "ultracite": "5.0.47"
+  }
+}
