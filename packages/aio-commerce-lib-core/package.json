@@ -77,7 +77,7 @@
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "vitest": "^2.0.0"
+    "vitest": "^3.0.0"
   },
   "sideEffects": false
 }
