@@ -39,8 +39,8 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
       ultracite:
-        specifier: 5.0.39
-        version: 5.0.39(@types/node@24.0.12)
+        specifier: 5.0.47
+        version: 5.0.47(@types/node@24.0.12)
 
   configs/tsdown:
     devDependencies:
@@ -2247,8 +2247,8 @@ packages:
     engines: {node: '>=0.8.0'}
     hasBin: true
 
-  ultracite@5.0.39:
-    resolution: {integrity: sha512-yyrftv3h7aIGEWYVfRGWn8fBB6vbCjmTK57LQr48uZsB1r/xs1vEHlwdZe4m7xfH5Bmch6xf7q9aylh0vVtkrQ==}
+  ultracite@5.0.47:
+    resolution: {integrity: sha512-herZIwthOKodt+npUA+QqCzP3d2xMKGiUptefq2IeWHgc1cCQ/+/SvK7Ou0E46Z5dgOTEIjSbVY8x92E+nLaOQ==}
     hasBin: true
 
   unconfig@7.3.2:
@@ -4590,7 +4590,7 @@ snapshots:
   uglify-js@3.19.3:
     optional: true
 
-  ultracite@5.0.39(@types/node@24.0.12):
+  ultracite@5.0.47(@types/node@24.0.12):
     dependencies:
       '@clack/prompts': 0.11.0
       commander: 14.0.0
