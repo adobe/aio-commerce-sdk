@@ -57,7 +57,7 @@ jobs:
           echo "SLACK_WEBHOOK_PAYLOAD=$SLACK_WEBHOOK_PAYLOAD" >> "$GITHUB_OUTPUT"
 
       - name: Notify on Slack
-        uses: slackapi/slack-github-action@b0fa283ad8fea605de13dc3f449259339835fc52 # v2.1.0
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         if: steps.changesets.outputs.published == 'true'
         with:
           webhook: ${{ secrets.TEST_SLACK_WEBHOOK_URL }}
