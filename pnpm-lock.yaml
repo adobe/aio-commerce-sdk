@@ -21,7 +21,7 @@ importers:
         specifier: ^2.5.4
         version: 2.5.4(@types/node@24.0.12)(typescript@5.8.3)
       '@types/node':
-        specifier: ^24.0.4
+        specifier: 24.0.12
         version: 24.0.12
       husky:
         specifier: ^9.1.7
@@ -158,12 +158,10 @@ packages:
   '@adobe/aio-lib-core-networking@5.0.4':
     resolution: {integrity: sha512-LsFPKIXqfWiMwSjD9NJbb6uUSlZ+DZiV8p9NhpqPyzqAAl9NNONAH0jcIKtsKWSULcHc20INaRAw8dqKzQBTbw==}
     engines: {node: '>=18'}
-    bundledDependencies: []
 
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
-    bundledDependencies: []
 
   '@adobe/aio-lib-ims-jwt@5.0.2':
     resolution: {integrity: sha512-KaK+RB4FbfF5llYJueoOd9r6NeJp+d8pUE2QxqP6tpfr8NGt40Fw68XduQSTnPoOxKLn2piTD+IfaQ9a5teKHg==}

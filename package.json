@@ -25,7 +25,7 @@
     "@changesets/changelog-github": "^0.5.1",
     "@changesets/cli": "^2.29.5",
     "@turbo/gen": "^2.5.4",
-    "@types/node": "^24.0.4",
+    "@types/node": "24.0.12",
     "husky": "^9.1.7",
     "tsdown": "^0.12.9",
     "turbo": "^2.5.4",
