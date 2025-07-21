@@ -1,0 +1,50 @@
+name: Validate Renovate Config
+
+on:
+  pull_request:
+    paths:
+      - '.github/renovate.json'
+
+jobs:
+  validate:
+    name: Validate Renovate Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Renovate config
+        uses: rinchsan/renovate-config-validator@v0.2.0
+        with:
+          pattern: '.github/renovate.json'
+
+      # See: https://docs.renovatebot.com/config-validation/
+      - name: Validate with Renovate CLI
+        run: |
+          npx --yes --package renovate renovate-config-validator --strict
+        env:
+          LOG_LEVEL: debug
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        if: failure()
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ Renovate configuration validation failed. Please check the workflow logs for details.'
+            })
+
+      - name: Comment PR Success
+        uses: actions/github-script@v7
+        if: success()
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Renovate configuration is valid!'
+            })
