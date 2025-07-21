@@ -31,7 +31,7 @@
     "turbo": "^2.5.4",
     "type-fest": "^4.41.0",
     "typescript": "^5.8.3",
-    "ultracite": "5.0.25"
+    "ultracite": "5.0.39"
   },
   "packageManager": "pnpm@10.12.4",
   "lint-staged": {
