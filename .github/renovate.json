@@ -1,0 +1,30 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    "config:recommended",
+    "customManagers:biomeVersions",
+    "group:recommended",
+    "group:monorepos",
+    "group:definitelyTyped",
+    "helpers:disableTypesNodeMajor",
+    "helpers:pinGitHubActionDigestsToSemver",
+    "npm:unpublishSafe",
+
+    ":automergeDisabled",
+    ":ignoreUnstable",
+    ":prConcurrentLimitNone",
+    ":prHourlyLimit4",
+    ":maintainLockFilesWeekly",
+    ":rebaseStalePrs",
+    ":renovatePrefix",
+    ":updateNotScheduled",
+    ":separateMultipleMajorReleases"
+  ],
+
+  "automerge": false,
+  "branchPrefix": "renovate/",
+  "commitMessagePrefix": "RENOVATE: ",
+  "labels": ["dependencies"],
+  "postUpdateOptions": ["pnpmDedupe"]
+}
