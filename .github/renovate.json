@@ -14,6 +14,7 @@
     ":automergeDisabled",
     ":ignoreUnstable",
     ":prConcurrentLimitNone",
+    ":prHourlyLimit4",
     ":maintainLockFilesWeekly",
     ":rebaseStalePrs",
     ":renovatePrefix",
