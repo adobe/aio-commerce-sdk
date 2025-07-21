@@ -13,10 +13,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Validate Renovate config
-        uses: rinchsan/renovate-config-validator@v0.2.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          pattern: '.github/renovate.json'
+          node-version: lts/*
+          cache: "npm"
 
       # See: https://docs.renovatebot.com/config-validation/
       - name: Validate with Renovate CLI
