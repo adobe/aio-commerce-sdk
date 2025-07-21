@@ -39,8 +39,8 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
       ultracite:
-        specifier: 5.0.25
-        version: 5.0.25(@types/node@24.0.12)
+        specifier: 5.0.39
+        version: 5.0.39(@types/node@24.0.12)
 
   configs/tsdown:
     devDependencies:
@@ -158,12 +158,10 @@ packages:
   '@adobe/aio-lib-core-networking@5.0.4':
     resolution: {integrity: sha512-LsFPKIXqfWiMwSjD9NJbb6uUSlZ+DZiV8p9NhpqPyzqAAl9NNONAH0jcIKtsKWSULcHc20INaRAw8dqKzQBTbw==}
     engines: {node: '>=18'}
-    bundledDependencies: []
 
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
-    bundledDependencies: []
 
   '@adobe/aio-lib-ims-jwt@5.0.2':
     resolution: {integrity: sha512-KaK+RB4FbfF5llYJueoOd9r6NeJp+d8pUE2QxqP6tpfr8NGt40Fw68XduQSTnPoOxKLn2piTD+IfaQ9a5teKHg==}
@@ -2432,8 +2430,8 @@ packages:
     engines: {node: '>=0.8.0'}
     hasBin: true
 
-  ultracite@5.0.25:
-    resolution: {integrity: sha512-IWIHQvPRxIf+7+YEt9pDmCV60w9baCswWvRhoP8SQwJaJUFC9OF5fBfGBdMhv6lpdIJfgyCDj7H7uEcnT4QxRw==}
+  ultracite@5.0.39:
+    resolution: {integrity: sha512-yyrftv3h7aIGEWYVfRGWn8fBB6vbCjmTK57LQr48uZsB1r/xs1vEHlwdZe4m7xfH5Bmch6xf7q9aylh0vVtkrQ==}
     hasBin: true
 
   unconfig@7.3.2:
@@ -4977,7 +4975,7 @@ snapshots:
   uglify-js@3.19.3:
     optional: true
 
-  ultracite@5.0.25(@types/node@24.0.12):
+  ultracite@5.0.39(@types/node@24.0.12):
     dependencies:
       '@clack/prompts': 0.11.0
       commander: 14.0.0
