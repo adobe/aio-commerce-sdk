@@ -23,6 +23,7 @@
   ],
 
   "automerge": false,
+  "branchPrefix": "renovate/",
   "commitMessagePrefix": "RENOVATE: ",
   "labels": ["dependencies"],
   "postUpdateOptions": ["pnpmDedupe"]
