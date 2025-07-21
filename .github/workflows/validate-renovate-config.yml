@@ -26,23 +26,20 @@ jobs:
         env:
           LOG_LEVEL: debug
 
-      # Remove existing validation labels
       - name: Remove validation labels
         uses: actions-ecosystem/action-remove-labels@v1
-        if: always()
         with:
+          fail_on_error: false
           labels: |
             renovate-config:valid
             renovate-config:invalid
 
-      # Add success label
       - name: Add valid label
         uses: actions-ecosystem/action-add-labels@v1
         if: success()
         with:
           labels: renovate-config:valid
 
-      # Add failure label
       - name: Add invalid label
         uses: actions-ecosystem/action-add-labels@v1
         if: failure()
