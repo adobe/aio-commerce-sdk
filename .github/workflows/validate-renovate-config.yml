@@ -25,26 +25,25 @@ jobs:
         env:
           LOG_LEVEL: debug
 
-      - name: Comment PR
-        uses: actions/github-script@v7
-        if: failure()
+      # Remove existing validation labels
+      - name: Remove validation labels
+        uses: actions-ecosystem/action-remove-labels@v1
+        if: always()
         with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '❌ Renovate configuration validation failed. Please check the workflow logs for details.'
-            })
+          labels: |
+            renovate-config:valid
+            renovate-config:invalid
 
-      - name: Comment PR Success
-        uses: actions/github-script@v7
+      # Add success label
+      - name: Add valid label
+        uses: actions-ecosystem/action-add-labels@v1
         if: success()
         with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '✅ Renovate configuration is valid!'
-            })
+          labels: renovate-config:valid
+
+      # Add failure label
+      - name: Add invalid label
+        uses: actions-ecosystem/action-add-labels@v1
+        if: failure()
+        with:
+          labels: renovate-config:invalid
