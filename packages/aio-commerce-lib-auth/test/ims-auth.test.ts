@@ -17,7 +17,6 @@ import {
   assertImsAuthParams,
   getImsAuthProvider,
 } from "~/lib/ims-auth/provider";
-
 import {
   IMS_AUTH_ENV,
   type ImsAuthEnv,

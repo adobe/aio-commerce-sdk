@@ -34,6 +34,14 @@
           "options": {
             "accessibility": "explicit"
           }
+        },
+
+        "useImportType": {
+          "level": "error",
+          "fix": "safe",
+          "options": {
+            "style": "inlineType"
+          }
         }
       }
     }

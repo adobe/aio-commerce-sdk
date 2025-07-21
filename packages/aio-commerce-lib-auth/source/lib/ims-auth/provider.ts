@@ -1,7 +1,6 @@
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { context, getToken } from "@adobe/aio-lib-ims";
-
-import type { SnakeCasedProperties } from "type-fest";
+import { type SnakeCasedProperties } from "type-fest";
 import { safeParse } from "valibot";
 
 import {

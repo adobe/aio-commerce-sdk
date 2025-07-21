@@ -61,14 +61,17 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "check:ci": "pnpm -w check:ci .",
-    "format": "pnpm -w format .",
-    "format:check": "pnpm -w format:check .",
-    "lint": "pnpm -w lint .",
-    "lint:fix": "pnpm -w lint:fix .",
+    "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
+    "format": "biome format --write --no-errors-on-unmatched",
+    "format:markdown": "pnpx prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
+    "format:check": "biome format --no-errors-on-unmatched",
+    "lint": "biome lint --no-errors-on-unmatched",
+    "lint:fix": "biome lint --write --no-errors-on-unmatched",
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'",
     "test": "vitest run",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "ansis": "^4.1.0",

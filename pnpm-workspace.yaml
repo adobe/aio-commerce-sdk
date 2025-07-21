@@ -1,4 +1,7 @@
 packages:
-  - "configs/*"
-  - "packages/*"
-  - "turbo/*"
+  - configs/*
+  - packages/*
+  - turbo/*
+
+onlyBuiltDependencies:
+  - esbuild
