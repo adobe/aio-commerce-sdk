@@ -1,6 +1,13 @@
 {
   "name": "aio-commerce-sdk",
   "private": true,
+
+  "packageManager": "pnpm@10.13.1",
+  "engines": {
+    "node": ">=20 <=24",
+    "pnpm": ">=10"
+  },
+
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky",
@@ -33,7 +40,6 @@
     "typescript": "^5.8.3",
     "ultracite": "5.0.47"
   },
-  "packageManager": "pnpm@10.13.1",
   "lint-staged": {
     "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
       "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --error-on-warnings"
