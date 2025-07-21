@@ -17,7 +17,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: false
+          cache: "npm"
+          cache-dependency-path: '**/.github/workflows/validate-renovate-config.yml'
 
       # See: https://docs.renovatebot.com/config-validation/
       - name: Validate with Renovate CLI
