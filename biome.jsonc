@@ -6,6 +6,12 @@
     "ignoreUnknown": true
   },
 
+  "json": {
+    "formatter": {
+      "trailingCommas": "none"
+    }
+  },
+
   "javascript": {
     "formatter": {
       "arrowParentheses": "always",
@@ -27,6 +33,42 @@
           "level": "error",
           "options": {
             "accessibility": "explicit"
+          }
+        }
+      }
+    }
+  },
+
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "groups": [
+              { "type": false, "source": [":BUN:", ":NODE:"] },
+              ":BLANK_LINE:",
+              {
+                "type": false,
+                "source": [":PACKAGE:", ":PACKAGE_WITH_PROTOCOL:"]
+              },
+              ":BLANK_LINE:",
+              { "type": false, "source": [":ALIAS:"] },
+              ":BLANK_LINE:",
+              { "type": false, "source": [":PATH:"] },
+              ":BLANK_LINE:",
+              { "type": true, "source": [":BUN:", ":NODE:"] },
+              ":BLANK_LINE:",
+              {
+                "type": true,
+                "source": [":PACKAGE:", ":PACKAGE_WITH_PROTOCOL:"]
+              },
+              ":BLANK_LINE:",
+              { "type": true, "source": [":ALIAS:"] },
+              ":BLANK_LINE:",
+              { "type": true, "source": [":PATH:"] }
+            ]
           }
         }
       }
