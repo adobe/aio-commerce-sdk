@@ -13,9 +13,9 @@
 
     ":automergeDisabled",
     ":ignoreUnstable",
-    ":prConcurrentLimitNone",
-    ":prHourlyLimit4",
     ":maintainLockFilesWeekly",
+    ":prConcurrentLimitNone",
+    ":preserveSemverRanges",
     ":rebaseStalePrs",
     ":renovatePrefix",
     ":updateNotScheduled",
@@ -25,6 +25,7 @@
   "automerge": false,
   "branchPrefix": "renovate/",
   "commitMessagePrefix": "RENOVATE: ",
+
   "labels": ["dependencies"],
   "postUpdateOptions": ["pnpmDedupe"]
 }
