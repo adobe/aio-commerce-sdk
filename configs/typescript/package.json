@@ -2,12 +2,24 @@
   "name": "@aio-commerce-sdk/config-typescript",
   "description": "Typescript configuration for the AIO Commerce SDK",
   "type": "module",
+
   "version": "1.0.0",
   "private": true,
-
   "exports": {
     "./tsconfig.base.json": "./tsconfig.base.json",
     "./package.json": "./package.json"
+  },
+
+  "scripts": {
+    "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
+    "format": "biome format --write --no-errors-on-unmatched",
+    "format:markdown": "pnpx prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
+    "format:check": "biome format --no-errors-on-unmatched",
+    "lint": "biome lint --no-errors-on-unmatched",
+    "lint:fix": "biome lint --write --no-errors-on-unmatched",
+    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
   },
 
   "devDependencies": {

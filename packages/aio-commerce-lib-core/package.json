@@ -1,12 +1,14 @@
 {
   "name": "@adobe/aio-commerce-lib-core",
   "type": "module",
+  "author": "Adobe Inc.",
+
   "version": "0.3.0",
   "private": false,
-  "author": "Adobe Inc.",
   "engines": {
-    "node": ">=22"
+    "node": ">=20 <=24"
   },
+
   "license": "Apache-2.0",
   "description": "Core utilities for AIO Commerce SDK Libraries",
   "keywords": [
@@ -19,14 +21,17 @@
     "aio-commerce-lib-core",
     "aio-commerce-sdk-lib-core"
   ],
+
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
+
   "repository": {
     "type": "git",
-    "url": "https://github.com/adobe/aio-commerce-sdk.git",
+    "url": "git+https://github.com/adobe/aio-commerce-sdk.git",
     "directory": "packages/aio-commerce-lib-core"
   },
+
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/es/index.js",
   "types": "./dist/cjs/index.d.cts",
@@ -53,12 +58,14 @@
     },
     "./package.json": "./package.json"
   },
+
   "files": [
     "dist",
     "package.json",
     "CHANGELOG.md",
     "README.md"
   ],
+
   "scripts": {
     "build": "tsdown",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
@@ -73,14 +80,17 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
+
   "dependencies": {
     "ansis": "^4.1.0",
     "valibot": "^1.1.0"
   },
+
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "vitest": "^3.0.0"
   },
+
   "sideEffects": false
 }

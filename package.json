@@ -27,6 +27,7 @@
     "pkg:sdk": "turbo --filter=@adobe/aio-commerce-sdk",
     "pkg:generators": "pnpm --filter=@aio-commerce-sdk/generators"
   },
+
   "devDependencies": {
     "@biomejs/biome": "2.1.2",
     "@changesets/changelog-github": "^0.5.1",
@@ -40,6 +41,7 @@
     "typescript": "^5.8.3",
     "ultracite": "5.0.47"
   },
+
   "lint-staged": {
     "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
       "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --error-on-warnings"

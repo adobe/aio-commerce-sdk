@@ -1,12 +1,14 @@
 {
   "name": "@adobe/aio-commerce-lib-auth",
   "type": "module",
+  "author": "Adobe Inc.",
+
   "version": "0.3.0",
   "private": false,
-  "author": "Adobe Inc.",
   "engines": {
-    "node": ">=22"
+    "node": ">=20 <=24"
   },
+
   "license": "Apache-2.0",
   "description": "Authentication utilities for Adobe Commerce apps deployed in Adobe App Builder.",
   "keywords": [
@@ -16,14 +18,17 @@
     "adobe-commerce",
     "adobe-ims"
   ],
+
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
+
   "repository": {
     "type": "git",
-    "url": "https://github.com/adobe/aio-commerce-sdk.git",
+    "url": "git+https://github.com/adobe/aio-commerce-sdk.git",
     "directory": "packages/aio-commerce-lib-auth"
   },
+
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/es/index.js",
   "types": "./dist/cjs/index.d.cts",
@@ -40,12 +45,14 @@
     },
     "./package.json": "./package.json"
   },
+
   "files": [
     "dist",
     "package.json",
     "CHANGELOG.md",
     "README.md"
   ],
+
   "scripts": {
     "build": "tsdown",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
@@ -60,6 +67,7 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
+
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-lib-ims": "^8.1.0",
@@ -67,10 +75,12 @@
     "oauth-1.0a": "^2.2.6",
     "valibot": "^1.1.0"
   },
+
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "vitest": "^3.2.4"
   },
+
   "sideEffects": false
 }
