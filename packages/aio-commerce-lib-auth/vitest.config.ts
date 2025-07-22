@@ -1,17 +1,6 @@
-import { resolve } from "node:path";
+import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config";
+import { mergeConfig } from "vitest/config";
 
-import { defineConfig } from "vitest/config";
-
-export default defineConfig({
-  resolve: {
-    alias: {
-      "~": resolve(__dirname, "./source"),
-      "~~": resolve(__dirname, "./"),
-    },
-  },
-
-  test: {
-    globals: true,
-    environment: "node",
-  },
+export default mergeConfig(baseConfig, {
+  // Write your Vitest configuration here.
 });

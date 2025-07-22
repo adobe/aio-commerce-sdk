@@ -15,7 +15,7 @@ function assertImsAuthParams(
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:82](https://github.com/adobe/aio-commerce-sdk/blob/5809dd20a9a3622ccefb4f7ffee3f04a460f0d98/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L82)
+Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:82](https://github.com/adobe/aio-commerce-sdk/blob/b828858b2e024cee9599e664761b0da5b22f0cd1/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L82)
 
 Asserts the provided configuration for an [ImsAuthProvider](../interfaces/ImsAuthProvider.md).
 
