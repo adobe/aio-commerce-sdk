@@ -9,5 +9,13 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+
+/**
+ * As much as you might be tempted to change the export path to use the relative files in this package,
+ * don't do it. If symbols get re-exported more than once, build tools will not be able to tree-shake them.
+ *
+ * Use always `export * as <name> from <packageName>`, where packageName is the NPM name, not a relative path.
+ */
+
 export * as Auth from "@adobe/aio-commerce-lib-auth";
 export * as Core from "@adobe/aio-commerce-lib-core";
