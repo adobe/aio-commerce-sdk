@@ -12,7 +12,7 @@
 
 /** biome-ignore-all lint/performance/useTopLevelRegex: No performance impact as these are tests. */
 
-import { type GenericIssue, safeParse } from "valibot";
+import { safeParse } from "valibot";
 import { describe, expect, it } from "vitest";
 
 import { CommerceSdkValidationError } from "~/lib/error/validation-error";
@@ -22,6 +22,8 @@ import {
   mockInvalidUserForTransformationError,
   mockUserSchema,
 } from "~~/test/fixtures/valibot";
+
+import type { GenericIssue } from "valibot";
 
 /** Returns mock validation issues for an input error */
 function getMockInputErrorIssues() {

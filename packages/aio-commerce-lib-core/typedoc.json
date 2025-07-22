@@ -2,7 +2,7 @@
   "$schema": "https://typedoc-plugin-markdown.org/schema.json",
   "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.json"],
 
-  "entryPoints": ["./source/index.ts"],
+  "entryPoints": ["./source/lib/**/index.ts", "./source/index.ts"],
   "out": "docs/api-reference",
 
   "validation": {

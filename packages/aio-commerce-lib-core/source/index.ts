@@ -10,5 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-// Export here the public API of the package.
+/**
+ * This module re-exports all the sub-modules of the package as namespaces.
+ * @privateRemarks This annotations are used by Typedoc to correctly generate the API reference. Don't remove them.
+ *
+ * @module index
+ * @mergeModuleWith <project>
+ */
+
 export * as Error from "./lib/error";

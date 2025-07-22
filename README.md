@@ -35,6 +35,7 @@ pnpm install @adobe/aio-commerce-lib-auth
 
 - **[`@aio-commerce-sdk/config-typescript`](./configs/typescript)** - Shared TypeScript configuration
 - **[`@aio-commerce-sdk/config-tsdown`](./configs/tsdown)** - Shared build configuration
+- **[`@aio-commerce-sdk/config-typedoc`](./configs/typedoc)** - Shared [Typedoc with Markdown](https://typedoc-plugin-markdown.org/docs) configuration
 - **[`@aio-commerce-sdk/generators`](./turbo/generators)** - Code generators for scaffolding
 
 ## Architecture

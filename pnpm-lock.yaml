@@ -117,6 +117,9 @@ importers:
       '@aio-commerce-sdk/config-tsdown':
         specifier: workspace:*
         version: link:../../configs/tsdown
+      '@aio-commerce-sdk/config-typedoc':
+        specifier: workspace:*
+        version: link:../../configs/typedoc
       '@aio-commerce-sdk/config-typescript':
         specifier: workspace:*
         version: link:../../configs/typescript

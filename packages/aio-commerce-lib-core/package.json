@@ -68,6 +68,8 @@
 
   "scripts": {
     "build": "tsdown",
+    "postbuild": "typedoc",
+    "docs": "typedoc",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
@@ -89,6 +91,7 @@
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "vitest": "^3.0.0"
   },
 

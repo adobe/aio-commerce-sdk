@@ -11,12 +11,12 @@
  */
 
 import { cyanBright, dim, whiteBright, yellowBright } from "ansis";
-import { type BaseIssue, type GenericIssue, getDotPath } from "valibot";
+import { getDotPath } from "valibot";
 
-import {
-  CommerceSdkErrorBase,
-  type CommerceSdkErrorOptions,
-} from "./base-error";
+import { CommerceSdkErrorBase } from "./base-error";
+
+import type { BaseIssue, GenericIssue } from "valibot";
+import type { CommerceSdkErrorOptions } from "./base-error";
 
 const LAST_RETURN_CHAR = "└── ";
 const RETURN_CHAR = "├── ";
@@ -87,7 +87,7 @@ export type CommerceSdkValidationErrorOptions = CommerceSdkErrorOptions<{
 
 /**
  * Represents a validation error in the Commerce SDK.
- * This error is thrown when the input does not conform to the expected schema.
+ * This error should be thrown when an input does not conform to the expected schema.
  * It contains a list of issues that describe the validation errors.
  *
  * @example

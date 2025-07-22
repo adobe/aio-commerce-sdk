@@ -1,6 +1,5 @@
 import {
   email,
-  type InferOutput,
   maxLength,
   minLength,
   minValue,
@@ -10,6 +9,8 @@ import {
   rawTransform,
   string,
 } from "valibot";
+
+import type { InferOutput } from "valibot";
 
 // Mock User Schema
 export const mockUserSchema = object({

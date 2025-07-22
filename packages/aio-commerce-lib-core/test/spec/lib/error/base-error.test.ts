@@ -12,10 +12,9 @@
 
 import { describe, expect, it } from "vitest";
 
-import {
-  CommerceSdkErrorBase,
-  type CommerceSdkErrorBaseOptions,
-} from "~/lib/error/base-error";
+import { CommerceSdkErrorBase } from "~/lib/error/base-error";
+
+import type { CommerceSdkErrorBaseOptions } from "~/lib/error/base-error";
 
 // Create a concrete implementation for testing
 class TestError extends CommerceSdkErrorBase {

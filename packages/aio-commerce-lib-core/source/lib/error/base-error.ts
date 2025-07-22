@@ -12,7 +12,7 @@
 
 import util from "node:util";
 
-/** Defines the base options for CommerceSdkErrorBase. */
+/** Defines the base options for {@link CommerceSdkErrorBase}. */
 export type CommerceSdkErrorBaseOptions = ErrorOptions & {
   traceId?: string;
 };
@@ -32,7 +32,7 @@ export type CommerceSdkErrorOptions<
 > = CommerceSdkErrorBaseOptions & T;
 
 /**
- * Base class for all AioCommerceSdk errors.
+ * Base class for all the errors in the AIO Commerce SDK.
  * @example
  * ```ts
  * class ValidationError extends CommerceSdkErrorBase {
@@ -54,17 +54,15 @@ export abstract class CommerceSdkErrorBase extends Error {
   public readonly traceId?: string;
 
   /**
-   * Constructs a new CommerceSdkErrorBase instance.
+   * Constructs a new CommerceSdkErrorBase instance. This is an abstract class so you
+   * should not instantiate it directly. Only invoke this constructor from a subclass.
    *
    * @param message - A human-friendly description of the error.
-   * @param traceId - An optional trace ID for tracking the error in logs.
-   * @param options - Required error options.
+   * @param options - Optional error options (additional information).
    */
-  public constructor(
-    message: string,
-    { traceId, ...options }: CommerceSdkErrorBaseOptions,
-  ) {
-    super(message, options);
+  public constructor(message: string, options?: CommerceSdkErrorBaseOptions) {
+    const { traceId, ...baseOptions } = options ?? {};
+    super(message, baseOptions);
 
     // See TypeScript example on: https://github.com/goldbergyoni/nodebestpractices/blob/master/sections/errorhandling/useonlythebuiltinerror.md#code-example--doing-it-even-better
     Object.setPrototypeOf(this, new.target.prototype);
@@ -134,7 +132,10 @@ export abstract class CommerceSdkErrorBase extends Error {
     };
   }
 
-  /** Returns a pretty string representation of the error. */
+  /**
+   * Returns a pretty string representation of the error.
+   * @param inspect - Whether to inspect the error (returns a more detailed string, useful for debugging).
+   */
   public toString(inspect = true) {
     if (inspect) {
       // This returns a pretty-printed string with more details than `toString`
