@@ -1,7 +1,7 @@
 {
   "name": "@aio-commerce-sdk/generators",
   "description": "Generators used to scaffold code within the AIO Commerce SDK monorepo",
-  "type": "module",
+  "type": "commonjs",
 
   "version": "1.0.0",
   "private": true,
