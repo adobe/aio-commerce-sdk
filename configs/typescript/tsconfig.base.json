@@ -18,7 +18,10 @@
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "useUnknownInCatchVariables": true
+    "useUnknownInCatchVariables": true,
+
+    "declaration": true,
+    "declarationMap": true
   },
 
   "include": ["**/*"],

@@ -11,7 +11,6 @@
  */
 
 import {
-  type InferOutput,
   instance,
   nonEmpty,
   nonOptional,
@@ -22,6 +21,8 @@ import {
   union,
   url as vUrl,
 } from "valibot";
+
+import type { InferOutput } from "valibot";
 
 /**
  * The HTTP methods supported by Commerce.

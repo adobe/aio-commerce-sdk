@@ -1,0 +1,24 @@
+{
+  "$schema": "https://typedoc-plugin-markdown.org/schema.json",
+  "plugin": ["typedoc-plugin-markdown"],
+
+  "cleanOutputDir": true,
+  "includeVersion": true,
+  "out": "docs/api-reference",
+
+  "expandObjects": true,
+  "expandParameters": true,
+  "hideBreadcrumbs": true,
+  "hidePageHeader": true,
+  "useCodeBlocks": true,
+  "useTsLinkResolution": true,
+  "readme": "none",
+
+  "indexFormat": "table",
+  "parametersFormat": "table",
+  "pageTitleTemplates": {
+    "index": "`{projectName}`: `{version}`",
+    "module": "`{name}`: {kind}",
+    "member": "`{name}`"
+  }
+}

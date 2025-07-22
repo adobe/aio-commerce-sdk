@@ -1,0 +1,9 @@
+{
+  "$schema": "https://typedoc-plugin-markdown.org/schema.json",
+  "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.json"],
+
+  "entryPoints": ["./source/index.ts"],
+  "validation": {
+    "notExported": false
+  }
+}

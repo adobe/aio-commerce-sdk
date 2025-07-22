@@ -17,11 +17,9 @@ import {
   assertImsAuthParams,
   getImsAuthProvider,
 } from "~/lib/ims-auth/provider";
-import {
-  IMS_AUTH_ENV,
-  type ImsAuthEnv,
-  type ImsAuthParams,
-} from "~/lib/ims-auth/schema";
+import { IMS_AUTH_ENV } from "~/lib/ims-auth/schema";
+
+import type { ImsAuthEnv, ImsAuthParams } from "~/lib/ims-auth/schema";
 
 vi.mock("@adobe/aio-lib-ims", async () => ({
   context: (await vi.importActual("@adobe/aio-lib-ims")).context,
