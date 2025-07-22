@@ -68,7 +68,6 @@
 
   "scripts": {
     "build": "tsdown",
-    "postbuild": "typedoc && prettier --write '**/*.md'",
     "docs": "typedoc && prettier --write '**/*.md'",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
