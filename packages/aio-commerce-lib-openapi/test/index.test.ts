@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
-import { createRoute, openapi } from "~/index";
+import { createResponseSchema, createRoute, openapi } from "~/index";
 
 describe("aio-commerce-lib-openapi", () => {
   it("should be defined", () => {
@@ -18,9 +18,11 @@ describe("aio-commerce-lib-openapi", () => {
           }),
         },
         responses: {
-          200: v.object({
-            data: v.string(),
-          }),
+          200: createResponseSchema(
+            v.object({
+              data: v.string(),
+            }),
+          ),
         },
       });
 
@@ -40,9 +42,11 @@ describe("aio-commerce-lib-openapi", () => {
           }),
         },
         responses: {
-          200: v.object({
-            data: v.string(),
-          }),
+          200: createResponseSchema(
+            v.object({
+              data: v.string(),
+            }),
+          ),
         },
       });
 
@@ -58,9 +62,11 @@ describe("aio-commerce-lib-openapi", () => {
         method: "GET",
         request: {},
         responses: {
-          200: v.object({
-            data: v.string(),
-          }),
+          200: createResponseSchema(
+            v.object({
+              data: v.string(),
+            }),
+          ),
         },
       });
 
@@ -87,9 +93,11 @@ describe("aio-commerce-lib-openapi", () => {
           },
         },
         responses: {
-          201: v.object({
-            id: v.string(),
-          }),
+          201: createResponseSchema(
+            v.object({
+              id: v.string(),
+            }),
+          ),
         },
       });
 
@@ -121,9 +129,11 @@ describe("aio-commerce-lib-openapi", () => {
           },
         },
         responses: {
-          201: v.object({
-            id: v.string(),
-          }),
+          201: createResponseSchema(
+            v.object({
+              id: v.string(),
+            }),
+          ),
         },
       });
 
@@ -139,9 +149,11 @@ describe("aio-commerce-lib-openapi", () => {
         method: "GET",
         request: {},
         responses: {
-          200: v.object({
-            data: v.string(),
-          }),
+          200: createResponseSchema(
+            v.object({
+              data: v.string(),
+            }),
+          ),
         },
       });
 
@@ -165,16 +177,20 @@ describe("aio-commerce-lib-openapi", () => {
           },
         },
         responses: {
-          200: v.object({
-            id: v.string(),
-            name: v.string(),
-            price: v.number(),
-            inStock: v.boolean(),
-          }),
-          404: v.object({
-            error: v.string(),
-            message: v.string(),
-          }),
+          200: createResponseSchema(
+            v.object({
+              id: v.string(),
+              name: v.string(),
+              price: v.number(),
+              inStock: v.boolean(),
+            }),
+          ),
+          404: createResponseSchema(
+            v.object({
+              error: v.string(),
+              message: v.string(),
+            }),
+          ),
         },
       });
 
@@ -246,8 +262,8 @@ describe("aio-commerce-lib-openapi", () => {
           },
         },
         responses: {
-          200: OkResponseSchema,
-          404: NotFoundResponseSchema,
+          200: createResponseSchema(OkResponseSchema),
+          404: createResponseSchema(NotFoundResponseSchema),
         },
       });
 
@@ -309,9 +325,11 @@ describe("aio-commerce-lib-openapi", () => {
           },
         },
         responses: {
-          200: v.object({
-            data: v.string(),
-          }),
+          200: createResponseSchema(
+            v.object({
+              data: v.string(),
+            }),
+          ),
         },
       });
 
@@ -332,9 +350,11 @@ describe("aio-commerce-lib-openapi", () => {
         method: "GET",
         request: {},
         responses: {
-          200: v.object({
-            data: v.string(),
-          }),
+          200: createResponseSchema(
+            v.object({
+              data: v.string(),
+            }),
+          ),
         },
       });
 
@@ -350,6 +370,76 @@ describe("aio-commerce-lib-openapi", () => {
         },
       });
     });
+
+    it("should validate and return headers when provided", async () => {
+      const HeaderSchema = v.object({
+        "X-Total-Count": v.string(),
+        "X-Page": v.number(),
+      });
+
+      const route = createRoute({
+        path: "/api/data",
+        method: "GET",
+        request: {},
+        responses: {
+          200: {
+            schema: v.object({
+              data: v.string(),
+            }),
+            headers: HeaderSchema,
+          },
+        },
+      });
+
+      const handler = route({});
+
+      // Test with valid headers
+      const response = await handler.json({ data: "test" }, 200, {
+        "X-Total-Count": "100",
+        "X-Page": 1,
+      });
+
+      expect(response).toEqual({
+        statusCode: 200,
+        body: {
+          data: "test",
+        },
+        headers: {
+          "X-Total-Count": "100",
+          "X-Page": 1,
+        },
+      });
+    });
+
+    it("should work without headers when headers schema is not defined", async () => {
+      const route = createRoute({
+        path: "/api/simple",
+        method: "GET",
+        request: {},
+        responses: {
+          200: createResponseSchema(
+            v.object({
+              data: v.string(),
+            }),
+          ),
+        },
+      });
+
+      const handler = route({});
+
+      // Test without headers (should work fine)
+      const response = await handler.json({ data: "test" });
+
+      expect(response).toEqual({
+        statusCode: 200,
+        body: {
+          data: "test",
+        },
+      });
+
+      // Ensure headers property is not present
+      expect(response).not.toHaveProperty("headers");
+    });
   });
 
   describe("error", () => {
@@ -363,15 +453,19 @@ describe("aio-commerce-lib-openapi", () => {
           }),
         },
         responses: {
-          404: v.object({
-            error: v.string(),
-            message: v.string(),
-          }),
-          500: v.object({
-            error: v.string(),
-            message: v.string(),
-            stackTrace: v.optional(v.string()),
-          }),
+          404: createResponseSchema(
+            v.object({
+              error: v.string(),
+              message: v.string(),
+            }),
+          ),
+          500: createResponseSchema(
+            v.object({
+              error: v.string(),
+              message: v.string(),
+              stackTrace: v.optional(v.string()),
+            }),
+          ),
         },
       });
 
@@ -435,8 +529,8 @@ describe("aio-commerce-lib-openapi", () => {
         method: "GET",
         request: {},
         responses: {
-          400: BadRequestResponseSchema,
-          500: InternalServerErrorResponseSchema,
+          400: createResponseSchema(BadRequestResponseSchema),
+          500: createResponseSchema(InternalServerErrorResponseSchema),
         },
       });
 
@@ -477,13 +571,17 @@ describe("aio-commerce-lib-openapi", () => {
         method: "GET",
         request: {},
         responses: {
-          200: v.object({
-            data: v.string(),
-          }),
-          404: v.object({
-            error: v.string(),
-            message: v.string(),
-          }),
+          200: createResponseSchema(
+            v.object({
+              data: v.string(),
+            }),
+          ),
+          404: createResponseSchema(
+            v.object({
+              error: v.string(),
+              message: v.string(),
+            }),
+          ),
         },
       });
 
@@ -507,10 +605,12 @@ describe("aio-commerce-lib-openapi", () => {
         method: "POST",
         request: {},
         responses: {
-          500: v.object({
-            error: v.string(),
-            message: v.string(),
-          }),
+          500: createResponseSchema(
+            v.object({
+              error: v.string(),
+              message: v.string(),
+            }),
+          ),
         },
       });
 
@@ -539,17 +639,19 @@ describe("aio-commerce-lib-openapi", () => {
         method: "POST",
         request: {},
         responses: {
-          422: v.object({
-            error: v.literal("validation_error"),
-            message: v.string(),
-            errors: v.array(
-              v.object({
-                field: v.string(),
-                message: v.string(),
-                code: v.string(),
-              }),
-            ),
-          }),
+          422: createResponseSchema(
+            v.object({
+              error: v.literal("validation_error"),
+              message: v.string(),
+              errors: v.array(
+                v.object({
+                  field: v.string(),
+                  message: v.string(),
+                  code: v.string(),
+                }),
+              ),
+            }),
+          ),
         },
       });
 
@@ -610,15 +712,19 @@ describe("aio-commerce-lib-openapi", () => {
           }),
         },
         responses: {
-          200: v.object({
-            id: v.string(),
-            name: v.string(),
-            price: v.number(),
-          }),
-          404: v.object({
-            error: v.string(),
-            message: v.string(),
-          }),
+          200: createResponseSchema(
+            v.object({
+              id: v.string(),
+              name: v.string(),
+              price: v.number(),
+            }),
+          ),
+          404: createResponseSchema(
+            v.object({
+              error: v.string(),
+              message: v.string(),
+            }),
+          ),
         },
       };
 
@@ -682,15 +788,19 @@ describe("aio-commerce-lib-openapi", () => {
           },
         },
         responses: {
-          201: v.object({
-            id: v.string(),
-            name: v.string(),
-            price: v.number(),
-          }),
-          400: v.object({
-            error: v.string(),
-            message: v.string(),
-          }),
+          201: createResponseSchema(
+            v.object({
+              id: v.string(),
+              name: v.string(),
+              price: v.number(),
+            }),
+          ),
+          400: createResponseSchema(
+            v.object({
+              error: v.string(),
+              message: v.string(),
+            }),
+          ),
         },
       };
 
@@ -759,19 +869,25 @@ describe("aio-commerce-lib-openapi", () => {
           },
         },
         responses: {
-          200: v.object({
-            orderId: v.string(),
-            status: v.literal("cancelled"),
-            cancelledAt: v.string(),
-          }),
-          400: v.object({
-            error: v.literal("invalid_state"),
-            message: v.string(),
-          }),
-          404: v.object({
-            error: v.literal("not_found"),
-            message: v.string(),
-          }),
+          200: createResponseSchema(
+            v.object({
+              orderId: v.string(),
+              status: v.literal("cancelled"),
+              cancelledAt: v.string(),
+            }),
+          ),
+          400: createResponseSchema(
+            v.object({
+              error: v.literal("invalid_state"),
+              message: v.string(),
+            }),
+          ),
+          404: createResponseSchema(
+            v.object({
+              error: v.literal("not_found"),
+              message: v.string(),
+            }),
+          ),
         },
       };
 

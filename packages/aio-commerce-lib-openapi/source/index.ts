@@ -2,6 +2,7 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import {
   type GenericSchema,
   type GenericSchemaAsync,
+  type InferInput,
   type InferOutput,
   safeParserAsync,
 } from "valibot";
@@ -19,8 +20,19 @@ type OpenApiRequest = {
   headers?: MaybeAsyncGenericSchema;
 };
 
-type OpenApiResponse = MaybeAsyncGenericSchema;
+type OpenApiResponse = {
+  headers?: MaybeAsyncGenericSchema;
+  schema: MaybeAsyncGenericSchema;
+};
 type OpenApiResponses = Record<PropertyKey, OpenApiResponse>;
+
+// Helper function to create a response schema from a valibot schema
+export function createResponseSchema(
+  schema: MaybeAsyncGenericSchema,
+  headers?: MaybeAsyncGenericSchema,
+): OpenApiResponse {
+  return { schema, headers };
+}
 
 export interface Route<
   TRequestSchema extends OpenApiRequest,
@@ -50,24 +62,30 @@ type AioOpenApiErrorResponse<
 
 type AioOpenApiSuccessResponse<
   TBody extends InferOutput<MaybeAsyncGenericSchema>,
+  THeaders extends InferOutput<MaybeAsyncGenericSchema> | undefined = undefined,
 > = {
+  headers?: THeaders;
   statusCode: number;
   body: TBody;
 };
 
 interface OpenApiSpecHandler<
   TRequestSchema extends OpenApiRequest,
-  TResponseSchema extends OpenApiResponses,
+  TResponse extends OpenApiResponses,
 > {
-  error: <TStatus extends keyof TResponseSchema>(
-    data: InferOutput<TResponseSchema[TStatus]>,
+  error: <TStatus extends keyof TResponse>(
+    data: InferInputResponseSchema<TResponse>,
     status?: TStatus,
-  ) => Promise<AioOpenApiErrorResponse<InferOutput<TResponseSchema[TStatus]>>>;
-  json: <TStatus extends keyof TResponseSchema>(
-    data: InferOutput<TResponseSchema[TStatus]>,
+  ) => Promise<AioOpenApiErrorResponse<InferOutputResponseSchema<TResponse>>>;
+  json: <TStatus extends keyof TResponse>(
+    data: InferInputResponseSchema<TResponse>,
     status?: TStatus,
+    headers?: InferInputResponseHeaderObject<TResponse>,
   ) => Promise<
-    AioOpenApiSuccessResponse<InferOutput<TResponseSchema[TStatus]>>
+    AioOpenApiSuccessResponse<
+      InferOutputResponseSchema<TResponse>,
+      InferOutputResponseHeaderObject<TResponse>
+    >
   >;
   validateBody: () => Promise<
     TRequestSchema["body"] extends { schema: MaybeAsyncGenericSchema }
@@ -84,9 +102,27 @@ interface OpenApiSpecHandler<
 type ApiHandler<TResponse extends OpenApiResponses> = (
   params: InputRequest,
 ) => Promise<
-  | AioOpenApiSuccessResponse<InferOutput<TResponse[keyof TResponse]>>
-  | AioOpenApiErrorResponse<InferOutput<TResponse[keyof TResponse]>>
+  | AioOpenApiSuccessResponse<
+      InferOutputResponseSchema<TResponse>,
+      InferOutputResponseHeaderObject<TResponse>
+    >
+  | AioOpenApiErrorResponse<InferOutputResponseSchema<TResponse>>
 >;
+
+type InferInputResponseSchema<TResponse extends OpenApiResponses> = InferInput<
+  TResponse[keyof TResponse]["schema"]
+>;
+type InferInputResponseHeaderObject<TResponse extends OpenApiResponses> =
+  TResponse[keyof TResponse]["headers"] extends MaybeAsyncGenericSchema
+    ? InferInput<TResponse[keyof TResponse]["headers"]>
+    : undefined;
+
+type InferOutputResponseSchema<TResponse extends OpenApiResponses> =
+  InferOutput<TResponse[keyof TResponse]["schema"]>;
+type InferOutputResponseHeaderObject<TResponse extends OpenApiResponses> =
+  TResponse[keyof TResponse]["headers"] extends MaybeAsyncGenericSchema
+    ? InferOutput<TResponse[keyof TResponse]["headers"]>
+    : undefined;
 
 export function openapi<
   TRequest extends OpenApiRequest,
@@ -96,8 +132,11 @@ export function openapi<
   handler: (
     spec: OpenApiSpecHandler<TRequest, TResponse>,
   ) => Promise<
-    | AioOpenApiSuccessResponse<InferOutput<TResponse[keyof TResponse]>>
-    | AioOpenApiErrorResponse<InferOutput<TResponse[keyof TResponse]>>
+    | AioOpenApiSuccessResponse<
+        InferOutputResponseSchema<TResponse>,
+        InferOutputResponseHeaderObject<TResponse>
+      >
+    | AioOpenApiErrorResponse<InferOutputResponseSchema<TResponse>>
   >,
 ): ApiHandler<TResponse> {
   const routeHandler = createRoute(route);
@@ -118,16 +157,24 @@ export function createRoute<
 
   const responseValidators: Record<
     string,
-    ReturnType<typeof safeParserAsync>
+    {
+      bodyValidator: ReturnType<typeof safeParserAsync>;
+      headersValidator?: ReturnType<typeof safeParserAsync>;
+    }
   > = {};
-  for (const [statusCode, schema] of Object.entries(route.responses)) {
-    responseValidators[statusCode] = safeParserAsync(schema);
+  for (const [statusCode, responseSchema] of Object.entries(route.responses)) {
+    responseValidators[statusCode] = {
+      bodyValidator: safeParserAsync(responseSchema.schema),
+      headersValidator: responseSchema.headers
+        ? safeParserAsync(responseSchema.headers)
+        : undefined,
+    };
   }
 
   return (params: InputRequest) => {
     return {
       async error<TStatus extends keyof TResponse>(
-        data: InferOutput<TResponse[TStatus]>,
+        data: InferInputResponseSchema<TResponse>,
         status: TStatus = "500" as TStatus,
       ) {
         const validator = responseValidators[String(status)];
@@ -137,7 +184,7 @@ export function createRoute<
           );
         }
 
-        const validationResult = await validator(data);
+        const validationResult = await validator.bodyValidator(data);
         if (!validationResult.success) {
           throw new CommerceSdkValidationError(
             `Invalid error response for route ${route.path} with status ${String(status)}`,
@@ -151,14 +198,17 @@ export function createRoute<
           error: {
             statusCode: Number(status),
             body: validationResult.output satisfies InferOutput<
-              TResponse[TStatus]
+              TResponse[TStatus]["schema"]
             >,
           },
-        } satisfies AioOpenApiErrorResponse<InferOutput<TResponse[TStatus]>>;
+        } satisfies AioOpenApiErrorResponse<
+          InferOutputResponseSchema<TResponse>
+        >;
       },
       async json<TStatus extends keyof TResponse>(
-        data: InferOutput<TResponse[TStatus]>,
+        data: InferInputResponseSchema<TResponse>,
         status: TStatus = "200" as TStatus,
+        headers?: InferInputResponseHeaderObject<TResponse>,
       ) {
         const validator = responseValidators[String(status)];
         if (!validator) {
@@ -167,22 +217,48 @@ export function createRoute<
           );
         }
 
-        const validationResult = await validator(data);
-        if (!validationResult.success) {
+        // Validate body
+        const bodyValidationResult = await validator.bodyValidator(data);
+        if (!bodyValidationResult.success) {
           throw new CommerceSdkValidationError(
             `Invalid response for route ${route.path} with status ${String(status)}`,
             {
-              issues: validationResult.issues,
+              issues: bodyValidationResult.issues,
             },
           );
         }
 
-        return {
+        const response: AioOpenApiSuccessResponse<
+          InferOutputResponseSchema<TResponse>
+        > = {
           statusCode: Number(status),
-          body: validationResult.output satisfies InferOutput<
-            TResponse[TStatus]
-          >,
-        } satisfies AioOpenApiSuccessResponse<InferOutput<TResponse[TStatus]>>;
+          body: bodyValidationResult.output satisfies InferOutputResponseSchema<TResponse>,
+        };
+
+        if (headers !== undefined && validator.headersValidator) {
+          const headersValidationResult =
+            await validator.headersValidator(headers);
+          if (!headersValidationResult.success) {
+            throw new CommerceSdkValidationError(
+              `Invalid headers for route ${route.path} with status ${String(status)}`,
+              {
+                issues: headersValidationResult.issues,
+              },
+            );
+          }
+          return {
+            ...response,
+            headers:
+              headersValidationResult.output as InferOutputResponseHeaderObject<TResponse>,
+          } satisfies AioOpenApiSuccessResponse<
+            InferOutputResponseSchema<TResponse>,
+            InferOutputResponseHeaderObject<TResponse>
+          >;
+        }
+
+        return response satisfies AioOpenApiSuccessResponse<
+          InferOutputResponseSchema<TResponse>
+        >;
       },
       async validateParams() {
         if (!paramsParser) {
