@@ -7,8 +7,14 @@
   ],
 
   "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "./dist",
+    "rootDir": "${configDir}",
+    "baseUrl": "${configDir}",
+    "outDir": "${configDir}/dist",
+    "paths": {
+      "~/*": ["${configDir}/source/*"],
+      "~~/*": ["${configDir}/*"]
+    },
+
     "module": "ESNext",
     "moduleResolution": "bundler",
 
@@ -21,6 +27,6 @@
     "useUnknownInCatchVariables": true
   },
 
-  "include": ["**/*"],
-  "exclude": ["../../**/node_modules", "../../**/dist"]
+  "include": ["${configDir}/**/*.ts"],
+  "exclude": ["${configDir}/**/node_modules", "${configDir}/**/dist"]
 }
