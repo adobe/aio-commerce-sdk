@@ -1,0 +1,53 @@
+{
+  "name": "@adobe/aio-commerce-lib-openapi",
+  "type": "module",
+  "version": "1.0.0",
+  "private": false,
+  "author": "Adobe Inc.",
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "Apache-2.0",
+  "description": "Description for @adobe/aio-commerce-lib-openapi",
+  "files": [
+    "dist",
+    "package.json",
+    "CHANGELOG.md",
+    "README.md"
+  ],
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/adobe/aio-commerce-sdk/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adobe/aio-commerce-sdk.git",
+    "directory": "packages/aio-commerce-lib-openapi"
+  },
+  "scripts": {
+    "build": "pnpm run typecheck && tsdown",
+    "assist": "pnpm -w assist .",
+    "assist:apply": "pnpm -w assist:apply .",
+    "check:ci": "pnpm -w check:ci .",
+    "format": "pnpm -w format .",
+    "format:check": "pnpm -w format:check .",
+    "lint": "pnpm -w lint .",
+    "lint:fix": "pnpm -w lint:fix .",
+    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'",
+    "test": "vitest run",
+    "test:watch": "vitest --watch"
+  },
+  "dependencies": {
+    "@adobe/aio-commerce-lib-core": "workspace:*",
+    "@types/http-codes": "^1.0.4",
+    "valibot": "^1.1.0"
+  },
+  "devDependencies": {
+    "@aio-commerce-sdk/config-tsdown": "workspace:*",
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "@vitest/coverage-v8": "^3.2.4",
+    "vite-tsconfig-paths": "latest",
+    "vitest": "latest"
+  },
+  "sideEffects": false
+}
