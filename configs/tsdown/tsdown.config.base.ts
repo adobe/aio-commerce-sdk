@@ -45,9 +45,14 @@ export const baseConfig: UserConfig = {
   outputOptions: {
     banner: ADOBE_LICENSE_BANNER,
     dir: OUT_DIR,
+
+    minifyInternalExports: true,
   },
 
   nodeProtocol: "strip",
+  minify: {
+    compress: true,
+  },
 
   dts: true,
   treeshake: true,
