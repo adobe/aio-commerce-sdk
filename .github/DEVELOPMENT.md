@@ -132,6 +132,10 @@ The generator will ask you if you want to make the package private. If you do, t
 > - [`@aio-commerce-sdk/config-typescript`](../configs/typescript)
 > - [`@aio-commerce-sdk/config-tsdown`](../configs/tsdown)
 
+#### Create a label for the package
+
+There's a [workflow](../.github/workflows/labeler.yml) set to run in GitHub Actions CI, that automatically adds some labels depending on the changes included. Make sure you add a label for your new package in the [labeler.yml](../.github/labeler.yml) file.
+
 ### Using Monorepo Packages as Dependencies
 
 Any package within the monorepo can be used as a dependency by another package. This is accomplished using the [`workspace:` protocol](https://pnpm.io/workspaces#workspace-protocol-workspace), which ensures that `pnpm` will only resolve to local workspace packages and never fetch from the npm registry.
@@ -411,9 +415,6 @@ This interactive command will:
 
 2. Ask whether each change requires a patch, minor, or major version bump
 
-   > [!IMPORTANT]
-   > Most of the time **you should create a different changeset per-package you want to bump**. And specify only the changes of that package. Otherwise, you'll end up with the same `CHANGELOG` message in multiple packages, explaining changes that are not related to the package you're bumping.
-
 3. Automatically detect dependencies and suggest version bumps for dependent packages
    - (e.g., if you update `pkg-a`, it will also bump `pkg-b` and `pkg-c`)
    - Request a description of the changes for the changelog
@@ -431,3 +432,6 @@ This interactive command will:
    - Package versions are updated in their `package.json` files
    - Changelogs are generated from the changeset descriptions
    - The release workflow builds and publishes the updated packages to npm
+
+> [!IMPORTANT]
+> Most of the time **you should create a different changeset per-package you want to bump**. And specify only the changes of that package. Otherwise, you'll end up with the same `CHANGELOG` message in multiple packages, explaining changes that are not related to the package you're bumping.
