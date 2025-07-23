@@ -102,6 +102,11 @@ interface OpenApiSpecHandler<
       ? InferOutput<TRequestSchema["headers"]>
       : never
   >;
+  validateQuery: () => Promise<
+    TRequestSchema["query"] extends MaybeAsyncGenericSchema
+      ? InferOutput<TRequestSchema["query"]>
+      : never
+  >;
 }
 
 type ApiHandler<TResponse extends OpenApiResponses> = (
@@ -151,19 +156,62 @@ export function openapi<
   };
 }
 
+function createRequestInputParser<
+  TRequestSchema extends OpenApiRequest,
+  TField extends "params" | "headers" | "query",
+>(request: TRequestSchema, schemaType: TField) {
+  const schema = request[schemaType];
+
+  if (!schema) {
+    return;
+  }
+
+  return safeParserAsync(schema) satisfies ReturnType<typeof safeParserAsync>;
+}
+
+async function validateRequestInput<
+  TRequestSchema extends OpenApiRequest,
+  TResponseSchema extends OpenApiResponses,
+  TField extends "params" | "headers" | "query",
+>(
+  parser: ReturnType<typeof safeParserAsync> | undefined,
+  params: InputRequest,
+  route: Route<TRequestSchema, TResponseSchema>,
+  schemaType: TField,
+): Promise<
+  TRequestSchema[TField] extends MaybeAsyncGenericSchema
+    ? InferOutput<TRequestSchema[TField]>
+    : never
+> {
+  if (!parser) {
+    throw new Error(`No ${schemaType} schema defined for route ${route.path}`);
+  }
+
+  const validationResult = await parser(params);
+  if (!validationResult.success) {
+    throw new CommerceSdkValidationError(
+      `Invalid ${schemaType} for route ${route.path}`,
+      {
+        issues: validationResult.issues,
+      },
+    );
+  }
+
+  return validationResult.output as TRequestSchema[TField] extends MaybeAsyncGenericSchema
+    ? InferOutput<TRequestSchema[TField]>
+    : never;
+}
+
 export function createRoute<
   TRequest extends OpenApiRequest,
   TResponse extends OpenApiResponses,
 >(route: Route<TRequest, TResponse>): OpenApiHandler<TRequest, TResponse> {
   const bodySchema = route.request.body?.schema;
   const bodyParser = bodySchema ? safeParserAsync(bodySchema) : undefined;
-  const paramsSchema = route.request.params;
-  const paramsParser = paramsSchema ? safeParserAsync(paramsSchema) : undefined;
 
-  const headersSchema = route.request.headers;
-  const headersParser = headersSchema
-    ? safeParserAsync(headersSchema)
-    : undefined;
+  const paramsParser = createRequestInputParser(route.request, "params");
+  const queryParser = createRequestInputParser(route.request, "query");
+  const headersParser = createRequestInputParser(route.request, "headers");
 
   const responseValidators: Record<
     string,
@@ -270,42 +318,6 @@ export function createRoute<
           InferOutputResponseSchema<TResponse>
         >;
       },
-      async validateHeaders() {
-        if (!headersParser) {
-          throw new Error(`No params schema defined for route ${route.path}`);
-        }
-
-        const validationResult = await headersParser(params);
-        if (!validationResult.success) {
-          throw new CommerceSdkValidationError(
-            `Invalid parameters for route ${route.path}`,
-            {
-              issues: validationResult.issues,
-            },
-          );
-        }
-        return validationResult.output as TRequest["params"] extends MaybeAsyncGenericSchema
-          ? InferOutput<TRequest["params"]>
-          : never;
-      },
-      async validateParams() {
-        if (!paramsParser) {
-          throw new Error(`No params schema defined for route ${route.path}`);
-        }
-
-        const validationResult = await paramsParser(params);
-        if (!validationResult.success) {
-          throw new CommerceSdkValidationError(
-            `Invalid parameters for route ${route.path}`,
-            {
-              issues: validationResult.issues,
-            },
-          );
-        }
-        return validationResult.output as TRequest["params"] extends MaybeAsyncGenericSchema
-          ? InferOutput<TRequest["params"]>
-          : never;
-      },
       async validateBody() {
         if (!bodyParser) {
           throw new Error(`No body schema defined for route ${route.path}`);
@@ -326,6 +338,12 @@ export function createRoute<
           ? InferOutput<TRequest["body"]["schema"]>
           : never;
       },
+      validateHeaders: () =>
+        validateRequestInput(headersParser, params, route, "headers"),
+      validateParams: () =>
+        validateRequestInput(paramsParser, params, route, "params"),
+      validateQuery: () =>
+        validateRequestInput(queryParser, params, route, "query"),
     } satisfies OpenApiSpecHandler<TRequest, TResponse>;
   };
 }

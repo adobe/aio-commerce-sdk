@@ -52,7 +52,7 @@ describe("aio-commerce-lib-openapi", () => {
 
       const handler = route({ id: 123 }); // number instead of string
       await expect(handler.validateParams()).rejects.toThrow(
-        "Invalid parameters for route /stock/{id}",
+        "Invalid params for route /stock/{id}",
       );
     });
 
@@ -220,7 +220,7 @@ describe("aio-commerce-lib-openapi", () => {
         // missing x-api-key
       });
       await expect(handler.validateHeaders()).rejects.toThrow(
-        "Invalid parameters for route /api/data",
+        "Invalid headers for route /api/data",
       );
     });
 
@@ -240,7 +240,7 @@ describe("aio-commerce-lib-openapi", () => {
 
       const handler = route({});
       await expect(handler.validateHeaders()).rejects.toThrow(
-        "No params schema defined for route /api/data",
+        "No headers schema defined for route /api/data",
       );
     });
 
@@ -284,6 +284,140 @@ describe("aio-commerce-lib-openapi", () => {
         "x-request-id": "550e8400-e29b-41d4-a716-446655440000",
       });
       await expect(invalidHandler.validateHeaders()).rejects.toThrow();
+    });
+  });
+
+  describe("validateQuery", () => {
+    it("should validate query parameters successfully when valid data is provided", async () => {
+      const route = createRoute({
+        path: "/api/search",
+        method: "GET",
+        request: {
+          query: v.object({
+            q: v.string(),
+            limit: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
+            offset: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
+          }),
+        },
+        responses: {
+          200: createResponseSchema(
+            v.object({
+              results: v.array(v.string()),
+              total: v.number(),
+            }),
+          ),
+        },
+      });
+
+      const handler = route({
+        q: "search term",
+        limit: 10,
+        offset: 0,
+      });
+      const query = await handler.validateQuery();
+
+      expect(query).toEqual({
+        q: "search term",
+        limit: 10,
+        offset: 0,
+      });
+    });
+
+    it("should throw an error when query parameters are invalid", async () => {
+      const route = createRoute({
+        path: "/api/search",
+        method: "GET",
+        request: {
+          query: v.object({
+            q: v.string(),
+            limit: v.pipe(v.number(), v.integer(), v.minValue(1)),
+          }),
+        },
+        responses: {
+          200: createResponseSchema(
+            v.object({
+              results: v.array(v.string()),
+            }),
+          ),
+        },
+      });
+
+      const handler = route({
+        q: "search term",
+        limit: 0, // violates minValue(1)
+      });
+      await expect(handler.validateQuery()).rejects.toThrow(
+        "Invalid query for route /api/search",
+      );
+    });
+
+    it("should throw an error when no query schema is defined", async () => {
+      const route = createRoute({
+        path: "/api/simple",
+        method: "GET",
+        request: {},
+        responses: {
+          200: createResponseSchema(
+            v.object({
+              data: v.string(),
+            }),
+          ),
+        },
+      });
+
+      const handler = route({});
+      await expect(handler.validateQuery()).rejects.toThrow(
+        "No query schema defined for route /api/simple",
+      );
+    });
+
+    it("should validate complex query schemas with transformations", async () => {
+      const route = createRoute({
+        path: "/api/products",
+        method: "GET",
+        request: {
+          query: v.object({
+            category: v.string(),
+            minPrice: v.optional(v.pipe(v.string(), v.transform(Number))),
+            maxPrice: v.optional(v.pipe(v.string(), v.transform(Number))),
+            sortBy: v.optional(v.picklist(["name", "price", "date"])),
+            sortOrder: v.optional(v.picklist(["asc", "desc"])),
+          }),
+        },
+        responses: {
+          200: createResponseSchema(
+            v.object({
+              products: v.array(v.object({ id: v.string(), name: v.string() })),
+            }),
+          ),
+        },
+      });
+
+      const validQuery = {
+        category: "electronics",
+        minPrice: "100",
+        maxPrice: "500",
+        sortBy: "price",
+        sortOrder: "asc",
+      };
+
+      const handler = route(validQuery);
+      const query = await handler.validateQuery();
+
+      expect(query).toEqual({
+        category: "electronics",
+        minPrice: 100, // transformed to number
+        maxPrice: 500, // transformed to number
+        sortBy: "price",
+        sortOrder: "asc",
+      });
+
+      // Test with invalid sortBy value
+      const invalidHandler = route({
+        category: "electronics",
+        sortBy: "invalid-sort",
+      });
+      await expect(invalidHandler.validateQuery()).rejects.toThrow();
     });
   });
 
@@ -1216,6 +1350,149 @@ describe("aio-commerce-lib-openapi", () => {
           body: {
             error: "unauthorized",
             message: "Missing or invalid headers",
+          },
+        },
+      });
+    });
+
+    it("should validate query parameters in openapi handler", async () => {
+      const routeDefinition = {
+        path: "/api/search",
+        method: "GET" as const,
+        request: {
+          query: v.object({
+            q: v.string(),
+            category: v.optional(v.string()),
+            limit: v.optional(
+              v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100)),
+            ),
+            offset: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
+          }),
+        },
+        responses: {
+          200: createResponseSchema(
+            v.object({
+              results: v.array(
+                v.object({
+                  id: v.string(),
+                  title: v.string(),
+                  category: v.string(),
+                }),
+              ),
+              total: v.number(),
+              query: v.string(),
+            }),
+          ),
+          400: createResponseSchema(
+            v.object({
+              error: v.literal("invalid_query"),
+              message: v.string(),
+            }),
+          ),
+        },
+      };
+
+      const handler = openapi(routeDefinition, async (c) => {
+        try {
+          const query = await c.validateQuery();
+
+          // Mock search results based on query
+          const mockResults = [
+            {
+              id: "1",
+              title: "Product 1",
+              category: query.category || "general",
+            },
+            {
+              id: "2",
+              title: "Product 2",
+              category: query.category || "general",
+            },
+          ];
+
+          const limit = query.limit || 10;
+          const offset = query.offset || 0;
+          const paginatedResults = mockResults.slice(offset, offset + limit);
+
+          return c.json(
+            {
+              results: paginatedResults,
+              total: mockResults.length,
+              query: query.q,
+            },
+            200,
+          );
+        } catch (_error) {
+          return c.error(
+            {
+              error: "invalid_query",
+              message: "Invalid search parameters",
+            },
+            400,
+          );
+        }
+      });
+
+      // Test with valid query parameters
+      const successResult = await handler({
+        q: "test search",
+        category: "electronics",
+        limit: 5,
+        offset: 0,
+      });
+      expect(successResult).toEqual({
+        statusCode: 200,
+        body: {
+          results: [
+            { id: "1", title: "Product 1", category: "electronics" },
+            { id: "2", title: "Product 2", category: "electronics" },
+          ],
+          total: 2,
+          query: "test search",
+        },
+      });
+
+      // Test with minimal query (only required parameter)
+      const minimalResult = await handler({
+        q: "minimal search",
+      });
+      expect(minimalResult).toEqual({
+        statusCode: 200,
+        body: {
+          results: [
+            { id: "1", title: "Product 1", category: "general" },
+            { id: "2", title: "Product 2", category: "general" },
+          ],
+          total: 2,
+          query: "minimal search",
+        },
+      });
+
+      // Test with invalid limit (exceeds maximum)
+      const invalidLimitResult = await handler({
+        q: "test",
+        limit: 200,
+      });
+      expect(invalidLimitResult).toEqual({
+        error: {
+          statusCode: 400,
+          body: {
+            error: "invalid_query",
+            message: "Invalid search parameters",
+          },
+        },
+      });
+
+      // Test with missing required query parameter
+      const missingQueryResult = await handler({
+        category: "electronics",
+      });
+      expect(missingQueryResult).toEqual({
+        error: {
+          statusCode: 400,
+          body: {
+            error: "invalid_query",
+            message: "Invalid search parameters",
           },
         },
       });
