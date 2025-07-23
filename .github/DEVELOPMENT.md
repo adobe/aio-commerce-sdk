@@ -419,7 +419,9 @@ This interactive command will:
 After that, a new file is generated in the `.changeset` folder at the repository root. You will notice the file has a random name, but it's not important. You can change it if you want, but it will not make a difference, Changeset files are identified by the content of the file
 
 1. **Commit this file** alongside your code changes in the PR.
-   1. Know that a Changesets bot is configured to warn on PRs that modify packages but don't include a changeset file. If you know your PR doesn't require a version bump at all (e.g. internal changes), ignore the warning.
+
+> [!NOTE]
+> A Changesets bot is configured to warn on PRs that modify packages but don't include a changeset file. If you know your PR doesn't require a version bump at all (e.g. internal changes), ignore the warning.
 
 #### Bumping package versions
 
