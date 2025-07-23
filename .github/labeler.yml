@@ -8,14 +8,30 @@
 - changed-files:
   - any-glob-to-any-file: packages/aio-commerce-lib-auth/**
 
+"pkg: aio-commerce-lib-core":
+- changed-files:
+  - any-glob-to-any-file: packages/aio-commerce-lib-core/**
+
 "generator":
 - changed-files:
   - any-glob-to-any-file: turbo/generators/**
+
+"cfg: tsdown":
+- changed-files:
+  - any-glob-to-any-file: configs/tsdown/**
+
+"cfg: turbo":
+- changed-files:
+  - any-glob-to-any-file: turbo.json
+
+"cfg: typedoc":
+- changed-files:
+  - any-glob-to-any-file: configs/typedoc/**
 
 "cfg: typescript":
 - changed-files:
   - any-glob-to-any-file: configs/typescript/**
 
-"cfg: tsdown":
+"cfg: vitest":
 - changed-files:
-  - any-glob-to-any-file: configs/tsdown/**
+  - any-glob-to-any-file: configs/vitest/**
