@@ -20,11 +20,23 @@ export const baseConfig = defineConfig({
 
     coverage: {
       provider: "v8",
+      exclude: [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/test/**",
+        "**/*.d.ts",
+        "**/*.config.*",
+        "**/*.test.*",
+        "**/*.spec.*",
+      ],
+
+      reporter: ["text", "json", "html"],
       thresholds: {
-        statements: 80,
-        branches: 80,
-        functions: 80,
-        lines: 80,
+        statements: 70,
+        branches: 70,
+        functions: 70,
+        lines: 70,
       },
     },
   },

@@ -52,5 +52,8 @@
     "*": [
       "biome check --no-errors-on-unmatched --files-ignore-unknown=true --error-on-warnings"
     ]
+  },
+  "dependencies": {
+    "@vitest/ui": "^3.2.4"
   }
 }
