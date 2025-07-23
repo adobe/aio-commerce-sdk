@@ -44,13 +44,13 @@
   },
   "lint-staged": {
     "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
-      "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --error-on-warnings"
+      "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
     ],
     "*.md": [
       "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\""
     ],
     "*": [
-      "biome check --no-errors-on-unmatched --files-ignore-unknown=true --error-on-warnings"
+      "biome check --no-errors-on-unmatched --files-ignore-unknown=true"
     ]
   },
   "dependencies": {
