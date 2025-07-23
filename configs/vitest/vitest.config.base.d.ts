@@ -9,5 +9,11 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-export * as Auth from "@adobe/aio-commerce-lib-auth";
-export * as Core from "@adobe/aio-commerce-lib-core";
+
+import type { ViteUserConfig } from "vitest/config";
+
+/**
+ * Base configuration to extend from for all Vitest configurations.
+ * @see https://vitest.dev/config/
+ */
+export declare const baseConfig: ViteUserConfig;

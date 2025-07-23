@@ -35,16 +35,20 @@ pnpm install @adobe/aio-commerce-lib-auth
 
 - **[`@aio-commerce-sdk/config-typescript`](./configs/typescript)** - Shared TypeScript configuration
 - **[`@aio-commerce-sdk/config-tsdown`](./configs/tsdown)** - Shared build configuration
+- **[`@aio-commerce-sdk/config-typedoc`](./configs/typedoc)** - Shared [Typedoc with Markdown](https://typedoc-plugin-markdown.org/docs) configuration
+- **[`@aio-commerce-sdk/config-vitest`](./configs/vitest)** - Shared Vitest configuration
 - **[`@aio-commerce-sdk/generators`](./turbo/generators)** - Code generators for scaffolding
 
 ## Architecture
 
-This project is built with modern tooling and best practices:
+Unlike some other languages, JavaScript/TypeScript doesn't have one unified toolchain that does everything. That's why we use many different tools for different purposes.
 
-- **[PNPM](https://pnpm.io/)** - Fast, disk space efficient package manager
+This project uses the following tools, find a detailed explanation/justification for each in the [development guide](./.github/DEVELOPMENT.md):
+
+- **[PNPM](https://pnpm.io/)** - Fast, disk space efficient package manager (replacing `npm`)
 - **[Turborepo](https://turbo.build/)** - High-performance build system for monorepos
 - **[TypeScript](https://www.typescriptlang.org/)** - For type-safe development.
-- **[TSDown](https://tsdown.dev/)** - Modern bundler specialized for TypeScript libraries..
+- **[TSDown](https://tsdown.dev/)** - Modern bundler specialized for TypeScript libraries.
 - **[Vitest](https://vitest.dev/)** - Fast TypeScript-compatible testing framework
 - **[Biome](https://biomejs.dev/)** - Fast formatter and linter
 

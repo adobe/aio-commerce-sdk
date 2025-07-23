@@ -13,15 +13,12 @@
 import crypto from "node:crypto";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-
 import OAuth1a from "oauth-1.0a";
 import { safeParse } from "valibot";
 
-import {
-  type HttpMethodInput,
-  type IntegrationAuthParams,
-  IntegrationAuthParamsSchema,
-} from "./schema";
+import { IntegrationAuthParamsSchema } from "./schema";
+
+import type { HttpMethodInput, IntegrationAuthParams } from "./schema";
 
 /** Defines the header key used for Commerce Integration authentication. */
 type IntegrationAuthHeader = "Authorization";
@@ -41,9 +38,8 @@ export interface IntegrationAuthProvider {
 }
 
 /**
- * Asserts the provided configuration for an Adobe Commerce integration authentication provider. {@link IntegrationAuthParams}
- * {@link IntegrationAuthProvider}
- * @param config {Record<PropertyKey, unknown>} The configuration to validate.
+ * Asserts the provided configuration for an Adobe Commerce {@link IntegrationAuthProvider}.
+ * @param config The configuration to validate.
  * @throws {CommerceSdkValidationError} If the configuration is invalid.
  * @example
  * ```typescript
@@ -87,7 +83,7 @@ export function assertIntegrationAuthParams(
 
 /**
  * Creates an {@link IntegrationAuthProvider} based on the provided configuration.
- * @param config {IntegrationAuthParams} The configuration for the integration.
+ * @param authParams The configuration for the integration.
  * @returns An {@link IntegrationAuthProvider} instance that can be used to get auth headers.
  * @example
  * ```typescript

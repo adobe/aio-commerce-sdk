@@ -76,7 +76,7 @@ dist/
 - **Type Declarations**: Automatic `.d.ts` and `.d.cts` generation
 - **Tree-shaking**: Enabled by default for optimal bundle sizes
 - **Legal Comments**: Preserved inline in the output
-- **Source Maps**: Not included by default (for production builds)
+- **Source Maps**: Not included by default
 
 ## Customization
 
@@ -112,7 +112,7 @@ export default defineConfig({
 
 ### Type declarations in wrong location
 
-The base configuration includes a post-build hook that automatically moves CJS type declarations to the correct directory. If you're experiencing issues, ensure you're not overriding the `hooks` configuration.
+The base configuration includes a post-build hook that automatically moves CJS type declarations and sub-directories to the correct directory (they are misplaced by default). If you're experiencing issues, ensure you're not overriding the `hooks` configuration.
 
 ### Missing exports
 

@@ -1,7 +1,5 @@
 ---
-description: Ultracite Rules
-globs: "**/*.{ts,tsx,js,jsx}"
-alwaysApply: true
+applyTo: "**/*.{ts,tsx,js,jsx}"
 ---
 
 - Don't use `accessKey` attribute on any HTML element.

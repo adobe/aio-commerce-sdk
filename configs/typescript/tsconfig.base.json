@@ -7,20 +7,26 @@
   ],
 
   "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "./dist",
+    "rootDir": "${configDir}",
+    "baseUrl": "${configDir}",
+    "outDir": "${configDir}/dist",
+    "paths": {
+      "~/*": ["${configDir}/source/*"],
+      "~~/*": ["${configDir}/*"]
+    },
+
     "module": "ESNext",
     "moduleResolution": "bundler",
 
     "allowJs": false,
     "noImplicitThis": true,
-    "removeComments": true,
+    "removeComments": false,
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "useUnknownInCatchVariables": true
   },
 
-  "include": ["**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["${configDir}/**/*.ts"],
+  "exclude": ["${configDir}/**/node_modules", "${configDir}/**/dist"]
 }

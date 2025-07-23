@@ -1,12 +1,14 @@
 {
   "name": "@adobe/aio-commerce-sdk",
   "type": "module",
+  "author": "Adobe Inc.",
+
   "version": "0.3.0",
   "private": false,
-  "author": "Adobe Inc.",
   "engines": {
-    "node": ">=22"
+    "node": ">=20 <=24"
   },
+
   "license": "Apache-2.0",
   "description": "Utilities for Adobe Commerce apps deployed in Adobe App Builder.",
   "keywords": [
@@ -17,27 +19,20 @@
     "adobe-commerce-sdk",
     "aio-commerce-sdk"
   ],
+
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
+
   "repository": {
     "type": "git",
-    "url": "https://github.com/adobe/aio-commerce-sdk.git"
+    "url": "git+https://github.com/adobe/aio-commerce-sdk.git"
   },
+
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/es/index.js",
   "types": "./dist/cjs/index.d.cts",
   "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/es/index.d.ts",
-        "default": "./dist/es/index.js"
-      },
-      "require": {
-        "types": "./dist/cjs/index.d.cts",
-        "default": "./dist/cjs/index.cjs"
-      }
-    },
     "./*": {
       "import": {
         "types": "./dist/es/*.d.ts",
@@ -50,30 +45,36 @@
     },
     "./package.json": "./package.json"
   },
+
   "files": [
     "dist",
     "package.json",
     "CHANGELOG.md",
     "README.md"
   ],
+
   "scripts": {
     "build": "tsdown",
-    "assist": "pnpm -w assist .",
-    "assist:apply": "pnpm -w assist:apply .",
-    "check:ci": "pnpm -w check:ci .",
-    "format": "pnpm -w format .",
-    "format:check": "pnpm -w format:check .",
-    "lint": "pnpm -w lint .",
-    "lint:fix": "pnpm -w lint:fix .",
+    "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
+    "format": "biome format --write --no-errors-on-unmatched",
+    "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
+    "format:check": "biome format --no-errors-on-unmatched",
+    "lint": "biome lint --no-errors-on-unmatched",
+    "lint:fix": "biome lint --write --no-errors-on-unmatched",
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
   },
+
   "dependencies": {
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*"
   },
+
   "devDependencies": {
-    "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@aio-commerce-sdk/config-tsdown": "workspace:*"
+    "@aio-commerce-sdk/config-tsdown": "workspace:*",
+    "@aio-commerce-sdk/config-typescript": "workspace:*"
   },
+
   "sideEffects": false
 }

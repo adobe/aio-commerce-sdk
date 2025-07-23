@@ -1,23 +1,57 @@
+/*
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
 import { mkdir, rename, rm } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
+
 import { globby } from "globby";
 
 import type { UserConfig } from "tsdown";
 
-/** By default, TSDown will output the files to the `./dist` directory. */
 const OUT_DIR = "./dist";
+const ADOBE_LICENSE_BANNER = `
+/**
+ * @license
+ * 
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+`.trimStart();
 
 /**
  * Base configuration to extend from for all TSDown configurations.
  * @see https://tsdown.dev/options/config-file
  */
-export const baseConfig = {
+export const baseConfig: UserConfig = {
   entry: [],
   format: ["cjs", "esm"],
 
   outputOptions: {
-    legalComments: "inline",
+    banner: ADOBE_LICENSE_BANNER,
     dir: OUT_DIR,
+
+    minifyInternalExports: true,
+  },
+
+  nodeProtocol: "strip",
+  minify: {
+    compress: true,
   },
 
   dts: true,
@@ -33,8 +67,8 @@ export const baseConfig = {
     },
 
     "build:done": async (_) => {
-      // For some reason the types for CJS are being placed out of the CJS directory.
-      // This is a workaround to move them into the CJS directory.
+      // For some reason the types and sub-directories of the CJS builds are being placed out of the CJS directory.
+      // This hook moves them after they're generated, respecting the directory structure.
       const files = await globby("**/*.d.cts", {
         cwd: OUT_DIR,
         absolute: true,
@@ -66,4 +100,4 @@ export const baseConfig = {
       );
     },
   },
-} satisfies UserConfig;
+};

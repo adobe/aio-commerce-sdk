@@ -6,6 +6,12 @@
     "ignoreUnknown": true
   },
 
+  "json": {
+    "formatter": {
+      "trailingCommas": "none"
+    }
+  },
+
   "javascript": {
     "formatter": {
       "arrowParentheses": "always",
@@ -22,11 +28,54 @@
       "performance": {
         "noNamespaceImport": "off"
       },
+
       "style": {
         "useConsistentMemberAccessibility": {
           "level": "error",
           "options": {
             "accessibility": "explicit"
+          }
+        },
+
+        "useImportType": {
+          "level": "error",
+          "fix": "safe",
+          "options": {
+            "style": "separatedType"
+          }
+        }
+      }
+    }
+  },
+
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "groups": [
+              { "type": false, "source": [":BUN:", ":NODE:"] },
+              ":BLANK_LINE:",
+              {
+                "type": false,
+                "source": [":PACKAGE:", ":PACKAGE_WITH_PROTOCOL:"]
+              },
+              ":BLANK_LINE:",
+              { "type": false, "source": [":ALIAS:"] },
+              ":BLANK_LINE:",
+              { "type": false, "source": [":PATH:"] },
+              ":BLANK_LINE:",
+
+              { "type": true, "source": [":BUN:", ":NODE:"] },
+              {
+                "type": true,
+                "source": [":PACKAGE:", ":PACKAGE_WITH_PROTOCOL:"]
+              },
+              { "type": true, "source": [":ALIAS:"] },
+              { "type": true, "source": [":PATH:"] }
+            ]
           }
         }
       }

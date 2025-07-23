@@ -27,11 +27,7 @@ The SDK currently includes:
 
 ## Usage
 
-You can import libraries from the SDK in two ways:
-
-### 1. Direct Sub-path Import (Recommended)
-
-Import directly from a specific library sub-path for better tree-shaking:
+Import directly from a specific library sub-path:
 
 ```typescript
 import {
@@ -39,7 +35,7 @@ import {
   getImsAuthProvider,
   assertIntegrationAuthParams,
   getIntegrationAuthProvider,
-} from "@adobe/aio-commerce-sdk/auth";
+} from "@adobe/aio-commerce-sdk/auth"; // <-- This is like @adobe/aio-commerce-lib-auth
 
 // Validate and create IMS auth provider
 assertImsAuthParams(params);
@@ -48,28 +44,6 @@ const imsAuth = getImsAuthProvider(params);
 // Validate and create integration auth provider
 assertIntegrationAuthParams(params);
 const integrationsAuth = getIntegrationAuthProvider(params);
-```
-
-### 2. Namespaced Import
-
-Import all exports from a specific library under a namespace:
-
-```typescript
-import { Auth } from "@adobe/aio-commerce-sdk";
-
-// Use IMS authentication
-Auth.assertImsAuthParams(params);
-const imsAuth = Auth.getImsAuthProvider(params);
-const headers = await imsAuth.getHeaders();
-```
-
-```typescript
-import { Auth } from "@adobe/aio-commerce-sdk";
-
-// Use integrations authentication
-Auth.assertIntegrationAuthParams(params);
-const integrationsAuth = Auth.getIntegrationAuthProvider(params);
-const headers = integrationsAuth.getHeaders("GET", "https://example.com/api");
 ```
 
 ## Benefits

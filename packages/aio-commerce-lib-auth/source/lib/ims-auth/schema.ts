@@ -12,7 +12,6 @@
 
 import {
   email,
-  type InferOutput,
   minLength,
   nonEmpty,
   object,
@@ -22,6 +21,8 @@ import {
   array as vArray,
   enum as vEnum,
 } from "valibot";
+
+import type { InferOutput } from "valibot";
 
 /**
  * Creates a validation schema for a required IMS auth string parameter.

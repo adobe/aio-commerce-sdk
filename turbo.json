@@ -2,21 +2,48 @@
   "$schema": "https://turborepo.com/schema.json",
   "globalEnv": ["NODE_ENV", "CI"],
   "tasks": {
+    "assist:apply": {
+      "dependsOn": ["lint:fix"]
+    },
+    "lint:fix": {
+      "dependsOn": ["transit"]
+    },
+    "format": {
+      "dependsOn": ["assist:apply"]
+    },
+    "format:markdown": {
+      "dependsOn": ["assist:apply"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
+
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
+    "assist": {
+      "dependsOn": ["transit"]
+    },
     "check:ci": {
-      "dependsOn": ["^check:ci"]
+      "dependsOn": ["transit"]
+    },
+    "docs": {
+      "dependsOn": ["transit"],
+      "outputs": ["docs/**"]
+    },
+    "format:check": {
+      "dependsOn": ["transit"]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["transit"]
     },
     "test": {
-      "dependsOn": ["^build", "^test"]
+      "dependsOn": ["transit"],
+      "outputs": ["coverage/**"]
     },
     "typecheck": {
-      "dependsOn": ["^build", "^typecheck"]
+      "dependsOn": ["transit"]
     }
   }
 }

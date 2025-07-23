@@ -1,14 +1,23 @@
+/*
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { context, getToken } from "@adobe/aio-lib-ims";
-
-import type { SnakeCasedProperties } from "type-fest";
 import { safeParse } from "valibot";
 
-import {
-  type ImsAuthEnv,
-  type ImsAuthParams,
-  ImsAuthParamsSchema,
-} from "./schema";
+import { ImsAuthParamsSchema } from "./schema";
+
+import type { SnakeCasedProperties } from "type-fest";
+import type { ImsAuthEnv, ImsAuthParams } from "./schema";
 
 /** Defines the header keys used for IMS authentication. */
 type ImsAuthHeader = "Authorization" | "x-api-key";
@@ -49,9 +58,8 @@ function toImsAuthConfig(config: ImsAuthParams): ImsAuthConfig {
 }
 
 /**
- * Asserts the provided configuration for an Adobe IMS authentication provider. {@link ImsAuthParams}
- * {@link ImsAuthProvider}
- * @param config {Record<PropertyKey, unknown>} The configuration to validate.
+ * Asserts the provided configuration for an {@link ImsAuthProvider}.
+ * @param config The configuration to validate.
  * @throws {CommerceSdkValidationError} If the configuration is invalid.
  * @example
  * ```typescript
@@ -99,7 +107,7 @@ export function assertImsAuthParams(
 
 /**
  * Creates an {@link ImsAuthProvider} based on the provided configuration.
- * @param config An {@link ImsAuthParams} parameter that contains the configuration for the IMS auth provider.
+ * @param authParams An {@link ImsAuthParams} parameter that contains the configuration for the {@link ImsAuthProvider}.
  * @returns An {@link ImsAuthProvider} instance that can be used to get access token and auth headers.
  * @example
  * ```typescript
