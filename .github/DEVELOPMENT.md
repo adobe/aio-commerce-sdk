@@ -420,6 +420,7 @@ This interactive command will:
      - You can later extend and edit that description in the `md` generated file in the `.changeset` folder (special syntax in the terminal is difficult to write).
 
 4. **Commit the changeset**: A new file is generated in the `.changeset` folder at the repository root. Commit this file alongside your code changes in the PR.
+   - The names of the generated changeset files are random. Those names are not important, you can change it if you want, but it will not make a difference, they are identified by the content of the file.
 
 5. **Automated version management**: Once your PR is merged to `main`:
    - A GitHub Action detects pending changesets
