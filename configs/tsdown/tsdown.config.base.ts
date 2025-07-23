@@ -43,8 +43,6 @@ export const baseConfig: UserConfig = {
   format: ["cjs", "esm"],
 
   outputOptions: {
-    legalComments: "inline",
-
     banner: ADOBE_LICENSE_BANNER,
     dir: OUT_DIR,
   },
