@@ -35,27 +35,24 @@
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/es/index.js",
   "types": "./dist/cjs/index.d.cts",
+  "publishConfig": {
+    "exports": {
+      "./*": {
+        "import": {
+          "types": "./dist/es/*/index.d.ts",
+          "default": "./dist/es/*/index.js"
+        },
+        "require": {
+          "types": "./dist/cjs/lib/*/index.d.cts",
+          "default": "./dist/cjs/lib/*/index.cjs"
+        }
+      },
+      "./package.json": "./package.json"
+    }
+  },
+
   "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/es/index.d.ts",
-        "default": "./dist/es/index.js"
-      },
-      "require": {
-        "types": "./dist/cjs/index.d.cts",
-        "default": "./dist/cjs/index.cjs"
-      }
-    },
-    "./*": {
-      "import": {
-        "types": "./dist/es/lib/*/index.d.ts",
-        "default": "./dist/es/lib/*/index.js"
-      },
-      "require": {
-        "types": "./dist/cjs/lib/*/index.d.cts",
-        "default": "./dist/cjs/lib/*/index.cjs"
-      }
-    },
+    "./error": "./source/error/index.ts",
     "./package.json": "./package.json"
   },
 

@@ -15,7 +15,7 @@
 import { safeParse } from "valibot";
 import { describe, expect, it } from "vitest";
 
-import { CommerceSdkValidationError } from "~/lib/error/validation-error";
+import { CommerceSdkValidationError } from "~/error/validation-error";
 import {
   mockInvalidUserForInputError,
   mockInvalidUserForSchemaValidationError,

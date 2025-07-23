@@ -12,7 +12,7 @@ const OUT_DIR = "./dist";
  * Base configuration to extend from for all TSDown configurations.
  * @see https://tsdown.dev/options/config-file
  */
-export const baseConfig = {
+export const baseConfig: UserConfig = {
   entry: [],
   format: ["cjs", "esm"],
 
@@ -20,6 +20,8 @@ export const baseConfig = {
     legalComments: "inline",
     dir: OUT_DIR,
   },
+
+  nodeProtocol: "strip",
 
   dts: true,
   treeshake: true,
@@ -34,8 +36,8 @@ export const baseConfig = {
     },
 
     "build:done": async (_) => {
-      // For some reason the types for CJS are being placed out of the CJS directory.
-      // This is a workaround to move them into the CJS directory.
+      // For some reason the types and sub-directories of the CJS builds are being placed out of the CJS directory.
+      // This hook moves them after they're generated, respecting the directory structure.
       const files = await globby("**/*.d.cts", {
         cwd: OUT_DIR,
         absolute: true,
@@ -67,4 +69,4 @@ export const baseConfig = {
       );
     },
   },
-} satisfies UserConfig;
+};
