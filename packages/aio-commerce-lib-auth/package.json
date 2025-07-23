@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-lib-auth",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
@@ -42,12 +42,10 @@
       "./package.json": "./package.json"
     }
   },
-
   "exports": {
     ".": "./source/index.ts",
     "./package.json": "./package.json"
   },
-
   "files": [
     "dist",
     "package.json",

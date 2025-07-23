@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-core
 
+## 0.4.0
+
+### Minor Changes
+
+- [#46](https://github.com/adobe/aio-commerce-sdk/pull/46) [`4b75585`](https://github.com/adobe/aio-commerce-sdk/commit/4b75585c0d27bd472de3277be5ddaf6a977664de) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Removed namespaced exports for index module
+
 ## 0.3.0
 
 ### Minor Changes

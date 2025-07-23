@@ -2,13 +2,11 @@
   "name": "@adobe/aio-commerce-sdk",
   "type": "module",
   "author": "Adobe Inc.",
-
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
   },
-
   "license": "Apache-2.0",
   "description": "Utilities for Adobe Commerce apps deployed in Adobe App Builder.",
   "keywords": [
@@ -19,16 +17,13 @@
     "adobe-commerce-sdk",
     "aio-commerce-sdk"
   ],
-
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
-
   "repository": {
     "type": "git",
     "url": "git+https://github.com/adobe/aio-commerce-sdk.git"
   },
-
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/es/index.js",
   "types": "./dist/cjs/index.d.cts",
@@ -45,14 +40,12 @@
     },
     "./package.json": "./package.json"
   },
-
   "files": [
     "dist",
     "package.json",
     "CHANGELOG.md",
     "README.md"
   ],
-
   "scripts": {
     "build": "tsdown",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
@@ -65,16 +58,13 @@
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
   },
-
   "dependencies": {
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*"
   },
-
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*"
   },
-
   "sideEffects": false
 }
