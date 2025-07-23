@@ -6,7 +6,7 @@
   "version": "1.0.0",
   "private": true,
   "exports": {
-    "./vitest.config": "./vitest.config.js",
+    "./vitest.config.base": "./vitest.config.base.js",
     "./package.json": "./package.json"
   },
 

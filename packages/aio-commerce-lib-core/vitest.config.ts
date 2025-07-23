@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config";
+import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
 import { mergeConfig } from "vitest/config";
 
 // Barrel files are those that only contain exports.
