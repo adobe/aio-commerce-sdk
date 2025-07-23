@@ -391,18 +391,11 @@ We version packages using the `MAJOR.MINOR.PATCH` format:
 ### How Changesets Work
 
 > [!IMPORTANT]
-> You don't need to manually handle versioning. If you run the below workflow correctly, Changesets will handle everything for you. Your only responsibility is to create a changeset and commit it in your PR.
->
-> Not all PRs may require a version bump (a changeset file), for example, you may only want to change an internal package or fix some typos. These kind of changes should not require a version bump. Stick to the [semantic versioning rules](#semantic-versioning).
-
-> [!NOTE]
-> A Changesets bot is configured to warn on PRs that modify packages but don't include a changeset file. If you know your PR doesn't require a version bump at all (e.g. internal changes), ignore the warning.
+> You don't need to manually handle versioning. If you run the below workflow correctly, Changesets will handle everything for you. Your only responsibility is to create changesets and commit them in your PRs.
 
 Here's a typical workflow when making changes:
 
-1. **Make your changes**: You work on a feature branch that modifies `pkg-a`.
-   - For the sake of the example, imagine that other packages in the monorepo (`pkg-b` and `pkg-c`) depend on `pkg-a`.
-
+1. **Make your changes**: You work on a feature branch that modifies `pkg-a` (for the sake of the example, imagine that other packages in the monorepo (`pkg-b` and `pkg-c`) depend on `pkg-a`).
 2. **Create a changeset**: Before opening a PR, run:
 
    ```shell
@@ -412,26 +405,37 @@ Here's a typical workflow when making changes:
 This interactive command will:
 
 1. Prompt you to select which packages have changed
-
 2. Ask whether each change requires a patch, minor, or major version bump
-
 3. Automatically detect dependencies and suggest version bumps for dependent packages
    - (e.g., if you update `pkg-a`, it will also bump `pkg-b` and `pkg-c`)
    - Request a description of the changes for the changelog
-     - You can later extend and edit that description in the `md` generated file in the `.changeset` folder (special syntax in the terminal is difficult to write).
-
-4. **Commit the changeset**: A new file is generated in the `.changeset` folder at the repository root. Commit this file alongside your code changes in the PR.
-   - The names of the generated changeset files are random. Those names are not important, you can change it if you want, but it will not make a difference, they are identified by the content of the file.
-
-5. **Automated version management**: Once your PR is merged to `main`:
-   - A GitHub Action detects pending changesets
-   - It creates (or updates) a "Version Packages" PR that consolidates all pending version bumps
-   - This PR accumulates changes from multiple merged PRs until you're ready to release
-
-6. **Release**: When you merge the "Version Packages" PR:
-   - Package versions are updated in their `package.json` files
-   - Changelogs are generated from the changeset descriptions
-   - The release workflow builds and publishes the updated packages to npm
+     - You can later extend and edit that description in the generated changeset file (uses **Markdown**, which is difficult to write in the terminal).
 
 > [!IMPORTANT]
-> Most of the time **you should create a different changeset per-package you want to bump**. And specify only the changes of that package. Otherwise, you'll end up with the same `CHANGELOG` message in multiple packages, explaining changes that are not related to the package you're bumping.
+> Most of the time **you should create a different changeset per-package you want to bump**, and specify only the changes of that package. Otherwise, you'll end up with the same `CHANGELOG` message in multiple packages, explaining changes that are not related to the package you're bumping.
+>
+> Not all PRs may require a version bump (a changeset file), for example, you may only want to change an internal package or fix some typos. These kind of changes should not require a version bump. Stick to the [semantic versioning rules](#semantic-versioning).
+
+After that, a new file is generated in the `.changeset` folder at the repository root. **Commit this file** alongside your code changes in the PR.
+
+> [!NOTE]
+> A Changesets bot is configured to warn on PRs that modify packages but don't include a changeset file. If you know your PR doesn't require a version bump at all (e.g. internal changes), ignore the warning.
+>
+> The names of the generated changeset files are random. Those names are not important, you can change it if you want, but it will not make a difference, they are identified by the content of the file.
+
+#### Bumping package versions
+
+Version management is automated by the tool. Once your PR is merged to `main`, the following happens:
+
+1. A GitHub Action detects pending changesets
+2. It creates (or updates) a "Version Packages" PR that consolidates all pending version bumps
+   1. You'll see it bumps the `version` fields in all the affected packages
+   2. This PR accumulates changes from multiple merged PRs until you're ready to release
+
+#### Publishing the package
+
+When you decide to release (publish to NPM) the packages, **merge the "Version Packages" PR**.
+
+- Package versions updates are merged to `main`
+- Changelogs are generated from the changeset descriptions
+- The release workflow builds and publishes the updated packages to npm
