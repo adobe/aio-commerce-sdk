@@ -97,6 +97,11 @@ interface OpenApiSpecHandler<
       ? InferOutput<TRequestSchema["params"]>
       : never
   >;
+  validateHeaders: () => Promise<
+    TRequestSchema["headers"] extends MaybeAsyncGenericSchema
+      ? InferOutput<TRequestSchema["headers"]>
+      : never
+  >;
 }
 
 type ApiHandler<TResponse extends OpenApiResponses> = (
@@ -154,6 +159,11 @@ export function createRoute<
   const bodyParser = bodySchema ? safeParserAsync(bodySchema) : undefined;
   const paramsSchema = route.request.params;
   const paramsParser = paramsSchema ? safeParserAsync(paramsSchema) : undefined;
+
+  const headersSchema = route.request.headers;
+  const headersParser = headersSchema
+    ? safeParserAsync(headersSchema)
+    : undefined;
 
   const responseValidators: Record<
     string,
@@ -259,6 +269,24 @@ export function createRoute<
         return response satisfies AioOpenApiSuccessResponse<
           InferOutputResponseSchema<TResponse>
         >;
+      },
+      async validateHeaders() {
+        if (!headersParser) {
+          throw new Error(`No params schema defined for route ${route.path}`);
+        }
+
+        const validationResult = await headersParser(params);
+        if (!validationResult.success) {
+          throw new CommerceSdkValidationError(
+            `Invalid parameters for route ${route.path}`,
+            {
+              issues: validationResult.issues,
+            },
+          );
+        }
+        return validationResult.output as TRequest["params"] extends MaybeAsyncGenericSchema
+          ? InferOutput<TRequest["params"]>
+          : never;
       },
       async validateParams() {
         if (!paramsParser) {

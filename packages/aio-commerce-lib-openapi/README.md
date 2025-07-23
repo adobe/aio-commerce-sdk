@@ -19,7 +19,7 @@ npm install @adobe/aio-commerce-lib-openapi
 ## Basic Usage
 
 ```typescript
-import { openapi } from "@adobe/aio-commerce-lib-openapi";
+import { openapi, createResponseSchema } from "@adobe/aio-commerce-lib-openapi";
 import * as v from "valibot";
 
 // Define your API handler with route and business logic
@@ -33,16 +33,20 @@ const getProductHandler = openapi(
       }),
     },
     responses: {
-      200: v.object({
-        id: v.string(),
-        name: v.string(),
-        price: v.number(),
-        inStock: v.boolean(),
-      }),
-      404: v.object({
-        error: v.string(),
-        message: v.string(),
-      }),
+      200: createResponseSchema(
+        v.object({
+          id: v.string(),
+          name: v.string(),
+          price: v.number(),
+          inStock: v.boolean(),
+        }),
+      ),
+      404: createResponseSchema(
+        v.object({
+          error: v.string(),
+          message: v.string(),
+        }),
+      ),
     },
   },
   async (spec) => {
@@ -102,15 +106,19 @@ const getProductHandler = openapi(
       }),
     },
     responses: {
-      200: v.object({
-        id: v.string(),
-        name: v.string(),
-        price: v.number(),
-      }),
-      404: v.object({
-        error: v.string(),
-        message: v.string(),
-      }),
+      200: createResponseSchema(
+        v.object({
+          id: v.string(),
+          name: v.string(),
+          price: v.number(),
+        }),
+      ),
+      404: createResponseSchema(
+        v.object({
+          error: v.string(),
+          message: v.string(),
+        }),
+      ),
     },
   },
   async (spec) => {
@@ -147,8 +155,8 @@ Creates a type-safe route handler with automatic validation. Use this when you n
   - `body?`: Request body schema
   - `params?`: URL parameters schema
   - `query?`: Query parameters schema (coming soon)
-  - `headers?`: Headers schema (coming soon)
-- `responses` (object): Response schemas keyed by status code
+  - `headers?`: Headers schema
+- `responses` (object): Response schemas keyed by status code. Each response can be created using `createResponseSchema(bodySchema, headersSchema?)` or as an object with `{schema: bodySchema, headers?: headersSchema}`
 
 #### Returns
 
@@ -198,7 +206,7 @@ const createProductRoute = createRoute({
     },
   },
   responses: {
-    201: v.object({ id: v.string() }),
+    201: createResponseSchema(v.object({ id: v.string() })),
   },
 });
 
@@ -210,9 +218,36 @@ const body = await handler.validateBody();
 // body is typed and validated
 ```
 
-#### `json(data, status?)`
+#### `validateHeaders()`
 
-Returns a successful response with validated data.
+Validates request headers against the defined schema.
+
+```typescript
+const protectedRoute = createRoute({
+  path: "/api/protected",
+  method: "GET",
+  request: {
+    headers: v.object({
+      authorization: v.pipe(v.string(), v.startsWith("Bearer ")),
+      "x-api-key": v.string(),
+    }),
+  },
+  responses: {
+    200: createResponseSchema(v.object({ data: v.string() })),
+  },
+});
+
+const handler = await protectedRoute({
+  authorization: "Bearer token123",
+  "x-api-key": "secret-key",
+});
+const headers = await handler.validateHeaders();
+// headers is typed as { authorization: string, "x-api-key": string }
+```
+
+#### `json(data, status?, headers?)`
+
+Returns a successful response with validated data and optional headers.
 
 ```typescript
 // TypeScript will enforce the correct shape based on status code
@@ -227,6 +262,17 @@ const response = await handler.json(
 ); // status defaults to 200 if not provided
 
 // Returns: { statusCode: 200, body: {...} }
+
+// With headers
+const responseWithHeaders = await handler.json(
+  { data: "paginated results" },
+  200,
+  {
+    "X-Total-Count": "100",
+    "X-Page": 1,
+  },
+);
+// Returns: { statusCode: 200, body: {...}, headers: {...} }
 ```
 
 #### `error(data, status?)`
@@ -361,6 +407,85 @@ try {
     500,
   );
 }
+```
+
+### Headers Example
+
+Request and response headers can be validated for enhanced API security and functionality.
+
+```typescript
+const protectedApiHandler = openapi(
+  {
+    path: "/api/protected",
+    method: "GET",
+    request: {
+      headers: v.object({
+        authorization: v.pipe(v.string(), v.startsWith("Bearer ")),
+        "x-api-key": v.string(),
+        "x-request-id": v.optional(v.string()),
+      }),
+    },
+    responses: {
+      200: createResponseSchema(
+        v.object({
+          data: v.string(),
+          requestId: v.optional(v.string()),
+        }),
+        // Response headers schema
+        v.object({
+          "X-RateLimit-Limit": v.string(),
+          "X-RateLimit-Remaining": v.string(),
+          "X-RateLimit-Reset": v.string(),
+        }),
+      ),
+      401: createResponseSchema(
+        v.object({
+          error: v.literal("unauthorized"),
+          message: v.string(),
+        }),
+      ),
+    },
+  },
+  async (c) => {
+    try {
+      // Validate request headers
+      const headers = await c.validateHeaders();
+
+      // Verify authorization token
+      if (headers.authorization !== "Bearer valid-token") {
+        return c.error(
+          {
+            error: "unauthorized",
+            message: "Invalid authorization token",
+          },
+          401,
+        );
+      }
+
+      // Return success with response headers
+      return c.json(
+        {
+          data: "Protected resource data",
+          requestId: headers["x-request-id"],
+        },
+        200,
+        {
+          "X-RateLimit-Limit": "1000",
+          "X-RateLimit-Remaining": "999",
+          "X-RateLimit-Reset": "1640995200",
+        },
+      );
+    } catch (_error) {
+      return c.error(
+        {
+          error: "unauthorized",
+          message: "Missing or invalid headers",
+        },
+        401,
+      );
+    }
+  },
+);
 ```
 
 ### Multiple Response Types
