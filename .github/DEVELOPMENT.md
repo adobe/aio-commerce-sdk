@@ -361,9 +361,6 @@ This tells bundlers that only the specified files have side effects, while all o
 
 As explained in the [Overview](#overview) section, the [`@adobe/aio-commerce-sdk`](../packages/aio-commerce-sdk) package re-exports certain libraries for convenience. If you want your package to be part of the SDK, you need to make sure that your library is properly re-exported by the package.
 
-> [!IMPORTANT]
-> Since the `aio-commerce-sdk` combines multiple packages, dependencies **should be installed normally** without the `workspace:` protocol. Using workspace references would complicate version management significantly and cause the SDK to always depend on the local development version rather than published releases. With standard dependencies, releasing a new version of your package allows you to simply update the corresponding version in the SDK.
-
 Assuming you want the SDK to re-export the [`@adobe/aio-commerce-lib-auth`](../packages/aio-commerce-lib-auth) package:
 
 1. Add it as a `dependency` to the [`@adobe/aio-commerce-sdk`](../packages/aio-commerce-sdk) package.
