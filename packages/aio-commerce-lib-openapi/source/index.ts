@@ -103,8 +103,7 @@ export function openapi<
   const routeHandler = createRoute(route);
 
   return async (params: InputRequest) => {
-    const spec = await routeHandler(params);
-    return handler(spec);
+    return await handler(routeHandler(params));
   };
 }
 
