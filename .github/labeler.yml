@@ -35,3 +35,11 @@
 "cfg: vitest":
 - changed-files:
   - any-glob-to-any-file: configs/vitest/**
+
+"with-changeset":
+- changed-files:
+  - any-glob-to-any-file: .changeset/**
+
+"without-changeset":
+- changed-files:
+  - any-glob-to-any-file: !.changeset/**
