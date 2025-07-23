@@ -28,6 +28,10 @@
     "check:ci": {
       "dependsOn": ["transit"]
     },
+    "docs": {
+      "dependsOn": ["transit"],
+      "outputs": ["docs/**"]
+    },
     "format:check": {
       "dependsOn": ["transit"]
     },
