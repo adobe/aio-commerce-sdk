@@ -416,9 +416,10 @@ This interactive command will:
 >
 > Not all PRs may require a version bump (a changeset file), for example, you may only want to change an internal package or fix some typos. These kind of changes should not require a version bump. Stick to the [semantic versioning rules](#semantic-versioning).
 
-After that, a new file is generated in the `.changeset` folder at the repository root. You will notice the file has a random name, but it's not important. You can change it if you want, but it will not make a difference, Changeset files are identified by the content of the file
+After that, a new file is generated in the `.changeset` folder at the repository root. You will notice the file has a random name. You can change it if you want, but it will not make a difference. Changeset files are identified by the content of the file.
 
 1. **Commit this file** alongside your code changes in the PR.
+   1. If you already created a Changeset file, you can just modify it and commit it again.
 
 > [!NOTE]
 > A Changesets bot is configured to warn on PRs that modify packages but don't include a changeset file. If you know your PR doesn't require a version bump at all (e.g. internal changes), ignore the warning.
