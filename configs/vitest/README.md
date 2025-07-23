@@ -32,32 +32,38 @@ In your package's `vitest.config.ts`:
 
 ```typescript
 import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config";
-import { mergeConfig } from "vitest/config";
+import { defineConfig, mergeConfig } from "vitest/config";
 
-export default mergeConfig(baseConfig, {
-  // Write your Vitest configuration here.
-});
+export default mergeConfig(
+  baseConfig,
+  defineConfig({
+    // Write your Vitest configuration here.
+  }),
+);
 ```
 
 ### Adding Custom Test Configuration
 
 ```typescript
 import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config";
-import { mergeConfig } from "vitest/config";
+import { defineConfig, mergeConfig } from "vitest/config";
 
-export default mergeConfig(baseConfig, {
-  test: {
-    // Add setup files
-    setupFiles: ["./test/setup.ts"],
+export default mergeConfig(
+  baseConfig,
+  defineConfig({
+    test: {
+      // Add setup files
+      setupFiles: ["./test/setup.ts"],
 
-    // Configure test timeout
-    testTimeout: 10000,
-    env: {
-      NODE_ENV: "test",
-      DEBUG: "false",
+      // Configure test timeout
+      testTimeout: 10000,
+      env: {
+        NODE_ENV: "test",
+        DEBUG: "false",
+      },
     },
-  },
-});
+  }),
+);
 ```
 
 ## Configuration Details
@@ -92,24 +98,27 @@ While the base configuration should work for most packages, you can override any
 
 ```typescript
 import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config";
-import { mergeConfig } from "vitest/config";
+import { defineConfig, mergeConfig } from "vitest/config";
 
-export default mergeConfig(baseConfig, {
-  test: {
-    // Increase coverage thresholds
-    coverage: {
-      thresholds: {
-        statements: 90,
-        branches: 90,
-        functions: 90,
-        lines: 90,
+export default mergeConfig(
+  baseConfig,
+  defineConfig({
+    test: {
+      // Increase coverage thresholds
+      coverage: {
+        thresholds: {
+          statements: 90,
+          branches: 90,
+          functions: 90,
+          lines: 90,
+        },
       },
-    },
 
-    // Add custom reporters
-    reporters: ["default", "html"],
-  },
-});
+      // Add custom reporters
+      reporters: ["default", "html"],
+    },
+  }),
+);
 ```
 
 ## Best Practices
