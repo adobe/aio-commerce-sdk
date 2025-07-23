@@ -164,6 +164,129 @@ describe("aio-commerce-lib-openapi", () => {
     });
   });
 
+  describe("validateHeaders", () => {
+    it("should validate headers successfully when valid data is provided", async () => {
+      const route = createRoute({
+        path: "/api/data",
+        method: "GET",
+        request: {
+          headers: v.object({
+            authorization: v.string(),
+            "x-api-key": v.string(),
+          }),
+        },
+        responses: {
+          200: createResponseSchema(
+            v.object({
+              data: v.string(),
+            }),
+          ),
+        },
+      });
+
+      const handler = route({
+        authorization: "Bearer token123",
+        "x-api-key": "secret-key",
+      });
+      const headers = await handler.validateHeaders();
+
+      expect(headers).toEqual({
+        authorization: "Bearer token123",
+        "x-api-key": "secret-key",
+      });
+    });
+
+    it("should throw an error when headers are invalid", async () => {
+      const route = createRoute({
+        path: "/api/data",
+        method: "GET",
+        request: {
+          headers: v.object({
+            authorization: v.string(),
+            "x-api-key": v.string(),
+          }),
+        },
+        responses: {
+          200: createResponseSchema(
+            v.object({
+              data: v.string(),
+            }),
+          ),
+        },
+      });
+
+      const handler = route({
+        authorization: "Bearer token123",
+        // missing x-api-key
+      });
+      await expect(handler.validateHeaders()).rejects.toThrow(
+        "Invalid parameters for route /api/data",
+      );
+    });
+
+    it("should throw an error when no headers schema is defined", async () => {
+      const route = createRoute({
+        path: "/api/data",
+        method: "GET",
+        request: {},
+        responses: {
+          200: createResponseSchema(
+            v.object({
+              data: v.string(),
+            }),
+          ),
+        },
+      });
+
+      const handler = route({});
+      await expect(handler.validateHeaders()).rejects.toThrow(
+        "No params schema defined for route /api/data",
+      );
+    });
+
+    it("should validate complex header schemas", async () => {
+      const route = createRoute({
+        path: "/api/secure",
+        method: "POST",
+        request: {
+          headers: v.object({
+            authorization: v.pipe(v.string(), v.startsWith("Bearer ")),
+            "content-type": v.literal("application/json"),
+            "x-request-id": v.pipe(v.string(), v.uuid()),
+            "x-api-version": v.optional(v.string()),
+          }),
+        },
+        responses: {
+          200: createResponseSchema(
+            v.object({
+              success: v.boolean(),
+            }),
+          ),
+        },
+      });
+
+      const validHeaders = {
+        authorization: "Bearer valid-token",
+        "content-type": "application/json",
+        "x-request-id": "550e8400-e29b-41d4-a716-446655440000",
+        "x-api-version": "v2",
+      };
+
+      const handler = route(validHeaders);
+      const headers = await handler.validateHeaders();
+
+      expect(headers).toEqual(validHeaders);
+
+      // Test with invalid authorization format
+      const invalidHandler = route({
+        authorization: "Invalid format",
+        "content-type": "application/json",
+        "x-request-id": "550e8400-e29b-41d4-a716-446655440000",
+      });
+      await expect(invalidHandler.validateHeaders()).rejects.toThrow();
+    });
+  });
+
   describe("json", () => {
     it("should return expected response bodies for different status codes", async () => {
       const route = createRoute({
@@ -972,6 +1095,127 @@ describe("aio-commerce-lib-openapi", () => {
           body: {
             error: "invalid_state",
             message: "Cannot cancel order in shipped state",
+          },
+        },
+      });
+    });
+
+    it("should validate headers in openapi handler", async () => {
+      const routeDefinition = {
+        path: "/api/protected",
+        method: "GET" as const,
+        request: {
+          headers: v.object({
+            authorization: v.pipe(v.string(), v.startsWith("Bearer ")),
+            "x-api-key": v.string(),
+            "x-request-id": v.optional(v.string()),
+          }),
+        },
+        responses: {
+          200: createResponseSchema(
+            v.object({
+              data: v.string(),
+              requestId: v.optional(v.string()),
+            }),
+          ),
+          401: createResponseSchema(
+            v.object({
+              error: v.literal("unauthorized"),
+              message: v.string(),
+            }),
+          ),
+        },
+      };
+
+      const handler = openapi(routeDefinition, async (c) => {
+        try {
+          const headers = await c.validateHeaders();
+
+          // Verify authorization token
+          if (headers.authorization !== "Bearer valid-token") {
+            return c.error(
+              {
+                error: "unauthorized",
+                message: "Invalid authorization token",
+              },
+              401,
+            );
+          }
+
+          // Return success with optional request ID if provided
+          return c.json(
+            {
+              data: "Protected resource data",
+              requestId: headers["x-request-id"],
+            },
+            200,
+          );
+        } catch (_error) {
+          return c.error(
+            {
+              error: "unauthorized",
+              message: "Missing or invalid headers",
+            },
+            401,
+          );
+        }
+      });
+
+      // Test with valid headers
+      const successResult = await handler({
+        authorization: "Bearer valid-token",
+        "x-api-key": "test-api-key",
+        "x-request-id": "req-123",
+      });
+      expect(successResult).toEqual({
+        statusCode: 200,
+        body: {
+          data: "Protected resource data",
+          requestId: "req-123",
+        },
+      });
+
+      // Test with invalid authorization
+      const invalidAuthResult = await handler({
+        authorization: "Bearer invalid-token",
+        "x-api-key": "test-api-key",
+      });
+      expect(invalidAuthResult).toEqual({
+        error: {
+          statusCode: 401,
+          body: {
+            error: "unauthorized",
+            message: "Invalid authorization token",
+          },
+        },
+      });
+
+      // Test with missing required headers
+      const missingHeadersResult = await handler({
+        authorization: "Bearer valid-token",
+        // missing x-api-key
+      });
+      expect(missingHeadersResult).toEqual({
+        error: {
+          statusCode: 401,
+          body: {
+            error: "unauthorized",
+            message: "Missing or invalid headers",
+          },
+        },
+      });
+
+      // Test with malformed authorization header
+      const malformedAuthResult = await handler({
+        authorization: "InvalidFormat token",
+        "x-api-key": "test-api-key",
+      });
+      expect(malformedAuthResult).toEqual({
+        error: {
+          statusCode: 401,
+          body: {
+            error: "unauthorized",
+            message: "Missing or invalid headers",
           },
         },
       });
