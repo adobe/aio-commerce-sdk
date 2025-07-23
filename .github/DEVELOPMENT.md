@@ -429,13 +429,13 @@ After that, a new file is generated in the `.changeset` folder at the repository
 Version management is automated by the tool. Once your PR is merged to `main`, the following happens:
 
 1. A GitHub Action detects pending changesets
-2. It creates (or updates) a "Version Packages" PR that consolidates all pending version bumps
+2. It creates (or updates) a `[CI] Release Packages` PR that consolidates all pending version bumps
    1. You'll see it bumps the `version` fields in all the affected packages
    2. This PR accumulates changes from multiple merged PRs until you're ready to release
 
 #### Publishing the package
 
-When you decide to release (publish to NPM) the packages, **merge the "Version Packages" PR**.
+When you decide to release (publish to NPM) the packages, **merge the** `[CI] Release Packages` **PR**.
 
 - Package versions updates are merged to `main`
 - Changelogs are generated from the changeset descriptions
