@@ -102,27 +102,29 @@ interface OpenApiSpecHandler<
       InferOutputResponseHeaderObjectWithStatus<TResponse, TStatus>
     >
   >;
-  validateBody: () => Promise<
-    TRequestSchema["body"] extends { schema: MaybeAsyncGenericSchema }
-      ? InferOutput<TRequestSchema["body"]["schema"]>
-      : never
-  >;
+  validateBody: () => Promise<RequestBodyOutput<TRequestSchema>>;
   validateParams: () => Promise<
-    TRequestSchema["params"] extends MaybeAsyncGenericSchema
-      ? InferOutput<TRequestSchema["params"]>
-      : never
+    RequestValidatorOutput<TRequestSchema, "params">
   >;
   validateHeaders: () => Promise<
-    TRequestSchema["headers"] extends MaybeAsyncGenericSchema
-      ? InferOutput<TRequestSchema["headers"]>
-      : never
+    RequestValidatorOutput<TRequestSchema, "headers">
   >;
-  validateQuery: () => Promise<
-    TRequestSchema["query"] extends MaybeAsyncGenericSchema
-      ? InferOutput<TRequestSchema["query"]>
-      : never
-  >;
+  validateQuery: () => Promise<RequestValidatorOutput<TRequestSchema, "query">>;
 }
+
+type RequestBodyOutput<TRequest extends OpenApiRequest> =
+  TRequest["body"] extends {
+    schema: infer TSchema extends MaybeAsyncGenericSchema;
+  }
+    ? InferOutput<TSchema>
+    : never;
+
+type RequestValidatorOutput<
+  TRequest extends OpenApiRequest,
+  TField extends "params" | "headers" | "query",
+> = TRequest[TField] extends MaybeAsyncGenericSchema
+  ? InferOutput<TRequest[TField]>
+  : never;
 
 type InferInputResponseSchema<TResponse extends OpenApiResponses> = InferInput<
   TResponse[keyof TResponse]["schema"]
@@ -358,6 +360,7 @@ export function createRoute<
         >;
       },
       async validateBody() {
+        // TODO: This should be inferred
         if (!bodyParser) {
           throw new Error(`No body schema defined for route ${route.path}`);
         }
@@ -371,11 +374,7 @@ export function createRoute<
           );
         }
 
-        return validationResult.output as TRequest["body"] extends {
-          schema: MaybeAsyncGenericSchema;
-        }
-          ? InferOutput<TRequest["body"]["schema"]>
-          : never;
+        return validationResult.output as RequestBodyOutput<TRequest>;
       },
       validateHeaders: () =>
         validateRequestInput(
