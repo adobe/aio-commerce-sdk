@@ -154,7 +154,7 @@ Creates a type-safe route handler with automatic validation. Use this when you n
 - `request` (object): Request schemas
   - `body?`: Request body schema
   - `params?`: URL parameters schema
-  - `query?`: Query parameters schema (coming soon)
+  - `query?`: Query parameters schema
   - `headers?`: Headers schema
 - `responses` (object): Response schemas keyed by status code. Each response can be created using `createResponseSchema(bodySchema, headersSchema?)` or as an object with `{schema: bodySchema, headers?: headersSchema}`
 
@@ -243,6 +243,42 @@ const handler = await protectedRoute({
 });
 const headers = await handler.validateHeaders();
 // headers is typed as { authorization: string, "x-api-key": string }
+```
+
+#### `validateQuery()`
+
+Validates query parameters against the defined schema.
+
+```typescript
+const searchRoute = createRoute({
+  path: "/api/search",
+  method: "GET",
+  request: {
+    query: v.object({
+      q: v.string(),
+      limit: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
+      offset: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
+      category: v.optional(v.string()),
+    }),
+  },
+  responses: {
+    200: createResponseSchema(
+      v.object({
+        results: v.array(v.string()),
+        total: v.number(),
+      }),
+    ),
+  },
+});
+
+const handler = await searchRoute({
+  q: "search term",
+  limit: 10,
+  offset: 0,
+  category: "electronics",
+});
+const query = await handler.validateQuery();
+// query is typed as { q: string, limit?: number, offset?: number, category?: string }
 ```
 
 #### `json(data, status?, headers?)`
@@ -486,6 +522,114 @@ const protectedApiHandler = openapi(
     }
   },
 );
+```
+
+### Query Parameters Example
+
+Query parameters can be validated for search, filtering, and pagination functionality.
+
+```typescript
+const searchApiHandler = openapi(
+  {
+    path: "/api/products/search",
+    method: "GET",
+    request: {
+      query: v.object({
+        q: v.string(),
+        category: v.optional(v.string()),
+        minPrice: v.optional(v.pipe(v.string(), v.transform(Number))),
+        maxPrice: v.optional(v.pipe(v.string(), v.transform(Number))),
+        limit: v.optional(
+          v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100)),
+        ),
+        offset: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
+        sortBy: v.optional(v.picklist(["name", "price", "date"])),
+        sortOrder: v.optional(v.picklist(["asc", "desc"])),
+      }),
+    },
+    responses: {
+      200: createResponseSchema(
+        v.object({
+          results: v.array(
+            v.object({
+              id: v.string(),
+              name: v.string(),
+              price: v.number(),
+              category: v.string(),
+            }),
+          ),
+          total: v.number(),
+          pagination: v.object({
+            limit: v.number(),
+            offset: v.number(),
+            hasMore: v.boolean(),
+          }),
+        }),
+      ),
+      400: createResponseSchema(
+        v.object({
+          error: v.literal("invalid_query"),
+          message: v.string(),
+        }),
+      ),
+    },
+  },
+  async (c) => {
+    try {
+      // Validate query parameters
+      const query = await c.validateQuery();
+
+      // Apply defaults
+      const limit = query.limit || 20;
+      const offset = query.offset || 0;
+      const sortBy = query.sortBy || "name";
+      const sortOrder = query.sortOrder || "asc";
+
+      // Build search filters
+      const filters = {
+        searchTerm: query.q,
+        category: query.category,
+        priceRange: {
+          min: query.minPrice,
+          max: query.maxPrice,
+        },
+      };
+
+      // Execute search with validation-processed parameters
+      const searchResults = await searchProducts(filters, {
+        limit,
+        offset,
+        sortBy,
+        sortOrder,
+      });
+
+      return c.json(
+        {
+          results: searchResults.items,
+          total: searchResults.totalCount,
+          pagination: {
+            limit,
+            offset,
+            hasMore: offset + limit < searchResults.totalCount,
+          },
+        },
+        200,
+      );
+    } catch (_error) {
+      return c.error(
+        {
+          error: "invalid_query",
+          message: "Invalid search parameters",
+        },
+        400,
+      );
+    }
+  },
+);
+
+// Usage examples:
+// GET /api/products/search?q=laptop&category=electronics&limit=10
+// GET /api/products/search?q=phone&minPrice=100&maxPrice=500&sortBy=price&sortOrder=asc
 ```
 
 ### Multiple Response Types
