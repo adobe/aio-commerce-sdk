@@ -7,25 +7,30 @@ import {
   safeParseAsync,
   safeParserAsync,
 } from "valibot";
+import type {
+  ClientErrorStatusCode,
+  ServerErrorStatusCode,
+  SuccessStatusCode,
+} from "~/http";
 
 type InputRequest = Record<PropertyKey, unknown>;
-type MaybeAsyncGenericSchema = GenericSchema | GenericSchemaAsync;
-type OpenApiRequestBody = {
+export type MaybeAsyncGenericSchema = GenericSchema | GenericSchemaAsync;
+export type OpenApiRequestBody = {
   schema: MaybeAsyncGenericSchema;
 };
 
-type OpenApiRequest = {
+export type OpenApiRequest = {
   body?: OpenApiRequestBody;
   query?: MaybeAsyncGenericSchema;
   params?: MaybeAsyncGenericSchema;
   headers?: MaybeAsyncGenericSchema;
 };
 
-type OpenApiResponse = {
+export type OpenApiResponse = {
   headers?: MaybeAsyncGenericSchema;
   schema: MaybeAsyncGenericSchema;
 };
-type OpenApiResponses = Record<PropertyKey, OpenApiResponse>;
+export type OpenApiResponses = Record<PropertyKey, OpenApiResponse>;
 
 export interface Route<
   TRequestSchema extends OpenApiRequest,
@@ -49,37 +54,45 @@ export const ResponseType = {
   Success: "success",
 } as const;
 
-export type ResponseType = (typeof ResponseType)[keyof typeof ResponseType];
+export type AioOpenApiResponse<
+  TType extends keyof typeof ResponseType,
+  TBody,
+  THeaders = undefined,
+> = TType extends "Error"
+  ? {
+      type: typeof ResponseType.Error;
+      error: {
+        statusCode: number;
+        body: TBody;
+      };
+    }
+  : {
+      type: typeof ResponseType.Success;
+      headers?: THeaders;
+      statusCode: number;
+      body: TBody;
+    };
 
-type AioOpenApiErrorResponse<
-  TBody extends InferOutput<MaybeAsyncGenericSchema>,
-> = {
-  type: typeof ResponseType.Error;
-  error: {
-    statusCode: number;
-    body: TBody;
-  };
-};
+export type AioOpenApiErrorResponse<TBody> = AioOpenApiResponse<"Error", TBody>;
 
-type AioOpenApiSuccessResponse<
-  TBody extends InferOutput<MaybeAsyncGenericSchema>,
-  THeaders extends InferOutput<MaybeAsyncGenericSchema> | undefined = undefined,
-> = {
-  type: typeof ResponseType.Success;
-  headers?: THeaders;
-  statusCode: number;
-  body: TBody;
-};
+export type AioOpenApiSuccessResponse<
+  TBody,
+  THeaders = undefined,
+> = AioOpenApiResponse<"Success", TBody, THeaders>;
 
 interface OpenApiSpecHandler<
   TRequestSchema extends OpenApiRequest,
   TResponse extends OpenApiResponses,
 > {
-  error: <TStatus extends keyof TResponse>(
+  error: <TStatus extends ErrorResponseKeys<TResponse>>(
     data: InferInputResponseSchema<TResponse>,
     status?: TStatus,
-  ) => Promise<AioOpenApiErrorResponse<InferOutputResponseSchema<TResponse>>>;
-  json: <TStatus extends keyof TResponse>(
+  ) => Promise<
+    AioOpenApiErrorResponse<
+      InferOutputResponseSchemaWithStatus<TResponse, TStatus>
+    >
+  >;
+  json: <TStatus extends SuccessResponseKeys<TResponse>>(
     data: InferInputResponseSchemaWithStatus<TResponse, TStatus>,
     status?: TStatus,
     headers?: InferInputResponseHeaderByStatus<TResponse, TStatus>,
@@ -124,6 +137,7 @@ export type InferInputResponseHeaderByStatus<
 
 type InferOutputResponseSchema<TResponse extends OpenApiResponses> =
   InferOutput<TResponse[keyof TResponse]["schema"]>;
+
 type InferOutputResponseHeaderObject<TResponse extends OpenApiResponses> =
   TResponse[keyof TResponse]["headers"] extends MaybeAsyncGenericSchema
     ? InferOutput<TResponse[keyof TResponse]["headers"]>
@@ -131,18 +145,30 @@ type InferOutputResponseHeaderObject<TResponse extends OpenApiResponses> =
 
 type InferInputResponseSchemaWithStatus<
   TResponse extends OpenApiResponses,
-  TStatus extends keyof TResponse,
+  TStatus extends SuccessResponseKeys<TResponse>,
 > = InferInput<TResponse[TStatus]["schema"]>;
+
 type InferOutputResponseSchemaWithStatus<
   TResponse extends OpenApiResponses,
   TStatus extends keyof TResponse,
 > = InferOutput<TResponse[TStatus]["schema"]>;
+
 type InferOutputResponseHeaderObjectWithStatus<
   TResponse extends OpenApiResponses,
-  TStatus extends keyof TResponse,
+  TStatus extends SuccessResponseKeys<TResponse>,
 > = TResponse[TStatus]["headers"] extends MaybeAsyncGenericSchema
   ? InferOutput<TResponse[TStatus]["headers"]>
   : undefined;
+
+type StatusCodeString<T extends number> = T | `${T}`;
+
+type AllErrorStatusCodes = ClientErrorStatusCode | ServerErrorStatusCode;
+
+export type SuccessResponseKeys<TResponse extends OpenApiResponses> =
+  keyof TResponse & StatusCodeString<SuccessStatusCode>;
+
+export type ErrorResponseKeys<TResponse extends OpenApiResponses> =
+  keyof TResponse & StatusCodeString<AllErrorStatusCodes>;
 
 export function openapi<
   TRequest extends OpenApiRequest,
@@ -175,34 +201,6 @@ function createRequestInputParser<
   }
 
   return safeParserAsync(schema) satisfies ReturnType<typeof safeParserAsync>;
-}
-
-export function isSuccessResponse<
-  TResponse extends OpenApiResponses,
-  TStatus extends keyof TResponse,
->(
-  status: TStatus,
-  response:
-    | AioOpenApiSuccessResponse<
-        InferOutputResponseSchemaWithStatus<TResponse, TStatus>,
-        InferOutputResponseHeaderObjectWithStatus<TResponse, TStatus>
-      >
-    | AioOpenApiErrorResponse<
-        InferOutputResponseSchemaWithStatus<TResponse, TStatus>
-      >
-    | AioOpenApiSuccessResponse<
-        InferOutputResponseSchema<TResponse>,
-        InferOutputResponseHeaderObject<TResponse>
-      >
-    | AioOpenApiErrorResponse<InferOutputResponseSchema<TResponse>>,
-): response is AioOpenApiSuccessResponse<
-  InferOutputResponseSchemaWithStatus<TResponse, TStatus>,
-  InferOutputResponseHeaderObjectWithStatus<TResponse, TStatus>
-> {
-  return (
-    response.type === ResponseType.Success &&
-    response.statusCode === Number(status)
-  );
 }
 
 async function validateRequestInput<
@@ -249,54 +247,31 @@ export function createRoute<
   const queryParser = createRequestInputParser(route.request, "query");
   const headersParser = createRequestInputParser(route.request, "headers");
 
-  const responseValidators: Record<
-    string,
-    {
-      bodyValidator: ReturnType<typeof safeParserAsync>;
-      headersValidator?: ReturnType<typeof safeParserAsync>;
-    }
-  > = {};
-  for (const [statusCode, responseSchema] of Object.entries(route.responses)) {
-    responseValidators[statusCode] = {
-      bodyValidator: safeParserAsync(responseSchema.schema),
-      headersValidator: responseSchema.headers
-        ? safeParserAsync(responseSchema.headers)
-        : undefined,
-    };
-  }
-
-  return (params: InputRequest) => {
+  return (requestInputParams: InputRequest) => {
     return {
-      async error<TStatus extends keyof TResponse>(
+      async error<TStatus extends ErrorResponseKeys<TResponse>>(
         data: InferInputResponseSchema<TResponse>,
         status: TStatus = "500" as TStatus,
       ) {
-        // if (!route.responses[String(status)]) {
-        //   throw new Error(
-        //     `No response schema defined for status ${String(status)} in route ${route.path}`,
-        //   );
-        // }
-
         const responseSpec = route.responses[String(status)];
-
-        if (responseSpec.headers) {
-          const responseHeadersParser =
-            responseValidators[String(status)].headersValidator;
-          if (!responseHeadersParser) {
-            throw new Error(
-              `No headers schema defined for status ${String(status)} in route ${route.path}`,
-            );
-          }
-          const headersValidationResult = await responseHeadersParser(params);
-          if (!headersValidationResult.success) {
-            throw new CommerceSdkValidationError(
-              `Invalid headers for route ${route.path} with status ${String(status)}`,
-              {
-                issues: headersValidationResult.issues,
-              },
-            );
-          }
+        if (!responseSpec) {
+          throw new Error(
+            `No response schema defined for status ${String(status)} in route ${route.path}`,
+          );
         }
+
+        // if (responseSpec.headers) {
+        //
+        //   const headersValidationResult = await safeParseAsync(responseSpec.headers, params);
+        //   if (!headersValidationResult.success) {
+        //     throw new CommerceSdkValidationError(
+        //       `Invalid headers for route ${route.path} with status ${String(status)}`,
+        //       {
+        //         issues: headersValidationResult.issues,
+        //       },
+        //     );
+        //   }
+        // }
 
         const validationResult = await safeParseAsync<
           TResponse[TStatus]["schema"]
@@ -317,29 +292,30 @@ export function createRoute<
             statusCode: Number(status),
             body: validationResult.output,
           },
-        } satisfies AioOpenApiErrorResponse<
-          InferOutputResponseSchema<TResponse>
-        >;
+        };
       },
-      async json<TStatus extends keyof TResponse>(
+      async json<TStatus extends SuccessResponseKeys<TResponse>>(
         data: InferInputResponseSchema<TResponse>,
         status: TStatus = "200" as TStatus,
         headers?: InferInputResponseHeaderByStatus<TResponse, TStatus>,
       ) {
-        const validator = responseValidators[String(status)];
-        if (!validator) {
+        const responseSpec = route.responses[String(status)];
+
+        if (!responseSpec) {
           throw new Error(
-            `No response schema defined for status ${String(status)}`,
+            `No response schema defined for status ${String(status)} in route ${route.path}`,
           );
         }
 
-        // Validate body
-        const bodyValidationResult = await validator.bodyValidator(data);
-        if (!bodyValidationResult.success) {
+        const bodyValidatorResult = await safeParseAsync<
+          TResponse[TStatus]["schema"]
+        >(responseSpec.schema, data);
+
+        if (!bodyValidatorResult.success) {
           throw new CommerceSdkValidationError(
             `Invalid response for route ${route.path} with status ${String(status)}`,
             {
-              issues: bodyValidationResult.issues,
+              issues: bodyValidatorResult.issues,
             },
           );
         }
@@ -347,12 +323,14 @@ export function createRoute<
         const response = {
           type: ResponseType.Success,
           statusCode: Number(status),
-          body: bodyValidationResult.output satisfies InferOutputResponseSchema<TResponse>,
+          body: bodyValidatorResult.output satisfies InferOutputResponseSchema<TResponse>,
         };
 
-        if (headers !== undefined && validator.headersValidator) {
-          const headersValidationResult =
-            await validator.headersValidator(headers);
+        if (responseSpec.headers) {
+          const headersValidationResult = await safeParseAsync(
+            responseSpec.headers,
+            headers,
+          );
           if (!headersValidationResult.success) {
             throw new CommerceSdkValidationError(
               `Invalid headers for route ${route.path} with status ${String(status)}`,
@@ -361,10 +339,14 @@ export function createRoute<
               },
             );
           }
+
           return {
             ...response,
             headers:
-              headersValidationResult.output as InferOutputResponseHeaderObject<TResponse>,
+              headersValidationResult.output as InferOutputResponseHeaderObjectWithStatus<
+                TResponse,
+                TStatus
+              >,
           } satisfies AioOpenApiSuccessResponse<
             InferOutputResponseSchemaWithStatus<TResponse, TStatus>,
             InferOutputResponseHeaderObjectWithStatus<TResponse, TStatus>
@@ -379,7 +361,7 @@ export function createRoute<
         if (!bodyParser) {
           throw new Error(`No body schema defined for route ${route.path}`);
         }
-        const validationResult = await bodyParser(params);
+        const validationResult = await bodyParser(requestInputParams);
         if (!validationResult.success) {
           throw new CommerceSdkValidationError(
             `Invalid request body for route ${route.path}`,
@@ -396,11 +378,16 @@ export function createRoute<
           : never;
       },
       validateHeaders: () =>
-        validateRequestInput(headersParser, params, route, "headers"),
+        validateRequestInput(
+          headersParser,
+          requestInputParams,
+          route,
+          "headers",
+        ),
       validateParams: () =>
-        validateRequestInput(paramsParser, params, route, "params"),
+        validateRequestInput(paramsParser, requestInputParams, route, "params"),
       validateQuery: () =>
-        validateRequestInput(queryParser, params, route, "query"),
+        validateRequestInput(queryParser, requestInputParams, route, "query"),
     } satisfies OpenApiSpecHandler<TRequest, TResponse>;
   };
 }
