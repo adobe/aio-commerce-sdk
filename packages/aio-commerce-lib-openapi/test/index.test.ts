@@ -1,6 +1,11 @@
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
-import { createRoute, isSuccessResponse, openapi } from "~/index";
+import { createRoute, openapi } from "~/index";
+
+const omitType = <T extends Record<PropertyKey, unknown>>(response: T) => {
+  const { type: _type, ...rest } = response;
+  return rest;
+};
 
 describe("aio-commerce-lib-openapi", () => {
   it("should be defined", () => {
@@ -464,7 +469,7 @@ describe("aio-commerce-lib-openapi", () => {
         200,
       );
 
-      expect(successResponse).toEqual({
+      expect(omitType(successResponse)).toEqual({
         statusCode: 200,
         body: {
           id: "123",
@@ -475,7 +480,7 @@ describe("aio-commerce-lib-openapi", () => {
       });
 
       // Test 404 response
-      const errorResponse = await handler.json(
+      const errorResponse = await handler.error(
         {
           error: "not_found",
           message: "Stock item not found",
@@ -483,11 +488,13 @@ describe("aio-commerce-lib-openapi", () => {
         404,
       );
 
-      expect(errorResponse).toEqual({
-        statusCode: 404,
-        body: {
-          error: "not_found",
-          message: "Stock item not found",
+      expect(omitType(errorResponse)).toEqual({
+        error: {
+          statusCode: 404,
+          body: {
+            error: "not_found",
+            message: "Stock item not found",
+          },
         },
       });
     });
@@ -624,7 +631,7 @@ describe("aio-commerce-lib-openapi", () => {
       // Should default to status 200
       const response = await handler.json({ data: "test" });
 
-      expect(response).toEqual({
+      expect(omitType(response)).toEqual({
         statusCode: 200,
         body: {
           data: "test",
@@ -660,7 +667,7 @@ describe("aio-commerce-lib-openapi", () => {
         "X-Page": 1,
       });
 
-      expect(response).toEqual({
+      expect(omitType(response)).toEqual({
         statusCode: 200,
         body: {
           data: "test",
@@ -691,7 +698,7 @@ describe("aio-commerce-lib-openapi", () => {
       // Test without headers (should work fine)
       const response = await handler.json({ data: "test" }, 200);
 
-      expect(response).toEqual({
+      expect(omitType(response)).toEqual({
         statusCode: 200,
         body: {
           data: "test",
@@ -741,7 +748,7 @@ describe("aio-commerce-lib-openapi", () => {
         404,
       );
 
-      expect(notFoundResponse).toEqual({
+      expect(omitType(notFoundResponse)).toEqual({
         error: {
           statusCode: 404,
           body: {
@@ -761,7 +768,7 @@ describe("aio-commerce-lib-openapi", () => {
         500,
       );
 
-      expect(serverErrorResponse).toEqual({
+      expect(omitType(serverErrorResponse)).toEqual({
         error: {
           statusCode: 500,
           body: {
@@ -887,7 +894,7 @@ describe("aio-commerce-lib-openapi", () => {
         message: "Something went wrong",
       });
 
-      expect(response).toEqual({
+      expect(omitType(response)).toEqual({
         error: {
           statusCode: 500,
           body: {
@@ -942,7 +949,7 @@ describe("aio-commerce-lib-openapi", () => {
         422,
       );
 
-      expect(validationErrorResponse).toEqual({
+      expect(omitType(validationErrorResponse)).toEqual({
         error: {
           statusCode: 422,
           body: {
@@ -1018,7 +1025,7 @@ describe("aio-commerce-lib-openapi", () => {
 
       // Test successful response
       const successResult = await handler({ id: "123" });
-      expect(successResult).toEqual({
+      expect(omitType(successResult)).toEqual({
         statusCode: 200,
         body: {
           id: "123",
@@ -1029,7 +1036,7 @@ describe("aio-commerce-lib-openapi", () => {
 
       // Test error response
       const errorResult = await handler({ id: "999" });
-      expect(errorResult).toEqual({
+      expect(omitType(errorResult)).toEqual({
         error: {
           statusCode: 404,
           body: {
@@ -1096,7 +1103,7 @@ describe("aio-commerce-lib-openapi", () => {
         name: "New Product",
         price: 49.99,
       });
-      expect(successResult).toEqual({
+      expect(omitType(successResult)).toEqual({
         statusCode: 201,
         body: {
           id: "new-123",
@@ -1107,7 +1114,7 @@ describe("aio-commerce-lib-openapi", () => {
 
       // Test with invalid data
       const errorResult = await handler({ name: "Missing Price" });
-      expect(errorResult).toEqual({
+      expect(omitType(errorResult)).toEqual({
         error: {
           statusCode: 400,
           body: {
@@ -1214,7 +1221,7 @@ describe("aio-commerce-lib-openapi", () => {
         notifyCustomer: false,
       });
 
-      expect(notFoundResult).toEqual({
+      expect(omitType(notFoundResult)).toEqual({
         error: {
           statusCode: 404,
           body: {
@@ -1231,7 +1238,7 @@ describe("aio-commerce-lib-openapi", () => {
         notifyCustomer: false,
       });
 
-      expect(invalidStateResult).toEqual({
+      expect(omitType(invalidStateResult)).toEqual({
         error: {
           statusCode: 400,
           body: {
@@ -1310,7 +1317,7 @@ describe("aio-commerce-lib-openapi", () => {
         "x-request-id": "req-123",
       });
 
-      expect(successResult).toEqual({
+      expect(omitType(successResult)).toEqual({
         statusCode: 200,
         body: {
           data: "Protected resource data",
@@ -1323,7 +1330,7 @@ describe("aio-commerce-lib-openapi", () => {
         authorization: "Bearer invalid-token",
         "x-api-key": "test-api-key",
       });
-      expect(invalidAuthResult).toEqual({
+      expect(omitType(invalidAuthResult)).toEqual({
         error: {
           statusCode: 401,
           body: {
@@ -1338,7 +1345,7 @@ describe("aio-commerce-lib-openapi", () => {
         authorization: "Bearer valid-token",
         // missing x-api-key
       });
-      expect(missingHeadersResult).toEqual({
+      expect(omitType(missingHeadersResult)).toEqual({
         error: {
           statusCode: 401,
           body: {
@@ -1353,7 +1360,7 @@ describe("aio-commerce-lib-openapi", () => {
         authorization: "InvalidFormat token",
         "x-api-key": "test-api-key",
       });
-      expect(malformedAuthResult).toEqual({
+      expect(omitType(malformedAuthResult)).toEqual({
         error: {
           statusCode: 401,
           body: {
@@ -1398,7 +1405,7 @@ describe("aio-commerce-lib-openapi", () => {
           },
           400: {
             schema: v.object({
-              error: v.literal("invalid_query"),
+              error: v.string(),
               message: v.string(),
             }),
           },
@@ -1434,6 +1441,10 @@ describe("aio-commerce-lib-openapi", () => {
               query: query.q,
             },
             200,
+            {
+              "X-Total-Count": "100",
+              "X-Page": 1,
+            },
           );
         } catch (_error) {
           return c.error(
@@ -1454,7 +1465,7 @@ describe("aio-commerce-lib-openapi", () => {
         offset: 0,
       });
 
-      expect(successResult).toEqual({
+      expect(omitType(successResult)).toEqual({
         statusCode: 200,
         body: {
           results: [
@@ -1464,6 +1475,10 @@ describe("aio-commerce-lib-openapi", () => {
           total: 2,
           query: "test search",
         },
+        headers: {
+          "X-Page": 1,
+          "X-Total-Count": "100",
+        },
       });
 
       // Test with minimal query (only required parameter)
@@ -1471,10 +1486,20 @@ describe("aio-commerce-lib-openapi", () => {
         q: "minimal search",
       });
 
-      if (isSuccessResponse(200, minimalResult)) {
-        const _test = minimalResult.body.results;
+      if (
+        minimalResult.type === "success" &&
+        minimalResult.statusCode === 200
+      ) {
+        if (minimalResult.headers) {
+          const headers = minimalResult.headers;
+          const _header = headers["X-Total-Count"];
+        }
+
+        const test = minimalResult.body.results;
+        const _titles = test.map((item) => item.title);
       }
-      expect(minimalResult).toEqual({
+
+      expect(omitType(minimalResult)).toEqual({
         statusCode: 200,
         body: {
           results: [
@@ -1484,6 +1509,10 @@ describe("aio-commerce-lib-openapi", () => {
           total: 2,
           query: "minimal search",
         },
+        headers: {
+          "X-Page": 1,
+          "X-Total-Count": "100",
+        },
       });
 
       // Test with invalid limit (exceeds maximum)
@@ -1491,7 +1520,7 @@ describe("aio-commerce-lib-openapi", () => {
         q: "test",
         limit: 200,
       });
-      expect(invalidLimitResult).toEqual({
+      expect(omitType(invalidLimitResult)).toEqual({
         error: {
           statusCode: 400,
           body: {
@@ -1505,7 +1534,7 @@ describe("aio-commerce-lib-openapi", () => {
       const missingQueryResult = await handler({
         category: "electronics",
       });
-      expect(missingQueryResult).toEqual({
+      expect(omitType(missingQueryResult)).toEqual({
         error: {
           statusCode: 400,
           body: {
