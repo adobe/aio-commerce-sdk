@@ -264,4 +264,216 @@ describe("error", () => {
       },
     });
   });
+
+  it("should validate error response headers when provided", async () => {
+    const route = createRoute({
+      path: "/api/resources",
+      method: "GET",
+      request: {},
+      responses: {
+        429: {
+          schema: v.object({
+            error: v.literal("rate_limit_exceeded"),
+            message: v.string(),
+            retryAfter: v.number(),
+          }),
+          headers: v.object({
+            "X-RateLimit-Limit": v.string(),
+            "X-RateLimit-Remaining": v.string(),
+            "X-RateLimit-Reset": v.string(),
+            "Retry-After": v.optional(v.string()),
+          }),
+        },
+        500: {
+          schema: v.object({
+            error: v.literal("internal_error"),
+            message: v.string(),
+            requestId: v.string(),
+          }),
+          headers: v.object({
+            "X-Request-ID": v.string(),
+            "X-Error-Code": v.string(),
+          }),
+        },
+      },
+    });
+
+    const handler = route({});
+
+    // Test 429 rate limit error with headers
+    const rateLimitResponse = await handler.error(
+      {
+        error: "rate_limit_exceeded",
+        message: "Too many requests",
+        retryAfter: 60,
+      },
+      429,
+      {
+        "X-RateLimit-Limit": "100",
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Reset": "1640995200",
+        "Retry-After": "60",
+      },
+    );
+
+    expect(omitType(rateLimitResponse)).toEqual({
+      error: {
+        statusCode: 429,
+        body: {
+          error: "rate_limit_exceeded",
+          message: "Too many requests",
+          retryAfter: 60,
+        },
+        headers: {
+          "X-RateLimit-Limit": "100",
+          "X-RateLimit-Remaining": "0",
+          "X-RateLimit-Reset": "1640995200",
+          "Retry-After": "60",
+        },
+      },
+    });
+
+    // Test 500 internal error with headers
+    const internalErrorResponse = await handler.error(
+      {
+        error: "internal_error",
+        message: "Database connection failed",
+        requestId: "req-123",
+      },
+      500,
+      {
+        "X-Request-ID": "req-123",
+        "X-Error-Code": "DB_CONNECTION_FAILED",
+      },
+    );
+
+    expect(omitType(internalErrorResponse)).toEqual({
+      error: {
+        statusCode: 500,
+        body: {
+          error: "internal_error",
+          message: "Database connection failed",
+          requestId: "req-123",
+        },
+        headers: {
+          "X-Request-ID": "req-123",
+          "X-Error-Code": "DB_CONNECTION_FAILED",
+        },
+      },
+    });
+  });
+
+  it("should throw validation error for invalid error response headers", async () => {
+    const route = createRoute({
+      path: "/api/resources",
+      method: "POST",
+      request: {},
+      responses: {
+        400: {
+          schema: v.object({
+            error: v.literal("bad_request"),
+            message: v.string(),
+          }),
+          headers: v.object({
+            "X-Error-Code": v.string(),
+            "X-Validation-Count": v.number(),
+          }),
+        },
+      },
+    });
+
+    const handler = route({});
+
+    // Test with invalid header type
+    await expect(
+      handler.error(
+        {
+          error: "bad_request",
+          message: "Invalid request format",
+        },
+        400,
+        {
+          "X-Error-Code": "INVALID_FORMAT",
+          "X-Validation-Count": "not-a-number", // Should be number
+        } as unknown as Parameters<typeof handler.error>[2],
+      ),
+    ).rejects.toThrow(
+      "Invalid error headers for route /api/resources with status 400",
+    );
+
+    // Test with missing required header
+    await expect(
+      handler.error(
+        {
+          error: "bad_request",
+          message: "Invalid request format",
+        },
+        400,
+        {
+          "X-Error-Code": "INVALID_FORMAT",
+        } as unknown as Parameters<typeof handler.error>[2],
+      ),
+    ).rejects.toThrow(
+      "Invalid error headers for route /api/resources with status 400",
+    );
+  });
+
+  it("should work without headers when headers schema is not defined", async () => {
+    const route = createRoute({
+      path: "/api/simple",
+      method: "GET",
+      request: {},
+      responses: {
+        404: {
+          schema: v.object({
+            error: v.literal("not_found"),
+            message: v.string(),
+          }),
+          // No headers schema defined
+        },
+      },
+    });
+
+    const handler = route({});
+
+    // Should work without headers
+    const response = await handler.error(
+      {
+        error: "not_found",
+        message: "Resource not found",
+      },
+      404,
+    );
+
+    expect(omitType(response)).toEqual({
+      error: {
+        statusCode: 404,
+        body: {
+          error: "not_found",
+          message: "Resource not found",
+        },
+      },
+    });
+
+    const responseWithIgnoredHeaders = await handler.error(
+      {
+        error: "not_found",
+        message: "Resource not found",
+      },
+      404,
+      {
+        "X-Custom-Header": "ignored",
+      } as unknown as Parameters<typeof handler.error>[2],
+    );
+
+    expect(omitType(responseWithIgnoredHeaders)).toEqual({
+      error: {
+        statusCode: 404,
+        body: {
+          error: "not_found",
+          message: "Resource not found",
+        },
+      },
+    });
+  });
 });
