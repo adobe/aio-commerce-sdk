@@ -1,7 +1,6 @@
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 import { openapi } from "~/index";
-import { omitType } from "./test-utils";
 
 describe("openapi", () => {
   it("should create a handler function that uses the provided handler", async () => {
@@ -55,7 +54,7 @@ describe("openapi", () => {
 
     // Test successful response
     const successResult = await handler({ id: "123" });
-    expect(omitType(successResult)).toEqual({
+    expect(successResult).toEqual({
       statusCode: 200,
       body: {
         id: "123",
@@ -66,7 +65,7 @@ describe("openapi", () => {
 
     // Test error response
     const errorResult = await handler({ id: "999" });
-    expect(omitType(errorResult)).toEqual({
+    expect(errorResult).toEqual({
       error: {
         statusCode: 404,
         body: {
@@ -133,7 +132,7 @@ describe("openapi", () => {
       name: "New Product",
       price: 49.99,
     });
-    expect(omitType(successResult)).toEqual({
+    expect(successResult).toEqual({
       statusCode: 201,
       body: {
         id: "new-123",
@@ -144,7 +143,7 @@ describe("openapi", () => {
 
     // Test with invalid data
     const errorResult = await handler({ name: "Missing Price" });
-    expect(omitType(errorResult)).toEqual({
+    expect(errorResult).toEqual({
       error: {
         statusCode: 400,
         body: {
@@ -251,7 +250,7 @@ describe("openapi", () => {
       notifyCustomer: false,
     });
 
-    expect(omitType(notFoundResult)).toEqual({
+    expect(notFoundResult).toEqual({
       error: {
         statusCode: 404,
         body: {
@@ -268,7 +267,7 @@ describe("openapi", () => {
       notifyCustomer: false,
     });
 
-    expect(omitType(invalidStateResult)).toEqual({
+    expect(invalidStateResult).toEqual({
       error: {
         statusCode: 400,
         body: {
@@ -347,7 +346,7 @@ describe("openapi", () => {
       "x-request-id": "req-123",
     });
 
-    expect(omitType(successResult)).toEqual({
+    expect(successResult).toEqual({
       statusCode: 200,
       body: {
         data: "Protected resource data",
@@ -360,7 +359,7 @@ describe("openapi", () => {
       authorization: "Bearer invalid-token",
       "x-api-key": "test-api-key",
     });
-    expect(omitType(invalidAuthResult)).toEqual({
+    expect(invalidAuthResult).toEqual({
       error: {
         statusCode: 401,
         body: {
@@ -375,7 +374,7 @@ describe("openapi", () => {
       authorization: "Bearer valid-token",
       // missing x-api-key
     });
-    expect(omitType(missingHeadersResult)).toEqual({
+    expect(missingHeadersResult).toEqual({
       error: {
         statusCode: 401,
         body: {
@@ -390,7 +389,7 @@ describe("openapi", () => {
       authorization: "InvalidFormat token",
       "x-api-key": "test-api-key",
     });
-    expect(omitType(malformedAuthResult)).toEqual({
+    expect(malformedAuthResult).toEqual({
       error: {
         statusCode: 401,
         body: {
@@ -495,7 +494,7 @@ describe("openapi", () => {
       offset: 0,
     });
 
-    expect(omitType(successResult)).toEqual({
+    expect(successResult).toEqual({
       statusCode: 200,
       body: {
         results: [
@@ -516,7 +515,7 @@ describe("openapi", () => {
       q: "minimal search",
     });
 
-    expect(omitType(minimalResult)).toEqual({
+    expect(minimalResult).toEqual({
       statusCode: 200,
       body: {
         results: [
@@ -537,7 +536,7 @@ describe("openapi", () => {
       q: "test",
       limit: 200,
     });
-    expect(omitType(invalidLimitResult)).toEqual({
+    expect(invalidLimitResult).toEqual({
       error: {
         statusCode: 400,
         body: {
@@ -551,7 +550,7 @@ describe("openapi", () => {
     const missingQueryResult = await handler({
       category: "electronics",
     });
-    expect(omitType(missingQueryResult)).toEqual({
+    expect(missingQueryResult).toEqual({
       error: {
         statusCode: 400,
         body: {
