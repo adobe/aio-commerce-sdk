@@ -352,7 +352,6 @@ export function createRoute<
         >;
       },
       async validateBody() {
-        // TODO: This should be inferred
         if (!bodyParser) {
           throw new Error(`No body schema defined for route ${route.path}`);
         }
