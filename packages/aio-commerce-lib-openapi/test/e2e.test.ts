@@ -1,7 +1,6 @@
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 import { openapi } from "~/index";
-import { omitType } from "~~/test/test-utils";
 
 // Define regex patterns at module level for performance
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}T/;
@@ -123,7 +122,7 @@ describe("E2E: Adobe App Builder Runtime Action Simulation", () => {
         reason: "Restocking after shipment",
       });
 
-      expect(omitType(result)).toEqual({
+      expect(result).toEqual({
         statusCode: 200,
         body: {
           sku: "SKU-123",
@@ -192,7 +191,7 @@ describe("E2E: Adobe App Builder Runtime Action Simulation", () => {
         triggerError: "timeout",
       });
 
-      expect(omitType(timeoutResult)).toEqual({
+      expect(timeoutResult).toEqual({
         error: {
           statusCode: 500,
           body: {
@@ -207,7 +206,7 @@ describe("E2E: Adobe App Builder Runtime Action Simulation", () => {
         triggerError: "database",
       });
 
-      expect(omitType(databaseResult)).toEqual({
+      expect(databaseResult).toEqual({
         error: {
           statusCode: 500,
           body: {

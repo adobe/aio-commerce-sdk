@@ -1,7 +1,6 @@
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 import { createRoute } from "~/index";
-import { omitType } from "./test-utils";
 
 describe("error", () => {
   it("should return expected error response bodies for different status codes", async () => {
@@ -41,7 +40,7 @@ describe("error", () => {
       404,
     );
 
-    expect(omitType(notFoundResponse)).toEqual({
+    expect(notFoundResponse).toEqual({
       error: {
         statusCode: 404,
         body: {
@@ -61,7 +60,7 @@ describe("error", () => {
       500,
     );
 
-    expect(omitType(serverErrorResponse)).toEqual({
+    expect(serverErrorResponse).toEqual({
       error: {
         statusCode: 500,
         body: {
@@ -187,7 +186,7 @@ describe("error", () => {
       message: "Something went wrong",
     });
 
-    expect(omitType(response)).toEqual({
+    expect(response).toEqual({
       error: {
         statusCode: 500,
         body: {
@@ -242,7 +241,7 @@ describe("error", () => {
       422,
     );
 
-    expect(omitType(validationErrorResponse)).toEqual({
+    expect(validationErrorResponse).toEqual({
       error: {
         statusCode: 422,
         body: {
@@ -316,7 +315,7 @@ describe("error", () => {
       },
     );
 
-    expect(omitType(rateLimitResponse)).toEqual({
+    expect(rateLimitResponse).toEqual({
       error: {
         statusCode: 429,
         body: {
@@ -347,7 +346,7 @@ describe("error", () => {
       },
     );
 
-    expect(omitType(internalErrorResponse)).toEqual({
+    expect(internalErrorResponse).toEqual({
       error: {
         statusCode: 500,
         body: {
@@ -445,7 +444,7 @@ describe("error", () => {
       404,
     );
 
-    expect(omitType(response)).toEqual({
+    expect(response).toEqual({
       error: {
         statusCode: 404,
         body: {
@@ -466,7 +465,7 @@ describe("error", () => {
       } as unknown as Parameters<typeof handler.error>[2],
     );
 
-    expect(omitType(responseWithIgnoredHeaders)).toEqual({
+    expect(responseWithIgnoredHeaders).toEqual({
       error: {
         statusCode: 404,
         body: {
