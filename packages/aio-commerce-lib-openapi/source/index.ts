@@ -13,46 +13,14 @@ import type {
   SuccessStatusCode,
 } from "~/http";
 
-type InputRequest = Record<PropertyKey, unknown>;
-export type MaybeAsyncGenericSchema = GenericSchema | GenericSchemaAsync;
-export type OpenApiRequestBody = {
-  schema: MaybeAsyncGenericSchema;
-};
-
-export type OpenApiRequest = {
-  body?: OpenApiRequestBody;
-  query?: MaybeAsyncGenericSchema;
-  params?: MaybeAsyncGenericSchema;
-  headers?: MaybeAsyncGenericSchema;
-};
-
-export type OpenApiResponse = {
-  headers?: MaybeAsyncGenericSchema;
-  schema: MaybeAsyncGenericSchema;
-};
-export type OpenApiResponses = Record<PropertyKey, OpenApiResponse>;
-
-export interface Route<
-  TRequestSchema extends OpenApiRequest,
-  TResponseSchema extends OpenApiResponses,
-> {
-  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-  path: string;
-  request: TRequestSchema;
-  responses: TResponseSchema;
-}
-
-type OpenApiHandler<
-  TRequestSchema extends OpenApiRequest,
-  TResponseSchema extends OpenApiResponses,
-> = <TParams extends InputRequest>(
-  params: TParams,
-) => OpenApiSpecHandler<TRequestSchema, TResponseSchema>;
-
+// Constants
 export const ResponseType = {
   Error: "error",
   Success: "success",
 } as const;
+
+// Type aliases (alphabetically ordered)
+export type AioOpenApiErrorResponse<TBody> = AioOpenApiResponse<"Error", TBody>;
 
 export type AioOpenApiResponse<
   TType extends keyof typeof ResponseType,
@@ -73,13 +41,94 @@ export type AioOpenApiResponse<
       body: TBody;
     };
 
-export type AioOpenApiErrorResponse<TBody> = AioOpenApiResponse<"Error", TBody>;
-
 export type AioOpenApiSuccessResponse<
   TBody,
   THeaders = undefined,
 > = AioOpenApiResponse<"Success", TBody, THeaders>;
 
+type AllErrorStatusCodes = ClientErrorStatusCode | ServerErrorStatusCode;
+
+export type ErrorResponseKeys<TResponse extends OpenApiResponses> =
+  keyof TResponse & StatusCodeString<AllErrorStatusCodes>;
+
+export type InferInputResponseHeaderByStatus<
+  TResponse extends OpenApiResponses,
+  TStatus extends keyof TResponse,
+> = TResponse[TStatus]["headers"] extends MaybeAsyncGenericSchema
+  ? InferInput<TResponse[TStatus]["headers"]>
+  : undefined;
+
+type InferInputResponseSchema<TResponse extends OpenApiResponses> = InferInput<
+  TResponse[keyof TResponse]["schema"]
+>;
+
+type InferInputResponseSchemaWithStatus<
+  TResponse extends OpenApiResponses,
+  TStatus extends SuccessResponseKeys<TResponse>,
+> = InferInput<TResponse[TStatus]["schema"]>;
+
+type InferOutputResponseHeaderObjectWithStatus<
+  TResponse extends OpenApiResponses,
+  TStatus extends SuccessResponseKeys<TResponse>,
+> = TResponse[TStatus]["headers"] extends MaybeAsyncGenericSchema
+  ? InferOutput<TResponse[TStatus]["headers"]>
+  : undefined;
+
+type InferOutputResponseSchema<TResponse extends OpenApiResponses> =
+  InferOutput<TResponse[keyof TResponse]["schema"]>;
+
+type InferOutputResponseSchemaWithStatus<
+  TResponse extends OpenApiResponses,
+  TStatus extends keyof TResponse,
+> = InferOutput<TResponse[TStatus]["schema"]>;
+
+type InputRequest = Record<PropertyKey, unknown>;
+
+export type MaybeAsyncGenericSchema = GenericSchema | GenericSchemaAsync;
+
+export type OpenApiRequest = {
+  body?: OpenApiRequestBody;
+  query?: MaybeAsyncGenericSchema;
+  params?: MaybeAsyncGenericSchema;
+  headers?: MaybeAsyncGenericSchema;
+};
+
+export type OpenApiRequestBody = {
+  schema: MaybeAsyncGenericSchema;
+};
+
+export type OpenApiResponse = {
+  headers?: MaybeAsyncGenericSchema;
+  schema: MaybeAsyncGenericSchema;
+};
+
+export type OpenApiResponses = Record<PropertyKey, OpenApiResponse>;
+
+type RequestBodyOutput<TRequest extends OpenApiRequest> =
+  TRequest["body"] extends {
+    schema: infer TSchema extends MaybeAsyncGenericSchema;
+  }
+    ? InferOutput<TSchema>
+    : never;
+
+type RequestValidatorFunction<
+  TRequest extends OpenApiRequest,
+  TField extends "params" | "headers" | "query",
+> = () => Promise<RequestValidatorOutput<TRequest, TField>>;
+
+type RequestValidatorOutput<
+  TRequest extends OpenApiRequest,
+  TField extends "params" | "headers" | "query",
+> = TRequest[TField] extends MaybeAsyncGenericSchema
+  ? InferOutput<TRequest[TField]>
+  : never;
+
+type StatusCodeString<T extends number> = T | `${T}`;
+
+export type SuccessResponseKeys<TResponse extends OpenApiResponses> =
+  keyof TResponse & StatusCodeString<SuccessStatusCode>;
+
+// Interfaces (alphabetically ordered)
 interface OpenApiSpecHandler<
   TRequestSchema extends OpenApiRequest,
   TResponse extends OpenApiResponses,
@@ -103,74 +152,20 @@ interface OpenApiSpecHandler<
     >
   >;
   validateBody: () => Promise<RequestBodyOutput<TRequestSchema>>;
-  validateParams: () => Promise<
-    RequestValidatorOutput<TRequestSchema, "params">
-  >;
-  validateHeaders: () => Promise<
-    RequestValidatorOutput<TRequestSchema, "headers">
-  >;
-  validateQuery: () => Promise<RequestValidatorOutput<TRequestSchema, "query">>;
+  validateParams: RequestValidatorFunction<TRequestSchema, "params">;
+  validateHeaders: RequestValidatorFunction<TRequestSchema, "headers">;
+  validateQuery: RequestValidatorFunction<TRequestSchema, "query">;
 }
 
-type RequestBodyOutput<TRequest extends OpenApiRequest> =
-  TRequest["body"] extends {
-    schema: infer TSchema extends MaybeAsyncGenericSchema;
-  }
-    ? InferOutput<TSchema>
-    : never;
-
-type RequestValidatorOutput<
-  TRequest extends OpenApiRequest,
-  TField extends "params" | "headers" | "query",
-> = TRequest[TField] extends MaybeAsyncGenericSchema
-  ? InferOutput<TRequest[TField]>
-  : never;
-
-type InferInputResponseSchema<TResponse extends OpenApiResponses> = InferInput<
-  TResponse[keyof TResponse]["schema"]
->;
-
-export type InferInputResponseHeaderByStatus<
-  TResponse extends OpenApiResponses,
-  TStatus extends keyof TResponse,
-> = TResponse[TStatus]["headers"] extends MaybeAsyncGenericSchema
-  ? InferInput<TResponse[TStatus]["headers"]>
-  : undefined;
-
-type InferOutputResponseSchema<TResponse extends OpenApiResponses> =
-  InferOutput<TResponse[keyof TResponse]["schema"]>;
-
-type InferOutputResponseHeaderObject<TResponse extends OpenApiResponses> =
-  TResponse[keyof TResponse]["headers"] extends MaybeAsyncGenericSchema
-    ? InferOutput<TResponse[keyof TResponse]["headers"]>
-    : undefined;
-
-type InferInputResponseSchemaWithStatus<
-  TResponse extends OpenApiResponses,
-  TStatus extends SuccessResponseKeys<TResponse>,
-> = InferInput<TResponse[TStatus]["schema"]>;
-
-type InferOutputResponseSchemaWithStatus<
-  TResponse extends OpenApiResponses,
-  TStatus extends keyof TResponse,
-> = InferOutput<TResponse[TStatus]["schema"]>;
-
-type InferOutputResponseHeaderObjectWithStatus<
-  TResponse extends OpenApiResponses,
-  TStatus extends SuccessResponseKeys<TResponse>,
-> = TResponse[TStatus]["headers"] extends MaybeAsyncGenericSchema
-  ? InferOutput<TResponse[TStatus]["headers"]>
-  : undefined;
-
-type StatusCodeString<T extends number> = T | `${T}`;
-
-type AllErrorStatusCodes = ClientErrorStatusCode | ServerErrorStatusCode;
-
-export type SuccessResponseKeys<TResponse extends OpenApiResponses> =
-  keyof TResponse & StatusCodeString<SuccessStatusCode>;
-
-export type ErrorResponseKeys<TResponse extends OpenApiResponses> =
-  keyof TResponse & StatusCodeString<AllErrorStatusCodes>;
+export interface Route<
+  TRequestSchema extends OpenApiRequest,
+  TResponseSchema extends OpenApiResponses,
+> {
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+  path: string;
+  request: TRequestSchema;
+  responses: TResponseSchema;
+}
 
 export function openapi<
   TRequest extends OpenApiRequest,
@@ -179,75 +174,50 @@ export function openapi<
   route: Route<TRequest, TResponse>,
   handler: (
     spec: OpenApiSpecHandler<TRequest, TResponse>,
-  ) => Promise<
-    | AioOpenApiSuccessResponse<
-        InferOutputResponseSchema<TResponse>,
-        InferOutputResponseHeaderObject<TResponse>
-      >
-    | AioOpenApiErrorResponse<InferOutputResponseSchema<TResponse>>
-  >,
+  ) =>
+    | ReturnType<OpenApiSpecHandler<TRequest, TResponse>["json"]>
+    | ReturnType<OpenApiSpecHandler<TRequest, TResponse>["error"]>,
 ) {
   const routeHandler = createRoute(route);
 
   return (params: InputRequest) => handler(routeHandler(params));
 }
 
-function createRequestInputParser<
-  TRequestSchema extends OpenApiRequest,
-  TField extends "params" | "headers" | "query",
->(request: TRequestSchema, schemaType: TField) {
-  const schema = request[schemaType];
-
-  if (!schema) {
-    return;
-  }
-
-  return safeParserAsync(schema) satisfies ReturnType<typeof safeParserAsync>;
-}
-
 async function validateRequestInput<
   TRequestSchema extends OpenApiRequest,
-  TResponseSchema extends OpenApiResponses,
   TField extends "params" | "headers" | "query",
 >(
-  parser: ReturnType<typeof safeParserAsync> | undefined,
+  schema: TRequestSchema[TField],
   params: InputRequest,
-  route: Route<TRequestSchema, TResponseSchema>,
+  path: string,
   schemaType: TField,
-): Promise<
-  TRequestSchema[TField] extends MaybeAsyncGenericSchema
-    ? InferOutput<TRequestSchema[TField]>
-    : never
-> {
-  if (!parser) {
-    throw new Error(`No ${schemaType} schema defined for route ${route.path}`);
+): Promise<RequestValidatorOutput<TRequestSchema, TField>> {
+  if (!schema) {
+    throw new Error(`No ${schemaType} schema defined for route ${path}`);
   }
 
-  const validationResult = await parser(params);
+  const validationResult = await safeParseAsync(schema, params);
   if (!validationResult.success) {
     throw new CommerceSdkValidationError(
-      `Invalid ${schemaType} for route ${route.path}`,
+      `Invalid ${schemaType} for route ${path}`,
       {
         issues: validationResult.issues,
       },
     );
   }
 
-  return validationResult.output as TRequestSchema[TField] extends MaybeAsyncGenericSchema
-    ? InferOutput<TRequestSchema[TField]>
-    : never;
+  return validationResult.output as RequestValidatorOutput<
+    TRequestSchema,
+    TField
+  >;
 }
 
 export function createRoute<
   TRequest extends OpenApiRequest,
   TResponse extends OpenApiResponses,
->(route: Route<TRequest, TResponse>): OpenApiHandler<TRequest, TResponse> {
+>(route: Route<TRequest, TResponse>) {
   const bodySchema = route.request.body?.schema;
   const bodyParser = bodySchema ? safeParserAsync(bodySchema) : undefined;
-
-  const paramsParser = createRequestInputParser(route.request, "params");
-  const queryParser = createRequestInputParser(route.request, "query");
-  const headersParser = createRequestInputParser(route.request, "headers");
 
   return (requestInputParams: InputRequest) => {
     return {
@@ -262,18 +232,7 @@ export function createRoute<
           );
         }
 
-        // if (responseSpec.headers) {
-        //
-        //   const headersValidationResult = await safeParseAsync(responseSpec.headers, params);
-        //   if (!headersValidationResult.success) {
-        //     throw new CommerceSdkValidationError(
-        //       `Invalid headers for route ${route.path} with status ${String(status)}`,
-        //       {
-        //         issues: headersValidationResult.issues,
-        //       },
-        //     );
-        //   }
-        // }
+        // TODO: Support header validation for error responses
 
         const validationResult = await safeParseAsync<
           TResponse[TStatus]["schema"]
@@ -378,15 +337,25 @@ export function createRoute<
       },
       validateHeaders: () =>
         validateRequestInput(
-          headersParser,
+          route.request.headers,
           requestInputParams,
-          route,
+          route.path,
           "headers",
         ),
       validateParams: () =>
-        validateRequestInput(paramsParser, requestInputParams, route, "params"),
+        validateRequestInput(
+          route.request.params,
+          requestInputParams,
+          route.path,
+          "params",
+        ),
       validateQuery: () =>
-        validateRequestInput(queryParser, requestInputParams, route, "query"),
+        validateRequestInput(
+          route.request.query,
+          requestInputParams,
+          route.path,
+          "query",
+        ),
     } satisfies OpenApiSpecHandler<TRequest, TResponse>;
   };
 }
