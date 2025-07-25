@@ -20,7 +20,10 @@ export const ResponseType = {
 } as const;
 
 // Type aliases (alphabetically ordered)
-export type AioOpenApiErrorResponse<TBody> = AioOpenApiResponse<"Error", TBody>;
+export type AioOpenApiErrorResponse<
+  TBody,
+  THeaders = undefined,
+> = AioOpenApiResponse<"Error", TBody, THeaders>;
 
 export type AioOpenApiResponse<
   TType extends keyof typeof ResponseType,
@@ -32,6 +35,7 @@ export type AioOpenApiResponse<
       error: {
         statusCode: number;
         body: TBody;
+        headers?: THeaders;
       };
     }
   : {
@@ -75,6 +79,13 @@ type InferInputResponseSchemaWithStatus<
 type InferOutputResponseHeaderObjectWithStatus<
   TResponse extends OpenApiResponses,
   TStatus extends SuccessResponseKeys<TResponse>,
+> = TResponse[TStatus]["headers"] extends MaybeAsyncGenericSchema
+  ? InferOutput<TResponse[TStatus]["headers"]>
+  : undefined;
+
+type InferOutputErrorResponseHeaderObjectWithStatus<
+  TResponse extends OpenApiResponses,
+  TStatus extends ErrorResponseKeys<TResponse>,
 > = TResponse[TStatus]["headers"] extends MaybeAsyncGenericSchema
   ? InferOutput<TResponse[TStatus]["headers"]>
   : undefined;
@@ -141,9 +152,11 @@ interface OpenApiSpecHandler<
   error: <TStatus extends ErrorResponseKeys<TResponse>>(
     data: InferInputErrorResponseSchemaWithStatus<TResponse, TStatus>,
     status?: TStatus,
+    headers?: InferInputResponseHeaderByStatus<TResponse, TStatus>,
   ) => Promise<
     AioOpenApiErrorResponse<
-      InferOutputResponseSchemaWithStatus<TResponse, TStatus>
+      InferOutputResponseSchemaWithStatus<TResponse, TStatus>,
+      InferOutputErrorResponseHeaderObjectWithStatus<TResponse, TStatus>
     >
   >;
   json: <TStatus extends SuccessResponseKeys<TResponse>>(
@@ -228,8 +241,9 @@ export function createRoute<
   return (requestInputParams: InputRequest) => {
     return {
       async error<TStatus extends ErrorResponseKeys<TResponse>>(
-        data: InferInputResponseSchema<TResponse>,
+        data: InferInputErrorResponseSchemaWithStatus<TResponse, TStatus>,
         status: TStatus = "500" as TStatus,
+        headers?: InferInputResponseHeaderByStatus<TResponse, TStatus>,
       ) {
         const responseSpec = route.responses[String(status)];
         if (!responseSpec) {
@@ -237,8 +251,6 @@ export function createRoute<
             `No response schema defined for status ${String(status)} in route ${route.path}`,
           );
         }
-
-        // TODO: Support header validation for error responses
 
         const validationResult = await safeParseAsync<
           TResponse[TStatus]["schema"]
@@ -253,13 +265,47 @@ export function createRoute<
           );
         }
 
-        return {
+        const response = {
           type: ResponseType.Error,
           error: {
             statusCode: Number(status),
             body: validationResult.output,
           },
         };
+
+        if (responseSpec.headers) {
+          const headersValidationResult = await safeParseAsync(
+            responseSpec.headers,
+            headers,
+          );
+          if (!headersValidationResult.success) {
+            throw new CommerceSdkValidationError(
+              `Invalid error headers for route ${route.path} with status ${String(status)}`,
+              {
+                issues: headersValidationResult.issues,
+              },
+            );
+          }
+
+          return {
+            ...response,
+            error: {
+              ...response.error,
+              headers:
+                headersValidationResult.output as InferOutputErrorResponseHeaderObjectWithStatus<
+                  TResponse,
+                  TStatus
+                >,
+            },
+          } satisfies AioOpenApiErrorResponse<
+            InferOutputResponseSchemaWithStatus<TResponse, TStatus>,
+            InferOutputErrorResponseHeaderObjectWithStatus<TResponse, TStatus>
+          >;
+        }
+
+        return response satisfies AioOpenApiErrorResponse<
+          InferOutputResponseSchemaWithStatus<TResponse, TStatus>
+        >;
       },
       async json<TStatus extends SuccessResponseKeys<TResponse>>(
         data: InferInputResponseSchema<TResponse>,
