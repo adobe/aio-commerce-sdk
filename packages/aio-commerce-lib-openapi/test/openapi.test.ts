@@ -516,16 +516,6 @@ describe("openapi", () => {
       q: "minimal search",
     });
 
-    if (minimalResult.type === "success" && minimalResult.statusCode === 200) {
-      if (minimalResult.headers) {
-        const headers = minimalResult.headers;
-        const _header = headers["X-Total-Count"];
-      }
-
-      const test = minimalResult.body.results;
-      const _titles = test.map((item) => item.title);
-    }
-
     expect(omitType(minimalResult)).toEqual({
       statusCode: 200,
       body: {

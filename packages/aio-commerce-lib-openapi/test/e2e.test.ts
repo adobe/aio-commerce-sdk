@@ -7,38 +7,6 @@ import { omitType } from "~~/test/test-utils";
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}T/;
 const REQUEST_ID_REGEX = /^req-[a-z0-9]+$/;
 
-// Helper function to reduce cognitive complexity
-function handleErrorScenarios(
-  spec: {
-    json: (data: unknown, status: number) => unknown;
-    error: (data: unknown, status: number) => unknown;
-  },
-  body: { triggerError: string },
-) {
-  try {
-    // Simulate different error conditions
-    if (body.triggerError === "timeout") {
-      throw new Error("Service timeout");
-    }
-
-    if (body.triggerError === "database") {
-      throw new Error("Database connection failed");
-    }
-
-    return spec.json({ success: true }, 200);
-  } catch (error) {
-    // Adobe App Builder error handling pattern
-    return spec.error(
-      {
-        error: "internal_error",
-        message: error instanceof Error ? error.message : "Unknown error",
-        requestId: `req-${Math.random().toString(36).substring(7)}`,
-      },
-      500,
-    );
-  }
-}
-
 describe("E2E: Adobe App Builder Runtime Action Simulation", () => {
   describe("Adobe App Builder Integration Patterns", () => {
     it("should demonstrate typical App Builder action structure", async () => {
@@ -195,7 +163,28 @@ describe("E2E: Adobe App Builder Runtime Action Simulation", () => {
         async (spec) => {
           const body = await spec.validateBody();
 
-          return handleErrorScenarios(spec, body);
+          let errorMessage: string | null = null;
+
+          // Simulate different error conditions
+          if (body.triggerError === "timeout") {
+            errorMessage = "Service timeout";
+          } else if (body.triggerError === "database") {
+            errorMessage = "Database connection failed";
+          }
+
+          // Adobe App Builder error handling pattern
+          if (errorMessage) {
+            return spec.error(
+              {
+                error: "internal_error",
+                message: errorMessage,
+                requestId: `req-${Math.random().toString(36).substring(7)}`,
+              },
+              500,
+            );
+          }
+
+          return spec.json({ success: true }, 200);
         },
       );
 

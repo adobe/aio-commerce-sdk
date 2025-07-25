@@ -62,6 +62,11 @@ type InferInputResponseSchema<TResponse extends OpenApiResponses> = InferInput<
   TResponse[keyof TResponse]["schema"]
 >;
 
+type InferInputErrorResponseSchemaWithStatus<
+  TResponse extends OpenApiResponses,
+  TStatus extends ErrorResponseKeys<TResponse>,
+> = InferInput<TResponse[TStatus]["schema"]>;
+
 type InferInputResponseSchemaWithStatus<
   TResponse extends OpenApiResponses,
   TStatus extends SuccessResponseKeys<TResponse>,
@@ -134,7 +139,7 @@ interface OpenApiSpecHandler<
   TResponse extends OpenApiResponses,
 > {
   error: <TStatus extends ErrorResponseKeys<TResponse>>(
-    data: InferInputResponseSchema<TResponse>,
+    data: InferInputErrorResponseSchemaWithStatus<TResponse, TStatus>,
     status?: TStatus,
   ) => Promise<
     AioOpenApiErrorResponse<
@@ -174,9 +179,10 @@ export function openapi<
   route: Route<TRequest, TResponse>,
   handler: (
     spec: OpenApiSpecHandler<TRequest, TResponse>,
-  ) =>
-    | ReturnType<OpenApiSpecHandler<TRequest, TResponse>["json"]>
-    | ReturnType<OpenApiSpecHandler<TRequest, TResponse>["error"]>,
+  ) => Promise<
+    | Awaited<ReturnType<OpenApiSpecHandler<TRequest, TResponse>["json"]>>
+    | Awaited<ReturnType<OpenApiSpecHandler<TRequest, TResponse>["error"]>>
+  >,
 ) {
   const routeHandler = createRoute(route);
 
