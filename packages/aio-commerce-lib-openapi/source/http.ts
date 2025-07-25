@@ -1,3 +1,5 @@
+export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+
 export type SuccessStatusCode = 200 | 201 | 202 | 203 | 204 | 206 | 207 | 208;
 export type ClientErrorStatusCode =
   | 400

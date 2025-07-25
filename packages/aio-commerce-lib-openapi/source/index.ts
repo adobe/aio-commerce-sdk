@@ -9,6 +9,7 @@ import {
 } from "valibot";
 import type {
   ClientErrorStatusCode,
+  HttpMethod,
   ServerErrorStatusCode,
   SuccessStatusCode,
 } from "~/http";
@@ -179,7 +180,7 @@ export interface Route<
   TRequestSchema extends OpenApiRequest,
   TResponseSchema extends OpenApiResponses,
 > {
-  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+  method: HttpMethod;
   path: string;
   request: TRequestSchema;
   responses: TResponseSchema;
