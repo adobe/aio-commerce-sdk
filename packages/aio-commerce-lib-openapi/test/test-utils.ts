@@ -1,11 +1,10 @@
 /**
- * Helper function to omit the type property from response objects.
- * This is useful for testing as we don't want to compare the type
- * discriminator in our assertions.
+ * Helper function to return response objects as-is for testing.
+ * Previously used to omit the type property, but now that the type
+ * discriminator has been removed, this is a passthrough function.
  */
 export const omitType = <T extends Record<PropertyKey, unknown>>(
   response: T,
 ) => {
-  const { type: _type, ...rest } = response;
-  return rest;
+  return response;
 };

@@ -14,42 +14,24 @@ import type {
   SuccessStatusCode,
 } from "~/http";
 
-// Constants
-export const ResponseType = {
-  Error: "error",
-  Success: "success",
-} as const;
-
 // Type aliases (alphabetically ordered)
-export type AioOpenApiErrorResponse<
-  TBody,
-  THeaders = undefined,
-> = AioOpenApiResponse<"Error", TBody, THeaders>;
+export type AioOpenApiErrorResponse<TBody, THeaders = undefined> = {
+  error: {
+    statusCode: number;
+    body: TBody;
+    headers?: THeaders;
+  };
+};
 
-export type AioOpenApiResponse<
-  TType extends keyof typeof ResponseType,
-  TBody,
-  THeaders = undefined,
-> = TType extends "Error"
-  ? {
-      type: typeof ResponseType.Error;
-      error: {
-        statusCode: number;
-        body: TBody;
-        headers?: THeaders;
-      };
-    }
-  : {
-      type: typeof ResponseType.Success;
-      headers?: THeaders;
-      statusCode: number;
-      body: TBody;
-    };
+export type AioOpenApiSuccessResponse<TBody, THeaders = undefined> = {
+  statusCode: number;
+  body: TBody;
+  headers?: THeaders;
+};
 
-export type AioOpenApiSuccessResponse<
-  TBody,
-  THeaders = undefined,
-> = AioOpenApiResponse<"Success", TBody, THeaders>;
+export type AioOpenApiResponse<TBody, THeaders = undefined> =
+  | AioOpenApiSuccessResponse<TBody, THeaders>
+  | AioOpenApiErrorResponse<TBody, THeaders>;
 
 type AllErrorStatusCodes = ClientErrorStatusCode | ServerErrorStatusCode;
 
@@ -267,7 +249,6 @@ export function createRoute<
         }
 
         const response = {
-          type: ResponseType.Error,
           error: {
             statusCode: Number(status),
             body: validationResult.output,
@@ -335,7 +316,6 @@ export function createRoute<
         }
 
         const response = {
-          type: ResponseType.Success,
           statusCode: Number(status),
           body: bodyValidatorResult.output satisfies InferOutputResponseSchema<TResponse>,
         };

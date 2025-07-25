@@ -1,7 +1,6 @@
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 import { createRoute } from "~/index";
-import { omitType } from "./test-utils";
 
 describe("json", () => {
   it("should return expected response bodies for different status codes", async () => {
@@ -46,7 +45,7 @@ describe("json", () => {
       200,
     );
 
-    expect(omitType(successResponse)).toEqual({
+    expect(successResponse).toEqual({
       statusCode: 200,
       body: {
         id: "123",
@@ -65,7 +64,7 @@ describe("json", () => {
       404,
     );
 
-    expect(omitType(errorResponse)).toEqual({
+    expect(errorResponse).toEqual({
       error: {
         statusCode: 404,
         body: {
@@ -202,7 +201,7 @@ describe("json", () => {
     // Should default to status 200
     const response = await handler.json({ data: "test" });
 
-    expect(omitType(response)).toEqual({
+    expect(response).toEqual({
       statusCode: 200,
       body: {
         data: "test",
@@ -238,7 +237,7 @@ describe("json", () => {
       "X-Page": 1,
     });
 
-    expect(omitType(response)).toEqual({
+    expect(response).toEqual({
       statusCode: 200,
       body: {
         data: "test",
@@ -269,7 +268,7 @@ describe("json", () => {
     // Test without headers (should work fine)
     const response = await handler.json({ data: "test" }, 200);
 
-    expect(omitType(response)).toEqual({
+    expect(response).toEqual({
       statusCode: 200,
       body: {
         data: "test",
