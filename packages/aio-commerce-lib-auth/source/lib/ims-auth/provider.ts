@@ -49,7 +49,7 @@ function toImsAuthConfig(config: ImsAuthParams): ImsAuthConfig {
   return {
     scopes: config.scopes,
     env: config?.environment ?? "prod",
-    context: config.context ?? "aio-commerce-sdk-creds",
+    context: config.context ?? "aio-commerce-lib-auth-creds",
     client_id: config.clientId,
     client_secrets: config.clientSecrets,
     technical_account_id: config.technicalAccountId,

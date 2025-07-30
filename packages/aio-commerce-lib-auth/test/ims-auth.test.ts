@@ -112,11 +112,11 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       await imsAuthProvider.getAccessToken();
 
       expect(context.set).toHaveBeenCalledWith(
-        "aio-commerce-sdk-creds",
+        "aio-commerce-lib-auth-creds",
         expect.objectContaining({
           scopes: ["scope1", "scope2"],
           env: "prod",
-          context: "aio-commerce-sdk-creds",
+          context: "aio-commerce-lib-auth-creds",
           client_id: "test-client-id",
           client_secrets: ["supersecret"],
           technical_account_id: "test-technical-account-id",
