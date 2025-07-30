@@ -76,7 +76,7 @@ export const ImsAuthParamsSchema = object({
   ),
   imsOrgId: imsAuthParameter("imsOrgId"),
   environment: pipe(optional(ImsAuthEnvSchema, IMS_AUTH_ENV.PROD)),
-  context: pipe(optional(string(), "aio-commerce-sdk-creds")),
+  context: pipe(optional(string())),
   scopes: pipe(
     stringArray("scopes"),
     minLength(1, "Expected at least one scope for IMS auth"),

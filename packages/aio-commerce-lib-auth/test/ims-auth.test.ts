@@ -10,8 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import { getToken } from "@adobe/aio-lib-ims";
-import { describe, expect, test, vi } from "vitest";
+import { context, getToken } from "@adobe/aio-lib-ims";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   assertImsAuthParams,
@@ -22,11 +22,16 @@ import { IMS_AUTH_ENV } from "~/lib/ims-auth/schema";
 import type { ImsAuthEnv, ImsAuthParams } from "~/lib/ims-auth/schema";
 
 vi.mock("@adobe/aio-lib-ims", async () => ({
-  context: (await vi.importActual("@adobe/aio-lib-ims")).context,
+  context: {
+    set: vi.fn(),
+  },
   getToken: vi.fn(),
 }));
 
 describe("aio-commerce-lib-auth/ims-auth", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   describe("getImsAuthProvider", () => {
     test("should export token", async () => {
       const authToken = "supersecrettoken";
@@ -52,6 +57,73 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const headers = await imsAuthProvider.getHeaders();
       expect(headers).toHaveProperty("Authorization", `Bearer ${authToken}`);
       expect(headers).toHaveProperty("x-api-key", config.clientId);
+    });
+
+    test("should call context.set with valid context and config", async () => {
+      const authToken = "supersecrettoken";
+      vi.mocked(getToken).mockResolvedValue(authToken);
+      vi.mocked(context.set).mockResolvedValue(undefined);
+
+      const config = {
+        clientId: "test-client-id",
+        clientSecrets: ["supersecret"],
+        technicalAccountId: "test-technical-account-id",
+        technicalAccountEmail: "test-email@example.com",
+        imsOrgId: "test-org-id",
+        scopes: ["scope1", "scope2"],
+        environment: IMS_AUTH_ENV.PROD,
+        context: "test-context",
+      };
+
+      const imsAuthProvider = getImsAuthProvider(config);
+      await imsAuthProvider.getAccessToken();
+
+      expect(context.set).toHaveBeenCalledWith(
+        "test-context",
+        expect.objectContaining({
+          scopes: ["scope1", "scope2"],
+          env: "prod",
+          context: "test-context",
+          client_id: "test-client-id",
+          client_secrets: ["supersecret"],
+          technical_account_id: "test-technical-account-id",
+          technical_account_email: "test-email@example.com",
+          ims_org_id: "test-org-id",
+        }),
+      );
+    });
+
+    test("should use default context when not provided", async () => {
+      const authToken = "supersecrettoken";
+      vi.mocked(getToken).mockResolvedValue(authToken);
+      vi.mocked(context.set).mockResolvedValue(undefined);
+
+      const config: ImsAuthParams = {
+        clientId: "test-client-id",
+        clientSecrets: ["supersecret"],
+        technicalAccountId: "test-technical-account-id",
+        technicalAccountEmail: "test-email@example.com",
+        imsOrgId: "test-org-id",
+        scopes: ["scope1", "scope2"],
+        environment: IMS_AUTH_ENV.PROD,
+      };
+
+      const imsAuthProvider = getImsAuthProvider(config);
+      await imsAuthProvider.getAccessToken();
+
+      expect(context.set).toHaveBeenCalledWith(
+        "aio-commerce-lib-auth-creds",
+        expect.objectContaining({
+          scopes: ["scope1", "scope2"],
+          env: "prod",
+          context: "aio-commerce-lib-auth-creds",
+          client_id: "test-client-id",
+          client_secrets: ["supersecret"],
+          technical_account_id: "test-technical-account-id",
+          technical_account_email: "test-email@example.com",
+          ims_org_id: "test-org-id",
+        }),
+      );
     });
   });
 
