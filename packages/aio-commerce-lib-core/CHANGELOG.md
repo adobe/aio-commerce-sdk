@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-core
 
+## 0.4.1
+
+### Patch Changes
+
+- [#54](https://github.com/adobe/aio-commerce-sdk/pull/54) [`412af7a`](https://github.com/adobe/aio-commerce-sdk/commit/412af7a0b0a40f24b6fddafc7de76807de800724) Thanks [@jnatherley](https://github.com/jnatherley)! - Package requires for cjs loader are broken in @adobe/aio-commerce-lib-core, this release fixes it
+
 ## 0.4.0
 
 ### Minor Changes
