@@ -46,7 +46,7 @@ const stringArray = (name: string) => {
   return pipe(
     vArray(
       string(),
-      `Expected a stringified JSON array value for the IMS auth parameter ${name}`,
+      `Expected a string array value for the IMS auth parameter ${name}`,
     ),
   );
 };
