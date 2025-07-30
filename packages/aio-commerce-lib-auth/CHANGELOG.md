@@ -1,5 +1,13 @@
 # @adobe/aio-commerce-lib-auth
 
+## 0.3.2
+
+### Patch Changes
+
+- [`08edb37`](https://github.com/adobe/aio-commerce-sdk/commit/08edb372c6b1a97ffed26d5f84b1c189bd6bd330) Thanks [@jnatherley](https://github.com/jnatherley)! - `ImsAuthConfig.context` could be received as `undefined` by the `context.set` method, after an `assertImsAuthParams` due to us discarding the Valibot output (which was setting a default). Now, the value is manually defaulted if not set.
+
+- [`0b37a82`](https://github.com/adobe/aio-commerce-sdk/commit/0b37a821f3a7d8c8acd1d2bb16e12b55a5ec7c71) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix small typo in validation message of `stringArray` schema.
+
 ## 0.3.1
 
 ### Patch Changes
