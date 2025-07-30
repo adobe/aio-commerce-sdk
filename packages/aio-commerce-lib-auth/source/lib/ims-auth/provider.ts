@@ -37,6 +37,7 @@ type ImsAuthConfig = Omit<
   "environment"
 > & {
   env: ImsAuthEnv;
+  context: string;
 };
 
 /**
@@ -48,7 +49,7 @@ function toImsAuthConfig(config: ImsAuthParams): ImsAuthConfig {
   return {
     scopes: config.scopes,
     env: config?.environment ?? "prod",
-    context: config.context,
+    context: config.context ?? "aio-commerce-sdk-creds",
     client_id: config.clientId,
     client_secrets: config.clientSecrets,
     technical_account_id: config.technicalAccountId,
@@ -146,8 +147,8 @@ export function getImsAuthProvider(authParams: ImsAuthParams) {
   const getAccessToken = async () => {
     const imsAuthConfig = toImsAuthConfig(authParams);
 
-    await context.set(authParams.context, imsAuthConfig);
-    return getToken(authParams.context, {});
+    await context.set(imsAuthConfig.context, imsAuthConfig);
+    return getToken(imsAuthConfig.context, {});
   };
 
   const getHeaders = async () => {
