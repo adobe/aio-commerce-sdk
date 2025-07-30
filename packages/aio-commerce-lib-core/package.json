@@ -38,8 +38,8 @@
           "default": "./dist/es/*/index.js"
         },
         "require": {
-          "types": "./dist/cjs/lib/*/index.d.cts",
-          "default": "./dist/cjs/lib/*/index.cjs"
+          "types": "./dist/cjs/*/index.d.cts",
+          "default": "./dist/cjs/*/index.cjs"
         }
       },
       "./package.json": "./package.json"
