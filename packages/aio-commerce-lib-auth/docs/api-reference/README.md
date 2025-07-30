@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-auth`: `v0.3.0`
+# `@adobe/aio-commerce-lib-auth`: `v0.3.1`
 
 ## Interfaces
 

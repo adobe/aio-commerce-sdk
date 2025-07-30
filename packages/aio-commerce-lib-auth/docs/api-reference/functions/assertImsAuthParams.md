@@ -6,7 +6,7 @@ function assertImsAuthParams(
 ): asserts config is {
   clientId: string;
   clientSecrets: string[];
-  context: string;
+  context?: string;
   environment: EnumValues<{ PROD: "prod"; STAGE: "stage" }>;
   imsOrgId: string;
   scopes: string[];
@@ -15,7 +15,7 @@ function assertImsAuthParams(
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:94](https://github.com/adobe/aio-commerce-sdk/blob/7b593b329256b2a01f618a3bfec89516edd0e844/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L94)
+Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:95](https://github.com/adobe/aio-commerce-sdk/blob/2e9631ab3482e2ba9d40c8de9e8d2373edc2e3ed/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L95)
 
 Asserts the provided configuration for an [ImsAuthProvider](../interfaces/ImsAuthProvider.md).
 
@@ -27,7 +27,7 @@ Asserts the provided configuration for an [ImsAuthProvider](../interfaces/ImsAut
 
 ## Returns
 
-`asserts config is { clientId: string; clientSecrets: string[]; context: string; environment: EnumValues<{ PROD: "prod"; STAGE: "stage" }>; imsOrgId: string; scopes: string[]; technicalAccountEmail: string; technicalAccountId: string }`
+`asserts config is { clientId: string; clientSecrets: string[]; context?: string; environment: EnumValues<{ PROD: "prod"; STAGE: "stage" }>; imsOrgId: string; scopes: string[]; technicalAccountEmail: string; technicalAccountId: string }`
 
 ## Throws
 
