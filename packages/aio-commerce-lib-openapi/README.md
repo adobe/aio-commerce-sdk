@@ -19,7 +19,7 @@ npm install @adobe/aio-commerce-lib-openapi
 ## Basic Usage
 
 ```typescript
-import { openapi, createResponseSchema } from "@adobe/aio-commerce-lib-openapi";
+import { openapi } from "@adobe/aio-commerce-lib-openapi";
 import * as v from "valibot";
 
 // Define your API handler with route and business logic
@@ -33,20 +33,16 @@ const getProductHandler = openapi(
       }),
     },
     responses: {
-      200: createResponseSchema(
-        v.object({
-          id: v.string(),
-          name: v.string(),
-          price: v.number(),
-          inStock: v.boolean(),
-        }),
-      ),
-      404: createResponseSchema(
-        v.object({
-          error: v.string(),
-          message: v.string(),
-        }),
-      ),
+      200: v.object({
+        id: v.string(),
+        name: v.string(),
+        price: v.number(),
+        inStock: v.boolean(),
+      }),
+      404: v.object({
+        error: v.string(),
+        message: v.string(),
+      }),
     },
   },
   async (spec) => {
@@ -106,19 +102,15 @@ const getProductHandler = openapi(
       }),
     },
     responses: {
-      200: createResponseSchema(
-        v.object({
-          id: v.string(),
-          name: v.string(),
-          price: v.number(),
-        }),
-      ),
-      404: createResponseSchema(
-        v.object({
-          error: v.string(),
-          message: v.string(),
-        }),
-      ),
+      200: v.object({
+        id: v.string(),
+        name: v.string(),
+        price: v.number(),
+      }),
+      404: v.object({
+        error: v.string(),
+        message: v.string(),
+      }),
     },
   },
   async (spec) => {
@@ -156,7 +148,7 @@ Creates a type-safe route handler with automatic validation. Use this when you n
   - `params?`: URL parameters schema
   - `query?`: Query parameters schema
   - `headers?`: Headers schema
-- `responses` (object): Response schemas keyed by status code. Each response can be created using `createResponseSchema(bodySchema, headersSchema?)` or as an object with `{schema: bodySchema, headers?: headersSchema}`
+- `responses` (object): Response schemas keyed by status code. Each response can be a Valibot schema or an object with `{schema: bodySchema, headers?: headersSchema}`
 
 #### Returns
 
@@ -206,7 +198,7 @@ const createProductRoute = createRoute({
     },
   },
   responses: {
-    201: createResponseSchema(v.object({ id: v.string() })),
+    201: v.object({ id: v.string() }),
   },
 });
 
@@ -233,7 +225,7 @@ const protectedRoute = createRoute({
     }),
   },
   responses: {
-    200: createResponseSchema(v.object({ data: v.string() })),
+    200: v.object({ data: v.string() }),
   },
 });
 
@@ -262,12 +254,10 @@ const searchRoute = createRoute({
     }),
   },
   responses: {
-    200: createResponseSchema(
-      v.object({
-        results: v.array(v.string()),
-        total: v.number(),
-      }),
-    ),
+    200: v.object({
+      results: v.array(v.string()),
+      total: v.number(),
+    }),
   },
 });
 
@@ -462,24 +452,21 @@ const protectedApiHandler = openapi(
       }),
     },
     responses: {
-      200: createResponseSchema(
-        v.object({
+      200: {
+        schema: v.object({
           data: v.string(),
           requestId: v.optional(v.string()),
         }),
-        // Response headers schema
-        v.object({
+        headers: v.object({
           "X-RateLimit-Limit": v.string(),
           "X-RateLimit-Remaining": v.string(),
           "X-RateLimit-Reset": v.string(),
         }),
-      ),
-      401: createResponseSchema(
-        v.object({
-          error: v.literal("unauthorized"),
-          message: v.string(),
-        }),
-      ),
+      },
+      401: v.object({
+        error: v.literal("unauthorized"),
+        message: v.string(),
+      }),
     },
   },
   async (c) => {
@@ -548,30 +535,26 @@ const searchApiHandler = openapi(
       }),
     },
     responses: {
-      200: createResponseSchema(
-        v.object({
-          results: v.array(
-            v.object({
-              id: v.string(),
-              name: v.string(),
-              price: v.number(),
-              category: v.string(),
-            }),
-          ),
-          total: v.number(),
-          pagination: v.object({
-            limit: v.number(),
-            offset: v.number(),
-            hasMore: v.boolean(),
+      200: v.object({
+        results: v.array(
+          v.object({
+            id: v.string(),
+            name: v.string(),
+            price: v.number(),
+            category: v.string(),
           }),
+        ),
+        total: v.number(),
+        pagination: v.object({
+          limit: v.number(),
+          offset: v.number(),
+          hasMore: v.boolean(),
         }),
-      ),
-      400: createResponseSchema(
-        v.object({
-          error: v.literal("invalid_query"),
-          message: v.string(),
-        }),
-      ),
+      }),
+      400: v.object({
+        error: v.literal("invalid_query"),
+        message: v.string(),
+      }),
     },
   },
   async (c) => {
