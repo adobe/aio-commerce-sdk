@@ -1,5 +1,10 @@
 import type { GenericSchema, GenericSchemaAsync, InferOutput } from "valibot";
-import type { ErrorBodyInput, ErrorHeaderInput, error } from "~/error";
+import type {
+  ErrorBodyInput,
+  ErrorBodyOutput,
+  ErrorHeaderInput,
+  ErrorHeaderOutput,
+} from "~/error";
 import type {
   ErrorStatusCode,
   ErrorStatusCodeString,
@@ -8,7 +13,12 @@ import type {
   SuccessStatusCode,
   SuccessStatusCodeString,
 } from "~/http";
-import type { json, ResponseBodyInput, ResponseHeaderInput } from "~/json";
+import type {
+  ResponseBodyInput,
+  ResponseBodyOutput,
+  ResponseHeaderInput,
+  ResponseHeaderOutput,
+} from "~/json";
 
 export type AioOpenApiErrorResponse<TBody, THeaders = undefined> = {
   error: {
@@ -86,6 +96,41 @@ export type ErrorResponsesHeaderInput<
   ? ErrorHeaderInput<TResponses[TStatus]>
   : undefined;
 
+// Return types for proper type inference
+export type JsonResponseReturn<
+  TResponses extends OpenApiResponses,
+  TStatus extends SuccessStatusCodeString & SuccessStatusCode,
+> = TResponses[TStatus] extends OpenApiResponse
+  ? TResponses[TStatus]["headers"] extends undefined
+    ? {
+        statusCode: TStatus;
+        body: ResponseBodyOutput<TResponses[TStatus]>;
+      }
+    : {
+        statusCode: TStatus;
+        body: ResponseBodyOutput<TResponses[TStatus]>;
+        headers: ResponseHeaderOutput<TResponses[TStatus]>;
+      }
+  : never;
+
+export type ErrorResponseReturn<
+  TResponses extends OpenApiResponses,
+  TStatus extends ErrorStatusCodeString & ErrorStatusCode,
+> = TResponses[TStatus] extends OpenApiResponse
+  ? {
+      error: TResponses[TStatus]["headers"] extends undefined
+        ? {
+            statusCode: TStatus;
+            body: ErrorBodyOutput<TResponses[TStatus]>;
+          }
+        : {
+            statusCode: TStatus;
+            body: ErrorBodyOutput<TResponses[TStatus]>;
+            headers: ErrorHeaderOutput<TResponses[TStatus]>;
+          };
+    }
+  : never;
+
 // Interfaces (alphabetically ordered)
 export interface OpenApiSpecHandler<
   TRequestSchema extends OpenApiRequest,
@@ -95,12 +140,12 @@ export interface OpenApiSpecHandler<
     data: ErrorResponsesBodyInput<TResponse, TStatus>,
     status: TStatus,
     headers?: ErrorResponsesHeaderInput<TResponse, TStatus>,
-  ) => ReturnType<typeof error>;
+  ) => Promise<ErrorResponseReturn<TResponse, TStatus>>;
   json: <TStatus extends SuccessStatusCodeString & SuccessStatusCode>(
     data: ResponsesBodyInput<TResponse, TStatus>,
     status: TStatus,
     headers?: ResponsesHeaderInput<TResponse, TStatus>,
-  ) => ReturnType<typeof json>;
+  ) => Promise<JsonResponseReturn<TResponse, TStatus>>;
   validateBody: () => Promise<RequestBodyOutput<TRequestSchema>>;
   validateParams: RequestValidatorFunction<TRequestSchema, "params">;
   validateHeaders: RequestValidatorFunction<TRequestSchema, "headers">;

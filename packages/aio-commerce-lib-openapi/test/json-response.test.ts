@@ -182,7 +182,8 @@ describe("json", () => {
 
     // Trying to use undefined status code
     await expect(
-      handler.json({ data: "test" } as unknown, 404 as unknown),
+      // @ts-expect-error - Testing invalid status code scenario
+      handler.json({ data: "test" }),
     ).rejects.toThrow(
       "No valid response schema defined for status 404 in route /stock/{id}",
     );
