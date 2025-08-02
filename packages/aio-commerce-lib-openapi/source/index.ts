@@ -5,9 +5,11 @@ import { error } from "~/error";
 import { json } from "~/json";
 
 import type {
+  ErrorResponseReturn,
   ErrorResponsesBodyInput,
   ErrorResponsesHeaderInput,
   InputRequest,
+  JsonResponseReturn,
   OpenApiRequest,
   OpenApiResponse,
   OpenApiResponses,
@@ -109,14 +111,14 @@ export function createRoute<
         data: ErrorResponsesBodyInput<TResponse, TStatus>,
         status: TStatus,
         headers?: ErrorResponsesHeaderInput<TResponse, TStatus>,
-      ) {
+      ): Promise<ErrorResponseReturn<TResponse, TStatus>> {
         const responseSpec = getResponseSpecByStatus(
           status,
           route.responses,
           route.path,
         );
 
-        return await error(
+        return (await error(
           {
             method: route.method,
             path: route.path,
@@ -125,20 +127,20 @@ export function createRoute<
           },
           data,
           headers,
-        );
+        )) as ErrorResponseReturn<TResponse, TStatus>;
       },
       async json<TStatus extends SuccessStatusCodeString & SuccessStatusCode>(
         data: ResponsesBodyInput<TResponse, TStatus>,
         status: TStatus,
         headers?: ResponsesHeaderInput<TResponse, TStatus>,
-      ) {
+      ): Promise<JsonResponseReturn<TResponse, TStatus>> {
         const responseSpec = getResponseSpecByStatus(
           status,
           route.responses,
           route.path,
         );
 
-        return await json(
+        return (await json(
           {
             method: route.method,
             path: route.path,
@@ -147,7 +149,7 @@ export function createRoute<
           },
           data,
           headers,
-        );
+        )) as JsonResponseReturn<TResponse, TStatus>;
       },
       async validateBody() {
         if (!bodyParser) {

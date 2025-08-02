@@ -154,11 +154,12 @@ describe("error", () => {
 
     // Trying to use undefined error status code
     await expect(
+      // @ts-expect-error - Testing invalid status code scenario
       handler.error(
         {
           error: "bad_request",
           message: "Invalid request",
-        } as unknown,
+        },
         400 as unknown,
       ),
     ).rejects.toThrow(
