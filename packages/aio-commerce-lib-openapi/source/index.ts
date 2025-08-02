@@ -1,176 +1,34 @@
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import {
-  type GenericSchema,
-  type GenericSchemaAsync,
-  type InferInput,
-  type InferOutput,
-  safeParseAsync,
-  safeParserAsync,
-} from "valibot";
+import { safeParseAsync, safeParserAsync } from "valibot";
+
+import { error } from "~/error";
+import { json } from "~/json";
+
 import type {
-  ClientErrorStatusCode,
-  HttpMethod,
-  ServerErrorStatusCode,
+  ErrorResponsesBodyInput,
+  ErrorResponsesHeaderInput,
+  InputRequest,
+  OpenApiRequest,
+  OpenApiResponse,
+  OpenApiResponses,
+  OpenApiSpecHandler,
+  RequestBodyOutput,
+  RequestValidatorOutput,
+  ResponsesBodyInput,
+  ResponsesHeaderInput,
+  Route,
+} from "~/common";
+import type {
+  ErrorStatusCode,
+  ErrorStatusCodeString,
+  HttpStatusCode,
   SuccessStatusCode,
+  SuccessStatusCodeString,
 } from "~/http";
-
-// Type aliases (alphabetically ordered)
-export type AioOpenApiErrorResponse<TBody, THeaders = undefined> = {
-  error: {
-    statusCode: number;
-    body: TBody;
-    headers?: THeaders;
-  };
-};
-
-export type AioOpenApiSuccessResponse<TBody, THeaders = undefined> = {
-  statusCode: number;
-  body: TBody;
-  headers?: THeaders;
-};
-
-export type AioOpenApiResponse<TBody, THeaders = undefined> =
-  | AioOpenApiSuccessResponse<TBody, THeaders>
-  | AioOpenApiErrorResponse<TBody, THeaders>;
-
-type AllErrorStatusCodes = ClientErrorStatusCode | ServerErrorStatusCode;
-
-export type ErrorResponseKeys<TResponse extends OpenApiResponses> =
-  keyof TResponse & StatusCodeString<AllErrorStatusCodes>;
-
-export type InferInputResponseHeaderByStatus<
-  TResponse extends OpenApiResponses,
-  TStatus extends keyof TResponse,
-> = TResponse[TStatus]["headers"] extends MaybeAsyncGenericSchema
-  ? InferInput<TResponse[TStatus]["headers"]>
-  : undefined;
-
-type InferInputResponseSchema<TResponse extends OpenApiResponses> = InferInput<
-  TResponse[keyof TResponse]["schema"]
->;
-
-type InferInputErrorResponseSchemaWithStatus<
-  TResponse extends OpenApiResponses,
-  TStatus extends ErrorResponseKeys<TResponse>,
-> = InferInput<TResponse[TStatus]["schema"]>;
-
-type InferInputResponseSchemaWithStatus<
-  TResponse extends OpenApiResponses,
-  TStatus extends SuccessResponseKeys<TResponse>,
-> = InferInput<TResponse[TStatus]["schema"]>;
-
-type InferOutputResponseHeaderObjectWithStatus<
-  TResponse extends OpenApiResponses,
-  TStatus extends SuccessResponseKeys<TResponse>,
-> = TResponse[TStatus]["headers"] extends MaybeAsyncGenericSchema
-  ? InferOutput<TResponse[TStatus]["headers"]>
-  : undefined;
-
-type InferOutputErrorResponseHeaderObjectWithStatus<
-  TResponse extends OpenApiResponses,
-  TStatus extends ErrorResponseKeys<TResponse>,
-> = TResponse[TStatus]["headers"] extends MaybeAsyncGenericSchema
-  ? InferOutput<TResponse[TStatus]["headers"]>
-  : undefined;
-
-type InferOutputResponseSchema<TResponse extends OpenApiResponses> =
-  InferOutput<TResponse[keyof TResponse]["schema"]>;
-
-type InferOutputResponseSchemaWithStatus<
-  TResponse extends OpenApiResponses,
-  TStatus extends keyof TResponse,
-> = InferOutput<TResponse[TStatus]["schema"]>;
-
-type InputRequest = Record<PropertyKey, unknown>;
-
-export type MaybeAsyncGenericSchema = GenericSchema | GenericSchemaAsync;
-
-export type OpenApiRequest = {
-  body?: OpenApiRequestBody;
-  query?: MaybeAsyncGenericSchema;
-  params?: MaybeAsyncGenericSchema;
-  headers?: MaybeAsyncGenericSchema;
-};
-
-export type OpenApiRequestBody = {
-  schema: MaybeAsyncGenericSchema;
-};
-
-export type OpenApiResponse = {
-  headers?: MaybeAsyncGenericSchema;
-  schema: MaybeAsyncGenericSchema;
-};
-
-export type OpenApiResponses = Record<PropertyKey, OpenApiResponse>;
-
-type RequestBodyOutput<TRequest extends OpenApiRequest> =
-  TRequest["body"] extends {
-    schema: infer TSchema extends MaybeAsyncGenericSchema;
-  }
-    ? InferOutput<TSchema>
-    : never;
-
-type RequestValidatorFunction<
-  TRequest extends OpenApiRequest,
-  TField extends "params" | "headers" | "query",
-> = () => Promise<RequestValidatorOutput<TRequest, TField>>;
-
-type RequestValidatorOutput<
-  TRequest extends OpenApiRequest,
-  TField extends "params" | "headers" | "query",
-> = TRequest[TField] extends MaybeAsyncGenericSchema
-  ? InferOutput<TRequest[TField]>
-  : never;
-
-type StatusCodeString<T extends number> = T | `${T}`;
-
-export type SuccessResponseKeys<TResponse extends OpenApiResponses> =
-  keyof TResponse & StatusCodeString<SuccessStatusCode>;
-
-// Interfaces (alphabetically ordered)
-interface OpenApiSpecHandler<
-  TRequestSchema extends OpenApiRequest,
-  TResponse extends OpenApiResponses,
-> {
-  error: <TStatus extends ErrorResponseKeys<TResponse>>(
-    data: InferInputErrorResponseSchemaWithStatus<TResponse, TStatus>,
-    status?: TStatus,
-    headers?: InferInputResponseHeaderByStatus<TResponse, TStatus>,
-  ) => Promise<
-    AioOpenApiErrorResponse<
-      InferOutputResponseSchemaWithStatus<TResponse, TStatus>,
-      InferOutputErrorResponseHeaderObjectWithStatus<TResponse, TStatus>
-    >
-  >;
-  json: <TStatus extends SuccessResponseKeys<TResponse>>(
-    data: InferInputResponseSchemaWithStatus<TResponse, TStatus>,
-    status?: TStatus,
-    headers?: InferInputResponseHeaderByStatus<TResponse, TStatus>,
-  ) => Promise<
-    AioOpenApiSuccessResponse<
-      InferOutputResponseSchemaWithStatus<TResponse, TStatus>,
-      InferOutputResponseHeaderObjectWithStatus<TResponse, TStatus>
-    >
-  >;
-  validateBody: () => Promise<RequestBodyOutput<TRequestSchema>>;
-  validateParams: RequestValidatorFunction<TRequestSchema, "params">;
-  validateHeaders: RequestValidatorFunction<TRequestSchema, "headers">;
-  validateQuery: RequestValidatorFunction<TRequestSchema, "query">;
-}
-
-export interface Route<
-  TRequestSchema extends OpenApiRequest,
-  TResponseSchema extends OpenApiResponses,
-> {
-  method: HttpMethod;
-  path: string;
-  request: TRequestSchema;
-  responses: TResponseSchema;
-}
 
 export function openapi<
   TRequest extends OpenApiRequest,
-  TResponse extends OpenApiResponses,
+  TResponse extends OpenApiResponses<SuccessStatusCode>,
 >(
   route: Route<TRequest, TResponse>,
   handler: (
@@ -214,6 +72,30 @@ async function validateRequestInput<
   >;
 }
 
+function isOpenApiResponse(value: unknown): value is OpenApiResponse {
+  return (
+    value !== null &&
+    value !== undefined &&
+    typeof value === "object" &&
+    "schema" in value
+  );
+}
+
+function getResponseSpecByStatus<
+  TStatus extends HttpStatusCode,
+  TResponses extends OpenApiResponses = OpenApiResponses,
+>(status: TStatus, responses: TResponses, routePath: string): OpenApiResponse {
+  const response = responses[status];
+
+  if (!isOpenApiResponse(response)) {
+    throw new Error(
+      `No valid response schema defined for status ${status} in route ${routePath}`,
+    );
+  }
+
+  return response;
+}
+
 export function createRoute<
   TRequest extends OpenApiRequest,
   TResponse extends OpenApiResponses,
@@ -223,133 +105,49 @@ export function createRoute<
 
   return (requestInputParams: InputRequest) => {
     return {
-      async error<TStatus extends ErrorResponseKeys<TResponse>>(
-        data: InferInputErrorResponseSchemaWithStatus<TResponse, TStatus>,
-        status: TStatus = "500" as TStatus,
-        headers?: InferInputResponseHeaderByStatus<TResponse, TStatus>,
+      async error<TStatus extends ErrorStatusCodeString & ErrorStatusCode>(
+        data: ErrorResponsesBodyInput<TResponse, TStatus>,
+        status: TStatus,
+        headers?: ErrorResponsesHeaderInput<TResponse, TStatus>,
       ) {
-        const responseSpec = route.responses[String(status)];
-        if (!responseSpec) {
-          throw new Error(
-            `No response schema defined for status ${String(status)} in route ${route.path}`,
-          );
-        }
+        const responseSpec = getResponseSpecByStatus(
+          status,
+          route.responses,
+          route.path,
+        );
 
-        const validationResult = await safeParseAsync<
-          TResponse[TStatus]["schema"]
-        >(responseSpec.schema, data);
-
-        if (!validationResult.success) {
-          throw new CommerceSdkValidationError(
-            `Invalid error response for route ${route.path} with status ${String(status)}`,
-            {
-              issues: validationResult.issues,
-            },
-          );
-        }
-
-        const response = {
-          error: {
-            statusCode: Number(status),
-            body: validationResult.output,
+        return await error(
+          {
+            method: route.method,
+            path: route.path,
+            status,
+            response: responseSpec,
           },
-        };
-
-        if (responseSpec.headers) {
-          const headersValidationResult = await safeParseAsync(
-            responseSpec.headers,
-            headers,
-          );
-          if (!headersValidationResult.success) {
-            throw new CommerceSdkValidationError(
-              `Invalid error headers for route ${route.path} with status ${String(status)}`,
-              {
-                issues: headersValidationResult.issues,
-              },
-            );
-          }
-
-          return {
-            ...response,
-            error: {
-              ...response.error,
-              headers:
-                headersValidationResult.output as InferOutputErrorResponseHeaderObjectWithStatus<
-                  TResponse,
-                  TStatus
-                >,
-            },
-          } satisfies AioOpenApiErrorResponse<
-            InferOutputResponseSchemaWithStatus<TResponse, TStatus>,
-            InferOutputErrorResponseHeaderObjectWithStatus<TResponse, TStatus>
-          >;
-        }
-
-        return response satisfies AioOpenApiErrorResponse<
-          InferOutputResponseSchemaWithStatus<TResponse, TStatus>
-        >;
+          data,
+          headers,
+        );
       },
-      async json<TStatus extends SuccessResponseKeys<TResponse>>(
-        data: InferInputResponseSchema<TResponse>,
-        status: TStatus = "200" as TStatus,
-        headers?: InferInputResponseHeaderByStatus<TResponse, TStatus>,
+      async json<TStatus extends SuccessStatusCodeString & SuccessStatusCode>(
+        data: ResponsesBodyInput<TResponse, TStatus>,
+        status: TStatus,
+        headers?: ResponsesHeaderInput<TResponse, TStatus>,
       ) {
-        const responseSpec = route.responses[String(status)];
+        const responseSpec = getResponseSpecByStatus(
+          status,
+          route.responses,
+          route.path,
+        );
 
-        if (!responseSpec) {
-          throw new Error(
-            `No response schema defined for status ${String(status)} in route ${route.path}`,
-          );
-        }
-
-        const bodyValidatorResult = await safeParseAsync<
-          TResponse[TStatus]["schema"]
-        >(responseSpec.schema, data);
-
-        if (!bodyValidatorResult.success) {
-          throw new CommerceSdkValidationError(
-            `Invalid response for route ${route.path} with status ${String(status)}`,
-            {
-              issues: bodyValidatorResult.issues,
-            },
-          );
-        }
-
-        const response = {
-          statusCode: Number(status),
-          body: bodyValidatorResult.output satisfies InferOutputResponseSchema<TResponse>,
-        };
-
-        if (responseSpec.headers) {
-          const headersValidationResult = await safeParseAsync(
-            responseSpec.headers,
-            headers,
-          );
-          if (!headersValidationResult.success) {
-            throw new CommerceSdkValidationError(
-              `Invalid headers for route ${route.path} with status ${String(status)}`,
-              {
-                issues: headersValidationResult.issues,
-              },
-            );
-          }
-
-          return {
-            ...response,
-            headers:
-              headersValidationResult.output as InferOutputResponseHeaderObjectWithStatus<
-                TResponse,
-                TStatus
-              >,
-          } satisfies AioOpenApiSuccessResponse<
-            InferOutputResponseSchemaWithStatus<TResponse, TStatus>,
-            InferOutputResponseHeaderObjectWithStatus<TResponse, TStatus>
-          >;
-        }
-
-        return response satisfies AioOpenApiSuccessResponse<
-          InferOutputResponseSchemaWithStatus<TResponse, TStatus>
-        >;
+        return await json(
+          {
+            method: route.method,
+            path: route.path,
+            status,
+            response: responseSpec,
+          },
+          data,
+          headers,
+        );
       },
       async validateBody() {
         if (!bodyParser) {

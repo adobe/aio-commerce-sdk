@@ -1,5 +1,6 @@
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
+
 import { createRoute } from "~/index";
 
 describe("error", () => {
@@ -111,7 +112,7 @@ describe("error", () => {
         400,
       ),
     ).rejects.toThrow(
-      "Invalid error response for route /stock/{id} with status 400",
+      "Invalid error response for route [GET] /stock/{id} with status 400",
     );
 
     // Wrong type for a property should throw error
@@ -125,7 +126,7 @@ describe("error", () => {
         400,
       ),
     ).rejects.toThrow(
-      "Invalid error response for route /stock/{id} with status 400",
+      "Invalid error response for route [GET] /stock/{id} with status 400",
     );
   });
 
@@ -157,13 +158,15 @@ describe("error", () => {
         {
           error: "bad_request",
           message: "Invalid request",
-        },
-        400 as unknown as Parameters<typeof handler.error>[1],
+        } as unknown,
+        400 as unknown,
       ),
-    ).rejects.toThrow("No response schema defined for status 400");
+    ).rejects.toThrow(
+      "No valid response schema defined for status 400 in route /stock/{id}",
+    );
   });
 
-  it("should use default status code 500 when not specified", async () => {
+  it("should handle explicit status code 500", async () => {
     const route = createRoute({
       path: "/stock",
       method: "POST",
@@ -180,11 +183,14 @@ describe("error", () => {
 
     const handler = route({});
 
-    // Should default to status 500
-    const response = await handler.error({
-      error: "internal_error",
-      message: "Something went wrong",
-    });
+    // Explicitly specify status 500
+    const response = await handler.error(
+      {
+        error: "internal_error",
+        message: "Something went wrong",
+      },
+      500,
+    );
 
     expect(response).toEqual({
       error: {

@@ -1,5 +1,6 @@
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
+
 import { createRoute } from "~/index";
 
 describe("json", () => {
@@ -124,7 +125,9 @@ describe("json", () => {
         { id: "123" } as unknown as v.InferInput<typeof OkResponseSchema>,
         200,
       ),
-    ).rejects.toThrow("Invalid response for route /stock/{id} with status 200");
+    ).rejects.toThrow(
+      "Invalid response for route [GET] /stock/{id} with status 200",
+    );
 
     // Wrong type for a property should throw error
     await expect(
@@ -137,7 +140,9 @@ describe("json", () => {
         } as unknown as v.InferInput<typeof OkResponseSchema>,
         200,
       ),
-    ).rejects.toThrow("Invalid response for route /stock/{id} with status 200");
+    ).rejects.toThrow(
+      "Invalid response for route [GET] /stock/{id} with status 200",
+    );
 
     // Extra properties are allowed by default in valibot, but wrong status code should throw
     await expect(
@@ -148,7 +153,9 @@ describe("json", () => {
         } as unknown as v.InferInput<typeof OkResponseSchema>,
         200,
       ),
-    ).rejects.toThrow("Invalid response for route /stock/{id} with status 200");
+    ).rejects.toThrow(
+      "Invalid response for route [GET] /stock/{id} with status 200",
+    );
   });
 
   it("should throw an error when no response schema is defined for status", async () => {
@@ -175,14 +182,13 @@ describe("json", () => {
 
     // Trying to use undefined status code
     await expect(
-      handler.json(
-        { data: "test" },
-        404 as unknown as Parameters<typeof handler.json>[1],
-      ),
-    ).rejects.toThrow("No response schema defined for status 404");
+      handler.json({ data: "test" } as unknown, 404 as unknown),
+    ).rejects.toThrow(
+      "No valid response schema defined for status 404 in route /stock/{id}",
+    );
   });
 
-  it("should use default status code 200 when not specified", async () => {
+  it("should handle explicit status code 200", async () => {
     const route = createRoute({
       path: "/stock",
       method: "GET",
@@ -198,8 +204,8 @@ describe("json", () => {
 
     const handler = route({});
 
-    // Should default to status 200
-    const response = await handler.json({ data: "test" });
+    // Explicitly specify status 200
+    const response = await handler.json({ data: "test" }, 200);
 
     expect(response).toEqual({
       statusCode: 200,

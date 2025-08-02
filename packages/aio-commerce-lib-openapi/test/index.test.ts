@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { createRoute, openapi } from "~/index";
 
 describe("aio-commerce-lib-openapi exports", () => {
