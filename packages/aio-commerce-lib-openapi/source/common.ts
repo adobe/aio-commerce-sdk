@@ -1,9 +1,4 @@
-import type {
-  GenericSchema,
-  GenericSchemaAsync,
-  InferInput,
-  InferOutput,
-} from "valibot";
+import type { GenericSchema, GenericSchemaAsync, InferOutput } from "valibot";
 import type { ErrorBodyInput, ErrorHeaderInput, error } from "~/error";
 import type {
   ErrorStatusCode,
@@ -22,15 +17,6 @@ export type AioOpenApiErrorResponse<TBody, THeaders = undefined> = {
     headers?: THeaders;
   };
 };
-
-export type InferInputResponseHeaderByStatus<
-  TResponse extends OpenApiResponse,
-> = TResponse["headers"] extends MaybeAsyncGenericSchema
-  ? InferInput<TResponse["headers"]>
-  : undefined;
-
-export type InferInputResponseSchema<TResponse extends OpenApiResponse> =
-  InferInput<TResponse["schema"]>;
 
 export type InputRequest = Record<PropertyKey, unknown>;
 export type MaybeAsyncGenericSchema = GenericSchema | GenericSchemaAsync;
