@@ -104,12 +104,12 @@ describe("openapi", () => {
           }),
         },
       },
-    };
+    } as const;
 
-    const handler = openapi(routeDefinition, async (c) => {
+    const handler = openapi(routeDefinition, async (spec) => {
       try {
-        const body = await c.validateBody();
-        return c.json(
+        const body = await spec.validateBody();
+        return spec.json(
           {
             id: "new-123",
             name: body.name,
@@ -118,7 +118,7 @@ describe("openapi", () => {
           201,
         );
       } catch (_error) {
-        return c.error(
+        return spec.error(
           {
             error: "validation_error",
             message: "Invalid request body",
@@ -199,13 +199,13 @@ describe("openapi", () => {
       "order-456": { status: "shipped" },
     };
 
-    const handler = openapi(routeDefinition, async (c) => {
-      const params = await c.validateParams();
+    const handler = openapi(routeDefinition, async (spec) => {
+      const params = await spec.validateParams();
 
       const order = orders[params.orderId as keyof typeof orders];
 
       if (!order) {
-        return c.error(
+        return spec.error(
           {
             error: "not_found",
             message: `Order ${params.orderId} not found`,
@@ -215,7 +215,7 @@ describe("openapi", () => {
       }
 
       if (order.status !== "pending") {
-        return c.error(
+        return spec.error(
           {
             error: "invalid_state",
             message: `Cannot cancel order in ${order.status} state`,
@@ -224,7 +224,7 @@ describe("openapi", () => {
         );
       }
 
-      return c.json(
+      return spec.json(
         {
           orderId: params.orderId,
           status: "cancelled",
@@ -306,13 +306,13 @@ describe("openapi", () => {
       },
     };
 
-    const handler = openapi(routeDefinition, async (c) => {
+    const handler = openapi(routeDefinition, async (spec) => {
       try {
-        const headers = await c.validateHeaders();
+        const headers = await spec.validateHeaders();
 
         // Verify authorization token
         if (headers.authorization !== "Bearer valid-token") {
-          return c.error(
+          return spec.error(
             {
               error: "unauthorized",
               message: "Invalid authorization token",
@@ -322,7 +322,7 @@ describe("openapi", () => {
         }
 
         // Return success with optional request ID if provided
-        return c.json(
+        return spec.json(
           {
             data: "Protected resource data",
             requestId: headers["x-request-id"],
@@ -330,7 +330,7 @@ describe("openapi", () => {
           200,
         );
       } catch (_error) {
-        return c.error(
+        return spec.error(
           {
             error: "unauthorized",
             message: "Missing or invalid headers",
@@ -442,9 +442,9 @@ describe("openapi", () => {
       },
     };
 
-    const handler = openapi(routeDefinition, async (c) => {
+    const handler = openapi(routeDefinition, async (spec) => {
       try {
-        const query = await c.validateQuery();
+        const query = await spec.validateQuery();
 
         // Mock search results based on query
         const mockResults = [
@@ -464,7 +464,7 @@ describe("openapi", () => {
         const offset = query.offset || 0;
         const paginatedResults = mockResults.slice(offset, offset + limit);
 
-        return c.json(
+        return spec.json(
           {
             results: paginatedResults,
             total: mockResults.length,
@@ -477,7 +477,7 @@ describe("openapi", () => {
           },
         );
       } catch (_error) {
-        return c.error(
+        return spec.error(
           {
             error: "invalid_query",
             message: "Invalid search parameters",
