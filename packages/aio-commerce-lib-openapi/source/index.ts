@@ -28,16 +28,26 @@ import type {
   SuccessStatusCodeString,
 } from "~/http";
 
+type ExtractSuccessStatusCodes<T extends OpenApiResponses> = Extract<
+  keyof T,
+  SuccessStatusCode
+>;
+
+type ExtractErrorStatusCodes<T extends OpenApiResponses> = Extract<
+  keyof T,
+  ErrorStatusCode
+>;
+
 export function openapi<
   TRequest extends OpenApiRequest,
-  TResponse extends OpenApiResponses<SuccessStatusCode>,
+  TResponse extends OpenApiResponses,
 >(
   route: Route<TRequest, TResponse>,
   handler: (
     spec: OpenApiSpecHandler<TRequest, TResponse>,
   ) => Promise<
-    | Awaited<ReturnType<OpenApiSpecHandler<TRequest, TResponse>["json"]>>
-    | Awaited<ReturnType<OpenApiSpecHandler<TRequest, TResponse>["error"]>>
+    | JsonResponseReturn<TResponse, ExtractSuccessStatusCodes<TResponse>>
+    | ErrorResponseReturn<TResponse, ExtractErrorStatusCodes<TResponse>>
   >,
 ) {
   const routeHandler = createRoute(route);
