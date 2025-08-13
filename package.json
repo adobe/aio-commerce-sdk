@@ -33,7 +33,7 @@
     "husky": "^9.1.7",
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
-    "tsdown": "^0.12.9",
+    "tsdown": "^0.14.0",
     "turbo": "^2.5.4",
     "type-fest": "^4.41.0",
     "typedoc": "^0.28.7",
