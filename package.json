@@ -39,7 +39,7 @@
     "typedoc": "^0.28.7",
     "typedoc-plugin-markdown": "^4.7.1",
     "typescript": "^5.8.3",
-    "ultracite": "5.0.47",
+    "ultracite": "5.1.8",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4"
   },
