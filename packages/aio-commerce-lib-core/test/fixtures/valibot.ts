@@ -29,7 +29,6 @@ export const mockUserSchema = object({
   id: pipe(
     string("id must be a string"),
     minLength(1, "id must not be empty"),
-    // biome-ignore lint/style/noMagicNumbers: fixture
     maxLength(36, "id must not exceed 36 characters"),
   ),
   email: pipe(
@@ -38,7 +37,6 @@ export const mockUserSchema = object({
   ),
   age: pipe(
     number("age must be a number"),
-    // biome-ignore lint/style/noMagicNumbers: fixture
     minValue(18, "age must be 18 or older"),
   ),
   name: pipe(

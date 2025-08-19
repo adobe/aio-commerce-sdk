@@ -4,17 +4,7 @@
   "extends": "//",
   "overrides": [
     {
-      "includes": ["source/index.ts", "source/error/index.ts"],
-      "linter": {
-        "rules": {
-          "performance": {
-            "noBarrelFile": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["test/**/*.test.ts", "test/fixtures/**/*.ts"],
+      "includes": ["test/**/*.test.ts", "test/fixtures/valibot.ts"],
       "linter": {
         "rules": {
           "style": {

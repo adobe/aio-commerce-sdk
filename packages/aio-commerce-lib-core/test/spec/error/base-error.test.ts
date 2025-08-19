@@ -95,7 +95,6 @@ describe("CommerceSdkErrorBase", () => {
 
     it("should return false for non-error values", () => {
       expect(CommerceSdkErrorBase.isSdkError("string")).toBe(false);
-      // biome-ignore lint/style/noMagicNumbers: fixture
       expect(CommerceSdkErrorBase.isSdkError(123)).toBe(false);
       expect(CommerceSdkErrorBase.isSdkError(undefined)).toBe(false);
       expect(CommerceSdkErrorBase.isSdkError({})).toBe(false);
