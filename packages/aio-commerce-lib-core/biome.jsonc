@@ -1,4 +1,27 @@
 {
+  "root": false,
   "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
-  "extends": "//"
+  "extends": "//",
+  "overrides": [
+    {
+      "includes": ["source/index.ts", "source/error/index.ts"],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noBarrelFile": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["test/**/*.test.ts", "test/fixtures/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noMagicNumbers": "off"
+          }
+        }
+      }
+    }
+  ]
 }
