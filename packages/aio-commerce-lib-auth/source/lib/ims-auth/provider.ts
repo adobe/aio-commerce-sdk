@@ -26,10 +26,10 @@ type ImsAuthHeader = "Authorization" | "x-api-key";
 type ImsAuthHeaders = Record<ImsAuthHeader, string>;
 
 /** Defines an authentication provider for Adobe IMS. */
-export interface ImsAuthProvider {
+export type ImsAuthProvider = {
   getAccessToken: () => Promise<string>;
   getHeaders: () => Promise<ImsAuthHeaders>;
-}
+};
 
 /** The shape of the configuration expected by `aio-lib-ims`. */
 type ImsAuthConfig = Omit<

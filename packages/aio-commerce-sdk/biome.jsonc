@@ -1,4 +1,17 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
-  "extends": "//"
+  "root": false,
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "extends": "//",
+  "overrides": [
+    {
+      "includes": ["source/auth.ts", "source/core.ts"],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noBarrelFile": "off"
+          }
+        }
+      }
+    }
+  ]
 }

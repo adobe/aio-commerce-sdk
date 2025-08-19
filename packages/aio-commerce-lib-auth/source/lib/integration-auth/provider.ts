@@ -30,12 +30,12 @@ type IntegrationAuthHeaders = Record<IntegrationAuthHeader, string>;
 export type AdobeCommerceUrl = string | URL;
 
 /** Defines an authentication provider for Adobe Commerce integrations. */
-export interface IntegrationAuthProvider {
+export type IntegrationAuthProvider = {
   getHeaders: (
     method: HttpMethodInput,
     url: AdobeCommerceUrl,
   ) => IntegrationAuthHeaders;
-}
+};
 
 /**
  * Asserts the provided configuration for an Adobe Commerce {@link IntegrationAuthProvider}.

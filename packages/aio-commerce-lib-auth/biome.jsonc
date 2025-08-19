@@ -1,4 +1,6 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
-  "extends": "//"
+  "root": false,
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "extends": "//",
+  "overrides": []
 }
