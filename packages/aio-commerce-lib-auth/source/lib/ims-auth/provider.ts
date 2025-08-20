@@ -41,7 +41,6 @@ type ImsAuthConfig = Omit<
 };
 
 const { context, getToken } = aioLibIms;
-
 /**
  * Converts IMS auth configuration properties to snake_case format.
  * @param config The IMS auth configuration with camelCase properties.
