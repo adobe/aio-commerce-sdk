@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { context, getToken } from "@adobe/aio-lib-ims";
+import aioLibIms from "@adobe/aio-lib-ims";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -21,11 +21,15 @@ import { IMS_AUTH_ENV } from "~/lib/ims-auth/schema";
 
 import type { ImsAuthEnv, ImsAuthParams } from "~/lib/ims-auth/schema";
 
-vi.mock("@adobe/aio-lib-ims", async () => ({
-  context: {
-    set: vi.fn(),
+const { context, getToken } = aioLibIms;
+
+vi.mock("@adobe/aio-lib-ims", () => ({
+  default: {
+    context: {
+      set: vi.fn(),
+    },
+    getToken: vi.fn(),
   },
-  getToken: vi.fn(),
 }));
 
 describe("aio-commerce-lib-auth/ims-auth", () => {
