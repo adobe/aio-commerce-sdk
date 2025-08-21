@@ -9,9 +9,9 @@ function getIntegrationAuthProvider(authParams: {
 }): IntegrationAuthProvider;
 ```
 
-Defined in: [packages/aio-commerce-lib-auth/source/lib/integration-auth/provider.ts:108](https://github.com/adobe/aio-commerce-sdk/blob/2e9631ab3482e2ba9d40c8de9e8d2373edc2e3ed/packages/aio-commerce-lib-auth/source/lib/integration-auth/provider.ts#L108)
+Defined in: [packages/aio-commerce-lib-auth/source/lib/integration-auth/provider.ts:108](https://github.com/adobe/aio-commerce-sdk/blob/5f2ef64f385c66b958f7880534fd6c1b1e618fc0/packages/aio-commerce-lib-auth/source/lib/integration-auth/provider.ts#L108)
 
-Creates an [IntegrationAuthProvider](../interfaces/IntegrationAuthProvider.md) based on the provided configuration.
+Creates an [IntegrationAuthProvider](../type-aliases/IntegrationAuthProvider.md) based on the provided configuration.
 
 ## Parameters
 
@@ -25,9 +25,9 @@ Creates an [IntegrationAuthProvider](../interfaces/IntegrationAuthProvider.md) b
 
 ## Returns
 
-[`IntegrationAuthProvider`](../interfaces/IntegrationAuthProvider.md)
+[`IntegrationAuthProvider`](../type-aliases/IntegrationAuthProvider.md)
 
-An [IntegrationAuthProvider](../interfaces/IntegrationAuthProvider.md) instance that can be used to get auth headers.
+An [IntegrationAuthProvider](../type-aliases/IntegrationAuthProvider.md) instance that can be used to get auth headers.
 
 ## Example
 
