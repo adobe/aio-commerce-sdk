@@ -11,7 +11,7 @@
  */
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { context, getToken } from "@adobe/aio-lib-ims";
+import aioLibIms from "@adobe/aio-lib-ims";
 import { safeParse } from "valibot";
 
 import { ImsAuthParamsSchema } from "./schema";
@@ -40,6 +40,7 @@ type ImsAuthConfig = Omit<
   context: string;
 };
 
+const { context, getToken } = aioLibIms;
 /**
  * Converts IMS auth configuration properties to snake_case format.
  * @param config The IMS auth configuration with camelCase properties.
