@@ -5,21 +5,29 @@
 //   - Prints a single-line JSON string to stdout, to be used as Slack webhook payload.
 //
 // Usage (local test):
-//   node .github/scripts/announce.js '[{"name":"@adobe/aio-commerce-sdk","version":"0.2.0"},{"name":"@adobe/aio-commerce-lib-core","version":"0.2.0"}]'
+//   node .github/scripts/announce.ts '[{"name":"@adobe/aio-commerce-sdk","version":"0.2.0"},{"name":"@adobe/aio-commerce-lib-core","version":"0.2.0"}]'
 //
 // Usage (send to Slack):
-//   SLACK_WEBHOOK_PAYLOAD=$(node .github/scripts/announce.js '[{"name":"@adobe/aio-commerce-sdk","version":"0.2.0"},{"name":"@adobe/aio-commerce-lib-core","version":"0.2.0"}]') curl -X POST -H 'Content-type: application/json' --data "$SLACK_WEBHOOK_PAYLOAD" $SLACK_WEBHOOK_URL
+//   SLACK_WEBHOOK_PAYLOAD=$(node .github/scripts/announce.ts '[{"name":"@adobe/aio-commerce-sdk","version":"0.2.0"},{"name":"@adobe/aio-commerce-lib-core","version":"0.2.0"}]') curl -X POST -H 'Content-type: application/json' --data "$SLACK_WEBHOOK_PAYLOAD" $SLACK_WEBHOOK_URL
+
+type PublishedPackage = {
+  name: string;
+  version: string;
+};
 
 const repo = "adobe/aio-commerce-sdk";
 const repoUrl = `https://github.com/${repo}`;
 
 /**
  * Formats an announcement for Slack based on the published packages.
- * @param {Array<{name: string, version: string}>} publishedPackages
- * @returns {string} The announcement text mrkdwn format
  * @see https://api.slack.com/reference/surfaces/formatting#basic-formatting
+ *
+ * @param publishedPackages - The published packages.
+ * @returns The announcement text markdown format
  */
-function formatMrkdwnAnnouncement(publishedPackages) {
+function formatMarkdownAnnouncement(
+  publishedPackages: PublishedPackage[],
+): string {
   // Sort packages to ensure consistent order
   publishedPackages.sort((a, b) => {
     if (a.name === "@adobe/aio-commerce-sdk") {
@@ -36,14 +44,20 @@ function formatMrkdwnAnnouncement(publishedPackages) {
     const pkgRelease = `${pkg.name}@${pkg.version}`;
     const pkgReleaseUrl = `${repoUrl}/releases/tag/${pkgRelease}`;
     const pkgNpmUrl = `https://www.npmjs.com/package/${pkg.name}`;
+
     announcement += `\u2007• \`${pkgRelease}\`: Read the <${pkgReleaseUrl}|release notes⇗>. See on <${pkgNpmUrl}|npm⇗>.\n`;
   }
+
   return announcement.trimEnd();
 }
 
+/** Entrypoint of the script. */
 function main() {
-  const publishedPackages = JSON.parse(process.argv[2] || "[]");
-  const announcement = formatMrkdwnAnnouncement(publishedPackages);
+  const publishedPackages = JSON.parse(
+    process.argv[2] || "[]",
+  ) as PublishedPackage[];
+
+  const announcement = formatMarkdownAnnouncement(publishedPackages);
   const webhookBody = JSON.stringify({
     blocks: [
       {
@@ -55,6 +69,7 @@ function main() {
       },
     ],
   });
+
   process.stdout.write(webhookBody);
 }
 

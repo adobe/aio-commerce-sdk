@@ -53,13 +53,15 @@ jobs:
         id: announcement
         if: steps.changesets.outputs.published == 'true'
         run: |
-          SLACK_WEBHOOK_PAYLOAD="$(node .github/scripts/announce.js '${{ steps.changesets.outputs.publishedPackages }}')"
+          # From Node v22.18.0, the node command is able to run .ts files directly (if it only needs type stripping).
+          # As of August 2025, Node v22.18.0 is already LTS (the version used by this workflow).
+          SLACK_WEBHOOK_PAYLOAD="$(node .github/scripts/announce.ts '${{ steps.changesets.outputs.publishedPackages }}')"
           echo "SLACK_WEBHOOK_PAYLOAD=$SLACK_WEBHOOK_PAYLOAD" >> "$GITHUB_OUTPUT"
 
       - name: Notify on Slack
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         if: steps.changesets.outputs.published == 'true'
         with:
-          webhook: ${{ secrets.TEST_SLACK_WEBHOOK_URL }}
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: ${{ steps.announcement.outputs.SLACK_WEBHOOK_PAYLOAD }}
