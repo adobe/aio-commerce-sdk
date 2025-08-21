@@ -11,10 +11,11 @@ import { context, getToken } from "@adobe/aio-lib-ims";
 SyntaxError: Named export 'getToken' not found. The requested module '@adobe/aio-lib-ims' is a CommonJS module, which may not support all module.exports as named exports.
 ```
 
-Affected Versions
+**Affected Versions**
 
 @adobe/aio-commerce-lib-auth: All versions with ESM distribution
 Occurs when using Node.js native ESM (projects with "type": "module" in package.json)
 
-Root Cause
+**Root Cause**
+
 The library's ESM distribution (/dist/es/index.js) attempts to use named imports from @adobe/aio-lib-ims, which is a CommonJS module. Node.js ESM cannot directly import named exports from CommonJS modules, requiring the use of default imports instead.
