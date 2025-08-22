@@ -41,5 +41,7 @@
   - any-glob-to-any-file: '.changeset/**'
 
 "without-changeset":
-- changed-files:
-  - any-glob-to-any-file: '!.changeset/**'
+- all:
+  - changed-files:
+    - any-glob-to-any-file: '**/*'
+    - all-globs-to-all-files: '!.changeset/**'
