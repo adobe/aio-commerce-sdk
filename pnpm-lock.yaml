@@ -144,6 +144,21 @@ importers:
         specifier: workspace:*
         version: link:../../configs/vitest
 
+  packages/aio-commerce-lib-events:
+    devDependencies:
+      '@aio-commerce-sdk/config-tsdown':
+        specifier: workspace:*
+        version: link:../../configs/tsdown
+      '@aio-commerce-sdk/config-typedoc':
+        specifier: workspace:*
+        version: link:../../configs/typedoc
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../../configs/typescript
+      '@aio-commerce-sdk/config-vitest':
+        specifier: workspace:*
+        version: link:../../configs/vitest
+
   packages/aio-commerce-sdk:
     dependencies:
       '@adobe/aio-commerce-lib-auth':
@@ -189,10 +204,12 @@ packages:
   '@adobe/aio-lib-core-networking@5.0.4':
     resolution: {integrity: sha512-LsFPKIXqfWiMwSjD9NJbb6uUSlZ+DZiV8p9NhpqPyzqAAl9NNONAH0jcIKtsKWSULcHc20INaRAw8dqKzQBTbw==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-ims-jwt@5.0.2':
     resolution: {integrity: sha512-KaK+RB4FbfF5llYJueoOd9r6NeJp+d8pUE2QxqP6tpfr8NGt40Fw68XduQSTnPoOxKLn2piTD+IfaQ9a5teKHg==}
