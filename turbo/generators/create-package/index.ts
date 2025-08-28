@@ -51,7 +51,7 @@ function getPackageData(options: WizardOptions) {
     : `@adobe/${name}`;
 
   const packageDir = isPrivate
-    ? `packages/internal/${name}`
+    ? `packages-private/${name}`
     : `packages/${name}`;
 
   return {
@@ -114,9 +114,9 @@ async function createPackageWizard() {
 
 /** Returns the template files to be used for the package. */
 function getTemplateFiles({ willContainTests }: PackageData) {
-  // This test files are excluded conditionally based on the answers.
   const templateFiles = ["create-package/template/**/*.hbs"];
 
+  // This test files are excluded conditionally based on the answers.
   if (!willContainTests) {
     templateFiles.push("!create-package/template/vitest.config.ts.hbs");
     templateFiles.push("!create-package/template/test/*.hbs");
