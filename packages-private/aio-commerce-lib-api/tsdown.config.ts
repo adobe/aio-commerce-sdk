@@ -9,13 +9,11 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
- 
-import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
-import { defineConfig, mergeConfig } from "vitest/config";
 
-export default mergeConfig(
-  baseConfig,
-  defineConfig({
-    // Write your Vitest configuration here.
-  })
-);
+import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
+import { defineConfig } from "tsdown";
+
+export default defineConfig({
+  ...baseConfig,
+  entry: ["./source/index.ts"],
+});

@@ -12,6 +12,10 @@
 - changed-files:
   - any-glob-to-any-file: 'packages/aio-commerce-lib-core/**'
 
+"pkg: aio-commerce-lib-api":
+- changed-files:
+  - any-glob-to-any-file: 'packages-private/aio-commerce-lib-api/**'
+
 "generator":
 - changed-files:
   - any-glob-to-any-file: 'turbo/generators/**'

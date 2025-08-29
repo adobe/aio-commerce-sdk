@@ -1,6 +1,7 @@
 packages:
   - configs/*
   - packages/*
+  - packages-private/*
   - turbo/*
 
 onlyBuiltDependencies:
