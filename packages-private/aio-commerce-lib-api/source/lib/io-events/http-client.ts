@@ -13,7 +13,7 @@ import type {
 export class AdobeIoEventsHttpClient extends HttpClientBase<IoEventsHttpClientConfig> {
   /**
    * Creates a new Adobe I/O Events HTTP client instance.
-   * @param params The configuration, authentication and fetch options parameters.
+   * @param params The parameters for building the Adobe I/O Events HTTP client.
    */
   public static create(params: IoEventsHttpClientParams) {
     const httpClient = buildIoEventsHttpClient(params);

@@ -6,21 +6,25 @@ import type { KyInstance, Options } from "ky";
  */
 export class HttpClientBase<T> {
   /** The actual HTTP client instance. */
-  // biome-ignore lint/style/useReadonlyClassProperties: False positive
-  #httpClient: Readonly<KyInstance>;
+  readonly #httpClient: Readonly<KyInstance>;
 
   /** The configuration used by the HTTP client. */
   public readonly config: Readonly<T>;
 
-  /** Creates a new HTTP client instance. */
+  /**
+   * Creates a new HTTP client instance.
+   * @param config The configuration used by the HTTP client.
+   * @param httpClient The actual HTTP client instance.
+   */
   protected constructor(config: T, httpClient: KyInstance) {
     this.#httpClient = Object.freeze(httpClient);
     this.config = Object.freeze(config);
   }
 
   /**
-   * Merges the given HTTP client with the current instance.
-   * @param client The Ky HTTP client to merge with the current instance.
+   * Merges the given HTTP client with the given target instance.
+   * @param base The target instance to merge with.
+   * @param client The Ky HTTP client to merge with the target instance.
    */
   protected static merge(
     base: HttpClientBase<unknown>,
@@ -31,8 +35,8 @@ export class HttpClientBase<T> {
   }
 
   /**
-   * Creates a new HTTP client instance.
-   * @param params The parameters for building the HTTP client.
+   * Extends the current HTTP client instance with the given options.
+   * @param options The options to extend the HTTP client with.
    */
   public extend(options: Options | ((parentOptions: Options) => Options)) {
     const client = Object.freeze(this.#httpClient.extend(options));
