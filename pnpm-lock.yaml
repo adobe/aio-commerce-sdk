@@ -98,7 +98,7 @@ importers:
         version: 0.3.4(typescript@5.9.2)
       ky:
         specifier: ^1.9.0
-        version: 1.9.1
+        version: 1.9.0
     devDependencies:
       '@aio-commerce-sdk/config-tsdown':
         specifier: workspace:*
@@ -152,21 +152,6 @@ importers:
       valibot:
         specifier: ^1.1.0
         version: 1.1.0(typescript@5.9.2)
-    devDependencies:
-      '@aio-commerce-sdk/config-tsdown':
-        specifier: workspace:*
-        version: link:../../configs/tsdown
-      '@aio-commerce-sdk/config-typedoc':
-        specifier: workspace:*
-        version: link:../../configs/typedoc
-      '@aio-commerce-sdk/config-typescript':
-        specifier: workspace:*
-        version: link:../../configs/typescript
-      '@aio-commerce-sdk/config-vitest':
-        specifier: workspace:*
-        version: link:../../configs/vitest
-
-  packages/aio-commerce-lib-events:
     devDependencies:
       '@aio-commerce-sdk/config-tsdown':
         specifier: workspace:*
@@ -1825,8 +1810,8 @@ packages:
   kuler@2.0.0:
     resolution: {integrity: sha512-Xq9nH7KlWZmXAtodXDDRE7vs6DU1gTU8zYDHDiWLSip45Egwq3plLHzPn27NgvzL2r1LMPC1vdqh98sQxtqj4A==}
 
-  ky@1.9.1:
-    resolution: {integrity: sha512-WGzpBn57klhxsqRTEABAqF4tqTtqCuxoTIv9m6nIZtMMFTVcrHp7bRDWblzFIfqkb47+OhTztOgHn6A4xItmqg==}
+  ky@1.9.0:
+    resolution: {integrity: sha512-NgBeR/cu7kuC4BAeF1rnXhfoI2uQ9RBe8zl5vo87ASsf1iIQoCeOxyt6Io6K4Ki++5ItCavXAtbEWWCGFciQ6g==}
     engines: {node: '>=18'}
 
   linkify-it@5.0.0:
@@ -4581,7 +4566,7 @@ snapshots:
 
   kuler@2.0.0: {}
 
-  ky@1.9.1: {}
+  ky@1.9.0: {}
 
   linkify-it@5.0.0:
     dependencies:

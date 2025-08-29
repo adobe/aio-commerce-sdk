@@ -1,11 +1,11 @@
-import type { KyInstance } from "ky";
+import type { HttpClientBase } from "./http-client-base";
 
 /**
  * Defines an API function. This is a function that takes an
  * HTTP client and some arguments and returns a result.
  */
 type ApiFunction<
-  TClient extends KyInstance,
+  TClient extends HttpClientBase<unknown>,
   TArgs extends unknown[],
   TResult,
 > = (client: TClient, ...args: TArgs) => TResult;
@@ -15,7 +15,7 @@ type ApiFunction<
  * provides a set of functions that can be used to make requests to the API.
  */
 type ApiClient<
-  TClient extends KyInstance,
+  TClient extends HttpClientBase<unknown>,
   T extends Record<string, ApiFunction<TClient, unknown[], unknown>>,
 > = {
   [K in keyof T]: (
@@ -29,7 +29,7 @@ type ApiClient<
  * @param fns The functions to wrap.
  */
 export function buildApiClient<
-  TClient extends KyInstance,
+  TClient extends HttpClientBase<unknown>,
   // biome-ignore lint/suspicious/noExplicitAny: We can't know the type of the arguments here.
   T extends Record<string, ApiFunction<TClient, any[], any>>,
 >(client: TClient, fns: T): ApiClient<TClient, T> {

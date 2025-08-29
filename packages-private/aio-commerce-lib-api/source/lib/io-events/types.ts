@@ -1,5 +1,5 @@
 import type { ImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
-import type { KyInstance, Options } from "ky";
+import type { Options } from "ky";
 import type { ImsAuthParamsWithOptionalScopes } from "~/utils/auth/ims-scopes";
 
 /** Defines the configuration required to build an Adobe I/O HTTP client. */
@@ -21,9 +21,4 @@ export type IoEventsHttpClientParams = {
 
   /** Additional fetch options to use for the I/O Events HTTP requests. */
   fetchOptions?: Options;
-};
-
-/** Defines the HTTP client for the Adobe I/O Events API. */
-export type IoEventsHttpClient = KyInstance & {
-  config: IoEventsHttpClientConfig;
 };

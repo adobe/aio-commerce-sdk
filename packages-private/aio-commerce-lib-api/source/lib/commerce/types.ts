@@ -3,23 +3,16 @@ import type {
   IntegrationAuthParams,
   IntegrationAuthProvider,
 } from "@adobe/aio-commerce-lib-auth";
-import type { KyInstance, Options } from "ky";
+import type { Options } from "ky";
 import type { ImsAuthParamsWithOptionalScopes } from "~/utils/auth/ims-scopes";
 
-/** Defines the flavor of the Commerce instance. */
-export type CommerceFlavor = "paas" | "saas";
-
-/** Defines the configuration required to build an Adobe Commerce HTTP client. */
-export type CommerceHttpClientConfig = {
+type CommerceHttpClientConfigBase = {
   /** The base URL of the Commerce API. */
   baseUrl: string;
 
-  /** Whether the target Commerce instance is a PaaS or SaaS. */
-  flavor: CommerceFlavor;
-
   /**
    * The store view code use to make requests to the Commerce API.
-   * @default "all"
+   * @default "default"
    */
   storeViewCode?: string;
 
@@ -31,14 +24,24 @@ export type CommerceHttpClientConfig = {
 };
 
 /** Defines the configuration required to build an Adobe Commerce HTTP client for PaaS. */
-export type CommerceHttpClientConfigPaaS = CommerceHttpClientConfig & {
+export type CommerceHttpClientConfigPaaS = CommerceHttpClientConfigBase & {
+  /** The flavor of the Commerce instance. */
   flavor: "paas";
 };
 
 /** Defines the configuration required to build an Adobe Commerce HTTP client for SaaS. */
-export type CommerceHttpClientConfigSaaS = CommerceHttpClientConfig & {
+export type CommerceHttpClientConfigSaaS = CommerceHttpClientConfigBase & {
+  /** The flavor of the Commerce instance. */
   flavor: "saas";
 };
+
+/** Defines the configuration required to build an Adobe Commerce HTTP client. */
+export type CommerceHttpClientConfig =
+  | CommerceHttpClientConfigPaaS
+  | CommerceHttpClientConfigSaaS;
+
+/** Defines the flavor of a Commerce instance. */
+export type CommerceFlavor = CommerceHttpClientConfig["flavor"];
 
 // Type for SaaS configuration
 export type SaaSClientParams = {
@@ -56,8 +59,3 @@ export type PaaSClientParams = {
 
 // Discriminated union of both types
 export type CommerceHttpClientParams = SaaSClientParams | PaaSClientParams;
-
-/** Defines a {@link KyInstance} which targets an Adobe Commerce instance. */
-export type CommerceHttpClient = KyInstance & {
-  config: CommerceHttpClientConfig;
-};
