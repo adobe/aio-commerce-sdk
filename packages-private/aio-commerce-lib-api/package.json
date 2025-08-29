@@ -8,6 +8,25 @@
   },
   "license": "Apache-2.0",
   "description": "A set of utilities to build HTTP/API clients for I/O Events and Adobe Commerce",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/es/index.d.ts",
+        "default": "./dist/es/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "CHANGELOG.md",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsdown",
     "docs": "typedoc && prettier --write '**/*.md'",
