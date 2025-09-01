@@ -14,7 +14,16 @@ export const EventProviderListAllParamsSchema = v.object({
     v.object({
       instanceId: v.optional(stringValueSchema("instanceId")),
       providerType: v.optional(
-        v.union([EventProviderTypeSchema, v.array(EventProviderTypeSchema)]),
+        v.union([
+          v.pipe(
+            EventProviderTypeSchema,
+            v.transform((value) => [value]),
+          ),
+          v.array(
+            EventProviderTypeSchema,
+            "Expected an array of event provider types",
+          ),
+        ]),
       ),
     }),
   ),
@@ -43,7 +52,7 @@ export const EventProviderCreateParamsSchema = v.object({
  * Defines the parameters received by the GET `providers` Adobe I/O Events API endpoint.
  * @see https://developer.adobe.com/events/docs/api#operation/getProvidersByConsumerOrgId
  */
-export type EventProviderListAllParams = v.InferOutput<
+export type EventProviderListAllParams = v.InferInput<
   typeof EventProviderListAllParamsSchema
 >;
 
@@ -51,7 +60,7 @@ export type EventProviderListAllParams = v.InferOutput<
  * The schema of the parameters received by the GET `providers/:id` Adobe I/O Events API endpoint.
  * @see https://developer.adobe.com/events/docs/api#operation/getProvidersById
  */
-export type EventProviderGetByIdParams = v.InferOutput<
+export type EventProviderGetByIdParams = v.InferInput<
   typeof EventProviderGetByIdParamsSchema
 >;
 
@@ -59,6 +68,6 @@ export type EventProviderGetByIdParams = v.InferOutput<
  * The schema of the parameters received by the POST `providers` Adobe I/O Events API endpoint.
  * @see https://developer.adobe.com/events/docs/api#operation/createProvider
  */
-export type EventProviderCreateParams = v.InferOutput<
+export type EventProviderCreateParams = v.InferInput<
   typeof EventProviderCreateParamsSchema
 >;

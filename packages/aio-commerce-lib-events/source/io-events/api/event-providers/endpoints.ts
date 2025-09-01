@@ -38,11 +38,8 @@ export function getAllEventProviders(
 
   const queryParams = new URLSearchParams();
   const { providerType = [], instanceId } = validatedParams.filterBy ?? {};
-  const providerTypes = Array.isArray(providerType)
-    ? providerType
-    : [providerType];
 
-  setArrayQueryParam(queryParams, "providerMetadataIds", providerTypes);
+  setArrayQueryParam(queryParams, "providerMetadataIds", providerType);
   setQueryParamIfTruthy(queryParams, "instanceId", instanceId);
   setQueryParamIfTruthy(
     queryParams,
