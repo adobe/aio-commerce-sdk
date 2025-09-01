@@ -1,45 +1,43 @@
 import type { HttpClientBase } from "./http-client-base";
 
-/**
- * Defines an API function. This is a function that takes an
- * HTTP client and some arguments and returns a result.
- */
+/** A function that takes an object of HTTP clients and returns something. */
 type ApiFunction<
-  TClient extends HttpClientBase<unknown>,
+  TClients extends Record<string, HttpClientBase<unknown>>,
   TArgs extends unknown[],
   TResult,
-> = (client: TClient, ...args: TArgs) => TResult;
+> = (clients: TClients, ...args: TArgs) => TResult;
 
-/**
- * Defines an API client. This is a client that wraps an HTTP client and
- * provides a set of functions that can be used to make requests to the API.
- */
-type ApiClient<
-  TClient extends HttpClientBase<unknown>,
-  T extends Record<string, ApiFunction<TClient, unknown[], unknown>>,
+/** A client that bounds a set of {@link ApiFunction} to their HTTP clients. */
+type ApiClientRecord<
+  TClients extends Record<string, HttpClientBase<unknown>>,
+  TFunctions extends Record<string, ApiFunction<TClients, unknown[], unknown>>,
 > = {
-  [K in keyof T]: (
-    ...args: Parameters<T[K]> extends [unknown, ...infer Rest] ? Rest : never
-  ) => ReturnType<T[K]>;
+  [K in keyof TFunctions]: TFunctions[K] extends ApiFunction<
+    TClients,
+    infer Args,
+    infer Result
+  >
+    ? (...args: Args) => Result
+    : never;
 };
 
-/**
- * Creates an API client for the given HTTP client and functions.
- * @param client The HTTP client.
- * @param fns The functions to wrap.
- */
-export function buildApiClient<
-  TClient extends HttpClientBase<unknown>,
-  // biome-ignore lint/suspicious/noExplicitAny: We can't know the type of the arguments here.
-  T extends Record<string, ApiFunction<TClient, any[], any>>,
->(client: TClient, fns: T): ApiClient<TClient, T> {
-  const wrapped = {} as ApiClient<TClient, T>;
+// biome-ignore lint/complexity/noStaticOnlyClass: For consistency with the rest of the codebase.
+export class ApiClient {
+  public static create<
+    TClients extends Record<string, HttpClientBase<unknown>>,
+    // biome-ignore lint/suspicious/noExplicitAny: We can't know the type of the argument/return type.
+    TFunctions extends Record<string, ApiFunction<TClients, any[], any>>,
+  >(clients: TClients, functions: TFunctions) {
+    const wrapped = {} as ApiClientRecord<TClients, TFunctions>;
 
-  for (const key in fns) {
-    if (Object.hasOwn(fns, key)) {
-      wrapped[key] = (...args: unknown[]) => fns[key](client, ...args);
+    for (const key in functions) {
+      if (Object.hasOwn(functions, key)) {
+        const fn = functions[key];
+        // biome-ignore lint/suspicious/noExplicitAny: We can't know the type of the argument/return type.
+        wrapped[key] = ((...args: unknown[]) => fn(clients, ...args)) as any;
+      }
     }
-  }
 
-  return wrapped;
+    return wrapped;
+  }
 }

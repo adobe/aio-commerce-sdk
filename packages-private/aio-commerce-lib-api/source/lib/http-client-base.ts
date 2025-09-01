@@ -26,8 +26,8 @@ export class HttpClientBase<T> {
    * @param base The target instance to merge with.
    * @param client The Ky HTTP client to merge with the target instance.
    */
-  protected static merge(
-    base: HttpClientBase<unknown>,
+  protected static merge<TClient extends HttpClientBase<unknown>>(
+    base: TClient,
     client: KyInstance | Readonly<KyInstance>,
   ) {
     const { extend: _, ...rest } = client;

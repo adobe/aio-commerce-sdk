@@ -19,6 +19,6 @@ export class AdobeCommerceHttpClient extends HttpClientBase<CommerceHttpClientCo
     const httpClient = buildCommerceHttpClient(params);
     const instance = new AdobeCommerceHttpClient(params.config, httpClient);
 
-    return HttpClientBase.merge(instance, httpClient);
+    return AdobeCommerceHttpClient.merge(instance, httpClient);
   }
 }
