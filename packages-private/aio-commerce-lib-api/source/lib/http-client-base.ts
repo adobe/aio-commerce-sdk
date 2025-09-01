@@ -4,7 +4,9 @@ import type { KyInstance, Options } from "ky";
  * Base class for HTTP clients.
  * @template T The type of the configuration object.
  */
-export class HttpClientBase<T> {
+// @ts-expect-error The interface is not explicitly implemented because
+// we forward all of it's methods via the inner KyInstance (with Object.assign).
+export class HttpClientBase<T> implements Omit<KyInstance, "extend"> {
   /** The actual HTTP client instance. */
   readonly #httpClient: Readonly<KyInstance>;
 
