@@ -15,10 +15,8 @@ export class AdobeIoEventsHttpClient extends HttpClientBase<IoEventsHttpClientCo
    * Creates a new Adobe I/O Events HTTP client instance.
    * @param params The parameters for building the Adobe I/O Events HTTP client.
    */
-  public static create(params: IoEventsHttpClientParams) {
+  public constructor(params: IoEventsHttpClientParams) {
     const httpClient = buildIoEventsHttpClient(params);
-    const instance = new AdobeIoEventsHttpClient(params.config, httpClient);
-
-    return HttpClientBase.merge(instance, httpClient);
+    super(params.config, httpClient);
   }
 }

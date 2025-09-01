@@ -1,17 +1,25 @@
 import type { KyInstance, Options } from "ky";
 
+type KyHttpClient = Omit<KyInstance, "extend" | "create">;
+
 /**
  * Base class for HTTP clients.
  * @template T The type of the configuration object.
  */
-// @ts-expect-error The interface is not explicitly implemented because
-// we forward all of it's methods via the inner KyInstance (with Object.assign).
-export class HttpClientBase<T> implements Omit<KyInstance, "extend"> {
+export class HttpClientBase<T> implements KyHttpClient {
   /** The actual HTTP client instance. */
   readonly #httpClient: Readonly<KyInstance>;
 
   /** The configuration used by the HTTP client. */
   public readonly config: Readonly<T>;
+
+  public readonly get: KyInstance["get"];
+  public readonly post: KyInstance["post"];
+  public readonly put: KyInstance["put"];
+  public readonly delete: KyInstance["delete"];
+  public readonly patch: KyInstance["patch"];
+  public readonly head: KyInstance["head"];
+  public readonly stop: KyInstance["stop"];
 
   /**
    * Creates a new HTTP client instance.
@@ -21,19 +29,14 @@ export class HttpClientBase<T> implements Omit<KyInstance, "extend"> {
   protected constructor(config: T, httpClient: KyInstance) {
     this.#httpClient = Object.freeze(httpClient);
     this.config = Object.freeze(config);
-  }
 
-  /**
-   * Merges the given HTTP client with the given target instance.
-   * @param base The target instance to merge with.
-   * @param client The Ky HTTP client to merge with the target instance.
-   */
-  protected static merge<TClient extends HttpClientBase<unknown>>(
-    base: TClient,
-    client: KyInstance | Readonly<KyInstance>,
-  ) {
-    const { extend: _, ...rest } = client;
-    return Object.assign(base, rest as Omit<KyInstance, "extend">);
+    this.get = this.#httpClient.get.bind(this.#httpClient);
+    this.post = this.#httpClient.post.bind(this.#httpClient);
+    this.put = this.#httpClient.put.bind(this.#httpClient);
+    this.delete = this.#httpClient.delete.bind(this.#httpClient);
+    this.patch = this.#httpClient.patch.bind(this.#httpClient);
+    this.head = this.#httpClient.head.bind(this.#httpClient);
+    this.stop = this.#httpClient.stop;
   }
 
   /**
@@ -42,8 +45,6 @@ export class HttpClientBase<T> implements Omit<KyInstance, "extend"> {
    */
   public extend(options: Options | ((parentOptions: Options) => Options)) {
     const client = Object.freeze(this.#httpClient.extend(options));
-    const instance = new HttpClientBase(this.config, client);
-
-    return HttpClientBase.merge(instance, client);
+    return new HttpClientBase(this.config, client);
   }
 }

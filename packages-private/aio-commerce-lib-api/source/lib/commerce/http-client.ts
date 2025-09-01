@@ -15,10 +15,8 @@ export class AdobeCommerceHttpClient extends HttpClientBase<CommerceHttpClientCo
    * Creates a new Commerce HTTP client instance.
    * @param params The parameters for building the Commerce HTTP client.
    */
-  public static create(params: CommerceHttpClientParams) {
+  public constructor(params: CommerceHttpClientParams) {
     const httpClient = buildCommerceHttpClient(params);
-    const instance = new AdobeCommerceHttpClient(params.config, httpClient);
-
-    return AdobeCommerceHttpClient.merge(instance, httpClient);
+    super(params.config, httpClient);
   }
 }
