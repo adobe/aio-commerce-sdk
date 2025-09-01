@@ -4,9 +4,6 @@ import type { ImsAuthParamsWithOptionalScopes } from "~/utils/auth/ims-scopes";
 
 /** Defines the configuration required to build an Adobe I/O HTTP client. */
 export type IoEventsHttpClientConfig = {
-  /** The consumer organization ID to use for the Adobe I/O API. */
-  consumerOrgId: string;
-
   /**
    * The base URL to use for the Adobe I/O Events API.
    * @default "https://api.adobe.io/events"
