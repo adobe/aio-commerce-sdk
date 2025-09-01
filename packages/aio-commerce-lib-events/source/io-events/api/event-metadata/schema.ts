@@ -26,6 +26,7 @@ function tryDecodeFromBase64(value: string) {
 
 function sampleEventTemplateSchema(fieldName: string) {
   return v.pipe(
+    // Input Format (JSON String or Object or Array)
     v.union([
       v.pipe(
         // Sample event templates should be strings (encoded or not) (containing valid JSON data)
@@ -41,16 +42,17 @@ function sampleEventTemplateSchema(fieldName: string) {
         v.stringifyJson(),
       ),
 
-      // Or objects or arrays.
       v.record(v.string(), v.unknown()),
       v.array(v.unknown()),
     ]),
 
-    // After checking if valid format, stringify to JSON and then encode to base64
+    // Output Format (JSON String)
     v.stringifyJson(
       undefined,
       `Expected valid JSON data for property '${fieldName}'`,
     ),
+
+    // Encoded to Base64
     v.transform(encodeToBase64),
   );
 }
