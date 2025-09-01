@@ -3,7 +3,7 @@ import {
   ApiClient,
 } from "@aio-commerce-sdk/aio-commerce-lib-api";
 
-import { updateEventingConfiguration } from "./eventing-configuration/endpoints";
+import { updateEventingConfiguration } from "./api/eventing-configuration/endpoints";
 
 import type {
   ApiFunction,

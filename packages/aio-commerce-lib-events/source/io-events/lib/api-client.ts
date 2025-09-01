@@ -3,8 +3,8 @@ import {
   ApiClient,
 } from "@aio-commerce-sdk/aio-commerce-lib-api";
 
-import * as eventProviderEndpoints from "./event-providers/endpoints";
-import * as eventProviderShorthands from "./event-providers/shorthands";
+import * as eventProviderEndpoints from "~/io-events/api/event-providers/endpoints";
+import * as eventProviderShorthands from "~/io-events/api/event-providers/shorthands";
 
 import type {
   ApiFunction,

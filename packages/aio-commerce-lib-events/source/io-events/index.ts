@@ -1,11 +1,11 @@
 /** biome-ignore-all lint/performance/noBarrelFile: This is the package `io-events` entrypoint. */
 
-export * from "./api-client";
-export * from "./event-providers/endpoints";
-export * from "./event-providers/shorthands";
+export * from "./api/event-providers/endpoints";
+export * from "./api/event-providers/shorthands";
+export * from "./lib/api-client";
 
 export type {
   EventProviderCreateParams,
   EventProviderGetByIdParams,
   EventProviderListAllParams,
-} from "./event-providers/schema";
+} from "./api/event-providers/schema";
