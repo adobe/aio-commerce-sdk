@@ -5,8 +5,5 @@ export * from "./api/event-providers/endpoints";
 export * from "./api/event-providers/shorthands";
 export * from "./lib/api-client";
 
-export type {
-  EventProviderCreateParams,
-  EventProviderGetByIdParams,
-  EventProviderListAllParams,
-} from "./api/event-providers/schema";
+export type * from "./api/event-metadata/schema";
+export type * from "./api/event-providers/schema";

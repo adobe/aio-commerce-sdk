@@ -4,6 +4,7 @@ import {
 } from "@aio-commerce-sdk/aio-commerce-lib-api";
 
 import * as eventProviderEndpoints from "~/commerce/api/event-providers/endpoints";
+import * as eventSubscriptionsEndpoints from "~/commerce/api/event-subscriptions/endpoints";
 import { updateEventingConfiguration } from "~/commerce/api/eventing-configuration/endpoints";
 
 import type {
@@ -22,6 +23,7 @@ export function createCommerceEventsApiClient(
   // We should encourage creating custom clients (using the below factory function).
   return ApiClient.create(new AdobeCommerceHttpClient(params), {
     ...eventProviderEndpoints,
+    ...eventSubscriptionsEndpoints,
     updateEventingConfiguration,
   });
 }
