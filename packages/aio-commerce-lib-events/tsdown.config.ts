@@ -15,7 +15,7 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig({
   ...baseConfig,
-  entry: ["./source/api/commerce/index.ts", "./source/api/io-events/index.ts"],
+  entry: ["./source/commerce/index.ts", "./source/io-events/index.ts"],
 
   // This package API is currently private so we need it to mark it as no-external (not published)
   // otherwise it won't work when installed in a project (as the dependency won't be found in NPM).

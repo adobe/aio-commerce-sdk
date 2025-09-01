@@ -3,7 +3,7 @@ import * as v from "valibot";
 import {
   DataResidencyRegionSchema,
   EventProviderTypeSchema,
-} from "~/api/io-events/schema";
+} from "~/io-events/lib/schema";
 import { booleanValueSchema, stringValueSchema } from "~/utils/schemas";
 
 export const EventProviderListAllParamsSchema = v.object({
