@@ -1,14 +1,14 @@
 import type { HttpClientBase } from "./http-client-base";
 
 /** A function that takes an object of HTTP clients and returns something. */
-type ApiFunction<
+export type ApiFunction<
   TClient extends HttpClientBase<unknown>,
   TArgs extends unknown[],
   TResult,
 > = (clients: TClient, ...args: TArgs) => TResult;
 
 /** A client that bounds a set of {@link ApiFunction} to their HTTP clients. */
-type ApiClientRecord<
+export type ApiClientRecord<
   TClient extends HttpClientBase<unknown>,
   TFunctions extends Record<string, ApiFunction<TClient, unknown[], unknown>>,
 > = {

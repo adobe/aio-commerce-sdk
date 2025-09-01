@@ -14,6 +14,8 @@
 
 export { ApiClient } from "./lib/api-client";
 export { AdobeCommerceHttpClient } from "./lib/commerce/http-client";
-export * from "./lib/commerce/types";
 export { AdobeIoEventsHttpClient } from "./lib/io-events/http-client";
-export * from "./lib/io-events/types";
+
+export type { ApiClientRecord, ApiFunction } from "./lib/api-client";
+export type * from "./lib/commerce/types";
+export type * from "./lib/io-events/types";
