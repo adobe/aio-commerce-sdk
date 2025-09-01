@@ -1,5 +1,5 @@
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { safeParse } from "valibot";
+import * as v from "valibot";
 
 import type { BaseIssue, BaseSchema, InferOutput } from "valibot";
 
@@ -8,10 +8,10 @@ import type { BaseIssue, BaseSchema, InferOutput } from "valibot";
  * @param schema - The schema to use for parsing.
  * @param input - The input to parse.
  */
-export function valibotParseOrThrow<
+export function parseOrThrow<
   const TSchema extends BaseSchema<unknown, unknown, BaseIssue<unknown>>,
 >(schema: TSchema, input: unknown): InferOutput<TSchema> {
-  const result = safeParse(schema, input);
+  const result = v.safeParse(schema, input);
   if (!result.success) {
     throw new CommerceSdkValidationError("Invalid input", {
       issues: result.issues,
