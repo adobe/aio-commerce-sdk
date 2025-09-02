@@ -13,12 +13,8 @@ export const EventProviderListAllParamsSchema = v.object({
   filterBy: v.optional(
     v.object({
       instanceId: v.optional(stringValueSchema("instanceId")),
-      providerType: v.optional(
+      providerTypes: v.optional(
         v.union([
-          v.pipe(
-            EventProviderTypeSchema,
-            v.transform((value) => [value]),
-          ),
           v.array(
             EventProviderTypeSchema,
             "Expected an array of event provider types",
