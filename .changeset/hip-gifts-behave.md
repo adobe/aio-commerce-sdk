@@ -4,7 +4,7 @@
 
 Create library and introduce the following API operations:
 
-### For Adobe I/O Events
+**For Adobe I/O Events**:
 
 | Category                    | Operations                                                                                                                            |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -12,7 +12,7 @@ Create library and introduce the following API operations:
 | Event Providers (Shortcuts) | `getAllCommerceEventProviders`, `getAll3rdPartyCustomEventsProviders`, `createCommerceProvider`, `create3rdPartyCustomEventsProvider` |
 | Event Metadata              | `getAllEventMetadataForProvider`, `getEventMetadataForEventAndProvider`, `createEventMetadataForProvider`                             |
 
-### For Adobe Commerce
+**For Adobe Commerce**:
 
 | Category               | Operations                                                            |
 | ---------------------- | --------------------------------------------------------------------- |
