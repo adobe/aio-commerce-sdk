@@ -13,6 +13,7 @@ import type {
   EventProviderCreateParams,
   EventProviderGetByIdParams,
 } from "./schema";
+import type { CommerceEventProvider } from "./types";
 
 /**
  * Lists all event providers of the Commerce instance bound to the given {@link AdobeCommerceHttpClient}.
@@ -28,7 +29,9 @@ export function getAllEventProviders(
   httpClient: AdobeCommerceHttpClient,
   fetchOptions?: Options,
 ) {
-  return httpClient.get("eventing/eventProvider", fetchOptions);
+  return httpClient
+    .get("eventing/eventProvider", fetchOptions)
+    .json<CommerceEventProvider[]>();
 }
 
 /**
@@ -52,10 +55,9 @@ export function getEventProviderById(
     params,
   );
 
-  return httpClient.get(
-    `eventing/eventProvider/${validatedParams.providerId}`,
-    fetchOptions,
-  );
+  return httpClient
+    .get(`eventing/eventProvider/${validatedParams.providerId}`, fetchOptions)
+    .json<CommerceEventProvider>();
 }
 
 /**
@@ -76,17 +78,19 @@ export function createEventProvider(
 ) {
   const validatedParams = parseOrThrow(EventProviderCreateParamsSchema, params);
 
-  return httpClient.post("eventing/eventProvider", {
-    ...fetchOptions,
-    json: {
-      eventProvider: {
-        provider_id: validatedParams.providerId,
-        instance_id: validatedParams.instanceId,
-        label: validatedParams.label,
-        description: validatedParams.description,
-        associated_workspace_configuration:
-          validatedParams.associatedWorkspaceConfiguration,
+  return httpClient
+    .post("eventing/eventProvider", {
+      ...fetchOptions,
+      json: {
+        eventProvider: {
+          provider_id: validatedParams.providerId,
+          instance_id: validatedParams.instanceId,
+          label: validatedParams.label,
+          description: validatedParams.description,
+          workspace_configuration:
+            validatedParams.associatedWorkspaceConfiguration,
+        },
       },
-    },
-  });
+    })
+    .json<CommerceEventProvider>();
 }
