@@ -166,6 +166,37 @@ importers:
         specifier: workspace:*
         version: link:../../configs/vitest
 
+  packages/aio-commerce-lib-events:
+    dependencies:
+      '@adobe/aio-commerce-lib-auth':
+        specifier: ^0.3.4
+        version: 0.3.4(typescript@5.9.2)
+      '@adobe/aio-commerce-lib-core':
+        specifier: ^0.4.1
+        version: 0.4.1(typescript@5.9.2)
+      '@aio-commerce-sdk/aio-commerce-lib-api':
+        specifier: workspace:*
+        version: link:../../packages-private/aio-commerce-lib-api
+      ky:
+        specifier: ^1.9.0
+        version: 1.9.0
+      valibot:
+        specifier: ^1.1.0
+        version: 1.1.0(typescript@5.9.2)
+    devDependencies:
+      '@aio-commerce-sdk/config-tsdown':
+        specifier: workspace:*
+        version: link:../../configs/tsdown
+      '@aio-commerce-sdk/config-typedoc':
+        specifier: workspace:*
+        version: link:../../configs/typedoc
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../../configs/typescript
+      '@aio-commerce-sdk/config-vitest':
+        specifier: workspace:*
+        version: link:../../configs/vitest
+
   packages/aio-commerce-sdk:
     dependencies:
       '@adobe/aio-commerce-lib-auth':
