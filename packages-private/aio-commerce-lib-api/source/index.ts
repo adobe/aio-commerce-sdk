@@ -9,13 +9,11 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
- 
-import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
-import { defineConfig, mergeConfig } from "vitest/config";
 
-export default mergeConfig(
-  baseConfig,
-  defineConfig({
-    // Write your Vitest configuration here.
-  })
-);
+/** biome-ignore-all lint/performance/noBarrelFile: This is the entrypoint of the package API */
+
+export { ApiClient } from "./lib/api-client";
+export { AdobeCommerceHttpClient } from "./lib/commerce/http-client";
+export * from "./lib/commerce/types";
+export { AdobeIoEventsHttpClient } from "./lib/io-events/http-client";
+export * from "./lib/io-events/types";
