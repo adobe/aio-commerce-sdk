@@ -23,8 +23,8 @@ const COMMERCE_SAAS_IMS_REQUIRED_SCOPES = [
   "commerce.accs",
 ];
 
-const DEFAULT_STORE_VIEW_CODE = "default";
-const DEFAULT_API_VERSION = "v1";
+const DEFAULT_STORE_VIEW_CODE = "all";
+const DEFAULT_API_VERSION = "V1";
 
 /**
  * Gets the Commerce URL for the given configuration and flavor.

@@ -12,15 +12,15 @@ type CommerceHttpClientConfigBase = {
 
   /**
    * The store view code use to make requests to the Commerce API.
-   * @default "default"
+   * @default "all"
    */
   storeViewCode?: string;
 
   /**
    * The version of the Commerce API to use. Currently only `v1` is supported.
-   * @default "v1"
+   * @default "V1"
    */
-  version?: "v1";
+  version?: "V1";
 };
 
 /** Defines the configuration required to build an Adobe Commerce HTTP client for PaaS. */

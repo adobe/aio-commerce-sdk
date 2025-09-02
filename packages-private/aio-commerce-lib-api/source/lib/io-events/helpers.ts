@@ -12,6 +12,7 @@ import { optionallyExtendKy } from "~/utils/http/ky";
 
 import type { IoEventsHttpClientParams } from "./types";
 
+const DEFAULT_IO_EVENTS_BASE_URL = "https://api.adobe.io/events";
 const IO_EVENTS_IMS_REQUIRED_SCOPES = [
   ...BASE_IMS_REQUIRED_SCOPES,
   "event_receiver_api",
@@ -29,11 +30,7 @@ export function buildIoEventsHttpClient(params: IoEventsHttpClientParams) {
         ensureImsScopes(auth, IO_EVENTS_IMS_REQUIRED_SCOPES),
       );
 
-  const adobeIoBaseUrl =
-    config.environment === "stage"
-      ? "https://api-stage.adobe.io/events"
-      : "https://api.adobe.io/events";
-
+  const adobeIoBaseUrl = config.baseUrl ?? DEFAULT_IO_EVENTS_BASE_URL;
   const httpClient = ky.create({
     prefixUrl: adobeIoBaseUrl,
     headers: {

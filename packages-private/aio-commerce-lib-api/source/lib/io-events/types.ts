@@ -7,8 +7,11 @@ export type IoEventsHttpClientConfig = {
   /** The consumer organization ID to use for the Adobe I/O API. */
   consumerOrgId: string;
 
-  /** The environment to use for the Adobe I/O API. */
-  environment?: "prod" | "stage";
+  /**
+   * The base URL to use for the Adobe I/O API.
+   * @default "https://api.adobe.io/events"
+   */
+  baseUrl?: string;
 };
 
 /** Defines the parameters required to build an HTTP client for the Adobe I/O Events API. */
