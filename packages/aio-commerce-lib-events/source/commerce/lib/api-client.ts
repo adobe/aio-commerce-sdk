@@ -14,7 +14,7 @@ import type {
 
 /**
  * Creates a new API client for the Commerce Events API client.
- * @param params - The parameters for the Commerce Events API.
+ * @param params - The parameters to build the Commerce HTTP client that will communicate with the Commerce Events API.
  */
 export function createCommerceEventsApiClient(
   params: CommerceHttpClientParams,
@@ -30,7 +30,7 @@ export function createCommerceEventsApiClient(
 
 /**
  * Creates a customized Commerce Events API client.
- * @param params - The parameters for the Commerce Events API.
+ * @param params - The parameters to build the Commerce HTTP client that will communicate with the Commerce Events API.
  * @param functions - The API functions to include in the client.
  */
 export function createCustomCommerceEventsApiClient<

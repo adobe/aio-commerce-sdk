@@ -14,7 +14,7 @@ import type {
 
 /**
  * Creates a new API client for the Adobe I/O Events API client.
- * @param params - The parameters for the Commerce Events API.
+ * @param params - The parameters to build the Adobe I/O Events HTTP client that will communicate with the Adobe I/O Events API.
  */
 export function createAdobeIoEventsApiClient(params: IoEventsHttpClientParams) {
   // By default we create a client that has all the endpoints available.
@@ -28,7 +28,7 @@ export function createAdobeIoEventsApiClient(params: IoEventsHttpClientParams) {
 
 /**
  * Creates a customized Adobe I/O Events API client.
- * @param params - The parameters for the Adobe I/O Events API.
+ * @param params - The parameters to build the Adobe I/O Events HTTP client that will communicate with the Adobe I/O Events API.
  * @param functions - The API functions to include in the client.
  */
 export function createCustomAdobeIoEventsApiClient<
