@@ -8,7 +8,7 @@ export type IoEventsHttpClientConfig = {
   consumerOrgId: string;
 
   /**
-   * The base URL to use for the Adobe I/O API.
+   * The base URL to use for the Adobe I/O Events API.
    * @default "https://api.adobe.io/events"
    */
   baseUrl?: string;
