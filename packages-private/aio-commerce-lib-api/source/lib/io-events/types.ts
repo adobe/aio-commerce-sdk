@@ -1,6 +1,6 @@
 import type { ImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
 import type { Options } from "ky";
-import type { ImsAuthParamsWithOptionalScopes } from "~/utils/auth/ims-scopes";
+import type { ImsAuthParamsWithOptionalScopes } from "#utils/auth/ims-scopes";
 
 /** Defines the configuration required to build an Adobe I/O HTTP client. */
 export type IoEventsHttpClientConfig = {

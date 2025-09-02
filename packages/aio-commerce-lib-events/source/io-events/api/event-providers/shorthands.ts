@@ -31,7 +31,7 @@ export function getAllCommerceEventProviders(
       ...params,
       filterBy: {
         ...params.filterBy,
-        providerType: "dx_commerce_events",
+        providerTypes: ["dx_commerce_events"],
       },
     },
     fetchOptions,
@@ -60,7 +60,7 @@ export function getAll3rdPartyCustomEventProviders(
       ...params,
       filterBy: {
         ...params.filterBy,
-        providerType: "3rd_party_custom_events",
+        providerTypes: ["3rd_party_custom_events"],
       },
     },
     fetchOptions,
