@@ -30,8 +30,7 @@ export function updateEventingConfiguration(
     params,
   );
 
-  const endpoint = "eventing/updateConfiguration";
-  return httpClient.put(endpoint, {
+  return httpClient.put("eventing/updateConfiguration", {
     ...fetchOptions,
     json: validatedParams,
   });

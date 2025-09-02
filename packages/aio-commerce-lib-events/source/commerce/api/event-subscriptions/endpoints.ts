@@ -18,8 +18,7 @@ export function getAllEventSubscriptions(
   httpClient: AdobeCommerceHttpClient,
   fetchOptions?: Options,
 ) {
-  const endpoint = "eventing/getEventSubscriptions";
-  return httpClient.get(endpoint, fetchOptions);
+  return httpClient.get("eventing/getEventSubscriptions", fetchOptions);
 }
 
 /**
@@ -44,9 +43,7 @@ export function createEventSubscription(
   );
 
   const { force, ...event } = validatedParams;
-  const endpoint = "eventing/eventSubscribe";
-
-  return httpClient.post(endpoint, {
+  return httpClient.post("eventing/eventSubscribe", {
     ...fetchOptions,
     json: {
       force,

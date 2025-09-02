@@ -28,8 +28,7 @@ export function getAllEventProviders(
   httpClient: AdobeCommerceHttpClient,
   fetchOptions?: Options,
 ) {
-  const endpoint = "eventing/eventProvider";
-  return httpClient.get(endpoint, fetchOptions);
+  return httpClient.get("eventing/eventProvider", fetchOptions);
 }
 
 /**
@@ -53,8 +52,10 @@ export function getEventProviderById(
     params,
   );
 
-  const endpoint = `eventing/eventProvider/${validatedParams.providerId}`;
-  return httpClient.get(endpoint, fetchOptions);
+  return httpClient.get(
+    `eventing/eventProvider/${validatedParams.providerId}`,
+    fetchOptions,
+  );
 }
 
 /**
@@ -75,8 +76,7 @@ export function createEventProvider(
 ) {
   const validatedParams = parseOrThrow(EventProviderCreateParamsSchema, params);
 
-  const endpoint = "eventing/eventProvider";
-  return httpClient.post(endpoint, {
+  return httpClient.post("eventing/eventProvider", {
     ...fetchOptions,
     json: {
       eventProvider: {

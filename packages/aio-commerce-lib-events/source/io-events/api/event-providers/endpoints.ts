@@ -47,8 +47,7 @@ export function getAllEventProviders(
     validatedParams.withEventMetadata,
   );
 
-  const endpoint = `${validatedParams.consumerOrgId}/providers`;
-  return httpClient.get(endpoint, {
+  return httpClient.get(`${validatedParams.consumerOrgId}/providers`, {
     ...fetchOptions,
     searchParams: queryParams,
   });
@@ -82,8 +81,7 @@ export function getEventProviderById(
     validatedParams.withEventMetadata,
   );
 
-  const endpoint = `providers/${params.providerId}`;
-  return httpClient.get(endpoint, {
+  return httpClient.get(`providers/${params.providerId}`, {
     ...fetchOptions,
     searchParams,
   });
@@ -106,18 +104,18 @@ export function createEventProvider(
   fetchOptions?: Options,
 ) {
   const validatedParams = parseOrThrow(EventProviderCreateParamsSchema, params);
+  return httpClient.post(
+    `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/providers`,
+    {
+      ...fetchOptions,
+      json: {
+        ...validatedParams,
 
-  const endpoint = `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/providers`;
-  const body = {
-    ...validatedParams,
-    docs_url: validatedParams.docsUrl,
-    provider_metadata: validatedParams.providerType,
-    instance_id: validatedParams.instanceId,
-    data_residency_region: validatedParams.dataResidencyRegion,
-  };
-
-  return httpClient.post(endpoint, {
-    ...fetchOptions,
-    json: body,
-  });
+        docs_url: validatedParams.docsUrl,
+        provider_metadata: validatedParams.providerType,
+        instance_id: validatedParams.instanceId,
+        data_residency_region: validatedParams.dataResidencyRegion,
+      },
+    },
+  );
 }

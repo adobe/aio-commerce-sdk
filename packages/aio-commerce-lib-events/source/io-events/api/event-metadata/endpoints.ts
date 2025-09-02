@@ -36,8 +36,10 @@ export function getAllEventMetadataForProvider(
     params,
   );
 
-  const endpoint = `providers/${validatedParams.providerId}/eventmetadata`;
-  return httpClient.get(endpoint, fetchOptions);
+  return httpClient.get(
+    `providers/${validatedParams.providerId}/eventmetadata`,
+    fetchOptions,
+  );
 }
 
 /**
@@ -61,8 +63,10 @@ export function getEventMetadataForEventAndProvider(
     params,
   );
 
-  const endpoint = `providers/${validatedParams.providerId}/eventmetadata/${validatedParams.eventCode}`;
-  return httpClient.get(endpoint, fetchOptions);
+  return httpClient.get(
+    `providers/${validatedParams.providerId}/eventmetadata/${validatedParams.eventCode}`,
+    fetchOptions,
+  );
 }
 
 /**
@@ -86,16 +90,16 @@ export function createEventMetadataForProvider(
     params,
   );
 
-  const endpoint = `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/providers/${validatedParams.providerId}/eventmetadata`;
-  const body = {
-    label: validatedParams.label,
-    description: validatedParams.description,
-    event_code: validatedParams.eventCode,
-    sample_event_template: validatedParams.sampleEventTemplate,
-  };
-
-  return httpClient.post(endpoint, {
-    ...fetchOptions,
-    json: body,
-  });
+  return httpClient.post(
+    `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/providers/${validatedParams.providerId}/eventmetadata`,
+    {
+      ...fetchOptions,
+      json: {
+        label: validatedParams.label,
+        description: validatedParams.description,
+        event_code: validatedParams.eventCode,
+        sample_event_template: validatedParams.sampleEventTemplate,
+      },
+    },
+  );
 }
