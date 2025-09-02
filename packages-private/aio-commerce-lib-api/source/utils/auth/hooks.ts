@@ -10,7 +10,7 @@ import type {
   IntegrationAuthProvider,
 } from "@adobe/aio-commerce-lib-auth";
 import type { KyRequest } from "ky";
-import type { ImsAuthParamsWithOptionalScopes } from "~/utils/auth/ims-scopes";
+import type { ImsAuthParamsWithOptionalScopes } from "#utils/auth/ims-scopes";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 

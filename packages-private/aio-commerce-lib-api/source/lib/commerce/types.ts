@@ -4,7 +4,7 @@ import type {
   IntegrationAuthProvider,
 } from "@adobe/aio-commerce-lib-auth";
 import type { Options } from "ky";
-import type { ImsAuthParamsWithOptionalScopes } from "~/utils/auth/ims-scopes";
+import type { ImsAuthParamsWithOptionalScopes } from "#utils/auth/ims-scopes";
 
 type CommerceHttpClientConfigBase = {
   /** The base URL of the Commerce API. */

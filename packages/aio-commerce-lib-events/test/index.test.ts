@@ -10,12 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the entrypoint of the package API */
+import { describe, expect, it } from "vitest";
 
-export { ApiClient } from "./lib/api-client";
-export { AdobeCommerceHttpClient } from "./lib/commerce/http-client";
-export { AdobeIoEventsHttpClient } from "./lib/io-events/http-client";
-
-export type { ApiClientRecord, ApiFunction } from "./lib/api-client";
-export type * from "./lib/commerce/types";
-export type * from "./lib/io-events/types";
+describe("aio-commerce-lib-events", () => {
+  it("should work", () => {
+    expect(true).toBe(true);
+  });
+});

@@ -1,0 +1,69 @@
+import * as v from "valibot";
+
+import {
+  DataResidencyRegionSchema,
+  EventProviderTypeSchema,
+} from "~/io-events/lib/schema";
+import { booleanValueSchema, stringValueSchema } from "~/utils/schemas";
+
+export const EventProviderListAllParamsSchema = v.object({
+  consumerOrgId: stringValueSchema("consumerOrgId"),
+  withEventMetadata: v.optional(booleanValueSchema("withEventMetadata")),
+
+  filterBy: v.optional(
+    v.object({
+      instanceId: v.optional(stringValueSchema("instanceId")),
+      providerTypes: v.optional(
+        v.union([
+          v.array(
+            EventProviderTypeSchema,
+            "Expected an array of event provider types",
+          ),
+        ]),
+      ),
+    }),
+  ),
+});
+
+export const EventProviderGetByIdParamsSchema = v.object({
+  providerId: stringValueSchema("providerId"),
+  withEventMetadata: v.optional(booleanValueSchema("withEventMetadata")),
+});
+
+export const EventProviderCreateParamsSchema = v.object({
+  consumerOrgId: stringValueSchema("consumerOrgId"),
+  projectId: stringValueSchema("projectId"),
+  workspaceId: stringValueSchema("workspaceId"),
+
+  label: stringValueSchema("label"),
+  description: v.optional(stringValueSchema("description")),
+  docsUrl: v.optional(stringValueSchema("docsUrl")),
+  instanceId: v.optional(stringValueSchema("instanceId")),
+
+  providerType: v.optional(EventProviderTypeSchema),
+  dataResidencyRegion: v.optional(DataResidencyRegionSchema),
+});
+
+/**
+ * Defines the parameters received by the GET `providers` Adobe I/O Events API endpoint.
+ * @see https://developer.adobe.com/events/docs/api#operation/getProvidersByConsumerOrgId
+ */
+export type EventProviderListAllParams = v.InferInput<
+  typeof EventProviderListAllParamsSchema
+>;
+
+/**
+ * The schema of the parameters received by the GET `providers/:id` Adobe I/O Events API endpoint.
+ * @see https://developer.adobe.com/events/docs/api#operation/getProvidersById
+ */
+export type EventProviderGetByIdParams = v.InferInput<
+  typeof EventProviderGetByIdParamsSchema
+>;
+
+/**
+ * The schema of the parameters received by the POST `providers` Adobe I/O Events API endpoint.
+ * @see https://developer.adobe.com/events/docs/api#operation/createProvider
+ */
+export type EventProviderCreateParams = v.InferInput<
+  typeof EventProviderCreateParamsSchema
+>;

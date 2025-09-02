@@ -3,12 +3,12 @@ import ky from "ky";
 import {
   buildImsAuthBeforeRequestHook,
   isAuthProvider,
-} from "~/utils/auth/hooks";
+} from "#utils/auth/hooks";
 import {
   BASE_IMS_REQUIRED_SCOPES,
   ensureImsScopes,
-} from "~/utils/auth/ims-scopes";
-import { optionallyExtendKy } from "~/utils/http/ky";
+} from "#utils/auth/ims-scopes";
+import { optionallyExtendKy } from "#utils/http/ky";
 
 import type { IoEventsHttpClientParams } from "./types";
 

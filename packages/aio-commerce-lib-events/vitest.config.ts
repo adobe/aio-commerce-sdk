@@ -10,12 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the entrypoint of the package API */
+import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
+import { defineConfig, mergeConfig } from "vitest/config";
 
-export { ApiClient } from "./lib/api-client";
-export { AdobeCommerceHttpClient } from "./lib/commerce/http-client";
-export { AdobeIoEventsHttpClient } from "./lib/io-events/http-client";
-
-export type { ApiClientRecord, ApiFunction } from "./lib/api-client";
-export type * from "./lib/commerce/types";
-export type * from "./lib/io-events/types";
+export default mergeConfig(
+  baseConfig,
+  defineConfig({
+    // Write your Vitest configuration here.
+  }),
+);

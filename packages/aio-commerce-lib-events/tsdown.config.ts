@@ -10,12 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the entrypoint of the package API */
+import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
+import { defineConfig } from "tsdown";
 
-export { ApiClient } from "./lib/api-client";
-export { AdobeCommerceHttpClient } from "./lib/commerce/http-client";
-export { AdobeIoEventsHttpClient } from "./lib/io-events/http-client";
+export default defineConfig({
+  ...baseConfig,
+  entry: ["./source/commerce/index.ts", "./source/io-events/index.ts"],
 
-export type { ApiClientRecord, ApiFunction } from "./lib/api-client";
-export type * from "./lib/commerce/types";
-export type * from "./lib/io-events/types";
+  // This package API is currently private so we need it to mark it as no-external (not published)
+  // otherwise it won't work when installed in a project (as the dependency won't be found in NPM).
+  // This can be transparently removed if the API library gets published and evertything will work the same.
+  noExternal: ["@aio-commerce-sdk/aio-commerce-lib-api"],
+});
