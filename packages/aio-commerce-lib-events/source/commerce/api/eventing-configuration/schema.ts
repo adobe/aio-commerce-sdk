@@ -4,27 +4,17 @@ import { workspaceConfigurationSchema } from "~/commerce/lib/schema";
 import {
   alphaNumericOrUnderscoreOrHyphenSchema,
   alphaNumericOrUnderscoreSchema,
+  booleanValueSchema,
 } from "~/utils/schemas";
 
 /** The schema of the parameters received by the `updateConfiguration` Commerce Eventing API endpoint. */
 export const UpdateEventingConfigurationParamsSchema = v.partial(
   v.object({
-    /** Whether the eventing is enabled. */
-    enabled: v.boolean('Expected a boolean value for property "enabled"'),
-
-    /** The ID of the provider in Adobe I/O Events. */
+    enabled: booleanValueSchema("enabled"),
     providerId: alphaNumericOrUnderscoreOrHyphenSchema("providerId"),
-
-    /** The instance ID of the provider in Adobe I/O Events. */
     instanceId: alphaNumericOrUnderscoreOrHyphenSchema("instanceId"),
-
-    /** The merchant ID of the provider in Adobe I/O Events. */
     merchantId: alphaNumericOrUnderscoreSchema("merchantId"),
-
-    /** The environment ID of the provider in Adobe I/O Events. */
     environmentId: alphaNumericOrUnderscoreSchema("environmentId"),
-
-    /** The workspace configuration downloaded from your project in the Developer Console. */
     workspaceConfiguration: workspaceConfigurationSchema(
       "workspaceConfiguration",
     ),
