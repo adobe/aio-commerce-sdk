@@ -30,8 +30,12 @@ export function updateEventingConfiguration(
     params,
   );
 
-  return httpClient.put("eventing/updateConfiguration", {
-    ...fetchOptions,
-    json: validatedParams,
-  });
+  return httpClient
+    .put("eventing/updateConfiguration", {
+      ...fetchOptions,
+      json: {
+        config: validatedParams,
+      },
+    })
+    .json<boolean>();
 }
