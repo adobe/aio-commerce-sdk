@@ -8,27 +8,34 @@
   },
   "license": "Apache-2.0",
   "description": "A set of utilities to build HTTP/API clients for I/O Events and Adobe Commerce",
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": {
+          "types": "./dist/es/index.d.ts",
+          "default": "./dist/es/index.js"
+        },
+        "require": {
+          "types": "./dist/cjs/index.d.cts",
+          "default": "./dist/cjs/index.cjs"
+        }
+      },
+      "./utils/*": {
+        "import": {
+          "types": "./dist/es/utils/*/index.d.ts",
+          "default": "./dist/es/utils/*/index.js"
+        },
+        "require": {
+          "types": "./dist/cjs/utils/*/index.d.cts",
+          "default": "./dist/cjs/utils/*/index.cjs"
+        }
+      },
+      "./package.json": "./package.json"
+    }
+  },
   "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/es/index.d.ts",
-        "default": "./dist/es/index.js"
-      },
-      "require": {
-        "types": "./dist/cjs/index.d.cts",
-        "default": "./dist/cjs/index.cjs"
-      }
-    },
-    "./utils/*": {
-      "import": {
-        "types": "./dist/es/utils/*/index.d.ts",
-        "default": "./dist/es/utils/*/index.js"
-      },
-      "require": {
-        "types": "./dist/cjs/utils/*/index.d.cts",
-        "default": "./dist/cjs/utils/*/index.cjs"
-      }
-    },
+    ".": "./source/index.ts",
+    "./utils/*": "./source/utils/*/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {
