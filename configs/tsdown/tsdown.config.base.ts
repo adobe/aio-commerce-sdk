@@ -52,6 +52,7 @@ export const baseConfig: UserConfig = {
   nodeProtocol: "strip",
   minify: {
     compress: true,
+    mangle: false,
   },
 
   dts: true,
