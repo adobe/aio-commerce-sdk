@@ -174,9 +174,6 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
-      '@aio-commerce-sdk/aio-commerce-lib-api':
-        specifier: workspace:*
-        version: link:../../packages-private/aio-commerce-lib-api
       ky:
         specifier: ^1.9.0
         version: 1.9.0
@@ -184,6 +181,9 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0(typescript@5.9.2)
     devDependencies:
+      '@aio-commerce-sdk/aio-commerce-lib-api':
+        specifier: workspace:*
+        version: link:../../packages-private/aio-commerce-lib-api
       '@aio-commerce-sdk/config-tsdown':
         specifier: workspace:*
         version: link:../../configs/tsdown
