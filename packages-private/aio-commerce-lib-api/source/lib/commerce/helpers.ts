@@ -21,15 +21,8 @@ import type {
 } from "./types";
 
 const COMMERCE_SAAS_IMS_REQUIRED_SCOPES = [
-  "adobeio_api",
-  "read_organizations",
-  "profile",
-  "email",
-  "additional_info.projectedProductContext",
-  "AdobeID",
   "openid",
-  "org.read",
-  "additional_info.roles",
+  "additional_info.projectedProductContext",
   "commerce.accs",
 ];
 

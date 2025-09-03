@@ -9,9 +9,7 @@ import { optionallyExtendKy } from "#utils/http/ky";
 
 import type { IoEventsHttpClientParamsWithRequiredConfig } from "./http-client";
 
-const IO_EVENTS_IMS_REQUIRED_SCOPES = [
-  "openid, AdobeID, event_receiver_api, read_organizations",
-];
+const IO_EVENTS_IMS_REQUIRED_SCOPES = ["adobeio_api"];
 
 /**
  * Builds the Adobe I/O Events HTTP client for the given parameters.
