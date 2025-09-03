@@ -57,6 +57,7 @@
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-auth": "^0.3.4",
+    "camelcase": "^8.0.0",
     "ky": "^1.9.0"
   },
   "devDependencies": {

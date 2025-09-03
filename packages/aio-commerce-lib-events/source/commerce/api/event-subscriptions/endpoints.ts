@@ -1,3 +1,5 @@
+import { buildCamelCaseKeysResponseHook } from "@aio-commerce-sdk/aio-commerce-lib-api/utils/transformations";
+
 import { parseOrThrow } from "~/utils/valibot";
 
 import { EventSubscriptionCreateParamsSchema } from "./schema";
@@ -19,7 +21,13 @@ export function getAllEventSubscriptions(
   httpClient: AdobeCommerceHttpClient,
   fetchOptions?: Options,
 ) {
-  return httpClient
+  const withHooksClient = httpClient.extend({
+    hooks: {
+      afterResponse: [buildCamelCaseKeysResponseHook()],
+    },
+  });
+
+  return withHooksClient
     .get("eventing/getEventSubscriptions", fetchOptions)
     .json<CommerceEventSubscriptionGetResponse[]>();
 }

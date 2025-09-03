@@ -1,3 +1,5 @@
+import camelcase from "camelcase";
+
 import type { AfterResponseHook, KyResponse } from "ky";
 
 /**
@@ -35,4 +37,9 @@ export function buildObjectKeyTransformerResponseHook(
       return new Response(JSON.stringify(transformedData), response);
     });
   };
+}
+
+/** Builds a hook that transforms the keys of an object to camel case. */
+export function buildCamelCaseKeysResponseHook(): AfterResponseHook {
+  return buildObjectKeyTransformerResponseHook(camelcase);
 }
