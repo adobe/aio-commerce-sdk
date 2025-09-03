@@ -8,7 +8,7 @@ import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/er
 import type { AdobeCommerceHttpClient } from "@aio-commerce-sdk/aio-commerce-lib-api";
 import type { HTTPError, Options } from "ky";
 import type { EventSubscriptionCreateParams } from "./schema";
-import type { CommerceEventSubscriptionGetResponse } from "./types";
+import type { CommerceEventSubscriptionManyResponse } from "./types";
 
 /**
  * Gets all event subscriptions in the Commerce instance bound to the given {@link AdobeCommerceHttpClient}.
@@ -29,7 +29,7 @@ export function getAllEventSubscriptions(
 
   return withHooksClient
     .get("eventing/getEventSubscriptions", fetchOptions)
-    .json<CommerceEventSubscriptionGetResponse[]>();
+    .json<CommerceEventSubscriptionManyResponse>();
 }
 
 /**

@@ -14,7 +14,10 @@ import type {
   EventProviderCreateParams,
   EventProviderGetByIdParams,
 } from "./schema";
-import type { CommerceEventProvider } from "./types";
+import type {
+  CommerceEventProviderManyResponse,
+  CommerceEventProviderOneResponse,
+} from "./types";
 
 /**
  * Lists all event providers of the Commerce instance bound to the given {@link AdobeCommerceHttpClient}.
@@ -38,7 +41,7 @@ export function getAllEventProviders(
 
   return withHooksClient
     .get("eventing/eventProvider", fetchOptions)
-    .json<CommerceEventProvider[]>();
+    .json<CommerceEventProviderManyResponse>();
 }
 
 /**
@@ -70,7 +73,7 @@ export function getEventProviderById(
 
   return withHooksClient
     .get(`eventing/eventProvider/${validatedParams.providerId}`, fetchOptions)
-    .json<CommerceEventProvider>();
+    .json<CommerceEventProviderOneResponse>();
 }
 
 /**
@@ -110,5 +113,5 @@ export function createEventProvider(
         },
       },
     })
-    .json<CommerceEventProvider>();
+    .json<CommerceEventProviderOneResponse>();
 }
