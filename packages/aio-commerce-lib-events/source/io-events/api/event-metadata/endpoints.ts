@@ -1,3 +1,5 @@
+import { buildCamelCaseKeysResponseHook } from "@aio-commerce-sdk/aio-commerce-lib-api/utils/transformations";
+
 import { parseOrThrow } from "~/utils/valibot";
 
 import {
@@ -14,6 +16,10 @@ import type {
   GetAllEventMetadataForProviderParams,
   GetEventMetadataForEventAndProviderParams,
 } from "./schema";
+import type {
+  IoEventMetadataManyResponse,
+  IoEventMetadataOneResponse,
+} from "./types";
 
 /**
  * Gets all event metadata for a specific provider.
@@ -36,10 +42,15 @@ export function getAllEventMetadataForProvider(
     params,
   );
 
-  return httpClient.get(
-    `providers/${validatedParams.providerId}/eventmetadata`,
-    fetchOptions,
-  );
+  const withHooksClient = httpClient.extend({
+    hooks: {
+      afterResponse: [buildCamelCaseKeysResponseHook()],
+    },
+  });
+
+  return withHooksClient
+    .get(`providers/${validatedParams.providerId}/eventmetadata`, fetchOptions)
+    .json<IoEventMetadataManyResponse>();
 }
 
 /**
@@ -63,10 +74,18 @@ export function getEventMetadataForEventAndProvider(
     params,
   );
 
-  return httpClient.get(
-    `providers/${validatedParams.providerId}/eventmetadata/${validatedParams.eventCode}`,
-    fetchOptions,
-  );
+  const withHooksClient = httpClient.extend({
+    hooks: {
+      afterResponse: [buildCamelCaseKeysResponseHook()],
+    },
+  });
+
+  return withHooksClient
+    .get(
+      `providers/${validatedParams.providerId}/eventmetadata/${validatedParams.eventCode}`,
+      fetchOptions,
+    )
+    .json<IoEventMetadataOneResponse>();
 }
 
 /**
@@ -90,16 +109,24 @@ export function createEventMetadataForProvider(
     params,
   );
 
-  return httpClient.post(
-    `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/providers/${validatedParams.providerId}/eventmetadata`,
-    {
-      ...fetchOptions,
-      json: {
-        label: validatedParams.label,
-        description: validatedParams.description,
-        event_code: validatedParams.eventCode,
-        sample_event_template: validatedParams.sampleEventTemplate,
-      },
+  const withHooksClient = httpClient.extend({
+    hooks: {
+      afterResponse: [buildCamelCaseKeysResponseHook()],
     },
-  );
+  });
+
+  return withHooksClient
+    .post(
+      `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/providers/${validatedParams.providerId}/eventmetadata`,
+      {
+        ...fetchOptions,
+        json: {
+          label: validatedParams.label,
+          description: validatedParams.description,
+          event_code: validatedParams.eventCode,
+          sample_event_template: validatedParams.sampleEventTemplate,
+        },
+      },
+    )
+    .json<IoEventMetadataOneResponse>();
 }
