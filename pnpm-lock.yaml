@@ -172,11 +172,11 @@ importers:
   packages/aio-commerce-lib-events:
     dependencies:
       '@adobe/aio-commerce-lib-auth':
-        specifier: ^0.3.4
-        version: 0.3.4(typescript@5.9.2)
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-auth
       '@adobe/aio-commerce-lib-core':
-        specifier: ^0.4.1
-        version: 0.4.1(typescript@5.9.2)
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-core
       '@aio-commerce-sdk/aio-commerce-lib-api':
         specifier: workspace:*
         version: link:../../packages-private/aio-commerce-lib-api
@@ -230,14 +230,6 @@ importers:
         version: link:../../configs/typescript
 
 packages:
-
-  '@adobe/aio-commerce-lib-auth@0.3.4':
-    resolution: {integrity: sha512-LiEPCtXbjKoccL+ljQUBgfWxUWUE/OXTvl8vZ44cApaGpy1Yb5/mwAj44P6yThqLJrxFFFim2Dvca48BA20cAw==}
-    engines: {node: '>=20 <=24'}
-
-  '@adobe/aio-commerce-lib-core@0.4.1':
-    resolution: {integrity: sha512-gkvHLoSdVHX9ByORVg2F6ITXyFj2HAY2AElvrXJUwXgtywcIs+j0xr4kG1yXQ1zglSRdsvuAH6zDpJGKrfJ6vg==}
-    engines: {node: '>=20 <=24'}
 
   '@adobe/aio-lib-core-config@5.0.1':
     resolution: {integrity: sha512-OQmQublmy/uXM1HC6qXfxSAXEl85nExh/yiajlEfJheKuJ9iPWwVWXR5vBHVVDlOXgWEVMWRUQPMIUu1lmR5lA==}
@@ -2865,25 +2857,6 @@ packages:
     resolution: {integrity: sha512-SgMZK/h8Tigt9nnKkfJMvB/mKjiJXaX26xegP4sa+0wHIFVFWVlsQGdhklDmuargBD3Hsi3rsQRIzwJIhTPJHA==}
 
 snapshots:
-
-  '@adobe/aio-commerce-lib-auth@0.3.4(typescript@5.9.2)':
-    dependencies:
-      '@adobe/aio-commerce-lib-core': 0.4.1(typescript@5.9.2)
-      '@adobe/aio-lib-ims': 8.1.0
-      ansis: 4.1.0
-      oauth-1.0a: 2.2.6
-      valibot: 1.1.0(typescript@5.9.2)
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
-      - typescript
-
-  '@adobe/aio-commerce-lib-core@0.4.1(typescript@5.9.2)':
-    dependencies:
-      ansis: 4.1.0
-      valibot: 1.1.0(typescript@5.9.2)
-    transitivePeerDependencies:
-      - typescript
 
   '@adobe/aio-lib-core-config@5.0.1':
     dependencies:

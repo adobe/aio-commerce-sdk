@@ -53,8 +53,8 @@
     "test:watch": "vitest --watch"
   },
   "dependencies": {
-    "@adobe/aio-commerce-lib-auth": "^0.3.4",
-    "@adobe/aio-commerce-lib-core": "^0.4.1",
+    "@adobe/aio-commerce-lib-auth": "workspace:*",
+    "@adobe/aio-commerce-lib-core": "workspace:*",
     "@aio-commerce-sdk/aio-commerce-lib-api": "workspace:*",
     "ky": "^1.9.0",
     "valibot": "^1.1.0"
