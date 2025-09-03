@@ -17,7 +17,9 @@ export type IoEventsHttpClientParams = {
   auth: ImsAuthProvider | ImsAuthParamsWithOptionalScopes;
 
   /** The configuration for the I/O Events HTTP client. */
-  config: IoEventsHttpClientConfig;
+  // Optional because all config values are optional. If ever more are added,
+  // the optionality should be re-evaluated (would imply breaking changes).
+  config?: IoEventsHttpClientConfig;
 
   /** Additional fetch options to use for the I/O Events HTTP requests. */
   fetchOptions?: Options;
