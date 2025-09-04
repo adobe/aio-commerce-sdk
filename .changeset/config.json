@@ -12,5 +12,6 @@
   "ignore": [],
   "linked": [],
 
-  "updateInternalDependencies": "patch"
+  "updateInternalDependencies": "patch",
+  "prettier": false
 }
