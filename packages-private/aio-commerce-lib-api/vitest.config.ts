@@ -24,8 +24,8 @@ export default mergeConfig(
   defineConfig({
     test: {
       coverage: {
-        // Exclude barrel files as they don't contain "logic".
-        exclude: [...BARREL_FILES],
+        // Exclude files that don't contain "logic".
+        exclude: [...BARREL_FILES, "./source/utils/http/codes.ts"],
       },
     },
   }),
