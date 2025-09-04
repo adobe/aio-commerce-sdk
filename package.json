@@ -8,7 +8,6 @@
   },
   "scripts": {
     "prepare": "husky",
-    "turbo:clean-cache": "rimraf ./**/.turbo/",
     "turbo": "turbo",
     "assist": "turbo run assist",
     "assist:apply": "turbo run assist:apply",
@@ -20,7 +19,11 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "test": "turbo test",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "clean:turbo": "pnpx rimraf './**/.turbo' --glob",
+    "clean:modules": "pnpx rimraf './**/node_modules' --glob",
+    "clean:dist": "pnpx rimraf './**/dist' --glob",
+    "clean:all": "pnpm clean:turbo && pnpm clean:dist && pnpm clean:modules"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.2",
@@ -32,7 +35,6 @@
     "@vitest/ui": "^3.2.4",
     "husky": "^9.1.7",
     "prettier": "^3.6.2",
-    "rimraf": "^6.0.1",
     "tsdown": "^0.14.0",
     "turbo": "^2.5.4",
     "type-fest": "^4.41.0",

@@ -15,5 +15,9 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig({
   ...baseConfig,
-  entry: ["./source/index.ts"],
+  entry: [
+    "./source/index.ts",
+    "./source/utils/http/index.ts",
+    "./source/utils/transformations/index.ts",
+  ],
 });

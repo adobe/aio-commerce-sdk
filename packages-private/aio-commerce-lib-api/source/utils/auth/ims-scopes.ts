@@ -1,14 +1,6 @@
 import type { ImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import type { SetOptional } from "type-fest";
 
-/** Common IMS required scopes. */
-export const BASE_IMS_REQUIRED_SCOPES = [
-  "adobeio_api",
-  "openid",
-  "AdobeID",
-  "read_organizations",
-];
-
 /** Defines the IMS authentication parameters with optional scopes. */
 export type ImsAuthParamsWithOptionalScopes = SetOptional<
   ImsAuthParams,

@@ -1,3 +1,5 @@
+import { buildCamelCaseKeysResponseHook } from "@aio-commerce-sdk/aio-commerce-lib-api/utils/transformations";
+
 import {
   setArrayQueryParam,
   setQueryParamIfTruthy,
@@ -18,6 +20,10 @@ import type {
   EventProviderGetByIdParams,
   EventProviderListAllParams,
 } from "./schema";
+import type {
+  IoEventProviderManyResponse,
+  IoEventProviderOneResponse,
+} from "./types";
 
 /**
  * Lists all event providers for the given consumer organization ID.
@@ -32,9 +38,10 @@ export function getAllEventProviders(
   params: EventProviderListAllParams,
   fetchOptions?: Options,
 ) {
-  const validatedParams = parseOrThrow(EventProviderListAllParamsSchema, {
+  const validatedParams = parseOrThrow(
+    EventProviderListAllParamsSchema,
     params,
-  });
+  );
 
   const queryParams = new URLSearchParams();
   const { providerTypes = [], instanceId } = validatedParams.filterBy ?? {};
@@ -47,10 +54,18 @@ export function getAllEventProviders(
     validatedParams.withEventMetadata,
   );
 
-  return httpClient.get(`${validatedParams.consumerOrgId}/providers`, {
-    ...fetchOptions,
-    searchParams: queryParams,
+  const withHooksClient = httpClient.extend({
+    hooks: {
+      afterResponse: [buildCamelCaseKeysResponseHook()],
+    },
   });
+
+  return withHooksClient
+    .get(`${validatedParams.consumerOrgId}/providers`, {
+      ...fetchOptions,
+      searchParams: queryParams,
+    })
+    .json<IoEventProviderManyResponse>();
 }
 
 /**
@@ -81,10 +96,18 @@ export function getEventProviderById(
     validatedParams.withEventMetadata,
   );
 
-  return httpClient.get(`providers/${params.providerId}`, {
-    ...fetchOptions,
-    searchParams,
+  const withHooksClient = httpClient.extend({
+    hooks: {
+      afterResponse: [buildCamelCaseKeysResponseHook()],
+    },
   });
+
+  return withHooksClient
+    .get(`providers/${params.providerId}`, {
+      ...fetchOptions,
+      searchParams,
+    })
+    .json<IoEventProviderOneResponse>();
 }
 
 /**
@@ -104,18 +127,26 @@ export function createEventProvider(
   fetchOptions?: Options,
 ) {
   const validatedParams = parseOrThrow(EventProviderCreateParamsSchema, params);
-  return httpClient.post(
-    `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/providers`,
-    {
-      ...fetchOptions,
-      json: {
-        ...validatedParams,
-
-        docs_url: validatedParams.docsUrl,
-        provider_metadata: validatedParams.providerType,
-        instance_id: validatedParams.instanceId,
-        data_residency_region: validatedParams.dataResidencyRegion,
-      },
+  const withHooksClient = httpClient.extend({
+    hooks: {
+      afterResponse: [buildCamelCaseKeysResponseHook()],
     },
-  );
+  });
+
+  return withHooksClient
+    .post(
+      `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/providers`,
+      {
+        ...fetchOptions,
+        json: {
+          ...validatedParams,
+
+          docs_url: validatedParams.docsUrl,
+          provider_metadata: validatedParams.providerType,
+          instance_id: validatedParams.instanceId,
+          data_residency_region: validatedParams.dataResidencyRegion,
+        },
+      },
+    )
+    .json<IoEventProviderOneResponse>();
 }

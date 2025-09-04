@@ -1,3 +1,5 @@
+import { buildCamelCaseKeysResponseHook } from "@aio-commerce-sdk/aio-commerce-lib-api/utils/transformations";
+
 import { parseOrThrow } from "~/utils/valibot";
 
 import { EventSubscriptionCreateParamsSchema } from "./schema";
@@ -6,6 +8,7 @@ import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/er
 import type { AdobeCommerceHttpClient } from "@aio-commerce-sdk/aio-commerce-lib-api";
 import type { HTTPError, Options } from "ky";
 import type { EventSubscriptionCreateParams } from "./schema";
+import type { CommerceEventSubscriptionManyResponse } from "./types";
 
 /**
  * Gets all event subscriptions in the Commerce instance bound to the given {@link AdobeCommerceHttpClient}.
@@ -18,7 +21,15 @@ export function getAllEventSubscriptions(
   httpClient: AdobeCommerceHttpClient,
   fetchOptions?: Options,
 ) {
-  return httpClient.get("eventing/getEventSubscriptions", fetchOptions);
+  const withHooksClient = httpClient.extend({
+    hooks: {
+      afterResponse: [buildCamelCaseKeysResponseHook()],
+    },
+  });
+
+  return withHooksClient
+    .get("eventing/getEventSubscriptions", fetchOptions)
+    .json<CommerceEventSubscriptionManyResponse>();
 }
 
 /**
@@ -43,17 +54,21 @@ export function createEventSubscription(
   );
 
   const { force, ...event } = validatedParams;
-  return httpClient.post("eventing/eventSubscribe", {
-    ...fetchOptions,
-    json: {
-      force,
-      event: {
-        ...event,
-
-        hipaa_audit_required: event.hipaaAuditRequired,
-        priority: event.prioritary,
-        provider_id: event.providerId,
+  httpClient
+    .post("eventing/eventSubscribe", {
+      ...fetchOptions,
+      json: {
+        force,
+        event: {
+          name: event.name,
+          parent: event.parent,
+          fields: event.fields,
+          destination: event.destination,
+          hipaa_audit_required: event.hipaaAuditRequired,
+          priority: event.prioritary,
+          provider_id: event.providerId,
+        },
       },
-    },
-  });
+    })
+    .json<void>();
 }
