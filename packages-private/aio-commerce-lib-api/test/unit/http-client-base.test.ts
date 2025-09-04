@@ -12,9 +12,9 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { HttpClientBase } from "../../source/lib/http-client-base.js";
-import { httpMethodTests } from "../fixtures/http-payloads.js";
-import { buildMockKyClient } from "../fixtures/ky-client.js";
+import { HttpClientBase } from "#lib/http-client-base";
+import { httpMethodTests } from "#test/fixtures/http-payloads";
+import { buildMockKyClient } from "#test/fixtures/ky-client";
 
 import type { KyInstance, Options } from "ky";
 

@@ -12,9 +12,9 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApiClient } from "../../source/lib/api-client.js";
-import { HttpClientBase } from "../../source/lib/http-client-base.js";
-import { buildMockKyClient } from "../fixtures/ky-client.js";
+import { ApiClient } from "#lib/api-client";
+import { HttpClientBase } from "#lib/http-client-base";
+import { buildMockKyClient } from "#test/fixtures/ky-client";
 
 import type { KyInstance } from "ky";
 
