@@ -18,18 +18,20 @@ import { buildMockKyClient } from "#test/fixtures/ky-client";
 
 import type { KyInstance, Options } from "ky";
 
+type Config = { apiKey: string; baseUrl: string };
+
 // Test class that extends HttpClientBase to access protected constructor
-class TestHttpClient<T> extends HttpClientBase<T> {
+class TestHttpClient extends HttpClientBase<Config> {
   // biome-ignore lint/complexity/noUselessConstructor: False positive, as we need to override the inherited `protected` access specifier.
-  public constructor(config: T, httpClient: KyInstance) {
+  public constructor(config: Config, httpClient: KyInstance) {
     super(config, httpClient);
   }
 }
 
 describe("lib/http-client-base", () => {
   let mockKyInstance: KyInstance;
-  let mockConfig: { apiKey: string; baseUrl: string };
-  let testClient: TestHttpClient<typeof mockConfig>;
+  let mockConfig: Config;
+  let testClient: TestHttpClient;
 
   beforeEach(() => {
     mockKyInstance = buildMockKyClient();
