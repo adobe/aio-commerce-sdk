@@ -13,9 +13,20 @@
 import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
 import { defineConfig, mergeConfig } from "vitest/config";
 
+const BARREL_FILES = [
+  "./source/index.ts",
+  "./source/utils/http/index.ts",
+  "./source/utils/transformations/index.ts",
+];
+
 export default mergeConfig(
   baseConfig,
   defineConfig({
-    // Write your Vitest configuration here.
+    test: {
+      coverage: {
+        // Exclude barrel files as they don't contain "logic".
+        exclude: [...BARREL_FILES],
+      },
+    },
   }),
 );
