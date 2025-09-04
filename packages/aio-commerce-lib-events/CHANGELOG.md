@@ -4,9 +4,7 @@
 
 ### Minor Changes
 
-- [#72](https://github.com/adobe/aio-commerce-sdk/pull/72) [`31eb4e4`](https://github.com/adobe/aio-commerce-sdk/commit/31eb4e403f30b593aafff57dc268bf9e6cf49f3e) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - - Introduce return types for API operations
-  - Fixes some validation pipelines and wrongful API payloads.
-  - Transform API responses to camel case.
+- [#72](https://github.com/adobe/aio-commerce-sdk/pull/72) [`31eb4e4`](https://github.com/adobe/aio-commerce-sdk/commit/31eb4e403f30b593aafff57dc268bf9e6cf49f3e) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Introduce return types for API operations, and transform API responses to `camelCase`. Fixes some validation pipelines and wrongful API payloads.
 
 - [#70](https://github.com/adobe/aio-commerce-sdk/pull/70) [`b2f7c2e`](https://github.com/adobe/aio-commerce-sdk/commit/b2f7c2efb46b54ba6819a19ead465f24b9f00de9) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Create library and introduce the following API operations:
 
