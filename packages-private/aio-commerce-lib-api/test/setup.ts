@@ -1,14 +1,13 @@
-import ky, { type KyInstance } from "ky";
 import { afterEach, beforeEach, vi } from "vitest";
 
 import type { HttpClientBase } from "#lib/http-client-base";
 
-type HttpClientParams = { config: { baseUrl: string } };
+type HttpClientParams = { config: unknown };
 type ExtractConfig<TParams> = TParams extends { config: infer C } ? C : never;
 
 type HttpClientFactory<TParams extends HttpClientParams, TClient> = new (
   clientParams: TParams,
-  kyInstance: KyInstance,
+  mockFetch: typeof fetch,
 ) => TClient;
 
 /** The default mock response that {@link fetch} will return. */
@@ -21,7 +20,7 @@ const DEFAULT_MOCK_RESPONSE = Response.json(
 );
 
 /** Performs the test setup for the library API. */
-export function libApiTestSetup<
+export function setupTestContext<
   TParams extends HttpClientParams,
   TClient extends HttpClientBase<unknown>,
 >(ClientFactory: HttpClientFactory<TParams, TClient>, params: TParams) {
@@ -32,12 +31,7 @@ export function libApiTestSetup<
 
   let testClient: TClient;
   beforeEach(() => {
-    const kyClient = ky.create({
-      prefixUrl: params.config.baseUrl,
-      fetch: fetch as unknown as typeof globalThis.fetch,
-    });
-
-    testClient = new ClientFactory(params, kyClient);
+    testClient = new ClientFactory(params, fetch);
   });
 
   afterEach(() => {

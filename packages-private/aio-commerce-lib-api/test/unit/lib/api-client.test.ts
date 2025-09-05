@@ -17,10 +17,10 @@ import {
   TEST_HTTP_CLIENT_PARAMS,
   TestHttpClient,
 } from "#test/fixtures/http-clients";
-import { libApiTestSetup } from "#test/setup";
+import { setupTestContext } from "#test/setup";
 
 describe("lib/api-client", () => {
-  const context = libApiTestSetup(TestHttpClient, TEST_HTTP_CLIENT_PARAMS);
+  const context = setupTestContext(TestHttpClient, TEST_HTTP_CLIENT_PARAMS);
 
   describe("create", () => {
     const sum = vi.fn((_client: TestHttpClient, a: number, b: number) => {

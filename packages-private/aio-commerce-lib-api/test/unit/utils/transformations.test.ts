@@ -20,10 +20,10 @@ import {
   buildCamelCaseKeysHookFetchOptions,
   buildUppercaseKeysHookFetchOptions,
 } from "#test/fixtures/ky-options";
-import { libApiTestSetup } from "#test/setup";
+import { setupTestContext } from "#test/setup";
 
 describe("utils/transformations", () => {
-  const context = libApiTestSetup(TestHttpClient, TEST_HTTP_CLIENT_PARAMS);
+  const context = setupTestContext(TestHttpClient, TEST_HTTP_CLIENT_PARAMS);
 
   describe("hooks/buildObjectKeyTransformerResponseHook", () => {
     test("should transform the keys of an object", async () => {

@@ -1,7 +1,8 @@
+import ky from "ky";
+
 import { AdobeCommerceHttpClient } from "#lib/commerce/http-client";
 import { HttpClientBase } from "#lib/http-client-base";
 
-import type { KyInstance } from "ky";
 import type {
   CommerceHttpClientParams,
   PaaSClientParams,
@@ -18,15 +19,27 @@ export type TestHttpClientParams = {
 };
 
 export class TestHttpClient extends HttpClientBase<TestHttpClientConfig> {
-  public constructor(params: TestHttpClientParams, kyInstance: KyInstance) {
+  public constructor(params: TestHttpClientParams, mockFetch: typeof fetch) {
+    const kyInstance = ky.create({
+      prefixUrl: params.config.baseUrl,
+      fetch: mockFetch as unknown as typeof globalThis.fetch,
+    });
+
     super(params.config, kyInstance);
   }
 }
 
 export class TestAdobeCommerceHttpClient extends AdobeCommerceHttpClient {
-  public constructor(params: CommerceHttpClientParams, kyInstance: KyInstance) {
+  public constructor(
+    params: CommerceHttpClientParams,
+    mockFetch: typeof fetch,
+  ) {
     super(params);
-    this.setHttpClient(kyInstance);
+    const client = this.httpClient.extend({
+      fetch: mockFetch as unknown as typeof globalThis.fetch,
+    });
+
+    this.setHttpClient(client);
   }
 }
 

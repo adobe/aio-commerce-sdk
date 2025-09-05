@@ -18,12 +18,12 @@ import {
   TEST_HTTP_CLIENT_PARAMS,
   TestHttpClient,
 } from "#test/fixtures/http-clients";
-import { libApiTestSetup } from "#test/setup";
+import { setupTestContext } from "#test/setup";
 
 import type { Options } from "ky";
 
 describe("lib/http-client-base", () => {
-  const context = libApiTestSetup(TestHttpClient, TEST_HTTP_CLIENT_PARAMS);
+  const context = setupTestContext(TestHttpClient, TEST_HTTP_CLIENT_PARAMS);
 
   describe("constructor and properties", () => {
     it("should freeze the config and make it immutable", () => {
