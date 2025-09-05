@@ -2,7 +2,7 @@ import { afterEach, beforeEach, vi } from "vitest";
 
 import type { HttpClientBase } from "#lib/http-client-base";
 
-type HttpClientParams = { config: unknown };
+type HttpClientParams = { config?: unknown };
 type ExtractConfig<TParams> = TParams extends { config: infer C } ? C : never;
 
 type HttpClientFactory<TParams extends HttpClientParams, TClient> = new (
@@ -48,7 +48,7 @@ export function setupTestContext<
     },
 
     get clientConfig() {
-      return params.config as ExtractConfig<TParams>;
+      return testClient.config as ExtractConfig<TParams>;
     },
   };
 }
