@@ -34,7 +34,7 @@ export function buildObjectKeyTransformerResponseHook(
   return (_req, _opt, response: KyResponse) => {
     return response.json().then((data) => {
       const transformedData = transformObject(data);
-      return new Response(JSON.stringify(transformedData), response);
+      return Response.json(transformedData, response);
     });
   };
 }
