@@ -2,12 +2,14 @@ import ky from "ky";
 
 import { AdobeCommerceHttpClient } from "#lib/commerce/http-client";
 import { HttpClientBase } from "#lib/http-client-base";
+import { AdobeIoEventsHttpClient } from "#lib/io-events/http-client";
 
 import type {
   CommerceHttpClientParams,
   PaaSClientParams,
   SaaSClientParams,
 } from "#lib/commerce/types";
+import type { IoEventsHttpClientParams } from "#lib/io-events/types";
 
 export type TestHttpClientConfig = {
   apiKey: string;
@@ -32,6 +34,20 @@ export class TestHttpClient extends HttpClientBase<TestHttpClientConfig> {
 export class TestAdobeCommerceHttpClient extends AdobeCommerceHttpClient {
   public constructor(
     params: CommerceHttpClientParams,
+    mockFetch: typeof fetch,
+  ) {
+    super(params);
+    const client = this.httpClient.extend({
+      fetch: mockFetch as unknown as typeof globalThis.fetch,
+    });
+
+    this.setHttpClient(client);
+  }
+}
+
+export class TestAdobeIoEventsHttpClient extends AdobeIoEventsHttpClient {
+  public constructor(
+    params: IoEventsHttpClientParams,
     mockFetch: typeof fetch,
   ) {
     super(params);
@@ -82,3 +98,20 @@ export const TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_SAAS: SaaSClientParams = {
     environment: "prod",
   },
 };
+
+// Default config for the test Adobe I/O Events HTTP client.
+export const TEST_ADOBE_IO_EVENTS_HTTP_CLIENT_PARAMS: IoEventsHttpClientParams =
+  {
+    config: {
+      baseUrl: "https://api.adobe.io/events",
+    },
+
+    auth: {
+      clientId: "test-client-id",
+      clientSecrets: ["test-client-secret"],
+      technicalAccountId: "test-technical-account-id",
+      technicalAccountEmail: "test-technical-account-email",
+      imsOrgId: "test-ims-org-id",
+      environment: "prod",
+    },
+  };
