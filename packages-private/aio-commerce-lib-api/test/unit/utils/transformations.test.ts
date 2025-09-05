@@ -13,7 +13,7 @@
 import { describe, expect, test } from "vitest";
 
 import {
-  TEST_HTTP_CLIENT_CONFIG,
+  TEST_HTTP_CLIENT_PARAMS,
   TestHttpClient,
 } from "#test/fixtures/http-clients";
 import {
@@ -23,7 +23,7 @@ import {
 import { libApiTestSetup } from "#test/setup";
 
 describe("utils/transformations", () => {
-  const context = libApiTestSetup(TestHttpClient, TEST_HTTP_CLIENT_CONFIG);
+  const context = libApiTestSetup(TestHttpClient, TEST_HTTP_CLIENT_PARAMS);
 
   describe("hooks/buildObjectKeyTransformerResponseHook", () => {
     test("should transform the keys of an object", async () => {

@@ -3,41 +3,41 @@ import { afterEach, beforeEach, vi } from "vitest";
 
 import type { HttpClientBase } from "#lib/http-client-base";
 
-type TestConfigBase = {
-  baseUrl: string;
-  [key: string]: unknown;
-};
+type HttpClientParams = { config: { baseUrl: string } };
+type ExtractConfig<TParams> = TParams extends { config: infer C } ? C : never;
 
-// A constructor of a class that extends HttpClientBase.
-type TestClientFactory<
-  TConfig extends TestConfigBase,
-  TClient extends HttpClientBase<TConfig>,
-> = new (config: TConfig, kyInstance: KyInstance) => TClient;
+type HttpClientFactory<TParams extends HttpClientParams, TClient> = new (
+  clientParams: TParams,
+  kyInstance: KyInstance,
+) => TClient;
+
+/** The default mock response that {@link fetch} will return. */
+const DEFAULT_MOCK_RESPONSE = Response.json(
+  { hello: "world" },
+  {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  },
+);
 
 /** Performs the test setup for the library API. */
 export function libApiTestSetup<
-  TConfig extends TestConfigBase,
-  TClient extends HttpClientBase<TConfig>,
-  TClientFactory extends TestClientFactory<TConfig, TClient>,
->(ClientFactory: TClientFactory, clientConfig: TConfig) {
-  // A mock of the fetch function we're going to use to test the HTTP client.
-  const fetch = vi.fn(async (_input, _init) => {
-    return await Promise.resolve(
-      new Response(JSON.stringify({ hello: "world" }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }),
-    );
-  });
+  TParams extends HttpClientParams,
+  TClient extends HttpClientBase<unknown>,
+>(ClientFactory: HttpClientFactory<TParams, TClient>, params: TParams) {
+  // A mock of the fetch function we're going to use to test the HTTP clients.
+  const fetch = vi.fn(
+    async (_input, _init) => await Promise.resolve(DEFAULT_MOCK_RESPONSE),
+  );
 
   let testClient: TClient;
   beforeEach(() => {
     const kyClient = ky.create({
-      prefixUrl: clientConfig.baseUrl,
+      prefixUrl: params.config.baseUrl,
       fetch: fetch as unknown as typeof globalThis.fetch,
     });
 
-    testClient = new ClientFactory(clientConfig, kyClient);
+    testClient = new ClientFactory(params, kyClient);
   });
 
   afterEach(() => {
@@ -54,7 +54,7 @@ export function libApiTestSetup<
     },
 
     get clientConfig() {
-      return clientConfig;
+      return params.config as ExtractConfig<TParams>;
     },
   };
 }

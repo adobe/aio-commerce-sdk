@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest";
 
 import { HttpClientBase } from "#lib/http-client-base";
 import {
-  TEST_HTTP_CLIENT_CONFIG,
+  TEST_HTTP_CLIENT_PARAMS,
   TestHttpClient,
 } from "#test/fixtures/http-clients";
 import { libApiTestSetup } from "#test/setup";
@@ -23,7 +23,7 @@ import { libApiTestSetup } from "#test/setup";
 import type { Options } from "ky";
 
 describe("lib/http-client-base", () => {
-  const context = libApiTestSetup(TestHttpClient, TEST_HTTP_CLIENT_CONFIG);
+  const context = libApiTestSetup(TestHttpClient, TEST_HTTP_CLIENT_PARAMS);
 
   describe("constructor and properties", () => {
     it("should freeze the config and make it immutable", () => {

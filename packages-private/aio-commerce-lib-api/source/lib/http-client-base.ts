@@ -8,7 +8,7 @@ type KyHttpClient = Omit<KyInstance, "extend" | "create">;
  */
 export class HttpClientBase<T> implements KyHttpClient {
   /** The actual HTTP client instance. */
-  readonly #httpClient: Readonly<KyInstance>;
+  #httpClient: Readonly<KyInstance>;
 
   /** The configuration used by the HTTP client. */
   public readonly config: Readonly<T>;
@@ -37,6 +37,14 @@ export class HttpClientBase<T> implements KyHttpClient {
     this.patch = this.#httpClient.patch.bind(this.#httpClient);
     this.head = this.#httpClient.head.bind(this.#httpClient);
     this.stop = this.#httpClient.stop;
+  }
+
+  /**
+   * Sets the HTTP client instance.
+   * @param httpClient The HTTP client instance to set.
+   */
+  protected setHttpClient(httpClient: KyInstance) {
+    this.#httpClient = Object.freeze(httpClient);
   }
 
   /**
