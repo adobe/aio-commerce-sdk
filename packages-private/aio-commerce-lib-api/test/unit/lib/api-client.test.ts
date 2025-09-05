@@ -13,12 +13,14 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiClient } from "#lib/api-client";
+import {
+  TEST_HTTP_CLIENT_CONFIG,
+  TestHttpClient,
+} from "#test/fixtures/http-clients";
 import { libApiTestSetup } from "#test/setup";
 
-import type { TestHttpClient } from "#test/setup";
-
 describe("lib/api-client", () => {
-  const context = libApiTestSetup();
+  const context = libApiTestSetup(TestHttpClient, TEST_HTTP_CLIENT_CONFIG);
 
   describe("create", () => {
     const sum = vi.fn((_client: TestHttpClient, a: number, b: number) => {

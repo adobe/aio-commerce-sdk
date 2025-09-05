@@ -14,12 +14,16 @@ import ky from "ky";
 import { describe, expect, it } from "vitest";
 
 import { HttpClientBase } from "#lib/http-client-base";
+import {
+  TEST_HTTP_CLIENT_CONFIG,
+  TestHttpClient,
+} from "#test/fixtures/http-clients";
 import { libApiTestSetup } from "#test/setup";
 
 import type { Options } from "ky";
 
 describe("lib/http-client-base", () => {
-  const context = libApiTestSetup();
+  const context = libApiTestSetup(TestHttpClient, TEST_HTTP_CLIENT_CONFIG);
 
   describe("constructor and properties", () => {
     it("should freeze the config and make it immutable", () => {

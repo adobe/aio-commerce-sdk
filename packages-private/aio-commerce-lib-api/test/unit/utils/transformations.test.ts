@@ -13,13 +13,17 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  TEST_HTTP_CLIENT_CONFIG,
+  TestHttpClient,
+} from "#test/fixtures/http-clients";
+import {
   buildCamelCaseKeysHookFetchOptions,
   buildUppercaseKeysHookFetchOptions,
 } from "#test/fixtures/ky-options";
 import { libApiTestSetup } from "#test/setup";
 
 describe("utils/transformations", () => {
-  const context = libApiTestSetup();
+  const context = libApiTestSetup(TestHttpClient, TEST_HTTP_CLIENT_CONFIG);
 
   describe("hooks/buildObjectKeyTransformerResponseHook", () => {
     test("should transform the keys of an object", async () => {
