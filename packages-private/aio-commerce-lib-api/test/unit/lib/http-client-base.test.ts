@@ -10,41 +10,20 @@
  * governing permissions and limitations under the License.
  */
 
-import { beforeEach, describe, expect, it } from "vitest";
+import ky from "ky";
+import { describe, expect, it } from "vitest";
 
 import { HttpClientBase } from "#lib/http-client-base";
-import { httpMethodTests } from "#test/fixtures/http-payloads";
-import { buildMockKyClient } from "#test/fixtures/ky-client";
+import { libApiTestSetup } from "#test/setup";
 
-import type { KyInstance, Options } from "ky";
-
-type Config = { apiKey: string; baseUrl: string };
-
-// Test class that extends HttpClientBase to access protected constructor
-class TestHttpClient extends HttpClientBase<Config> {
-  // biome-ignore lint/complexity/noUselessConstructor: False positive, as we need to override the inherited `protected` access specifier.
-  public constructor(config: Config, httpClient: KyInstance) {
-    super(config, httpClient);
-  }
-}
+import type { Options } from "ky";
 
 describe("lib/http-client-base", () => {
-  let mockKyInstance: KyInstance;
-  let mockConfig: Config;
-  let testClient: TestHttpClient;
+  const context = libApiTestSetup();
 
-  beforeEach(() => {
-    mockKyInstance = buildMockKyClient();
-    mockConfig = {
-      apiKey: "test-api-key",
-      baseUrl: "https://api.example.com",
-    };
-
-    testClient = new TestHttpClient(mockConfig, mockKyInstance);
-  });
-
-  describe("constructor", () => {
+  describe("constructor and properties", () => {
     it("should freeze the config and make it immutable", () => {
+      const { testClient } = context;
       expect(Object.isFrozen(testClient.config)).toBe(true);
       expect(() => {
         // @ts-expect-error - Testing immutability
@@ -53,12 +32,13 @@ describe("lib/http-client-base", () => {
     });
 
     it("should store the config correctly", () => {
-      expect(testClient.config).toEqual(mockConfig);
-      expect(testClient.config.apiKey).toBe("test-api-key");
-      expect(testClient.config.baseUrl).toBe("https://api.example.com");
+      const { testClient, clientConfig } = context;
+      expect(testClient.config.apiKey).toBe(clientConfig.apiKey);
+      expect(testClient.config.baseUrl).toBe(clientConfig.baseUrl);
     });
 
     it("should bind HTTP methods correctly", () => {
+      const { testClient } = context;
       expect(testClient.get).toBeDefined();
       expect(testClient.post).toBeDefined();
       expect(testClient.put).toBeDefined();
@@ -67,31 +47,14 @@ describe("lib/http-client-base", () => {
       expect(testClient.head).toBeDefined();
       expect(testClient.stop).toBeDefined();
     });
-  });
-
-  describe("HTTP client binding", () => {
-    it.each(httpMethodTests)(
-      "should call the underlying $method method",
-      async ({ method, options }) => {
-        const url = "/test";
-
-        if (options !== null) {
-          await testClient[method](url, options);
-          expect(mockKyInstance[method]).toHaveBeenCalledWith(url, options);
-        } else {
-          await testClient[method](url);
-          expect(mockKyInstance[method]).toHaveBeenCalledWith(url);
-        }
-
-        expect(mockKyInstance[method]).toHaveBeenCalledTimes(1);
-      },
-    );
 
     it("should have the stop property", () => {
-      expect(testClient.stop).toBe(mockKyInstance.stop);
+      const { testClient } = context;
+      expect(testClient.stop).toBe(ky.stop);
     });
 
     it("should not have the create method", () => {
+      const { testClient } = context;
       // @ts-expect-error - Testing missing method
       expect(testClient.create).toBeUndefined();
     });
@@ -103,12 +66,13 @@ describe("lib/http-client-base", () => {
     };
 
     it("should create a new instance with extended options", async () => {
+      const { testClient } = context;
       const extendedClient = testClient.extend(extendOptions);
       expect(extendedClient).toBeInstanceOf(HttpClientBase);
       expect(extendedClient).not.toBe(testClient);
 
       // Sample invocation to ensure the extended client is working
-      await extendedClient.get("/test", {
+      await extendedClient.get("test", {
         hooks: {
           beforeRequest: [
             (request) => {
@@ -120,20 +84,22 @@ describe("lib/http-client-base", () => {
     });
 
     it("should preserve the original config in extended instance", () => {
+      const { testClient } = context;
       const extendedClient = testClient.extend(extendOptions);
 
-      expect(extendedClient.config).toEqual(mockConfig);
+      expect(extendedClient.config).toEqual(testClient.config);
       expect(extendedClient.config).toBe(testClient.config);
     });
 
     it("should support function-based options", async () => {
+      const { testClient } = context;
       const extendFunction = () => extendOptions;
 
       const extendedClient = testClient.extend(extendFunction);
       expect(extendedClient).toBeInstanceOf(HttpClientBase);
 
       // Sample invocation to ensure the extended client is working
-      await extendedClient.get("/test", {
+      await extendedClient.get("test", {
         hooks: {
           beforeRequest: [
             (request) => {

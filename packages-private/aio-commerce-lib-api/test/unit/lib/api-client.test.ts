@@ -10,38 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { ApiClient } from "#lib/api-client";
-import { HttpClientBase } from "#lib/http-client-base";
-import { buildMockKyClient } from "#test/fixtures/ky-client";
+import { libApiTestSetup } from "#test/setup";
 
-import type { KyInstance } from "ky";
-
-type Config = { apiKey: string; baseUrl: string };
-
-// Test class that extends HttpClientBase to access protected constructor
-class TestHttpClient extends HttpClientBase<Config> {
-  // biome-ignore lint/complexity/noUselessConstructor: False positive, as we need to override the inherited `protected` access specifier.
-  public constructor(config: Config, httpClient: KyInstance) {
-    super(config, httpClient);
-  }
-}
+import type { TestHttpClient } from "#test/setup";
 
 describe("lib/api-client", () => {
-  let mockKyInstance: KyInstance;
-  let mockConfig: Config;
-  let testClient: TestHttpClient;
-
-  beforeEach(() => {
-    mockKyInstance = buildMockKyClient();
-    mockConfig = {
-      apiKey: "test-api-key",
-      baseUrl: "https://api.example.com",
-    };
-
-    testClient = new TestHttpClient(mockConfig, mockKyInstance);
-  });
+  const context = libApiTestSetup();
 
   describe("create", () => {
     const sum = vi.fn((_client: TestHttpClient, a: number, b: number) => {
@@ -59,7 +36,9 @@ describe("lib/api-client", () => {
     });
 
     it("should bind provided functions to the client and preserve shape", async () => {
+      const { testClient } = context;
       const api = ApiClient.create(testClient, { sum, getApiKey, asyncOp });
+
       expect(api.sum).toBeDefined();
       expect(api.getApiKey).toBeDefined();
       expect(api.asyncOp).toBeDefined();
@@ -70,7 +49,7 @@ describe("lib/api-client", () => {
       expect(sum).toHaveBeenCalledWith(testClient, 2, 3);
 
       const r2 = api.getApiKey();
-      expect(r2).toBe(mockConfig.apiKey);
+      expect(r2).toBe(testClient.config.apiKey);
       expect(getApiKey).toHaveBeenCalledTimes(1);
       expect(getApiKey).toHaveBeenCalledWith(testClient);
 
