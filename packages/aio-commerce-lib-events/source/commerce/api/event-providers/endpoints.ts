@@ -1,7 +1,7 @@
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { buildCamelCaseKeysResponseHook } from "@aio-commerce-sdk/aio-commerce-lib-api/utils/transformations";
 
-import { parseOrThrow } from "~/utils/valibot";
+import { parseOrThrow } from "#utils/valibot";
 
 import {
   EventProviderCreateParamsSchema,
@@ -29,7 +29,7 @@ import type {
  *
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function getAllEventProviders(
+export async function getAllEventProviders(
   httpClient: AdobeCommerceHttpClient,
   fetchOptions?: Options,
 ) {
@@ -55,12 +55,12 @@ export function getAllEventProviders(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function getEventProviderById(
+export async function getEventProviderById(
   httpClient: AdobeCommerceHttpClient,
   params: EventProviderGetByIdParams,
   fetchOptions?: Options,
 ) {
-  const validatedParams = parseOrThrow(
+  const validatedParams = await parseOrThrow(
     EventProviderGetByIdParamsSchema,
     params,
   );
@@ -87,7 +87,7 @@ export function getEventProviderById(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function createEventProvider(
+export async function createEventProvider(
   httpClient: AdobeCommerceHttpClient,
   params: EventProviderCreateParams,
   fetchOptions?: Options,

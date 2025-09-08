@@ -3,8 +3,8 @@ import * as v from "valibot";
 import {
   DataResidencyRegionSchema,
   EventProviderTypeSchema,
-} from "~/io-events/lib/schema";
-import { booleanValueSchema, stringValueSchema } from "~/utils/schemas";
+} from "#io-events/lib/schema";
+import { booleanValueSchema, stringValueSchema } from "#utils/schemas";
 
 export const EventProviderListAllParamsSchema = v.object({
   consumerOrgId: stringValueSchema("consumerOrgId"),

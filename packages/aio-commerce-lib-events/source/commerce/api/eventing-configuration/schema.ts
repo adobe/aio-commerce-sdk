@@ -1,11 +1,11 @@
 import * as v from "valibot";
 
-import { workspaceConfigurationSchema } from "~/commerce/lib/schema";
+import { workspaceConfigurationSchema } from "#commerce/lib/schema";
 import {
   alphaNumericOrUnderscoreOrHyphenSchema,
   alphaNumericOrUnderscoreSchema,
   booleanValueSchema,
-} from "~/utils/schemas";
+} from "#utils/schemas";
 
 /** The schema of the parameters received by the `updateConfiguration` Commerce Eventing API endpoint. */
 export const UpdateEventingConfigurationParamsSchema = v.partial(

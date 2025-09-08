@@ -20,7 +20,7 @@ import type {
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function getAllCommerceEventProviders(
+export async function getAllCommerceEventProviders(
   httpClient: AdobeIoEventsHttpClient,
   params: OmitDeep<EventProviderListAllParams, "filterBy.providerType">,
   fetchOptions?: Options,
@@ -49,7 +49,7 @@ export function getAllCommerceEventProviders(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function getAll3rdPartyCustomEventProviders(
+export async function getAll3rdPartyCustomEventProviders(
   httpClient: AdobeIoEventsHttpClient,
   params: OmitDeep<EventProviderListAllParams, "filterBy.providerType">,
   fetchOptions?: Options,
@@ -78,7 +78,7 @@ export function getAll3rdPartyCustomEventProviders(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function createCommerceEventProvider(
+export async function createCommerceEventProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: OmitDeep<EventProviderCreateParams, "providerType">,
   fetchOptions?: Options,
@@ -100,7 +100,7 @@ export function createCommerceEventProvider(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function create3rdPartyCustomEventProvider(
+export async function create3rdPartyCustomEventProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: OmitDeep<EventProviderCreateParams, "providerType">,
   fetchOptions?: Options,

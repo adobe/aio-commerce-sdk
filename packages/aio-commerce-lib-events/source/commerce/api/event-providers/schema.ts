@@ -1,7 +1,7 @@
 import * as v from "valibot";
 
-import { workspaceConfigurationSchema } from "~/commerce/lib/schema";
-import { stringValueSchema } from "~/utils/schemas";
+import { workspaceConfigurationSchema } from "#commerce/lib/schema";
+import { stringValueSchema } from "#utils/schemas";
 
 export const EventProviderGetByIdParamsSchema = v.object({
   providerId: stringValueSchema("providerId"),
