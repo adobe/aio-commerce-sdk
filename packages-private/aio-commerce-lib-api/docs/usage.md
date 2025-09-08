@@ -1,8 +1,5 @@
 # `@aio-commerce-sdk/aio-commerce-lib-api` Documentation
 
-> [!WARNING]
-> This package is a work in progress and is not yet ready for use yet. You may be able to install it, but if you do, expect breaking changes.
-
 ## Overview
 
 The `@aio-commerce-sdk/aio-commerce-lib-api` package provides:
@@ -30,8 +27,6 @@ const commerceClient = new AdobeCommerceHttpClient({
   config: {
     baseUrl: "https://api.commerce.adobe.com",
     flavor: "saas",
-    storeViewCode: "default", // optional, defaults to "all"
-    version: "V1", // optional, defaults to "V1"
   },
 
   auth: {
@@ -55,8 +50,6 @@ const commerceClient = new AdobeCommerceHttpClient({
   config: {
     baseUrl: "https://your-commerce-instance.com",
     flavor: "paas",
-    storeViewCode: "default", // optional, defaults to "all"
-    version: "V1", // optional, defaults to "V1"
   },
 
   auth: {
@@ -193,7 +186,7 @@ const extendedClient = commerceClient.extend({
 
 #### Custom Fetch Options
 
-You can provide custom fetch options when creating clients:
+You can provide custom fetch options when creating HTTP clients:
 
 ```typescript
 const client = new AdobeCommerceHttpClient({
