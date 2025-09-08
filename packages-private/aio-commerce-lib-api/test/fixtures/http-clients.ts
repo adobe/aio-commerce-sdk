@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /*
  * Copyright 2025 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -10,6 +11,8 @@
  * governing permissions and limitations under the License.
  */
 
+=======
+>>>>>>> 60e27a1 (CEXT-4993/CEXT-5218: `@aio-commerce-sdk/aio-commerce-lib-api` Unit Tests and Docs (#78))
 import ky from "ky";
 
 import { AdobeCommerceHttpClient } from "#lib/commerce/http-client";
