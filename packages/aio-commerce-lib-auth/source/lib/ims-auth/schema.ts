@@ -22,7 +22,7 @@ import {
   array as vArray,
 } from "valibot";
 
-import type { InferInput } from "valibot";
+import type { InferOutput } from "valibot";
 
 /**
  * Creates a validation schema for a required IMS auth string parameter.
@@ -69,7 +69,7 @@ export const ImsAuthParamsSchema = object({
     email("Expected a valid email format for technicalAccountEmail"),
   ),
   imsOrgId: imsAuthParameter("imsOrgId"),
-  environment: pipe(optional(ImsAuthEnvSchema, "prod")),
+  environment: pipe(optional(ImsAuthEnvSchema)),
   context: pipe(optional(string())),
   scopes: pipe(
     stringArray("scopes"),
@@ -78,7 +78,7 @@ export const ImsAuthParamsSchema = object({
 });
 
 /** Defines the parameters for the IMS auth service. */
-export type ImsAuthParams = InferInput<typeof ImsAuthParamsSchema>;
+export type ImsAuthParams = InferOutput<typeof ImsAuthParamsSchema>;
 
 /** Defines the environments accepted by the IMS auth service. */
-export type ImsAuthEnv = InferInput<typeof ImsAuthEnvSchema>;
+export type ImsAuthEnv = InferOutput<typeof ImsAuthEnvSchema>;
