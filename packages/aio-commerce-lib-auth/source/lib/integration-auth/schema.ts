@@ -22,7 +22,7 @@ import {
   url as vUrl,
 } from "valibot";
 
-import type { InferOutput } from "valibot";
+import type { InferInput } from "valibot";
 
 /**
  * The HTTP methods supported by Commerce.
@@ -76,6 +76,6 @@ export const IntegrationAuthParamsSchema = nonOptional(
 );
 
 /** Defines the parameters required for Commerce Integration authentication. */
-export type IntegrationAuthParams = InferOutput<
+export type IntegrationAuthParams = InferInput<
   typeof IntegrationAuthParamsSchema
 >;
