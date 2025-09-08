@@ -13,7 +13,7 @@
 | Type Alias                                                                   | Description                                                                                     |
 | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | [ApiClientRecord](type-aliases/ApiClientRecord.md)                           | A client that bounds a set of [ApiFunction](type-aliases/ApiFunction.md) to their HTTP clients. |
-| [ApiFunction](type-aliases/ApiFunction.md)                                   | A function that takes an object of HTTP clients and returns something.                          |
+| [ApiFunction](type-aliases/ApiFunction.md)                                   | A generic function that takes an HTTP client and some other arguments and returns a result.     |
 | [CommerceFlavor](type-aliases/CommerceFlavor.md)                             | Defines the flavor of a Commerce instance.                                                      |
 | [CommerceHttpClientConfig](type-aliases/CommerceHttpClientConfig.md)         | Defines the configuration required to build an Adobe Commerce HTTP client.                      |
 | [CommerceHttpClientConfigPaaS](type-aliases/CommerceHttpClientConfigPaaS.md) | Defines the configuration required to build an Adobe Commerce HTTP client for PaaS.             |

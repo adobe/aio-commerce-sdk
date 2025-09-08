@@ -1,6 +1,6 @@
 # `ApiClient`
 
-Defined in: [packages-private/aio-commerce-lib-api/source/lib/api-client.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/10972051f45fae3dd318c777be4a5107aa4882ce/packages-private/aio-commerce-lib-api/source/lib/api-client.ts#L38)
+Defined in: [packages-private/aio-commerce-lib-api/source/lib/api-client.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/8cc35111c26be4d9997541cb07f95e4f82dd2c7b/packages-private/aio-commerce-lib-api/source/lib/api-client.ts#L38)
 
 A client that binds a set of [ApiFunction](../type-aliases/ApiFunction.md) to a given HTTP client.
 
@@ -24,7 +24,9 @@ new ApiClient(): ApiClient;
 static create<TClient, TFunctions>(client: TClient, functions: TFunctions): ApiClientRecord<TClient, TFunctions>;
 ```
 
-Defined in: [packages-private/aio-commerce-lib-api/source/lib/api-client.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/10972051f45fae3dd318c777be4a5107aa4882ce/packages-private/aio-commerce-lib-api/source/lib/api-client.ts#L39)
+Defined in: [packages-private/aio-commerce-lib-api/source/lib/api-client.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/8cc35111c26be4d9997541cb07f95e4f82dd2c7b/packages-private/aio-commerce-lib-api/source/lib/api-client.ts#L44)
+
+Creates a new API client that binds a set of [ApiFunction](../type-aliases/ApiFunction.md) to a given HTTP client.
 
 #### Type Parameters
 
@@ -35,10 +37,10 @@ Defined in: [packages-private/aio-commerce-lib-api/source/lib/api-client.ts:39](
 
 #### Parameters
 
-| Parameter   | Type         |
-| ----------- | ------------ |
-| `client`    | `TClient`    |
-| `functions` | `TFunctions` |
+| Parameter   | Type         | Description                                   |
+| ----------- | ------------ | --------------------------------------------- |
+| `client`    | `TClient`    | The HTTP client to bind the API functions to. |
+| `functions` | `TFunctions` | The API functions to bind to the HTTP client. |
 
 #### Returns
 
