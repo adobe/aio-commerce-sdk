@@ -1,3 +1,15 @@
+/*
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
 import type {
   ImsAuthProvider,
   IntegrationAuthParams,
@@ -43,19 +55,19 @@ export type CommerceHttpClientConfig =
 /** Defines the flavor of a Commerce instance. */
 export type CommerceFlavor = CommerceHttpClientConfig["flavor"];
 
-// Type for SaaS configuration
+/** Defines the configuration required to build an Adobe Commerce HTTP client for SaaS. */
 export type SaaSClientParams = {
   auth: ImsAuthProvider | ImsAuthParamsWithOptionalScopes; // We provide default scopes.
   config: CommerceHttpClientConfigSaaS;
   fetchOptions?: Options;
 };
 
-// Type for PaaS configuration
+/** Defines the configuration required to build an Adobe Commerce HTTP client for PaaS. */
 export type PaaSClientParams = {
   auth: IntegrationAuthProvider | IntegrationAuthParams;
   config: CommerceHttpClientConfigPaaS;
   fetchOptions?: Options;
 };
 
-// Discriminated union of both types
+/** Defines the parameters required to build an Adobe Commerce HTTP client (either SaaS or PaaS). */
 export type CommerceHttpClientParams = SaaSClientParams | PaaSClientParams;
