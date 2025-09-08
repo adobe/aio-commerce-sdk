@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /*
  * Copyright 2025 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -11,8 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-=======
->>>>>>> 60e27a1 (CEXT-4993/CEXT-5218: `@aio-commerce-sdk/aio-commerce-lib-api` Unit Tests and Docs (#78))
 import ky from "ky";
 
 import { AdobeCommerceHttpClient } from "#lib/commerce/http-client";
@@ -49,7 +46,7 @@ export class TestHttpClient extends HttpClientBase<TestHttpClientConfig> {
 export class TestAdobeCommerceHttpClient extends AdobeCommerceHttpClient {
   public constructor(
     params: CommerceHttpClientParams,
-    mockFetch: typeof fetch,
+    mockFetch: typeof fetch
   ) {
     super(params);
     const client = this.httpClient.extend({
@@ -63,7 +60,7 @@ export class TestAdobeCommerceHttpClient extends AdobeCommerceHttpClient {
 export class TestAdobeIoEventsHttpClient extends AdobeIoEventsHttpClient {
   public constructor(
     params: IoEventsHttpClientParams,
-    mockFetch: typeof fetch,
+    mockFetch: typeof fetch
   ) {
     super(params);
     const client = this.httpClient.extend({
