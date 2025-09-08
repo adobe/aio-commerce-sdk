@@ -41,6 +41,16 @@
     "./io-events": "./source/io-events/index.ts",
     "./package.json": "./package.json"
   },
+  "imports": {
+    "#*": [
+      "./source/*.ts",
+      "./source/*/index.ts"
+    ],
+    "#test/*": [
+      "./test/*.ts",
+      "./test/*/index.ts"
+    ]
+  },
   "files": [
     "dist",
     "package.json",
