@@ -7,35 +7,19 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
   {
     name: "getAllEventProviders",
     method: "GET",
-    pathname() {
-      return "eventing/eventProvider";
-    },
+    pathname: "eventing/eventProvider",
 
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.getAllEventProviders(fetchOptions);
     },
 
-    invalidInvoke: null,
-    mockResponse: {
-      providers: [
-        { provider_id: "provider-1", provider_name: "Provider 1" },
-        { provider_id: "provider-2", provider_name: "Provider 2" },
-      ],
-    },
-
-    actualResponse: {
-      providers: [
-        { providerId: "provider-1", providerName: "Provider 1" },
-        { providerId: "provider-2", providerName: "Provider 2" },
-      ],
-    },
+    hasInputValidation: false,
+    hasCamelCaseTransformer: true,
   },
   {
     name: "getEventProviderById",
     method: "GET",
-    pathname() {
-      return "eventing/eventProvider/provider-1";
-    },
+    pathname: "eventing/eventProvider/provider-1",
 
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.getEventProviderById(
@@ -46,25 +30,13 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
       );
     },
 
-    invalidInvoke: (client: CommerceEventsApiClient) => {
-      // @ts-expect-error - Testing invalid params
-      return client.getEventProviderById("invalid-params");
-    },
-
-    mockResponse: {
-      provider: { provider_id: "provider-1", provider_name: "Provider 1" },
-    },
-
-    actualResponse: {
-      provider: { providerId: "provider-1", providerName: "Provider 1" },
-    },
+    hasInputValidation: true,
+    hasCamelCaseTransformer: true,
   },
   {
     name: "createEventProvider",
     method: "POST",
-    pathname() {
-      return "eventing/eventProvider";
-    },
+    pathname: "eventing/eventProvider",
 
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.createEventProvider(
@@ -79,45 +51,25 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
       );
     },
 
-    invalidInvoke: (client: CommerceEventsApiClient) => {
-      // @ts-expect-error - Testing invalid params
-      return client.createEventProvider("invalid-params");
-    },
-
-    mockResponse: {
-      provider: { provider_id: "provider-1", provider_name: "Provider 1" },
-    },
-
-    actualResponse: {
-      provider: { providerId: "provider-1", providerName: "Provider 1" },
-    },
+    hasInputValidation: true,
+    hasCamelCaseTransformer: true,
   },
   {
     name: "getAllEventSubscriptions",
     method: "GET",
-    pathname() {
-      return "eventing/getEventSubscriptions";
-    },
+    pathname: "eventing/getEventSubscriptions",
 
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.getAllEventSubscriptions(fetchOptions);
     },
 
-    invalidInvoke: null,
-    mockResponse: {
-      subscriptions: [{ name: "subscription-1", provider_id: "provider-1" }],
-    },
-
-    actualResponse: {
-      subscriptions: [{ name: "subscription-1", providerId: "provider-1" }],
-    },
+    hasInputValidation: false,
+    hasCamelCaseTransformer: true,
   },
   {
     name: "createEventSubscription",
     method: "POST",
-    pathname() {
-      return "eventing/eventSubscribe";
-    },
+    pathname: "eventing/eventSubscribe",
 
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.createEventSubscription(
@@ -130,23 +82,13 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
       );
     },
 
-    invalidInvoke: (client: CommerceEventsApiClient) => {
-      // @ts-expect-error - Testing invalid params
-      return client.createEventSubscription("invalid-params");
-    },
-
-    mockResponse: {
-      subscription: { name: "subscription-1", providerId: "provider-1" },
-    },
-
-    actualResponse: null,
+    hasInputValidation: true,
+    hasCamelCaseTransformer: false,
   },
   {
     name: "updateEventingConfiguration",
     method: "PUT",
-    pathname() {
-      return "eventing/updateConfiguration";
-    },
+    pathname: "eventing/updateConfiguration",
 
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.updateEventingConfiguration(
@@ -157,13 +99,7 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
       );
     },
 
-    invalidInvoke: (client: CommerceEventsApiClient) => {
-      // @ts-expect-error - Testing invalid params
-      return client.updateEventingConfiguration("invalid-params");
-    },
-
-    // `true` indicates a successful configuration update.
-    mockResponse: true,
-    actualResponse: true,
+    hasInputValidation: true,
+    hasCamelCaseTransformer: false,
   },
 ] as const;

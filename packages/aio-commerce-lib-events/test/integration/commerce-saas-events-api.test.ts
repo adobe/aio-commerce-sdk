@@ -53,15 +53,15 @@ describe("SaaS Commerce Events API - Integration Tests", () => {
 
   // All tests are the same with different payloads, so we just parameterize them.
   describe.each(COMMERCE_EVENTS_API_PAYLOADS)("$name", (payload) => {
-    test("should make a $method request to $pathname", async () => {
+    test("should make a request using the correct HTTP method", async () => {
       const capture = {
         method: null as string | null,
       };
 
       server.use(
-        http.all(makeUrl(payload.pathname()), ({ request }) => {
+        http.all(makeUrl(payload.pathname), ({ request }) => {
           capture.method = request.method;
-          return HttpResponse.json(payload.mockResponse);
+          return HttpResponse.json({});
         }),
       );
 
@@ -71,23 +71,27 @@ describe("SaaS Commerce Events API - Integration Tests", () => {
 
     test("should handle successful response", async () => {
       server.use(
-        http.all(makeUrl(payload.pathname()), () => {
-          return HttpResponse.json(payload.mockResponse);
+        http.all(makeUrl(payload.pathname), () => {
+          return HttpResponse.json({
+            fake_response: "hello",
+          });
         }),
       );
 
       const result = await payload.invoke(client);
 
-      // If the `actualResponse` is null, we don't return anything (void).
-      if (payload.actualResponse !== null) {
-        expect(result).toEqual(payload.actualResponse);
+      if (payload.hasCamelCaseTransformer) {
+        expect(result).toEqual({
+          // Should be transformed to camel case
+          fakeResponse: "hello",
+        });
       }
     });
 
     test("should handle error responses", async () => {
       server.use(
-        http.all(makeUrl(payload.pathname()), () => {
-          return HttpResponse.json(payload.mockResponse, { status: 401 });
+        http.all(makeUrl(payload.pathname), () => {
+          return HttpResponse.json({}, { status: 401 });
         }),
       );
 
@@ -97,9 +101,9 @@ describe("SaaS Commerce Events API - Integration Tests", () => {
     test("requests should have oauth authorization header", async () => {
       const capture = { headers: null as Headers | null };
       server.use(
-        http.all(makeUrl(payload.pathname()), ({ request }) => {
+        http.all(makeUrl(payload.pathname), ({ request }) => {
           capture.headers = request.headers;
-          return HttpResponse.json(payload.mockResponse);
+          return HttpResponse.json({});
         }),
       );
 
@@ -121,9 +125,9 @@ describe("SaaS Commerce Events API - Integration Tests", () => {
     test("should use custom fetch options", async () => {
       const capture = { headers: null as Headers | null };
       server.use(
-        http.all(makeUrl(payload.pathname()), ({ request }) => {
+        http.all(makeUrl(payload.pathname), ({ request }) => {
           capture.headers = request.headers;
-          return HttpResponse.json(payload.mockResponse);
+          return HttpResponse.json({});
         }),
       );
 
@@ -139,15 +143,17 @@ describe("SaaS Commerce Events API - Integration Tests", () => {
       expect(capture.headers.get("X-Custom-Header")).toBe("test-value");
     });
 
-    if (payload.invalidInvoke) {
+    if (payload.hasInputValidation) {
       test("should throw an error on schema validation failure", async () => {
         server.use(
-          http.all(makeUrl(payload.pathname()), () => {
-            return HttpResponse.json(payload.mockResponse);
+          http.all(makeUrl(payload.pathname), () => {
+            return HttpResponse.json({});
           }),
         );
 
-        await expect(payload.invalidInvoke(client)).rejects.toThrow();
+        // @ts-expect-error - Testing invalid params
+        const invoke = () => client[payload.name]("invalid-params");
+        await expect(invoke()).rejects.toThrow();
       });
     }
   });

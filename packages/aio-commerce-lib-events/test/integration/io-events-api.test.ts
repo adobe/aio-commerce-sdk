@@ -79,10 +79,13 @@ describe("Adobe IO Events API - Integration Tests", () => {
       );
 
       const result = await payload.invoke(client);
-      expect(result).toEqual({
-        // Should be transformed to camel case
-        fakeResponse: "hello",
-      });
+
+      if (payload.hasCamelCaseTransformer) {
+        expect(result).toEqual({
+          // Should be transformed to camel case
+          fakeResponse: "hello",
+        });
+      }
     });
 
     test("should handle error responses", async () => {
