@@ -12,7 +12,7 @@
 
 import type { HttpClientBase } from "./http-client-base";
 
-/** A function that takes an object of HTTP clients and returns something. */
+/** A generic function that takes an HTTP client and some other arguments and returns a result. */
 export type ApiFunction<
   TClient extends HttpClientBase<unknown>,
   TArgs extends unknown[],
@@ -36,6 +36,11 @@ export type ApiClientRecord<
 /** A client that binds a set of {@link ApiFunction} to a given HTTP client. */
 // biome-ignore lint/complexity/noStaticOnlyClass: For consistency with the rest of the codebase.
 export class ApiClient {
+  /**
+   * Creates a new API client that binds a set of {@link ApiFunction} to a given HTTP client.
+   * @param client - The HTTP client to bind the API functions to.
+   * @param functions - The API functions to bind to the HTTP client.
+   */
   public static create<
     TClient extends HttpClientBase<unknown>,
     // biome-ignore lint/suspicious/noExplicitAny: We can't know the type of the argument/return type.
