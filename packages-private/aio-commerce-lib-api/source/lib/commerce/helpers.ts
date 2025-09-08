@@ -33,13 +33,13 @@ const COMMERCE_SAAS_IMS_REQUIRED_SCOPES = [
 function getCommerceUrl(config: RequiredComerceHttpClientConfig) {
   const { baseUrl, storeViewCode, version } = config;
 
-  const commerceUrl = new URL(baseUrl);
+  const commerceUrl = new URL(baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`);
   const uppercasedVersion = version?.toUpperCase();
 
   if (config.flavor === "paas") {
     commerceUrl.pathname += `rest/${storeViewCode}/${uppercasedVersion}`;
   } else if (config.flavor === "saas") {
-    commerceUrl.pathname += `/${uppercasedVersion}`;
+    commerceUrl.pathname += `${uppercasedVersion}`;
   }
 
   return commerceUrl.toString();
