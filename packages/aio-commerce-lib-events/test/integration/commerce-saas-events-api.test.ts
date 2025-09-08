@@ -1,12 +1,37 @@
 import { HttpResponse, http } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import { createCommerceEventsApiClient } from "#commerce/index";
 import { COMMERCE_EVENTS_API_PAYLOADS } from "#test/fixtures/commerce-events-api-payloads";
-import { TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_PAAS } from "#test/fixtures/http-client-params";
+import { TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_SAAS } from "#test/fixtures/http-client-params";
 
-const REGEX_OAUTH_TOKEN = /^OAuth/;
+import type { ImsAuthParams } from "@adobe/aio-commerce-lib-auth";
+
+vi.mock("@adobe/aio-commerce-lib-auth", async () => {
+  const original = await vi.importActual("@adobe/aio-commerce-lib-auth");
+  return {
+    ...original,
+    getImsAuthProvider: vi.fn((params: ImsAuthParams) => {
+      return {
+        getHeaders: vi.fn(() => {
+          return {
+            Authorization: "Bearer supersecrettoken",
+            "x-api-key": params.clientId,
+          };
+        }),
+      };
+    }),
+  };
+});
 
 // See: https://vitest.dev/guide/mocking.html#requests
 const server = setupServer();
@@ -15,11 +40,11 @@ beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterAll(() => server.close());
 afterEach(() => server.resetHandlers());
 
-describe("PaaS Commerce Events API - Integration Tests", () => {
+describe("SaaS Commerce Events API - Integration Tests", () => {
   // Create a real client
-  const baseUrl = "https://api.commerce.adobe.com/rest/all/V1";
+  const baseUrl = "https://api.commerce.adobe.com/V1";
   const client = createCommerceEventsApiClient(
-    TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_PAAS,
+    TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_SAAS,
   );
 
   function makeUrl(pathname: string) {
@@ -85,7 +110,12 @@ describe("PaaS Commerce Events API - Integration Tests", () => {
         return;
       }
 
-      expect(capture.headers.get("Authorization")).toMatch(REGEX_OAUTH_TOKEN);
+      expect(capture.headers.get("Authorization")).toBe(
+        "Bearer supersecrettoken",
+      );
+
+      expect(capture.headers.get("x-api-key")).toBe("test-client-id");
+      expect(capture.headers.get("Store")).toBe("all");
     });
 
     test("should use custom fetch options", async () => {

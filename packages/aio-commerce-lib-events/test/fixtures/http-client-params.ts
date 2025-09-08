@@ -10,48 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  AdobeCommerceHttpClient,
-  AdobeIoEventsHttpClient,
-} from "@aio-commerce-sdk/aio-commerce-lib-api";
-
 import type {
-  CommerceHttpClientParams,
   IoEventsHttpClientParams,
   PaaSClientParams,
+  SaaSClientParams,
 } from "@aio-commerce-sdk/aio-commerce-lib-api";
 
-export class TestAdobeCommerceHttpClient extends AdobeCommerceHttpClient {
-  public constructor(
-    params: CommerceHttpClientParams,
-    mockFetch: typeof fetch,
-  ) {
-    super(params);
-    const client = this.httpClient.extend({
-      fetch: mockFetch as unknown as typeof globalThis.fetch,
-    });
-
-    this.setHttpClient(client);
-  }
-}
-
-export class TestAdobeIoEventsHttpClient extends AdobeIoEventsHttpClient {
-  public constructor(
-    params: IoEventsHttpClientParams,
-    mockFetch: typeof fetch,
-  ) {
-    super(params);
-    const client = this.httpClient.extend({
-      fetch: mockFetch as unknown as typeof globalThis.fetch,
-    });
-
-    this.setHttpClient(client);
-  }
-}
-
 // Default config for the test Adobe Commerce HTTP client for PaaS.
-// We are going to run tests using a mock PaaS client (either PaaS or SaaS would work).
-export const TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS: PaaSClientParams = {
+export const TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_PAAS: PaaSClientParams = {
   config: {
     baseUrl: "https://api.commerce.adobe.com",
     flavor: "paas",
@@ -62,6 +28,23 @@ export const TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS: PaaSClientParams = {
     accessTokenSecret: "test-access-token-secret",
     consumerKey: "test-consumer-key",
     consumerSecret: "test-consumer-secret",
+  },
+};
+
+// Default config for the test Adobe Commerce HTTP client for SaaS.
+export const TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_SAAS: SaaSClientParams = {
+  config: {
+    baseUrl: "https://api.commerce.adobe.com",
+    flavor: "saas",
+  },
+
+  auth: {
+    clientId: "test-client-id",
+    clientSecrets: ["test-client-secret"],
+    technicalAccountId: "test-technical-account-id",
+    technicalAccountEmail: "test-technical-account-email",
+    imsOrgId: "test-ims-org-id",
+    environment: "prod",
   },
 };
 
