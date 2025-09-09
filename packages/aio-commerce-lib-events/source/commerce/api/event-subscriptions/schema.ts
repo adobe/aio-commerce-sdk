@@ -1,6 +1,6 @@
 import * as v from "valibot";
 
-import { booleanValueSchema, stringValueSchema } from "~/utils/schemas";
+import { booleanValueSchema, stringValueSchema } from "#utils/schemas";
 
 function fieldsSchema(propertyName: string) {
   return v.array(

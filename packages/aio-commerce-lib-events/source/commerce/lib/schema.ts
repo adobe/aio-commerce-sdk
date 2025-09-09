@@ -1,6 +1,6 @@
 import * as v from "valibot";
 
-import { stringValueSchema } from "~/utils/schemas";
+import { stringValueSchema } from "#utils/schemas";
 
 /** The schema of the workspace configuration in the Developer Console. */
 export function workspaceConfigurationSchema(propertyName: string) {

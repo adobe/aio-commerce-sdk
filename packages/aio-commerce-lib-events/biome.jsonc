@@ -2,5 +2,24 @@
   "$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
 
   "root": false,
-  "extends": "//"
+  "extends": "//",
+
+  "overrides": [
+    {
+      "includes": ["source/**/{endpoints,shorthands}.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            // The nature of API calls is to be async. Although we don't explicitly use `await`
+            // we need to declare functions as async. Otherwise it causes inconsistencies with
+            // error handling, as some errors are thrown "synchronously" (not wrapped in a Promise).
+            // This is confusing, because if one of those "synchronous" errors (like a schema validation error)
+            // makes the function fail, you will not be able to `.catch()` it in the returned Promise,
+            // while for other errors (like an HTTP error, for a 400 or 500 status code) you would be able to.
+            "useAwait": "off"
+          }
+        }
+      }
+    }
+  ]
 }

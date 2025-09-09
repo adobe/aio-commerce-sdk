@@ -1,5 +1,5 @@
 import type { CamelCasedPropertiesDeep } from "type-fest";
-import type { HALLink } from "~/io-events/types";
+import type { HALLink } from "#io-events/types";
 
 /** Defines the base fields of an event metadata entity. */
 export type IoEventMetadata = {

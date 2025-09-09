@@ -1,6 +1,6 @@
 import { buildCamelCaseKeysResponseHook } from "@aio-commerce-sdk/aio-commerce-lib-api/utils/transformations";
 
-import { parseOrThrow } from "~/utils/valibot";
+import { parseOrThrow } from "#utils/valibot";
 
 import {
   CreateEventMetadataForProviderSchema,
@@ -10,7 +10,10 @@ import {
 
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import type { AdobeIoEventsHttpClient } from "@aio-commerce-sdk/aio-commerce-lib-api";
-import type { HTTPError, Options } from "ky";
+import type {
+  HTTPError,
+  Options,
+} from "@aio-commerce-sdk/aio-commerce-lib-api/ky";
 import type {
   CreateEventMetadataForProviderParams,
   GetAllEventMetadataForProviderParams,
@@ -32,7 +35,7 @@ import type {
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function getAllEventMetadataForProvider(
+export async function getAllEventMetadataForProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: GetAllEventMetadataForProviderParams,
   fetchOptions?: Options,
@@ -64,7 +67,7 @@ export function getAllEventMetadataForProvider(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function getEventMetadataForEventAndProvider(
+export async function getEventMetadataForEventAndProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: GetEventMetadataForEventAndProviderParams,
   fetchOptions?: Options,
@@ -99,7 +102,7 @@ export function getEventMetadataForEventAndProvider(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function createEventMetadataForProvider(
+export async function createEventMetadataForProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: CreateEventMetadataForProviderParams,
   fetchOptions?: Options,

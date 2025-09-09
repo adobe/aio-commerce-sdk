@@ -41,6 +41,16 @@
     "./io-events": "./source/io-events/index.ts",
     "./package.json": "./package.json"
   },
+  "imports": {
+    "#*": [
+      "./source/*.ts",
+      "./source/*/index.ts"
+    ],
+    "#test/*": [
+      "./test/*.ts",
+      "./test/*/index.ts"
+    ]
+  },
   "files": [
     "dist",
     "package.json",
@@ -65,7 +75,6 @@
   "dependencies": {
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
-    "ky": "^1.9.0",
     "valibot": "^1.1.0"
   },
   "devDependencies": {

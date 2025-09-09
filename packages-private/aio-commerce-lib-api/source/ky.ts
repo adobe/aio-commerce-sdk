@@ -10,15 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { defineConfig } from "tsdown";
+/** biome-ignore-all lint/performance/noBarrelFile: This is the entrypoint of the package API */
 
-export default defineConfig({
-  ...baseConfig,
-  entry: [
-    "./source/index.ts",
-    "./source/ky.ts",
-    "./source/utils/http/index.ts",
-    "./source/utils/transformations/index.ts",
-  ],
-});
+export { HTTPError, TimeoutError } from "ky";
+
+export type * from "ky";

@@ -2,7 +2,10 @@ import { createEventProvider, getAllEventProviders } from "./endpoints";
 
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import type { AdobeIoEventsHttpClient } from "@aio-commerce-sdk/aio-commerce-lib-api";
-import type { HTTPError, Options } from "ky";
+import type {
+  HTTPError,
+  Options,
+} from "@aio-commerce-sdk/aio-commerce-lib-api/ky";
 import type { OmitDeep } from "type-fest";
 import type {
   EventProviderCreateParams,
@@ -20,7 +23,7 @@ import type {
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function getAllCommerceEventProviders(
+export async function getAllCommerceEventProviders(
   httpClient: AdobeIoEventsHttpClient,
   params: OmitDeep<EventProviderListAllParams, "filterBy.providerType">,
   fetchOptions?: Options,
@@ -49,7 +52,7 @@ export function getAllCommerceEventProviders(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function getAll3rdPartyCustomEventProviders(
+export async function getAll3rdPartyCustomEventProviders(
   httpClient: AdobeIoEventsHttpClient,
   params: OmitDeep<EventProviderListAllParams, "filterBy.providerType">,
   fetchOptions?: Options,
@@ -78,7 +81,7 @@ export function getAll3rdPartyCustomEventProviders(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function createCommerceEventProvider(
+export async function createCommerceEventProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: OmitDeep<EventProviderCreateParams, "providerType">,
   fetchOptions?: Options,
@@ -100,7 +103,7 @@ export function createCommerceEventProvider(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function create3rdPartyCustomEventProvider(
+export async function create3rdPartyCustomEventProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: OmitDeep<EventProviderCreateParams, "providerType">,
   fetchOptions?: Options,

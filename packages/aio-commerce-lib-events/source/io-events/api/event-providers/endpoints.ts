@@ -1,10 +1,7 @@
 import { buildCamelCaseKeysResponseHook } from "@aio-commerce-sdk/aio-commerce-lib-api/utils/transformations";
 
-import {
-  setArrayQueryParam,
-  setQueryParamIfTruthy,
-} from "~/utils/query-params";
-import { parseOrThrow } from "~/utils/valibot";
+import { setArrayQueryParam, setQueryParamIfTruthy } from "#utils/query-params";
+import { parseOrThrow } from "#utils/valibot";
 
 import {
   EventProviderCreateParamsSchema,
@@ -14,7 +11,10 @@ import {
 
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import type { AdobeIoEventsHttpClient } from "@aio-commerce-sdk/aio-commerce-lib-api";
-import type { HTTPError, Options } from "ky";
+import type {
+  HTTPError,
+  Options,
+} from "@aio-commerce-sdk/aio-commerce-lib-api/ky";
 import type {
   EventProviderCreateParams,
   EventProviderGetByIdParams,
@@ -33,7 +33,7 @@ import type {
  * @param params - The parameters to list the event providers with.
  * @param fetchOptions - The {@link Options} to use to make the request.
  */
-export function getAllEventProviders(
+export async function getAllEventProviders(
   httpClient: AdobeIoEventsHttpClient,
   params: EventProviderListAllParams,
   fetchOptions?: Options,
@@ -79,7 +79,7 @@ export function getAllEventProviders(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function getEventProviderById(
+export async function getEventProviderById(
   httpClient: AdobeIoEventsHttpClient,
   params: EventProviderGetByIdParams,
   fetchOptions?: Options,
@@ -121,7 +121,7 @@ export function getEventProviderById(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function createEventProvider(
+export async function createEventProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: EventProviderCreateParams,
   fetchOptions?: Options,

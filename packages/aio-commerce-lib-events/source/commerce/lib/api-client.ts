@@ -3,9 +3,9 @@ import {
   ApiClient,
 } from "@aio-commerce-sdk/aio-commerce-lib-api";
 
-import * as eventProviderEndpoints from "~/commerce/api/event-providers/endpoints";
-import * as eventSubscriptionsEndpoints from "~/commerce/api/event-subscriptions/endpoints";
-import { updateEventingConfiguration } from "~/commerce/api/eventing-configuration/endpoints";
+import * as eventProviderEndpoints from "#commerce/api/event-providers/endpoints";
+import * as eventSubscriptionsEndpoints from "#commerce/api/event-subscriptions/endpoints";
+import { updateEventingConfiguration } from "#commerce/api/eventing-configuration/endpoints";
 
 import type {
   ApiFunction,
@@ -36,7 +36,8 @@ export function createCommerceEventsApiClient(
 export function createCustomCommerceEventsApiClient<
   TFunctions extends Record<
     string,
-    ApiFunction<AdobeCommerceHttpClient, unknown[], unknown>
+    // biome-ignore lint/suspicious/noExplicitAny: We can't know the type of the argument/return type.
+    ApiFunction<AdobeCommerceHttpClient, any[], any>
   >,
 >(params: CommerceHttpClientParams, functions: TFunctions) {
   return ApiClient.create(new AdobeCommerceHttpClient(params), functions);
