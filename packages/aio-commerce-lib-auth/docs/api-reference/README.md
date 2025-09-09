@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-auth`: `v0.3.3`
+# `@adobe/aio-commerce-lib-auth`: `v0.4.0`
 
 ## Type Aliases
 
@@ -9,12 +9,6 @@
 | [ImsAuthProvider](type-aliases/ImsAuthProvider.md)                 | Defines an authentication provider for Adobe IMS.                        |
 | [IntegrationAuthParams](type-aliases/IntegrationAuthParams.md)     | Defines the parameters required for Commerce Integration authentication. |
 | [IntegrationAuthProvider](type-aliases/IntegrationAuthProvider.md) | Defines an authentication provider for Adobe Commerce integrations.      |
-
-## Variables
-
-| Variable                                  | Description                                        |
-| ----------------------------------------- | -------------------------------------------------- |
-| [IMS_AUTH_ENV](variables/IMS_AUTH_ENV.md) | The environments accepted by the IMS auth service. |
 
 ## Functions
 
