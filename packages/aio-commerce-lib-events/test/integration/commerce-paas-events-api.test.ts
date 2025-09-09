@@ -53,15 +53,26 @@ describe("PaaS Commerce Events API - Integration Tests", () => {
         }),
       );
 
-      const result = await payload.invoke(client);
+      const promise = payload.invoke(client);
+      await expect(promise).resolves.not.toThrow();
+    });
 
-      if (payload.hasCamelCaseTransformer) {
+    test.runIf(payload.hasCamelCaseTransformer)(
+      "should run camel case transformer",
+      async () => {
+        server.use(
+          http.all(makeUrl(payload.pathname), () => {
+            return HttpResponse.json({ fake_response: "hello" });
+          }),
+        );
+
+        const result = await payload.invoke(client);
+
         expect(result).toEqual({
-          // Should be transformed to camel case
           fakeResponse: "hello",
         });
-      }
-    });
+      },
+    );
 
     test("should handle error responses", async () => {
       server.use(
@@ -113,8 +124,9 @@ describe("PaaS Commerce Events API - Integration Tests", () => {
       expect(capture.headers.get("X-Custom-Header")).toBe("test-value");
     });
 
-    if (payload.hasInputValidation) {
-      test("should throw an error on schema validation failure", async () => {
+    test.runIf(payload.hasInputValidation)(
+      "should throw an error on schema validation failure",
+      async () => {
         server.use(
           http.all(makeUrl(payload.pathname), () => {
             return HttpResponse.json({});
@@ -124,7 +136,7 @@ describe("PaaS Commerce Events API - Integration Tests", () => {
         // @ts-expect-error - Testing invalid params
         const invoke = () => client[payload.name]("invalid-params");
         await expect(invoke()).rejects.toThrow();
-      });
-    }
+      },
+    );
   });
 });
