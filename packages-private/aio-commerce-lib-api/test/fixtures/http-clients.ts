@@ -46,7 +46,7 @@ export class TestHttpClient extends HttpClientBase<TestHttpClientConfig> {
 export class TestAdobeCommerceHttpClient extends AdobeCommerceHttpClient {
   public constructor(
     params: CommerceHttpClientParams,
-    mockFetch: typeof fetch
+    mockFetch: typeof fetch,
   ) {
     super(params);
     const client = this.httpClient.extend({
@@ -60,7 +60,7 @@ export class TestAdobeCommerceHttpClient extends AdobeCommerceHttpClient {
 export class TestAdobeIoEventsHttpClient extends AdobeIoEventsHttpClient {
   public constructor(
     params: IoEventsHttpClientParams,
-    mockFetch: typeof fetch
+    mockFetch: typeof fetch,
   ) {
     super(params);
     const client = this.httpClient.extend({

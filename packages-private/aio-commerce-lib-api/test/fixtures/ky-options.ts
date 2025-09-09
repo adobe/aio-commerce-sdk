@@ -22,7 +22,7 @@ import {
 export function buildUppercaseKeysHookFetchOptions(recursive = true) {
   const hook = buildObjectKeyTransformerResponseHook(
     (key) => key.toUpperCase(),
-    recursive
+    recursive,
   );
   return {
     hooks: {
