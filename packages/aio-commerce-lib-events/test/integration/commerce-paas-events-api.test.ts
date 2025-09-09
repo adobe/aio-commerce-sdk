@@ -67,7 +67,6 @@ describe("PaaS Commerce Events API - Integration Tests", () => {
         );
 
         const result = await payload.invoke(client);
-
         expect(result).toEqual({
           fakeResponse: "hello",
         });
