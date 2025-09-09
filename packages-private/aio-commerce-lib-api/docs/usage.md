@@ -36,7 +36,6 @@ const commerceClient = new AdobeCommerceHttpClient({
     technicalAccountId: "your-technical-account-id",
     technicalAccountEmail: "your-technical-account-email",
     imsOrgId: "your-ims-org-id",
-    environment: "prod",
   },
 });
 ```
@@ -75,7 +74,6 @@ const ioEventsClient = new AdobeIoEventsHttpClient({
     technicalAccountId: "your-technical-account-id",
     technicalAccountEmail: "your-technical-account-email",
     imsOrgId: "your-ims-org-id",
-    environment: "prod",
   },
   config: {
     baseUrl: "https://api.adobe.io/events", // optional, this is the default

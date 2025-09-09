@@ -16,14 +16,10 @@ export {
   type ImsAuthProvider,
 } from "./lib/ims-auth/provider";
 export {
-  IMS_AUTH_ENV,
-  type ImsAuthEnv,
-  type ImsAuthParams,
-} from "./lib/ims-auth/schema";
-export {
   assertIntegrationAuthParams,
   getIntegrationAuthProvider,
   type IntegrationAuthProvider,
 } from "./lib/integration-auth/provider";
 
+export type { ImsAuthEnv, ImsAuthParams } from "./lib/ims-auth/schema";
 export type { IntegrationAuthParams } from "./lib/integration-auth/schema";

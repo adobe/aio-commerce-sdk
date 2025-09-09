@@ -16,10 +16,10 @@ import {
   nonEmpty,
   object,
   optional,
+  picklist,
   pipe,
   string,
   array as vArray,
-  enum as vEnum,
 } from "valibot";
 
 import type { InferOutput } from "valibot";
@@ -51,14 +51,8 @@ const stringArray = (name: string) => {
   );
 };
 
-/** The environments accepted by the IMS auth service. */
-export const IMS_AUTH_ENV = {
-  PROD: "prod",
-  STAGE: "stage",
-} as const;
-
 /** Validation schema for IMS auth environment values. */
-const ImsAuthEnvSchema = vEnum(IMS_AUTH_ENV);
+const ImsAuthEnvSchema = picklist(["prod", "stage"]);
 
 /** Defines the schema to validate the necessary parameters for the IMS auth service. */
 export const ImsAuthParamsSchema = object({
@@ -75,7 +69,7 @@ export const ImsAuthParamsSchema = object({
     email("Expected a valid email format for technicalAccountEmail"),
   ),
   imsOrgId: imsAuthParameter("imsOrgId"),
-  environment: pipe(optional(ImsAuthEnvSchema, IMS_AUTH_ENV.PROD)),
+  environment: pipe(optional(ImsAuthEnvSchema)),
   context: pipe(optional(string())),
   scopes: pipe(
     stringArray("scopes"),

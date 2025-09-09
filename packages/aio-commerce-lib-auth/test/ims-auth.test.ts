@@ -17,7 +17,6 @@ import {
   assertImsAuthParams,
   getImsAuthProvider,
 } from "~/lib/ims-auth/provider";
-import { IMS_AUTH_ENV } from "~/lib/ims-auth/schema";
 
 import type { ImsAuthEnv, ImsAuthParams } from "~/lib/ims-auth/schema";
 
@@ -48,7 +47,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         technicalAccountEmail: "test-email@example.com",
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        environment: IMS_AUTH_ENV.PROD,
+        environment: "prod" as const,
         context: "test-context",
       };
 
@@ -75,7 +74,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         technicalAccountEmail: "test-email@example.com",
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        environment: IMS_AUTH_ENV.PROD,
+        environment: "prod" as const,
         context: "test-context",
       };
 
@@ -109,7 +108,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         technicalAccountEmail: "test-email@example.com",
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        environment: IMS_AUTH_ENV.PROD,
+        environment: "prod" as const,
       };
 
       const imsAuthProvider = getImsAuthProvider(config);
@@ -143,7 +142,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         technicalAccountEmail: "test-email@example.com",
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        environment: IMS_AUTH_ENV.PROD,
+        environment: "prod" as const,
         context: "test-context",
       };
 
@@ -166,7 +165,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
           technicalAccountEmail: "test-email@example.com",
           imsOrgId: "test-org-id",
           scopes: ["scope1", "scope2"],
-          environment: IMS_AUTH_ENV.PROD,
+          environment: "prod" as const,
           context: "test-context",
         });
       }).not.toThrow();
@@ -198,7 +197,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       technicalAccountEmail: "test-email@example.com",
       imsOrgId: "test-org-id",
       scopes: ["scope1", "scope2"],
-      environment: IMS_AUTH_ENV.PROD,
+      environment: "prod" as const,
       context: "test-context",
     };
 
