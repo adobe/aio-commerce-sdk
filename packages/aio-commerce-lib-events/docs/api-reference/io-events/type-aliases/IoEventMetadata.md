@@ -8,7 +8,7 @@ type IoEventMetadata = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts:5](https://github.com/adobe/aio-commerce-sdk/blob/5a56cf6f89369fbe4cacf586ea1b3d08993680a9/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L5)
+Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L17)
 
 Defines the base fields of an event metadata entity.
 
@@ -20,7 +20,7 @@ Defines the base fields of an event metadata entity.
 description: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts:6](https://github.com/adobe/aio-commerce-sdk/blob/5a56cf6f89369fbe4cacf586ea1b3d08993680a9/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L6)
+Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L18)
 
 ---
 
@@ -30,7 +30,7 @@ Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-metadat
 event_code: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts:8](https://github.com/adobe/aio-commerce-sdk/blob/5a56cf6f89369fbe4cacf586ea1b3d08993680a9/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L8)
+Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L20)
 
 ---
 
@@ -40,4 +40,4 @@ Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-metadat
 label: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts:7](https://github.com/adobe/aio-commerce-sdk/blob/5a56cf6f89369fbe4cacf586ea1b3d08993680a9/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L7)
+Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L19)

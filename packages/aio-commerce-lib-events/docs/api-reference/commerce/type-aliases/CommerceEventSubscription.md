@@ -13,7 +13,7 @@ type CommerceEventSubscription = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/5a56cf6f89369fbe4cacf586ea1b3d08993680a9/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L17)
+Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L29)
 
 Defines the structure of a Commerce event subscription.
 
@@ -25,7 +25,7 @@ Defines the structure of a Commerce event subscription.
 destination: "default" | string;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/5a56cf6f89369fbe4cacf586ea1b3d08993680a9/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L25)
+Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L37)
 
 ---
 
@@ -35,7 +35,7 @@ Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscrip
 fields: CommerceEventSubscriptionField[];
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/5a56cf6f89369fbe4cacf586ea1b3d08993680a9/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L22)
+Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L34)
 
 ---
 
@@ -45,7 +45,7 @@ Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscrip
 hipaa_audit_required: boolean;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/5a56cf6f89369fbe4cacf586ea1b3d08993680a9/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L27)
+Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L39)
 
 ---
 
@@ -55,7 +55,7 @@ Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscrip
 name: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/5a56cf6f89369fbe4cacf586ea1b3d08993680a9/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L18)
+Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L30)
 
 ---
 
@@ -65,7 +65,7 @@ Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscrip
 parent: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/5a56cf6f89369fbe4cacf586ea1b3d08993680a9/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L19)
+Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L31)
 
 ---
 
@@ -75,7 +75,7 @@ Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscrip
 priority: boolean;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/5a56cf6f89369fbe4cacf586ea1b3d08993680a9/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L26)
+Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L38)
 
 ---
 
@@ -85,7 +85,7 @@ Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscrip
 provider_id: "default" | string;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/5a56cf6f89369fbe4cacf586ea1b3d08993680a9/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L20)
+Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L32)
 
 ---
 
@@ -95,4 +95,4 @@ Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscrip
 rules: CommerceEventSubscriptionRule[];
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/5a56cf6f89369fbe4cacf586ea1b3d08993680a9/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L23)
+Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L35)
