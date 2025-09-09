@@ -63,7 +63,7 @@ export async function getEventProviderById(
   params: EventProviderGetByIdParams,
   fetchOptions?: Options,
 ) {
-  const validatedParams = await parseOrThrow(
+  const validatedParams = parseOrThrow(
     EventProviderGetByIdParamsSchema,
     params,
   );
