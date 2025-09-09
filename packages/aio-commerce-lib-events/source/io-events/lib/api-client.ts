@@ -34,7 +34,8 @@ export function createAdobeIoEventsApiClient(params: IoEventsHttpClientParams) {
 export function createCustomAdobeIoEventsApiClient<
   TFunctions extends Record<
     string,
-    ApiFunction<AdobeIoEventsHttpClient, unknown[], unknown>
+    // biome-ignore lint/suspicious/noExplicitAny: We can't know the type of the argument/return type.
+    ApiFunction<AdobeIoEventsHttpClient, any[], any>
   >,
 >(params: IoEventsHttpClientParams, functions: TFunctions) {
   return ApiClient.create(new AdobeIoEventsHttpClient(params), functions);
