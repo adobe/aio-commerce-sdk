@@ -19,7 +19,7 @@ function updateEventingConfiguration(
 ): Promise<boolean>;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/eventing-configuration/endpoints.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/5a56cf6f89369fbe4cacf586ea1b3d08993680a9/packages/aio-commerce-lib-events/source/commerce/api/eventing-configuration/endpoints.ts#L24)
+Defined in: [packages/aio-commerce-lib-events/source/commerce/api/eventing-configuration/endpoints.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/commerce/api/eventing-configuration/endpoints.ts#L36)
 
 Updates the configuration of the Commerce Eventing API.
 
