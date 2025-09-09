@@ -1,11 +1,27 @@
 {
   "$schema": "https://typedoc-plugin-markdown.org/schema.json",
-  "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.json"],
+  "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.base.json"],
 
-  "entryPoints": ["./source/index.ts"],
+  "entryPoints": ["./source/commerce/index.ts", "./source/io-events/index.ts"],
   "out": "docs/api-reference",
 
   "validation": {
     "notExported": false
+  },
+
+  "externalSymbolLinkMappings": {
+    "@aio-commerce-sdk/aio-commerce-lib-api": {
+      "AdobeCommerceHttpClient": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages-private/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md",
+      "AdobeIoEventsHttpClient": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages-private/aio-commerce-lib-api/docs/api-reference/classes/AdobeIoEventsHttpClient.md"
+    },
+
+    "@adobe/aio-commerce-lib-core": {
+      "CommerceSdkValidationError": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-core/docs/api-reference/classes/CommerceSdkValidationError.md"
+    },
+
+    "ky": {
+      "Options": "https://github.com/sindresorhus/ky?tab=readme-ov-file#options",
+      "HTTPError": "https://github.com/sindresorhus/ky?tab=readme-ov-file#httperror"
+    }
   }
 }

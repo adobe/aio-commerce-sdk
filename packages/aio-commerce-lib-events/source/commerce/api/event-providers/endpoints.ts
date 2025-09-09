@@ -27,7 +27,6 @@ import type {
  * @see https://developer.adobe.com/commerce/extensibility/events/api/#get-list-of-all-event-providers
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
- * @param params - The parameters to list the event providers with.
  * @param fetchOptions - The {@link Options} to use to make the request.
  *
  * @throws An {@link HTTPError} If the status code is not 2XX.
