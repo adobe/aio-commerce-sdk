@@ -12,11 +12,15 @@ The library provides two main event management APIs:
 
 These APIs abstract the complexity of event management, making it easy to create, configure, and manage event-driven integrations in your App Builder applications.
 
+## Reference
+
+See the [API Reference](./api-reference/README.md) for more details.
+
 ## How to use
 
 ### Commerce Events API
 
-The Commerce Events API allows you to manage event providers, subscriptions, and configuration within Adobe Commerce instances.
+The Commerce Events API allows you to manage event providers, subscriptions, and configuration within Adobe Commerce instances. Below you'll find usage examples for some of the operations. Find them all in the [API reference for the Commerce entrypoint](./api-reference/commerce/README.md).
 
 #### Creating a Commerce Events API Client
 
@@ -104,7 +108,7 @@ await commerceEventsClient.updateEventingConfiguration({
 
 ### Adobe I/O Events API
 
-The Adobe I/O Events API allows you to manage event providers and metadata in the Adobe I/O Events platform.
+The Adobe I/O Events API allows you to manage event providers and metadata in the Adobe I/O Events platform. Below you'll find usage examples for some of the operations. Find them all in the [API reference for the I/O Events entrypoint](./api-reference/io-events/README.md).
 
 #### Creating an Adobe I/O Events API Client
 
