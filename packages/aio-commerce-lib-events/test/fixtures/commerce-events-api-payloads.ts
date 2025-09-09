@@ -1,4 +1,4 @@
-import type { Options } from "ky";
+import type { Options } from "@aio-commerce-sdk/aio-commerce-lib-api/ky";
 import type { createCommerceEventsApiClient } from "#commerce/index";
 
 type CommerceEventsApiClient = ReturnType<typeof createCommerceEventsApiClient>;
