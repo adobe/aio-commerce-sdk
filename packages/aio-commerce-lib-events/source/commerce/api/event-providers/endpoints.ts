@@ -9,7 +9,10 @@ import {
 } from "./schema";
 
 import type { AdobeCommerceHttpClient } from "@aio-commerce-sdk/aio-commerce-lib-api";
-import type { HTTPError, Options } from "ky";
+import type {
+  HTTPError,
+  Options,
+} from "@aio-commerce-sdk/aio-commerce-lib-api/ky";
 import type {
   EventProviderCreateParams,
   EventProviderGetByIdParams,
