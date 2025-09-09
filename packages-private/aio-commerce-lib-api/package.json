@@ -1,7 +1,7 @@
 {
   "name": "@aio-commerce-sdk/aio-commerce-lib-api",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "engines": {
     "node": ">=20 <=24"

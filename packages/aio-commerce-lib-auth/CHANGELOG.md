@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-auth
 
+## 0.4.0
+
+### Minor Changes
+
+- [#81](https://github.com/adobe/aio-commerce-sdk/pull/81) [`e0db24c`](https://github.com/adobe/aio-commerce-sdk/commit/e0db24c04aed9a6df72e80d5395aa41374570b6a) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove `IMS_AUTH_ENV` enum and replace it with a simple union. Remove default value from `environment` in `ImsAuthParams` as `prod` is used by default.
+
 ## 0.3.4
 
 ### Patch Changes
