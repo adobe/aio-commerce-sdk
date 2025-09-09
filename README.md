@@ -25,19 +25,10 @@ pnpm install @adobe/aio-commerce-lib-auth
 
 ## Packages
 
-### Published Packages
-
 - **[`@adobe/aio-commerce-sdk`](./packages/aio-commerce-sdk)** - Meta-package that re-exports many of the SDK libraries
 - **[`@adobe/aio-commerce-lib-auth`](./packages/aio-commerce-lib-auth)** - Authentication utilities for IMS and Commerce integrations
 - **[`@adobe/aio-commerce-lib-core`](./packages/aio-commerce-lib-core)** - Core utilities for AIO Commerce SDK Libraries
-
-### Internal Packages
-
-- **[`@aio-commerce-sdk/config-typescript`](./configs/typescript)** - Shared TypeScript configuration
-- **[`@aio-commerce-sdk/config-tsdown`](./configs/tsdown)** - Shared build configuration
-- **[`@aio-commerce-sdk/config-typedoc`](./configs/typedoc)** - Shared [Typedoc with Markdown](https://typedoc-plugin-markdown.org/docs) configuration
-- **[`@aio-commerce-sdk/config-vitest`](./configs/vitest)** - Shared Vitest configuration
-- **[`@aio-commerce-sdk/generators`](./turbo/generators)** - Code generators for scaffolding
+- **[`@adobe/aio-commerce-lib-events`](./packages/aio-commerce-lib-events)** - Event management utilities for Adobe Commerce and Adobe I/O Events
 
 ## Architecture
 
