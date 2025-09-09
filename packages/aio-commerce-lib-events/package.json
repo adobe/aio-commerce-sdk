@@ -41,6 +41,16 @@
     "./io-events": "./source/io-events/index.ts",
     "./package.json": "./package.json"
   },
+  "imports": {
+    "#*": [
+      "./source/*.ts",
+      "./source/*/index.ts"
+    ],
+    "#test/*": [
+      "./test/*.ts",
+      "./test/*/index.ts"
+    ]
+  },
   "files": [
     "dist",
     "package.json",
@@ -59,13 +69,13 @@
     "lint": "biome lint --no-errors-on-unmatched",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'",
-    "test": "vitest run",
-    "test:watch": "vitest --watch"
+    "test": "vitest run --coverage",
+    "test:ui": "vitest --ui --coverage",
+    "test:watch": "vitest --watch --coverage"
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
-    "ky": "^1.9.0",
     "valibot": "^1.1.0"
   },
   "devDependencies": {
@@ -73,7 +83,8 @@
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@aio-commerce-sdk/config-vitest": "workspace:*"
+    "@aio-commerce-sdk/config-vitest": "workspace:*",
+    "msw": "^2.11.1"
   },
   "sideEffects": false
 }

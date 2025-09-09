@@ -1,12 +1,27 @@
+/*
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
 import { buildCamelCaseKeysResponseHook } from "@aio-commerce-sdk/aio-commerce-lib-api/utils/transformations";
 
-import { parseOrThrow } from "~/utils/valibot";
+import { parseOrThrow } from "#utils/valibot";
 
 import { EventSubscriptionCreateParamsSchema } from "./schema";
 
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import type { AdobeCommerceHttpClient } from "@aio-commerce-sdk/aio-commerce-lib-api";
-import type { HTTPError, Options } from "ky";
+import type {
+  HTTPError,
+  Options,
+} from "@aio-commerce-sdk/aio-commerce-lib-api/ky";
 import type { EventSubscriptionCreateParams } from "./schema";
 import type { CommerceEventSubscriptionManyResponse } from "./types";
 
@@ -17,7 +32,7 @@ import type { CommerceEventSubscriptionManyResponse } from "./types";
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
  * @param fetchOptions - The {@link Options} to use to make the request.
  */
-export function getAllEventSubscriptions(
+export async function getAllEventSubscriptions(
   httpClient: AdobeCommerceHttpClient,
   fetchOptions?: Options,
 ) {
@@ -43,7 +58,7 @@ export function getAllEventSubscriptions(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function createEventSubscription(
+export async function createEventSubscription(
   httpClient: AdobeCommerceHttpClient,
   params: EventSubscriptionCreateParams,
   fetchOptions?: Options,
@@ -54,7 +69,7 @@ export function createEventSubscription(
   );
 
   const { force, ...event } = validatedParams;
-  httpClient
+  return httpClient
     .post("eventing/eventSubscribe", {
       ...fetchOptions,
       json: {
@@ -70,5 +85,9 @@ export function createEventSubscription(
         },
       },
     })
-    .json<void>();
+    .json()
+    .then((_res) => {
+      // The response is always `[]` which is basically `void`
+      // We set this `then` to make the response type `void`
+    });
 }

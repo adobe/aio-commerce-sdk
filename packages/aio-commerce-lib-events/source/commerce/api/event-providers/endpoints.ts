@@ -1,7 +1,19 @@
+/*
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { buildCamelCaseKeysResponseHook } from "@aio-commerce-sdk/aio-commerce-lib-api/utils/transformations";
 
-import { parseOrThrow } from "~/utils/valibot";
+import { parseOrThrow } from "#utils/valibot";
 
 import {
   EventProviderCreateParamsSchema,
@@ -9,7 +21,10 @@ import {
 } from "./schema";
 
 import type { AdobeCommerceHttpClient } from "@aio-commerce-sdk/aio-commerce-lib-api";
-import type { HTTPError, Options } from "ky";
+import type {
+  HTTPError,
+  Options,
+} from "@aio-commerce-sdk/aio-commerce-lib-api/ky";
 import type {
   EventProviderCreateParams,
   EventProviderGetByIdParams,
@@ -24,12 +39,11 @@ import type {
  * @see https://developer.adobe.com/commerce/extensibility/events/api/#get-list-of-all-event-providers
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
- * @param params - The parameters to list the event providers with.
  * @param fetchOptions - The {@link Options} to use to make the request.
  *
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function getAllEventProviders(
+export async function getAllEventProviders(
   httpClient: AdobeCommerceHttpClient,
   fetchOptions?: Options,
 ) {
@@ -55,7 +69,7 @@ export function getAllEventProviders(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function getEventProviderById(
+export async function getEventProviderById(
   httpClient: AdobeCommerceHttpClient,
   params: EventProviderGetByIdParams,
   fetchOptions?: Options,
@@ -87,7 +101,7 @@ export function getEventProviderById(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function createEventProvider(
+export async function createEventProvider(
   httpClient: AdobeCommerceHttpClient,
   params: EventProviderCreateParams,
   fetchOptions?: Options,

@@ -10,10 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, it } from "vitest";
+/** biome-ignore-all lint/performance/noBarrelFile: This is the entrypoint of the package API */
 
-describe("aio-commerce-lib-events", () => {
-  it("should work", () => {
-    expect(true).toBe(true);
-  });
-});
+export { HTTPError, TimeoutError } from "ky";
+
+export type * from "ky";

@@ -20,6 +20,16 @@
           "default": "./dist/cjs/index.cjs"
         }
       },
+      "./ky": {
+        "import": {
+          "types": "./dist/es/ky.d.ts",
+          "default": "./dist/es/ky.js"
+        },
+        "require": {
+          "types": "./dist/cjs/ky.d.cts",
+          "default": "./dist/cjs/ky.cjs"
+        }
+      },
       "./utils/*": {
         "import": {
           "types": "./dist/es/utils/*/index.d.ts",
@@ -35,11 +45,19 @@
   },
   "exports": {
     ".": "./source/index.ts",
+    "./ky": "./source/ky.ts",
     "./utils/*": "./source/utils/*/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {
-    "#*": "./source/*.ts"
+    "#*": [
+      "./source/*.ts",
+      "./source/*/index.ts"
+    ],
+    "#test/*": [
+      "./test/*.ts",
+      "./test/*/index.ts"
+    ]
   },
   "files": [
     "dist",
@@ -59,8 +77,9 @@
     "lint": "biome lint --no-errors-on-unmatched",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'",
-    "test": "vitest run",
-    "test:watch": "vitest --watch"
+    "test": "vitest run --coverage",
+    "test:watch": "vitest --coverage",
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-auth": "workspace:*",
