@@ -23,14 +23,24 @@
   "types": "./dist/cjs/index.d.cts",
   "publishConfig": {
     "exports": {
-      ".": {
+      "./commerce": {
         "import": {
-          "types": "./dist/es/index.d.ts",
-          "default": "./dist/es/index.js"
+          "types": "./dist/es/commerce/index.d.ts",
+          "default": "./dist/es/commerce/index.js"
         },
         "require": {
-          "types": "./dist/cjs/index.d.cts",
-          "default": "./dist/cjs/index.cjs"
+          "types": "./dist/cjs/commerce/index.d.cts",
+          "default": "./dist/cjs/commerce/index.cjs"
+        }
+      },
+      "./io-events": {
+        "import": {
+          "types": "./dist/es/io-events/index.d.ts",
+          "default": "./dist/es/io-events/index.js"
+        },
+        "require": {
+          "types": "./dist/cjs/io-events/index.d.cts",
+          "default": "./dist/cjs/io-events/index.cjs"
         }
       },
       "./package.json": "./package.json"
