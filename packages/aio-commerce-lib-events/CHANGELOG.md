@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-events
 
+## 0.2.1
+
+### Patch Changes
+
+- [#88](https://github.com/adobe/aio-commerce-sdk/pull/88) [`db844b7`](https://github.com/adobe/aio-commerce-sdk/commit/db844b7c3685fa8d20cf865b88786a863c9fc963) Thanks [@jnatherley](https://github.com/jnatherley)! - Module resolution should work for `cjs` and `esm` for aio-commerce-lib-events. Fixed export mapping that led to unresolvable paths when using the package.
+
 ## 0.2.0
 
 ### Minor Changes
