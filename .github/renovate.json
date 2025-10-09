@@ -9,8 +9,7 @@
     "group:definitelyTyped",
     "helpers:disableTypesNodeMajor",
     "helpers:pinGitHubActionDigestsToSemver",
-    "npm:unpublishSafe",
-
+    "security:minimumReleaseAgeNpm",
     ":automergeDisabled",
     ":ignoreUnstable",
     ":maintainLockFilesWeekly",
@@ -21,11 +20,13 @@
     ":updateNotScheduled",
     ":separateMultipleMajorReleases"
   ],
-
   "automerge": false,
   "branchPrefix": "renovate/",
   "commitMessagePrefix": "RENOVATE: ",
-
-  "labels": ["dependencies"],
-  "postUpdateOptions": ["pnpmDedupe"]
+  "labels": [
+    "dependencies"
+  ],
+  "postUpdateOptions": [
+    "pnpmDedupe"
+  ]
 }
