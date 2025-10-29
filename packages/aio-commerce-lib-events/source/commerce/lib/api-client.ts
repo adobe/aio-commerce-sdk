@@ -13,7 +13,7 @@
 import {
   AdobeCommerceHttpClient,
   ApiClient,
-} from "@aio-commerce-sdk/aio-commerce-lib-api";
+} from "@adobe/aio-commerce-lib-api";
 
 import * as eventProviderEndpoints from "#commerce/api/event-providers/endpoints";
 import * as eventSubscriptionsEndpoints from "#commerce/api/event-subscriptions/endpoints";
@@ -22,7 +22,7 @@ import { updateEventingConfiguration } from "#commerce/api/eventing-configuratio
 import type {
   ApiFunction,
   CommerceHttpClientParams,
-} from "@aio-commerce-sdk/aio-commerce-lib-api";
+} from "@adobe/aio-commerce-lib-api";
 
 /**
  * Creates a new API client for the Commerce Events API client.
