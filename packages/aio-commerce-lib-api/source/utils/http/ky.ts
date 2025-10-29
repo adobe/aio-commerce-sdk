@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type { KyInstance, Options } from "source/utils/http/ky";
+import type { KyInstance, Options } from "ky";
 
 /**
  * Extends the given Ky instance with the provided options if they are provided.
