@@ -12,7 +12,7 @@ The `@aio-commerce-sdk/aio-commerce-lib-api` package provides:
 
 ## Reference
 
-See the [API Reference](./api-reference/README.md) for more details.
+See the [API Reference](api-reference/README.md) for more details.
 
 ## How to use
 

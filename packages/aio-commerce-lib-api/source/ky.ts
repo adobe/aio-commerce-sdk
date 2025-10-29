@@ -12,6 +12,6 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: This is the entrypoint of the package API */
 
-export { HTTPError, TimeoutError } from "ky";
+export { HTTPError, TimeoutError } from "source/ky";
 
-export type * from "ky";
+export type * from "source/ky";

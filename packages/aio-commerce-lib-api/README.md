@@ -12,7 +12,7 @@ This library provides a unified interface for building HTTP clients that can com
 Since this is a private package, it's only available within the monorepo:
 
 > [!WARNING]
-> If you're using it in a published package, it should be installed as a `devDependency` in your project. Then bundle it into your public package code via TSDown. See how this is done in the [`@aio-commerce-lib-events`](../../packages/aio-commerce-lib-events/tsdown.config.ts) package.
+> If you're using it in a published package, it should be installed as a `devDependency` in your project. Then bundle it into your public package code via TSDown. See how this is done in the [`@aio-commerce-lib-events`](../aio-commerce-lib-events/tsdown.config.ts) package.
 
 ```json
 {
@@ -24,7 +24,7 @@ Since this is a private package, it's only available within the monorepo:
 
 ## Usage
 
-See the [Usage Guide](./docs/usage.md) for more information.
+See the [Usage Guide](docs/usage.md) for more information.
 
 ## Architecture
 
