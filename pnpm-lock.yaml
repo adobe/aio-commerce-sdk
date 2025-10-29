@@ -168,6 +168,9 @@ importers:
 
   packages/aio-commerce-lib-events:
     dependencies:
+      '@adobe/aio-commerce-lib-api':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-api
       '@adobe/aio-commerce-lib-auth':
         specifier: workspace:*
         version: link:../aio-commerce-lib-auth
@@ -178,9 +181,6 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0(typescript@5.9.2)
     devDependencies:
-      '@adobe/aio-commerce-lib-api':
-        specifier: workspace:*
-        version: link:../aio-commerce-lib-api
       '@aio-commerce-sdk/config-tsdown':
         specifier: workspace:*
         version: link:../../configs/tsdown
