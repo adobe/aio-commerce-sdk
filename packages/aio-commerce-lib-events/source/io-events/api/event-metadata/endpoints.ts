@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { buildCamelCaseKeysResponseHook } from "@aio-commerce-sdk/aio-commerce-lib-api/utils/transformations";
+import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils/transformations";
 
 import { parseOrThrow } from "#utils/valibot";
 
@@ -20,12 +20,9 @@ import {
   GetEventMetadataForEventAndProviderSchema,
 } from "./schema";
 
+import type { AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api";
+import type { HTTPError, Options } from "@adobe/aio-commerce-lib-api/ky";
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import type { AdobeIoEventsHttpClient } from "@aio-commerce-sdk/aio-commerce-lib-api";
-import type {
-  HTTPError,
-  Options,
-} from "@aio-commerce-sdk/aio-commerce-lib-api/ky";
 import type {
   CreateEventMetadataForProviderParams,
   GetAllEventMetadataForProviderParams,

@@ -13,7 +13,7 @@
 import {
   AdobeIoEventsHttpClient,
   ApiClient,
-} from "@aio-commerce-sdk/aio-commerce-lib-api";
+} from "@adobe/aio-commerce-lib-api";
 
 import * as eventMetadataEndpoints from "#io-events/api/event-metadata/endpoints";
 import * as eventProviderEndpoints from "#io-events/api/event-providers/endpoints";
@@ -22,7 +22,7 @@ import * as eventProviderShorthands from "#io-events/api/event-providers/shortha
 import type {
   ApiFunction,
   IoEventsHttpClientParams,
-} from "@aio-commerce-sdk/aio-commerce-lib-api";
+} from "@adobe/aio-commerce-lib-api";
 
 /**
  * Creates a new API client for the Adobe I/O Events API client.

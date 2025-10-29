@@ -14,7 +14,7 @@ import type {
   IoEventsHttpClientParams,
   PaaSClientParams,
   SaaSClientParams,
-} from "@aio-commerce-sdk/aio-commerce-lib-api";
+} from "@adobe/aio-commerce-lib-api";
 
 // Default config for the test Adobe Commerce HTTP client for PaaS.
 export const TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_PAAS: PaaSClientParams = {
