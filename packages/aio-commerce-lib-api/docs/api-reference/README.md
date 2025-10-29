@@ -1,4 +1,4 @@
-# `@aio-commerce-sdk/aio-commerce-lib-api`: `v0.1.0`
+# `@adobe/aio-commerce-lib-api`: `v0.1.1`
 
 ## Classes
 

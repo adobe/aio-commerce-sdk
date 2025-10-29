@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type { Options } from "@aio-commerce-sdk/aio-commerce-lib-api/ky";
+import type { Options } from "@adobe/aio-commerce-lib-api/ky";
 import type { createCommerceEventsApiClient } from "#commerce/index";
 
 type CommerceEventsApiClient = ReturnType<typeof createCommerceEventsApiClient>;

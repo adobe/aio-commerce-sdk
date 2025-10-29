@@ -1,8 +1,8 @@
-# `@aio-commerce-sdk/aio-commerce-lib-api` Documentation
+# `@adobe/aio-commerce-lib-api` Documentation
 
 ## Overview
 
-The `@aio-commerce-sdk/aio-commerce-lib-api` package provides:
+The `@adobe/aio-commerce-lib-api` package provides:
 
 - **HTTP Clients**: Pre-configured Ky-based HTTP clients for Adobe Commerce and Adobe I/O Events
 - **API Client Builder**: A flexible system for binding API functions to HTTP clients
@@ -12,7 +12,7 @@ The `@aio-commerce-sdk/aio-commerce-lib-api` package provides:
 
 ## Reference
 
-See the [API Reference](./api-reference/README.md) for more details.
+See the [API Reference](api-reference/README.md) for more details.
 
 ## How to use
 
@@ -21,7 +21,7 @@ See the [API Reference](./api-reference/README.md) for more details.
 #### Adobe Commerce HTTP Client (SaaS)
 
 ```typescript
-import { AdobeCommerceHttpClient } from "@aio-commerce-sdk/aio-commerce-lib-api";
+import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 
 const commerceClient = new AdobeCommerceHttpClient({
   config: {
@@ -43,7 +43,7 @@ const commerceClient = new AdobeCommerceHttpClient({
 #### Adobe Commerce HTTP Client (PaaS)
 
 ```typescript
-import { AdobeCommerceHttpClient } from "@aio-commerce-sdk/aio-commerce-lib-api";
+import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 
 const commerceClient = new AdobeCommerceHttpClient({
   config: {
@@ -64,7 +64,7 @@ const commerceClient = new AdobeCommerceHttpClient({
 #### Adobe I/O Events HTTP Client
 
 ```typescript
-import { AdobeIoEventsHttpClient } from "@aio-commerce-sdk/aio-commerce-lib-api";
+import { AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api";
 
 const ioEventsClient = new AdobeIoEventsHttpClient({
   auth: {
@@ -89,7 +89,7 @@ The `ApiClient` class allows you to bind API functions to HTTP clients, creating
 import {
   ApiClient,
   AdobeCommerceHttpClient,
-} from "@aio-commerce-sdk/aio-commerce-lib-api";
+} from "@adobe/aio-commerce-lib-api";
 
 const getProduct = async (client: AdobeCommerceHttpClient, sku: string) => {
   return client.get(`products/${sku}`).json();
@@ -125,7 +125,7 @@ const updated = await commerceApiClient.updateProduct("test-sku", {
 The library provides utilities for transforming API responses:
 
 ```typescript
-import { buildCamelCaseKeysResponseHook } from "@aio-commerce-sdk/aio-commerce-lib-api/utils/transformations";
+import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils/transformations";
 
 const client = new AdobeCommerceHttpClient({
   config: {

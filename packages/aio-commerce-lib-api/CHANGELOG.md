@@ -1,4 +1,4 @@
-# @aio-commerce-sdk/aio-commerce-lib-api
+# @adobe/aio-commerce-lib-api
 
 ## 0.1.1
 

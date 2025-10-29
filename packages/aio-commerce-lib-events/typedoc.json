@@ -10,9 +10,9 @@
   },
 
   "externalSymbolLinkMappings": {
-    "@aio-commerce-sdk/aio-commerce-lib-api": {
-      "AdobeCommerceHttpClient": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages-private/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md",
-      "AdobeIoEventsHttpClient": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages-private/aio-commerce-lib-api/docs/api-reference/classes/AdobeIoEventsHttpClient.md"
+    "@adobe/aio-commerce-lib-api": {
+      "AdobeCommerceHttpClient": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md",
+      "AdobeIoEventsHttpClient": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeIoEventsHttpClient.md"
     },
 
     "@adobe/aio-commerce-lib-core": {
