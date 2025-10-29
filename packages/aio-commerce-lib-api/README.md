@@ -1,7 +1,4 @@
-# `@aio-commerce-sdk/aio-commerce-lib-api`
-
-> [!WARNING]
-> This is a private package intended for internal use within the Adobe Commerce SDK monorepo only.
+# `@adobe/aio-commerce-lib-api`
 
 A set of utilities to build HTTP/API clients for Adobe I/O Events and Adobe Commerce APIs.
 
@@ -9,17 +6,8 @@ This library provides a unified interface for building HTTP clients that can com
 
 ## Installation
 
-Since this is a private package, it's only available within the monorepo:
-
-> [!WARNING]
-> If you're using it in a published package, it should be installed as a `devDependency` in your project. Then bundle it into your public package code via TSDown. See how this is done in the [`@aio-commerce-lib-events`](../aio-commerce-lib-events/tsdown.config.ts) package.
-
-```json
-{
-  "devDependencies": {
-    "@aio-commerce-sdk/aio-commerce-lib-api": "workspace:*"
-  }
-}
+```bash
+pnpm add @adobe/aio-commerce-lib-api
 ```
 
 ## Usage
