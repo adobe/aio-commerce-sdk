@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-api
 
+## 0.2.0
+
+### Minor Changes
+
+- [#97](https://github.com/adobe/aio-commerce-sdk/pull/97) [`4c2e0c4`](https://github.com/adobe/aio-commerce-sdk/commit/4c2e0c4699d64065853e648f5bba5b66acda08c3) Thanks [@aminakhyat](https://github.com/aminakhyat)! - Initial release of `@adobe/aio-commerce-lib-api`
+
 ## 0.1.1
 
 ### Patch Changes

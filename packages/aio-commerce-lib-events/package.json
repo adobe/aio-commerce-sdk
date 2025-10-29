@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-lib-events",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
