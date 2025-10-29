@@ -2,4 +2,4 @@
 "@adobe/aio-commerce-lib-api": minor
 ---
 
-Initial release of aio-commerce-lib-api
+Initial release of `@adobe/aio-commerce-lib-api`

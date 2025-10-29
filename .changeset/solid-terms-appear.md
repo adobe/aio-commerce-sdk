@@ -2,4 +2,4 @@
 "@adobe/aio-commerce-lib-events": minor
 ---
 
-Update aio-commerce-lib-events with published aio-commerce-lib-api dependency
+Update `@adobe/aio-commerce-lib-events` with published `@adobe/aio-commerce-lib-api` dependency
