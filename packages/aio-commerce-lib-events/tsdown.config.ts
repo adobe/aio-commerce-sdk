@@ -19,6 +19,6 @@ export default defineConfig({
 
   // This package API is currently private so we need it to mark it as no-external (not published)
   // otherwise it won't work when installed in a project (as the dependency won't be found in NPM).
-  // This can be transparently removed if the API library gets published and evertything will work the same.
-  noExternal: ["@aio-commerce-sdk/aio-commerce-lib-api"],
+  // This can be transparently removed if the API library gets published and everything will work the same.
+  noExternal: ["@adobe/aio-commerce-lib-api"],
 });

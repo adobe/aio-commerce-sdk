@@ -89,7 +89,7 @@
     "valibot": "^1.1.0"
   },
   "devDependencies": {
-    "@aio-commerce-sdk/aio-commerce-lib-api": "workspace:*",
+    "@adobe/aio-commerce-lib-api": "workspace:*",
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",

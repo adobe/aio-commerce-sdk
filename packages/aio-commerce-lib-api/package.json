@@ -1,13 +1,26 @@
 {
-  "name": "@aio-commerce-sdk/aio-commerce-lib-api",
+  "name": "@adobe/aio-commerce-lib-api",
   "type": "module",
+  "author": "Adobe Inc.",
   "version": "0.1.1",
-  "private": true,
+  "private": false,
   "engines": {
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
   "description": "A set of utilities to build HTTP/API clients for I/O Events and Adobe Commerce",
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/adobe/aio-commerce-sdk/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adobe/aio-commerce-sdk.git",
+    "directory": "packages/aio-commerce-lib-api"
+  },
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/es/index.js",
+  "types": "./dist/cjs/index.d.cts",
   "publishConfig": {
     "exports": {
       ".": {
