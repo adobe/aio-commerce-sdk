@@ -6,7 +6,7 @@ type IoEventsHttpClientConfig = {
 };
 ```
 
-Defined in: [packages-private/aio-commerce-lib-api/source/lib/io-events/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/8cc35111c26be4d9997541cb07f95e4f82dd2c7b/packages-private/aio-commerce-lib-api/source/lib/io-events/types.ts#L18)
+Defined in: [packages/aio-commerce-lib-api/source/lib/io-events/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/8afcf118655e877df634d68e8df599d706c63cbc/packages/aio-commerce-lib-api/source/lib/io-events/types.ts#L18)
 
 Defines the configuration required to build an Adobe I/O HTTP client.
 
@@ -18,7 +18,7 @@ Defines the configuration required to build an Adobe I/O HTTP client.
 optional baseUrl: string;
 ```
 
-Defined in: [packages-private/aio-commerce-lib-api/source/lib/io-events/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/8cc35111c26be4d9997541cb07f95e4f82dd2c7b/packages-private/aio-commerce-lib-api/source/lib/io-events/types.ts#L23)
+Defined in: [packages/aio-commerce-lib-api/source/lib/io-events/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/8afcf118655e877df634d68e8df599d706c63cbc/packages/aio-commerce-lib-api/source/lib/io-events/types.ts#L23)
 
 The base URL to use for the Adobe I/O Events API.
 
