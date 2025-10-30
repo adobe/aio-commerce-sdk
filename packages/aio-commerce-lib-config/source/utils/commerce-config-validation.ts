@@ -27,7 +27,7 @@ export interface CommerceConfigParams {
 }
 
 export class CommerceValidationError extends Error {
-  constructor(message: string, code: string = "INVALID_COMMERCE_CONFIG") {
+  constructor(message: string, code = "INVALID_COMMERCE_CONFIG") {
     super(message);
     this.name = "CommerceValidationError";
   }

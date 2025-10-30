@@ -20,7 +20,6 @@
         "noMagicNumbers": "off",
         "noNonNullAssertion": "off",
         "useImportType": "off",
-        "noInferrableTypes": "off",
         "useBlockStatements": "off",
         "useReadonlyClassProperties": "off",
         "noExportedImports": "off",
