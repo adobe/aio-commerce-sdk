@@ -164,7 +164,6 @@ function findInScopeTree(
       if (foundId) return foundId;
     }
   }
-  return undefined;
 }
 
 /**
