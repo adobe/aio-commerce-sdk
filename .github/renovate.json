@@ -9,8 +9,7 @@
     "group:definitelyTyped",
     "helpers:disableTypesNodeMajor",
     "helpers:pinGitHubActionDigestsToSemver",
-    "npm:unpublishSafe",
-
+    "security:minimumReleaseAgeNpm",
     ":automergeDisabled",
     ":ignoreUnstable",
     ":maintainLockFilesWeekly",
@@ -21,11 +20,21 @@
     ":updateNotScheduled",
     ":separateMultipleMajorReleases"
   ],
-
   "automerge": false,
   "branchPrefix": "renovate/",
   "commitMessagePrefix": "RENOVATE: ",
 
   "labels": ["dependencies"],
-  "postUpdateOptions": ["pnpmDedupe"]
+  "postUpdateOptions": ["pnpmDedupe"],
+
+  "packageRules": [
+    {
+      "groupName": "biome and ultracite",
+      "matchPackageNames": ["@biomejs/biome", "ultracite"],
+      "postUpgradeTasks": {
+        "commands": ["pnpm turbo run lint:fix format"],
+        "executionMode": "branch"
+      }
+    }
+  ]
 }

@@ -23,9 +23,7 @@ describe("lib/api-client", () => {
   const context = setupTestContext(TestHttpClient, TEST_HTTP_CLIENT_PARAMS);
 
   describe("create", () => {
-    const sum = vi.fn((_client: TestHttpClient, a: number, b: number) => {
-      return a + b;
-    });
+    const sum = vi.fn((_client: TestHttpClient, a: number, b: number) => a + b);
 
     const getApiKey = vi.fn((client: TestHttpClient) => {
       // Test that the client has access to the config.

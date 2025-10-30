@@ -146,9 +146,7 @@ const installDependencies: PlopTypes.CustomActionFunction = async (answers) => {
 /** The configuration for the `create-package` Prop generator. */
 export function getGeneratorConfig(): PlopTypes.PlopGeneratorConfig {
   // Gather the answers via @clack/prompts and not via Plop.js inquirer.
-  const prompts = async () => {
-    return await createPackageWizard();
-  };
+  const prompts = async () => await createPackageWizard();
 
   return {
     description:

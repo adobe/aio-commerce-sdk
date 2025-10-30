@@ -36,7 +36,17 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
         "http://localhost/test",
       );
 
+      const headersWithUrlObject = integrationAuthProvider.getHeaders(
+        "GET",
+        new URL("http://localhost/test"),
+      );
+
       expect(headers).toHaveProperty(
+        "Authorization",
+        expect.stringMatching(OAUTH1_REGEX),
+      );
+
+      expect(headersWithUrlObject).toHaveProperty(
         "Authorization",
         expect.stringMatching(OAUTH1_REGEX),
       );

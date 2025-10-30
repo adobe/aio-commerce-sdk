@@ -29,16 +29,12 @@ vi.mock("@adobe/aio-commerce-lib-auth", async () => {
   const original = await vi.importActual("@adobe/aio-commerce-lib-auth");
   return {
     ...original,
-    getImsAuthProvider: vi.fn((params: ImsAuthParams) => {
-      return {
-        getHeaders: vi.fn(() => {
-          return {
-            Authorization: "Bearer supersecrettoken",
-            "x-api-key": params.clientId,
-          };
-        }),
-      };
-    }),
+    getImsAuthProvider: vi.fn((params: ImsAuthParams) => ({
+      getHeaders: vi.fn(() => ({
+        Authorization: "Bearer supersecrettoken",
+        "x-api-key": params.clientId,
+      })),
+    })),
   };
 });
 

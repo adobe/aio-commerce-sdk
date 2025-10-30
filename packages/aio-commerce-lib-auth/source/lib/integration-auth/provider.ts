@@ -14,9 +14,9 @@ import crypto from "node:crypto";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import OAuth1a from "oauth-1.0a";
-import { safeParse } from "valibot";
+import { parse, safeParse } from "valibot";
 
-import { IntegrationAuthParamsSchema } from "./schema";
+import { IntegrationAuthParamsSchema, UrlSchema } from "./schema";
 
 import type { HttpMethodInput, IntegrationAuthParams } from "./schema";
 
@@ -125,7 +125,7 @@ export function getIntegrationAuthProvider(
 
   return {
     getHeaders: (method: HttpMethodInput, url: AdobeCommerceUrl) => {
-      const urlString = url instanceof URL ? url.toString() : url;
+      const urlString = parse(UrlSchema, url);
       return oauth.toHeader(
         oauth.authorize({ url: urlString, method }, oauthToken),
       );
