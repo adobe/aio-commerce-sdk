@@ -156,8 +156,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.1
       '@adobe/aio-lib-state':
-        specifier: ^3.0.0
-        version: 3.0.2
+        specifier: ^4.0.0
+        version: 4.0.1
       uuid:
         specifier: ^13.0.0
         version: 13.0.0
@@ -290,20 +290,14 @@ packages:
   '@adobe/aio-lib-core-networking@3.0.0':
     resolution: {integrity: sha512-+wn6Mha6htY1aAYMY6BRkOkvWa46tpfXWb1+zhf+HjmiXGYDsxSwdBmdckYTsP3qZ2K5iC80piblPhWopaU8vw==}
     engines: {node: ^14.16 || ^16.13 || >=18}
-    bundledDependencies: []
 
   '@adobe/aio-lib-core-networking@5.0.4':
     resolution: {integrity: sha512-LsFPKIXqfWiMwSjD9NJbb6uUSlZ+DZiV8p9NhpqPyzqAAl9NNONAH0jcIKtsKWSULcHc20INaRAw8dqKzQBTbw==}
     engines: {node: '>=18'}
-    bundledDependencies: []
 
   '@adobe/aio-lib-core-tvm@3.0.1':
     resolution: {integrity: sha512-ysbXCJash1wwajMwDOuMUci4kFVPm0/dxqUpJMe6Wcf6LkzJralUOJoWlcmoHFO7ACZbFpHnEy5W2td5Fh0r7g==}
     engines: {node: ^14.16 || ^16.13 || >=18}
-
-  '@adobe/aio-lib-core-tvm@4.0.3':
-    resolution: {integrity: sha512-zwl4GeU5CryZBozpub4jI9tnGW2ewD6mMLaXX8HhO8DqKzcjnjYr+MbUS0c/QzGd8gTzZWbikm4J7tfpCn3cAA==}
-    engines: {node: '>=18'}
 
   '@adobe/aio-lib-env@2.0.0':
     resolution: {integrity: sha512-ZY2UupgFhq7ijvoLz0p+RWEDGypRyVcAyrOibcxZXwQ0wEncabygJbL5q1qnPpVEV+cxeVJ7kqbaVJCZ5AzW7w==}
@@ -312,7 +306,6 @@ packages:
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
-    bundledDependencies: []
 
   '@adobe/aio-lib-files@3.0.1':
     resolution: {integrity: sha512-TOLQTC4moD1HSjv51zY3NYxYU9HmTSs+3+kiiUS97zD7/BfjVNOYnLiqEWwrVLpFqMjTcqo0Spw5y19/9dJcJQ==}
@@ -334,17 +327,13 @@ packages:
     resolution: {integrity: sha512-+clD6/By/Ub3dKazuIBIWEgHZErSNz6iyZKL54zL7v0NQcEZAaRjfFqCnwm+m7Tc2spA+IWii/XepfzmZBpeNQ==}
     engines: {node: '>=18'}
 
-  '@adobe/aio-lib-state@3.0.2':
-    resolution: {integrity: sha512-ZwZUM5jVUmI0+8GmSwQ99pZVAa9Hii9afwje8X+4+D+SVmifi8K7hndP5LXR0W/NR67oC3ceEY6Uh+KNcgJdGQ==}
+  '@adobe/aio-lib-state@4.0.1':
+    resolution: {integrity: sha512-kAFwcqJhEAj+z4SyIGWRdstimY6HYWLC2pV5V/ojGqhupvTIc7X23N3Wcx9SrQ68E/S86m2z+LKwcyDBXZ46Rw==}
     engines: {node: '>=18'}
 
   '@adobe/aio-lib-state@5.1.0':
     resolution: {integrity: sha512-RC0r4ZH7V7oIr3xEAgspHhD3bg3passfkzQVtb6KApj+QpkOQdqiIKc/MBeyiyWP9U7YGsQhAYtnrMKMBYxTAw==}
     engines: {node: '>=18'}
-
-  '@azure/abort-controller@1.1.0':
-    resolution: {integrity: sha512-TrRLIoSQVzfAJX9H1JeFjzAoDGcoK1IYX1UImfceTZpsyYfWr09Ss1aHW1y5TrrR3iq6RZLBwJ3E24uwPhwahw==}
-    engines: {node: '>=12.0.0'}
 
   '@azure/abort-controller@2.1.2':
     resolution: {integrity: sha512-nBrLsEWm4J2u5LpAPjxADTlq3trDgVZZXHNKabeXZtpq3d3AbN/KGO82R87rdDz5/lYB024rtEf10/q0urNgsA==}
@@ -385,10 +374,6 @@ packages:
   '@azure/core-xml@1.5.0':
     resolution: {integrity: sha512-D/sdlJBMJfx7gqoj66PKVmhDDaU6TKA49ptcolxdas29X7AfvLTmfAGLjAcIMBK7UZ2o4lygHIqVckOlQU3xWw==}
     engines: {node: '>=20.0.0'}
-
-  '@azure/cosmos@3.17.3':
-    resolution: {integrity: sha512-wBglkQ6Irjv5Vo2iw8fd6eYj60WYRSSg4/0DBkeOP6BwQ4RA91znsOHd6s3qG6UAbNgYuzC9Nnq07vlFFZkHEw==}
-    engines: {node: '>=14.0.0'}
 
   '@azure/logger@1.3.0':
     resolution: {integrity: sha512-fCqPIfOcLE+CGqGPd66c8bZpwAji98tZ4JI9i/mlTNTlsIWslCfpg48s/ypyLxZTump5sypjrKn2/kY7q8oAbA==}
@@ -1697,9 +1682,6 @@ packages:
     resolution: {integrity: sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==}
     engines: {node: '>=8.6.0'}
 
-  fast-json-stable-stringify@2.1.0:
-    resolution: {integrity: sha512-lhd/wF+Lk98HZoTCtlVraHtfh5XYijIjalXck7saUtuanSDyLMxnHhSXEDJqHxD7msR8D0uCmqlkwjCV8xvwHw==}
-
   fast-uri@3.1.0:
     resolution: {integrity: sha512-iPeeDKJSWf4IEOasVVrknXpaBV0IApz/gp7S2bb7Z4Lljbl2MGJRqInZiUrQwV16cpzw/D3S5j5Julj/gT52AA==}
 
@@ -1756,10 +1738,6 @@ packages:
   fs-extra@10.1.0:
     resolution: {integrity: sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==}
     engines: {node: '>=12'}
-
-  fs-extra@11.3.2:
-    resolution: {integrity: sha512-Xr9F6z6up6Ws+NjzMCZc6WXg2YFRlrLP9NQDO3VQrWrfiojdhS56TzueT88ze0uBdCTwEIhQ3ptnmKeWGFAe0A==}
-    engines: {node: '>=14.14'}
 
   fs-extra@7.0.1:
     resolution: {integrity: sha512-YJDaCJZEnBmcbw13fvdAM9AwNOJwOzrE4pqMqBq5nFiEqXUqHwlK4B+3pUw6JNvfSPtX05xFHtYy/1ni01eGCw==}
@@ -2070,9 +2048,6 @@ packages:
     resolution: {integrity: sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==}
     hasBin: true
 
-  jsbi@3.2.5:
-    resolution: {integrity: sha512-aBE4n43IPvjaddScbvWRA2YlTzKEynHzu7MqOyTipdHucf/VxS63ViCjxYRg86M8Rxwbt/GfzHl1kKERkt45fQ==}
-
   jsesc@3.1.0:
     resolution: {integrity: sha512-/sM3dO2FOzXjKQhJuo0Q173wf2KOo8t4I8vHy6lF9poUp7bKT0/NHE8fPX23PwfhnykfqnC2xRxOnVw5XuGIaA==}
     engines: {node: '>=6'}
@@ -2284,9 +2259,6 @@ packages:
   no-case@2.3.2:
     resolution: {integrity: sha512-rmTZ9kz+f3rCvK2TD1Ue/oZlns7OGoIWP4fc3llxxRXlOkHKoWPPWJOfFYpITabSow43QJbRIoHQXtt10VldyQ==}
 
-  node-abort-controller@3.1.1:
-    resolution: {integrity: sha512-AGK2yQKIjRuqnc6VkX2Xj5d+QW8xZ87pa1UK6yA6ouUyuxfHuMP6umE5QK7UmTeOAymo+Zx1Fxiuw9rVx8taHQ==}
-
   node-fetch@2.7.0:
     resolution: {integrity: sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A==}
     engines: {node: 4.x || >=6.0.0}
@@ -2452,9 +2424,6 @@ packages:
     engines: {node: '>=14'}
     hasBin: true
 
-  priorityqueuejs@1.0.0:
-    resolution: {integrity: sha512-lg++21mreCEOuGWTbO5DnJKAdxfjrdN0S9ysoW9SzdSJvbkWpkaDdpG/cdsPCsEnoLUwmd9m3WcZhngW7yKA2g==}
-
   proxy-agent@6.5.0:
     resolution: {integrity: sha512-TmatMXdr2KlRiA2CyDu8GqR8EjahTG3aY3nXjdzFyoZbmB8hrBsTyMezhULIXKnC0jpfjlmiZ3+EaCzoInSu/A==}
     engines: {node: '>= 14'}
@@ -2583,10 +2552,6 @@ packages:
 
   sax@1.4.1:
     resolution: {integrity: sha512-+aWOz7yVScEGoKNd4PA10LZ8sk0A/z5+nXQG5giUO5rprX9jgYsTdov9qCchZiPIZezbZH+jRut8nPodFAX4Jg==}
-
-  semaphore@1.1.0:
-    resolution: {integrity: sha512-O4OZEaNtkMd/K0i6js9SL+gqy0ZCBMgUvlSqHKi4IBdjhe7wB8pwztUk1BbZ1fmrvpwFrPbHzqd2w5pTcJH6LA==}
-    engines: {node: '>=0.8.0'}
 
   semver@7.6.2:
     resolution: {integrity: sha512-FNAIBWCx9qcRhoHcgcJ0gvU7SN1lYU2ZXuSfl04bSC5OpvDHFyJCjdNHomPXxjQlCBU67YW64PzY7/VIEH7F2w==}
@@ -2964,9 +2929,6 @@ packages:
     resolution: {integrity: sha512-+QBBXBCvifc56fsbuxZQ6Sic3wqqc3WWaqxs58gvJrcOuN83HGTCwz3oS5phzU9LthRNE9VrJCFCLUgHeeFnfA==}
     engines: {node: '>=18'}
 
-  universal-user-agent@6.0.1:
-    resolution: {integrity: sha512-yCzhz6FN2wU1NiiQRogkTQszlQSlpWaw8SvVegAc+bDxbzHgh1vX8uIe8OYyMH6DwH+sdTJsgMl36+mSMdRJIQ==}
-
   universalify@0.1.2:
     resolution: {integrity: sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==}
     engines: {node: '>= 4.0.0'}
@@ -2982,10 +2944,6 @@ packages:
 
   upath@1.2.0:
     resolution: {integrity: sha512-aZwGpamFO61g3OlfT7OQCHqhGnW43ieH9WZeP7QxN/G/jS4jfqUkZxoryvJgVPEcrl5NL/ggHsSmLMHuH64Lhg==}
-    engines: {node: '>=4'}
-
-  upath@2.0.1:
-    resolution: {integrity: sha512-1uEe95xksV1O0CYKXo8vQvN1JEbtJp7lb7C5U9HMsIp6IVwntkH/oNUzyVNQSd4S1sYk2FpSSW44FqMc8qee5w==}
     engines: {node: '>=4'}
 
   update-check@1.5.4:
@@ -3264,20 +3222,6 @@ snapshots:
       - encoding
       - supports-color
 
-  '@adobe/aio-lib-core-tvm@4.0.3':
-    dependencies:
-      '@adobe/aio-lib-core-errors': 4.0.1
-      '@adobe/aio-lib-core-logging': 3.0.2
-      '@adobe/aio-lib-core-networking': 5.0.4
-      '@adobe/aio-lib-env': 3.0.1
-      fs-extra: 11.3.2
-      joi: 17.13.3
-      lodash.clonedeep: 4.5.0
-      upath: 2.0.1
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
-
   '@adobe/aio-lib-env@2.0.0':
     dependencies:
       '@adobe/aio-lib-core-config': 3.1.0
@@ -3350,13 +3294,13 @@ snapshots:
       - encoding
       - supports-color
 
-  '@adobe/aio-lib-state@3.0.2':
+  '@adobe/aio-lib-state@4.0.1':
     dependencies:
       '@adobe/aio-lib-core-errors': 4.0.1
       '@adobe/aio-lib-core-logging': 3.0.2
-      '@adobe/aio-lib-core-tvm': 4.0.3
-      '@azure/cosmos': 3.17.3
-      joi: 17.13.3
+      '@adobe/aio-lib-core-networking': 5.0.4
+      '@adobe/aio-lib-env': 3.0.1
+      ajv: 8.17.1
       lodash.clonedeep: 4.5.0
     transitivePeerDependencies:
       - encoding
@@ -3373,10 +3317,6 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
-
-  '@azure/abort-controller@1.1.0':
-    dependencies:
-      tslib: 2.8.1
 
   '@azure/abort-controller@2.1.2':
     dependencies:
@@ -3451,24 +3391,6 @@ snapshots:
     dependencies:
       fast-xml-parser: 5.3.0
       tslib: 2.8.1
-
-  '@azure/cosmos@3.17.3':
-    dependencies:
-      '@azure/abort-controller': 1.1.0
-      '@azure/core-auth': 1.10.1
-      '@azure/core-rest-pipeline': 1.22.1
-      '@azure/core-tracing': 1.3.1
-      debug: 4.4.3
-      fast-json-stable-stringify: 2.1.0
-      jsbi: 3.2.5
-      node-abort-controller: 3.1.1
-      priorityqueuejs: 1.0.0
-      semaphore: 1.1.0
-      tslib: 2.8.1
-      universal-user-agent: 6.0.1
-      uuid: 8.3.2
-    transitivePeerDependencies:
-      - supports-color
 
   '@azure/logger@1.3.0':
     dependencies:
@@ -4793,8 +4715,6 @@ snapshots:
       merge2: 1.4.1
       micromatch: 4.0.8
 
-  fast-json-stable-stringify@2.1.0: {}
-
   fast-uri@3.1.0: {}
 
   fast-xml-parser@5.3.0:
@@ -4845,12 +4765,6 @@ snapshots:
       mime-types: 2.1.35
 
   fs-extra@10.1.0:
-    dependencies:
-      graceful-fs: 4.2.11
-      jsonfile: 6.2.0
-      universalify: 2.0.1
-
-  fs-extra@11.3.2:
     dependencies:
       graceful-fs: 4.2.11
       jsonfile: 6.2.0
@@ -5199,8 +5113,6 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jsbi@3.2.5: {}
-
   jsesc@3.1.0: {}
 
   json-schema-traverse@1.0.0: {}
@@ -5416,8 +5328,6 @@ snapshots:
     dependencies:
       lower-case: 1.1.4
 
-  node-abort-controller@3.1.1: {}
-
   node-fetch@2.7.0:
     dependencies:
       whatwg-url: 5.0.0
@@ -5594,8 +5504,6 @@ snapshots:
 
   prettier@3.6.2: {}
 
-  priorityqueuejs@1.0.0: {}
-
   proxy-agent@6.5.0:
     dependencies:
       agent-base: 7.1.4
@@ -5758,8 +5666,6 @@ snapshots:
   safer-buffer@2.1.2: {}
 
   sax@1.4.1: {}
-
-  semaphore@1.1.0: {}
 
   semver@7.6.2: {}
 
@@ -6080,8 +5986,6 @@ snapshots:
 
   unicorn-magic@0.3.0: {}
 
-  universal-user-agent@6.0.1: {}
-
   universalify@0.1.2: {}
 
   universalify@2.0.1: {}
@@ -6093,8 +5997,6 @@ snapshots:
       synckit: 0.11.11
 
   upath@1.2.0: {}
-
-  upath@2.0.1: {}
 
   update-check@1.5.4:
     dependencies:
