@@ -21,8 +21,7 @@
         "useImportType": "off",
         "useBlockStatements": "off",
         "useReadonlyClassProperties": "off",
-        "noExportedImports": "off",
-        "noUnusedTemplateLiteral": "off"
+        "noExportedImports": "off"
       },
       "correctness": {
         "noUnusedVariables": "off",

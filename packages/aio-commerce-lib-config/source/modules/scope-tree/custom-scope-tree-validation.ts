@@ -85,7 +85,7 @@ export function validateAndNormalizeSingleScope(
   scope: CustomScopeInput,
 ): CustomScopeInput {
   if (!scope || typeof scope !== "object") {
-    throw createValidationError(`Scope must be an object`);
+    throw createValidationError("Scope must be an object");
   }
 
   const requiredFields = ["code", "label", "is_editable", "is_final"];
