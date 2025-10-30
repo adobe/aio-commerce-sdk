@@ -1,5 +1,15 @@
 # @adobe/aio-commerce-lib-events
 
+## 0.3.1
+
+### Patch Changes
+
+- [#95](https://github.com/adobe/aio-commerce-sdk/pull/95) [`abd5012`](https://github.com/adobe/aio-commerce-sdk/commit/abd5012e5680f97abd150de6036b2225c7dc0277) Thanks [@iivvaannxx](https://github.com/apps/renovate)! - Fix automatic handling of expected Base64 format for `sample_event_template` during event metadata creation.
+
+- Updated dependencies [[`abd5012`](https://github.com/adobe/aio-commerce-sdk/commit/abd5012e5680f97abd150de6036b2225c7dc0277)]:
+  - @adobe/aio-commerce-lib-auth@0.5.0
+  - @adobe/aio-commerce-lib-api@0.2.1
+
 ## 0.3.0
 
 ### Minor Changes

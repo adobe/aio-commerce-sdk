@@ -1,5 +1,20 @@
 # @adobe/aio-commerce-sdk
 
+## 0.5.0
+
+### Minor Changes
+
+- [#101](https://github.com/adobe/aio-commerce-sdk/pull/101) [`82147b3`](https://github.com/adobe/aio-commerce-sdk/commit/82147b388e1b182e062c287a94209661053fe1f9) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Re-export `@adobe/aio-lib-telemetry`. Add new `api`, `api/ky` and `api/utils` entrypoints that mimic the structure of the library.
+
+### Patch Changes
+
+- [#101](https://github.com/adobe/aio-commerce-sdk/pull/101) [`82147b3`](https://github.com/adobe/aio-commerce-sdk/commit/82147b388e1b182e062c287a94209661053fe1f9) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Re-export `@adobe/aio-commerce-lib-events`. Add new `events/commerce` and `events/io-events` entrypoints that mimic the structure of the library.
+
+- Updated dependencies [[`abd5012`](https://github.com/adobe/aio-commerce-sdk/commit/abd5012e5680f97abd150de6036b2225c7dc0277), [`abd5012`](https://github.com/adobe/aio-commerce-sdk/commit/abd5012e5680f97abd150de6036b2225c7dc0277)]:
+  - @adobe/aio-commerce-lib-events@0.3.1
+  - @adobe/aio-commerce-lib-auth@0.5.0
+  - @adobe/aio-commerce-lib-api@0.2.1
+
 ## 0.4.4
 
 ### Patch Changes
