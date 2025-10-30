@@ -37,10 +37,10 @@
     "prettier": "^3.6.2",
     "tsdown": "^0.15.0",
     "turbo": "^2.5.4",
-    "type-fest": "^4.41.0",
+    "type-fest": "^5.0.0",
     "typedoc": "^0.28.7",
     "typedoc-plugin-markdown": "^4.7.1",
-    "typescript": "^5.8.3",
+    "typescript": "^5.9.2",
     "ultracite": "^5.2.4",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4"
