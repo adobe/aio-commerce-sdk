@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-lib-config",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
@@ -79,16 +79,15 @@
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-lib-files": "^3.0.0",
     "@adobe/aio-lib-state": "^3.0.0",
-    "js-yaml": "^4.1.0",
     "uuid": "^13.0.0",
-    "valibot": "^1.1.0"
+    "valibot": "^1.1.0",
+    "yaml": "^2.6.1"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@aio-commerce-sdk/config-vitest": "workspace:*",
-    "@types/js-yaml": "^4.0.9"
+    "@aio-commerce-sdk/config-vitest": "workspace:*"
   },
   "sideEffects": false
 }

@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { dump as dumpYaml, load as loadYaml } from "js-yaml";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -212,18 +212,17 @@ async function readExtConfig(configPath: string): Promise<ExtConfig> {
   }
 
   const content = await readFile(configPath, "utf-8");
-  return (loadYaml(content) as ExtConfig) || {};
+  return (parseYaml(content) as ExtConfig) || {};
 }
 
 async function writeExtConfig(
   configPath: string,
   config: ExtConfig,
 ): Promise<void> {
-  const yamlContent = dumpYaml(config, {
+  const yamlContent = stringifyYaml(config, {
     indent: 2,
-    lineWidth: -1,
-    noRefs: true,
-    quotingType: "'",
+    lineWidth: 0,
+    defaultStringType: "QUOTE_SINGLE",
   });
 
   await writeFile(configPath, yamlContent, "utf-8");
