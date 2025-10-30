@@ -25,6 +25,10 @@ The SDK currently includes:
 
 - **[@adobe/aio-commerce-lib-core](https://github.com/adobe/aio-commerce-sdk/tree/main/packages/aio-commerce-lib-core)**: Core utilities for the Adobe Commerce SDK.
 
+- **[@adobe/aio-commerce-lib-api](https://github.com/adobe/aio-commerce-sdk/tree/main/packages/aio-commerce-lib-api)**: A set of utilities to build HTTP/API clients for I/O Events and Adobe Commerce.
+
+- **[@adobe/aio-commerce-lib-events](https://github.com/adobe/aio-commerce-sdk/tree/main/packages/aio-commerce-lib-events)**: Event management utilities to interact with the Adobe I/O and Commerce Eventing APIs.
+
 ## Usage
 
 Import directly from a specific library sub-path:
@@ -37,13 +41,50 @@ import {
   getIntegrationAuthProvider,
 } from "@adobe/aio-commerce-sdk/auth"; // <-- This is like @adobe/aio-commerce-lib-auth
 
+import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-sdk/api"; // <-- This is like @adobe/aio-commerce-lib-api
+import {
+  createCommerceEventsApiClient,
+  updateEventingConfiguration,
+} from "@adobe/aio-commerce-sdk/events/commerce"; // <-- This is like @adobe/aio-commerce-lib-events/commerce
+
 // Validate and create IMS auth provider
 assertImsAuthParams(params);
 const imsAuth = getImsAuthProvider(params);
 
-// Validate and create integration auth provider
-assertIntegrationAuthParams(params);
-const integrationsAuth = getIntegrationAuthProvider(params);
+const commerceHttpClientConfig = {
+  auth: imsAuth,
+  config: {
+    baseUrl: "https://na1-sandbox.api.commerce.adobe.com/{tenantId}/",
+    flavor: "saas",
+  },
+};
+
+const updateEventingConfigurationParams = {
+  enabled: true,
+  environmentId: "my-environment-id",
+  instanceId: "my-instance-id",
+  merchantId: "my-merchant-id",
+  providerId: "my-provider-id",
+  workspaceConfiguration: {
+    // ...
+  },
+};
+
+// Use the raw HTTP client
+const commerceClient = new AdobeCommerceHttpClient(commerceHttpClientConfig);
+await updateEventingConfiguration(
+  commerceClient,
+  updateEventingConfigurationParams,
+);
+
+// Or create an API client with a pre-bound HTTP client.
+const commerceEventsClient = createCommerceEventsApiClient(
+  commerceHttpClientConfig,
+);
+
+await commerceEventsClient.updateEventingConfiguration(
+  updateEventingConfigurationParams,
+);
 ```
 
 ## Benefits
