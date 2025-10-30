@@ -43,12 +43,11 @@ export function buildObjectKeyTransformerResponseHook(
     return transformedData;
   };
 
-  return (_req, _opt, response: KyResponse) => {
-    return response.json().then((data) => {
+  return (_req, _opt, response: KyResponse) =>
+    response.json().then((data) => {
       const transformedData = transformObject(data);
       return Response.json(transformedData, response);
     });
-  };
 }
 
 /** Builds a hook that transforms the keys of an object to camel case. */

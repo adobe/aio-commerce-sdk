@@ -13,3 +13,4 @@
  * (At the time of writing, there's only the `error` sub-module.)
  */
 
+/** biome-ignore-all lint/nursery/noEmptySource: It's empty for now only for documentation generation consistency. */

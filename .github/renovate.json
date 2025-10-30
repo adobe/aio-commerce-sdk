@@ -23,10 +23,12 @@
   "automerge": false,
   "branchPrefix": "renovate/",
   "commitMessagePrefix": "RENOVATE: ",
-  "labels": [
-    "dependencies"
-  ],
-  "postUpdateOptions": [
-    "pnpmDedupe"
+  "labels": ["dependencies"],
+  "postUpdateOptions": ["pnpmDedupe"],
+  "packageRules": [
+    {
+      "groupName": "biome and ultracite",
+      "matchPackageNames": ["@biomejs/biome", "ultracite"]
+    }
   ]
 }
