@@ -11,12 +11,12 @@ governing permissions and limitations under the License.
 */
 
 import { Files, init as initFiles } from "@adobe/aio-lib-files";
-import { init as initState, StateStore } from "@adobe/aio-lib-state";
+import { AdobeState, init as initState } from "@adobe/aio-lib-state";
 
 import type { ConfigSchemaField } from "./types";
 
 // Shared instances to avoid re-initialization
-let sharedState: StateStore | undefined;
+let sharedState: AdobeState | undefined;
 let sharedFiles: Files | undefined;
 
 /**
@@ -24,7 +24,7 @@ let sharedFiles: Files | undefined;
  * Handles both state (caching) and files (persistence) operations
  */
 export class ConfigSchemaRepository {
-  private async getState(): Promise<StateStore> {
+  private async getState(): Promise<AdobeState> {
     if (!sharedState) {
       sharedState = await initState();
     }
@@ -47,7 +47,7 @@ export class ConfigSchemaRepository {
     try {
       const state = await this.getState();
       const cached = await state.get(`${namespace}:config-schema`);
-      return cached?.value?.data || null;
+      return cached?.value ? JSON.parse(cached.value) : null;
     } catch (error) {
       return null;
     }
@@ -63,7 +63,9 @@ export class ConfigSchemaRepository {
   ): Promise<void> {
     try {
       const state = await this.getState();
-      await state.put(`${namespace}:config-schema`, { data }, { ttl });
+      await state.put(`${namespace}:config-schema`, JSON.stringify(data), {
+        ttl,
+      });
     } catch (error) {
       console.error("Error caching schema:", error);
       // Don't throw - caching failure shouldn't break functionality
@@ -90,7 +92,7 @@ export class ConfigSchemaRepository {
     try {
       const state = await this.getState();
       const versionData = await state.get(`${namespace}:schema-version`);
-      return versionData?.value?.version || null;
+      return versionData?.value ? JSON.parse(versionData.value).version : null;
     } catch (error) {
       return null;
     }
@@ -102,7 +104,10 @@ export class ConfigSchemaRepository {
   async setSchemaVersion(namespace: string, version: string): Promise<void> {
     try {
       const state = await this.getState();
-      await state.put(`${namespace}:schema-version`, { version });
+      await state.put(
+        `${namespace}:schema-version`,
+        JSON.stringify({ version }),
+      );
     } catch (error) {
       console.error("Error setting schema version:", error);
       // Don't throw - version tracking failure shouldn't break functionality

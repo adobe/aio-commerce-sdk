@@ -11,10 +11,10 @@ governing permissions and limitations under the License.
 */
 
 import { Files, init as initFiles } from "@adobe/aio-lib-files";
-import { init as initState, StateStore } from "@adobe/aio-lib-state";
+import { AdobeState, init as initState } from "@adobe/aio-lib-state";
 
 // Shared instances to avoid re-initialization
-let sharedState: StateStore | undefined;
+let sharedState: AdobeState | undefined;
 let sharedFiles: Files | undefined;
 
 /**
@@ -22,7 +22,7 @@ let sharedFiles: Files | undefined;
  * Handles both state (caching) and files (persistence) operations
  */
 export class ConfigurationRepository {
-  private async getState(): Promise<StateStore> {
+  private async getState(): Promise<AdobeState> {
     if (!sharedState) {
       sharedState = await initState();
     }
@@ -44,7 +44,7 @@ export class ConfigurationRepository {
       const state = await this.getState();
       const key = this.getConfigStateKey(scopeCode);
       const result = await state.get(key);
-      return result.value?.data || null;
+      return result.value ? JSON.parse(result.value) : null;
     } catch (error) {
       return null;
     }

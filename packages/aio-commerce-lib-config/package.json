@@ -78,7 +78,7 @@
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-lib-files": "^3.0.0",
-    "@adobe/aio-lib-state": "^3.0.0",
+    "@adobe/aio-lib-state": "^4.0.0",
     "uuid": "^13.0.0",
     "valibot": "^1.1.0",
     "yaml": "^2.6.1"
