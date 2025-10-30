@@ -15,9 +15,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildUpdatedScopeTree,
   mergeCommerceScopes,
-} from "../source/modules/scope-tree";
+} from "../source/modules/scope-tree/merge-scopes";
 
-import type { ScopeNode, ScopeTree } from "../source/modules/scope-tree";
+import type { ScopeNode, ScopeTree } from "../source/modules/scope-tree/types";
 import type { CommerceScopeData } from "../source/types";
 
 // Constants for magic numbers
@@ -204,13 +204,15 @@ describe("ScopeTreeUtils - Actual Merge Logic", () => {
 
       // Store group should preserve UUID
       const storeGroup = firstWebsite?.children?.[0];
-      expect(storeGroup.id).toBe("existing-store-group-uuid-789"); // UUID preserved
-      expect(storeGroup.label).toBe("Main Store"); // Label updated
+      expect(storeGroup).toBeDefined();
+      expect(storeGroup!.id).toBe("existing-store-group-uuid-789"); // UUID preserved
+      expect(storeGroup!.label).toBe("Main Store"); // Label updated
 
       // Store view should preserve UUID
       const storeView = storeGroup?.children?.[0];
-      expect(storeView.id).toBe("existing-store-view-uuid-101"); // UUID preserved
-      expect(storeView.label).toBe("Default Store View"); // Label updated
+      expect(storeView).toBeDefined();
+      expect(storeView!.id).toBe("existing-store-view-uuid-101"); // UUID preserved
+      expect(storeView!.label).toBe("Default Store View"); // Label updated
 
       // Second website should get new UUID (didn't exist before)
       const secondWebsite = result.find((w) => w.commerce_id === 2);

@@ -128,22 +128,46 @@ class MockConfigurationRepository {
   }
 }
 
-// Global mock instances
+// Mock instances
 let mockScopeTreeRepo: MockScopeTreeRepository;
 let mockSchemaRepo: MockConfigSchemaRepository;
 let mockConfigRepo: MockConfigurationRepository;
 
-// Mock the repository modules
+// Mock the repository modules with constructor delegation
 vi.mock("../source/modules/scope-tree/scope-tree-repository", () => ({
-  ScopeTreeRepository: vi.fn(() => mockScopeTreeRepo),
+  ScopeTreeRepository: class MockedScopeTreeRepository {
+    constructor() {
+      // Delegate all methods to the mock instance
+      if (mockScopeTreeRepo) {
+        Object.setPrototypeOf(this, mockScopeTreeRepo);
+        Object.assign(this, mockScopeTreeRepo);
+      }
+    }
+  },
 }));
 
 vi.mock("../source/modules/schema/config-schema-repository", () => ({
-  ConfigSchemaRepository: vi.fn(() => mockSchemaRepo),
+  ConfigSchemaRepository: class MockedConfigSchemaRepository {
+    constructor() {
+      // Delegate all methods to the mock instance
+      if (mockSchemaRepo) {
+        Object.setPrototypeOf(this, mockSchemaRepo);
+        Object.assign(this, mockSchemaRepo);
+      }
+    }
+  },
 }));
 
 vi.mock("../source/modules/configuration/configuration-repository", () => ({
-  ConfigurationRepository: vi.fn(() => mockConfigRepo),
+  ConfigurationRepository: class MockedConfigurationRepository {
+    constructor() {
+      // Delegate all methods to the mock instance
+      if (mockConfigRepo) {
+        Object.setPrototypeOf(this, mockConfigRepo);
+        Object.assign(this, mockConfigRepo);
+      }
+    }
+  },
 }));
 
 function createManager(): ConfigManager {
@@ -152,7 +176,7 @@ function createManager(): ConfigManager {
 
 describe("ConfigManager", () => {
   beforeEach(() => {
-    // Reset mock instances before each test
+    // Initialize mock instances before each test
     mockScopeTreeRepo = new MockScopeTreeRepository();
     mockSchemaRepo = new MockConfigSchemaRepository();
     mockConfigRepo = new MockConfigurationRepository();
@@ -359,16 +383,16 @@ describe("ConfigManager", () => {
   it("ignores extra properties in setConfiguration request entries", async () => {
     const mgr = createManager();
 
+    // Test that extra properties are stripped at runtime
     const response = await mgr.setConfiguration(
       {
         config: [
-          // @ts-expect-error - testing that extra props are stripped
           {
             name: "currency",
             value: "GBP",
             extraProp: "ignored",
             anotherProp: 123,
-          },
+          } as any, // Allow extra props for runtime testing
         ],
       },
       "global",
@@ -381,14 +405,13 @@ describe("ConfigManager", () => {
   it("skips entries missing value and strips unknown props as per request contract", async () => {
     const mgr = createManager();
 
+    // Test malformed entries are handled at runtime
     const response = await mgr.setConfiguration(
       {
         config: [
-          // @ts-expect-error - testing malformed entries
-          { name: "currency" }, // missing value
+          { name: "currency" } as any, // missing value - test runtime handling
           { name: "exampleList", value: "option1" }, // valid
-          // @ts-expect-error - testing malformed entries
-          { value: "orphaned" }, // missing name
+          { value: "orphaned" } as any, // missing name - test runtime handling
         ],
       },
       "global",
