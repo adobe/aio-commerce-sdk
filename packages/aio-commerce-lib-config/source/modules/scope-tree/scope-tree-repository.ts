@@ -11,14 +11,14 @@ governing permissions and limitations under the License.
 */
 
 import { Files, init as initFiles } from "@adobe/aio-lib-files";
-import { init as initState, StateStore } from "@adobe/aio-lib-state";
+import { AdobeState, init as initState } from "@adobe/aio-lib-state";
 
 import { generateUUID } from "../../utils/uuid";
 
 import type { ScopeNode, ScopeTree } from "./types";
 
 // Shared instances to avoid re-initialization
-let sharedState: StateStore | undefined;
+let sharedState: AdobeState | undefined;
 let sharedFiles: Files | undefined;
 
 /**
@@ -26,7 +26,7 @@ let sharedFiles: Files | undefined;
  * Handles both state (caching) and files (persistence) operations
  */
 export class ScopeTreeRepository {
-  private async getState(): Promise<StateStore> {
+  private async getState(): Promise<AdobeState> {
     if (!sharedState) {
       sharedState = await initState();
     }
@@ -47,7 +47,7 @@ export class ScopeTreeRepository {
     try {
       const state = await this.getState();
       const cached = await state.get(`${namespace}:scope-tree`);
-      return cached?.value?.data || null;
+      return cached?.value ? JSON.parse(cached.value) : null;
     } catch (error) {
       return null;
     }
@@ -63,7 +63,9 @@ export class ScopeTreeRepository {
   ): Promise<void> {
     try {
       const state = await this.getState();
-      await state.put(`${namespace}:scope-tree`, { data }, { ttl: ttlSeconds });
+      await state.put(`${namespace}:scope-tree`, JSON.stringify(data), {
+        ttl: ttlSeconds,
+      });
     } catch (error) {
       console.error("Error caching scope tree:", error);
       // Don't throw - caching failure shouldn't break functionality
