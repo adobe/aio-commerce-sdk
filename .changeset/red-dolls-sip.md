@@ -2,4 +2,4 @@
 "@adobe/aio-commerce-sdk": patch
 ---
 
-Add new `events` entrypoint with re-exports of the `@adobe/aio-commerce-lib-events` library.
+Re-export `@adobe/aio-commerce-lib-events`. Add new `events/commerce` and `events/io-events` entrypoints that mimic the structure of the library.
