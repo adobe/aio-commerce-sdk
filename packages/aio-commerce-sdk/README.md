@@ -25,7 +25,7 @@ The SDK currently includes:
 
 - **[@adobe/aio-commerce-lib-core](https://github.com/adobe/aio-commerce-sdk/tree/main/packages/aio-commerce-lib-core)**: Core utilities for the Adobe Commerce SDK.
 
-- **[@adobe/aio-commerce-lib-api](https://github.com/adobe/aio-commerce-sdk/tree/main/packages/aio-commerce-lib-api)**: A set of utilities to build HTTP/API clients for I/O Events and Adobe Commerce
+- **[@adobe/aio-commerce-lib-api](https://github.com/adobe/aio-commerce-sdk/tree/main/packages/aio-commerce-lib-api)**: A set of utilities to build HTTP/API clients for I/O Events and Adobe Commerce.
 
 - **[@adobe/aio-commerce-lib-events](https://github.com/adobe/aio-commerce-sdk/tree/main/packages/aio-commerce-lib-events)**: Event management utilities to interact with the Adobe I/O and Commerce Eventing APIs.
 
