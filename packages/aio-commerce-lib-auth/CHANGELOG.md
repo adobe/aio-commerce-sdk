@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- [#95](https://github.com/adobe/aio-commerce-sdk/pull/95) [`abd5012`](https://github.com/adobe/aio-commerce-sdk/commit/abd5012e5680f97abd150de6036b2225c7dc0277) Thanks [@renovate](https://github.com/apps/renovate)! - [Breaking] Ensure `UrlSchema` is used when validating the input URL of Commerce Integration Auth. Now, if the input URL is not in the expected format it will throw.
+- [#95](https://github.com/adobe/aio-commerce-sdk/pull/95) [`abd5012`](https://github.com/adobe/aio-commerce-sdk/commit/abd5012e5680f97abd150de6036b2225c7dc0277) Thanks [@iivvaannxx](https://github.com/apps/renovate)! - [Breaking] Ensure `UrlSchema` is used when validating the input URL of Commerce Integration Auth. Now, if the input URL is not in the expected format it will throw.
 
 ## 0.4.0
 
