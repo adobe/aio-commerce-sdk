@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- [#101](https://github.com/adobe/aio-commerce-sdk/pull/101) [`82147b3`](https://github.com/adobe/aio-commerce-sdk/commit/82147b388e1b182e062c287a94209661053fe1f9) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Re-export `@adobe/aio-lib-telemetry`. Add new `api`, `api/ky` and `api/utils` entrypoints that mimic the structure of the library.
+- [#101](https://github.com/adobe/aio-commerce-sdk/pull/101) [`82147b3`](https://github.com/adobe/aio-commerce-sdk/commit/82147b388e1b182e062c287a94209661053fe1f9) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Re-export `@adobe/aio-lib-commerce-api`. Add new `api`, `api/ky` and `api/utils` entrypoints that mimic the structure of the library.
 
 ### Patch Changes
 
