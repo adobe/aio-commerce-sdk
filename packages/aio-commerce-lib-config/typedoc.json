@@ -1,0 +1,3 @@
+{
+  "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.base.json"]
+}
