@@ -296,12 +296,10 @@ packages:
   '@adobe/aio-lib-core-networking@3.0.0':
     resolution: {integrity: sha512-+wn6Mha6htY1aAYMY6BRkOkvWa46tpfXWb1+zhf+HjmiXGYDsxSwdBmdckYTsP3qZ2K5iC80piblPhWopaU8vw==}
     engines: {node: ^14.16 || ^16.13 || >=18}
-    bundledDependencies: []
 
   '@adobe/aio-lib-core-networking@5.0.4':
     resolution: {integrity: sha512-LsFPKIXqfWiMwSjD9NJbb6uUSlZ+DZiV8p9NhpqPyzqAAl9NNONAH0jcIKtsKWSULcHc20INaRAw8dqKzQBTbw==}
     engines: {node: '>=18'}
-    bundledDependencies: []
 
   '@adobe/aio-lib-core-tvm@3.0.1':
     resolution: {integrity: sha512-ysbXCJash1wwajMwDOuMUci4kFVPm0/dxqUpJMe6Wcf6LkzJralUOJoWlcmoHFO7ACZbFpHnEy5W2td5Fh0r7g==}
@@ -318,7 +316,6 @@ packages:
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
-    bundledDependencies: []
 
   '@adobe/aio-lib-files@3.0.1':
     resolution: {integrity: sha512-TOLQTC4moD1HSjv51zY3NYxYU9HmTSs+3+kiiUS97zD7/BfjVNOYnLiqEWwrVLpFqMjTcqo0Spw5y19/9dJcJQ==}
