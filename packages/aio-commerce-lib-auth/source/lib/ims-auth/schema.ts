@@ -42,14 +42,13 @@ const imsAuthParameter = (name: string) =>
  * @param name The name of the parameter for error messages.
  * @returns A validation pipeline that ensures the parameter is an array of strings.
  */
-const stringArray = (name: string) => {
-  return pipe(
+const stringArray = (name: string) =>
+  pipe(
     vArray(
       string(),
       `Expected a string array value for the IMS auth parameter ${name}`,
     ),
   );
-};
 
 /** Validation schema for IMS auth environment values. */
 const ImsAuthEnvSchema = picklist(["prod", "stage"]);

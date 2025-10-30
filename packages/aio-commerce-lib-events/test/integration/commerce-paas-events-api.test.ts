@@ -58,11 +58,11 @@ describe("PaaS Commerce Events API - Integration Tests", () => {
 
     test("should handle successful response", async () => {
       server.use(
-        http.all(makeUrl(payload.pathname), () => {
-          return HttpResponse.json({
+        http.all(makeUrl(payload.pathname), () =>
+          HttpResponse.json({
             fake_response: "hello",
-          });
-        }),
+          }),
+        ),
       );
 
       const promise = payload.invoke(client);
@@ -73,9 +73,9 @@ describe("PaaS Commerce Events API - Integration Tests", () => {
       "should run camel case transformer",
       async () => {
         server.use(
-          http.all(makeUrl(payload.pathname), () => {
-            return HttpResponse.json({ fake_response: "hello" });
-          }),
+          http.all(makeUrl(payload.pathname), () =>
+            HttpResponse.json({ fake_response: "hello" }),
+          ),
         );
 
         const result = await payload.invoke(client);
@@ -87,9 +87,9 @@ describe("PaaS Commerce Events API - Integration Tests", () => {
 
     test("should handle error responses", async () => {
       server.use(
-        http.all(makeUrl(payload.pathname), () => {
-          return HttpResponse.json({}, { status: 401 });
-        }),
+        http.all(makeUrl(payload.pathname), () =>
+          HttpResponse.json({}, { status: 401 }),
+        ),
       );
 
       await expect(payload.invoke(client)).rejects.toThrow();
@@ -139,9 +139,7 @@ describe("PaaS Commerce Events API - Integration Tests", () => {
       "should throw an error on schema validation failure",
       async () => {
         server.use(
-          http.all(makeUrl(payload.pathname), () => {
-            return HttpResponse.json({});
-          }),
+          http.all(makeUrl(payload.pathname), () => HttpResponse.json({})),
         );
 
         // @ts-expect-error - Testing invalid params
