@@ -28,7 +28,6 @@
       },
       "correctness": {
         "noUnusedVariables": "off",
-        "noUnusedImports": "off",
         "noUnusedFunctionParameters": "off"
       },
       "complexity": {
