@@ -1,0 +1,46 @@
+{
+  "root": false,
+  "$schema": "https://biomejs.dev/schemas/2.3.2/schema.json",
+  "extends": "//",
+  "linter": {
+    "rules": {
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noConsole": "off",
+        "noEmptyBlockStatements": "off",
+        "useAwait": "off"
+      },
+      "nursery": {
+        "noUselessUndefined": "off",
+        "useMaxParams": "off"
+      },
+      "style": {
+        "useConsistentMemberAccessibility": "off",
+        "useConsistentTypeDefinitions": "off",
+        "noMagicNumbers": "off",
+        "noNonNullAssertion": "off",
+        "useImportType": "off",
+        "noInferrableTypes": "off",
+        "useBlockStatements": "off",
+        "useReadonlyClassProperties": "off",
+        "noExportedImports": "off",
+        "noUnusedTemplateLiteral": "off"
+      },
+      "correctness": {
+        "noUnusedVariables": "off",
+        "noUnusedImports": "off",
+        "noUnusedFunctionParameters": "off"
+      },
+      "complexity": {
+        "useSimplifiedLogicExpression": "off",
+        "noExcessiveCognitiveComplexity": "off",
+        "noForEach": "off"
+      },
+      "performance": {
+        "noBarrelFile": "off",
+        "useTopLevelRegex": "off"
+      }
+    }
+  },
+  "overrides": []
+}

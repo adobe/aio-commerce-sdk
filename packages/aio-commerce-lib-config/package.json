@@ -1,0 +1,93 @@
+{
+  "name": "@adobe/aio-commerce-lib-config",
+  "type": "module",
+  "author": "Adobe Inc.",
+  "version": "0.0.0",
+  "private": false,
+  "engines": {
+    "node": ">=20 <=24"
+  },
+  "license": "Apache-2.0",
+  "description": "Configuration management utilities for Adobe Commerce apps deployed in Adobe App Builder.",
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/adobe/aio-commerce-sdk/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adobe/aio-commerce-sdk.git",
+    "directory": "packages/aio-commerce-lib-config"
+  },
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/es/index.js",
+  "types": "./dist/cjs/index.d.cts",
+  "bin": {
+    "aio-commerce-lib-config-schema-validate": "./dist/es/commands/config-schema-validate.js"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": {
+          "types": "./dist/es/index.d.ts",
+          "default": "./dist/es/index.js"
+        },
+        "require": {
+          "types": "./dist/cjs/index.d.cts",
+          "default": "./dist/cjs/index.cjs"
+        }
+      },
+      "./package.json": "./package.json"
+    }
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/es/index.d.ts",
+        "default": "./dist/es/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "CHANGELOG.md",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "docs": "typedoc && prettier --write '**/*.md'",
+    "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
+    "format": "biome format --write --no-errors-on-unmatched",
+    "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
+    "format:check": "biome format --no-errors-on-unmatched",
+    "lint": "biome lint --no-errors-on-unmatched",
+    "lint:fix": "biome lint --write --no-errors-on-unmatched",
+    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest --coverage",
+    "test:ui": "vitest --ui"
+  },
+  "dependencies": {
+    "@adobe/aio-commerce-lib-api": "workspace:*",
+    "@adobe/aio-commerce-lib-core": "workspace:*",
+    "@adobe/aio-lib-files": "^3.0.0",
+    "@adobe/aio-lib-state": "^3.0.0",
+    "uuid": "^13.0.0",
+    "valibot": "^1.1.0",
+    "yaml": "^2.6.1"
+  },
+  "devDependencies": {
+    "@aio-commerce-sdk/config-tsdown": "workspace:*",
+    "@aio-commerce-sdk/config-typedoc": "workspace:*",
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "@aio-commerce-sdk/config-vitest": "workspace:*"
+  },
+  "sideEffects": false
+}
