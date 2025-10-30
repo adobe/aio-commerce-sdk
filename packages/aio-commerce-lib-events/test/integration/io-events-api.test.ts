@@ -28,6 +28,9 @@ import { ADOBE_IO_EVENTS_API_PAYLOADS } from "#test/fixtures/io-events-api-paylo
 
 import type { ImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 
+// Regex for validating base64 encoded strings
+const BASE64_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
+
 vi.mock("@adobe/aio-commerce-lib-auth", async () => {
   const original = await vi.importActual("@adobe/aio-commerce-lib-auth");
   return {
@@ -172,5 +175,158 @@ describe("Adobe IO Events API - Integration Tests", () => {
         await expect(invoke()).rejects.toThrow();
       },
     );
+  });
+
+  describe("event metadata schema validation for sample event template", () => {
+    const CONSUMER_ORG_ID = "test-consumer-org-id";
+    const PROJECT_ID = "test-project-id";
+    const WORKSPACE_ID = "test-workspace-id";
+    const PROVIDER_ID = "test-provider-id";
+
+    test("should encode sample event template to base64 in request body", async () => {
+      const sampleEventTemplate = {
+        name: "product name",
+        sku: "1234567890",
+        price: 100,
+      };
+
+      const capture = { body: null as Record<string, unknown> | null };
+      server.use(
+        http.all(
+          makeUrl(
+            `${CONSUMER_ORG_ID}/${PROJECT_ID}/${WORKSPACE_ID}/providers/${PROVIDER_ID}/eventmetadata`,
+          ),
+          async ({ request }) => {
+            capture.body = (await request.json()) as Record<string, unknown>;
+            return HttpResponse.json({});
+          },
+        ),
+      );
+
+      await client.createEventMetadataForProvider({
+        consumerOrgId: CONSUMER_ORG_ID,
+        projectId: PROJECT_ID,
+        workspaceId: WORKSPACE_ID,
+        providerId: PROVIDER_ID,
+        label: "test-label",
+        description: "test-description",
+        eventCode: "test-event-code",
+        sampleEventTemplate,
+      });
+
+      if (!capture.body) {
+        expect.fail("Captured request body is null");
+      }
+
+      expect(capture.body).toHaveProperty("label", "test-label");
+      expect(capture.body).toHaveProperty("description", "test-description");
+      expect(capture.body).toHaveProperty("event_code", "test-event-code");
+      expect(capture.body).toHaveProperty("sample_event_template");
+
+      const encodedTemplate = capture.body.sample_event_template as string;
+      expect(encodedTemplate).toBeTypeOf("string");
+      expect(encodedTemplate).toMatch(BASE64_REGEX);
+
+      const decodedTemplate = Buffer.from(encodedTemplate, "base64").toString(
+        "utf-8",
+      );
+
+      const parsedTemplate = JSON.parse(decodedTemplate);
+      expect(parsedTemplate).toEqual(sampleEventTemplate);
+    });
+
+    test("should handle already base64-encoded sample event template", async () => {
+      const sampleEventTemplate = {
+        name: "product name",
+        sku: "1234567890",
+        price: 100,
+      };
+
+      const alreadyEncoded = Buffer.from(
+        JSON.stringify(sampleEventTemplate),
+      ).toString("base64");
+
+      const capture = { body: null as Record<string, unknown> | null };
+      server.use(
+        http.all(
+          makeUrl(
+            `${CONSUMER_ORG_ID}/${PROJECT_ID}/${WORKSPACE_ID}/providers/${PROVIDER_ID}/eventmetadata`,
+          ),
+          async ({ request }) => {
+            capture.body = (await request.json()) as Record<string, unknown>;
+            return HttpResponse.json({});
+          },
+        ),
+      );
+
+      await client.createEventMetadataForProvider({
+        consumerOrgId: CONSUMER_ORG_ID,
+        projectId: PROJECT_ID,
+        workspaceId: WORKSPACE_ID,
+        providerId: PROVIDER_ID,
+        label: "test-label",
+        description: "test-description",
+        eventCode: "test-event-code",
+        sampleEventTemplate: alreadyEncoded,
+      });
+
+      if (!capture.body) {
+        expect.fail("Captured request body is null");
+      }
+
+      const encodedTemplate = capture.body.sample_event_template as string;
+      const decodedTemplate = Buffer.from(encodedTemplate, "base64").toString(
+        "utf-8",
+      );
+
+      const parsedTemplate = JSON.parse(decodedTemplate);
+      expect(parsedTemplate).toEqual(sampleEventTemplate);
+    });
+
+    test("should handle sample event template as JSON string", async () => {
+      const sampleEventTemplate = {
+        name: "product name",
+        sku: "1234567890",
+        price: 100,
+      };
+
+      const jsonString = JSON.stringify(sampleEventTemplate);
+      const capture = { body: null as Record<string, unknown> | null };
+
+      server.use(
+        http.all(
+          makeUrl(
+            `${CONSUMER_ORG_ID}/${PROJECT_ID}/${WORKSPACE_ID}/providers/${PROVIDER_ID}/eventmetadata`,
+          ),
+          async ({ request }) => {
+            capture.body = (await request.json()) as Record<string, unknown>;
+            return HttpResponse.json({});
+          },
+        ),
+      );
+
+      await client.createEventMetadataForProvider({
+        consumerOrgId: CONSUMER_ORG_ID,
+        projectId: PROJECT_ID,
+        workspaceId: WORKSPACE_ID,
+        providerId: PROVIDER_ID,
+        label: "test-label",
+        description: "test-description",
+        eventCode: "test-event-code",
+        sampleEventTemplate: jsonString,
+      });
+
+      if (!capture.body) {
+        expect.fail("Captured request body is null");
+      }
+
+      const encodedTemplate = capture.body.sample_event_template as string;
+      const decodedTemplate = Buffer.from(encodedTemplate, "base64").toString(
+        "utf-8",
+      );
+
+      const parsedTemplate = JSON.parse(decodedTemplate);
+      expect(parsedTemplate).toEqual(sampleEventTemplate);
+    });
   });
 });

@@ -49,9 +49,8 @@ function sampleEventTemplateSchema(fieldName: string) {
           `Expected valid JSON string for property '${fieldName}'`,
         ),
 
-        // After checking if valid, convert back to string
+        // After checking if valid, ensure it's an object
         v.record(v.string(), v.unknown()),
-        v.stringifyJson(),
       ),
 
       v.record(v.string(), v.unknown()),
