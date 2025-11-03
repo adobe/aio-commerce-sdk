@@ -5,7 +5,6 @@
   "linter": {
     "rules": {
       "suspicious": {
-        "noConsole": "off",
         "useAwait": "off"
       },
       "nursery": {

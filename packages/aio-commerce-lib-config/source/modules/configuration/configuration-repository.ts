@@ -10,6 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
+import AioLogger from "@adobe/aio-lib-core-logging";
 import { init as initFiles } from "@adobe/aio-lib-files";
 import { init as initState } from "@adobe/aio-lib-state";
 
@@ -19,6 +20,11 @@ import type { StateStore } from "@adobe/aio-lib-state";
 // Shared instances to avoid re-initialization
 let sharedState: StateStore | undefined;
 let sharedFiles: Files | undefined;
+
+const logger = AioLogger(
+  "@adobe/aio-commerce-lib-config:configuration-repository",
+  { level: process.env.LOG_LEVEL ?? "debug" },
+);
 
 /**
  * Repository for all configuration data related operations
@@ -62,7 +68,10 @@ export class ConfigurationRepository {
       const key = this.getConfigStateKey(scopeCode);
       await state.put(key, payload);
     } catch (error) {
-      console.error("Error caching configuration:", error);
+      logger.debug(
+        "Failed to cache configuration:",
+        error instanceof Error ? error.message : String(error),
+      );
       // Don't throw - caching failure shouldn't break functionality
     }
   }
@@ -110,7 +119,7 @@ export class ConfigurationRepository {
         return JSON.parse(statePayload);
       }
     } catch (err) {
-      console.debug("State read failed, will try files next", {
+      logger.debug("State read failed, will try files next", {
         scopeCode,
         error: err instanceof Error ? err.message : String(err),
       });
@@ -126,7 +135,7 @@ export class ConfigurationRepository {
         try {
           await this.setCachedConfig(scopeCode, JSON.stringify(parsed));
         } catch (err) {
-          console.warn("Failed to cache configuration in state", {
+          logger.debug("Failed to cache configuration in state", {
             scopeCode,
             error: err instanceof Error ? err.message : String(err),
           });
@@ -141,13 +150,13 @@ export class ConfigurationRepository {
         (("statusCode" in err && err.statusCode === 404) ||
           ("code" in err && err.code === "ENOENT"))
       ) {
-        console.debug(
+        logger.debug(
           `No persisted configuration file found for scope ${scopeCode}.`,
         );
       } else {
-        console.error(
-          `Error retrieving configuration from files for scope ${scopeCode}:`,
-          err,
+        logger.debug(
+          `Failed to retrieve configuration from files for scope ${scopeCode}:`,
+          err instanceof Error ? err.message : String(err),
         );
       }
     }
@@ -170,7 +179,7 @@ export class ConfigurationRepository {
     try {
       await this.setCachedConfig(scopeCode, payloadString);
     } catch (e) {
-      console.warn("Failed to cache configuration in state", {
+      logger.debug("Failed to cache configuration in state", {
         scopeCode,
         error: e instanceof Error ? e.message : String(e),
       });

@@ -10,6 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
+import AioLogger from "@adobe/aio-lib-core-logging";
 import { init as initFiles } from "@adobe/aio-lib-files";
 import { init as initState } from "@adobe/aio-lib-state";
 
@@ -18,6 +19,13 @@ import { generateUUID } from "../../utils/uuid";
 import type { Files } from "@adobe/aio-lib-files";
 import type { StateStore } from "@adobe/aio-lib-state";
 import type { ScopeNode, ScopeTree } from "./types";
+
+const logger = AioLogger(
+  "@adobe/aio-commerce-lib-config:scope-tree-repository",
+  {
+    level: process.env.LOG_LEVEL ?? "debug",
+  },
+);
 
 // Shared instances to avoid re-initialization
 let sharedState: StateStore | undefined;
@@ -67,7 +75,10 @@ export class ScopeTreeRepository {
       const state = await this.getState();
       await state.put(`${namespace}:scope-tree`, { data }, { ttl: ttlSeconds });
     } catch (error) {
-      console.error("Error caching scope tree:", error);
+      logger.debug(
+        "Error caching scope tree:",
+        error instanceof Error ? error.message : String(error),
+      );
       // Don't throw - caching failure shouldn't break functionality
     }
   }
@@ -91,7 +102,10 @@ export class ScopeTreeRepository {
         return initialTree;
       }
     } catch (error) {
-      console.error("Error getting scope tree from files:", error);
+      logger.debug(
+        "Error getting scope tree from files:",
+        error instanceof Error ? error.message : String(error),
+      );
       // Return initial tree as fallback
       return this.createInitialScopeTree();
     }
@@ -111,7 +125,10 @@ export class ScopeTreeRepository {
       };
       await files.write(filePath, JSON.stringify(data, null, 2));
     } catch (error) {
-      console.error("Error saving scope tree to files:", error);
+      logger.debug(
+        "Error saving scope tree to files:",
+        error instanceof Error ? error.message : String(error),
+      );
       throw error;
     }
   }

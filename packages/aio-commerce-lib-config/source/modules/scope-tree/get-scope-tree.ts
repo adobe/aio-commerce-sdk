@@ -11,6 +11,7 @@ governing permissions and limitations under the License.
 */
 
 import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
+import AioLogger from "@adobe/aio-lib-core-logging";
 
 import { CommerceService } from "../../services/commerce-service";
 import { buildUpdatedScopeTree, mergeCommerceScopes } from "./merge-scopes";
@@ -22,6 +23,10 @@ import type {
   GetScopeTreeResult,
   ScopeTreeContext,
 } from "./types";
+
+const logger = AioLogger("@adobe/aio-commerce-lib-config:get-scope-tree", {
+  level: process.env.LOG_LEVEL ?? "debug",
+});
 
 /**
  * Get scope tree and optionally refresh commerce scopes from Commerce API
@@ -103,7 +108,10 @@ async function buildTreeWithUpdatedCommerceScopes(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "";
-    console.warn("Failed to fetch fresh Commerce data, using fallback:", error);
+    logger.debug(
+      "Failed to fetch fresh Commerce data, using fallback: ",
+      error instanceof Error ? error.message : String(error),
+    );
 
     // Try cached data first
     const cachedFlattenedTree = await repository.getCachedScopeTree(

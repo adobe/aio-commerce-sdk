@@ -3,10 +3,14 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import AioLogger from "@adobe/aio-lib-core-logging";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const logger = AioLogger("@adobe/aio-commerce-lib-config:generate-actions", {
+  level: "debug",
+});
 
 const PACKAGE_NAME = "app-management";
 const GENERATED_ACTIONS_PATH = ".generated/actions/app-management";
@@ -92,11 +96,11 @@ export async function run(): Promise<void> {
 
   await generateActionFiles();
 
-  console.info(`✅ ${LIB_NAME}: Action generation completed successfully.\n`);
+  logger.info(`✅ ${LIB_NAME}: Action generation completed successfully.\n`);
 }
 
 async function updateExtConfig(): Promise<void> {
-  console.info(`📝 ${LIB_NAME}: Updating ext.config.yaml...\n`);
+  logger.info(`📝 ${LIB_NAME}: Updating ext.config.yaml...\n`);
 
   const workspaceRoot = process.cwd();
   const extConfigPath = join(workspaceRoot, "ext.config.yaml");
@@ -109,7 +113,7 @@ async function updateExtConfig(): Promise<void> {
 }
 
 async function generateActionFiles(): Promise<void> {
-  console.info(`🔧 ${LIB_NAME}: Generating runtime actions...\n`);
+  logger.info(`🔧 ${LIB_NAME}: Generating runtime actions...\n`);
 
   const workspaceRoot = process.cwd();
   const outputDir = join(workspaceRoot, GENERATED_ACTIONS_PATH);
@@ -127,7 +131,7 @@ async function generateActionFiles(): Promise<void> {
     await writeFile(actionPath, template, "utf-8");
   }
 
-  console.info(
+  logger.info(
     `Generated ${RUNTIME_ACTIONS.length} action(s) in ${GENERATED_ACTIONS_PATH}\n`,
   );
 }
