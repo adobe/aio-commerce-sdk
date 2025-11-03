@@ -20,7 +20,7 @@ import type { ConfigSchemaField } from "./types";
 
 const logger = AioLogger(
   "@adobe/aio-commerce-lib-config:config-schema-repository",
-  { level: process.env.LOG_LEVEL ?? "debug" },
+  { level: process.env.LOG_LEVEL ?? "info" },
 );
 
 // Shared instances to avoid re-initialization

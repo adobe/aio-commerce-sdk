@@ -25,7 +25,7 @@ import type {
 } from "./types";
 
 const logger = AioLogger("@adobe/aio-commerce-lib-config:get-scope-tree", {
-  level: process.env.LOG_LEVEL ?? "debug",
+  level: process.env.LOG_LEVEL ?? "info",
 });
 
 /**

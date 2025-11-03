@@ -23,7 +23,7 @@ import type { ScopeNode, ScopeTree } from "./types";
 const logger = AioLogger(
   "@adobe/aio-commerce-lib-config:scope-tree-repository",
   {
-    level: process.env.LOG_LEVEL ?? "debug",
+    level: process.env.LOG_LEVEL ?? "info",
   },
 );
 

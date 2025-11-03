@@ -23,7 +23,7 @@ let sharedFiles: Files | undefined;
 
 const logger = AioLogger(
   "@adobe/aio-commerce-lib-config:configuration-repository",
-  { level: process.env.LOG_LEVEL ?? "debug" },
+  { level: process.env.LOG_LEVEL ?? "info" },
 );
 
 /**
