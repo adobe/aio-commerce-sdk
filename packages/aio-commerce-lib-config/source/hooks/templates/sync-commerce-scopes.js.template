@@ -22,8 +22,9 @@ import {
 } from '@adobe/aio-commerce-lib-config';
 
 /**
- * Main action handler for the sync-commerce-scopes endpoint
- * Forces a fresh fetch of scopes from Commerce API and updates cache
+ * Sync commerce scopes.
+ * @param params - The input parameters.
+ * @returns The response object containing updated scope tree.
  */
 export async function main(params) {
   try {

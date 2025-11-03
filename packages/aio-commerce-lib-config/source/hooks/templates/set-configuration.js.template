@@ -18,7 +18,7 @@ import { init, createErrorResponse, createSuccessResponse } from '@adobe/aio-com
 /**
  * Get the configuration.
  * @param params - The input parameters.
- * @returns The response object containing the configuration schema.
+ * @returns The response object containing the updated configuration values.
  */
 export async function main(params) {
   try {

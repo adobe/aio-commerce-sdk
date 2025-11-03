@@ -16,8 +16,9 @@ governing permissions and limitations under the License.
 import { init, createErrorResponse, createSuccessResponse } from '@adobe/aio-commerce-lib-config';
 
 /**
- * Main action handler for the get-scope-tree endpoint
- * Retrieves the persisted scope tree configuration from cache/storage
+ * Get scope tree.
+ * @param params - The input parameters.
+ * @returns The response object containing persisted scope tree configuration from cache/storage.
  */
 export async function main(params) {
   try {
