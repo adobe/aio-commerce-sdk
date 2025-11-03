@@ -25,7 +25,7 @@ export interface Website {
   name: string;
   code: string;
   default_group_id: number;
-  extension_attributes?: Record<string, any>;
+  extension_attributes?: Record<string, unknown>;
 }
 
 export interface StoreGroup {
@@ -35,7 +35,7 @@ export interface StoreGroup {
   default_store_id: number;
   name: string;
   code: string;
-  extension_attributes?: Record<string, any>;
+  extension_attributes?: Record<string, unknown>;
 }
 
 export interface StoreView {
@@ -45,5 +45,5 @@ export interface StoreView {
   website_id: number;
   store_group_id: number;
   is_active: boolean;
-  extension_attributes?: Record<string, any>;
+  extension_attributes?: Record<string, unknown>;
 }

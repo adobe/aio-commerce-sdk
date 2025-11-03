@@ -16,7 +16,7 @@ export interface ActionErrorResponse {
   details?: string;
 }
 
-export interface StandardActionResponse<T = any> {
+export interface StandardActionResponse<T = unknown> {
   statusCode: number;
   body: T | { error: ActionErrorResponse };
   headers?: Record<string, string>;

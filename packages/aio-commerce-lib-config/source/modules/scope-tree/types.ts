@@ -10,7 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import type { CommerceHttpClientParams } from "../../types";
+import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 
 // Core scope tree domain types
 export interface ScopeNode {
@@ -43,5 +43,5 @@ export interface GetScopeTreeResult {
 export interface ScopeTreeContext {
   namespace: string;
   cacheTimeout: number;
-  commerceConfig?: CommerceHttpClientParams | undefined;
+  commerceConfig?: CommerceHttpClientParams;
 }

@@ -20,10 +20,9 @@ export const GLOBAL_SCOPE_CODE = "global";
 /**
  * Helper to create validation errors with consistent property
  */
-export function createValidationError(message: string): Error {
+export function createValidationError(message: string) {
   const error = new Error(message);
-  (error as any).isValidationError = true;
-  return error;
+  return Object.assign(error, { isValidationError: true });
 }
 
 /**

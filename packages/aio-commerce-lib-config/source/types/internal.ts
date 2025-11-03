@@ -10,18 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-export interface CommerceHttpClientConfig {
-  baseUrl: string;
-  flavor: "paas" | "saas";
-  storeViewCode?: string;
-  version?: "V1";
-}
-
-export interface CommerceHttpClientParams {
-  auth: any; // Auth provider or params
-  config: CommerceHttpClientConfig;
-  fetchOptions?: any; // ky Options
-}
+import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 
 export interface LibConfig {
   cacheTimeout?: number;

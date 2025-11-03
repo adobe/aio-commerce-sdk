@@ -46,7 +46,7 @@ export async function getConfiguration(
     scopeTree,
   );
 
-  let configData: any = await configRepository.loadConfig(scopeCode);
+  let configData = await configRepository.loadConfig(scopeCode);
   if (!configData) {
     const cachedSchema = await schemaRepository.getCachedSchema(
       context.namespace,

@@ -5,7 +5,6 @@
   "linter": {
     "rules": {
       "suspicious": {
-        "noExplicitAny": "off",
         "noConsole": "off",
         "useAwait": "off"
       },

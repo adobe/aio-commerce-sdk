@@ -1,5 +1,10 @@
 import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "./utils";
 
+import type {
+  AcceptableConfigValue,
+  ConfigValueWithOptionalOrigin,
+} from "#modules/configuration/types";
+import type { ConfigValue } from "./modules/configuration";
 import type { ConfigSchemaField } from "./modules/schema";
 import type { ScopeNode, ScopeTree } from "./modules/scope-tree";
 
@@ -11,7 +16,7 @@ export { generateUUID } from "./utils";
  * @param value The value to check.
  * @returns True if the value is a non-empty string, false otherwise.
  */
-export function isNonEmptyString(value: any): value is string {
+export function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
@@ -20,7 +25,7 @@ export function isNonEmptyString(value: any): value is string {
  * @param args - The arguments to validate.
  * @returns True if the arguments are valid, false otherwise.
  */
-export function areValidArgs(args: any[]): boolean {
+export function areValidArgs(args: unknown[]): boolean {
   if (args.length === 2) {
     return isNonEmptyString(args[0]) && isNonEmptyString(args[1]);
   }
@@ -69,8 +74,8 @@ function findScopeNodeById(tree: ScopeTree, id: string): ScopeNode | null {
  * @returns The derived scope information including code, level, id, and path.
  */
 export function deriveScopeFromCodeAndLevel(
-  code: string,
-  level: string,
+  code: unknown,
+  level: unknown,
   tree: ScopeTree,
 ): {
   scopeCode: string;
@@ -110,7 +115,7 @@ export function deriveScopeFromCodeAndLevel(
  * @returns The derived scope information including code, level, id, and path.
  */
 export function deriveScopeFromId(
-  id: string,
+  id: unknown,
   tree: ScopeTree,
 ): {
   scopeCode: string;
@@ -143,8 +148,8 @@ export function deriveScopeFromId(
  * @returns The derived scope information including code, level, id, and path.
  */
 export function deriveScopeFromCodeWithOptionalLevel(
-  code: string,
-  level: string | undefined,
+  code: unknown,
+  level: unknown | undefined,
   tree: ScopeTree,
 ): {
   scopeCode: string;
@@ -154,6 +159,10 @@ export function deriveScopeFromCodeWithOptionalLevel(
 } {
   if (!isNonEmptyString(code)) {
     throw new Error("INVALID_ARGS: expected (code: string)");
+  }
+
+  if (!isNonEmptyString(level)) {
+    throw new Error("INVALID_ARGS: expected (level: string)");
   }
 
   const effectiveLevel = level?.trim() || DEFAULT_CUSTOM_SCOPE_LEVEL;
@@ -166,7 +175,7 @@ export function deriveScopeFromCodeWithOptionalLevel(
  * @param tree - The scope tree to search for the node.
  * @returns The derived scope information including code, level, id, and path.
  */
-export function deriveScopeFromArgs(args: any[], tree: ScopeTree) {
+export function deriveScopeFromArgs(args: unknown[], tree: ScopeTree) {
   if (args.length === 2) {
     return deriveScopeFromCodeAndLevel(args[0], args[1], tree);
   }
@@ -190,11 +199,7 @@ export function deriveScopeFromArgs(args: any[], tree: ScopeTree) {
  * @param level - The level of the scope to find.
  * @returns The found scope path or an empty array if not found.
  */
-export function findScopePath(
-  tree: ScopeTree,
-  code: string,
-  level: string,
-): ScopeNode[] {
+export function findScopePath(tree: ScopeTree, code: string, level: string) {
   const path: ScopeNode[] = [];
   const traverse = (node: ScopeNode, parents: ScopeNode[]): boolean => {
     const extendedPath = parents.concat(node);
@@ -225,11 +230,11 @@ export function findScopePath(
  * @returns The sanitized entries.
  */
 export function sanitizeRequestEntries(
-  entries: any,
-): Array<{ name: string; value: string | number | boolean }> {
-  const list: any[] = Array.isArray(entries) ? entries : [];
+  entries: ConfigValueWithOptionalOrigin[],
+): ConfigValueWithOptionalOrigin[] {
+  const list = Array.isArray(entries) ? entries : [];
   return list
-    .filter((entry: any) => {
+    .filter((entry) => {
       if (!entry || typeof entry.name !== "string") {
         return false;
       }
@@ -238,9 +243,10 @@ export function sanitizeRequestEntries(
       );
       return entry.name.trim().length > 0 && hasValidValue;
     })
-    .map((entry: any) => ({
+    .map((entry) => ({
       name: String(entry.name).trim(),
       value: entry.value as string | number | boolean,
+      origin: entry.origin,
     }));
 }
 
@@ -253,26 +259,30 @@ export function sanitizeRequestEntries(
  * @returns The merged scope entries.
  */
 export function mergeScopes(
-  existingScopeEntries: Array<{ name: string; value: any; origin?: any }>,
-  requestedScopeEntries: Array<{ name: string; value: any }>,
+  existingScopeEntries: ConfigValueWithOptionalOrigin[],
+  requestedScopeEntries: ConfigValueWithOptionalOrigin[],
   scopeCode: string,
   scopeLevel: string,
-): Array<{ name: string; value: any; origin: any }> {
-  const mergedMap = new Map<string, any>();
+) {
+  const mergedMap = new Map<string, ConfigValue>();
   for (const existingEntry of existingScopeEntries) {
     mergedMap.set(existingEntry.name, {
+      name: existingEntry.name,
       value: existingEntry.value,
       origin: existingEntry.origin || { code: scopeCode, level: scopeLevel },
     });
   }
+
   for (const requestedEntry of requestedScopeEntries) {
     mergedMap.set(requestedEntry.name, {
+      name: requestedEntry.name,
       value: requestedEntry.value,
       origin: { code: scopeCode, level: scopeLevel },
     });
   }
-  return Array.from(mergedMap.entries()).map(([name, data]) => ({
-    name,
+
+  return Array.from(mergedMap.values()).map((data) => ({
+    name: data.name,
     value: data.value,
     origin: data.origin,
   }));
@@ -283,20 +293,15 @@ export function mergeScopes(
  * @param schema - The schema to build the defaults from.
  * @returns The default config entries.
  */
-export function getSchemaDefaults(schema: ConfigSchemaField[]): {
-  config: Array<{
-    name: string;
-    value: any;
-    origin: { code: string; level: string };
-  }>;
-} {
+export function getSchemaDefaults(schema: ConfigSchemaField[]) {
   const defaults = schema
     .filter((field) => field.default !== undefined)
     .map((field) => ({
       name: field.name,
-      value: field.default,
+      value: field.default as string,
       origin: { code: "default", level: "system" },
     }));
+
   return { config: defaults };
 }
 
@@ -314,22 +319,23 @@ export function getSchemaDefaults(schema: ConfigSchemaField[]): {
 export async function mergeWithSchemaDefaults(
   loadScopeConfigFn: (
     code: string,
-  ) => Promise<{ scope: any; config: any[] } | null>,
+  ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>,
   getSchemaFn: () => Promise<ConfigSchemaField[]>,
-  configData: any,
+  configData: { scope: ScopeNode; config: ConfigValue[] },
   scopeCode: string,
   scopeLevel: string,
   scopePath: ScopeNode[],
-): Promise<any> {
+) {
   const schema = await getSchemaFn();
-  const defaultMap = new Map<string, any>();
+  const defaultMap = new Map<string, AcceptableConfigValue>();
+
   for (const field of schema) {
     if (field.default !== undefined) {
       defaultMap.set(field.name, field.default);
     }
   }
 
-  const merged: Map<string, any> = new Map();
+  const merged: Map<string, ConfigValue> = new Map();
 
   // First, load from the inheritance path (most specific to least specific within the branch)
   for (const node of scopePath) {
@@ -338,6 +344,7 @@ export async function mergeWithSchemaDefaults(
       for (const entry of persisted.config) {
         if (!merged.has(entry.name)) {
           merged.set(entry.name, {
+            name: entry.name,
             value: entry.value,
             origin: { code: node.code, level: node.level },
           });
@@ -350,12 +357,14 @@ export async function mergeWithSchemaDefaults(
   const hasGlobal = scopePath.some(
     (node) => node.code === "global" && node.level === "global",
   );
+
   if (!hasGlobal) {
     const globalConfig = await loadScopeConfigFn("global");
     if (globalConfig && Array.isArray(globalConfig.config)) {
       for (const entry of globalConfig.config) {
         if (!merged.has(entry.name)) {
           merged.set(entry.name, {
+            name: entry.name,
             value: entry.value,
             origin: { code: "global", level: "global" },
           });
@@ -368,6 +377,7 @@ export async function mergeWithSchemaDefaults(
     for (const entry of configData.config) {
       if (!merged.has(entry.name)) {
         merged.set(entry.name, {
+          name: entry.name,
           value: entry.value,
           origin: entry.origin || {
             code: configData.scope?.code || scopeCode,
@@ -381,6 +391,7 @@ export async function mergeWithSchemaDefaults(
   for (const [name, def] of defaultMap.entries()) {
     if (!merged.has(name)) {
       merged.set(name, {
+        name,
         value: def,
         origin: { code: "default", level: "system" },
       });
