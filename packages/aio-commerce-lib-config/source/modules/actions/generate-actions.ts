@@ -222,7 +222,7 @@ async function writeExtConfig(
   const yamlContent = stringifyYaml(config, {
     indent: 2,
     lineWidth: 0,
-    defaultStringType: "QUOTE_SINGLE",
+    defaultStringType: "PLAIN",
   });
 
   await writeFile(configPath, yamlContent, "utf-8");
