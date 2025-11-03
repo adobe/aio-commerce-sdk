@@ -19,9 +19,6 @@
         "noNonNullAssertion": "off",
         "useReadonlyClassProperties": "off"
       },
-      "correctness": {
-        "noUnusedFunctionParameters": "off"
-      },
       "complexity": {
         "noExcessiveCognitiveComplexity": "off"
       },
