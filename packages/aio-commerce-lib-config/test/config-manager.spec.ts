@@ -1,7 +1,51 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ConfigManager } from "../source/config-manager";
-import { mockScopeTree } from "./fixtures/mock-scope-tree";
+import { ConfigManager } from "#config-manager";
+import { mockScopeTree } from "#test/fixtures/scope-tree";
+
+vi.mock("#modules/scope-tree/scope-tree-repository", () => {
+  const MockScopeTreeRepository = vi.fn(
+    class {
+      getCachedScopeTree = vi.fn(() => null);
+      getPersistedScopeTree = vi.fn(() => mockScopeTree);
+      setCachedScopeTree = vi.fn();
+      saveScopeTree = vi.fn();
+    },
+  );
+
+  return { ScopeTreeRepository: MockScopeTreeRepository };
+});
+
+vi.mock("#modules/schema/config-schema-repository", () => {
+  const mockSchema = JSON.stringify([
+    {
+      name: "exampleList",
+      type: "list",
+      options: [{ label: "Option 1", value: "option1" }],
+      default: "option1",
+    },
+    {
+      name: "currency",
+      type: "text",
+      label: "Currency",
+      default: "",
+    },
+  ]);
+
+  const MockConfigSchemaRepository = vi.fn(
+    class {
+      getCachedSchema = vi.fn(() => null);
+      setCachedSchema = vi.fn();
+      deleteCachedSchema = vi.fn();
+      getPersistedSchema = vi.fn(() => mockSchema);
+      saveSchema = vi.fn();
+      getSchemaVersion = vi.fn(() => null);
+      setSchemaVersion = vi.fn();
+    },
+  );
+
+  return { ConfigSchemaRepository: MockConfigSchemaRepository };
+});
 
 function buildPayload(
   id: string,
@@ -17,48 +61,6 @@ function buildPayload(
     scope: { id, code, level },
     config: entries,
   });
-}
-
-// Mock repositories for testing
-class MockScopeTreeRepository {
-  async getCachedScopeTree(namespace: string) {
-    return null;
-  }
-  async setCachedScopeTree(namespace: string, tree: any, ttl: number) {}
-  async getPersistedScopeTree(namespace: string) {
-    return mockScopeTree;
-  }
-  async saveScopeTree(namespace: string, scopes: any): Promise<void> {}
-}
-
-class MockConfigSchemaRepository {
-  async getCachedSchema(namespace: string) {
-    return null;
-  }
-  async setCachedSchema(namespace: string, data: any, ttl: number) {}
-  async deleteCachedSchema(namespace: string) {}
-  async getPersistedSchema(): Promise<string> {
-    // Return a valid schema with defaults for testing
-    return JSON.stringify([
-      {
-        name: "exampleList",
-        type: "list",
-        options: [{ label: "Option 1", value: "option1" }],
-        default: "option1",
-      },
-      {
-        name: "currency",
-        type: "text",
-        label: "Currency",
-        default: "",
-      },
-    ]);
-  }
-  async saveSchema(schema: string): Promise<void> {}
-  async getSchemaVersion(namespace: string) {
-    return null;
-  }
-  async setSchemaVersion(namespace: string, version: string) {}
 }
 
 class MockConfigurationRepository {
@@ -129,36 +131,9 @@ class MockConfigurationRepository {
 }
 
 // Mock instances
-let mockScopeTreeRepo: MockScopeTreeRepository;
-let mockSchemaRepo: MockConfigSchemaRepository;
 let mockConfigRepo: MockConfigurationRepository;
 
-// Mock the repository modules with constructor delegation
-vi.mock("../source/modules/scope-tree/scope-tree-repository", () => ({
-  ScopeTreeRepository: class MockedScopeTreeRepository {
-    constructor() {
-      // Delegate all methods to the mock instance
-      if (mockScopeTreeRepo) {
-        Object.setPrototypeOf(this, mockScopeTreeRepo);
-        Object.assign(this, mockScopeTreeRepo);
-      }
-    }
-  },
-}));
-
-vi.mock("../source/modules/schema/config-schema-repository", () => ({
-  ConfigSchemaRepository: class MockedConfigSchemaRepository {
-    constructor() {
-      // Delegate all methods to the mock instance
-      if (mockSchemaRepo) {
-        Object.setPrototypeOf(this, mockSchemaRepo);
-        Object.assign(this, mockSchemaRepo);
-      }
-    }
-  },
-}));
-
-vi.mock("../source/modules/configuration/configuration-repository", () => ({
+vi.mock("#modules/configuration/configuration-repository", () => ({
   ConfigurationRepository: class MockedConfigurationRepository {
     constructor() {
       // Delegate all methods to the mock instance
@@ -177,8 +152,6 @@ function createManager(): ConfigManager {
 describe("ConfigManager", () => {
   beforeEach(() => {
     // Initialize mock instances before each test
-    mockScopeTreeRepo = new MockScopeTreeRepository();
-    mockSchemaRepo = new MockConfigSchemaRepository();
     mockConfigRepo = new MockConfigurationRepository();
   });
 

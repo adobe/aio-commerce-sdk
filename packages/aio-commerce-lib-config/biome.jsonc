@@ -7,7 +7,6 @@
       "suspicious": {
         "noExplicitAny": "off",
         "noConsole": "off",
-        "noEmptyBlockStatements": "off",
         "useAwait": "off"
       },
       "nursery": {
