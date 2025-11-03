@@ -17,10 +17,6 @@ import { init as initState } from "@adobe/aio-lib-state";
 import type { Files } from "@adobe/aio-lib-files";
 import type { StateStore } from "@adobe/aio-lib-state";
 
-// Shared instances to avoid re-initialization
-let sharedState: StateStore | undefined;
-let sharedFiles: Files | undefined;
-
 const logger = AioLogger(
   "@adobe/aio-commerce-lib-config:configuration-repository",
   { level: process.env.LOG_LEVEL ?? "info" },
@@ -31,18 +27,28 @@ const logger = AioLogger(
  * Handles both state (caching) and files (persistence) operations
  */
 export class ConfigurationRepository {
+  private __state: StateStore | null;
+  private __files: Files | null;
+
+  public constructor(state?: StateStore, files?: Files) {
+    this.__state = state ?? null;
+    this.__files = files ?? null;
+  }
+
   private async getState() {
-    if (!sharedState) {
-      sharedState = await initState();
+    if (!this.__state) {
+      this.__state = await initState();
     }
-    return sharedState;
+
+    return this.__state;
   }
 
   private async getFiles() {
-    if (!sharedFiles) {
-      sharedFiles = await initFiles();
+    if (!this.__files) {
+      this.__files = await initFiles();
     }
-    return sharedFiles;
+
+    return this.__files;
   }
 
   /**

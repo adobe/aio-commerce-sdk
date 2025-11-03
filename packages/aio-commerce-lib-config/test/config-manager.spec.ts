@@ -1,7 +1,34 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ConfigManager } from "#config-manager";
+import { ConfigurationRepository } from "#modules/configuration/configuration-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
+
+import { createMockLibFiles } from "./mocks/lib-files";
+import { createMockLibState } from "./mocks/lib-state";
+
+const MockState = createMockLibState();
+const MockFiles = createMockLibFiles();
+
+// Module-level variables that will be reassigned in beforeEach
+let mockStateInstance = new MockState();
+let mockFilesInstance = new MockFiles();
+
+vi.mock("#modules/configuration/configuration-repository", async () => {
+  const original = await vi.importActual<{
+    ConfigurationRepository: typeof ConfigurationRepository;
+  }>("#modules/configuration/configuration-repository");
+
+  return {
+    ...original,
+    ConfigurationRepository: class extends original.ConfigurationRepository {
+      public constructor() {
+        // @ts-expect-error - mocks are minimal implementations for testing only
+        super(mockStateInstance, mockFilesInstance);
+      }
+    },
+  };
+});
 
 vi.mock("#modules/scope-tree/scope-tree-repository", () => {
   const MockScopeTreeRepository = vi.fn(
@@ -63,99 +90,19 @@ function buildPayload(
   });
 }
 
-class MockConfigurationRepository {
-  private readonly state = new Map<string, string>();
-  private readonly files = new Map<string, string>();
-
-  // Low-level methods
-  public async getCachedConfig(scopeCode: string): Promise<string | null> {
-    const key = `configuration.${scopeCode}`;
-    return this.state.get(key) || null;
-  }
-
-  public async setCachedConfig(
-    scopeCode: string,
-    payload: string,
-  ): Promise<void> {
-    const key = `configuration.${scopeCode}`;
-    this.state.set(key, payload);
-  }
-
-  public async getPersistedConfig(scopeCode: string): Promise<string | null> {
-    const path = `scope/${scopeCode.toLowerCase()}/configuration.json`;
-    return this.files.get(path) || null;
-  }
-
-  public async saveConfig(scopeCode: string, payload: string): Promise<void> {
-    const path = `scope/${scopeCode.toLowerCase()}/configuration.json`;
-    this.files.set(path, payload);
-  }
-
-  // High-level methods
-  public async loadConfig(
-    scopeCode: string,
-  ): Promise<{ scope: any; config: any[] } | null> {
-    try {
-      const statePayload = await this.getCachedConfig(scopeCode);
-      if (statePayload) {
-        return JSON.parse(statePayload);
-      }
-    } catch (_e) {
-      // Continue to files
-    }
-
-    try {
-      const filePayload = await this.getPersistedConfig(scopeCode);
-      if (filePayload) {
-        const parsed = JSON.parse(filePayload);
-        try {
-          await this.setCachedConfig(scopeCode, JSON.stringify(parsed));
-        } catch (_e) {
-          // Cache failure is non-critical
-        }
-        return parsed;
-      }
-    } catch (_e) {
-      // No config found
-    }
-
-    return null;
-  }
-
-  public async persistConfig(scopeCode: string, payload: any): Promise<void> {
-    const payloadString = JSON.stringify(payload);
-    await this.saveConfig(scopeCode, payloadString);
-    try {
-      await this.setCachedConfig(scopeCode, payloadString);
-    } catch (_e) {
-      // Cache failure is non-critical
-    }
-  }
-}
-
-// Mock instances
-let mockConfigRepo: MockConfigurationRepository;
-
-vi.mock("#modules/configuration/configuration-repository", () => ({
-  ConfigurationRepository: class MockedConfigurationRepository {
-    public constructor() {
-      // Delegate all methods to the mock instance
-      if (mockConfigRepo) {
-        Object.setPrototypeOf(this, mockConfigRepo);
-        Object.assign(this, mockConfigRepo);
-      }
-    }
-  },
-}));
-
 function createManager(): ConfigManager {
   return new ConfigManager();
 }
 
 describe("ConfigManager", () => {
+  let mockConfigRepo: ConfigurationRepository;
+
   beforeEach(() => {
-    // Initialize mock instances before each test
-    mockConfigRepo = new MockConfigurationRepository();
+    // Create fresh mock instances for each test
+    // so that each test starts with a clean state
+    mockStateInstance = new MockState();
+    mockFilesInstance = new MockFiles();
+    mockConfigRepo = new ConfigurationRepository();
   });
 
   it("returns defaults when no persisted config", async () => {
@@ -178,6 +125,7 @@ describe("ConfigManager", () => {
         },
       ]),
     );
+
     const result = await mgr.getConfiguration("global", "global");
     expect(result.config.find((e: any) => e.name === "currency")?.value).toBe(
       "€",
@@ -196,6 +144,7 @@ describe("ConfigManager", () => {
         },
       ]),
     );
+
     const result = await mgr.getConfiguration("global", "global");
     expect(result.config.find((e: any) => e.name === "currency")?.value).toBe(
       "£",
@@ -310,7 +259,7 @@ describe("ConfigManager", () => {
     expect(response.scope.code).toBe("global");
     expect(response.config).toEqual([{ name: "currency", value: "JPY" }]);
 
-    // Verify persistence
+    // Verify persistence in files
     const persisted = await mockConfigRepo.getPersistedConfig("global");
     expect(persisted).toBeTruthy();
     const parsed = JSON.parse(persisted!);

@@ -4,9 +4,6 @@
   "extends": "//",
   "linter": {
     "rules": {
-      "suspicious": {
-        "useAwait": "off"
-      },
       "nursery": {
         "useMaxParams": "off"
       },
