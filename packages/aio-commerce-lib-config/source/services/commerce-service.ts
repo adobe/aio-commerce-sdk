@@ -23,7 +23,8 @@ import type {
  */
 export class CommerceService {
   private httpClient: AdobeCommerceHttpClient;
-  constructor(httpClient: AdobeCommerceHttpClient) {
+
+  public constructor(httpClient: AdobeCommerceHttpClient) {
     this.httpClient = httpClient;
   }
 
@@ -31,7 +32,7 @@ export class CommerceService {
    * Fetch all scope data from Commerce REST API endpoints
    * @returns Complete Commerce scope data with websites, store groups, and store views
    */
-  async getAllScopeData(): Promise<CommerceScopeData> {
+  public async getAllScopeData(): Promise<CommerceScopeData> {
     try {
       // Fetch all three endpoint data in parallel for better performance
       const [websites, storeGroups, storeViews] = await Promise.all([
@@ -50,7 +51,7 @@ export class CommerceService {
    * Get all websites using /V1/store/websites endpoint
    * @see https://adobe-commerce.redoc.ly/2.4.8-admin/tag/storewebsites
    */
-  async getWebsites(): Promise<Website[]> {
+  public async getWebsites(): Promise<Website[]> {
     try {
       return await this.httpClient.get("store/websites").json<Website[]>();
     } catch (error) {
@@ -62,7 +63,7 @@ export class CommerceService {
    * Get all store groups using /V1/store/storeGroups endpoint
    * @see https://adobe-commerce.redoc.ly/2.4.8-admin/tag/storestoreGroups
    */
-  async getStoreGroups(): Promise<StoreGroup[]> {
+  public async getStoreGroups(): Promise<StoreGroup[]> {
     try {
       return await this.httpClient
         .get("store/storeGroups")
@@ -76,7 +77,7 @@ export class CommerceService {
    * Get all store views using /V1/store/storeViews endpoint
    * @see https://adobe-commerce.redoc.ly/2.4.8-admin/tag/storestoreViews
    */
-  async getStoreViews(): Promise<StoreView[]> {
+  public async getStoreViews(): Promise<StoreView[]> {
     try {
       return await this.httpClient.get("store/storeViews").json<StoreView[]>();
     } catch (error) {

@@ -48,7 +48,7 @@ export class ConfigurationRepository {
   /**
    * Get cached configuration payload from state store
    */
-  async getCachedConfig(scopeCode: string) {
+  public async getCachedConfig(scopeCode: string) {
     try {
       const state = await this.getState();
       const key = this.getConfigStateKey(scopeCode);
@@ -62,7 +62,7 @@ export class ConfigurationRepository {
   /**
    * Cache configuration payload in state store
    */
-  async setCachedConfig(scopeCode: string, payload: string) {
+  public async setCachedConfig(scopeCode: string, payload: string) {
     try {
       const state = await this.getState();
       const key = this.getConfigStateKey(scopeCode);
@@ -79,7 +79,7 @@ export class ConfigurationRepository {
   /**
    * Get persisted configuration payload from files
    */
-  async getPersistedConfig(scopeCode: string) {
+  public async getPersistedConfig(scopeCode: string) {
     try {
       const files = await this.getFiles();
       const filePath = this.getConfigFilePath(scopeCode);
@@ -100,7 +100,7 @@ export class ConfigurationRepository {
   /**
    * Save configuration payload to files
    */
-  async saveConfig(scopeCode: string, payload: string) {
+  public async saveConfig(scopeCode: string, payload: string) {
     const files = await this.getFiles();
     const filePath = this.getConfigFilePath(scopeCode);
     await files.write(filePath, payload);
@@ -111,7 +111,7 @@ export class ConfigurationRepository {
    * @param scopeCode - The scope code to load configuration for
    * @returns The configuration payload or null if not found
    */
-  async loadConfig(scopeCode: string) {
+  public async loadConfig(scopeCode: string) {
     try {
       // Try state cache first
       const statePayload = await this.getCachedConfig(scopeCode);
@@ -169,7 +169,7 @@ export class ConfigurationRepository {
    * @param scopeCode - The scope code to persist configuration for
    * @param payload - The configuration payload object
    */
-  async persistConfig(scopeCode: string, payload: unknown) {
+  public async persistConfig(scopeCode: string, payload: unknown) {
     const payloadString = JSON.stringify(payload);
 
     // Always save to files (primary persistence)

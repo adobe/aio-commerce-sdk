@@ -49,7 +49,7 @@ export class ConfigSchemaRepository {
   /**
    * Get cached schema from state store
    */
-  async getCachedSchema(
+  public async getCachedSchema(
     namespace: string,
   ): Promise<ConfigSchemaField[] | null> {
     try {
@@ -64,7 +64,7 @@ export class ConfigSchemaRepository {
   /**
    * Cache schema in state store with TTL
    */
-  async setCachedSchema(
+  public async setCachedSchema(
     namespace: string,
     data: ConfigSchemaField[],
     ttl: number,
@@ -84,7 +84,7 @@ export class ConfigSchemaRepository {
   /**
    * Delete cached schema from state store
    */
-  async deleteCachedSchema(namespace: string): Promise<void> {
+  public async deleteCachedSchema(namespace: string): Promise<void> {
     try {
       const state = await this.getState();
       await state.delete(`${namespace}:config-schema`);
@@ -100,7 +100,7 @@ export class ConfigSchemaRepository {
   /**
    * Get cached schema version
    */
-  async getSchemaVersion(namespace: string): Promise<string | null> {
+  public async getSchemaVersion(namespace: string): Promise<string | null> {
     try {
       const state = await this.getState();
       const versionData = await state.get(`${namespace}:schema-version`);
@@ -113,7 +113,10 @@ export class ConfigSchemaRepository {
   /**
    * Set schema version
    */
-  async setSchemaVersion(namespace: string, version: string): Promise<void> {
+  public async setSchemaVersion(
+    namespace: string,
+    version: string,
+  ): Promise<void> {
     try {
       const state = await this.getState();
       await state.put(`${namespace}:schema-version`, { version });
@@ -129,7 +132,7 @@ export class ConfigSchemaRepository {
   /**
    * Read persisted schema from files
    */
-  async getPersistedSchema(): Promise<string> {
+  public async getPersistedSchema(): Promise<string> {
     const files = await this.getFiles();
     const buffer: Buffer = await files.read("config-schema.json");
     return buffer.toString();
@@ -138,7 +141,7 @@ export class ConfigSchemaRepository {
   /**
    * Save schema to files
    */
-  async saveSchema(schema: string): Promise<void> {
+  public async saveSchema(schema: string): Promise<void> {
     const files = await this.getFiles();
     await files.write("config-schema.json", schema);
   }

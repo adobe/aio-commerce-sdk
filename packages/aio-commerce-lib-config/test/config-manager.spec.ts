@@ -6,10 +6,10 @@ import { mockScopeTree } from "#test/fixtures/scope-tree";
 vi.mock("#modules/scope-tree/scope-tree-repository", () => {
   const MockScopeTreeRepository = vi.fn(
     class {
-      getCachedScopeTree = vi.fn(() => null);
-      getPersistedScopeTree = vi.fn(() => mockScopeTree);
-      setCachedScopeTree = vi.fn();
-      saveScopeTree = vi.fn();
+      public getCachedScopeTree = vi.fn(() => null);
+      public getPersistedScopeTree = vi.fn(() => mockScopeTree);
+      public setCachedScopeTree = vi.fn();
+      public saveScopeTree = vi.fn();
     },
   );
 
@@ -34,13 +34,13 @@ vi.mock("#modules/schema/config-schema-repository", () => {
 
   const MockConfigSchemaRepository = vi.fn(
     class {
-      getCachedSchema = vi.fn(() => null);
-      setCachedSchema = vi.fn();
-      deleteCachedSchema = vi.fn();
-      getPersistedSchema = vi.fn(() => mockSchema);
-      saveSchema = vi.fn();
-      getSchemaVersion = vi.fn(() => null);
-      setSchemaVersion = vi.fn();
+      public getCachedSchema = vi.fn(() => null);
+      public setCachedSchema = vi.fn();
+      public deleteCachedSchema = vi.fn();
+      public getPersistedSchema = vi.fn(() => mockSchema);
+      public saveSchema = vi.fn();
+      public getSchemaVersion = vi.fn(() => null);
+      public setSchemaVersion = vi.fn();
     },
   );
 
@@ -68,28 +68,31 @@ class MockConfigurationRepository {
   private files = new Map<string, string>();
 
   // Low-level methods
-  async getCachedConfig(scopeCode: string): Promise<string | null> {
+  public async getCachedConfig(scopeCode: string): Promise<string | null> {
     const key = `configuration.${scopeCode}`;
     return this.state.get(key) || null;
   }
 
-  async setCachedConfig(scopeCode: string, payload: string): Promise<void> {
+  public async setCachedConfig(
+    scopeCode: string,
+    payload: string,
+  ): Promise<void> {
     const key = `configuration.${scopeCode}`;
     this.state.set(key, payload);
   }
 
-  async getPersistedConfig(scopeCode: string): Promise<string | null> {
+  public async getPersistedConfig(scopeCode: string): Promise<string | null> {
     const path = `scope/${scopeCode.toLowerCase()}/configuration.json`;
     return this.files.get(path) || null;
   }
 
-  async saveConfig(scopeCode: string, payload: string): Promise<void> {
+  public async saveConfig(scopeCode: string, payload: string): Promise<void> {
     const path = `scope/${scopeCode.toLowerCase()}/configuration.json`;
     this.files.set(path, payload);
   }
 
   // High-level methods
-  async loadConfig(
+  public async loadConfig(
     scopeCode: string,
   ): Promise<{ scope: any; config: any[] } | null> {
     try {
@@ -119,7 +122,7 @@ class MockConfigurationRepository {
     return null;
   }
 
-  async persistConfig(scopeCode: string, payload: any): Promise<void> {
+  public async persistConfig(scopeCode: string, payload: any): Promise<void> {
     const payloadString = JSON.stringify(payload);
     await this.saveConfig(scopeCode, payloadString);
     try {
@@ -135,7 +138,7 @@ let mockConfigRepo: MockConfigurationRepository;
 
 vi.mock("#modules/configuration/configuration-repository", () => ({
   ConfigurationRepository: class MockedConfigurationRepository {
-    constructor() {
+    public constructor() {
       // Delegate all methods to the mock instance
       if (mockConfigRepo) {
         Object.setPrototypeOf(this, mockConfigRepo);

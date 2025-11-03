@@ -53,7 +53,9 @@ export class ScopeTreeRepository {
   /**
    * Get cached scope tree from state store
    */
-  async getCachedScopeTree(namespace: string): Promise<ScopeNode[] | null> {
+  public async getCachedScopeTree(
+    namespace: string,
+  ): Promise<ScopeNode[] | null> {
     try {
       const state = await this.getState();
       const cached = await state.get(`${namespace}:scope-tree`);
@@ -66,7 +68,7 @@ export class ScopeTreeRepository {
   /**
    * Cache scope tree in state store with TTL
    */
-  async setCachedScopeTree(
+  public async setCachedScopeTree(
     namespace: string,
     data: ScopeNode[],
     ttlSeconds: number,
@@ -86,7 +88,7 @@ export class ScopeTreeRepository {
   /**
    * Get persisted scope tree from files
    */
-  async getPersistedScopeTree(namespace: string): Promise<ScopeTree> {
+  public async getPersistedScopeTree(namespace: string): Promise<ScopeTree> {
     try {
       const files = await this.getFiles();
       const filePath = this.generateScopeFilePath(namespace);
@@ -114,7 +116,10 @@ export class ScopeTreeRepository {
   /**
    * Save scope tree to files
    */
-  async saveScopeTree(namespace: string, scopes: ScopeTree): Promise<void> {
+  public async saveScopeTree(
+    namespace: string,
+    scopes: ScopeTree,
+  ): Promise<void> {
     try {
       const files = await this.getFiles();
       const filePath = this.generateScopeFilePath(namespace);
