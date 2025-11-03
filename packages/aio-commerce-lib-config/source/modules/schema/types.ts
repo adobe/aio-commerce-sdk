@@ -11,21 +11,21 @@ governing permissions and limitations under the License.
 */
 
 // Schema-specific types
-export interface ConfigSchemaOption {
+export type ConfigSchemaOption = {
   value: string;
   label: string;
-}
+};
 
-export interface ConfigSchemaField {
+export type ConfigSchemaField = {
   name: string;
   type: "text" | "list";
   label: string;
   options?: ConfigSchemaOption[];
   default?: string;
-}
+};
 
 // Context needed for schema operations
-export interface SchemaContext {
+export type SchemaContext = {
   namespace: string;
   cacheTimeout: number;
-}
+};

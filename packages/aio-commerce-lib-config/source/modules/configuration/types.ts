@@ -13,23 +13,23 @@ governing permissions and limitations under the License.
 import type { SetOptional } from "type-fest";
 
 // Configuration-specific types
-export interface ConfigOrigin {
+export type ConfigOrigin = {
   code: string;
   level: string;
-}
+};
 
 export type AcceptableConfigValue = string | number | boolean;
 
-export interface ConfigValue {
+export type ConfigValue = {
   name: string;
   value: AcceptableConfigValue;
   origin: ConfigOrigin;
-}
+};
 
 export type ConfigValueWithOptionalOrigin = SetOptional<ConfigValue, "origin">;
 
 // Context needed for configuration operations
-export interface ConfigContext {
+export type ConfigContext = {
   namespace: string;
   cacheTimeout: number;
-}
+};

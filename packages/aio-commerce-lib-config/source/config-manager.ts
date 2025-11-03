@@ -11,10 +11,10 @@ import {
 import { validateCommerceConfig } from "./utils/commerce-config-validation";
 import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "./utils/constants";
 
+import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { ConfigSchemaField } from "./modules/schema";
 import type { ScopeTree } from "./modules/scope-tree";
 import type {
-  CommerceHttpClientParams,
   GetConfigurationByKeyResponse,
   GetConfigurationResponse,
   LibConfig,

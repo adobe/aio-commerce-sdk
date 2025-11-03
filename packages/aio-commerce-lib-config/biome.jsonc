@@ -12,7 +12,6 @@
       },
       "style": {
         "useConsistentMemberAccessibility": "off",
-        "useConsistentTypeDefinitions": "off",
         "noMagicNumbers": "off",
         "noNonNullAssertion": "off",
         "useReadonlyClassProperties": "off"

@@ -12,7 +12,7 @@ governing permissions and limitations under the License.
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 
-export interface LibConfig {
+export type LibConfig = {
   cacheTimeout?: number;
   commerce?: CommerceHttpClientParams;
-}
+};

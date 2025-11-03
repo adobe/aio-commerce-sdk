@@ -14,21 +14,21 @@ governing permissions and limitations under the License.
 // to avoid circular dependencies with LibConfig
 
 // Commerce API response types
-export interface CommerceScopeData {
+export type CommerceScopeData = {
   websites: Website[];
   storeGroups: StoreGroup[];
   storeViews: StoreView[];
-}
+};
 
-export interface Website {
+export type Website = {
   id: number;
   name: string;
   code: string;
   default_group_id: number;
   extension_attributes?: Record<string, unknown>;
-}
+};
 
-export interface StoreGroup {
+export type StoreGroup = {
   id: number;
   website_id: number;
   root_category_id: number;
@@ -36,9 +36,9 @@ export interface StoreGroup {
   name: string;
   code: string;
   extension_attributes?: Record<string, unknown>;
-}
+};
 
-export interface StoreView {
+export type StoreView = {
   id: number;
   code: string;
   name: string;
@@ -46,4 +46,4 @@ export interface StoreView {
   store_group_id: number;
   is_active: boolean;
   extension_attributes?: Record<string, unknown>;
-}
+};
