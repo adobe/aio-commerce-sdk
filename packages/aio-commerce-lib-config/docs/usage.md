@@ -21,6 +21,8 @@ See the [API Reference](./api-reference/README.md) for a full list of classes, i
 
 1. Create your configuration schema at `init-files/configuration-schema.json`:
 
+Define the structure of your application's configuration using a schema file. This example shows how to create different types of configuration fields (list and text). Each field definition specifies its type, label, and optional default values.
+
 ```json
 [
   {
@@ -56,16 +58,25 @@ hooks:
 
 This automatically generates 6 runtime actions under `.generated/actions/app-management/`:
 
+**Scope Management Actions:**
+
+Scopes define the hierarchical boundaries where configuration values can be set and inherited. For Adobe Commerce, these typically represent websites, stores, and store views. For external systems, you can define custom scope hierarchies that match your application's organizational structure.
+
 - `get-scope-tree` - Retrieve scope hierarchies
 - `sync-commerce-scopes` - Sync scopes from Adobe Commerce
+- `set-custom-scope-tree` - Define custom scope hierarchies
+
+**Configuration Management Actions:**
+
 - `get-config-schema` - Retrieve configuration schema
 - `get-configuration` - Get configuration values with inheritance
 - `set-configuration` - Save configuration values
-- `set-custom-scope-tree` - Define custom scope hierarchies
 
 The hook also configures the required environment variables in `ext.config.yaml`.
 
 ### Initialize the Library
+
+Initialize the library with basic settings or configure it with an Adobe Commerce instance, and uses the default cache timeout of 5 minutes. When working with Adobe Commerce, provide the appropriate authentication credentials based on your instance type (SaaS or PaaS).
 
 ```typescript
 import { init } from "@adobe/aio-commerce-lib-config";
@@ -105,6 +116,8 @@ const config = init({
 
 ### Working with Scope Trees
 
+Retrieve and manage scope hierarchies to organize your configuration values. Use cached scope data for better performance, or force a refresh when you need the latest data from Adobe Commerce. For external systems, define custom scope hierarchies that match your application's organizational structure.
+
 ```typescript
 // Get cached scope tree
 const result = await config.getScopeTree();
@@ -118,7 +131,7 @@ const freshResult = await config.getScopeTree(true);
 const syncResult = await config.syncCommerceScopes();
 console.log("Synced:", syncResult.synced);
 
-// Set custom scope tree (for non-Commerce external systems)
+// Set custom scope tree for external systems
 await config.setCustomScopeTree({
   scopes: [
     {
@@ -142,6 +155,8 @@ await config.setCustomScopeTree({
 ```
 
 ### Managing Configuration
+
+Read and write configuration values at any scope level in your hierarchy. Configuration values automatically inherit from parent scopes when not explicitly set, following the inheritance model. Use `getConfigurationByKey` when you need a single value, or `getConfiguration` to retrieve all configuration values for a scope.
 
 ```typescript
 // Get configuration by scope ID
@@ -180,6 +195,8 @@ console.log(schema); // Array of field definitions
 ```
 
 ### Using Configuration in Runtime Actions
+
+This example demonstrates a typical use case: retrieving scope-specific configuration values within a runtime action. The action receives scope information (store code and level) from the incoming request parameters and uses it to fetch the appropriate configuration values. This pattern ensures that each request is processed with the correct settings for that particular scope.
 
 ```javascript
 // actions/process-order/index.js
@@ -256,9 +273,11 @@ Validate your schema before deployment:
 pnpm exec aio-commerce-lib-config-schema-validate
 ```
 
-Supported field types:
+The library supports two field types for configuration schemas:
 
 **Text Field:**
+
+Use text fields for free-form input values like merchant identifiers or custom strings. Text fields support optional default values.
 
 ```json
 {
@@ -270,6 +289,8 @@ Supported field types:
 ```
 
 **List Field (Dropdown):**
+
+Use list fields when you need to restrict values to a predefined set of options. This is useful for settings like log levels, environment modes, or payment methods. List fields require both options and a default value.
 
 ```json
 {
