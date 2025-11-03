@@ -118,8 +118,7 @@ export function validateCommerceConfig(
     const missingFields = requiredFields.filter((field) => {
       if (field === "clientSecrets") {
         return (
-          !auth.clientSecrets ||
-          !Array.isArray(auth.clientSecrets) ||
+          !(auth.clientSecrets && Array.isArray(auth.clientSecrets)) ||
           auth.clientSecrets.length === 0
         );
       }

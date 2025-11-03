@@ -161,7 +161,9 @@ function findInScopeTree(
     }
     if (scope.children) {
       const foundId = findInScopeTree(targetCode, targetLevel, scope.children);
-      if (foundId) return foundId;
+      if (foundId) {
+        return foundId;
+      }
     }
   }
 }

@@ -80,7 +80,7 @@ export async function getConfiguration(
       scopeLevel,
       scopePath,
     );
-  } catch (e) {
+  } catch (_e) {
     // Continue with original configData if merging fails
   }
 

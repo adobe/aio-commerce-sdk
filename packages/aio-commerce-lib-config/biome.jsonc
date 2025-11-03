@@ -18,23 +18,16 @@
         "useConsistentTypeDefinitions": "off",
         "noMagicNumbers": "off",
         "noNonNullAssertion": "off",
-        "useImportType": "off",
-        "useBlockStatements": "off",
-        "useReadonlyClassProperties": "off",
-        "noExportedImports": "off"
+        "useReadonlyClassProperties": "off"
       },
       "correctness": {
-        "noUnusedVariables": "off",
         "noUnusedFunctionParameters": "off"
       },
       "complexity": {
-        "useSimplifiedLogicExpression": "off",
-        "noExcessiveCognitiveComplexity": "off",
-        "noForEach": "off"
+        "noExcessiveCognitiveComplexity": "off"
       },
       "performance": {
-        "noBarrelFile": "off",
-        "useTopLevelRegex": "off"
+        "noBarrelFile": "off"
       }
     }
   },

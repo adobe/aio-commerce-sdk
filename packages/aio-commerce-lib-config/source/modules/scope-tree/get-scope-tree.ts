@@ -10,15 +10,13 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import {
-  AdobeCommerceHttpClient,
-  type CommerceHttpClientParams,
-} from "@adobe/aio-commerce-lib-api";
+import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 
 import { CommerceService } from "../../services/commerce-service";
 import { buildUpdatedScopeTree, mergeCommerceScopes } from "./merge-scopes";
 import { ScopeTreeRepository } from "./scope-tree-repository";
 
+import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type {
   GetScopeTreeOptions,
   GetScopeTreeResult,

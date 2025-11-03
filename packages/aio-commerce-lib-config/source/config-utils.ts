@@ -1,10 +1,10 @@
-import { DEFAULT_CUSTOM_SCOPE_LEVEL, generateUUID } from "./utils";
+import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "./utils";
 
 import type { ConfigSchemaField } from "./modules/schema";
 import type { ScopeNode, ScopeTree } from "./modules/scope-tree";
 
 // Re-export UUID utility
-export { generateUUID };
+export { generateUUID } from "./utils";
 
 /**
  * Checks if the given value is a non-empty string.
@@ -38,11 +38,15 @@ export function areValidArgs(args: any[]): boolean {
  */
 function findScopeNodeById(tree: ScopeTree, id: string): ScopeNode | null {
   const traverse = (node: ScopeNode): ScopeNode | null => {
-    if (node.id === id) return node;
+    if (node.id === id) {
+      return node;
+    }
     if (node.children) {
       for (const child of node.children) {
         const found = traverse(child);
-        if (found) return found;
+        if (found) {
+          return found;
+        }
       }
     }
     return null;
@@ -50,7 +54,9 @@ function findScopeNodeById(tree: ScopeTree, id: string): ScopeNode | null {
 
   for (const root of tree) {
     const found = traverse(root);
-    if (found) return found;
+    if (found) {
+      return found;
+    }
   }
   return null;
 }
@@ -72,7 +78,7 @@ export function deriveScopeFromCodeAndLevel(
   scopeId: string;
   scopePath: ScopeNode[];
 } {
-  if (!isNonEmptyString(code) || !isNonEmptyString(level)) {
+  if (!(isNonEmptyString(code) && isNonEmptyString(level))) {
     throw new Error("INVALID_ARGS: expected (code: string, level: string)");
   }
   const trimmedCode = code.trim();
@@ -169,7 +175,7 @@ export function deriveScopeFromArgs(args: any[], tree: ScopeTree) {
     // Try as ID first, then as code with default level
     try {
       return deriveScopeFromId(arg, tree);
-    } catch (error) {
+    } catch (_error) {
       // If ID lookup fails, treat as code with default level
       return deriveScopeFromCodeWithOptionalLevel(arg, undefined, tree);
     }
@@ -198,13 +204,17 @@ export function findScopePath(
     }
     if (node.children) {
       for (const child of node.children) {
-        if (traverse(child, extendedPath)) return true;
+        if (traverse(child, extendedPath)) {
+          return true;
+        }
       }
     }
     return false;
   };
   for (const root of tree) {
-    if (traverse(root, [])) return path.reverse();
+    if (traverse(root, [])) {
+      return path.reverse();
+    }
   }
   return [];
 }
@@ -220,7 +230,9 @@ export function sanitizeRequestEntries(
   const list: any[] = Array.isArray(entries) ? entries : [];
   return list
     .filter((entry: any) => {
-      if (!entry || typeof entry.name !== "string") return false;
+      if (!entry || typeof entry.name !== "string") {
+        return false;
+      }
       const hasValidValue = ["string", "number", "boolean"].includes(
         typeof entry.value,
       );

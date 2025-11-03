@@ -10,11 +10,13 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { Files, init as initFiles } from "@adobe/aio-lib-files";
-import { init as initState, StateStore } from "@adobe/aio-lib-state";
+import { init as initFiles } from "@adobe/aio-lib-files";
+import { init as initState } from "@adobe/aio-lib-state";
 
 import { generateUUID } from "../../utils/uuid";
 
+import type { Files } from "@adobe/aio-lib-files";
+import type { StateStore } from "@adobe/aio-lib-state";
 import type { ScopeNode, ScopeTree } from "./types";
 
 // Shared instances to avoid re-initialization
@@ -48,7 +50,7 @@ export class ScopeTreeRepository {
       const state = await this.getState();
       const cached = await state.get(`${namespace}:scope-tree`);
       return cached?.value?.data || null;
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }
@@ -82,7 +84,7 @@ export class ScopeTreeRepository {
         const content = await files.read(filePath);
         const data = JSON.parse(content.toString());
         return data.scopes as ScopeTree;
-      } catch (readError) {
+      } catch (_readError) {
         // File doesn't exist, create and return initial tree
         const initialTree = this.createInitialScopeTree();
         await this.saveScopeTree(namespace, initialTree);

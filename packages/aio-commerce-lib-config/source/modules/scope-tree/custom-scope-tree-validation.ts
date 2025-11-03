@@ -32,15 +32,15 @@ export function createValidationError(message: string): Error {
 export function validateCustomScopeRequest(
   request: SetCustomScopeTreeRequest,
 ): CustomScopeInput[] {
-  if (!request.scopes || !Array.isArray(request.scopes)) {
+  if (!(request.scopes && Array.isArray(request.scopes))) {
     throw createValidationError("Request must include a scopes array");
   }
 
   const validatedScopes: CustomScopeInput[] = [];
-  request.scopes.forEach((scope) => {
+  for (const scope of request.scopes) {
     const validatedScope = validateAndNormalizeSingleScope(scope);
     validatedScopes.push(validatedScope);
-  });
+  }
 
   checkForDuplicateCodeLevelCombinations(validatedScopes);
 

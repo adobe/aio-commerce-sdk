@@ -95,7 +95,7 @@ class MockConfigurationRepository {
       if (statePayload) {
         return JSON.parse(statePayload);
       }
-    } catch (e) {
+    } catch (_e) {
       // Continue to files
     }
 
@@ -105,12 +105,12 @@ class MockConfigurationRepository {
         const parsed = JSON.parse(filePayload);
         try {
           await this.setCachedConfig(scopeCode, JSON.stringify(parsed));
-        } catch (e) {
+        } catch (_e) {
           // Cache failure is non-critical
         }
         return parsed;
       }
-    } catch (e) {
+    } catch (_e) {
       // No config found
     }
 
@@ -122,7 +122,7 @@ class MockConfigurationRepository {
     await this.saveConfig(scopeCode, payloadString);
     try {
       await this.setCachedConfig(scopeCode, payloadString);
-    } catch (e) {
+    } catch (_e) {
       // Cache failure is non-critical
     }
   }

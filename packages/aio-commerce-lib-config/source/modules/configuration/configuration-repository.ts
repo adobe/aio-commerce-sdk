@@ -10,8 +10,11 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { Files, init as initFiles } from "@adobe/aio-lib-files";
-import { init as initState, StateStore } from "@adobe/aio-lib-state";
+import { init as initFiles } from "@adobe/aio-lib-files";
+import { init as initState } from "@adobe/aio-lib-state";
+
+import type { Files } from "@adobe/aio-lib-files";
+import type { StateStore } from "@adobe/aio-lib-state";
 
 // Shared instances to avoid re-initialization
 let sharedState: StateStore | undefined;
@@ -45,7 +48,7 @@ export class ConfigurationRepository {
       const key = this.getConfigStateKey(scopeCode);
       const result = await state.get(key);
       return result.value?.data || null;
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }
@@ -80,7 +83,7 @@ export class ConfigurationRepository {
 
       const content = await files.read(filePath);
       return content ? content.toString("utf8") : null;
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }

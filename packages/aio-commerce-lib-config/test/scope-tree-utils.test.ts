@@ -217,7 +217,7 @@ describe("ScopeTreeUtils - Actual Merge Logic", () => {
       // Second website should get new UUID (didn't exist before)
       const secondWebsite = result.find((w) => w.commerce_id === 2);
       expect(secondWebsite).toBeDefined();
-      expect(secondWebsite!.id).toMatch(/^new-uuid-/); // New UUID
+      expect(secondWebsite!.id).toMatch(NEW_UUID_REGEX); // New UUID
     });
 
     it("should build correct hierarchical structure", () => {

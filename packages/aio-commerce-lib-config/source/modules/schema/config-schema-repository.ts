@@ -10,9 +10,11 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { Files, init as initFiles } from "@adobe/aio-lib-files";
-import { init as initState, StateStore } from "@adobe/aio-lib-state";
+import { init as initFiles } from "@adobe/aio-lib-files";
+import { init as initState } from "@adobe/aio-lib-state";
 
+import type { Files } from "@adobe/aio-lib-files";
+import type { StateStore } from "@adobe/aio-lib-state";
 import type { ConfigSchemaField } from "./types";
 
 // Shared instances to avoid re-initialization
@@ -48,7 +50,7 @@ export class ConfigSchemaRepository {
       const state = await this.getState();
       const cached = await state.get(`${namespace}:config-schema`);
       return cached?.value?.data || null;
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }
@@ -91,7 +93,7 @@ export class ConfigSchemaRepository {
       const state = await this.getState();
       const versionData = await state.get(`${namespace}:schema-version`);
       return versionData?.value?.version || null;
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }
