@@ -43,7 +43,7 @@ export async function main(params) {
     });
   } catch (error) {
     if (error instanceof CommerceValidationError) {
-      return createErrorResponse(400, "400", error.message);
+      return createErrorResponse(400, "BAD_REQUEST", error.message);
     }
 
     return createErrorResponse(500, "INTERNAL_ERROR",
