@@ -22,7 +22,7 @@ import type {
  * Service for fetching scope data from Adobe Commerce REST API
  */
 export class CommerceService {
-  private httpClient: AdobeCommerceHttpClient;
+  private readonly httpClient: AdobeCommerceHttpClient;
 
   public constructor(httpClient: AdobeCommerceHttpClient) {
     this.httpClient = httpClient;

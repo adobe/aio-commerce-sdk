@@ -64,8 +64,8 @@ function buildPayload(
 }
 
 class MockConfigurationRepository {
-  private state = new Map<string, string>();
-  private files = new Map<string, string>();
+  private readonly state = new Map<string, string>();
+  private readonly files = new Map<string, string>();
 
   // Low-level methods
   public async getCachedConfig(scopeCode: string): Promise<string | null> {
