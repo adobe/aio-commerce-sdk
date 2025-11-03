@@ -53,7 +53,7 @@ Define the structure of your application's configuration using a schema file. Th
 
 ```yaml
 hooks:
-  pre-app-build: "@adobe/aio-commerce-lib-config/hooks/pre-app-build"
+  pre-app-build: "node_modules/@adobe/aio-commerce-lib-config/dist/cjs/hooks/pre-app-build.cjs"
 ```
 
 This automatically generates 6 runtime actions under `.generated/actions/app-management/`:
