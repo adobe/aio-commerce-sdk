@@ -42,6 +42,7 @@ export class CommerceValidationError extends Error {
  * @param commerceConfig - Commerce configuration to validate
  * @throws {CommerceValidationError} When configuration is invalid or missing
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: This validation will be removed soon
 export function validateCommerceConfig(
   commerceConfig?: CommerceHttpClientParams,
 ): void {

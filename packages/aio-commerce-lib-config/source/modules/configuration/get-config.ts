@@ -29,7 +29,7 @@ import type { ConfigContext } from "./types";
  * @returns Promise resolving to configuration response
  */
 export async function getConfiguration(
-  context: ConfigContext,
+  { namespace }: ConfigContext,
   ...args: unknown[]
 ): Promise<GetConfigurationResponse> {
   // Create repositories for each domain
@@ -37,10 +37,7 @@ export async function getConfiguration(
   const schemaRepository = new ConfigSchemaRepository();
   const configRepository = new ConfigurationRepository();
 
-  // Get scope tree
-  const scopeTree = await scopeTreeRepository.getPersistedScopeTree(
-    context.namespace,
-  );
+  const scopeTree = await scopeTreeRepository.getPersistedScopeTree(namespace);
   const { scopeCode, scopeLevel, scopeId, scopePath } = deriveScopeFromArgs(
     args,
     scopeTree,
@@ -48,9 +45,7 @@ export async function getConfiguration(
 
   let configData = await configRepository.loadConfig(scopeCode);
   if (!configData) {
-    const cachedSchema = await schemaRepository.getCachedSchema(
-      context.namespace,
-    );
+    const cachedSchema = await schemaRepository.getCachedSchema(namespace);
     const schema =
       cachedSchema || JSON.parse(await schemaRepository.getPersistedSchema());
 
@@ -64,22 +59,21 @@ export async function getConfiguration(
   }
 
   try {
-    configData = await mergeWithSchemaDefaults(
-      async (code: string) => configRepository.loadConfig(code),
-      async () => {
-        const cachedSchema = await schemaRepository.getCachedSchema(
-          context.namespace,
-        );
+    configData = await mergeWithSchemaDefaults({
+      configData,
+      scopeCode,
+      scopeLevel,
+      scopePath,
+
+      loadScopeConfigFn: (code: string) => configRepository.loadConfig(code),
+      getSchemaFn: async () => {
+        const cachedSchema = await schemaRepository.getCachedSchema(namespace);
         return (
           cachedSchema ||
           JSON.parse(await schemaRepository.getPersistedSchema())
         );
       },
-      configData,
-      scopeCode,
-      scopeLevel,
-      scopePath,
-    );
+    });
   } catch (_e) {
     // Continue with original configData if merging fails
   }

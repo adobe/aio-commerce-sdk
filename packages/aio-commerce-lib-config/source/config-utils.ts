@@ -306,74 +306,93 @@ export function getSchemaDefaults(schema: ConfigSchemaField[]) {
 }
 
 /**
- * Merge inherited configs along the scope path and ensure schema defaults exist
- * @param loadScopeConfigFn - The function to load the scope config.
- * @param getSchemaFn - The function to get the schema.
- * @param configData - The config data to merge.
- * @param scopeCode - The code of the scope.
- * @param scopeLevel - The level of the scope.
- * @param scopePath - The path of the scope.
- * @returns The merged config data. Returns null if the config data is not valid.
- * @throws An error if the config data is not valid.
+ * Merges config entries into the target map if not already present
+ * @param merged - The target map to merge into
+ * @param entries - The config entries to merge
+ * @param origin - The origin information for the entries
  */
-export async function mergeWithSchemaDefaults(
+function mergeConfigEntries(
+  merged: Map<string, ConfigValue>,
+  entries: ConfigValue[],
+  origin: { code: string; level: string },
+) {
+  for (const entry of entries) {
+    if (!merged.has(entry.name)) {
+      merged.set(entry.name, {
+        name: entry.name,
+        value: entry.value,
+        origin,
+      });
+    }
+  }
+}
+
+/**
+ * Loads and merges config from the inheritance path
+ * @param merged - The target map to merge into
+ * @param scopePath - The path of scope nodes to load from
+ * @param loadScopeConfigFn - Function to load config for a scope
+ */
+async function mergeConfigFromPath(
+  merged: Map<string, ConfigValue>,
+  scopePath: ScopeNode[],
   loadScopeConfigFn: (
     code: string,
   ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>,
-  getSchemaFn: () => Promise<ConfigSchemaField[]>,
-  configData: { scope: ScopeNode; config: ConfigValue[] },
-  scopeCode: string,
-  scopeLevel: string,
-  scopePath: ScopeNode[],
 ) {
-  const schema = await getSchemaFn();
-  const defaultMap = new Map<string, AcceptableConfigValue>();
-
-  for (const field of schema) {
-    if (field.default !== undefined) {
-      defaultMap.set(field.name, field.default);
-    }
-  }
-
-  const merged: Map<string, ConfigValue> = new Map();
-
-  // First, load from the inheritance path (most specific to least specific within the branch)
   for (const node of scopePath) {
     const persisted = await loadScopeConfigFn(node.code);
-    if (persisted && Array.isArray(persisted.config)) {
-      for (const entry of persisted.config) {
-        if (!merged.has(entry.name)) {
-          merged.set(entry.name, {
-            name: entry.name,
-            value: entry.value,
-            origin: { code: node.code, level: node.level },
-          });
-        }
-      }
+    if (persisted?.config && Array.isArray(persisted.config)) {
+      mergeConfigEntries(merged, persisted.config, {
+        code: node.code,
+        level: node.level,
+      });
     }
   }
+}
 
-  // Then, check global scope as fallback (if not already in the path)
+/**
+ * Checks if global scope is in the path and loads it if not
+ * @param merged - The target map to merge into
+ * @param scopePath - The path of scope nodes
+ * @param loadScopeConfigFn - Function to load config for a scope
+ */
+async function mergeGlobalConfigIfNeeded(
+  merged: Map<string, ConfigValue>,
+  scopePath: ScopeNode[],
+  loadScopeConfigFn: (
+    code: string,
+  ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>,
+) {
   const hasGlobal = scopePath.some(
     (node) => node.code === "global" && node.level === "global",
   );
 
   if (!hasGlobal) {
     const globalConfig = await loadScopeConfigFn("global");
-    if (globalConfig && Array.isArray(globalConfig.config)) {
-      for (const entry of globalConfig.config) {
-        if (!merged.has(entry.name)) {
-          merged.set(entry.name, {
-            name: entry.name,
-            value: entry.value,
-            origin: { code: "global", level: "global" },
-          });
-        }
-      }
+    if (globalConfig?.config && Array.isArray(globalConfig.config)) {
+      mergeConfigEntries(merged, globalConfig.config, {
+        code: "global",
+        level: "global",
+      });
     }
   }
+}
 
-  if (configData && Array.isArray(configData.config)) {
+/**
+ * Merges the current config data into the map
+ * @param merged - The target map to merge into
+ * @param configData - The current config data
+ * @param scopeCode - The code of the scope
+ * @param scopeLevel - The level of the scope
+ */
+function mergeCurrentConfigData(
+  merged: Map<string, ConfigValue>,
+  configData: { scope: ScopeNode; config: ConfigValue[] },
+  scopeCode: string,
+  scopeLevel: string,
+) {
+  if (configData?.config && Array.isArray(configData.config)) {
     for (const entry of configData.config) {
       if (!merged.has(entry.name)) {
         merged.set(entry.name, {
@@ -387,7 +406,17 @@ export async function mergeWithSchemaDefaults(
       }
     }
   }
+}
 
+/**
+ * Applies schema defaults to the merged config
+ * @param merged - The target map to apply defaults to
+ * @param defaultMap - The map of default values
+ */
+function applySchemaDefaults(
+  merged: Map<string, ConfigValue>,
+  defaultMap: Map<string, AcceptableConfigValue>,
+) {
   for (const [name, def] of defaultMap.entries()) {
     if (!merged.has(name)) {
       merged.set(name, {
@@ -397,7 +426,54 @@ export async function mergeWithSchemaDefaults(
       });
     }
   }
+}
 
+/** Parameters for mergeWithSchemaDefaults function */
+type MergeWithSchemaDefaultsParams = {
+  loadScopeConfigFn: (
+    code: string,
+  ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>;
+  getSchemaFn: () => Promise<ConfigSchemaField[]>;
+  configData: { scope: ScopeNode; config: ConfigValue[] };
+  scopeCode: string;
+  scopeLevel: string;
+  scopePath: ScopeNode[];
+};
+
+/**
+ * Merge inherited configs along the scope path and ensure schema defaults exist
+ * @param params - The parameters object
+ * @param params.loadScopeConfigFn - The function to load the scope config.
+ * @param params.getSchemaFn - The function to get the schema.
+ * @param params.configData - The config data to merge.
+ * @param params.scopeCode - The code of the scope.
+ * @param params.scopeLevel - The level of the scope.
+ * @param params.scopePath - The path of the scope.
+ * @returns The merged config data. Returns null if the config data is not valid.
+ * @throws An error if the config data is not valid.
+ */
+export async function mergeWithSchemaDefaults({
+  loadScopeConfigFn,
+  getSchemaFn,
+  configData,
+  scopeCode,
+  scopeLevel,
+  scopePath,
+}: MergeWithSchemaDefaultsParams) {
+  const schema = await getSchemaFn();
+  const defaultMap = new Map<string, AcceptableConfigValue>();
+  for (const field of schema) {
+    if (field.default !== undefined) {
+      defaultMap.set(field.name, field.default);
+    }
+  }
+
+  const merged: Map<string, ConfigValue> = new Map();
+  await mergeConfigFromPath(merged, scopePath, loadScopeConfigFn);
+  await mergeGlobalConfigIfNeeded(merged, scopePath, loadScopeConfigFn);
+
+  mergeCurrentConfigData(merged, configData, scopeCode, scopeLevel);
+  applySchemaDefaults(merged, defaultMap);
   configData.config = Array.from(merged.entries()).map(([name, data]) => ({
     name,
     value: data.value,

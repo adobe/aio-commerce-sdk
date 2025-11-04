@@ -11,9 +11,6 @@
         "noMagicNumbers": "off",
         "noNonNullAssertion": "off"
       },
-      "complexity": {
-        "noExcessiveCognitiveComplexity": "off"
-      },
       "performance": {
         "noBarrelFile": "off"
       }

@@ -113,49 +113,64 @@ export class ConfigurationRepository {
   }
 
   /**
-   * Load configuration with smart fallback strategy (state -> files -> cache)
+   * Try to load configuration from state cache
    * @param scopeCode - The scope code to load configuration for
-   * @returns The configuration payload or null if not found
+   * @returns The parsed configuration or null if not found
    */
-  public async loadConfig(scopeCode: string) {
+  private async loadFromStateCache(scopeCode: string) {
     try {
-      // Try state cache first
       const statePayload = await this.getCachedConfig(scopeCode);
       if (statePayload) {
         return JSON.parse(statePayload);
       }
     } catch (err) {
-      logger.debug("State read failed, will try files next", {
+      logger.debug("Failed to load configuration from state cache", {
         scopeCode,
         error: err instanceof Error ? err.message : String(err),
       });
     }
+    return null;
+  }
 
+  /**
+   * Check if error is a not-found error
+   */
+  private isNotFoundError(err: unknown): boolean {
+    return (
+      typeof err === "object" &&
+      err !== null &&
+      (("statusCode" in err && err.statusCode === 404) ||
+        ("code" in err && err.code === "ENOENT"))
+    );
+  }
+
+  /**
+   * Try to load configuration from persisted files
+   * @param scopeCode - The scope code to load configuration for
+   * @returns The parsed configuration or null if not found
+   */
+  private async loadFromPersistedFiles(scopeCode: string) {
     try {
-      // Fallback to persisted files
       const filePayload = await this.getPersistedConfig(scopeCode);
-      if (filePayload) {
-        const parsed = JSON.parse(filePayload);
-
-        // Try to cache the file data for future reads
-        try {
-          await this.setCachedConfig(scopeCode, JSON.stringify(parsed));
-        } catch (err) {
-          logger.debug("Failed to cache configuration in state", {
-            scopeCode,
-            error: err instanceof Error ? err.message : String(err),
-          });
-        }
-
-        return parsed;
+      if (!filePayload) {
+        return null;
       }
+
+      const parsed = JSON.parse(filePayload);
+
+      // Try to cache the file data for future reads
+      try {
+        await this.setCachedConfig(scopeCode, JSON.stringify(parsed));
+      } catch (err) {
+        logger.debug("Failed to cache configuration in state", {
+          scopeCode,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+
+      return parsed;
     } catch (err) {
-      if (
-        typeof err === "object" &&
-        err !== null &&
-        (("statusCode" in err && err.statusCode === 404) ||
-          ("code" in err && err.code === "ENOENT"))
-      ) {
+      if (this.isNotFoundError(err)) {
         logger.debug(
           `No persisted configuration file found for scope ${scopeCode}.`,
         );
@@ -165,6 +180,24 @@ export class ConfigurationRepository {
           err instanceof Error ? err.message : String(err),
         );
       }
+    }
+    return null;
+  }
+
+  /**
+   * Load configuration with smart fallback strategy (state -> files -> cache)
+   * @param scopeCode - The scope code to load configuration for
+   * @returns The configuration payload or null if not found
+   */
+  public async loadConfig(scopeCode: string) {
+    const fromState = await this.loadFromStateCache(scopeCode);
+    if (fromState) {
+      return fromState;
+    }
+
+    const fromFiles = await this.loadFromPersistedFiles(scopeCode);
+    if (fromFiles) {
+      return fromFiles;
     }
 
     return null;
