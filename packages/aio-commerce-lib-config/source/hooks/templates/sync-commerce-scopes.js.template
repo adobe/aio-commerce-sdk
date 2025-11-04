@@ -14,12 +14,18 @@ governing permissions and limitations under the License.
 // Do not modify this file directly
 
 import {
+  resolveCommerceHttpClientParams,
+} from '@adobe/aio-commerce-lib-api';
+
+import {
   init,
   createErrorResponse,
   createSuccessResponse,
-  CommerceValidationError,
-  buildCommerceConfig
 } from '@adobe/aio-commerce-lib-config';
+
+import {
+  CommerceSdkValidationError
+} from '@adobe/aio-commerce-lib-core/error';
 
 /**
  * Sync commerce scopes.
@@ -28,8 +34,7 @@ import {
  */
 export async function main(params) {
   try {
-    const commerceConfig = buildCommerceConfig(params);
-
+    const commerceConfig = resolveCommerceHttpClientParams(params);
     const config = init({
       commerce: commerceConfig
     });
@@ -42,8 +47,8 @@ export async function main(params) {
       error: result.error
     });
   } catch (error) {
-    if (error instanceof CommerceValidationError) {
-      return createErrorResponse(400, "BAD_REQUEST", error.message);
+    if (error instanceof CommerceSdkValidationError) {
+      return createErrorResponse(400, "BAD_REQUEST", error.display(false));
     }
 
     return createErrorResponse(500, "INTERNAL_ERROR",

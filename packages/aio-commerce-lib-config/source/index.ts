@@ -16,10 +16,6 @@ export {
   createErrorResponse,
   createSuccessResponse,
 } from "./utils/api-interface";
-export {
-  buildCommerceConfig,
-  CommerceValidationError,
-} from "./utils/commerce-config-validation";
 
 export type { ConfigOrigin, ConfigValue } from "./modules/configuration";
 export type {
