@@ -8,8 +8,8 @@ export function createMockLibState() {
       private state = new Map<string, string>();
 
       public get = vi.fn(async (key: string) => {
-        const data = this.state.get(key) || null;
-        return { value: { data } };
+        const value = this.state.get(key) || null;
+        return { value };
       });
       public put = vi.fn(async (key: string, value: string) => {
         this.state.set(key, value);
