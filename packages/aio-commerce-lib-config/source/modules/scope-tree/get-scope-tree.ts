@@ -28,6 +28,12 @@ const logger = AioLogger("@adobe/aio-commerce-lib-config:get-scope-tree", {
   level: process.env.LOG_LEVEL ?? "info",
 });
 
+function hasCommerceConfig(ctx: ScopeTreeContext): ctx is ScopeTreeContext & {
+  commerceConfig: CommerceHttpClientParams;
+} {
+  return !!ctx.commerceConfig;
+}
+
 /**
  * Get scope tree and optionally refresh commerce scopes from Commerce API
  * @param context - Context containing configuration and namespace
@@ -41,7 +47,7 @@ export async function getScopeTree(
   const { remoteFetch = false } = options;
   const repository = new ScopeTreeRepository();
 
-  if (remoteFetch && context.commerceConfig) {
+  if (remoteFetch && hasCommerceConfig(context)) {
     return await buildTreeWithUpdatedCommerceScopes(context, repository);
   }
 
@@ -72,11 +78,11 @@ export async function getScopeTree(
  * Returns scope tree ready for caching and returning to caller
  */
 async function buildTreeWithUpdatedCommerceScopes(
-  context: ScopeTreeContext,
+  context: ScopeTreeContext & { commerceConfig: CommerceHttpClientParams },
   repository: ScopeTreeRepository,
 ): Promise<GetScopeTreeResult> {
   try {
-    const commerceClient = initializeCommerceClient(context.commerceConfig!);
+    const commerceClient = initializeCommerceClient(context.commerceConfig);
     const commerceService = new CommerceService(commerceClient);
     const updatedCommerceScopeData = await commerceService.getAllScopeData();
 
@@ -147,12 +153,10 @@ async function buildTreeWithUpdatedCommerceScopes(
  * Initialize Commerce HTTP client
  */
 function initializeCommerceClient(
-  commerceConfig: NonNullable<ScopeTreeContext["commerceConfig"]>,
+  commerceConfig: CommerceHttpClientParams,
 ): AdobeCommerceHttpClient {
   try {
-    return new AdobeCommerceHttpClient(
-      commerceConfig as CommerceHttpClientParams,
-    );
+    return new AdobeCommerceHttpClient(commerceConfig);
   } catch (error) {
     throw new Error(`Failed to initialize Commerce client: ${error}`);
   }

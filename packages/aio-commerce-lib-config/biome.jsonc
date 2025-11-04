@@ -4,9 +4,6 @@
   "extends": "//",
   "linter": {
     "rules": {
-      "style": {
-        "noNonNullAssertion": "off"
-      },
       "performance": {
         "noBarrelFile": "off"
       }

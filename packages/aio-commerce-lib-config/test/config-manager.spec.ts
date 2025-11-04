@@ -7,6 +7,8 @@ import { mockScopeTree } from "#test/fixtures/scope-tree";
 import { createMockLibFiles } from "./mocks/lib-files";
 import { createMockLibState } from "./mocks/lib-state";
 
+import type { ConfigValue } from "#index";
+
 const MockState = createMockLibState();
 const MockFiles = createMockLibFiles();
 
@@ -127,9 +129,7 @@ describe("ConfigManager", () => {
     );
 
     const result = await mgr.getConfiguration("global", "global");
-    expect(result.config.find((e: any) => e.name === "currency")?.value).toBe(
-      "€",
-    );
+    expect(result.config.find((e) => e.name === "currency")?.value).toBe("€");
   });
 
   it("falls back to files and caches to state", async () => {
@@ -146,17 +146,16 @@ describe("ConfigManager", () => {
     );
 
     const result = await mgr.getConfiguration("global", "global");
-    expect(result.config.find((e: any) => e.name === "currency")?.value).toBe(
-      "£",
-    );
+    expect(result.config.find((e) => e.name === "currency")?.value).toBe("£");
 
     // Verify it was cached in state
     const cachedPayload = await mockConfigRepo.getCachedConfig("global");
-    expect(cachedPayload).toBeTruthy();
-    const cached = JSON.parse(cachedPayload!);
-    expect(cached.config.find((e: any) => e.name === "currency")?.value).toBe(
-      "£",
-    );
+    expect.assert(cachedPayload, "cachedPayload is not defined/truthy");
+
+    const cached = JSON.parse(cachedPayload);
+    expect(
+      cached.config.find((e: ConfigValue) => e.name === "currency")?.value,
+    ).toBe("£");
   });
 
   it("merges inherited values from parent scopes", async () => {
@@ -209,17 +208,17 @@ describe("ConfigManager", () => {
     );
 
     const result = await mgr.getConfiguration("default", "store_view");
-    expect(result.config.find((e: any) => e.name === "currency")?.value).toBe(
-      "$",
-    );
     expect(
-      result.config.find((e: any) => e.name === "currency")?.origin,
+      result.config.find((e: ConfigValue) => e.name === "currency")?.value,
+    ).toBe("$");
+    expect(
+      result.config.find((e: ConfigValue) => e.name === "currency")?.origin,
     ).toEqual({ code: "global", level: "global" });
     expect(
-      result.config.find((e: any) => e.name === "exampleList")?.value,
+      result.config.find((e: ConfigValue) => e.name === "exampleList")?.value,
     ).toBe("option1");
     expect(
-      result.config.find((e: any) => e.name === "exampleList")?.origin,
+      result.config.find((e: ConfigValue) => e.name === "exampleList")?.origin,
     ).toEqual({ code: "default", level: "store_view" });
   });
 
@@ -261,11 +260,12 @@ describe("ConfigManager", () => {
 
     // Verify persistence in files
     const persisted = await mockConfigRepo.getPersistedConfig("global");
-    expect(persisted).toBeTruthy();
-    const parsed = JSON.parse(persisted!);
-    expect(parsed.config.find((e: any) => e.name === "currency")?.value).toBe(
-      "JPY",
-    );
+    expect.assert(persisted, "persisted is not defined/truthy");
+
+    const parsed = JSON.parse(persisted);
+    expect(
+      parsed.config.find((e: ConfigValue) => e.name === "currency")?.value,
+    ).toBe("JPY");
   });
 
   it("merges existing and newly set entries without losing prior values", async () => {
@@ -297,11 +297,11 @@ describe("ConfigManager", () => {
 
     // Verify both values are present
     const result = await mgr.getConfiguration("global", "global");
-    expect(result.config.find((e: any) => e.name === "currency")?.value).toBe(
-      "CAD",
-    );
     expect(
-      result.config.find((e: any) => e.name === "exampleList")?.value,
+      result.config.find((e: ConfigValue) => e.name === "currency")?.value,
+    ).toBe("CAD");
+    expect(
+      result.config.find((e: ConfigValue) => e.name === "exampleList")?.value,
     ).toBe("option1");
   });
 

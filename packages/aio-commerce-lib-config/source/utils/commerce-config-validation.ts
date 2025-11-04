@@ -45,7 +45,7 @@ export class CommerceValidationError extends Error {
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: This validation will be removed soon
 export function validateCommerceConfig(
   commerceConfig?: CommerceHttpClientParams,
-): void {
+): asserts commerceConfig is CommerceHttpClientParams {
   if (!commerceConfig) {
     throw new CommerceValidationError(
       "Commerce configuration is required for this operation. Initialize the library with Commerce config: init({ commerce: { auth: {...}, config: {...} } })",
@@ -161,14 +161,15 @@ export function buildCommerceConfig(
   if (flavor === "saas") {
     return {
       auth: {
-        clientId: params.COMMERCE_CLIENT_ID!,
-        clientSecrets: [params.COMMERCE_CLIENT_SECRET!],
-        technicalAccountId: params.COMMERCE_TECHNICAL_ACCOUNT_ID!,
-        technicalAccountEmail: params.COMMERCE_TECHNICAL_ACCOUNT_EMAIL!,
-        imsOrgId: params.COMMERCE_IMS_ORG_ID!,
+        clientId: params.COMMERCE_CLIENT_ID as string,
+        clientSecrets: [params.COMMERCE_CLIENT_SECRET as string],
+        technicalAccountId: params.COMMERCE_TECHNICAL_ACCOUNT_ID as string,
+        technicalAccountEmail:
+          params.COMMERCE_TECHNICAL_ACCOUNT_EMAIL as string,
+        imsOrgId: params.COMMERCE_IMS_ORG_ID as string,
       },
       config: {
-        baseUrl: params.COMMERCE_BASE_URL!,
+        baseUrl: params.COMMERCE_BASE_URL as string,
         flavor: "saas" as const,
       },
     };
@@ -176,13 +177,13 @@ export function buildCommerceConfig(
 
   return {
     auth: {
-      consumerKey: params.COMMERCE_CONSUMER_KEY!,
-      consumerSecret: params.COMMERCE_CONSUMER_SECRET!,
-      accessToken: params.COMMERCE_ACCESS_TOKEN!,
-      accessTokenSecret: params.COMMERCE_ACCESS_TOKEN_SECRET!,
+      consumerKey: params.COMMERCE_CONSUMER_KEY as string,
+      consumerSecret: params.COMMERCE_CONSUMER_SECRET as string,
+      accessToken: params.COMMERCE_ACCESS_TOKEN as string,
+      accessTokenSecret: params.COMMERCE_ACCESS_TOKEN_SECRET as string,
     },
     config: {
-      baseUrl: params.COMMERCE_BASE_URL!,
+      baseUrl: params.COMMERCE_BASE_URL as string,
       flavor: "paas" as const,
       storeViewCode: "default",
       version: "V1" as const,

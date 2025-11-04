@@ -198,26 +198,26 @@ describe("ScopeTreeUtils - Actual Merge Logic", () => {
       // First website should preserve existing UUID but update data
       const firstWebsite = result.find((w) => w.commerce_id === 1);
       expect(firstWebsite).toBeDefined();
-      expect(firstWebsite?.id).toBe("existing-website-uuid-456"); // UUID preserved
-      expect(firstWebsite?.label).toBe("Main Website"); // Label updated from fresh data
-      expect(firstWebsite?.code).toBe("main"); // Code matches
+      expect(firstWebsite?.id).toBe("existing-website-uuid-456");
+      expect(firstWebsite?.label).toBe("Main Website");
+      expect(firstWebsite?.code).toBe("main");
 
       // Store group should preserve UUID
       const storeGroup = firstWebsite?.children?.[0];
-      expect(storeGroup).toBeDefined();
-      expect(storeGroup!.id).toBe("existing-store-group-uuid-789"); // UUID preserved
-      expect(storeGroup!.label).toBe("Main Store"); // Label updated
+      expect.assert(storeGroup, "storeGroup is not defined/truthy");
+      expect(storeGroup.id).toBe("existing-store-group-uuid-789");
+      expect(storeGroup.label).toBe("Main Store");
 
       // Store view should preserve UUID
       const storeView = storeGroup?.children?.[0];
-      expect(storeView).toBeDefined();
-      expect(storeView!.id).toBe("existing-store-view-uuid-101"); // UUID preserved
-      expect(storeView!.label).toBe("Default Store View"); // Label updated
+      expect.assert(storeView, "storeView is not defined/truthy");
+      expect(storeView.id).toBe("existing-store-view-uuid-101");
+      expect(storeView.label).toBe("Default Store View");
 
       // Second website should get new UUID (didn't exist before)
       const secondWebsite = result.find((w) => w.commerce_id === 2);
-      expect(secondWebsite).toBeDefined();
-      expect(secondWebsite!.id).toMatch(NEW_UUID_REGEX); // New UUID
+      expect.assert(secondWebsite, "secondWebsite is not defined/truthy");
+      expect(secondWebsite.id).toMatch(NEW_UUID_REGEX);
     });
 
     it("should build correct hierarchical structure", () => {
@@ -227,22 +227,24 @@ describe("ScopeTreeUtils - Actual Merge Logic", () => {
       );
 
       const website = result.find((w) => w.commerce_id === 1);
-      expect(website).toBeDefined();
+      expect.assert(website, "website is not defined/truthy");
 
       // Check website structure
-      expect(website!.level).toBe("website");
-      expect(website!.is_final).toBe(true);
-      expect(website!.children).toHaveLength(1);
+      expect(website.level).toBe("website");
+      expect(website.is_final).toBe(true);
+      expect(website.children).toHaveLength(1);
 
       // Check store group structure
-      const storeGroup = website!.children![0];
+      const storeGroup = website.children?.[0];
+      expect.assert(storeGroup, "storeGroup is not defined/truthy");
       expect(storeGroup.commerce_id).toBe(1);
       expect(storeGroup.level).toBe("store");
       expect(storeGroup.is_final).toBe(true);
       expect(storeGroup.children).toHaveLength(1);
 
       // Check store view structure
-      const storeView = storeGroup.children![0];
+      const storeView = storeGroup.children?.[0];
+      expect.assert(storeView, "storeView is not defined/truthy");
       expect(storeView.commerce_id).toBe(1);
       expect(storeView.level).toBe("store_view");
       expect(storeView.is_final).toBe(true);
