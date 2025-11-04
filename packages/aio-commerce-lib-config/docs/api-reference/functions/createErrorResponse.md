@@ -9,7 +9,7 @@ function createErrorResponse(
 ): StandardActionResponse;
 ```
 
-Defined in: [utils/api-interface.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/752f0ed899598bcf6504a5b844c4c482176eabad/packages/aio-commerce-lib-config/source/utils/api-interface.ts#L33)
+Defined in: [utils/api-interface.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/utils/api-interface.ts#L33)
 
 Creates a standardized error response for runtime actions
 
@@ -24,6 +24,6 @@ Creates a standardized error response for runtime actions
 
 ## Returns
 
-[`StandardActionResponse`](../interfaces/StandardActionResponse.md)
+[`StandardActionResponse`](../type-aliases/StandardActionResponse.md)
 
 Standardized action error response

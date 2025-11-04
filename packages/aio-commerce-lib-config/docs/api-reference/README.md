@@ -1,52 +1,37 @@
-# `@adobe/aio-commerce-lib-config`: `v0.1.0`
-
-## Namespaces
-
-| Namespace                                      | Description |
-| ---------------------------------------------- | ----------- |
-| [actions](@adobe/namespaces/actions/README.md) | -           |
-| [schema](@adobe/namespaces/schema/README.md)   | -           |
+# `@adobe/aio-commerce-lib-config`: `v0.2.0`
 
 ## Classes
 
 | Class                                                         | Description |
 | ------------------------------------------------------------- | ----------- |
 | [CommerceValidationError](classes/CommerceValidationError.md) | -           |
-| [ConfigManager](classes/ConfigManager.md)                     | -           |
-
-## Interfaces
-
-| Interface                                                                    | Description |
-| ---------------------------------------------------------------------------- | ----------- |
-| [ActionErrorResponse](interfaces/ActionErrorResponse.md)                     | -           |
-| [CommerceHttpClientConfig](interfaces/CommerceHttpClientConfig.md)           | -           |
-| [CommerceHttpClientParams](interfaces/CommerceHttpClientParams.md)           | -           |
-| [CommerceScopeData](interfaces/CommerceScopeData.md)                         | -           |
-| [ConfigOrigin](interfaces/ConfigOrigin.md)                                   | -           |
-| [ConfigSchemaField](interfaces/ConfigSchemaField.md)                         | -           |
-| [ConfigSchemaOption](interfaces/ConfigSchemaOption.md)                       | -           |
-| [ConfigValue](interfaces/ConfigValue.md)                                     | -           |
-| [CustomScopeInput](interfaces/CustomScopeInput.md)                           | -           |
-| [CustomScopeOutput](interfaces/CustomScopeOutput.md)                         | -           |
-| [GetConfigSchemaResponse](interfaces/GetConfigSchemaResponse.md)             | -           |
-| [GetConfigurationByKeyResponse](interfaces/GetConfigurationByKeyResponse.md) | -           |
-| [GetConfigurationResponse](interfaces/GetConfigurationResponse.md)           | -           |
-| [LibConfig](interfaces/LibConfig.md)                                         | -           |
-| [ScopeNode](interfaces/ScopeNode.md)                                         | -           |
-| [SetConfigurationRequest](interfaces/SetConfigurationRequest.md)             | -           |
-| [SetConfigurationResponse](interfaces/SetConfigurationResponse.md)           | -           |
-| [SetCustomScopeTreeRequest](interfaces/SetCustomScopeTreeRequest.md)         | -           |
-| [SetCustomScopeTreeResponse](interfaces/SetCustomScopeTreeResponse.md)       | -           |
-| [StandardActionResponse](interfaces/StandardActionResponse.md)               | -           |
-| [StoreGroup](interfaces/StoreGroup.md)                                       | -           |
-| [StoreView](interfaces/StoreView.md)                                         | -           |
-| [Website](interfaces/Website.md)                                             | -           |
 
 ## Type Aliases
 
-| Type Alias                             | Description |
-| -------------------------------------- | ----------- |
-| [ScopeTree](type-aliases/ScopeTree.md) | -           |
+| Type Alias                                                                     | Description |
+| ------------------------------------------------------------------------------ | ----------- |
+| [ActionErrorResponse](type-aliases/ActionErrorResponse.md)                     | -           |
+| [CommerceScopeData](type-aliases/CommerceScopeData.md)                         | -           |
+| [ConfigOrigin](type-aliases/ConfigOrigin.md)                                   | -           |
+| [ConfigSchemaField](type-aliases/ConfigSchemaField.md)                         | -           |
+| [ConfigSchemaOption](type-aliases/ConfigSchemaOption.md)                       | -           |
+| [ConfigValue](type-aliases/ConfigValue.md)                                     | -           |
+| [CustomScopeInput](type-aliases/CustomScopeInput.md)                           | -           |
+| [CustomScopeOutput](type-aliases/CustomScopeOutput.md)                         | -           |
+| [GetConfigSchemaResponse](type-aliases/GetConfigSchemaResponse.md)             | -           |
+| [GetConfigurationByKeyResponse](type-aliases/GetConfigurationByKeyResponse.md) | -           |
+| [GetConfigurationResponse](type-aliases/GetConfigurationResponse.md)           | -           |
+| [LibConfig](type-aliases/LibConfig.md)                                         | -           |
+| [ScopeNode](type-aliases/ScopeNode.md)                                         | -           |
+| [ScopeTree](type-aliases/ScopeTree.md)                                         | -           |
+| [SetConfigurationRequest](type-aliases/SetConfigurationRequest.md)             | -           |
+| [SetConfigurationResponse](type-aliases/SetConfigurationResponse.md)           | -           |
+| [SetCustomScopeTreeRequest](type-aliases/SetCustomScopeTreeRequest.md)         | -           |
+| [SetCustomScopeTreeResponse](type-aliases/SetCustomScopeTreeResponse.md)       | -           |
+| [StandardActionResponse](type-aliases/StandardActionResponse.md)               | -           |
+| [StoreGroup](type-aliases/StoreGroup.md)                                       | -           |
+| [StoreView](type-aliases/StoreView.md)                                         | -           |
+| [Website](type-aliases/Website.md)                                             | -           |
 
 ## Functions
 

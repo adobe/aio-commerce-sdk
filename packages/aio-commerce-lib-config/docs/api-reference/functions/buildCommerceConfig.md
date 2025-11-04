@@ -6,7 +6,7 @@ function buildCommerceConfig(
 ): CommerceHttpClientParams;
 ```
 
-Defined in: [utils/commerce-config-validation.ts:143](https://github.com/adobe/aio-commerce-sdk/blob/752f0ed899598bcf6504a5b844c4c482176eabad/packages/aio-commerce-lib-config/source/utils/commerce-config-validation.ts#L143)
+Defined in: [utils/commerce-config-validation.ts:156](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/utils/commerce-config-validation.ts#L156)
 
 Builds Commerce configuration object from action parameters
 
@@ -18,6 +18,6 @@ Builds Commerce configuration object from action parameters
 
 ## Returns
 
-[`CommerceHttpClientParams`](../interfaces/CommerceHttpClientParams.md)
+`CommerceHttpClientParams`
 
 Properly structured Commerce configuration for the library

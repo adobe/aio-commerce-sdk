@@ -20,15 +20,15 @@ function init(_config?: LibConfig): {
 };
 ```
 
-Defined in: [lib-config.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/752f0ed899598bcf6504a5b844c4c482176eabad/packages/aio-commerce-lib-config/source/lib-config.ts#L20)
+Defined in: [lib-config.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/lib-config.ts#L20)
 
 Initialize the configuration library
 
 ## Parameters
 
-| Parameter  | Type                                      |
-| ---------- | ----------------------------------------- |
-| `_config?` | [`LibConfig`](../interfaces/LibConfig.md) |
+| Parameter  | Type                                        |
+| ---------- | ------------------------------------------- |
+| `_config?` | [`LibConfig`](../type-aliases/LibConfig.md) |
 
 ## Returns
 
@@ -44,7 +44,7 @@ Get configuration schema
 
 #### Returns
 
-`Promise`\<[`ConfigSchemaField`](../interfaces/ConfigSchemaField.md)[]\>
+`Promise`\<[`ConfigSchemaField`](../type-aliases/ConfigSchemaField.md)[]\>
 
 ### getConfiguration()
 
@@ -62,7 +62,7 @@ Get configuration.
 
 #### Returns
 
-`Promise`\<[`GetConfigurationResponse`](../interfaces/GetConfigurationResponse.md)\>
+`Promise`\<[`GetConfigurationResponse`](../type-aliases/GetConfigurationResponse.md)\>
 
 ### getConfigurationByKey()
 
@@ -81,7 +81,7 @@ Get specific configuration value by key.
 
 #### Returns
 
-`Promise`\<[`GetConfigurationByKeyResponse`](../interfaces/GetConfigurationByKeyResponse.md)\>
+`Promise`\<[`GetConfigurationByKeyResponse`](../type-aliases/GetConfigurationByKeyResponse.md)\>
 
 ### getScopeTree()
 
@@ -121,14 +121,14 @@ Set configuration.
 
 #### Parameters
 
-| Parameter | Type                                                                  |
-| --------- | --------------------------------------------------------------------- |
-| `request` | [`SetConfigurationRequest`](../interfaces/SetConfigurationRequest.md) |
-| ...`args` | `unknown`[]                                                           |
+| Parameter | Type                                                                    |
+| --------- | ----------------------------------------------------------------------- |
+| `request` | [`SetConfigurationRequest`](../type-aliases/SetConfigurationRequest.md) |
+| ...`args` | `unknown`[]                                                             |
 
 #### Returns
 
-`Promise`\<[`SetConfigurationResponse`](../interfaces/SetConfigurationResponse.md)\>
+`Promise`\<[`SetConfigurationResponse`](../type-aliases/SetConfigurationResponse.md)\>
 
 ### setCustomScopeTree()
 
@@ -140,13 +140,13 @@ Set custom scope tree
 
 #### Parameters
 
-| Parameter | Type                                                                      | Description                 |
-| --------- | ------------------------------------------------------------------------- | --------------------------- |
-| `request` | [`SetCustomScopeTreeRequest`](../interfaces/SetCustomScopeTreeRequest.md) | Custom scopes to set/update |
+| Parameter | Type                                                                        | Description                 |
+| --------- | --------------------------------------------------------------------------- | --------------------------- |
+| `request` | [`SetCustomScopeTreeRequest`](../type-aliases/SetCustomScopeTreeRequest.md) | Custom scopes to set/update |
 
 #### Returns
 
-`Promise`\<[`SetCustomScopeTreeResponse`](../interfaces/SetCustomScopeTreeResponse.md)\>
+`Promise`\<[`SetCustomScopeTreeResponse`](../type-aliases/SetCustomScopeTreeResponse.md)\>
 
 Updated custom scope tree with generated IDs and timestamp
 

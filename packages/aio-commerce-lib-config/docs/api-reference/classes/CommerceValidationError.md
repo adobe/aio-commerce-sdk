@@ -1,6 +1,6 @@
 # `CommerceValidationError`
 
-Defined in: [utils/commerce-config-validation.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/752f0ed899598bcf6504a5b844c4c482176eabad/packages/aio-commerce-lib-config/source/utils/commerce-config-validation.ts#L29)
+Defined in: [utils/commerce-config-validation.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/utils/commerce-config-validation.ts#L33)
 
 ## Extends
 
@@ -11,17 +11,17 @@ Defined in: [utils/commerce-config-validation.ts:29](https://github.com/adobe/ai
 ### Constructor
 
 ```ts
-new CommerceValidationError(message: string, code: string): CommerceValidationError;
+new CommerceValidationError(message: string, _code: string): CommerceValidationError;
 ```
 
-Defined in: [utils/commerce-config-validation.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/752f0ed899598bcf6504a5b844c4c482176eabad/packages/aio-commerce-lib-config/source/utils/commerce-config-validation.ts#L30)
+Defined in: [utils/commerce-config-validation.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/utils/commerce-config-validation.ts#L34)
 
 #### Parameters
 
 | Parameter | Type     | Default value               |
 | --------- | -------- | --------------------------- |
 | `message` | `string` | `undefined`                 |
-| `code`    | `string` | `"INVALID_COMMERCE_CONFIG"` |
+| `_code`   | `string` | `"INVALID_COMMERCE_CONFIG"` |
 
 #### Returns
 
