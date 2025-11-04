@@ -4,9 +4,6 @@
   "extends": "//",
   "linter": {
     "rules": {
-      "nursery": {
-        "useMaxParams": "off"
-      },
       "style": {
         "noNonNullAssertion": "off"
       },
