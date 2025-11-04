@@ -13,10 +13,11 @@
 import aioLibIms from "@adobe/aio-lib-ims";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+import { getImsAuthProvider } from "~/lib/ims-auth/provider";
 import {
   assertImsAuthParams,
-  getImsAuthProvider,
-} from "~/lib/ims-auth/provider";
+  resolveImsAuthParams,
+} from "~/lib/ims-auth/utils";
 
 import type { ImsAuthEnv, ImsAuthParams } from "~/lib/ims-auth/schema";
 
@@ -303,6 +304,84 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
           ...validConfig,
           ...overrides,
         });
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+  });
+
+  describe("resolveImsAuthParams", () => {
+    test("should resolve IMS auth params from App Builder action inputs with all fields", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+        AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "prod" as const,
+        AIO_COMMERCE_AUTH_IMS_CONTEXT: "test-context",
+      };
+
+      const resolved = resolveImsAuthParams(params);
+
+      expect(resolved).toEqual({
+        clientId: "test-client-id",
+        clientSecrets: ["supersecret"],
+        technicalAccountId: "test-technical-account-id",
+        technicalAccountEmail: "test-email@example.com",
+        imsOrgId: "test-org-id",
+        scopes: ["scope1", "scope2"],
+        environment: "prod",
+        context: "test-context",
+      });
+    });
+
+    test("should resolve IMS auth params with only required fields", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+        AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+      };
+
+      const resolved = resolveImsAuthParams(params);
+
+      expect(resolved).toEqual({
+        clientId: "test-client-id",
+        clientSecrets: ["supersecret"],
+        technicalAccountId: "test-technical-account-id",
+        technicalAccountEmail: "test-email@example.com",
+        imsOrgId: "test-org-id",
+        scopes: ["scope1", "scope2"],
+        environment: undefined,
+        context: undefined,
+      });
+    });
+
+    test("should throw CommerceSdkValidationError when required params are missing (validation via assert)", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        // Missing other required fields
+      };
+
+      expect(() => {
+        resolveImsAuthParams(params);
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw CommerceSdkValidationError with invalid data (validation via assert)", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: [], // Empty array - invalid
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+        AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+      };
+
+      expect(() => {
+        resolveImsAuthParams(params);
       }).toThrow("Invalid ImsAuthProvider configuration");
     });
   });

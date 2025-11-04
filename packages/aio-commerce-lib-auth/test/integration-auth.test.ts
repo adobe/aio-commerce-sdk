@@ -12,10 +12,11 @@
 
 import { describe, expect, test } from "vitest";
 
+import { getIntegrationAuthProvider } from "~/lib/integration-auth/provider";
 import {
   assertIntegrationAuthParams,
-  getIntegrationAuthProvider,
-} from "~/lib/integration-auth/provider";
+  resolveIntegrationAuthParams,
+} from "~/lib/integration-auth/utils";
 
 /** Regex to match the OAuth 1.0a header format. */
 const OAUTH1_REGEX =
@@ -91,6 +92,52 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
           ...validConfig,
           ...overrides,
         });
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+  });
+
+  describe("resolveIntegrationAuthParams", () => {
+    test("should resolve Integration auth params from App Builder action inputs", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
+          "test-access-token-secret",
+      };
+
+      const resolved = resolveIntegrationAuthParams(params);
+
+      expect(resolved).toEqual({
+        consumerKey: "test-consumer-key",
+        consumerSecret: "test-consumer-secret",
+        accessToken: "test-access-token",
+        accessTokenSecret: "test-access-token-secret",
+      });
+    });
+
+    test("should throw CommerceSdkValidationError when required params are missing (validation via assert)", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        // Missing other required fields
+      };
+
+      expect(() => {
+        resolveIntegrationAuthParams(params);
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw CommerceSdkValidationError with invalid data (validation via assert)", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
+          "test-access-token-secret",
+      };
+
+      expect(() => {
+        resolveIntegrationAuthParams(params);
       }).toThrow("Invalid IntegrationAuthProvider configuration");
     });
   });
