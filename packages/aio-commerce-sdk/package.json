@@ -28,6 +28,36 @@
   "module": "./dist/es/index.js",
   "types": "./dist/cjs/index.d.cts",
   "exports": {
+    "./api": {
+      "import": {
+        "types": "./dist/es/api/index.d.ts",
+        "default": "./dist/es/api/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/api/index.d.cts",
+        "default": "./dist/cjs/api/index.cjs"
+      }
+    },
+    "./api/*": {
+      "import": {
+        "types": "./dist/es/api/*.d.ts",
+        "default": "./dist/es/api/*.js"
+      },
+      "require": {
+        "types": "./dist/cjs/api/*.d.cts",
+        "default": "./dist/cjs/api/*.cjs"
+      }
+    },
+    "./events/*": {
+      "import": {
+        "types": "./dist/es/events/*.d.ts",
+        "default": "./dist/es/events/*.js"
+      },
+      "require": {
+        "types": "./dist/cjs/events/*.d.cts",
+        "default": "./dist/cjs/events/*.cjs"
+      }
+    },
     "./*": {
       "import": {
         "types": "./dist/es/*.d.ts",
