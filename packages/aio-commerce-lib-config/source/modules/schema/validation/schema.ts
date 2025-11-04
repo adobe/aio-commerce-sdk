@@ -11,6 +11,7 @@ export const ListSchema = v.object({
   type: v.literal("list"),
   options: v.array(ListOptionSchema),
   default: v.pipe(v.string(), v.nonEmpty()),
+  description: v.optional(v.string()),
 });
 
 export const TextSchema = v.object({
@@ -18,6 +19,7 @@ export const TextSchema = v.object({
   label: v.optional(v.string()),
   type: v.literal("text"),
   default: v.optional(v.string()),
+  description: v.optional(v.string()),
 });
 
 export const VariantTypeSchema = v.variant("type", [ListSchema, TextSchema]);
