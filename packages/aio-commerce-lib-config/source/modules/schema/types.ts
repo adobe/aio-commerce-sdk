@@ -22,6 +22,7 @@ export interface ConfigSchemaField {
   label: string;
   options?: ConfigSchemaOption[];
   default?: string;
+  description?: string;
 }
 
 // Context needed for schema operations
