@@ -1,4 +1,4 @@
-import type { ScopeTree } from "../../source/modules/scope-tree";
+import type { ScopeTree } from "#modules/scope-tree";
 
 /**
  * Mock scope tree for testing.

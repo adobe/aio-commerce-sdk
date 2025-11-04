@@ -3,11 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mockSchemaValidationCommand = vi.fn();
 const mockGenerateActions = vi.fn();
 
-vi.mock("../../source/modules/schema/validation", () => ({
+vi.mock("../../source/modules/schema/validation/command", () => ({
   run: mockSchemaValidationCommand,
 }));
 
-vi.mock("../../source/modules/actions", () => ({
+vi.mock("../../source/modules/actions/generate", () => ({
   run: mockGenerateActions,
 }));
 

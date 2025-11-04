@@ -40,17 +40,18 @@
     }
   },
   "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/es/index.d.ts",
-        "default": "./dist/es/index.js"
-      },
-      "require": {
-        "types": "./dist/cjs/index.d.cts",
-        "default": "./dist/cjs/index.cjs"
-      }
-    },
+    ".": "./source/index.ts",
     "./package.json": "./package.json"
+  },
+  "imports": {
+    "#*": [
+      "./source/*.ts",
+      "./source/*/index.ts"
+    ],
+    "#test/*": [
+      "./test/*.ts",
+      "./test/*/index.ts"
+    ]
   },
   "files": [
     "dist",
@@ -77,6 +78,7 @@
   "dependencies": {
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
+    "@adobe/aio-lib-core-logging": "^3.0.2",
     "@adobe/aio-lib-files": "^3.0.0",
     "@adobe/aio-lib-state": "^3.0.0",
     "uuid": "^13.0.0",

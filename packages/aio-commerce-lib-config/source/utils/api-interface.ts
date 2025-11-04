@@ -10,17 +10,17 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-export interface ActionErrorResponse {
+export type ActionErrorResponse = {
   code: string;
   message: string;
   details?: string;
-}
+};
 
-export interface StandardActionResponse<T = any> {
+export type StandardActionResponse<T = unknown> = {
   statusCode: number;
   body: T | { error: ActionErrorResponse };
   headers?: Record<string, string>;
-}
+};
 
 /**
  * Creates a standardized error response for runtime actions

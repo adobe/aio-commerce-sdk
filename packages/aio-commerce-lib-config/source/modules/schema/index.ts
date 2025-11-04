@@ -10,12 +10,9 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-// Schema repository for data access
 export { ConfigSchemaRepository } from "./config-schema-repository";
-// Main schema functionality
 export { getSchema, storeSchema } from "./get-schema";
 
-// Types for schema operations
 export type {
   ConfigSchemaField,
   ConfigSchemaOption,

@@ -9,7 +9,7 @@ import {
 import {
   INVALID_CONFIGURATION,
   VALID_CONFIGURATION,
-} from "../fixtures/configuration-schema-fixture";
+} from "../fixtures/configuration-schema";
 
 import type { InferOutput } from "valibot";
 import type { RootSchema } from "../../source/modules/schema/validation/schema";

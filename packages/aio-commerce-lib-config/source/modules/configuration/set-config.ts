@@ -53,8 +53,9 @@ export async function setConfiguration(
   const sanitizedEntries = sanitizeRequestEntries(request?.config);
   const existingPersisted = await configRepository.loadConfig(scopeCode);
   const existingEntries = Array.isArray(existingPersisted?.config)
-    ? existingPersisted!.config
+    ? (existingPersisted?.config ?? [])
     : [];
+
   const mergedScopeConfig = mergeScopes(
     existingEntries,
     sanitizedEntries,

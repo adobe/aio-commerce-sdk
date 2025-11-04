@@ -10,9 +10,13 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import type { CommerceHttpClientParams } from "../types/internal";
+import type {
+  CommerceHttpClientParams,
+  PaaSClientParams,
+  SaaSClientParams,
+} from "@adobe/aio-commerce-lib-api";
 
-export interface CommerceConfigParams {
+export type CommerceConfigParams = {
   COMMERCE_CONSUMER_KEY?: string;
   COMMERCE_CONSUMER_SECRET?: string;
   COMMERCE_ACCESS_TOKEN?: string;
@@ -24,10 +28,10 @@ export interface CommerceConfigParams {
   COMMERCE_IMS_ORG_ID?: string;
   COMMERCE_BASE_URL?: string;
   COMMERCE_FLAVOR?: "paas" | "saas";
-}
+};
 
 export class CommerceValidationError extends Error {
-  constructor(message: string, code: string = "INVALID_COMMERCE_CONFIG") {
+  public constructor(message: string, _code = "INVALID_COMMERCE_CONFIG") {
     super(message);
     this.name = "CommerceValidationError";
   }
@@ -38,9 +42,10 @@ export class CommerceValidationError extends Error {
  * @param commerceConfig - Commerce configuration to validate
  * @throws {CommerceValidationError} When configuration is invalid or missing
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: This validation will be removed soon
 export function validateCommerceConfig(
   commerceConfig?: CommerceHttpClientParams,
-): void {
+): asserts commerceConfig is CommerceHttpClientParams {
   if (!commerceConfig) {
     throw new CommerceValidationError(
       "Commerce configuration is required for this operation. Initialize the library with Commerce config: init({ commerce: { auth: {...}, config: {...} } })",
@@ -48,34 +53,33 @@ export function validateCommerceConfig(
     );
   }
 
-  const { auth, config } = commerceConfig;
-
-  if (!config) {
+  if (!commerceConfig.config) {
     throw new CommerceValidationError(
       "Commerce config object is required",
       "MISSING_COMMERCE_CONFIG_OBJECT",
     );
   }
 
-  if (!auth) {
+  if (!commerceConfig.auth) {
     throw new CommerceValidationError(
       "Commerce auth object is required",
       "MISSING_COMMERCE_AUTH",
     );
   }
 
-  const flavor = config.flavor;
-
   // Validate flavor
-  if (flavor !== "paas" && flavor !== "saas") {
+  if (
+    commerceConfig.config.flavor !== "paas" &&
+    commerceConfig.config.flavor !== "saas"
+  ) {
     throw new CommerceValidationError(
-      `Invalid Commerce flavor: ${flavor}. Must be 'paas' or 'saas'`,
+      `Invalid Commerce flavor: Must be 'paas' or 'saas'`,
       "INVALID_FLAVOR",
     );
   }
 
   // Validate base URL
-  if (!config.baseUrl) {
+  if (!commerceConfig.config.baseUrl) {
     throw new CommerceValidationError(
       "Commerce baseUrl is required",
       "MISSING_BASE_URL",
@@ -83,7 +87,7 @@ export function validateCommerceConfig(
   }
 
   try {
-    new URL(config.baseUrl);
+    new URL(commerceConfig.config.baseUrl);
   } catch {
     throw new CommerceValidationError(
       "Invalid Commerce base URL format",
@@ -92,45 +96,54 @@ export function validateCommerceConfig(
   }
 
   // Validate auth parameters based on flavor
-  if (flavor === "paas") {
-    const requiredFields = [
-      "consumerKey",
-      "consumerSecret",
-      "accessToken",
-      "accessTokenSecret",
-    ];
-    const missingFields = requiredFields.filter((field) => !auth[field]);
+  if (commerceConfig.config.flavor === "paas") {
+    const auth = commerceConfig.auth as PaaSClientParams["auth"];
 
-    if (missingFields.length > 0) {
-      throw new CommerceValidationError(
-        `Missing required PAAS authentication fields: ${missingFields.join(", ")}`,
-        "MISSING_PAAS_AUTH",
-      );
-    }
-  } else if (flavor === "saas") {
-    const requiredFields = [
-      "clientId",
-      "clientSecrets",
-      "technicalAccountId",
-      "technicalAccountEmail",
-      "imsOrgId",
-    ];
-    const missingFields = requiredFields.filter((field) => {
-      if (field === "clientSecrets") {
-        return (
-          !auth.clientSecrets ||
-          !Array.isArray(auth.clientSecrets) ||
-          auth.clientSecrets.length === 0
+    if (!("getHeaders" in auth)) {
+      const requiredFields = [
+        "consumerKey",
+        "consumerSecret",
+        "accessToken",
+        "accessTokenSecret",
+      ] as const;
+
+      const missingFields = requiredFields.filter((field) => !auth[field]);
+
+      if (missingFields.length > 0) {
+        throw new CommerceValidationError(
+          `Missing required PAAS authentication fields: ${missingFields.join(", ")}`,
+          "MISSING_PAAS_AUTH",
         );
       }
-      return !auth[field];
-    });
+    }
+  } else if (commerceConfig.config.flavor === "saas") {
+    const auth = commerceConfig.auth as SaaSClientParams["auth"];
 
-    if (missingFields.length > 0) {
-      throw new CommerceValidationError(
-        `Missing required SAAS authentication fields: ${missingFields.join(", ")}`,
-        "MISSING_SAAS_AUTH",
-      );
+    if (!("getHeaders" in auth)) {
+      const requiredFields = [
+        "clientId",
+        "clientSecrets",
+        "technicalAccountId",
+        "technicalAccountEmail",
+        "imsOrgId",
+      ] as const;
+
+      const missingFields = requiredFields.filter((field) => {
+        if (field === "clientSecrets") {
+          return (
+            !(auth.clientSecrets && Array.isArray(auth.clientSecrets)) ||
+            auth.clientSecrets.length === 0
+          );
+        }
+        return !auth[field];
+      });
+
+      if (missingFields.length > 0) {
+        throw new CommerceValidationError(
+          `Missing required SAAS authentication fields: ${missingFields.join(", ")}`,
+          "MISSING_SAAS_AUTH",
+        );
+      }
     }
   }
 }
@@ -148,14 +161,15 @@ export function buildCommerceConfig(
   if (flavor === "saas") {
     return {
       auth: {
-        clientId: params.COMMERCE_CLIENT_ID!,
-        clientSecrets: [params.COMMERCE_CLIENT_SECRET!],
-        technicalAccountId: params.COMMERCE_TECHNICAL_ACCOUNT_ID!,
-        technicalAccountEmail: params.COMMERCE_TECHNICAL_ACCOUNT_EMAIL!,
-        imsOrgId: params.COMMERCE_IMS_ORG_ID!,
+        clientId: params.COMMERCE_CLIENT_ID as string,
+        clientSecrets: [params.COMMERCE_CLIENT_SECRET as string],
+        technicalAccountId: params.COMMERCE_TECHNICAL_ACCOUNT_ID as string,
+        technicalAccountEmail:
+          params.COMMERCE_TECHNICAL_ACCOUNT_EMAIL as string,
+        imsOrgId: params.COMMERCE_IMS_ORG_ID as string,
       },
       config: {
-        baseUrl: params.COMMERCE_BASE_URL!,
+        baseUrl: params.COMMERCE_BASE_URL as string,
         flavor: "saas" as const,
       },
     };
@@ -163,13 +177,13 @@ export function buildCommerceConfig(
 
   return {
     auth: {
-      consumerKey: params.COMMERCE_CONSUMER_KEY!,
-      consumerSecret: params.COMMERCE_CONSUMER_SECRET!,
-      accessToken: params.COMMERCE_ACCESS_TOKEN!,
-      accessTokenSecret: params.COMMERCE_ACCESS_TOKEN_SECRET!,
+      consumerKey: params.COMMERCE_CONSUMER_KEY as string,
+      consumerSecret: params.COMMERCE_CONSUMER_SECRET as string,
+      accessToken: params.COMMERCE_ACCESS_TOKEN as string,
+      accessTokenSecret: params.COMMERCE_ACCESS_TOKEN_SECRET as string,
     },
     config: {
-      baseUrl: params.COMMERCE_BASE_URL!,
+      baseUrl: params.COMMERCE_BASE_URL as string,
       flavor: "paas" as const,
       storeViewCode: "default",
       version: "V1" as const,

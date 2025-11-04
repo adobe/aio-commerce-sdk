@@ -10,10 +10,18 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { Files, init as initFiles } from "@adobe/aio-lib-files";
-import { init as initState, StateStore } from "@adobe/aio-lib-state";
+import AioLogger from "@adobe/aio-lib-core-logging";
+import { init as initFiles } from "@adobe/aio-lib-files";
+import { init as initState } from "@adobe/aio-lib-state";
 
+import type { Files } from "@adobe/aio-lib-files";
+import type { StateStore } from "@adobe/aio-lib-state";
 import type { ConfigSchemaField } from "./types";
+
+const logger = AioLogger(
+  "@adobe/aio-commerce-lib-config:config-schema-repository",
+  { level: process.env.LOG_LEVEL ?? "info" },
+);
 
 // Shared instances to avoid re-initialization
 let sharedState: StateStore | undefined;
@@ -41,14 +49,14 @@ export class ConfigSchemaRepository {
   /**
    * Get cached schema from state store
    */
-  async getCachedSchema(
+  public async getCachedSchema(
     namespace: string,
   ): Promise<ConfigSchemaField[] | null> {
     try {
       const state = await this.getState();
       const cached = await state.get(`${namespace}:config-schema`);
       return cached?.value?.data || null;
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }
@@ -56,7 +64,7 @@ export class ConfigSchemaRepository {
   /**
    * Cache schema in state store with TTL
    */
-  async setCachedSchema(
+  public async setCachedSchema(
     namespace: string,
     data: ConfigSchemaField[],
     ttl: number,
@@ -65,7 +73,10 @@ export class ConfigSchemaRepository {
       const state = await this.getState();
       await state.put(`${namespace}:config-schema`, { data }, { ttl });
     } catch (error) {
-      console.error("Error caching schema:", error);
+      logger.debug(
+        "Failed to cache schema:",
+        error instanceof Error ? error.message : String(error),
+      );
       // Don't throw - caching failure shouldn't break functionality
     }
   }
@@ -73,12 +84,15 @@ export class ConfigSchemaRepository {
   /**
    * Delete cached schema from state store
    */
-  async deleteCachedSchema(namespace: string): Promise<void> {
+  public async deleteCachedSchema(namespace: string): Promise<void> {
     try {
       const state = await this.getState();
       await state.delete(`${namespace}:config-schema`);
     } catch (error) {
-      console.error("Error deleting cached schema:", error);
+      logger.debug(
+        "Failed to delete cached schema:",
+        error instanceof Error ? error.message : String(error),
+      );
       // Don't throw - cache deletion failure shouldn't break functionality
     }
   }
@@ -86,12 +100,12 @@ export class ConfigSchemaRepository {
   /**
    * Get cached schema version
    */
-  async getSchemaVersion(namespace: string): Promise<string | null> {
+  public async getSchemaVersion(namespace: string): Promise<string | null> {
     try {
       const state = await this.getState();
       const versionData = await state.get(`${namespace}:schema-version`);
       return versionData?.value?.version || null;
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }
@@ -99,12 +113,18 @@ export class ConfigSchemaRepository {
   /**
    * Set schema version
    */
-  async setSchemaVersion(namespace: string, version: string): Promise<void> {
+  public async setSchemaVersion(
+    namespace: string,
+    version: string,
+  ): Promise<void> {
     try {
       const state = await this.getState();
       await state.put(`${namespace}:schema-version`, { version });
     } catch (error) {
-      console.error("Error setting schema version:", error);
+      logger.debug(
+        "Failed to set schema version:",
+        error instanceof Error ? error.message : String(error),
+      );
       // Don't throw - version tracking failure shouldn't break functionality
     }
   }
@@ -112,7 +132,7 @@ export class ConfigSchemaRepository {
   /**
    * Read persisted schema from files
    */
-  async getPersistedSchema(): Promise<string> {
+  public async getPersistedSchema(): Promise<string> {
     const files = await this.getFiles();
     const buffer: Buffer = await files.read("config-schema.json");
     return buffer.toString();
@@ -121,7 +141,7 @@ export class ConfigSchemaRepository {
   /**
    * Save schema to files
    */
-  async saveSchema(schema: string): Promise<void> {
+  public async saveSchema(schema: string): Promise<void> {
     const files = await this.getFiles();
     await files.write("config-schema.json", schema);
   }

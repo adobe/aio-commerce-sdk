@@ -3,12 +3,13 @@ import { readFile } from "node:fs/promises";
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { safeParse } from "valibot";
 
+import { logger } from "./logger";
 import { RootSchema } from "./schema";
 
 import type { AnySchema } from "valibot";
 
 export async function check(configPath: string) {
-  console.log(`Validating configuration file at path: ${configPath}`);
+  logger.debug(`Validating configuration file at path: ${configPath}`);
   if (!configPath.endsWith(".json")) {
     throw new Error("Configuration file must be a JSON file");
   }
@@ -19,7 +20,6 @@ export async function check(configPath: string) {
 
 export function validate(value: unknown, schema?: AnySchema) {
   const schemaToUse = schema ?? RootSchema;
-
   const { output, success, issues } = safeParse(schemaToUse, value);
 
   if (!success) {
