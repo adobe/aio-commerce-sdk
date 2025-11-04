@@ -20,6 +20,10 @@
 - changed-files:
   - any-glob-to-any-file: 'packages/aio-commerce-lib-events/**'
 
+"pkg: aio-commerce-lib-config":
+- changed-files:
+  - any-glob-to-any-file: 'packages/aio-commerce-lib-config/**'
+
 "generator":
 - changed-files:
   - any-glob-to-any-file: 'turbo/generators/**'

@@ -1,17 +1,19 @@
-import { DEFAULT_CUSTOM_SCOPE_LEVEL, generateUUID } from "./utils";
+import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "./utils/constants";
 
+import type {
+  AcceptableConfigValue,
+  ConfigValueWithOptionalOrigin,
+} from "#modules/configuration/types";
+import type { ConfigValue } from "./modules/configuration";
 import type { ConfigSchemaField } from "./modules/schema";
 import type { ScopeNode, ScopeTree } from "./modules/scope-tree";
-
-// Re-export UUID utility
-export { generateUUID };
 
 /**
  * Checks if the given value is a non-empty string.
  * @param value The value to check.
  * @returns True if the value is a non-empty string, false otherwise.
  */
-export function isNonEmptyString(value: any): value is string {
+export function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
@@ -20,7 +22,7 @@ export function isNonEmptyString(value: any): value is string {
  * @param args - The arguments to validate.
  * @returns True if the arguments are valid, false otherwise.
  */
-export function areValidArgs(args: any[]): boolean {
+export function areValidArgs(args: unknown[]): boolean {
   if (args.length === 2) {
     return isNonEmptyString(args[0]) && isNonEmptyString(args[1]);
   }
@@ -38,11 +40,15 @@ export function areValidArgs(args: any[]): boolean {
  */
 function findScopeNodeById(tree: ScopeTree, id: string): ScopeNode | null {
   const traverse = (node: ScopeNode): ScopeNode | null => {
-    if (node.id === id) return node;
+    if (node.id === id) {
+      return node;
+    }
     if (node.children) {
       for (const child of node.children) {
         const found = traverse(child);
-        if (found) return found;
+        if (found) {
+          return found;
+        }
       }
     }
     return null;
@@ -50,7 +56,9 @@ function findScopeNodeById(tree: ScopeTree, id: string): ScopeNode | null {
 
   for (const root of tree) {
     const found = traverse(root);
-    if (found) return found;
+    if (found) {
+      return found;
+    }
   }
   return null;
 }
@@ -63,8 +71,8 @@ function findScopeNodeById(tree: ScopeTree, id: string): ScopeNode | null {
  * @returns The derived scope information including code, level, id, and path.
  */
 export function deriveScopeFromCodeAndLevel(
-  code: string,
-  level: string,
+  code: unknown,
+  level: unknown,
   tree: ScopeTree,
 ): {
   scopeCode: string;
@@ -72,7 +80,7 @@ export function deriveScopeFromCodeAndLevel(
   scopeId: string;
   scopePath: ScopeNode[];
 } {
-  if (!isNonEmptyString(code) || !isNonEmptyString(level)) {
+  if (!(isNonEmptyString(code) && isNonEmptyString(level))) {
     throw new Error("INVALID_ARGS: expected (code: string, level: string)");
   }
   const trimmedCode = code.trim();
@@ -104,7 +112,7 @@ export function deriveScopeFromCodeAndLevel(
  * @returns The derived scope information including code, level, id, and path.
  */
 export function deriveScopeFromId(
-  id: string,
+  id: unknown,
   tree: ScopeTree,
 ): {
   scopeCode: string;
@@ -137,8 +145,8 @@ export function deriveScopeFromId(
  * @returns The derived scope information including code, level, id, and path.
  */
 export function deriveScopeFromCodeWithOptionalLevel(
-  code: string,
-  level: string | undefined,
+  code: unknown,
+  level: unknown | undefined,
   tree: ScopeTree,
 ): {
   scopeCode: string;
@@ -148,6 +156,10 @@ export function deriveScopeFromCodeWithOptionalLevel(
 } {
   if (!isNonEmptyString(code)) {
     throw new Error("INVALID_ARGS: expected (code: string)");
+  }
+
+  if (!isNonEmptyString(level)) {
+    throw new Error("INVALID_ARGS: expected (level: string)");
   }
 
   const effectiveLevel = level?.trim() || DEFAULT_CUSTOM_SCOPE_LEVEL;
@@ -160,7 +172,7 @@ export function deriveScopeFromCodeWithOptionalLevel(
  * @param tree - The scope tree to search for the node.
  * @returns The derived scope information including code, level, id, and path.
  */
-export function deriveScopeFromArgs(args: any[], tree: ScopeTree) {
+export function deriveScopeFromArgs(args: unknown[], tree: ScopeTree) {
   if (args.length === 2) {
     return deriveScopeFromCodeAndLevel(args[0], args[1], tree);
   }
@@ -169,7 +181,7 @@ export function deriveScopeFromArgs(args: any[], tree: ScopeTree) {
     // Try as ID first, then as code with default level
     try {
       return deriveScopeFromId(arg, tree);
-    } catch (error) {
+    } catch (_error) {
       // If ID lookup fails, treat as code with default level
       return deriveScopeFromCodeWithOptionalLevel(arg, undefined, tree);
     }
@@ -184,11 +196,7 @@ export function deriveScopeFromArgs(args: any[], tree: ScopeTree) {
  * @param level - The level of the scope to find.
  * @returns The found scope path or an empty array if not found.
  */
-export function findScopePath(
-  tree: ScopeTree,
-  code: string,
-  level: string,
-): ScopeNode[] {
+export function findScopePath(tree: ScopeTree, code: string, level: string) {
   const path: ScopeNode[] = [];
   const traverse = (node: ScopeNode, parents: ScopeNode[]): boolean => {
     const extendedPath = parents.concat(node);
@@ -198,13 +206,17 @@ export function findScopePath(
     }
     if (node.children) {
       for (const child of node.children) {
-        if (traverse(child, extendedPath)) return true;
+        if (traverse(child, extendedPath)) {
+          return true;
+        }
       }
     }
     return false;
   };
   for (const root of tree) {
-    if (traverse(root, [])) return path.reverse();
+    if (traverse(root, [])) {
+      return path.reverse();
+    }
   }
   return [];
 }
@@ -215,20 +227,23 @@ export function findScopePath(
  * @returns The sanitized entries.
  */
 export function sanitizeRequestEntries(
-  entries: any,
-): Array<{ name: string; value: string | number | boolean }> {
-  const list: any[] = Array.isArray(entries) ? entries : [];
+  entries: ConfigValueWithOptionalOrigin[],
+): ConfigValueWithOptionalOrigin[] {
+  const list = Array.isArray(entries) ? entries : [];
   return list
-    .filter((entry: any) => {
-      if (!entry || typeof entry.name !== "string") return false;
+    .filter((entry) => {
+      if (!entry || typeof entry.name !== "string") {
+        return false;
+      }
       const hasValidValue = ["string", "number", "boolean"].includes(
         typeof entry.value,
       );
       return entry.name.trim().length > 0 && hasValidValue;
     })
-    .map((entry: any) => ({
+    .map((entry) => ({
       name: String(entry.name).trim(),
       value: entry.value as string | number | boolean,
+      origin: entry.origin,
     }));
 }
 
@@ -241,26 +256,30 @@ export function sanitizeRequestEntries(
  * @returns The merged scope entries.
  */
 export function mergeScopes(
-  existingScopeEntries: Array<{ name: string; value: any; origin?: any }>,
-  requestedScopeEntries: Array<{ name: string; value: any }>,
+  existingScopeEntries: ConfigValueWithOptionalOrigin[],
+  requestedScopeEntries: ConfigValueWithOptionalOrigin[],
   scopeCode: string,
   scopeLevel: string,
-): Array<{ name: string; value: any; origin: any }> {
-  const mergedMap = new Map<string, any>();
+) {
+  const mergedMap = new Map<string, ConfigValue>();
   for (const existingEntry of existingScopeEntries) {
     mergedMap.set(existingEntry.name, {
+      name: existingEntry.name,
       value: existingEntry.value,
       origin: existingEntry.origin || { code: scopeCode, level: scopeLevel },
     });
   }
+
   for (const requestedEntry of requestedScopeEntries) {
     mergedMap.set(requestedEntry.name, {
+      name: requestedEntry.name,
       value: requestedEntry.value,
       origin: { code: scopeCode, level: scopeLevel },
     });
   }
-  return Array.from(mergedMap.entries()).map(([name, data]) => ({
-    name,
+
+  return Array.from(mergedMap.values()).map((data) => ({
+    name: data.name,
     value: data.value,
     origin: data.origin,
   }));
@@ -271,91 +290,110 @@ export function mergeScopes(
  * @param schema - The schema to build the defaults from.
  * @returns The default config entries.
  */
-export function getSchemaDefaults(schema: ConfigSchemaField[]): {
-  config: Array<{
-    name: string;
-    value: any;
-    origin: { code: string; level: string };
-  }>;
-} {
+export function getSchemaDefaults(schema: ConfigSchemaField[]) {
   const defaults = schema
     .filter((field) => field.default !== undefined)
     .map((field) => ({
       name: field.name,
-      value: field.default,
+      value: field.default as string,
       origin: { code: "default", level: "system" },
     }));
+
   return { config: defaults };
 }
 
 /**
- * Merge inherited configs along the scope path and ensure schema defaults exist
- * @param loadScopeConfigFn - The function to load the scope config.
- * @param getSchemaFn - The function to get the schema.
- * @param configData - The config data to merge.
- * @param scopeCode - The code of the scope.
- * @param scopeLevel - The level of the scope.
- * @param scopePath - The path of the scope.
- * @returns The merged config data. Returns null if the config data is not valid.
- * @throws An error if the config data is not valid.
+ * Merges config entries into the target map if not already present
+ * @param merged - The target map to merge into
+ * @param entries - The config entries to merge
+ * @param origin - The origin information for the entries
  */
-export async function mergeWithSchemaDefaults(
+function mergeConfigEntries(
+  merged: Map<string, ConfigValue>,
+  entries: ConfigValue[],
+  origin: { code: string; level: string },
+) {
+  for (const entry of entries) {
+    if (!merged.has(entry.name)) {
+      merged.set(entry.name, {
+        name: entry.name,
+        value: entry.value,
+        origin,
+      });
+    }
+  }
+}
+
+/**
+ * Loads and merges config from the inheritance path
+ * @param merged - The target map to merge into
+ * @param scopePath - The path of scope nodes to load from
+ * @param loadScopeConfigFn - Function to load config for a scope
+ */
+async function mergeConfigFromPath(
+  merged: Map<string, ConfigValue>,
+  scopePath: ScopeNode[],
   loadScopeConfigFn: (
     code: string,
-  ) => Promise<{ scope: any; config: any[] } | null>,
-  getSchemaFn: () => Promise<ConfigSchemaField[]>,
-  configData: any,
-  scopeCode: string,
-  scopeLevel: string,
-  scopePath: ScopeNode[],
-): Promise<any> {
-  const schema = await getSchemaFn();
-  const defaultMap = new Map<string, any>();
-  for (const field of schema) {
-    if (field.default !== undefined) {
-      defaultMap.set(field.name, field.default);
-    }
-  }
-
-  const merged: Map<string, any> = new Map();
-
-  // First, load from the inheritance path (most specific to least specific within the branch)
+  ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>,
+) {
   for (const node of scopePath) {
     const persisted = await loadScopeConfigFn(node.code);
-    if (persisted && Array.isArray(persisted.config)) {
-      for (const entry of persisted.config) {
-        if (!merged.has(entry.name)) {
-          merged.set(entry.name, {
-            value: entry.value,
-            origin: { code: node.code, level: node.level },
-          });
-        }
-      }
+    if (persisted?.config && Array.isArray(persisted.config)) {
+      mergeConfigEntries(merged, persisted.config, {
+        code: node.code,
+        level: node.level,
+      });
     }
   }
+}
 
-  // Then, check global scope as fallback (if not already in the path)
+/**
+ * Checks if global scope is in the path and loads it if not
+ * @param merged - The target map to merge into
+ * @param scopePath - The path of scope nodes
+ * @param loadScopeConfigFn - Function to load config for a scope
+ */
+async function mergeGlobalConfigIfNeeded(
+  merged: Map<string, ConfigValue>,
+  scopePath: ScopeNode[],
+  loadScopeConfigFn: (
+    code: string,
+  ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>,
+) {
   const hasGlobal = scopePath.some(
     (node) => node.code === "global" && node.level === "global",
   );
+
   if (!hasGlobal) {
     const globalConfig = await loadScopeConfigFn("global");
-    if (globalConfig && Array.isArray(globalConfig.config)) {
-      for (const entry of globalConfig.config) {
-        if (!merged.has(entry.name)) {
-          merged.set(entry.name, {
-            value: entry.value,
-            origin: { code: "global", level: "global" },
-          });
-        }
-      }
+    if (globalConfig?.config && Array.isArray(globalConfig.config)) {
+      mergeConfigEntries(merged, globalConfig.config, {
+        code: "global",
+        level: "global",
+      });
     }
   }
+}
 
-  if (configData && Array.isArray(configData.config)) {
+/**
+ * Merges the current config data into the map
+ * @param merged - The target map to merge into
+ * @param configData - The current config data
+ * @param scopeCode - The code of the scope
+ * @param scopeLevel - The level of the scope
+ */
+function mergeCurrentConfigData(
+  merged: Map<string, ConfigValue>,
+  configData: { scope: ScopeNode; config: ConfigValue[] },
+  scopeCode: string,
+  scopeLevel: string,
+) {
+  if (configData?.config && Array.isArray(configData.config)) {
     for (const entry of configData.config) {
       if (!merged.has(entry.name)) {
         merged.set(entry.name, {
+          name: entry.name,
           value: entry.value,
           origin: entry.origin || {
             code: configData.scope?.code || scopeCode,
@@ -365,16 +403,74 @@ export async function mergeWithSchemaDefaults(
       }
     }
   }
+}
 
+/**
+ * Applies schema defaults to the merged config
+ * @param merged - The target map to apply defaults to
+ * @param defaultMap - The map of default values
+ */
+function applySchemaDefaults(
+  merged: Map<string, ConfigValue>,
+  defaultMap: Map<string, AcceptableConfigValue>,
+) {
   for (const [name, def] of defaultMap.entries()) {
     if (!merged.has(name)) {
       merged.set(name, {
+        name,
         value: def,
         origin: { code: "default", level: "system" },
       });
     }
   }
+}
 
+/** Parameters for mergeWithSchemaDefaults function */
+type MergeWithSchemaDefaultsParams = {
+  loadScopeConfigFn: (
+    code: string,
+  ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>;
+  getSchemaFn: () => Promise<ConfigSchemaField[]>;
+  configData: { scope: ScopeNode; config: ConfigValue[] };
+  scopeCode: string;
+  scopeLevel: string;
+  scopePath: ScopeNode[];
+};
+
+/**
+ * Merge inherited configs along the scope path and ensure schema defaults exist
+ * @param params - The parameters object
+ * @param params.loadScopeConfigFn - The function to load the scope config.
+ * @param params.getSchemaFn - The function to get the schema.
+ * @param params.configData - The config data to merge.
+ * @param params.scopeCode - The code of the scope.
+ * @param params.scopeLevel - The level of the scope.
+ * @param params.scopePath - The path of the scope.
+ * @returns The merged config data. Returns null if the config data is not valid.
+ * @throws An error if the config data is not valid.
+ */
+export async function mergeWithSchemaDefaults({
+  loadScopeConfigFn,
+  getSchemaFn,
+  configData,
+  scopeCode,
+  scopeLevel,
+  scopePath,
+}: MergeWithSchemaDefaultsParams) {
+  const schema = await getSchemaFn();
+  const defaultMap = new Map<string, AcceptableConfigValue>();
+  for (const field of schema) {
+    if (field.default !== undefined) {
+      defaultMap.set(field.name, field.default);
+    }
+  }
+
+  const merged: Map<string, ConfigValue> = new Map();
+  await mergeConfigFromPath(merged, scopePath, loadScopeConfigFn);
+  await mergeGlobalConfigIfNeeded(merged, scopePath, loadScopeConfigFn);
+
+  mergeCurrentConfigData(merged, configData, scopeCode, scopeLevel);
+  applySchemaDefaults(merged, defaultMap);
   configData.config = Array.from(merged.entries()).map(([name, data]) => ({
     name,
     value: data.value,

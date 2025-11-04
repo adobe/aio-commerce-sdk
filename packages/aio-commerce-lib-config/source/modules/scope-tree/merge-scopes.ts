@@ -10,14 +10,9 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { generateUUID } from "../../utils";
+import { generateUUID } from "../../utils/uuid";
 
-import type {
-  CommerceScopeData,
-  StoreGroup,
-  StoreView,
-  Website,
-} from "../../types";
+import type { CommerceScopeData, StoreGroup, StoreView } from "../../types";
 import type { ScopeNode, ScopeTree } from "./types";
 
 /**

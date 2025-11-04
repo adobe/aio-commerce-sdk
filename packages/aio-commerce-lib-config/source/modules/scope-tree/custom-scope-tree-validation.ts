@@ -10,7 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "../../utils";
+import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "../../utils/constants";
 
 import type { CustomScopeInput, SetCustomScopeTreeRequest } from "../../types";
 
@@ -20,10 +20,9 @@ export const GLOBAL_SCOPE_CODE = "global";
 /**
  * Helper to create validation errors with consistent property
  */
-export function createValidationError(message: string): Error {
+export function createValidationError(message: string) {
   const error = new Error(message);
-  (error as any).isValidationError = true;
-  return error;
+  return Object.assign(error, { isValidationError: true });
 }
 
 /**
@@ -32,15 +31,15 @@ export function createValidationError(message: string): Error {
 export function validateCustomScopeRequest(
   request: SetCustomScopeTreeRequest,
 ): CustomScopeInput[] {
-  if (!request.scopes || !Array.isArray(request.scopes)) {
+  if (!(request.scopes && Array.isArray(request.scopes))) {
     throw createValidationError("Request must include a scopes array");
   }
 
   const validatedScopes: CustomScopeInput[] = [];
-  request.scopes.forEach((scope) => {
+  for (const scope of request.scopes) {
     const validatedScope = validateAndNormalizeSingleScope(scope);
     validatedScopes.push(validatedScope);
-  });
+  }
 
   checkForDuplicateCodeLevelCombinations(validatedScopes);
 
@@ -85,7 +84,7 @@ export function validateAndNormalizeSingleScope(
   scope: CustomScopeInput,
 ): CustomScopeInput {
   if (!scope || typeof scope !== "object") {
-    throw createValidationError(`Scope must be an object`);
+    throw createValidationError("Scope must be an object");
   }
 
   const requiredFields = ["code", "label", "is_editable", "is_final"];
