@@ -136,10 +136,11 @@ export class ConfigurationRepository {
    * Check if error is a not-found error
    */
   private isNotFoundError(err: unknown): boolean {
+    const statusNotFound = 404;
     return (
       typeof err === "object" &&
       err !== null &&
-      (("statusCode" in err && err.statusCode === 404) ||
+      (("statusCode" in err && err.statusCode === statusNotFound) ||
         ("code" in err && err.code === "ENOENT"))
     );
   }

@@ -8,7 +8,6 @@
         "useMaxParams": "off"
       },
       "style": {
-        "noMagicNumbers": "off",
         "noNonNullAssertion": "off"
       },
       "performance": {
