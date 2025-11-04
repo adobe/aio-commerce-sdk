@@ -10,20 +10,15 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-// Schema-specific types
-export interface ConfigSchemaOption {
-  value: string;
-  label: string;
-}
+import * as v from "valibot";
 
-export interface ConfigSchemaField {
-  name: string;
-  type: "text" | "list";
-  label: string;
-  options?: ConfigSchemaOption[];
-  default?: string;
-  description?: string;
-}
+import type { VariantTypeSchema } from "./validation/schema";
+
+export type ConfigSchemaField = v.InferInput<typeof VariantTypeSchema>;
+export type ConfigSchemaOption = Extract<
+  ConfigSchemaField,
+  { type: "list" }
+>["options"][number];
 
 // Context needed for schema operations
 export interface SchemaContext {
