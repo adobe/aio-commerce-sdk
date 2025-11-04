@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+import { allNonEmpty } from "@adobe/aio-commerce-lib-core/params";
 import ky from "ky";
 
 import {
@@ -20,6 +22,10 @@ import {
 import { ensureImsScopes } from "#utils/auth/ims-scopes";
 import { optionallyExtendKy } from "#utils/http/ky";
 
+/** A regex matching a regular SaaS API URL, with a tenant ID and optional trailing slash. */
+const COMMERCE_API_URL_REGEX =
+  /^([a-zA-Z0-9-]+\.)?api\.commerce\.adobe\.com\/[a-zA-Z0-9-]+\/?$/;
+
 import type {
   CommerceHttpClientParamsWithRequiredConfig,
   PaaSClientParamsWithRequiredConfig,
@@ -27,6 +33,7 @@ import type {
   SaaSClientParamsWithRequiredConfig,
 } from "./http-client";
 import type {
+  CommerceFlavor,
   CommerceHttpClientParams,
   PaaSClientParams,
   SaaSClientParams,
@@ -145,4 +152,61 @@ export function buildCommerceHttpClient(
   }
 
   throw new Error(`Invalid Commerce configuration. Unknown flavor: ${flavor}`);
+}
+
+/**
+ * Resolves the {@link CommerceFlavor} from the given API URL.
+ * @param apiUrl The API URL to resolve the {@link CommerceFlavor} from.
+ */
+function resolveCommerceFlavorFromApiUrl(apiUrl: string): CommerceFlavor {
+  const { hostname, pathname } = new URL(apiUrl);
+  // Combine hostname and pathname (without leading slash) to match the regex pattern
+  const hostAndPath = `${hostname}${pathname}`;
+  return COMMERCE_API_URL_REGEX.test(hostAndPath) ? "saas" : "paas";
+}
+
+/**
+ * Resolves the {@link CommerceHttpClientParams} from the given App Builder action inputs.
+ * @param params The App Builder action inputs to resolve the {@link CommerceHttpClientParams} from.
+ * @throws If the base API URL or the authentication parameters cannot be resolved.
+ * @example
+ * ```typescript
+ * import { resolveCommerceHttpClientParams, AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api/commerce";
+ *
+ * // Some App Builder runtime action that needs the Commerce HTTP client
+ * export function main(params) {
+ *   const commerceHttpClientParams = resolveCommerceHttpClientParams(params);
+ *   const commerceClient = new AdobeCommerceHttpClient(commerceHttpClientParams);
+ * }
+ * ```
+ */
+export function resolveCommerceHttpClientParams(
+  params: Record<string, unknown>,
+): CommerceHttpClientParams {
+  if (allNonEmpty(params, ["AIO_COMMERCE_API_BASE_URL"])) {
+    const baseUrl = String(params.AIO_COMMERCE_API_BASE_URL);
+    const flavor = resolveCommerceFlavorFromApiUrl(baseUrl);
+
+    if (flavor === "saas") {
+      return {
+        auth: resolveAuthParams(params, "ims"),
+        config: {
+          baseUrl,
+          flavor,
+        },
+      };
+    }
+
+    return {
+      auth: resolveAuthParams(params, "integration"),
+      config: {
+        baseUrl,
+        flavor,
+      },
+    };
+  }
+
+  throw new Error(
+    "Can not resolve CommerceHttpClientParams without an AIO_COMMERCE_API_BASE_URL. Please provide one.",
+  );
 }

@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
 import ky from "ky";
 
 import {
@@ -20,6 +21,7 @@ import { ensureImsScopes } from "#utils/auth/ims-scopes";
 import { optionallyExtendKy } from "#utils/http/ky";
 
 import type { IoEventsHttpClientParamsWithRequiredConfig } from "./http-client";
+import type { IoEventsHttpClientParams } from "./types";
 
 const IO_EVENTS_IMS_REQUIRED_SCOPES = ["adobeio_api"];
 
@@ -50,4 +52,24 @@ export function buildIoEventsHttpClient(
   });
 
   return optionallyExtendKy(httpClient, fetchOptions);
+}
+
+/**
+ * Resolves the {@link IoEventsHttpClientParams} from the given App Builder action inputs.
+ * @param params The App Builder action inputs to resolve the {@link IoEventsHttpClientParams} from.
+ * @throws If the authentication parameters cannot be resolved.
+ */
+export function resolveIoEventsHttpClientParams(
+  params: Record<string, unknown>,
+): IoEventsHttpClientParams {
+  return {
+    // IO Events always uses IMS authentication.
+    auth: resolveAuthParams(params, "ims"),
+    config: {
+      // This is already optional, so only set if it is provided.
+      baseUrl: params.AIO_EVENTS_API_BASE_URL
+        ? String(params.AIO_EVENTS_API_BASE_URL)
+        : undefined,
+    },
+  };
 }
