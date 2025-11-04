@@ -10,8 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import * as v from "valibot";
-
+import type * as v from "valibot";
 import type { VariantTypeSchema } from "./validation/schema";
 
 export type ConfigSchemaField = v.InferInput<typeof VariantTypeSchema>;
@@ -21,7 +20,7 @@ export type ConfigSchemaOption = Extract<
 >["options"][number];
 
 // Context needed for schema operations
-export interface SchemaContext {
+export type SchemaContext = {
   namespace: string;
   cacheTimeout: number;
-}
+};

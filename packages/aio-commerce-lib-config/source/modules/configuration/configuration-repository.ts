@@ -10,42 +10,57 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { Files, init as initFiles } from "@adobe/aio-lib-files";
-import { init as initState, StateStore } from "@adobe/aio-lib-state";
+import AioLogger from "@adobe/aio-lib-core-logging";
+import { init as initFiles } from "@adobe/aio-lib-files";
+import { init as initState } from "@adobe/aio-lib-state";
 
-// Shared instances to avoid re-initialization
-let sharedState: StateStore | undefined;
-let sharedFiles: Files | undefined;
+import type { Files } from "@adobe/aio-lib-files";
+import type { StateStore } from "@adobe/aio-lib-state";
+
+const logger = AioLogger(
+  "@adobe/aio-commerce-lib-config:configuration-repository",
+  { level: process.env.LOG_LEVEL ?? "info" },
+);
 
 /**
  * Repository for all configuration data related operations
  * Handles both state (caching) and files (persistence) operations
  */
 export class ConfigurationRepository {
-  private async getState(): Promise<StateStore> {
-    if (!sharedState) {
-      sharedState = await initState();
-    }
-    return sharedState;
+  private __state: StateStore | null;
+  private __files: Files | null;
+
+  public constructor(state?: StateStore, files?: Files) {
+    this.__state = state ?? null;
+    this.__files = files ?? null;
   }
 
-  private async getFiles(): Promise<Files> {
-    if (!sharedFiles) {
-      sharedFiles = await initFiles();
+  private async getState() {
+    if (!this.__state) {
+      this.__state = await initState();
     }
-    return sharedFiles;
+
+    return this.__state;
+  }
+
+  private async getFiles() {
+    if (!this.__files) {
+      this.__files = await initFiles();
+    }
+
+    return this.__files;
   }
 
   /**
    * Get cached configuration payload from state store
    */
-  async getCachedConfig(scopeCode: string): Promise<any> {
+  public async getCachedConfig(scopeCode: string) {
     try {
       const state = await this.getState();
       const key = this.getConfigStateKey(scopeCode);
       const result = await state.get(key);
       return result.value?.data || null;
-    } catch (error) {
+    } catch (_) {
       return null;
     }
   }
@@ -53,13 +68,16 @@ export class ConfigurationRepository {
   /**
    * Cache configuration payload in state store
    */
-  async setCachedConfig(scopeCode: string, payload: string): Promise<void> {
+  public async setCachedConfig(scopeCode: string, payload: string) {
     try {
       const state = await this.getState();
       const key = this.getConfigStateKey(scopeCode);
       await state.put(key, payload);
     } catch (error) {
-      console.error("Error caching configuration:", error);
+      logger.debug(
+        "Failed to cache configuration:",
+        error instanceof Error ? error.message : String(error),
+      );
       // Don't throw - caching failure shouldn't break functionality
     }
   }
@@ -67,7 +85,7 @@ export class ConfigurationRepository {
   /**
    * Get persisted configuration payload from files
    */
-  async getPersistedConfig(scopeCode: string): Promise<string | null> {
+  public async getPersistedConfig(scopeCode: string) {
     try {
       const files = await this.getFiles();
       const filePath = this.getConfigFilePath(scopeCode);
@@ -80,7 +98,7 @@ export class ConfigurationRepository {
 
       const content = await files.read(filePath);
       return content ? content.toString("utf8") : null;
-    } catch (error) {
+    } catch (_) {
       return null;
     }
   }
@@ -88,10 +106,83 @@ export class ConfigurationRepository {
   /**
    * Save configuration payload to files
    */
-  async saveConfig(scopeCode: string, payload: string): Promise<void> {
+  public async saveConfig(scopeCode: string, payload: string) {
     const files = await this.getFiles();
     const filePath = this.getConfigFilePath(scopeCode);
     await files.write(filePath, payload);
+  }
+
+  /**
+   * Try to load configuration from state cache
+   * @param scopeCode - The scope code to load configuration for
+   * @returns The parsed configuration or null if not found
+   */
+  private async loadFromStateCache(scopeCode: string) {
+    try {
+      const statePayload = await this.getCachedConfig(scopeCode);
+      if (statePayload) {
+        return JSON.parse(statePayload);
+      }
+    } catch (err) {
+      logger.debug("Failed to load configuration from state cache", {
+        scopeCode,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+    return null;
+  }
+
+  /**
+   * Check if error is a not-found error
+   */
+  private isNotFoundError(err: unknown): boolean {
+    const statusNotFound = 404;
+    return (
+      typeof err === "object" &&
+      err !== null &&
+      (("statusCode" in err && err.statusCode === statusNotFound) ||
+        ("code" in err && err.code === "ENOENT"))
+    );
+  }
+
+  /**
+   * Try to load configuration from persisted files
+   * @param scopeCode - The scope code to load configuration for
+   * @returns The parsed configuration or null if not found
+   */
+  private async loadFromPersistedFiles(scopeCode: string) {
+    try {
+      const filePayload = await this.getPersistedConfig(scopeCode);
+      if (!filePayload) {
+        return null;
+      }
+
+      const parsed = JSON.parse(filePayload);
+
+      // Try to cache the file data for future reads
+      try {
+        await this.setCachedConfig(scopeCode, JSON.stringify(parsed));
+      } catch (err) {
+        logger.debug("Failed to cache configuration in state", {
+          scopeCode,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+
+      return parsed;
+    } catch (err) {
+      if (this.isNotFoundError(err)) {
+        logger.debug(
+          `No persisted configuration file found for scope ${scopeCode}.`,
+        );
+      } else {
+        logger.debug(
+          `Failed to retrieve configuration from files for scope ${scopeCode}:`,
+          err instanceof Error ? err.message : String(err),
+        );
+      }
+    }
+    return null;
   }
 
   /**
@@ -99,51 +190,15 @@ export class ConfigurationRepository {
    * @param scopeCode - The scope code to load configuration for
    * @returns The configuration payload or null if not found
    */
-  async loadConfig(
-    scopeCode: string,
-  ): Promise<{ scope: any; config: any[] } | null> {
-    try {
-      // Try state cache first
-      const statePayload = await this.getCachedConfig(scopeCode);
-      if (statePayload) {
-        return JSON.parse(statePayload);
-      }
-    } catch (e: any) {
-      console.debug("State read failed, will try files next", {
-        scopeCode,
-        error: e instanceof Error ? e.message : String(e),
-      });
+  public async loadConfig(scopeCode: string) {
+    const fromState = await this.loadFromStateCache(scopeCode);
+    if (fromState) {
+      return fromState;
     }
 
-    try {
-      // Fallback to persisted files
-      const filePayload = await this.getPersistedConfig(scopeCode);
-      if (filePayload) {
-        const parsed = JSON.parse(filePayload);
-
-        // Try to cache the file data for future reads
-        try {
-          await this.setCachedConfig(scopeCode, JSON.stringify(parsed));
-        } catch (e: any) {
-          console.warn("Failed to cache configuration in state", {
-            scopeCode,
-            error: e instanceof Error ? e.message : String(e),
-          });
-        }
-
-        return parsed;
-      }
-    } catch (e: any) {
-      if (e?.statusCode === 404 || e?.code === "ENOENT") {
-        console.debug(
-          `No persisted configuration file found for scope ${scopeCode}.`,
-        );
-      } else {
-        console.error(
-          `Error retrieving configuration from files for scope ${scopeCode}:`,
-          e,
-        );
-      }
+    const fromFiles = await this.loadFromPersistedFiles(scopeCode);
+    if (fromFiles) {
+      return fromFiles;
     }
 
     return null;
@@ -154,7 +209,7 @@ export class ConfigurationRepository {
    * @param scopeCode - The scope code to persist configuration for
    * @param payload - The configuration payload object
    */
-  async persistConfig(scopeCode: string, payload: any): Promise<void> {
+  public async persistConfig(scopeCode: string, payload: unknown) {
     const payloadString = JSON.stringify(payload);
 
     // Always save to files (primary persistence)
@@ -163,8 +218,8 @@ export class ConfigurationRepository {
     // Try to cache in state for faster reads
     try {
       await this.setCachedConfig(scopeCode, payloadString);
-    } catch (e: any) {
-      console.warn("Failed to cache configuration in state", {
+    } catch (e) {
+      logger.debug("Failed to cache configuration in state", {
         scopeCode,
         error: e instanceof Error ? e.message : String(e),
       });

@@ -1,7 +1,80 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ConfigManager } from "../source/config-manager";
-import { mockScopeTree } from "./fixtures/mock-scope-tree";
+import { ConfigManager } from "#config-manager";
+import { ConfigurationRepository } from "#modules/configuration/configuration-repository";
+import { mockScopeTree } from "#test/fixtures/scope-tree";
+
+import { createMockLibFiles } from "./mocks/lib-files";
+import { createMockLibState } from "./mocks/lib-state";
+
+import type { ConfigValue } from "#index";
+
+const MockState = createMockLibState();
+const MockFiles = createMockLibFiles();
+
+// Module-level variables that will be reassigned in beforeEach
+let mockStateInstance = new MockState();
+let mockFilesInstance = new MockFiles();
+
+vi.mock("#modules/configuration/configuration-repository", async () => {
+  const original = await vi.importActual<{
+    ConfigurationRepository: typeof ConfigurationRepository;
+  }>("#modules/configuration/configuration-repository");
+
+  return {
+    ...original,
+    ConfigurationRepository: class extends original.ConfigurationRepository {
+      public constructor() {
+        // @ts-expect-error - mocks are minimal implementations for testing only
+        super(mockStateInstance, mockFilesInstance);
+      }
+    },
+  };
+});
+
+vi.mock("#modules/scope-tree/scope-tree-repository", () => {
+  const MockScopeTreeRepository = vi.fn(
+    class {
+      public getCachedScopeTree = vi.fn(() => null);
+      public getPersistedScopeTree = vi.fn(() => mockScopeTree);
+      public setCachedScopeTree = vi.fn();
+      public saveScopeTree = vi.fn();
+    },
+  );
+
+  return { ScopeTreeRepository: MockScopeTreeRepository };
+});
+
+vi.mock("#modules/schema/config-schema-repository", () => {
+  const mockSchema = JSON.stringify([
+    {
+      name: "exampleList",
+      type: "list",
+      options: [{ label: "Option 1", value: "option1" }],
+      default: "option1",
+    },
+    {
+      name: "currency",
+      type: "text",
+      label: "Currency",
+      default: "",
+    },
+  ]);
+
+  const MockConfigSchemaRepository = vi.fn(
+    class {
+      public getCachedSchema = vi.fn(() => null);
+      public setCachedSchema = vi.fn();
+      public deleteCachedSchema = vi.fn();
+      public getPersistedSchema = vi.fn(() => mockSchema);
+      public saveSchema = vi.fn();
+      public getSchemaVersion = vi.fn(() => null);
+      public setSchemaVersion = vi.fn();
+    },
+  );
+
+  return { ConfigSchemaRepository: MockConfigSchemaRepository };
+});
 
 function buildPayload(
   id: string,
@@ -19,167 +92,19 @@ function buildPayload(
   });
 }
 
-// Mock repositories for testing
-class MockScopeTreeRepository {
-  async getCachedScopeTree(namespace: string) {
-    return null;
-  }
-  async setCachedScopeTree(namespace: string, tree: any, ttl: number) {}
-  async getPersistedScopeTree(namespace: string) {
-    return mockScopeTree;
-  }
-  async saveScopeTree(namespace: string, scopes: any): Promise<void> {}
-}
-
-class MockConfigSchemaRepository {
-  async getCachedSchema(namespace: string) {
-    return null;
-  }
-  async setCachedSchema(namespace: string, data: any, ttl: number) {}
-  async deleteCachedSchema(namespace: string) {}
-  async getPersistedSchema(): Promise<string> {
-    // Return a valid schema with defaults for testing
-    return JSON.stringify([
-      {
-        name: "exampleList",
-        type: "list",
-        options: [{ label: "Option 1", value: "option1" }],
-        default: "option1",
-      },
-      {
-        name: "currency",
-        type: "text",
-        label: "Currency",
-        default: "",
-      },
-    ]);
-  }
-  async saveSchema(schema: string): Promise<void> {}
-  async getSchemaVersion(namespace: string) {
-    return null;
-  }
-  async setSchemaVersion(namespace: string, version: string) {}
-}
-
-class MockConfigurationRepository {
-  private state = new Map<string, string>();
-  private files = new Map<string, string>();
-
-  // Low-level methods
-  async getCachedConfig(scopeCode: string): Promise<string | null> {
-    const key = `configuration.${scopeCode}`;
-    return this.state.get(key) || null;
-  }
-
-  async setCachedConfig(scopeCode: string, payload: string): Promise<void> {
-    const key = `configuration.${scopeCode}`;
-    this.state.set(key, payload);
-  }
-
-  async getPersistedConfig(scopeCode: string): Promise<string | null> {
-    const path = `scope/${scopeCode.toLowerCase()}/configuration.json`;
-    return this.files.get(path) || null;
-  }
-
-  async saveConfig(scopeCode: string, payload: string): Promise<void> {
-    const path = `scope/${scopeCode.toLowerCase()}/configuration.json`;
-    this.files.set(path, payload);
-  }
-
-  // High-level methods
-  async loadConfig(
-    scopeCode: string,
-  ): Promise<{ scope: any; config: any[] } | null> {
-    try {
-      const statePayload = await this.getCachedConfig(scopeCode);
-      if (statePayload) {
-        return JSON.parse(statePayload);
-      }
-    } catch (e) {
-      // Continue to files
-    }
-
-    try {
-      const filePayload = await this.getPersistedConfig(scopeCode);
-      if (filePayload) {
-        const parsed = JSON.parse(filePayload);
-        try {
-          await this.setCachedConfig(scopeCode, JSON.stringify(parsed));
-        } catch (e) {
-          // Cache failure is non-critical
-        }
-        return parsed;
-      }
-    } catch (e) {
-      // No config found
-    }
-
-    return null;
-  }
-
-  async persistConfig(scopeCode: string, payload: any): Promise<void> {
-    const payloadString = JSON.stringify(payload);
-    await this.saveConfig(scopeCode, payloadString);
-    try {
-      await this.setCachedConfig(scopeCode, payloadString);
-    } catch (e) {
-      // Cache failure is non-critical
-    }
-  }
-}
-
-// Mock instances
-let mockScopeTreeRepo: MockScopeTreeRepository;
-let mockSchemaRepo: MockConfigSchemaRepository;
-let mockConfigRepo: MockConfigurationRepository;
-
-// Mock the repository modules with constructor delegation
-vi.mock("../source/modules/scope-tree/scope-tree-repository", () => ({
-  ScopeTreeRepository: class MockedScopeTreeRepository {
-    constructor() {
-      // Delegate all methods to the mock instance
-      if (mockScopeTreeRepo) {
-        Object.setPrototypeOf(this, mockScopeTreeRepo);
-        Object.assign(this, mockScopeTreeRepo);
-      }
-    }
-  },
-}));
-
-vi.mock("../source/modules/schema/config-schema-repository", () => ({
-  ConfigSchemaRepository: class MockedConfigSchemaRepository {
-    constructor() {
-      // Delegate all methods to the mock instance
-      if (mockSchemaRepo) {
-        Object.setPrototypeOf(this, mockSchemaRepo);
-        Object.assign(this, mockSchemaRepo);
-      }
-    }
-  },
-}));
-
-vi.mock("../source/modules/configuration/configuration-repository", () => ({
-  ConfigurationRepository: class MockedConfigurationRepository {
-    constructor() {
-      // Delegate all methods to the mock instance
-      if (mockConfigRepo) {
-        Object.setPrototypeOf(this, mockConfigRepo);
-        Object.assign(this, mockConfigRepo);
-      }
-    }
-  },
-}));
-
 function createManager(): ConfigManager {
   return new ConfigManager();
 }
 
 describe("ConfigManager", () => {
+  let mockConfigRepo: ConfigurationRepository;
+
   beforeEach(() => {
-    // Initialize mock instances before each test
-    mockScopeTreeRepo = new MockScopeTreeRepository();
-    mockSchemaRepo = new MockConfigSchemaRepository();
-    mockConfigRepo = new MockConfigurationRepository();
+    // Create fresh mock instances for each test
+    // so that each test starts with a clean state
+    mockStateInstance = new MockState();
+    mockFilesInstance = new MockFiles();
+    mockConfigRepo = new ConfigurationRepository();
   });
 
   it("returns defaults when no persisted config", async () => {
@@ -202,10 +127,9 @@ describe("ConfigManager", () => {
         },
       ]),
     );
+
     const result = await mgr.getConfiguration("global", "global");
-    expect(result.config.find((e: any) => e.name === "currency")?.value).toBe(
-      "€",
-    );
+    expect(result.config.find((e) => e.name === "currency")?.value).toBe("€");
   });
 
   it("falls back to files and caches to state", async () => {
@@ -220,18 +144,18 @@ describe("ConfigManager", () => {
         },
       ]),
     );
+
     const result = await mgr.getConfiguration("global", "global");
-    expect(result.config.find((e: any) => e.name === "currency")?.value).toBe(
-      "£",
-    );
+    expect(result.config.find((e) => e.name === "currency")?.value).toBe("£");
 
     // Verify it was cached in state
     const cachedPayload = await mockConfigRepo.getCachedConfig("global");
-    expect(cachedPayload).toBeTruthy();
-    const cached = JSON.parse(cachedPayload!);
-    expect(cached.config.find((e: any) => e.name === "currency")?.value).toBe(
-      "£",
-    );
+    expect.assert(cachedPayload, "cachedPayload is not defined/truthy");
+
+    const cached = JSON.parse(cachedPayload);
+    expect(
+      cached.config.find((e: ConfigValue) => e.name === "currency")?.value,
+    ).toBe("£");
   });
 
   it("merges inherited values from parent scopes", async () => {
@@ -284,17 +208,17 @@ describe("ConfigManager", () => {
     );
 
     const result = await mgr.getConfiguration("default", "store_view");
-    expect(result.config.find((e: any) => e.name === "currency")?.value).toBe(
-      "$",
-    );
     expect(
-      result.config.find((e: any) => e.name === "currency")?.origin,
+      result.config.find((e: ConfigValue) => e.name === "currency")?.value,
+    ).toBe("$");
+    expect(
+      result.config.find((e: ConfigValue) => e.name === "currency")?.origin,
     ).toEqual({ code: "global", level: "global" });
     expect(
-      result.config.find((e: any) => e.name === "exampleList")?.value,
+      result.config.find((e: ConfigValue) => e.name === "exampleList")?.value,
     ).toBe("option1");
     expect(
-      result.config.find((e: any) => e.name === "exampleList")?.origin,
+      result.config.find((e: ConfigValue) => e.name === "exampleList")?.origin,
     ).toEqual({ code: "default", level: "store_view" });
   });
 
@@ -334,13 +258,14 @@ describe("ConfigManager", () => {
     expect(response.scope.code).toBe("global");
     expect(response.config).toEqual([{ name: "currency", value: "JPY" }]);
 
-    // Verify persistence
+    // Verify persistence in files
     const persisted = await mockConfigRepo.getPersistedConfig("global");
-    expect(persisted).toBeTruthy();
-    const parsed = JSON.parse(persisted!);
-    expect(parsed.config.find((e: any) => e.name === "currency")?.value).toBe(
-      "JPY",
-    );
+    expect.assert(persisted, "persisted is not defined/truthy");
+
+    const parsed = JSON.parse(persisted);
+    expect(
+      parsed.config.find((e: ConfigValue) => e.name === "currency")?.value,
+    ).toBe("JPY");
   });
 
   it("merges existing and newly set entries without losing prior values", async () => {
@@ -372,11 +297,11 @@ describe("ConfigManager", () => {
 
     // Verify both values are present
     const result = await mgr.getConfiguration("global", "global");
-    expect(result.config.find((e: any) => e.name === "currency")?.value).toBe(
-      "CAD",
-    );
     expect(
-      result.config.find((e: any) => e.name === "exampleList")?.value,
+      result.config.find((e: ConfigValue) => e.name === "currency")?.value,
+    ).toBe("CAD");
+    expect(
+      result.config.find((e: ConfigValue) => e.name === "exampleList")?.value,
     ).toBe("option1");
   });
 

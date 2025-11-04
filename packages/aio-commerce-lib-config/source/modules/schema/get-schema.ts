@@ -11,7 +11,7 @@ governing permissions and limitations under the License.
 */
 
 import { ConfigSchemaRepository } from "./config-schema-repository";
-import { utils as schemaUtils } from "./validation";
+import * as schemaUtils from "./schema-utils";
 
 import type { ConfigSchemaField, SchemaContext } from "./types";
 
@@ -26,7 +26,9 @@ export async function getSchema(
   const repository = new ConfigSchemaRepository();
 
   const cachedSchema = await tryGetFromCache(context, repository);
-  if (cachedSchema) return cachedSchema;
+  if (cachedSchema) {
+    return cachedSchema;
+  }
 
   const storedSchema = await tryGetFromStorage(context, repository);
   if (storedSchema) {
@@ -63,7 +65,7 @@ async function tryGetFromCache(
     if (cached) {
       return cached;
     }
-  } catch (error) {
+  } catch (_error) {
     // Cache failure shouldn't prevent trying storage
   }
   return null;
@@ -82,7 +84,7 @@ async function tryGetFromStorage(
 
     await cacheSchema(context, repository, schema);
     return schema;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
@@ -114,7 +116,7 @@ async function handleStoredSchemaUpdate(
       content,
       currentVersion,
     );
-  } catch (error) {
+  } catch (_error) {
     // If version checking/update fails, return stored schema as fallback
     return storedSchema;
   }
@@ -137,7 +139,7 @@ async function initializeSchemaFromBundledFile(
     await storeSchemaVersion(context, repository, currentVersion);
 
     return validatedSchema;
-  } catch (error) {
+  } catch (_error) {
     // All options exhausted, return empty schema
     return [];
   }

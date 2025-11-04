@@ -14,37 +14,37 @@ import type { ConfigValue } from "../modules/configuration";
 import type { ConfigSchemaField } from "../modules/schema";
 
 // Public API Response Types
-export interface GetConfigSchemaResponse {
+export type GetConfigSchemaResponse = {
   configSchema: ConfigSchemaField[];
-}
+};
 
-export interface GetConfigurationResponse {
+export type GetConfigurationResponse = {
   scope: {
     id: string;
     code: string;
     level: string;
   };
   config: ConfigValue[];
-}
+};
 
-export interface GetConfigurationByKeyResponse {
+export type GetConfigurationByKeyResponse = {
   scope: {
     id: string;
     code: string;
     level: string;
   };
   config: ConfigValue | null;
-}
+};
 
 // Public API Request Types
-export interface SetConfigurationRequest {
+export type SetConfigurationRequest = {
   config: Array<{
     name: string;
     value: string | number | boolean;
   }>;
-}
+};
 
-export interface SetConfigurationResponse {
+export type SetConfigurationResponse = {
   message: string;
   timestamp: string;
   scope: {
@@ -56,14 +56,14 @@ export interface SetConfigurationResponse {
     name: string;
     value: string | number | boolean;
   }>;
-}
+};
 
 // Set Custom Scope Tree Request/Response Types
-export interface SetCustomScopeTreeRequest {
+export type SetCustomScopeTreeRequest = {
   scopes: CustomScopeInput[];
-}
+};
 
-export interface CustomScopeInput {
+export type CustomScopeInput = {
   id?: string; // If not provided, it's a new scope
   code: string;
   label: string;
@@ -71,15 +71,15 @@ export interface CustomScopeInput {
   is_editable: boolean;
   is_final: boolean;
   children?: CustomScopeInput[];
-}
+};
 
-export interface SetCustomScopeTreeResponse {
+export type SetCustomScopeTreeResponse = {
   message: string;
   timestamp: string;
   scopes: CustomScopeOutput[];
-}
+};
 
-export interface CustomScopeOutput {
+export type CustomScopeOutput = {
   id: string;
   code: string;
   label: string;
@@ -87,4 +87,4 @@ export interface CustomScopeOutput {
   is_editable: boolean;
   is_final: boolean;
   children?: CustomScopeOutput[];
-}
+};

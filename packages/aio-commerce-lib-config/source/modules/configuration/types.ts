@@ -10,20 +10,26 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
+import type { SetOptional } from "type-fest";
+
 // Configuration-specific types
-export interface ConfigOrigin {
+export type ConfigOrigin = {
   code: string;
   level: string;
-}
+};
 
-export interface ConfigValue {
+export type AcceptableConfigValue = string | number | boolean;
+
+export type ConfigValue = {
   name: string;
-  value: string | number | boolean;
+  value: AcceptableConfigValue;
   origin: ConfigOrigin;
-}
+};
+
+export type ConfigValueWithOptionalOrigin = SetOptional<ConfigValue, "origin">;
 
 // Context needed for configuration operations
-export interface ConfigContext {
+export type ConfigContext = {
   namespace: string;
   cacheTimeout: number;
-}
+};

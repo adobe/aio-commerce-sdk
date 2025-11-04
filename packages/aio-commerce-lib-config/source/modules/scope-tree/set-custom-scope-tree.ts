@@ -10,7 +10,8 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { generateUUID } from "../../utils";
+import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "../../utils/constants";
+import { generateUUID } from "../../utils/uuid";
 import {
   COMMERCE_SCOPE_CODE,
   GLOBAL_SCOPE_CODE,
@@ -110,12 +111,12 @@ function processSingleScope(
   existingCustomScopes: ScopeNode[],
 ): ScopeNode {
   const id = findExistingId(inputScope, existingCustomScopes) || generateUUID();
-
   const baseCustomScope = {
     id,
     code: inputScope.code,
     label: inputScope.label,
-    level: inputScope.level!,
+    level: inputScope.level ?? DEFAULT_CUSTOM_SCOPE_LEVEL,
+
     is_editable: inputScope.is_editable,
     is_final: inputScope.is_final,
     is_removable: true, // Custom scopes are always removable
@@ -144,7 +145,11 @@ function findExistingId(
     return inputScope.id;
   }
 
-  return findInScopeTree(inputScope.code, inputScope.level!, existingScopes);
+  return findInScopeTree(
+    inputScope.code,
+    inputScope.level ?? DEFAULT_CUSTOM_SCOPE_LEVEL,
+    existingScopes,
+  );
 }
 
 /**
@@ -161,10 +166,11 @@ function findInScopeTree(
     }
     if (scope.children) {
       const foundId = findInScopeTree(targetCode, targetLevel, scope.children);
-      if (foundId) return foundId;
+      if (foundId) {
+        return foundId;
+      }
     }
   }
-  return undefined;
 }
 
 /**
