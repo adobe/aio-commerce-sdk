@@ -15,7 +15,7 @@ import { init as initFiles } from "@adobe/aio-lib-files";
 import { init as initState } from "@adobe/aio-lib-state";
 
 import type { Files } from "@adobe/aio-lib-files";
-import type { StateStore } from "@adobe/aio-lib-state";
+import type { AdobeState } from "@adobe/aio-lib-state";
 
 const logger = AioLogger(
   "@adobe/aio-commerce-lib-config:configuration-repository",
@@ -26,11 +26,12 @@ const logger = AioLogger(
  * Repository for all configuration data related operations
  * Handles both state (caching) and files (persistence) operations
  */
+
 export class ConfigurationRepository {
-  private __state: StateStore | null;
+  private __state: AdobeState | null;
   private __files: Files | null;
 
-  public constructor(state?: StateStore, files?: Files) {
+  public constructor(state?: AdobeState, files?: Files) {
     this.__state = state ?? null;
     this.__files = files ?? null;
   }
@@ -59,7 +60,11 @@ export class ConfigurationRepository {
       const state = await this.getState();
       const key = this.getConfigStateKey(scopeCode);
       const result = await state.get(key);
-      return result.value?.data || null;
+      if (result.value) {
+        const parsed = JSON.parse(result.value);
+        return parsed.data || null;
+      }
+      return null;
     } catch (_) {
       return null;
     }
@@ -72,7 +77,7 @@ export class ConfigurationRepository {
     try {
       const state = await this.getState();
       const key = this.getConfigStateKey(scopeCode);
-      await state.put(key, payload);
+      await state.put(key, JSON.stringify({ data: payload }));
     } catch (error) {
       logger.debug(
         "Failed to cache configuration:",

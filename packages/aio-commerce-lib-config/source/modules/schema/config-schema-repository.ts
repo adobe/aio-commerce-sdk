@@ -15,7 +15,7 @@ import { init as initFiles } from "@adobe/aio-lib-files";
 import { init as initState } from "@adobe/aio-lib-state";
 
 import type { Files } from "@adobe/aio-lib-files";
-import type { StateStore } from "@adobe/aio-lib-state";
+import type { AdobeState } from "@adobe/aio-lib-state";
 import type { ConfigSchemaField } from "./types";
 
 const logger = AioLogger(
@@ -24,7 +24,7 @@ const logger = AioLogger(
 );
 
 // Shared instances to avoid re-initialization
-let sharedState: StateStore | undefined;
+let sharedState: AdobeState | undefined;
 let sharedFiles: Files | undefined;
 
 /**
@@ -32,7 +32,7 @@ let sharedFiles: Files | undefined;
  * Handles both state (caching) and files (persistence) operations
  */
 export class ConfigSchemaRepository {
-  private async getState(): Promise<StateStore> {
+  private async getState(): Promise<AdobeState> {
     if (!sharedState) {
       sharedState = await initState();
     }
@@ -55,7 +55,11 @@ export class ConfigSchemaRepository {
     try {
       const state = await this.getState();
       const cached = await state.get(`${namespace}:config-schema`);
-      return cached?.value?.data || null;
+      if (cached?.value) {
+        const parsed = JSON.parse(cached.value);
+        return parsed.data || null;
+      }
+      return null;
     } catch (_error) {
       return null;
     }
@@ -71,7 +75,9 @@ export class ConfigSchemaRepository {
   ): Promise<void> {
     try {
       const state = await this.getState();
-      await state.put(`${namespace}:config-schema`, { data }, { ttl });
+      await state.put(`${namespace}:config-schema`, JSON.stringify({ data }), {
+        ttl,
+      });
     } catch (error) {
       logger.debug(
         "Failed to cache schema:",
@@ -104,7 +110,11 @@ export class ConfigSchemaRepository {
     try {
       const state = await this.getState();
       const versionData = await state.get(`${namespace}:schema-version`);
-      return versionData?.value?.version || null;
+      if (versionData?.value) {
+        const parsed = JSON.parse(versionData.value);
+        return parsed.version || null;
+      }
+      return null;
     } catch (_error) {
       return null;
     }
@@ -119,7 +129,10 @@ export class ConfigSchemaRepository {
   ): Promise<void> {
     try {
       const state = await this.getState();
-      await state.put(`${namespace}:schema-version`, { version });
+      await state.put(
+        `${namespace}:schema-version`,
+        JSON.stringify({ version }),
+      );
     } catch (error) {
       logger.debug(
         "Failed to set schema version:",
