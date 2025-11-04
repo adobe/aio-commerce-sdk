@@ -1,7 +1,7 @@
 # `@adobe/aio-commerce-lib-config`
 
 > [!WARNING]
-> This package is a work in progress and is not yet ready for use. You may be able to install it, but if you do, expect breaking changes.
+> This package is still under development and is not yet ready for use. You might be able to install it, but you may encounter breaking changes.
 
 Configuration management library for Adobe Commerce and external systems with hierarchical scopes and inheritance.
 
