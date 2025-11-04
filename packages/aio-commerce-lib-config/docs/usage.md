@@ -7,7 +7,7 @@ The `@adobe/aio-commerce-lib-config` library provides:
 - **Configuration Management**: Read and write configuration values across hierarchical scopes
 - **Scope Trees**: Support for Adobe Commerce and external system scope hierarchies
 - **Inheritance Model**: Automatic configuration inheritance from parent scopes
-- **Schema Validation**: Define and validate configuration schemas
+- **Schema Validation**: Validate configuration schemas
 - **App Management Integration**: Auto-generated runtime actions for the App Management UI
 - **Persistent Storage**: Uses `@adobe/aio-lib-state` and `@adobe/aio-lib-files` for caching and storage
 

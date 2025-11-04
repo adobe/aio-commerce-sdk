@@ -5,7 +5,7 @@
 
 Configuration management library for Adobe Commerce and external systems with hierarchical scopes and inheritance.
 
-This library provides a comprehensive solution for managing configuration across Adobe Commerce and other external systems. It handles configuration schemas, hierarchical scope trees, and configuration values with built-in support for inheritance, caching, and integration with the App Management UI.
+This library provides a comprehensive solution for managing business configuration across Adobe Commerce and other external systems. It handles configuration schemas, hierarchical scope trees, and configuration values with built-in support for inheritance, caching, and integration with the App Management UI.
 
 ## Installation
 
