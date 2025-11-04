@@ -17,6 +17,10 @@
  * @param value - The value of the parameter.
  */
 export function nonEmpty(name: string, value: unknown): boolean {
+  if (value === undefined || value === null) {
+    return false;
+  }
+
   const v = String(value)?.trim();
   return !!v && v !== `$${name}`;
 }
