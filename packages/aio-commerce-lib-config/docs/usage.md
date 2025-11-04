@@ -21,7 +21,7 @@ See the [API Reference](./api-reference/README.md) for a full list of classes, i
 
 1. Create your configuration schema at `init-files/configuration-schema.json`:
 
-Define the structure of your application's configuration using a schema file. This example shows how to create different types of configuration fields (list and text). Each field definition specifies its type, label, and optional default values.
+Define the structure of your application's configuration using a schema file. This example shows how to create different types of configuration fields, such as list and text. Each field definition specifies its type, label, and optional default values.
 
 ```json
 [
