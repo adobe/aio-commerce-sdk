@@ -2,12 +2,25 @@
   "root": false,
   "$schema": "https://biomejs.dev/schemas/2.3.2/schema.json",
   "extends": "//",
-  "linter": {
-    "rules": {
-      "performance": {
-        "noBarrelFile": "off"
+
+  "overrides": [
+    {
+      // Library entrypoints and logical divisions of source code for easier imports.
+      "includes": [
+        "source/index.ts",
+        "source/types/index.ts",
+        "source/modules/configuration/index.ts",
+        "source/modules/schema/index.ts",
+        "source/modules/scope-tree/index.ts"
+      ],
+
+      "linter": {
+        "rules": {
+          "performance": {
+            "noBarrelFile": "off"
+          }
+        }
       }
     }
-  },
-  "overrides": []
+  ]
 }

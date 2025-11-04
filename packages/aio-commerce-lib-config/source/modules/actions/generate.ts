@@ -8,7 +8,7 @@ import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const logger = AioLogger("@adobe/aio-commerce-lib-config:generate-actions", {
+const logger = AioLogger("@adobe/aio-commerce-lib-config:actions:generate", {
   level: process.env.LOG_LEVEL ?? "info",
 });
 
@@ -93,7 +93,6 @@ const RUNTIME_ACTIONS: ActionConfig[] = [
 
 export async function run(): Promise<void> {
   await updateExtConfig();
-
   await generateActionFiles();
 
   logger.info("Action generation completed successfully.\n");

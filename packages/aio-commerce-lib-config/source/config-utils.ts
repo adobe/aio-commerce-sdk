@@ -1,4 +1,4 @@
-import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "./utils";
+import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "./utils/constants";
 
 import type {
   AcceptableConfigValue,
@@ -7,9 +7,6 @@ import type {
 import type { ConfigValue } from "./modules/configuration";
 import type { ConfigSchemaField } from "./modules/schema";
 import type { ScopeNode, ScopeTree } from "./modules/scope-tree";
-
-// Re-export UUID utility
-export { generateUUID } from "./utils";
 
 /**
  * Checks if the given value is a non-empty string.

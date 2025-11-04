@@ -10,7 +10,8 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { DEFAULT_CUSTOM_SCOPE_LEVEL, generateUUID } from "../../utils";
+import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "../../utils/constants";
+import { generateUUID } from "../../utils/uuid";
 import {
   COMMERCE_SCOPE_CODE,
   GLOBAL_SCOPE_CODE,

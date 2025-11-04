@@ -10,16 +10,9 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-// Configuration repository for data access
 export { ConfigurationRepository } from "./configuration-repository";
-// Main configuration functionality
 export { getConfiguration } from "./get-config";
 export { getConfigurationByKey } from "./get-config-by-key";
 export { setConfiguration } from "./set-config";
 
-// Types for configuration operations
-export type {
-  ConfigContext,
-  ConfigOrigin,
-  ConfigValue,
-} from "./types";
+export type { ConfigContext, ConfigOrigin, ConfigValue } from "./types";

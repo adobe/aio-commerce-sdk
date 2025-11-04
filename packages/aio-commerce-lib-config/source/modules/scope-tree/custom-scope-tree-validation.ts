@@ -10,7 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "../../utils";
+import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "../../utils/constants";
 
 import type { CustomScopeInput, SetCustomScopeTreeRequest } from "../../types";
 
