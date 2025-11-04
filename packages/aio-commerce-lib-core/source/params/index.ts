@@ -11,10 +11,9 @@
  */
 
 /**
- * This module exports the core error classes for the AIO Commerce SDK.
+ * This module exports core parameter utilities for the AIO Commerce SDK.
  * @packageDocumentation
  */
 
 // biome-ignore lint/performance/noBarrelFile: export as part of the Public API
-export { CommerceSdkErrorBase } from "./base-error";
-export { CommerceSdkValidationError } from "./validation-error";
+export * from "./helpers";
