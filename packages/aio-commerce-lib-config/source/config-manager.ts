@@ -68,7 +68,9 @@ export class ConfigManager {
     error?: string;
   }> {
     if (!this.commerceConfig) {
-      throw new Error("Commerce configuration is required to sync scopes");
+      throw new Error(
+        "Commerce configuration is required to sync commerce scopes",
+      );
     }
 
     const context = {
