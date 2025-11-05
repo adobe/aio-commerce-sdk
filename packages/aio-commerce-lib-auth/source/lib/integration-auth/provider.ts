@@ -36,6 +36,16 @@ export type IntegrationAuthProvider = {
   ) => IntegrationAuthHeaders;
 };
 
+export function isIntegrationAuthProvider(
+  provider: unknown,
+): provider is IntegrationAuthProvider {
+  return (
+    typeof provider === "object" &&
+    provider !== null &&
+    "getHeaders" in provider
+  );
+}
+
 /**
  * Creates an {@link IntegrationAuthProvider} based on the provided configuration.
  * @param authParams The configuration for the integration.

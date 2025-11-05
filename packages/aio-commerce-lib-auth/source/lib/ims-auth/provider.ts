@@ -55,6 +55,17 @@ function toImsAuthConfig(config: ImsAuthParams): ImsAuthConfig {
   };
 }
 
+export function isImsAuthProvider(
+  provider: unknown,
+): provider is ImsAuthProvider {
+  return (
+    typeof provider === "object" &&
+    provider !== null &&
+    "getAccessToken" in provider &&
+    "getHeaders" in provider
+  );
+}
+
 /**
  * Creates an {@link ImsAuthProvider} based on the provided configuration.
  * @param authParams An {@link ImsAuthParams} parameter that contains the configuration for the {@link ImsAuthProvider}.
