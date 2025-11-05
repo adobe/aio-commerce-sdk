@@ -193,30 +193,15 @@ export const main = async function (params: Record<string, unknown>) {
 };
 ```
 
-#### Forcing a Specific Strategy
-
-You can also force a specific authentication strategy:
-
-```typescript
-// Force IMS authentication
-const imsAuth = resolveAuthParams(params, "ims");
-console.log(imsAuth.strategy); // "ims"
-
-// Force Integration authentication
-const integrationAuth = resolveAuthParams(params, "integration");
-console.log(integrationAuth.strategy); // "integration"
-```
-
 #### How Detection Works
 
-The resolver uses the following logic:
+The resolver checks for IMS parameters first. If all IMS parameters are present, it returns IMS auth with `strategy: "ims"`. Otherwise, it checks for Integration parameters. If all Integration parameters are present, it returns Integration auth with `strategy: "integration"`. If neither set is complete, it throws an error.
 
-1. **Auto mode (default)**: Checks for IMS parameters first. If all IMS parameters are present, returns IMS auth. Otherwise, checks for Integration parameters. If all Integration parameters are present, returns Integration auth. If neither set is complete, throws an error.
-
-2. **Explicit strategy**: When you specify `"ims"` or `"integration"`, the resolver validates only those specific parameters and throws a validation error if they're missing or invalid.
+> [!TIP]
+> If you need to work with a specific authentication type, use the provider-specific methods (`getImsAuthProvider` or `getIntegrationAuthProvider`) along with their assertion functions (`assertImsAuthParams` or `assertIntegrationAuthParams`) as shown in the sections above.
 
 ## Best Practices
 
 1. **Use `resolveAuthParams` for flexibility** - Automatically detects auth type, making your code work with both IMS and Integration auth
-2. **Use `assert*` functions for validation** - When you need explicit validation before creating providers
+2. **Use specific providers when needed** - Use `getImsAuthProvider` or `getIntegrationAuthProvider` with their respective `assert*` functions when you need to enforce a specific auth type
 3. **Handle errors gracefully** - Catch and properly handle validation and authentication errors

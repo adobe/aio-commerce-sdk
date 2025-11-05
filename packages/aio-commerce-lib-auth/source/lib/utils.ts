@@ -31,22 +31,23 @@ const INTEGRATION_AUTH_PARAMS = [
   "AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET",
 ] as const satisfies string[];
 
-const AUTH_PARAMS_RESOLVER_MAP = {
-  ims: resolveImsAuthParams,
-  integration: resolveIntegrationAuthParams,
-  auto: resolveAuthParamsAuto,
-};
-
-type AuthResolverStrategy = "ims" | "integration" | "auto";
-
 /**
  * Automatically detects and resolves authentication parameters from App Builder action inputs.
  * Attempts to resolve IMS authentication first, then falls back to Integration authentication.
  *
  * @param params The App Builder action inputs containing authentication parameters.
+ * @throws {CommerceSdkValidationError} If the parameters are invalid.
  * @throws {Error} If neither IMS nor Integration authentication parameters can be resolved.
+ * @example
+ * ```typescript
+ * // Automatic detection (will use IMS if IMS params are present, otherwise Integration)
+ * export function main(params) {
+ *   const authProvider = resolveAuthParams(params);
+ *   console.log(authProvider.strategy); // "ims" or "integration"
+ * }
+ * ```
  */
-function resolveAuthParamsAuto(params: Record<string, unknown>) {
+export function resolveAuthParams(params: Record<string, unknown>) {
   if (allNonEmpty(params, IMS_AUTH_PARAMS)) {
     return Object.assign(resolveImsAuthParams(params), {
       strategy: "ims",
@@ -64,49 +65,4 @@ function resolveAuthParamsAuto(params: Record<string, unknown>) {
       `Please provide either IMS options (${IMS_AUTH_PARAMS.join(", ")}) ` +
       `or Commerce integration options (${INTEGRATION_AUTH_PARAMS.join(", ")}).`,
   );
-}
-
-/**
- * Resolves authentication parameters from App Builder action inputs based on the specified strategy.
- * Supports automatic detection or explicit strategy specification for IMS or Integration authentication.
- *
- * @template T The authentication resolver strategy type (defaults to "auto").
- * @param params The App Builder action inputs containing authentication parameters.
- * @param strategy The authentication strategy to use. Defaults to "auto" for automatic detection.
- *
- * @throws {CommerceSdkValidationError} If the parameters are invalid for the specified strategy.
- * @throws {Error} If "auto" strategy is used and neither authentication type can be resolved.
- * @example
- * ```typescript
- * // Automatic detection (will use IMS if IMS params are present, otherwise Integration)
- * export function main(params) {
- *   const authProvider = resolveAuthParams(params);
- *   console.log(authProvider.strategy); // "ims" or "integration"
- * }
- * ```
- * @example
- * ```typescript
- * // Explicit IMS strategy
- * export function main(params) {
- *   const imsAuth = resolveAuthParams(params, "ims");
- *   console.log(imsAuth.strategy); // "ims"
- *   console.log(imsAuth.clientId); // your IMS client ID
- * }
- * ```
- * @example
- * ```typescript
- * // Explicit Integration strategy
- * export function main(params) {
- *   const integrationAuth = resolveAuthParams(params, "integration");
- *   console.log(integrationAuth.strategy); // "integration"
- *   console.log(integrationAuth.consumerKey); // your consumer key
- * }
- * ```
- */
-export function resolveAuthParams<T extends AuthResolverStrategy = "auto">(
-  params: Record<string, unknown>,
-  strategy: T = "auto" as T,
-) {
-  const provider = AUTH_PARAMS_RESOLVER_MAP[strategy];
-  return provider(params);
 }
