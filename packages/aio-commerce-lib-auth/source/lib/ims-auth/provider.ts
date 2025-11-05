@@ -56,6 +56,38 @@ function toImsAuthConfig(config: ImsAuthParams): ImsAuthConfig {
 }
 
 /**
+ * Type guard to check if a value is an ImsAuthProvider instance.
+ *
+ * @param provider The value to check.
+ * @returns `true` if the value is an ImsAuthProvider, `false` otherwise.
+ *
+ * @example
+ * ```typescript
+ * import { getImsAuthProvider, isImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
+ *
+ * // Imagine you have an object that it's not strictly typed as ImsAuthProvider.
+ * const provider = getImsAuthProvider({ ... }) as unknown;
+ *
+ * if (isImsAuthProvider(provider)) {
+ *   // TypeScript knows provider is ImsAuthProvider
+ *   const token = await provider.getAccessToken();
+ * }
+ * ```
+ */
+export function isImsAuthProvider(
+  provider: unknown,
+): provider is ImsAuthProvider {
+  return (
+    typeof provider === "object" &&
+    provider !== null &&
+    "getAccessToken" in provider &&
+    "getHeaders" in provider &&
+    typeof provider.getAccessToken === "function" &&
+    typeof provider.getHeaders === "function"
+  );
+}
+
+/**
  * Creates an {@link ImsAuthProvider} based on the provided configuration.
  * @param authParams An {@link ImsAuthParams} parameter that contains the configuration for the {@link ImsAuthProvider}.
  * @returns An {@link ImsAuthProvider} instance that can be used to get access token and auth headers.

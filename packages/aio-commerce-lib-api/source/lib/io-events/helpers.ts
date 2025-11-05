@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
 import ky from "ky";
 
 import {
@@ -20,6 +21,7 @@ import { ensureImsScopes } from "#utils/auth/ims-scopes";
 import { optionallyExtendKy } from "#utils/http/ky";
 
 import type { IoEventsHttpClientParamsWithRequiredConfig } from "./http-client";
+import type { IoEventsHttpClientParams } from "./types";
 
 const IO_EVENTS_IMS_REQUIRED_SCOPES = ["adobeio_api"];
 
@@ -50,4 +52,45 @@ export function buildIoEventsHttpClient(
   });
 
   return optionallyExtendKy(httpClient, fetchOptions);
+}
+
+/**
+ * Resolves the {@link IoEventsHttpClientParams} from the given App Builder action inputs.
+ * @param params The App Builder action inputs to resolve the {@link IoEventsHttpClientParams} from.
+ * @throws {Error} If the authentication parameters cannot be resolved or if non-IMS auth is detected.
+ * @example
+ * ```typescript
+ * import { resolveIoEventsHttpClientParams, AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api/io-events";
+ *
+ * export const main = async function (params: Record<string, unknown>) {
+ *   // Automatically resolves IMS auth params from environment variables
+ *   const clientParams = resolveIoEventsHttpClientParams(params);
+ *   const eventsClient = new AdobeIoEventsHttpClient(clientParams);
+ *
+ *   // Use the client
+ *   const response = await eventsClient.get("{orgId}/providers").json();
+ *   return { statusCode: 200, body: response };
+ * };
+ * ```
+ */
+export function resolveIoEventsHttpClientParams(
+  params: Record<string, unknown>,
+): IoEventsHttpClientParams {
+  const authParams = resolveAuthParams(params);
+
+  if (authParams.strategy !== "ims") {
+    throw new Error(
+      "Resolved incorrect auth parameters for I/O Events. Only IMS auth is supported",
+    );
+  }
+
+  return {
+    auth: authParams,
+    config: {
+      // This is already optional, so only set if it is provided.
+      baseUrl: params.AIO_EVENTS_API_BASE_URL
+        ? String(params.AIO_EVENTS_API_BASE_URL)
+        : undefined,
+    },
+  };
 }

@@ -42,6 +42,10 @@ const commerceClient = new AdobeCommerceHttpClient({
 
 #### Adobe Commerce HTTP Client (PaaS)
 
+PaaS supports both IMS and Integration authentication:
+
+**With Integration Auth:**
+
 ```typescript
 import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 
@@ -57,6 +61,26 @@ const commerceClient = new AdobeCommerceHttpClient({
     accessTokenSecret: "your-access-token-secret",
     consumerKey: "your-consumer-key",
     consumerSecret: "your-consumer-secret",
+  },
+});
+```
+
+**With IMS Auth:**
+
+```typescript
+const commerceClient = new AdobeCommerceHttpClient({
+  config: {
+    baseUrl: "https://your-commerce-instance.com",
+    flavor: "paas",
+  },
+
+  auth: {
+    // IMS auth params
+    clientId: "your-client-id",
+    clientSecrets: ["your-client-secret"],
+    technicalAccountId: "your-technical-account-id",
+    technicalAccountEmail: "your-technical-account-email",
+    imsOrgId: "your-ims-org-id",
   },
 });
 ```
@@ -80,6 +104,79 @@ const ioEventsClient = new AdobeIoEventsHttpClient({
   },
 });
 ```
+
+### Resolving Client Parameters from Runtime Actions
+
+For App Builder runtime actions, you can use `resolveCommerceHttpClientParams` to automatically resolve client parameters from action inputs:
+
+**Example: SaaS with IMS Auth**
+
+```yaml
+# app.config.yaml
+actions:
+  my-action:
+    function: src/actions/my-action/index.js
+    inputs:
+      AIO_COMMERCE_API_BASE_URL: $AIO_COMMERCE_API_BASE_URL # e.g., https://api.commerce.adobe.com/tenant
+      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: $AIO_COMMERCE_AUTH_IMS_CLIENT_ID
+      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: $AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS
+      AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: $AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID
+      AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: $AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL
+      AIO_COMMERCE_AUTH_IMS_ORG_ID: $AIO_COMMERCE_AUTH_IMS_ORG_ID
+      AIO_COMMERCE_AUTH_IMS_SCOPES: $AIO_COMMERCE_AUTH_IMS_SCOPES
+```
+
+```typescript
+// src/actions/my-action/index.js
+import {
+  resolveCommerceHttpClientParams,
+  AdobeCommerceHttpClient,
+} from "@adobe/aio-commerce-lib-api/commerce";
+
+export const main = async function (params) {
+  const clientParams = resolveCommerceHttpClientParams(params);
+  // Resolves to: { config: { flavor: "saas", baseUrl: "..." }, auth: { ... ImsAuthParams } }
+
+  const client = new AdobeCommerceHttpClient(clientParams);
+  return await client.get("products").json();
+};
+```
+
+**Example: PaaS with Integration Auth**
+
+```yaml
+# app.config.yaml
+actions:
+  my-action:
+    function: src/actions/my-action/index.js
+    inputs:
+      AIO_COMMERCE_API_BASE_URL: $AIO_COMMERCE_API_BASE_URL # e.g., https://my-store.com
+
+      # For Integration auth:
+      AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: $AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY
+      AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: $AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET
+      AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: $AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN
+      AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET: $AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET
+      # Or use IMS auth params instead (same as SaaS example above)
+```
+
+```typescript
+// src/actions/my-action/index.js
+import {
+  resolveCommerceHttpClientParams,
+  AdobeCommerceHttpClient,
+} from "@adobe/aio-commerce-lib-api/commerce";
+
+export const main = async function (params) {
+  const clientParams = resolveCommerceHttpClientParams(params);
+  // Resolves to: { config: { flavor: "paas", baseUrl: "..." }, auth: { ... IntegrationAuthParams } }
+
+  const client = new AdobeCommerceHttpClient(clientParams);
+  return await client.get("rest/V1/products").json();
+};
+```
+
+The resolver automatically detects flavor from the URL and auth type from the provided parameters. Define actual values in your `.env` file.
 
 ### Creating API Clients
 

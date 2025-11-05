@@ -13,11 +13,13 @@
 export {
   getImsAuthProvider,
   type ImsAuthProvider,
+  isImsAuthProvider,
 } from "./lib/ims-auth/provider";
 export { assertImsAuthParams } from "./lib/ims-auth/utils";
 export {
   getIntegrationAuthProvider,
   type IntegrationAuthProvider,
+  isIntegrationAuthProvider,
 } from "./lib/integration-auth/provider";
 export { assertIntegrationAuthParams } from "./lib/integration-auth/utils";
 export { resolveAuthParams } from "./lib/utils";

@@ -37,6 +37,36 @@ export type IntegrationAuthProvider = {
 };
 
 /**
+ * Type guard to check if a value is an IntegrationAuthProvider instance.
+ *
+ * @param provider The value to check.
+ * @returns `true` if the value is an IntegrationAuthProvider, `false` otherwise.
+ *
+ * @example
+ * ```typescript
+ * import { getIntegrationAuthProvider, isIntegrationAuthProvider } from "@adobe/aio-commerce-lib-auth";
+ *
+ * // Imagine you have an object that it's not strictly typed as IntegrationAuthProvider.
+ * const provider = getIntegrationAuthProvider({ ... }) as unknown;
+ *
+ * if (isIntegrationAuthProvider(provider)) {
+ *   // TypeScript knows provider is IntegrationAuthProvider
+ *   const headers = provider.getHeaders("GET", "https://api.example.com");
+ * }
+ * ```
+ */
+export function isIntegrationAuthProvider(
+  provider: unknown,
+): provider is IntegrationAuthProvider {
+  return (
+    typeof provider === "object" &&
+    provider !== null &&
+    "getHeaders" in provider &&
+    typeof provider.getHeaders === "function"
+  );
+}
+
+/**
  * Creates an {@link IntegrationAuthProvider} based on the provided configuration.
  * @param authParams The configuration for the integration.
  * @returns An {@link IntegrationAuthProvider} instance that can be used to get auth headers.
