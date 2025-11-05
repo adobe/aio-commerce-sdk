@@ -18,6 +18,28 @@ import { resolveIntegrationAuthParams } from "./integration-auth/utils";
 import type { ImsAuthParams } from "./ims-auth/schema";
 import type { IntegrationAuthParams } from "./integration-auth/schema";
 
+const IMS_AUTH_PARAMS = [
+  "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
+  "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
+  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID",
+  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL",
+  "AIO_COMMERCE_AUTH_IMS_ORG_ID",
+  "AIO_COMMERCE_AUTH_IMS_SCOPES",
+] as const satisfies string[];
+
+const INTEGRATION_AUTH_PARAMS = [
+  "AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY",
+  "AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET",
+  "AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN",
+  "AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET",
+] as const satisfies string[];
+
+const AUTH_PARAMS_RESOLVER_MAP = {
+  ims: resolveImsAuthParams,
+  integration: resolveIntegrationAuthParams,
+  auto: resolveAuthParamsAuto,
+};
+
 /** IMS authentication parameters with the "ims" strategy indicator. */
 export type ImsAuthParamsWithStrategy = ImsAuthParams & { strategy: "ims" };
 
@@ -57,29 +79,13 @@ type ResolvedAuthParams<T extends AuthResolverStrategy> = T extends "ims"
  * @throws {Error} If neither IMS nor Integration authentication parameters can be resolved.
  */
 function resolveAuthParamsAuto(params: Record<string, unknown>): AuthProvider {
-  if (
-    allNonEmpty(params, [
-      "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
-      "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
-      "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID",
-      "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL",
-      "AIO_COMMERCE_AUTH_IMS_ORG_ID",
-      "AIO_COMMERCE_AUTH_IMS_SCOPES",
-    ])
-  ) {
+  if (allNonEmpty(params, IMS_AUTH_PARAMS)) {
     return Object.assign(resolveImsAuthParams(params), {
       strategy: "ims",
     } as const);
   }
 
-  if (
-    allNonEmpty(params, [
-      "AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY",
-      "AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET",
-      "AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN",
-      "AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET",
-    ])
-  ) {
+  if (allNonEmpty(params, INTEGRATION_AUTH_PARAMS)) {
     return Object.assign(resolveIntegrationAuthParams(params), {
       strategy: "integration",
     } as const);
@@ -87,8 +93,8 @@ function resolveAuthParamsAuto(params: Record<string, unknown>): AuthProvider {
 
   throw new Error(
     "Can't resolve authentication options for the given params. " +
-      "Please provide either IMS options (AIO_COMMERCE_AUTH_IMS_CLIENT_ID, AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS, AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID, AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL, AIO_COMMERCE_AUTH_IMS_ORG_ID, AIO_COMMERCE_AUTH_IMS_SCOPES) " +
-      "or Commerce integration options (AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY, AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET, AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN, AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET).",
+      `Please provide either IMS options (${IMS_AUTH_PARAMS.join(", ")}) ` +
+      `or Commerce integration options (${INTEGRATION_AUTH_PARAMS.join(", ")}).`,
   );
 }
 
@@ -133,12 +139,6 @@ export function resolveAuthParams<T extends AuthResolverStrategy = "auto">(
   params: Record<string, unknown>,
   strategy: T = "auto" as T,
 ): ResolvedAuthParams<T> {
-  const providerMap = {
-    ims: resolveImsAuthParams,
-    integration: resolveIntegrationAuthParams,
-    auto: resolveAuthParamsAuto,
-  };
-
-  const provider = providerMap[strategy];
+  const provider = AUTH_PARAMS_RESOLVER_MAP[strategy];
   return provider(params) as ResolvedAuthParams<T>;
 }
