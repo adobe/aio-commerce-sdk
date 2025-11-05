@@ -34,6 +34,6 @@ export function nonEmpty(name: string, value: unknown): boolean {
 export function allNonEmpty<const T extends string[]>(
   params: Record<string, unknown>,
   required: T,
-): params is Record<T[number], unknown> {
+): params is Record<string, unknown> & Record<T[number], unknown> {
   return required.every((name) => nonEmpty(name, params[name]));
 }
