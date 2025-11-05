@@ -42,6 +42,10 @@ const commerceClient = new AdobeCommerceHttpClient({
 
 #### Adobe Commerce HTTP Client (PaaS)
 
+PaaS supports both IMS and Integration authentication:
+
+**With Integration Auth:**
+
 ```typescript
 import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 
@@ -57,6 +61,26 @@ const commerceClient = new AdobeCommerceHttpClient({
     accessTokenSecret: "your-access-token-secret",
     consumerKey: "your-consumer-key",
     consumerSecret: "your-consumer-secret",
+  },
+});
+```
+
+**With IMS Auth:**
+
+```typescript
+const commerceClient = new AdobeCommerceHttpClient({
+  config: {
+    baseUrl: "https://your-commerce-instance.com",
+    flavor: "paas",
+  },
+
+  auth: {
+    // IMS auth params
+    clientId: "your-client-id",
+    clientSecrets: ["your-client-secret"],
+    technicalAccountId: "your-technical-account-id",
+    technicalAccountEmail: "your-technical-account-email",
+    imsOrgId: "your-ims-org-id",
   },
 });
 ```
@@ -80,6 +104,34 @@ const ioEventsClient = new AdobeIoEventsHttpClient({
   },
 });
 ```
+
+### Resolving Client Parameters from Runtime Actions
+
+For App Builder runtime actions, you can use `resolveCommerceHttpClientParams` to automatically resolve client parameters from action inputs:
+
+```typescript
+import {
+  resolveCommerceHttpClientParams,
+  AdobeCommerceHttpClient,
+} from "@adobe/aio-commerce-lib-api/commerce";
+
+export const main = async function (params: Record<string, unknown>) {
+  // Automatically resolves flavor (SaaS/PaaS) and auth from environment variables
+  const clientParams = resolveCommerceHttpClientParams(params);
+  const commerceClient = new AdobeCommerceHttpClient(clientParams);
+
+  // Use the client
+  const response = await commerceClient.get("products").json();
+  return { statusCode: 200, body: response };
+};
+```
+
+This function:
+
+- Automatically detects SaaS vs PaaS based on the `AIO_COMMERCE_API_BASE_URL`
+- Auto-resolves IMS or Integration authentication parameters
+- Validates that SaaS uses only IMS auth (throws error if Integration auth is detected)
+- Validates that all required parameters are present
 
 ### Creating API Clients
 
