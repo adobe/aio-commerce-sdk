@@ -38,6 +38,6 @@ export async function main(params) {
         message: "An internal server error occurred",
         details: error instanceof Error ? error.message : 'Unknown error'
       }
-    })
+    });
   }
 }
