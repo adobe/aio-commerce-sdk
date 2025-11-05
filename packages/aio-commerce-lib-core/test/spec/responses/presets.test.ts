@@ -85,6 +85,16 @@ describe("responses/presets", () => {
         message: "Resource created successfully",
       });
     });
+
+    it("should accept string shorthand", () => {
+      const result = created("Resource created successfully");
+
+      expect(result).toEqual({
+        type: "success",
+        statusCode: 201,
+        message: "Resource created successfully",
+      });
+    });
   });
 
   describe("badRequest (400)", () => {
@@ -167,6 +177,20 @@ describe("responses/presets", () => {
         },
       });
     });
+
+    it("should accept string shorthand", () => {
+      const result = notFound("Resource not found");
+
+      expect(result).toEqual({
+        type: "error",
+        error: {
+          statusCode: 404,
+          body: {
+            message: "Resource not found",
+          },
+        },
+      });
+    });
   });
 
   describe("internalServerError (500)", () => {
@@ -174,6 +198,20 @@ describe("responses/presets", () => {
       const result = internalServerError({
         body: { message: "Internal server error" },
       });
+
+      expect(result).toEqual({
+        type: "error",
+        error: {
+          statusCode: 500,
+          body: {
+            message: "Internal server error",
+          },
+        },
+      });
+    });
+
+    it("should accept string shorthand", () => {
+      const result = internalServerError("Internal server error");
 
       expect(result).toEqual({
         type: "error",
