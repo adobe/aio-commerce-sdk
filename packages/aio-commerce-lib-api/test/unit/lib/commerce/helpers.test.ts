@@ -77,6 +77,26 @@ describe("lib/commerce/helpers", () => {
       });
     });
 
+    test("should resolve PaaS Commerce params with IMS auth", () => {
+      const params = {
+        AIO_COMMERCE_API_BASE_URL: "https://my-store.example.com/",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+        AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+      };
+
+      const result = resolveCommerceHttpClientParams(params);
+
+      expect(result.config.flavor).toBe("paas");
+      expect(result.config.baseUrl).toBe("https://my-store.example.com/");
+      expect(result.auth).toMatchObject({
+        clientId: "test-client-id",
+      });
+    });
+
     test("should resolve PaaS Commerce params with custom domain", () => {
       const params = {
         AIO_COMMERCE_API_BASE_URL: "https://commerce.mycompany.com/api",
@@ -128,7 +148,7 @@ describe("lib/commerce/helpers", () => {
       );
     });
 
-    test("should throw validation error when auth params are missing for SaaS", () => {
+    test("should throw error when auth params are missing for SaaS", () => {
       const params = {
         AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/my-tenant/",
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
@@ -137,7 +157,7 @@ describe("lib/commerce/helpers", () => {
 
       expect(() => {
         resolveCommerceHttpClientParams(params);
-      }).toThrow("Invalid ImsAuthProvider configuration");
+      }).toThrow("Can't resolve authentication options for the given params");
     });
 
     test("should throw validation error when auth params are missing for PaaS", () => {
@@ -149,7 +169,24 @@ describe("lib/commerce/helpers", () => {
 
       expect(() => {
         resolveCommerceHttpClientParams(params);
-      }).toThrow("Invalid IntegrationAuthProvider configuration");
+      }).toThrow();
+    });
+
+    test("should throw error when SaaS is detected with Integration auth", () => {
+      const params = {
+        AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/my-tenant/",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
+          "test-access-token-secret",
+      };
+
+      expect(() => {
+        resolveCommerceHttpClientParams(params);
+      }).toThrow(
+        "Resolved incorrect auth parameters for SaaS. Only IMS auth is supported",
+      );
     });
   });
 });

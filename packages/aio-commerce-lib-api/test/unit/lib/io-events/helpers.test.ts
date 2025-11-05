@@ -76,7 +76,7 @@ describe("lib/io-events/helpers", () => {
       expect(result.config?.baseUrl).toBe("https://events.adobe.io");
     });
 
-    test("should throw validation error when IMS auth params are missing", () => {
+    test("should throw error when IMS auth params are missing", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         // Missing other required IMS fields
@@ -84,15 +84,15 @@ describe("lib/io-events/helpers", () => {
 
       expect(() => {
         resolveIoEventsHttpClientParams(params);
-      }).toThrow("Invalid ImsAuthProvider configuration");
+      }).toThrow("Can't resolve authentication options for the given params");
     });
 
-    test("should throw validation error when all params are empty", () => {
+    test("should throw error when all params are empty", () => {
       const params = {};
 
       expect(() => {
         resolveIoEventsHttpClientParams(params);
-      }).toThrow("Invalid ImsAuthProvider configuration");
+      }).toThrow("Can't resolve authentication options for the given params");
     });
 
     test("should handle empty string base URL correctly", () => {
