@@ -64,7 +64,12 @@ export type SaaSClientParams = {
 
 /** Defines the configuration required to build an Adobe Commerce HTTP client for PaaS. */
 export type PaaSClientParams = {
-  auth: IntegrationAuthProvider | IntegrationAuthParams;
+  auth:
+    | IntegrationAuthProvider
+    | IntegrationAuthParams
+    | ImsAuthProvider
+    | ImsAuthParamsWithOptionalScopes;
+
   config: CommerceHttpClientConfigPaaS;
   fetchOptions?: Options;
 };

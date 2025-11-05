@@ -10,7 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+import {
+  isImsAuthProvider,
+  resolveAuthParams,
+} from "@adobe/aio-commerce-lib-auth";
 import { allNonEmpty } from "@adobe/aio-commerce-lib-core/params";
 import ky from "ky";
 
@@ -21,6 +24,14 @@ import {
 } from "#utils/auth/hooks";
 import { ensureImsScopes } from "#utils/auth/ims-scopes";
 import { optionallyExtendKy } from "#utils/http/ky";
+
+import type {
+  ImsAuthParams,
+  ImsAuthProvider,
+  IntegrationAuthParams,
+  IntegrationAuthProvider,
+} from "@adobe/aio-commerce-lib-auth";
+import type { ImsAuthParamsWithOptionalScopes } from "#utils/auth/ims-scopes";
 
 /** A regex matching a regular SaaS API URL, with a tenant ID and optional trailing slash. */
 const COMMERCE_API_URL_REGEX =
@@ -39,9 +50,13 @@ import type {
   SaaSClientParams,
 } from "./types";
 
-const COMMERCE_SAAS_IMS_REQUIRED_SCOPES = [
+const COMMERCE_IMS_REQUIRED_SCOPES = [
   "openid",
   "additional_info.projectedProductContext",
+];
+
+const COMMERCE_SAAS_IMS_REQUIRED_SCOPES = [
+  ...COMMERCE_IMS_REQUIRED_SCOPES,
   "commerce.accs",
 ];
 
@@ -65,6 +80,37 @@ function getCommerceUrl(config: RequiredComerceHttpClientConfig) {
 }
 
 /**
+ * Builds the appropriate auth hook based on the auth provider type.
+ * Supports both IMS and Integration authentication.
+ * @param auth The authentication provider (IMS or Integration).
+ */
+function buildAuthBeforeRequestHook(
+  flavor: CommerceFlavor,
+  auth:
+    | ImsAuthParams
+    | ImsAuthProvider
+    | IntegrationAuthParams
+    | IntegrationAuthProvider
+    | ImsAuthParamsWithOptionalScopes,
+) {
+  // Check if it's IMS auth (provider or params)
+  if (isImsAuthProvider(auth) || "clientId" in auth) {
+    return isAuthProvider(auth)
+      ? buildImsAuthBeforeRequestHook(auth)
+      : buildImsAuthBeforeRequestHook(
+          ensureImsScopes(
+            auth,
+            flavor === "saas"
+              ? COMMERCE_SAAS_IMS_REQUIRED_SCOPES
+              : COMMERCE_IMS_REQUIRED_SCOPES,
+          ),
+        );
+  }
+
+  return buildIntegrationAuthBeforeRequestHook(auth);
+}
+
+/**
  * Builds a Commerce HTTP client for PaaS.
  * @param params The parameters for building the Commerce PaaS HTTP client.
  */
@@ -73,8 +119,8 @@ function buildCommerceHttpClientPaaS(
 ) {
   const { auth, config, fetchOptions } = params;
   const commerceUrl = getCommerceUrl(config);
-  const beforeRequestAuthHook = buildIntegrationAuthBeforeRequestHook(auth);
 
+  const beforeRequestAuthHook = buildAuthBeforeRequestHook("paas", auth);
   const httpClient = ky.create({
     prefixUrl: commerceUrl,
     hooks: {
@@ -95,12 +141,7 @@ function buildCommerceHttpClientSaaS(
   const { auth, config, fetchOptions } = params;
   const commerceUrl = getCommerceUrl(config);
 
-  const beforeRequestAuthHook = isAuthProvider(auth)
-    ? buildImsAuthBeforeRequestHook(auth)
-    : buildImsAuthBeforeRequestHook(
-        ensureImsScopes(auth, COMMERCE_SAAS_IMS_REQUIRED_SCOPES),
-      );
-
+  const beforeRequestAuthHook = buildAuthBeforeRequestHook("saas", auth);
   const httpClient = ky.create({
     prefixUrl: commerceUrl,
     hooks: {
@@ -160,6 +201,7 @@ export function buildCommerceHttpClient(
  */
 function resolveCommerceFlavorFromApiUrl(apiUrl: string): CommerceFlavor {
   const { hostname, pathname } = new URL(apiUrl);
+
   // Combine hostname and pathname (without leading slash) to match the regex pattern
   const hostAndPath = `${hostname}${pathname}`;
   return COMMERCE_API_URL_REGEX.test(hostAndPath) ? "saas" : "paas";
@@ -186,19 +228,17 @@ export function resolveCommerceHttpClientParams(
   if (allNonEmpty(params, ["AIO_COMMERCE_API_BASE_URL"])) {
     const baseUrl = String(params.AIO_COMMERCE_API_BASE_URL);
     const flavor = resolveCommerceFlavorFromApiUrl(baseUrl);
+    const authParams = resolveAuthParams(params);
 
-    if (flavor === "saas") {
-      return {
-        auth: resolveAuthParams(params, "ims"),
-        config: {
-          baseUrl,
-          flavor,
-        },
-      };
+    if (flavor === "saas" && authParams.strategy !== "ims") {
+      throw new Error(
+        "Resolved incorrect auth parameters for SaaS. Only IMS auth is supported",
+      );
     }
 
+    // @ts-expect-error - TypeScript is not able to smartly discriminate, but we know that authParams is correct for both flavors at this point.
     return {
-      auth: resolveAuthParams(params, "integration"),
+      auth: authParams,
       config: {
         baseUrl,
         flavor,
