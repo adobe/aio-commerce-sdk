@@ -12,7 +12,24 @@ The library supports two main authentication providers:
 
 These providers abstract the complexity of authentication, making it easy to obtain and use access tokens in your App Builder applications.
 
-In your App Builder application, you can use the library to authenticate users or services and obtain access tokens.
+### Quick Start
+
+For simple use cases, use `resolveAuthParams` to automatically detect and resolve authentication parameters:
+
+```typescript
+import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+
+export const main = async function (params: Record<string, unknown>) {
+  // Automatically detects IMS or Integration auth based on provided params
+  const authProvider = resolveAuthParams(params);
+
+  if (authProvider.strategy === "ims") {
+    // Use IMS-specific methods
+  } else {
+    // Use Integration-specific methods
+  }
+};
+```
 
 ## Reference
 
@@ -117,7 +134,74 @@ try {
 }
 ```
 
+### Automatic Auth Resolution
+
+The `resolveAuthParams` function automatically detects and resolves authentication parameters from your runtime action inputs. It inspects the provided parameters and determines whether to use IMS or Integration authentication based on which required keys are present.
+
+#### Required Parameters
+
+The resolver checks for the following parameter keys:
+
+**IMS Authentication** (requires all of these):
+| Parameter Key | Description |
+|---------------|-------------|
+| `AIO_COMMERCE_AUTH_IMS_CLIENT_ID` | IMS OAuth client ID |
+| `AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS` | IMS client secrets (comma-separated) |
+| `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID` | Technical account ID |
+| `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL` | Technical account email |
+| `AIO_COMMERCE_AUTH_IMS_ORG_ID` | IMS organization ID |
+| `AIO_COMMERCE_AUTH_IMS_SCOPES` | OAuth scopes (comma-separated) |
+
+**Integration Authentication** (requires all of these):
+| Parameter Key | Description |
+|---------------|-------------|
+| `AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY` | OAuth consumer key |
+| `AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET` | OAuth consumer secret |
+| `AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN` | OAuth access token |
+| `AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET` | OAuth access token secret |
+
+> **Note:** In App Builder runtime actions, these parameters are typically provided via runtime action inputs in your `app.config.yaml` file and automatically passed to your action's `params` object.
+
+#### Basic Usage
+
+```typescript
+import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+
+export const main = async function (params: Record<string, unknown>) {
+  try {
+    // Auto-detect authentication type (IMS or Integration)
+    const authProvider = resolveAuthParams(params);
+
+    console.log(authProvider.strategy); // "ims" or "integration"
+
+    // Type-safe access to provider-specific properties
+    if (authProvider.strategy === "ims") {
+      console.log(authProvider.clientId);
+      console.log(authProvider.orgId);
+    } else {
+      console.log(authProvider.consumerKey);
+      console.log(authProvider.accessToken);
+    }
+
+    return { statusCode: 200 };
+  } catch (error) {
+    return {
+      statusCode: 400,
+      body: { error: String(error) },
+    };
+  }
+};
+```
+
+#### How Detection Works
+
+The resolver checks for IMS parameters first. If all IMS parameters are present, it returns IMS auth with `strategy: "ims"`. Otherwise, it checks for Integration parameters. If all Integration parameters are present, it returns Integration auth with `strategy: "integration"`. If neither set is complete, it throws an error.
+
+> [!TIP]
+> If you need to work with a specific authentication type, use the provider-specific methods (`getImsAuthProvider` or `getIntegrationAuthProvider`) along with their assertion functions (`assertImsAuthParams` or `assertIntegrationAuthParams`) as shown in the sections above.
+
 ## Best Practices
 
-1. **Always validate parameters** - Use the `assert*` functions before creating providers
-2. **Handle errors gracefully** - Catch and properly handle validation and authentication errors
+1. **Use `resolveAuthParams` for flexibility** - Automatically detects auth type, making your code work with both IMS and Integration auth
+2. **Use specific providers when needed** - Use `getImsAuthProvider` or `getIntegrationAuthProvider` with their respective `assert*` functions when you need to enforce a specific auth type
+3. **Handle errors gracefully** - Catch and properly handle validation and authentication errors

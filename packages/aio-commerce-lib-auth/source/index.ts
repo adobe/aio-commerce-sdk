@@ -11,15 +11,17 @@
  */
 // biome-ignore lint/performance/noBarrelFile: export as part of the Public API
 export {
-  assertImsAuthParams,
   getImsAuthProvider,
   type ImsAuthProvider,
 } from "./lib/ims-auth/provider";
+export { assertImsAuthParams } from "./lib/ims-auth/utils";
 export {
-  assertIntegrationAuthParams,
   getIntegrationAuthProvider,
   type IntegrationAuthProvider,
 } from "./lib/integration-auth/provider";
+export { assertIntegrationAuthParams } from "./lib/integration-auth/utils";
+export { resolveAuthParams } from "./lib/utils";
 
 export type { ImsAuthEnv, ImsAuthParams } from "./lib/ims-auth/schema";
 export type { IntegrationAuthParams } from "./lib/integration-auth/schema";
+export type * from "./lib/utils";
