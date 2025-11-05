@@ -62,9 +62,16 @@ export function buildIoEventsHttpClient(
 export function resolveIoEventsHttpClientParams(
   params: Record<string, unknown>,
 ): IoEventsHttpClientParams {
+  const authParams = resolveAuthParams(params);
+
+  if (authParams.strategy !== "ims") {
+    throw new Error(
+      "Resolved incorrect auth parameters for I/O Events. Only IMS auth is supported",
+    );
+  }
+
   return {
-    // IO Events always uses IMS authentication.
-    auth: resolveAuthParams(params, "ims"),
+    auth: authParams,
     config: {
       // This is already optional, so only set if it is provided.
       baseUrl: params.AIO_EVENTS_API_BASE_URL
