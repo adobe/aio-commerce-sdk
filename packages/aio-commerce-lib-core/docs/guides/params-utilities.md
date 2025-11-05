@@ -12,7 +12,7 @@ import { badRequest } from "@adobe/aio-commerce-lib-core/responses";
 
 function main(params) {
   if (!nonEmpty("apiKey", params.apiKey)) {
-    return badRequest({ message: "apiKey is required" });
+    return badRequest({ body: { message: "apiKey is required" } });
   }
 
   // apiKey is now guaranteed to be non-empty
@@ -49,7 +49,7 @@ nonEmpty("apiKey", [1, 2, 3]); // true
 
 ## allNonEmpty
 
-Checks if all required parameters are non-empty. When the check passes, TypeScript automatically narrows the type to guarantee that all required parameters are strings.
+Checks if all required parameters are non-empty. When the check passes, TypeScript automatically narrows the type to guarantee that all required parameters are present (non-empty values).
 
 ```typescript
 import { allNonEmpty } from "@adobe/aio-commerce-lib-core/params";
@@ -60,12 +60,14 @@ function main(params) {
 
   if (!allNonEmpty(params, required)) {
     return badRequest({
-      message: "Missing required parameters",
-      body: { required },
+      body: {
+        message: "Missing required parameters",
+        required,
+      },
     });
   }
 
-  // TypeScript now knows that apiKey, clientId, and clientSecret are strings
+  // TypeScript now knows that apiKey, clientId, and clientSecret are non-empty
   const { apiKey, clientId, clientSecret } = params;
 
   // Use the validated parameters...

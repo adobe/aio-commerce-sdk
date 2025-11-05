@@ -4,33 +4,46 @@ The `@adobe/aio-commerce-lib-core/responses` module provides standardized respon
 
 ## Creating Success Responses
 
-Use `createSuccessResponse` or the convenient presets like `ok` and `created`:
+Use `buildSuccessResponse` or the convenient presets like `ok` and `created`:
 
 ```typescript
 import { ok, created } from "@adobe/aio-commerce-lib-core/responses";
 
-// Simple success response
+// Success response without payload (e.g., 204 No Content)
+return ok();
+
+// Simple success response using string shorthand
+return ok("Operation successful");
+
+// Equivalent to the above, using full object syntax
 return ok({
-  message: "Operation successful",
+  body: { message: "Operation successful" },
 });
 
 // Success with additional data
 return ok({
-  message: "User retrieved",
-  body: { id: "123", name: "John Doe", email: "john@example.com" },
+  body: {
+    message: "User retrieved",
+    id: "123",
+    name: "John Doe",
+    email: "john@example.com",
+  },
 });
 
 // Created response with location header
 return created({
-  message: "Resource created",
-  body: { id: "456" },
+  body: { message: "Resource created", id: "456" },
   headers: { Location: "/api/resources/456" },
 });
 ```
 
+Success responses spread the body properties directly into the response object, making them easy to work with. The payload parameter is optional, allowing you to create responses without any body or headers.
+
+**String Shorthand:** For convenience, you can pass a string directly to any preset function. It will be automatically converted to `{ body: { message: yourString } }`.
+
 ## Creating Error Responses
 
-Use `createErrorResponse` or the convenient presets like `badRequest`, `notFound`, etc.:
+Use `buildErrorResponse` or the convenient presets like `badRequest`, `notFound`, etc.:
 
 ```typescript
 import {
@@ -41,34 +54,52 @@ import {
   internalServerError,
 } from "@adobe/aio-commerce-lib-core/responses";
 
-// Bad request with validation details
+// Simple error using string shorthand
+return badRequest("Invalid input");
+
+// Equivalent to the above, using full object syntax
 return badRequest({
-  message: "Invalid input",
-  body: { field: "email", code: "INVALID_FORMAT" },
+  body: { message: "Invalid input" },
 });
 
-// Authentication error
+// Bad request with validation details
+return badRequest({
+  body: {
+    message: "Invalid input",
+    field: "email",
+    code: "INVALID_FORMAT",
+  },
+});
+
+// Authentication error with headers
 return unauthorized({
-  message: "Authentication required",
+  body: { message: "Authentication required" },
   headers: { "WWW-Authenticate": 'Bearer realm="api"' },
 });
 
-// Access denied
+// Access denied with additional data
 return forbidden({
-  message: "Insufficient permissions",
-  body: { requiredRole: "admin", currentRole: "user" },
+  body: {
+    message: "Insufficient permissions",
+    requiredRole: "admin",
+    currentRole: "user",
+  },
 });
 
 // Resource not found
 return notFound({
-  message: "User not found",
-  body: { resourceId: "123" },
+  body: {
+    message: "User not found",
+    resourceId: "123",
+  },
 });
 
 // Server error
 return internalServerError({
-  message: "An unexpected error occurred",
-  body: { errorId: "err-abc-123" },
+  body: {
+    message: "An unexpected error occurred",
+    errorId: "err-abc-123",
+  },
 });
 ```
 
@@ -76,15 +107,40 @@ return internalServerError({
 
 The library provides the following convenience functions:
 
-- `ok(payload)` - HTTP 200 (Success)
-- `created(payload)` - HTTP 201 (Created)
+- `ok(payload?)` - HTTP 200 (Success)
+- `created(payload?)` - HTTP 201 (Created)
 - `badRequest(payload)` - HTTP 400 (Bad Request)
 - `unauthorized(payload)` - HTTP 401 (Unauthorized)
 - `forbidden(payload)` - HTTP 403 (Forbidden)
 - `notFound(payload)` - HTTP 404 (Not Found)
 - `internalServerError(payload)` - HTTP 500 (Internal Server Error)
 
-All presets accept a payload with a required `message` field, and optional `body` and `headers` fields.
+### Payload Options
+
+All preset functions accept flexible payload formats:
+
+**String shorthand:**
+
+```typescript
+ok("Success message");
+badRequest("Error message");
+// Automatically converts to: { body: { message: "..." } }
+```
+
+**Object payload:**
+
+```typescript
+ok({ body: { message: "Success", data: {...} }, headers: {...} })
+badRequest({ body: { message: "Error", code: "..." }, headers: {...} })
+```
+
+**No payload (success only):**
+
+```typescript
+ok(); // Returns empty success response
+```
+
+Success presets (`ok`, `created`) accept an optional payload. Error presets require a payload (string or object with `body.message`). All object payloads can include an optional `headers` field.
 
 ## Type Discrimination
 
@@ -95,12 +151,12 @@ import { ok, badRequest } from "@adobe/aio-commerce-lib-core/responses";
 
 const response =
   Math.random() > 0.5
-    ? ok({ message: "Success" })
-    : badRequest({ message: "Error" });
+    ? ok({ body: { message: "Success" } })
+    : badRequest({ body: { message: "Error" } });
 
 if (response.type === "success") {
   console.log(`Status: ${response.statusCode}`);
-  console.log(`Body: ${response.body}`);
+  console.log(`Message: ${response.message}`);
 } else {
   console.log(`Error Status: ${response.error.statusCode}`);
   console.log(`Error Body: ${response.error.body}`);
@@ -115,24 +171,24 @@ For custom status codes not covered by the presets, use the base functions direc
 
 ```typescript
 import {
-  createSuccessResponse,
-  createErrorResponse,
+  buildSuccessResponse,
+  buildErrorResponse,
 } from "@adobe/aio-commerce-lib-core/responses";
 
 // 204 No Content
-const noContent = createSuccessResponse(204, {
-  message: "Resource deleted",
-});
+const noContent = buildSuccessResponse(204, {});
 
 // 429 Rate Limited
-const rateLimited = createErrorResponse(429, {
-  message: "Too many requests",
+const rateLimited = buildErrorResponse(429, {
+  body: { message: "Too many requests" },
   headers: { "Retry-After": "60" },
 });
 
 // 503 Service Unavailable
-const unavailable = createErrorResponse(503, {
-  message: "Service temporarily unavailable",
-  body: { retryAfter: 300 },
+const unavailable = buildErrorResponse(503, {
+  body: {
+    message: "Service temporarily unavailable",
+    retryAfter: 300,
+  },
 });
 ```

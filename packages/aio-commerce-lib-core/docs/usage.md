@@ -41,11 +41,14 @@ throw new ApiError("Request failed", 500);
 ```typescript
 import { ok, badRequest } from "@adobe/aio-commerce-lib-core/responses";
 
-// Success response
-return ok({ message: "User retrieved", body: { id: "123" } });
+// Success response using string shorthand
+return ok("User retrieved");
 
-// Error response
-return badRequest({ message: "Invalid input" });
+// Error response using string shorthand
+return badRequest("Invalid input");
+
+// Or use full object syntax for additional data
+return ok({ body: { message: "User retrieved", id: "123" } });
 ```
 
 [Read the Response Helpers Guide →](./guides/response-helpers.md)
@@ -54,10 +57,11 @@ return badRequest({ message: "Invalid input" });
 
 ```typescript
 import { allNonEmpty } from "@adobe/aio-commerce-lib-core/params";
+import { badRequest } from "@adobe/aio-commerce-lib-core/responses";
 
 function main(params) {
   if (!allNonEmpty(params, ["apiKey", "userId"])) {
-    return badRequest({ message: "Missing required parameters" });
+    return badRequest({ body: { message: "Missing required parameters" } });
   }
 
   const { apiKey, userId } = params;
