@@ -42,7 +42,8 @@ export function isIntegrationAuthProvider(
   return (
     typeof provider === "object" &&
     provider !== null &&
-    "getHeaders" in provider
+    "getHeaders" in provider &&
+    typeof provider.getHeaders === "function"
   );
 }
 

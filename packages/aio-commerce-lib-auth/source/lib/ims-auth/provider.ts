@@ -62,7 +62,9 @@ export function isImsAuthProvider(
     typeof provider === "object" &&
     provider !== null &&
     "getAccessToken" in provider &&
-    "getHeaders" in provider
+    "getHeaders" in provider &&
+    typeof provider.getAccessToken === "function" &&
+    typeof provider.getHeaders === "function"
   );
 }
 
