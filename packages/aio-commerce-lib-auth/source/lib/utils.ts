@@ -15,9 +15,6 @@ import { allNonEmpty } from "@adobe/aio-commerce-lib-core/params";
 import { resolveImsAuthParams } from "./ims-auth/utils";
 import { resolveIntegrationAuthParams } from "./integration-auth/utils";
 
-import type { ImsAuthParams } from "./ims-auth/schema";
-import type { IntegrationAuthParams } from "./integration-auth/schema";
-
 const IMS_AUTH_PARAMS = [
   "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
   "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
@@ -40,36 +37,7 @@ const AUTH_PARAMS_RESOLVER_MAP = {
   auto: resolveAuthParamsAuto,
 };
 
-/** IMS authentication parameters with the "ims" strategy indicator. */
-export type ImsAuthParamsWithStrategy = ImsAuthParams & { strategy: "ims" };
-
-/** Adobe Commerce Integration authentication parameters with the "integration" strategy indicator. */
-export type IntegrationAuthParamsWithStrategy = IntegrationAuthParams & {
-  strategy: "integration";
-};
-
-/**
- * Union type representing either IMS or Integration authentication providers.
- * Each provider includes its respective parameters and a strategy identifier.
- */
-export type AuthProvider =
-  | ImsAuthParamsWithStrategy
-  | IntegrationAuthParamsWithStrategy;
-
-/**
- * The available authentication resolver strategies.
- * - `"ims"`: Force resolution as IMS authentication
- * - `"integration"`: Force resolution as Adobe Commerce Integration authentication
- * - `"auto"`: Automatically detect the authentication type based on provided parameters
- */
-export type AuthResolverStrategy = AuthProvider["strategy"] | "auto";
-
-/** Conditional type that resolves to the correct authentication parameters type based on the strategy. */
-type ResolvedAuthParams<T extends AuthResolverStrategy> = T extends "ims"
-  ? ImsAuthParamsWithStrategy
-  : T extends "integration"
-    ? IntegrationAuthParamsWithStrategy
-    : AuthProvider;
+type AuthResolverStrategy = "ims" | "integration" | "auto";
 
 /**
  * Automatically detects and resolves authentication parameters from App Builder action inputs.
@@ -78,7 +46,7 @@ type ResolvedAuthParams<T extends AuthResolverStrategy> = T extends "ims"
  * @param params The App Builder action inputs containing authentication parameters.
  * @throws {Error} If neither IMS nor Integration authentication parameters can be resolved.
  */
-function resolveAuthParamsAuto(params: Record<string, unknown>): AuthProvider {
+function resolveAuthParamsAuto(params: Record<string, unknown>) {
   if (allNonEmpty(params, IMS_AUTH_PARAMS)) {
     return Object.assign(resolveImsAuthParams(params), {
       strategy: "ims",
@@ -138,7 +106,7 @@ function resolveAuthParamsAuto(params: Record<string, unknown>): AuthProvider {
 export function resolveAuthParams<T extends AuthResolverStrategy = "auto">(
   params: Record<string, unknown>,
   strategy: T = "auto" as T,
-): ResolvedAuthParams<T> {
+) {
   const provider = AUTH_PARAMS_RESOLVER_MAP[strategy];
-  return provider(params) as ResolvedAuthParams<T>;
+  return provider(params);
 }
