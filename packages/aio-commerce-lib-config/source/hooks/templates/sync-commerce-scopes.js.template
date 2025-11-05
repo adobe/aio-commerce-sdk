@@ -17,15 +17,12 @@ import {
   resolveCommerceHttpClientParams,
 } from '@adobe/aio-commerce-lib-api';
 
-import {
-  init,
-  createErrorResponse,
-  createSuccessResponse,
-} from '@adobe/aio-commerce-lib-config';
-
+import { init } from '@adobe/aio-commerce-lib-config';
 import {
   CommerceSdkValidationError
 } from '@adobe/aio-commerce-lib-core/error';
+
+import { internalServerError, ok } from '@adobe/aio-commerce-lib-core/responses';
 
 /**
  * Sync commerce scopes.
@@ -41,19 +38,20 @@ export async function main(params) {
 
     const result = await config.syncCommerceScopes();
 
-    return createSuccessResponse(200, {
-      scopes: result.scopeTree,
-      synced: result.synced,
-      error: result.error
+    return ok({
+      body: {
+        scopes: result.scopeTree,
+        synced: result.synced,
+        error: result.error
+      }
     });
   } catch (error) {
-    if (error instanceof CommerceSdkValidationError) {
-      return createErrorResponse(400, "BAD_REQUEST", error.display(false));
-    }
-
-    return createErrorResponse(500, "INTERNAL_ERROR",
-        "An unexpected error occurred while processing the request.",
-        error instanceof Error ? error.message : 'Unknown error'
-    );
+    return internalServerError({
+      body: {
+        code: "INTERNAL_ERROR",
+        message: "An internal server error occurred",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }
+    });
   }
 }
