@@ -57,7 +57,21 @@ export function buildIoEventsHttpClient(
 /**
  * Resolves the {@link IoEventsHttpClientParams} from the given App Builder action inputs.
  * @param params The App Builder action inputs to resolve the {@link IoEventsHttpClientParams} from.
- * @throws If the authentication parameters cannot be resolved.
+ * @throws {Error} If the authentication parameters cannot be resolved or if non-IMS auth is detected.
+ * @example
+ * ```typescript
+ * import { resolveIoEventsHttpClientParams, AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api/io-events";
+ *
+ * export const main = async function (params: Record<string, unknown>) {
+ *   // Automatically resolves IMS auth params from environment variables
+ *   const clientParams = resolveIoEventsHttpClientParams(params);
+ *   const eventsClient = new AdobeIoEventsHttpClient(clientParams);
+ *
+ *   // Use the client
+ *   const response = await eventsClient.get("{orgId}/providers").json();
+ *   return { statusCode: 200, body: response };
+ * };
+ * ```
  */
 export function resolveIoEventsHttpClientParams(
   params: Record<string, unknown>,
