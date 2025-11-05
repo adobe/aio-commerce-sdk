@@ -12,16 +12,13 @@
 
 import { describe, expect, it } from "vitest";
 
-import {
-  createErrorResponse,
-  createSuccessResponse,
-} from "~/responses/helpers";
+import { buildErrorResponse, buildSuccessResponse } from "~/responses/helpers";
 
 describe("responses/helpers", () => {
-  describe("createErrorResponse", () => {
+  describe("buildErrorResponse", () => {
     it("should create a basic error response with just a message", () => {
-      const result = createErrorResponse(404, {
-        message: "Resource not found",
+      const result = buildErrorResponse(404, {
+        body: { message: "Resource not found" },
       });
 
       expect(result).toEqual({
@@ -36,9 +33,12 @@ describe("responses/helpers", () => {
     });
 
     it("should create an error response with additional body properties", () => {
-      const result = createErrorResponse(400, {
-        message: "Invalid request",
-        body: { field: "email", code: "INVALID_FORMAT" },
+      const result = buildErrorResponse(400, {
+        body: {
+          message: "Invalid request",
+          field: "email",
+          code: "INVALID_FORMAT",
+        },
       });
 
       expect(result).toEqual({
@@ -55,8 +55,8 @@ describe("responses/helpers", () => {
     });
 
     it("should create an error response with custom headers", () => {
-      const result = createErrorResponse(429, {
-        message: "Rate limit exceeded",
+      const result = buildErrorResponse(429, {
+        body: { message: "Rate limit exceeded" },
         headers: { "Retry-After": "60" },
       });
 
@@ -73,9 +73,12 @@ describe("responses/helpers", () => {
     });
 
     it("should create an error response with both body and headers", () => {
-      const result = createErrorResponse(403, {
-        message: "Access denied",
-        body: { reason: "insufficient_permissions", resource: "/api/users" },
+      const result = buildErrorResponse(403, {
+        body: {
+          message: "Access denied",
+          reason: "insufficient_permissions",
+          resource: "/api/users",
+        },
         headers: { "X-Request-Id": "abc123" },
       });
 
@@ -94,75 +97,53 @@ describe("responses/helpers", () => {
     });
 
     it("should properly type the response as ErrorResponse", () => {
-      const result = createErrorResponse(400, {
-        message: "Bad request",
+      const result = buildErrorResponse(400, {
+        body: { message: "Bad request" },
       });
 
       expect(result.type).toBe("error");
       expect("error" in result).toBe(true);
     });
 
-    it("should handle empty body object", () => {
-      const result = createErrorResponse(400, {
-        message: "Bad request",
-        body: {},
-      });
-
-      expect(result).toEqual({
-        type: "error",
-        error: {
-          statusCode: 400,
-          body: {
-            message: "Bad request",
-          },
-        },
-      });
-    });
-
     it("should not include headers key when headers are not provided", () => {
-      const result = createErrorResponse(404, {
-        message: "Not found",
+      const result = buildErrorResponse(404, {
+        body: { message: "Not found" },
       });
 
       expect(result.error).not.toHaveProperty("headers");
     });
   });
 
-  describe("createSuccessResponse", () => {
-    it("should create a basic success response with just a message", () => {
-      const result = createSuccessResponse(200, {
-        message: "Operation successful",
+  describe("buildSuccessResponse", () => {
+    it("should create a basic success response with body", () => {
+      const result = buildSuccessResponse(200, {
+        body: { message: "Operation successful" },
       });
 
       expect(result).toEqual({
         type: "success",
         statusCode: 200,
-        body: {
-          message: "Operation successful",
-        },
+        message: "Operation successful",
       });
     });
 
     it("should create a success response with additional body properties", () => {
-      const result = createSuccessResponse(201, {
-        message: "Resource created",
-        body: { id: "456", created: true },
+      const result = buildSuccessResponse(201, {
+        body: { message: "Resource created", id: "456", created: true },
       });
 
       expect(result).toEqual({
         type: "success",
         statusCode: 201,
-        body: {
-          id: "456",
-          created: true,
-          message: "Resource created",
-        },
+        id: "456",
+        created: true,
+        message: "Resource created",
       });
     });
 
     it("should create a success response with custom headers", () => {
-      const result = createSuccessResponse(201, {
-        message: "Resource created",
+      const result = buildSuccessResponse(201, {
+        body: { message: "Resource created" },
         headers: { Location: "/api/resources/456" },
       });
 
@@ -170,16 +151,13 @@ describe("responses/helpers", () => {
         type: "success",
         statusCode: 201,
         headers: { Location: "/api/resources/456" },
-        body: {
-          message: "Resource created",
-        },
+        message: "Resource created",
       });
     });
 
     it("should create a success response with both body and headers", () => {
-      const result = createSuccessResponse(200, {
-        message: "Data retrieved",
-        body: { users: [], total: 0 },
+      const result = buildSuccessResponse(200, {
+        body: { message: "Data retrieved", users: [], total: 0 },
         headers: { "X-Total-Count": "0" },
       });
 
@@ -187,50 +165,33 @@ describe("responses/helpers", () => {
         type: "success",
         statusCode: 200,
         headers: { "X-Total-Count": "0" },
-        body: {
-          users: [],
-          total: 0,
-          message: "Data retrieved",
-        },
+        users: [],
+        total: 0,
+        message: "Data retrieved",
       });
     });
 
     it("should properly type the response as SuccessResponse", () => {
-      const result = createSuccessResponse(200, {
-        message: "Success",
+      const result = buildSuccessResponse(200, {
+        body: { message: "Success" },
       });
 
       expect(result.type).toBe("success");
       expect("statusCode" in result).toBe(true);
     });
 
-    it("should handle empty body object", () => {
-      const result = createSuccessResponse(200, {
-        message: "Success",
-        body: {},
-      });
-
-      expect(result).toEqual({
-        type: "success",
-        statusCode: 200,
-        body: {
-          message: "Success",
-        },
-      });
-    });
-
     it("should not include headers key when headers are not provided", () => {
-      const result = createSuccessResponse(200, {
-        message: "Success",
+      const result = buildSuccessResponse(200, {
+        body: { message: "Success" },
       });
 
       expect(result).not.toHaveProperty("headers");
     });
 
     it("should handle complex body data structures", () => {
-      const result = createSuccessResponse(200, {
-        message: "Success",
+      const result = buildSuccessResponse(200, {
         body: {
+          message: "Success",
           data: {
             nested: {
               value: 123,
@@ -240,22 +201,45 @@ describe("responses/helpers", () => {
         },
       });
 
-      expect(result.body).toEqual({
+      // Body properties are spread into the response
+      expect(result).toMatchObject({
+        type: "success",
+        statusCode: 200,
+        message: "Success",
         data: {
           nested: {
             value: 123,
           },
         },
         array: [1, 2, 3],
-        message: "Success",
+      });
+    });
+
+    it("should create response without body when body is omitted", () => {
+      const result = buildSuccessResponse(204, {});
+
+      expect(result).toEqual({
+        type: "success",
+        statusCode: 204,
+      });
+    });
+
+    it("should handle optional payload parameter", () => {
+      const result = buildSuccessResponse(204);
+
+      expect(result).toEqual({
+        type: "success",
+        statusCode: 204,
       });
     });
   });
 
   describe("type discrimination", () => {
     it("should allow type discrimination between success and error responses", () => {
-      const success = createSuccessResponse(200, { message: "OK" });
-      const error = createErrorResponse(400, { message: "Bad request" });
+      const success = buildSuccessResponse(200, { body: { message: "OK" } });
+      const error = buildErrorResponse(400, {
+        body: { message: "Bad request" },
+      });
 
       if (success.type === "success") {
         expect(success.statusCode).toBe(200);
