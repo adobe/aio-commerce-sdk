@@ -12,5 +12,7 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the responses entrypoint */
 
-export * from "./helpers";
+export { buildErrorResponse, buildSuccessResponse } from "./helpers";
 export * from "./presets";
+
+export type { ActionResponse, ErrorResponse, SuccessResponse } from "./helpers";

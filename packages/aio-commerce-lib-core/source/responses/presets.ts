@@ -10,7 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
-import { createErrorResponse, createSuccessResponse } from "./helpers";
+import { buildErrorResponse, buildSuccessResponse } from "./helpers";
+
+import type {
+  BodyRecord,
+  BodyRecordWithMessage,
+  HeadersRecord,
+} from "./helpers";
 
 export const HTTP_OK = 200;
 export const HTTP_CREATED = 201;
@@ -20,47 +26,64 @@ export const HTTP_FORBIDDEN = 403;
 export const HTTP_NOT_FOUND = 404;
 export const HTTP_INTERNAL_SERVER_ERROR = 500;
 
+function curryBuildSuccessResponse(code: number) {
+  return (payload?: string | { body?: BodyRecord; headers?: HeadersRecord }) =>
+    buildSuccessResponse(
+      code,
+      typeof payload === "string" ? { body: { message: payload } } : payload,
+    );
+}
+
+function curryBuildErrorResponse(code: number) {
+  return (
+    payload: string | { body: BodyRecordWithMessage; headers?: HeadersRecord },
+  ) =>
+    buildErrorResponse(
+      code,
+      typeof payload === "string" ? { body: { message: payload } } : payload,
+    );
+}
+
 /**
  * Creates a success response with the HTTP status code 200.
- * See {@link createSuccessResponse} for details on the response payload.
+ * See {@link buildSuccessResponse} for details on the response payload.
  */
-export const ok = createSuccessResponse.bind(null, HTTP_OK);
+export const ok = curryBuildSuccessResponse(HTTP_OK);
 
 /**
  * Creates a success response with the HTTP status code 201.
- * See {@link createSuccessResponse} for details on the response payload.
+ * See {@link buildSuccessResponse} for details on the response payload.
  */
-export const created = createSuccessResponse.bind(null, HTTP_CREATED);
+export const created = curryBuildSuccessResponse(HTTP_CREATED);
 
 /**
  * Creates an error response with the HTTP status code 400.
- * See {@link createErrorResponse} for details on the response payload.
+ * See {@link buildErrorResponse} for details on the response payload.
  */
-export const badRequest = createErrorResponse.bind(null, HTTP_BAD_REQUEST);
+export const badRequest = curryBuildErrorResponse(HTTP_BAD_REQUEST);
 
 /**
  * Creates an error response with the HTTP status code 401.
- * See {@link createErrorResponse} for details on the response payload.
+ * See {@link buildErrorResponse} for details on the response payload.
  */
-export const unauthorized = createErrorResponse.bind(null, HTTP_UNAUTHORIZED);
+export const unauthorized = curryBuildErrorResponse(HTTP_UNAUTHORIZED);
 
 /**
  * Creates an error response with the HTTP status code 403.
- * See {@link createErrorResponse} for details on the response payload.
+ * See {@link buildErrorResponse} for details on the response payload.
  */
-export const forbidden = createErrorResponse.bind(null, HTTP_FORBIDDEN);
+export const forbidden = curryBuildErrorResponse(HTTP_FORBIDDEN);
 
 /**
  * Creates an error response with the HTTP status code 404.
- * See {@link createErrorResponse} for details on the response payload.
+ * See {@link buildErrorResponse} for details on the response payload.
  */
-export const notFound = createErrorResponse.bind(null, HTTP_NOT_FOUND);
+export const notFound = curryBuildErrorResponse(HTTP_NOT_FOUND);
 
 /**
  * Creates an error response with the HTTP status code 500.
- * See {@link createErrorResponse} for details on the response payload.
+ * See {@link buildErrorResponse} for details on the response payload.
  */
-export const internalServerError = createErrorResponse.bind(
-  null,
+export const internalServerError = curryBuildErrorResponse(
   HTTP_INTERNAL_SERVER_ERROR,
 );

@@ -10,17 +10,21 @@
  * governing permissions and limitations under the License.
  */
 
+export type HeadersRecord = Record<string, string>;
+export type BodyRecord = Record<string, unknown>;
+export type BodyRecordWithMessage = BodyRecord & { message: string };
+
 /**
  * Common payload structure for runtime action responses
  * @template TBody - Response body properties
  * @template THeaders - Custom response headers
  */
 export type ResponsePayload<
-  TBody extends Record<string, unknown> = Record<string, unknown>,
-  THeaders extends Record<string, string> = Record<string, string>,
+  TBody extends BodyRecord = BodyRecord,
+  THeaders extends HeadersRecord = HeadersRecord,
 > = {
   statusCode: number;
-  body?: TBody & { message: string };
+  body?: TBody;
   headers?: THeaders;
 };
 
@@ -30,8 +34,8 @@ export type ResponsePayload<
  * @template THeaders - Custom response headers
  */
 export type ErrorResponse<
-  TBody extends Record<string, unknown> = Record<string, unknown>,
-  THeaders extends Record<string, string> = Record<string, string>,
+  TBody extends BodyRecordWithMessage = BodyRecordWithMessage,
+  THeaders extends HeadersRecord = HeadersRecord,
 > = {
   type: "error";
   error: ResponsePayload<TBody, THeaders>;
@@ -43,8 +47,8 @@ export type ErrorResponse<
  * @template THeaders - Custom response headers
  */
 export type SuccessResponse<
-  TBody extends Record<string, unknown> = Record<string, unknown>,
-  THeaders extends Record<string, string> = Record<string, string>,
+  TBody extends BodyRecord = BodyRecord,
+  THeaders extends HeadersRecord = HeadersRecord,
 > = ResponsePayload<TBody, THeaders> & {
   type: "success";
 };
@@ -55,8 +59,8 @@ export type SuccessResponse<
  * @template THeaders - Custom response headers
  */
 export type ActionResponse<
-  TBody extends Record<string, unknown> = Record<string, unknown>,
-  THeaders extends Record<string, string> = Record<string, string>,
+  TBody extends BodyRecordWithMessage = BodyRecordWithMessage,
+  THeaders extends HeadersRecord = HeadersRecord,
 > = SuccessResponse<TBody, THeaders> | ErrorResponse<TBody, THeaders>;
 
 /**
@@ -94,12 +98,12 @@ export type ActionResponse<
  * });
  * ```
  */
-export function createErrorResponse<
-  TBody extends Record<string, unknown> = Record<string, unknown>,
-  THeaders extends Record<string, string> = Record<string, string>,
+export function buildErrorResponse<
+  TBody extends BodyRecordWithMessage = BodyRecordWithMessage,
+  THeaders extends HeadersRecord = HeadersRecord,
 >(
   statusCode: number,
-  payload: { message: string; body?: TBody; headers?: THeaders },
+  payload: { body: TBody; headers?: THeaders },
 ): ErrorResponse<TBody, THeaders> {
   return {
     type: "error",
@@ -107,10 +111,7 @@ export function createErrorResponse<
       ...(payload?.headers && { headers: payload.headers }),
 
       statusCode,
-      body: {
-        ...(payload?.body ?? {}),
-        message: payload.message,
-      } as TBody & { message: string },
+      body: payload.body,
     },
   };
 }
@@ -145,21 +146,18 @@ export function createErrorResponse<
  * });
  * ```
  */
-export function createSuccessResponse<
-  TBody extends Record<string, unknown> = Record<string, unknown>,
-  THeaders extends Record<string, string> = Record<string, string>,
+export function buildSuccessResponse<
+  TBody extends BodyRecord = BodyRecord,
+  THeaders extends HeadersRecord = HeadersRecord,
 >(
   statusCode: number,
-  payload: { message: string; body?: TBody; headers?: THeaders },
+  payload?: { body?: TBody; headers?: THeaders },
 ): SuccessResponse<TBody, THeaders> {
   return {
     type: "success",
     statusCode,
 
-    ...(payload.headers && { headers: payload.headers }),
-    body: {
-      ...(payload?.body ?? {}),
-      message: payload.message,
-    } as TBody & { message: string },
+    ...(payload?.headers && { headers: payload.headers }),
+    ...(payload?.body ?? {}),
   };
 }
