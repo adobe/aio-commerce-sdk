@@ -11,12 +11,10 @@
  */
 
 /**
- * This module exports the error classes for the AIO Commerce SDK.
- * @privateRemarks This annotations are used by Typedoc to correctly generate the API reference. Don't remove them.
- *
- * @module error
+ * This module exports the core error classes for the AIO Commerce SDK.
  * @packageDocumentation
  */
+
 // biome-ignore lint/performance/noBarrelFile: export as part of the Public API
 export { CommerceSdkErrorBase } from "./base-error";
 export { CommerceSdkValidationError } from "./validation-error";

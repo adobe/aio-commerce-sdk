@@ -10,24 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
-import { defineConfig, mergeConfig } from "vitest/config";
+/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the responses entrypoint */
 
-// Barrel files are those that only contain exports.
-const BARREL_FILES = [
-  "./source/index.ts",
-  "./source/error/index.ts",
-  "./source/responses/index.ts",
-];
+export { buildErrorResponse, buildSuccessResponse } from "./helpers";
+export * from "./presets";
 
-export default mergeConfig(
-  baseConfig,
-  defineConfig({
-    test: {
-      coverage: {
-        // Exclude barrel files as they don't contain "logic".
-        exclude: [...BARREL_FILES],
-      },
-    },
-  }),
-);
+export type { ActionResponse, ErrorResponse, SuccessResponse } from "./helpers";
