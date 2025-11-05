@@ -31,9 +31,9 @@ export function nonEmpty(name: string, value: unknown): boolean {
  * @param params - The action input parameters.
  * @param required - The list of required parameter names.
  */
-export function allNonEmpty(
+export function allNonEmpty<const T extends string[]>(
   params: Record<string, unknown>,
-  required: string[],
-): boolean {
+  required: T,
+): params is Record<T[number], string> {
   return required.every((name) => nonEmpty(name, params[name]));
 }
