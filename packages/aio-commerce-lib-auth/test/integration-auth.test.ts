@@ -12,7 +12,10 @@
 
 import { describe, expect, test } from "vitest";
 
-import { getIntegrationAuthProvider } from "~/lib/integration-auth/provider";
+import {
+  getIntegrationAuthProvider,
+  isIntegrationAuthProvider,
+} from "~/lib/integration-auth/provider";
 import {
   assertIntegrationAuthParams,
   resolveIntegrationAuthParams,
@@ -139,6 +142,60 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
       expect(() => {
         resolveIntegrationAuthParams(params);
       }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+  });
+
+  describe("isIntegrationAuthProvider", () => {
+    test("should return true for Integration auth provider", () => {
+      const provider = getIntegrationAuthProvider({
+        consumerKey: "test-consumer-key",
+        consumerSecret: "test-consumer-secret",
+        accessToken: "test-access-token",
+        accessTokenSecret: "test-access-token-secret",
+      });
+
+      expect(isIntegrationAuthProvider(provider)).toBe(true);
+    });
+
+    test("should return false for plain Integration auth params", () => {
+      const params = {
+        consumerKey: "test-consumer-key",
+        consumerSecret: "test-consumer-secret",
+        accessToken: "test-access-token",
+        accessTokenSecret: "test-access-token-secret",
+      };
+
+      expect(isIntegrationAuthProvider(params)).toBe(false);
+    });
+
+    test("should return false for null", () => {
+      expect(isIntegrationAuthProvider(null)).toBe(false);
+    });
+
+    test("should return false for undefined", () => {
+      expect(isIntegrationAuthProvider(undefined)).toBe(false);
+    });
+
+    test("should return false for non-object types", () => {
+      expect(isIntegrationAuthProvider("string")).toBe(false);
+      expect(isIntegrationAuthProvider(true)).toBe(false);
+    });
+
+    test("should return false for objects without required properties", () => {
+      expect(isIntegrationAuthProvider({})).toBe(false);
+    });
+
+    test("should return false for objects with getHeaders that is not a function", () => {
+      expect(isIntegrationAuthProvider({ getHeaders: "anything" })).toBe(false);
+      expect(isIntegrationAuthProvider({ getHeaders: 123 })).toBe(false);
+    });
+
+    test("should return true for objects with getHeaders function", () => {
+      expect(
+        isIntegrationAuthProvider({
+          getHeaders: () => ({ Authorization: "" }),
+        }),
+      ).toBe(true);
     });
   });
 });

@@ -13,7 +13,7 @@
 import aioLibIms from "@adobe/aio-lib-ims";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { getImsAuthProvider } from "~/lib/ims-auth/provider";
+import { getImsAuthProvider, isImsAuthProvider } from "~/lib/ims-auth/provider";
 import {
   assertImsAuthParams,
   resolveImsAuthParams,
@@ -383,6 +383,77 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       expect(() => {
         resolveImsAuthParams(params);
       }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+  });
+
+  describe("isImsAuthProvider", () => {
+    test("should return true for IMS auth provider", () => {
+      const provider = getImsAuthProvider({
+        clientId: "test-client-id",
+        clientSecrets: ["supersecret"],
+        technicalAccountId: "test-technical-account-id",
+        technicalAccountEmail: "test-email@example.com",
+        imsOrgId: "test-org-id",
+        scopes: ["scope1", "scope2"],
+      });
+
+      expect(isImsAuthProvider(provider)).toBe(true);
+    });
+
+    test("should return false for plain IMS auth params", () => {
+      const params = {
+        clientId: "test-client-id",
+        clientSecrets: ["supersecret"],
+        technicalAccountId: "test-technical-account-id",
+        technicalAccountEmail: "test-email@example.com",
+        imsOrgId: "test-org-id",
+        scopes: ["scope1", "scope2"],
+      };
+
+      expect(isImsAuthProvider(params)).toBe(false);
+    });
+
+    test("should return false for null", () => {
+      expect(isImsAuthProvider(null)).toBe(false);
+    });
+
+    test("should return false for undefined", () => {
+      expect(isImsAuthProvider(undefined)).toBe(false);
+    });
+
+    test("should return false for non-object types", () => {
+      expect(isImsAuthProvider("string")).toBe(false);
+      expect(isImsAuthProvider(true)).toBe(false);
+    });
+
+    test("should return false for objects without required properties", () => {
+      expect(isImsAuthProvider({})).toBe(false);
+      expect(isImsAuthProvider({ getAccessToken: "anything" })).toBe(false);
+      expect(isImsAuthProvider({ getHeaders: "anything" })).toBe(false);
+    });
+
+    test("should return false for objects with non-function properties", () => {
+      expect(
+        isImsAuthProvider({
+          getAccessToken: "anything",
+          getHeaders: "anything",
+        }),
+      ).toBe(false);
+      expect(
+        isImsAuthProvider({
+          getAccessToken: () => Promise.resolve("token"),
+          getHeaders: "not a function",
+        }),
+      ).toBe(false);
+    });
+
+    test("should return true for objects with both required functions", () => {
+      expect(
+        isImsAuthProvider({
+          getAccessToken: () => Promise.resolve("token"),
+          getHeaders: () => Promise.resolve({}),
+        }),
+      ).toBe(true);
     });
   });
 });
