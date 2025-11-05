@@ -14,7 +14,11 @@ import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
 import { defineConfig, mergeConfig } from "vitest/config";
 
 // Barrel files are those that only contain exports.
-const BARREL_FILES = ["./source/index.ts", "./source/error/index.ts"];
+const BARREL_FILES = [
+  "./source/index.ts",
+  "./source/error/index.ts",
+  "./source/responses/index.ts",
+];
 
 export default mergeConfig(
   baseConfig,
