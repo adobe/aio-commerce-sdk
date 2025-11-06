@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-api`: `v0.1.1`
+# `@adobe/aio-commerce-lib-api`: `v0.3.0`
 
 ## Classes
 
@@ -23,3 +23,10 @@
 | [IoEventsHttpClientParams](type-aliases/IoEventsHttpClientParams.md)         | Defines the parameters required to build an HTTP client for the Adobe I/O Events API.           |
 | [PaaSClientParams](type-aliases/PaaSClientParams.md)                         | Defines the configuration required to build an Adobe Commerce HTTP client for PaaS.             |
 | [SaaSClientParams](type-aliases/SaaSClientParams.md)                         | Defines the configuration required to build an Adobe Commerce HTTP client for SaaS.             |
+
+## Functions
+
+| Function                                                                        | Description                                                                                                                 |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| [resolveCommerceHttpClientParams](functions/resolveCommerceHttpClientParams.md) | Resolves the [CommerceHttpClientParams](type-aliases/CommerceHttpClientParams.md) from the given App Builder action inputs. |
+| [resolveIoEventsHttpClientParams](functions/resolveIoEventsHttpClientParams.md) | Resolves the [IoEventsHttpClientParams](type-aliases/IoEventsHttpClientParams.md) from the given App Builder action inputs. |

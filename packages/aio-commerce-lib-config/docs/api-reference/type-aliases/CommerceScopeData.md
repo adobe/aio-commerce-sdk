@@ -8,7 +8,7 @@ type CommerceScopeData = {
 };
 ```
 
-Defined in: [types/commerce.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/commerce.ts#L17)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/commerce.ts#L17)
 
 ## Properties
 
@@ -18,7 +18,7 @@ Defined in: [types/commerce.ts:17](https://github.com/adobe/aio-commerce-sdk/blo
 storeGroups: StoreGroup[];
 ```
 
-Defined in: [types/commerce.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/commerce.ts#L19)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/commerce.ts#L19)
 
 ---
 
@@ -28,7 +28,7 @@ Defined in: [types/commerce.ts:19](https://github.com/adobe/aio-commerce-sdk/blo
 storeViews: StoreView[];
 ```
 
-Defined in: [types/commerce.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/commerce.ts#L20)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/commerce.ts#L20)
 
 ---
 
@@ -38,4 +38,4 @@ Defined in: [types/commerce.ts:20](https://github.com/adobe/aio-commerce-sdk/blo
 websites: Website[];
 ```
 
-Defined in: [types/commerce.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/commerce.ts#L18)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/commerce.ts#L18)

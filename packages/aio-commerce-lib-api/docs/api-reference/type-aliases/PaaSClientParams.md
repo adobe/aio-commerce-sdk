@@ -2,13 +2,17 @@
 
 ```ts
 type PaaSClientParams = {
-  auth: IntegrationAuthProvider | IntegrationAuthParams;
+  auth:
+    | IntegrationAuthProvider
+    | IntegrationAuthParams
+    | ImsAuthProvider
+    | ImsAuthParamsWithOptionalScopes;
   config: CommerceHttpClientConfigPaaS;
   fetchOptions?: Options;
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:66](https://github.com/adobe/aio-commerce-sdk/blob/8afcf118655e877df634d68e8df599d706c63cbc/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L66)
+Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:66](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L66)
 
 Defines the configuration required to build an Adobe Commerce HTTP client for PaaS.
 
@@ -17,10 +21,14 @@ Defines the configuration required to build an Adobe Commerce HTTP client for Pa
 ### auth
 
 ```ts
-auth: IntegrationAuthProvider | IntegrationAuthParams;
+auth:
+  | IntegrationAuthProvider
+  | IntegrationAuthParams
+  | ImsAuthProvider
+  | ImsAuthParamsWithOptionalScopes;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/8afcf118655e877df634d68e8df599d706c63cbc/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L67)
+Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L67)
 
 ---
 
@@ -30,7 +38,7 @@ Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:67](http
 config: CommerceHttpClientConfigPaaS;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:68](https://github.com/adobe/aio-commerce-sdk/blob/8afcf118655e877df634d68e8df599d706c63cbc/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L68)
+Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:73](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L73)
 
 ---
 
@@ -40,4 +48,4 @@ Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:68](http
 optional fetchOptions: Options;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:69](https://github.com/adobe/aio-commerce-sdk/blob/8afcf118655e877df634d68e8df599d706c63cbc/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L69)
+Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L74)

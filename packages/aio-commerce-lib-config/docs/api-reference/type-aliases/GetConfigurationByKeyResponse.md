@@ -11,7 +11,7 @@ type GetConfigurationByKeyResponse = {
 };
 ```
 
-Defined in: [types/api.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L30)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L30)
 
 ## Properties
 
@@ -21,7 +21,7 @@ Defined in: [types/api.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/88c
 config: ConfigValue | null;
 ```
 
-Defined in: [types/api.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L36)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L36)
 
 ---
 
@@ -35,7 +35,7 @@ scope: {
 }
 ```
 
-Defined in: [types/api.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L31)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L31)
 
 #### code
 

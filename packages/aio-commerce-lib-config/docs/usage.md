@@ -51,6 +51,12 @@ Define the structure of your application's configuration using a schema file. Th
 
 2. Configure the pre-app-build hook in `app.config.yaml`:
 
+> **Note**: The pre-app-build hook generates 6 runtime actions that are necessary if your application is going to be used/integrated within the Commerce App Management. Before adding this hook, you must install the required dependencies that these generated runtime actions reference:
+>
+> ```bash
+> npm install @adobe/aio-commerce-lib-api @adobe/aio-commerce-lib-core
+> ```
+
 ```yaml
 hooks:
   pre-app-build: "node_modules/@adobe/aio-commerce-lib-config/dist/cjs/hooks/pre-app-build.cjs"
@@ -74,6 +80,8 @@ Scopes define the hierarchical boundaries where configuration values can be set 
 
 The hook also configures the required environment variables in `ext.config.yaml`.
 
+> **Important**: Don't forget to fill in the necessary values for the Commerce configuration in your `.env` file before the hook generates the environment variable placeholders.
+
 ### Initialize the Library
 
 Initialize the library with basic settings or configure it with an Adobe Commerce instance, and uses the default cache timeout of 5 minutes. When working with Adobe Commerce, provide the appropriate authentication credentials based on your instance type (SaaS or PaaS).
@@ -94,25 +102,43 @@ const config = init({
   cacheTimeout: 600,
   commerce: {
     config: {
-      baseUrl: params.COMMERCE_BASE_URL,
-      flavor: params.COMMERCE_FLAVOR, // "saas" or "paas"
+      baseUrl: "https://your-commerce-instance.com",
+      flavor: "your-commerce-flavour", // "saas" or "paas"
     },
     auth: {
       // For SaaS instances
-      clientId: params.COMMERCE_CLIENT_ID,
-      clientSecret: params.COMMERCE_CLIENT_SECRET,
-      technicalAccountId: params.COMMERCE_TECHNICAL_ACCOUNT_ID,
-      technicalAccountEmail: params.COMMERCE_TECHNICAL_ACCOUNT_EMAIL,
-      imsOrgId: params.COMMERCE_IMS_ORG_ID,
+      clientId: "your-client-id",
+      clientSecret: ["your-client-secret"],
+      technicalAccountId: "your-technical-account-id",
+      technicalAccountEmail: "your-technical-account-email",
+      imsOrgId: "your-ims-org-id",
       // For PaaS instances
-      consumerKey: params.COMMERCE_CONSUMER_KEY,
-      consumerSecret: params.COMMERCE_CONSUMER_SECRET,
-      accessToken: params.COMMERCE_ACCESS_TOKEN,
-      accessTokenSecret: params.COMMERCE_ACCESS_TOKEN_SECRET,
+      consumerKey: "your-consumer-key",
+      consumerSecret: "your-consumer-secret",
+      accessToken: "your-access-token",
+      accessTokenSecret: "your-access-token-secret",
     },
   },
 });
 ```
+
+You can also use `resolveCommerceHttpClientParams` to automatically resolve client parameters from action inputs:
+
+```typescript
+import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
+import { init } from "@adobe/aio-commerce-lib-config";
+
+const commerceConfig = resolveCommerceHttpClientParams(params);
+// SaaS with IMS Auth resolves to: { config: { flavor: "saas", baseUrl: "..." }, auth: { ... ImsAuthParams } }
+// PaaS with Integration Auth resolves to: { config: { flavor: "paas", baseUrl: "..." }, auth: { ... IntegrationAuthParams } }
+
+const config = init({
+  cacheTimeout: 600,
+  commerce: commerceConfig,
+});
+```
+
+The resolver automatically detects flavor from the URL and auth type from the provided parameters. Define actual values in your `.env` file.
 
 ### Working with Scope Trees
 

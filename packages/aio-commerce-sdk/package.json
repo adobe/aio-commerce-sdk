@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-sdk",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
@@ -56,6 +56,16 @@
       "require": {
         "types": "./dist/cjs/events/*.d.cts",
         "default": "./dist/cjs/events/*.cjs"
+      }
+    },
+    "./core/*": {
+      "import": {
+        "types": "./dist/es/core/*.d.ts",
+        "default": "./dist/es/core/*.js"
+      },
+      "require": {
+        "types": "./dist/cjs/core/*.d.cts",
+        "default": "./dist/cjs/core/*.cjs"
       }
     },
     "./*": {

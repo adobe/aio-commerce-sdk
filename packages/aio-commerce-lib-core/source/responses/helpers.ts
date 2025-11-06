@@ -81,18 +81,18 @@ export type ActionResponse<
  * @example
  * ```typescript
  * // Simple error with just a message
- * const error = createErrorResponse(404, {
+ * const error = buildErrorResponse(404, {
  *   message: 'Resource not found'
  * });
  *
  * // Error with additional body data
- * const error = createErrorResponse(400, {
+ * const error = buildErrorResponse(400, {
  *   message: 'Invalid request',
  *   body: { field: 'email', code: 'INVALID_FORMAT' }
  * });
  *
  * // Error with custom headers
- * const error = createErrorResponse(429, {
+ * const error = buildErrorResponse(429, {
  *   message: 'Rate limit exceeded',
  *   headers: { 'Retry-After': '60' }
  * });
@@ -134,12 +134,12 @@ export function buildErrorResponse<
  * @example
  * ```typescript
  * // Simple success response
- * const response = createSuccessResponse(200, {
+ * const response = buildSuccessResponse(200, {
  *   message: 'Operation successful'
  * });
  *
  * // Success with additional body data
- * const response = createSuccessResponse(201, {
+ * const response = buildSuccessResponse(201, {
  *   message: 'Resource created',
  *   body: { id: '456', created: true },
  *   headers: { 'Location': '/api/resources/456' }
@@ -158,6 +158,6 @@ export function buildSuccessResponse<
     statusCode,
 
     ...(payload?.headers && { headers: payload.headers }),
-    ...(payload?.body ?? {}),
+    ...(payload?.body && { body: payload.body }),
   };
 }

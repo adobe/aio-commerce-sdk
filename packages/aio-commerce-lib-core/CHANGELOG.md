@@ -1,5 +1,15 @@
 # @adobe/aio-commerce-lib-core
 
+## 0.5.0
+
+### Minor Changes
+
+- [#116](https://github.com/adobe/aio-commerce-sdk/pull/116) [`176bd0f`](https://github.com/adobe/aio-commerce-sdk/commit/176bd0f793de8dbd11b1704a82dd722158f48e81) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add new `params` entrypoint for utilities related to runtime action params
+
+- [#116](https://github.com/adobe/aio-commerce-sdk/pull/116) [`176bd0f`](https://github.com/adobe/aio-commerce-sdk/commit/176bd0f793de8dbd11b1704a82dd722158f48e81) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add new `responses` entrypoint for utilities related to runtime action responses
+
+- [#122](https://github.com/adobe/aio-commerce-sdk/pull/122) [`493da95`](https://github.com/adobe/aio-commerce-sdk/commit/493da9595c06de304ecddbbc8295db124cb6fcba) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Add new `./responses` export path providing response builder utilities (`buildErrorResponse`, `buildSuccessResponse`), response presets, and related types
+
 ## 0.4.1
 
 ### Patch Changes

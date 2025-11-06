@@ -8,7 +8,7 @@ type ConfigValue = {
 };
 ```
 
-Defined in: [modules/configuration/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L23)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L23)
 
 ## Properties
 
@@ -18,7 +18,7 @@ Defined in: [modules/configuration/types.ts:23](https://github.com/adobe/aio-com
 name: string;
 ```
 
-Defined in: [modules/configuration/types.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L24)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L24)
 
 ---
 
@@ -28,7 +28,7 @@ Defined in: [modules/configuration/types.ts:24](https://github.com/adobe/aio-com
 origin: ConfigOrigin;
 ```
 
-Defined in: [modules/configuration/types.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L26)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L26)
 
 ---
 
@@ -38,4 +38,4 @@ Defined in: [modules/configuration/types.ts:26](https://github.com/adobe/aio-com
 value: AcceptableConfigValue;
 ```
 
-Defined in: [modules/configuration/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L25)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L25)
