@@ -51,6 +51,12 @@ Define the structure of your application's configuration using a schema file. Th
 
 2. Configure the pre-app-build hook in `app.config.yaml`:
 
+> **Note**: The pre-app-build hook generates 6 runtime actions that are necessary if your application is going to be used/integrated within the Commerce App Management. Before adding this hook, you must install the required dependencies that these generated runtime actions reference:
+>
+> ```bash
+> npm install @adobe/aio-commerce-lib-api @adobe/aio-commerce-lib-core
+> ```
+
 ```yaml
 hooks:
   pre-app-build: "node_modules/@adobe/aio-commerce-lib-config/dist/cjs/hooks/pre-app-build.cjs"
