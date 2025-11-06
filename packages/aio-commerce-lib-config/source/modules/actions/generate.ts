@@ -127,7 +127,7 @@ async function generateActionFiles(): Promise<void> {
     await mkdir(outputDir, { recursive: true });
   }
 
-  const templatesDir = join(__dirname, "../../hooks/templates");
+  const templatesDir = join(__dirname, "templates");
 
   for (const action of RUNTIME_ACTIONS) {
     const templatePath = join(templatesDir, action.templateFile);
