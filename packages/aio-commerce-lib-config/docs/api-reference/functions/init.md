@@ -2,7 +2,28 @@
 
 ```ts
 function init(_config?: LibConfig): {
-  getConfigSchema: Promise<ConfigSchemaField[]>;
+  getConfigSchema: Promise<
+    (
+      | {
+          default: string;
+          description?: string;
+          label?: string;
+          name: string;
+          options: {
+            label: string;
+            value: string;
+          }[];
+          type: "list";
+        }
+      | {
+          default?: string;
+          description?: string;
+          label?: string;
+          name: string;
+          type: "text";
+        }
+    )[]
+  >;
   getConfiguration: Promise<GetConfigurationResponse>;
   getConfigurationByKey: Promise<GetConfigurationByKeyResponse>;
   getScopeTree: Promise<{
@@ -20,7 +41,7 @@ function init(_config?: LibConfig): {
 };
 ```
 
-Defined in: [lib-config.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/lib-config.ts#L20)
+Defined in: [packages/aio-commerce-lib-config/source/lib-config.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/lib-config.ts#L20)
 
 Initialize the configuration library
 
@@ -37,14 +58,50 @@ Initialized configuration instance
 ### getConfigSchema()
 
 ```ts
-getConfigSchema(): Promise<ConfigSchemaField[]>;
+getConfigSchema(): Promise<(
+  | {
+  default: string;
+  description?: string;
+  label?: string;
+  name: string;
+  options: {
+     label: string;
+     value: string;
+  }[];
+  type: "list";
+}
+  | {
+  default?: string;
+  description?: string;
+  label?: string;
+  name: string;
+  type: "text";
+})[]>;
 ```
 
 Get configuration schema
 
 #### Returns
 
-`Promise`\<[`ConfigSchemaField`](../type-aliases/ConfigSchemaField.md)[]\>
+`Promise`\<(
+\| \{
+`default`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`options`: \{
+`label`: `string`;
+`value`: `string`;
+\}[];
+`type`: `"list"`;
+\}
+\| \{
+`default?`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`type`: `"text"`;
+\})[]\>
 
 ### getConfiguration()
 

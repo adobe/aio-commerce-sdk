@@ -16,7 +16,7 @@ type SetConfigurationResponse = {
 };
 ```
 
-Defined in: [types/api.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L47)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L47)
 
 ## Properties
 
@@ -30,7 +30,7 @@ config: {
 [];
 ```
 
-Defined in: [types/api.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L55)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L55)
 
 #### name
 
@@ -52,7 +52,7 @@ value: string | number | boolean;
 message: string;
 ```
 
-Defined in: [types/api.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L48)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L48)
 
 ---
 
@@ -66,7 +66,7 @@ scope: {
 }
 ```
 
-Defined in: [types/api.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L50)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L50)
 
 #### code
 
@@ -94,4 +94,4 @@ level: string;
 timestamp: string;
 ```
 
-Defined in: [types/api.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L49)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L49)

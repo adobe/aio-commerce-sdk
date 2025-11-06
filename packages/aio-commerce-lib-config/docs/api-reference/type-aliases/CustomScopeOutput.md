@@ -12,7 +12,7 @@ type CustomScopeOutput = {
 };
 ```
 
-Defined in: [types/api.ts:82](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L82)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:82](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L82)
 
 ## Properties
 
@@ -22,7 +22,7 @@ Defined in: [types/api.ts:82](https://github.com/adobe/aio-commerce-sdk/blob/88c
 optional children: CustomScopeOutput[];
 ```
 
-Defined in: [types/api.ts:89](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L89)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:89](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L89)
 
 ---
 
@@ -32,7 +32,7 @@ Defined in: [types/api.ts:89](https://github.com/adobe/aio-commerce-sdk/blob/88c
 code: string;
 ```
 
-Defined in: [types/api.ts:84](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L84)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:84](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L84)
 
 ---
 
@@ -42,7 +42,7 @@ Defined in: [types/api.ts:84](https://github.com/adobe/aio-commerce-sdk/blob/88c
 id: string;
 ```
 
-Defined in: [types/api.ts:83](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L83)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:83](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L83)
 
 ---
 
@@ -52,7 +52,7 @@ Defined in: [types/api.ts:83](https://github.com/adobe/aio-commerce-sdk/blob/88c
 is_editable: boolean;
 ```
 
-Defined in: [types/api.ts:87](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L87)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:87](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L87)
 
 ---
 
@@ -62,7 +62,7 @@ Defined in: [types/api.ts:87](https://github.com/adobe/aio-commerce-sdk/blob/88c
 is_final: boolean;
 ```
 
-Defined in: [types/api.ts:88](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L88)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:88](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L88)
 
 ---
 
@@ -72,7 +72,7 @@ Defined in: [types/api.ts:88](https://github.com/adobe/aio-commerce-sdk/blob/88c
 label: string;
 ```
 
-Defined in: [types/api.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L85)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L85)
 
 ---
 
@@ -82,4 +82,4 @@ Defined in: [types/api.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/88c
 level: string;
 ```
 
-Defined in: [types/api.ts:86](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L86)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:86](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L86)

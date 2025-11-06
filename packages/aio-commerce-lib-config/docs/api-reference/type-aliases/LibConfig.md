@@ -7,7 +7,7 @@ type LibConfig = {
 };
 ```
 
-Defined in: [types/internal.ts:15](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/internal.ts#L15)
+Defined in: [packages/aio-commerce-lib-config/source/types/internal.ts:15](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/internal.ts#L15)
 
 ## Properties
 
@@ -17,7 +17,7 @@ Defined in: [types/internal.ts:15](https://github.com/adobe/aio-commerce-sdk/blo
 optional cacheTimeout: number;
 ```
 
-Defined in: [types/internal.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/internal.ts#L16)
+Defined in: [packages/aio-commerce-lib-config/source/types/internal.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/internal.ts#L16)
 
 ---
 
@@ -27,4 +27,4 @@ Defined in: [types/internal.ts:16](https://github.com/adobe/aio-commerce-sdk/blo
 optional commerce: CommerceHttpClientParams;
 ```
 
-Defined in: [types/internal.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/internal.ts#L17)
+Defined in: [packages/aio-commerce-lib-config/source/types/internal.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/internal.ts#L17)
