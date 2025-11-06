@@ -80,6 +80,8 @@ Scopes define the hierarchical boundaries where configuration values can be set 
 
 The hook also configures the required environment variables in `ext.config.yaml`.
 
+> **Important**: Don't forget to fill in the necessary values for the Commerce configuration in your `.env` file before the hook generates the environment variable placeholders.
+
 ### Initialize the Library
 
 Initialize the library with basic settings or configure it with an Adobe Commerce instance, and uses the default cache timeout of 5 minutes. When working with Adobe Commerce, provide the appropriate authentication credentials based on your instance type (SaaS or PaaS).
