@@ -318,17 +318,43 @@ Use text fields for free-form input values like merchant identifiers or custom s
 
 Use list fields when you need to restrict values to a predefined set of options. This is useful for settings like log levels, environment modes, or payment methods. List fields require both options and a default value.
 
+The `selectionMode` field (optional) controls whether users can select a single value or multiple values:
+
+- `"single"` (default if omitted): Standard dropdown with single selection
+- `"multiple"`: Allows multiple selections from the list
+
+Single selection example:
+
 ```json
 {
   "name": "log_level",
   "label": "Log Level",
   "type": "list",
+  "selectionMode": "single",
   "options": [
     { "label": "Debug", "value": "debug" },
     { "label": "Info", "value": "info" },
     { "label": "Error", "value": "error" }
   ],
   "default": "info"
+}
+```
+
+Multiple selection example:
+
+```json
+{
+  "name": "paymentMethods",
+  "label": "Enabled Payment Methods",
+  "type": "list",
+  "selectionMode": "multiple",
+  "options": [
+    { "label": "Credit Card", "value": "credit_card" },
+    { "label": "PayPal", "value": "paypal" },
+    { "label": "Apple Pay", "value": "apple_pay" },
+    { "label": "Google Pay", "value": "google_pay" }
+  ],
+  "default": "credit_card"
 }
 ```
 
