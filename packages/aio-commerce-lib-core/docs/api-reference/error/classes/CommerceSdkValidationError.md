@@ -1,6 +1,6 @@
 # `CommerceSdkValidationError`
 
-Defined in: [validation-error.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/7b593b329256b2a01f618a3bfec89516edd0e844/packages/aio-commerce-lib-core/source/error/validation-error.ts#L104)
+Defined in: [error/validation-error.ts:103](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-core/source/error/validation-error.ts#L103)
 
 Represents a validation error in the Commerce SDK.
 This error should be thrown when an input does not conform to the expected schema.
@@ -29,7 +29,7 @@ console.log(error.display());
 new CommerceSdkValidationError(message: string, options: CommerceSdkValidationErrorOptions): CommerceSdkValidationError;
 ```
 
-Defined in: [validation-error.ts:113](https://github.com/adobe/aio-commerce-sdk/blob/7b593b329256b2a01f618a3bfec89516edd0e844/packages/aio-commerce-lib-core/source/error/validation-error.ts#L113)
+Defined in: [error/validation-error.ts:112](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-core/source/error/validation-error.ts#L112)
 
 Constructs a new CommerceSdkValidationError instance.
 
@@ -56,7 +56,7 @@ Constructs a new CommerceSdkValidationError instance.
 readonly issues: GenericIssue[];
 ```
 
-Defined in: [validation-error.ts:105](https://github.com/adobe/aio-commerce-sdk/blob/7b593b329256b2a01f618a3bfec89516edd0e844/packages/aio-commerce-lib-core/source/error/validation-error.ts#L105)
+Defined in: [error/validation-error.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-core/source/error/validation-error.ts#L104)
 
 ---
 
@@ -66,7 +66,7 @@ Defined in: [validation-error.ts:105](https://github.com/adobe/aio-commerce-sdk/
 readonly optional traceId: string;
 ```
 
-Defined in: [base-error.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/7b593b329256b2a01f618a3bfec89516edd0e844/packages/aio-commerce-lib-core/source/error/base-error.ts#L54)
+Defined in: [error/base-error.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-core/source/error/base-error.ts#L54)
 
 #### Inherited from
 
@@ -82,7 +82,7 @@ Defined in: [base-error.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/7b
 get fullStack(): string;
 ```
 
-Defined in: [base-error.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/7b593b329256b2a01f618a3bfec89516edd0e844/packages/aio-commerce-lib-core/source/error/base-error.ts#L96)
+Defined in: [error/base-error.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-core/source/error/base-error.ts#L96)
 
 Returns the full stack trace of the error and its causes.
 
@@ -104,7 +104,7 @@ Returns the full stack trace of the error and its causes.
 get rootCause(): unknown;
 ```
 
-Defined in: [base-error.ts:109](https://github.com/adobe/aio-commerce-sdk/blob/7b593b329256b2a01f618a3bfec89516edd0e844/packages/aio-commerce-lib-core/source/error/base-error.ts#L109)
+Defined in: [error/base-error.ts:109](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-core/source/error/base-error.ts#L109)
 
 Returns the root cause of the error.
 
@@ -124,7 +124,7 @@ Returns the root cause of the error.
 display(withColor: boolean): string;
 ```
 
-Defined in: [validation-error.ts:125](https://github.com/adobe/aio-commerce-sdk/blob/7b593b329256b2a01f618a3bfec89516edd0e844/packages/aio-commerce-lib-core/source/error/validation-error.ts#L125)
+Defined in: [error/validation-error.ts:124](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-core/source/error/validation-error.ts#L124)
 
 Returns a pretty string (and colored) representation of the validation error.
 
@@ -152,7 +152,7 @@ toJSON(): {
 };
 ```
 
-Defined in: [base-error.ts:124](https://github.com/adobe/aio-commerce-sdk/blob/7b593b329256b2a01f618a3bfec89516edd0e844/packages/aio-commerce-lib-core/source/error/base-error.ts#L124)
+Defined in: [error/base-error.ts:124](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-core/source/error/base-error.ts#L124)
 
 Converts the error to a JSON-like representation.
 
@@ -210,7 +210,7 @@ traceId: undefined | string;
 toString(inspect: boolean): string;
 ```
 
-Defined in: [base-error.ts:139](https://github.com/adobe/aio-commerce-sdk/blob/7b593b329256b2a01f618a3bfec89516edd0e844/packages/aio-commerce-lib-core/source/error/base-error.ts#L139)
+Defined in: [error/base-error.ts:139](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-core/source/error/base-error.ts#L139)
 
 Returns a pretty string representation of the error.
 
@@ -236,7 +236,7 @@ Returns a pretty string representation of the error.
 static isSdkError(error: unknown): error is CommerceSdkErrorBase;
 ```
 
-Defined in: [base-error.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/7b593b329256b2a01f618a3bfec89516edd0e844/packages/aio-commerce-lib-core/source/error/base-error.ts#L91)
+Defined in: [error/base-error.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-core/source/error/base-error.ts#L91)
 
 Checks if the error is any CommerceSdkErrorBase instance.
 

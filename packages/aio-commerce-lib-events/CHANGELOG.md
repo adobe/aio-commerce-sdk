@@ -1,5 +1,14 @@
 # @adobe/aio-commerce-lib-events
 
+## 0.3.2
+
+### Patch Changes
+
+- Updated dependencies [[`9079402`](https://github.com/adobe/aio-commerce-sdk/commit/90794023b30ba749e2a1e8278584e4804ad45e1e), [`176bd0f`](https://github.com/adobe/aio-commerce-sdk/commit/176bd0f793de8dbd11b1704a82dd722158f48e81), [`176bd0f`](https://github.com/adobe/aio-commerce-sdk/commit/176bd0f793de8dbd11b1704a82dd722158f48e81), [`9079402`](https://github.com/adobe/aio-commerce-sdk/commit/90794023b30ba749e2a1e8278584e4804ad45e1e), [`9079402`](https://github.com/adobe/aio-commerce-sdk/commit/90794023b30ba749e2a1e8278584e4804ad45e1e), [`fd6a1b5`](https://github.com/adobe/aio-commerce-sdk/commit/fd6a1b531aaea399fea875c8e1e03002790cb1f4), [`493da95`](https://github.com/adobe/aio-commerce-sdk/commit/493da9595c06de304ecddbbc8295db124cb6fcba)]:
+  - @adobe/aio-commerce-lib-api@0.3.0
+  - @adobe/aio-commerce-lib-core@0.5.0
+  - @adobe/aio-commerce-lib-auth@0.6.0
+
 ## 0.3.1
 
 ### Patch Changes

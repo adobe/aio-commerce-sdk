@@ -6,7 +6,7 @@ type GetEventMetadataForEventAndProviderParams = v.InferInput<
 >;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-metadata/schema.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/schema.ts#L110)
+Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-metadata/schema.ts:109](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/schema.ts#L109)
 
 The schema of the parameters received by the GET `providers/:id/eventmetadata/:code` Adobe I/O Events API endpoint.
 

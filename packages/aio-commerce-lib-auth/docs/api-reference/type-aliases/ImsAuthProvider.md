@@ -7,7 +7,7 @@ type ImsAuthProvider = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L29)
+Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L25)
 
 Defines an authentication provider for Adobe IMS.
 
@@ -19,7 +19,7 @@ Defines an authentication provider for Adobe IMS.
 getAccessToken: () => Promise<string>;
 ```
 
-Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L30)
+Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L26)
 
 #### Returns
 
@@ -33,7 +33,7 @@ Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:30](
 getHeaders: () => Promise<ImsAuthHeaders>;
 ```
 
-Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/db09d0de34ee085849efca6e0213ea525d0165dc/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L31)
+Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L27)
 
 #### Returns
 

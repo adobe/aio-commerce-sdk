@@ -8,7 +8,7 @@ type SetCustomScopeTreeResponse = {
 };
 ```
 
-Defined in: [types/api.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L76)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L76)
 
 ## Properties
 
@@ -18,7 +18,7 @@ Defined in: [types/api.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/88c
 message: string;
 ```
 
-Defined in: [types/api.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L77)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L77)
 
 ---
 
@@ -28,7 +28,7 @@ Defined in: [types/api.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/88c
 scopes: CustomScopeOutput[];
 ```
 
-Defined in: [types/api.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L79)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L79)
 
 ---
 
@@ -38,4 +38,4 @@ Defined in: [types/api.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/88c
 timestamp: string;
 ```
 
-Defined in: [types/api.ts:78](https://github.com/adobe/aio-commerce-sdk/blob/88c96db601b539591174d2688fb3767e977f3e86/packages/aio-commerce-lib-config/source/types/api.ts#L78)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:78](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L78)
