@@ -14,10 +14,10 @@ governing permissions and limitations under the License.
 // Do not modify this file directly
 
 import { init } from '@adobe/aio-commerce-lib-config';
-import { 
-  badRequest, 
-  internalServerError, 
-  ok 
+import {
+  badRequest,
+  internalServerError,
+  ok
 } from '@adobe/aio-commerce-lib-core/responses';
 
 /**
@@ -29,12 +29,12 @@ export async function main(params) {
   try {
     const scopes = params.scopes;
     if (!scopes) {
-      return badRequest({ 
+      return badRequest({
         body: {
           code: 'INVALID_REQUEST',
-          message: 'Request must include scopes parameter'
+          message: 'Request must include scopes parameter',
           details: 'Expected: { scopes: [array of scope objects] }'
-        } 
+        }
       });
     }
 
