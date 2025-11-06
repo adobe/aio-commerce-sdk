@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- [#105](https://github.com/adobe/aio-commerce-sdk/pull/105) [`e974b8a`](https://github.com/adobe/aio-commerce-sdk/commit/e974b8aa31fdd5dbb3a80125222dde49333e61c3) Thanks [@renovate](https://github.com/apps/renovate)! - Update `@adobe/aio-lib-state` dependency to v5 for improved storage backend
+- [#105](https://github.com/adobe/aio-commerce-sdk/pull/105) [`e974b8a`](https://github.com/adobe/aio-commerce-sdk/commit/e974b8aa31fdd5dbb3a80125222dde49333e61c3) Thanks [@aminakhyat](https://github.com/apps/renovate)! - Update `@adobe/aio-lib-state` dependency to v5 for improved storage backend
 
 - [#119](https://github.com/adobe/aio-commerce-sdk/pull/119) [`e5ad0f5`](https://github.com/adobe/aio-commerce-sdk/commit/e5ad0f514dd79cccaefa55f331c69e6768d628b9) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Enhance the library with the new resolver helpers of `@adobe/aio-commerce-lib-api` and the response helpers of `@adobe/aio-commerce-lib-core` to remove unnecessary logic. The library no longer exports `buildCommerceHttpClient`, `CommerceValidationError`, `createErrorResponse` and `createSuccessResponse`
 
