@@ -14,12 +14,15 @@ governing permissions and limitations under the License.
 // Do not modify this file directly
 
 import {
-  init,
-  createErrorResponse,
-  createSuccessResponse,
-  CommerceValidationError,
-  buildCommerceConfig
-} from '@adobe/aio-commerce-lib-config';
+  resolveCommerceHttpClientParams,
+} from '@adobe/aio-commerce-lib-api';
+
+import { init } from '@adobe/aio-commerce-lib-config';
+import {
+  CommerceSdkValidationError
+} from '@adobe/aio-commerce-lib-core/error';
+
+import { internalServerError, ok } from '@adobe/aio-commerce-lib-core/responses';
 
 /**
  * Sync commerce scopes.
@@ -28,27 +31,27 @@ import {
  */
 export async function main(params) {
   try {
-    const commerceConfig = buildCommerceConfig(params);
-
+    const commerceConfig = resolveCommerceHttpClientParams(params);
     const config = init({
       commerce: commerceConfig
     });
 
     const result = await config.syncCommerceScopes();
 
-    return createSuccessResponse(200, {
-      scopes: result.scopeTree,
-      synced: result.synced,
-      error: result.error
+    return ok({
+      body: {
+        scopes: result.scopeTree,
+        synced: result.synced,
+        error: result.error
+      }
     });
   } catch (error) {
-    if (error instanceof CommerceValidationError) {
-      return createErrorResponse(400, "BAD_REQUEST", error.message);
-    }
-
-    return createErrorResponse(500, "INTERNAL_ERROR",
-        "An unexpected error occurred while processing the request.",
-        error instanceof Error ? error.message : 'Unknown error'
-    );
+    return internalServerError({
+      body: {
+        code: "INTERNAL_ERROR",
+        message: "An internal server error occurred",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }
+    });
   }
 }
