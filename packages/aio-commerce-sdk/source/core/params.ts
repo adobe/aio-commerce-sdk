@@ -10,6 +10,4 @@
  * governing permissions and limitations under the License.
  */
 
-export * from "@adobe/aio-commerce-lib-core/error";
 export * from "@adobe/aio-commerce-lib-core/params";
-export * from "@adobe/aio-commerce-lib-core/responses";

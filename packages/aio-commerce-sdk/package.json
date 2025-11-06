@@ -58,6 +58,16 @@
         "default": "./dist/cjs/events/*.cjs"
       }
     },
+    "./core/*": {
+      "import": {
+        "types": "./dist/es/core/*.d.ts",
+        "default": "./dist/es/core/*.js"
+      },
+      "require": {
+        "types": "./dist/cjs/core/*.d.cts",
+        "default": "./dist/cjs/core/*.cjs"
+      }
+    },
     "./*": {
       "import": {
         "types": "./dist/es/*.d.ts",
