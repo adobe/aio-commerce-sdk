@@ -11,6 +11,7 @@ export const ListSchema = v.object({
   type: v.literal("list"),
   selectionMode: v.optional(
     v.union([v.literal("single"), v.literal("multiple")]),
+    "single",
   ),
   options: v.array(ListOptionSchema),
   default: v.pipe(v.string(), v.nonEmpty()),
