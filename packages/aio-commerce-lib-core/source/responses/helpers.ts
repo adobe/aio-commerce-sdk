@@ -158,6 +158,6 @@ export function buildSuccessResponse<
     statusCode,
 
     ...(payload?.headers && { headers: payload.headers }),
-    ...(payload?.body ?? {}),
+    ...(payload?.body && { body: payload.body }),
   };
 }
