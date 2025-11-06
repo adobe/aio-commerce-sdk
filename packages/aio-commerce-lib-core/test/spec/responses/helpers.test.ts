@@ -123,7 +123,7 @@ describe("responses/helpers", () => {
       expect(result).toEqual({
         type: "success",
         statusCode: 200,
-        message: "Operation successful",
+        body: { message: "Operation successful" },
       });
     });
 
@@ -135,9 +135,7 @@ describe("responses/helpers", () => {
       expect(result).toEqual({
         type: "success",
         statusCode: 201,
-        id: "456",
-        created: true,
-        message: "Resource created",
+        body: { message: "Resource created", id: "456", created: true },
       });
     });
 
@@ -151,7 +149,7 @@ describe("responses/helpers", () => {
         type: "success",
         statusCode: 201,
         headers: { Location: "/api/resources/456" },
-        message: "Resource created",
+        body: { message: "Resource created" },
       });
     });
 
@@ -165,9 +163,7 @@ describe("responses/helpers", () => {
         type: "success",
         statusCode: 200,
         headers: { "X-Total-Count": "0" },
-        users: [],
-        total: 0,
-        message: "Data retrieved",
+        body: { message: "Data retrieved", users: [], total: 0 },
       });
     });
 
@@ -201,17 +197,19 @@ describe("responses/helpers", () => {
         },
       });
 
-      // Body properties are spread into the response
+      // Body properties are nested under body property
       expect(result).toMatchObject({
         type: "success",
         statusCode: 200,
-        message: "Success",
-        data: {
-          nested: {
-            value: 123,
+        body: {
+          message: "Success",
+          data: {
+            nested: {
+              value: 123,
+            },
           },
+          array: [1, 2, 3],
         },
-        array: [1, 2, 3],
       });
     });
 

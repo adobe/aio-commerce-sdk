@@ -49,7 +49,7 @@ describe("responses/presets", () => {
       expect(result).toEqual({
         type: "success",
         statusCode: 200,
-        message: "Request successful",
+        body: { message: "Request successful" },
       });
     });
 
@@ -68,7 +68,7 @@ describe("responses/presets", () => {
       expect(result).toEqual({
         type: "success",
         statusCode: 200,
-        message: "Request successful",
+        body: { message: "Request successful" },
       });
     });
   });
@@ -82,7 +82,7 @@ describe("responses/presets", () => {
       expect(result).toEqual({
         type: "success",
         statusCode: 201,
-        message: "Resource created successfully",
+        body: { message: "Resource created successfully" },
       });
     });
 
@@ -92,7 +92,7 @@ describe("responses/presets", () => {
       expect(result).toEqual({
         type: "success",
         statusCode: 201,
-        message: "Resource created successfully",
+        body: { message: "Resource created successfully" },
       });
     });
   });
