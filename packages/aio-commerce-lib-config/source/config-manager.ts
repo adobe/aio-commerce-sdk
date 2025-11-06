@@ -8,7 +8,6 @@ import {
   getScopeTree as getScopeTreeModule,
   setCustomScopeTree as setCustomScopeTreeModule,
 } from "./modules/scope-tree";
-import { validateCommerceConfig } from "./utils/commerce-config-validation";
 import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "./utils/constants";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
@@ -46,8 +45,8 @@ export class ConfigManager {
     isCachedData: boolean;
     fallbackError?: string;
   }> {
-    if (remoteFetch) {
-      validateCommerceConfig(this.commerceConfig);
+    if (remoteFetch && !this.commerceConfig) {
+      throw new Error("Commerce configuration is required to fetch scopes");
     }
 
     const context = {
@@ -68,7 +67,11 @@ export class ConfigManager {
     synced: boolean;
     error?: string;
   }> {
-    validateCommerceConfig(this.commerceConfig);
+    if (!this.commerceConfig) {
+      throw new Error(
+        "Commerce configuration is required to sync commerce scopes",
+      );
+    }
 
     const context = {
       namespace: this.namespace,
