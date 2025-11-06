@@ -48,6 +48,7 @@
   "exports": {
     "./error": "./source/error/index.ts",
     "./params": "./source/params/index.ts",
+    "./responses": "./source/responses/index.ts",
     "./package.json": "./package.json"
   },
   "files": [
