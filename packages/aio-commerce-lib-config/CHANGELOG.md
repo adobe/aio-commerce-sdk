@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.3.1
+
+### Patch Changes
+
+- [#123](https://github.com/adobe/aio-commerce-sdk/pull/123) [`3866e55`](https://github.com/adobe/aio-commerce-sdk/commit/3866e5548c9aa17f8f80b0aa85d75bfeaeea2f20) Thanks [@aminakhyat](https://github.com/aminakhyat)! - Fix path for action templates
+
 ## 0.3.0
 
 ### Minor Changes
