@@ -24,7 +24,7 @@ export async function check(configPath: string) {
   let businessConfigSchema: unknown;
 
   try {
-    const jiti = createJiti("schema-validator");
+    const jiti = createJiti(import.meta.url);
     const extensibilityConfig =
       await jiti.import<ExtensibilityConfig>(resolvedPath);
 

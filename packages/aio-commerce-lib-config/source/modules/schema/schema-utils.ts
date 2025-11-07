@@ -14,7 +14,7 @@ export async function readBundledSchemaFile(): Promise<string> {
     const configPath = CONFIG_SCHEMA_PATH;
     const resolvedPath = resolve(process.cwd(), configPath);
 
-    const jiti = createJiti("schema-utils");
+    const jiti = createJiti(import.meta.url);
     const extensibilityConfig =
       await jiti.import<ExtensibilityConfig>(resolvedPath);
 
