@@ -81,6 +81,7 @@
     "@adobe/aio-lib-core-logging": "^3.0.2",
     "@adobe/aio-lib-files": "^4.0.0",
     "@adobe/aio-lib-state": "^5.0.0",
+    "jiti": "^2.4.2",
     "uuid": "^13.0.0",
     "valibot": "^1.1.0",
     "yaml": "^2.6.1"
