@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.4.1
+
+### Patch Changes
+
+- [#128](https://github.com/adobe/aio-commerce-sdk/pull/128) [`8c6fd47`](https://github.com/adobe/aio-commerce-sdk/commit/8c6fd476761ae479d9afeb3b9829a628c93e564d) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Bundle patched version of `jiti` into the distribution files.
+
 ## 0.4.0
 
 ### Minor Changes
