@@ -2,18 +2,18 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { createJiti } from "jiti";
 import { safeParse } from "valibot";
 
 import { logger } from "./logger";
 import { RootSchema } from "./schema";
 
 import type { AnySchema } from "valibot";
+import type { ExtensibilityConfig } from "../types";
 
 export async function check(configPath: string) {
   logger.debug(`Validating configuration file at path: ${configPath}`);
 
-  const resolvedPath = resolve(process.cwd(), configPath);
+  const resolvedPath = resolve(__dirname, configPath);
 
   if (!existsSync(resolvedPath)) {
     logger.warn(`Extensibility config file not found at ${resolvedPath}`);
@@ -23,21 +23,17 @@ export async function check(configPath: string) {
   let businessConfigSchema: unknown;
 
   try {
-    const jiti = createJiti(import.meta.url);
-    const extensibilityConfig = (await jiti.import(resolvedPath)) as {
-      businessConfig?: {
-        schema?: unknown;
-      };
-    };
+    const { createJiti } = require("jiti") as typeof import("jiti");
+    const jiti = createJiti(__filename);
+    const extensibilityConfig =
+      await jiti.import<ExtensibilityConfig>(resolvedPath);
 
     businessConfigSchema = extensibilityConfig.businessConfig?.schema;
   } catch (error) {
-    logger.error(
-      `Error loading extensibility.config.js: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
-    throw new Error(
-      `Error loading extensibility.config.js: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
+    const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error(`Error loading extensibility.config.js: ${message}`);
+
+    throw new Error(`Error loading extensibility.config.js: ${message}`);
   }
 
   if (!businessConfigSchema) {

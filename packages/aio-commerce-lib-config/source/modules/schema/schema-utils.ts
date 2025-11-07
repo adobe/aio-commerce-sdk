@@ -1,36 +1,21 @@
 import { resolve } from "node:path";
 
-import { createJiti } from "jiti";
-
 import { CONFIG_SCHEMA_PATH } from "../../utils/constants";
 import { validate } from "./validation/validator";
 
 import type { ConfigSchemaField } from "./index";
+import type { ExtensibilityConfig } from "./types";
 
-/**
- * Read bundled schema file from the runtime action
- */
+/** Read bundled schema file from the runtime action */
 export async function readBundledSchemaFile(): Promise<string> {
   try {
+    const { createJiti } = require("jiti") as typeof import("jiti");
     const configPath = CONFIG_SCHEMA_PATH;
-    const resolvedPath = resolve(process.cwd(), configPath);
+    const resolvedPath = resolve(__dirname, configPath);
 
-    //   transform: Returns source as-is to avoid bundling issues
-    //   In runtime, actions are bundled (webpack/esbuild) and jiti's internal Babel
-    //   dependency won't be available. By passing through the source
-    //   unchanged, we skip transformation for extensibility.config.js which is
-    //   already valid CommonJS. To consider this if file changes in the future.
-    const jiti = createJiti(import.meta.url, {
-      interopDefault: true,
-      moduleCache: false,
-      transform: (opts) => ({ code: opts.source }),
-    });
-
-    const extensibilityConfig = (await jiti.import(resolvedPath)) as {
-      businessConfig?: {
-        schema?: unknown;
-      };
-    };
+    const jiti = createJiti(__filename);
+    const extensibilityConfig =
+      await jiti.import<ExtensibilityConfig>(resolvedPath);
 
     const businessConfigSchema = extensibilityConfig.businessConfig?.schema;
     if (!businessConfigSchema) {
