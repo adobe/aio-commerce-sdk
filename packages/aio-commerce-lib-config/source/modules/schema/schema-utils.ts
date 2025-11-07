@@ -1,4 +1,6 @@
-import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+
+import { createJiti } from "jiti";
 
 import { CONFIG_SCHEMA_PATH } from "../../utils/constants";
 import { validate } from "./validation/validator";
@@ -8,15 +10,32 @@ import type { ConfigSchemaField } from "./index";
 /**
  * Read bundled schema file from the runtime action
  */
-
 export async function readBundledSchemaFile(): Promise<string> {
-  const configPath = CONFIG_SCHEMA_PATH;
+  try {
+    const configPath = CONFIG_SCHEMA_PATH;
+    const resolvedPath = resolve(process.cwd(), configPath);
 
-  if (!configPath) {
-    throw new Error("CONFIG_SCHEMA_PATH environment variable is not set");
+    const jiti = createJiti(import.meta.url, {
+      interopDefault: true,
+      moduleCache: false,
+      transform: (opts) => ({ code: opts.source }),
+    });
+
+    const extensibilityConfig = (await jiti.import(resolvedPath)) as {
+      businessConfig?: {
+        schema?: unknown;
+      };
+    };
+
+    const businessConfigSchema = extensibilityConfig.businessConfig?.schema;
+    if (!businessConfigSchema) {
+      return JSON.stringify([]);
+    }
+
+    return JSON.stringify(businessConfigSchema);
+  } catch (_error) {
+    return JSON.stringify([]);
   }
-
-  return await readFile(configPath, "utf-8");
 }
 
 /**

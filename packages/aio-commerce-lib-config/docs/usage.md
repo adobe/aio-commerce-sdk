@@ -19,34 +19,45 @@ See the [API Reference](./api-reference/README.md) for a full list of classes, i
 
 ### Setup
 
-1. Create your configuration schema at `init-files/configuration-schema.json`:
+1. Create your configuration schema at `extensibility.config.js` in the project root:
 
-Define the structure of your application's configuration using a schema file. This example shows how to create different types of configuration fields, such as list and text. Each field definition specifies its type, label, and optional default values.
+Define the structure of your application's configuration using a JavaScript module. This example shows how to create different types of configuration fields, such as list and text. Each field definition specifies its type, label, and optional default values.
 
-```json
-[
-  {
-    "name": "exampleList",
-    "type": "list",
-    "options": [{ "label": "Option 1", "value": "option1" }],
-    "default": "option1"
+```javascript
+module.exports = {
+  businessConfig: {
+    schema: [
+      {
+        name: "exampleList",
+        type: "list",
+        label: "Example List",
+        options: [
+          { label: "Option 1", value: "option1" },
+          { label: "Option 2", value: "option2" },
+        ],
+        default: "option1",
+        description: "This is a description for the example list",
+      },
+      {
+        name: "currency",
+        type: "text",
+        label: "Currency",
+      },
+      {
+        name: "paymentMethod",
+        type: "text",
+        label: "Payment Test Method",
+      },
+      {
+        name: "testField",
+        type: "text",
+        label: "Test Field",
+        description: "This is a description for the test field",
+        default: "Test Default Value",
+      },
+    ],
   },
-  {
-    "name": "currency",
-    "type": "text",
-    "label": "Currency"
-  },
-  {
-    "name": "paymentMethod",
-    "type": "text",
-    "label": "Payment Test Method"
-  },
-  {
-    "name": "testField",
-    "type": "text",
-    "label": "Test Field"
-  }
-]
+};
 ```
 
 2. Configure the pre-app-build hook in `app.config.yaml`:
@@ -305,12 +316,12 @@ The library supports two field types for configuration schemas:
 
 Use text fields for free-form input values like merchant identifiers or custom strings. Text fields support optional default values.
 
-```json
+```javascript
 {
-  "name": "merchant_id",
-  "label": "Merchant ID",
-  "type": "text",
-  "default": ""
+  name: "merchant_id",
+  label: "Merchant ID",
+  type: "text",
+  default: ""
 }
 ```
 
@@ -325,36 +336,36 @@ The `selectionMode` field (optional) controls whether users can select a single 
 
 Single selection example:
 
-```json
+```javascript
 {
-  "name": "log_level",
-  "label": "Log Level",
-  "type": "list",
-  "selectionMode": "single",
-  "options": [
-    { "label": "Debug", "value": "debug" },
-    { "label": "Info", "value": "info" },
-    { "label": "Error", "value": "error" }
+  name: "log_level",
+  label: "Log Level",
+  type: "list",
+  selectionMode: "single",
+  options: [
+    { label: "Debug", value: "debug" },
+    { label: "Info", value: "info" },
+    { label: "Error", value: "error" }
   ],
-  "default": "info"
+  default: "info"
 }
 ```
 
 Multiple selection example:
 
-```json
+```javascript
 {
-  "name": "paymentMethods",
-  "label": "Enabled Payment Methods",
-  "type": "list",
-  "selectionMode": "multiple",
-  "options": [
-    { "label": "Credit Card", "value": "credit_card" },
-    { "label": "PayPal", "value": "paypal" },
-    { "label": "Apple Pay", "value": "apple_pay" },
-    { "label": "Google Pay", "value": "google_pay" }
+  name: "paymentMethods",
+  label: "Enabled Payment Methods",
+  type: "list",
+  selectionMode: "multiple",
+  options: [
+    { label: "Credit Card", value: "credit_card" },
+    { label: "PayPal", value: "paypal" },
+    { label: "Apple Pay", value: "apple_pay" },
+    { label: "Google Pay", value: "google_pay" }
   ],
-  "default": "credit_card"
+  default: "credit_card"
 }
 ```
 
