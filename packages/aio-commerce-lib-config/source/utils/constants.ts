@@ -24,12 +24,11 @@ export const DEFAULT_CACHE_TIMEOUT = 300;
 /**
  * Default configuration schema path in the runtime action
  */
-export const CONFIG_SCHEMA_PATH = "app-management/configuration-schema.json";
+export const CONFIG_SCHEMA_PATH = "app-management/extensibility.config.js";
 
 /**
  * Default configuration schema path for init files
  */
-export const DEFAULT_INIT_SCHEMA_PATH =
-  "./init-files/configuration-schema.json";
+export const DEFAULT_INIT_SCHEMA_PATH = "./extensibility.config.js";
 
 export const DEFAULT_CUSTOM_SCOPE_LEVEL = "base";

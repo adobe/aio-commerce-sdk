@@ -7,3 +7,6 @@ packages:
 onlyBuiltDependencies:
   - core-js-pure
   - esbuild
+
+patchedDependencies:
+  jiti: patches/jiti.patch

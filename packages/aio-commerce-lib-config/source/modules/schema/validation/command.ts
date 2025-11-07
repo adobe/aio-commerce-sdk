@@ -1,20 +1,25 @@
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 
+import { DEFAULT_INIT_SCHEMA_PATH } from "../../../utils/constants";
 import { logger } from "./logger";
 import { check } from "./validator";
 
 export async function run() {
-  const configPath = process.env.CONFIG_SCHEMA_PATH;
+  const configPath = DEFAULT_INIT_SCHEMA_PATH;
   logger.info("\n🔄 Analyzing configuration schema...\n");
 
   if (!configPath) {
-    logger.error("\n❌ CONFIG_SCHEMA_PATH environment variable is not set.\n");
+    logger.error("\n❌ extensibility.config.js file is not found.\n");
     process.exit(1);
   }
 
   try {
-    await check(configPath);
-    logger.info("\n✅ Configuration schema validation passed.\n");
+    const result = await check(configPath);
+    if (result.validated) {
+      logger.info("\n✅ Configuration schema validation passed.\n");
+    } else {
+      logger.info("\n⚠️ No schema found to validate.\n");
+    }
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       logger.error(
@@ -23,6 +28,8 @@ export async function run() {
       );
     }
 
-    throw new Error("Configuration schema validation failed", { cause: error });
+    throw new Error("\n❌ Configuration schema validation failed\n", {
+      cause: error,
+    });
   }
 }

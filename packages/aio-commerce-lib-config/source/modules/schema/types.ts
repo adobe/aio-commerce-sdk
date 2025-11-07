@@ -24,3 +24,9 @@ export type SchemaContext = {
   namespace: string;
   cacheTimeout: number;
 };
+
+export type ExtensibilityConfig = {
+  businessConfig?: {
+    schema?: unknown;
+  };
+};

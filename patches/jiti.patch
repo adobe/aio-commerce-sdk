@@ -1,0 +1,79 @@
+diff --git a/lib/jiti-eager.cjs b/lib/jiti-eager.cjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..d385042fbffda619246fd8ed0f649015d50d1796
+--- /dev/null
++++ b/lib/jiti-eager.cjs
+@@ -0,0 +1,23 @@
++const { createRequire } = require("node:module");
++const _createJiti = require("../dist/jiti.cjs");
++const eagerTransform = require("../dist/babel.cjs");
++
++function onError(err) {
++  throw err; /* ↓ Check stack trace ↓ */
++}
++
++const nativeImport = (id) => import(id);
++
++function createJiti(id, opts = {}) {
++  if (!opts.transform) {
++    opts = { ...opts, transform: eagerTransform };
++  }
++  return _createJiti(id, opts, {
++    onError,
++    nativeImport,
++    createRequire,
++  });
++}
++
++module.exports = createJiti;
++module.exports.createJiti = createJiti;
+diff --git a/lib/jiti-eager.mjs b/lib/jiti-eager.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..7468b94644f0808773e8cff94724e62a157bb543
+--- /dev/null
++++ b/lib/jiti-eager.mjs
+@@ -0,0 +1,23 @@
++import { createRequire } from "node:module";
++import _createJiti from "../dist/jiti.cjs";
++
++import eagerTransform from "../dist/babel.cjs";
++
++function onError(err) {
++  throw err; /* ↓ Check stack trace ↓ */
++}
++
++const nativeImport = (id) => import(id);
++
++export function createJiti(id, opts = {}) {
++  if (!opts.transform) {
++    opts = { ...opts, transform: eagerTransform };
++  }
++  return _createJiti(id, opts, {
++    onError,
++    nativeImport,
++    createRequire,
++  });
++}
++
++export default createJiti;
+diff --git a/package.json b/package.json
+index f368db30f658df7a3f1320484fffd14cc7b4b57f..5c8747a6eaa01dd105118ebdbdc0603ec82bcf5b 100644
+--- a/package.json
++++ b/package.json
+@@ -24,6 +24,16 @@
+       "types": "./lib/jiti.d.mts",
+       "import": "./lib/jiti-native.mjs"
+     },
++    "./eager": {
++      "import": {
++        "types": "./lib/jiti.d.mts",
++        "default": "./lib/jiti-eager.mjs"
++      },
++      "require": {
++        "types": "./lib/jiti.d.cts",
++        "default": "./lib/jiti-eager.cjs"
++      }
++    },
+     "./package.json": "./package.json"
+   },
+   "main": "./lib/jiti.cjs",

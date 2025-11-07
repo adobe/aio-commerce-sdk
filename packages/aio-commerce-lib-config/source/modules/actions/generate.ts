@@ -160,10 +160,7 @@ function buildActionDefinition(action: ActionConfig): ActionDefinition {
   }
 
   if (action.requiresSchema) {
-    actionDef.inputs.CONFIG_SCHEMA_PATH = "$CONFIG_SCHEMA_PATH";
-    actionDef.include = [
-      ["init-files/configuration-schema.json", `${PACKAGE_NAME}/`],
-    ];
+    actionDef.include = [["extensibility.config.js", `${PACKAGE_NAME}/`]];
   }
 
   return actionDef;
