@@ -1,5 +1,13 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.4.0
+
+### Minor Changes
+
+- [#125](https://github.com/adobe/aio-commerce-sdk/pull/125) [`94befad`](https://github.com/adobe/aio-commerce-sdk/commit/94befadca96f695869c7bf2c692c14d4b8484917) Thanks [@emartinpalomas](https://github.com/emartinpalomas)! - Add optional selectionMode field to list schema type supporting single and multiple selection modes
+
+- [#127](https://github.com/adobe/aio-commerce-sdk/pull/127) [`e62803c`](https://github.com/adobe/aio-commerce-sdk/commit/e62803cef5721519d0c975cfb1546ff05d0cb703) Thanks [@aminakhyat](https://github.com/aminakhyat)! - Move business config schema location from `init-files/configuration-schema.json` to `extensibility.config.js`
+
 ## 0.3.1
 
 ### Patch Changes
