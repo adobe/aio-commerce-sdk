@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { createJiti } from "jiti/eager";
 import { safeParse } from "valibot";
 
 import { logger } from "./logger";
@@ -13,7 +14,7 @@ import type { ExtensibilityConfig } from "../types";
 export async function check(configPath: string) {
   logger.debug(`Validating configuration file at path: ${configPath}`);
 
-  const resolvedPath = resolve(__dirname, configPath);
+  const resolvedPath = resolve(process.cwd(), configPath);
 
   if (!existsSync(resolvedPath)) {
     logger.warn(`Extensibility config file not found at ${resolvedPath}`);
@@ -23,8 +24,7 @@ export async function check(configPath: string) {
   let businessConfigSchema: unknown;
 
   try {
-    const { createJiti } = require("jiti") as typeof import("jiti");
-    const jiti = createJiti(__filename);
+    const jiti = createJiti("schema-validator");
     const extensibilityConfig =
       await jiti.import<ExtensibilityConfig>(resolvedPath);
 

@@ -1,5 +1,7 @@
 import { resolve } from "node:path";
 
+import { createJiti } from "jiti/eager";
+
 import { CONFIG_SCHEMA_PATH } from "../../utils/constants";
 import { validate } from "./validation/validator";
 
@@ -9,11 +11,10 @@ import type { ExtensibilityConfig } from "./types";
 /** Read bundled schema file from the runtime action */
 export async function readBundledSchemaFile(): Promise<string> {
   try {
-    const { createJiti } = require("jiti") as typeof import("jiti");
     const configPath = CONFIG_SCHEMA_PATH;
-    const resolvedPath = resolve(__dirname, configPath);
+    const resolvedPath = resolve(process.cwd(), configPath);
 
-    const jiti = createJiti(__filename);
+    const jiti = createJiti("schema-utils");
     const extensibilityConfig =
       await jiti.import<ExtensibilityConfig>(resolvedPath);
 
