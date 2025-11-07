@@ -25,6 +25,7 @@ Define the structure of your application's configuration using a JavaScript modu
 
 ```javascript
 module.exports = {
+  // Or export default if using ESM
   businessConfig: {
     schema: [
       {
