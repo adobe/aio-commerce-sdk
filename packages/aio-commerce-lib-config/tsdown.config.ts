@@ -26,8 +26,4 @@ export default defineConfig({
       to: "./dist/es/hooks/templates",
     },
   ],
-
-  // Because we're using a patched version of Jiti, we need to bundle it within our package.
-  // Otherwise the resolved package will be the NPM version, which doesn't work as we need.
-  noExternal: ["jiti"],
 });
