@@ -57,7 +57,7 @@ describe("validator", () => {
 
       // Should return gracefully with validated: false
       const result = await check("./path/to/configuration.js");
-      expect(result).toEqual({ validated: false });
+      expect(result).toEqual({ validated: false, schema: null });
     });
 
     it("should throw if loading the file fails with invalid syntax", async () => {
