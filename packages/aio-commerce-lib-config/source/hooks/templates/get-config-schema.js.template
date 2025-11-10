@@ -18,10 +18,9 @@ import { internalServerError, ok } from '@adobe/aio-commerce-lib-core/responses'
 
 /**
  * Get the configuration schema.
- * @param params - The input parameters.
  * @returns The response object containing the configuration schema.
  */
-export async function main(params) {
+export async function main() {
   try {
     const config = init();
     const configSchema = await config.getConfigSchema();

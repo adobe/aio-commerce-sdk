@@ -25,7 +25,7 @@ export async function run() {
     if (error instanceof CommerceSdkValidationError) {
       logger.error(
         "❌ Configuration schema validation failed:\n",
-        error.display(true)
+        error.display(true),
       );
     }
 

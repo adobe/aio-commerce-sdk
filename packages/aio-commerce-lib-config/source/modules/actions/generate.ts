@@ -100,19 +100,17 @@ const RUNTIME_ACTIONS: ActionConfig[] = [
 export async function generateRuntimeActions(): Promise<void> {
   await updateExtConfig();
   await generateActionFiles();
-  logger.info("✅ Runtime actions generated successfully.\n");
 }
 
 export async function generateSchema(validatedSchema?: unknown): Promise<void> {
   await generateSchemaFile(validatedSchema);
-  logger.info("✅ Configuration schema generated successfully.\n");
 }
 
 async function updateExtConfig(): Promise<void> {
   logger.info("📝 Updating ext.config.yaml...");
 
-  const workspaceRoot = join(process.cwd(), "commerce-configuration-1");
-  const extConfigPath = join(workspaceRoot, "ext.config.yaml");
+  const extConfigFolder = join(process.cwd(), "commerce-configuration-1");
+  const extConfigPath = join(extConfigFolder, "ext.config.yaml");
 
   if (!existsSync(extConfigPath)) {
     logger.info("ext.config.yaml not found, creating new one...");
@@ -135,10 +133,10 @@ async function updateExtConfig(): Promise<void> {
 }
 
 async function generateActionFiles(): Promise<void> {
-  logger.info("\n🔧 Generating runtime actions...");
+  logger.info("🔧 Generating runtime actions...");
 
-  const workspaceRoot = process.cwd();
-  const outputDir = join(workspaceRoot, GENERATED_ACTIONS_PATH);
+  const extConfigFolder = join(process.cwd(), "commerce-configuration-1");
+  const outputDir = join(extConfigFolder, GENERATED_ACTIONS_PATH);
 
   if (!existsSync(outputDir)) {
     await mkdir(outputDir, { recursive: true });
@@ -154,13 +152,13 @@ async function generateActionFiles(): Promise<void> {
   }
 
   logger.info(
-    `Generated ${RUNTIME_ACTIONS.length} action(s) in ${GENERATED_ACTIONS_PATH}\n`
+    `✅ Generated ${RUNTIME_ACTIONS.length} action(s) in ${GENERATED_ACTIONS_PATH}\n`,
   );
 }
 
 async function generateSchemaFile(validatedSchema?: unknown): Promise<void> {
-  const workspaceRoot = process.cwd();
-  const outputDir = join(workspaceRoot, GENERATED_SCHEMA_PATH);
+  const extConfigFolder = join(process.cwd(), "commerce-configuration-1");
+  const outputDir = join(extConfigFolder, GENERATED_SCHEMA_PATH);
 
   if (!existsSync(outputDir)) {
     await mkdir(outputDir, { recursive: true });
@@ -170,7 +168,6 @@ async function generateSchemaFile(validatedSchema?: unknown): Promise<void> {
   const schemaContent = validatedSchema ? validatedSchema : [];
 
   await writeFile(schemaPath, JSON.stringify(schemaContent, null, 2), "utf-8");
-
   logger.info("📄 Generated configuration-schema.json\n");
 }
 
@@ -213,7 +210,7 @@ function buildOperations(extConfig: ExtConfig): void {
   }
 
   const existingOps = extConfig.operations.workerProcess.filter(
-    (op) => op.impl && !op.impl.startsWith(`${PACKAGE_NAME}/`)
+    (op) => op.impl && !op.impl.startsWith(`${PACKAGE_NAME}/`),
   );
   const ourOps = RUNTIME_ACTIONS.map((action) => ({
     type: "action" as const,
@@ -255,13 +252,12 @@ async function readExtConfig(configPath: string): Promise<ExtConfig> {
 
 async function writeExtConfig(
   configPath: string,
-  config: ExtConfig
+  config: ExtConfig,
 ): Promise<void> {
   const yamlContent = stringifyYaml(config, {
     indent: 2,
     lineWidth: 0,
     defaultStringType: "PLAIN",
-    collectionStyle: "flow",
   });
 
   await writeFile(configPath, yamlContent, "utf-8");
