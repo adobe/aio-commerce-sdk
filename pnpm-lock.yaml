@@ -164,6 +164,9 @@ importers:
       '@adobe/aio-lib-state':
         specifier: ^5.0.0
         version: 5.1.0
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       uuid:
         specifier: ^13.0.0
         version: 13.0.0
@@ -186,9 +189,6 @@ importers:
       '@aio-commerce-sdk/config-vitest':
         specifier: workspace:*
         version: link:../../configs/vitest
-      jiti:
-        specifier: ^2.6.1
-        version: 2.6.1
 
   packages/aio-commerce-lib-core:
     dependencies:
