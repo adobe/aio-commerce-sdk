@@ -14,6 +14,7 @@ const logger = AioLogger("@adobe/aio-commerce-lib-config:actions:generate", {
 
 const PACKAGE_NAME = "app-management";
 const GENERATED_ACTIONS_PATH = ".generated/actions/app-management";
+const GENERATED_SCHEMA_PATH = ".generated";
 
 const COMMERCE_INPUTS = {
   AIO_COMMERCE_API_BASE_URL: "$AIO_COMMERCE_API_BASE_URL",
@@ -97,11 +98,15 @@ const RUNTIME_ACTIONS: ActionConfig[] = [
   },
 ];
 
-export async function run(): Promise<void> {
+export async function generateRuntimeActions(): Promise<void> {
   await updateExtConfig();
   await generateActionFiles();
+  logger.info("✅ Runtime actions generated successfully.\n");
+}
 
-  logger.info("Action generation completed successfully.\n");
+export async function generateSchema(validatedSchema?: unknown): Promise<void> {
+  await generateSchemaFile(validatedSchema);
+  logger.info("✅ Configuration schema generated successfully.\n");
 }
 
 async function updateExtConfig(): Promise<void> {
@@ -141,6 +146,22 @@ async function generateActionFiles(): Promise<void> {
   );
 }
 
+async function generateSchemaFile(validatedSchema?: unknown): Promise<void> {
+  const workspaceRoot = process.cwd();
+  const outputDir = join(workspaceRoot, GENERATED_SCHEMA_PATH);
+
+  if (!existsSync(outputDir)) {
+    await mkdir(outputDir, { recursive: true });
+  }
+
+  const schemaPath = join(outputDir, "configuration-schema.json");
+  const schemaContent = validatedSchema ? validatedSchema : [];
+
+  await writeFile(schemaPath, JSON.stringify(schemaContent, null, 2), "utf-8");
+
+  logger.info("📄 Generated configuration-schema.json\n");
+}
+
 function buildActionDefinition(action: ActionConfig): ActionDefinition {
   const actionDef: ActionDefinition = {
     function: `${GENERATED_ACTIONS_PATH}/${action.name}.js`,
@@ -160,7 +181,12 @@ function buildActionDefinition(action: ActionConfig): ActionDefinition {
   }
 
   if (action.requiresSchema) {
-    actionDef.include = [["extensibility.config.js", `${PACKAGE_NAME}/`]];
+    actionDef.include = [
+      [
+        `${GENERATED_SCHEMA_PATH}/configuration-schema.json`,
+        `${PACKAGE_NAME}/`,
+      ],
+    ];
   }
 
   return actionDef;

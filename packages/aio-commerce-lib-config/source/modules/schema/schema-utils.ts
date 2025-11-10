@@ -1,29 +1,16 @@
-import { resolve } from "node:path";
-
-import { createJiti } from "jiti/eager";
+import { readFile } from "node:fs/promises";
 
 import { CONFIG_SCHEMA_PATH } from "../../utils/constants";
 import { validate } from "./validation/validator";
 
 import type { ConfigSchemaField } from "./index";
-import type { ExtensibilityConfig } from "./types";
 
 /** Read bundled schema file from the runtime action */
 export async function readBundledSchemaFile(): Promise<string> {
   try {
     const configPath = CONFIG_SCHEMA_PATH;
-    const resolvedPath = resolve(process.cwd(), configPath);
 
-    const jiti = createJiti(import.meta.url);
-    const extensibilityConfig =
-      await jiti.import<ExtensibilityConfig>(resolvedPath);
-
-    const businessConfigSchema = extensibilityConfig.businessConfig?.schema;
-    if (!businessConfigSchema) {
-      return JSON.stringify([]);
-    }
-
-    return JSON.stringify(businessConfigSchema);
+    return await readFile(configPath, "utf-8");
   } catch (_error) {
     return JSON.stringify([]);
   }

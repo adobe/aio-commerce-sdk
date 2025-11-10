@@ -74,7 +74,10 @@ hooks:
   pre-app-build: "node_modules/@adobe/aio-commerce-lib-config/dist/cjs/hooks/pre-app-build.cjs"
 ```
 
-This automatically generates 6 runtime actions under `.generated/actions/app-management/`:
+This automatically generates:
+
+1. **Configuration schema** at `.generated/configuration-schema.json` - A validated JSON representation of your schema for runtime use
+2. **Six runtime actions** under `.generated/actions/app-management/`:
 
 **Scope Management Actions:**
 

@@ -17,9 +17,10 @@ export async function run() {
     const result = await check(configPath);
     if (result.validated) {
       logger.info("\n✅ Configuration schema validation passed.\n");
-    } else {
-      logger.info("\n⚠️ No schema found to validate.\n");
+      return result.schema;
     }
+    logger.info("\n⚠️ No schema found to validate.\n");
+    return null;
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       logger.error(

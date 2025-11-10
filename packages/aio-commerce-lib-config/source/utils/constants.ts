@@ -24,7 +24,7 @@ export const DEFAULT_CACHE_TIMEOUT = 300;
 /**
  * Default configuration schema path in the runtime action
  */
-export const CONFIG_SCHEMA_PATH = "app-management/extensibility.config.js";
+export const CONFIG_SCHEMA_PATH = "app-management/configuration-schema.json";
 
 /**
  * Default configuration schema path for init files

@@ -1,7 +1,11 @@
-import { run as generateActions } from "../modules/actions/generate";
+import {
+  generateRuntimeActions,
+  generateSchema,
+} from "../modules/actions/generate";
 import { run as schemaValidationCommand } from "../modules/schema/validation/command";
 
 export default async (_config: Record<string, unknown>) => {
-  await schemaValidationCommand();
-  await generateActions();
+  const validatedSchema = await schemaValidationCommand();
+  await generateSchema(validatedSchema);
+  await generateRuntimeActions();
 };

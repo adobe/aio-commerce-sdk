@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { createJiti } from "jiti/eager";
+import { createJiti } from "jiti";
 import { safeParse } from "valibot";
 
 import { logger } from "./logger";
@@ -18,7 +18,7 @@ export async function check(configPath: string) {
 
   if (!existsSync(resolvedPath)) {
     logger.warn(`Extensibility config file not found at ${resolvedPath}`);
-    return { validated: false };
+    return { validated: false, schema: null };
   }
 
   let businessConfigSchema: unknown;
@@ -40,11 +40,11 @@ export async function check(configPath: string) {
     logger.warn(
       "\n⚠️ No businessConfig.schema found in extensibility.config.js, skipping validation.\n",
     );
-    return { validated: false };
+    return { validated: false, schema: null };
   }
 
-  validate(businessConfigSchema);
-  return { validated: true };
+  const validatedSchema = validate(businessConfigSchema);
+  return { validated: true, schema: validatedSchema };
 }
 
 export function validate(value: unknown, schema?: AnySchema) {
