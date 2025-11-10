@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { createJiti } from "jiti/eager";
+import { createJiti } from "jiti";
 import { safeParse } from "valibot";
 
 import { logger } from "./logger";
