@@ -25,11 +25,11 @@ pnpm install @adobe/aio-commerce-lib-auth
 
 ## Packages
 
-- **[`@adobe/aio-commerce-sdk`](./packages/aio-commerce-sdk)** - Meta-package that re-exports many of the SDK libraries
-- **[`@adobe/aio-commerce-lib-auth`](./packages/aio-commerce-lib-auth)** - Authentication utilities for Adobe IMS and Adobe Commerce integrations
-- **[`@adobe/aio-commerce-lib-config`](./packages/aio-commerce-lib-config)** - Business configuration management library for Adobe Commerce
-- **[`@adobe/aio-commerce-lib-core`](./packages/aio-commerce-lib-core)** - Core utilities for the `@adobe/aio-commerce-sdk` libraries
-- **[`@adobe/aio-commerce-lib-events`](./packages/aio-commerce-lib-events)** - Event management utilities for Adobe Commerce and Adobe I/O Events
+- **[`@adobe/aio-commerce-sdk`](./packages/aio-commerce-sdk)** - Unified meta-package providing convenient access to all SDK libraries through a single import
+- **[`@adobe/aio-commerce-lib-auth`](./packages/aio-commerce-lib-auth)** - Handles authentication flows for Adobe IMS and Adobe Commerce, including token management and credential validation
+- **[`@adobe/aio-commerce-lib-config`](./packages/aio-commerce-lib-config)** - Manages hierarchical business configuration with scope inheritance for Adobe Commerce applications
+- **[`@adobe/aio-commerce-lib-core`](./packages/aio-commerce-lib-core)** - Provides foundational utilities and shared functionality used across all `@adobe/aio-commerce-sdk` libraries
+- **[`@adobe/aio-commerce-lib-events`](./packages/aio-commerce-lib-events)** - Facilitates event-driven integrations between Adobe Commerce and Adobe I/O Events
 
 ## Architecture
 
