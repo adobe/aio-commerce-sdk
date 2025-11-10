@@ -86,7 +86,7 @@
     "yaml": "^2.6.1"
   },
   "devDependencies": {
-    "jiti": "2.6.1",
+    "jiti": "^2.6.1",
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
