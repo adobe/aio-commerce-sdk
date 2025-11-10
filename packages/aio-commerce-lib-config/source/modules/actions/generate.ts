@@ -109,13 +109,13 @@ export async function generateSchema(validatedSchema?: unknown): Promise<void> {
 }
 
 async function updateExtConfig(): Promise<void> {
-  logger.info("📝 Updating ext.config.yaml...\n");
+  logger.info("📝 Updating ext.config.yaml...");
 
   const workspaceRoot = join(process.cwd(), "commerce-configuration-1");
   const extConfigPath = join(workspaceRoot, "ext.config.yaml");
 
   if (!existsSync(extConfigPath)) {
-    logger.info("ext.config.yaml not found, creating new one...\n");
+    logger.info("ext.config.yaml not found, creating new one...");
     const extConfig = {
       hooks: {
         "pre-app-build":
@@ -135,7 +135,7 @@ async function updateExtConfig(): Promise<void> {
 }
 
 async function generateActionFiles(): Promise<void> {
-  logger.info("🔧 Generating runtime actions...\n");
+  logger.info("\n🔧 Generating runtime actions...");
 
   const workspaceRoot = process.cwd();
   const outputDir = join(workspaceRoot, GENERATED_ACTIONS_PATH);
@@ -154,7 +154,7 @@ async function generateActionFiles(): Promise<void> {
   }
 
   logger.info(
-    `Generated ${RUNTIME_ACTIONS.length} action(s) in ${GENERATED_ACTIONS_PATH}\n`,
+    `Generated ${RUNTIME_ACTIONS.length} action(s) in ${GENERATED_ACTIONS_PATH}\n`
   );
 }
 
@@ -178,7 +178,7 @@ function buildActionDefinition(action: ActionConfig): ActionDefinition {
   const actionDef: ActionDefinition = {
     function: `${GENERATED_ACTIONS_PATH}/${action.name}.js`,
     web: "yes",
-    runtime: "nodejs:20",
+    runtime: "nodejs:22",
     inputs: {
       LOG_LEVEL: "info",
     },
@@ -213,7 +213,7 @@ function buildOperations(extConfig: ExtConfig): void {
   }
 
   const existingOps = extConfig.operations.workerProcess.filter(
-    (op) => op.impl && !op.impl.startsWith(`${PACKAGE_NAME}/`),
+    (op) => op.impl && !op.impl.startsWith(`${PACKAGE_NAME}/`)
   );
   const ourOps = RUNTIME_ACTIONS.map((action) => ({
     type: "action" as const,
@@ -223,22 +223,16 @@ function buildOperations(extConfig: ExtConfig): void {
 }
 
 function buildRuntimeManifest(extConfig: ExtConfig): void {
-  if (!extConfig.runtimeManifest) {
-    extConfig.runtimeManifest = {};
-  }
-  if (!extConfig.runtimeManifest.packages) {
-    extConfig.runtimeManifest.packages = {};
-  }
-  if (!extConfig.runtimeManifest.packages[PACKAGE_NAME]) {
-    extConfig.runtimeManifest.packages[PACKAGE_NAME] = {
-      license: "Apache-2.0",
-      actions: {},
-    };
-  }
+  extConfig.runtimeManifest ??= {};
+  extConfig.runtimeManifest.packages ??= {};
+  extConfig.runtimeManifest.packages[PACKAGE_NAME] ??= {
+    license: "Apache-2.0",
+    actions: {},
+  };
 
-  const existingActions =
-    extConfig.runtimeManifest.packages[PACKAGE_NAME]?.actions || {};
   const actions: Record<string, ActionDefinition> = {};
+  const existingActions =
+    extConfig.runtimeManifest.packages[PACKAGE_NAME]?.actions ?? {};
 
   for (const action of RUNTIME_ACTIONS) {
     actions[action.name] = buildActionDefinition(action);
@@ -261,12 +255,13 @@ async function readExtConfig(configPath: string): Promise<ExtConfig> {
 
 async function writeExtConfig(
   configPath: string,
-  config: ExtConfig,
+  config: ExtConfig
 ): Promise<void> {
   const yamlContent = stringifyYaml(config, {
     indent: 2,
     lineWidth: 0,
     defaultStringType: "PLAIN",
+    collectionStyle: "flow",
   });
 
   await writeFile(configPath, yamlContent, "utf-8");

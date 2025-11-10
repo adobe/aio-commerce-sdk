@@ -6,30 +6,30 @@ import { check } from "./validator";
 
 export async function run() {
   const configPath = DEFAULT_INIT_SCHEMA_PATH;
-  logger.info("\n🔄 Analyzing configuration schema...\n");
+  logger.info("🔄 Analyzing configuration schema...");
 
   if (!configPath) {
-    logger.error("\n❌ extensibility.config.js file is not found.\n");
+    logger.error("❌ extensibility.config.js file is not found.\n");
     process.exit(1);
   }
 
   try {
     const result = await check(configPath);
     if (result.validated) {
-      logger.info("\n✅ Configuration schema validation passed.\n");
+      logger.info("✅ Configuration schema validation passed.\n");
       return result.schema;
     }
-    logger.info("\n⚠️ No schema found to validate.\n");
+    logger.info("⚠️ No schema found to validate.\n");
     return null;
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       logger.error(
-        "\n❌ Configuration schema validation failed:\n",
-        error.display(true),
+        "❌ Configuration schema validation failed:\n",
+        error.display(true)
       );
     }
 
-    throw new Error("\n❌ Configuration schema validation failed\n", {
+    throw new Error("Configuration schema validation failed", {
       cause: error,
     });
   }
