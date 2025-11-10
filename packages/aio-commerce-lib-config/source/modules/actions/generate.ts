@@ -18,7 +18,6 @@ const GENERATED_SCHEMA_PATH = ".generated";
 
 const COMMERCE_INPUTS = {
   AIO_COMMERCE_API_BASE_URL: "$AIO_COMMERCE_API_BASE_URL",
-  COMMERCE_FLAVOR: "$COMMERCE_FLAVOR",
   AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY:
     "$AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY",
   AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET:
@@ -112,8 +111,21 @@ export async function generateSchema(validatedSchema?: unknown): Promise<void> {
 async function updateExtConfig(): Promise<void> {
   logger.info("📝 Updating ext.config.yaml...\n");
 
-  const workspaceRoot = process.cwd();
+  const workspaceRoot = join(process.cwd(), "commerce-configuration-1");
   const extConfigPath = join(workspaceRoot, "ext.config.yaml");
+
+  if (!existsSync(extConfigPath)) {
+    logger.info("ext.config.yaml not found, creating new one...\n");
+    const extConfig = {
+      hooks: {
+        "pre-app-build":
+          "../node_modules/@adobe/aio-commerce-lib-config/dist/cjs/hooks/pre-app-build.cjs",
+      },
+    };
+
+    await writeFile(extConfigPath, stringifyYaml(extConfig), "utf-8");
+  }
+
   const extConfig = await readExtConfig(extConfigPath);
 
   buildOperations(extConfig);
