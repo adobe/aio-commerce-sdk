@@ -111,19 +111,6 @@ async function updateExtConfig(): Promise<void> {
 
   const extConfigFolder = join(process.cwd(), "commerce-configuration-1");
   const extConfigPath = join(extConfigFolder, "ext.config.yaml");
-
-  if (!existsSync(extConfigPath)) {
-    logger.info("ext.config.yaml not found, creating new one...");
-    const extConfig = {
-      hooks: {
-        "pre-app-build":
-          "../node_modules/@adobe/aio-commerce-lib-config/dist/cjs/hooks/pre-app-build.cjs",
-      },
-    };
-
-    await writeFile(extConfigPath, stringifyYaml(extConfig), "utf-8");
-  }
-
   const extConfig = await readExtConfig(extConfigPath);
 
   buildOperations(extConfig);
