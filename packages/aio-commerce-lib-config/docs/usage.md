@@ -61,9 +61,10 @@ module.exports = {
 };
 ```
 
-2. Configure the pre-app-build hook in `app.config.yaml`:
+1. Create an `ext.config.yaml` in a directory named `commerce-configuration-1`. Add a `pre-app-build` hook as follows:
 
-> **Note**: The pre-app-build hook generates 6 runtime actions that are necessary if your application is going to be used/integrated within the Commerce App Management. Before adding this hook, you must install the required dependencies that these generated runtime actions reference:
+> [!NOTE]
+> The pre-app-build hook generates 6 runtime actions that are necessary if your application is going to be used/integrated within the Commerce App Management. Before adding this hook, you must install the required dependencies that these generated runtime actions reference:
 >
 > ```bash
 > npm install @adobe/aio-commerce-lib-api @adobe/aio-commerce-lib-core
@@ -71,13 +72,21 @@ module.exports = {
 
 ```yaml
 hooks:
-  pre-app-build: "node_modules/@adobe/aio-commerce-lib-config/dist/cjs/hooks/pre-app-build.cjs"
+  pre-app-build: "../node_modules/@adobe/aio-commerce-lib-config/dist/cjs/hooks/pre-app-build.cjs"
 ```
 
-This automatically generates:
+2. Then, in your `app.config.yaml`, include the contents of the `ext.config.yaml` you just created as shown below. Note that you may have multiple entries defined in the `extensions` section. If that's the case, add it as a new entry.
 
-1. **Configuration schema** at `.generated/configuration-schema.json` - A validated JSON representation of your schema for runtime use
-2. **Six runtime actions** under `.generated/actions/app-management/`:
+```yaml
+extensions:
+  commerce-configuration-1:
+    $include: "commerce-configuration-1/ext.config.yaml"
+```
+
+Upon runnning `aio app build`, this will automatically generate:
+
+1. A **configuration schema** at `commerce-configuration-1/.generated/configuration-schema.json` - A validated JSON representation of your schema for runtime use
+2. **Six runtime actions** under `commerce-configuration-1/.generated/actions/app-management/`:
 
 **Scope Management Actions:**
 
