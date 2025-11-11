@@ -18,10 +18,6 @@ import {
 } from '@adobe/aio-commerce-lib-api';
 
 import { init } from '@adobe/aio-commerce-lib-config';
-import {
-  CommerceSdkValidationError
-} from '@adobe/aio-commerce-lib-core/error';
-
 import { internalServerError, ok } from '@adobe/aio-commerce-lib-core/responses';
 
 /**

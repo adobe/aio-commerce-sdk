@@ -18,7 +18,6 @@ const GENERATED_SCHEMA_PATH = ".generated";
 
 const COMMERCE_INPUTS = {
   AIO_COMMERCE_API_BASE_URL: "$AIO_COMMERCE_API_BASE_URL",
-  COMMERCE_FLAVOR: "$COMMERCE_FLAVOR",
   AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY:
     "$AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY",
   AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET:
@@ -101,19 +100,17 @@ const RUNTIME_ACTIONS: ActionConfig[] = [
 export async function generateRuntimeActions(): Promise<void> {
   await updateExtConfig();
   await generateActionFiles();
-  logger.info("✅ Runtime actions generated successfully.\n");
 }
 
 export async function generateSchema(validatedSchema?: unknown): Promise<void> {
   await generateSchemaFile(validatedSchema);
-  logger.info("✅ Configuration schema generated successfully.\n");
 }
 
 async function updateExtConfig(): Promise<void> {
-  logger.info("📝 Updating ext.config.yaml...\n");
+  logger.info("📝 Updating ext.config.yaml...");
 
-  const workspaceRoot = process.cwd();
-  const extConfigPath = join(workspaceRoot, "ext.config.yaml");
+  const extConfigFolder = join(process.cwd(), "commerce-configuration-1");
+  const extConfigPath = join(extConfigFolder, "ext.config.yaml");
   const extConfig = await readExtConfig(extConfigPath);
 
   buildOperations(extConfig);
@@ -123,10 +120,10 @@ async function updateExtConfig(): Promise<void> {
 }
 
 async function generateActionFiles(): Promise<void> {
-  logger.info("🔧 Generating runtime actions...\n");
+  logger.info("🔧 Generating runtime actions...");
 
-  const workspaceRoot = process.cwd();
-  const outputDir = join(workspaceRoot, GENERATED_ACTIONS_PATH);
+  const extConfigFolder = join(process.cwd(), "commerce-configuration-1");
+  const outputDir = join(extConfigFolder, GENERATED_ACTIONS_PATH);
 
   if (!existsSync(outputDir)) {
     await mkdir(outputDir, { recursive: true });
@@ -142,13 +139,13 @@ async function generateActionFiles(): Promise<void> {
   }
 
   logger.info(
-    `Generated ${RUNTIME_ACTIONS.length} action(s) in ${GENERATED_ACTIONS_PATH}\n`,
+    `✅ Generated ${RUNTIME_ACTIONS.length} action(s) in ${GENERATED_ACTIONS_PATH}\n`,
   );
 }
 
 async function generateSchemaFile(validatedSchema?: unknown): Promise<void> {
-  const workspaceRoot = process.cwd();
-  const outputDir = join(workspaceRoot, GENERATED_SCHEMA_PATH);
+  const extConfigFolder = join(process.cwd(), "commerce-configuration-1");
+  const outputDir = join(extConfigFolder, GENERATED_SCHEMA_PATH);
 
   if (!existsSync(outputDir)) {
     await mkdir(outputDir, { recursive: true });
@@ -158,7 +155,6 @@ async function generateSchemaFile(validatedSchema?: unknown): Promise<void> {
   const schemaContent = validatedSchema ? validatedSchema : [];
 
   await writeFile(schemaPath, JSON.stringify(schemaContent, null, 2), "utf-8");
-
   logger.info("📄 Generated configuration-schema.json\n");
 }
 
@@ -166,7 +162,7 @@ function buildActionDefinition(action: ActionConfig): ActionDefinition {
   const actionDef: ActionDefinition = {
     function: `${GENERATED_ACTIONS_PATH}/${action.name}.js`,
     web: "yes",
-    runtime: "nodejs:20",
+    runtime: "nodejs:22",
     inputs: {
       LOG_LEVEL: "info",
     },
@@ -211,22 +207,16 @@ function buildOperations(extConfig: ExtConfig): void {
 }
 
 function buildRuntimeManifest(extConfig: ExtConfig): void {
-  if (!extConfig.runtimeManifest) {
-    extConfig.runtimeManifest = {};
-  }
-  if (!extConfig.runtimeManifest.packages) {
-    extConfig.runtimeManifest.packages = {};
-  }
-  if (!extConfig.runtimeManifest.packages[PACKAGE_NAME]) {
-    extConfig.runtimeManifest.packages[PACKAGE_NAME] = {
-      license: "Apache-2.0",
-      actions: {},
-    };
-  }
+  extConfig.runtimeManifest ??= {};
+  extConfig.runtimeManifest.packages ??= {};
+  extConfig.runtimeManifest.packages[PACKAGE_NAME] ??= {
+    license: "Apache-2.0",
+    actions: {},
+  };
 
-  const existingActions =
-    extConfig.runtimeManifest.packages[PACKAGE_NAME]?.actions || {};
   const actions: Record<string, ActionDefinition> = {};
+  const existingActions =
+    extConfig.runtimeManifest.packages[PACKAGE_NAME]?.actions ?? {};
 
   for (const action of RUNTIME_ACTIONS) {
     actions[action.name] = buildActionDefinition(action);

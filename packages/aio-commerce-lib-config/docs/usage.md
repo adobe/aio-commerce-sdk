@@ -61,23 +61,33 @@ module.exports = {
 };
 ```
 
-2. Configure the pre-app-build hook in `app.config.yaml`:
+1. Create an empty `ext.config.yaml` file in a directory named `commerce-configuration-1`:
 
-> **Note**: The pre-app-build hook generates 6 runtime actions that are necessary if your application is going to be used/integrated within the Commerce App Management. Before adding this hook, you must install the required dependencies that these generated runtime actions reference:
+```yaml
+{}
+```
+
+2. In your `app.config.yaml` file, reference the `ext.config.yaml` file you created and add the `pre-app-build` hook as shown below. If you already have multiple entries in the `extensions` section, add this as an additional entry.
+
+```yaml
+extensions:
+  commerce/configuration/1:
+    $include: "commerce-configuration-1/ext.config.yaml"
+    hooks:
+      pre-app-build: node_modules/@adobe/aio-commerce-lib-config/dist/cjs/hooks/pre-app-build.cjs
+```
+
+> [!NOTE]
+> The `pre-app-build` hook generates 6 runtime actions required for applications integrated with Commerce App Management. Before adding this hook, install the dependencies these runtime actions require:
 >
 > ```bash
 > npm install @adobe/aio-commerce-lib-api @adobe/aio-commerce-lib-core
 > ```
 
-```yaml
-hooks:
-  pre-app-build: "node_modules/@adobe/aio-commerce-lib-config/dist/cjs/hooks/pre-app-build.cjs"
-```
+Upon runnning `aio app build`, this will automatically generate:
 
-This automatically generates:
-
-1. **Configuration schema** at `.generated/configuration-schema.json` - A validated JSON representation of your schema for runtime use
-2. **Six runtime actions** under `.generated/actions/app-management/`:
+1. A **configuration schema** at `commerce-configuration-1/.generated/configuration-schema.json` - A validated JSON representation of your schema for runtime use
+2. **Six runtime actions** under `commerce-configuration-1/.generated/actions/app-management/`:
 
 **Scope Management Actions:**
 
