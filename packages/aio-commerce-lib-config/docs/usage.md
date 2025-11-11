@@ -61,27 +61,28 @@ module.exports = {
 };
 ```
 
-1. Create an `ext.config.yaml` in a directory named `commerce-configuration-1`. Add a `pre-app-build` hook as follows:
+1. Create an empty `ext.config.yaml` file in a directory named `commerce-configuration-1`:
+
+```yaml
+{}
+```
+
+2. In your `app.config.yaml` file, reference the `ext.config.yaml` file you created and add the `pre-app-build` hook as shown below. If you already have multiple entries in the `extensions` section, add this as an additional entry.
+
+```yaml
+extensions:
+  commerce/configuration/1:
+    $include: "commerce-configuration-1/ext.config.yaml"
+    hooks:
+      pre-app-build: node_modules/@adobe/aio-commerce-lib-config/dist/cjs/hooks/pre-app-build.cjs
+```
 
 > [!NOTE]
-> The pre-app-build hook generates 6 runtime actions that are necessary if your application is going to be used/integrated within the Commerce App Management. Before adding this hook, you must install the required dependencies that these generated runtime actions reference:
+> The `pre-app-build` hook generates 6 runtime actions required for applications integrated with Commerce App Management. Before adding this hook, install the dependencies these runtime actions require:
 >
 > ```bash
 > npm install @adobe/aio-commerce-lib-api @adobe/aio-commerce-lib-core
 > ```
-
-```yaml
-hooks:
-  pre-app-build: "../node_modules/@adobe/aio-commerce-lib-config/dist/cjs/hooks/pre-app-build.cjs"
-```
-
-2. Then, in your `app.config.yaml`, include the contents of the `ext.config.yaml` you just created as shown below. Note that you may have multiple entries defined in the `extensions` section. If that's the case, add it as a new entry.
-
-```yaml
-extensions:
-  commerce-configuration-1:
-    $include: "commerce-configuration-1/ext.config.yaml"
-```
 
 Upon runnning `aio app build`, this will automatically generate:
 
