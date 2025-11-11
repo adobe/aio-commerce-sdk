@@ -1,5 +1,15 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.5.0
+
+### Minor Changes
+
+- [#130](https://github.com/adobe/aio-commerce-sdk/pull/130) [`07cf4f5`](https://github.com/adobe/aio-commerce-sdk/commit/07cf4f590bb0641f21ca58dd0d8e7dfa817aaf0c) Thanks [@aminakhyat](https://github.com/aminakhyat)! - Automatically generate configuration schema json file from `extensibility.config.js`
+
+### Patch Changes
+
+- [#132](https://github.com/adobe/aio-commerce-sdk/pull/132) [`e4f1e07`](https://github.com/adobe/aio-commerce-sdk/commit/e4f1e07fdb949e2f0a71bfbc9b94c10d114c00bc) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Search for the `ext.config.yaml` in a `commerce-configuration-1` folder instead of the workspace root. Use it as the home of the generated actions and the generated schema.
+
 ## 0.4.1
 
 ### Patch Changes
