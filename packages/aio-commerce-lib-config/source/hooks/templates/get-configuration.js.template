@@ -18,7 +18,7 @@ import {
   badRequest, 
   internalServerError, 
   ok 
-} from '@adobe/aio-commerce-lib-core/responses';
+} from '@adobe/aio-commerce-sdk/core/responses';
 
 /**
  * Get the configuration.

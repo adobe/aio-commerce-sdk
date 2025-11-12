@@ -17,7 +17,7 @@ import { init } from '@adobe/aio-commerce-lib-config';
 import { 
   buildSuccessResponse, 
   internalServerError 
-} from '@adobe/aio-commerce-lib-core/responses';
+} from '@adobe/aio-commerce-sdk/core/responses';
 
 /**
  * Get scope tree.

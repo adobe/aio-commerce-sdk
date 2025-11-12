@@ -14,7 +14,7 @@ governing permissions and limitations under the License.
 // Do not modify this file directly
 
 import { init } from '@adobe/aio-commerce-lib-config';
-import { internalServerError, ok } from '@adobe/aio-commerce-lib-core/responses'
+import { internalServerError, ok } from '@adobe/aio-commerce-sdk/core/responses'
 
 /**
  * Get the configuration schema.
