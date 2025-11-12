@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.5.1
+
+### Patch Changes
+
+- [#133](https://github.com/adobe/aio-commerce-sdk/pull/133) [`6d6cf9c`](https://github.com/adobe/aio-commerce-sdk/commit/6d6cf9c383dbcc0c9e47443d5ef5fadaf8adad72) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Use the `@adobe/aio-commerce-sdk` metapackage in the generated runtime actions
+
 ## 0.5.0
 
 ### Minor Changes
