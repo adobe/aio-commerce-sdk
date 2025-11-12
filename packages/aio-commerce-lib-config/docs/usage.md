@@ -78,10 +78,10 @@ extensions:
 ```
 
 > [!NOTE]
-> The `pre-app-build` hook generates 6 runtime actions required for applications integrated with Commerce App Management. Before adding this hook, install the dependencies these runtime actions require:
+> The `pre-app-build` hook generates 6 runtime actions required for applications integrated with Commerce App Management. Before adding this hook, install the SDK package, as it's required by these runtime actions.
 >
 > ```bash
-> npm install @adobe/aio-commerce-lib-api @adobe/aio-commerce-lib-core
+> npm install @adobe/aio-commerce-sdk
 > ```
 
 Upon runnning `aio app build`, this will automatically generate:
