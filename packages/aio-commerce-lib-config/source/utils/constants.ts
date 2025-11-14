@@ -16,19 +16,11 @@ governing permissions and limitations under the License.
  */
 export const DEFAULT_NAMESPACE = "aio-commerce-config";
 
-/**
- * Default cache timeout in seconds (5 minutes)
- */
+/** Default cache timeout in seconds (5 minutes). */
 export const DEFAULT_CACHE_TIMEOUT = 300;
 
-/**
- * Default configuration schema path in the runtime action
- */
+/** Default configuration schema path in the runtime action. */
 export const CONFIG_SCHEMA_PATH = "app-management/configuration-schema.json";
 
-/**
- * Default configuration schema path for init files
- */
-export const DEFAULT_INIT_SCHEMA_PATH = "./extensibility.config.js";
-
+/** Default custom scope level. */
 export const DEFAULT_CUSTOM_SCOPE_LEVEL = "base";

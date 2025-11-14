@@ -3,9 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ConfigManager } from "#config-manager";
 import { ConfigurationRepository } from "#modules/configuration/configuration-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
-
-import { createMockLibFiles } from "./mocks/lib-files";
-import { createMockLibState } from "./mocks/lib-state";
+import { createMockLibFiles } from "#test/mocks/lib-files";
+import { createMockLibState } from "#test/mocks/lib-state";
 
 import type { ConfigValue } from "#index";
 
