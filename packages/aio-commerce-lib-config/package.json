@@ -22,7 +22,7 @@
   "module": "./dist/es/index.js",
   "types": "./dist/cjs/index.d.cts",
   "bin": {
-    "aio-commerce-lib-config-schema-validate": "./dist/es/commands/config-schema-validate.js"
+    "@adobe/aio-commerce-lib-config": "./dist/es/commands/config-schema-validate.js"
   },
   "publishConfig": {
     "exports": {

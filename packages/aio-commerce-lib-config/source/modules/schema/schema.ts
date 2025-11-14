@@ -27,7 +27,6 @@ export const TextSchema = v.object({
 });
 
 export const VariantTypeSchema = v.variant("type", [ListSchema, TextSchema]);
-
 export const RootSchema = v.pipe(
   v.array(VariantTypeSchema),
   v.minLength(1, "At least one configuration parameter is required"),

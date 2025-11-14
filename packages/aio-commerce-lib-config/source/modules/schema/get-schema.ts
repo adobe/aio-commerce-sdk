@@ -11,7 +11,7 @@ governing permissions and limitations under the License.
 */
 
 import { ConfigSchemaRepository } from "./config-schema-repository";
-import * as schemaUtils from "./schema-utils";
+import * as schemaUtils from "./utils";
 
 import type { ConfigSchemaField, SchemaContext } from "./types";
 
