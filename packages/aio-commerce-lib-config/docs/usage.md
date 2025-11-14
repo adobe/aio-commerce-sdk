@@ -24,8 +24,8 @@ See the [API Reference](./api-reference/README.md) for a full list of classes, i
 Define the structure of your application's configuration using a JavaScript module. This example shows how to create different types of configuration fields, such as list and text. Each field definition specifies its type, label, and optional default values.
 
 ```javascript
+// Or export default if using ESM
 module.exports = {
-  // Or export default if using ESM
   businessConfig: {
     schema: [
       {
@@ -61,7 +61,7 @@ module.exports = {
 };
 ```
 
-2. Install the package and add the postinstall script to your `package.json`:
+1. Install the package and add the postinstall script to your `package.json`:
 
 ```bash
 npm install @adobe/aio-commerce-lib-config
