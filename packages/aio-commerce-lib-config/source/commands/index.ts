@@ -22,12 +22,13 @@ const args = process.argv.slice(2);
 const [command, subcommand] = args;
 
 const USAGE = `
-Usage: ${NAMESPACE} <command> [subcommand]
+Usage: ${NAMESPACE} <command> <target>
 
 Commands:
   generate <target>    Generate artifacts
-    schema             Generate configuration schema
-    actions            Generate runtime actions
+    all                Generate configuration schema and runtime actions
+    schema             Generate configuration schema only
+    actions            Generate runtime actions only
 
   validate <target>    Validate configuration
     schema             Validate configuration schema
@@ -35,10 +36,19 @@ Commands:
   help                 Show this help message
 
 Examples:
+  ${NAMESPACE} generate all
   ${NAMESPACE} generate schema
   ${NAMESPACE} generate actions
   ${NAMESPACE} validate schema
 `;
+
+/**
+ * Run all generate targets in sequence
+ */
+async function generateAll() {
+  await generateSchemaCommand();
+  await generateActionsCommand();
+}
 
 /**
  * Command handlers registry mapping command names to their subcommand handlers
@@ -47,6 +57,7 @@ const COMMANDS = {
   generate: {
     schema: generateSchemaCommand,
     actions: generateActionsCommand,
+    all: generateAll,
   },
   validate: {
     schema: validateSchemaCommand,
@@ -64,18 +75,24 @@ async function handleCommand(
   target: string,
   handlers: Record<string, () => Promise<unknown>>,
 ) {
-  const availableTargets = Object.keys(handlers).join(", ");
-
-  const fallback = () => {
-    process.stderr.write(
-      `❌ Unknown ${commandName} target: ${target || "(none)"}`,
-    );
-
+  if (!target) {
+    const availableTargets = Object.keys(handlers).join(", ");
+    process.stderr.write(`❌ No ${commandName} target specified`);
     process.stdout.write(`\nAvailable targets: ${availableTargets}`);
-    process.exit(1);
-  };
 
-  const handler = handlers[target] ?? fallback;
+    process.exit(1);
+  }
+
+  const handler = handlers[target];
+
+  if (!handler) {
+    const availableTargets = Object.keys(handlers).join(", ");
+    process.stderr.write(`❌ Unknown ${commandName} target: ${target}`);
+    process.stdout.write(`\nAvailable targets: ${availableTargets}`);
+
+    process.exit(1);
+  }
+
   await handler();
 }
 

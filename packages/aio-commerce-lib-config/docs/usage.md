@@ -61,30 +61,63 @@ module.exports = {
 };
 ```
 
-1. Create an empty `ext.config.yaml` file in a directory named `commerce-configuration-1`:
+2. Install the package and add the postinstall script to your `package.json`:
 
-```yaml
-{}
+```bash
+npm install @adobe/aio-commerce-lib-config
 ```
 
-2. In your `app.config.yaml` file, reference the `ext.config.yaml` file you created and add the `pre-app-build` hook as shown below. If you already have multiple entries in the `extensions` section, add this as an additional entry.
+Then add the postinstall script:
+
+```json
+{
+  "dependencies": {
+    "@adobe/aio-commerce-lib-config": "^0.5.0"
+  },
+
+  "scripts": {
+    "postinstall": "@adobe/aio-commerce-lib-config generate all"
+  }
+}
+```
+
+This script will run automatically every time you install your dependencies. The CLI provides several commands:
+
+- `@adobe/aio-commerce-lib-config generate all` - Generate all artifacts (schema + runtime actions)
+- `@adobe/aio-commerce-lib-config generate schema` - Generate the configuration schema only
+- `@adobe/aio-commerce-lib-config generate actions` - Generate runtime actions and ext.config.yaml only
+- `@adobe/aio-commerce-lib-config validate schema` - Validate your configuration schema
+
+You can run these commands manually using `npx`:
+
+```bash
+# Generate everything (schema + actions)
+npx @adobe/aio-commerce-lib-config generate all
+
+# Or generate individually
+npx @adobe/aio-commerce-lib-config generate schema
+npx @adobe/aio-commerce-lib-config generate actions
+
+# Validate schema
+npx @adobe/aio-commerce-lib-config validate schema
+```
+
+3. In your `app.config.yaml` file, reference the generated `ext.config.yaml` file. If you already have multiple entries in the `extensions` section, add this as an additional entry.
 
 ```yaml
 extensions:
   commerce/configuration/1:
     $include: "commerce-configuration-1/ext.config.yaml"
-    hooks:
-      pre-app-build: node_modules/@adobe/aio-commerce-lib-config/dist/cjs/hooks/pre-app-build.cjs
 ```
 
-> [!NOTE]
-> The `pre-app-build` hook generates 6 runtime actions required for applications integrated with Commerce App Management. Before adding this hook, install the SDK package, as it's required by these runtime actions.
+> [!IMPORTANT]
+> The generated runtime actions require the SDK package. Make sure to install it before generating actions.
 >
 > ```bash
 > npm install @adobe/aio-commerce-sdk
 > ```
 
-Upon runnning `aio app build`, this will automatically generate:
+Upon running the generate commands, this will automatically create:
 
 1. A **configuration schema** at `commerce-configuration-1/.generated/configuration-schema.json` - A validated JSON representation of your schema for runtime use
 2. **Six runtime actions** under `commerce-configuration-1/.generated/actions/app-management/`:
@@ -103,9 +136,9 @@ Scopes define the hierarchical boundaries where configuration values can be set 
 - `get-configuration` - Get configuration values with inheritance
 - `set-configuration` - Save configuration values
 
-The hook also configures the required environment variables in `ext.config.yaml`.
+The `generate actions` command also creates the `ext.config.yaml` file with the required configuration and environment variable placeholders.
 
-> **Important**: Don't forget to fill in the necessary values for the Commerce configuration in your `.env` file before the hook generates the environment variable placeholders.
+> **Important**: Don't forget to fill in the necessary values for the Commerce configuration in your `.env` file before deploying your application.
 
 ### Initialize the Library
 
@@ -321,8 +354,15 @@ Each configuration value includes an `origin` field showing where it was resolve
 Validate your schema before deployment:
 
 ```bash
-pnpm exec aio-commerce-lib-config-schema-validate
+npx @adobe/aio-commerce-lib-config validate schema
 ```
+
+This command will:
+
+- Check that your `extensibility.config.js` file exists and is valid
+- Validate the schema structure and field definitions
+- Ensure all required properties are present
+- Report any validation errors with details
 
 The library supports two field types for configuration schemas:
 
