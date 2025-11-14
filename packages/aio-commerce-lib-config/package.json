@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-lib-config",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
@@ -22,7 +22,7 @@
   "module": "./dist/es/index.js",
   "types": "./dist/cjs/index.d.cts",
   "bin": {
-    "@adobe/aio-commerce-lib-config": "./dist/es/commands/config-schema-validate.js"
+    "@adobe/aio-commerce-lib-config": "./dist/es/commands/index.js"
   },
   "publishConfig": {
     "exports": {

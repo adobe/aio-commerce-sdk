@@ -9,7 +9,8 @@ import { RUNTIME_ACTIONS } from "./constants";
 import { updateExtConfig } from "./lib";
 import { logger } from "./logger";
 
-// This will point to the directory where the hook is running from.
+// This will point to the directory where the script is running from.
+// This is the dist/commands directory (as we use a facade to run the commands)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -24,7 +25,7 @@ async function generateActionFiles() {
   logger.info("🔧 Generating runtime actions...");
 
   const outputDir = await makeOutputDirFor(GENERATED_ACTIONS_PATH);
-  const templatesDir = join(__dirname, "templates");
+  const templatesDir = join(__dirname, "generate/actions/templates");
 
   for (const action of RUNTIME_ACTIONS) {
     const templatePath = join(templatesDir, action.templateFile);
