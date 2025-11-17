@@ -1,11 +1,11 @@
 import * as v from "valibot";
 
-export const ListOptionSchema = v.object({
+const ListOptionSchema = v.object({
   label: v.string(),
   value: v.string(),
 });
 
-export const ListSchema = v.object({
+const ListSchema = v.object({
   name: v.pipe(v.string(), v.nonEmpty()),
   label: v.optional(v.string()),
   type: v.literal("list"),
@@ -18,7 +18,7 @@ export const ListSchema = v.object({
   description: v.optional(v.string()),
 });
 
-export const TextSchema = v.object({
+const TextSchema = v.object({
   name: v.pipe(v.string(), v.nonEmpty()),
   label: v.optional(v.string()),
   type: v.literal("text"),
@@ -26,8 +26,19 @@ export const TextSchema = v.object({
   description: v.optional(v.string()),
 });
 
-export const VariantTypeSchema = v.variant("type", [ListSchema, TextSchema]);
+const VariantTypeSchema = v.variant("type", [ListSchema, TextSchema]);
+
+/** An array of schema configurations. */
 export const RootSchema = v.pipe(
   v.array(VariantTypeSchema),
   v.minLength(1, "At least one configuration parameter is required"),
 );
+
+/** The schema for a configuration field. */
+export type ConfigSchemaField = v.InferInput<typeof VariantTypeSchema>;
+
+/** The schema for an option for a list configuration field. */
+export type ConfigSchemaOption = Extract<
+  ConfigSchemaField,
+  { type: "list" }
+>["options"][number];

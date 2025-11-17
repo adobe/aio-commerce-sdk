@@ -13,7 +13,11 @@
 export { init } from "./lib-config";
 export * from "./types";
 
-export type { ConfigOrigin, ConfigValue } from "./modules/configuration";
+export type {
+  AcceptableConfigValue,
+  ConfigOrigin,
+  ConfigValue,
+} from "./modules/configuration";
 export type {
   ConfigSchemaField,
   ConfigSchemaOption,
