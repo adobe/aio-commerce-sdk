@@ -15,15 +15,16 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig({
   ...baseConfig,
-  entry: ["./source/index.ts", "./source/hooks/*.ts", "./source/commands/*.ts"],
+
+  entry: ["./source/index.ts", "./source/commands/index.ts"],
   copy: [
     {
-      from: "./source/hooks/templates",
-      to: "./dist/cjs/hooks/templates",
+      from: "./source/commands/generate/actions/templates",
+      to: "./dist/cjs/commands/generate/actions/templates",
     },
     {
-      from: "./source/hooks/templates",
-      to: "./dist/es/hooks/templates",
+      from: "./source/commands/generate/actions/templates",
+      to: "./dist/es/commands/generate/actions/templates",
     },
   ],
 });

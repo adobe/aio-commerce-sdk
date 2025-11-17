@@ -15,10 +15,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildUpdatedScopeTree,
   mergeCommerceScopes,
-} from "../source/modules/scope-tree/merge-scopes";
+} from "#modules/scope-tree/merge-scopes";
 
-import type { ScopeNode, ScopeTree } from "../source/modules/scope-tree/types";
-import type { CommerceScopeData } from "../source/types";
+import type { ScopeNode, ScopeTree } from "#modules/scope-tree/types";
+import type { CommerceScopeData } from "#types";
 
 // Constants for magic numbers
 const BASE_36 = 36;

@@ -3,19 +3,14 @@ import { writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { assertType, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  check,
-  validate,
-} from "../../source/modules/schema/validation/validator";
+import { loadBusinessConfigSchema } from "../../../source/commands/schema/validate/lib";
+import { validateSchema } from "../../../source/modules/schema/utils";
 import {
   INVALID_CONFIGURATION,
   VALID_CONFIGURATION,
-} from "../fixtures/configuration-schema";
-
-import type { InferOutput } from "valibot";
-import type { RootSchema } from "../../source/modules/schema/validation/schema";
+} from "../../fixtures/configuration-schema";
 
 vi.mock("node:fs");
 
@@ -24,20 +19,21 @@ beforeEach(() => {
 });
 
 describe("validator", () => {
-  describe("validate()", () => {
+  describe("validateSchema()", () => {
     it("should not throw with valid schema", () => {
       expect(() => {
-        const result = validate(VALID_CONFIGURATION);
-        assertType<InferOutput<typeof RootSchema>>(result);
+        const result = validateSchema(VALID_CONFIGURATION);
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBeGreaterThan(0);
       }).not.toThrow();
     });
 
     it("should throw with invalid schema", () => {
-      expect(() => validate(INVALID_CONFIGURATION)).toThrow();
+      expect(() => validateSchema(INVALID_CONFIGURATION)).toThrow();
     });
   });
 
-  describe("check()", () => {
+  describe("loadBusinessConfigSchema()", () => {
     it("should validate if the file does exist and the content is valid", async () => {
       const testFile = join(tmpdir(), `test-config-${Date.now()}.js`);
       await writeFile(
@@ -48,16 +44,18 @@ describe("validator", () => {
       vi.mocked(existsSync).mockReturnValueOnce(true);
 
       await expect(async () => {
-        await check(testFile);
+        await loadBusinessConfigSchema(testFile);
       }).not.toThrow();
     });
 
-    it("should not throw if the file does not exist", async () => {
+    it("should return null if the file does not exist", async () => {
       vi.mocked(existsSync).mockReturnValueOnce(false);
 
-      // Should return gracefully with validated: false
-      const result = await check("./path/to/configuration.js");
-      expect(result).toEqual({ validated: false, schema: null });
+      // Should return gracefully with null
+      const result = await loadBusinessConfigSchema(
+        "./path/to/configuration.js",
+      );
+      expect(result).toBeNull();
     });
 
     it("should throw if loading the file fails with invalid syntax", async () => {
@@ -66,7 +64,7 @@ describe("validator", () => {
 
       vi.mocked(existsSync).mockReturnValueOnce(true);
 
-      await expect(check(testFile)).rejects.toThrow();
+      await expect(loadBusinessConfigSchema(testFile)).rejects.toThrow();
     });
   });
 });
