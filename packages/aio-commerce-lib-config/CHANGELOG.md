@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.6.0
+
+### Minor Changes
+
+- [#137](https://github.com/adobe/aio-commerce-sdk/pull/137) [`3a33b41`](https://github.com/adobe/aio-commerce-sdk/commit/3a33b41253786534bb0ddb6635a7643e758497a0) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove hooks entrypoint and replace the `pre-app-build` hook with a simple CLI command.
+
 ## 0.5.1
 
 ### Patch Changes
