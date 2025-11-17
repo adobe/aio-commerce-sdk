@@ -16,7 +16,7 @@ type SetConfigurationResponse = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L47)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L47)
 
 ## Properties
 
@@ -30,7 +30,7 @@ config: {
 [];
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L55)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L55)
 
 #### name
 
@@ -52,7 +52,7 @@ value: string | number | boolean;
 message: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L48)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L48)
 
 ---
 
@@ -66,7 +66,7 @@ scope: {
 }
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L50)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L50)
 
 #### code
 
@@ -94,4 +94,4 @@ level: string;
 timestamp: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L49)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L49)

@@ -9,7 +9,7 @@ type SetConfigurationRequest = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L40)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L40)
 
 ## Properties
 
@@ -23,7 +23,7 @@ config: {
 [];
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/api.ts#L41)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L41)
 
 #### name
 

@@ -12,7 +12,7 @@ type StoreGroup = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/commerce.ts#L31)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L31)
 
 ## Properties
 
@@ -22,7 +22,7 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:31](https
 code: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/commerce.ts#L37)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L37)
 
 ---
 
@@ -32,7 +32,7 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:37](https
 default_store_id: number;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/commerce.ts#L35)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L35)
 
 ---
 
@@ -42,7 +42,7 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:35](https
 optional extension_attributes: Record<string, unknown>;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/commerce.ts#L38)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L38)
 
 ---
 
@@ -52,7 +52,7 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:38](https
 id: number;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/commerce.ts#L32)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L32)
 
 ---
 
@@ -62,7 +62,7 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:32](https
 name: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/commerce.ts#L36)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L36)
 
 ---
 
@@ -72,7 +72,7 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:36](https
 root_category_id: number;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/commerce.ts#L34)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L34)
 
 ---
 
@@ -82,4 +82,4 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:34](https
 website_id: number;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/types/commerce.ts#L33)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L33)
