@@ -23,7 +23,7 @@
   },
 
   "devDependencies": {
-    "globby": "^15.0.0",
+    "globby": "^16.0.0",
     "@aio-commerce-sdk/config-typescript": "workspace:*"
   }
 }
