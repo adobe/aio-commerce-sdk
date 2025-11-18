@@ -61,18 +61,18 @@ module.exports = {
 };
 ```
 
-1. Install the package and add the postinstall script to your `package.json`:
+1. First, install the package:
 
 ```bash
 npm install @adobe/aio-commerce-lib-config
 ```
 
-Then add the postinstall script:
+Then add a `postinstall` script to your `package.json`:
 
 ```json
 {
   "dependencies": {
-    "@adobe/aio-commerce-lib-config": "^0.5.0"
+    "@adobe/aio-commerce-lib-config": "^0.6.0"
   },
 
   "scripts": {
@@ -81,7 +81,9 @@ Then add the postinstall script:
 }
 ```
 
-This script will run automatically every time you install your dependencies. The CLI provides several commands:
+This script will run automatically every time you install your dependencies. This is done because the generated runtime actions will only change when you install the package for the first time, or a new version of it.
+
+The CLI provides several commands:
 
 - `@adobe/aio-commerce-lib-config generate all` - Generate all artifacts (schema + runtime actions)
 - `@adobe/aio-commerce-lib-config generate schema` - Generate the configuration schema only
@@ -102,12 +104,14 @@ npx @adobe/aio-commerce-lib-config generate actions
 npx @adobe/aio-commerce-lib-config validate schema
 ```
 
-3. In your `app.config.yaml` file, reference the generated `ext.config.yaml` file. If you already have multiple entries in the `extensions` section, add this as an additional entry.
+3. In your `app.config.yaml` file, reference the generated `ext.config.yaml` file and a `pre-app-build` hook to re-generate your schema, which you may want to change in between builds. If you already have multiple entries in the `extensions` section, add this as an additional entry.
 
 ```yaml
 extensions:
   commerce/configuration/1:
     $include: "commerce-configuration-1/ext.config.yaml"
+    hooks:
+      pre-app-build: npx @adobe/aio-commerce-lib-config generate schema
 ```
 
 > [!IMPORTANT]
