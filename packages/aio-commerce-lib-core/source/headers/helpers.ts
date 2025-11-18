@@ -11,11 +11,11 @@
  */
 
 /**
- * Extracts a header value from an object, checking both lowercase and capitalized variations.
- * This is useful for handling HTTP headers which can be case-insensitive.
+ * Extracts a header value from an object with case-insensitive lookup.
+ * This is useful for handling HTTP headers which can be case-insensitive per RFC 7230.
  *
  * @param headers The headers object to search in.
- * @param name The header name to look for (will check both lowercase and original casing).
+ * @param name The header name to look for (case-insensitive).
  *
  * @example
  * ```typescript
@@ -25,7 +25,7 @@
  *
  * @example
  * ```typescript
- * const headers = { Authorization: "Bearer token123" };
+ * const headers = { AUTHORIZATION: "Bearer token123" };
  * const auth = getHeader(headers, "authorization"); // "Bearer token123"
  * ```
  */
@@ -33,7 +33,20 @@ export function getHeader(
   headers: Record<string, string | undefined>,
   name: string,
 ): string | undefined {
-  return headers[name.toLowerCase()] ?? headers[name];
+  // Try exact match first for performance
+  if (Object.hasOwn(headers, name)) {
+    return headers[name];
+  }
+
+  // Fall back to case-insensitive search
+  const lowerName = name.toLowerCase();
+  for (const key in headers) {
+    if (Object.hasOwn(headers, key) && key.toLowerCase() === lowerName) {
+      return headers[key];
+    }
+  }
+
+  return;
 }
 
 /**

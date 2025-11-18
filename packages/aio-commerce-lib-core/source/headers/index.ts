@@ -12,6 +12,7 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: export as part of the Public API */
 
+export { createHeaderAccessor } from "./accessor";
 export { parseBearerToken } from "./auth";
 export { getHeader, getHeadersFromParams } from "./helpers";
-export { assertRequiredHeaders } from "./validation";
+export { assertRequiredHeaders, getMissingHeaders } from "./validation";
