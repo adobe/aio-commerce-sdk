@@ -7,7 +7,7 @@ type ConfigOrigin = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L16)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L16)
 
 ## Properties
 
@@ -17,7 +17,7 @@ Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types
 code: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L17)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L17)
 
 ---
 
@@ -27,4 +27,4 @@ Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types
 level: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L18)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L18)

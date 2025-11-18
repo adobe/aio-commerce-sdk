@@ -17,8 +17,8 @@ import type {
  * @param config - Optional configuration for the library
  * @returns Initialized configuration instance
  */
-export function init(_config?: LibConfig) {
-  const configManager = new ConfigManager(_config);
+export function init(config?: LibConfig) {
+  const configManager = new ConfigManager(config);
 
   return {
     /**

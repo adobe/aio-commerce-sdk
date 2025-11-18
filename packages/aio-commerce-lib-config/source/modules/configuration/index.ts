@@ -15,4 +15,9 @@ export { getConfiguration } from "./get-config";
 export { getConfigurationByKey } from "./get-config-by-key";
 export { setConfiguration } from "./set-config";
 
-export type { ConfigContext, ConfigOrigin, ConfigValue } from "./types";
+export type {
+  AcceptableConfigValue,
+  ConfigContext,
+  ConfigOrigin,
+  ConfigValue,
+} from "./types";

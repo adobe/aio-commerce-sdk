@@ -14,7 +14,7 @@ type ScopeNode = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L16)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L16)
 
 ## Properties
 
@@ -24,7 +24,7 @@ Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts
 optional children: ScopeNode[];
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L25)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L25)
 
 ---
 
@@ -34,7 +34,7 @@ Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts
 code: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L18)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L18)
 
 ---
 
@@ -44,7 +44,7 @@ Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts
 optional commerce_id: number;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L24)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L24)
 
 ---
 
@@ -54,7 +54,7 @@ Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts
 id: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L17)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L17)
 
 ---
 
@@ -64,7 +64,7 @@ Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts
 is_editable: boolean;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L21)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L21)
 
 ---
 
@@ -74,7 +74,7 @@ Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts
 is_final: boolean;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L22)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L22)
 
 ---
 
@@ -84,7 +84,7 @@ Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts
 is_removable: boolean;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L23)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L23)
 
 ---
 
@@ -94,7 +94,7 @@ Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts
 label: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L19)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L19)
 
 ---
 
@@ -104,4 +104,4 @@ Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts
 level: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L20)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L20)

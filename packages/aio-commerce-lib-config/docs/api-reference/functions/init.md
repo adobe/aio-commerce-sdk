@@ -1,7 +1,7 @@
 # `init()`
 
 ```ts
-function init(_config?: LibConfig): {
+function init(config?: LibConfig): {
   getConfigSchema: Promise<
     (
       | {
@@ -13,6 +13,7 @@ function init(_config?: LibConfig): {
             label: string;
             value: string;
           }[];
+          selectionMode?: "single" | "multiple";
           type: "list";
         }
       | {
@@ -41,15 +42,15 @@ function init(_config?: LibConfig): {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/lib-config.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-config/source/lib-config.ts#L20)
+Defined in: [packages/aio-commerce-lib-config/source/lib-config.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/lib-config.ts#L20)
 
 Initialize the configuration library
 
 ## Parameters
 
-| Parameter  | Type                                        |
-| ---------- | ------------------------------------------- |
-| `_config?` | [`LibConfig`](../type-aliases/LibConfig.md) |
+| Parameter | Type                                        | Description                            |
+| --------- | ------------------------------------------- | -------------------------------------- |
+| `config?` | [`LibConfig`](../type-aliases/LibConfig.md) | Optional configuration for the library |
 
 ## Returns
 
@@ -68,6 +69,7 @@ getConfigSchema(): Promise<(
      label: string;
      value: string;
   }[];
+  selectionMode?: "single" | "multiple";
   type: "list";
 }
   | {
@@ -93,6 +95,7 @@ Get configuration schema
 `label`: `string`;
 `value`: `string`;
 \}[];
+`selectionMode?`: `"single"` \| `"multiple"`;
 `type`: `"list"`;
 \}
 \| \{
