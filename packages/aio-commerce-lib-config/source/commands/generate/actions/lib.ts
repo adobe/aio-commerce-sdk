@@ -41,7 +41,7 @@ function buildActionDefinition(action: ActionConfig) {
     web: "yes",
     runtime: "nodejs:22",
     inputs: {
-      LOG_LEVEL: "info",
+      LOG_LEVEL: "$LOG_LEVEL",
     },
     annotations: {
       "require-adobe-auth": true,
