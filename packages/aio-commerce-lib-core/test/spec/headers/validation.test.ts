@@ -48,7 +48,7 @@ describe("headers/validation", () => {
 
       expect(() => {
         assertRequiredHeaders(headers, ["x-api-key", "Authorization"]);
-      }).toThrow("Missing required headers: Authorization");
+      }).toThrow("Missing required headers: [Authorization]");
     });
 
     test("should throw error when multiple headers are missing", () => {
@@ -61,7 +61,7 @@ describe("headers/validation", () => {
           "x-custom",
         ]);
       }).toThrow(
-        "Missing required headers: x-api-key, Authorization, x-custom",
+        "Missing required headers: [x-api-key, Authorization, x-custom]",
       );
     });
 
@@ -70,7 +70,7 @@ describe("headers/validation", () => {
 
       expect(() => {
         assertRequiredHeaders(headers, ["x-api-key"]);
-      }).toThrow("Missing required headers: x-api-key");
+      }).toThrow("Missing required headers: [x-api-key]");
     });
 
     test("should throw error when header value is null", () => {
@@ -78,7 +78,7 @@ describe("headers/validation", () => {
 
       expect(() => {
         assertRequiredHeaders(headers, ["x-api-key"]);
-      }).toThrow("Missing required headers: x-api-key");
+      }).toThrow("Missing required headers: [x-api-key]");
     });
 
     test("should throw error when header value is empty string", () => {
@@ -86,7 +86,7 @@ describe("headers/validation", () => {
 
       expect(() => {
         assertRequiredHeaders(headers, ["x-api-key"]);
-      }).toThrow("Missing required headers: x-api-key");
+      }).toThrow("Missing required headers: [x-api-key]");
     });
 
     test("should throw error when header value is only whitespace", () => {
@@ -97,11 +97,11 @@ describe("headers/validation", () => {
 
       expect(() => {
         assertRequiredHeaders(headers, ["x-api-key"]);
-      }).toThrow("Missing required headers: x-api-key");
+      }).toThrow("Missing required headers: [x-api-key]");
 
       expect(() => {
         assertRequiredHeaders(headers, ["Authorization"]);
-      }).toThrow("Missing required headers: Authorization");
+      }).toThrow("Missing required headers: [Authorization]");
     });
 
     test("should handle case-insensitive header lookup", () => {
@@ -124,7 +124,7 @@ describe("headers/validation", () => {
           "Authorization",
           "x-custom",
         ]);
-      }).toThrow("Missing required headers: Authorization");
+      }).toThrow("Missing required headers: [Authorization]");
     });
 
     test("should narrow types after successful assertion", () => {

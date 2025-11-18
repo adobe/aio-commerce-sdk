@@ -33,13 +33,16 @@ describe("headers/helpers", () => {
       expect(getHeader(headers, "AUTHORIZATION")).toBe("Bearer token");
     });
 
-    test("should prioritize lowercase header name", () => {
+    test("should prioritize exact match over case-insensitive match", () => {
       const headers = {
         authorization: "Bearer lowercase",
         Authorization: "Bearer uppercase",
       };
 
-      expect(getHeader(headers, "Authorization")).toBe("Bearer lowercase");
+      // Exact match for "Authorization" returns uppercase value
+      expect(getHeader(headers, "Authorization")).toBe("Bearer uppercase");
+      // Exact match for "authorization" returns lowercase value
+      expect(getHeader(headers, "authorization")).toBe("Bearer lowercase");
     });
 
     test("should return undefined for missing header", () => {
