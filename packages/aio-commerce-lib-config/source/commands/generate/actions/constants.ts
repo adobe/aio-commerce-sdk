@@ -12,6 +12,7 @@ export const COMMERCE_VARIABLES = [
   "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID",
   "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL",
   "AIO_COMMERCE_AUTH_IMS_ORG_ID",
+  "AIO_COMMERCE_AUTH_IMS_SCOPES",
 ] as const satisfies string[];
 
 /** The inputs for the generated runtime actions */
