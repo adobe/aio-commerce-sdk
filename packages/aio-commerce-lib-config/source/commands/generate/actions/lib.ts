@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+import { Document, isNode, isSeq, parse as parseYaml } from "yaml";
 
 import {
   CONFIG_SCHEMA_FILE_NAME,
@@ -122,12 +122,69 @@ async function readExtConfig(configPath: string) {
 }
 
 /**
+ * Add a comment before a node
+ * @param doc - The YAML document
+ * @param path - The path to the node
+ * @param comment - The comment to add
+ */
+function addCommentToNode(doc: Document, path: string[], comment: string) {
+  const node: unknown = doc.getIn(path);
+  if (isNode(node)) {
+    node.commentBefore = comment;
+  }
+}
+
+/**
+ * Set flow style for all items in a sequence
+ * @param doc - The YAML document
+ * @param path - The path to the sequence
+ */
+function setFlowStyleForSeq(doc: Document, path: string[]) {
+  const node: unknown = doc.getIn(path);
+  if (isSeq(node)) {
+    for (const item of node.items) {
+      if (isSeq(item)) {
+        item.flow = true;
+      }
+    }
+  }
+}
+
+/**
  * Write the ext.config.yaml file
  * @param configPath - The path to the ext.config.yaml file
  * @param config - The config to write
  */
 async function writeExtConfig(configPath: string, config: ExtConfig) {
-  const yamlContent = stringifyYaml(config, {
+  const doc = new Document(config);
+
+  // Add comments to auto-generated sections
+  addCommentToNode(
+    doc,
+    ["operations"],
+    " This worker processes definitions are auto-generated. Do not edit manually.",
+  );
+  addCommentToNode(
+    doc,
+    ["runtimeManifest", "packages", PACKAGE_NAME],
+    " This package definition is auto-generated. Do not edit manually.",
+  );
+
+  // Set flow style for include arrays in actions
+  const actions =
+    config.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions ?? {};
+  for (const actionName of Object.keys(actions)) {
+    setFlowStyleForSeq(doc, [
+      "runtimeManifest",
+      "packages",
+      PACKAGE_NAME,
+      "actions",
+      actionName,
+      "include",
+    ]);
+  }
+
+  const yamlContent = doc.toString({
     indent: 2,
     lineWidth: 0,
     defaultStringType: "PLAIN",
