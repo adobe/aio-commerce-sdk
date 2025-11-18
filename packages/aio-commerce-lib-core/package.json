@@ -47,6 +47,7 @@
   },
   "exports": {
     "./error": "./source/error/index.ts",
+    "./headers": "./source/headers/index.ts",
     "./params": "./source/params/index.ts",
     "./responses": "./source/responses/index.ts",
     "./package.json": "./package.json"
@@ -58,6 +59,7 @@
     "README.md"
   ],
   "scripts": {
+    "prepublishOnly": "pnpm run docs",
     "build": "tsdown",
     "docs": "typedoc && prettier --write '**/*.md'",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
