@@ -1,0 +1,134 @@
+/*
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+import { describe, expect, test } from "vitest";
+
+import { getHeader, getHeadersFromParams } from "~/headers/helpers";
+
+describe("headers/helpers", () => {
+  describe("getHeader", () => {
+    test("should get header with exact case match", () => {
+      const headers = {
+        "x-api-key": "test-key",
+        Authorization: "Bearer token",
+      };
+
+      expect(getHeader(headers, "x-api-key")).toBe("test-key");
+      expect(getHeader(headers, "Authorization")).toBe("Bearer token");
+    });
+
+    test("should get header with case-insensitive match", () => {
+      const headers = { authorization: "Bearer token" };
+
+      expect(getHeader(headers, "Authorization")).toBe("Bearer token");
+      expect(getHeader(headers, "AUTHORIZATION")).toBe("Bearer token");
+    });
+
+    test("should prioritize lowercase header name", () => {
+      const headers = {
+        authorization: "Bearer lowercase",
+        Authorization: "Bearer uppercase",
+      };
+
+      expect(getHeader(headers, "Authorization")).toBe("Bearer lowercase");
+    });
+
+    test("should return undefined for missing header", () => {
+      const headers = { "x-api-key": "test-key" };
+
+      expect(getHeader(headers, "Authorization")).toBeUndefined();
+    });
+
+    test("should return undefined for empty headers object", () => {
+      expect(getHeader({}, "x-api-key")).toBeUndefined();
+    });
+
+    test("should handle headers with undefined values", () => {
+      const headers = { "x-api-key": undefined };
+
+      expect(getHeader(headers, "x-api-key")).toBeUndefined();
+    });
+  });
+
+  describe("getHeadersFromParams", () => {
+    test("should extract __ow_headers from params", () => {
+      const params = {
+        __ow_headers: {
+          "x-api-key": "test-key",
+          Authorization: "Bearer token",
+        },
+        someOtherParam: "value",
+      };
+
+      const headers = getHeadersFromParams(params);
+      expect(headers).toEqual({
+        "x-api-key": "test-key",
+        Authorization: "Bearer token",
+      });
+    });
+
+    test("should throw error when __ow_headers is missing", () => {
+      expect(() => {
+        getHeadersFromParams({});
+      }).toThrow("Missing __ow_headers in action params");
+    });
+
+    test("should throw error when __ow_headers is null", () => {
+      expect(() => {
+        getHeadersFromParams({ __ow_headers: null });
+      }).toThrow("Missing __ow_headers in action params");
+    });
+
+    test("should throw error when __ow_headers is undefined", () => {
+      expect(() => {
+        getHeadersFromParams({ __ow_headers: undefined });
+      }).toThrow("Missing __ow_headers in action params");
+    });
+
+    test("should throw error when __ow_headers is not an object", () => {
+      expect(() => {
+        getHeadersFromParams({ __ow_headers: "not-an-object" });
+      }).toThrow("Missing __ow_headers in action params");
+
+      expect(() => {
+        getHeadersFromParams({ __ow_headers: 123 });
+      }).toThrow("Missing __ow_headers in action params");
+
+      expect(() => {
+        getHeadersFromParams({ __ow_headers: true });
+      }).toThrow("Missing __ow_headers in action params");
+    });
+
+    test("should accept empty __ow_headers object", () => {
+      const params = { __ow_headers: {} };
+      const headers = getHeadersFromParams(params);
+      expect(headers).toEqual({});
+    });
+
+    test("should preserve header values including empty strings", () => {
+      const params = {
+        __ow_headers: {
+          "x-api-key": "",
+          Authorization: "Bearer token",
+          "x-custom": undefined,
+        },
+      };
+
+      const headers = getHeadersFromParams(params);
+      expect(headers).toEqual({
+        "x-api-key": "",
+        Authorization: "Bearer token",
+        "x-custom": undefined,
+      });
+    });
+  });
+});
