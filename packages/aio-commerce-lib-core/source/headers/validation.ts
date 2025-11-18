@@ -13,34 +13,17 @@
 import { getHeader } from "./helpers";
 
 /**
- * Validates that required headers are present and non-empty in the headers object.
- * Uses type narrowing to ensure TypeScript knows the headers exist after validation.
+ * Checks which headers are missing or empty from the headers object.
+ * Performs case-insensitive lookup using {@link getHeader}.
  *
- * @param headers The headers object to validate.
+ * @param headers The headers object to check.
  * @param requiredHeaders Array of required header names.
- * @throws {Error} If any required headers are missing or empty.
- *
- * @example
- * ```typescript
- * const headers = { "x-api-key": "key123", "Authorization": "Bearer token" };
- * assertRequiredHeaders(headers, ["x-api-key", "Authorization"]);
- * // TypeScript now knows headers["x-api-key"] and headers["Authorization"] are non-empty strings
- * ```
- *
- * @example
- * ```typescript
- * try {
- *   assertRequiredHeaders({}, ["x-api-key", "Authorization"]);
- * } catch (error) {
- *   console.error(error.message); // "Missing required headers: x-api-key, Authorization"
- * }
- * ```
+ * @returns Array of missing header names (empty array if all present).
  */
-export function assertRequiredHeaders<const T extends string[]>(
+export function getMissingHeaders(
   headers: Record<string, string | undefined>,
-  requiredHeaders: T,
-): asserts headers is Record<string, string | undefined> &
-  Record<T[number], string> {
+  requiredHeaders: string[],
+): string[] {
   const missing: string[] = [];
 
   for (const header of requiredHeaders) {
@@ -52,7 +35,41 @@ export function assertRequiredHeaders<const T extends string[]>(
     }
   }
 
+  return missing;
+}
+
+/**
+ * Validates that required headers are present and non-empty in the headers object.
+ * Performs case-insensitive validation with {@link getHeader}.
+ *
+ * @param headers The headers object to validate.
+ * @param requiredHeaders Array of required header names.
+ * @throws {Error} If any required headers are missing or empty.
+ *
+ * @example
+ * ```typescript
+ * const headers = { "x-api-key": "key123", "Authorization": "Bearer token" };
+ * assertRequiredHeaders(headers, ["x-api-key", "Authorization"]);
+ * // Headers are validated, use getHeader() for safe access
+ * const apiKey = getHeader(headers, "x-api-key")!;
+ * ```
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   assertRequiredHeaders({}, ["x-api-key", "Authorization"]);
+ * } catch (error) {
+ *   console.error(error.message); // "Missing required headers: x-api-key, Authorization"
+ * }
+ * ```
+ */
+export function assertRequiredHeaders(
+  headers: Record<string, string | undefined>,
+  requiredHeaders: string[],
+): void {
+  const missing = getMissingHeaders(headers, requiredHeaders);
+
   if (missing.length > 0) {
-    throw new Error(`Missing required headers: ${missing.join(", ")}`);
+    throw new Error(`Missing required headers: [${missing.join(", ")}]`);
   }
 }
