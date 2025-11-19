@@ -27,9 +27,6 @@
     "url": "git+https://github.com/adobe/aio-commerce-sdk.git",
     "directory": "packages/aio-commerce-lib-core"
   },
-  "main": "./dist/cjs/index.cjs",
-  "module": "./dist/es/index.js",
-  "types": "./dist/cjs/index.d.cts",
   "publishConfig": {
     "exports": {
       "./*": {
