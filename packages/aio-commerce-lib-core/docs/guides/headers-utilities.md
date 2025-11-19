@@ -155,15 +155,42 @@ Headers are considered empty if they are:
 - Empty string (`""`)
 - Whitespace-only (`"   "`, `"\t"`, etc.)
 
-## parseBearerToken
+## Authorization Parsing
 
-Extracts and validates a Bearer token from an Authorization header.
+The module provides utilities for parsing different authorization schemes from HTTP Authorization headers.
+
+### parseAuthorization
+
+Parses any authorization header into a discriminated union type. This is the base function used by specialized parsers.
+
+```typescript
+import { parseAuthorization } from "@adobe/aio-commerce-lib-core/headers";
+
+const bearerAuth = parseAuthorization("Bearer token123");
+// { scheme: "Bearer", token: "token123" }
+
+const basicAuth = parseAuthorization("Basic dXNlcjpwYXNz");
+// { scheme: "Basic", credentials: "dXNlcjpwYXNz" }
+
+const oauthAuth = parseAuthorization('OAuth oauth_token="abc"');
+// { scheme: "OAuth", parameters: { oauth_token: "abc" } }
+
+const digestAuth = parseAuthorization('Digest realm="Example"');
+// { scheme: "Digest", parametersRaw: 'realm="Example"', parameters: { realm: "Example" } }
+```
+
+### parseBearerToken
+
+Extracts and validates a Bearer token from an Authorization header. Returns a `BearerAuthorization` object.
 
 ```typescript
 import { parseBearerToken } from "@adobe/aio-commerce-lib-core/headers";
 
 const authorization = "Bearer eyJhbGci...";
-const token = parseBearerToken(authorization); // "eyJhbGci..."
+const auth = parseBearerToken(authorization);
+// { scheme: "Bearer", token: "eyJhbGci..." }
+
+console.log(auth.token); // "eyJhbGci..."
 ```
 
 ### Validation
@@ -180,17 +207,91 @@ The function performs several validations:
 2. **Token cannot be empty**
 
    ```typescript
-   parseBearerToken("Bearer ");
-   // Error: Bearer token cannot be empty
+   parseBearerToken("Bearer");
+   // Error: Invalid Authorization header format
 
    parseBearerToken("Bearer    ");
-   // Error: Bearer token cannot be empty
+   // Error: Invalid Authorization header format
    ```
 
 3. **Whitespace is trimmed**
    ```typescript
-   parseBearerToken("Bearer   token123   "); // "token123"
+   const auth = parseBearerToken("Bearer   token123   ");
+   console.log(auth.token); // "token123"
    ```
+
+### parseBasicToken
+
+Parses and validates a Basic authorization header. Returns a `BasicAuthorization` object.
+
+```typescript
+import { parseBasicToken } from "@adobe/aio-commerce-lib-core/headers";
+
+const auth = parseBasicToken("Basic dXNlcjpwYXNz");
+// { scheme: "Basic", credentials: "dXNlcjpwYXNz" }
+
+console.log(auth.credentials); // "dXNlcjpwYXNz"
+```
+
+### parseOAuthToken
+
+Parses and validates an OAuth 1.0 authorization header. Returns an `OAuth1Authorization` object with structured parameters.
+
+```typescript
+import { parseOAuthToken } from "@adobe/aio-commerce-lib-core/headers";
+
+const auth = parseOAuthToken(
+  'OAuth oauth_consumer_key="key", oauth_token="token"',
+);
+// {
+//   scheme: "OAuth",
+//   parameters: {
+//     oauth_consumer_key: "key",
+//     oauth_token: "token"
+//   }
+// }
+```
+
+The function parses OAuth 1.0 parameters according to RFC 5849, extracting key-value pairs from the authorization string.
+
+### Type Guards and Discriminated Unions
+
+The `Authorization` type is a discriminated union, but **TypeScript cannot automatically narrow** based on `scheme === "Bearer"` checks when `GenericAuthorization` is in the union (because `GenericAuthorization.scheme` is `string`, which includes all string literals).
+
+**Always use type guards** for reliable type narrowing:
+
+```typescript
+import {
+  parseAuthorization,
+  isBearerAuth,
+  isBasicAuth,
+  isOAuth,
+} from "@adobe/aio-commerce-lib-core/headers";
+
+const auth = parseAuthorization("Bearer token123");
+
+// ✅ Use type guards for type narrowing
+if (isBearerAuth(auth)) {
+  // TypeScript knows auth is BearerAuthorization here
+  console.log(auth.token); // ✅ Type-safe
+}
+
+if (isBasicAuth(auth)) {
+  // TypeScript knows auth is BasicAuthorization here
+  console.log(auth.credentials); // ✅ Type-safe
+}
+
+if (isOAuth(auth)) {
+  // TypeScript knows auth is OAuth1Authorization here
+  console.log(auth.parameters.oauth_token); // ✅ Type-safe
+}
+
+// ❌ Direct scheme checks do NOT work for type narrowing
+if (auth.scheme === "Bearer") {
+  // TypeScript cannot narrow here - auth.token will cause an error
+  // console.log(auth.token); // ❌ Error: Property 'token' does not exist
+}
+```
 
 ## Best Practices
 

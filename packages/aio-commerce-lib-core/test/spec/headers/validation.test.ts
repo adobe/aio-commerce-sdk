@@ -12,7 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 
-import { assertRequiredHeaders } from "~/headers/validation";
+import { assertRequiredHeaders } from "#headers";
 
 describe("headers/validation", () => {
   describe("assertRequiredHeaders", () => {
