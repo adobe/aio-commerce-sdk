@@ -64,7 +64,7 @@ getHeader(headers, "authorization"); // "Bearer token123"
 
 ### Priority
 
-If both lowercase and original case versions exist, the lowercase version takes priority:
+Exact match is prioritized first for performance, then falls back to case-insensitive search:
 
 ```typescript
 const headers = {
@@ -72,7 +72,9 @@ const headers = {
   Authorization: "Bearer uppercase",
 };
 
-getHeader(headers, "Authorization"); // "Bearer lowercase"
+getHeader(headers, "Authorization"); // "Bearer uppercase" (exact match)
+getHeader(headers, "authorization"); // "Bearer lowercase" (exact match)
+getHeader(headers, "AUTHORIZATION"); // "Bearer uppercase" (case-insensitive fallback)
 ```
 
 ## assertRequiredHeaders
@@ -189,58 +191,6 @@ The function performs several validations:
    ```typescript
    parseBearerToken("Bearer   token123   "); // "token123"
    ```
-
-## Complete Example: Forwarding Authentication
-
-Here's a complete example of forwarding authentication from an incoming request to downstream services:
-
-```typescript
-import {
-  getHeadersFromParams,
-  createHeaderAccessor,
-  parseBearerToken,
-} from "@adobe/aio-commerce-lib-core/headers";
-import {
-  ok,
-  unauthorized,
-  badRequest,
-} from "@adobe/aio-commerce-lib-core/responses";
-
-export async function main(params) {
-  try {
-    // Extract and validate headers with type-safe camelCase accessor
-    const headers = getHeadersFromParams(params);
-    const { xApiKey, authorization } = createHeaderAccessor(headers, [
-      "x-api-key",
-      "Authorization",
-    ]);
-
-    // Parse and validate Bearer token
-    const accessToken = parseBearerToken(authorization);
-
-    // Forward to downstream service
-    const response = await fetch("https://api.example.com/data", {
-      headers: {
-        "x-api-key": xApiKey,
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    const data = await response.json();
-    return ok({ body: data });
-  } catch (error) {
-    if (error.message.includes("Missing required headers")) {
-      return badRequest({ body: { error: error.message } });
-    }
-
-    if (error.message.includes("Bearer token")) {
-      return unauthorized({ body: { error: "Invalid authentication" } });
-    }
-
-    throw error;
-  }
-}
-```
 
 ## Best Practices
 
