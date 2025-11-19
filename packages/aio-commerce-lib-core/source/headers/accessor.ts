@@ -15,8 +15,7 @@ import camelcase from "camelcase";
 import { getHeader } from "./helpers";
 import { getMissingHeaders } from "./validation";
 
-import type { CamelCase } from "type-fest";
-import type { HttpHeaders } from "./types";
+import type { HttpHeaderAccessorMap, HttpHeaders } from "./types";
 
 /**
  * Creates a type-safe header accessor object with validated required headers.
@@ -39,7 +38,7 @@ import type { HttpHeaders } from "./types";
 export function createHeaderAccessor<const T extends string[]>(
   headers: HttpHeaders,
   requiredHeaders: T,
-): { [K in T[number] as CamelCase<K>]: string } {
+): HttpHeaderAccessorMap<T> {
   const missing = getMissingHeaders(headers, requiredHeaders);
 
   if (missing.length > 0) {
@@ -47,7 +46,7 @@ export function createHeaderAccessor<const T extends string[]>(
   }
 
   // Build accessor object with camelCase keys
-  const accessor: Record<string, string> = {};
+  const accessor: Record<string, string | string[]> = {};
 
   for (const header of requiredHeaders) {
     const camelKey = camelcase(header);
@@ -59,5 +58,5 @@ export function createHeaderAccessor<const T extends string[]>(
     }
   }
 
-  return accessor as { [K in T[number] as CamelCase<K>]: string };
+  return accessor as HttpHeaderAccessorMap<T>;
 }

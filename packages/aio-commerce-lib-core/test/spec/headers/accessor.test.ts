@@ -145,12 +145,9 @@ describe("headers/accessor", () => {
         "Authorization",
       ]);
 
-      // TypeScript should know these are strings
-      const key: string = xApiKey;
-      const auth: string = authorization;
-
-      expect(key).toBe("test-key");
-      expect(auth).toBe("Bearer token");
+      // TypeScript knows these are string | string[]
+      expect(xApiKey).toBe("test-key");
+      expect(authorization).toBe("Bearer token");
     });
   });
 });

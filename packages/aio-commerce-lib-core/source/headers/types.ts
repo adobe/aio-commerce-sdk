@@ -10,5 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
+import type { CamelCase } from "type-fest";
+
+/** The type of an HTTP header value. */
+export type HttpHeaderValue = string | string[] | undefined;
+
 /** The type of an HTTP headers record. */
 export type HttpHeaders = Record<string, string | undefined>;
+
+/** The type of an HTTP header accessor object. */
+export type HttpHeaderAccessorMap<T extends string[]> = {
+  [K in T[number] as CamelCase<K>]: string | string[];
+};
