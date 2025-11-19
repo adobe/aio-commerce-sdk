@@ -88,8 +88,8 @@ function main(params) {
     "Authorization",
   ]);
 
-  const accessToken = parseBearerToken(authorization);
-  // Use validated headers...
+  const { token } = parseBearerToken(authorization);
+  // Use validated headers and token...
 }
 ```
 

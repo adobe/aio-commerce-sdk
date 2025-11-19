@@ -12,7 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 
-import { createHeaderAccessor } from "~/headers/accessor";
+import { createHeaderAccessor } from "#headers";
 
 describe("headers/accessor", () => {
   describe("createHeaderAccessor", () => {

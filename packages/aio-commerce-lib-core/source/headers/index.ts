@@ -18,7 +18,24 @@
  */
 
 export { createHeaderAccessor } from "./accessor";
-export { parseBearerToken } from "./auth";
+export {
+  isBasicAuth,
+  isBearerAuth,
+  isOAuth,
+  parseAuthorization,
+  parseBasicToken,
+  parseBearerToken,
+  parseOAuthToken,
+} from "./auth";
 export { getHeader, getHeadersFromParams } from "./helpers";
 export * from "./types";
 export { assertRequiredHeaders, getMissingHeaders } from "./validation";
+
+export type {
+  Authorization,
+  BasicAuthorization,
+  BearerAuthorization,
+  GenericAuthorization,
+  OAuth1Authorization,
+  OAuth1Parameters,
+} from "./auth";
