@@ -26,6 +26,7 @@ export async function updateExtConfig() {
 
   buildOperations(extConfig);
   buildRuntimeManifest(extConfig);
+  buildHooks(extConfig);
 
   await writeExtConfig(extConfigPath, extConfig);
   return extConfig;
@@ -109,6 +110,32 @@ function buildRuntimeManifest(extConfig: ExtConfig) {
 }
 
 /**
+ * Build the `hooks` section of the `ext.config.yaml` file
+ * @param extConfig - The ext.config.yaml file
+ */
+function buildHooks(extConfig: ExtConfig) {
+  extConfig.hooks ??= {};
+  extConfig.hooks["pre-app-build"] ??= "";
+
+  if (
+    extConfig.hooks["pre-app-build"].endsWith("js") ||
+    extConfig.hooks["pre-app-build"].endsWith("ts")
+  ) {
+    throw new Error(
+      "Conflicting pre-app-build hook definition found. The hook needs to be a command in order for `@adobe/aio-commerce-lib-config` to work, not a script.",
+    );
+  }
+
+  if (extConfig.hooks["pre-app-build"].trim() === "") {
+    extConfig.hooks["pre-app-build"] =
+      "npx @adobe/aio-commerce-lib-config generate schema";
+  } else {
+    extConfig.hooks["pre-app-build"] +=
+      " && npx @adobe/aio-commerce-lib-config generate schema";
+  }
+}
+
+/**
  * Read the ext.config.yaml file
  * @param configPath - The path to the ext.config.yaml file
  */
@@ -162,12 +189,17 @@ async function writeExtConfig(configPath: string, config: ExtConfig) {
   addCommentToNode(
     doc,
     ["operations"],
-    " This worker processes definitions are auto-generated. Do not edit manually.",
+    " This worker processes definitions are auto-generated. Do not remove or manually edit.",
   );
   addCommentToNode(
     doc,
     ["runtimeManifest", "packages", PACKAGE_NAME],
-    " This package definition is auto-generated. Do not edit manually.",
+    " This package definition is auto-generated. Do not remove or manually edit.",
+  );
+  addCommentToNode(
+    doc,
+    ["hooks", "pre-app-build"],
+    " This schema generation command is auto-generated. Do not remove or manually edit.",
   );
 
   // Set flow style for include arrays in actions

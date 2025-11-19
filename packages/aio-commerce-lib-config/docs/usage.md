@@ -104,14 +104,12 @@ npx @adobe/aio-commerce-lib-config generate actions
 npx @adobe/aio-commerce-lib-config validate schema
 ```
 
-3. In your `app.config.yaml` file, reference the generated `ext.config.yaml` file and a `pre-app-build` hook to re-generate your schema, which you may want to change in between builds. If you already have multiple entries in the `extensions` section, add this as an additional entry.
+3. In your `app.config.yaml` file, reference the generated `ext.config.yaml` file:
 
 ```yaml
 extensions:
   commerce/configuration/1:
     $include: "commerce-configuration-1/ext.config.yaml"
-    hooks:
-      pre-app-build: npx @adobe/aio-commerce-lib-config generate schema
 ```
 
 > [!IMPORTANT]
