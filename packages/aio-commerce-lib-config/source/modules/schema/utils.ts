@@ -5,7 +5,7 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { safeParse } from "valibot";
 
 import { CONFIG_SCHEMA_PATH } from "../../utils/constants";
-import { RootSchema } from "./schema";
+import { BusinessConfigSchema } from "./schema";
 
 import type { AnySchema } from "valibot";
 import type { ConfigSchemaField } from "./index";
@@ -52,7 +52,7 @@ export function validateSchema(
   value: unknown,
   schema?: AnySchema,
 ): ConfigSchemaField[] {
-  const schemaToUse = schema ?? RootSchema;
+  const schemaToUse = schema ?? BusinessConfigSchema;
   const { output, success, issues } = safeParse(schemaToUse, value);
 
   if (!success) {

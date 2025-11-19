@@ -5,12 +5,12 @@ import { join } from "node:path";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { loadBusinessConfigSchema } from "../../../source/commands/schema/validate/lib";
-import { validateSchema } from "../../../source/modules/schema/utils";
+import { loadBusinessConfigSchema } from "#commands/schema/validate/lib";
+import { validateSchema } from "#modules/schema/utils";
 import {
   INVALID_CONFIGURATION,
   VALID_CONFIGURATION,
-} from "../../fixtures/configuration-schema";
+} from "#test/fixtures/configuration-schema";
 
 vi.mock("node:fs");
 
