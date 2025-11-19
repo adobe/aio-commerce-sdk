@@ -8,7 +8,7 @@ When building Adobe I/O Runtime actions, you often need to:
 
 - Extract headers from incoming requests
 - Validate required authentication headers
-- Parse Bearer tokens
+- Parse authentication credentials
 - Handle case-insensitive header names
 
 This module provides utilities to simplify these common tasks.
@@ -93,7 +93,7 @@ const headers = {
 };
 
 const value = getHeader(headers, "cache-control");
-// Returns: ["Foo", "Bar"] (automatically split into array)
+// Returns: ["no-store", "no-cache"] (automatically split into array)
 ```
 
 Single values without commas are returned as strings:
@@ -293,7 +293,7 @@ The function parses OAuth 1.0 parameters according to RFC 5849, extracting key-v
 
 ### Type Guards and Discriminated Unions
 
-The `Authorization` type is a discriminated union, but **TypeScript cannot automatically narrow** based on `scheme === "Bearer"` checks when `GenericAuthorization` is in the union (because `GenericAuthorization.scheme` is `string`, which includes all string literals).
+The `Authorization` type is a discriminated union, but **TypeScript cannot automatically narrow** based on checks like `scheme === "Bearer"` or `scheme === "Basic"` as it would do with other discriminated unions. This is because `GenericAuthorization.scheme` is `string`, which includes all string literals including "Bearer", "Basic", and "OAuth".
 
 **Always use type guards** for reliable type narrowing:
 
