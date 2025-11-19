@@ -5,18 +5,30 @@ const ListOptionSchema = v.object({
   value: v.string(),
 });
 
-const ListSchema = v.object({
+const SingleListSchema = v.object({
   name: v.pipe(v.string(), v.nonEmpty()),
   label: v.optional(v.string()),
   type: v.literal("list"),
-  selectionMode: v.optional(
-    v.union([v.literal("single"), v.literal("multiple")]),
-    "single",
-  ),
+  selectionMode: v.literal("single"),
   options: v.array(ListOptionSchema),
   default: v.pipe(v.string(), v.nonEmpty()),
   description: v.optional(v.string()),
 });
+
+const MultipleListSchema = v.object({
+  name: v.pipe(v.string(), v.nonEmpty()),
+  label: v.optional(v.string()),
+  type: v.literal("list"),
+  selectionMode: v.literal("multiple"),
+  options: v.array(ListOptionSchema),
+  default: v.array(v.pipe(v.string(), v.nonEmpty())),
+  description: v.optional(v.string()),
+});
+
+const ListSchema = v.variant("selectionMode", [
+  SingleListSchema,
+  MultipleListSchema,
+]);
 
 const TextSchema = v.object({
   name: v.pipe(v.string(), v.nonEmpty()),
@@ -26,16 +38,19 @@ const TextSchema = v.object({
   description: v.optional(v.string()),
 });
 
-const VariantTypeSchema = v.variant("type", [ListSchema, TextSchema]);
+const FieldSchema = v.variant("type", [ListSchema, TextSchema]);
 
 /** An array of schema configurations. */
-export const RootSchema = v.pipe(
-  v.array(VariantTypeSchema),
+export const BusinessConfigSchema = v.pipe(
+  v.array(FieldSchema),
   v.minLength(1, "At least one configuration parameter is required"),
 );
 
 /** The schema for a configuration field. */
-export type ConfigSchemaField = v.InferInput<typeof VariantTypeSchema>;
+export type ConfigSchemaField = v.InferInput<typeof FieldSchema>;
+
+/** The schema for the own business configuration schema. */
+export type BusinessConfigSchema = v.InferInput<typeof BusinessConfigSchema>;
 
 /** The schema for an option for a list configuration field. */
 export type ConfigSchemaOption = Extract<
