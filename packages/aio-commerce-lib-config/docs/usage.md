@@ -36,6 +36,7 @@ module.exports = {
           { label: "Option 1", value: "option1" },
           { label: "Option 2", value: "option2" },
         ],
+        selectionMode: "single",
         default: "option1",
         description: "This is a description for the example list",
       },
@@ -112,6 +113,8 @@ extensions:
     $include: "commerce-configuration-1/ext.config.yaml"
 ```
 
+The generated `ext.config.yaml` file includes a `pre-app-build` hook that automatically regenerates the configuration schema before each build. This ensures your schema is always up-to-date. The hook is automatically added and should not be manually edited.
+
 > [!IMPORTANT]
 > The generated runtime actions require the SDK package. Make sure to install it before generating actions.
 >
@@ -138,9 +141,46 @@ Scopes define the hierarchical boundaries where configuration values can be set 
 - `get-configuration` - Get configuration values with inheritance
 - `set-configuration` - Save configuration values
 
-The `generate actions` command also creates the `ext.config.yaml` file with the required configuration and environment variable placeholders.
+The `generate actions` command also creates the `ext.config.yaml` file with the required configuration and environment variable placeholders. It automatically adds a `pre-app-build` hook that regenerates the configuration schema before each build.
 
-> **Important**: Don't forget to fill in the necessary values for the Commerce configuration in your `.env` file before deploying your application.
+> [!IMPORTANT]
+> Don't forget to fill in the necessary values for the Commerce configuration in your `.env` file before deploying your application.
+>
+> The generated actions require the following environment variables. Add them to your `.env` file:
+>
+> **For SaaS instances:**
+>
+> ```bash
+> # Logging level for runtime actions
+> LOG_LEVEL=info
+>
+> # Adobe Commerce API configuration
+> AIO_COMMERCE_API_BASE_URL=https://your-commerce-instance.com
+>
+> # IMS Authentication (SaaS)
+> AIO_COMMERCE_AUTH_IMS_CLIENT_ID=your-client-id
+> AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS=your-client-secrets
+> AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID=your-technical-account-id
+> AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL=your-technical-account-email
+> AIO_COMMERCE_AUTH_IMS_ORG_ID=your-ims-org-id
+> AIO_COMMERCE_AUTH_IMS_SCOPES=your-ims-scopes
+> ```
+>
+> **For PaaS instances:**
+>
+> ```bash
+> # Logging level for runtime actions
+> LOG_LEVEL=info
+>
+> # Adobe Commerce API configuration
+> AIO_COMMERCE_API_BASE_URL=https://your-commerce-instance.com
+>
+> # Integration Authentication (PaaS)
+> AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY=your-consumer-key
+> AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET=your-consumer-secret
+> AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN=your-access-token
+> AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET=your-access-token-secret
+> ```
 
 ### Initialize the Library
 
@@ -385,9 +425,9 @@ Use text fields for free-form input values like merchant identifiers or custom s
 
 Use list fields when you need to restrict values to a predefined set of options. This is useful for settings like log levels, environment modes, or payment methods. List fields require both options and a default value.
 
-The `selectionMode` field (optional) controls whether users can select a single value or multiple values:
+The `selectionMode` field (required) controls whether users can select a single value or multiple values:
 
-- `"single"` (default if omitted): Standard dropdown with single selection
+- `"single"`: Standard dropdown with single selection
 - `"multiple"`: Allows multiple selections from the list
 
 Single selection example:
@@ -421,9 +461,12 @@ Multiple selection example:
     { label: "Apple Pay", value: "apple_pay" },
     { label: "Google Pay", value: "google_pay" }
   ],
-  default: "credit_card"
+  default: ["credit_card"]
 }
 ```
+
+> [!NOTE]
+> For `selectionMode: "multiple"`, the `default` value must be an array of strings, even if only one option is selected by default.
 
 ## Best Practices
 
