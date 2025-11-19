@@ -23,7 +23,7 @@ export const EXTENSION_POINT_FOLDER_NAME = EXTENSION_POINT_ID.replaceAll(
 
 /** The absolute path to the extension point folder. */
 export const EXTENSION_POINT_FOLDER = join(
-  process.cwd(),
+  `${process.cwd()}/src`,
   EXTENSION_POINT_FOLDER_NAME,
 );
 

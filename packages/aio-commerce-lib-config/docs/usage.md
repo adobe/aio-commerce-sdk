@@ -110,7 +110,7 @@ npx @adobe/aio-commerce-lib-config validate schema
 ```yaml
 extensions:
   commerce/configuration/1:
-    $include: "commerce-configuration-1/ext.config.yaml"
+    $include: "src/commerce-configuration-1/ext.config.yaml"
 ```
 
 The generated `ext.config.yaml` file includes a `pre-app-build` hook that automatically regenerates the configuration schema before each build. This ensures your schema is always up-to-date. The hook is automatically added and should not be manually edited.
@@ -124,8 +124,8 @@ The generated `ext.config.yaml` file includes a `pre-app-build` hook that automa
 
 Upon running the generate commands, this will automatically create:
 
-1. A **configuration schema** at `commerce-configuration-1/.generated/configuration-schema.json` - A validated JSON representation of your schema for runtime use
-2. **Six runtime actions** under `commerce-configuration-1/.generated/actions/app-management/`:
+1. A **configuration schema** at `src/commerce-configuration-1/.generated/configuration-schema.json` - A validated JSON representation of your schema for runtime use
+2. **Six runtime actions** under `src/commerce-configuration-1/.generated/actions/app-management/`:
 
 **Scope Management Actions:**
 
