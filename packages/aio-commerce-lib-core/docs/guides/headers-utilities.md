@@ -77,6 +77,43 @@ getHeader(headers, "authorization"); // "Bearer lowercase" (exact match)
 getHeader(headers, "AUTHORIZATION"); // "Bearer uppercase" (case-insensitive fallback)
 ```
 
+### Multiple Header Values (RFC 9110)
+
+According to RFC 9110, when a header appears multiple times, the HTTP server/runtime MAY combine (not necessarily) the values with commas. `getHeader` automatically splits comma-separated strings into arrays:
+
+```typescript
+// Header appeared multiple times in request:
+// cache-control: no-store
+// cache-control: no-cache
+// Runtime combines to: "no-store, no-cache"
+
+const headers = {
+  "cache-control": "no-store, no-cache", // Comma-separated string from runtime
+  "x-api-key": "key123",
+};
+
+const value = getHeader(headers, "cache-control");
+// Returns: ["Foo", "Bar"] (automatically split into array)
+```
+
+Single values without commas are returned as strings:
+
+```typescript
+const headers = {
+  "cache-control": "no-store",
+  "x-api-key": "key123",
+};
+
+const value = getHeader(headers, "cache-control");
+// Returns: "no-store" (string, not array)
+```
+
+**Return Type**: `getHeader` returns `string | string[] | undefined`:
+
+- `string` - Single header value (no commas)
+- `string[]` - Multiple header values (comma-separated string was automatically split)
+- `undefined` - Header not found
+
 ## assertRequiredHeaders
 
 Validates that required headers are present and non-empty. Performs case-insensitive validation.

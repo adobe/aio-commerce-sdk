@@ -60,6 +60,34 @@ describe("headers/helpers", () => {
 
       expect(getHeader(headers, "x-api-key")).toBeUndefined();
     });
+
+    test("should split comma-separated strings into arrays", () => {
+      const headers = { "Example-Field": "Foo, Bar" };
+
+      expect(getHeader(headers, "Example-Field")).toEqual(["Foo", "Bar"]);
+    });
+
+    test("should trim values when splitting comma-separated strings", () => {
+      const headers = { "Example-Field": "Foo , Bar , Baz" };
+
+      expect(getHeader(headers, "Example-Field")).toEqual([
+        "Foo",
+        "Bar",
+        "Baz",
+      ]);
+    });
+
+    test("should return single strings without commas as-is", () => {
+      const headers = { "Example-Field": "SingleValue" };
+
+      expect(getHeader(headers, "Example-Field")).toBe("SingleValue");
+    });
+
+    test("should handle empty string", () => {
+      const headers = { "Example-Field": "" };
+
+      expect(getHeader(headers, "Example-Field")).toBe("");
+    });
   });
 
   describe("getHeadersFromParams", () => {
@@ -135,6 +163,21 @@ describe("headers/helpers", () => {
         "x-api-key": "",
         Authorization: "Bearer token",
         "x-custom": undefined,
+      });
+    });
+
+    test("should preserve comma-separated string header values", () => {
+      const params = {
+        __ow_headers: {
+          "Example-Field": "Foo, Bar",
+          "x-api-key": "test-key",
+        },
+      };
+
+      const headers = getHeadersFromParams(params);
+      expect(headers).toEqual({
+        "Example-Field": "Foo, Bar",
+        "x-api-key": "test-key",
       });
     });
   });

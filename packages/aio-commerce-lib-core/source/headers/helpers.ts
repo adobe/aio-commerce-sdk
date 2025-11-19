@@ -11,14 +11,18 @@
  */
 
 import type { RuntimeActionParams } from "#params";
-import type { HttpHeaders } from "./types";
+import type { HttpHeaders, HttpHeaderValue } from "./types";
 
 /**
  * Extracts a header value from an object with case-insensitive lookup.
  * This is useful for handling HTTP headers which can be case-insensitive per RFC 7230.
  *
+ * If a header value is a comma-separated string (per RFC 9110), it is automatically
+ * split into an array. Headers that are already arrays are returned as-is.
+ *
  * @param headers The headers object to search in.
  * @param name The header name to look for (case-insensitive).
+ * @returns The header value as `string | string[] | undefined`. Comma-separated strings are split into arrays.
  *
  * @example
  * ```typescript
@@ -28,28 +32,42 @@ import type { HttpHeaders } from "./types";
  *
  * @example
  * ```typescript
- * const headers = { AUTHORIZATION: "Bearer token123" };
- * const auth = getHeader(headers, "authorization"); // "Bearer token123"
+ * // Comma-separated string is automatically split
+ * const headers = { "Example-Field": "Foo, Bar" };
+ * const value = getHeader(headers, "Example-Field"); // ["Foo", "Bar"]
  * ```
+ *
+ * @example
+ * ```typescript
+ * // Array values are returned as-is
+ * const headers: HttpHeaders = { "Example-Field": ["Foo", "Bar"] };
+ * const value = getHeader(headers, "Example-Field"); // ["Foo", "Bar"]
+ * ```
+ *
+ * @see https://datatracker.ietf.org/doc/html/rfc9110#name-field-lines-and-combined-fi
  */
-export function getHeader(
-  headers: HttpHeaders,
-  name: string,
-): string | undefined {
+export function getHeader(headers: HttpHeaders, name: string): HttpHeaderValue {
+  let value: HttpHeaderValue;
+
   // Try exact match first for performance
   if (Object.hasOwn(headers, name)) {
-    return headers[name];
-  }
-
-  // Fall back to case-insensitive search
-  const lowerName = name.toLowerCase();
-  for (const key in headers) {
-    if (Object.hasOwn(headers, key) && key.toLowerCase() === lowerName) {
-      return headers[key];
+    value = headers[name];
+  } else {
+    // Fall back to case-insensitive search
+    const lowerName = name.toLowerCase();
+    for (const key in headers) {
+      if (Object.hasOwn(headers, key) && key.toLowerCase() === lowerName) {
+        value = headers[key];
+        break;
+      }
     }
   }
 
-  return;
+  if (typeof value === "string" && value.includes(",")) {
+    value = value.split(",").map((v) => v.trim());
+  }
+
+  return value;
 }
 
 /**
@@ -61,7 +79,7 @@ export function getHeader(
  * @example
  * ```typescript
  * export async function main(params) {
- *   const headers = extractRuntimeHeaders(params);
+ *   const headers = getHeadersFromParams(params);
  *   const apiKey = headers["x-api-key"];
  * }
  * ```

@@ -30,9 +30,20 @@ export function getMissingHeaders(
 
   for (const header of requiredHeaders) {
     const value = getHeader(headers, header);
-    const trimmedValue = String(value)?.trim();
 
-    if (value === undefined || value === null || trimmedValue === "") {
+    if (value === undefined || value === null) {
+      missing.push(header);
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      // Check if array is empty or all values are empty/whitespace
+      const hasNonEmptyValue = value.some((v) => v.trim() !== "");
+      if (!hasNonEmptyValue) {
+        missing.push(header);
+      }
+    } else if (value.trim() === "") {
+      // Check if string is empty or whitespace-only
       missing.push(header);
     }
   }

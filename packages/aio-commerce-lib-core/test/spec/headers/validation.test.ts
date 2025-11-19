@@ -153,5 +153,26 @@ describe("headers/validation", () => {
       assertRequiredHeaders(headers, ["x-api-key"]);
       expect(headers["x-optional"]).toBe("optional-value");
     });
+
+    test("should validate headers with comma-separated values", () => {
+      // getHeader will split these into arrays, validation handles arrays correctly
+      const headers = {
+        "Example-Field": "Foo, Bar",
+        "x-api-key": "test-key",
+      };
+
+      assertRequiredHeaders(headers, ["Example-Field", "x-api-key"]);
+    });
+
+    test("should consider comma-separated empty values as missing", () => {
+      const headers = {
+        "Example-Field": ", ",
+        "x-api-key": "test-key",
+      };
+
+      expect(() => {
+        assertRequiredHeaders(headers, ["Example-Field", "x-api-key"]);
+      }).toThrow("Missing required headers: [Example-Field]");
+    });
   });
 });
