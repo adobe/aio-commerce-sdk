@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type { RuntimeActionParams } from "~/params";
+import type { RuntimeActionParams } from "#params";
 import type { HttpHeaders } from "./types";
 
 /**
