@@ -18,11 +18,10 @@ import type { HttpHeaders, HttpHeaderValue } from "./types";
  * This is useful for handling HTTP headers which can be case-insensitive per RFC 7230.
  *
  * If a header value is a comma-separated string (per RFC 9110), it is automatically
- * split into an array. Headers that are already arrays are returned as-is.
+ * split into an array.
  *
  * @param headers The headers object to search in.
  * @param name The header name to look for (case-insensitive).
- * @returns The header value as `string | string[] | undefined`. Comma-separated strings are split into arrays.
  *
  * @example
  * ```typescript
@@ -34,13 +33,6 @@ import type { HttpHeaders, HttpHeaderValue } from "./types";
  * ```typescript
  * // Comma-separated string is automatically split
  * const headers = { "Example-Field": "Foo, Bar" };
- * const value = getHeader(headers, "Example-Field"); // ["Foo", "Bar"]
- * ```
- *
- * @example
- * ```typescript
- * // Array values are returned as-is
- * const headers: HttpHeaders = { "Example-Field": ["Foo", "Bar"] };
  * const value = getHeader(headers, "Example-Field"); // ["Foo", "Bar"]
  * ```
  *
