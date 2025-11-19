@@ -76,7 +76,7 @@ Then add a `postinstall` script to your `package.json`:
   },
 
   "scripts": {
-    "postinstall": "@adobe/aio-commerce-lib-config generate all"
+    "postinstall": "npx @adobe/aio-commerce-lib-config generate all"
   }
 }
 ```
