@@ -136,8 +136,8 @@ describe("headers/validation", () => {
       assertRequiredHeaders(headers, ["x-api-key", "Authorization"]);
 
       // TypeScript should now know these are strings (not string | undefined)
-      const apiKey: string = headers["x-api-key"];
-      const auth: string = headers.Authorization;
+      const apiKey = headers["x-api-key"];
+      const auth = headers.Authorization;
 
       expect(apiKey).toBe("test-key");
       expect(auth).toBe("Bearer token");
