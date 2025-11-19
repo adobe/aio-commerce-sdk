@@ -12,6 +12,11 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the responses entrypoint */
 
+/**
+ * This module exports core response utilities for the AIO Commerce SDK.
+ * @packageDocumentation
+ */
+
 export { buildErrorResponse, buildSuccessResponse } from "./helpers";
 export * from "./presets";
 
