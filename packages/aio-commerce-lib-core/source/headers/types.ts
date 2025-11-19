@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2025 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
@@ -10,15 +10,5 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: export as part of the Public API */
-
-/**
- * This module exports core HTTP header utilities for the AIO Commerce SDK.
- * @packageDocumentation
- */
-
-export { createHeaderAccessor } from "./accessor";
-export { parseBearerToken } from "./auth";
-export { getHeader, getHeadersFromParams } from "./helpers";
-export * from "./types";
-export { assertRequiredHeaders, getMissingHeaders } from "./validation";
+/** The type of an HTTP headers record. */
+export type HttpHeaders = Record<string, string | undefined>;

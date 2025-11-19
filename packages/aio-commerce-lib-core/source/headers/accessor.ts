@@ -16,6 +16,7 @@ import { getHeader } from "./helpers";
 import { getMissingHeaders } from "./validation";
 
 import type { CamelCase } from "type-fest";
+import type { HttpHeaders } from "./types";
 
 /**
  * Creates a type-safe header accessor object with validated required headers.
@@ -36,7 +37,7 @@ import type { CamelCase } from "type-fest";
  * ```
  */
 export function createHeaderAccessor<const T extends string[]>(
-  headers: Record<string, string | undefined>,
+  headers: HttpHeaders,
   requiredHeaders: T,
 ): { [K in T[number] as CamelCase<K>]: string } {
   const missing = getMissingHeaders(headers, requiredHeaders);
