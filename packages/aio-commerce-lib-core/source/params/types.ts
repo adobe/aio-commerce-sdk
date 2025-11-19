@@ -10,15 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: export as part of the Public API */
+/** The type of the runtime action parameters. */
+export type RuntimeActionParams = {
+  /** If the runtime action is invoked via HTTP, this will be the headers of the request. */
+  __ow_headers?: Record<string, string | undefined>;
 
-/**
- * This module exports core HTTP header utilities for the AIO Commerce SDK.
- * @packageDocumentation
- */
+  /** If the runtime action is invoked via HTTP, this will be the HTTP method of the request. */
+  __ow_method?: string;
 
-export { createHeaderAccessor } from "./accessor";
-export { parseBearerToken } from "./auth";
-export { getHeader, getHeadersFromParams } from "./helpers";
-export * from "./types";
-export { assertRequiredHeaders, getMissingHeaders } from "./validation";
+  // Remaining unknown properties.
+  [key: string]: unknown;
+};

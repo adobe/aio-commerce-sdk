@@ -10,6 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
+import type { RuntimeActionParams } from "~/params";
+import type { HttpHeaders } from "./types";
+
 /**
  * Extracts a header value from an object with case-insensitive lookup.
  * This is useful for handling HTTP headers which can be case-insensitive per RFC 7230.
@@ -30,7 +33,7 @@
  * ```
  */
 export function getHeader(
-  headers: Record<string, string | undefined>,
+  headers: HttpHeaders,
   name: string,
 ): string | undefined {
   // Try exact match first for performance
@@ -63,12 +66,10 @@ export function getHeader(
  * }
  * ```
  */
-export function getHeadersFromParams(
-  params: Record<string, unknown>,
-): Record<string, string | undefined> {
+export function getHeadersFromParams(params: RuntimeActionParams): HttpHeaders {
   if (!params.__ow_headers || typeof params.__ow_headers !== "object") {
     throw new Error("Missing __ow_headers in action params");
   }
 
-  return params.__ow_headers as Record<string, string | undefined>;
+  return params.__ow_headers;
 }

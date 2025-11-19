@@ -12,6 +12,8 @@
 
 import { getHeader } from "./helpers";
 
+import type { HttpHeaders } from "./types";
+
 /**
  * Checks which headers are missing or empty from the headers object.
  * Performs case-insensitive lookup using {@link getHeader}.
@@ -21,7 +23,7 @@ import { getHeader } from "./helpers";
  * @returns Array of missing header names (empty array if all present).
  */
 export function getMissingHeaders(
-  headers: Record<string, string | undefined>,
+  headers: HttpHeaders,
   requiredHeaders: string[],
 ): string[] {
   const missing: string[] = [];
@@ -64,7 +66,7 @@ export function getMissingHeaders(
  * ```
  */
 export function assertRequiredHeaders(
-  headers: Record<string, string | undefined>,
+  headers: HttpHeaders,
   requiredHeaders: string[],
 ): void {
   const missing = getMissingHeaders(headers, requiredHeaders);

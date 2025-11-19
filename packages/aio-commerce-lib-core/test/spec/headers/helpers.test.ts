@@ -87,6 +87,7 @@ describe("headers/helpers", () => {
 
     test("should throw error when __ow_headers is null", () => {
       expect(() => {
+        // @ts-expect-error - null is not a valid __ow_headers object
         getHeadersFromParams({ __ow_headers: null });
       }).toThrow("Missing __ow_headers in action params");
     });
@@ -99,14 +100,17 @@ describe("headers/helpers", () => {
 
     test("should throw error when __ow_headers is not an object", () => {
       expect(() => {
+        // @ts-expect-error - not-an-object is not a valid __ow_headers object
         getHeadersFromParams({ __ow_headers: "not-an-object" });
       }).toThrow("Missing __ow_headers in action params");
 
       expect(() => {
+        // @ts-expect-error - 123 is not a valid __ow_headers object
         getHeadersFromParams({ __ow_headers: 123 });
       }).toThrow("Missing __ow_headers in action params");
 
       expect(() => {
+        // @ts-expect-error - true is not a valid __ow_headers object
         getHeadersFromParams({ __ow_headers: true });
       }).toThrow("Missing __ow_headers in action params");
     });
