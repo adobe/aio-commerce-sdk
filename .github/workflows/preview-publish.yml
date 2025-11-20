@@ -1,0 +1,171 @@
+name: Preview Publish
+
+on:
+  issue_comment:
+    types: [created]
+
+# Automatically cancel in-progress jobs in the same branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  publish:
+    name: Publish Preview Packages
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '/publish-preview')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PR information
+        id: pr-info
+        run: |
+          # From Node v22.18.0, the node command is able to run .ts files directly (if it only needs type stripping).
+          # As of August 2025, Node v22.18.0 is already LTS (the version used by this workflow).
+          RESULT=$(node .github/scripts/preview-publish/get-pr-info.ts \
+            "${{ github.event.issue.number }}" \
+            "${{ secrets.GITHUB_TOKEN }}" \
+            "${{ github.repository }}")
+          
+          echo "PR info result:"
+          echo "$RESULT"
+          
+          PR_NUMBER=$(echo "$RESULT" | jq -r '.prNumber')
+          BASE_REF=$(echo "$RESULT" | jq -r '.baseRef')
+          HEAD_SHA=$(echo "$RESULT" | jq -r '.headSha')
+          
+          echo "pr-number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "base-ref=$BASE_REF" >> $GITHUB_OUTPUT
+          echo "head-sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+          
+          echo "PR #$PR_NUMBER: Publishing preview packages"
+          echo "Base ref: $BASE_REF"
+          echo "Head SHA: $HEAD_SHA"
+
+      - name: Checkout code
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          # Fetch all history for all branches so --affected can compare properly
+          fetch-depth: 0
+          ref: ${{ steps.pr-info.outputs.head-sha }}
+
+      - name: Fetch target branch for PR
+        run: |
+          git fetch origin ${{ steps.pr-info.outputs.base-ref }}:refs/remotes/origin/${{ steps.pr-info.outputs.base-ref }}
+
+      # pnpm version will be read from packageManager field in package.json
+      - name: Setup pnpm
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: lts/*
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Detect packages with changesets
+        id: changesets
+        run: |
+          BASE_REF="origin/${{ steps.pr-info.outputs.base-ref }}"
+          HEAD_SHA="${{ steps.pr-info.outputs.head-sha }}"
+          
+          echo "Comparing $HEAD_SHA against $BASE_REF"
+
+          # Run TypeScript script to detect packages with changesets
+          # From Node v22.18.0, the node command is able to run .ts files directly (if it only needs type stripping).
+          # As of August 2025, Node v22.18.0 is already LTS (the version used by this workflow).
+          RESULT=$(node .github/scripts/preview-publish/detect-changesets.ts "$BASE_REF" "$HEAD_SHA")
+          
+          echo "Changeset detection result:"
+          echo "$RESULT"
+
+          # Extract values from JSON output using jq
+          HAS_CHANGESETS=$(echo "$RESULT" | jq -r '.hasChangesets')
+          PACKAGE_NAMES=$(echo "$RESULT" | jq -r '.packages | join(" ")')
+
+          echo "hasChangesets=$HAS_CHANGESETS" >> $GITHUB_OUTPUT
+          echo "packageNames=$PACKAGE_NAMES" >> $GITHUB_OUTPUT
+
+      - name: Map package names to paths
+        if: steps.changesets.outputs.hasChangesets == 'true'
+        id: package-paths
+        run: |
+          PACKAGE_NAMES="${{ steps.changesets.outputs.packageNames }}"
+          
+          # From Node v22.18.0, the node command is able to run .ts files directly (if it only needs type stripping).
+          # As of August 2025, Node v22.18.0 is already LTS (the version used by this workflow).
+          RESULT=$(node .github/scripts/preview-publish/map-package-paths.ts "$PACKAGE_NAMES")
+          
+          echo "Package paths result:"
+          echo "$RESULT"
+          
+          PACKAGE_PATHS=$(echo "$RESULT" | jq -r '.packagePaths | join(" ")')
+          
+          echo "packagePaths=$PACKAGE_PATHS" >> $GITHUB_OUTPUT
+          echo "Package paths to publish: $PACKAGE_PATHS"
+
+      - name: Build packages with changesets
+        if: steps.changesets.outputs.hasChangesets == 'true'
+        run: |
+          PACKAGE_NAMES="${{ steps.changesets.outputs.packageNames }}"
+          
+          # From Node v22.18.0, the node command is able to run .ts files directly (if it only needs type stripping).
+          # As of August 2025, Node v22.18.0 is already LTS (the version used by this workflow).
+          RESULT=$(node .github/scripts/preview-publish/build-turbo-filter.ts "$PACKAGE_NAMES")
+          
+          FILTER=$(echo "$RESULT" | jq -r '.filter')
+          
+          echo "Building packages (with dependencies): $PACKAGE_NAMES"
+          echo "Turbo filter: $FILTER"
+          
+          # Build packages with changesets and their dependencies
+          # The ... suffix ensures dependencies are built too
+          pnpm turbo run build $FILTER
+
+      - name: Dry run - Show publish command
+        if: steps.changesets.outputs.hasChangesets == 'true'
+        run: |
+          PACKAGE_PATHS="${{ steps.package-paths.outputs.packagePaths }}"
+          
+          # From Node v22.18.0, the node command is able to run .ts files directly (if it only needs type stripping).
+          # As of August 2025, Node v22.18.0 is already LTS (the version used by this workflow).
+          RESULT=$(node .github/scripts/preview-publish/build-publish-command.ts "$PACKAGE_PATHS")
+          
+          PUBLISH_CMD=$(echo "$RESULT" | jq -r '.command')
+          
+          echo "::notice title=Preview Publish Command::Would execute: $PUBLISH_CMD"
+          echo "Command that would be executed:"
+          echo "$PUBLISH_CMD"
+
+      - name: Publish preview packages
+        if: steps.changesets.outputs.hasChangesets == 'true'
+        id: publish
+        run: |
+          PACKAGE_PATHS="${{ steps.package-paths.outputs.packagePaths }}"
+          
+          # From Node v22.18.0, the node command is able to run .ts files directly (if it only needs type stripping).
+          # As of August 2025, Node v22.18.0 is already LTS (the version used by this workflow).
+          RESULT=$(node .github/scripts/preview-publish/build-publish-command.ts "$PACKAGE_PATHS")
+          
+          PUBLISH_CMD=$(echo "$RESULT" | jq -r '.command')
+          
+          echo "Executing: $PUBLISH_CMD"
+          $PUBLISH_CMD
+
+      # - name: Comment on PR if no changesets found
+      #   if: steps.changesets.outputs.hasChangesets == 'false'
+      #   run: |
+      #     curl -X POST \
+      #       -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+      #       -H "Accept: application/vnd.github.v3+json" \
+      #       "https://api.github.com/repos/${{ github.repository }}/issues/${{ steps.pr-info.outputs.pr-number }}/comments" \
+      #       -d '{"body":"⚠️ No changesets found. Please add a changeset file to publish preview packages."}'
+
