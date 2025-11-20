@@ -23,18 +23,3 @@ export const DEFAULT_EXTENSIBILITY_CONFIG_SCHEMA: BusinessConfigSchema = [
 
 /** To match environment variables in the .env file */
 export const ENV_VAR_REGEX = /^([A-Z_]+)=/;
-
-/** The package manager used to install the package */
-export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
-
-/** Simple representation of a partial app.config.yaml file */
-export type AppConfig = {
-  extensions?: {
-    [extensionKey: string]: {
-      $include?: string;
-      [configKey: string]: unknown;
-    };
-  };
-
-  [configKey: string]: unknown;
-};
