@@ -2,15 +2,20 @@ import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { Document, isNode, isSeq, parse as parseYaml } from "yaml";
+import { Document, parse as parseYaml } from "yaml";
 
 import {
   CONFIG_SCHEMA_FILE_NAME,
-  EXTENSION_POINT_FOLDER,
+  EXTENSION_POINT_FOLDER_PATH,
   GENERATED_ACTIONS_PATH,
   GENERATED_PATH,
   PACKAGE_NAME,
 } from "#commands/constants";
+import {
+  addCommentToNode,
+  makeOutputDirFor,
+  setFlowStyleForSeq,
+} from "#commands/utils";
 
 import { ACTION_INPUTS, RUNTIME_ACTIONS } from "./constants";
 import { logger } from "./logger";
@@ -21,12 +26,13 @@ import type { ActionConfig, ActionDefinition, ExtConfig } from "./types";
 export async function updateExtConfig() {
   logger.info("📝 Updating ext.config.yaml...");
 
-  const extConfigPath = join(EXTENSION_POINT_FOLDER, "ext.config.yaml");
+  const outputDir = await makeOutputDirFor(EXTENSION_POINT_FOLDER_PATH);
+  const extConfigPath = join(outputDir, "ext.config.yaml");
   const extConfig = await readExtConfig(extConfigPath);
 
+  buildHooks(extConfig);
   buildOperations(extConfig);
   buildRuntimeManifest(extConfig);
-  buildHooks(extConfig);
 
   await writeExtConfig(extConfigPath, extConfig);
   return extConfig;
@@ -129,7 +135,11 @@ function buildHooks(extConfig: ExtConfig) {
   if (extConfig.hooks["pre-app-build"].trim() === "") {
     extConfig.hooks["pre-app-build"] =
       "npx @adobe/aio-commerce-lib-config generate schema";
-  } else {
+  } else if (
+    !extConfig.hooks["pre-app-build"].includes(
+      "npx @adobe/aio-commerce-lib-config generate schema",
+    )
+  ) {
     extConfig.hooks["pre-app-build"] +=
       " && npx @adobe/aio-commerce-lib-config generate schema";
   }
@@ -146,35 +156,6 @@ async function readExtConfig(configPath: string) {
 
   const content = await readFile(configPath, "utf-8");
   return (parseYaml(content) as ExtConfig) || {};
-}
-
-/**
- * Add a comment before a node
- * @param doc - The YAML document
- * @param path - The path to the node
- * @param comment - The comment to add
- */
-function addCommentToNode(doc: Document, path: string[], comment: string) {
-  const node: unknown = doc.getIn(path);
-  if (isNode(node)) {
-    node.commentBefore = comment;
-  }
-}
-
-/**
- * Set flow style for all items in a sequence
- * @param doc - The YAML document
- * @param path - The path to the sequence
- */
-function setFlowStyleForSeq(doc: Document, path: string[]) {
-  const node: unknown = doc.getIn(path);
-  if (isSeq(node)) {
-    for (const item of node.items) {
-      if (isSeq(item)) {
-        item.flow = true;
-      }
-    }
-  }
 }
 
 /**

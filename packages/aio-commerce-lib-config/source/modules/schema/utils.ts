@@ -7,7 +7,6 @@ import { safeParse } from "valibot";
 import { CONFIG_SCHEMA_PATH } from "../../utils/constants";
 import { BusinessConfigSchema } from "./schema";
 
-import type { AnySchema } from "valibot";
 import type { ConfigSchemaField } from "./index";
 
 /** Read bundled schema file from the runtime action */
@@ -46,14 +45,9 @@ export async function readBundledSchemaWithVersion(): Promise<{
 /**
  * Validate a business configuration schema, against the business config own schema.
  * @param value - The business configuration schema to validate
- * @param schema - The business config own schema to use
  */
-export function validateSchema(
-  value: unknown,
-  schema?: AnySchema,
-): ConfigSchemaField[] {
-  const schemaToUse = schema ?? BusinessConfigSchema;
-  const { output, success, issues } = safeParse(schemaToUse, value);
+export function validateBusinessConfigSchema(value: unknown) {
+  const { output, success, issues } = safeParse(BusinessConfigSchema, value);
 
   if (!success) {
     throw new CommerceSdkValidationError("Invalid configuration schema", {
@@ -61,15 +55,11 @@ export function validateSchema(
     });
   }
 
-  return output;
+  return output satisfies ConfigSchemaField[];
 }
 
-/**
- * Validate and parse schema from JSON content
- */
-export function validateSchemaFromContent(
-  content: string,
-): ConfigSchemaField[] {
+/** Validate and parse schema from JSON content */
+export function validateSchemaFromContent(content: string) {
   const rawSchema = JSON.parse(content);
-  return validateSchema(rawSchema);
+  return validateBusinessConfigSchema(rawSchema) satisfies ConfigSchemaField[];
 }

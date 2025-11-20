@@ -19,6 +19,34 @@ See the [API Reference](./api-reference/README.md) for a full list of classes, i
 
 ### Setup
 
+#### Recommended: Quick Setup with Init Command
+
+The easiest way to get started is using the `init` command, which automates the setup process:
+
+```bash
+npx @adobe/aio-commerce-lib-config init
+```
+
+The `init` command will:
+
+- Create `extensibility.config.js` with a template schema (if it doesn't exist)
+- Add the `postinstall` script to your `package.json`
+- Generate all required artifacts (schema and runtime actions)
+- Update your `app.config.yaml` with the extension reference
+- Create or update your `.env` file with placeholder environment variables
+- Install required dependencies (`@adobe/aio-commerce-lib-config` and `@adobe/aio-commerce-sdk`)
+
+The command automatically detects your package manager (npm, pnpm, or yarn) by checking for lock files and uses the appropriate commands.
+
+After running `init`, you'll need to:
+
+1. Review and customize `extensibility.config.js` with your configuration schema
+2. Fill in the required values in your `.env` file
+
+#### Alternative: Manual Setup
+
+If you prefer to set up manually or need more control over the process:
+
 1. Create your configuration schema at `extensibility.config.js` in the project root:
 
 Define the structure of your application's configuration using a JavaScript module. This example shows how to create different types of configuration fields, such as list and text. Each field definition specifies its type, label, and optional default values.
@@ -62,7 +90,7 @@ module.exports = {
 };
 ```
 
-1. First, install the package:
+2. Install the package and add a `postinstall` script:
 
 ```bash
 npm install @adobe/aio-commerce-lib-config
@@ -84,8 +112,11 @@ Then add a `postinstall` script to your `package.json`:
 
 This script will run automatically every time you install your dependencies. This is done because the generated runtime actions will only change when you install the package for the first time, or a new version of it.
 
+3. Generate the artifacts:
+
 The CLI provides several commands:
 
+- `@adobe/aio-commerce-lib-config init` - Initialize the project (recommended for first-time setup)
 - `@adobe/aio-commerce-lib-config generate all` - Generate all artifacts (schema + runtime actions)
 - `@adobe/aio-commerce-lib-config generate schema` - Generate the configuration schema only
 - `@adobe/aio-commerce-lib-config generate actions` - Generate runtime actions and ext.config.yaml only
@@ -105,7 +136,7 @@ npx @adobe/aio-commerce-lib-config generate actions
 npx @adobe/aio-commerce-lib-config validate schema
 ```
 
-3. In your `app.config.yaml` file, reference the generated `ext.config.yaml` file:
+4. In your `app.config.yaml` file, reference the generated `ext.config.yaml` file:
 
 ```yaml
 extensions:

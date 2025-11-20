@@ -14,6 +14,7 @@
 
 import { run as generateActionsCommand } from "#commands/generate/actions/run";
 import { run as generateSchemaCommand } from "#commands/generate/schema/run";
+import { run as initCommand } from "#commands/init/run";
 import { run as validateSchemaCommand } from "#commands/schema/validate/run";
 
 const NAMESPACE = "@adobe/aio-commerce-lib-config";
@@ -22,9 +23,11 @@ const args = process.argv.slice(2);
 const [command, subcommand] = args;
 
 const USAGE = `
-Usage: ${NAMESPACE} <command> <target>
+Usage: ${NAMESPACE} <command> [target]
 
 Commands:
+  init                 Initialize the project (recommended for first-time setup)
+  
   generate <target>    Generate artifacts
     all                Generate configuration schema and runtime actions
     schema             Generate configuration schema only
@@ -36,6 +39,7 @@ Commands:
   help                 Show this help message
 
 Examples:
+  ${NAMESPACE} init
   ${NAMESPACE} generate all
   ${NAMESPACE} generate schema
   ${NAMESPACE} generate actions
@@ -54,6 +58,7 @@ async function generateAll() {
  * Command handlers registry mapping command names to their subcommand handlers
  */
 const COMMANDS = {
+  init: initCommand,
   generate: {
     schema: generateSchemaCommand,
     actions: generateActionsCommand,
@@ -116,6 +121,13 @@ async function main() {
       process.exit(1);
     }
 
+    // Handle direct commands (like init) that don't have subcommands
+    if (typeof handlers === "function") {
+      await handlers();
+      return;
+    }
+
+    // Handle commands with subcommands (like generate, validate)
     await handleCommand(command, subcommand, handlers);
   } catch (error) {
     process.stderr.write(

@@ -2,7 +2,10 @@ import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { GENERATED_ACTIONS_PATH } from "#commands/constants";
+import {
+  EXTENSION_POINT_FOLDER_PATH,
+  GENERATED_ACTIONS_PATH,
+} from "#commands/constants";
 import { makeOutputDirFor } from "#commands/utils";
 
 import { RUNTIME_ACTIONS } from "./constants";
@@ -23,8 +26,10 @@ export async function run() {
 /** Generate the action files */
 async function generateActionFiles() {
   logger.info("🔧 Generating runtime actions...");
+  const outputDir = await makeOutputDirFor(
+    join(EXTENSION_POINT_FOLDER_PATH, GENERATED_ACTIONS_PATH),
+  );
 
-  const outputDir = await makeOutputDirFor(GENERATED_ACTIONS_PATH);
   const templatesDir = join(__dirname, "generate/actions/templates");
 
   for (const action of RUNTIME_ACTIONS) {
