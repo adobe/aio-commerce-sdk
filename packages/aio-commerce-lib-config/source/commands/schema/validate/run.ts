@@ -1,20 +1,17 @@
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { stringifyError } from "#commands/utils";
 
 import { loadBusinessConfigSchema } from "./lib";
 import { logger } from "./logger";
-
-/** Default configuration schema path for init files. */
-const EXTENSIBILITY_CONFIG_FILE = "extensibility.config.js";
 
 /**
  * Validate the configuration schema.
  * @returns The validated schema.
  */
 export async function run() {
-  logger.info("🔄 Analyzing configuration schema...");
+  logger.info("🔍 Validating configuration schema...");
 
   try {
-    const result = await loadBusinessConfigSchema(EXTENSIBILITY_CONFIG_FILE);
+    const result = await loadBusinessConfigSchema();
     if (result !== null) {
       logger.info("✅ Configuration schema validation passed.\n");
       return result;
@@ -23,15 +20,9 @@ export async function run() {
     logger.info("⚠️ No schema found to validate.\n");
     return null;
   } catch (error) {
-    if (error instanceof CommerceSdkValidationError) {
-      logger.error(
-        "❌ Configuration schema validation failed:\n",
-        error.display(true),
-      );
-    }
+    logger.error(stringifyError(error as Error));
+    logger.error("❌ Configuration schema validation failed\n");
 
-    throw new Error("Configuration schema validation failed", {
-      cause: error,
-    });
+    throw new Error("Configuration schema validation failed", { cause: error });
   }
 }
