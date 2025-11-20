@@ -11,6 +11,7 @@ governing permissions and limitations under the License.
 */
 
 import type { SetOptional } from "type-fest";
+import type { BusinessConfigSchema } from "#modules/schema/schema";
 
 // Configuration-specific types
 export type ConfigOrigin = {
@@ -18,7 +19,7 @@ export type ConfigOrigin = {
   level: string;
 };
 
-export type AcceptableConfigValue = string | number | boolean | string[];
+export type AcceptableConfigValue = BusinessConfigSchema[number]["default"];
 
 export type ConfigValue = {
   name: string;

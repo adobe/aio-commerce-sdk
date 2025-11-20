@@ -28,8 +28,12 @@ export async function loadBusinessConfigSchema() {
   }
 
   try {
-    const extensibilityConfig = await readExtensibilityConfig(resolvedPath);
-    return extensibilityConfig?.businessConfig?.schema;
+    const extensibilityConfig = await readExtensibilityConfig();
+    if (!extensibilityConfig) {
+      return null;
+    }
+
+    return extensibilityConfig.businessConfig?.schema ?? null;
   } catch (error) {
     process.stderr.write(`${stringifyError(error as Error)}\n`);
     process.stderr.write("❌ Error loading extensibility.config.js\n");

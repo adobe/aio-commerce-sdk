@@ -1,9 +1,7 @@
 import { existsSync } from "node:fs";
-import { writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { loadBusinessConfigSchema } from "#commands/schema/validate/lib";
 import { validateBusinessConfigSchema } from "#modules/schema/utils";
@@ -13,9 +11,14 @@ import {
 } from "#test/fixtures/configuration-schema";
 
 vi.mock("node:fs");
-
-beforeEach(() => {
-  vi.clearAllMocks();
+vi.mock("#commands/utils", async () => {
+  const actual =
+    await vi.importActual<typeof import("#commands/utils")>("#commands/utils");
+  return {
+    ...actual,
+    getProjectRootDirectory: vi.fn(),
+    readExtensibilityConfig: vi.fn(),
+  };
 });
 
 describe("validator", () => {
@@ -38,14 +41,15 @@ describe("validator", () => {
   describe("loadBusinessConfigSchema()", () => {
     it("should validate if the file does exist and the content is valid", async () => {
       const tempDir = tmpdir();
-      const testFile = join(tempDir, "extensibility.config.js");
-      await writeFile(
-        testFile,
-        `module.exports = { businessConfig: { schema: ${JSON.stringify(VALID_CONFIGURATION)} } };`,
+      const { getProjectRootDirectory, readExtensibilityConfig } = await import(
+        "#commands/utils"
       );
 
-      vi.spyOn(process, "cwd").mockReturnValueOnce(tempDir);
+      vi.mocked(getProjectRootDirectory).mockResolvedValueOnce(tempDir);
       vi.mocked(existsSync).mockReturnValueOnce(true);
+      vi.mocked(readExtensibilityConfig).mockResolvedValueOnce({
+        businessConfig: { schema: VALID_CONFIGURATION },
+      });
 
       await expect(async () => {
         await loadBusinessConfigSchema();
@@ -53,6 +57,10 @@ describe("validator", () => {
     });
 
     it("should return null if the file does not exist", async () => {
+      const tempDir = tmpdir();
+      const { getProjectRootDirectory } = await import("#commands/utils");
+
+      vi.mocked(getProjectRootDirectory).mockResolvedValueOnce(tempDir);
       vi.mocked(existsSync).mockReturnValueOnce(false);
 
       // Should return gracefully with null
@@ -62,11 +70,15 @@ describe("validator", () => {
 
     it("should throw if loading the file fails with invalid syntax", async () => {
       const tempDir = tmpdir();
-      const testFile = join(tempDir, "extensibility.config.js");
+      const { getProjectRootDirectory, readExtensibilityConfig } = await import(
+        "#commands/utils"
+      );
 
-      await writeFile(testFile, "module.exports = { invalid syntax here");
-      vi.spyOn(process, "cwd").mockReturnValueOnce(tempDir);
+      vi.mocked(getProjectRootDirectory).mockResolvedValueOnce(tempDir);
       vi.mocked(existsSync).mockReturnValueOnce(true);
+      vi.mocked(readExtensibilityConfig).mockRejectedValueOnce(
+        new Error("Invalid syntax"),
+      );
 
       await expect(loadBusinessConfigSchema()).rejects.toThrow();
     });
