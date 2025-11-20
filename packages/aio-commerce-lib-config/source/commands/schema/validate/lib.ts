@@ -8,8 +8,6 @@ import {
   stringifyError,
 } from "#commands/utils";
 
-import { logger } from "./logger";
-
 /** Load the business configuration schema from the given path. */
 export async function loadBusinessConfigSchema() {
   let resolvedPath: string | null = null;
@@ -20,8 +18,8 @@ export async function loadBusinessConfigSchema() {
     );
   } finally {
     if (!(resolvedPath && existsSync(resolvedPath))) {
-      logger.warn(
-        `⚠️ Extensibility config file not found at ${resolvedPath}. Skipping validation.`,
+      process.stderr.write(
+        `⚠️ Extensibility config file not found at ${resolvedPath}. Skipping validation.\n`,
       );
 
       // biome-ignore lint/correctness/noUnsafeFinally: Safe to return null
@@ -33,8 +31,8 @@ export async function loadBusinessConfigSchema() {
     const extensibilityConfig = await readExtensibilityConfig(resolvedPath);
     return extensibilityConfig?.businessConfig?.schema;
   } catch (error) {
-    logger.error(stringifyError(error as Error));
-    logger.error("❌ Error loading extensibility.config.js");
+    process.stderr.write(`${stringifyError(error as Error)}\n`);
+    process.stderr.write("❌ Error loading extensibility.config.js\n");
 
     throw new Error("Error loading extensibility.config.js", { cause: error });
   }

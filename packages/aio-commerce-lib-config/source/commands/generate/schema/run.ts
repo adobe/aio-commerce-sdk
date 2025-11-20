@@ -9,19 +9,17 @@ import {
 import { loadBusinessConfigSchema } from "#commands/schema/validate/lib";
 import { makeOutputDirFor } from "#commands/utils";
 
-import { logger } from "./logger";
-
 /** Run the generate schema command */
 export async function run() {
-  logger.info("🔍 Validating configuration schema...");
+  process.stdout.write("🔍 Validating configuration schema...\n");
   const validatedSchema = await loadBusinessConfigSchema();
 
   if (validatedSchema === null) {
-    logger.info("❌ Configuration schema validation failed.\n");
+    process.stdout.write("❌ Configuration schema validation failed.\n");
     return;
   }
 
-  logger.info("🔧 Generating schema file...");
+  process.stdout.write("🔧 Generating schema file...\n");
   await generateSchemaFile(validatedSchema);
 }
 
@@ -35,5 +33,5 @@ async function generateSchemaFile(validatedSchema?: unknown) {
   const schemaContent = validatedSchema ? validatedSchema : [];
 
   await writeFile(schemaPath, JSON.stringify(schemaContent, null, 2), "utf-8");
-  logger.info(`📄 Generated ${CONFIG_SCHEMA_FILE_NAME}\n`);
+  process.stdout.write(`📄 Generated ${CONFIG_SCHEMA_FILE_NAME}\n`);
 }

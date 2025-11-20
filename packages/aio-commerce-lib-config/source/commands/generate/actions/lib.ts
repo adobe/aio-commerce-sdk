@@ -18,13 +18,12 @@ import {
 } from "#commands/utils";
 
 import { ACTION_INPUTS, RUNTIME_ACTIONS } from "./constants";
-import { logger } from "./logger";
 
 import type { ActionConfig, ActionDefinition, ExtConfig } from "./types";
 
 /** Update the ext.config.yaml file */
 export async function updateExtConfig() {
-  logger.info("📝 Updating ext.config.yaml...");
+  process.stdout.write("📝 Updating ext.config.yaml...\n");
 
   const outputDir = await makeOutputDirFor(EXTENSION_POINT_FOLDER_PATH);
   const extConfigPath = join(outputDir, "ext.config.yaml");
