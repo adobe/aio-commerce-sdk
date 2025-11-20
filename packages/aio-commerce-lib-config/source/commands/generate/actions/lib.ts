@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { Document, parse as parseYaml } from "yaml";
+import { Document, parseDocument } from "yaml";
 
 import {
   CONFIG_SCHEMA_FILE_NAME,
@@ -148,13 +148,14 @@ function buildHooks(extConfig: ExtConfig) {
  * Read the ext.config.yaml file
  * @param configPath - The path to the ext.config.yaml file
  */
-async function readExtConfig(configPath: string) {
+async function readExtConfig(configPath: string): Promise<ExtConfig> {
   if (!existsSync(configPath)) {
     return {};
   }
 
   const content = await readFile(configPath, "utf-8");
-  return (parseYaml(content) as ExtConfig) || {};
+  const doc = parseDocument(content, { keepSourceTokens: true });
+  return (doc.toJS() as ExtConfig) || {};
 }
 
 /**
