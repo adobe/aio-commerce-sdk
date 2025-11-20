@@ -18,7 +18,11 @@ import { init } from '@adobe/aio-commerce-lib-config';
 import {
   resolveCommerceHttpClientParams,
 } from '@adobe/aio-commerce-sdk/api';
-import { internalServerError, ok } from '@adobe/aio-commerce-sdk/core/responses';
+import { 
+  internalServerError,
+  nonAuthoritativeInformation,
+  ok 
+} from '@adobe/aio-commerce-sdk/core/responses';
 
 /**
  * Sync commerce scopes.
@@ -34,11 +38,30 @@ export async function main(params) {
 
     const result = await config.syncCommerceScopes();
 
+    if (result.error) {
+      return internalServerError({
+        body: {
+          code: "INTERNAL_ERROR",
+          message: "An internal server error occurred",
+          error: result.error,
+        }
+      })
+    }
+
+    if (!(result.synced)) {
+      return nonAuthoritativeInformation({
+        headers: { "x-cache": "hit" },
+        body: {
+          scopes: result.scopeTree,
+          synced: false,
+        }
+      })
+    }
+
     return ok({
       body: {
         scopes: result.scopeTree,
-        synced: result.synced,
-        error: result.error
+        synced: true,
       }
     });
   } catch (error) {
