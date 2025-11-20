@@ -11,7 +11,6 @@ import {
   installDependencies,
   runGeneration,
 } from "./lib";
-import { logger } from "./logger";
 
 function makeStep<T extends (...args: Parameters<T>) => ReturnType<T>>(
   name: string,
@@ -24,7 +23,9 @@ function makeStep<T extends (...args: Parameters<T>) => ReturnType<T>>(
 /** Initialize the project with @adobe/aio-commerce-lib-config */
 export async function run() {
   try {
-    logger.info("🚀 Initializing @adobe/aio-commerce-lib-config...\n");
+    process.stdout.write(
+      "🚀 Initializing @adobe/aio-commerce-lib-config...\n\n",
+    );
 
     const packageManager = await detectPackageManager();
     const execCommand = getExecCommand(packageManager);
@@ -44,20 +45,20 @@ export async function run() {
       const result = await fn();
 
       if (!result) {
-        logger.error(`❌ Initialization failed at step: ${name}\n`);
+        process.stderr.write(`❌ Initialization failed at step: ${name}\n`);
         throw new Error(`Initialization failed at step: ${name}`);
       }
     }
 
-    logger.info("✅ Initialization complete!");
-    logger.info(
+    process.stdout.write("✅ Initialization complete!\n");
+    process.stdout.write(
       "📝 Next steps:\n" +
         "   1. Review and customize extensibility.config.js\n" +
         "   2. Fill in the required values in your .env file\n",
     );
   } catch (error) {
-    logger.error(stringifyError(error as Error));
-    logger.error("❌ Initialization failed\n");
+    process.stderr.write(`${stringifyError(error as Error)}\n`);
+    process.stderr.write("❌ Initialization failed\n");
 
     throw new Error("Initialization failed", { cause: error });
   }

@@ -28,7 +28,6 @@ import {
   DEFAULT_EXTENSIBILITY_CONFIG_SCHEMA,
   ENV_VAR_REGEX,
 } from "./constants";
-import { logger } from "./logger";
 
 import type { AppConfig, InstallYaml, PackageManager } from "./types";
 
@@ -37,14 +36,14 @@ export async function ensureExtensibilityConfig(cwd = process.cwd()) {
   const extensibilityConfig = await readExtensibilityConfig(cwd);
 
   if (extensibilityConfig) {
-    logger.info(
-      `✅ ${EXTENSIBILITY_CONFIG_FILE} already exists. Continuing...`,
+    process.stdout.write(
+      `✅ ${EXTENSIBILITY_CONFIG_FILE} already exists. Continuing...\n`,
     );
 
     const schema = extensibilityConfig.businessConfig?.schema;
     if (!schema) {
-      logger.warn(
-        "⚠️ No schema found in extensibility.config.js. Please add a `businessConfig.schema` property.",
+      process.stderr.write(
+        "⚠️ No schema found in extensibility.config.js. Please add a `businessConfig.schema` property.\n",
       );
 
       return false;
@@ -53,7 +52,7 @@ export async function ensureExtensibilityConfig(cwd = process.cwd()) {
     return true;
   }
 
-  logger.info(`📝 Creating ${EXTENSIBILITY_CONFIG_FILE}...`);
+  process.stdout.write(`📝 Creating ${EXTENSIBILITY_CONFIG_FILE}...\n`);
   const exportKeyword = (await isESM(cwd))
     ? "export default"
     : "module.exports =";
@@ -70,7 +69,7 @@ export async function ensureExtensibilityConfig(cwd = process.cwd()) {
     "utf-8",
   );
 
-  logger.info(`✅ Created ${EXTENSIBILITY_CONFIG_FILE}`);
+  process.stdout.write(`✅ Created ${EXTENSIBILITY_CONFIG_FILE}\n`);
   return true;
 }
 
@@ -118,11 +117,11 @@ export async function ensurePackageJsonScript(
   const packageJson = await readPackageJson(cwd);
 
   if (!packageJson) {
-    logger.warn(
-      "⚠️  package.json not found. Please add the postinstall script manually:",
+    process.stderr.write(
+      "⚠️  package.json not found. Please add the postinstall script manually:\n",
     );
 
-    logger.info(`   "postinstall": "${postinstallScript}"`);
+    process.stdout.write(`   "postinstall": "${postinstallScript}"\n`);
     return false;
   }
 
@@ -132,21 +131,23 @@ export async function ensurePackageJsonScript(
     packageJson.scripts.postinstall === postinstallScript ||
     packageJson.scripts.postinstall?.includes(postinstallScript)
   ) {
-    logger.info(
-      `✅ postinstall script already configured in ${PACKAGE_JSON_FILE}`,
+    process.stdout.write(
+      `✅ postinstall script already configured in ${PACKAGE_JSON_FILE}\n`,
     );
 
     return true;
   }
 
   if (packageJson.scripts.postinstall) {
-    logger.warn(
-      `⚠️  ${PACKAGE_JSON_FILE} already has a postinstall script. Adding a new one...`,
+    process.stderr.write(
+      `⚠️  ${PACKAGE_JSON_FILE} already has a postinstall script. Adding a new one...\n`,
     );
 
     packageJson.scripts.postinstall += ` && ${postinstallScript}`;
   } else {
-    logger.info(`📝 Adding postinstall script to ${PACKAGE_JSON_FILE}...`);
+    process.stdout.write(
+      `📝 Adding postinstall script to ${PACKAGE_JSON_FILE}...\n`,
+    );
     packageJson.scripts = {
       postinstall: postinstallScript,
       ...packageJson.scripts,
@@ -159,7 +160,7 @@ export async function ensurePackageJsonScript(
     "utf-8",
   );
 
-  logger.info(`✅ Added postinstall script to ${PACKAGE_JSON_FILE}`);
+  process.stdout.write(`✅ Added postinstall script to ${PACKAGE_JSON_FILE}\n`);
   return true;
 }
 
@@ -175,11 +176,11 @@ export async function ensureAppConfig(cwd = process.cwd()) {
       const content = await readFile(appConfigPath, "utf-8");
       appConfig = (parseYaml(content) as AppConfig) || {};
     } catch (error) {
-      logger.error(stringifyError(error as Error));
+      process.stderr.write(`${stringifyError(error as Error)}\n`);
 
       const content = `extensions:\n\t${EXTENSION_POINT_ID}:\n\t\t$include: "${includePath}"`;
-      logger.warn(
-        `❌ Failed to parse ${APP_CONFIG_FILE}. Please add manually: \n\t${content}`,
+      process.stderr.write(
+        `❌ Failed to parse ${APP_CONFIG_FILE}. Please add manually: \n\t${content}\n`,
       );
 
       return false;
@@ -189,12 +190,14 @@ export async function ensureAppConfig(cwd = process.cwd()) {
   appConfig.extensions ??= {};
 
   if (appConfig.extensions[EXTENSION_POINT_ID]?.$include === includePath) {
-    logger.info(`✅ Extension already configured in ${APP_CONFIG_FILE}`);
+    process.stdout.write(
+      `✅ Extension already configured in ${APP_CONFIG_FILE}\n`,
+    );
     return true;
   }
 
   // Add or update the extension
-  logger.info(`📝 Updating ${APP_CONFIG_FILE}...`);
+  process.stdout.write(`📝 Updating ${APP_CONFIG_FILE}...\n`);
   appConfig.extensions[EXTENSION_POINT_ID] = {
     $include: includePath,
     ...appConfig.extensions[EXTENSION_POINT_ID],
@@ -206,7 +209,7 @@ export async function ensureAppConfig(cwd = process.cwd()) {
   });
 
   await writeFile(appConfigPath, yamlContent, "utf-8");
-  logger.info(`✅ Updated ${APP_CONFIG_FILE}`);
+  process.stdout.write(`✅ Updated ${APP_CONFIG_FILE}\n`);
 
   return true;
 }
@@ -279,14 +282,16 @@ export async function ensureEnvFile(cwd = process.cwd()) {
   const missingVars = requiredVars.filter((v) => !existingEnvVars.has(v));
 
   if (missingVars.length === 0) {
-    logger.info(
-      `✅ All required environment variables already present in ${ENV_FILE}`,
+    process.stdout.write(
+      `✅ All required environment variables already present in ${ENV_FILE}\n`,
     );
 
     return true;
   }
 
-  logger.info(`📝 Adding environment variable placeholders to ${ENV_FILE}...`);
+  process.stdout.write(
+    `📝 Adding environment variable placeholders to ${ENV_FILE}...\n`,
+  );
   let newContent = "";
 
   if (!existingEnvVars.has("LOG_LEVEL")) {
@@ -318,7 +323,9 @@ export async function ensureEnvFile(cwd = process.cwd()) {
   ]);
 
   await writeFile(envPath, `${newContent}\n${envContent}`, "utf-8");
-  logger.info(`✅ Added environment variable placeholders to ${ENV_FILE}`);
+  process.stdout.write(
+    `✅ Added environment variable placeholders to ${ENV_FILE}\n`,
+  );
 
   return true;
 }
@@ -328,7 +335,7 @@ export function installDependencies(
   packageManager: PackageManager,
   cwd = process.cwd(),
 ) {
-  logger.info("📦 Installing dependencies...");
+  process.stdout.write("📦 Installing dependencies...\n");
   const packages = [
     "@adobe/aio-commerce-lib-config",
     "@adobe/aio-commerce-sdk",
@@ -349,12 +356,12 @@ export function installDependencies(
       stdio: "inherit",
     });
 
-    logger.info("✅ Dependencies installed successfully");
+    process.stdout.write("✅ Dependencies installed successfully\n");
     return true;
   } catch (error) {
-    logger.error(stringifyError(error as Error));
-    logger.error(
-      `❌  Failed to install dependencies automatically. Please install manually: ${installCommand}`,
+    process.stderr.write(`${stringifyError(error as Error)}\n`);
+    process.stderr.write(
+      `❌  Failed to install dependencies automatically. Please install manually: ${installCommand}\n`,
     );
 
     return false;
@@ -374,9 +381,9 @@ export async function runGeneration(cwd = process.cwd()) {
       stdio: "inherit",
     });
   } catch (error) {
-    logger.error(stringifyError(error as Error));
-    logger.error(
-      `❌  Failed to run generation command. Please run manually: ${execCommand} @adobe/aio-commerce-lib-config generate all`,
+    process.stderr.write(`${stringifyError(error as Error)}\n`);
+    process.stderr.write(
+      `❌  Failed to run generation command. Please run manually: ${execCommand} @adobe/aio-commerce-lib-config generate all\n`,
     );
 
     return false;
@@ -397,11 +404,11 @@ export async function ensureInstallYaml(cwd = process.cwd()) {
       const content = await readFile(installYamlPath, "utf-8");
       installYaml = parseYaml(content) as InstallYaml;
     } catch (error) {
-      logger.error(stringifyError(error as Error));
+      process.stderr.write(`${stringifyError(error as Error)}\n`);
 
       const content = `extensions:\n  - ${EXTENSION_POINT_ID}`;
-      logger.warn(
-        `❌ Failed to parse ${INSTALL_YAML_FILE}. Please add manually: \n\t${content}`,
+      process.stderr.write(
+        `❌ Failed to parse ${INSTALL_YAML_FILE}. Please add manually: \n\t${content}\n`,
       );
 
       return false;
@@ -414,12 +421,14 @@ export async function ensureInstallYaml(cwd = process.cwd()) {
   );
 
   if (hasExtension) {
-    logger.info(`✅ Extension already configured in ${INSTALL_YAML_FILE}`);
+    process.stdout.write(
+      `✅ Extension already configured in ${INSTALL_YAML_FILE}\n`,
+    );
     return true;
   }
 
   // Add the extension (preserving existing ones)
-  logger.info(`📝 Updating ${INSTALL_YAML_FILE}...`);
+  process.stdout.write(`📝 Updating ${INSTALL_YAML_FILE}...\n`);
   installYaml.extensions.push({ extensionPointId: EXTENSION_POINT_ID });
 
   await writeFile(
@@ -428,6 +437,6 @@ export async function ensureInstallYaml(cwd = process.cwd()) {
     "utf-8",
   );
 
-  logger.info(`✅ Updated ${INSTALL_YAML_FILE}`);
+  process.stdout.write(`✅ Updated ${INSTALL_YAML_FILE}\n`);
   return true;
 }
