@@ -18,7 +18,7 @@ export type ConfigOrigin = {
   level: string;
 };
 
-export type AcceptableConfigValue = string | number | boolean;
+export type AcceptableConfigValue = string | number | boolean | string[];
 
 export type ConfigValue = {
   name: string;
