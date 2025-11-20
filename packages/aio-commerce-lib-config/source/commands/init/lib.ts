@@ -4,7 +4,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import util from "node:util";
 
-import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+import { parseDocument, stringify as stringifyYaml } from "yaml";
 
 import {
   APP_CONFIG_FILE,
@@ -170,11 +170,11 @@ export async function ensureAppConfig(cwd = process.cwd()) {
   const appConfigPath = join(rootDirectory, APP_CONFIG_FILE);
   const includePath = join(EXTENSION_POINT_FOLDER_PATH, "ext.config.yaml");
 
-  let appConfig: AppConfig = {};
+  let doc: ReturnType<typeof parseDocument>;
   if (existsSync(appConfigPath)) {
     try {
       const content = await readFile(appConfigPath, "utf-8");
-      appConfig = (parseYaml(content) as AppConfig) || {};
+      doc = parseDocument(content, { keepSourceTokens: true });
     } catch (error) {
       process.stderr.write(`${stringifyError(error as Error)}\n`);
 
@@ -185,8 +185,11 @@ export async function ensureAppConfig(cwd = process.cwd()) {
 
       return false;
     }
+  } else {
+    doc = parseDocument("{}", { keepSourceTokens: true });
   }
 
+  const appConfig = (doc.toJS() as AppConfig) || {};
   appConfig.extensions ??= {};
 
   if (appConfig.extensions[EXTENSION_POINT_ID]?.$include === includePath) {
@@ -203,7 +206,12 @@ export async function ensureAppConfig(cwd = process.cwd()) {
     ...appConfig.extensions[EXTENSION_POINT_ID],
   };
 
-  const yamlContent = stringifyYaml(appConfig, {
+  // Create a new document with the updated config to preserve formatting
+  const updatedDoc = parseDocument(stringifyYaml(appConfig), {
+    keepSourceTokens: true,
+  });
+
+  const yamlContent = updatedDoc.toString({
     indent: 2,
     lineWidth: 0,
   });
@@ -397,24 +405,26 @@ export async function ensureInstallYaml(cwd = process.cwd()) {
   const rootDirectory = await getProjectRootDirectory(cwd);
   const installYamlPath = join(rootDirectory, INSTALL_YAML_FILE);
 
-  let installYaml: InstallYaml = { extensions: [] };
-
+  let doc: ReturnType<typeof parseDocument>;
   if (existsSync(installYamlPath)) {
     try {
       const content = await readFile(installYamlPath, "utf-8");
-      installYaml = parseYaml(content) as InstallYaml;
+      doc = parseDocument(content, { keepSourceTokens: true });
     } catch (error) {
       process.stderr.write(`${stringifyError(error as Error)}\n`);
 
-      const content = `extensions:\n  - ${EXTENSION_POINT_ID}`;
+      const content = `extensions:\n  - extensionPointId: ${EXTENSION_POINT_ID}`;
       process.stderr.write(
         `❌ Failed to parse ${INSTALL_YAML_FILE}. Please add manually: \n\t${content}\n`,
       );
 
       return false;
     }
+  } else {
+    doc = parseDocument("extensions: []", { keepSourceTokens: true });
   }
 
+  const installYaml = (doc.toJS() as InstallYaml) || { extensions: [] };
   installYaml.extensions ??= [];
   const hasExtension = installYaml.extensions.some(
     (ext) => ext.extensionPointId === EXTENSION_POINT_ID,
@@ -431,11 +441,17 @@ export async function ensureInstallYaml(cwd = process.cwd()) {
   process.stdout.write(`📝 Updating ${INSTALL_YAML_FILE}...\n`);
   installYaml.extensions.push({ extensionPointId: EXTENSION_POINT_ID });
 
-  await writeFile(
-    installYamlPath,
-    stringifyYaml(installYaml, { indent: 2, lineWidth: 0 }),
-    "utf-8",
-  );
+  // Create a new document with the updated config to preserve formatting
+  const updatedDoc = parseDocument(stringifyYaml(installYaml), {
+    keepSourceTokens: true,
+  });
+
+  const yamlContent = updatedDoc.toString({
+    indent: 2,
+    lineWidth: 0,
+  });
+
+  await writeFile(installYamlPath, yamlContent, "utf-8");
 
   process.stdout.write(`✅ Updated ${INSTALL_YAML_FILE}\n`);
   return true;
