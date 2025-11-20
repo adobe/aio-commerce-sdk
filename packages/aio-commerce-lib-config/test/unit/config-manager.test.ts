@@ -49,6 +49,7 @@ vi.mock("#modules/schema/config-schema-repository", () => {
     {
       name: "exampleList",
       type: "list",
+      selectionMode: "single",
       options: [{ label: "Option 1", value: "option1" }],
       default: "option1",
     },
