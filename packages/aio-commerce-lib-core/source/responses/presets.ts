@@ -20,6 +20,7 @@ import type {
 
 export const HTTP_OK = 200;
 export const HTTP_CREATED = 201;
+export const HTTP_NON_AUTHORITATIVE_INFORMATION = 203;
 export const HTTP_BAD_REQUEST = 400;
 export const HTTP_UNAUTHORIZED = 401;
 export const HTTP_FORBIDDEN = 403;
@@ -55,6 +56,14 @@ export const ok = curryBuildSuccessResponse(HTTP_OK);
  * See {@link buildSuccessResponse} for details on the response payload.
  */
 export const created = curryBuildSuccessResponse(HTTP_CREATED);
+
+/**
+ * Creates a success response with the HTTP status code 203.
+ * See {@link buildSuccessResponse} for details on the response payload.
+ */
+export const nonAuthoritativeInformation = curryBuildSuccessResponse(
+  HTTP_NON_AUTHORITATIVE_INFORMATION,
+);
 
 /**
  * Creates an error response with the HTTP status code 400.
