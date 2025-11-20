@@ -6,7 +6,7 @@
 //     - packagePaths: string[] (array of package paths)
 //
 // Usage:
-//   node .github/scripts/map-package-paths.ts "@adobe/aio-commerce-lib-config @adobe/aio-commerce-lib-api"
+//   node .github/scripts/preview-publish/map-package-paths.ts "@adobe/aio-commerce-lib-config @adobe/aio-commerce-lib-api"
 
 import { existsSync } from "node:fs";
 
@@ -31,9 +31,9 @@ function mapPackagePaths(packageNames: string[]): PackagePathsResult {
     // Verify the path exists
     if (existsSync(pkgPath)) {
       packagePaths.push(pkgPath);
-      console.log(`Mapped ${pkg} -> ${pkgPath}`);
+      console.error(`Mapped ${pkg} -> ${pkgPath}`);
     } else {
-      console.warn(`Warning: Package path ${pkgPath} not found for ${pkg}`);
+      console.error(`Warning: Package path ${pkgPath} not found for ${pkg}`);
     }
   }
 
@@ -49,7 +49,7 @@ function main() {
   if (!packageNamesArg) {
     console.error("Error: packageNames argument is required");
     console.error(
-      "Usage: node .github/scripts/map-package-paths.ts '<packageNames>'",
+      "Usage: node .github/scripts/preview-publish/map-package-paths.ts '<packageNames>'",
     );
     process.exit(1);
   }
@@ -66,6 +66,8 @@ function main() {
   }
 
   const result = mapPackagePaths(packageNames);
+
+  // Output JSON for GitHub Actions to parse (use stdout for data, stderr for logs)
   process.stdout.write(JSON.stringify(result, null, 2));
 }
 
