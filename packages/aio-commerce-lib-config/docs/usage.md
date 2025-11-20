@@ -15,13 +15,23 @@ The `@adobe/aio-commerce-lib-config` library provides:
 
 See the [API Reference](./api-reference/README.md) for a full list of classes, interfaces, and functions exported by the library.
 
+## Quick Start
+
+The fastest way to get started is using the `init` command:
+
+```bash
+npx @adobe/aio-commerce-lib-config init
+```
+
+This single command will set up everything you need. See [Setup](#setup) below for details.
+
 ## How to use
 
 ### Setup
 
 #### Recommended: Quick Setup with Init Command
 
-The easiest way to get started is using the `init` command, which automates the setup process:
+The easiest way to get started is using the `init` command, which automates the entire setup process:
 
 ```bash
 npx @adobe/aio-commerce-lib-config init
@@ -33,10 +43,11 @@ The `init` command will:
 - Add the `postinstall` script to your `package.json`
 - Generate all required artifacts (schema and runtime actions)
 - Update your `app.config.yaml` with the extension reference
+- Create or update your `install.yaml` with the extension point reference
 - Create or update your `.env` file with placeholder environment variables
 - Install required dependencies (`@adobe/aio-commerce-lib-config` and `@adobe/aio-commerce-sdk`)
 
-The command automatically detects your package manager (npm, pnpm, or yarn) by checking for lock files and uses the appropriate commands.
+The command automatically detects your package manager (npm, pnpm, yarn, or bun) by checking for lock files and uses the appropriate commands.
 
 After running `init`, you'll need to:
 
@@ -136,7 +147,7 @@ npx @adobe/aio-commerce-lib-config generate actions
 npx @adobe/aio-commerce-lib-config validate schema
 ```
 
-4. In your `app.config.yaml` file, reference the generated `ext.config.yaml` file:
+4. In your `app.config.yaml` file, reference the generated `ext.config.yaml` file. If you have multiple extension points, add it as a new entry:
 
 ```yaml
 extensions:
@@ -144,10 +155,17 @@ extensions:
     $include: "src/commerce-configuration-1/ext.config.yaml"
 ```
 
+5. In your `install.yaml` file, add the extension point reference. If you have multiple extension points, add it as a new entry:
+
+```yaml
+extensions:
+  - extensionPointId: commerce/configuration/1
+```
+
 The generated `ext.config.yaml` file includes a `pre-app-build` hook that automatically regenerates the configuration schema before each build. This ensures your schema is always up-to-date. The hook is automatically added and should not be manually edited.
 
 > [!IMPORTANT]
-> The generated runtime actions require the SDK package. Make sure to install it before generating actions.
+> The generated runtime actions require the SDK package. Make sure to install it before running your build, otherwise bundling will fail.
 >
 > ```bash
 > npm install @adobe/aio-commerce-sdk
@@ -243,6 +261,7 @@ const config = init({
       technicalAccountId: "your-technical-account-id",
       technicalAccountEmail: "your-technical-account-email",
       imsOrgId: "your-ims-org-id",
+
       // For PaaS instances
       consumerKey: "your-consumer-key",
       consumerSecret: "your-consumer-secret",
@@ -435,9 +454,11 @@ This command will:
 - Check that your `extensibility.config.js` file exists and is valid
 - Validate the schema structure and field definitions
 - Ensure all required properties are present
-- Report any validation errors with details
+- Report any validation errors with clear, descriptive error messages
 
-The library supports two field types for configuration schemas:
+The validation provides detailed error messages for each validation failure, making it easy to identify and fix issues in your schema configuration.
+
+The library supports multiple field types for configuration schemas:
 
 **Text Field:**
 
@@ -449,6 +470,97 @@ Use text fields for free-form input values like merchant identifiers or custom s
   label: "Merchant ID",
   type: "text",
   default: ""
+}
+```
+
+**Password Field:**
+
+Use password fields for sensitive values that should be masked in the UI. Password fields support optional default values.
+
+```javascript
+{
+  name: "api_key",
+  label: "API Key",
+  type: "password",
+  default: process.env.API_KEY
+}
+```
+
+**Boolean Field:**
+
+Use boolean fields for true/false or yes/no settings. Boolean fields support optional default values.
+
+```javascript
+{
+  name: "enable_feature",
+  label: "Enable Feature",
+  type: "boolean",
+  default: false
+}
+```
+
+**Number Field:**
+
+Use number fields for numeric values. Number fields support optional default values.
+
+```javascript
+{
+  name: "max_items",
+  label: "Maximum Items",
+  type: "number",
+  default: 10
+}
+```
+
+**Date Field:**
+
+Use date fields for date values. Date fields support optional default values.
+
+```javascript
+{
+  name: "start_date",
+  label: "Start Date",
+  type: "date",
+  default: new Date("2024-01-01")
+}
+```
+
+**Email Field:**
+
+Use email fields for email addresses with automatic validation. Email fields support optional default values.
+
+```javascript
+{
+  name: "admin_email",
+  label: "Admin Email",
+  type: "email",
+  default: "admin@example.com"
+}
+```
+
+**URL Field:**
+
+Use URL fields for web addresses with automatic validation. URL fields support optional default values.
+
+```javascript
+{
+  name: "api_endpoint",
+  label: "API Endpoint",
+  type: "url",
+  default: "https://api.example.com"
+}
+```
+
+**Phone Field:**
+
+Use phone fields for telephone numbers with format validation. Phone fields support optional default values.
+
+```javascript
+{
+  name: "support_phone",
+  label: "Support Phone",
+  type: "tel",
+  default: "+1-555-123-4567"
 }
 ```
 
