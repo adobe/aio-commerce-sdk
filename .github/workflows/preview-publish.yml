@@ -121,9 +121,8 @@ jobs:
           echo "::notice title=Dry Run::Would publish packages: $PACKAGE_PATHS"
           echo "Command: pnpm dlx pkg-pr-new publish --compact --comment=create $PACKAGE_PATHS"
 
-      # Uncomment when ready to actually publish
-      # - name: Publish preview packages
-      #   if: steps.changed_packages.outputs.has_changes == 'true'
-      #   run: |
-      #     PACKAGE_PATHS="${{ steps.package_paths.outputs.package_paths }}"
-      #     pnpm dlx pkg-pr-new publish --compact --comment=create $PACKAGE_PATHS
+      - name: Publish preview packages
+        if: steps.changed_packages.outputs.has_changes == 'true'
+        run: |
+          PACKAGE_PATHS="${{ steps.package_paths.outputs.package_paths }}"
+          pnpx pkg-pr-new publish --compact --comment=create $PACKAGE_PATHS
