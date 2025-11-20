@@ -113,14 +113,6 @@ jobs:
           PACKAGE_PATHS=$(echo "$RESULT" | jq -r '.packagePaths | join(" ")')
           echo "package_paths=$PACKAGE_PATHS" >> $GITHUB_OUTPUT
 
-      - name: Dry run - Show publish command
-        if: steps.changed_packages.outputs.has_changes == 'true'
-        run: |
-          PACKAGE_PATHS="${{ steps.package_paths.outputs.package_paths }}"
-          
-          echo "::notice title=Dry Run::Would publish packages: $PACKAGE_PATHS"
-          echo "Command: pnpm dlx pkg-pr-new publish --compact --comment=create $PACKAGE_PATHS"
-
       - name: Publish preview packages
         if: steps.changed_packages.outputs.has_changes == 'true'
         run: |
