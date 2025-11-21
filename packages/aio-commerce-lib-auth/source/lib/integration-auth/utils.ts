@@ -19,6 +19,26 @@ import type { IntegrationAuthProvider } from "./provider";
 import type { IntegrationAuthParams } from "./schema";
 
 /**
+ * Parses the provided configuration for an {@link IntegrationAuthProvider}.
+ * @param config - The configuration to parse.
+ * @throws {CommerceSdkValidationError} If the configuration is invalid.
+ *
+ * @internal
+ */
+function __parseIntegrationAuthParams(config: unknown) {
+  const result = safeParse(IntegrationAuthParamsSchema, config);
+  if (!result.success) {
+    throw new CommerceSdkValidationError(
+      "Invalid IntegrationAuthProvider configuration",
+      {
+        issues: result.issues,
+      },
+    );
+  }
+
+  return result.output;
+}
+/**
  * Asserts the provided configuration for an Adobe Commerce {@link IntegrationAuthProvider}.
  * @param config The configuration to validate.
  * @throws {CommerceSdkValidationError} If the configuration is invalid.
@@ -51,15 +71,9 @@ import type { IntegrationAuthParams } from "./schema";
 export function assertIntegrationAuthParams(
   config: Record<PropertyKey, unknown>,
 ): asserts config is IntegrationAuthParams {
-  const result = safeParse(IntegrationAuthParamsSchema, config);
-  if (!result.success) {
-    throw new CommerceSdkValidationError(
-      "Invalid IntegrationAuthProvider configuration",
-      {
-        issues: result.issues,
-      },
-    );
-  }
+  // Run the parsing but discard the result
+  // This will throw if the configuration is invalid
+  __parseIntegrationAuthParams(config);
 }
 
 /**
@@ -85,6 +99,5 @@ export function resolveIntegrationAuthParams(
     accessTokenSecret: params.AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET,
   };
 
-  assertIntegrationAuthParams(resolvedParams);
-  return resolvedParams;
+  return __parseIntegrationAuthParams(resolvedParams);
 }

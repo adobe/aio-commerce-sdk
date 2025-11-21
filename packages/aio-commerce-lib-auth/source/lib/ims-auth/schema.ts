@@ -18,7 +18,9 @@ import {
   optional,
   picklist,
   pipe,
+  rawTransform,
   string,
+  union,
   array as vArray,
 } from "valibot";
 
@@ -40,14 +42,49 @@ const imsAuthParameter = (name: string) =>
 /**
  * Creates a validation schema for an IMS auth string array parameter.
  * @param name The name of the parameter for error messages.
+ * @param minimumLength The minimum length of the array.
  * @returns A validation pipeline that ensures the parameter is an array of strings.
  */
-const stringArray = (name: string) =>
-  pipe(
-    vArray(
-      string(),
-      `Expected a string array value for the IMS auth parameter ${name}`,
+const stringArray = (name: string, minimumLength: number) => {
+  const schema = vArray(
+    string(),
+    `Expected a string array value for the IMS auth parameter ${name}`,
+  );
+
+  return pipe(
+    schema,
+    minLength(
+      minimumLength,
+      `Expected at least ${minimumLength} items for the IMS auth parameter ${name}`,
     ),
+  );
+};
+
+/**
+ * Creates a validation schema for an IMS auth string array parameter that may be a JSON string.
+ * @param name The name of the parameter for error messages.
+ * @returns A validation pipeline that ensures the parameter is an array of strings.
+ */
+const maybeJsonStringArray = (name: string) =>
+  pipe(
+    imsAuthParameter(name),
+    rawTransform(({ dataset: { value: v }, addIssue, NEVER }) => {
+      if (v.startsWith("[") && v.endsWith("]")) {
+        try {
+          return JSON.parse(v);
+        } catch (error) {
+          const errorMessage = (error as Error).message;
+          addIssue({
+            received: v,
+            message: `Expected a valid JSON array for the IMS auth parameter "${name}": ${errorMessage}`,
+          });
+
+          return NEVER;
+        }
+      }
+
+      return [v];
+    }),
   );
 
 /** Validation schema for IMS auth environment values. */
@@ -57,8 +94,11 @@ const ImsAuthEnvSchema = picklist(["prod", "stage"]);
 export const ImsAuthParamsSchema = object({
   clientId: imsAuthParameter("clientId"),
   clientSecrets: pipe(
-    stringArray("clientSecrets"),
-    minLength(1, "Expected at least one client secret for IMS auth"),
+    union([
+      maybeJsonStringArray("clientSecrets"),
+      stringArray("clientSecrets", 1),
+    ]),
+    stringArray("clientSecrets", 1),
   ),
   technicalAccountId: imsAuthParameter("technicalAccountId"),
   technicalAccountEmail: pipe(
@@ -70,10 +110,7 @@ export const ImsAuthParamsSchema = object({
   imsOrgId: imsAuthParameter("imsOrgId"),
   environment: pipe(optional(ImsAuthEnvSchema)),
   context: pipe(optional(string())),
-  scopes: pipe(
-    stringArray("scopes"),
-    minLength(1, "Expected at least one scope for IMS auth"),
-  ),
+  scopes: stringArray("scopes", 1),
 });
 
 /** Defines the parameters for the IMS auth service. */

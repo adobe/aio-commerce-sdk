@@ -19,6 +19,26 @@ import type { ImsAuthProvider } from "./provider";
 import type { ImsAuthParams } from "./schema";
 
 /**
+ * Parses the provided configuration for an {@link ImsAuthProvider}.
+ * @param config - The configuration to parse.
+ * @throws {CommerceSdkValidationError} If the configuration is invalid.
+ *
+ * @internal
+ */
+function __parseImsAuthParams(config: unknown) {
+  const result = safeParse(ImsAuthParamsSchema, config);
+  if (!result.success) {
+    throw new CommerceSdkValidationError(
+      "Invalid ImsAuthProvider configuration",
+      {
+        issues: result.issues,
+      },
+    );
+  }
+
+  return result.output;
+}
+/**
  * Asserts the provided configuration for an {@link ImsAuthProvider}.
  * @param config The configuration to validate.
  * @throws {CommerceSdkValidationError} If the configuration is invalid.
@@ -55,15 +75,9 @@ import type { ImsAuthParams } from "./schema";
 export function assertImsAuthParams(
   config: Record<PropertyKey, unknown>,
 ): asserts config is ImsAuthParams {
-  const result = safeParse(ImsAuthParamsSchema, config);
-  if (!result.success) {
-    throw new CommerceSdkValidationError(
-      "Invalid ImsAuthProvider configuration",
-      {
-        issues: result.issues,
-      },
-    );
-  }
+  // Run the parsing but discard the result
+  // This will throw if the configuration is invalid
+  __parseImsAuthParams(config);
 }
 
 /**
@@ -101,6 +115,5 @@ export function resolveImsAuthParams(
     context: params.AIO_COMMERCE_AUTH_IMS_CONTEXT,
   };
 
-  assertImsAuthParams(resolvedParams);
-  return resolvedParams;
+  return __parseImsAuthParams(resolvedParams);
 }
