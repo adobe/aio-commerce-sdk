@@ -110,7 +110,10 @@ export const ImsAuthParamsSchema = object({
   imsOrgId: imsAuthParameter("imsOrgId"),
   environment: pipe(optional(ImsAuthEnvSchema)),
   context: pipe(optional(string())),
-  scopes: stringArray("scopes", 1),
+  scopes: pipe(
+    union([maybeJsonStringArray("scopes"), stringArray("scopes", 1)]),
+    stringArray("scopes", 1),
+  ),
 });
 
 /** Defines the parameters for the IMS auth service. */
