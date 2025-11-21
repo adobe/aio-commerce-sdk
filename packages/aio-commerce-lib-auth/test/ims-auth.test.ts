@@ -129,6 +129,105 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         }),
       );
     });
+
+    test("should use default environment when not provided", async () => {
+      const authToken = "supersecrettoken";
+      vi.mocked(getToken).mockResolvedValue(authToken);
+      vi.mocked(context.set).mockResolvedValue(undefined);
+
+      const config: ImsAuthParams = {
+        clientId: "test-client-id",
+        clientSecrets: ["supersecret"],
+        technicalAccountId: "test-technical-account-id",
+        technicalAccountEmail: "test-email@example.com",
+        imsOrgId: "test-org-id",
+        scopes: ["scope1", "scope2"],
+        context: "test-context",
+      };
+
+      const imsAuthProvider = getImsAuthProvider(config);
+      await imsAuthProvider.getAccessToken();
+
+      expect(context.set).toHaveBeenCalledWith(
+        "test-context",
+        expect.objectContaining({
+          scopes: ["scope1", "scope2"],
+          env: "prod", // Should default to "prod" when environment is undefined
+          context: "test-context",
+          client_id: "test-client-id",
+          client_secrets: ["supersecret"],
+          technical_account_id: "test-technical-account-id",
+          technical_account_email: "test-email@example.com",
+          ims_org_id: "test-org-id",
+        }),
+      );
+    });
+
+    test("should use default environment and context when both are not provided", async () => {
+      const authToken = "supersecrettoken";
+      vi.mocked(getToken).mockResolvedValue(authToken);
+      vi.mocked(context.set).mockResolvedValue(undefined);
+
+      const config: ImsAuthParams = {
+        clientId: "test-client-id",
+        clientSecrets: ["supersecret"],
+        technicalAccountId: "test-technical-account-id",
+        technicalAccountEmail: "test-email@example.com",
+        imsOrgId: "test-org-id",
+        scopes: ["scope1", "scope2"],
+      };
+
+      const imsAuthProvider = getImsAuthProvider(config);
+      await imsAuthProvider.getAccessToken();
+
+      expect(context.set).toHaveBeenCalledWith(
+        "aio-commerce-lib-auth-creds",
+        expect.objectContaining({
+          scopes: ["scope1", "scope2"],
+          env: "prod", // Should default to "prod" when environment is undefined
+          context: "aio-commerce-lib-auth-creds",
+          client_id: "test-client-id",
+          client_secrets: ["supersecret"],
+          technical_account_id: "test-technical-account-id",
+          technical_account_email: "test-email@example.com",
+          ims_org_id: "test-org-id",
+        }),
+      );
+    });
+
+    test("should use stage environment when provided", async () => {
+      const authToken = "supersecrettoken";
+      vi.mocked(getToken).mockResolvedValue(authToken);
+      vi.mocked(context.set).mockResolvedValue(undefined);
+
+      const config: ImsAuthParams = {
+        clientId: "test-client-id",
+        clientSecrets: ["supersecret"],
+        technicalAccountId: "test-technical-account-id",
+        technicalAccountEmail: "test-email@example.com",
+        imsOrgId: "test-org-id",
+        scopes: ["scope1", "scope2"],
+        environment: "stage" as const,
+        context: "test-context",
+      };
+
+      const imsAuthProvider = getImsAuthProvider(config);
+      await imsAuthProvider.getAccessToken();
+
+      expect(context.set).toHaveBeenCalledWith(
+        "test-context",
+        expect.objectContaining({
+          scopes: ["scope1", "scope2"],
+          env: "stage",
+          context: "test-context",
+          client_id: "test-client-id",
+          client_secrets: ["supersecret"],
+          technical_account_id: "test-technical-account-id",
+          technical_account_email: "test-email@example.com",
+          ims_org_id: "test-org-id",
+        }),
+      );
+    });
   });
 
   describe("getImsAuthProvider error handling", () => {
@@ -218,6 +317,69 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       }).toThrow("Invalid ImsAuthProvider configuration");
     });
 
+    test("should accept JSON string array for clientSecrets", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          clientSecrets: '["secret1","secret2"]',
+        });
+      }).not.toThrow();
+    });
+
+    test("should accept single string for clientSecrets and convert to array", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          clientSecrets: "single-secret",
+        });
+      }).not.toThrow();
+    });
+
+    test("should throw with invalid JSON string for clientSecrets", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          clientSecrets: "[invalid-json]", // Starts and ends with brackets but invalid JSON
+        });
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw with JSON string containing non-string items for clientSecrets", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          clientSecrets: "[123, 456]", // Valid JSON array but contains numbers, not strings
+        });
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw with invalid JSON syntax in array for clientSecrets", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          clientSecrets: '["test", invalid]', // Starts with [ and ends with ] but has unquoted value (invalid JSON)
+        });
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw with empty JSON array string for clientSecrets", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          clientSecrets: "[]",
+        });
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw with malformed JSON array string for clientSecrets", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          clientSecrets: "[not-valid-json]",
+        });
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
     test("should throw with invalid email format", () => {
       expect(() => {
         assertImsAuthParams({
@@ -268,6 +430,32 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
           clientId: 123,
           clientSecrets: "not-an-array",
           technicalAccountId: true,
+        } as unknown as ImsAuthParams);
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw with array containing non-string items for clientSecrets", () => {
+      expect(() => {
+        const nonStringItem = 123;
+        assertImsAuthParams({
+          ...validConfig,
+          clientSecrets: [nonStringItem, "secret"],
+        } as unknown as ImsAuthParams);
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw with null or undefined clientSecrets", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          clientSecrets: null,
+        } as unknown as ImsAuthParams);
+      }).toThrow("Invalid ImsAuthProvider configuration");
+
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          clientSecrets: undefined,
         } as unknown as ImsAuthParams);
       }).toThrow("Invalid ImsAuthProvider configuration");
     });
@@ -359,6 +547,34 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       });
     });
 
+    test("should resolve IMS auth params with JSON string array for clientSecrets", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: '["secret1","secret2"]',
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+        AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+      };
+
+      const resolved = resolveImsAuthParams(params);
+      expect(resolved.clientSecrets).toEqual(["secret1", "secret2"]);
+    });
+
+    test("should resolve IMS auth params with single string for clientSecrets", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "single-secret",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+        AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+      };
+
+      const resolved = resolveImsAuthParams(params);
+      expect(resolved.clientSecrets).toEqual(["single-secret"]);
+    });
+
     test("should throw CommerceSdkValidationError when required params are missing (validation via assert)", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
@@ -378,6 +594,36 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+      };
+
+      expect(() => {
+        resolveImsAuthParams(params);
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw CommerceSdkValidationError when scopes is a JSON string (scopes must be an array)", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+        AIO_COMMERCE_AUTH_IMS_SCOPES: '["scope1","scope2"]', // JSON string - invalid for scopes
+      };
+
+      expect(() => {
+        resolveImsAuthParams(params);
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw CommerceSdkValidationError when scopes is empty array", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+        AIO_COMMERCE_AUTH_IMS_SCOPES: [], // Empty array - invalid
       };
 
       expect(() => {

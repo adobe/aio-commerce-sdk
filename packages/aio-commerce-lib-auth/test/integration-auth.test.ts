@@ -84,6 +84,91 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
       accessTokenSecret: "test-access-token-secret",
     };
 
+    test("should throw with missing consumerKey", () => {
+      const { consumerKey: _, ...configWithoutConsumerKey } = validConfig;
+      expect(() => {
+        assertIntegrationAuthParams(configWithoutConsumerKey);
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw with empty consumerKey", () => {
+      expect(() => {
+        assertIntegrationAuthParams({
+          ...validConfig,
+          consumerKey: "",
+        });
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw with missing consumerSecret", () => {
+      const { consumerSecret: _, ...configWithoutConsumerSecret } = validConfig;
+      expect(() => {
+        assertIntegrationAuthParams(configWithoutConsumerSecret);
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw with empty consumerSecret", () => {
+      expect(() => {
+        assertIntegrationAuthParams({
+          ...validConfig,
+          consumerSecret: "",
+        });
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw with missing accessToken", () => {
+      const { accessToken: _, ...configWithoutAccessToken } = validConfig;
+      expect(() => {
+        assertIntegrationAuthParams(configWithoutAccessToken);
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw with empty accessToken", () => {
+      expect(() => {
+        assertIntegrationAuthParams({
+          ...validConfig,
+          accessToken: "",
+        });
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw with missing accessTokenSecret", () => {
+      const { accessTokenSecret: _, ...configWithoutAccessTokenSecret } =
+        validConfig;
+      expect(() => {
+        assertIntegrationAuthParams(configWithoutAccessTokenSecret);
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw with empty accessTokenSecret", () => {
+      expect(() => {
+        assertIntegrationAuthParams({
+          ...validConfig,
+          accessTokenSecret: "",
+        });
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw with wrong data types", () => {
+      expect(() => {
+        assertIntegrationAuthParams({
+          consumerKey: 123,
+          consumerSecret: true,
+          accessToken: null,
+          accessTokenSecret: undefined,
+        } as unknown as typeof validConfig);
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw with null values", () => {
+      expect(() => {
+        assertIntegrationAuthParams({
+          ...validConfig,
+          consumerKey: null,
+        } as unknown as typeof validConfig);
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
     test.each([
       ["consumerKey", { consumerKey: undefined }],
       ["consumerSecret", { consumerSecret: undefined }],
@@ -96,6 +181,16 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
           ...overrides,
         });
       }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should handle extra unknown properties", () => {
+      expect(() => {
+        assertIntegrationAuthParams({
+          ...validConfig,
+          extraProperty: "should-be-ignored",
+          anotherExtra: 123,
+        });
+      }).not.toThrow();
     });
   });
 
@@ -119,7 +214,7 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
       });
     });
 
-    test("should throw CommerceSdkValidationError when required params are missing (validation via assert)", () => {
+    test("should throw CommerceSdkValidationError when required params are missing", () => {
       const params = {
         AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
         // Missing other required fields
@@ -130,9 +225,77 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
       }).toThrow("Invalid IntegrationAuthProvider configuration");
     });
 
-    test("should throw CommerceSdkValidationError with invalid data (validation via assert)", () => {
+    test("should throw CommerceSdkValidationError with empty consumerKey", () => {
       const params = {
         AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
+          "test-access-token-secret",
+      };
+
+      expect(() => {
+        resolveIntegrationAuthParams(params);
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw CommerceSdkValidationError with empty consumerSecret", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "",
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
+          "test-access-token-secret",
+      };
+
+      expect(() => {
+        resolveIntegrationAuthParams(params);
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw CommerceSdkValidationError with empty accessToken", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "",
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
+          "test-access-token-secret",
+      };
+
+      expect(() => {
+        resolveIntegrationAuthParams(params);
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw CommerceSdkValidationError with empty accessTokenSecret", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET: "",
+      };
+
+      expect(() => {
+        resolveIntegrationAuthParams(params);
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw CommerceSdkValidationError with invalid data types", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: 123,
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: true,
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: null,
+        AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET: undefined,
+      };
+
+      expect(() => {
+        resolveIntegrationAuthParams(params);
+      }).toThrow("Invalid IntegrationAuthProvider configuration");
+    });
+
+    test("should throw CommerceSdkValidationError with null values", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: null,
         AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
