@@ -1,5 +1,15 @@
 # @adobe/aio-commerce-sdk
 
+## 0.6.1
+
+### Patch Changes
+
+- Updated dependencies [[`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac), [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac), [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac)]:
+  - @adobe/aio-commerce-lib-core@0.5.1
+  - @adobe/aio-commerce-lib-auth@0.6.1
+  - @adobe/aio-commerce-lib-api@0.3.1
+  - @adobe/aio-commerce-lib-events@0.3.3
+
 ## 0.6.0
 
 ### Minor Changes
