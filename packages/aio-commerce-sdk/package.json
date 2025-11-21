@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-sdk",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
