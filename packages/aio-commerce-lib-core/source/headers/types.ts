@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2025 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
@@ -10,14 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the responses entrypoint */
+import type { CamelCase } from "type-fest";
 
-/**
- * This module exports core response utilities for the AIO Commerce SDK.
- * @packageDocumentation
- */
+/** The type of an HTTP header value. */
+export type HttpHeaderValue = string | string[] | undefined;
 
-export { buildErrorResponse, buildSuccessResponse } from "./helpers";
-export * from "./presets";
+/** The type of an HTTP headers record. */
+export type HttpHeaders = Record<string, string | undefined>;
 
-export type { ActionResponse, ErrorResponse, SuccessResponse } from "./helpers";
+/** The type of an HTTP header accessor object. */
+export type HttpHeaderAccessorMap<T extends string[]> = {
+  [K in T[number] as CamelCase<K>]: string | string[];
+};

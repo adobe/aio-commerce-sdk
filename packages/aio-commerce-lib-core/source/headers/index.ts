@@ -10,11 +10,32 @@
  * governing permissions and limitations under the License.
  */
 
+/** biome-ignore-all lint/performance/noBarrelFile: export as part of the Public API */
+
 /**
- * This module exports core parameter utilities for the AIO Commerce SDK.
+ * This module exports core HTTP header utilities for the AIO Commerce SDK.
  * @packageDocumentation
  */
 
-// biome-ignore lint/performance/noBarrelFile: export as part of the Public API
-export * from "./helpers";
+export { createHeaderAccessor } from "./accessor";
+export {
+  isBasicAuth,
+  isBearerAuth,
+  isOAuth,
+  parseAuthorization,
+  parseBasicToken,
+  parseBearerToken,
+  parseOAuthToken,
+} from "./auth";
+export { getHeader, getHeadersFromParams } from "./helpers";
 export * from "./types";
+export { assertRequiredHeaders, getMissingHeaders } from "./validation";
+
+export type {
+  Authorization,
+  BasicAuthorization,
+  BearerAuthorization,
+  GenericAuthorization,
+  OAuth1Authorization,
+  OAuth1Parameters,
+} from "./auth";
