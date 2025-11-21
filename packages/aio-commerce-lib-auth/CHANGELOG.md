@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-auth
 
+## 0.6.2
+
+### Patch Changes
+
+- [#153](https://github.com/adobe/aio-commerce-sdk/pull/153) [`3c88b74`](https://github.com/adobe/aio-commerce-sdk/commit/3c88b74ccfea0df06514b696ce8797c95e1acc4f) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Parse IMS scopes from potential string arrays, when resolving from a params object.
+
 ## 0.6.1
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.7.1
+
+### Patch Changes
+
+- [#155](https://github.com/adobe/aio-commerce-sdk/pull/155) [`6adc0b4`](https://github.com/adobe/aio-commerce-sdk/commit/6adc0b48112ef97abad86c5f62a12b8f41054fe9) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix minor linting issues reported by Biome in generated code
+
+- Updated dependencies []:
+  - @adobe/aio-commerce-lib-api@0.3.2
+
 ## 0.7.0
 
 ### Minor Changes
