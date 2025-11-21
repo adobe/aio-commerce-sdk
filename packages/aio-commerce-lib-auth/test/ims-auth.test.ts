@@ -423,6 +423,95 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       }).toThrow("Invalid ImsAuthProvider configuration");
     });
 
+    test("should accept JSON string array for scopes", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          scopes: '["scope1","scope2"]',
+        });
+      }).not.toThrow();
+    });
+
+    test("should accept single string for scopes and convert to array", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          scopes: "single-scope",
+        });
+      }).not.toThrow();
+    });
+
+    test("should throw with invalid JSON string for scopes", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          scopes: "[invalid-json]", // Starts and ends with brackets but invalid JSON
+        });
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw with JSON string containing non-string items for scopes", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          scopes: "[123, 456]", // Valid JSON array but contains numbers, not strings
+        });
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw with invalid JSON syntax in array for scopes", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          scopes: '["test", invalid]', // Starts with [ and ends with ] but has unquoted value (invalid JSON)
+        });
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw with empty JSON array string for scopes", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          scopes: "[]",
+        });
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw with malformed JSON array string for scopes", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          scopes: "[not-valid-json]",
+        });
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw with array containing non-string items for scopes", () => {
+      expect(() => {
+        const nonStringItem = 123;
+        assertImsAuthParams({
+          ...validConfig,
+          scopes: [nonStringItem, "scope"],
+        } as unknown as ImsAuthParams);
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
+    test("should throw with null or undefined scopes", () => {
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          scopes: null,
+        } as unknown as ImsAuthParams);
+      }).toThrow("Invalid ImsAuthProvider configuration");
+
+      expect(() => {
+        assertImsAuthParams({
+          ...validConfig,
+          scopes: undefined,
+        } as unknown as ImsAuthParams);
+      }).toThrow("Invalid ImsAuthProvider configuration");
+    });
+
     test("should throw with wrong data types", () => {
       expect(() => {
         assertImsAuthParams({
@@ -601,19 +690,32 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       }).toThrow("Invalid ImsAuthProvider configuration");
     });
 
-    test("should throw CommerceSdkValidationError when scopes is a JSON string (scopes must be an array)", () => {
+    test("should resolve IMS auth params with JSON string array for scopes", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
         AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
         AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
-        AIO_COMMERCE_AUTH_IMS_SCOPES: '["scope1","scope2"]', // JSON string - invalid for scopes
+        AIO_COMMERCE_AUTH_IMS_SCOPES: '["scope1","scope2"]',
       };
 
-      expect(() => {
-        resolveImsAuthParams(params);
-      }).toThrow("Invalid ImsAuthProvider configuration");
+      const resolved = resolveImsAuthParams(params);
+      expect(resolved.scopes).toEqual(["scope1", "scope2"]);
+    });
+
+    test("should resolve IMS auth params with single string for scopes", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+        AIO_COMMERCE_AUTH_IMS_SCOPES: "single-scope",
+      };
+
+      const resolved = resolveImsAuthParams(params);
+      expect(resolved.scopes).toEqual(["single-scope"]);
     });
 
     test("should throw CommerceSdkValidationError when scopes is empty array", () => {
