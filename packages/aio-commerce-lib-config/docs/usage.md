@@ -346,12 +346,11 @@ const config3 = await config.getConfiguration("us-west", "store");
 console.log(config3.config);
 
 // Get a specific configuration value
-const result = await config.getConfigurationByKey(
-  "paymentMethod",
-  "us-west",
-  "store",
-);
-console.log(result.config?.value);
+const {
+  config: { value },
+} = await config.getConfigurationByKey("paymentMethod", "us-west", "store");
+
+console.log(value);
 
 // Set configuration for a scope
 await config.setConfiguration(
@@ -387,23 +386,20 @@ async function main(params) {
     const storeLevel = params.store_level || "store_view";
 
     // Get specific configuration values
-    const paymentMethodResult = await config.getConfigurationByKey(
+    const {
+      config: { value: paymentMethod },
+    } = await config.getConfigurationByKey(
       "paymentMethod",
       storeCode,
       storeLevel,
     );
-    const currencyResult = await config.getConfigurationByKey(
-      "currency",
-      storeCode,
-      storeLevel,
-    );
 
-    const paymentMethod = paymentMethodResult.config?.value;
-    const currency = currencyResult.config?.value;
+    const {
+      config: { value: currency },
+    } = await config.getConfigurationByKey("currency", storeCode, storeLevel);
 
     // Use configuration in your business logic
     console.log(`Processing order with ${paymentMethod} in ${currency}`);
-
     return {
       statusCode: 200,
       body: { success: true },
