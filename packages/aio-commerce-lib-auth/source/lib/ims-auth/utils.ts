@@ -13,10 +13,39 @@
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { safeParse } from "valibot";
 
-import { ImsAuthParamsSchema } from "./schema";
+import {
+  ImsAuthParamsSchema,
+  StringArrayTransformSchema as stringArrayTransformSchema,
+} from "./schema";
 
 import type { ImsAuthProvider } from "./provider";
 import type { ImsAuthParams } from "./schema";
+
+/**
+ * Transforms a value using the string array transformation schema.
+ * @param value - The value to transform (may be a JSON string, single string, or array).
+ * @throws {CommerceSdkValidationError} If the transformation fails.
+ *
+ * @internal
+ */
+function __transformStringArray(
+  name: string,
+  value: unknown,
+): string[] | undefined {
+  if (value === undefined) {
+    return;
+  }
+
+  const result = safeParse(stringArrayTransformSchema(name), value);
+  if (!result.success) {
+    throw new CommerceSdkValidationError(
+      "Invalid ImsAuthProvider configuration",
+      { issues: result.issues },
+    );
+  }
+
+  return result.output;
+}
 
 /**
  * Parses the provided configuration for an {@link ImsAuthProvider}.
@@ -104,11 +133,17 @@ export function resolveImsAuthParams(
 ): ImsAuthParams {
   const resolvedParams = {
     clientId: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
-    clientSecrets: params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
+    clientSecrets: __transformStringArray(
+      "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
+      params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
+    ),
     technicalAccountId: params.AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID,
     technicalAccountEmail: params.AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL,
     imsOrgId: params.AIO_COMMERCE_AUTH_IMS_ORG_ID,
-    scopes: params.AIO_COMMERCE_AUTH_IMS_SCOPES,
+    scopes: __transformStringArray(
+      "AIO_COMMERCE_AUTH_IMS_SCOPES",
+      params.AIO_COMMERCE_AUTH_IMS_SCOPES,
+    ),
 
     // These are optional, if not set will be defaulted in future use of `getHeaders` or `getAccessToken`
     environment: params.AIO_COMMERCE_AUTH_IMS_ENVIRONMENT,

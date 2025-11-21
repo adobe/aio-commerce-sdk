@@ -61,30 +61,43 @@ const stringArray = (name: string, minimumLength: number) => {
 };
 
 /**
- * Creates a validation schema for an IMS auth string array parameter that may be a JSON string.
- * @param name The name of the parameter for error messages.
- * @returns A validation pipeline that ensures the parameter is an array of strings.
+ * Schema for transforming a value that may be a JSON string array or a single string into an array.
+ * This schema handles the transformation of App Builder action inputs that may come as JSON strings.
  */
-const maybeJsonStringArray = (name: string) =>
+export const StringArrayTransformSchema = (name: string) =>
   pipe(
-    imsAuthParameter(name),
-    rawTransform(({ dataset: { value: v }, addIssue, NEVER }) => {
-      if (v.startsWith("[") && v.endsWith("]")) {
-        try {
-          return JSON.parse(v);
-        } catch (error) {
-          const errorMessage = (error as Error).message;
-          addIssue({
-            received: v,
-            message: `Expected a valid JSON array for the IMS auth parameter "${name}": ${errorMessage}`,
-          });
+    union([
+      stringArray(name, 1),
+      pipe(
+        string(),
+        rawTransform(({ dataset: { value: v }, addIssue, NEVER }) => {
+          if (v.startsWith("[") && v.endsWith("]")) {
+            try {
+              const parsed = JSON.parse(v);
+              if (!Array.isArray(parsed)) {
+                addIssue({
+                  received: v,
+                  message: `Expected a valid JSON array for the IMS auth parameter ${name}: ${v}`,
+                });
+                return NEVER;
+              }
 
-          return NEVER;
-        }
-      }
+              return parsed;
+            } catch (error) {
+              const errorMessage = (error as Error).message;
+              addIssue({
+                received: v,
+                message: `Expected a valid JSON array for the IMS auth parameter ${name}: ${errorMessage}`,
+              });
 
-      return [v];
-    }),
+              return NEVER;
+            }
+          }
+          return [v];
+        }),
+      ),
+    ]),
+    stringArray("value", 1),
   );
 
 /** Validation schema for IMS auth environment values. */
@@ -93,13 +106,7 @@ const ImsAuthEnvSchema = picklist(["prod", "stage"]);
 /** Defines the schema to validate the necessary parameters for the IMS auth service. */
 export const ImsAuthParamsSchema = object({
   clientId: imsAuthParameter("clientId"),
-  clientSecrets: pipe(
-    union([
-      maybeJsonStringArray("clientSecrets"),
-      stringArray("clientSecrets", 1),
-    ]),
-    stringArray("clientSecrets", 1),
-  ),
+  clientSecrets: stringArray("clientSecrets", 1),
   technicalAccountId: imsAuthParameter("technicalAccountId"),
   technicalAccountEmail: pipe(
     string(
