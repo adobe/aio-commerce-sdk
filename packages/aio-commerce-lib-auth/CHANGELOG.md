@@ -1,5 +1,16 @@
 # @adobe/aio-commerce-lib-auth
 
+## 0.6.1
+
+### Patch Changes
+
+- [#143](https://github.com/adobe/aio-commerce-sdk/pull/143) [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - The IMS authentication schema has been updated to support both `string` and `string[]` inputs, automatically handling cases where you might have a single secret string, given in a non-array format (which is the expected).
+
+- [#143](https://github.com/adobe/aio-commerce-sdk/pull/143) [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fixed an issue where the `resolve` utilities where asserting that the input was correct, which is expected, but they were not returning the output data of transformations applied during schema parsing, which caused some inputs to always be invalid, as the `params` objectonly handles primitives.
+
+- Updated dependencies [[`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac)]:
+  - @adobe/aio-commerce-lib-core@0.5.1
+
 ## 0.6.0
 
 ### Minor Changes

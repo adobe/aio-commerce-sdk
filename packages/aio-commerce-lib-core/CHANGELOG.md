@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-core
 
+## 0.5.1
+
+### Patch Changes
+
+- [#143](https://github.com/adobe/aio-commerce-sdk/pull/143) [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add a new success response preset for HTTP 203 status code: `nonAuthoritativeInformation`
+
 ## 0.5.0
 
 ### Minor Changes

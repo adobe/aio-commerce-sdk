@@ -1,5 +1,39 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.7.0
+
+### Minor Changes
+
+- [#143](https://github.com/adobe/aio-commerce-sdk/pull/143) [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Improved CLI scripts to handle projects written in both `CommonJS` and `ESM`. Support running the commands in directories different from the root.
+
+- [#143](https://github.com/adobe/aio-commerce-sdk/pull/143) [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add a new `init` script to easily bootstrap an App Builder application to be used with `@adobe/aio-commerce-lib-config`, automating all manual steps
+
+- [#143](https://github.com/adobe/aio-commerce-sdk/pull/143) [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add logging to all the generated runtime actions for debugging purposes
+
+- [#143](https://github.com/adobe/aio-commerce-sdk/pull/143) [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add new schema types for configuration values: `password`, `email`, `tel`, `number`, `boolean`, `url` and `date`
+
+### Patch Changes
+
+- [#143](https://github.com/adobe/aio-commerce-sdk/pull/143) [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Configuration values of type `list` now require a `selectionMode` to be defined an no longer default to `single`. This is required because the `default` value for both of them are different (one is a simple string, the other a string array) and we need to discriminate against the `selectionMode` for type-safety.
+
+- [#143](https://github.com/adobe/aio-commerce-sdk/pull/143) [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Set `LOG_LEVEL` input as an environment variable
+
+- [#143](https://github.com/adobe/aio-commerce-sdk/pull/143) [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - The `sync-commerce-scopes` now returns a 203 status code if the scope data comes from the cache, together with an `x-cache: hit` custom header. If there's an error in the request, a 500 status code is returned.
+
+- [#143](https://github.com/adobe/aio-commerce-sdk/pull/143) [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - All the generated code now is placed insde the `src` directory.
+
+- [#143](https://github.com/adobe/aio-commerce-sdk/pull/143) [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove all logging in CLI commands made via `@adobe/aio-lib-core-logging`. Instead use `process.stdout` and `process.stderr` for better readability of log messages.
+
+- [#143](https://github.com/adobe/aio-commerce-sdk/pull/143) [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix missing `AIO_COMMERCE_AUTH_IMS_SCOPES` input variable required for SaaS authentication.
+
+- [#139](https://github.com/adobe/aio-commerce-sdk/pull/139) [`ad1c3aa`](https://github.com/adobe/aio-commerce-sdk/commit/ad1c3aa00a7bfcdafb9ee94521657b84433ff35d) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add `AcceptableConfigValue` to the library public API
+
+- [#143](https://github.com/adobe/aio-commerce-sdk/pull/143) [`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Modify `ext.config.yaml` generation to add some comments and use `flow` style for the `include` option.
+
+- Updated dependencies [[`f05b041`](https://github.com/adobe/aio-commerce-sdk/commit/f05b0413b06a4dea5579a1b16c293aaf8b64ffac)]:
+  - @adobe/aio-commerce-lib-core@0.5.1
+  - @adobe/aio-commerce-lib-api@0.3.1
+
 ## 0.6.0
 
 ### Minor Changes
