@@ -1,19 +1,154 @@
 import { existsSync } from "node:fs";
-import { mkdir } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, readFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 
-import { EXTENSION_POINT_FOLDER } from "#commands/constants";
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { findUp } from "find-up";
+import { createJiti } from "jiti";
+import { isNode, isSeq } from "yaml";
+
+import { EXTENSIBILITY_CONFIG_FILE } from "#commands/constants";
+
+import type { PackageJson } from "type-fest";
+import type { Document } from "yaml";
+import type { ExtensibilityConfig } from "#modules/schema/types";
+
+const jiti = createJiti(import.meta.url);
+
+/**
+ * Find the nearest package.json file in the current working directory or its parents
+ * @param cwd The current working directory
+ * @param logger - The logger to use
+ */
+export async function findNearestPackageJson(cwd = process.cwd()) {
+  const packageJsonPath = await findUp("package.json", { cwd });
+
+  if (!packageJsonPath) {
+    return null;
+  }
+
+  return packageJsonPath;
+}
+
+/** Read the package.json file */
+export async function readPackageJson(
+  cwd = process.cwd(),
+): Promise<PackageJson | null> {
+  const packageJsonPath = await findNearestPackageJson(cwd);
+  if (!packageJsonPath) {
+    return null;
+  }
+
+  return JSON.parse(await readFile(packageJsonPath, "utf-8"));
+}
+
+/**
+ * Check if the current working directory is an ESM project.
+ * @param cwd The current working directory
+ */
+export async function isESM(cwd = process.cwd()) {
+  const packageJson = await readPackageJson(cwd);
+  if (!packageJson) {
+    return false;
+  }
+
+  return packageJson.type === "module";
+}
+
+/**
+ * Get the root directory of the project
+ * @param cwd The current working directory
+ */
+export async function getProjectRootDirectory(cwd = process.cwd()) {
+  const packageJsonPath = await findNearestPackageJson(cwd);
+  if (!packageJsonPath) {
+    throw new Error(
+      "Could not find a the root directory of the project. `package.json` file not found.",
+    );
+  }
+
+  return dirname(packageJsonPath);
+}
 
 /**
  * Create the output directory for the generated files
  * @param fileOrFolder - The file or folder to create
  */
 export async function makeOutputDirFor(fileOrFolder: string) {
-  const outputDir = join(EXTENSION_POINT_FOLDER, fileOrFolder);
+  const rootDirectory = await getProjectRootDirectory();
+  const outputDir = join(rootDirectory, fileOrFolder);
 
   if (!existsSync(outputDir)) {
     await mkdir(outputDir, { recursive: true });
   }
 
   return outputDir;
+}
+
+/**
+ * Try to find (up to the nearest package.json file) the extensibility.config.js file.
+ * @param cwd The current working directory
+ */
+export async function readExtensibilityConfig(cwd = process.cwd()) {
+  const packageJsonPath = await findNearestPackageJson(cwd);
+
+  if (!packageJsonPath) {
+    return null;
+  }
+
+  const configPath = await findUp(EXTENSIBILITY_CONFIG_FILE, {
+    cwd,
+    stopAt: await getProjectRootDirectory(cwd),
+  });
+
+  if (!configPath) {
+    return null;
+  }
+
+  return await jiti.import<ExtensibilityConfig>(configPath);
+}
+
+/**
+ * Stringify an error to a human-friendly string.
+ * @param error - The error to stringify.
+ */
+export function stringifyError(error: Error) {
+  if (error instanceof CommerceSdkValidationError) {
+    return error.display();
+  }
+
+  return error instanceof Error ? error.message : "Unknown error";
+}
+
+/**
+ * Add a comment before a node
+ * @param doc - The YAML document
+ * @param path - The path to the node
+ * @param comment - The comment to add
+ */
+export function addCommentToNode(
+  doc: Document,
+  path: string[],
+  comment: string,
+) {
+  const node: unknown = doc.getIn(path);
+  if (isNode(node)) {
+    node.commentBefore = comment;
+  }
+}
+
+/**
+ * Set flow style for all items in a sequence
+ * @param doc - The YAML document
+ * @param path - The path to the sequence
+ */
+export function setFlowStyleForSeq(doc: Document, path: string[]) {
+  const node: unknown = doc.getIn(path);
+  if (isSeq(node)) {
+    for (const item of node.items) {
+      if (isSeq(item)) {
+        item.flow = true;
+      }
+    }
+  }
 }

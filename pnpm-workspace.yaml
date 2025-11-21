@@ -7,3 +7,4 @@ packages:
 onlyBuiltDependencies:
   - core-js-pure
   - esbuild
+  - msw

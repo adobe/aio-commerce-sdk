@@ -2,12 +2,14 @@ import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { GENERATED_ACTIONS_PATH } from "#commands/constants";
+import {
+  EXTENSION_POINT_FOLDER_PATH,
+  GENERATED_ACTIONS_PATH,
+} from "#commands/constants";
 import { makeOutputDirFor } from "#commands/utils";
 
 import { RUNTIME_ACTIONS } from "./constants";
 import { updateExtConfig } from "./lib";
-import { logger } from "./logger";
 
 // This will point to the directory where the script is running from.
 // This is the dist/commands directory (as we use a facade to run the commands)
@@ -22,9 +24,11 @@ export async function run() {
 
 /** Generate the action files */
 async function generateActionFiles() {
-  logger.info("🔧 Generating runtime actions...");
+  process.stdout.write("🔧 Generating runtime actions...\n");
+  const outputDir = await makeOutputDirFor(
+    join(EXTENSION_POINT_FOLDER_PATH, GENERATED_ACTIONS_PATH),
+  );
 
-  const outputDir = await makeOutputDirFor(GENERATED_ACTIONS_PATH);
   const templatesDir = join(__dirname, "generate/actions/templates");
 
   for (const action of RUNTIME_ACTIONS) {
@@ -35,7 +39,7 @@ async function generateActionFiles() {
     await writeFile(actionPath, template, "utf-8");
   }
 
-  logger.info(
+  process.stdout.write(
     `✅ Generated ${RUNTIME_ACTIONS.length} action(s) in ${GENERATED_ACTIONS_PATH}\n`,
   );
 }

@@ -15,9 +15,48 @@ The `@adobe/aio-commerce-lib-config` library provides:
 
 See the [API Reference](./api-reference/README.md) for a full list of classes, interfaces, and functions exported by the library.
 
+## Quick Start
+
+The fastest way to get started is using the `init` command:
+
+```bash
+npx @adobe/aio-commerce-lib-config init
+```
+
+This single command will set up everything you need. See [Setup](#setup) below for details.
+
 ## How to use
 
 ### Setup
+
+#### Recommended: Quick Setup with Init Command
+
+The easiest way to get started is using the `init` command, which automates the entire setup process:
+
+```bash
+npx @adobe/aio-commerce-lib-config init
+```
+
+The `init` command will:
+
+- Create `extensibility.config.js` with a template schema (if it doesn't exist)
+- Add the `postinstall` script to your `package.json`
+- Generate all required artifacts (schema and runtime actions)
+- Update your `app.config.yaml` with the extension reference
+- Create or update your `install.yaml` with the extension point reference
+- Create or update your `.env` file with placeholder environment variables
+- Install required dependencies (`@adobe/aio-commerce-lib-config` and `@adobe/aio-commerce-sdk`)
+
+The command automatically detects your package manager (npm, pnpm, yarn, or bun) by checking for lock files and uses the appropriate commands.
+
+After running `init`, you'll need to:
+
+1. Review and customize `extensibility.config.js` with your configuration schema
+2. Fill in the required values in your `.env` file
+
+#### Alternative: Manual Setup
+
+If you prefer to set up manually or need more control over the process:
 
 1. Create your configuration schema at `extensibility.config.js` in the project root:
 
@@ -36,6 +75,7 @@ module.exports = {
           { label: "Option 1", value: "option1" },
           { label: "Option 2", value: "option2" },
         ],
+        selectionMode: "single",
         default: "option1",
         description: "This is a description for the example list",
       },
@@ -61,7 +101,7 @@ module.exports = {
 };
 ```
 
-1. First, install the package:
+2. Install the package and add a `postinstall` script:
 
 ```bash
 npm install @adobe/aio-commerce-lib-config
@@ -76,15 +116,18 @@ Then add a `postinstall` script to your `package.json`:
   },
 
   "scripts": {
-    "postinstall": "@adobe/aio-commerce-lib-config generate all"
+    "postinstall": "npx @adobe/aio-commerce-lib-config generate all"
   }
 }
 ```
 
 This script will run automatically every time you install your dependencies. This is done because the generated runtime actions will only change when you install the package for the first time, or a new version of it.
 
+3. Generate the artifacts:
+
 The CLI provides several commands:
 
+- `@adobe/aio-commerce-lib-config init` - Initialize the project (recommended for first-time setup)
 - `@adobe/aio-commerce-lib-config generate all` - Generate all artifacts (schema + runtime actions)
 - `@adobe/aio-commerce-lib-config generate schema` - Generate the configuration schema only
 - `@adobe/aio-commerce-lib-config generate actions` - Generate runtime actions and ext.config.yaml only
@@ -104,18 +147,25 @@ npx @adobe/aio-commerce-lib-config generate actions
 npx @adobe/aio-commerce-lib-config validate schema
 ```
 
-3. In your `app.config.yaml` file, reference the generated `ext.config.yaml` file and a `pre-app-build` hook to re-generate your schema, which you may want to change in between builds. If you already have multiple entries in the `extensions` section, add this as an additional entry.
+4. In your `app.config.yaml` file, reference the generated `ext.config.yaml` file. If you have multiple extension points, add it as a new entry:
 
 ```yaml
 extensions:
   commerce/configuration/1:
-    $include: "commerce-configuration-1/ext.config.yaml"
-    hooks:
-      pre-app-build: npx @adobe/aio-commerce-lib-config generate schema
+    $include: "src/commerce-configuration-1/ext.config.yaml"
 ```
 
+5. In your `install.yaml` file, add the extension point reference. If you have multiple extension points, add it as a new entry:
+
+```yaml
+extensions:
+  - extensionPointId: commerce/configuration/1
+```
+
+The generated `ext.config.yaml` file includes a `pre-app-build` hook that automatically regenerates the configuration schema before each build. This ensures your schema is always up-to-date. The hook is automatically added and should not be manually edited.
+
 > [!IMPORTANT]
-> The generated runtime actions require the SDK package. Make sure to install it before generating actions.
+> The generated runtime actions require the SDK package. Make sure to install it before running your build, otherwise bundling will fail.
 >
 > ```bash
 > npm install @adobe/aio-commerce-sdk
@@ -123,8 +173,8 @@ extensions:
 
 Upon running the generate commands, this will automatically create:
 
-1. A **configuration schema** at `commerce-configuration-1/.generated/configuration-schema.json` - A validated JSON representation of your schema for runtime use
-2. **Six runtime actions** under `commerce-configuration-1/.generated/actions/app-management/`:
+1. A **configuration schema** at `src/commerce-configuration-1/.generated/configuration-schema.json` - A validated JSON representation of your schema for runtime use
+2. **Six runtime actions** under `src/commerce-configuration-1/.generated/actions/app-management/`:
 
 **Scope Management Actions:**
 
@@ -140,9 +190,46 @@ Scopes define the hierarchical boundaries where configuration values can be set 
 - `get-configuration` - Get configuration values with inheritance
 - `set-configuration` - Save configuration values
 
-The `generate actions` command also creates the `ext.config.yaml` file with the required configuration and environment variable placeholders.
+The `generate actions` command also creates the `ext.config.yaml` file with the required configuration and environment variable placeholders. It automatically adds a `pre-app-build` hook that regenerates the configuration schema before each build.
 
-> **Important**: Don't forget to fill in the necessary values for the Commerce configuration in your `.env` file before deploying your application.
+> [!IMPORTANT]
+> Don't forget to fill in the necessary values for the Commerce configuration in your `.env` file before deploying your application.
+>
+> The generated actions require the following environment variables. Add them to your `.env` file:
+>
+> **For SaaS instances:**
+>
+> ```bash
+> # Logging level for runtime actions
+> LOG_LEVEL=info
+>
+> # Adobe Commerce API configuration
+> AIO_COMMERCE_API_BASE_URL=https://your-commerce-instance.com
+>
+> # IMS Authentication (SaaS)
+> AIO_COMMERCE_AUTH_IMS_CLIENT_ID=your-client-id
+> AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS=your-client-secrets
+> AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID=your-technical-account-id
+> AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL=your-technical-account-email
+> AIO_COMMERCE_AUTH_IMS_ORG_ID=your-ims-org-id
+> AIO_COMMERCE_AUTH_IMS_SCOPES=your-ims-scopes
+> ```
+>
+> **For PaaS instances:**
+>
+> ```bash
+> # Logging level for runtime actions
+> LOG_LEVEL=info
+>
+> # Adobe Commerce API configuration
+> AIO_COMMERCE_API_BASE_URL=https://your-commerce-instance.com
+>
+> # Integration Authentication (PaaS)
+> AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY=your-consumer-key
+> AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET=your-consumer-secret
+> AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN=your-access-token
+> AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET=your-access-token-secret
+> ```
 
 ### Initialize the Library
 
@@ -174,6 +261,7 @@ const config = init({
       technicalAccountId: "your-technical-account-id",
       technicalAccountEmail: "your-technical-account-email",
       imsOrgId: "your-ims-org-id",
+
       // For PaaS instances
       consumerKey: "your-consumer-key",
       consumerSecret: "your-consumer-secret",
@@ -258,12 +346,11 @@ const config3 = await config.getConfiguration("us-west", "store");
 console.log(config3.config);
 
 // Get a specific configuration value
-const result = await config.getConfigurationByKey(
-  "paymentMethod",
-  "us-west",
-  "store",
-);
-console.log(result.config?.value);
+const {
+  config: { value },
+} = await config.getConfigurationByKey("paymentMethod", "us-west", "store");
+
+console.log(value);
 
 // Set configuration for a scope
 await config.setConfiguration(
@@ -299,23 +386,20 @@ async function main(params) {
     const storeLevel = params.store_level || "store_view";
 
     // Get specific configuration values
-    const paymentMethodResult = await config.getConfigurationByKey(
+    const {
+      config: { value: paymentMethod },
+    } = await config.getConfigurationByKey(
       "paymentMethod",
       storeCode,
       storeLevel,
     );
-    const currencyResult = await config.getConfigurationByKey(
-      "currency",
-      storeCode,
-      storeLevel,
-    );
 
-    const paymentMethod = paymentMethodResult.config?.value;
-    const currency = currencyResult.config?.value;
+    const {
+      config: { value: currency },
+    } = await config.getConfigurationByKey("currency", storeCode, storeLevel);
 
     // Use configuration in your business logic
     console.log(`Processing order with ${paymentMethod} in ${currency}`);
-
     return {
       statusCode: 200,
       body: { success: true },
@@ -366,9 +450,11 @@ This command will:
 - Check that your `extensibility.config.js` file exists and is valid
 - Validate the schema structure and field definitions
 - Ensure all required properties are present
-- Report any validation errors with details
+- Report any validation errors with clear, descriptive error messages
 
-The library supports two field types for configuration schemas:
+The validation provides detailed error messages for each validation failure, making it easy to identify and fix issues in your schema configuration.
+
+The library supports multiple field types for configuration schemas:
 
 **Text Field:**
 
@@ -383,13 +469,104 @@ Use text fields for free-form input values like merchant identifiers or custom s
 }
 ```
 
+**Password Field:**
+
+Use password fields for sensitive values that should be masked in the UI. Password fields support optional default values.
+
+```javascript
+{
+  name: "api_key",
+  label: "API Key",
+  type: "password",
+  default: process.env.API_KEY
+}
+```
+
+**Boolean Field:**
+
+Use boolean fields for true/false or yes/no settings. Boolean fields support optional default values.
+
+```javascript
+{
+  name: "enable_feature",
+  label: "Enable Feature",
+  type: "boolean",
+  default: false
+}
+```
+
+**Number Field:**
+
+Use number fields for numeric values. Number fields support optional default values.
+
+```javascript
+{
+  name: "max_items",
+  label: "Maximum Items",
+  type: "number",
+  default: 10
+}
+```
+
+**Date Field:**
+
+Use date fields for date values. Date fields support optional default values.
+
+```javascript
+{
+  name: "start_date",
+  label: "Start Date",
+  type: "date",
+  default: new Date("2024-01-01")
+}
+```
+
+**Email Field:**
+
+Use email fields for email addresses with automatic validation. Email fields support optional default values.
+
+```javascript
+{
+  name: "admin_email",
+  label: "Admin Email",
+  type: "email",
+  default: "admin@example.com"
+}
+```
+
+**URL Field:**
+
+Use URL fields for web addresses with automatic validation. URL fields support optional default values.
+
+```javascript
+{
+  name: "api_endpoint",
+  label: "API Endpoint",
+  type: "url",
+  default: "https://api.example.com"
+}
+```
+
+**Phone Field:**
+
+Use phone fields for telephone numbers with format validation. Phone fields support optional default values.
+
+```javascript
+{
+  name: "support_phone",
+  label: "Support Phone",
+  type: "tel",
+  default: "+1-555-123-4567"
+}
+```
+
 **List Field (Dropdown):**
 
 Use list fields when you need to restrict values to a predefined set of options. This is useful for settings like log levels, environment modes, or payment methods. List fields require both options and a default value.
 
-The `selectionMode` field (optional) controls whether users can select a single value or multiple values:
+The `selectionMode` field (required) controls whether users can select a single value or multiple values:
 
-- `"single"` (default if omitted): Standard dropdown with single selection
+- `"single"`: Standard dropdown with single selection
 - `"multiple"`: Allows multiple selections from the list
 
 Single selection example:
@@ -423,9 +600,12 @@ Multiple selection example:
     { label: "Apple Pay", value: "apple_pay" },
     { label: "Google Pay", value: "google_pay" }
   ],
-  default: "credit_card"
+  default: ["credit_card"]
 }
 ```
+
+> [!NOTE]
+> For `selectionMode: "multiple"`, the `default` value must be an array of strings, even if only one option is selected by default.
 
 ## Best Practices
 

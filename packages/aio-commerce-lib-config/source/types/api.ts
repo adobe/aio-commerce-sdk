@@ -10,7 +10,10 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import type { ConfigValue } from "../modules/configuration";
+import type {
+  AcceptableConfigValue,
+  ConfigValue,
+} from "../modules/configuration";
 import type { ConfigSchemaField } from "../modules/schema";
 
 // Public API Response Types
@@ -40,7 +43,7 @@ export type GetConfigurationByKeyResponse = {
 export type SetConfigurationRequest = {
   config: Array<{
     name: string;
-    value: string | number | boolean;
+    value: AcceptableConfigValue;
   }>;
 };
 
@@ -54,7 +57,7 @@ export type SetConfigurationResponse = {
   };
   config: Array<{
     name: string;
-    value: string | number | boolean;
+    value: AcceptableConfigValue;
   }>;
 };
 
