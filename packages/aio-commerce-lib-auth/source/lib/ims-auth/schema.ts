@@ -64,40 +64,41 @@ const stringArray = (name: string, minimumLength: number) => {
  * Schema for transforming a value that may be a JSON string array or a single string into an array.
  * This schema handles the transformation of App Builder action inputs that may come as JSON strings.
  */
-export const StringArrayTransformSchema = pipe(
-  union([
-    stringArray("value", 1),
-    pipe(
-      string(),
-      rawTransform(({ dataset: { value: v }, addIssue, NEVER }) => {
-        if (v.startsWith("[") && v.endsWith("]")) {
-          try {
-            const parsed = JSON.parse(v);
-            if (!Array.isArray(parsed)) {
+export const StringArrayTransformSchema = (name: string) =>
+  pipe(
+    union([
+      stringArray(name, 1),
+      pipe(
+        string(),
+        rawTransform(({ dataset: { value: v }, addIssue, NEVER }) => {
+          if (v.startsWith("[") && v.endsWith("]")) {
+            try {
+              const parsed = JSON.parse(v);
+              if (!Array.isArray(parsed)) {
+                addIssue({
+                  received: v,
+                  message: `Expected a valid JSON array for the IMS auth parameter ${name}: ${v}`,
+                });
+                return NEVER;
+              }
+
+              return parsed;
+            } catch (error) {
+              const errorMessage = (error as Error).message;
               addIssue({
                 received: v,
-                message: `Expected a valid JSON array: ${v}`,
+                message: `Expected a valid JSON array for the IMS auth parameter ${name}: ${errorMessage}`,
               });
+
               return NEVER;
             }
-
-            return parsed;
-          } catch (error) {
-            const errorMessage = (error as Error).message;
-            addIssue({
-              received: v,
-              message: `Expected a valid JSON array: ${errorMessage}`,
-            });
-
-            return NEVER;
           }
-        }
-        return [v];
-      }),
-    ),
-  ]),
-  stringArray("value", 1),
-);
+          return [v];
+        }),
+      ),
+    ]),
+    stringArray("value", 1),
+  );
 
 /** Validation schema for IMS auth environment values. */
 const ImsAuthEnvSchema = picklist(["prod", "stage"]);

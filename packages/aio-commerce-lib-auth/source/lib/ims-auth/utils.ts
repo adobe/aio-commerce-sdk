@@ -13,7 +13,10 @@
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { safeParse } from "valibot";
 
-import { ImsAuthParamsSchema, StringArrayTransformSchema } from "./schema";
+import {
+  ImsAuthParamsSchema,
+  StringArrayTransformSchema as stringArrayTransformSchema,
+} from "./schema";
 
 import type { ImsAuthProvider } from "./provider";
 import type { ImsAuthParams } from "./schema";
@@ -25,12 +28,15 @@ import type { ImsAuthParams } from "./schema";
  *
  * @internal
  */
-function __transformStringArray(value: unknown): string[] | undefined {
+function __transformStringArray(
+  name: string,
+  value: unknown,
+): string[] | undefined {
   if (value === undefined) {
     return;
   }
 
-  const result = safeParse(StringArrayTransformSchema, value);
+  const result = safeParse(stringArrayTransformSchema(name), value);
   if (!result.success) {
     throw new CommerceSdkValidationError(
       "Invalid ImsAuthProvider configuration",
@@ -128,12 +134,16 @@ export function resolveImsAuthParams(
   const resolvedParams = {
     clientId: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
     clientSecrets: __transformStringArray(
+      "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
       params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
     ),
     technicalAccountId: params.AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID,
     technicalAccountEmail: params.AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL,
     imsOrgId: params.AIO_COMMERCE_AUTH_IMS_ORG_ID,
-    scopes: __transformStringArray(params.AIO_COMMERCE_AUTH_IMS_SCOPES),
+    scopes: __transformStringArray(
+      "AIO_COMMERCE_AUTH_IMS_SCOPES",
+      params.AIO_COMMERCE_AUTH_IMS_SCOPES,
+    ),
 
     // These are optional, if not set will be defaulted in future use of `getHeaders` or `getAccessToken`
     environment: params.AIO_COMMERCE_AUTH_IMS_ENVIRONMENT,
