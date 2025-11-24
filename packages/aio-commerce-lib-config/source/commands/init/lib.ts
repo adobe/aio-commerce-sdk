@@ -69,10 +69,9 @@ export async function ensureExtensibilityConfig(cwd = process.cwd()) {
     colors: false,
   });
 
-  const defaultExtensibilityConfig = `${exportKeyword} {\n\tbusinessConfig: {\n\t\tschema: ${schema},\n\t},\n}`;
   await writeFile(
     join(await getProjectRootDirectory(cwd), EXTENSIBILITY_CONFIG_FILE),
-    defaultExtensibilityConfig,
+    `${exportKeyword} ${schema}\n`,
     "utf-8",
   );
 

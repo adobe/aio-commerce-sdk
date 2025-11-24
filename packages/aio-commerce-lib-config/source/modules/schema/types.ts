@@ -10,6 +10,8 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
+import type { BusinessConfigSchema } from "./schema";
+
 export type * from "./schema";
 
 // Context needed for schema operations
@@ -20,6 +22,6 @@ export type SchemaContext = {
 
 export type ExtensibilityConfig = {
   businessConfig?: {
-    schema?: unknown;
+    schema?: BusinessConfigSchema;
   };
 };
