@@ -25,7 +25,6 @@ export const RUNTIME_ACTIONS: ActionConfig[] = [
   {
     name: "get-scope-tree",
     templateFile: "get-scope-tree.js.template",
-    requiresCommerce: true,
   },
   {
     name: "get-config-schema",

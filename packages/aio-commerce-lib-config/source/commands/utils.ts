@@ -5,12 +5,10 @@ import { dirname, join } from "node:path";
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { findUp } from "find-up";
 import { createJiti } from "jiti";
-import { isNode, isSeq } from "yaml";
 
 import { EXTENSIBILITY_CONFIG_FILE } from "#commands/constants";
 
 import type { PackageJson } from "type-fest";
-import type { Document } from "yaml";
 import type { ExtensibilityConfig } from "#modules/schema/types";
 
 const jiti = createJiti(import.meta.url);
@@ -118,37 +116,4 @@ export function stringifyError(error: Error) {
   }
 
   return error instanceof Error ? error.message : "Unknown error";
-}
-
-/**
- * Add a comment before a node
- * @param doc - The YAML document
- * @param path - The path to the node
- * @param comment - The comment to add
- */
-export function addCommentToNode(
-  doc: Document,
-  path: string[],
-  comment: string,
-) {
-  const node: unknown = doc.getIn(path);
-  if (isNode(node)) {
-    node.commentBefore = comment;
-  }
-}
-
-/**
- * Set flow style for all items in a sequence
- * @param doc - The YAML document
- * @param path - The path to the sequence
- */
-export function setFlowStyleForSeq(doc: Document, path: string[]) {
-  const node: unknown = doc.getIn(path);
-  if (isSeq(node)) {
-    for (const item of node.items) {
-      if (isSeq(item)) {
-        item.flow = true;
-      }
-    }
-  }
 }

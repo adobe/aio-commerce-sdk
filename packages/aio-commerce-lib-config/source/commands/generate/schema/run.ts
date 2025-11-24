@@ -11,7 +11,7 @@ import { makeOutputDirFor } from "#commands/utils";
 
 /** Run the generate schema command */
 export async function run() {
-  process.stdout.write("🔍 Validating configuration schema...\n");
+  process.stdout.write("\n🔍 Validating configuration schema...\n");
   const validatedSchema = await loadBusinessConfigSchema();
 
   if (validatedSchema === null) {

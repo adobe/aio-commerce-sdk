@@ -7,7 +7,7 @@ import { loadBusinessConfigSchema } from "./lib";
  * @returns The validated schema.
  */
 export async function run() {
-  process.stdout.write("🔍 Validating configuration schema...\n");
+  process.stdout.write("\n🔍 Validating configuration schema...\n");
 
   try {
     const result = await loadBusinessConfigSchema();
