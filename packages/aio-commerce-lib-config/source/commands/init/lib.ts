@@ -4,7 +4,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import util from "node:util";
 
-import { isMap, parseDocument, stringify as stringifyYaml } from "yaml";
+import { isMap } from "yaml";
 
 import {
   APP_CONFIG_FILE,
@@ -17,14 +17,17 @@ import {
 } from "#commands/constants";
 import { COMMERCE_VARIABLES } from "#commands/generate/actions/constants";
 import {
-  getOrCreateSeq,
   getProjectRootDirectory,
   isESM,
   readExtensibilityConfig,
   readPackageJson,
-  readYamlFile,
   stringifyError,
 } from "#commands/utils";
+import {
+  getOrCreateMap,
+  getOrCreateSeq,
+  readYamlFile,
+} from "#commands/yaml-helpers";
 
 import {
   DEFAULT_EXTENSIBILITY_CONFIG_SCHEMA,
@@ -32,7 +35,7 @@ import {
 } from "./constants";
 
 import type { Document, YAMLSeq } from "yaml";
-import type { AppConfig, PackageManager } from "./types";
+import type { PackageManager } from "./types";
 
 /** Ensure extensibility.config.js exists, create it if it doesn't */
 export async function ensureExtensibilityConfig(cwd = process.cwd()) {
@@ -174,52 +177,49 @@ export async function ensureAppConfig(cwd = process.cwd()) {
   const includePath = join(EXTENSION_POINT_FOLDER_PATH, "ext.config.yaml");
 
   const { stdout, stderr } = process;
-  let doc: ReturnType<typeof parseDocument>;
+  let doc: Document;
 
-  if (existsSync(appConfigPath)) {
-    try {
-      const content = await readFile(appConfigPath, "utf-8");
-      doc = parseDocument(content, { keepSourceTokens: true });
-    } catch (error) {
-      const fallbackContent = `extensions:\n\t${EXTENSION_POINT_ID}:\n\t\t$include: "${includePath}"`;
+  try {
+    doc = await readYamlFile(appConfigPath);
+  } catch (error) {
+    const fallbackContent = `extensions:\n  ${EXTENSION_POINT_ID}:\n    $include: "${includePath}"`;
 
-      stderr.write(`${stringifyError(error as Error)}\n`);
-      stderr.write(
-        `❌ Failed to parse ${APP_CONFIG_FILE}. Please add manually: \n\t${fallbackContent}\n`,
-      );
+    stderr.write(`${stringifyError(error as Error)}\n`);
+    stderr.write(
+      `❌ Failed to parse ${APP_CONFIG_FILE}. \nPlease add manually: \n\n${fallbackContent}\n`,
+    );
 
-      return false;
-    }
-  } else {
-    doc = parseDocument("{}", { keepSourceTokens: true });
+    return false;
   }
 
-  const appConfig = (doc.toJS() as AppConfig) || {};
-  appConfig.extensions ??= {};
-
-  if (appConfig.extensions[EXTENSION_POINT_ID]?.$include === includePath) {
+  if (
+    doc.getIn(["extensions", EXTENSION_POINT_ID, "$include"]) === includePath
+  ) {
     stdout.write(`✅ Extension already configured in ${APP_CONFIG_FILE}\n`);
     return true;
   }
 
-  // Add or update the extension
-  stdout.write(`📝 Updating ${APP_CONFIG_FILE}...\n`);
-  appConfig.extensions[EXTENSION_POINT_ID] = {
-    $include: includePath,
-    ...appConfig.extensions[EXTENSION_POINT_ID],
-  };
-
-  // Create a new document with the updated config to preserve formatting
-  const updatedDoc = parseDocument(stringifyYaml(appConfig), {
-    keepSourceTokens: true,
+  stdout.write(`\n📝 Adding extension to ${APP_CONFIG_FILE}...\n`);
+  const extensions = getOrCreateMap(doc, ["extensions"], {
+    onBeforeCreate: (pair) => {
+      pair.key.spaceBefore = true;
+    },
   });
 
-  const yamlContent = updatedDoc.toString({
-    indent: 2,
-    lineWidth: 0,
-  });
+  const commerceConfigExtension = getOrCreateMap(
+    doc,
+    ["extensions", EXTENSION_POINT_ID],
+    {
+      onBeforeCreate: (pair) => {
+        pair.key.spaceBefore = extensions.items.length > 0;
+        pair.key.commentBefore = ` \`${EXTENSION_POINT_ID}\` is required by \`@adobe/aio-commerce-lib-config\`.`;
+      },
+    },
+  );
 
-  await writeFile(appConfigPath, yamlContent, "utf-8");
+  commerceConfigExtension.set("$include", includePath);
+
+  await writeFile(appConfigPath, doc.toString(), "utf-8");
   stdout.write(`✅ Updated ${APP_CONFIG_FILE}\n`);
 
   return true;
@@ -447,8 +447,7 @@ export async function ensureInstallYaml(cwd = process.cwd()) {
   extension.key.commentBefore = ` \`${EXTENSION_POINT_ID}\` is required by \`@adobe/aio-commerce-lib-config\`.`;
   extensions.items.unshift(extension);
 
-  const yamlContent = doc.toString();
-  await writeFile(installYamlPath, yamlContent, "utf-8");
+  await writeFile(installYamlPath, doc.toString(), "utf-8");
   stdout.write(`✅ Updated ${INSTALL_YAML_FILE}\n`);
 
   return true;

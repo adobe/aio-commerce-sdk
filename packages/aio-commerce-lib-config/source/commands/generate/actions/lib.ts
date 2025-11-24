@@ -11,11 +11,8 @@ import {
   GENERATED_PATH,
   PACKAGE_NAME,
 } from "#commands/constants";
-import {
-  addCommentToNode,
-  makeOutputDirFor,
-  setFlowStyleForSeq,
-} from "#commands/utils";
+import { makeOutputDirFor } from "#commands/utils";
+import { addCommentToNode, setFlowStyleForSeq } from "#commands/yaml-helpers";
 
 import { ACTION_INPUTS, RUNTIME_ACTIONS } from "./constants";
 
