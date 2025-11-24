@@ -296,7 +296,7 @@ export async function ensureEnvFile(cwd = process.cwd()) {
 
   if (missingVars.length === 0) {
     stdout.write(
-      `✅ All required environment variables already present in ${ENV_FILE}\n`,
+      `\n✅ All required environment variables already present in ${ENV_FILE}\n`,
     );
 
     return true;
