@@ -2,15 +2,7 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
-import {
-  Document,
-  isMap,
-  isNode,
-  isSeq,
-  parseDocument,
-  YAMLMap,
-  YAMLSeq,
-} from "yaml";
+import { Document, isMap, isSeq, parseDocument, YAMLMap, YAMLSeq } from "yaml";
 
 import type { Node, Pair } from "yaml";
 
@@ -103,9 +95,9 @@ function getOrCreateNode<T extends YAMLSeq | YAMLMap>(
 export function getOrCreateSeq(
   doc: Document,
   path: string[],
-  options: GetOrCreateOptions,
+  options?: GetOrCreateOptions,
 ): YAMLSeq {
-  return getOrCreateNode(doc, path, options, {
+  return getOrCreateNode(doc, path, options ?? {}, {
     typeGuard: isSeq,
     createNode: () => new YAMLSeq(),
     typeName: "sequence",
@@ -121,44 +113,11 @@ export function getOrCreateSeq(
 export function getOrCreateMap(
   doc: Document,
   path: string[],
-  options: GetOrCreateOptions,
+  options?: GetOrCreateOptions,
 ): YAMLMap {
-  return getOrCreateNode(doc, path, options, {
+  return getOrCreateNode(doc, path, options ?? {}, {
     typeGuard: isMap,
     createNode: () => new YAMLMap(),
     typeName: "map",
   });
-}
-
-/**
- * Add a comment before a node
- * @param doc - The YAML document
- * @param path - The path to the node
- * @param comment - The comment to add
- */
-export function addCommentToNode(
-  doc: Document,
-  path: string[],
-  comment: string,
-) {
-  const node: unknown = doc.getIn(path);
-  if (isNode(node)) {
-    node.commentBefore = comment;
-  }
-}
-
-/**
- * Set flow style for all items in a sequence
- * @param doc - The YAML document
- * @param path - The path to the sequence
- */
-export function setFlowStyleForSeq(doc: Document, path: string[]) {
-  const node: unknown = doc.getIn(path);
-  if (isSeq(node)) {
-    for (const item of node.items) {
-      if (isSeq(item)) {
-        item.flow = true;
-      }
-    }
-  }
 }
