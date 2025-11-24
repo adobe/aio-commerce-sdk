@@ -52,7 +52,7 @@ export async function run() {
 
     process.stdout.write("✅ Initialization complete!\n");
     process.stdout.write(
-      "📝 Next steps:\n" +
+      "\n📝 Next steps:\n" +
         "   1. Review and customize extensibility.config.js\n" +
         "   2. Fill in the required values in your .env file\n",
     );

@@ -24,7 +24,7 @@ export async function run() {
 
 /** Generate the action files */
 async function generateActionFiles() {
-  process.stdout.write("🔧 Generating runtime actions...\n");
+  process.stdout.write("\n🔧 Generating runtime actions...\n");
   const outputDir = await makeOutputDirFor(
     join(EXTENSION_POINT_FOLDER_PATH, GENERATED_ACTIONS_PATH),
   );

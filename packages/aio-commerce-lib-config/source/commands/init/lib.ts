@@ -59,7 +59,7 @@ export async function ensureExtensibilityConfig(cwd = process.cwd()) {
     return true;
   }
 
-  stdout.write(`📝 Creating ${EXTENSIBILITY_CONFIG_FILE}...\n`);
+  stdout.write(`\n📝 Creating ${EXTENSIBILITY_CONFIG_FILE}...\n`);
   const exportKeyword = (await isESM(cwd))
     ? "export default"
     : "module.exports =";
@@ -211,7 +211,8 @@ export async function ensureAppConfig(cwd = process.cwd()) {
     {
       onBeforeCreate: (pair) => {
         pair.key.spaceBefore = extensions.items.length > 0;
-        pair.key.commentBefore = ` \`${EXTENSION_POINT_ID}\` is required by \`@adobe/aio-commerce-lib-config\`.`;
+        pair.key.commentBefore =
+          " This extension is required by `@adobe/aio-commerce-lib-config`.";
       },
     },
   );
@@ -303,7 +304,7 @@ export async function ensureEnvFile(cwd = process.cwd()) {
 
   let newContent = "";
   stdout.write(
-    `📝 Adding environment variable placeholders to ${ENV_FILE}...\n`,
+    `\n📝 Adding environment variable placeholders to ${ENV_FILE}...\n`,
   );
 
   if (!existingEnvVars.has("LOG_LEVEL")) {
@@ -346,7 +347,7 @@ export function installDependencies(
   cwd = process.cwd(),
 ) {
   const { stdout, stderr } = process;
-  stdout.write("📦 Installing dependencies...\n");
+  stdout.write("\n📦 Installing dependencies...\n");
 
   const packages = [
     "@adobe/aio-commerce-lib-config",
@@ -367,12 +368,12 @@ export function installDependencies(
       stdio: "inherit",
     });
 
-    stdout.write("✅ Dependencies installed successfully\n");
+    stdout.write("\n✅ Dependencies installed successfully\n");
     return true;
   } catch (error) {
     stderr.write(`${stringifyError(error as Error)}\n`);
     stderr.write(
-      `❌  Failed to install dependencies automatically. Please install manually: ${installCommand}\n`,
+      `\n❌  Failed to install dependencies automatically. Please install manually: ${installCommand}\n`,
     );
 
     return false;
