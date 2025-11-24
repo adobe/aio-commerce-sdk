@@ -489,9 +489,9 @@ In order to be able to load your secrets from the environment variables, see the
 ```javascript
 import { loadEnvFromFile } from "node:process";
 
-// Default value is `.env`. But you can specify a different path (e.g. .env.development).
-const env = loadEnvFromFile();
-console.log(env.API_KEY); // "secret"
+// Default value of `envPath` is `.env`. But you can specify a different path (e.g. `.env.development`).
+loadEnvFromFile(envPath);
+console.log(process.env.API_KEY); // "secret"
 ```
 
 Or you can use the [`dotenv`](https://www.npmjs.com/package/dotenv) package (if using Node 18 or lower):
