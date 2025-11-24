@@ -62,13 +62,16 @@ function buildActionDefinition(name: string, action: ActionConfig) {
   });
 
   if (action.requiresSchema) {
-    const seq = new YAMLSeq();
-    seq.items.push([
+    const itemSeq = new YAMLSeq();
+    itemSeq.flow = true;
+    itemSeq.items.push(
       `${GENERATED_PATH}/${CONFIG_SCHEMA_FILE_NAME}`,
       `${PACKAGE_NAME}/`,
-    ]);
+    );
 
-    seq.flow = true;
+    const seq = new YAMLSeq();
+    seq.items.push(itemSeq);
+
     actionDef.set("include", seq);
   }
 
