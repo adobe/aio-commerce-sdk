@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.7.2
+
+### Patch Changes
+
+- [#158](https://github.com/adobe/aio-commerce-sdk/pull/158) [`a9a7785`](https://github.com/adobe/aio-commerce-sdk/commit/a9a7785cb410fc482c0417f75c001ae4ff112dac) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove Commerce inputs from `get-scope-tree` generated action. Fix formatting of generated `extensibility.config.js`. Fix unwanted changes when editing YAML files via the `init` script.
+
 ## 0.7.1
 
 ### Patch Changes
