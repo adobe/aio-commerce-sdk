@@ -482,6 +482,27 @@ Use password fields for sensitive values that should be masked in the UI. Passwo
 }
 ```
 
+To use a password field with a secret default value, use the `process.env` object. Since this file should be committed to source control, you should not store secrets in plain text. If your default value is not a secret, you can use a plain string.
+
+In order to be able to load your secrets from the environment variables, see the example below. You'll need to load the environment variables via `process.loadEnvFromFile` (if using Node 20 or higher):
+
+```javascript
+import { loadEnvFromFile } from "node:process";
+
+// Default value is `.env`. But you can specify a different path (e.g. .env.development).
+const env = loadEnvFromFile();
+console.log(env.API_KEY); // "secret"
+```
+
+Or you can use the [`dotenv`](https://www.npmjs.com/package/dotenv) package (if using Node 18 or lower):
+
+```javascript
+import dotenv from "dotenv";
+
+dotenv.config();
+console.log(process.env.API_KEY); // "secret"
+```
+
 **Boolean Field:**
 
 Use boolean fields for true/false or yes/no settings. Boolean fields support optional default values.
