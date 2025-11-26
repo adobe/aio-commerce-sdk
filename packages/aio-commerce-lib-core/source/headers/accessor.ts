@@ -15,7 +15,11 @@ import camelcase from "camelcase";
 import { getHeader } from "./helpers";
 import { assertRequiredHeaders } from "./validation";
 
-import type { HttpHeaderAccessorMap, HttpHeaders } from "./types";
+import type {
+  GetHeaderOptions,
+  HttpHeaderAccessorMap,
+  HttpHeaders,
+} from "./types";
 
 /**
  * Creates a type-safe header accessor object with validated required headers.
@@ -35,10 +39,14 @@ import type { HttpHeaderAccessorMap, HttpHeaders } from "./types";
  * const auth = accessor.authorization;   // string
  * ```
  */
-export function createHeaderAccessor<const T extends string[]>(
+export function createHeaderAccessor<
+  const T extends string[],
+  const O extends GetHeaderOptions | undefined = undefined,
+>(
   headers: HttpHeaders,
   requiredHeaders: T,
-): HttpHeaderAccessorMap<T> {
+  options?: O,
+): HttpHeaderAccessorMap<T, O> {
   assertRequiredHeaders(headers, requiredHeaders);
 
   // Build accessor object with camelCase keys
@@ -46,11 +54,11 @@ export function createHeaderAccessor<const T extends string[]>(
 
   for (const header of requiredHeaders) {
     const camelKey = camelcase(header);
-    const value = getHeader(headers, header);
+    const value = getHeader(headers, header, options);
 
     // We know value is defined because assertRequiredHeaders passed
     accessor[camelKey] = value as string | string[];
   }
 
-  return accessor as HttpHeaderAccessorMap<T>;
+  return accessor as HttpHeaderAccessorMap<T, O>;
 }

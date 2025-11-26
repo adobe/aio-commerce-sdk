@@ -22,17 +22,24 @@ import {
 import { CommerceSdkValidationError } from "#error";
 
 import type { RuntimeActionParams } from "#params";
-import type { HttpHeaders, HttpHeaderValue } from "./types";
+import type {
+  GetHeaderOptions,
+  GetHeaderReturn,
+  HttpHeaders,
+  HttpHeaderValue,
+} from "./types";
 
 /**
  * Extracts a header value from an object with case-insensitive lookup.
  * This is useful for handling HTTP headers which can be case-insensitive per RFC 7230.
  *
- * If a header value is a comma-separated string (per RFC 9110), it is automatically
- * split into an array.
+ * When enabled via options, comma-separated header values (per RFC 9110) can be
+ * automatically split into an array. This is useful when multiple header values
+ * are combined into a single comma-separated string.
  *
  * @param headers The headers object to search in.
  * @param name The header name to look for (case-insensitive).
+ * @param options Optional settings to control header value processing.
  *
  * @example
  * ```typescript
@@ -42,14 +49,21 @@ import type { HttpHeaders, HttpHeaderValue } from "./types";
  *
  * @example
  * ```typescript
- * // Comma-separated string is automatically split
+ * // Comma-separated string can be split when enabled (per RFC 9110)
  * const headers = { "Example-Field": "Foo, Bar" };
- * const value = getHeader(headers, "Example-Field"); // ["Foo", "Bar"]
+ * const value = getHeader(headers, "Example-Field", { splitCommaSeparated: true }); // ["Foo", "Bar"]
  * ```
  *
- * @see https://datatracker.ietf.org/doc/html/rfc9110#name-field-lines-and-combined-fi
+ * @see https://datatracker.ietf.org/doc/html/rfc7230 - HTTP/1.1 Message Syntax and Routing
+ * @see https://datatracker.ietf.org/doc/html/rfc9110#name-field-lines-and-combined-fi - HTTP Semantics: Field Lines and Combined Field Values
  */
-export function getHeader(headers: HttpHeaders, name: string): HttpHeaderValue {
+export function getHeader<T extends GetHeaderOptions | undefined = undefined>(
+  headers: HttpHeaders,
+  name: string,
+  options?: T,
+): GetHeaderReturn<T> {
+  const { splitCommaSeparated = false } = options ?? {};
+
   let value: HttpHeaderValue;
 
   // Try exact match first for performance
@@ -66,11 +80,11 @@ export function getHeader(headers: HttpHeaders, name: string): HttpHeaderValue {
     }
   }
 
-  if (typeof value === "string" && value.includes(",")) {
+  if (splitCommaSeparated && typeof value === "string" && value.includes(",")) {
     value = value.split(",").map((v) => v.trim());
   }
 
-  return value;
+  return value as GetHeaderReturn<T>;
 }
 
 /**

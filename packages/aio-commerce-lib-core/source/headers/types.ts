@@ -18,7 +18,29 @@ export type HttpHeaderValue = string | string[] | undefined;
 /** The type of an HTTP headers record. */
 export type HttpHeaders = Record<string, string | undefined>;
 
+/** Options for controlling header value processing behavior in {@link getHeader} */
+export type GetHeaderOptions = {
+  /**
+   * If `true`, comma-separated header values (per RFC 9110) will be automatically
+   * split into an array. Defaults to `false`.
+   *
+   * @default false
+   */
+  splitCommaSeparated?: boolean;
+};
+
+/** Return type for {@link getHeader} based on whether splitCommaSeparated is enabled. */
+export type GetHeaderReturn<T extends GetHeaderOptions | undefined> =
+  T extends {
+    splitCommaSeparated: true;
+  }
+    ? HttpHeaderValue
+    : Exclude<HttpHeaderValue, string[]>;
+
 /** The type of an HTTP header accessor object. */
-export type HttpHeaderAccessorMap<T extends string[]> = {
-  [K in T[number] as CamelCase<K>]: string | string[];
+export type HttpHeaderAccessorMap<
+  T extends string[],
+  O extends GetHeaderOptions | undefined = undefined,
+> = {
+  [K in T[number] as CamelCase<K>]: Exclude<GetHeaderReturn<O>, undefined>;
 };

@@ -61,20 +61,26 @@ describe("headers/helpers", () => {
       expect(getHeader(headers, "x-api-key")).toBeUndefined();
     });
 
-    test("should split comma-separated strings into arrays", () => {
+    test("should not split comma-separated strings by default", () => {
       const headers = { "Example-Field": "Foo, Bar" };
 
-      expect(getHeader(headers, "Example-Field")).toEqual(["Foo", "Bar"]);
+      expect(getHeader(headers, "Example-Field")).toBe("Foo, Bar");
+    });
+
+    test("should split comma-separated strings into arrays when enabled", () => {
+      const headers = { "Example-Field": "Foo, Bar" };
+
+      expect(
+        getHeader(headers, "Example-Field", { splitCommaSeparated: true }),
+      ).toEqual(["Foo", "Bar"]);
     });
 
     test("should trim values when splitting comma-separated strings", () => {
       const headers = { "Example-Field": "Foo , Bar , Baz" };
 
-      expect(getHeader(headers, "Example-Field")).toEqual([
-        "Foo",
-        "Bar",
-        "Baz",
-      ]);
+      expect(
+        getHeader(headers, "Example-Field", { splitCommaSeparated: true }),
+      ).toEqual(["Foo", "Bar", "Baz"]);
     });
 
     test("should return single strings without commas as-is", () => {
