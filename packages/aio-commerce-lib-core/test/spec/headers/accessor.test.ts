@@ -12,6 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 
+import { CommerceSdkValidationError } from "#error";
 import { createHeaderAccessor } from "#headers";
 
 describe("headers/accessor", () => {
@@ -51,7 +52,7 @@ describe("headers/accessor", () => {
 
       expect(() => {
         createHeaderAccessor(headers, ["x-api-key", "Authorization"]);
-      }).toThrow("Missing required headers: [Authorization]");
+      }).toThrow(CommerceSdkValidationError);
     });
 
     test("should throw error when multiple headers are missing", () => {
@@ -59,7 +60,7 @@ describe("headers/accessor", () => {
 
       expect(() => {
         createHeaderAccessor(headers, ["x-api-key", "Authorization"]);
-      }).toThrow("Missing required headers: [x-api-key, Authorization]");
+      }).toThrow(CommerceSdkValidationError);
     });
 
     test("should throw error when header value is empty", () => {
@@ -67,7 +68,7 @@ describe("headers/accessor", () => {
 
       expect(() => {
         createHeaderAccessor(headers, ["x-api-key"]);
-      }).toThrow("Missing required headers: [x-api-key]");
+      }).toThrow(CommerceSdkValidationError);
     });
 
     test("should throw error when header value is whitespace only", () => {
@@ -75,14 +76,13 @@ describe("headers/accessor", () => {
 
       expect(() => {
         createHeaderAccessor(headers, ["x-api-key"]);
-      }).toThrow("Missing required headers: [x-api-key]");
+      }).toThrow(CommerceSdkValidationError);
     });
 
     test("should handle single header", () => {
       const headers = { "x-api-key": "test-key" };
 
       const accessor = createHeaderAccessor(headers, ["x-api-key"]);
-
       expect(accessor.xApiKey).toBe("test-key");
     });
 

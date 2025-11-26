@@ -10,45 +10,143 @@
  * governing permissions and limitations under the License.
  */
 
+import { literal, object, pipe, rawCheck, safeParse, string } from "valibot";
+
+import { CommerceSdkValidationError } from "#error";
+
 import { getHeader } from "./helpers";
 
+import type { LiteralSchema } from "valibot";
 import type { HttpHeaders } from "./types";
 
 /**
- * Checks which headers are missing or empty from the headers object.
- * Performs case-insensitive lookup using {@link getHeader}.
- *
- * @param headers The headers object to check.
- * @param requiredHeaders Array of required header names.
- * @returns Array of missing header names (empty array if all present).
+ * Returns an array of missing or empty headers using Valibot validation.
+ * Case-insensitive by default.
  */
-export function getMissingHeaders(
+export function getMissingOrEmptyHeaders(
   headers: HttpHeaders,
   requiredHeaders: string[],
 ): string[] {
-  const missing: string[] = [];
+  // Normalize headers to lowercase keys for validation
+  // Skip undefined/null values as they should be treated as missing
+  const normalized: Record<string, string> = {};
 
-  for (const header of requiredHeaders) {
-    const value = getHeader(headers, header);
-
-    if (value === undefined || value === null) {
-      missing.push(header);
-      continue;
-    }
-
-    if (Array.isArray(value)) {
-      // Check if array is empty or all values are empty/whitespace
-      const hasNonEmptyValue = value.some((v) => v.trim() !== "");
-      if (!hasNonEmptyValue) {
-        missing.push(header);
+  // Handle null/undefined headers gracefully to avoid Object.keys() errors
+  if (headers && typeof headers === "object" && !Array.isArray(headers)) {
+    for (const key of Object.keys(headers)) {
+      const value = headers[key];
+      if (value !== undefined && value !== null) {
+        normalized[key.toLowerCase()] = value;
       }
-    } else if (value.trim() === "") {
-      // Check if string is empty or whitespace-only
-      missing.push(header);
     }
   }
 
-  return missing;
+  const schema = buildHeadersSchema(requiredHeaders.map((h) => literal(h)));
+  const parsed = safeParse(schema, normalized);
+
+  if (parsed.success) {
+    return [];
+  }
+
+  const lookup = new Map(requiredHeaders.map((h) => [h.toLowerCase(), h]));
+  return parsed.issues.flatMap((issue) => {
+    const key = issue.path?.[0]?.key;
+    const original =
+      typeof key === "string" ? lookup.get(key.toLowerCase()) : null;
+
+    return original ? [original] : [];
+  });
+}
+
+/**
+ * Builds a Valibot schema that checks:
+ * - Required headers exist (case-insensitive)
+ * - Each required header has a non-empty string value
+ */
+function buildHeadersSchema<
+  T extends LiteralSchema<string, string | undefined>[],
+>(requiredHeaders: T) {
+  const buildSchema = () =>
+    pipe(
+      string("Expected a string value for the header"),
+      rawCheck(({ dataset, addIssue }) => {
+        if (!dataset.typed) {
+          return;
+        }
+
+        const value = dataset.value;
+
+        // Check if it's empty or whitespace-only
+        if (value.trim() === "") {
+          addIssue({
+            expected: "a non-empty string value",
+            received: `"${value}"`,
+            message: "Header value cannot be empty or contain only whitespace",
+          });
+
+          return;
+        }
+
+        // Check if comma-separated values are all empty
+        if (value.includes(",")) {
+          const parts = value.split(",").map((part) => part.trim());
+          const hasNonEmptyPart = parts.some((part) => part !== "");
+
+          if (!hasNonEmptyPart) {
+            addIssue({
+              expected: "at least one non-empty value in comma-separated list",
+              received: `[${parts.join(", ")}]`,
+              message:
+                "Header value contains only empty or whitespace values when split by comma",
+            });
+          }
+        }
+      }),
+    );
+
+  const shape: Record<string, ReturnType<typeof buildSchema>> = {};
+
+  for (const schema of requiredHeaders) {
+    shape[schema.literal.toLowerCase()] = buildSchema();
+  }
+
+  return object(shape);
+}
+
+/**
+ * Validates that required headers are present in the headers object.
+ * Case-insensitive by default (HTTP standard).
+ *
+ * @param headers The headers object to validate.
+ * @param requiredHeaders Array of required header names as LiteralSchemas.
+ * @throws {CommerceSdkValidationError} If validation fails.
+ */
+export function assertRequiredHeadersSchema<
+  T extends LiteralSchema<string, string | undefined>[],
+>(headers: HttpHeaders, requiredHeaders: T) {
+  // Normalize headers to lowercase keys for validation
+  // Skip undefined/null values as they should be treated as missing
+  const normalized: Record<string, string> = {};
+
+  // Handle null/undefined headers gracefully to avoid Object.keys() errors
+  if (headers && typeof headers === "object" && !Array.isArray(headers)) {
+    for (const key of Object.keys(headers)) {
+      const value = headers[key];
+      if (value !== undefined && value !== null) {
+        normalized[key.toLowerCase()] = value;
+      }
+    }
+  }
+
+  const schema = buildHeadersSchema(requiredHeaders);
+  const parsed = safeParse(schema, normalized);
+
+  if (!parsed.success) {
+    throw new CommerceSdkValidationError(
+      "The headers object does not match the required headers (case-insensitive)",
+      { issues: parsed.issues },
+    );
+  }
 }
 
 /**
@@ -57,7 +155,7 @@ export function getMissingHeaders(
  *
  * @param headers The headers object to validate.
  * @param requiredHeaders Array of required header names.
- * @throws {Error} If any required headers are missing or empty.
+ * @throws {CommerceSdkValidationError} If any required headers are missing or empty.
  *
  * @example
  * ```typescript
@@ -72,17 +170,19 @@ export function getMissingHeaders(
  * try {
  *   assertRequiredHeaders({}, ["x-api-key", "Authorization"]);
  * } catch (error) {
- *   console.error(error.message); // "Missing required headers: x-api-key, Authorization"
+ *   console.error(error.display());
+ *   // "The headers object does not match the required headers (case-insensitive)"
+ *  // ├── Schema validation error at x-api-key → Expected a non-empty string value
+ *  // └── Schema validation error at Authorization → Expected a non-empty string value
  * }
  * ```
  */
 export function assertRequiredHeaders(
   headers: HttpHeaders,
   requiredHeaders: string[],
-): void {
-  const missing = getMissingHeaders(headers, requiredHeaders);
-
-  if (missing.length > 0) {
-    throw new Error(`Missing required headers: [${missing.join(", ")}]`);
-  }
+) {
+  assertRequiredHeadersSchema(
+    headers,
+    requiredHeaders.map((header) => literal(header)),
+  );
 }

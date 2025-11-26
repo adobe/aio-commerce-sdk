@@ -10,6 +10,17 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  object,
+  record,
+  safeParse,
+  string,
+  union,
+  undefined as vUndefined,
+} from "valibot";
+
+import { CommerceSdkValidationError } from "#error";
+
 import type { RuntimeActionParams } from "#params";
 import type { HttpHeaders, HttpHeaderValue } from "./types";
 
@@ -66,7 +77,7 @@ export function getHeader(headers: HttpHeaders, name: string): HttpHeaderValue {
  * Extracts the `__ow_headers` object from App Builder runtime action parameters.
  *
  * @param params The action parameters from App Builder runtime.
- * @throws {Error} If `__ow_headers` is missing or not an object.
+ * @throws {CommerceSdkValidationError} If `__ow_headers` is missing or not an object.
  *
  * @example
  * ```typescript
@@ -77,9 +88,17 @@ export function getHeader(headers: HttpHeaders, name: string): HttpHeaderValue {
  * ```
  */
 export function getHeadersFromParams(params: RuntimeActionParams): HttpHeaders {
-  if (!params.__ow_headers || typeof params.__ow_headers !== "object") {
-    throw new Error("Missing __ow_headers in action params");
+  const schema = object({
+    __ow_headers: record(string(), union([string(), vUndefined()])),
+  });
+
+  const parsed = safeParse(schema, params);
+  if (!parsed.success) {
+    throw new CommerceSdkValidationError(
+      "Missing __ow_headers in action params",
+      { issues: parsed.issues },
+    );
   }
 
-  return params.__ow_headers;
+  return parsed.output.__ow_headers;
 }

@@ -10,6 +10,19 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  literal,
+  nonEmpty,
+  object,
+  pipe,
+  rawTransform,
+  safeParse,
+  string,
+  trim,
+} from "valibot";
+
+import { CommerceSdkValidationError } from "#error";
+
 /**
  * Represents a Bearer authentication scheme (RFC 6750).
  */
@@ -154,6 +167,31 @@ function parseKeyValueParameters(
   return params;
 }
 
+const authorizationSchema = pipe(
+  string("Expected a string value"),
+  trim(),
+  nonEmpty("Expected a non-empty string value"),
+  rawTransform(({ dataset: { value: authorization }, addIssue, NEVER }) => {
+    const spaceIndex = authorization.indexOf(" ");
+    if (spaceIndex === -1) {
+      addIssue({
+        message: "Invalid Authorization header format",
+      });
+
+      return NEVER;
+    }
+
+    // Note: scheme and parameters will not be empty here because:
+    // - scheme === "" would require spaceIndex === 0, but trim() removes leading spaces
+    // - parameters === "" would require space followed by only whitespace, but trim() removes trailing whitespace
+    // Both cases are already caught by the spaceIndex === -1 check above
+    return {
+      scheme: authorization.slice(0, spaceIndex),
+      parameters: authorization.slice(spaceIndex + 1).trim(),
+    };
+  }),
+);
+
 /**
  * Parses an Authorization header value into its scheme and parameters.
  *
@@ -188,20 +226,15 @@ function parseKeyValueParameters(
  * ```
  */
 export function parseAuthorization(authorization: string): Authorization {
-  const trimmed = authorization.trim();
-  const spaceIndex = trimmed.indexOf(" ");
-
-  if (spaceIndex === -1) {
-    throw new Error("Invalid Authorization header format");
+  const parsed = safeParse(authorizationSchema, authorization);
+  if (!parsed.success) {
+    throw new CommerceSdkValidationError(
+      "Invalid Authorization header format",
+      { issues: parsed.issues },
+    );
   }
 
-  const scheme = trimmed.slice(0, spaceIndex);
-  const parameters = trimmed.slice(spaceIndex + 1).trim();
-
-  // Note: scheme and parameters cannot be empty here because:
-  // - scheme === "" would require spaceIndex === 0, but trim() removes leading spaces
-  // - parameters === "" would require space followed by only whitespace, but trim() removes trailing whitespace
-  // Both cases are already caught by the spaceIndex === -1 check above
+  const { scheme, parameters } = parsed.output;
 
   // Return discriminated union based on scheme
   if (scheme === "Bearer") {
@@ -233,6 +266,10 @@ export function parseAuthorization(authorization: string): Authorization {
   };
 }
 
+const bearerSchema = object({
+  scheme: literal("Bearer"),
+});
+
 /**
  * Parses and validates a Bearer authorization header.
  *
@@ -256,13 +293,21 @@ export function parseAuthorization(authorization: string): Authorization {
  */
 export function parseBearerToken(authorization: string): BearerAuthorization {
   const auth = parseAuthorization(authorization);
+  const parsed = safeParse(bearerSchema, auth);
 
-  if (!isBearerAuth(auth)) {
-    throw new Error("Authorization header must be a Bearer token");
+  if (!parsed.success) {
+    throw new CommerceSdkValidationError(
+      "Authorization header must be a Bearer token",
+      { issues: parsed.issues },
+    );
   }
 
-  return auth;
+  return auth as BearerAuthorization;
 }
+
+const basicSchema = object({
+  scheme: literal("Basic"),
+});
 
 /**
  * Parses and validates a Basic authorization header.
@@ -278,13 +323,21 @@ export function parseBearerToken(authorization: string): BearerAuthorization {
  */
 export function parseBasicToken(authorization: string): BasicAuthorization {
   const auth = parseAuthorization(authorization);
+  const parsed = safeParse(basicSchema, auth);
 
-  if (!isBasicAuth(auth)) {
-    throw new Error("Authorization header must be Basic authentication");
+  if (!parsed.success) {
+    throw new CommerceSdkValidationError(
+      "Authorization header must be Basic authentication",
+      { issues: parsed.issues },
+    );
   }
 
-  return auth;
+  return auth as BasicAuthorization;
 }
+
+const oauthSchema = object({
+  scheme: literal("OAuth"),
+});
 
 /**
  * Parses and validates an OAuth 1.0 authorization header.
@@ -301,10 +354,13 @@ export function parseBasicToken(authorization: string): BasicAuthorization {
  */
 export function parseOAuthToken(authorization: string): OAuth1Authorization {
   const auth = parseAuthorization(authorization);
+  const parsed = safeParse(oauthSchema, auth);
 
-  if (!isOAuth(auth)) {
-    throw new Error("Authorization header must be OAuth");
+  if (!parsed.success) {
+    throw new CommerceSdkValidationError("Authorization header must be OAuth", {
+      issues: parsed.issues,
+    });
   }
 
-  return auth;
+  return auth as OAuth1Authorization;
 }

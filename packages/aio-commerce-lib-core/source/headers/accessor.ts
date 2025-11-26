@@ -13,7 +13,7 @@
 import camelcase from "camelcase";
 
 import { getHeader } from "./helpers";
-import { getMissingHeaders } from "./validation";
+import { assertRequiredHeaders } from "./validation";
 
 import type { HttpHeaderAccessorMap, HttpHeaders } from "./types";
 
@@ -39,11 +39,7 @@ export function createHeaderAccessor<const T extends string[]>(
   headers: HttpHeaders,
   requiredHeaders: T,
 ): HttpHeaderAccessorMap<T> {
-  const missing = getMissingHeaders(headers, requiredHeaders);
-
-  if (missing.length > 0) {
-    throw new Error(`Missing required headers: [${missing.join(", ")}]`);
-  }
+  assertRequiredHeaders(headers, requiredHeaders);
 
   // Build accessor object with camelCase keys
   const accessor: Record<string, string | string[]> = {};
@@ -52,10 +48,8 @@ export function createHeaderAccessor<const T extends string[]>(
     const camelKey = camelcase(header);
     const value = getHeader(headers, header);
 
-    // We know value is defined because getMissingHeaders passed
-    if (value !== undefined) {
-      accessor[camelKey] = value;
-    }
+    // We know value is defined because assertRequiredHeaders passed
+    accessor[camelKey] = value as string | string[];
   }
 
   return accessor as HttpHeaderAccessorMap<T>;

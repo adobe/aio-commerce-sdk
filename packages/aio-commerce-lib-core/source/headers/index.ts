@@ -28,8 +28,11 @@ export {
   parseOAuthToken,
 } from "./auth";
 export { getHeader, getHeadersFromParams } from "./helpers";
-export * from "./types";
-export { assertRequiredHeaders, getMissingHeaders } from "./validation";
+export {
+  assertRequiredHeaders,
+  assertRequiredHeadersSchema,
+  getMissingOrEmptyHeaders,
+} from "./validation";
 
 export type {
   Authorization,
@@ -39,3 +42,8 @@ export type {
   OAuth1Authorization,
   OAuth1Parameters,
 } from "./auth";
+export type {
+  HttpHeaderAccessorMap,
+  HttpHeaders,
+  HttpHeaderValue,
+} from "./types";
