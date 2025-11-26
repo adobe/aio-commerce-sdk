@@ -344,6 +344,51 @@ describe("headers/auth", () => {
         domain: "example.com",
       });
     });
+
+    test("should handle parameters with only quoted values", () => {
+      const auth = parseAuthorization(
+        'Digest realm="Example", nonce="abc123", qop="auth"',
+      );
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "Example",
+        nonce: "abc123",
+        qop: "auth",
+      });
+    });
+
+    test("should handle parameters with only unquoted values", () => {
+      const auth = parseAuthorization("Digest realm=example, nonce=abc123");
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "example",
+        nonce: "abc123",
+      });
+    });
+
+    test("should handle OAuth with only quoted values", () => {
+      const auth = parseAuthorization(
+        'OAuth oauth_consumer_key="key", oauth_token="token", oauth_signature="sig"',
+      );
+      expect(auth.scheme).toBe("OAuth");
+      if (isOAuth(auth)) {
+        expect(auth.parameters.oauth_consumer_key).toBe("key");
+        expect(auth.parameters.oauth_token).toBe("token");
+        expect(auth.parameters.oauth_signature).toBe("sig");
+      }
+    });
+
+    test("should handle OAuth with only unquoted values", () => {
+      const auth = parseAuthorization(
+        "OAuth oauth_consumer_key=key, oauth_token=token, oauth_signature=sig",
+      );
+      expect(auth.scheme).toBe("OAuth");
+      if (isOAuth(auth)) {
+        expect(auth.parameters.oauth_consumer_key).toBe("key");
+        expect(auth.parameters.oauth_token).toBe("token");
+        expect(auth.parameters.oauth_signature).toBe("sig");
+      }
+    });
   });
 
   describe("parseBearerToken", () => {

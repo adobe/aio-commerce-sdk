@@ -153,13 +153,11 @@ function parseKeyValueParameters(
 
   while (match !== null) {
     const [, key, quotedValue, unquotedValue] = match;
-    if (key) {
-      // Use quoted value if present, otherwise use unquoted value
-      const value = quotedValue !== undefined ? quotedValue : unquotedValue;
-      if (value !== undefined) {
-        params[key] = value;
-      }
-    }
+
+    // Regex guarantees: key is always present (\w+), and value is always defined
+    // (either quotedValue from "([^"]*)" or unquotedValue from ([^,\s]+))
+    const value = quotedValue !== undefined ? quotedValue : unquotedValue;
+    params[key] = value;
 
     match = paramPattern.exec(parametersString);
   }
