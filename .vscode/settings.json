@@ -24,5 +24,6 @@
     "source.organizeImports.biome": "explicit"
   },
 
+  "biome.enabled": true,
   "typescript.tsdk": "node_modules/typescript/lib"
 }
