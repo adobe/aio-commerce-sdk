@@ -79,7 +79,7 @@ getHeader(headers, "AUTHORIZATION"); // "Bearer uppercase" (case-insensitive fal
 
 ### Multiple Header Values (RFC 9110)
 
-According to RFC 9110, when a header appears multiple times, the HTTP server/runtime MAY combine (not necessarily) the values with commas. `getHeader` automatically splits comma-separated strings into arrays:
+According to RFC 9110, when a header appears multiple times, the HTTP server/runtime MAY combine (not necessarily) the values with commas. `getHeader` can optionally split comma-separated strings into arrays when the `splitCommaSeparated` option is enabled:
 
 ```typescript
 // Header appeared multiple times in request:
@@ -92,8 +92,15 @@ const headers = {
   "x-api-key": "key123",
 };
 
-const value = getHeader(headers, "cache-control");
-// Returns: ["no-store", "no-cache"] (automatically split into array)
+// Without splitCommaSeparated option (default behavior)
+const value1 = getHeader(headers, "cache-control");
+// Returns: "no-store, no-cache" (string, not split)
+
+// With splitCommaSeparated option enabled
+const value2 = getHeader(headers, "cache-control", {
+  splitCommaSeparated: true,
+});
+// Returns: ["no-store", "no-cache"] (array, split by comma)
 ```
 
 Single values without commas are returned as strings:
@@ -106,15 +113,25 @@ const headers = {
 
 const value = getHeader(headers, "cache-control");
 // Returns: "no-store" (string, not array)
+
+// Even with splitCommaSeparated enabled, single values remain strings
+const value2 = getHeader(headers, "cache-control", {
+  splitCommaSeparated: true,
+});
+// Returns: "no-store" (string, no comma to split)
 ```
 
 **Return Type**: `getHeader` returns `string | string[] | undefined`:
 
-- `string` - Single header value (no commas)
-- `string[]` - Multiple header values (comma-separated string was automatically split)
+- `string` - Single header value (default, or when no comma is present)
+- `string[]` - Multiple header values (only when `splitCommaSeparated: true`)
 - `undefined` - Header not found
 
-## assertRequiredHeaders
+## Header Validation
+
+The module provides several functions for validating required headers.
+
+### assertRequiredHeaders
 
 Validates that required headers are present and non-empty. Performs case-insensitive validation.
 
@@ -139,16 +156,38 @@ export async function main(params) {
 
 ### Error Messages
 
-The function provides clear error messages:
+The function throws a `CommerceSdkValidationError` with detailed validation issues:
 
 ```typescript
-// Missing one header
-assertRequiredHeaders(headers, ["x-api-key", "Authorization"]);
-// Error: Missing required headers: [Authorization]
+try {
+  assertRequiredHeaders({}, ["x-api-key", "Authorization"]);
+} catch (error) {
+  console.error(error.display());
+  // "The headers object does not match the required headers (case-insensitive)"
+  // ├── Schema validation error at x-api-key → Expected a non-empty string value
+  // └── Schema validation error at Authorization → Expected a non-empty string value
+}
+```
 
-// Missing multiple headers
-assertRequiredHeaders(headers, ["x-api-key", "Authorization", "x-custom"]);
-// Error: Missing required headers: [x-api-key, Authorization, x-custom]
+### getMissingOrEmptyHeaders
+
+Returns an array of header names that are missing or empty, without throwing an error. Useful when you need to check headers without immediately failing:
+
+```typescript
+import { getMissingOrEmptyHeaders } from "@adobe/aio-commerce-lib-core/headers";
+import { badRequest } from "@adobe/aio-commerce-lib-core/responses";
+
+const headers = getHeadersFromParams(params);
+const missing = getMissingOrEmptyHeaders(headers, [
+  "x-api-key",
+  "Authorization",
+]);
+
+if (missing.length > 0) {
+  return badRequest({
+    body: { message: `Missing headers: ${missing.join(", ")}` },
+  });
+}
 ```
 
 ## createHeaderAccessor
@@ -174,6 +213,18 @@ export async function main(params) {
   console.log(xApiKey); // string
   console.log(authorization); // string
 }
+```
+
+### Options
+
+The function accepts an optional `options` parameter to control header value processing:
+
+```typescript
+// Enable comma-separated value splitting
+const { cacheControl } = createHeaderAccessor(headers, ["cache-control"], {
+  splitCommaSeparated: true,
+});
+// cacheControl may be string | string[] depending on whether comma is present
 ```
 
 ### Benefits

@@ -10,15 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { literal } from "valibot";
 import { describe, expect, test } from "vitest";
 
 import { CommerceSdkValidationError } from "#error";
-import {
-  assertRequiredHeaders,
-  assertRequiredHeadersSchema,
-  getMissingOrEmptyHeaders,
-} from "#headers";
+import { assertRequiredHeaders, getMissingOrEmptyHeaders } from "#headers";
 
 import type { HttpHeaders } from "#headers";
 
@@ -180,52 +175,40 @@ describe("headers/validation", () => {
         assertRequiredHeaders(headers, ["Example-Field", "x-api-key"]);
       }).toThrow(CommerceSdkValidationError);
     });
-  });
 
-  describe("assertRequiredHeadersSchema", () => {
-    test("should handle null headers input", () => {
-      const headers = null as unknown as HttpHeaders;
-
+    test("should handle null headers object", () => {
+      // Test line 169: when headers is null (through assertRequiredHeadersSchema)
       expect(() => {
-        assertRequiredHeadersSchema(headers, [
-          literal("x-api-key"),
-          literal("Authorization"),
+        assertRequiredHeaders(null as unknown as HttpHeaders, ["x-api-key"]);
+      }).toThrow(CommerceSdkValidationError);
+    });
+
+    test("should handle undefined headers object", () => {
+      // Test line 169: when headers is undefined (through assertRequiredHeadersSchema)
+      expect(() => {
+        assertRequiredHeaders(undefined as unknown as HttpHeaders, [
+          "x-api-key",
         ]);
       }).toThrow(CommerceSdkValidationError);
     });
 
-    test("should handle array input as headers", () => {
-      const headers = [] as unknown as HttpHeaders;
-
+    test("should handle array headers object", () => {
+      // Test line 169: when headers is an array (through assertRequiredHeadersSchema)
       expect(() => {
-        assertRequiredHeadersSchema(headers, [
-          literal("x-api-key"),
-          literal("Authorization"),
-        ]);
-      }).toThrow(CommerceSdkValidationError);
-    });
-  });
-
-  describe("assertRequiredHeadersSchema", () => {
-    test("should handle null headers input", () => {
-      const headers = null as unknown as HttpHeaders;
-
-      expect(() => {
-        assertRequiredHeadersSchema(headers, [
-          literal("x-api-key"),
-          literal("Authorization"),
-        ]);
+        assertRequiredHeaders([] as unknown as HttpHeaders, ["x-api-key"]);
       }).toThrow(CommerceSdkValidationError);
     });
 
-    test("should handle array input as headers", () => {
-      const headers = [] as unknown as HttpHeaders;
+    test("should handle non-object headers", () => {
+      // Test line 169: when headers is not an object (through assertRequiredHeadersSchema)
+      expect(() => {
+        assertRequiredHeaders("not-an-object" as unknown as HttpHeaders, [
+          "x-api-key",
+        ]);
+      }).toThrow(CommerceSdkValidationError);
 
       expect(() => {
-        assertRequiredHeadersSchema(headers, [
-          literal("x-api-key"),
-          literal("Authorization"),
-        ]);
+        assertRequiredHeaders(123 as unknown as HttpHeaders, ["x-api-key"]);
       }).toThrow(CommerceSdkValidationError);
     });
   });
@@ -476,6 +459,48 @@ describe("headers/validation", () => {
 
       // Should return the header as missing since validation failed
       expect(missing).toEqual(["x-api-key"]);
+    });
+
+    test("should handle null headers object", () => {
+      // Test line 57: when headers is null
+      const missing = getMissingOrEmptyHeaders(null as unknown as HttpHeaders, [
+        "x-api-key",
+      ]);
+
+      expect(missing).toEqual(["x-api-key"]);
+    });
+
+    test("should handle undefined headers object", () => {
+      // Test line 57: when headers is undefined
+      const missing = getMissingOrEmptyHeaders(
+        undefined as unknown as HttpHeaders,
+        ["x-api-key"],
+      );
+
+      expect(missing).toEqual(["x-api-key"]);
+    });
+
+    test("should handle array headers object", () => {
+      // Test line 57: when headers is an array (should be treated as invalid)
+      const missing = getMissingOrEmptyHeaders([] as unknown as HttpHeaders, [
+        "x-api-key",
+      ]);
+
+      expect(missing).toEqual(["x-api-key"]);
+    });
+
+    test("should handle non-object headers", () => {
+      // Test line 57: when headers is not an object (e.g., string, number)
+      const missing1 = getMissingOrEmptyHeaders(
+        "not-an-object" as unknown as HttpHeaders,
+        ["x-api-key"],
+      );
+      expect(missing1).toEqual(["x-api-key"]);
+
+      const missing2 = getMissingOrEmptyHeaders(123 as unknown as HttpHeaders, [
+        "x-api-key",
+      ]);
+      expect(missing2).toEqual(["x-api-key"]);
     });
 
     test("should handle path extraction fallback when find doesn't match", () => {

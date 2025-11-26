@@ -28,11 +28,7 @@ export {
   parseOAuthToken,
 } from "./auth";
 export { getHeader, getHeadersFromParams } from "./helpers";
-export {
-  assertRequiredHeaders,
-  assertRequiredHeadersSchema,
-  getMissingOrEmptyHeaders,
-} from "./validation";
+export { assertRequiredHeaders, getMissingOrEmptyHeaders } from "./validation";
 
 export type {
   Authorization,

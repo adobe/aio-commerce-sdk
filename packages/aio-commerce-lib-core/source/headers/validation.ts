@@ -22,6 +22,28 @@ import type { HttpHeaders } from "./types";
 /**
  * Returns an array of missing or empty headers using Valibot validation.
  * Case-insensitive by default.
+ *
+ * Unlike {@link assertRequiredHeaders}, this function does not throw an error.
+ * Instead, it returns an array of header names that are missing or empty.
+ * This is useful when you need to check headers without immediately failing.
+ *
+ * @param headers The headers object to validate.
+ * @param requiredHeaders Array of required header names.
+ * @returns Array of header names that are missing or empty. Empty array if all headers are present and non-empty.
+ *
+ * @example
+ * ```typescript
+ * const headers = { "x-api-key": "key123" };
+ * const missing = getMissingOrEmptyHeaders(headers, ["x-api-key", "Authorization"]);
+ * // Returns: ["Authorization"]
+ * ```
+ *
+ * @example
+ * ```typescript
+ * const headers = { "x-api-key": "", "Authorization": "Bearer token" };
+ * const missing = getMissingOrEmptyHeaders(headers, ["x-api-key", "Authorization"]);
+ * // Returns: ["x-api-key"] (empty string is considered missing)
+ * ```
  */
 export function getMissingOrEmptyHeaders(
   headers: HttpHeaders,
@@ -117,11 +139,26 @@ function buildHeadersSchema<
  * Validates that required headers are present in the headers object.
  * Case-insensitive by default (HTTP standard).
  *
+ * This is an advanced validation function that accepts Valibot `LiteralSchema` objects
+ * instead of plain strings. Use {@link assertRequiredHeaders} for the simpler string-based API.
+ *
  * @param headers The headers object to validate.
- * @param requiredHeaders Array of required header names as LiteralSchemas.
+ * @param requiredHeaders Array of required header names as Valibot `LiteralSchema` objects.
  * @throws {CommerceSdkValidationError} If validation fails.
+ *
+ * @example
+ * ```typescript
+ * import { literal } from "valibot";
+ * import { assertRequiredHeadersSchema } from "@adobe/aio-commerce-lib-core/headers";
+ *
+ * const headers = getHeadersFromParams(params);
+ * assertRequiredHeadersSchema(headers, [
+ *   literal("x-api-key"),
+ *   literal("Authorization"),
+ * ]);
+ * ```
  */
-export function assertRequiredHeadersSchema<
+function assertRequiredHeadersSchema<
   T extends LiteralSchema<string, string | undefined>[],
 >(headers: HttpHeaders, requiredHeaders: T) {
   // Normalize headers to lowercase keys for validation

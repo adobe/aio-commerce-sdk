@@ -194,7 +194,7 @@ const authorizationSchema = pipe(
  * Parses an Authorization header value into its scheme and parameters.
  *
  * @param authorization The Authorization header value.
- * @throws {Error} If the authorization header is malformed.
+ * @throws {CommerceSdkValidationError} If the authorization header is malformed.
  *
  * @example
  * ```typescript
@@ -272,7 +272,7 @@ const bearerSchema = object({
  * Parses and validates a Bearer authorization header.
  *
  * @param authorization The Authorization header value.
- * @throws {Error} If the authorization header is not a Bearer token or if the token is empty.
+ * @throws {CommerceSdkValidationError} If the authorization header is not a Bearer token or if the token is empty.
  *
  * @example
  * ```typescript
@@ -311,7 +311,7 @@ const basicSchema = object({
  * Parses and validates a Basic authorization header.
  *
  * @param authorization The Authorization header value.
- * @throws {Error} If the authorization header is not Basic auth.
+ * @throws {CommerceSdkValidationError} If the authorization header is not Basic auth.
  *
  * @example
  * ```typescript
@@ -341,7 +341,7 @@ const oauthSchema = object({
  * Parses and validates an OAuth 1.0 authorization header.
  *
  * @param authorization The Authorization header value.
- * @throws {Error} If the authorization header is not OAuth.
+ * @throws {CommerceSdkValidationError} If the authorization header is not OAuth.
  *
  * @example
  * ```typescript

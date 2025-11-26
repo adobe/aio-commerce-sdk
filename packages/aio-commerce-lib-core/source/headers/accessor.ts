@@ -27,7 +27,8 @@ import type {
  *
  * @param headers The headers object from runtime params.
  * @param requiredHeaders Array of required header names.
- * @throws {Error} If any required headers are missing or empty.
+ * @param options Optional settings to control header value processing (e.g., `splitCommaSeparated`).
+ * @throws {CommerceSdkValidationError} If any required headers are missing or empty.
  *
  * @example
  * ```typescript
@@ -37,6 +38,17 @@ import type {
  * // TypeScript knows these are non-empty strings (normalized to camelCase)
  * const apiKey = accessor.xApiKey;       // string
  * const auth = accessor.authorization;   // string
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // With options to enable comma-separated value splitting
+ * const accessor = createHeaderAccessor(
+ *   headers,
+ *   ["cache-control"],
+ *   { splitCommaSeparated: true }
+ * );
+ * // accessor.cacheControl may be string | string[] depending on comma presence
  * ```
  */
 export function createHeaderAccessor<
