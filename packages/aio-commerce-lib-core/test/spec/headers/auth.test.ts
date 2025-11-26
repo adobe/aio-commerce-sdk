@@ -54,8 +54,13 @@ describe("headers/auth", () => {
       const auth = parseAuthorization("Digest realm=example");
       expect(auth).toEqual({
         scheme: "Digest",
-        parametersRaw: "realm=example",
-        parameters: {},
+        rawParameters: "realm=example",
+        parseParameters: expect.any(Function),
+      });
+
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "example",
       });
     });
 
@@ -63,11 +68,14 @@ describe("headers/auth", () => {
       const auth = parseAuthorization('Digest realm="Example", nonce="abc123"');
       expect(auth).toMatchObject({
         scheme: "Digest",
-        parametersRaw: 'realm="Example", nonce="abc123"',
-        parameters: {
-          realm: "Example",
-          nonce: "abc123",
-        },
+        rawParameters: 'realm="Example", nonce="abc123"',
+        parseParameters: expect.any(Function),
+      });
+
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "Example",
+        nonce: "abc123",
       });
     });
 
@@ -85,19 +93,30 @@ describe("headers/auth", () => {
       }).toThrow("Invalid Authorization header format");
     });
 
-    test("should throw error for empty scheme", () => {
+    test("should throw error for missing space", () => {
+      expect(() => {
+        parseAuthorization("Bearertoken123");
+      }).toThrow("Invalid Authorization header format");
+
+      // Leading/trailing whitespace gets trimmed, so these also hit the "no space" check
       expect(() => {
         parseAuthorization(" token123");
       }).toThrow("Invalid Authorization header format");
-    });
 
-    test("should throw error for empty parameters", () => {
       expect(() => {
         parseAuthorization("Bearer ");
       }).toThrow("Invalid Authorization header format");
 
       expect(() => {
         parseAuthorization("Bearer    ");
+      }).toThrow("Invalid Authorization header format");
+
+      expect(() => {
+        parseAuthorization("Bearer \t");
+      }).toThrow("Invalid Authorization header format");
+
+      expect(() => {
+        parseAuthorization("Bearer \n");
       }).toThrow("Invalid Authorization header format");
     });
 
@@ -135,8 +154,10 @@ describe("headers/auth", () => {
       ) {
         // At runtime, we know this is GenericAuthorization
         const genericAuth = digestAuth as GenericAuthorization;
-        expect(genericAuth.parametersRaw).toBe('realm="Example"');
-        expect(genericAuth.parameters.realm).toBe("Example");
+        expect(genericAuth.rawParameters).toBe('realm="Example"');
+
+        const keyValueParameters = genericAuth.parseParameters();
+        expect(keyValueParameters.realm).toBe("Example");
       }
     });
 
@@ -145,7 +166,7 @@ describe("headers/auth", () => {
         'OAuth realm="Example", oauth_consumer_key="key", oauth_nonce="nonce"',
       );
       expect(auth.scheme).toBe("OAuth");
-      if (auth.scheme === "OAuth") {
+      if (isOAuth(auth)) {
         expect(auth.parameters.realm).toBe("Example");
         expect(auth.parameters.oauth_consumer_key).toBe("key");
         expect(auth.parameters.oauth_nonce).toBe("nonce");
@@ -155,9 +176,173 @@ describe("headers/auth", () => {
     test("should handle empty OAuth parameters object", () => {
       const auth = parseAuthorization("OAuth no-valid-params-here");
       expect(auth.scheme).toBe("OAuth");
-      if (auth.scheme === "OAuth") {
+      if (isOAuth(auth)) {
         expect(auth.parameters).toEqual({});
       }
+    });
+  });
+
+  describe("parameter parsing (quoted and unquoted values)", () => {
+    test("should parse unquoted values in generic schemes", () => {
+      const auth = parseAuthorization("Digest realm=example");
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "example",
+      });
+    });
+
+    test("should parse multiple unquoted parameters", () => {
+      const auth = parseAuthorization(
+        "Digest realm=example, nonce=abc123, qop=auth",
+      );
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "example",
+        nonce: "abc123",
+        qop: "auth",
+      });
+    });
+
+    test("should parse mixed quoted and unquoted parameters", () => {
+      const auth = parseAuthorization(
+        'Digest realm="Example Realm", nonce=abc123, qop="auth"',
+      );
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "Example Realm",
+        nonce: "abc123",
+        qop: "auth",
+      });
+    });
+
+    test("should parse unquoted values with special characters", () => {
+      const auth = parseAuthorization(
+        "Digest realm=example.com, nonce=abc-123_xyz, qop=auth-int",
+      );
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "example.com",
+        nonce: "abc-123_xyz",
+        qop: "auth-int",
+      });
+    });
+
+    test("should parse OAuth with unquoted values", () => {
+      const auth = parseAuthorization(
+        'OAuth oauth_consumer_key="key", oauth_token=token123, oauth_signature=sig456',
+      );
+      expect(auth.scheme).toBe("OAuth");
+      if (isOAuth(auth)) {
+        expect(auth.parameters.oauth_consumer_key).toBe("key");
+        expect(auth.parameters.oauth_token).toBe("token123");
+        expect(auth.parameters.oauth_signature).toBe("sig456");
+      }
+    });
+
+    test("should parse OAuth with all unquoted values", () => {
+      const auth = parseAuthorization(
+        "OAuth oauth_consumer_key=key123, oauth_token=token456, oauth_signature=sig789",
+      );
+      expect(auth.scheme).toBe("OAuth");
+      if (isOAuth(auth)) {
+        expect(auth.parameters.oauth_consumer_key).toBe("key123");
+        expect(auth.parameters.oauth_token).toBe("token456");
+        expect(auth.parameters.oauth_signature).toBe("sig789");
+      }
+    });
+
+    test("should stop unquoted values at commas", () => {
+      const auth = parseAuthorization("Digest realm=example, nonce=abc123");
+      const digestAuth = auth as GenericAuthorization;
+      const params = digestAuth.parseParameters();
+      expect(params.realm).toBe("example");
+      expect(params.nonce).toBe("abc123");
+    });
+
+    test("should stop unquoted values at spaces", () => {
+      const auth = parseAuthorization("Digest realm=example nonce=abc123");
+      const digestAuth = auth as GenericAuthorization;
+      const params = digestAuth.parseParameters();
+      expect(params.realm).toBe("example");
+      expect(params.nonce).toBe("abc123");
+    });
+
+    test("should handle empty quoted values", () => {
+      const auth = parseAuthorization('Digest realm="", nonce=abc123');
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "",
+        nonce: "abc123",
+      });
+    });
+
+    test("should handle quoted values with spaces", () => {
+      const auth = parseAuthorization(
+        'Digest realm="Example Realm", nonce=abc123',
+      );
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "Example Realm",
+        nonce: "abc123",
+      });
+    });
+
+    test("should handle quoted values with commas", () => {
+      const auth = parseAuthorization(
+        'Digest realm="Example, Realm", nonce=abc123',
+      );
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "Example, Realm",
+        nonce: "abc123",
+      });
+    });
+
+    test("should handle unquoted numeric values", () => {
+      const auth = parseAuthorization(
+        "Digest realm=example, nonce=123456, qop=auth",
+      );
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "example",
+        nonce: "123456",
+        qop: "auth",
+      });
+    });
+
+    test("should handle unquoted values with dots", () => {
+      const auth = parseAuthorization(
+        "Digest realm=example.com, domain=sub.example.com",
+      );
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "example.com",
+        domain: "sub.example.com",
+      });
+    });
+
+    test("should handle unquoted values with hyphens and underscores", () => {
+      const auth = parseAuthorization(
+        "Digest realm=example-realm, nonce=abc_123-xyz",
+      );
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "example-realm",
+        nonce: "abc_123-xyz",
+      });
+    });
+
+    test("should handle complex mixed scenario", () => {
+      const auth = parseAuthorization(
+        'Digest realm="Example Realm", username=user123, password="secret pass", domain=example.com',
+      );
+      const digestAuth = auth as GenericAuthorization;
+      expect(digestAuth.parseParameters()).toEqual({
+        realm: "Example Realm",
+        username: "user123",
+        password: "secret pass",
+        domain: "example.com",
+      });
     });
   });
 

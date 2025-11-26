@@ -61,8 +61,9 @@ export type OAuth1Authorization = {
  */
 export type GenericAuthorization = {
   scheme: string;
-  parametersRaw: string;
-  parameters: Record<string, string>;
+  rawParameters: string;
+
+  parseParameters: () => Record<string, string>;
 };
 
 /**
@@ -121,7 +122,7 @@ export function isOAuth(auth: Authorization): auth is OAuth1Authorization {
 }
 
 /**
- * Parses key="value" parameters from a string.
+ * Parses key="value" or key=value parameters from a string.
  * Used for OAuth and other schemes with comma-separated key-value pairs.
  *
  * @param parametersString The parameters string.
@@ -131,15 +132,22 @@ function parseKeyValueParameters(
 ): Record<string, string> {
   const params: Record<string, string> = {};
 
-  // Match key="value" pairs
-  const paramPattern = /(\w+)="([^"]*)"/g;
+  // Match key="value" or key=value pairs
+  // Quoted values: key="value" (value can contain any character except ")
+  // Unquoted values: key=value (value stops at comma, space, or end of string)
+  const paramPattern = /(\w+)=(?:"([^"]*)"|([^,\s]+))/g;
   let match = paramPattern.exec(parametersString);
 
   while (match !== null) {
-    const [, key, value] = match;
-    if (key && value !== undefined) {
-      params[key] = value;
+    const [, key, quotedValue, unquotedValue] = match;
+    if (key) {
+      // Use quoted value if present, otherwise use unquoted value
+      const value = quotedValue !== undefined ? quotedValue : unquotedValue;
+      if (value !== undefined) {
+        params[key] = value;
+      }
     }
+
     match = paramPattern.exec(parametersString);
   }
 
@@ -173,7 +181,10 @@ function parseKeyValueParameters(
  * @example
  * ```typescript
  * const auth = parseAuthorization('Digest realm="Example", nonce="abc"');
- * // { scheme: "Digest", parametersRaw: 'realm="Example", nonce="abc"', parameters: { realm: "Example", nonce: "abc" } }
+ * // { scheme: "Digest", rawParameters: 'realm="Example", nonce="abc"' }
+ *
+ * const parameters = auth.parseParameters();
+ * // { realm: "Example", nonce: "abc" }
  * ```
  */
 export function parseAuthorization(authorization: string): Authorization {
@@ -187,13 +198,10 @@ export function parseAuthorization(authorization: string): Authorization {
   const scheme = trimmed.slice(0, spaceIndex);
   const parameters = trimmed.slice(spaceIndex + 1).trim();
 
-  if (scheme === "") {
-    throw new Error("Authorization scheme cannot be empty");
-  }
-
-  if (parameters === "") {
-    throw new Error("Authorization parameters cannot be empty");
-  }
+  // Note: scheme and parameters cannot be empty here because:
+  // - scheme === "" would require spaceIndex === 0, but trim() removes leading spaces
+  // - parameters === "" would require space followed by only whitespace, but trim() removes trailing whitespace
+  // Both cases are already caught by the spaceIndex === -1 check above
 
   // Return discriminated union based on scheme
   if (scheme === "Bearer") {
@@ -219,8 +227,9 @@ export function parseAuthorization(authorization: string): Authorization {
 
   return {
     scheme,
-    parametersRaw: parameters,
-    parameters: parseKeyValueParameters(parameters),
+    rawParameters: parameters,
+
+    parseParameters: () => parseKeyValueParameters(parameters),
   };
 }
 
