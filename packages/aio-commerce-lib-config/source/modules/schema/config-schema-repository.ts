@@ -1,14 +1,14 @@
 /*
-Copyright 2025 Adobe. All rights reserved.
-This file is licensed to you under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License. You may obtain a copy
-of the License at http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under
-the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
-OF ANY KIND, either express or implied. See the License for the specific language
-governing permissions and limitations under the License.
-*/
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 
 import { getLogger } from "../../utils/logger";
 import { getSharedFiles, getSharedState } from "../../utils/repository";
@@ -16,7 +16,10 @@ import { getSharedFiles, getSharedState } from "../../utils/repository";
 import type { ConfigSchemaField } from "./types";
 
 /**
- * Get cached schema from state store
+ * Gets cached schema from state store.
+ *
+ * @param namespace - Namespace identifier for the schema.
+ * @returns Promise resolving to cached schema or null if not found.
  */
 export async function getCachedSchema(
   namespace: string,
@@ -35,7 +38,11 @@ export async function getCachedSchema(
 }
 
 /**
- * Cache schema in state store with TTL
+ * Caches schema in state store with TTL.
+ *
+ * @param namespace - Namespace identifier for the schema.
+ * @param data - Schema data to cache.
+ * @param ttl - Time to live in milliseconds.
  */
 export async function setCachedSchema(
   namespace: string,
@@ -60,7 +67,9 @@ export async function setCachedSchema(
 }
 
 /**
- * Delete cached schema from state store
+ * Deletes cached schema from state store.
+ *
+ * @param namespace - Namespace identifier for the schema.
  */
 export async function deleteCachedSchema(namespace: string): Promise<void> {
   const logger = getLogger(
@@ -79,7 +88,10 @@ export async function deleteCachedSchema(namespace: string): Promise<void> {
 }
 
 /**
- * Get cached schema version
+ * Gets cached schema version.
+ *
+ * @param namespace - Namespace identifier for the schema.
+ * @returns Promise resolving to schema version hash or null if not found.
  */
 export async function getSchemaVersion(
   namespace: string,
@@ -98,7 +110,10 @@ export async function getSchemaVersion(
 }
 
 /**
- * Set schema version
+ * Sets schema version.
+ *
+ * @param namespace - Namespace identifier for the schema.
+ * @param version - Schema version hash to store.
  */
 export async function setSchemaVersion(
   namespace: string,
@@ -120,7 +135,9 @@ export async function setSchemaVersion(
 }
 
 /**
- * Read persisted schema from files
+ * Reads persisted schema from files.
+ *
+ * @returns Promise resolving to schema content as JSON string.
  */
 export async function getPersistedSchema(): Promise<string> {
   const files = await getSharedFiles();
@@ -129,7 +146,9 @@ export async function getPersistedSchema(): Promise<string> {
 }
 
 /**
- * Save schema to files
+ * Saves schema to files.
+ *
+ * @param schema - Schema content as JSON string.
  */
 export async function saveSchema(schema: string): Promise<void> {
   const files = await getSharedFiles();

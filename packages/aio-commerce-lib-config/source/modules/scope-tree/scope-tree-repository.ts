@@ -1,14 +1,14 @@
 /*
-Copyright 2025 Adobe. All rights reserved.
-This file is licensed to you under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License. You may obtain a copy
-of the License at http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under
-the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
-OF ANY KIND, either express or implied. See the License for the specific language
-governing permissions and limitations under the License.
-*/
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 
 import { getLogger } from "../../utils/logger";
 import { getSharedFiles, getSharedState } from "../../utils/repository";
@@ -17,7 +17,10 @@ import { generateUUID } from "../../utils/uuid";
 import type { ScopeNode, ScopeTree } from "./types";
 
 /**
- * Get cached scope tree from state store
+ * Gets cached scope tree from state store.
+ *
+ * @param namespace - Namespace identifier for the scope tree.
+ * @returns Promise resolving to cached scope tree or null if not found.
  */
 export async function getCachedScopeTree(
   namespace: string,
@@ -36,7 +39,11 @@ export async function getCachedScopeTree(
 }
 
 /**
- * Cache scope tree in state store with TTL
+ * Caches scope tree in state store with TTL.
+ *
+ * @param namespace - Namespace identifier for the scope tree.
+ * @param data - Scope tree data to cache.
+ * @param ttlSeconds - Time to live in seconds.
  */
 export async function setCachedScopeTree(
   namespace: string,
@@ -61,7 +68,10 @@ export async function setCachedScopeTree(
 }
 
 /**
- * Get persisted scope tree from files
+ * Gets persisted scope tree from files.
+ *
+ * @param namespace - Namespace identifier for the scope tree.
+ * @returns Promise resolving to scope tree, creating initial tree if not found.
  */
 export async function getPersistedScopeTree(
   namespace: string,
@@ -94,7 +104,12 @@ export async function getPersistedScopeTree(
 }
 
 /**
- * Save scope tree to files
+ * Saves scope tree to files.
+ *
+ * @param namespace - Namespace identifier for the scope tree.
+ * @param scopes - Scope tree to save.
+ *
+ * @throws {Error} If saving to files fails.
  */
 export async function saveScopeTree(
   namespace: string,
@@ -121,6 +136,11 @@ export async function saveScopeTree(
   }
 }
 
+/**
+ * Creates initial scope tree with global scope.
+ *
+ * @returns Initial scope tree containing only global scope.
+ */
 function createInitialScopeTree(): ScopeTree {
   return [
     {
@@ -135,6 +155,12 @@ function createInitialScopeTree(): ScopeTree {
   ];
 }
 
+/**
+ * Generates file path for scope tree storage.
+ *
+ * @param namespace - Namespace identifier.
+ * @returns File path string.
+ */
 function generateScopeFilePath(namespace: string): string {
   return `${namespace}/scope-tree.json`;
 }

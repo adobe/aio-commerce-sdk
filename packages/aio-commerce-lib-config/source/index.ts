@@ -10,6 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
+/**
+ * This module exports configuration management utilities for the AIO Commerce SDK.
+ * @packageDocumentation
+ */
+
 export * from "./config-manager";
 export * from "./types";
 

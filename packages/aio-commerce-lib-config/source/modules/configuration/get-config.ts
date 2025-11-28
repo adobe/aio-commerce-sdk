@@ -1,14 +1,14 @@
 /*
-Copyright 2025 Adobe. All rights reserved.
-This file is licensed to you under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License. You may obtain a copy
-of the License at http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under
-the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
-OF ANY KIND, either express or implied. See the License for the specific language
-governing permissions and limitations under the License.
-*/
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 
 import {
   deriveScopeFromArgs,
@@ -23,10 +23,18 @@ import type { GetConfigurationResponse } from "../../types";
 import type { ConfigContext } from "./types";
 
 /**
- * Get configuration for a scope identified by code and level or id.
- * @param context - Configuration context
- * @param args - either (id) or (code, level)
- * @returns Promise resolving to configuration response
+ * Gets configuration for a scope identified by code and level or id.
+ *
+ * This function retrieves all configuration values for a specific scope, including
+ * inherited values from parent scopes and schema defaults. The configuration is
+ * merged according to the scope hierarchy, with values from more specific scopes
+ * taking precedence over parent scopes.
+ *
+ * @param context - Configuration context containing namespace and cache timeout.
+ * @param args - Scope identifier: either `(id: string)` or `(code: string, level: string)`.
+ * @returns Promise resolving to configuration response with scope information and config values.
+ *
+ * @throws {Error} If the scope arguments are invalid or the scope is not found.
  */
 export async function getConfiguration(
   { namespace }: ConfigContext,
