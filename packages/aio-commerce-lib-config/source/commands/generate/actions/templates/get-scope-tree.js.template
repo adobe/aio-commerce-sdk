@@ -15,7 +15,7 @@
 
 import util from "node:util";
 
-import * as libConfig from "@adobe/aio-commerce-lib-config";
+import { getScopeTree } from "@adobe/aio-commerce-lib-config";
 import {
   internalServerError,
   nonAuthoritativeInformation,
@@ -38,7 +38,7 @@ export async function main(params) {
   try {
     logger.debug("Retrieving scope tree...");
 
-    const result = await libConfig.getScopeTree();
+    const result = await getScopeTree();
     logger.debug(
       `Successfully retrieved scope tree (cached: ${result.isCachedData}): ${inspect(result.scopeTree)}`,
     );

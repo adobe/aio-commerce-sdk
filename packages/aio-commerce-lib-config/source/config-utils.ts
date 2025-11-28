@@ -491,3 +491,39 @@ export async function mergeWithSchemaDefaults({
 
   return configData;
 }
+
+type ByScopeId = {
+  by: {
+    _tag: "scopeId";
+    scopeId: string;
+  };
+};
+
+type ByCodeAndLevel = {
+  by: {
+    _tag: "codeAndLevel";
+    code: string;
+    level: string;
+  };
+};
+
+type ByCode = {
+  by: {
+    _tag: "code";
+    code: string;
+  };
+};
+
+export type BySelector = ByScopeId | ByCodeAndLevel | ByCode;
+
+export function byScopeId(scopeId: string): ByScopeId {
+  return { by: { _tag: "scopeId", scopeId } };
+}
+
+export function byCodeAndLevel(code: string, level: string): ByCodeAndLevel {
+  return { by: { _tag: "codeAndLevel", code, level } };
+}
+
+export function byCode(code: string): ByCode {
+  return { by: { _tag: "code", code } };
+}

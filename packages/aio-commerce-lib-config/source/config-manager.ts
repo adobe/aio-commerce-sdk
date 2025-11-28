@@ -23,43 +23,44 @@ import {
 import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "./utils/constants";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
+import type { BySelector } from "#config-utils";
 import type { GetScopeTreeResult, ScopeTree } from "./modules/scope-tree";
 import type {
-  FetchOptions,
-  GlobalFetchOptions,
+  GlobalLibConfigOptions,
+  LibConfigOptions,
   SetConfigurationRequest,
   SetCustomScopeTreeRequest,
 } from "./types";
 
-const globalFetchOptions: GlobalFetchOptions = {
+const globalLibConfigOptions: GlobalLibConfigOptions = {
   cacheTimeout: DEFAULT_CACHE_TIMEOUT,
 };
 
 /**
- * Sets global fetch options that will be used as defaults for all operations of the library.
- * @param options - The fetch options to set globally.
+ * Sets global library configuration options that will be used as defaults for all operations of the library.
+ * @param options - The library configuration options to set globally.
  * @example
  * ```typescript
- * import { setGlobalFetchOptions } from "@adobe/aio-commerce-lib-config";
+ * import { setGlobalLibConfigOptions } from "@adobe/aio-commerce-lib-config";
  *
  * // Set a global cache timeout of 5 minutes (300000ms)
- * setGlobalFetchOptions({ cacheTimeout: 300000 });
+ * setGlobalLibConfigOptions({ cacheTimeout: 300000 });
  *
  * // All subsequent calls will use this cache timeout unless overridden
  * const schema = await getConfigSchema();
  * ```
  */
-export function setGlobalFetchOptions(options: FetchOptions) {
-  globalFetchOptions.cacheTimeout =
+export function setGlobalLibConfigOptions(options: LibConfigOptions) {
+  globalLibConfigOptions.cacheTimeout =
     options.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT;
 }
 
-type GetFreshScopeTreeParams = FetchOptions & {
+type GetFreshScopeTreeParams = {
   refreshData: true;
   commerceConfig: CommerceHttpClientParams;
 };
 
-type GetCachedScopeTreeParams = FetchOptions & {
+type GetCachedScopeTreeParams = {
   refreshData?: false | undefined;
 };
 
@@ -71,6 +72,7 @@ type GetCachedScopeTreeParams = FetchOptions & {
  * and custom scopes that may have been defined.
  *
  * @param params - Configuration options. If `refreshData` is true, `commerceConfig` is required.
+ * @param options - Optional library configuration options for cache timeout.
  * @returns Promise resolving to scope tree with metadata about data freshness and any fallback information.
  *
  * @example
@@ -94,10 +96,10 @@ type GetCachedScopeTreeParams = FetchOptions & {
  *   // ... other auth config
  * };
  *
- * const result = await getScopeTree({
- *   refreshData: true,
- *   commerceConfig,
- * });
+ * const result = await getScopeTree(
+ *   { refreshData: true, commerceConfig },
+ *   { cacheTimeout: 600000 }
+ * );
  * console.log(result.scopeTree); // Fresh data from Commerce API
  * console.log(result.isCachedData); // false
  * if (result.fallbackError) {
@@ -110,28 +112,30 @@ type GetCachedScopeTreeParams = FetchOptions & {
  * import { getScopeTree } from "@adobe/aio-commerce-lib-config";
  *
  * // Get scope tree with custom cache timeout
- * const result = await getScopeTree({
- *   cacheTimeout: 600000, // 10 minutes
- * });
+ * const result = await getScopeTree(undefined, { cacheTimeout: 600000 });
  * ```
  */
 
 // Overload for cached Commerce data
 export async function getScopeTree(
   params?: GetCachedScopeTreeParams,
+  options?: LibConfigOptions,
 ): Promise<GetScopeTreeResult>;
 
 // Overload for fresh Commerce data
 export async function getScopeTree(
   params: GetFreshScopeTreeParams,
+  options?: LibConfigOptions,
 ): Promise<GetScopeTreeResult>;
 
+// Implementation
 export async function getScopeTree(
   params?: GetCachedScopeTreeParams | GetFreshScopeTreeParams,
+  options?: LibConfigOptions,
 ) {
   const context = {
     namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
+    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
   };
 
   if (params?.refreshData === true) {
@@ -154,9 +158,8 @@ export async function getScopeTree(
  * the latest changes from your Commerce instance. It will fetch fresh data and update
  * both the cache and persistent storage.
  *
- * @param params - Configuration options including Commerce API client parameters.
- * @param params.commerceConfig - The Commerce HTTP client configuration required for API calls.
- * @param params.cacheTimeout - Optional cache timeout in milliseconds.
+ * @param commerceConfig - The Commerce HTTP client configuration required for API calls.
+ * @param options - Optional library configuration options for cache timeout.
  * @returns Promise resolving to sync result with updated scope tree and sync status.
  *
  * @example
@@ -169,7 +172,7 @@ export async function getScopeTree(
  *   // ... other auth config
  * };
  *
- * const result = await syncCommerceScopes({ commerceConfig });
+ * const result = await syncCommerceScopes(commerceConfig);
  *
  * if (result.synced) {
  *   console.log("Successfully synced scope tree");
@@ -184,13 +187,17 @@ export async function getScopeTree(
  * ```
  */
 export async function syncCommerceScopes(
-  params: FetchOptions & { commerceConfig: CommerceHttpClientParams },
+  commerceConfig: CommerceHttpClientParams,
+  options?: LibConfigOptions,
 ) {
   try {
-    const result = await getScopeTree({
-      ...params,
-      refreshData: true,
-    });
+    const result = await getScopeTree(
+      {
+        refreshData: true,
+        commerceConfig,
+      },
+      options,
+    );
 
     const syncResult: {
       scopeTree: ScopeTree;
@@ -220,7 +227,7 @@ export async function syncCommerceScopes(
  * including field names, types, default values, and validation rules. The schema is
  * cached and automatically updated when the bundled schema version changes.
  *
- * @param params - Optional fetch options for cache timeout.
+ * @param options - Optional library configuration options for cache timeout.
  * @returns Promise resolving to an array of schema field definitions.
  *
  * @example
@@ -229,7 +236,6 @@ export async function syncCommerceScopes(
  *
  * // Get the configuration schema
  * const schema = await getConfigSchema();
- *
  * schema.forEach((field) => {
  *   console.log(`Field: ${field.name}`);
  *   console.log(`Type: ${field.type}`);
@@ -251,192 +257,188 @@ export async function syncCommerceScopes(
  * }
  * ```
  */
-export function getConfigSchema(params?: FetchOptions) {
+export function getConfigSchema(options?: LibConfigOptions) {
   const context = {
     namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
+    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
   };
 
   return getSchemaModule(context);
 }
 
 /**
- * Gets configuration for a scope identified by code and level or id.
+ * Gets configuration for a scope.
  *
  * This function retrieves all configuration values for a specific scope, including
  * inherited values from parent scopes and schema defaults. The configuration is
  * merged according to the scope hierarchy.
  *
- * @param params - Optional configuration options for cache timeout.
- * @param args - Scope identifier: either `(id: string)` or `(code: string, level: string)`.
+ * @param selector - Scope selector specifying how to identify the scope.
+ * @param options - Optional library configuration options for cache timeout.
  * @returns Promise resolving to configuration response with scope information and config values.
  *
  * @example
  * ```typescript
- * import { getConfiguration } from "@adobe/aio-commerce-lib-config";
+ * import { getConfiguration, byScopeId, byCodeAndLevel, byCode } from "@adobe/aio-commerce-lib-config";
  *
  * // Get configuration by scope ID
- * const config = await getConfiguration(undefined, "scope-123");
- * console.log(config.scope); // { id, code, level }
- * console.log(config.config); // Array of config values with origins
- * ```
- *
- * @example
- * ```typescript
- * import { getConfiguration } from "@adobe/aio-commerce-lib-config";
+ * const config1 = await getConfiguration(byScopeId("scope-123"));
+ * console.log(config1.scope); // { id, code, level }
+ * console.log(config1.config); // Array of config values with origins
  *
  * // Get configuration by code and level
- * const config = await getConfiguration(undefined, "website", "website");
- * config.config.forEach((item) => {
+ * const config2 = await getConfiguration(byCodeAndLevel("website", "website"));
+ * config2.config.forEach((item) => {
  *   console.log(`${item.name}: ${item.value} (from ${item.origin.code})`);
  * });
- * ```
  *
- * @example
- * ```typescript
- * import { getConfiguration } from "@adobe/aio-commerce-lib-config";
- *
- * // Get configuration with custom cache timeout
- * const config = await getConfiguration(
- *   { cacheTimeout: 300000 },
- *   "store",
- *   "store_view"
- * );
+ * // Get configuration by code (uses default level)
+ * const config3 = await getConfiguration(byCode("website"));
  * ```
  */
 export async function getConfiguration(
-  params?: FetchOptions,
-  ...args: unknown[]
+  selector: BySelector,
+  options?: LibConfigOptions,
 ) {
   const context = {
     namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
+    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
   };
 
-  return await getConfigModule(context, ...args);
+  if (selector.by._tag === "scopeId") {
+    return await getConfigModule(context, selector.by.scopeId);
+  }
+
+  if (selector.by._tag === "codeAndLevel") {
+    return await getConfigModule(context, selector.by.code, selector.by.level);
+  }
+
+  return await getConfigModule(context, selector.by.code);
 }
 
 /**
- * Gets a specific configuration value by key for a scope identified by code and level or id.
+ * Gets a specific configuration value by key for a scope.
  *
  * This function retrieves a single configuration value for a specific scope. It's useful
  * when you only need one configuration field rather than the entire configuration object.
  *
  * @param configKey - The name of the configuration field to retrieve.
- * @param params - Optional configuration options for cache timeout.
- * @param args - Scope identifier: either `(id: string)` or `(code: string, level: string)`.
+ * @param selector - Scope selector specifying how to identify the scope.
+ * @param options - Optional library configuration options for cache timeout.
  * @returns Promise resolving to configuration response with scope information and single config value (or null if not found).
  *
  * @example
  * ```typescript
- * import { getConfigurationByKey } from "@adobe/aio-commerce-lib-config";
+ * import { getConfigurationByKey, byScopeId, byCodeAndLevel, byCode } from "@adobe/aio-commerce-lib-config";
  *
  * // Get a specific config value by scope ID
- * const result = await getConfigurationByKey("api_key", undefined, "scope-123");
+ * const result1 = await getConfigurationByKey("api_key", byScopeId("scope-123"));
  *
- * if (result.config) {
- *   console.log(`API Key: ${result.config.value}`);
- *   console.log(`Origin: ${result.config.origin.code}`);
- * } else {
- *   console.log("API Key not found for this scope");
+ * if (result1.config) {
+ *   console.log(`API Key: ${result1.config.value}`);
+ *   console.log(`Origin: ${result1.config.origin.code}`);
  * }
- * ```
- *
- * @example
- * ```typescript
- * import { getConfigurationByKey } from "@adobe/aio-commerce-lib-config";
  *
  * // Get a specific config value by code and level
- * const result = await getConfigurationByKey(
- *   "enable_feature",
- *   undefined,
- *   "website",
- *   "website"
- * );
+ * const result2 = await getConfigurationByKey("enable_feature", byCodeAndLevel("website", "website"));
  *
- * if (result.config) {
- *   const isEnabled = result.config.value === true || result.config.value === "true";
- *   console.log(`Feature enabled: ${isEnabled}`);
- * }
+ * // Get a specific config value by code
+ * const result3 = await getConfigurationByKey("api_key", byCode("website"));
  * ```
  */
 export async function getConfigurationByKey(
   configKey: string,
-  params?: FetchOptions,
-  ...args: unknown[]
+  selector: BySelector,
+  options?: LibConfigOptions,
 ) {
   const context = {
     namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
+    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
   };
 
-  return await getConfigByKeyModule(context, configKey, ...args);
+  if (selector.by._tag === "scopeId") {
+    return await getConfigByKeyModule(context, configKey, selector.by.scopeId);
+  }
+
+  if (selector.by._tag === "codeAndLevel") {
+    return await getConfigByKeyModule(
+      context,
+      configKey,
+      selector.by.code,
+      selector.by.level,
+    );
+  }
+
+  return await getConfigByKeyModule(context, configKey, selector.by.code);
 }
 
 /**
- * Sets configuration values for a scope identified by code and level or id.
+ * Sets configuration values for a scope.
  *
  * This function updates configuration values for a specific scope. The provided values
  * are merged with existing configuration, and the origin is set to the current scope.
  * Configuration values are inherited from parent scopes unless explicitly overridden.
  *
  * @param request - Configuration set request containing the config values to set.
- * @param params - Optional configuration options for cache timeout.
- * @param args - Scope identifier: either `(id: string)` or `(code: string, level: string)`.
+ * @param selector - Scope selector specifying how to identify the scope.
+ * @param options - Optional library configuration options for cache timeout.
  * @returns Promise resolving to configuration response with updated scope and config values.
  *
  * @example
  * ```typescript
- * import { setConfiguration } from "@adobe/aio-commerce-lib-config";
+ * import { setConfiguration, byScopeId, byCodeAndLevel } from "@adobe/aio-commerce-lib-config";
  *
  * // Set configuration by scope ID
- * const result = await setConfiguration(
+ * const result1 = await setConfiguration(
  *   {
  *     config: [
  *       { name: "api_key", value: "your-api-key-here" },
  *       { name: "enable_feature", value: true },
  *     ],
  *   },
- *   undefined,
- *   "scope-123"
+ *   byScopeId("scope-123")
  * );
  *
- * console.log(result.message); // "Configuration values updated successfully"
- * console.log(result.scope); // Updated scope information
- * console.log(result.config); // Array of updated config values
- * ```
- *
- * @example
- * ```typescript
- * import { setConfiguration } from "@adobe/aio-commerce-lib-config";
- *
  * // Set configuration by code and level
- * const result = await setConfiguration(
+ * const result2 = await setConfiguration(
  *   {
  *     config: [
  *       { name: "timeout", value: 5000 },
  *       { name: "retry_count", value: 3 },
  *     ],
  *   },
- *   undefined,
- *   "website",
- *   "website"
+ *   byCodeAndLevel("website", "website")
  * );
  *
- * console.log(`Updated ${result.config.length} configuration values`);
+ * console.log(result2.message); // "Configuration values updated successfully"
+ * console.log(result2.scope); // Updated scope information
+ * console.log(result2.config); // Array of updated config values
  * ```
  */
 export async function setConfiguration(
   request: SetConfigurationRequest,
-  params?: FetchOptions,
-  ...args: unknown[]
+  selector: BySelector,
+  options?: LibConfigOptions,
 ) {
   const context = {
     namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
+    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
   };
 
-  return await setConfigModule(context, request, ...args);
+  if (selector.by._tag === "scopeId") {
+    return await setConfigModule(context, request, selector.by.scopeId);
+  }
+
+  if (selector.by._tag === "codeAndLevel") {
+    return await setConfigModule(
+      context,
+      request,
+      selector.by.code,
+      selector.by.level,
+    );
+  }
+
+  return await setConfigModule(context, request, selector.by.code);
 }
 
 /**
@@ -447,7 +449,7 @@ export async function setConfiguration(
  * custom scopes, preserving system scopes (global and commerce).
  *
  * @param request - Custom scope tree request containing the scopes to set.
- * @param params - Optional configuration options for cache timeout.
+ * @param options - Optional library configuration options for cache timeout.
  * @returns Promise resolving to response with updated custom scopes.
  *
  * @example
@@ -505,11 +507,11 @@ export async function setConfiguration(
  */
 export async function setCustomScopeTree(
   request: SetCustomScopeTreeRequest,
-  params?: FetchOptions,
+  options?: LibConfigOptions,
 ) {
   const context = {
     namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
+    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
   };
 
   return await setCustomScopeTreeModule(context, request);

@@ -15,7 +15,7 @@
 
 import util from "node:util";
 
-import * as libConfig from "@adobe/aio-commerce-lib-config";
+import { getConfigSchema } from "@adobe/aio-commerce-lib-config";
 import {
   internalServerError,
   ok,
@@ -36,7 +36,7 @@ export async function main(params) {
 
   try {
     logger.debug("Retrieving configuration schema...");
-    const configSchema = await libConfig.getConfigSchema();
+    const configSchema = await getConfigSchema();
 
     logger.debug(
       `Successfully retrieved configSchema: ${inspect(configSchema)}`,

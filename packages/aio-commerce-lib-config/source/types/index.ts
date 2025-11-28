@@ -13,17 +13,14 @@
 export * from "./api";
 export * from "./commerce";
 
-/**
- * Options for controlling fetch behavior, particularly cache timeout.
- */
-export type FetchOptions = {
+/** Options for controlling fetch behavior, particularly cache timeout. */
+export type LibConfigOptions = {
   /** Optional cache timeout in milliseconds. */
   cacheTimeout?: number;
 };
 
 /**
  * Global fetch options with all properties required.
- *
  * @internal
  */
-export type GlobalFetchOptions = Required<FetchOptions>;
+export type GlobalLibConfigOptions = Required<LibConfigOptions>;

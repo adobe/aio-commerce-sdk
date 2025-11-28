@@ -15,7 +15,11 @@
 
 import util from "node:util";
 
-import * as libConfig from "@adobe/aio-commerce-lib-config";
+import {
+  setConfiguration,
+  byScopeId,
+  byCodeAndLevel,
+} from "@adobe/aio-commerce-lib-config";
 import {
   badRequest,
   internalServerError,
@@ -87,8 +91,8 @@ export async function main(params) {
     logger.debug(`Setting configuration with payload: ${inspect(payload)}`);
 
     const result = id
-      ? await libConfig.setConfiguration(payload, id)
-      : await libConfig.setConfiguration(payload, code, level);
+      ? await setConfiguration(payload, byScopeId(id))
+      : await setConfiguration(payload, byCodeAndLevel(code, level));
 
     logger.debug(`Successfully set configuration: ${inspect(result)}`);
     return ok({
