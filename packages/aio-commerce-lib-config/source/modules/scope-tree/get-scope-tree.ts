@@ -35,10 +35,15 @@ function hasCommerceConfig(ctx: ScopeTreeContext): ctx is ScopeTreeContext & {
 }
 
 /**
- * Get scope tree and optionally refresh commerce scopes from Commerce API
- * @param context - Context containing configuration and namespace
- * @param options - Options for scope tree retrieval
- * @returns Scope tree with metadata about data freshness and any fallback information
+ * Gets the scope tree and optionally refreshes Commerce scopes from Commerce API.
+ *
+ * The scope tree represents the hierarchical structure of configuration scopes available
+ * in your Adobe Commerce instance. This includes both system scopes (global, website, store)
+ * and custom scopes that may have been defined.
+ *
+ * @param context - Scope tree context containing namespace, cache timeout, and optional Commerce config.
+ * @param options - Options for scope tree retrieval, including whether to fetch fresh data.
+ * @returns Promise resolving to scope tree with metadata about data freshness and any fallback information.
  */
 export async function getScopeTree(
   context: ScopeTreeContext,
@@ -75,8 +80,10 @@ export async function getScopeTree(
 }
 
 /**
- * Build scope tree with updated Commerce data merged with existing scopes
- * Returns scope tree ready for caching and returning to caller
+ * Builds scope tree with updated Commerce data merged with existing scopes.
+ *
+ * @param context - Scope tree context with Commerce configuration for fetching fresh data.
+ * @returns Promise resolving to scope tree result with fresh Commerce data or fallback data.
  */
 async function buildTreeWithUpdatedCommerceScopes(
   context: ScopeTreeContext & { commerceConfig: CommerceHttpClientParams },
@@ -149,7 +156,12 @@ async function buildTreeWithUpdatedCommerceScopes(
 }
 
 /**
- * Initialize Commerce HTTP client
+ * Initializes a Commerce HTTP client from the provided configuration.
+ *
+ * @param commerceConfig - Commerce HTTP client configuration parameters.
+ * @returns Initialized Commerce HTTP client instance.
+ *
+ * @throws {Error} If the client initialization fails.
  */
 function initializeCommerceClient(
   commerceConfig: CommerceHttpClientParams,

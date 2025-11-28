@@ -167,13 +167,26 @@ export const BusinessConfigSchema = v.pipe(
   v.minLength(1, "At least one configuration parameter is required"),
 );
 
-/** The schema for a configuration field. */
+/**
+ * The schema type for a configuration field.
+ *
+ * Represents a single field definition in the configuration schema, which can be
+ * one of various types: list, text, password, boolean, number, date, email, url, or phone.
+ */
 export type ConfigSchemaField = v.InferInput<typeof FieldSchema>;
 
-/** The schema for the own business configuration schema. */
+/**
+ * The schema type for the business configuration schema.
+ *
+ * Represents an array of configuration field definitions that make up the complete
+ * business configuration schema. Must contain at least one field.
+ */
 export type BusinessConfigSchema = v.InferInput<typeof BusinessConfigSchema>;
 
-/** The schema for an option for a list configuration field. */
+/**
+ * The schema type for an option in a list configuration field.
+ * Represents a single option that can be selected in a list-type configuration field.
+ */
 export type ConfigSchemaOption = Extract<
   ConfigSchemaField,
   { type: "list" }

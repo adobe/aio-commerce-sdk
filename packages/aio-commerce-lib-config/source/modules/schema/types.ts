@@ -14,14 +14,20 @@ import type { BusinessConfigSchema } from "./schema";
 
 export type * from "./schema";
 
-// Context needed for schema operations
+/** Context needed for schema operations. */
 export type SchemaContext = {
+  /** The namespace for isolating schema data. */
   namespace: string;
+
+  /** Cache timeout in milliseconds. */
   cacheTimeout: number;
 };
 
+/** Defines the extensibility configuration for the business configuration schema. */
 export type ExtensibilityConfig = {
+  /** Optional business configuration schema extension. */
   businessConfig?: {
+    /** Optional custom schema definition. */
     schema?: BusinessConfigSchema;
   };
 };

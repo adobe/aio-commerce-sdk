@@ -16,9 +16,14 @@ import * as schemaUtils from "./utils";
 import type { ConfigSchemaField, SchemaContext } from "./types";
 
 /**
- * Get the configuration schema with lazy initialization and version checking
- * @param context - Context containing namespace and cache timeout
- * @returns Promise resolving to array of schema fields
+ * Gets the configuration schema with lazy initialization and version checking.
+ *
+ * The schema defines the structure of configuration fields available in your application,
+ * including field names, types, default values, and validation rules. The schema is
+ * cached and automatically updated when the bundled schema version changes.
+ *
+ * @param context - Schema context containing namespace and cache timeout.
+ * @returns Promise resolving to an array of schema field definitions.
  */
 export async function getSchema(
   context: SchemaContext,
@@ -37,9 +42,27 @@ export async function getSchema(
 }
 
 /**
- * Store validated schema
- * @param context - Schema context
- * @param validatedSchema - The validated schema to store
+ * Stores a validated schema in persistent storage and clears the cache.
+ *
+ * This function persists the schema to lib-files storage and invalidates the cache
+ * to ensure fresh data on the next retrieval. Typically used when you need to manually
+ * update the schema or after validating a custom schema.
+ *
+ * @param context - Schema context containing namespace and cache timeout.
+ * @param validatedSchema - The validated schema to store.
+ *
+ * @example
+ * ```typescript
+ * import { storeSchema } from "./modules/schema";
+ * import { validateSchemaFromContent } from "./utils";
+ *
+ * const context = { namespace: "my-app", cacheTimeout: 300000 };
+ *
+ * // Validate and store a custom schema
+ * const schemaContent = JSON.stringify([...]);
+ * const validatedSchema = validateSchemaFromContent(schemaContent);
+ * await storeSchema(context, validatedSchema);
+ * ```
  */
 export async function storeSchema(
   context: SchemaContext,
@@ -50,7 +73,10 @@ export async function storeSchema(
 }
 
 /**
- * Try to get schema from cache
+ * Tries to get schema from cache.
+ *
+ * @param context - Schema context containing namespace and cache timeout.
+ * @returns Promise resolving to cached schema or null if not found.
  */
 async function tryGetFromCache(
   context: SchemaContext,
@@ -67,7 +93,10 @@ async function tryGetFromCache(
 }
 
 /**
- * Try to get schema from persistent storage (lib-files)
+ * Tries to get schema from persistent storage (lib-files).
+ *
+ * @param context - Schema context containing namespace and cache timeout.
+ * @returns Promise resolving to stored schema or null if not found.
  */
 async function tryGetFromStorage(
   context: SchemaContext,
@@ -84,7 +113,11 @@ async function tryGetFromStorage(
 }
 
 /**
- * Handle version checking and updating for stored schema
+ * Handles version checking and updating for stored schema.
+ *
+ * @param context - Schema context containing namespace and cache timeout.
+ * @param storedSchema - The currently stored schema.
+ * @returns Promise resolving to updated schema if version changed, otherwise the stored schema.
  */
 async function handleStoredSchemaUpdate(
   context: SchemaContext,
@@ -107,7 +140,10 @@ async function handleStoredSchemaUpdate(
 }
 
 /**
- * Initialize schema from bundled file (lazy initialization)
+ * Initializes schema from bundled file (lazy initialization).
+ *
+ * @param context - Schema context containing namespace and cache timeout.
+ * @returns Promise resolving to validated schema or empty array if initialization fails.
  */
 async function initializeSchemaFromBundledFile(
   context: SchemaContext,
@@ -129,7 +165,12 @@ async function initializeSchemaFromBundledFile(
 }
 
 /**
- * Initialize schema from content and version
+ * Initializes schema from content and version.
+ *
+ * @param context - Schema context containing namespace and cache timeout.
+ * @param content - Schema content as JSON string.
+ * @param version - Schema version hash.
+ * @returns Promise resolving to validated schema.
  */
 async function initializeSchemaFromContent(
   context: SchemaContext,
@@ -145,7 +186,11 @@ async function initializeSchemaFromContent(
 }
 
 /**
- * Check if schema should be updated by comparing versions
+ * Checks if schema should be updated by comparing versions.
+ *
+ * @param context - Schema context containing namespace and cache timeout.
+ * @param currentVersion - Current schema version hash.
+ * @returns Promise resolving to true if version changed, false otherwise.
  */
 async function hasVersionChanged(
   context: SchemaContext,
@@ -159,7 +204,10 @@ async function hasVersionChanged(
 }
 
 /**
- * Store schema version hash
+ * Stores schema version hash.
+ *
+ * @param context - Schema context containing namespace and cache timeout.
+ * @param version - Schema version hash to store.
  */
 async function storeSchemaVersion(
   context: SchemaContext,
@@ -169,7 +217,10 @@ async function storeSchemaVersion(
 }
 
 /**
- * Cache schema in lib-state
+ * Caches schema in lib-state.
+ *
+ * @param context - Schema context containing namespace and cache timeout.
+ * @param schema - Schema to cache.
  */
 async function cacheSchema(
   context: SchemaContext,

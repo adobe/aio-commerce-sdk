@@ -16,11 +16,18 @@ import type { GetConfigurationByKeyResponse } from "../../types";
 import type { ConfigContext } from "./types";
 
 /**
- * Get a specific configuration value by key for a scope identified by code and level or id.
- * @param context - Configuration context
- * @param configKey - The name of the configuration field to retrieve
- * @param args - either (id) or (code, level) or (code)
- * @returns configuration response with single config value
+ * Gets a specific configuration value by key for a scope identified by code and level or id.
+ *
+ * This function retrieves a single configuration value for a specific scope. It's useful
+ * when you only need one configuration field rather than the entire configuration object.
+ * The value includes origin information indicating where it was inherited from.
+ *
+ * @param context - Configuration context containing namespace and cache timeout.
+ * @param configKey - The name of the configuration field to retrieve.
+ * @param args - Scope identifier: either `(id: string)` or `(code: string, level: string)`.
+ * @returns Promise resolving to configuration response with scope information and single config value (or null if not found).
+ *
+ * @throws {Error} If the scope arguments are invalid or the scope is not found.
  */
 export async function getConfigurationByKey(
   context: ConfigContext,

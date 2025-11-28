@@ -14,7 +14,10 @@ import { getLogger } from "../../utils/logger";
 import { getSharedFiles, getSharedState } from "../../utils/repository";
 
 /**
- * Get cached configuration payload from state store
+ * Gets cached configuration payload from state store.
+ *
+ * @param scopeCode - Scope code identifier.
+ * @returns Promise resolving to cached configuration payload or null if not found.
  */
 export async function getCachedConfig(scopeCode: string) {
   try {
@@ -33,7 +36,10 @@ export async function getCachedConfig(scopeCode: string) {
 }
 
 /**
- * Cache configuration payload in state store
+ * Caches configuration payload in state store.
+ *
+ * @param scopeCode - Scope code identifier.
+ * @param payload - Configuration payload as JSON string.
  */
 export async function setCachedConfig(scopeCode: string, payload: string) {
   const logger = getLogger(
@@ -53,7 +59,10 @@ export async function setCachedConfig(scopeCode: string, payload: string) {
 }
 
 /**
- * Get persisted configuration payload from files
+ * Gets persisted configuration payload from files.
+ *
+ * @param scopeCode - Scope code identifier.
+ * @returns Promise resolving to configuration payload as string or null if not found.
  */
 export async function getPersistedConfig(scopeCode: string) {
   try {
@@ -74,7 +83,10 @@ export async function getPersistedConfig(scopeCode: string) {
 }
 
 /**
- * Save configuration payload to files
+ * Saves configuration payload to files.
+ *
+ * @param scopeCode - Scope code identifier.
+ * @param payload - Configuration payload as JSON string.
  */
 export async function saveConfig(scopeCode: string, payload: string) {
   const files = await getSharedFiles();
@@ -83,9 +95,10 @@ export async function saveConfig(scopeCode: string, payload: string) {
 }
 
 /**
- * Persist configuration with caching strategy (files + state cache)
- * @param scopeCode - The scope code to persist configuration for
- * @param payload - The configuration payload object
+ * Persists configuration with caching strategy (files + state cache).
+ *
+ * @param scopeCode - The scope code to persist configuration for.
+ * @param payload - The configuration payload object.
  */
 export async function persistConfig(scopeCode: string, payload: unknown) {
   const payloadString = JSON.stringify(payload);
@@ -108,9 +121,10 @@ export async function persistConfig(scopeCode: string, payload: unknown) {
 }
 
 /**
- * Try to load configuration from state cache
- * @param scopeCode - The scope code to load configuration for
- * @returns The parsed configuration or null if not found
+ * Tries to load configuration from state cache.
+ *
+ * @param scopeCode - The scope code to load configuration for.
+ * @returns Promise resolving to parsed configuration or null if not found.
  */
 async function loadFromStateCache(scopeCode: string) {
   const logger = getLogger(
@@ -131,9 +145,10 @@ async function loadFromStateCache(scopeCode: string) {
 }
 
 /**
- * Try to load configuration from persisted files
- * @param scopeCode - The scope code to load configuration for
- * @returns The parsed configuration or null if not found
+ * Tries to load configuration from persisted files.
+ *
+ * @param scopeCode - The scope code to load configuration for.
+ * @returns Promise resolving to parsed configuration or null if not found.
  */
 async function loadFromPersistedFiles(scopeCode: string) {
   const logger = getLogger(
@@ -174,9 +189,10 @@ async function loadFromPersistedFiles(scopeCode: string) {
 }
 
 /**
- * Load configuration with smart fallback strategy (state -> files -> cache)
- * @param scopeCode - The scope code to load configuration for
- * @returns The configuration payload or null if not found
+ * Loads configuration with smart fallback strategy (state -> files -> cache).
+ *
+ * @param scopeCode - The scope code to load configuration for.
+ * @returns Promise resolving to configuration payload or null if not found.
  */
 export async function loadConfig(scopeCode: string) {
   const fromState = await loadFromStateCache(scopeCode);
@@ -193,23 +209,30 @@ export async function loadConfig(scopeCode: string) {
 }
 
 /**
- * Get the state key for a given scope code
- * @param scopeCode - The scope code to get the configuration for
+ * Gets the state key for a given scope code.
+ *
+ * @param scopeCode - The scope code to get the state key for.
+ * @returns State key string.
  */
 function getConfigStateKey(scopeCode: string): string {
   return `configuration.${scopeCode}`;
 }
 
 /**
- * Get the file path for a given scope code
- * @param scopeCode - The scope code to get the configuration for
+ * Gets the file path for a given scope code.
+ *
+ * @param scopeCode - The scope code to get the file path for.
+ * @returns File path string.
  */
 function getConfigFilePath(scopeCode: string): string {
   return `scope/${scopeCode.toLowerCase()}/configuration.json`;
 }
 
 /**
- * Check if error is a not-found error
+ * Checks if error is a not-found error.
+ *
+ * @param err - Error to check.
+ * @returns True if error is a not-found error (404 or ENOENT), false otherwise.
  */
 function isNotFoundError(err: unknown): boolean {
   const statusNotFound = 404;

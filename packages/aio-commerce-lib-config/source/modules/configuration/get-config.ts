@@ -23,10 +23,18 @@ import type { GetConfigurationResponse } from "../../types";
 import type { ConfigContext } from "./types";
 
 /**
- * Get configuration for a scope identified by code and level or id.
- * @param context - Configuration context
- * @param args - either (id) or (code, level)
- * @returns Promise resolving to configuration response
+ * Gets configuration for a scope identified by code and level or id.
+ *
+ * This function retrieves all configuration values for a specific scope, including
+ * inherited values from parent scopes and schema defaults. The configuration is
+ * merged according to the scope hierarchy, with values from more specific scopes
+ * taking precedence over parent scopes.
+ *
+ * @param context - Configuration context containing namespace and cache timeout.
+ * @param args - Scope identifier: either `(id: string)` or `(code: string, level: string)`.
+ * @returns Promise resolving to configuration response with scope information and config values.
+ *
+ * @throws {Error} If the scope arguments are invalid or the scope is not found.
  */
 export async function getConfiguration(
   { namespace }: ConfigContext,

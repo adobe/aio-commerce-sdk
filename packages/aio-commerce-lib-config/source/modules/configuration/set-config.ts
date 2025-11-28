@@ -26,11 +26,18 @@ import type { ConfigContext } from "./types";
 // loadScopeConfig and persistConfiguration are now repository methods
 
 /**
- * Set configuration for a scope identified by code and level or id.
- * @param context - Configuration context
- * @param request - Configuration set request
- * @param args - either (id) or (code, level)
- * @returns Promise resolving to configuration response
+ * Sets configuration values for a scope identified by code and level or id.
+ *
+ * This function updates configuration values for a specific scope. The provided values
+ * are merged with existing configuration, and the origin is set to the current scope.
+ * Configuration values are inherited from parent scopes unless explicitly overridden.
+ *
+ * @param context - Configuration context containing namespace and cache timeout.
+ * @param request - Configuration set request containing the config values to set.
+ * @param args - Scope identifier: either `(id: string)` or `(code: string, level: string)`.
+ * @returns Promise resolving to configuration response with updated scope and config values.
+ *
+ * @throws {Error} If the scope arguments are invalid or the scope is not found.
  */
 export async function setConfiguration(
   context: ConfigContext,

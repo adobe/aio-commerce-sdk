@@ -13,24 +13,52 @@
 import type { SetOptional } from "type-fest";
 import type { BusinessConfigSchema } from "#modules/schema/schema";
 
-// Configuration-specific types
+/**
+ * Represents the origin of a configuration value, indicating which scope it came from.
+ */
 export type ConfigOrigin = {
+  /** The scope code where the configuration value originates. */
   code: string;
+  /** The scope level where the configuration value originates. */
   level: string;
 };
 
+/**
+ * Represents an acceptable configuration value type (string, number, boolean, or undefined).
+ *
+ * This type is derived from the schema defaults and represents the valid types
+ * that can be stored as configuration values.
+ */
 export type AcceptableConfigValue = BusinessConfigSchema[number]["default"];
 
+/**
+ * Represents a configuration value with its origin information.
+ */
 export type ConfigValue = {
+  /** The name of the configuration field. */
   name: string;
+  /** The configuration value (string, number, boolean, or undefined). */
   value: AcceptableConfigValue;
+  /** The origin scope where this value was set or inherited from. */
   origin: ConfigOrigin;
 };
 
+/**
+ * Configuration value with optional origin information.
+ *
+ * Used internally when setting configuration values where the origin
+ * will be determined automatically.
+ *
+ * @internal
+ */
 export type ConfigValueWithOptionalOrigin = SetOptional<ConfigValue, "origin">;
 
-// Context needed for configuration operations
+/**
+ * Context needed for configuration operations.
+ */
 export type ConfigContext = {
+  /** The namespace for isolating configuration data. */
   namespace: string;
+  /** Cache timeout in milliseconds. */
   cacheTimeout: number;
 };
