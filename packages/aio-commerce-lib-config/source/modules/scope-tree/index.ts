@@ -14,8 +14,6 @@ governing permissions and limitations under the License.
 export { getScopeTree } from "./get-scope-tree";
 // Commerce scope merging utilities
 export { buildUpdatedScopeTree, mergeCommerceScopes } from "./merge-scopes";
-// Scope tree repository for data access
-export { ScopeTreeRepository } from "./scope-tree-repository";
 // Custom scope tree management
 export { setCustomScopeTree } from "./set-custom-scope-tree";
 
