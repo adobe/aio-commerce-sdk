@@ -13,7 +13,7 @@ governing permissions and limitations under the License.
 import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 import AioLogger from "@adobe/aio-lib-core-logging";
 
-import { CommerceService } from "../../services/commerce-service";
+import { getAllScopeData } from "../../services/commerce-service";
 import { buildUpdatedScopeTree, mergeCommerceScopes } from "./merge-scopes";
 import * as scopeTreeRepository from "./scope-tree-repository";
 
@@ -83,8 +83,7 @@ async function buildTreeWithUpdatedCommerceScopes(
 ): Promise<GetScopeTreeResult> {
   try {
     const commerceClient = initializeCommerceClient(context.commerceConfig);
-    const commerceService = new CommerceService(commerceClient);
-    const updatedCommerceScopeData = await commerceService.getAllScopeData();
+    const updatedCommerceScopeData = await getAllScopeData(commerceClient);
 
     const existingTree = await scopeTreeRepository.getPersistedScopeTree(
       context.namespace,
