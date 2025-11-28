@@ -18,7 +18,7 @@ import {
 } from "#modules/scope-tree/merge-scopes";
 
 import type { ScopeNode, ScopeTree } from "#modules/scope-tree/types";
-import type { CommerceScopeData } from "#types";
+import type { CommerceScopeData } from "#types/index";
 
 // Constants for magic numbers
 const BASE_36 = 36;

@@ -12,7 +12,7 @@
 
 import { getConfiguration } from "./get-config";
 
-import type { GetConfigurationByKeyResponse } from "../../types";
+import type { GetConfigurationByKeyResponse } from "#types/index";
 import type { ConfigContext } from "./types";
 
 /**

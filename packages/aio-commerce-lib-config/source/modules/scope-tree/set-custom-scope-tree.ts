@@ -10,8 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "../../utils/constants";
-import { generateUUID } from "../../utils/uuid";
+import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "#utils/constants";
+import { generateUUID } from "#utils/uuid";
+
 import {
   COMMERCE_SCOPE_CODE,
   GLOBAL_SCOPE_CODE,
@@ -24,7 +25,7 @@ import type {
   CustomScopeOutput,
   SetCustomScopeTreeRequest,
   SetCustomScopeTreeResponse,
-} from "../../types";
+} from "#types/index";
 import type { ScopeNode, ScopeTree, ScopeTreeContext } from "./types";
 
 /**

@@ -13,6 +13,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getConfiguration, setConfiguration } from "#config-manager";
+import { byCodeAndLevel, byScopeId } from "#config-utils";
 import * as configRepository from "#modules/configuration/configuration-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
 import { createMockLibFiles } from "#test/mocks/lib-files";
@@ -95,7 +96,7 @@ describe("ConfigManager functions", () => {
   });
 
   it("returns defaults when no persisted config", async () => {
-    const result = await getConfiguration(undefined, "global", "global");
+    const result = await getConfiguration(byCodeAndLevel("global", "global"));
     expect(result.scope.code).toBe("global");
     expect(Array.isArray(result.config)).toBe(true);
     expect(result.config.length).toBeGreaterThan(0);
@@ -113,7 +114,7 @@ describe("ConfigManager functions", () => {
       ]),
     );
 
-    const result = await getConfiguration(undefined, "global", "global");
+    const result = await getConfiguration(byCodeAndLevel("global", "global"));
     expect(result.config.find((e) => e.name === "currency")?.value).toBe("€");
   });
 
@@ -129,7 +130,7 @@ describe("ConfigManager functions", () => {
       ]),
     );
 
-    const result = await getConfiguration(undefined, "global", "global");
+    const result = await getConfiguration(byCodeAndLevel("global", "global"));
     expect(result.config.find((e) => e.name === "currency")?.value).toBe("£");
 
     // Verify it was cached in state
@@ -189,7 +190,9 @@ describe("ConfigManager functions", () => {
       ]),
     );
 
-    const result = await getConfiguration(undefined, "default", "store_view");
+    const result = await getConfiguration(
+      byCodeAndLevel("default", "store_view"),
+    );
     expect(
       result.config.find((e: ConfigValue) => e.name === "currency")?.value,
     ).toBe("$");
@@ -218,11 +221,9 @@ describe("ConfigManager functions", () => {
     );
 
     const resultByCodeLevel = await getConfiguration(
-      undefined,
-      "base",
-      "website",
+      byCodeAndLevel("base", "website"),
     );
-    const resultById = await getConfiguration(undefined, "idw");
+    const resultById = await getConfiguration(byScopeId("idw"));
 
     expect(resultByCodeLevel).toEqual(resultById);
     expect(resultByCodeLevel.scope.id).toBe("idw");
@@ -233,9 +234,7 @@ describe("ConfigManager functions", () => {
   it("sets configuration and persists to files/state", async () => {
     const response = await setConfiguration(
       { config: [{ name: "currency", value: "JPY" }] },
-      undefined,
-      "global",
-      "global",
+      byCodeAndLevel("global", "global"),
     );
 
     expect(response.message).toBe("Configuration values updated successfully");
@@ -273,13 +272,11 @@ describe("ConfigManager functions", () => {
     // Update only currency
     await setConfiguration(
       { config: [{ name: "currency", value: "CAD" }] },
-      undefined,
-      "global",
-      "global",
+      byCodeAndLevel("global", "global"),
     );
 
     // Verify both values are present
-    const result = await getConfiguration(undefined, "global", "global");
+    const result = await getConfiguration(byCodeAndLevel("global", "global"));
     expect(
       result.config.find((e: ConfigValue) => e.name === "currency")?.value,
     ).toBe("CAD");
@@ -301,9 +298,7 @@ describe("ConfigManager functions", () => {
           } as any, // Allow extra props for runtime testing
         ],
       },
-      undefined,
-      "global",
-      "global",
+      byCodeAndLevel("global", "global"),
     );
 
     expect(response.config).toEqual([{ name: "currency", value: "GBP" }]);
@@ -319,9 +314,7 @@ describe("ConfigManager functions", () => {
           { value: "orphaned" } as any, // missing name - test runtime handling
         ],
       },
-      undefined,
-      "global",
-      "global",
+      byCodeAndLevel("global", "global"),
     );
 
     expect(response.config).toEqual([

@@ -16,6 +16,7 @@
  */
 
 export * from "./config-manager";
+export { byCode, byCodeAndLevel, byScopeId } from "./config-utils";
 export * from "./types";
 
 export type {

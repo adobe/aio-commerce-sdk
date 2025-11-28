@@ -13,8 +13,8 @@
 import type {
   AcceptableConfigValue,
   ConfigValue,
-} from "../modules/configuration";
-import type { ConfigSchemaField } from "../modules/schema";
+} from "#modules/configuration/types";
+import type { ConfigSchemaField } from "#modules/schema/types";
 
 /**
  * Response type for getting the configuration schema.
