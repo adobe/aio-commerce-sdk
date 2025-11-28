@@ -1,3 +1,5 @@
+// @ts-check
+
 /*
  * Copyright 2025 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -16,9 +18,9 @@
 import util from "node:util";
 
 import {
-  setConfiguration,
-  byScopeId,
   byCodeAndLevel,
+  byScopeId,
+  setConfiguration,
 } from "@adobe/aio-commerce-lib-config";
 import {
   badRequest,

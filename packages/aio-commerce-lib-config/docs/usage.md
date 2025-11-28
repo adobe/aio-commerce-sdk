@@ -257,10 +257,10 @@ import {
 If you need to customize defaults for all function calls, you can set global options:
 
 ```typescript
-import { setGlobalFetchOptions } from "@adobe/aio-commerce-lib-config";
+import { setGlobalLibConfigOptions } from "@adobe/aio-commerce-lib-config";
 
 // Set global defaults (optional)
-setGlobalFetchOptions({
+setGlobalLibConfigOptions({
   cacheTimeout: 600, // default: 300 seconds (5 minutes)
 });
 ```

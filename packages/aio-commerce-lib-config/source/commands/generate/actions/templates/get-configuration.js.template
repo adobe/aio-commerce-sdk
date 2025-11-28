@@ -16,10 +16,10 @@
 import util from "node:util";
 
 import {
-  getConfiguration,
-  byScopeId,
   byCode,
   byCodeAndLevel,
+  byScopeId,
+  getConfiguration,
 } from "@adobe/aio-commerce-lib-config";
 import {
   badRequest,
@@ -68,9 +68,8 @@ export async function main(params) {
       logger.debug(
         `Retrieving configuration by code: ${code}, level: ${level}`,
       );
-      appConfiguration = await getConfiguration(
-        byCodeAndLevel(code, level),
-      );
+
+      appConfiguration = await getConfiguration(byCodeAndLevel(code, level));
     } else {
       logger.debug(`Retrieving configuration by code: ${code}`);
       appConfiguration = await getConfiguration(byCode(code));

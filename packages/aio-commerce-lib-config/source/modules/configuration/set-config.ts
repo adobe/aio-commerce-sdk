@@ -44,11 +44,10 @@ export async function setConfiguration(
   request: SetConfigurationRequest,
   ...args: unknown[]
 ): Promise<SetConfigurationResponse> {
-  // Create repositories for each domain
-  // Get scope tree
   const scopeTree = await scopeTreeRepository.getPersistedScopeTree(
     context.namespace,
   );
+
   const { scopeCode, scopeLevel, scopeId } = deriveScopeFromArgs(
     args,
     scopeTree,
@@ -73,7 +72,6 @@ export async function setConfiguration(
   };
 
   await configRepository.persistConfig(scopeCode, payload);
-
   const responseConfig = sanitizedEntries.map((entry) => ({
     name: entry.name,
     value: entry.value,
