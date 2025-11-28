@@ -12,4 +12,9 @@ governing permissions and limitations under the License.
 
 export * from "./api";
 export * from "./commerce";
-export * from "./internal";
+
+export type FetchOptions = {
+  cacheTimeout?: number;
+};
+
+export type GlobalFetchOptions = Required<FetchOptions>;

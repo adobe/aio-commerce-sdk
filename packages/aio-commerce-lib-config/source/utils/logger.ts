@@ -10,9 +10,15 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
+import AioLogger from "@adobe/aio-lib-core-logging";
 
-export type LibConfig = {
-  cacheTimeout?: number;
-  commerce?: CommerceHttpClientParams;
-};
+/**
+ * Get a logger instance for a given module name
+ * @param moduleName - The name of the module to create a logger for
+ * @returns Logger instance
+ */
+export function getLogger(moduleName: string) {
+  return AioLogger(moduleName, {
+    level: process.env.LOG_LEVEL ?? "info",
+  });
+}

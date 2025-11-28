@@ -15,9 +15,9 @@ import {
   getSchemaDefaults,
   mergeWithSchemaDefaults,
 } from "../../config-utils";
-import { ConfigSchemaRepository } from "../schema/config-schema-repository";
-import { ScopeTreeRepository } from "../scope-tree/scope-tree-repository";
-import { ConfigurationRepository } from "./configuration-repository";
+import * as schemaRepository from "../schema/config-schema-repository";
+import * as scopeTreeRepository from "../scope-tree/scope-tree-repository";
+import * as configRepository from "./configuration-repository";
 
 import type { GetConfigurationResponse } from "../../types";
 import type { ConfigContext } from "./types";
@@ -33,10 +33,6 @@ export async function getConfiguration(
   ...args: unknown[]
 ): Promise<GetConfigurationResponse> {
   // Create repositories for each domain
-  const scopeTreeRepository = new ScopeTreeRepository();
-  const schemaRepository = new ConfigSchemaRepository();
-  const configRepository = new ConfigurationRepository();
-
   const scopeTree = await scopeTreeRepository.getPersistedScopeTree(namespace);
   const { scopeCode, scopeLevel, scopeId, scopePath } = deriveScopeFromArgs(
     args,

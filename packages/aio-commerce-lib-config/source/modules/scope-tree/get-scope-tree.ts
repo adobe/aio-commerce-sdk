@@ -13,9 +13,9 @@ governing permissions and limitations under the License.
 import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 import AioLogger from "@adobe/aio-lib-core-logging";
 
-import { CommerceService } from "../../services/commerce-service";
+import { getAllScopeData } from "../../services/commerce-service";
 import { buildUpdatedScopeTree, mergeCommerceScopes } from "./merge-scopes";
-import { ScopeTreeRepository } from "./scope-tree-repository";
+import * as scopeTreeRepository from "./scope-tree-repository";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type {
@@ -45,23 +45,24 @@ export async function getScopeTree(
   options: GetScopeTreeOptions = {},
 ): Promise<GetScopeTreeResult> {
   const { remoteFetch = false } = options;
-  const repository = new ScopeTreeRepository();
 
   if (remoteFetch && hasCommerceConfig(context)) {
-    return await buildTreeWithUpdatedCommerceScopes(context, repository);
+    return await buildTreeWithUpdatedCommerceScopes(context);
   }
 
   // Try cache first
-  const cached = await repository.getCachedScopeTree(context.namespace);
+  const cached = await scopeTreeRepository.getCachedScopeTree(
+    context.namespace,
+  );
   if (cached) {
     return { scopeTree: cached, isCachedData: true };
   }
 
   // Fallback to persisted data
-  const persistedTree = await repository.getPersistedScopeTree(
+  const persistedTree = await scopeTreeRepository.getPersistedScopeTree(
     context.namespace,
   );
-  await repository.setCachedScopeTree(
+  await scopeTreeRepository.setCachedScopeTree(
     context.namespace,
     persistedTree,
     context.cacheTimeout,
@@ -79,14 +80,12 @@ export async function getScopeTree(
  */
 async function buildTreeWithUpdatedCommerceScopes(
   context: ScopeTreeContext & { commerceConfig: CommerceHttpClientParams },
-  repository: ScopeTreeRepository,
 ): Promise<GetScopeTreeResult> {
   try {
     const commerceClient = initializeCommerceClient(context.commerceConfig);
-    const commerceService = new CommerceService(commerceClient);
-    const updatedCommerceScopeData = await commerceService.getAllScopeData();
+    const updatedCommerceScopeData = await getAllScopeData(commerceClient);
 
-    const existingTree = await repository.getPersistedScopeTree(
+    const existingTree = await scopeTreeRepository.getPersistedScopeTree(
       context.namespace,
     );
 
@@ -101,8 +100,8 @@ async function buildTreeWithUpdatedCommerceScopes(
     );
 
     // Persist updates
-    await repository.saveScopeTree(context.namespace, finalTree);
-    await repository.setCachedScopeTree(
+    await scopeTreeRepository.saveScopeTree(context.namespace, finalTree);
+    await scopeTreeRepository.setCachedScopeTree(
       context.namespace,
       finalTree,
       context.cacheTimeout,
@@ -120,7 +119,7 @@ async function buildTreeWithUpdatedCommerceScopes(
     );
 
     // Try cached data first
-    const cachedFlattenedTree = await repository.getCachedScopeTree(
+    const cachedFlattenedTree = await scopeTreeRepository.getCachedScopeTree(
       context.namespace,
     );
     if (cachedFlattenedTree) {
@@ -132,10 +131,10 @@ async function buildTreeWithUpdatedCommerceScopes(
     }
 
     // Final fallback to persisted data
-    const existingTree = await repository.getPersistedScopeTree(
+    const existingTree = await scopeTreeRepository.getPersistedScopeTree(
       context.namespace,
     );
-    await repository.setCachedScopeTree(
+    await scopeTreeRepository.setCachedScopeTree(
       context.namespace,
       existingTree,
       context.cacheTimeout,

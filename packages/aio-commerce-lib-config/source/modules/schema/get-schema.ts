@@ -10,7 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import { ConfigSchemaRepository } from "./config-schema-repository";
+import * as schemaRepository from "./config-schema-repository";
 import * as schemaUtils from "./utils";
 
 import type { ConfigSchemaField, SchemaContext } from "./types";
@@ -23,34 +23,30 @@ import type { ConfigSchemaField, SchemaContext } from "./types";
 export async function getSchema(
   context: SchemaContext,
 ): Promise<ConfigSchemaField[]> {
-  const repository = new ConfigSchemaRepository();
-
-  const cachedSchema = await tryGetFromCache(context, repository);
+  const cachedSchema = await tryGetFromCache(context);
   if (cachedSchema) {
     return cachedSchema;
   }
 
-  const storedSchema = await tryGetFromStorage(context, repository);
+  const storedSchema = await tryGetFromStorage(context);
   if (storedSchema) {
-    return await handleStoredSchemaUpdate(context, repository, storedSchema);
+    return await handleStoredSchemaUpdate(context, storedSchema);
   }
 
-  return await initializeSchemaFromBundledFile(context, repository);
+  return await initializeSchemaFromBundledFile(context);
 }
 
 /**
  * Store validated schema
  * @param context - Schema context
- * @param repository - Schema repository
  * @param validatedSchema - The validated schema to store
  */
 export async function storeSchema(
   context: SchemaContext,
-  repository: ConfigSchemaRepository,
   validatedSchema: ConfigSchemaField[],
 ): Promise<void> {
-  await repository.saveSchema(JSON.stringify(validatedSchema, null, 2));
-  await repository.deleteCachedSchema(context.namespace);
+  await schemaRepository.saveSchema(JSON.stringify(validatedSchema, null, 2));
+  await schemaRepository.deleteCachedSchema(context.namespace);
 }
 
 /**
@@ -58,10 +54,9 @@ export async function storeSchema(
  */
 async function tryGetFromCache(
   context: SchemaContext,
-  repository: ConfigSchemaRepository,
 ): Promise<ConfigSchemaField[] | null> {
   try {
-    const cached = await repository.getCachedSchema(context.namespace);
+    const cached = await schemaRepository.getCachedSchema(context.namespace);
     if (cached) {
       return cached;
     }
@@ -76,13 +71,12 @@ async function tryGetFromCache(
  */
 async function tryGetFromStorage(
   context: SchemaContext,
-  repository: ConfigSchemaRepository,
 ): Promise<ConfigSchemaField[] | null> {
   try {
-    const schemaContent = await repository.getPersistedSchema();
+    const schemaContent = await schemaRepository.getPersistedSchema();
     const schema = JSON.parse(schemaContent);
 
-    await cacheSchema(context, repository, schema);
+    await cacheSchema(context, schema);
     return schema;
   } catch (_error) {
     return null;
@@ -94,28 +88,18 @@ async function tryGetFromStorage(
  */
 async function handleStoredSchemaUpdate(
   context: SchemaContext,
-  repository: ConfigSchemaRepository,
   storedSchema: ConfigSchemaField[],
 ): Promise<ConfigSchemaField[]> {
   try {
     const { content, version: currentVersion } =
       await schemaUtils.readBundledSchemaWithVersion();
-    const shouldUpdate = await hasVersionChanged(
-      context,
-      repository,
-      currentVersion,
-    );
+    const shouldUpdate = await hasVersionChanged(context, currentVersion);
 
     if (!shouldUpdate) {
       return storedSchema;
     }
 
-    return await initializeSchemaFromContent(
-      context,
-      repository,
-      content,
-      currentVersion,
-    );
+    return await initializeSchemaFromContent(context, content, currentVersion);
   } catch (_error) {
     // If version checking/update fails, return stored schema as fallback
     return storedSchema;
@@ -127,7 +111,6 @@ async function handleStoredSchemaUpdate(
  */
 async function initializeSchemaFromBundledFile(
   context: SchemaContext,
-  repository: ConfigSchemaRepository,
 ): Promise<ConfigSchemaField[]> {
   try {
     const schemaContent = await schemaUtils.readBundledSchemaFile();
@@ -135,8 +118,8 @@ async function initializeSchemaFromBundledFile(
       schemaUtils.validateSchemaFromContent(schemaContent);
     const currentVersion = schemaUtils.calculateSchemaVersion(schemaContent);
 
-    await storeSchema(context, repository, validatedSchema);
-    await storeSchemaVersion(context, repository, currentVersion);
+    await storeSchema(context, validatedSchema);
+    await storeSchemaVersion(context, currentVersion);
 
     return validatedSchema;
   } catch (_error) {
@@ -150,14 +133,13 @@ async function initializeSchemaFromBundledFile(
  */
 async function initializeSchemaFromContent(
   context: SchemaContext,
-  repository: ConfigSchemaRepository,
   content: string,
   version: string,
 ): Promise<ConfigSchemaField[]> {
   const validatedSchema = schemaUtils.validateSchemaFromContent(content);
 
-  await storeSchema(context, repository, validatedSchema);
-  await storeSchemaVersion(context, repository, version);
+  await storeSchema(context, validatedSchema);
+  await storeSchemaVersion(context, version);
 
   return validatedSchema;
 }
@@ -167,10 +149,11 @@ async function initializeSchemaFromContent(
  */
 async function hasVersionChanged(
   context: SchemaContext,
-  repository: ConfigSchemaRepository,
   currentVersion: string,
 ): Promise<boolean> {
-  const storedVersion = await repository.getSchemaVersion(context.namespace);
+  const storedVersion = await schemaRepository.getSchemaVersion(
+    context.namespace,
+  );
 
   return currentVersion !== storedVersion;
 }
@@ -180,10 +163,9 @@ async function hasVersionChanged(
  */
 async function storeSchemaVersion(
   context: SchemaContext,
-  repository: ConfigSchemaRepository,
   version: string,
 ): Promise<void> {
-  await repository.setSchemaVersion(context.namespace, version);
+  await schemaRepository.setSchemaVersion(context.namespace, version);
 }
 
 /**
@@ -191,10 +173,9 @@ async function storeSchemaVersion(
  */
 async function cacheSchema(
   context: SchemaContext,
-  repository: ConfigSchemaRepository,
   schema: ConfigSchemaField[],
 ): Promise<void> {
-  await repository.setCachedSchema(
+  await schemaRepository.setCachedSchema(
     context.namespace,
     schema,
     context.cacheTimeout,

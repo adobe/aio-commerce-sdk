@@ -17,7 +17,7 @@ import {
   GLOBAL_SCOPE_CODE,
   validateCustomScopeRequest,
 } from "./custom-scope-tree-validation";
-import { ScopeTreeRepository } from "./scope-tree-repository";
+import * as scopeTreeRepository from "./scope-tree-repository";
 
 import type {
   CustomScopeInput,
@@ -34,11 +34,9 @@ export async function setCustomScopeTree(
   context: ScopeTreeContext,
   request: SetCustomScopeTreeRequest,
 ): Promise<SetCustomScopeTreeResponse> {
-  const repository = new ScopeTreeRepository();
-
   const validatedScopes = validateCustomScopeRequest(request);
 
-  const completeCurrentTree = await repository.getPersistedScopeTree(
+  const completeCurrentTree = await scopeTreeRepository.getPersistedScopeTree(
     context.namespace,
   );
   const existingCustomScopes = getExistingCustomScopes(completeCurrentTree);
@@ -50,10 +48,13 @@ export async function setCustomScopeTree(
     completeCurrentTree,
     processedCustomScopes,
   );
-  await repository.saveScopeTree(context.namespace, updatedCompleteTree);
+  await scopeTreeRepository.saveScopeTree(
+    context.namespace,
+    updatedCompleteTree,
+  );
 
   // Clear cache to ensure fresh data on next get-scope-tree call
-  await repository.setCachedScopeTree(
+  await scopeTreeRepository.setCachedScopeTree(
     context.namespace,
     updatedCompleteTree,
     0,

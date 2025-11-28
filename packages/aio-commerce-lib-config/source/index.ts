@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-export { init } from "./lib-config";
+export * from "./config-manager";
 export * from "./types";
 
 export type {

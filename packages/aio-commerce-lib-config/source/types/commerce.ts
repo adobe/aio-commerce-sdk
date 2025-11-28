@@ -10,9 +10,6 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-// Note: CommerceHttpClientConfig and CommerceHttpClientParams are defined in internal.ts
-// to avoid circular dependencies with LibConfig
-
 // Commerce API response types
 export type CommerceScopeData = {
   websites: Website[];
