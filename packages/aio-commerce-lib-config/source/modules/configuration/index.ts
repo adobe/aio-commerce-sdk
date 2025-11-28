@@ -10,7 +10,6 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-export { ConfigurationRepository } from "./configuration-repository";
 export { getConfiguration } from "./get-config";
 export { getConfigurationByKey } from "./get-config-by-key";
 export { setConfiguration } from "./set-config";

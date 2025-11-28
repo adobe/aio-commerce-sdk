@@ -16,7 +16,7 @@ import {
   sanitizeRequestEntries,
 } from "../../config-utils";
 import { ScopeTreeRepository } from "../scope-tree/scope-tree-repository";
-import { ConfigurationRepository } from "./configuration-repository";
+import * as configRepository from "./configuration-repository";
 
 import type {
   SetConfigurationRequest,
@@ -39,7 +39,6 @@ export async function setConfiguration(
 ): Promise<SetConfigurationResponse> {
   // Create repositories for each domain
   const scopeTreeRepository = new ScopeTreeRepository();
-  const configRepository = new ConfigurationRepository();
 
   // Get scope tree
   const scopeTree = await scopeTreeRepository.getPersistedScopeTree(
