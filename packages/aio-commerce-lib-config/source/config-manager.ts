@@ -11,172 +11,177 @@ import {
 import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "./utils/constants";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
-import type { ConfigSchemaField } from "./modules/schema";
 import type { ScopeTree } from "./modules/scope-tree";
 import type {
-  GetConfigurationByKeyResponse,
-  GetConfigurationResponse,
-  LibConfig,
   SetConfigurationRequest,
-  SetConfigurationResponse,
   SetCustomScopeTreeRequest,
-  SetCustomScopeTreeResponse,
 } from "./types";
 
-export class ConfigManager {
-  private readonly cacheTimeout: number;
-  private readonly commerceConfig?: CommerceHttpClientParams | undefined;
+type FetchOptions = {
+  namespace?: string;
+  cacheTimeout?: number;
+};
 
-  // Fixed namespace for simplicity - 1 app : 1 commerce relationship
-  private readonly namespace = DEFAULT_NAMESPACE;
+type GlobalFetchOptions = Required<FetchOptions>;
+const globalFetchOptions: GlobalFetchOptions = {
+  namespace: DEFAULT_NAMESPACE,
+  cacheTimeout: DEFAULT_CACHE_TIMEOUT,
+};
 
-  public constructor(config?: LibConfig) {
-    this.cacheTimeout = config?.cacheTimeout || DEFAULT_CACHE_TIMEOUT;
-    this.commerceConfig = config?.commerce;
-  }
+export function setGlobalFetchOptions(options: FetchOptions) {
+  globalFetchOptions.namespace = options.namespace ?? DEFAULT_NAMESPACE;
+  globalFetchOptions.cacheTimeout =
+    options.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT;
+}
 
-  /**
-   * Get scope tree and optionally refresh commerce scopes from Commerce API
-   * @param remoteFetch Whether to fetch fresh Commerce scopes
-   * @returns Scope tree as array with metadata about data freshness and any fallback information
-   */
-  public async getScopeTree(remoteFetch = false): Promise<{
-    scopeTree: ScopeTree;
-    isCachedData: boolean;
-    fallbackError?: string;
-  }> {
-    if (remoteFetch && !this.commerceConfig) {
-      throw new Error("Commerce configuration is required to fetch scopes");
+/**
+ * Get the scope tree from the Commerce API
+ * @remarks This function will update the cached result returned by {@link getScopeTree}
+ *
+ * @param params - The necessary data to fetch the scope tree from the Commerce API.
+ * @returns Scope tree as array with metadata about data freshness and any fallback information
+ */
+export async function getScopeTreeFromCommerce(
+  params: FetchOptions & { commerceConfig: CommerceHttpClientParams },
+) {
+  const context = {
+    namespace: params.namespace ?? globalFetchOptions.namespace,
+    cacheTimeout: params.cacheTimeout ?? globalFetchOptions.cacheTimeout,
+    commerceConfig: params.commerceConfig,
+  };
+
+  return getScopeTreeModule(context, { remoteFetch: true });
+}
+
+/**
+ * Get the scope tree from the cache
+ *
+ * @param params - The necessary data to fetch the scope tree.
+ * @returns Scope tree as array with metadata about data freshness and any fallback information
+ */
+export async function getScopeTree(params?: FetchOptions) {
+  const context = {
+    namespace: params?.namespace ?? globalFetchOptions.namespace,
+    cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
+  };
+
+  return getScopeTreeModule(context, { remoteFetch: false });
+}
+
+/**
+ * Sync Commerce scopes forces a fresh fetch from Commerce API and updates cache
+ * @returns Sync result with updated scope tree and sync status
+ */
+export async function syncCommerceScopes(
+  params: FetchOptions & { commerceConfig: CommerceHttpClientParams },
+) {
+  try {
+    const result = await getScopeTreeFromCommerce(params);
+    const syncResult: {
+      scopeTree: ScopeTree;
+      synced: boolean;
+      error?: string;
+    } = {
+      scopeTree: result.scopeTree,
+      synced: !result.isCachedData,
+    };
+
+    if (result.fallbackError) {
+      syncResult.error = result.fallbackError;
     }
 
-    const context = {
-      namespace: this.namespace,
-      cacheTimeout: this.cacheTimeout,
-      commerceConfig: this.commerceConfig,
-    };
-
-    return await getScopeTreeModule(context, { remoteFetch });
+    return syncResult;
+  } catch (error) {
+    throw new Error(
+      `Failed to sync Commerce scopes: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
+}
 
-  /**
-   * Sync Commerce scopes forces a fresh fetch from Commerce API and updates cache
-   * @returns Sync result with updated scope tree and sync status
-   */
-  public async syncCommerceScopes(): Promise<{
-    scopeTree: ScopeTree;
-    synced: boolean;
-    error?: string;
-  }> {
-    if (!this.commerceConfig) {
-      throw new Error(
-        "Commerce configuration is required to sync commerce scopes",
-      );
-    }
+/**
+ * Get the configuration schema with lazy initialization and version checking
+ */
+export function getSchema(params?: FetchOptions) {
+  const context = {
+    namespace: params?.namespace ?? globalFetchOptions.namespace,
+    cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
+  };
 
-    const context = {
-      namespace: this.namespace,
-      cacheTimeout: this.cacheTimeout,
-      commerceConfig: this.commerceConfig,
-    };
+  return getSchemaModule(context);
+}
 
-    try {
-      const result = await getScopeTreeModule(context, { remoteFetch: true });
+/**
+ * Get configuration for a scope identified by code and level or id.
+ * @param params - Configuration options
+ * @param args - either (id) or (code, level)
+ * @returns Promise resolving to configuration response
+ */
+export async function getConfiguration(
+  params?: FetchOptions,
+  ...args: unknown[]
+) {
+  const context = {
+    namespace: params?.namespace ?? globalFetchOptions.namespace,
+    cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
+  };
 
-      const syncResult: {
-        scopeTree: ScopeTree;
-        synced: boolean;
-        error?: string;
-      } = {
-        scopeTree: result.scopeTree,
-        synced: !result.isCachedData,
-      };
+  return await getConfigModule(context, ...args);
+}
 
-      if (result.fallbackError) {
-        syncResult.error = result.fallbackError;
-      }
+/**
+ * Get a specific configuration value by key for a scope identified by code and level or id.
+ * @param params - Configuration options
+ * @param configKey - The name of the configuration field to retrieve
+ * @param args - either (id) or (code, level)
+ * @returns Promise resolving to configuration response with single config value
+ */
+export async function getConfigurationByKey(
+  configKey: string,
+  params?: FetchOptions,
+  ...args: unknown[]
+) {
+  const context = {
+    namespace: params?.namespace ?? globalFetchOptions.namespace,
+    cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
+  };
 
-      return syncResult;
-    } catch (error) {
-      throw new Error(
-        `Failed to sync Commerce scopes: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-    }
-  }
+  return await getConfigByKeyModule(context, configKey, ...args);
+}
 
-  /**
-   * Get the configuration schema with lazy initialization and version checking
-   */
-  public async getSchema(): Promise<ConfigSchemaField[]> {
-    const context = {
-      namespace: this.namespace,
-      cacheTimeout: this.cacheTimeout,
-    };
+/**
+ * Set configuration for a scope identified by code and level or id.
+ * @param params - Configuration options
+ * @param request - Configuration set request
+ * @param args - either (id) or (code, level)
+ * @returns Promise resolving to configuration response
+ */
+export async function setConfiguration(
+  request: SetConfigurationRequest,
+  params?: FetchOptions,
+  ...args: unknown[]
+) {
+  const context = {
+    namespace: params?.namespace ?? globalFetchOptions.namespace,
+    cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
+  };
 
-    return await getSchemaModule(context);
-  }
+  return await setConfigModule(context, request, ...args);
+}
 
-  /**
-   * Get configuration for a scope identified by code and level or id.
-   * @param args - either (id) or (code, level)
-   * @returns
-   */
-  public async getConfiguration(
-    ...args: unknown[]
-  ): Promise<GetConfigurationResponse> {
-    const context = {
-      namespace: this.namespace,
-      cacheTimeout: this.cacheTimeout,
-    };
+/**
+ * Set custom scope tree
+ * @param params - Configuration options
+ * @param request - Custom scopes to set
+ * @returns Response with updated custom scopes
+ */
+export async function setCustomScopeTree(
+  request: SetCustomScopeTreeRequest,
+  params?: FetchOptions,
+) {
+  const context = {
+    namespace: params?.namespace ?? globalFetchOptions.namespace,
+    cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
+  };
 
-    return await getConfigModule(context, ...args);
-  }
-
-  /**
-   * Get a specific configuration value by key for a scope identified by code and level or id.
-   * @param configKey - The name of the configuration field to retrieve
-   * @param args - either (id) or (code, level)
-   * @returns Promise resolving to configuration response with single config value
-   */
-  public async getConfigurationByKey(
-    configKey: string,
-    ...args: unknown[]
-  ): Promise<GetConfigurationByKeyResponse> {
-    const context = {
-      namespace: this.namespace,
-      cacheTimeout: this.cacheTimeout,
-    };
-
-    return await getConfigByKeyModule(context, configKey, ...args);
-  }
-
-  /**
-   * Set configuration for a scope identified by code and level or id.
-   */
-  public async setConfiguration(
-    request: SetConfigurationRequest,
-    ...args: unknown[]
-  ): Promise<SetConfigurationResponse> {
-    const context = {
-      namespace: this.namespace,
-      cacheTimeout: this.cacheTimeout,
-    };
-
-    return await setConfigModule(context, request, ...args);
-  }
-
-  /**
-   * Set custom scope tree
-   * @param request - Custom scopes to set
-   * @returns Response with updated custom scopes
-   */
-  public async setCustomScopeTree(
-    request: SetCustomScopeTreeRequest,
-  ): Promise<SetCustomScopeTreeResponse> {
-    const context = {
-      namespace: this.namespace,
-      cacheTimeout: this.cacheTimeout,
-    };
-
-    return await setCustomScopeTreeModule(context, request);
-  }
+  return await setCustomScopeTreeModule(context, request);
 }
