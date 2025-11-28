@@ -73,9 +73,22 @@ await libConfig.syncCommerceScopes(commerceConfig, { cacheTimeout: 600 });
 
 You can now set global defaults for `cacheTimeout` that will be used by all functions:
 
+**Before:**
+
+```typescript
+import { init } from "@adobe/aio-commerce-lib-config";
+
+const config = init({
+  cacheTimeout: 3600,
+});
+```
+
+**After:**
+
 ```typescript
 import { setGlobalLibConfigOptions } from "@adobe/aio-commerce-lib-config";
 
+// If not customized, the default cache timeout will be used (300 seconds)
 setGlobalLibConfigOptions({
   cacheTimeout: 3600,
 });
