@@ -10,48 +10,11 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import AioLogger from "@adobe/aio-lib-core-logging";
-import { init as initFiles } from "@adobe/aio-lib-files";
-import { init as initState } from "@adobe/aio-lib-state";
-
+import { getLogger } from "../../utils/logger";
+import { getSharedFiles, getSharedState } from "../../utils/repository";
 import { generateUUID } from "../../utils/uuid";
 
-import type { Files } from "@adobe/aio-lib-files";
-import type { AdobeState } from "@adobe/aio-lib-state";
 import type { ScopeNode, ScopeTree } from "./types";
-
-let __state: AdobeState | null = null;
-let __files: Files | null = null;
-let __logger: ReturnType<typeof AioLogger> | null = null;
-
-function getLogger() {
-  if (!__logger) {
-    __logger = AioLogger(
-      "@adobe/aio-commerce-lib-config:scope-tree-repository",
-      {
-        level: process.env.LOG_LEVEL ?? "info",
-      },
-    );
-  }
-
-  return __logger;
-}
-
-async function getState() {
-  if (!__state) {
-    __state = await initState();
-  }
-
-  return __state;
-}
-
-async function getFiles() {
-  if (!__files) {
-    __files = await initFiles();
-  }
-
-  return __files;
-}
 
 /**
  * Get cached scope tree from state store
@@ -60,7 +23,7 @@ export async function getCachedScopeTree(
   namespace: string,
 ): Promise<ScopeNode[] | null> {
   try {
-    const state = await getState();
+    const state = await getSharedState();
     const cached = await state.get(`${namespace}:scope-tree`);
     if (cached?.value) {
       const parsed = JSON.parse(cached.value);
@@ -80,9 +43,11 @@ export async function setCachedScopeTree(
   data: ScopeNode[],
   ttlSeconds: number,
 ): Promise<void> {
-  const logger = getLogger();
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:scope-tree-repository",
+  );
   try {
-    const state = await getState();
+    const state = await getSharedState();
     await state.put(`${namespace}:scope-tree`, JSON.stringify({ data }), {
       ttl: ttlSeconds,
     });
@@ -101,9 +66,11 @@ export async function setCachedScopeTree(
 export async function getPersistedScopeTree(
   namespace: string,
 ): Promise<ScopeTree> {
-  const logger = getLogger();
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:scope-tree-repository",
+  );
   try {
-    const files = await getFiles();
+    const files = await getSharedFiles();
     const filePath = generateScopeFilePath(namespace);
 
     try {
@@ -133,9 +100,11 @@ export async function saveScopeTree(
   namespace: string,
   scopes: ScopeTree,
 ): Promise<void> {
-  const logger = getLogger();
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:scope-tree-repository",
+  );
   try {
-    const files = await getFiles();
+    const files = await getSharedFiles();
     const filePath = generateScopeFilePath(namespace);
     const data = {
       scopes,

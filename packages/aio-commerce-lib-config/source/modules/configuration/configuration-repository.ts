@@ -10,50 +10,15 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import AioLogger from "@adobe/aio-lib-core-logging";
-import { init as initFiles } from "@adobe/aio-lib-files";
-import { init as initState } from "@adobe/aio-lib-state";
-
-import type { Files } from "@adobe/aio-lib-files";
-import type { AdobeState } from "@adobe/aio-lib-state";
-
-let __state: AdobeState | null = null;
-let __files: Files | null = null;
-let __logger: ReturnType<typeof AioLogger> | null = null;
-
-function getLogger() {
-  if (!__logger) {
-    __logger = AioLogger(
-      "@adobe/aio-commerce-lib-config:configuration-repository",
-      { level: process.env.LOG_LEVEL ?? "info" },
-    );
-  }
-
-  return __logger;
-}
-
-async function getState() {
-  if (!__state) {
-    __state = await initState();
-  }
-
-  return __state;
-}
-
-async function getFiles() {
-  if (!__files) {
-    __files = await initFiles();
-  }
-
-  return __files;
-}
+import { getLogger } from "../../utils/logger";
+import { getSharedFiles, getSharedState } from "../../utils/repository";
 
 /**
  * Get cached configuration payload from state store
  */
 export async function getCachedConfig(scopeCode: string) {
   try {
-    const state = await getState();
+    const state = await getSharedState();
     const key = getConfigStateKey(scopeCode);
     const result = await state.get(key);
 
@@ -71,9 +36,11 @@ export async function getCachedConfig(scopeCode: string) {
  * Cache configuration payload in state store
  */
 export async function setCachedConfig(scopeCode: string, payload: string) {
-  const logger = getLogger();
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:configuration-repository",
+  );
   try {
-    const state = await getState();
+    const state = await getSharedState();
     const key = getConfigStateKey(scopeCode);
     await state.put(key, JSON.stringify({ data: payload }));
   } catch (error) {
@@ -90,7 +57,7 @@ export async function setCachedConfig(scopeCode: string, payload: string) {
  */
 export async function getPersistedConfig(scopeCode: string) {
   try {
-    const files = await getFiles();
+    const files = await getSharedFiles();
     const filePath = getConfigFilePath(scopeCode);
     const filesList = await files.list("scope/");
     const fileObject = filesList.find((file) => file.name === filePath);
@@ -110,7 +77,7 @@ export async function getPersistedConfig(scopeCode: string) {
  * Save configuration payload to files
  */
 export async function saveConfig(scopeCode: string, payload: string) {
-  const files = await getFiles();
+  const files = await getSharedFiles();
   const filePath = getConfigFilePath(scopeCode);
   await files.write(filePath, payload);
 }
@@ -122,7 +89,9 @@ export async function saveConfig(scopeCode: string, payload: string) {
  */
 export async function persistConfig(scopeCode: string, payload: unknown) {
   const payloadString = JSON.stringify(payload);
-  const logger = getLogger();
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:configuration-repository",
+  );
 
   // Always save to files (primary persistence)
   await saveConfig(scopeCode, payloadString);
@@ -144,7 +113,9 @@ export async function persistConfig(scopeCode: string, payload: unknown) {
  * @returns The parsed configuration or null if not found
  */
 async function loadFromStateCache(scopeCode: string) {
-  const logger = getLogger();
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:configuration-repository",
+  );
   try {
     const statePayload = await getCachedConfig(scopeCode);
     if (statePayload) {
@@ -165,7 +136,9 @@ async function loadFromStateCache(scopeCode: string) {
  * @returns The parsed configuration or null if not found
  */
 async function loadFromPersistedFiles(scopeCode: string) {
-  const logger = getLogger();
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:configuration-repository",
+  );
   try {
     const filePayload = await getPersistedConfig(scopeCode);
     if (!filePayload) {

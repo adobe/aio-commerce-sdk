@@ -10,44 +10,10 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import AioLogger from "@adobe/aio-lib-core-logging";
-import { init as initFiles } from "@adobe/aio-lib-files";
-import { init as initState } from "@adobe/aio-lib-state";
+import { getLogger } from "../../utils/logger";
+import { getSharedFiles, getSharedState } from "../../utils/repository";
 
-import type { Files } from "@adobe/aio-lib-files";
-import type { AdobeState } from "@adobe/aio-lib-state";
 import type { ConfigSchemaField } from "./types";
-
-let __state: AdobeState | null = null;
-let __files: Files | null = null;
-let __logger: ReturnType<typeof AioLogger> | null = null;
-
-function getLogger() {
-  if (!__logger) {
-    __logger = AioLogger(
-      "@adobe/aio-commerce-lib-config:config-schema-repository",
-      { level: process.env.LOG_LEVEL ?? "info" },
-    );
-  }
-
-  return __logger;
-}
-
-async function getState() {
-  if (!__state) {
-    __state = await initState();
-  }
-
-  return __state;
-}
-
-async function getFiles() {
-  if (!__files) {
-    __files = await initFiles();
-  }
-
-  return __files;
-}
 
 /**
  * Get cached schema from state store
@@ -56,7 +22,7 @@ export async function getCachedSchema(
   namespace: string,
 ): Promise<ConfigSchemaField[] | null> {
   try {
-    const state = await getState();
+    const state = await getSharedState();
     const cached = await state.get(`${namespace}:config-schema`);
     if (cached?.value) {
       const parsed = JSON.parse(cached.value);
@@ -76,9 +42,11 @@ export async function setCachedSchema(
   data: ConfigSchemaField[],
   ttl: number,
 ): Promise<void> {
-  const logger = getLogger();
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:config-schema-repository",
+  );
   try {
-    const state = await getState();
+    const state = await getSharedState();
     await state.put(`${namespace}:config-schema`, JSON.stringify({ data }), {
       ttl,
     });
@@ -95,9 +63,11 @@ export async function setCachedSchema(
  * Delete cached schema from state store
  */
 export async function deleteCachedSchema(namespace: string): Promise<void> {
-  const logger = getLogger();
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:config-schema-repository",
+  );
   try {
-    const state = await getState();
+    const state = await getSharedState();
     await state.delete(`${namespace}:config-schema`);
   } catch (error) {
     logger.debug(
@@ -115,7 +85,7 @@ export async function getSchemaVersion(
   namespace: string,
 ): Promise<string | null> {
   try {
-    const state = await getState();
+    const state = await getSharedState();
     const versionData = await state.get(`${namespace}:schema-version`);
     if (versionData?.value) {
       const parsed = JSON.parse(versionData.value);
@@ -134,9 +104,11 @@ export async function setSchemaVersion(
   namespace: string,
   version: string,
 ): Promise<void> {
-  const logger = getLogger();
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:config-schema-repository",
+  );
   try {
-    const state = await getState();
+    const state = await getSharedState();
     await state.put(`${namespace}:schema-version`, JSON.stringify({ version }));
   } catch (error) {
     logger.debug(
@@ -151,7 +123,7 @@ export async function setSchemaVersion(
  * Read persisted schema from files
  */
 export async function getPersistedSchema(): Promise<string> {
-  const files = await getFiles();
+  const files = await getSharedFiles();
   const buffer: Buffer = await files.read("config-schema.json");
   return buffer.toString();
 }
@@ -160,6 +132,6 @@ export async function getPersistedSchema(): Promise<string> {
  * Save schema to files
  */
 export async function saveSchema(schema: string): Promise<void> {
-  const files = await getFiles();
+  const files = await getSharedFiles();
   await files.write("config-schema.json", schema);
 }
