@@ -17,7 +17,7 @@ governing permissions and limitations under the License.
 
 import util from "node:util";
 
-import * as config from "@adobe/aio-commerce-lib-config";
+import * as libConfig from "@adobe/aio-commerce-lib-config";
 import {
   badRequest,
   internalServerError,
@@ -89,8 +89,8 @@ export async function main(params) {
     logger.debug(`Setting configuration with payload: ${inspect(payload)}`);
 
     const result = id
-      ? await config.setConfiguration(payload, id)
-      : await config.setConfiguration(payload, code, level);
+      ? await libConfig.setConfiguration(payload, id)
+      : await libConfig.setConfiguration(payload, code, level);
 
     logger.debug(`Successfully set configuration: ${inspect(result)}`);
     return ok({

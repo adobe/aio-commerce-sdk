@@ -17,7 +17,7 @@ governing permissions and limitations under the License.
 
 import util from "node:util";
 
-import * as config from "@adobe/aio-commerce-lib-config";
+import * as libConfig from "@adobe/aio-commerce-lib-config";
 import {
   internalServerError,
   ok,
@@ -38,7 +38,7 @@ export async function main(params) {
 
   try {
     logger.debug("Retrieving configuration schema...");
-    const configSchema = await config.getConfigSchema();
+    const configSchema = await libConfig.getConfigSchema();
 
     logger.debug(
       `Successfully retrieved configSchema: ${inspect(configSchema)}`,

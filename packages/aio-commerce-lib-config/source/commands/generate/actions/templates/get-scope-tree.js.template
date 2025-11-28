@@ -17,7 +17,7 @@ governing permissions and limitations under the License.
 
 import util from "node:util";
 
-import * as config from "@adobe/aio-commerce-lib-config";
+import * as libConfig from "@adobe/aio-commerce-lib-config";
 import {
   internalServerError,
   nonAuthoritativeInformation,
@@ -40,7 +40,7 @@ export async function main(params) {
   try {
     logger.debug("Retrieving scope tree...");
 
-    const result = await config.getScopeTree();
+    const result = await libConfig.getScopeTree();
     logger.debug(
       `Successfully retrieved scope tree (cached: ${result.isCachedData}): ${inspect(result.scopeTree)}`,
     );

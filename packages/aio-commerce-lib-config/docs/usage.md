@@ -238,7 +238,7 @@ The library uses a function-based API. Import the functions you need and call th
 #### Basic Import Pattern
 
 ```typescript
-import * as config from "@adobe/aio-commerce-lib-config";
+import * as libConfig from "@adobe/aio-commerce-lib-config";
 ```
 
 Or import specific functions:
@@ -276,17 +276,17 @@ This is useful when you want consistent configuration across your entire applica
 Retrieve and manage scope hierarchies to organize your configuration values. Use cached scope data for better performance, or force a refresh when you need the latest data from Adobe Commerce. For external systems, define custom scope hierarchies that match your application's organizational structure.
 
 ```typescript
-import * as config from "@adobe/aio-commerce-lib-config";
+import * as libConfig from "@adobe/aio-commerce-lib-config";
 
 // Get cached scope tree
-const result = await config.getScopeTree();
+const result = await libConfig.getScopeTree();
 console.log(result.scopeTree);
 console.log("Using cached data:", result.isCachedData);
 
 // Force refresh from Commerce API (requires commerce config)
 import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-sdk/api";
 const commerceConfig = resolveCommerceHttpClientParams(params);
-const freshResult = await config.getScopeTree({
+const freshResult = await libConfig.getScopeTree({
   refreshData: true,
   commerceConfig,
 });
@@ -294,11 +294,11 @@ const freshResult = await config.getScopeTree({
 console.log("Using fresh data:", !freshResult.isCachedData);
 
 // Sync Commerce scopes explicitly (requires commerce config)
-const syncResult = await config.syncCommerceScopes({ commerceConfig });
+const syncResult = await libConfig.syncCommerceScopes({ commerceConfig });
 console.log("Synced:", syncResult.synced);
 
 // Set custom scope tree for external systems
-await config.setCustomScopeTree({
+await libConfig.setCustomScopeTree({
   scopes: [
     {
       code: "external_system_master",
@@ -325,26 +325,26 @@ await config.setCustomScopeTree({
 Read and write configuration values at any scope level in your hierarchy. Configuration values automatically inherit from parent scopes when not explicitly set, following the inheritance model. Use `getConfigurationByKey` when you need a single value, or `getConfiguration` to retrieve all configuration values for a scope.
 
 ```typescript
-import * as config from "@adobe/aio-commerce-lib-config";
+import * as libConfig from "@adobe/aio-commerce-lib-config";
 
 // Get configuration by scope ID
-const config1 = await config.getConfiguration("scope-id-123");
+const config1 = await libConfig.getConfiguration("scope-id-123");
 
 // Get configuration by scope code (uses default level base)
-const config2 = await config.getConfiguration("us-east");
+const config2 = await libConfig.getConfiguration("us-east");
 
 // Get configuration by scope code and level
-const config3 = await config.getConfiguration("us-west", "store");
+const config3 = await libConfig.getConfiguration("us-west", "store");
 console.log(config3.config);
 
 // Get a specific configuration value by key
 const {
   config: { value },
-} = await config.getConfigurationByKey("paymentMethod", "us-west", "store");
+} = await libConfig.getConfigurationByKey("paymentMethod", "us-west", "store");
 console.log(value);
 
 // Set configuration for a scope
-await config.setConfiguration(
+await libConfig.setConfiguration(
   {
     config: [
       { name: "paymentMethod", value: "credit_card" },
@@ -356,7 +356,7 @@ await config.setConfiguration(
 );
 
 // Get the configuration schema
-const schema = await config.getConfigSchema();
+const schema = await libConfig.getConfigSchema();
 console.log(schema); // Array of field definitions
 ```
 
@@ -366,7 +366,7 @@ This example demonstrates a typical use case: retrieving scope-specific configur
 
 ```javascript
 // actions/process-order/index.js
-import * as config from "@adobe/aio-commerce-lib-config";
+import * as libConfig from "@adobe/aio-commerce-lib-config";
 
 async function main(params) {
   try {
@@ -377,7 +377,7 @@ async function main(params) {
     // Get specific configuration values
     const {
       config: { value: paymentMethod },
-    } = await config.getConfigurationByKey(
+    } = await libConfig.getConfigurationByKey(
       "paymentMethod",
       storeCode,
       storeLevel,
@@ -385,7 +385,11 @@ async function main(params) {
 
     const {
       config: { value: currency },
-    } = await config.getConfigurationByKey("currency", storeCode, storeLevel);
+    } = await libConfig.getConfigurationByKey(
+      "currency",
+      storeCode,
+      storeLevel,
+    );
 
     // Use configuration in your business logic
     console.log(`Processing order with ${paymentMethod} in ${currency}`);

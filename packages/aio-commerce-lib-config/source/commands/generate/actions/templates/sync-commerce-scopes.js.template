@@ -17,7 +17,7 @@ governing permissions and limitations under the License.
 
 import util from "node:util";
 
-import * as config from "@adobe/aio-commerce-lib-config";
+import * as libConfig from "@adobe/aio-commerce-lib-config";
 import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-sdk/api";
 import {
   internalServerError,
@@ -43,7 +43,7 @@ export async function main(params) {
     logger.debug("Syncing commerce scopes...");
 
     const commerceConfig = resolveCommerceHttpClientParams(params);
-    const result = await config.syncCommerceScopes({ commerceConfig });
+    const result = await libConfig.syncCommerceScopes({ commerceConfig });
 
     if (result.error) {
       logger.error(`Error syncing commerce scopes: ${inspect(result.error)}`);
