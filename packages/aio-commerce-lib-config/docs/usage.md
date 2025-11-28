@@ -247,7 +247,7 @@ Or import specific functions:
 import {
   getConfiguration,
   getConfigurationByKey,
-  getSchema,
+  getConfigSchema,
   getScopeTree,
   setConfiguration,
   setCustomScopeTree,
@@ -356,7 +356,7 @@ await config.setConfiguration(
 );
 
 // Get the configuration schema
-const schema = await config.getSchema();
+const schema = await config.getConfigSchema();
 console.log(schema); // Array of field definitions
 ```
 

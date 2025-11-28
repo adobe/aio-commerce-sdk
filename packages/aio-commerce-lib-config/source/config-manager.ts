@@ -118,7 +118,7 @@ export async function syncCommerceScopes(
 /**
  * Get the configuration schema with lazy initialization and version checking
  */
-export function getSchema(params?: FetchOptions) {
+export function getConfigSchema(params?: FetchOptions) {
   const context = {
     namespace: params?.namespace ?? globalFetchOptions.namespace,
     cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,

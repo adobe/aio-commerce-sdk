@@ -38,7 +38,7 @@ export async function main(params) {
 
   try {
     logger.debug("Retrieving configuration schema...");
-    const configSchema = await config.getSchema();
+    const configSchema = await config.getConfigSchema();
 
     logger.debug(
       `Successfully retrieved configSchema: ${inspect(configSchema)}`,
