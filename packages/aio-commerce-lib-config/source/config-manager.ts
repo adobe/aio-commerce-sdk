@@ -11,7 +11,7 @@ import {
 import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "./utils/constants";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
-import type { ScopeTree } from "./modules/scope-tree";
+import type { GetScopeTreeResult, ScopeTree } from "./modules/scope-tree";
 import type {
   SetConfigurationRequest,
   SetCustomScopeTreeRequest,
@@ -34,36 +34,49 @@ export function setGlobalFetchOptions(options: FetchOptions) {
     options.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT;
 }
 
+type GetFreshScopeTreeParams = FetchOptions & {
+  refreshData: true;
+  commerceConfig: CommerceHttpClientParams;
+};
+
+type GetCachedScopeTreeParams = FetchOptions & {
+  refreshData?: false | undefined;
+};
+
 /**
- * Get the scope tree from the Commerce API
- * @remarks This function will update the cached result returned by {@link getScopeTree}
+ * Get the scope tree from cache or Commerce API
  *
- * @param params - The necessary data to fetch the scope tree from the Commerce API.
+ * @param params - Configuration options. If `refreshData` is true, `commerceConfig` is required.
  * @returns Scope tree as array with metadata about data freshness and any fallback information
  */
-export async function getScopeTreeFromCommerce(
-  params: FetchOptions & { commerceConfig: CommerceHttpClientParams },
+
+// Overload for cached Commerce data
+export async function getScopeTree(
+  params?: GetCachedScopeTreeParams,
+): Promise<GetScopeTreeResult>;
+
+// Overload for fresh Commerce data
+export async function getScopeTree(
+  params: GetFreshScopeTreeParams,
+): Promise<GetScopeTreeResult>;
+
+export async function getScopeTree(
+  params?: GetCachedScopeTreeParams | GetFreshScopeTreeParams,
 ) {
-  const context = {
-    namespace: params.namespace ?? globalFetchOptions.namespace,
-    cacheTimeout: params.cacheTimeout ?? globalFetchOptions.cacheTimeout,
-    commerceConfig: params.commerceConfig,
-  };
-
-  return getScopeTreeModule(context, { remoteFetch: true });
-}
-
-/**
- * Get the scope tree from the cache
- *
- * @param params - The necessary data to fetch the scope tree.
- * @returns Scope tree as array with metadata about data freshness and any fallback information
- */
-export async function getScopeTree(params?: FetchOptions) {
   const context = {
     namespace: params?.namespace ?? globalFetchOptions.namespace,
     cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
   };
+
+  if (params?.refreshData === true) {
+    return getScopeTreeModule(
+      {
+        ...context,
+        commerceConfig: params.commerceConfig,
+      },
+      { remoteFetch: true },
+    );
+  }
 
   return getScopeTreeModule(context, { remoteFetch: false });
 }
@@ -76,7 +89,11 @@ export async function syncCommerceScopes(
   params: FetchOptions & { commerceConfig: CommerceHttpClientParams },
 ) {
   try {
-    const result = await getScopeTreeFromCommerce(params);
+    const result = await getScopeTree({
+      ...params,
+      refreshData: true,
+    });
+
     const syncResult: {
       scopeTree: ScopeTree;
       synced: boolean;
