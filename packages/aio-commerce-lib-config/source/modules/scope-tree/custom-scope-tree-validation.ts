@@ -10,9 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "../../utils/constants";
+import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "#utils/constants";
 
-import type { CustomScopeInput, SetCustomScopeTreeRequest } from "../../types";
+import type { CustomScopeInput, SetCustomScopeTreeRequest } from "#types/index";
 
 export const COMMERCE_SCOPE_CODE = "commerce";
 export const GLOBAL_SCOPE_CODE = "global";

@@ -14,14 +14,15 @@ import {
   deriveScopeFromArgs,
   mergeScopes,
   sanitizeRequestEntries,
-} from "../../config-utils";
-import * as scopeTreeRepository from "../scope-tree/scope-tree-repository";
+} from "#config-utils";
+import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
+
 import * as configRepository from "./configuration-repository";
 
 import type {
   SetConfigurationRequest,
   SetConfigurationResponse,
-} from "../../types";
+} from "#types/index";
 import type { ConfigContext } from "./types";
 // loadScopeConfig and persistConfiguration are now repository methods
 

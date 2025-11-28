@@ -10,15 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "./utils/constants";
+import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "#utils/constants";
 
+import type { ConfigValue } from "#modules/configuration/index";
 import type {
   AcceptableConfigValue,
   ConfigValueWithOptionalOrigin,
 } from "#modules/configuration/types";
-import type { ConfigValue } from "./modules/configuration";
-import type { ConfigSchemaField } from "./modules/schema";
-import type { ScopeNode, ScopeTree } from "./modules/scope-tree";
+import type { ConfigSchemaField } from "#modules/schema/index";
+import type { ScopeNode, ScopeTree } from "#modules/scope-tree/index";
 
 /**
  * Checks if the given value is a non-empty string.

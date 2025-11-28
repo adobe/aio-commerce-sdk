@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "#utils/constants";
+
 import {
   getConfigurationByKey as getConfigByKeyModule,
   getConfiguration as getConfigModule,
@@ -20,7 +22,6 @@ import {
   getScopeTree as getScopeTreeModule,
   setCustomScopeTree as setCustomScopeTreeModule,
 } from "./modules/scope-tree";
-import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "./utils/constants";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { BySelector } from "#config-utils";

@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type { ScopeTree } from "#modules/scope-tree";
+import type { ScopeTree } from "#modules/scope-tree/types";
 
 /**
  * Mock scope tree for testing.
