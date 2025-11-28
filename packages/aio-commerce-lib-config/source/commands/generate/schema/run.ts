@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { execSync } from "node:child_process";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -23,13 +24,8 @@ import { makeOutputDirFor } from "#commands/utils";
 
 /** Run the generate schema command */
 export async function run() {
-  process.stdout.write("\n🔍 Validating configuration schema...\n");
+  execSync("npx aio-commerce-lib-config validate schema", { stdio: "inherit" });
   const validatedSchema = await loadBusinessConfigSchema();
-
-  if (validatedSchema === null) {
-    process.stdout.write("❌ Configuration schema validation failed.\n");
-    return;
-  }
 
   process.stdout.write("🔧 Generating schema file...\n");
   await generateSchemaFile(validatedSchema);
