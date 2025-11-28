@@ -1,3 +1,5 @@
+// @ts-check
+
 /*
 Copyright 2025 Adobe. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -15,16 +17,14 @@ governing permissions and limitations under the License.
 
 import util from "node:util";
 
-import { init } from '@adobe/aio-commerce-lib-config';
+import * as config from "@adobe/aio-commerce-lib-config";
+import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-sdk/api";
 import {
-  resolveCommerceHttpClientParams,
-} from '@adobe/aio-commerce-sdk/api';
-import { 
   internalServerError,
   nonAuthoritativeInformation,
-  ok 
-} from '@adobe/aio-commerce-sdk/core/responses';
-import AioLogger from "@adobe/aio-lib-core-logging"
+  ok,
+} from "@adobe/aio-commerce-sdk/core/responses";
+import AioLogger from "@adobe/aio-lib-core-logging";
 
 // Shorthand to inspect an object.
 const inspect = (obj) => util.inspect(obj, { depth: null });
@@ -35,16 +35,15 @@ const inspect = (obj) => util.inspect(obj, { depth: null });
  * @returns The response object containing updated scope tree.
  */
 export async function main(params) {
-  const logger = AioLogger("sync-commerce-scopes", { level: params.LOG_LEVEL || "info" });
+  const logger = AioLogger("sync-commerce-scopes", {
+    level: params.LOG_LEVEL || "info",
+  });
+
   try {
     logger.debug("Syncing commerce scopes...");
 
     const commerceConfig = resolveCommerceHttpClientParams(params);
-    const config = init({
-      commerce: commerceConfig
-    });
-
-    const result = await config.syncCommerceScopes();
+    const result = await config.syncCommerceScopes({ commerceConfig });
 
     if (result.error) {
       logger.error(`Error syncing commerce scopes: ${inspect(result.error)}`);
@@ -53,36 +52,45 @@ export async function main(params) {
           code: "INTERNAL_ERROR",
           message: "An internal server error occurred",
           error: result.error,
-        }
-      })
+        },
+      });
     }
 
-    if (!(result.synced)) {
-      logger.debug(`Commerce scopes not synced (cached): ${inspect(result.scopeTree)}`);
+    if (!result.synced) {
+      logger.debug(
+        `Commerce scopes not synced (cached): ${inspect(result.scopeTree)}`,
+      );
+
       return nonAuthoritativeInformation({
         headers: { "x-cache": "hit" },
         body: {
           scopes: result.scopeTree,
           synced: false,
-        }
-      })
+        },
+      });
     }
 
-    logger.debug(`Successfully synced commerce scopes: ${inspect(result.scopeTree)}`);
+    logger.debug(
+      `Successfully synced commerce scopes: ${inspect(result.scopeTree)}`,
+    );
+
     return ok({
       body: {
         scopes: result.scopeTree,
         synced: true,
-      }
+      },
     });
   } catch (error) {
-    logger.error(`Something went wrong while syncing commerce scopes: ${inspect(error)}`);
+    logger.error(
+      `Something went wrong while syncing commerce scopes: ${inspect(error)}`,
+    );
+
     return internalServerError({
       body: {
         code: "INTERNAL_ERROR",
         message: "An internal server error occurred",
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
     });
   }
 }

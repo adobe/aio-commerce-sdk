@@ -1,3 +1,5 @@
+// @ts-check
+
 /*
 Copyright 2025 Adobe. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -15,12 +17,12 @@ governing permissions and limitations under the License.
 
 import util from "node:util";
 
-import { init } from '@adobe/aio-commerce-lib-config';
-import { 
-  internalServerError, 
-  ok 
-} from '@adobe/aio-commerce-sdk/core/responses'
-import AioLogger from "@adobe/aio-lib-core-logging"
+import * as config from "@adobe/aio-commerce-lib-config";
+import {
+  internalServerError,
+  ok,
+} from "@adobe/aio-commerce-sdk/core/responses";
+import AioLogger from "@adobe/aio-lib-core-logging";
 
 // Shorthand to inspect an object.
 const inspect = (obj) => util.inspect(obj, { depth: null });
@@ -30,27 +32,34 @@ const inspect = (obj) => util.inspect(obj, { depth: null });
  * @returns The response object containing the configuration schema.
  */
 export async function main(params) {
-  const logger = AioLogger("get-config-schema", { level: params.LOG_LEVEL || "info" });
+  const logger = AioLogger("get-config-schema", {
+    level: params.LOG_LEVEL || "info",
+  });
+
   try {
-    const config = init();
-
     logger.debug("Retrieving configuration schema...");
-    const configSchema = await config.getConfigSchema();
+    const configSchema = await config.getSchema();
 
-    logger.debug(`Successfully retrieved configSchema: ${inspect(configSchema)}`);
+    logger.debug(
+      `Successfully retrieved configSchema: ${inspect(configSchema)}`,
+    );
+
     return ok({
       body: {
-        configSchema
-      }
+        configSchema,
+      },
     });
   } catch (error) {
-    logger.error(`Something wen't wrong while retrieving config schema: ${inspect(error)}`);
+    logger.error(
+      `Something wen't wrong while retrieving config schema: ${inspect(error)}`,
+    );
+
     return internalServerError({
       body: {
         code: "INTERNAL_ERROR",
+        details: error instanceof Error ? error.message : "Unknown error",
         message: "An internal server error occurred",
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }
+      },
     });
   }
 }
