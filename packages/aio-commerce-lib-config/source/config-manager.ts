@@ -13,15 +13,12 @@ import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "./utils/constants";
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { GetScopeTreeResult, ScopeTree } from "./modules/scope-tree";
 import type {
+  FetchOptions,
+  GlobalFetchOptions,
   SetConfigurationRequest,
   SetCustomScopeTreeRequest,
 } from "./types";
 
-type FetchOptions = {
-  cacheTimeout?: number;
-};
-
-type GlobalFetchOptions = Required<FetchOptions>;
 const globalFetchOptions: GlobalFetchOptions = {
   cacheTimeout: DEFAULT_CACHE_TIMEOUT,
 };
