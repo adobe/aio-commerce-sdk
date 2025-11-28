@@ -1,14 +1,14 @@
 /*
-Copyright 2025 Adobe. All rights reserved.
-This file is licensed to you under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License. You may obtain a copy
-of the License at http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under
-the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
-OF ANY KIND, either express or implied. See the License for the specific language
-governing permissions and limitations under the License.
-*/
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 
 import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "../../utils/constants";
 
@@ -18,7 +18,10 @@ export const COMMERCE_SCOPE_CODE = "commerce";
 export const GLOBAL_SCOPE_CODE = "global";
 
 /**
- * Helper to create validation errors with consistent property
+ * Creates validation errors with consistent property.
+ *
+ * @param message - Error message.
+ * @returns Error object with isValidationError property set to true.
  */
 export function createValidationError(message: string) {
   const error = new Error(message);
@@ -26,7 +29,12 @@ export function createValidationError(message: string) {
 }
 
 /**
- * Validate and normalize the complete request structure, field types, and business rules
+ * Validates and normalizes the complete request structure, field types, and business rules.
+ *
+ * @param request - Custom scope tree request to validate.
+ * @returns Array of validated and normalized custom scope inputs.
+ *
+ * @throws {Error} If the request is invalid (missing scopes array, invalid fields, duplicate codes, etc.).
  */
 export function validateCustomScopeRequest(
   request: SetCustomScopeTreeRequest,
@@ -47,7 +55,11 @@ export function validateCustomScopeRequest(
 }
 
 /**
- * Validate field types for a scope
+ * Validates field types for a scope.
+ *
+ * @param scope - Custom scope input to validate.
+ *
+ * @throws {Error} If any field type is invalid.
  */
 export function validateFieldTypes(scope: CustomScopeInput): void {
   // Validate code field
@@ -77,8 +89,12 @@ export function validateFieldTypes(scope: CustomScopeInput): void {
 }
 
 /**
- * Validate and normalize a single scope recursively including structure, types, and business rules
- * Returns the scope with default values applied
+ * Validates and normalizes a single scope recursively including structure, types, and business rules.
+ *
+ * @param scope - Custom scope input to validate and normalize.
+ * @returns Normalized scope with default values applied.
+ *
+ * @throws {Error} If the scope is invalid (missing required fields, invalid types, reserved codes, etc.).
  */
 export function validateAndNormalizeSingleScope(
   scope: CustomScopeInput,
@@ -146,7 +162,11 @@ export function validateAndNormalizeSingleScope(
 }
 
 /**
- * Check for duplicate code-level combinations across all scopes (including nested children)
+ * Checks for duplicate code-level combinations across all scopes (including nested children).
+ *
+ * @param scopes - Array of custom scope inputs to check.
+ *
+ * @throws {Error} If duplicate code-level combinations are found.
  */
 function checkForDuplicateCodeLevelCombinations(
   scopes: CustomScopeInput[],
@@ -173,7 +193,10 @@ function checkForDuplicateCodeLevelCombinations(
 }
 
 /**
- * Check if an optional string field is provided but invalid
+ * Checks if an optional string field is provided but invalid.
+ *
+ * @param value - String value to check.
+ * @returns True if value is provided but empty after trimming, false otherwise.
  */
 function isProvidedButInvalidString(value: string | undefined): boolean {
   return value !== undefined && value.trim() === "";

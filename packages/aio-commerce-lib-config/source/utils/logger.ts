@@ -10,26 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-/** The package manager used to install the package */
-export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
+import AioLogger from "@adobe/aio-lib-core-logging";
 
-/** Simple representation of a partial app.config.yaml file */
-export type AppConfig = {
-  extensions?: {
-    [extensionKey: string]: {
-      $include?: string;
-      [configKey: string]: unknown;
-    };
-  };
-
-  [configKey: string]: unknown;
-};
-
-/** Simple representation of a partial install.yaml file */
-export type InstallYaml = {
-  extensions: {
-    extensionPointId: string;
-  }[];
-
-  [key: string]: unknown;
-};
+/**
+ * Get a logger instance for a given module name
+ * @param moduleName - The name of the module to create a logger for
+ * @returns Logger instance
+ */
+export function getLogger(moduleName: string) {
+  return AioLogger(moduleName, {
+    level: process.env.LOG_LEVEL ?? "info",
+  });
+}
