@@ -112,7 +112,7 @@ Then add a `postinstall` script to your `package.json`:
 ```json
 {
   "dependencies": {
-    "@adobe/aio-commerce-lib-config": "^0.6.0"
+    "@adobe/aio-commerce-lib-config": "^0.8.0"
   },
 
   "scripts": {
