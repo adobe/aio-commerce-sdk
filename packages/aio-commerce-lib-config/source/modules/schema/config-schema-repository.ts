@@ -18,144 +18,148 @@ import type { Files } from "@adobe/aio-lib-files";
 import type { AdobeState } from "@adobe/aio-lib-state";
 import type { ConfigSchemaField } from "./types";
 
-const logger = AioLogger(
-  "@adobe/aio-commerce-lib-config:config-schema-repository",
-  { level: process.env.LOG_LEVEL ?? "info" },
-);
+let __state: AdobeState | null = null;
+let __files: Files | null = null;
+let __logger: ReturnType<typeof AioLogger> | null = null;
 
-// Shared instances to avoid re-initialization
-let sharedState: AdobeState | undefined;
-let sharedFiles: Files | undefined;
+function getLogger() {
+  if (!__logger) {
+    __logger = AioLogger(
+      "@adobe/aio-commerce-lib-config:config-schema-repository",
+      { level: process.env.LOG_LEVEL ?? "info" },
+    );
+  }
+
+  return __logger;
+}
+
+async function getState() {
+  if (!__state) {
+    __state = await initState();
+  }
+
+  return __state;
+}
+
+async function getFiles() {
+  if (!__files) {
+    __files = await initFiles();
+  }
+
+  return __files;
+}
 
 /**
- * Repository for all configuration schema related operations
- * Handles both state (caching) and files (persistence) operations
+ * Get cached schema from state store
  */
-export class ConfigSchemaRepository {
-  private async getState(): Promise<AdobeState> {
-    if (!sharedState) {
-      sharedState = await initState();
+export async function getCachedSchema(
+  namespace: string,
+): Promise<ConfigSchemaField[] | null> {
+  try {
+    const state = await getState();
+    const cached = await state.get(`${namespace}:config-schema`);
+    if (cached?.value) {
+      const parsed = JSON.parse(cached.value);
+      return parsed.data || null;
     }
-    return sharedState;
+    return null;
+  } catch (_error) {
+    return null;
   }
+}
 
-  private async getFiles(): Promise<Files> {
-    if (!sharedFiles) {
-      sharedFiles = await initFiles();
+/**
+ * Cache schema in state store with TTL
+ */
+export async function setCachedSchema(
+  namespace: string,
+  data: ConfigSchemaField[],
+  ttl: number,
+): Promise<void> {
+  const logger = getLogger();
+  try {
+    const state = await getState();
+    await state.put(`${namespace}:config-schema`, JSON.stringify({ data }), {
+      ttl,
+    });
+  } catch (error) {
+    logger.debug(
+      "Failed to cache schema:",
+      error instanceof Error ? error.message : String(error),
+    );
+    // Don't throw - caching failure shouldn't break functionality
+  }
+}
+
+/**
+ * Delete cached schema from state store
+ */
+export async function deleteCachedSchema(namespace: string): Promise<void> {
+  const logger = getLogger();
+  try {
+    const state = await getState();
+    await state.delete(`${namespace}:config-schema`);
+  } catch (error) {
+    logger.debug(
+      "Failed to delete cached schema:",
+      error instanceof Error ? error.message : String(error),
+    );
+    // Don't throw - cache deletion failure shouldn't break functionality
+  }
+}
+
+/**
+ * Get cached schema version
+ */
+export async function getSchemaVersion(
+  namespace: string,
+): Promise<string | null> {
+  try {
+    const state = await getState();
+    const versionData = await state.get(`${namespace}:schema-version`);
+    if (versionData?.value) {
+      const parsed = JSON.parse(versionData.value);
+      return parsed.version || null;
     }
-    return sharedFiles;
+    return null;
+  } catch (_error) {
+    return null;
   }
+}
 
-  /**
-   * Get cached schema from state store
-   */
-  public async getCachedSchema(
-    namespace: string,
-  ): Promise<ConfigSchemaField[] | null> {
-    try {
-      const state = await this.getState();
-      const cached = await state.get(`${namespace}:config-schema`);
-      if (cached?.value) {
-        const parsed = JSON.parse(cached.value);
-        return parsed.data || null;
-      }
-      return null;
-    } catch (_error) {
-      return null;
-    }
+/**
+ * Set schema version
+ */
+export async function setSchemaVersion(
+  namespace: string,
+  version: string,
+): Promise<void> {
+  const logger = getLogger();
+  try {
+    const state = await getState();
+    await state.put(`${namespace}:schema-version`, JSON.stringify({ version }));
+  } catch (error) {
+    logger.debug(
+      "Failed to set schema version:",
+      error instanceof Error ? error.message : String(error),
+    );
+    // Don't throw - version tracking failure shouldn't break functionality
   }
+}
 
-  /**
-   * Cache schema in state store with TTL
-   */
-  public async setCachedSchema(
-    namespace: string,
-    data: ConfigSchemaField[],
-    ttl: number,
-  ): Promise<void> {
-    try {
-      const state = await this.getState();
-      await state.put(`${namespace}:config-schema`, JSON.stringify({ data }), {
-        ttl,
-      });
-    } catch (error) {
-      logger.debug(
-        "Failed to cache schema:",
-        error instanceof Error ? error.message : String(error),
-      );
-      // Don't throw - caching failure shouldn't break functionality
-    }
-  }
+/**
+ * Read persisted schema from files
+ */
+export async function getPersistedSchema(): Promise<string> {
+  const files = await getFiles();
+  const buffer: Buffer = await files.read("config-schema.json");
+  return buffer.toString();
+}
 
-  /**
-   * Delete cached schema from state store
-   */
-  public async deleteCachedSchema(namespace: string): Promise<void> {
-    try {
-      const state = await this.getState();
-      await state.delete(`${namespace}:config-schema`);
-    } catch (error) {
-      logger.debug(
-        "Failed to delete cached schema:",
-        error instanceof Error ? error.message : String(error),
-      );
-      // Don't throw - cache deletion failure shouldn't break functionality
-    }
-  }
-
-  /**
-   * Get cached schema version
-   */
-  public async getSchemaVersion(namespace: string): Promise<string | null> {
-    try {
-      const state = await this.getState();
-      const versionData = await state.get(`${namespace}:schema-version`);
-      if (versionData?.value) {
-        const parsed = JSON.parse(versionData.value);
-        return parsed.version || null;
-      }
-      return null;
-    } catch (_error) {
-      return null;
-    }
-  }
-
-  /**
-   * Set schema version
-   */
-  public async setSchemaVersion(
-    namespace: string,
-    version: string,
-  ): Promise<void> {
-    try {
-      const state = await this.getState();
-      await state.put(
-        `${namespace}:schema-version`,
-        JSON.stringify({ version }),
-      );
-    } catch (error) {
-      logger.debug(
-        "Failed to set schema version:",
-        error instanceof Error ? error.message : String(error),
-      );
-      // Don't throw - version tracking failure shouldn't break functionality
-    }
-  }
-
-  /**
-   * Read persisted schema from files
-   */
-  public async getPersistedSchema(): Promise<string> {
-    const files = await this.getFiles();
-    const buffer: Buffer = await files.read("config-schema.json");
-    return buffer.toString();
-  }
-
-  /**
-   * Save schema to files
-   */
-  public async saveSchema(schema: string): Promise<void> {
-    const files = await this.getFiles();
-    await files.write("config-schema.json", schema);
-  }
+/**
+ * Save schema to files
+ */
+export async function saveSchema(schema: string): Promise<void> {
+  const files = await getFiles();
+  await files.write("config-schema.json", schema);
 }
