@@ -264,7 +264,6 @@ import { setGlobalFetchOptions } from "@adobe/aio-commerce-lib-config";
 
 // Set global defaults (optional)
 setGlobalFetchOptions({
-  namespace: "my-app-config", // default: "aio-commerce-config"
   cacheTimeout: 600, // default: 300 seconds (5 minutes)
 });
 ```

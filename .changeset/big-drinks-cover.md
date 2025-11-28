@@ -29,7 +29,7 @@ await libConfig.getConfiguration("scope-id");
 
 **Function signature changes**
 
-All functions now accept an optional `params` object as the first (or second) parameter for configuration options (`namespace`, `cacheTimeout`). The function arguments remain the same but are shifted.
+All functions now accept an optional `params` object as the first (or second) parameter for configuration options (`cacheTimeout`). The function arguments remain the same but are shifted.
 
 **`getScopeTree()`**
 
@@ -84,7 +84,7 @@ await config.getConfiguration(...args);
 await libConfig.getConfiguration(...args);
 
 // With params
-await libConfig.getConfiguration({ namespace: "custom" }, ...args);
+await libConfig.getConfiguration({ cacheTimeout: 600 }, ...args);
 ```
 
 **`getConfigurationByKey()`**
@@ -104,7 +104,7 @@ await libConfig.getConfigurationByKey(configKey, ...args);
 // With params
 await libConfig.getConfigurationByKey(
   configKey,
-  { namespace: "custom" },
+  { cacheTimeout: 600 },
   ...args,
 );
 ```
@@ -124,7 +124,7 @@ await config.setConfiguration(request, ...args);
 await libConfig.setConfiguration(request, ...args);
 
 // With params
-await libConfig.setConfiguration(request, { namespace: "custom" }, ...args);
+await libConfig.setConfiguration(request, { cacheTimeout: 600 }, ...args);
 ```
 
 **`setCustomScopeTree()`**
@@ -142,7 +142,7 @@ await config.setCustomScopeTree(request);
 await libConfig.setCustomScopeTree(request);
 
 // With params
-await libConfig.setCustomScopeTree(request, { namespace: "custom" });
+await libConfig.setCustomScopeTree(request, { cacheTimeout: 600 });
 ```
 
 **`getConfigSchema()`**
@@ -160,18 +160,17 @@ await config.getConfigSchema();
 await libConfig.getConfigSchema();
 
 // With params
-await libConfig.getConfigSchema({ namespace: "custom" });
+await libConfig.getConfigSchema({ cacheTimeout: 600 });
 ```
 
 **New `setGlobalFetchOptions()` function**
 
-You can now set global defaults for `namespace` and `cacheTimeout` that will be used by all functions:
+You can now set global defaults for `cacheTimeout` that will be used by all functions:
 
 ```typescript
 import * as libConfig from "@adobe/aio-commerce-lib-config";
 
 libConfig.setGlobalFetchOptions({
-  namespace: "my-namespace",
   cacheTimeout: 3600,
 });
 ```

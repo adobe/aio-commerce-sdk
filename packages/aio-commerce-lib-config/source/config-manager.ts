@@ -18,18 +18,15 @@ import type {
 } from "./types";
 
 type FetchOptions = {
-  namespace?: string;
   cacheTimeout?: number;
 };
 
 type GlobalFetchOptions = Required<FetchOptions>;
 const globalFetchOptions: GlobalFetchOptions = {
-  namespace: DEFAULT_NAMESPACE,
   cacheTimeout: DEFAULT_CACHE_TIMEOUT,
 };
 
 export function setGlobalFetchOptions(options: FetchOptions) {
-  globalFetchOptions.namespace = options.namespace ?? DEFAULT_NAMESPACE;
   globalFetchOptions.cacheTimeout =
     options.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT;
 }
@@ -64,7 +61,7 @@ export async function getScopeTree(
   params?: GetCachedScopeTreeParams | GetFreshScopeTreeParams,
 ) {
   const context = {
-    namespace: params?.namespace ?? globalFetchOptions.namespace,
+    namespace: DEFAULT_NAMESPACE,
     cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
   };
 
@@ -120,7 +117,7 @@ export async function syncCommerceScopes(
  */
 export function getConfigSchema(params?: FetchOptions) {
   const context = {
-    namespace: params?.namespace ?? globalFetchOptions.namespace,
+    namespace: DEFAULT_NAMESPACE,
     cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
   };
 
@@ -138,7 +135,7 @@ export async function getConfiguration(
   ...args: unknown[]
 ) {
   const context = {
-    namespace: params?.namespace ?? globalFetchOptions.namespace,
+    namespace: DEFAULT_NAMESPACE,
     cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
   };
 
@@ -158,7 +155,7 @@ export async function getConfigurationByKey(
   ...args: unknown[]
 ) {
   const context = {
-    namespace: params?.namespace ?? globalFetchOptions.namespace,
+    namespace: DEFAULT_NAMESPACE,
     cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
   };
 
@@ -178,7 +175,7 @@ export async function setConfiguration(
   ...args: unknown[]
 ) {
   const context = {
-    namespace: params?.namespace ?? globalFetchOptions.namespace,
+    namespace: DEFAULT_NAMESPACE,
     cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
   };
 
@@ -196,7 +193,7 @@ export async function setCustomScopeTree(
   params?: FetchOptions,
 ) {
   const context = {
-    namespace: params?.namespace ?? globalFetchOptions.namespace,
+    namespace: DEFAULT_NAMESPACE,
     cacheTimeout: params?.cacheTimeout ?? globalFetchOptions.cacheTimeout,
   };
 
