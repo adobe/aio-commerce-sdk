@@ -359,7 +359,7 @@ export function installDependencies(
   cwd = process.cwd(),
 ) {
   const { stdout, stderr } = process;
-  stdout.write("\n📦 Installing dependencies...\n");
+  stdout.write(`\n📦 Installing dependencies with ${packageManager}...\n`);
 
   const packages = [
     "@adobe/aio-commerce-lib-config",
