@@ -1,5 +1,166 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.8.0
+
+### Minor Changes
+
+- [#163](https://github.com/adobe/aio-commerce-sdk/pull/163) [`4a66b81`](https://github.com/adobe/aio-commerce-sdk/commit/4a66b810c106e5d00f3392c7c3fc142aa3aef2d5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - [BREAKING] Refactor library to use tree-shakeable function-based API instead of class-based initialization pattern
+
+  **Breaking Changes**
+
+  **Removed `init()` function**
+
+  The library no longer uses an initialization function. Instead, all functions are exported directly from the module.
+
+  **Before:**
+
+  ```typescript
+  import { init } from "@adobe/aio-commerce-lib-config";
+
+  const config = init();
+  await config.getConfigSchema();
+  ```
+
+  **After:**
+
+  ```typescript
+  import * as libConfig from "@adobe/aio-commerce-lib-config";
+
+  await libConfig.getConfigSchema();
+  ```
+
+  **Function signature changes**
+
+  All functions now accept an optional `options` object as the last parameter for configuration options (`cacheTimeout`). Some examples:
+
+  **`getScopeTree()`**
+
+  **Before:**
+
+  ```typescript
+  await config.getScopeTree(remoteFetch?: boolean);
+  ```
+
+  **After:**
+
+  ```typescript
+  // For cached data (default)
+  await libConfig.getScopeTree();
+
+  // For fresh data from Commerce API
+  await libConfig.getScopeTree({
+    refreshData: true,
+    commerceConfig: {
+      /* Commerce client config */
+    },
+  });
+  ```
+
+  **`syncCommerceScopes()`**
+
+  **Before:**
+
+  ```typescript
+  const config = init({ commerce: commerceConfig });
+  await config.syncCommerceScopes();
+  ```
+
+  **After:**
+
+  ```typescript
+  await libConfig.syncCommerceScopes(commerceConfig, { cacheTimeout: 600 });
+  ```
+
+  **New `setGlobalLibConfigOptions()` function**
+
+  You can now set global defaults for `cacheTimeout` that will be used by all functions:
+
+  **Before:**
+
+  ```typescript
+  import { init } from "@adobe/aio-commerce-lib-config";
+
+  const config = init({
+    cacheTimeout: 3600,
+  });
+  ```
+
+  **After:**
+
+  ```typescript
+  import { setGlobalLibConfigOptions } from "@adobe/aio-commerce-lib-config";
+
+  // If not customized, the default cache timeout will be used (300 seconds)
+  setGlobalLibConfigOptions({
+    cacheTimeout: 3600,
+  });
+  ```
+
+  **Migration Guide**
+  1. Replace `import { init }` with `import * as libConfig` or use named imports
+  2. Remove all `const config = init()` calls
+  3. For `getScopeTree()` with `remoteFetch: true`, use the new `refreshData: true` pattern with `commerceConfig`
+  4. For `syncCommerceScopes()`, pass `commerceConfig` directly as the first parameter
+
+- [#163](https://github.com/adobe/aio-commerce-sdk/pull/163) [`4a66b81`](https://github.com/adobe/aio-commerce-sdk/commit/4a66b810c106e5d00f3392c7c3fc142aa3aef2d5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - [BREAKING] Refactor API to use selector pattern and improve type safety
+
+  **Breaking Changes**
+
+  **Scope Selection API Refactoring**
+
+  The configuration functions (`getConfiguration`, `getConfigurationByKey`, `setConfiguration`) now use a selector-based API instead of positional arguments with `...args`. This provides better type safety and clearer API usage.
+
+  **Before:**
+
+  ```typescript
+  import * as libConfig from "@adobe/aio-commerce-lib-config";
+
+  // Ambiguous - which argument is which?
+  await libConfig.getConfiguration("scope-id");
+  await libConfig.getConfiguration("website", "website");
+  await libConfig.getConfiguration("website");
+  ```
+
+  **After:**
+
+  ```typescript
+  import {
+    getConfiguration,
+    byScopeId,
+    byCodeAndLevel,
+    byCode,
+  } from "@adobe/aio-commerce-lib-config";
+
+  // Clear and type-safe
+  await getConfiguration(byScopeId("scope-id"));
+  await getConfiguration(byCodeAndLevel("website", "website"));
+  await getConfiguration(byCode("website"));
+  ```
+
+  **New Selector Helper Functions**
+
+  Three new helper functions are exported to create selector objects:
+  - `byScopeId(scopeId: string)` - Select a scope by its unique ID
+  - `byCodeAndLevel(code: string, level: string)` - Select a scope by code and level
+  - `byCode(code: string)` - Select a scope by code (uses default level)
+
+  **Migration Guide**
+  1. Replace positional arguments with selector helper functions:
+     - `getConfiguration("scope-id")` → `getConfiguration(byScopeId("scope-id"))`
+     - `getConfiguration("website", "website")` → `getConfiguration(byCodeAndLevel("website", "website"))`
+     - `getConfiguration("website")` → `getConfiguration(byCode("website"))`
+
+  **Documentation Improvements**
+  - Added comprehensive JSDoc comments with examples for all public API functions
+  - Added JSDoc comments for internal module functions with `@param` and `@throws` documentation
+  - Improved type documentation with descriptions
+
+### Patch Changes
+
+- [#163](https://github.com/adobe/aio-commerce-sdk/pull/163) [`4a66b81`](https://github.com/adobe/aio-commerce-sdk/commit/4a66b810c106e5d00f3392c7c3fc142aa3aef2d5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fixes a bug where the validation of business configuration schemas always succeeded as it never was actually performing a validation.
+
+- [#163](https://github.com/adobe/aio-commerce-sdk/pull/163) [`4a66b81`](https://github.com/adobe/aio-commerce-sdk/commit/4a66b810c106e5d00f3392c7c3fc142aa3aef2d5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fixes usages of the library binaries by using the package name only instead of the fully qualified org + package name. The latter was causing the binary to always be fetched from NPM, instead of using the locally installed one.
+
 ## 0.7.2
 
 ### Patch Changes
