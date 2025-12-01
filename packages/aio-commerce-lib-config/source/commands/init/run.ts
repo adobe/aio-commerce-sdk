@@ -44,11 +44,11 @@ export async function run() {
     const steps = [
       makeStep("ensureExtensibilityConfig", ensureExtensibilityConfig),
       makeStep("ensurePackageJsonScript", ensurePackageJsonScript, execCommand),
+      makeStep("installDependencies", installDependencies, packageManager),
       makeStep("runGeneration", runGeneration),
       makeStep("ensureAppConfig", ensureAppConfig),
       makeStep("ensureInstallYaml", ensureInstallYaml),
       makeStep("ensureEnvFile", ensureEnvFile),
-      makeStep("installDependencies", installDependencies, packageManager),
     ];
 
     for (const step of steps) {
