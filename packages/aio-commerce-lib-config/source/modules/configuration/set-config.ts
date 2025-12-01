@@ -14,14 +14,15 @@ import {
   deriveScopeFromArgs,
   mergeScopes,
   sanitizeRequestEntries,
-} from "../../config-utils";
-import * as scopeTreeRepository from "../scope-tree/scope-tree-repository";
+} from "#config-utils";
+import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
+
 import * as configRepository from "./configuration-repository";
 
 import type {
   SetConfigurationRequest,
   SetConfigurationResponse,
-} from "../../types";
+} from "#types/index";
 import type { ConfigContext } from "./types";
 // loadScopeConfig and persistConfiguration are now repository methods
 
@@ -44,11 +45,10 @@ export async function setConfiguration(
   request: SetConfigurationRequest,
   ...args: unknown[]
 ): Promise<SetConfigurationResponse> {
-  // Create repositories for each domain
-  // Get scope tree
   const scopeTree = await scopeTreeRepository.getPersistedScopeTree(
     context.namespace,
   );
+
   const { scopeCode, scopeLevel, scopeId } = deriveScopeFromArgs(
     args,
     scopeTree,
@@ -73,7 +73,6 @@ export async function setConfiguration(
   };
 
   await configRepository.persistConfig(scopeCode, payload);
-
   const responseConfig = sanitizedEntries.map((entry) => ({
     name: entry.name,
     value: entry.value,

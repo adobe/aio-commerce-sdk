@@ -238,12 +238,6 @@ The library uses a function-based API. Import the functions you need and call th
 #### Basic Import Pattern
 
 ```typescript
-import * as libConfig from "@adobe/aio-commerce-lib-config";
-```
-
-Or import specific functions:
-
-```typescript
 import {
   getConfiguration,
   getConfigurationByKey,
@@ -252,6 +246,9 @@ import {
   setConfiguration,
   setCustomScopeTree,
   syncCommerceScopes,
+  byScopeId,
+  byCode,
+  byCodeAndLevel,
 } from "@adobe/aio-commerce-lib-config";
 ```
 
@@ -260,10 +257,10 @@ import {
 If you need to customize defaults for all function calls, you can set global options:
 
 ```typescript
-import { setGlobalFetchOptions } from "@adobe/aio-commerce-lib-config";
+import { setGlobalLibConfigOptions } from "@adobe/aio-commerce-lib-config";
 
 // Set global defaults (optional)
-setGlobalFetchOptions({
+setGlobalLibConfigOptions({
   cacheTimeout: 600, // default: 300 seconds (5 minutes)
 });
 ```
@@ -275,29 +272,38 @@ This is useful when you want consistent configuration across your entire applica
 Retrieve and manage scope hierarchies to organize your configuration values. Use cached scope data for better performance, or force a refresh when you need the latest data from Adobe Commerce. For external systems, define custom scope hierarchies that match your application's organizational structure.
 
 ```typescript
-import * as libConfig from "@adobe/aio-commerce-lib-config";
+import {
+  getScopeTree,
+  syncCommerceScopes,
+  setCustomScopeTree,
+} from "@adobe/aio-commerce-lib-config";
+import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-sdk/api";
 
 // Get cached scope tree
-const result = await libConfig.getScopeTree();
+const result = await getScopeTree();
 console.log(result.scopeTree);
 console.log("Using cached data:", result.isCachedData);
 
 // Force refresh from Commerce API (requires commerce config)
-import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-sdk/api";
 const commerceConfig = resolveCommerceHttpClientParams(params);
-const freshResult = await libConfig.getScopeTree({
-  refreshData: true,
-  commerceConfig,
-});
+const freshResult = await getScopeTree(
+  {
+    refreshData: true,
+    commerceConfig,
+  },
+  { cacheTimeout: 600000 },
+);
 
 console.log("Using fresh data:", !freshResult.isCachedData);
 
 // Sync Commerce scopes explicitly (requires commerce config)
-const syncResult = await libConfig.syncCommerceScopes({ commerceConfig });
+const syncResult = await syncCommerceScopes(commerceConfig, {
+  cacheTimeout: 600000,
+});
 console.log("Synced:", syncResult.synced);
 
 // Set custom scope tree for external systems
-await libConfig.setCustomScopeTree({
+await setCustomScopeTree({
   scopes: [
     {
       code: "external_system_master",
@@ -324,38 +330,48 @@ await libConfig.setCustomScopeTree({
 Read and write configuration values at any scope level in your hierarchy. Configuration values automatically inherit from parent scopes when not explicitly set, following the inheritance model. Use `getConfigurationByKey` when you need a single value, or `getConfiguration` to retrieve all configuration values for a scope.
 
 ```typescript
-import * as libConfig from "@adobe/aio-commerce-lib-config";
+import {
+  getConfiguration,
+  getConfigurationByKey,
+  getConfigSchema,
+  setConfiguration,
+  byScopeId,
+  byCode,
+  byCodeAndLevel,
+} from "@adobe/aio-commerce-lib-config";
 
 // Get configuration by scope ID
-const config1 = await libConfig.getConfiguration("scope-id-123");
+const config1 = await getConfiguration(byScopeId("scope-id-123"));
 
 // Get configuration by scope code (uses default level base)
-const config2 = await libConfig.getConfiguration("us-east");
+const config2 = await getConfiguration(byCode("us-east"));
 
 // Get configuration by scope code and level
-const config3 = await libConfig.getConfiguration("us-west", "store");
+const config3 = await getConfiguration(byCodeAndLevel("us-west", "store"));
 console.log(config3.config);
 
 // Get a specific configuration value by key
 const {
   config: { value },
-} = await libConfig.getConfigurationByKey("paymentMethod", "us-west", "store");
+} = await getConfigurationByKey(
+  "paymentMethod",
+  byCodeAndLevel("us-west", "store"),
+);
 console.log(value);
 
 // Set configuration for a scope
-await libConfig.setConfiguration(
+await setConfiguration(
   {
     config: [
       { name: "paymentMethod", value: "credit_card" },
       { name: "currency", value: "USD" },
     ],
   },
-  "us-west",
-  "store",
+  byCodeAndLevel("us-west", "store"),
 );
 
 // Get the configuration schema
-const schema = await libConfig.getConfigSchema();
+const schema = await getConfigSchema();
 console.log(schema); // Array of field definitions
 ```
 
@@ -365,7 +381,10 @@ This example demonstrates a typical use case: retrieving scope-specific configur
 
 ```javascript
 // actions/process-order/index.js
-import * as libConfig from "@adobe/aio-commerce-lib-config";
+import {
+  getConfigurationByKey,
+  byCodeAndLevel,
+} from "@adobe/aio-commerce-lib-config";
 
 async function main(params) {
   try {
@@ -376,18 +395,16 @@ async function main(params) {
     // Get specific configuration values
     const {
       config: { value: paymentMethod },
-    } = await libConfig.getConfigurationByKey(
+    } = await getConfigurationByKey(
       "paymentMethod",
-      storeCode,
-      storeLevel,
+      byCodeAndLevel(storeCode, storeLevel),
     );
 
     const {
       config: { value: currency },
-    } = await libConfig.getConfigurationByKey(
+    } = await getConfigurationByKey(
       "currency",
-      storeCode,
-      storeLevel,
+      byCodeAndLevel(storeCode, storeLevel),
     );
 
     // Use configuration in your business logic

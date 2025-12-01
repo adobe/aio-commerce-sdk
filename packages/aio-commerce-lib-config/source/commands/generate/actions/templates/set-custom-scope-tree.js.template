@@ -15,7 +15,7 @@
 
 import util from "node:util";
 
-import * as libConfig from "@adobe/aio-commerce-lib-config";
+import { setCustomScopeTree } from "@adobe/aio-commerce-lib-config";
 import {
   badRequest,
   internalServerError,
@@ -56,7 +56,7 @@ export async function main(params) {
     const request = { scopes };
     logger.debug(`Setting custom scope tree: ${inspect(request)}`);
 
-    const result = await libConfig.setCustomScopeTree(request);
+    const result = await setCustomScopeTree(request);
     logger.debug(`Successfully set custom scope tree: ${inspect(result)}`);
 
     return ok({

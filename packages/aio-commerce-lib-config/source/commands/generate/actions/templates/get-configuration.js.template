@@ -15,7 +15,12 @@
 
 import util from "node:util";
 
-import * as libConfig from "@adobe/aio-commerce-lib-config";
+import {
+  byCode,
+  byCodeAndLevel,
+  byScopeId,
+  getConfiguration,
+} from "@adobe/aio-commerce-lib-config";
 import {
   badRequest,
   internalServerError,
@@ -58,15 +63,16 @@ export async function main(params) {
     let appConfiguration;
     if (id) {
       logger.debug(`Retrieving configuration by id: ${id}`);
-      appConfiguration = await libConfig.getConfiguration(id);
+      appConfiguration = await getConfiguration(byScopeId(id));
     } else if (level) {
       logger.debug(
         `Retrieving configuration by code: ${code}, level: ${level}`,
       );
-      appConfiguration = await libConfig.getConfiguration(code, level);
+
+      appConfiguration = await getConfiguration(byCodeAndLevel(code, level));
     } else {
       logger.debug(`Retrieving configuration by code: ${code}`);
-      appConfiguration = await libConfig.getConfiguration(code);
+      appConfiguration = await getConfiguration(byCode(code));
     }
 
     logger.debug(

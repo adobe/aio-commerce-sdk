@@ -10,9 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { generateUUID } from "../../utils/uuid";
+import { generateUUID } from "#utils/uuid";
 
-import type { CommerceScopeData, StoreGroup, StoreView } from "../../types";
+import type { CommerceScopeData, StoreGroup, StoreView } from "#types/index";
 import type { ScopeNode, ScopeTree } from "./types";
 
 /**

@@ -10,9 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { getLogger } from "../../utils/logger";
-import { getSharedFiles, getSharedState } from "../../utils/repository";
-import { generateUUID } from "../../utils/uuid";
+import { getLogger } from "#utils/logger";
+import { getSharedFiles, getSharedState } from "#utils/repository";
+import { generateUUID } from "#utils/uuid";
 
 import type { ScopeNode, ScopeTree } from "./types";
 

@@ -16,7 +16,7 @@ import type {
   StoreGroup,
   StoreView,
   Website,
-} from "../types";
+} from "#types/index";
 
 /**
  * Fetch all scope data from Commerce REST API endpoints

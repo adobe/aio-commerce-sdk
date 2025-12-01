@@ -1,3 +1,5 @@
+// @ts-check
+
 /*
  * Copyright 2025 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -15,7 +17,11 @@
 
 import util from "node:util";
 
-import * as libConfig from "@adobe/aio-commerce-lib-config";
+import {
+  byCodeAndLevel,
+  byScopeId,
+  setConfiguration,
+} from "@adobe/aio-commerce-lib-config";
 import {
   badRequest,
   internalServerError,
@@ -87,8 +93,8 @@ export async function main(params) {
     logger.debug(`Setting configuration with payload: ${inspect(payload)}`);
 
     const result = id
-      ? await libConfig.setConfiguration(payload, id)
-      : await libConfig.setConfiguration(payload, code, level);
+      ? await setConfiguration(payload, byScopeId(id))
+      : await setConfiguration(payload, byCodeAndLevel(code, level));
 
     logger.debug(`Successfully set configuration: ${inspect(result)}`);
     return ok({

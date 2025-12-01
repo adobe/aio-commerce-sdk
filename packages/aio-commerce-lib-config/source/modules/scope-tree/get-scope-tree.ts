@@ -13,7 +13,8 @@
 import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 import AioLogger from "@adobe/aio-lib-core-logging";
 
-import { getAllScopeData } from "../../services/commerce-service";
+import { getAllScopeData } from "#api/commerce";
+
 import { buildUpdatedScopeTree, mergeCommerceScopes } from "./merge-scopes";
 import * as scopeTreeRepository from "./scope-tree-repository";
 

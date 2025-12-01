@@ -14,12 +14,13 @@ import {
   deriveScopeFromArgs,
   getSchemaDefaults,
   mergeWithSchemaDefaults,
-} from "../../config-utils";
-import * as schemaRepository from "../schema/config-schema-repository";
-import * as scopeTreeRepository from "../scope-tree/scope-tree-repository";
+} from "#config-utils";
+import * as schemaRepository from "#modules/schema/config-schema-repository";
+import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
+
 import * as configRepository from "./configuration-repository";
 
-import type { GetConfigurationResponse } from "../../types";
+import type { GetConfigurationResponse } from "#types/index";
 import type { ConfigContext } from "./types";
 
 /**

@@ -16,7 +16,8 @@ import { readFile } from "node:fs/promises";
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { safeParse } from "valibot";
 
-import { CONFIG_SCHEMA_PATH } from "../../utils/constants";
+import { CONFIG_SCHEMA_PATH } from "#utils/constants";
+
 import { BusinessConfigSchema } from "./schema";
 
 import type { ConfigSchemaField } from "./index";
