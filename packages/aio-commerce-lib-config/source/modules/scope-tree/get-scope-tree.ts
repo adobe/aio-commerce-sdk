@@ -1,21 +1,22 @@
 /*
-Copyright 2025 Adobe. All rights reserved.
-This file is licensed to you under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License. You may obtain a copy
-of the License at http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under
-the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
-OF ANY KIND, either express or implied. See the License for the specific language
-governing permissions and limitations under the License.
-*/
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 
 import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 import AioLogger from "@adobe/aio-lib-core-logging";
 
-import { CommerceService } from "../../services/commerce-service";
+import { getAllScopeData } from "#api/commerce";
+
 import { buildUpdatedScopeTree, mergeCommerceScopes } from "./merge-scopes";
-import { ScopeTreeRepository } from "./scope-tree-repository";
+import * as scopeTreeRepository from "./scope-tree-repository";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type {
@@ -35,33 +36,39 @@ function hasCommerceConfig(ctx: ScopeTreeContext): ctx is ScopeTreeContext & {
 }
 
 /**
- * Get scope tree and optionally refresh commerce scopes from Commerce API
- * @param context - Context containing configuration and namespace
- * @param options - Options for scope tree retrieval
- * @returns Scope tree with metadata about data freshness and any fallback information
+ * Gets the scope tree and optionally refreshes Commerce scopes from Commerce API.
+ *
+ * The scope tree represents the hierarchical structure of configuration scopes available
+ * in your Adobe Commerce instance. This includes both system scopes (global, website, store)
+ * and custom scopes that may have been defined.
+ *
+ * @param context - Scope tree context containing namespace, cache timeout, and optional Commerce config.
+ * @param options - Options for scope tree retrieval, including whether to fetch fresh data.
+ * @returns Promise resolving to scope tree with metadata about data freshness and any fallback information.
  */
 export async function getScopeTree(
   context: ScopeTreeContext,
   options: GetScopeTreeOptions = {},
 ): Promise<GetScopeTreeResult> {
   const { remoteFetch = false } = options;
-  const repository = new ScopeTreeRepository();
 
   if (remoteFetch && hasCommerceConfig(context)) {
-    return await buildTreeWithUpdatedCommerceScopes(context, repository);
+    return await buildTreeWithUpdatedCommerceScopes(context);
   }
 
   // Try cache first
-  const cached = await repository.getCachedScopeTree(context.namespace);
+  const cached = await scopeTreeRepository.getCachedScopeTree(
+    context.namespace,
+  );
   if (cached) {
     return { scopeTree: cached, isCachedData: true };
   }
 
   // Fallback to persisted data
-  const persistedTree = await repository.getPersistedScopeTree(
+  const persistedTree = await scopeTreeRepository.getPersistedScopeTree(
     context.namespace,
   );
-  await repository.setCachedScopeTree(
+  await scopeTreeRepository.setCachedScopeTree(
     context.namespace,
     persistedTree,
     context.cacheTimeout,
@@ -74,19 +81,19 @@ export async function getScopeTree(
 }
 
 /**
- * Build scope tree with updated Commerce data merged with existing scopes
- * Returns scope tree ready for caching and returning to caller
+ * Builds scope tree with updated Commerce data merged with existing scopes.
+ *
+ * @param context - Scope tree context with Commerce configuration for fetching fresh data.
+ * @returns Promise resolving to scope tree result with fresh Commerce data or fallback data.
  */
 async function buildTreeWithUpdatedCommerceScopes(
   context: ScopeTreeContext & { commerceConfig: CommerceHttpClientParams },
-  repository: ScopeTreeRepository,
 ): Promise<GetScopeTreeResult> {
   try {
     const commerceClient = initializeCommerceClient(context.commerceConfig);
-    const commerceService = new CommerceService(commerceClient);
-    const updatedCommerceScopeData = await commerceService.getAllScopeData();
+    const updatedCommerceScopeData = await getAllScopeData(commerceClient);
 
-    const existingTree = await repository.getPersistedScopeTree(
+    const existingTree = await scopeTreeRepository.getPersistedScopeTree(
       context.namespace,
     );
 
@@ -101,8 +108,8 @@ async function buildTreeWithUpdatedCommerceScopes(
     );
 
     // Persist updates
-    await repository.saveScopeTree(context.namespace, finalTree);
-    await repository.setCachedScopeTree(
+    await scopeTreeRepository.saveScopeTree(context.namespace, finalTree);
+    await scopeTreeRepository.setCachedScopeTree(
       context.namespace,
       finalTree,
       context.cacheTimeout,
@@ -120,7 +127,7 @@ async function buildTreeWithUpdatedCommerceScopes(
     );
 
     // Try cached data first
-    const cachedFlattenedTree = await repository.getCachedScopeTree(
+    const cachedFlattenedTree = await scopeTreeRepository.getCachedScopeTree(
       context.namespace,
     );
     if (cachedFlattenedTree) {
@@ -132,10 +139,10 @@ async function buildTreeWithUpdatedCommerceScopes(
     }
 
     // Final fallback to persisted data
-    const existingTree = await repository.getPersistedScopeTree(
+    const existingTree = await scopeTreeRepository.getPersistedScopeTree(
       context.namespace,
     );
-    await repository.setCachedScopeTree(
+    await scopeTreeRepository.setCachedScopeTree(
       context.namespace,
       existingTree,
       context.cacheTimeout,
@@ -150,7 +157,12 @@ async function buildTreeWithUpdatedCommerceScopes(
 }
 
 /**
- * Initialize Commerce HTTP client
+ * Initializes a Commerce HTTP client from the provided configuration.
+ *
+ * @param commerceConfig - Commerce HTTP client configuration parameters.
+ * @returns Initialized Commerce HTTP client instance.
+ *
+ * @throws {Error} If the client initialization fails.
  */
 function initializeCommerceClient(
   commerceConfig: CommerceHttpClientParams,

@@ -10,7 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
-export { init } from "./lib-config";
+/**
+ * This module exports configuration management utilities for the AIO Commerce SDK.
+ * @packageDocumentation
+ */
+
+export * from "./config-manager";
+export { byCode, byCodeAndLevel, byScopeId } from "./config-utils";
 export * from "./types";
 
 export type {

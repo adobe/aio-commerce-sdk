@@ -1,7 +1,20 @@
+/*
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ConfigManager } from "#config-manager";
-import { ConfigurationRepository } from "#modules/configuration/configuration-repository";
+import { getConfiguration, setConfiguration } from "#config-manager";
+import { byCodeAndLevel, byScopeId } from "#config-utils";
+import * as configRepository from "#modules/configuration/configuration-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
 import { createMockLibFiles } from "#test/mocks/lib-files";
 import { createMockLibState } from "#test/mocks/lib-state";
@@ -15,34 +28,18 @@ const MockFiles = createMockLibFiles();
 let mockStateInstance = new MockState();
 let mockFilesInstance = new MockFiles();
 
-vi.mock("#modules/configuration/configuration-repository", async () => {
-  const original = await vi.importActual<{
-    ConfigurationRepository: typeof ConfigurationRepository;
-  }>("#modules/configuration/configuration-repository");
+// Mock the shared repository utilities
+vi.mock("#utils/repository", () => ({
+  getSharedState: vi.fn(async () => mockStateInstance),
+  getSharedFiles: vi.fn(async () => mockFilesInstance),
+}));
 
-  return {
-    ...original,
-    ConfigurationRepository: class extends original.ConfigurationRepository {
-      public constructor() {
-        // @ts-expect-error - mocks are minimal implementations for testing only
-        super(mockStateInstance, mockFilesInstance);
-      }
-    },
-  };
-});
-
-vi.mock("#modules/scope-tree/scope-tree-repository", () => {
-  const MockScopeTreeRepository = vi.fn(
-    class {
-      public getCachedScopeTree = vi.fn(() => null);
-      public getPersistedScopeTree = vi.fn(() => mockScopeTree);
-      public setCachedScopeTree = vi.fn();
-      public saveScopeTree = vi.fn();
-    },
-  );
-
-  return { ScopeTreeRepository: MockScopeTreeRepository };
-});
+vi.mock("#modules/scope-tree/scope-tree-repository", () => ({
+  getCachedScopeTree: vi.fn(() => Promise.resolve(null)),
+  getPersistedScopeTree: vi.fn(() => Promise.resolve(mockScopeTree)),
+  setCachedScopeTree: vi.fn(() => Promise.resolve()),
+  saveScopeTree: vi.fn(() => Promise.resolve()),
+}));
 
 vi.mock("#modules/schema/config-schema-repository", () => {
   const mockSchema = JSON.stringify([
@@ -61,19 +58,15 @@ vi.mock("#modules/schema/config-schema-repository", () => {
     },
   ]);
 
-  const MockConfigSchemaRepository = vi.fn(
-    class {
-      public getCachedSchema = vi.fn(() => null);
-      public setCachedSchema = vi.fn();
-      public deleteCachedSchema = vi.fn();
-      public getPersistedSchema = vi.fn(() => mockSchema);
-      public saveSchema = vi.fn();
-      public getSchemaVersion = vi.fn(() => null);
-      public setSchemaVersion = vi.fn();
-    },
-  );
-
-  return { ConfigSchemaRepository: MockConfigSchemaRepository };
+  return {
+    getCachedSchema: vi.fn(() => Promise.resolve(null)),
+    setCachedSchema: vi.fn(() => Promise.resolve()),
+    deleteCachedSchema: vi.fn(() => Promise.resolve()),
+    getPersistedSchema: vi.fn(() => Promise.resolve(mockSchema)),
+    saveSchema: vi.fn(() => Promise.resolve()),
+    getSchemaVersion: vi.fn(() => Promise.resolve(null)),
+    setSchemaVersion: vi.fn(() => Promise.resolve()),
+  };
 });
 
 function buildPayload(
@@ -92,32 +85,26 @@ function buildPayload(
   });
 }
 
-function createManager(): ConfigManager {
-  return new ConfigManager();
-}
-
-describe("ConfigManager", () => {
-  let mockConfigRepo: ConfigurationRepository;
-
+describe("ConfigManager functions", () => {
   beforeEach(() => {
     // Create fresh mock instances for each test
     // so that each test starts with a clean state
     mockStateInstance = new MockState();
     mockFilesInstance = new MockFiles();
-    mockConfigRepo = new ConfigurationRepository();
+
+    // Reset all mocks
+    vi.clearAllMocks();
   });
 
   it("returns defaults when no persisted config", async () => {
-    const mgr = createManager();
-    const result = await mgr.getConfiguration("global", "global");
+    const result = await getConfiguration(byCodeAndLevel("global", "global"));
     expect(result.scope.code).toBe("global");
     expect(Array.isArray(result.config)).toBe(true);
     expect(result.config.length).toBeGreaterThan(0);
   });
 
   it("reads from state when present", async () => {
-    const mgr = createManager();
-    await mockConfigRepo.setCachedConfig(
+    await configRepository.setCachedConfig(
       "global",
       buildPayload("id1", "global", "global", [
         {
@@ -128,13 +115,12 @@ describe("ConfigManager", () => {
       ]),
     );
 
-    const result = await mgr.getConfiguration("global", "global");
+    const result = await getConfiguration(byCodeAndLevel("global", "global"));
     expect(result.config.find((e) => e.name === "currency")?.value).toBe("€");
   });
 
   it("falls back to files and caches to state", async () => {
-    const mgr = createManager();
-    await mockConfigRepo.saveConfig(
+    await configRepository.saveConfig(
       "global",
       buildPayload("id2", "global", "global", [
         {
@@ -145,11 +131,11 @@ describe("ConfigManager", () => {
       ]),
     );
 
-    const result = await mgr.getConfiguration("global", "global");
+    const result = await getConfiguration(byCodeAndLevel("global", "global"));
     expect(result.config.find((e) => e.name === "currency")?.value).toBe("£");
 
     // Verify it was cached in state
-    const cachedPayload = await mockConfigRepo.getCachedConfig("global");
+    const cachedPayload = await configRepository.getCachedConfig("global");
     expect.assert(cachedPayload, "cachedPayload is not defined/truthy");
 
     const cached = JSON.parse(cachedPayload);
@@ -159,10 +145,8 @@ describe("ConfigManager", () => {
   });
 
   it("merges inherited values from parent scopes", async () => {
-    const mgr = createManager();
-
     // Set up global scope config (top-level parent)
-    await mockConfigRepo.saveConfig(
+    await configRepository.saveConfig(
       "global",
       buildPayload("id-global", "global", "global", [
         {
@@ -174,21 +158,21 @@ describe("ConfigManager", () => {
     );
 
     // Set up intermediate parent scopes in the hierarchy
-    await mockConfigRepo.saveConfig(
+    await configRepository.saveConfig(
       "commerce",
       buildPayload("id-commerce", "commerce", "commerce", [
         // Commerce inherits currency from global but doesn't override it
       ]),
     );
 
-    await mockConfigRepo.saveConfig(
+    await configRepository.saveConfig(
       "base",
       buildPayload("idw", "base", "website", [
         // Base website inherits currency from global but doesn't override it
       ]),
     );
 
-    await mockConfigRepo.saveConfig(
+    await configRepository.saveConfig(
       "main_store",
       buildPayload("ids", "main_store", "store", [
         // Store inherits currency from global but doesn't override it
@@ -196,7 +180,7 @@ describe("ConfigManager", () => {
     );
 
     // Set up child scope config with partial override
-    await mockConfigRepo.saveConfig(
+    await configRepository.saveConfig(
       "default",
       buildPayload("idsv", "default", "store_view", [
         {
@@ -207,7 +191,9 @@ describe("ConfigManager", () => {
       ]),
     );
 
-    const result = await mgr.getConfiguration("default", "store_view");
+    const result = await getConfiguration(
+      byCodeAndLevel("default", "store_view"),
+    );
     expect(
       result.config.find((e: ConfigValue) => e.name === "currency")?.value,
     ).toBe("$");
@@ -223,9 +209,8 @@ describe("ConfigManager", () => {
   });
 
   it("resolves scope by code+level to id and fetches same via id", async () => {
-    const mgr = createManager();
     // Use the correct ID from mock scope tree: 'base'/'website' has id 'idw'
-    await mockConfigRepo.saveConfig(
+    await configRepository.saveConfig(
       "base",
       buildPayload("idw", "base", "website", [
         {
@@ -236,8 +221,10 @@ describe("ConfigManager", () => {
       ]),
     );
 
-    const resultByCodeLevel = await mgr.getConfiguration("base", "website");
-    const resultById = await mgr.getConfiguration("idw");
+    const resultByCodeLevel = await getConfiguration(
+      byCodeAndLevel("base", "website"),
+    );
+    const resultById = await getConfiguration(byScopeId("idw"));
 
     expect(resultByCodeLevel).toEqual(resultById);
     expect(resultByCodeLevel.scope.id).toBe("idw");
@@ -246,12 +233,9 @@ describe("ConfigManager", () => {
   });
 
   it("sets configuration and persists to files/state", async () => {
-    const mgr = createManager();
-
-    const response = await mgr.setConfiguration(
+    const response = await setConfiguration(
       { config: [{ name: "currency", value: "JPY" }] },
-      "global",
-      "global",
+      byCodeAndLevel("global", "global"),
     );
 
     expect(response.message).toBe("Configuration values updated successfully");
@@ -259,7 +243,7 @@ describe("ConfigManager", () => {
     expect(response.config).toEqual([{ name: "currency", value: "JPY" }]);
 
     // Verify persistence in files
-    const persisted = await mockConfigRepo.getPersistedConfig("global");
+    const persisted = await configRepository.getPersistedConfig("global");
     expect.assert(persisted, "persisted is not defined/truthy");
 
     const parsed = JSON.parse(persisted);
@@ -269,10 +253,8 @@ describe("ConfigManager", () => {
   });
 
   it("merges existing and newly set entries without losing prior values", async () => {
-    const mgr = createManager();
-
     // Set initial config
-    await mockConfigRepo.saveConfig(
+    await configRepository.saveConfig(
       "global",
       buildPayload("id-global", "global", "global", [
         {
@@ -289,14 +271,13 @@ describe("ConfigManager", () => {
     );
 
     // Update only currency
-    await mgr.setConfiguration(
+    await setConfiguration(
       { config: [{ name: "currency", value: "CAD" }] },
-      "global",
-      "global",
+      byCodeAndLevel("global", "global"),
     );
 
     // Verify both values are present
-    const result = await mgr.getConfiguration("global", "global");
+    const result = await getConfiguration(byCodeAndLevel("global", "global"));
     expect(
       result.config.find((e: ConfigValue) => e.name === "currency")?.value,
     ).toBe("CAD");
@@ -306,10 +287,8 @@ describe("ConfigManager", () => {
   });
 
   it("ignores extra properties in setConfiguration request entries", async () => {
-    const mgr = createManager();
-
     // Test that extra properties are stripped at runtime
-    const response = await mgr.setConfiguration(
+    const response = await setConfiguration(
       {
         config: [
           {
@@ -320,18 +299,15 @@ describe("ConfigManager", () => {
           } as any, // Allow extra props for runtime testing
         ],
       },
-      "global",
-      "global",
+      byCodeAndLevel("global", "global"),
     );
 
     expect(response.config).toEqual([{ name: "currency", value: "GBP" }]);
   });
 
   it("skips entries missing value and strips unknown props as per request contract", async () => {
-    const mgr = createManager();
-
     // Test malformed entries are handled at runtime
-    const response = await mgr.setConfiguration(
+    const response = await setConfiguration(
       {
         config: [
           { name: "currency" } as any, // missing value - test runtime handling
@@ -339,8 +315,7 @@ describe("ConfigManager", () => {
           { value: "orphaned" } as any, // missing name - test runtime handling
         ],
       },
-      "global",
-      "global",
+      byCodeAndLevel("global", "global"),
     );
 
     expect(response.config).toEqual([

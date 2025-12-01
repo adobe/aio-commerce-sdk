@@ -1,3 +1,15 @@
+/*
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
 import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
@@ -119,7 +131,7 @@ export async function ensurePackageJsonScript(
   execCommand: string,
   cwd = process.cwd(),
 ) {
-  const postinstallScript = `${execCommand} @adobe/aio-commerce-lib-config generate all`;
+  const postinstallScript = `${execCommand} aio-commerce-lib-config generate all`;
   const packageJson = await readPackageJson(cwd);
   const { stdout, stderr } = process;
 
@@ -347,7 +359,7 @@ export function installDependencies(
   cwd = process.cwd(),
 ) {
   const { stdout, stderr } = process;
-  stdout.write("\n📦 Installing dependencies...\n");
+  stdout.write(`\n📦 Installing dependencies with ${packageManager}...\n`);
 
   const packages = [
     "@adobe/aio-commerce-lib-config",
@@ -389,14 +401,14 @@ export async function runGeneration(cwd = process.cwd()) {
   try {
     // Although we programatically add the postinstall script to package.json, we still need to run the generation
     // command manually because many package managers block postinstall scripts by default
-    execSync(`${execCommand} @adobe/aio-commerce-lib-config generate all`, {
+    execSync(`${execCommand} aio-commerce-lib-config generate all`, {
       cwd,
       stdio: "inherit",
     });
   } catch (error) {
     stderr.write(`${stringifyError(error as Error)}\n`);
     stderr.write(
-      `❌  Failed to run generation command. Please run manually: ${execCommand} @adobe/aio-commerce-lib-config generate all\n`,
+      `❌  Failed to run generation command. Please run manually: ${execCommand} aio-commerce-lib-config generate all\n`,
     );
 
     return false;

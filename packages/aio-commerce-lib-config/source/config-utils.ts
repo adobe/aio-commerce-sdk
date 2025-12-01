@@ -1,12 +1,24 @@
-import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "./utils/constants";
+/*
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 
+import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "#utils/constants";
+
+import type { ConfigValue } from "#modules/configuration/index";
 import type {
   AcceptableConfigValue,
   ConfigValueWithOptionalOrigin,
 } from "#modules/configuration/types";
-import type { ConfigValue } from "./modules/configuration";
-import type { ConfigSchemaField } from "./modules/schema";
-import type { ScopeNode, ScopeTree } from "./modules/scope-tree";
+import type { ConfigSchemaField } from "#modules/schema/index";
+import type { ScopeNode, ScopeTree } from "#modules/scope-tree/index";
 
 /**
  * Checks if the given value is a non-empty string.
@@ -478,4 +490,102 @@ export async function mergeWithSchemaDefaults({
   }));
 
   return configData;
+}
+
+type ByScopeId = {
+  by: {
+    _tag: "scopeId";
+    scopeId: string;
+  };
+};
+
+type ByCodeAndLevel = {
+  by: {
+    _tag: "codeAndLevel";
+    code: string;
+    level: string;
+  };
+};
+
+type ByCode = {
+  by: {
+    _tag: "code";
+    code: string;
+  };
+};
+
+/**
+ * Discriminated union type for selecting a scope by different methods.
+ *
+ * Use the helper functions {@link byScopeId}, {@link byCodeAndLevel}, or {@link byCode} to create
+ * selector objects instead of constructing them manually.
+ */
+export type BySelector = ByScopeId | ByCodeAndLevel | ByCode;
+
+/**
+ * Creates a scope selector that identifies a scope by its unique ID.
+ *
+ * This is the most direct way to identify a scope when you already know its ID.
+ * Scope IDs are unique identifiers assigned to each scope in the scope tree.
+ *
+ * @param scopeId - The unique identifier of the scope.
+ * @returns A selector object that identifies the scope by ID.
+ *
+ * @example
+ * ```typescript
+ * import { getConfiguration, byScopeId } from "@adobe/aio-commerce-lib-config";
+ *
+ * // Get configuration for a scope by its ID
+ * const config = await getConfiguration(byScopeId("scope-123"));
+ * ```
+ */
+export function byScopeId(scopeId: string): ByScopeId {
+  return { by: { _tag: "scopeId", scopeId } };
+}
+
+/**
+ * Creates a scope selector that identifies a scope by its code and level.
+ *
+ * This selector is useful when you know both the scope code and its level in
+ * the hierarchy (e.g., "website" level "website", "store" level "store").
+ *
+ * @param code - The code identifier of the scope (e.g., "us-east", "main_store").
+ * @param level - The level of the scope in the hierarchy (e.g., "website", "store", "store_view").
+ * @returns A selector object that identifies the scope by code and level.
+ *
+ * @example
+ * ```typescript
+ * import { getConfiguration, byCodeAndLevel } from "@adobe/aio-commerce-lib-config";
+ *
+ * // Get configuration for a website scope
+ * const config = await getConfiguration(byCodeAndLevel("us-east", "website"));
+ *
+ * // Get configuration for a store scope
+ * const storeConfig = await getConfiguration(byCodeAndLevel("main_store", "store"));
+ * ```
+ */
+export function byCodeAndLevel(code: string, level: string): ByCodeAndLevel {
+  return { by: { _tag: "codeAndLevel", code, level } };
+}
+
+/**
+ * Creates a scope selector that identifies a scope by its code only.
+ *
+ * This selector uses the scope code and will resolve to the default level for that code.
+ * Use this when you want to let the system determine the appropriate level based on
+ * the code alone.
+ *
+ * @param code - The code identifier of the scope.
+ * @returns A selector object that identifies the scope by code.
+ *
+ * @example
+ * ```typescript
+ * import { getConfiguration, byCode } from "@adobe/aio-commerce-lib-config";
+ *
+ * // Get configuration by code (uses default level)
+ * const config = await getConfiguration(byCode("us-east"));
+ * ```
+ */
+export function byCode(code: string): ByCode {
+  return { by: { _tag: "code", code } };
 }

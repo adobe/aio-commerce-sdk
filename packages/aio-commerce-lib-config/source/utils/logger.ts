@@ -10,17 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-export * from "./api";
-export * from "./commerce";
-
-/** Options for controlling fetch behavior, particularly cache timeout. */
-export type LibConfigOptions = {
-  /** Optional cache timeout in milliseconds. */
-  cacheTimeout?: number;
-};
+import AioLogger from "@adobe/aio-lib-core-logging";
 
 /**
- * Global fetch options with all properties required.
- * @internal
+ * Get a logger instance for a given module name
+ * @param moduleName - The name of the module to create a logger for
+ * @returns Logger instance
  */
-export type GlobalLibConfigOptions = Required<LibConfigOptions>;
+export function getLogger(moduleName: string) {
+  return AioLogger(moduleName, {
+    level: process.env.LOG_LEVEL ?? "info",
+  });
+}

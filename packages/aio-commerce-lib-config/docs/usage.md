@@ -112,7 +112,7 @@ Then add a `postinstall` script to your `package.json`:
 ```json
 {
   "dependencies": {
-    "@adobe/aio-commerce-lib-config": "^0.6.0"
+    "@adobe/aio-commerce-lib-config": "^0.8.0"
   },
 
   "scripts": {
@@ -231,84 +231,79 @@ The `generate actions` command also creates the `ext.config.yaml` file with the 
 > AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET=your-access-token-secret
 > ```
 
-### Initialize the Library
+### Using the Library
 
-Initialize the library with basic settings or configure it with an Adobe Commerce instance, and uses the default cache timeout of 5 minutes. When working with Adobe Commerce, provide the appropriate authentication credentials based on your instance type (SaaS or PaaS).
+The library uses a function-based API. Import the functions you need and call them directly. Most functions use sensible defaults, so you typically don't need to pass configuration options unless you need custom behavior.
+
+#### Basic Import Pattern
 
 ```typescript
-import { init } from "@adobe/aio-commerce-lib-config";
+import {
+  getConfiguration,
+  getConfigurationByKey,
+  getConfigSchema,
+  getScopeTree,
+  setConfiguration,
+  setCustomScopeTree,
+  syncCommerceScopes,
+  byScopeId,
+  byCode,
+  byCodeAndLevel,
+} from "@adobe/aio-commerce-lib-config";
+```
 
-// Basic initialization
-const config = init();
+#### Setting Global Options (Optional)
 
-// With custom cache timeout (default is 300 seconds = 5 minutes)
-const config = init({
-  cacheTimeout: 600,
-});
+If you need to customize defaults for all function calls, you can set global options:
 
-// With Adobe Commerce instance
-const config = init({
-  cacheTimeout: 600,
-  commerce: {
-    config: {
-      baseUrl: "https://your-commerce-instance.com",
-      flavor: "your-commerce-flavour", // "saas" or "paas"
-    },
-    auth: {
-      // For SaaS instances
-      clientId: "your-client-id",
-      clientSecret: ["your-client-secret"],
-      technicalAccountId: "your-technical-account-id",
-      technicalAccountEmail: "your-technical-account-email",
-      imsOrgId: "your-ims-org-id",
+```typescript
+import { setGlobalLibConfigOptions } from "@adobe/aio-commerce-lib-config";
 
-      // For PaaS instances
-      consumerKey: "your-consumer-key",
-      consumerSecret: "your-consumer-secret",
-      accessToken: "your-access-token",
-      accessTokenSecret: "your-access-token-secret",
-    },
-  },
+// Set global defaults (optional)
+setGlobalLibConfigOptions({
+  cacheTimeout: 600, // default: 300 seconds (5 minutes)
 });
 ```
 
-You can also use `resolveCommerceHttpClientParams` to automatically resolve client parameters from action inputs:
-
-```typescript
-import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
-import { init } from "@adobe/aio-commerce-lib-config";
-
-const commerceConfig = resolveCommerceHttpClientParams(params);
-// SaaS with IMS Auth resolves to: { config: { flavor: "saas", baseUrl: "..." }, auth: { ... ImsAuthParams } }
-// PaaS with Integration Auth resolves to: { config: { flavor: "paas", baseUrl: "..." }, auth: { ... IntegrationAuthParams } }
-
-const config = init({
-  cacheTimeout: 600,
-  commerce: commerceConfig,
-});
-```
-
-The resolver automatically detects flavor from the URL and auth type from the provided parameters. Define actual values in your `.env` file.
+This is useful when you want consistent configuration across your entire application without passing options to each function call.
 
 ### Working with Scope Trees
 
 Retrieve and manage scope hierarchies to organize your configuration values. Use cached scope data for better performance, or force a refresh when you need the latest data from Adobe Commerce. For external systems, define custom scope hierarchies that match your application's organizational structure.
 
 ```typescript
+import {
+  getScopeTree,
+  syncCommerceScopes,
+  setCustomScopeTree,
+} from "@adobe/aio-commerce-lib-config";
+import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-sdk/api";
+
 // Get cached scope tree
-const result = await config.getScopeTree();
+const result = await getScopeTree();
 console.log(result.scopeTree);
 console.log("Using cached data:", result.isCachedData);
 
-// Force refresh from Commerce
-const freshResult = await config.getScopeTree(true);
+// Force refresh from Commerce API (requires commerce config)
+const commerceConfig = resolveCommerceHttpClientParams(params);
+const freshResult = await getScopeTree(
+  {
+    refreshData: true,
+    commerceConfig,
+  },
+  { cacheTimeout: 600000 },
+);
 
-// Sync Commerce scopes explicitly
-const syncResult = await config.syncCommerceScopes();
+console.log("Using fresh data:", !freshResult.isCachedData);
+
+// Sync Commerce scopes explicitly (requires commerce config)
+const syncResult = await syncCommerceScopes(commerceConfig, {
+  cacheTimeout: 600000,
+});
 console.log("Synced:", syncResult.synced);
 
 // Set custom scope tree for external systems
-await config.setCustomScopeTree({
+await setCustomScopeTree({
   scopes: [
     {
       code: "external_system_master",
@@ -335,37 +330,48 @@ await config.setCustomScopeTree({
 Read and write configuration values at any scope level in your hierarchy. Configuration values automatically inherit from parent scopes when not explicitly set, following the inheritance model. Use `getConfigurationByKey` when you need a single value, or `getConfiguration` to retrieve all configuration values for a scope.
 
 ```typescript
+import {
+  getConfiguration,
+  getConfigurationByKey,
+  getConfigSchema,
+  setConfiguration,
+  byScopeId,
+  byCode,
+  byCodeAndLevel,
+} from "@adobe/aio-commerce-lib-config";
+
 // Get configuration by scope ID
-const config1 = await config.getConfiguration("scope-id-123");
+const config1 = await getConfiguration(byScopeId("scope-id-123"));
 
 // Get configuration by scope code (uses default level base)
-const config2 = await config.getConfiguration("us-east");
+const config2 = await getConfiguration(byCode("us-east"));
 
 // Get configuration by scope code and level
-const config3 = await config.getConfiguration("us-west", "store");
+const config3 = await getConfiguration(byCodeAndLevel("us-west", "store"));
 console.log(config3.config);
 
-// Get a specific configuration value
+// Get a specific configuration value by key
 const {
   config: { value },
-} = await config.getConfigurationByKey("paymentMethod", "us-west", "store");
-
+} = await getConfigurationByKey(
+  "paymentMethod",
+  byCodeAndLevel("us-west", "store"),
+);
 console.log(value);
 
 // Set configuration for a scope
-await config.setConfiguration(
+await setConfiguration(
   {
     config: [
       { name: "paymentMethod", value: "credit_card" },
       { name: "currency", value: "USD" },
     ],
   },
-  "us-west",
-  "store",
+  byCodeAndLevel("us-west", "store"),
 );
 
 // Get the configuration schema
-const schema = await config.getConfigSchema();
+const schema = await getConfigSchema();
 console.log(schema); // Array of field definitions
 ```
 
@@ -375,12 +381,13 @@ This example demonstrates a typical use case: retrieving scope-specific configur
 
 ```javascript
 // actions/process-order/index.js
-const { init } = require("@adobe/aio-commerce-lib-config");
+import {
+  getConfigurationByKey,
+  byCodeAndLevel,
+} from "@adobe/aio-commerce-lib-config";
 
 async function main(params) {
   try {
-    const config = init();
-
     // Get configuration for the current scope
     const storeCode = params.store_code || "default";
     const storeLevel = params.store_level || "store_view";
@@ -388,15 +395,17 @@ async function main(params) {
     // Get specific configuration values
     const {
       config: { value: paymentMethod },
-    } = await config.getConfigurationByKey(
+    } = await getConfigurationByKey(
       "paymentMethod",
-      storeCode,
-      storeLevel,
+      byCodeAndLevel(storeCode, storeLevel),
     );
 
     const {
       config: { value: currency },
-    } = await config.getConfigurationByKey("currency", storeCode, storeLevel);
+    } = await getConfigurationByKey(
+      "currency",
+      byCodeAndLevel(storeCode, storeLevel),
+    );
 
     // Use configuration in your business logic
     console.log(`Processing order with ${paymentMethod} in ${currency}`);

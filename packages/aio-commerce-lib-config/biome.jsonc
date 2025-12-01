@@ -21,6 +21,17 @@
           }
         }
       }
+    },
+    {
+      "includes": ["source/config-manager.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            // We want to ensure the function always returns a Promise
+            "useAwait": "off"
+          }
+        }
+      }
     }
   ]
 }
