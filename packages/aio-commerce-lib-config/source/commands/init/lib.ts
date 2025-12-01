@@ -131,7 +131,7 @@ export async function ensurePackageJsonScript(
   execCommand: string,
   cwd = process.cwd(),
 ) {
-  const postinstallScript = `${execCommand} @adobe/aio-commerce-lib-config generate all`;
+  const postinstallScript = `${execCommand} aio-commerce-lib-config generate all`;
   const packageJson = await readPackageJson(cwd);
   const { stdout, stderr } = process;
 
@@ -359,7 +359,7 @@ export function installDependencies(
   cwd = process.cwd(),
 ) {
   const { stdout, stderr } = process;
-  stdout.write("\n📦 Installing dependencies...\n");
+  stdout.write(`\n📦 Installing dependencies with ${packageManager}...\n`);
 
   const packages = [
     "@adobe/aio-commerce-lib-config",
@@ -401,14 +401,14 @@ export async function runGeneration(cwd = process.cwd()) {
   try {
     // Although we programatically add the postinstall script to package.json, we still need to run the generation
     // command manually because many package managers block postinstall scripts by default
-    execSync(`${execCommand} @adobe/aio-commerce-lib-config generate all`, {
+    execSync(`${execCommand} aio-commerce-lib-config generate all`, {
       cwd,
       stdio: "inherit",
     });
   } catch (error) {
     stderr.write(`${stringifyError(error as Error)}\n`);
     stderr.write(
-      `❌  Failed to run generation command. Please run manually: ${execCommand} @adobe/aio-commerce-lib-config generate all\n`,
+      `❌  Failed to run generation command. Please run manually: ${execCommand} aio-commerce-lib-config generate all\n`,
     );
 
     return false;

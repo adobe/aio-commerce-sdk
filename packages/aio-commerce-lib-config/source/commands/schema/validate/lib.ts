@@ -17,8 +17,8 @@ import { EXTENSIBILITY_CONFIG_FILE } from "#commands/constants";
 import {
   getProjectRootDirectory,
   readExtensibilityConfig,
-  stringifyError,
 } from "#commands/utils";
+import { validateBusinessConfigSchema } from "#modules/schema/utils";
 
 /** Load the business configuration schema from the given path. */
 export async function loadBusinessConfigSchema() {
@@ -39,17 +39,12 @@ export async function loadBusinessConfigSchema() {
     }
   }
 
-  try {
-    const extensibilityConfig = await readExtensibilityConfig();
-    if (!extensibilityConfig) {
-      return null;
-    }
+  const extensibilityConfig = await readExtensibilityConfig();
+  const schema = extensibilityConfig?.businessConfig?.schema ?? null;
 
-    return extensibilityConfig.businessConfig?.schema ?? null;
-  } catch (error) {
-    process.stderr.write(`${stringifyError(error as Error)}\n`);
-    process.stderr.write("❌ Error loading extensibility.config.js\n");
-
-    throw new Error("Error loading extensibility.config.js", { cause: error });
+  if (!schema) {
+    return null;
   }
+
+  return validateBusinessConfigSchema(schema);
 }

@@ -32,7 +32,7 @@ export async function run() {
     return null;
   } catch (error) {
     process.stderr.write(`${stringifyError(error as Error)}\n`);
-    process.stderr.write("❌ Configuration schema validation failed\n");
+    process.stderr.write("\n❌ Configuration schema validation failed\n");
 
     throw new Error("Configuration schema validation failed", { cause: error });
   }
