@@ -77,8 +77,8 @@ importers:
   configs/typescript:
     devDependencies:
       '@tsconfig/node-lts':
-        specifier: ^22.0.2
-        version: 22.0.2
+        specifier: ^24.0.0
+        version: 24.0.0
       '@tsconfig/node-ts':
         specifier: ^23.6.1
         version: 23.6.1
@@ -1072,8 +1072,8 @@ packages:
     peerDependencies:
       typescript: '>=5.7.2'
 
-  '@tsconfig/node-lts@22.0.2':
-    resolution: {integrity: sha512-Kgq5yXTvnUnvlhob0xJpOH4na9PWtuFhHSf94MpDwnENWgiFeJKDNANQV2MT1WpXZYkK2WSWfVYKhVkR7bc8TA==}
+  '@tsconfig/node-lts@24.0.0':
+    resolution: {integrity: sha512-8mSTqWwCd6aQpvxSrpQlMoA9RiUZSs7bYhL5qsLXIIaN9HQaINeoydrRu/Y7/fws4bvfuyhs0BRnW9/NI8tySg==}
 
   '@tsconfig/node-ts@23.6.1':
     resolution: {integrity: sha512-1E5cUp+S65pLKKI9VrGMQPWDHxOEq3dAGM2onG3fLeSRwWbylYFwhIjnzJikjSN7w2nCgwxmv8ifvUKDFkK38Q==}
@@ -3993,7 +3993,7 @@ snapshots:
     dependencies:
       typescript: 5.9.2
 
-  '@tsconfig/node-lts@22.0.2': {}
+  '@tsconfig/node-lts@24.0.0': {}
 
   '@tsconfig/node-ts@23.6.1': {}
 
