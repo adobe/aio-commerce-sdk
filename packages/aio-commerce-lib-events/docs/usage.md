@@ -25,7 +25,7 @@ The Commerce Events API allows you to manage event providers, subscriptions, and
 #### Creating a Commerce Events API Client
 
 ```typescript
-import { createCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events";
+import { createCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
 
 // For SaaS Commerce instances
 const commerceEventsClient = createCommerceEventsApiClient({
@@ -113,7 +113,7 @@ The Adobe I/O Events API allows you to manage event providers and metadata in th
 #### Creating an Adobe I/O Events API Client
 
 ```typescript
-import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events";
+import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 
 const ioEventsClient = createAdobeIoEventsApiClient({
   config: {
@@ -209,7 +209,7 @@ const newMetadata = await ioEventsClient.createEventMetadataForProvider({
 You can create custom API clients with only the functions you need:
 
 ```typescript
-import { createCustomCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events";
+import { createCustomCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
 
 // Create a custom client with only specific functions
 const customClient = createCustomCommerceEventsApiClient(

@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils/transformations";
+import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils";
 
 import { parseOrThrow } from "#utils/valibot";
 
