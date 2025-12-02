@@ -16,12 +16,14 @@
 import * as v from "valibot";
 
 import { BusinessConfigurationSchema } from "./business-configuration";
+import { MetadataSchema } from "./metadata";
 
 import type { BusinessConfigurationConfig } from "./business-configuration";
+import type { ApplicationMetadata } from "./metadata";
 
 /** The schema used to validate an extensibility config domain. */
 export const extensibilityConfigDomainsSchema = v.picklist(
-  ["businessConfig"],
+  ["businessConfig", "metadata"],
   "Expected a valid extensibility config domain",
 );
 
@@ -32,6 +34,7 @@ export type ExtensibilityConfigDomain = v.InferOutput<
 
 /** The schema used to validate the extensibility config file. */
 export const ExtensibilityConfigSchema = v.object({
+  metadata: MetadataSchema,
   businessConfig: v.optional(BusinessConfigurationSchema),
 });
 
@@ -46,3 +49,4 @@ export type ExtensibilityConfigOutputModel = v.InferOutput<
 >;
 
 export { type BusinessConfigurationConfig, BusinessConfigurationSchema };
+export { type ApplicationMetadata, MetadataSchema };
