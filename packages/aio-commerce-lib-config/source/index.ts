@@ -16,7 +16,16 @@
  */
 
 export * from "./config-manager";
-export { byCode, byCodeAndLevel, byScopeId } from "./config-utils";
+export {
+  byCode,
+  byCodeAndLevel,
+  byScopeId,
+  type ScopeLevel,
+  type SelectorBy,
+  type SelectorByCode,
+  type SelectorByCodeAndLevel,
+  type SelectorByScopeId,
+} from "./config-utils";
 export * from "./types";
 
 export type {

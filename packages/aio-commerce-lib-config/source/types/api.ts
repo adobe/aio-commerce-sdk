@@ -16,6 +16,8 @@ import type {
 } from "#modules/configuration/types";
 import type { ConfigSchemaField } from "#modules/schema/types";
 
+export type { GetScopeTreeResult } from "#modules/scope-tree/types";
+
 /**
  * Response type for getting the configuration schema.
  */

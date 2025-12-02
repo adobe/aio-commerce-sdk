@@ -24,7 +24,7 @@ import {
 } from "./modules/scope-tree";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
-import type { BySelector } from "#config-utils";
+import type { SelectorBy } from "#config-utils";
 import type { GetScopeTreeResult, ScopeTree } from "./modules/scope-tree";
 import type {
   GlobalLibConfigOptions,
@@ -56,12 +56,14 @@ export function setGlobalLibConfigOptions(options: LibConfigOptions) {
     options.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT;
 }
 
-type GetFreshScopeTreeParams = {
+/** Parameters for getting the scope tree from Commerce API. */
+export type GetFreshScopeTreeParams = {
   refreshData: true;
   commerceConfig: CommerceHttpClientParams;
 };
 
-type GetCachedScopeTreeParams = {
+/** Parameters for getting the scope tree from cache. */
+export type GetCachedScopeTreeParams = {
   refreshData?: false | undefined;
 };
 
@@ -298,7 +300,7 @@ export function getConfigSchema(options?: LibConfigOptions) {
  * ```
  */
 export async function getConfiguration(
-  selector: BySelector,
+  selector: SelectorBy,
   options?: LibConfigOptions,
 ) {
   const context = {
@@ -349,7 +351,7 @@ export async function getConfiguration(
  */
 export async function getConfigurationByKey(
   configKey: string,
-  selector: BySelector,
+  selector: SelectorBy,
   options?: LibConfigOptions,
 ) {
   const context = {
@@ -418,7 +420,7 @@ export async function getConfigurationByKey(
  */
 export async function setConfiguration(
   request: SetConfigurationRequest,
-  selector: BySelector,
+  selector: SelectorBy,
   options?: LibConfigOptions,
 ) {
   const context = {

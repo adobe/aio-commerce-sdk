@@ -492,22 +492,34 @@ export async function mergeWithSchemaDefaults({
   return configData;
 }
 
-type ByScopeId = {
+/**
+ * Selector type for identifying a scope by its unique ID.
+ */
+export type SelectorByScopeId = {
   by: {
     _tag: "scopeId";
     scopeId: string;
   };
 };
 
-type ByCodeAndLevel = {
+/** The allowed levels for a scope. */
+export type ScopeLevel = "website" | "store" | "store_view" | "global";
+
+/**
+ * Selector type for identifying a scope by its code and level.
+ */
+export type SelectorByCodeAndLevel = {
   by: {
     _tag: "codeAndLevel";
     code: string;
-    level: string;
+    level: ScopeLevel;
   };
 };
 
-type ByCode = {
+/**
+ * Selector type for identifying a scope by its code only.
+ */
+export type SelectorByCode = {
   by: {
     _tag: "code";
     code: string;
@@ -520,7 +532,10 @@ type ByCode = {
  * Use the helper functions {@link byScopeId}, {@link byCodeAndLevel}, or {@link byCode} to create
  * selector objects instead of constructing them manually.
  */
-export type BySelector = ByScopeId | ByCodeAndLevel | ByCode;
+export type SelectorBy =
+  | SelectorByScopeId
+  | SelectorByCodeAndLevel
+  | SelectorByCode;
 
 /**
  * Creates a scope selector that identifies a scope by its unique ID.
@@ -539,7 +554,7 @@ export type BySelector = ByScopeId | ByCodeAndLevel | ByCode;
  * const config = await getConfiguration(byScopeId("scope-123"));
  * ```
  */
-export function byScopeId(scopeId: string): ByScopeId {
+export function byScopeId(scopeId: string): SelectorByScopeId {
   return { by: { _tag: "scopeId", scopeId } };
 }
 
@@ -564,7 +579,10 @@ export function byScopeId(scopeId: string): ByScopeId {
  * const storeConfig = await getConfiguration(byCodeAndLevel("main_store", "store"));
  * ```
  */
-export function byCodeAndLevel(code: string, level: string): ByCodeAndLevel {
+export function byCodeAndLevel(
+  code: string,
+  level: ScopeLevel,
+): SelectorByCodeAndLevel {
   return { by: { _tag: "codeAndLevel", code, level } };
 }
 
@@ -586,6 +604,6 @@ export function byCodeAndLevel(code: string, level: string): ByCodeAndLevel {
  * const config = await getConfiguration(byCode("us-east"));
  * ```
  */
-export function byCode(code: string): ByCode {
+export function byCode(code: string): SelectorByCode {
   return { by: { _tag: "code", code } };
 }
