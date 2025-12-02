@@ -1,5 +1,16 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.8.1
+
+### Patch Changes
+
+- [#167](https://github.com/adobe/aio-commerce-sdk/pull/167) [`2745786`](https://github.com/adobe/aio-commerce-sdk/commit/274578686e07261b68d912adfa4bae040a807c3a) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fixes a bug with the `generate schema` command where it was not inferring the correct command based on the package manager.
+
+- [#167](https://github.com/adobe/aio-commerce-sdk/pull/167) [`2745786`](https://github.com/adobe/aio-commerce-sdk/commit/274578686e07261b68d912adfa4bae040a807c3a) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Export the following types: `SelectorBy`, `SelectorByCode`, `SelectorByCodeAndLevel`, and `SelectorByScopeId`.
+
+- Updated dependencies [[`2745786`](https://github.com/adobe/aio-commerce-sdk/commit/274578686e07261b68d912adfa4bae040a807c3a)]:
+  - @adobe/aio-commerce-lib-api@0.4.0
+
 ## 0.8.0
 
 ### Minor Changes

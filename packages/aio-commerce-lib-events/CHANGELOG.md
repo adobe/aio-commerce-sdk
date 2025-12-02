@@ -1,5 +1,14 @@
 # @adobe/aio-commerce-lib-events
 
+## 0.3.5
+
+### Patch Changes
+
+- [#167](https://github.com/adobe/aio-commerce-sdk/pull/167) [`2745786`](https://github.com/adobe/aio-commerce-sdk/commit/274578686e07261b68d912adfa4bae040a807c3a) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fixes the usages of the `utils` entrypoint of `lib-api`
+
+- Updated dependencies [[`2745786`](https://github.com/adobe/aio-commerce-sdk/commit/274578686e07261b68d912adfa4bae040a807c3a)]:
+  - @adobe/aio-commerce-lib-api@0.4.0
+
 ## 0.3.4
 
 ### Patch Changes
