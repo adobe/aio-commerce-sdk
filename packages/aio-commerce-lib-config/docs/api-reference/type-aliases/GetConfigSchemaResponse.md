@@ -6,7 +6,9 @@ type GetConfigSchemaResponse = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L17)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/api.ts#L24)
+
+Response type for getting the configuration schema.
 
 ## Properties
 
@@ -16,4 +18,6 @@ Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:17](https://gi
 configSchema: ConfigSchemaField[];
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L18)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/api.ts#L26)
+
+Array of configuration schema field definitions.

@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-api
 
+## 0.4.0
+
+### Minor Changes
+
+- [#167](https://github.com/adobe/aio-commerce-sdk/pull/167) [`2745786`](https://github.com/adobe/aio-commerce-sdk/commit/274578686e07261b68d912adfa4bae040a807c3a) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - [BREAKING]: Unify all `utils` into a single entrypoint. If you were previously using `import ... from "@adobe/aio-commerce-lib-config/utils/<something>"` now you need to import just from `utils`, effectively removing the `<something>` subpath.
+
 ## 0.3.2
 
 ### Patch Changes

@@ -11,7 +11,9 @@ type GetConfigurationByKeyResponse = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L30)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/api.ts#L46)
+
+Response type for getting a single configuration value by key.
 
 ## Properties
 
@@ -21,7 +23,9 @@ Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:30](https://gi
 config: ConfigValue | null;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L36)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/api.ts#L54)
+
+The configuration value, or null if not found.
 
 ---
 
@@ -35,7 +39,9 @@ scope: {
 }
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L31)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/api.ts#L48)
+
+Scope information including id, code, and level.
 
 #### code
 
