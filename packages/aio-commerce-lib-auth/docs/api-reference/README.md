@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-auth`: `v0.6.0`
+# `@adobe/aio-commerce-lib-auth`: `v0.6.2`
 
 ## Type Aliases
 

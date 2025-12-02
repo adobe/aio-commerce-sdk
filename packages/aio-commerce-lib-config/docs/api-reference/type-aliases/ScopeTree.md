@@ -4,4 +4,6 @@
 type ScopeTree = ScopeNode[];
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L28)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:42](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L42)
+
+Represents the complete scope tree as an array of root scope nodes.

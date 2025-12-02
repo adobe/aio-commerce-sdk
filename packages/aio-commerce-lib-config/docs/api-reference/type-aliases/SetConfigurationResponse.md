@@ -4,7 +4,7 @@
 type SetConfigurationResponse = {
   config: {
     name: string;
-    value: string | number | boolean;
+    value: AcceptableConfigValue;
   }[];
   message: string;
   scope: {
@@ -16,7 +16,9 @@ type SetConfigurationResponse = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L47)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:73](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/api.ts#L73)
+
+Response type for setting configuration values.
 
 ## Properties
 
@@ -25,12 +27,14 @@ Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:47](https://gi
 ```ts
 config: {
   name: string;
-  value: string | number | boolean;
+  value: AcceptableConfigValue;
 }
 [];
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L55)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/api.ts#L85)
+
+Array of updated configuration values.
 
 #### name
 
@@ -41,7 +45,7 @@ name: string;
 #### value
 
 ```ts
-value: string | number | boolean;
+value: AcceptableConfigValue;
 ```
 
 ---
@@ -52,7 +56,9 @@ value: string | number | boolean;
 message: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L48)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:75](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/api.ts#L75)
+
+Success message.
 
 ---
 
@@ -66,7 +72,9 @@ scope: {
 }
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L50)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/api.ts#L79)
+
+Scope information including id, code, and level.
 
 #### code
 
@@ -94,4 +102,6 @@ level: string;
 timestamp: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L49)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/api.ts#L77)
+
+ISO timestamp of when the configuration was updated.

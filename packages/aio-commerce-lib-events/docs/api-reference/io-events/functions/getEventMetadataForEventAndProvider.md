@@ -68,7 +68,7 @@ function getEventMetadataForEventAndProvider(
 }>;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-metadata/endpoints.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/endpoints.ts#L79)
+Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-metadata/endpoints.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/endpoints.ts#L79)
 
 Gets event metadata for a specific event code and provider.
 

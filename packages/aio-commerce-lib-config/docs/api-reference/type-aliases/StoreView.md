@@ -12,7 +12,9 @@ type StoreView = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L41)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/commerce.ts#L67)
+
+Represents a store view in Adobe Commerce.
 
 ## Properties
 
@@ -22,7 +24,9 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:41](https
 code: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L43)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:71](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/commerce.ts#L71)
+
+Unique code identifier for the store view.
 
 ---
 
@@ -32,7 +36,9 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:43](https
 optional extension_attributes: Record<string, unknown>;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L48)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:81](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/commerce.ts#L81)
+
+Optional extension attributes for additional data.
 
 ---
 
@@ -42,7 +48,9 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:48](https
 id: number;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:42](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L42)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:69](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/commerce.ts#L69)
+
+Unique identifier for the store view.
 
 ---
 
@@ -52,7 +60,9 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:42](https
 is_active: boolean;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L47)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/commerce.ts#L79)
+
+Whether the store view is currently active.
 
 ---
 
@@ -62,7 +72,9 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:47](https
 name: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L44)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:73](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/commerce.ts#L73)
+
+Display name of the store view.
 
 ---
 
@@ -72,7 +84,9 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:44](https
 store_group_id: number;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L46)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/commerce.ts#L77)
+
+ID of the parent store group.
 
 ---
 
@@ -82,4 +96,6 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:46](https
 website_id: number;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L45)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:75](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/commerce.ts#L75)
+
+ID of the parent website.

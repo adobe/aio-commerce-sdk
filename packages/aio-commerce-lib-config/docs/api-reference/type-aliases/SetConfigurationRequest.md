@@ -4,12 +4,14 @@
 type SetConfigurationRequest = {
   config: {
     name: string;
-    value: string | number | boolean;
+    value: AcceptableConfigValue;
   }[];
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L40)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:60](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/api.ts#L60)
+
+Request type for setting configuration values.
 
 ## Properties
 
@@ -18,12 +20,14 @@ Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:40](https://gi
 ```ts
 config: {
   name: string;
-  value: string | number | boolean;
+  value: AcceptableConfigValue;
 }
 [];
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/api.ts#L41)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:62](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/types/api.ts#L62)
+
+Array of configuration name-value pairs to set.
 
 #### name
 
@@ -31,8 +35,12 @@ Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:41](https://gi
 name: string;
 ```
 
+The name of the configuration field.
+
 #### value
 
 ```ts
-value: string | number | boolean;
+value: AcceptableConfigValue;
 ```
+
+The value to set (string, number, or boolean).
