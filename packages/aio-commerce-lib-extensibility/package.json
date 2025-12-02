@@ -2,27 +2,22 @@
   "name": "@adobe/aio-commerce-lib-extensibility",
   "type": "module",
   "author": "Adobe Inc.",
-
   "version": "1.0.0",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
   },
-
   "license": "Apache-2.0",
   "description": "Description for @adobe/aio-commerce-lib-extensibility",
   "keywords": [],
-
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
-
   "repository": {
     "type": "git",
     "url": "git+https://github.com/adobe/aio-commerce-sdk.git",
     "directory": "packages/aio-commerce-lib-extensibility"
   },
-
   "exports": {
     ".": {
       "import": {
@@ -36,14 +31,16 @@
     },
     "./package.json": "./package.json"
   },
-
+  "imports": {
+    "#*": "./source/*.ts",
+    "#test/*": "./test/*.ts"
+  },
   "files": [
     "dist",
     "package.json",
     "CHANGELOG.md",
     "README.md"
   ],
-
   "scripts": {
     "build": "tsdown",
     "docs": "typedoc && prettier --write '**/*.md'",
@@ -59,14 +56,17 @@
     "test": "vitest run",
     "test:watch": "vitest --watch"
   },
-
-  "dependencies": {},
+  "dependencies": {
+    "@adobe/aio-commerce-lib-core": "^0.5.1",
+    "find-up": "^8.0.0",
+    "jiti": "^2.6.1",
+    "valibot": "^1.1.0"
+  },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "@aio-commerce-sdk/config-vitest": "workspace:*"
   },
-
   "sideEffects": false
 }
