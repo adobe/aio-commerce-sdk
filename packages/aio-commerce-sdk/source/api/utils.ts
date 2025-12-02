@@ -13,4 +13,3 @@
 /** biome-ignore-all lint/performance/noBarrelFile: Public API for the api/utils entrypoint */
 
 export * from "@adobe/aio-commerce-lib-api/utils";
-export * from "@adobe/aio-commerce-lib-api/utils";
