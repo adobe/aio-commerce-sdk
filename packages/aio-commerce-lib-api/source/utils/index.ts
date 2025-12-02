@@ -13,6 +13,7 @@
 /** biome-ignore-all lint/performance/noBarrelFile: This is the entrypoint of the utils package API */
 
 export * from "./auth/hooks";
-export * from "./auth/ims-scopes";
 export * from "./http/codes";
 export * from "./transformations/hooks";
+
+export type { ImsAuthParamsWithOptionalScopes } from "./auth/ims-scopes";
