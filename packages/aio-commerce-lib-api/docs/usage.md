@@ -222,7 +222,7 @@ const updated = await commerceApiClient.updateProduct("test-sku", {
 The library provides utilities for transforming API responses:
 
 ```typescript
-import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils/transformations";
+import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils";
 
 const client = new AdobeCommerceHttpClient({
   config: {

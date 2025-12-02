@@ -18,7 +18,8 @@ import type {
 import type { Options } from "ky";
 import type { ImsAuthParamsWithOptionalScopes } from "#utils/auth/ims-scopes";
 
-type CommerceHttpClientConfigBase = {
+/** Defines the base configuration required to build an Adobe Commerce HTTP client. */
+export type CommerceHttpClientConfigBase = {
   /** The base URL of the Commerce API. */
   baseUrl: string;
 

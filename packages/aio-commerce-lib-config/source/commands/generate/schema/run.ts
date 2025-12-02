@@ -19,12 +19,18 @@ import {
   EXTENSION_POINT_FOLDER_PATH,
   GENERATED_PATH,
 } from "#commands/constants";
+import { detectPackageManager, getExecCommand } from "#commands/init/lib";
 import { loadBusinessConfigSchema } from "#commands/schema/validate/lib";
 import { makeOutputDirFor } from "#commands/utils";
 
 /** Run the generate schema command */
 export async function run() {
-  execSync("npx aio-commerce-lib-config validate schema", { stdio: "inherit" });
+  const packageManager = await detectPackageManager();
+  const execCommand = getExecCommand(packageManager);
+  execSync(`${execCommand} aio-commerce-lib-config validate schema`, {
+    stdio: "inherit",
+  });
+
   const validatedSchema = await loadBusinessConfigSchema();
 
   process.stdout.write("🔧 Generating schema file...\n");

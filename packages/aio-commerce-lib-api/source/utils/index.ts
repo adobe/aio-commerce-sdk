@@ -10,9 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the utils/transformations entrypoint */
+/** biome-ignore-all lint/performance/noBarrelFile: This is the entrypoint of the utils package API */
 
-export {
-  buildCamelCaseKeysResponseHook,
-  buildObjectKeyTransformerResponseHook,
-} from "./hooks";
+export * from "./auth/hooks";
+export * from "./http/codes";
+export * from "./transformations/hooks";
+
+export type { ImsAuthParamsWithOptionalScopes } from "./auth/ims-scopes";

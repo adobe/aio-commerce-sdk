@@ -2,10 +2,21 @@
   "$schema": "https://typedoc-plugin-markdown.org/schema.json",
   "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.base.json"],
 
-  "entryPoints": ["./source/index.ts"],
+  "entryPoints": ["./source/index.ts", "./source/utils/index.ts"],
   "out": "docs/api-reference",
 
-  "validation": {
-    "notExported": false
+  "intentionallyNotExported": [
+    "RequiredComerceHttpClientConfig",
+    "HttpClientBase"
+  ],
+
+  "externalSymbolLinkMappings": {
+    "@adobe/aio-commerce-lib-auth": {
+      "ImsAuthEnv": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-auth/docs/api-reference/type-aliases/ImsAuthEnv.md",
+      "ImsAuthParams": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-auth/docs/api-reference/type-aliases/ImsAuthParams.md",
+      "ImsAuthProvider": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-auth/docs/api-reference/type-aliases/ImsAuthProvider.md",
+      "IntegrationAuthParams": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-auth/docs/api-reference/type-aliases/IntegrationAuthParams.md",
+      "IntegrationAuthProvider": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-auth/docs/api-reference/type-aliases/IntegrationAuthProvider.md"
+    }
   }
 }

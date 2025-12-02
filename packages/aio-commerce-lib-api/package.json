@@ -43,14 +43,14 @@
           "default": "./dist/cjs/ky.cjs"
         }
       },
-      "./utils/*": {
+      "./utils": {
         "import": {
-          "types": "./dist/es/utils/*/index.d.ts",
-          "default": "./dist/es/utils/*/index.js"
+          "types": "./dist/es/utils/index.d.ts",
+          "default": "./dist/es/utils/index.js"
         },
         "require": {
-          "types": "./dist/cjs/utils/*/index.d.cts",
-          "default": "./dist/cjs/utils/*/index.cjs"
+          "types": "./dist/cjs/utils/index.d.cts",
+          "default": "./dist/cjs/utils/index.cjs"
         }
       },
       "./package.json": "./package.json"
@@ -59,7 +59,7 @@
   "exports": {
     ".": "./source/index.ts",
     "./ky": "./source/ky.ts",
-    "./utils/*": "./source/utils/*/index.ts",
+    "./utils": "./source/utils/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {
