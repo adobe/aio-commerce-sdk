@@ -20,7 +20,6 @@ export {
   byCode,
   byCodeAndLevel,
   byScopeId,
-  type ScopeLevel,
   type SelectorBy,
   type SelectorByCode,
   type SelectorByCodeAndLevel,

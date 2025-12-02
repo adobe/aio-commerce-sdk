@@ -502,9 +502,6 @@ export type SelectorByScopeId = {
   };
 };
 
-/** The allowed levels for a scope. */
-export type ScopeLevel = "website" | "store" | "store_view" | "global";
-
 /**
  * Selector type for identifying a scope by its code and level.
  */
@@ -512,7 +509,7 @@ export type SelectorByCodeAndLevel = {
   by: {
     _tag: "codeAndLevel";
     code: string;
-    level: ScopeLevel;
+    level: string;
   };
 };
 
@@ -581,7 +578,7 @@ export function byScopeId(scopeId: string): SelectorByScopeId {
  */
 export function byCodeAndLevel(
   code: string,
-  level: ScopeLevel,
+  level: string,
 ): SelectorByCodeAndLevel {
   return { by: { _tag: "codeAndLevel", code, level } };
 }
