@@ -247,7 +247,13 @@ export function sanitizeRequestEntries(
       if (!entry || typeof entry.name !== "string") {
         return false;
       }
-      const hasValidValue = ["string", "array"].includes(typeof entry.value);
+
+      // TODO: This should be done via schema validation.
+      const hasValidValue =
+        ["string"].includes(typeof entry.value) ||
+        (Array.isArray(entry.value) &&
+          entry.value.every((item) => typeof item === "string"));
+
       return entry.name.trim().length > 0 && hasValidValue;
     })
     .map((entry) => ({
