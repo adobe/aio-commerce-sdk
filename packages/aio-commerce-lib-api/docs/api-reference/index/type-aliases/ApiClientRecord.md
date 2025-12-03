@@ -12,7 +12,7 @@ type ApiClientRecord<TClient, TFunctions> = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/api-client.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-api/source/lib/api-client.ts#L23)
+Defined in: [packages/aio-commerce-lib-api/source/lib/api-client.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-api/source/lib/api-client.ts#L23)
 
 A client that bounds a set of [ApiFunction](ApiFunction.md) to their HTTP clients.
 
