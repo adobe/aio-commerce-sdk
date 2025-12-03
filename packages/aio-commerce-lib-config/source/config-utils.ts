@@ -247,14 +247,12 @@ export function sanitizeRequestEntries(
       if (!entry || typeof entry.name !== "string") {
         return false;
       }
-      const hasValidValue = ["string", "number", "boolean"].includes(
-        typeof entry.value,
-      );
+      const hasValidValue = ["string", "array"].includes(typeof entry.value);
       return entry.name.trim().length > 0 && hasValidValue;
     })
     .map((entry) => ({
       name: String(entry.name).trim(),
-      value: entry.value as string | number | boolean,
+      value: entry.value as AcceptableConfigValue,
       origin: entry.origin,
     }));
 }
