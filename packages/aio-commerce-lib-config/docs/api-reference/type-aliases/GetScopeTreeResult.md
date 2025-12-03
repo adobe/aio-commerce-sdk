@@ -8,7 +8,7 @@ type GetScopeTreeResult = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L55)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L55)
 
 Result from getting the scope tree.
 
@@ -20,7 +20,7 @@ Result from getting the scope tree.
 optional fallbackError: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L61)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L61)
 
 Optional error message if fallback data was used.
 
@@ -32,7 +32,7 @@ Optional error message if fallback data was used.
 isCachedData: boolean;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L59)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L59)
 
 Whether the returned data came from cache.
 
@@ -44,6 +44,6 @@ Whether the returned data came from cache.
 scopeTree: ScopeNode[];
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L57)
+Defined in: [packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L57)
 
 The scope tree as an array of root scope nodes.

@@ -1,5 +1,16 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.8.2
+
+### Patch Changes
+
+- [#173](https://github.com/adobe/aio-commerce-sdk/pull/173) [`6b16d0b`](https://github.com/adobe/aio-commerce-sdk/commit/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Temporarily remove unsupported field types: `password`, `boolean`, `number`, `date`.
+
+- [#171](https://github.com/adobe/aio-commerce-sdk/pull/171) [`9e4ad33`](https://github.com/adobe/aio-commerce-sdk/commit/9e4ad3363508e89878292ac898c81690f52ba456) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix `exports` in `package.json` for proper resolution
+
+- Updated dependencies [[`9e4ad33`](https://github.com/adobe/aio-commerce-sdk/commit/9e4ad3363508e89878292ac898c81690f52ba456)]:
+  - @adobe/aio-commerce-lib-api@0.4.1
+
 ## 0.8.1
 
 ### Patch Changes

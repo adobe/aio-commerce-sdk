@@ -1,5 +1,15 @@
 # @adobe/aio-commerce-sdk
 
+## 0.6.4
+
+### Patch Changes
+
+- [#171](https://github.com/adobe/aio-commerce-sdk/pull/171) [`9e4ad33`](https://github.com/adobe/aio-commerce-sdk/commit/9e4ad3363508e89878292ac898c81690f52ba456) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix `exports` in `package.json` for proper resolution
+
+- Updated dependencies [[`9e4ad33`](https://github.com/adobe/aio-commerce-sdk/commit/9e4ad3363508e89878292ac898c81690f52ba456)]:
+  - @adobe/aio-commerce-lib-events@0.3.6
+  - @adobe/aio-commerce-lib-api@0.4.1
+
 ## 0.6.3
 
 ### Patch Changes

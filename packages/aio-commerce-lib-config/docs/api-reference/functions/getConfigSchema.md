@@ -39,34 +39,6 @@ function getConfigSchema(options?: LibConfigOptions): Promise<
         description?: string;
         label?: string;
         name: string;
-        type: "password";
-      }
-    | {
-        default?: boolean;
-        description?: string;
-        label?: string;
-        name: string;
-        type: "boolean";
-      }
-    | {
-        default?: number;
-        description?: string;
-        label?: string;
-        name: string;
-        type: "number";
-      }
-    | {
-        default?: Date;
-        description?: string;
-        label?: string;
-        name: string;
-        type: "date";
-      }
-    | {
-        default?: string;
-        description?: string;
-        label?: string;
-        name: string;
         type: "email";
       }
     | {
@@ -87,7 +59,7 @@ function getConfigSchema(options?: LibConfigOptions): Promise<
 >;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/config-manager.ts:263](https://github.com/adobe/aio-commerce-sdk/blob/328e76511a3d6688c6ab08c0bd2228837474a89a/packages/aio-commerce-lib-config/source/config-manager.ts#L263)
+Defined in: [packages/aio-commerce-lib-config/source/config-manager.ts:263](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/config-manager.ts#L263)
 
 Gets the configuration schema with lazy initialization and version checking.
 
@@ -134,34 +106,6 @@ cached and automatically updated when the bundled schema version changes.
 `label?`: `string`;
 `name`: `string`;
 `type`: `"text"`;
-\}
-\| \{
-`default?`: `string`;
-`description?`: `string`;
-`label?`: `string`;
-`name`: `string`;
-`type`: `"password"`;
-\}
-\| \{
-`default?`: `boolean`;
-`description?`: `string`;
-`label?`: `string`;
-`name`: `string`;
-`type`: `"boolean"`;
-\}
-\| \{
-`default?`: `number`;
-`description?`: `string`;
-`label?`: `string`;
-`name`: `string`;
-`type`: `"number"`;
-\}
-\| \{
-`default?`: `Date`;
-`description?`: `string`;
-`label?`: `string`;
-`name`: `string`;
-`type`: `"date"`;
 \}
 \| \{
 `default?`: `string`;
