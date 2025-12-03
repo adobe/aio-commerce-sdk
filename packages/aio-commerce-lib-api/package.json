@@ -19,14 +19,14 @@
     "directory": "packages/aio-commerce-lib-api"
   },
   "main": "./dist/cjs/index.cjs",
-  "module": "./dist/es/index.js",
+  "module": "./dist/es/index.mjs",
   "types": "./dist/cjs/index.d.cts",
   "publishConfig": {
     "exports": {
       ".": {
         "import": {
-          "types": "./dist/es/index.d.ts",
-          "default": "./dist/es/index.js"
+          "types": "./dist/es/index.d.mts",
+          "default": "./dist/es/index.mjs"
         },
         "require": {
           "types": "./dist/cjs/index.d.cts",
@@ -35,8 +35,8 @@
       },
       "./ky": {
         "import": {
-          "types": "./dist/es/ky.d.ts",
-          "default": "./dist/es/ky.js"
+          "types": "./dist/es/ky.d.mts",
+          "default": "./dist/es/ky.mjs"
         },
         "require": {
           "types": "./dist/cjs/ky.d.cts",
@@ -45,8 +45,8 @@
       },
       "./utils": {
         "import": {
-          "types": "./dist/es/utils/index.d.ts",
-          "default": "./dist/es/utils/index.js"
+          "types": "./dist/es/utils/index.d.mts",
+          "default": "./dist/es/utils/index.mjs"
         },
         "require": {
           "types": "./dist/cjs/utils/index.d.cts",
@@ -63,14 +63,8 @@
     "./package.json": "./package.json"
   },
   "imports": {
-    "#*": [
-      "./source/*.ts",
-      "./source/*/index.ts"
-    ],
-    "#test/*": [
-      "./test/*.ts",
-      "./test/*/index.ts"
-    ]
+    "#*": "./source/*.ts",
+    "#test/*": "./test/*.ts"
   },
   "files": [
     "dist",
@@ -80,6 +74,7 @@
   ],
   "scripts": {
     "build": "tsdown",
+    "publint": "publint",
     "docs": "typedoc && prettier --write '**/*.md'",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
