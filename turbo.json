@@ -44,6 +44,10 @@
     },
     "typecheck": {
       "dependsOn": ["transit"]
+    },
+    "publint": {
+      "dependsOn": ["build"],
+      "cache": false
     }
   }
 }
