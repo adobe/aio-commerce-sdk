@@ -247,14 +247,18 @@ export function sanitizeRequestEntries(
       if (!entry || typeof entry.name !== "string") {
         return false;
       }
-      const hasValidValue = ["string", "number", "boolean"].includes(
-        typeof entry.value,
-      );
+
+      // TODO: This should be done via schema validation.
+      const hasValidValue =
+        ["string"].includes(typeof entry.value) ||
+        (Array.isArray(entry.value) &&
+          entry.value.every((item) => typeof item === "string"));
+
       return entry.name.trim().length > 0 && hasValidValue;
     })
     .map((entry) => ({
       name: String(entry.name).trim(),
-      value: entry.value as string | number | boolean,
+      value: entry.value as AcceptableConfigValue,
       origin: entry.origin,
     }));
 }
