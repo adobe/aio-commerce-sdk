@@ -16,4 +16,7 @@ import { defineConfig } from "tsdown";
 export default defineConfig({
   ...baseConfig,
   entry: ["./source/config/index.ts"],
+
+  // This package is private and needs to be bundled as a no-external dependency.
+  noExternal: ["@aio-commerce-sdk/scripting-utils"],
 });

@@ -10,15 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-import { readFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
+import { findNearestPackageJson } from "@aio-commerce-sdk/scripting-utils/fs";
 import { findUp } from "find-up";
 import { createJiti } from "jiti";
 
 import { validateConfig } from "./validate";
 
-import type { PackageJson } from "type-fest";
 import type { ExtensibilityConfigOutputModel } from "../schema";
 
 const jiti = createJiti(import.meta.url);
@@ -83,31 +82,4 @@ export async function readExtensibilityConfig(cwd = process.cwd()) {
   }
 
   return validateConfig(config);
-}
-
-/**
- * Find the nearest package.json file in the current working directory or its parents
- * @param cwd The current working directory
- * @param logger - The logger to use
- */
-export async function findNearestPackageJson(cwd = process.cwd()) {
-  const packageJsonPath = await findUp("package.json", { cwd });
-
-  if (!packageJsonPath) {
-    return null;
-  }
-
-  return packageJsonPath;
-}
-
-/** Read the package.json file */
-export async function readPackageJson(
-  cwd = process.cwd(),
-): Promise<PackageJson | null> {
-  const packageJsonPath = await findNearestPackageJson(cwd);
-  if (!packageJsonPath) {
-    return null;
-  }
-
-  return JSON.parse(await readFile(packageJsonPath, "utf-8"));
 }
