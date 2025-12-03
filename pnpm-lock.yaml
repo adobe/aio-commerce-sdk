@@ -249,6 +249,34 @@ importers:
         specifier: ^2.11.1
         version: 2.11.1(@types/node@24.3.0)(typescript@5.9.2)
 
+  packages/aio-commerce-lib-extensibility:
+    dependencies:
+      '@adobe/aio-commerce-lib-core':
+        specifier: ^0.5.1
+        version: 0.5.1(typescript@5.9.2)
+      find-up:
+        specifier: ^8.0.0
+        version: 8.0.0
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
+      valibot:
+        specifier: ^1.1.0
+        version: 1.1.0(typescript@5.9.2)
+    devDependencies:
+      '@aio-commerce-sdk/config-tsdown':
+        specifier: workspace:*
+        version: link:../../configs/tsdown
+      '@aio-commerce-sdk/config-typedoc':
+        specifier: workspace:*
+        version: link:../../configs/typedoc
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../../configs/typescript
+      '@aio-commerce-sdk/config-vitest':
+        specifier: workspace:*
+        version: link:../../configs/vitest
+
   packages/aio-commerce-sdk:
     dependencies:
       '@adobe/aio-commerce-lib-api':
@@ -285,6 +313,10 @@ importers:
         version: link:../../configs/typescript
 
 packages:
+
+  '@adobe/aio-commerce-lib-core@0.5.1':
+    resolution: {integrity: sha512-Kk4QKxfYGrIpu27HqQ8UPOhbkFG2zy+0Oc17i/X802qPmwmrc7lWoHN9El7FxFGzj3ntvouFe/ctzXI8oYDbmw==}
+    engines: {node: '>=20 <=24'}
 
   '@adobe/aio-lib-core-config@5.0.1':
     resolution: {integrity: sha512-OQmQublmy/uXM1HC6qXfxSAXEl85nExh/yiajlEfJheKuJ9iPWwVWXR5vBHVVDlOXgWEVMWRUQPMIUu1lmR5lA==}
@@ -3142,6 +3174,13 @@ packages:
     resolution: {integrity: sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ==}
 
 snapshots:
+
+  '@adobe/aio-commerce-lib-core@0.5.1(typescript@5.9.2)':
+    dependencies:
+      ansis: 4.2.0
+      valibot: 1.1.0(typescript@5.9.2)
+    transitivePeerDependencies:
+      - typescript
 
   '@adobe/aio-lib-core-config@5.0.1':
     dependencies:
