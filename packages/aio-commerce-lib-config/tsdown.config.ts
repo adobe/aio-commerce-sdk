@@ -27,4 +27,7 @@ export default defineConfig({
       to: "./dist/es/commands/generate/actions/templates",
     },
   ],
+
+  // This package is private and needs to be bundled as a no-external dependency.
+  noExternal: ["@aio-commerce-sdk/scripting-utils"],
 });
