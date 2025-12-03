@@ -91,6 +91,34 @@ importers:
 
   configs/vitest: {}
 
+  packages-private/scripting-utils:
+    dependencies:
+      '@adobe/aio-commerce-lib-core':
+        specifier: ^0.5.1
+        version: 0.5.1(typescript@5.9.2)
+      consola:
+        specifier: ^3.4.2
+        version: 3.4.2
+      find-up:
+        specifier: ^8.0.0
+        version: 8.0.0
+      yaml:
+        specifier: ^2.8.1
+        version: 2.8.1
+    devDependencies:
+      '@aio-commerce-sdk/config-tsdown':
+        specifier: workspace:*
+        version: link:../../configs/tsdown
+      '@aio-commerce-sdk/config-typedoc':
+        specifier: workspace:*
+        version: link:../../configs/typedoc
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../../configs/typescript
+      '@aio-commerce-sdk/config-vitest':
+        specifier: workspace:*
+        version: link:../../configs/vitest
+
   packages/aio-commerce-lib-api:
     dependencies:
       '@adobe/aio-commerce-lib-auth':
@@ -276,6 +304,9 @@ importers:
       '@aio-commerce-sdk/config-vitest':
         specifier: workspace:*
         version: link:../../configs/vitest
+      '@aio-commerce-sdk/scripting-utils':
+        specifier: workspace:*
+        version: link:../../packages-private/scripting-utils
 
   packages/aio-commerce-sdk:
     dependencies:
@@ -332,6 +363,7 @@ packages:
   '@adobe/aio-lib-core-networking@5.0.4':
     resolution: {integrity: sha512-LsFPKIXqfWiMwSjD9NJbb6uUSlZ+DZiV8p9NhpqPyzqAAl9NNONAH0jcIKtsKWSULcHc20INaRAw8dqKzQBTbw==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-core-tvm@4.0.3':
     resolution: {integrity: sha512-zwl4GeU5CryZBozpub4jI9tnGW2ewD6mMLaXX8HhO8DqKzcjnjYr+MbUS0c/QzGd8gTzZWbikm4J7tfpCn3cAA==}
@@ -340,6 +372,7 @@ packages:
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-files@4.1.2':
     resolution: {integrity: sha512-4Ll776OGB34R7nPgMF+UQpIYm33yjtH5yLUuvtvKNHZtRF/wODG1Q8Oqcy9pOFutRIacg/xM0AMB6OKrQTP+Xw==}
