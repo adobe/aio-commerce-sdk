@@ -14,7 +14,6 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { findUp } from "find-up";
 
 import type { PackageJson } from "type-fest";
@@ -93,14 +92,40 @@ export async function makeOutputDirFor(fileOrFolder: string) {
   return outputDir;
 }
 
-/**
- * Stringify an error to a human-friendly string.
- * @param error - The error to stringify.
- */
-export function stringifyError(error: Error) {
-  if (error instanceof CommerceSdkValidationError) {
-    return error.display();
+/** The package manager used to install the package */
+export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
+
+/** Detect the package manager by checking for lock files */
+export async function detectPackageManager(
+  cwd = process.cwd(),
+): Promise<PackageManager> {
+  const rootDirectory = await getProjectRootDirectory(cwd);
+  const lockFileMap = {
+    "bun.lockb": "bun",
+    "pnpm-lock.yaml": "pnpm",
+    "yarn.lock": "yarn",
+    "package-lock.json": "npm",
+  } as const;
+
+  const lockFileName = Object.keys(lockFileMap).find((name) =>
+    existsSync(join(rootDirectory, name)),
+  ) as keyof typeof lockFileMap;
+
+  if (!lockFileName) {
+    return "npm";
   }
 
-  return error instanceof Error ? error.message : "Unknown error";
+  return lockFileMap[lockFileName];
+}
+
+/** Get the appropriate exec command based on package manager */
+export function getExecCommand(packageManager: PackageManager): string {
+  const execCommandMap = {
+    pnpm: "pnpx",
+    yarn: "yarn dlx",
+    bun: "bunx",
+    npm: "npx",
+  } as const;
+
+  return execCommandMap[packageManager];
 }

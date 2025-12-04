@@ -10,18 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the config entrypoint */
+/** biome-ignore-all lint/performance/noBarrelFile: Public entrypoint for the yaml helpers. */
 
-export { defineConfig } from "./lib/define";
-export {
-  readBundledExtensibilityConfig,
-  readExtensibilityConfig,
-  resolveExtensibilityConfig,
-} from "./lib/parser";
-export { validateConfig, validateConfigDomain } from "./lib/validate";
-
-export type {
-  BusinessConfigurationConfig,
-  ExtensibilityConfig,
-  ExtensibilityConfigDomain,
-} from "./schema";
+export * from "./codegen";
+export * from "./helpers";
+export * from "./types";

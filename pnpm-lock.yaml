@@ -96,9 +96,6 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: ^0.5.1
         version: 0.5.1(typescript@5.9.2)
-      consola:
-        specifier: ^3.4.2
-        version: 3.4.2
       find-up:
         specifier: ^8.0.0
         version: 8.0.0
@@ -223,6 +220,9 @@ importers:
       '@aio-commerce-sdk/config-vitest':
         specifier: workspace:*
         version: link:../../configs/vitest
+      '@aio-commerce-sdk/scripting-utils':
+        specifier: workspace:*
+        version: link:../../packages-private/scripting-utils
 
   packages/aio-commerce-lib-core:
     dependencies:
@@ -282,6 +282,9 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: ^0.5.1
         version: 0.5.1(typescript@5.9.2)
+      consola:
+        specifier: ^3.4.2
+        version: 3.4.2
       find-up:
         specifier: ^8.0.0
         version: 8.0.0

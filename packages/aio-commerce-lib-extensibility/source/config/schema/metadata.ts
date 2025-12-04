@@ -32,7 +32,7 @@ export const MetadataSchema = v.object({
     nonEmptyString("application display name"),
     v.maxLength(
       MAX_DISPLAY_NAME_LENGTH,
-      "The application display name must not be longer than 255 characters",
+      `The application display name must not be longer than ${MAX_DISPLAY_NAME_LENGTH} characters`,
     ),
   ),
 
@@ -40,7 +40,7 @@ export const MetadataSchema = v.object({
     nonEmptyString("metadata description"),
     v.maxLength(
       MAX_DESCRIPTION_LENGTH,
-      "The metadata description must not be longer than 255 characters",
+      `The metadata description must not be longer than ${MAX_DESCRIPTION_LENGTH} characters`,
     ),
   ),
 

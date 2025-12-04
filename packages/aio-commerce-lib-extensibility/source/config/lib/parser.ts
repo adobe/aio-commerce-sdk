@@ -10,9 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
+import { readFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
-import { findNearestPackageJson } from "@aio-commerce-sdk/scripting-utils/fs";
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { findNearestPackageJson } from "@aio-commerce-sdk/scripting-utils/project";
 import { findUp } from "find-up";
 import { createJiti } from "jiti";
 
@@ -21,6 +23,10 @@ import { validateConfig } from "./validate";
 import type { ExtensibilityConfigOutputModel } from "../schema";
 
 const jiti = createJiti(import.meta.url);
+
+/** The path to the bundled extensibility config file. */
+const BUNDLED_EXTENSIBILITY_CONFIG_PATH =
+  "app-management/extensibility.manifest.json";
 
 // Config paths to search for. In order of likely appearance to speed up the check.
 const configPaths = Object.freeze([
@@ -72,14 +78,43 @@ export async function readExtensibilityConfig(cwd = process.cwd()) {
     );
   }
 
-  let config: ExtensibilityConfigOutputModel | null = null;
   try {
-    config = await jiti.import<ExtensibilityConfigOutputModel>(configFilePath);
+    type ImportedConfig = { default: ExtensibilityConfigOutputModel };
+    const config = await jiti.import<ImportedConfig>(configFilePath);
+
+    if (config && !config?.default) {
+      throw new Error(
+        "Extensibility config file does not export a default export. Make sure you use `export default` or `module.exports = { /* your config */ }`",
+      );
+    }
+
+    return validateConfig(config.default);
   } catch (error) {
     throw new Error(
       `Failed to read extensibility config file at ${configFilePath}: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
 
-  return validateConfig(config);
+/**
+ * Read the bundled extensibility config file
+ * @returns The validated extensibility config
+ *
+ * @throws {Error} If the bundled extensibility config file is not found or if it is invalid
+ */
+export async function readBundledExtensibilityConfig() {
+  try {
+    const fileContents = await readFile(
+      BUNDLED_EXTENSIBILITY_CONFIG_PATH,
+      "utf-8",
+    );
+
+    return validateConfig(JSON.parse(fileContents));
+  } catch (error) {
+    const message = stringifyError(error);
+    throw new Error(
+      `Failed to read bundled extensibility config file: ${message}`,
+      { cause: error },
+    );
+  }
 }
