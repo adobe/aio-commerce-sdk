@@ -25,11 +25,14 @@
   },
   "exports": {
     "./*": "./source/*.ts",
+    "./yaml": "./source/yaml/index.ts",
     "./package.json": "./package.json"
+  },
+  "imports": {
+    "#*": "./source/*.ts"
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "^0.5.1",
-    "consola": "^3.4.2",
     "find-up": "^8.0.0",
     "yaml": "^2.8.1"
   },

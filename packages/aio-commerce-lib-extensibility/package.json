@@ -18,17 +18,26 @@
     "url": "git+https://github.com/adobe/aio-commerce-sdk.git",
     "directory": "packages/aio-commerce-lib-extensibility"
   },
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/es/index.d.ts",
-        "default": "./dist/es/index.js"
+  "bin": {
+    "@adobe/aio-commerce-lib-extensibility": "./dist/es/commands/index.mjs"
+  },
+  "publishConfig": {
+    "exports": {
+      "./config": {
+        "import": {
+          "types": "./dist/es/config/index.d.mts",
+          "default": "./dist/es/config/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/config/index.d.cts",
+          "default": "./dist/cjs/config/index.cjs"
+        }
       },
-      "require": {
-        "types": "./dist/cjs/index.d.cts",
-        "default": "./dist/cjs/index.cjs"
-      }
-    },
+      "./package.json": "./package.json"
+    }
+  },
+  "exports": {
+    "./config": "./source/config/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {
@@ -60,7 +69,8 @@
     "@adobe/aio-commerce-lib-core": "^0.5.1",
     "find-up": "^8.0.0",
     "jiti": "^2.6.1",
-    "valibot": "^1.1.0"
+    "valibot": "^1.1.0",
+    "consola": "^3.4.2"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",

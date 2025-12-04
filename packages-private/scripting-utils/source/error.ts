@@ -10,18 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the config entrypoint */
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 
-export { defineConfig } from "./lib/define";
-export {
-  readBundledExtensibilityConfig,
-  readExtensibilityConfig,
-  resolveExtensibilityConfig,
-} from "./lib/parser";
-export { validateConfig, validateConfigDomain } from "./lib/validate";
+/**
+ * Stringify an error to a human-friendly string.
+ * @param error - The error to stringify.
+ */
+export function stringifyError(error: unknown) {
+  if (error instanceof CommerceSdkValidationError) {
+    return error.display();
+  }
 
-export type {
-  BusinessConfigurationConfig,
-  ExtensibilityConfig,
-  ExtensibilityConfigDomain,
-} from "./schema";
+  return error instanceof Error ? error.message : String(error);
+}
