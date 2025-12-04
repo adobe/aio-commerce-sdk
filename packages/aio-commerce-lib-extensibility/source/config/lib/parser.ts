@@ -13,15 +13,20 @@
 import { readFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { findNearestPackageJson } from "@aio-commerce-sdk/scripting-utils/project";
 import { findUp } from "find-up";
 import { createJiti } from "jiti";
 
 import { validateConfig } from "./validate";
 
-import type { PackageJson } from "type-fest";
 import type { ExtensibilityConfigOutputModel } from "../schema";
 
 const jiti = createJiti(import.meta.url);
+
+/** The path to the bundled extensibility config file. */
+const BUNDLED_EXTENSIBILITY_CONFIG_PATH =
+  "app-management/extensibility.manifest.json";
 
 // Config paths to search for. In order of likely appearance to speed up the check.
 const configPaths = Object.freeze([
@@ -73,41 +78,43 @@ export async function readExtensibilityConfig(cwd = process.cwd()) {
     );
   }
 
-  let config: ExtensibilityConfigOutputModel | null = null;
   try {
-    config = await jiti.import<ExtensibilityConfigOutputModel>(configFilePath);
+    type ImportedConfig = { default: ExtensibilityConfigOutputModel };
+    const config = await jiti.import<ImportedConfig>(configFilePath);
+
+    if (config && !config?.default) {
+      throw new Error(
+        "Extensibility config file does not export a default export. Make sure you use `export default` or `module.exports = { /* your config */ }`",
+      );
+    }
+
+    return validateConfig(config.default);
   } catch (error) {
     throw new Error(
       `Failed to read extensibility config file at ${configFilePath}: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
-
-  return validateConfig(config);
 }
 
 /**
- * Find the nearest package.json file in the current working directory or its parents
- * @param cwd The current working directory
- * @param logger - The logger to use
+ * Read the bundled extensibility config file
+ * @returns The validated extensibility config
+ *
+ * @throws {Error} If the bundled extensibility config file is not found or if it is invalid
  */
-export async function findNearestPackageJson(cwd = process.cwd()) {
-  const packageJsonPath = await findUp("package.json", { cwd });
+export async function readBundledExtensibilityConfig() {
+  try {
+    const fileContents = await readFile(
+      BUNDLED_EXTENSIBILITY_CONFIG_PATH,
+      "utf-8",
+    );
 
-  if (!packageJsonPath) {
-    return null;
+    return validateConfig(JSON.parse(fileContents));
+  } catch (error) {
+    const message = stringifyError(error);
+    throw new Error(
+      `Failed to read bundled extensibility config file: ${message}`,
+      { cause: error },
+    );
   }
-
-  return packageJsonPath;
-}
-
-/** Read the package.json file */
-export async function readPackageJson(
-  cwd = process.cwd(),
-): Promise<PackageJson | null> {
-  const packageJsonPath = await findNearestPackageJson(cwd);
-  if (!packageJsonPath) {
-    return null;
-  }
-
-  return JSON.parse(await readFile(packageJsonPath, "utf-8"));
 }

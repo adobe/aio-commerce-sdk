@@ -10,18 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the config entrypoint */
+import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
+import { defineConfig } from "tsdown";
 
-export { defineConfig } from "./lib/define";
-export {
-  readBundledExtensibilityConfig,
-  readExtensibilityConfig,
-  resolveExtensibilityConfig,
-} from "./lib/parser";
-export { validateConfig, validateConfigDomain } from "./lib/validate";
-
-export type {
-  BusinessConfigurationConfig,
-  ExtensibilityConfig,
-  ExtensibilityConfigDomain,
-} from "./schema";
+export default defineConfig({
+  ...baseConfig,
+  entry: ["./source/*.ts"],
+});

@@ -13,6 +13,11 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import {
+  getOrCreateMap,
+  getOrCreateSeq,
+  readYamlFile,
+} from "@aio-commerce-sdk/scripting-utils/yaml";
 import { isMap, YAMLMap, YAMLSeq } from "yaml";
 
 import {
@@ -24,11 +29,6 @@ import {
 } from "#commands/constants";
 import { detectPackageManager, getExecCommand } from "#commands/init/lib";
 import { makeOutputDirFor } from "#commands/utils";
-import {
-  getOrCreateMap,
-  getOrCreateSeq,
-  readYamlFile,
-} from "#commands/yaml-helpers";
 
 import { ACTION_INPUTS, RUNTIME_ACTIONS } from "./constants";
 
