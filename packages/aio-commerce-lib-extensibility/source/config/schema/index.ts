@@ -15,22 +15,23 @@
 
 import * as v from "valibot";
 
-import { BusinessConfigurationSchema } from "./business-configuration";
+import {
+  BusinessConfigSchemaSchema,
+  BusinessConfigurationSchema,
+} from "./business-configuration";
 import { MetadataSchema } from "./metadata";
 
 import type { BusinessConfigurationConfig } from "./business-configuration";
 import type { ApplicationMetadata } from "./metadata";
 
-/** The schema used to validate an extensibility config domain. */
-export const extensibilityConfigDomainsSchema = v.picklist(
-  ["businessConfig", "metadata"],
-  "Expected a valid extensibility config domain",
-);
+export const ExtensibilityConfigSchemas = {
+  metadata: MetadataSchema,
+  businessConfig: BusinessConfigurationSchema,
+  "businessConfig.schema": BusinessConfigSchemaSchema,
+} as const;
 
-/** The different extensibility domains of Adobe Commerce apps. */
-export type ExtensibilityConfigDomain = v.InferOutput<
-  typeof extensibilityConfigDomainsSchema
->;
+/** Individual validatable domains of the extensibility config. */
+export type ExtensibilityConfigDomain = keyof typeof ExtensibilityConfigSchemas;
 
 /** The schema used to validate the extensibility config file. */
 export const ExtensibilityConfigSchema = v.object({

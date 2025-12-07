@@ -15,13 +15,18 @@ import * as v from "valibot";
 
 import {
   ExtensibilityConfigSchema,
-  extensibilityConfigDomainsSchema,
+  ExtensibilityConfigSchemas,
 } from "#config/schema/index";
 
+import type { Get } from "type-fest";
 import type {
   ExtensibilityConfigDomain,
   ExtensibilityConfigOutputModel,
 } from "#config/schema/index";
+
+const extensibilityConfigDomainsSchema = v.picklist(
+  Object.keys(ExtensibilityConfigSchemas),
+);
 
 /**
  * Validates a complete extensibility configuration object against the schema.
@@ -96,7 +101,7 @@ export function validateConfig(
  * try {
  *   const validatedConfig = validateConfigDomain(
  *     businessConfig,
- *     'businessConfiguration'
+ *     'businessConfig'
  *   );
  *   // Use validatedConfig safely
  * } catch (error) {
@@ -109,7 +114,7 @@ export function validateConfig(
 export function validateConfigDomain<T extends ExtensibilityConfigDomain>(
   config: unknown,
   domain: T,
-): ExtensibilityConfigOutputModel[T] {
+): Get<ExtensibilityConfigOutputModel, T> {
   const domainSchema = v.safeParse(extensibilityConfigDomainsSchema, domain);
 
   if (!domainSchema.success) {
@@ -121,10 +126,8 @@ export function validateConfigDomain<T extends ExtensibilityConfigDomain>(
     );
   }
 
-  const validatedConfig = v.safeParse(
-    ExtensibilityConfigSchema.entries[domain],
-    config,
-  );
+  const domainConfigSchema = ExtensibilityConfigSchemas[domain];
+  const validatedConfig = v.safeParse(domainConfigSchema, config);
 
   if (!validatedConfig.success) {
     throw new CommerceSdkValidationError(
@@ -135,5 +138,5 @@ export function validateConfigDomain<T extends ExtensibilityConfigDomain>(
     );
   }
 
-  return validatedConfig.output;
+  return validatedConfig.output as Get<ExtensibilityConfigOutputModel, T>;
 }
