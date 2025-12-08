@@ -32,7 +32,7 @@ export type ExtensibilityConfigDomain = keyof typeof ExtensibilityConfigSchemas;
 
 /** The schema used to validate the extensibility config file. */
 export const ExtensibilityConfigSchema = v.object({
-  metadata: v.optional(MetadataSchema),
+  metadata: MetadataSchema,
   businessConfig: v.optional(BusinessConfigSchema),
 });
 
