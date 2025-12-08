@@ -90,9 +90,12 @@ export async function ensureExtensibilityConfig(cwd = process.cwd()) {
     colors: false,
   });
 
+  const importStatement =
+    "import { defineConfig } from '@adobe/aio-commerce-lib-extensibility/config';\n";
+
   await writeFile(
     join(await getProjectRootDirectory(cwd), EXTENSIBILITY_CONFIG_FILE),
-    `${exportKeyword} ${schema}\n`,
+    `${importStatement}\n${exportKeyword} defineConfig(${schema})\n`,
     "utf-8",
   );
 
