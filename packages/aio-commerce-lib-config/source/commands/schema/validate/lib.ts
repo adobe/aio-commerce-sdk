@@ -21,6 +21,8 @@ import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/proje
 
 import { EXTENSIBILITY_CONFIG_FILE } from "#commands/constants";
 
+import type { ExtensibilityConfig } from "@adobe/aio-commerce-lib-extensibility/config";
+
 /** Load the business configuration schema from the given path. */
 export async function loadBusinessConfigSchema() {
   let resolvedPath: string | null = null;
@@ -36,9 +38,10 @@ export async function loadBusinessConfigSchema() {
     }
   }
 
-  const extensibilityConfig = await readExtensibilityConfig();
-  const schema = extensibilityConfig?.businessConfig?.schema ?? null;
+  const extensibilityConfig =
+    (await readExtensibilityConfig()) as Partial<ExtensibilityConfig>;
 
+  const schema = extensibilityConfig?.businessConfig?.schema ?? null;
   if (!schema) {
     return null;
   }

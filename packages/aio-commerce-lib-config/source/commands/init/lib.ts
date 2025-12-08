@@ -55,17 +55,12 @@ import type { Document, YAMLSeq } from "yaml";
 
 /** Ensure extensibility.config.js exists, create it if it doesn't */
 export async function ensureExtensibilityConfig(cwd = process.cwd()) {
-  let extensibilityConfig: ExtensibilityConfig | null = null;
-  try {
-    extensibilityConfig = await readExtensibilityConfig(cwd);
-  } catch (_) {
-    // Do nothing
-  }
-
+  const extensibilityConfig = await readExtensibilityConfig(cwd);
   if (extensibilityConfig) {
     consola.info(`${EXTENSIBILITY_CONFIG_FILE} already exists. Continuing...`);
 
-    const schema = extensibilityConfig.businessConfig?.schema;
+    const typedConfig = extensibilityConfig as ExtensibilityConfig;
+    const schema = typedConfig.businessConfig?.schema;
     if (!schema) {
       consola.warn(
         "No schema found in extensibility.config.js. Please add a `businessConfig.schema` property.",

@@ -21,14 +21,14 @@ import {
   EXTENSIBILITY_MANIFEST_FILE,
   EXTENSION_POINT_FOLDER_PATH,
 } from "#commands/constants";
-import { readExtensibilityConfig } from "#config/index";
+import { parseExtensibilityConfig } from "#config/lib/parser";
 
 /** Run the generate manifest command */
 export async function run() {
   consola.start("Generating extensibility manifest...");
   try {
     consola.info("Reading extensibility config...");
-    const config = await readExtensibilityConfig();
+    const config = await parseExtensibilityConfig();
 
     consola.info("Generating extensibility manifest...");
     const contents = JSON.stringify(config, null, 2);

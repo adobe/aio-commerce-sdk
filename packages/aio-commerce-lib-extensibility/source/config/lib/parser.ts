@@ -20,7 +20,7 @@ import { createJiti } from "jiti";
 
 import { validateConfig } from "./validate";
 
-import type { ExtensibilityConfigOutputModel } from "../schema/extensibility";
+import type { ExtensibilityConfigOutputModel } from "#config/schema/extensibility";
 
 const jiti = createJiti(import.meta.url);
 
@@ -66,8 +66,8 @@ export async function resolveExtensibilityConfig(cwd = process.cwd()) {
 }
 
 /**
- * Read the extensibility config file
- * @param configFilePath The path to the extensibility config file
+ * Read the extensibility config file as-is, without validating it.
+ * @param cwd The current working directory
  */
 export async function readExtensibilityConfig(cwd = process.cwd()) {
   const configFilePath = await resolveExtensibilityConfig(cwd);
@@ -78,27 +78,36 @@ export async function readExtensibilityConfig(cwd = process.cwd()) {
     );
   }
 
+  type ImportedConfig = { default: unknown };
+  let config: ImportedConfig | null = null;
   try {
-    type ImportedConfig = { default: ExtensibilityConfigOutputModel };
-    const config = await jiti.import<ImportedConfig>(configFilePath);
-
-    if (config && !config?.default) {
-      throw new Error(
-        "Extensibility config file does not export a default export. Make sure you use `export default` or `module.exports = { /* your config */ }`",
-      );
-    }
-
-    return validateConfig(config.default);
+    config = await jiti.import<ImportedConfig>(configFilePath);
   } catch (error) {
     throw new Error(
       `Failed to read extensibility config file at ${configFilePath}: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+
+  if (config && !("default" in config)) {
+    throw new Error(
+      "Extensibility config file does not export a default export. Make sure you use `export default` or `module.exports = { /* your config */ }`",
+    );
+  }
+
+  return config.default;
+}
+
+/**
+ * Read the extensibility config file and parses it's contents into it's schema.
+ * @param configFilePath The path to the extensibility config file
+ */
+export async function parseExtensibilityConfig(cwd = process.cwd()) {
+  const config = await readExtensibilityConfig(cwd);
+  return validateConfig(config) satisfies ExtensibilityConfigOutputModel;
 }
 
 /**
  * Read the bundled extensibility config file
- * @returns The validated extensibility config
  *
  * @throws {Error} If the bundled extensibility config file is not found or if it is invalid
  */

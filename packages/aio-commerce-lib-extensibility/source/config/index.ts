@@ -14,6 +14,7 @@
 
 export { defineConfig } from "./lib/define";
 export {
+  parseExtensibilityConfig,
   readBundledExtensibilityConfig,
   readExtensibilityConfig,
   resolveExtensibilityConfig,
