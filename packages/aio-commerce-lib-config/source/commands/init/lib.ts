@@ -55,10 +55,14 @@ import type { Document, YAMLSeq } from "yaml";
 
 /** Ensure extensibility.config.js exists, create it if it doesn't */
 export async function ensureExtensibilityConfig(cwd = process.cwd()) {
-  const extensibilityConfig = await readExtensibilityConfig(cwd);
-  if (extensibilityConfig) {
-    consola.info(`${EXTENSIBILITY_CONFIG_FILE} already exists. Continuing...`);
+  let extensibilityConfig: unknown = null;
+  try {
+    extensibilityConfig = await readExtensibilityConfig(cwd);
+  } catch (_) {
+    // Do nothing
+  }
 
+  if (extensibilityConfig) {
     const typedConfig = extensibilityConfig as ExtensibilityConfig;
     const schema = typedConfig.businessConfig?.schema;
     if (!schema) {
@@ -68,6 +72,10 @@ export async function ensureExtensibilityConfig(cwd = process.cwd()) {
 
       return false;
     }
+
+    consola.success(
+      `${EXTENSIBILITY_CONFIG_FILE} already exists. Continuing...`,
+    );
 
     return true;
   }
@@ -104,6 +112,7 @@ export async function ensurePackageJsonScript(
     consola.warn(
       "package.json not found. Please add the postinstall script manually:",
     );
+
     consola.log.raw(`   "postinstall": "${postinstallScript}"`);
     return false;
   }
@@ -159,7 +168,7 @@ export async function ensureAppConfig(cwd = process.cwd()) {
     const fallbackContent = `extensions:\n  ${EXTENSION_POINT_ID}:\n    $include: "${includePath}"`;
 
     consola.error(stringifyError(error as Error));
-    consola.error(
+    consola.log.raw(
       `Failed to parse ${APP_CONFIG_FILE}. \nPlease add manually: \n\n${fallbackContent}`,
     );
 
@@ -343,7 +352,7 @@ export function installDependencies(
     return true;
   } catch (error) {
     consola.error(stringifyError(error as Error));
-    consola.error(
+    consola.log.raw(
       `Failed to install dependencies automatically. Please install manually: ${installCommand}`,
     );
 
@@ -365,7 +374,7 @@ export async function runGeneration(cwd = process.cwd()) {
     });
   } catch (error) {
     consola.error(stringifyError(error as Error));
-    consola.error(
+    consola.log.raw(
       `Failed to run generation command. Please run manually: ${execCommand} aio-commerce-lib-config generate all`,
     );
 

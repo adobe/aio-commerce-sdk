@@ -12,6 +12,9 @@
  * governing permissions and limitations under the License.
  */
 
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import consola from "consola";
+
 import { run as generateActionsCommand } from "#commands/generate/actions/run";
 import { run as generateSchemaCommand } from "#commands/generate/schema/run";
 import { run as initCommand } from "#commands/init/run";
@@ -51,6 +54,7 @@ Examples:
  */
 async function generateAll() {
   await generateSchemaCommand();
+  consola.log.raw("");
   await generateActionsCommand();
 }
 
@@ -82,8 +86,8 @@ async function handleCommand(
 ) {
   if (!target) {
     const availableTargets = Object.keys(handlers).join(", ");
-    process.stderr.write(`❌ No ${commandName} target specified`);
-    process.stdout.write(`\nAvailable targets: ${availableTargets}`);
+    consola.error(`No ${commandName} target specified`);
+    consola.info(`Available targets: ${availableTargets}`);
 
     process.exit(1);
   }
@@ -92,8 +96,8 @@ async function handleCommand(
 
   if (!handler) {
     const availableTargets = Object.keys(handlers).join(", ");
-    process.stderr.write(`❌ Unknown ${commandName} target: ${target}`);
-    process.stdout.write(`\nAvailable targets: ${availableTargets}`);
+    consola.error(`Unknown ${commandName} target: ${target}`);
+    consola.info(`Available targets: ${availableTargets}`);
 
     process.exit(1);
   }
@@ -108,7 +112,7 @@ async function main() {
     command === "--help" ||
     command === "-h"
   ) {
-    process.stdout.write(USAGE);
+    consola.log.raw(USAGE);
     process.exit(0);
   }
 
@@ -116,8 +120,8 @@ async function main() {
     const handlers = COMMANDS[command as keyof typeof COMMANDS];
 
     if (!handlers) {
-      process.stderr.write(`❌ Unknown command: ${command}`);
-      process.stdout.write(USAGE);
+      consola.error(`Unknown command: ${command}`);
+      consola.log.raw(USAGE);
       process.exit(1);
     }
 
@@ -130,10 +134,7 @@ async function main() {
     // Handle commands with subcommands (like generate, validate)
     await handleCommand(command, subcommand, handlers);
   } catch (error) {
-    process.stderr.write(
-      `❌ Command failed: ${error instanceof Error ? error.message : error}`,
-    );
-
+    consola.error(stringifyError(error));
     process.exit(1);
   }
 }

@@ -43,6 +43,7 @@ Examples:
 /** Run all generate targets in sequence */
 async function generateAll() {
   await generateActionsCommand();
+  consola.log.raw("");
   await generateManifestCommand();
 }
 
@@ -110,9 +111,7 @@ async function main() {
     // Handle commands with subcommands (like generate)
     await handleCommand(command, subcommand, handlers);
   } catch (error) {
-    consola.fatal(
-      new Error(`Command failed: ${stringifyError(error)}`, { cause: error }),
-    );
+    consola.error(stringifyError(error));
   }
 }
 

@@ -31,10 +31,7 @@ export async function run() {
     consola.warn("No schema found to validate.");
     return null;
   } catch (error) {
-    if (error instanceof Error) {
-      consola.fatal(error);
-    } else {
-      consola.fatal(new Error(stringifyError(error), { cause: error }));
-    }
+    consola.error(stringifyError(error));
+    process.exit(1);
   }
 }

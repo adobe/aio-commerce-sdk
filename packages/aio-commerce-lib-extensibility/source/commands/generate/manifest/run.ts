@@ -41,10 +41,7 @@ export async function run() {
 
     consola.success(`Generated ${EXTENSIBILITY_MANIFEST_FILE}`);
   } catch (error) {
-    if (error instanceof Error) {
-      consola.fatal(error);
-    } else {
-      consola.fatal(new Error(stringifyError(error), { cause: error }));
-    }
+    consola.error(stringifyError(error));
+    process.exit(1);
   }
 }

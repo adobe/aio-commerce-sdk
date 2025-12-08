@@ -10,15 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { execSync } from "node:child_process";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import {
-  detectPackageManager,
-  getExecCommand,
-  makeOutputDirFor,
-} from "@aio-commerce-sdk/scripting-utils/project";
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 
 import {
@@ -30,18 +26,17 @@ import { loadBusinessConfigSchema } from "#commands/schema/validate/lib";
 
 /** Run the generate schema command */
 export async function run() {
-  consola.start("Generating schema file...");
+  try {
+    consola.start("Generating schema file...");
 
-  const packageManager = await detectPackageManager();
-  const execCommand = getExecCommand(packageManager);
-  execSync(`${execCommand} aio-commerce-lib-config validate schema`, {
-    stdio: "inherit",
-  });
+    const validatedSchema = await loadBusinessConfigSchema();
+    await generateSchemaFile(validatedSchema);
 
-  const validatedSchema = await loadBusinessConfigSchema();
-  await generateSchemaFile(validatedSchema);
-
-  consola.success(`Generated ${CONFIG_SCHEMA_FILE_NAME}`);
+    consola.success(`Generated ${CONFIG_SCHEMA_FILE_NAME}`);
+  } catch (error) {
+    consola.error(stringifyError(error));
+    process.exit(1);
+  }
 }
 
 /** Generate the schema file */

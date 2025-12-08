@@ -39,11 +39,8 @@ export async function run() {
     await generateActionFiles();
     await updateExtConfig();
   } catch (error) {
-    if (error instanceof Error) {
-      consola.fatal(error);
-    } else {
-      consola.fatal(new Error(stringifyError(error), { cause: error }));
-    }
+    consola.error(stringifyError(error));
+    process.exit(1);
   }
 }
 

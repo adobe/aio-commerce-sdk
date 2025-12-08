@@ -131,7 +131,7 @@ export function validateConfigDomain<T extends ExtensibilityConfigDomain>(
 
   if (!validatedConfig.success) {
     throw new CommerceSdkValidationError(
-      "Invalid extensibility config domain configuration",
+      `Invalid extensibility config: ${domain}`,
       {
         issues: validatedConfig.issues,
       },
