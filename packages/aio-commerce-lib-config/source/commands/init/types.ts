@@ -10,9 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-/** The package manager used to install the package */
-export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
-
 /** Simple representation of a partial app.config.yaml file */
 export type AppConfig = {
   extensions?: {

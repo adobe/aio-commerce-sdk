@@ -14,12 +14,14 @@ import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
 import {
   createOrUpdateExtConfig,
   readYamlFile,
 } from "@aio-commerce-sdk/scripting-utils/yaml";
 import { consola } from "consola";
+import { formatTree } from "consola/utils";
 
 import {
   EXTENSION_POINT_FOLDER_PATH,
@@ -35,8 +37,16 @@ const __dirname = dirname(__filename);
 
 /** Run the generate actions command */
 export async function run() {
-  await updateExtConfig();
-  await generateActionFiles();
+  try {
+    await updateExtConfig();
+    await generateActionFiles();
+  } catch (error) {
+    if (error instanceof Error) {
+      consola.fatal(error);
+    } else {
+      consola.fatal(new Error(stringifyError(error), { cause: error }));
+    }
+  }
 }
 
 /** Update the ext.config.yaml file */
@@ -47,20 +57,19 @@ async function updateExtConfig() {
   const extConfigPath = join(outputDir, "ext.config.yaml");
   const extConfigDoc = await readYamlFile(extConfigPath);
 
-  consola.info("Updating ext.config.yaml in place...");
   await createOrUpdateExtConfig(extConfigPath, EXT_CONFIG, extConfigDoc);
-
   consola.success("Updated ext.config.yaml");
 }
 
 /** Generate the action files */
 async function generateActionFiles() {
-  process.stdout.write("\n🔧 Generating runtime actions...\n");
+  consola.start("Generating runtime actions...");
   const outputDir = await makeOutputDirFor(
     join(EXTENSION_POINT_FOLDER_PATH, GENERATED_ACTIONS_PATH),
   );
 
   const templatesDir = join(__dirname, "generate/actions/templates");
+  const outputFiles: string[] = [];
 
   for (const action of RUNTIME_ACTIONS) {
     const templatePath = join(templatesDir, action.templateFile);
@@ -68,9 +77,12 @@ async function generateActionFiles() {
     const actionPath = join(outputDir, `${action.name}.js`);
 
     await writeFile(actionPath, template, "utf-8");
+    outputFiles.push(actionPath);
   }
 
-  process.stdout.write(
-    `✅ Generated ${RUNTIME_ACTIONS.length} action(s) in ${GENERATED_ACTIONS_PATH}\n`,
+  consola.success(
+    `Generated ${RUNTIME_ACTIONS.length} action(s) in ${GENERATED_ACTIONS_PATH}`,
   );
+
+  consola.log(formatTree(outputFiles, { color: "green" }));
 }

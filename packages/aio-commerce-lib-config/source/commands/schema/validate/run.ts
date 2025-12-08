@@ -11,6 +11,7 @@
  */
 
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import consola from "consola";
 
 import { loadBusinessConfigSchema } from "./lib";
 
@@ -19,21 +20,21 @@ import { loadBusinessConfigSchema } from "./lib";
  * @returns The validated schema.
  */
 export async function run() {
-  process.stdout.write("\n🔍 Validating configuration schema...\n");
-
+  consola.start("Validating configuration schema...");
   try {
     const result = await loadBusinessConfigSchema();
     if (result !== null) {
-      process.stdout.write("✅ Configuration schema validation passed.\n");
+      consola.success("Configuration schema validation passed.");
       return result;
     }
 
-    process.stdout.write("⚠️ No schema found to validate.\n");
+    consola.warn("No schema found to validate.");
     return null;
   } catch (error) {
-    process.stderr.write(`${stringifyError(error as Error)}\n`);
-    process.stderr.write("\n❌ Configuration schema validation failed\n");
-
-    throw new Error("Configuration schema validation failed", { cause: error });
+    if (error instanceof Error) {
+      consola.fatal(error);
+    } else {
+      consola.fatal(new Error(stringifyError(error), { cause: error }));
+    }
   }
 }

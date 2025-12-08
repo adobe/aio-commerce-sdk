@@ -19,6 +19,7 @@ import {
   getExecCommand,
   makeOutputDirFor,
 } from "@aio-commerce-sdk/scripting-utils/project";
+import { consola } from "consola";
 
 import {
   CONFIG_SCHEMA_FILE_NAME,
@@ -29,6 +30,8 @@ import { loadBusinessConfigSchema } from "#commands/schema/validate/lib";
 
 /** Run the generate schema command */
 export async function run() {
+  consola.start("Generating schema file...");
+
   const packageManager = await detectPackageManager();
   const execCommand = getExecCommand(packageManager);
   execSync(`${execCommand} aio-commerce-lib-config validate schema`, {
@@ -36,9 +39,9 @@ export async function run() {
   });
 
   const validatedSchema = await loadBusinessConfigSchema();
-
-  process.stdout.write("🔧 Generating schema file...\n");
   await generateSchemaFile(validatedSchema);
+
+  consola.success(`Generated ${CONFIG_SCHEMA_FILE_NAME}`);
 }
 
 /** Generate the schema file */
@@ -51,5 +54,4 @@ async function generateSchemaFile(validatedSchema?: unknown) {
   const schemaContent = validatedSchema ? validatedSchema : [];
 
   await writeFile(schemaPath, JSON.stringify(schemaContent, null, 2), "utf-8");
-  process.stdout.write(`📄 Generated ${CONFIG_SCHEMA_FILE_NAME}\n`);
 }

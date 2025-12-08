@@ -13,6 +13,7 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 
@@ -40,8 +41,10 @@ export async function run() {
 
     consola.success(`Generated ${EXTENSIBILITY_MANIFEST_FILE}`);
   } catch (error) {
-    consola.fatal(
-      new Error("Failed to generate extensibility manifest", { cause: error }),
-    );
+    if (error instanceof Error) {
+      consola.fatal(error);
+    } else {
+      consola.fatal(new Error(stringifyError(error), { cause: error }));
+    }
   }
 }

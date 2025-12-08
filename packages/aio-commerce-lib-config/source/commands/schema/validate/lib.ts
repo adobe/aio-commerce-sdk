@@ -31,10 +31,6 @@ export async function loadBusinessConfigSchema() {
     );
   } finally {
     if (!(resolvedPath && existsSync(resolvedPath))) {
-      process.stderr.write(
-        `⚠️ Extensibility config file not found at ${resolvedPath}. Skipping validation.\n`,
-      );
-
       // biome-ignore lint/correctness/noUnsafeFinally: Safe to return null
       return null;
     }
