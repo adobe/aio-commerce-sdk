@@ -17,7 +17,7 @@ import { validateConfigDomain } from "@adobe/aio-commerce-lib-extensibility/conf
 
 import { CONFIG_SCHEMA_PATH } from "#utils/constants";
 
-import type { ConfigSchemaField } from "./types";
+import type { BusinessConfigSchema } from "./types";
 
 /**
  * Reads bundled schema file from the runtime action.
@@ -73,7 +73,7 @@ export function validateBusinessConfigSchema(value: unknown) {
   return validateConfigDomain(
     value,
     "businessConfig.schema",
-  ) satisfies ConfigSchemaField[];
+  ) satisfies BusinessConfigSchema;
 }
 
 /**

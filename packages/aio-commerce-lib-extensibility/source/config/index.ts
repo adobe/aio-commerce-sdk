@@ -21,7 +21,14 @@ export {
 export { validateConfig, validateConfigDomain } from "./lib/validate";
 
 export type {
-  BusinessConfigurationConfig,
+  BusinessConfig,
+  BusinessConfigSchema,
+  BusinessConfigSchemaField,
+  BusinessConfigSchemaListOption,
+  BusinessConfigSchemaValue,
+} from "./schema/business-configuration";
+export type {
   ExtensibilityConfig,
   ExtensibilityConfigDomain,
-} from "./schema";
+} from "./schema/extensibility";
+export type { ApplicationMetadata } from "./schema/metadata";

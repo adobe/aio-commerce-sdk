@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type { ExtensibilityConfig } from "#config/schema/index";
+import type { ExtensibilityConfig } from "#config/schema/extensibility";
 
 /**
  * Helper to type-safely define the extensibility config.

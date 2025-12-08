@@ -16,17 +16,14 @@
 import * as v from "valibot";
 
 import {
+  BusinessConfigSchema,
   BusinessConfigSchemaSchema,
-  BusinessConfigurationSchema,
 } from "./business-configuration";
 import { MetadataSchema } from "./metadata";
 
-import type { BusinessConfigurationConfig } from "./business-configuration";
-import type { ApplicationMetadata } from "./metadata";
-
 export const ExtensibilityConfigSchemas = {
   metadata: MetadataSchema,
-  businessConfig: BusinessConfigurationSchema,
+  businessConfig: BusinessConfigSchema,
   "businessConfig.schema": BusinessConfigSchemaSchema,
 } as const;
 
@@ -36,7 +33,7 @@ export type ExtensibilityConfigDomain = keyof typeof ExtensibilityConfigSchemas;
 /** The schema used to validate the extensibility config file. */
 export const ExtensibilityConfigSchema = v.object({
   metadata: MetadataSchema,
-  businessConfig: v.optional(BusinessConfigurationSchema),
+  businessConfig: v.optional(BusinessConfigSchema),
 });
 
 /** The input shape of the extensibility config schema. */
@@ -48,6 +45,3 @@ export type ExtensibilityConfig = v.InferInput<
 export type ExtensibilityConfigOutputModel = v.InferOutput<
   typeof ExtensibilityConfigSchema
 >;
-
-export { type BusinessConfigurationConfig, BusinessConfigurationSchema };
-export { type ApplicationMetadata, MetadataSchema };

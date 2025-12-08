@@ -12,8 +12,4 @@
 
 export { getSchema, storeSchema } from "./get-schema";
 
-export type {
-  ConfigSchemaField,
-  ConfigSchemaOption,
-  SchemaContext,
-} from "./types";
+export type * from "./types";

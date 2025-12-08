@@ -16,13 +16,13 @@ import * as v from "valibot";
 import {
   ExtensibilityConfigSchema,
   ExtensibilityConfigSchemas,
-} from "#config/schema/index";
+} from "#config/schema/extensibility";
 
 import type { Get } from "type-fest";
 import type {
   ExtensibilityConfigDomain,
   ExtensibilityConfigOutputModel,
-} from "#config/schema/index";
+} from "#config/schema/extensibility";
 
 const extensibilityConfigDomainsSchema = v.picklist(
   Object.keys(ExtensibilityConfigSchemas),

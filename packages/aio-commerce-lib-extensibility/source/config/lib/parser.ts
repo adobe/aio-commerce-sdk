@@ -20,7 +20,7 @@ import { createJiti } from "jiti";
 
 import { validateConfig } from "./validate";
 
-import type { ExtensibilityConfigOutputModel } from "../schema";
+import type { ExtensibilityConfigOutputModel } from "../schema/extensibility";
 
 const jiti = createJiti(import.meta.url);
 
