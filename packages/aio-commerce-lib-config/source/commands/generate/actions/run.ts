@@ -11,7 +11,7 @@
  */
 
 import { readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
@@ -38,8 +38,8 @@ const __dirname = dirname(__filename);
 /** Run the generate actions command */
 export async function run() {
   try {
-    await updateExtConfig();
     await generateActionFiles();
+    await updateExtConfig();
   } catch (error) {
     if (error instanceof Error) {
       consola.fatal(error);
@@ -77,12 +77,12 @@ async function generateActionFiles() {
     const actionPath = join(outputDir, `${action.name}.js`);
 
     await writeFile(actionPath, template, "utf-8");
-    outputFiles.push(actionPath);
+    outputFiles.push(` ${relative(process.cwd(), actionPath)}`);
   }
 
   consola.success(
     `Generated ${RUNTIME_ACTIONS.length} action(s) in ${GENERATED_ACTIONS_PATH}`,
   );
 
-  consola.log(formatTree(outputFiles, { color: "green" }));
+  consola.log.raw(formatTree(outputFiles, { color: "green" }));
 }

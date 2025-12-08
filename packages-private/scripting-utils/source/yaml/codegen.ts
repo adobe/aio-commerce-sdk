@@ -72,16 +72,18 @@ function buildActionDefinition(action: ActionDefinition) {
   });
 
   const includes = action.include ?? [];
-  const itemSeq = new YAMLSeq();
-  itemSeq.flow = true;
+  if (includes.length > 0) {
+    const itemSeq = new YAMLSeq();
+    itemSeq.flow = true;
 
-  for (const [source, target] of includes) {
-    itemSeq.items.push(source, target);
+    for (const [source, target] of includes) {
+      itemSeq.items.push(source, target);
+    }
+
+    const seq = new YAMLSeq();
+    seq.items.push(itemSeq);
+    actionDef.set("include", seq);
   }
-
-  const seq = new YAMLSeq();
-  seq.items.push(itemSeq);
-  actionDef.set("include", seq);
 
   return actionDef;
 }

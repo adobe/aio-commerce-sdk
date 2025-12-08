@@ -57,6 +57,9 @@ export async function run() {
       const { name, fn } = step;
       const result = await fn();
 
+      // Empty line between steps
+      consola.log.raw("");
+
       if (!result) {
         consola.error(`Initialization failed at step: ${name}`);
         throw new Error(`Initialization failed at step: ${name}`);
@@ -67,7 +70,7 @@ export async function run() {
     consola.box(
       "Next steps:\n" +
         "   1. Review and customize extensibility.config.js\n" +
-        "   2. Fill in the required values in your .env file\n",
+        "   2. Fill in the required values in your .env file",
     );
   } catch (error) {
     if (error instanceof Error) {

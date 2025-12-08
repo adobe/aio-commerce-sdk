@@ -11,7 +11,7 @@
  */
 
 import { readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
@@ -55,9 +55,7 @@ export async function updateExtConfig() {
   const extConfigPath = join(outputDir, "ext.config.yaml");
   const extConfigDoc = await readYamlFile(extConfigPath);
 
-  consola.info("Updating ext.config.yaml in place...");
   await createOrUpdateExtConfig(extConfigPath, EXT_CONFIG, extConfigDoc);
-
   consola.success("Updated ext.config.yaml");
 }
 
@@ -77,12 +75,12 @@ export async function generateActionFiles() {
     const actionPath = join(outputDir, `${action.name}.js`);
 
     await writeFile(actionPath, template, "utf-8");
-    outputFiles.push(actionPath);
+    outputFiles.push(` ${relative(process.cwd(), actionPath)}`);
   }
 
   consola.success(
     `Generated ${RUNTIME_ACTIONS.length} action(s) in ${GENERATED_ACTIONS_PATH}`,
   );
 
-  consola.log(formatTree(outputFiles, { color: "green" }));
+  consola.log.raw(formatTree(outputFiles, { color: "green" }));
 }

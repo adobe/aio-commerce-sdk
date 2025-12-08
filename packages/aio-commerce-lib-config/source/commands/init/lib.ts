@@ -49,12 +49,18 @@ import {
   ENV_VAR_REGEX,
 } from "./constants";
 
+import type { ExtensibilityConfig } from "@adobe/aio-commerce-lib-extensibility/config";
 import type { PackageManager } from "@aio-commerce-sdk/scripting-utils/project";
 import type { Document, YAMLSeq } from "yaml";
 
 /** Ensure extensibility.config.js exists, create it if it doesn't */
 export async function ensureExtensibilityConfig(cwd = process.cwd()) {
-  const extensibilityConfig = await readExtensibilityConfig(cwd);
+  let extensibilityConfig: ExtensibilityConfig | null = null;
+  try {
+    extensibilityConfig = await readExtensibilityConfig(cwd);
+  } catch (_) {
+    // Do nothing
+  }
 
   if (extensibilityConfig) {
     consola.info(`${EXTENSIBILITY_CONFIG_FILE} already exists. Continuing...`);
@@ -103,7 +109,7 @@ export async function ensurePackageJsonScript(
     consola.warn(
       "package.json not found. Please add the postinstall script manually:",
     );
-    consola.log(`   "postinstall": "${postinstallScript}"`);
+    consola.log.raw(`   "postinstall": "${postinstallScript}"`);
     return false;
   }
 
@@ -395,7 +401,7 @@ export async function ensureInstallYaml(cwd = process.cwd()) {
       `Something went wrong while preparing "${INSTALL_YAML_FILE}": ${error}`,
     );
 
-    consola.log(`Please add manually: \n${fallbackContent}\n`);
+    consola.log.raw(`Please add manually: \n${fallbackContent}\n`);
     return false;
   }
 

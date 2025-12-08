@@ -93,7 +93,7 @@ async function main() {
     command === "--help" ||
     command === "-h"
   ) {
-    consola.log(USAGE);
+    consola.log.raw(USAGE);
     process.exit(0);
   }
 
@@ -102,7 +102,7 @@ async function main() {
 
     if (!handlers) {
       consola.error(`Unknown command: ${command}`);
-      consola.log(USAGE);
+      consola.log.raw(USAGE);
 
       process.exit(1);
     }

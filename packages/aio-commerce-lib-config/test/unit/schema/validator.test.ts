@@ -76,7 +76,6 @@ describe("validator", () => {
       vi.mocked(getProjectRootDirectory).mockResolvedValueOnce(tempDir);
       vi.mocked(existsSync).mockReturnValueOnce(true);
 
-      // @ts-expect-error - Mocking a partially valid config (but not complete)
       vi.mocked(readExtensibilityConfig).mockResolvedValueOnce({
         businessConfig: { schema: VALID_CONFIGURATION },
       });
