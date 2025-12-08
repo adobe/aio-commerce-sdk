@@ -10,7 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-import type { ActionConfig } from "./types";
+import { PACKAGE_NAME } from "#commands/constants";
+
+import { buildActionDefinition } from "./lib";
+
+import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
+import type { ActionConfig } from "./lib";
 
 /** The list of Commerce variables that are required for the runtime actions */
 export const COMMERCE_VARIABLES = [
@@ -62,3 +67,30 @@ export const RUNTIME_ACTIONS: ActionConfig[] = [
     requiresCommerce: true,
   },
 ];
+
+export const EXT_CONFIG: ExtConfig = {
+  hooks: {
+    "pre-app-build": "$packageExec aio-commerce-lib-config generate schema",
+  },
+
+  operations: {
+    workerProcess: RUNTIME_ACTIONS.map((action) => ({
+      type: "action",
+      impl: `${PACKAGE_NAME}/${action.name}`,
+    })),
+  },
+
+  runtimeManifest: {
+    packages: {
+      [PACKAGE_NAME]: {
+        license: "Apache-2.0",
+        actions: Object.fromEntries(
+          RUNTIME_ACTIONS.map((action) => [
+            action.name,
+            buildActionDefinition(action),
+          ]),
+        ),
+      },
+    },
+  },
+};

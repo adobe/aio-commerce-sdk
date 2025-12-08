@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { stringifyError } from "#commands/utils";
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 
 import { loadBusinessConfigSchema } from "./lib";
 

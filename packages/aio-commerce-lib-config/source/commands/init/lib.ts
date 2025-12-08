@@ -16,6 +16,20 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import util from "node:util";
 
+import { readExtensibilityConfig } from "@adobe/aio-commerce-lib-extensibility/config";
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import {
+  detectPackageManager,
+  getExecCommand,
+  getProjectRootDirectory,
+  isESM,
+  readPackageJson,
+} from "@aio-commerce-sdk/scripting-utils/project";
+import {
+  getOrCreateMap,
+  getOrCreateSeq,
+  readYamlFile,
+} from "@aio-commerce-sdk/scripting-utils/yaml";
 import { isMap } from "yaml";
 
 import {
@@ -28,18 +42,6 @@ import {
   PACKAGE_JSON_FILE,
 } from "#commands/constants";
 import { COMMERCE_VARIABLES } from "#commands/generate/actions/constants";
-import {
-  getProjectRootDirectory,
-  isESM,
-  readExtensibilityConfig,
-  readPackageJson,
-  stringifyError,
-} from "#commands/utils";
-import {
-  getOrCreateMap,
-  getOrCreateSeq,
-  readYamlFile,
-} from "#commands/yaml-helpers";
 
 import {
   DEFAULT_EXTENSIBILITY_CONFIG_SCHEMA,
@@ -89,41 +91,6 @@ export async function ensureExtensibilityConfig(cwd = process.cwd()) {
 
   stdout.write(`✅ Created ${EXTENSIBILITY_CONFIG_FILE}\n`);
   return true;
-}
-
-/** Detect the package manager by checking for lock files */
-export async function detectPackageManager(
-  cwd = process.cwd(),
-): Promise<PackageManager> {
-  const rootDirectory = await getProjectRootDirectory(cwd);
-  const lockFileMap = {
-    "bun.lockb": "bun",
-    "pnpm-lock.yaml": "pnpm",
-    "yarn.lock": "yarn",
-    "package-lock.json": "npm",
-  } as const;
-
-  const lockFileName = Object.keys(lockFileMap).find((name) =>
-    existsSync(join(rootDirectory, name)),
-  ) as keyof typeof lockFileMap;
-
-  if (!lockFileName) {
-    return "npm";
-  }
-
-  return lockFileMap[lockFileName];
-}
-
-/** Get the appropriate exec command based on package manager */
-export function getExecCommand(packageManager: PackageManager): string {
-  const execCommandMap = {
-    pnpm: "pnpx",
-    yarn: "yarn dlx",
-    bun: "bunx",
-    npm: "npx",
-  } as const;
-
-  return execCommandMap[packageManager];
 }
 
 /** Ensure package.json has the postinstall script */

@@ -15,13 +15,17 @@ import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import {
+  detectPackageManager,
+  getExecCommand,
+  makeOutputDirFor,
+} from "@aio-commerce-sdk/scripting-utils/project";
+
+import {
   CONFIG_SCHEMA_FILE_NAME,
   EXTENSION_POINT_FOLDER_PATH,
   GENERATED_PATH,
 } from "#commands/constants";
-import { detectPackageManager, getExecCommand } from "#commands/init/lib";
 import { loadBusinessConfigSchema } from "#commands/schema/validate/lib";
-import { makeOutputDirFor } from "#commands/utils";
 
 /** Run the generate schema command */
 export async function run() {

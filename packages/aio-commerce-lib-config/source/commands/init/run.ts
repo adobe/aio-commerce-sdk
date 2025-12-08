@@ -10,16 +10,18 @@
  * governing permissions and limitations under the License.
  */
 
-import { stringifyError } from "#commands/utils";
-
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import {
   detectPackageManager,
+  getExecCommand,
+} from "@aio-commerce-sdk/scripting-utils/project";
+
+import {
   ensureAppConfig,
   ensureEnvFile,
   ensureExtensibilityConfig,
   ensureInstallYaml,
   ensurePackageJsonScript,
-  getExecCommand,
   installDependencies,
   runGeneration,
 } from "./lib";

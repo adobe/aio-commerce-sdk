@@ -114,7 +114,7 @@ export function validateConfig(
 export function validateConfigDomain<T extends ExtensibilityConfigDomain>(
   config: unknown,
   domain: T,
-): Get<ExtensibilityConfigOutputModel, T> {
+) {
   const domainSchema = v.safeParse(extensibilityConfigDomainsSchema, domain);
 
   if (!domainSchema.success) {
@@ -138,5 +138,7 @@ export function validateConfigDomain<T extends ExtensibilityConfigDomain>(
     );
   }
 
-  return validatedConfig.output as Get<ExtensibilityConfigOutputModel, T>;
+  return validatedConfig.output as NonNullable<
+    Get<ExtensibilityConfigOutputModel, T>
+  >;
 }

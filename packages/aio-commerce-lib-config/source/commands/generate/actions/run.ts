@@ -14,14 +14,19 @@ import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
+import {
+  createOrUpdateExtConfig,
+  readYamlFile,
+} from "@aio-commerce-sdk/scripting-utils/yaml";
+import { consola } from "consola";
+
 import {
   EXTENSION_POINT_FOLDER_PATH,
   GENERATED_ACTIONS_PATH,
 } from "#commands/constants";
-import { makeOutputDirFor } from "#commands/utils";
 
-import { RUNTIME_ACTIONS } from "./constants";
-import { updateExtConfig } from "./lib";
+import { EXT_CONFIG, RUNTIME_ACTIONS } from "./constants";
 
 // This will point to the directory where the script is running from.
 // This is the dist/commands directory (as we use a facade to run the commands)
@@ -32,6 +37,20 @@ const __dirname = dirname(__filename);
 export async function run() {
   await updateExtConfig();
   await generateActionFiles();
+}
+
+/** Update the ext.config.yaml file */
+async function updateExtConfig() {
+  consola.info("Updating ext.config.yaml...");
+
+  const outputDir = await makeOutputDirFor(EXTENSION_POINT_FOLDER_PATH);
+  const extConfigPath = join(outputDir, "ext.config.yaml");
+  const extConfigDoc = await readYamlFile(extConfigPath);
+
+  consola.info("Updating ext.config.yaml in place...");
+  await createOrUpdateExtConfig(extConfigPath, EXT_CONFIG, extConfigDoc);
+
+  consola.success("Updated ext.config.yaml");
 }
 
 /** Generate the action files */

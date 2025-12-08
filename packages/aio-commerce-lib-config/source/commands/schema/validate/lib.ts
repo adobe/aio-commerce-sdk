@@ -13,12 +13,13 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { EXTENSIBILITY_CONFIG_FILE } from "#commands/constants";
 import {
-  getProjectRootDirectory,
   readExtensibilityConfig,
-} from "#commands/utils";
-import { validateBusinessConfigSchema } from "#modules/schema/utils";
+  validateConfigDomain,
+} from "@adobe/aio-commerce-lib-extensibility/config";
+import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
+
+import { EXTENSIBILITY_CONFIG_FILE } from "#commands/constants";
 
 /** Load the business configuration schema from the given path. */
 export async function loadBusinessConfigSchema() {
@@ -46,5 +47,5 @@ export async function loadBusinessConfigSchema() {
     return null;
   }
 
-  return validateBusinessConfigSchema(schema);
+  return validateConfigDomain(schema, "businessConfig.schema");
 }
