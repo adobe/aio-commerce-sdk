@@ -124,12 +124,4 @@ export class CommerceSdkValidationError extends CommerceSdkErrorBase {
   public display(withColor = true) {
     return displayValidationError(this, withColor);
   }
-
-  /**
-   * Custom inspect method for Node.js console.log.
-   * This makes the error display nicely when logged to the console.
-   */
-  public [Symbol.for("nodejs.util.inspect.custom")]() {
-    return this.display();
-  }
 }
