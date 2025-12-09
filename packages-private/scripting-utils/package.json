@@ -1,0 +1,46 @@
+{
+  "name": "@aio-commerce-sdk/scripting-utils",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20 <=24"
+  },
+  "license": "Apache-2.0",
+  "description": "Description for @aio-commerce-sdk/scripting-utils",
+  "scripts": {
+    "build": "tsdown",
+    "docs": "typedoc && prettier --write '**/*.md'",
+    "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
+    "format": "biome format --write --no-errors-on-unmatched",
+    "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
+    "format:check": "biome format --no-errors-on-unmatched",
+    "lint": "biome lint --no-errors-on-unmatched",
+    "lint:fix": "biome lint --write --no-errors-on-unmatched",
+    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'",
+    "test": "vitest run",
+    "test:watch": "vitest --watch"
+  },
+  "exports": {
+    "./*": "./source/*.ts",
+    "./yaml": "./source/yaml/index.ts",
+    "./package.json": "./package.json"
+  },
+  "imports": {
+    "#*": "./source/*.ts"
+  },
+  "dependencies": {
+    "@adobe/aio-commerce-lib-core": "^0.5.1",
+    "find-up": "^8.0.0",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@aio-commerce-sdk/config-tsdown": "workspace:*",
+    "@aio-commerce-sdk/config-typedoc": "workspace:*",
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "@aio-commerce-sdk/config-vitest": "workspace:*"
+  },
+  "sideEffects": false
+}

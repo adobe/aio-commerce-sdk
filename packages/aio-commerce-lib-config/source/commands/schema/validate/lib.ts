@@ -13,12 +13,15 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { EXTENSIBILITY_CONFIG_FILE } from "#commands/constants";
 import {
-  getProjectRootDirectory,
   readExtensibilityConfig,
-} from "#commands/utils";
-import { validateBusinessConfigSchema } from "#modules/schema/utils";
+  validateConfigDomain,
+} from "@adobe/aio-commerce-lib-extensibility/config";
+import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
+
+import { EXTENSIBILITY_CONFIG_FILE } from "#commands/constants";
+
+import type { ExtensibilityConfig } from "@adobe/aio-commerce-lib-extensibility/config";
 
 /** Load the business configuration schema from the given path. */
 export async function loadBusinessConfigSchema() {
@@ -30,21 +33,18 @@ export async function loadBusinessConfigSchema() {
     );
   } finally {
     if (!(resolvedPath && existsSync(resolvedPath))) {
-      process.stderr.write(
-        `⚠️ Extensibility config file not found at ${resolvedPath}. Skipping validation.\n`,
-      );
-
       // biome-ignore lint/correctness/noUnsafeFinally: Safe to return null
       return null;
     }
   }
 
-  const extensibilityConfig = await readExtensibilityConfig();
-  const schema = extensibilityConfig?.businessConfig?.schema ?? null;
+  const extensibilityConfig =
+    (await readExtensibilityConfig()) as Partial<ExtensibilityConfig>;
 
+  const schema = extensibilityConfig?.businessConfig?.schema ?? null;
   if (!schema) {
     return null;
   }
 
-  return validateBusinessConfigSchema(schema);
+  return validateConfigDomain(schema, "businessConfig.schema");
 }

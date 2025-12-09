@@ -10,10 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import type { BusinessConfigSchema } from "./schema";
-
-export type * from "./schema";
-
 /** Context needed for schema operations. */
 export type SchemaContext = {
   /** The namespace for isolating schema data. */
@@ -23,11 +19,11 @@ export type SchemaContext = {
   cacheTimeout: number;
 };
 
-/** Defines the extensibility configuration for the business configuration schema. */
-export type ExtensibilityConfig = {
-  /** Optional business configuration schema extension. */
-  businessConfig?: {
-    /** Optional custom schema definition. */
-    schema?: BusinessConfigSchema;
-  };
-};
+export type {
+  BusinessConfig,
+  BusinessConfigSchema,
+  BusinessConfigSchemaField,
+  BusinessConfigSchemaListOption,
+  BusinessConfigSchemaValue,
+  ExtensibilityConfig,
+} from "@adobe/aio-commerce-lib-extensibility/config";

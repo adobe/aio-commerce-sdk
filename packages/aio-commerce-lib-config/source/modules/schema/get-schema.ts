@@ -13,7 +13,7 @@
 import * as schemaRepository from "./config-schema-repository";
 import * as schemaUtils from "./utils";
 
-import type { ConfigSchemaField, SchemaContext } from "./types";
+import type { BusinessConfigSchema, SchemaContext } from "./types";
 
 /**
  * Gets the configuration schema with lazy initialization and version checking.
@@ -27,7 +27,7 @@ import type { ConfigSchemaField, SchemaContext } from "./types";
  */
 export async function getSchema(
   context: SchemaContext,
-): Promise<ConfigSchemaField[]> {
+): Promise<BusinessConfigSchema> {
   const cachedSchema = await tryGetFromCache(context);
   if (cachedSchema) {
     return cachedSchema;
@@ -66,7 +66,7 @@ export async function getSchema(
  */
 export async function storeSchema(
   context: SchemaContext,
-  validatedSchema: ConfigSchemaField[],
+  validatedSchema: BusinessConfigSchema,
 ): Promise<void> {
   await schemaRepository.saveSchema(JSON.stringify(validatedSchema, null, 2));
   await schemaRepository.deleteCachedSchema(context.namespace);
@@ -80,7 +80,7 @@ export async function storeSchema(
  */
 async function tryGetFromCache(
   context: SchemaContext,
-): Promise<ConfigSchemaField[] | null> {
+): Promise<BusinessConfigSchema | null> {
   try {
     const cached = await schemaRepository.getCachedSchema(context.namespace);
     if (cached) {
@@ -100,7 +100,7 @@ async function tryGetFromCache(
  */
 async function tryGetFromStorage(
   context: SchemaContext,
-): Promise<ConfigSchemaField[] | null> {
+): Promise<BusinessConfigSchema | null> {
   try {
     const schemaContent = await schemaRepository.getPersistedSchema();
     const schema = JSON.parse(schemaContent);
@@ -121,8 +121,8 @@ async function tryGetFromStorage(
  */
 async function handleStoredSchemaUpdate(
   context: SchemaContext,
-  storedSchema: ConfigSchemaField[],
-): Promise<ConfigSchemaField[]> {
+  storedSchema: BusinessConfigSchema,
+): Promise<BusinessConfigSchema> {
   try {
     const { content, version: currentVersion } =
       await schemaUtils.readBundledSchemaWithVersion();
@@ -147,7 +147,7 @@ async function handleStoredSchemaUpdate(
  */
 async function initializeSchemaFromBundledFile(
   context: SchemaContext,
-): Promise<ConfigSchemaField[]> {
+): Promise<BusinessConfigSchema> {
   try {
     const schemaContent = await schemaUtils.readBundledSchemaFile();
     const validatedSchema =
@@ -176,7 +176,7 @@ async function initializeSchemaFromContent(
   context: SchemaContext,
   content: string,
   version: string,
-): Promise<ConfigSchemaField[]> {
+): Promise<BusinessConfigSchema> {
   const validatedSchema = schemaUtils.validateSchemaFromContent(content);
 
   await storeSchema(context, validatedSchema);
@@ -224,7 +224,7 @@ async function storeSchemaVersion(
  */
 async function cacheSchema(
   context: SchemaContext,
-  schema: ConfigSchemaField[],
+  schema: BusinessConfigSchema,
 ): Promise<void> {
   await schemaRepository.setCachedSchema(
     context.namespace,

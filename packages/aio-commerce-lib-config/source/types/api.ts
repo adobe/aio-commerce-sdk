@@ -10,11 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
+import type { ConfigValue } from "#modules/configuration/types";
 import type {
-  AcceptableConfigValue,
-  ConfigValue,
-} from "#modules/configuration/types";
-import type { ConfigSchemaField } from "#modules/schema/types";
+  BusinessConfigSchema,
+  BusinessConfigSchemaValue,
+} from "#modules/schema/types";
 
 export type { GetScopeTreeResult } from "#modules/scope-tree/types";
 
@@ -23,7 +23,7 @@ export type { GetScopeTreeResult } from "#modules/scope-tree/types";
  */
 export type GetConfigSchemaResponse = {
   /** Array of configuration schema field definitions. */
-  configSchema: ConfigSchemaField[];
+  configSchema: BusinessConfigSchema;
 };
 
 /**
@@ -63,7 +63,7 @@ export type SetConfigurationRequest = {
     /** The name of the configuration field. */
     name: string;
     /** The value to set (string, number, or boolean). */
-    value: AcceptableConfigValue;
+    value: BusinessConfigSchemaValue;
   }>;
 };
 
@@ -84,7 +84,7 @@ export type SetConfigurationResponse = {
   /** Array of updated configuration values. */
   config: Array<{
     name: string;
-    value: AcceptableConfigValue;
+    value: BusinessConfigSchemaValue;
   }>;
 };
 

@@ -21,10 +21,10 @@ export type Operations = {
 
 export type ActionDefinition = {
   function: string;
-  web: string;
-  runtime: string;
-  inputs: Record<string, string>;
-  annotations: Record<string, boolean | string>;
+  web?: string;
+  runtime?: string;
+  inputs?: Record<string, string>;
+  annotations?: Record<string, boolean | string>;
   include?: [string, string][];
 };
 
@@ -41,11 +41,4 @@ export type ExtConfig = {
   hooks?: Record<string, string>;
   operations?: Operations;
   runtimeManifest?: RuntimeManifest;
-};
-
-export type ActionConfig = {
-  name: string;
-  templateFile: string;
-  requiresCommerce?: boolean;
-  requiresSchema?: boolean;
 };

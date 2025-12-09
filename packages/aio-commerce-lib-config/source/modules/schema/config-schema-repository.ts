@@ -13,7 +13,7 @@
 import { getLogger } from "#utils/logger";
 import { getSharedFiles, getSharedState } from "#utils/repository";
 
-import type { ConfigSchemaField } from "./types";
+import type { BusinessConfigSchema } from "./types";
 
 /**
  * Gets cached schema from state store.
@@ -23,7 +23,7 @@ import type { ConfigSchemaField } from "./types";
  */
 export async function getCachedSchema(
   namespace: string,
-): Promise<ConfigSchemaField[] | null> {
+): Promise<BusinessConfigSchema | null> {
   try {
     const state = await getSharedState();
     const cached = await state.get(`${namespace}:config-schema`);
@@ -46,7 +46,7 @@ export async function getCachedSchema(
  */
 export async function setCachedSchema(
   namespace: string,
-  data: ConfigSchemaField[],
+  data: BusinessConfigSchema,
   ttl: number,
 ): Promise<void> {
   const logger = getLogger(

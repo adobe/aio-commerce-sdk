@@ -13,7 +13,7 @@
 import * as v from "valibot";
 
 /** Base schema for configuration field options with name, optional label, and optional description */
-export const BaseOptionSchema = v.object({
+const BaseOptionSchema = v.object({
   name: v.pipe(
     v.string("Expected a string for the field name"),
     v.nonEmpty("The field name must not be empty"),
@@ -107,8 +107,8 @@ const TextSchema = v.object({
   ...BaseOptionSchema.entries,
   type: v.literal("date", "Expected the type to be 'date'"),
   default: v.optional(v.date("Expected a date for the default value")),
-}); */
-
+});
+ */
 /** Schema for an email input field that accepts and validates email addresses */
 const EmailSchema = v.object({
   ...BaseOptionSchema.entries,
@@ -161,8 +161,8 @@ const FieldSchema = v.variant("type", [
   PhoneSchema,
 ]);
 
-/** Schema for the business configuration, which is an array of configuration fields with at least one field required */
-export const BusinessConfigSchema = v.pipe(
+/** Schema for the schema of the business configuration, which is an array of configuration fields with at least one field required */
+export const BusinessConfigSchemaSchema = v.pipe(
   v.array(FieldSchema, "Expected an array of configuration fields"),
   v.minLength(1, "At least one configuration parameter is required"),
 );
@@ -173,7 +173,7 @@ export const BusinessConfigSchema = v.pipe(
  * Represents a single field definition in the configuration schema, which can be
  * one of various types: list, text, password, boolean, number, date, email, url, or phone.
  */
-export type ConfigSchemaField = v.InferInput<typeof FieldSchema>;
+export type BusinessConfigSchemaField = v.InferInput<typeof FieldSchema>;
 
 /**
  * The schema type for the business configuration schema.
@@ -181,13 +181,32 @@ export type ConfigSchemaField = v.InferInput<typeof FieldSchema>;
  * Represents an array of configuration field definitions that make up the complete
  * business configuration schema. Must contain at least one field.
  */
-export type BusinessConfigSchema = v.InferInput<typeof BusinessConfigSchema>;
+export type BusinessConfigSchema = v.InferInput<
+  typeof BusinessConfigSchemaSchema
+>;
+
+/** The schema type for the business configuration schema. */
+export type BusinessConfigSchemaValue = BusinessConfigSchemaField["default"];
 
 /**
  * The schema type for an option in a list configuration field.
  * Represents a single option that can be selected in a list-type configuration field.
  */
-export type ConfigSchemaOption = Extract<
-  ConfigSchemaField,
+export type BusinessConfigSchemaListOption = Extract<
+  BusinessConfigSchemaField,
   { type: "list" }
 >["options"][number];
+
+/** The keys of the `businessConfig` settings in the extensibility config file. */
+export type BusinessConfig = {
+  /**
+   * The schema of the app business configuration.
+   * @default []
+   */
+  schema?: BusinessConfigSchema;
+};
+
+/** The schema used to validate the `businessConfig` settings in the extensibility config file. */
+export const BusinessConfigSchema = v.object({
+  schema: v.optional(BusinessConfigSchemaSchema, []),
+}) satisfies v.GenericSchema<BusinessConfig>;
