@@ -44,9 +44,18 @@
   },
   "exports": {
     "./error": "./source/error/index.ts",
+    "./headers": "./source/headers/index.ts",
     "./params": "./source/params/index.ts",
     "./responses": "./source/responses/index.ts",
     "./package.json": "./package.json"
+  },
+  "imports": {
+    "#*": [
+      "./source/*/index.ts"
+    ],
+    "#test/*": [
+      "./test/*.ts"
+    ]
   },
   "files": [
     "dist",
@@ -55,6 +64,7 @@
     "README.md"
   ],
   "scripts": {
+    "prepublishOnly": "pnpm run docs",
     "build": "tsdown",
     "publint": "publint",
     "docs": "typedoc && prettier --write '**/*.md'",
@@ -73,6 +83,7 @@
   },
   "dependencies": {
     "ansis": "^4.1.0",
+    "camelcase": "^8.0.0",
     "valibot": "^1.1.0"
   },
   "devDependencies": {
