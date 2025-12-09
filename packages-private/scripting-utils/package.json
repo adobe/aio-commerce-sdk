@@ -1,58 +1,15 @@
 {
-  "name": "@adobe/aio-commerce-lib-extensibility",
+  "name": "@aio-commerce-sdk/scripting-utils",
   "type": "module",
-  "author": "Adobe Inc.",
-  "version": "0.0.0",
-  "private": false,
+  "version": "1.0.0",
+  "private": true,
   "engines": {
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
-  "description": "Description for @adobe/aio-commerce-lib-extensibility",
-  "keywords": [],
-  "bugs": {
-    "url": "https://github.com/adobe/aio-commerce-sdk/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/adobe/aio-commerce-sdk.git",
-    "directory": "packages/aio-commerce-lib-extensibility"
-  },
-  "bin": {
-    "@adobe/aio-commerce-lib-extensibility": "./dist/es/commands/index.mjs"
-  },
-  "publishConfig": {
-    "exports": {
-      "./config": {
-        "import": {
-          "types": "./dist/es/config/index.d.mts",
-          "default": "./dist/es/config/index.mjs"
-        },
-        "require": {
-          "types": "./dist/cjs/config/index.d.cts",
-          "default": "./dist/cjs/config/index.cjs"
-        }
-      },
-      "./package.json": "./package.json"
-    }
-  },
-  "exports": {
-    "./config": "./source/config/index.ts",
-    "./package.json": "./package.json"
-  },
-  "imports": {
-    "#*": "./source/*.ts",
-    "#test/*": "./test/*.ts"
-  },
-  "files": [
-    "dist",
-    "package.json",
-    "CHANGELOG.md",
-    "README.md"
-  ],
+  "description": "Description for @aio-commerce-sdk/scripting-utils",
   "scripts": {
     "build": "tsdown",
-    "publint": "publint",
     "docs": "typedoc && prettier --write '**/*.md'",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
@@ -66,19 +23,24 @@
     "test": "vitest run",
     "test:watch": "vitest --watch"
   },
+  "exports": {
+    "./*": "./source/*.ts",
+    "./yaml": "./source/yaml/index.ts",
+    "./package.json": "./package.json"
+  },
+  "imports": {
+    "#*": "./source/*.ts"
+  },
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "^0.5.1",
     "find-up": "^8.0.0",
-    "jiti": "^2.6.1",
-    "valibot": "^1.1.0",
-    "consola": "^3.4.2"
+    "yaml": "^2.8.1"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@aio-commerce-sdk/config-vitest": "workspace:*",
-    "@aio-commerce-sdk/scripting-utils": "workspace:*"
+    "@aio-commerce-sdk/config-vitest": "workspace:*"
   },
   "sideEffects": false
 }

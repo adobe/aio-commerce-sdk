@@ -13,11 +13,11 @@
 import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "#utils/constants";
 
 import type { ConfigValue } from "#modules/configuration/index";
+import type { ConfigValueWithOptionalOrigin } from "#modules/configuration/types";
 import type {
-  AcceptableConfigValue,
-  ConfigValueWithOptionalOrigin,
-} from "#modules/configuration/types";
-import type { ConfigSchemaField } from "#modules/schema/index";
+  BusinessConfigSchema,
+  BusinessConfigSchemaValue,
+} from "#modules/schema/index";
 import type { ScopeNode, ScopeTree } from "#modules/scope-tree/index";
 
 /**
@@ -258,7 +258,7 @@ export function sanitizeRequestEntries(
     })
     .map((entry) => ({
       name: String(entry.name).trim(),
-      value: entry.value as AcceptableConfigValue,
+      value: entry.value as BusinessConfigSchemaValue,
       origin: entry.origin,
     }));
 }
@@ -306,7 +306,7 @@ export function mergeScopes(
  * @param schema - The schema to build the defaults from.
  * @returns The default config entries.
  */
-export function getSchemaDefaults(schema: ConfigSchemaField[]) {
+export function getSchemaDefaults(schema: BusinessConfigSchema) {
   const defaults = schema
     .filter((field) => field.default !== undefined)
     .map((field) => ({
@@ -428,7 +428,7 @@ function mergeCurrentConfigData(
  */
 function applySchemaDefaults(
   merged: Map<string, ConfigValue>,
-  defaultMap: Map<string, AcceptableConfigValue>,
+  defaultMap: Map<string, BusinessConfigSchemaValue>,
 ) {
   for (const [name, def] of defaultMap.entries()) {
     if (!merged.has(name)) {
@@ -446,7 +446,7 @@ type MergeWithSchemaDefaultsParams = {
   loadScopeConfigFn: (
     code: string,
   ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>;
-  getSchemaFn: () => Promise<ConfigSchemaField[]>;
+  getSchemaFn: () => Promise<BusinessConfigSchema>;
   configData: { scope: ScopeNode; config: ConfigValue[] };
   scopeCode: string;
   scopeLevel: string;
@@ -474,7 +474,7 @@ export async function mergeWithSchemaDefaults({
   scopePath,
 }: MergeWithSchemaDefaultsParams) {
   const schema = await getSchemaFn();
-  const defaultMap = new Map<string, AcceptableConfigValue>();
+  const defaultMap = new Map<string, BusinessConfigSchemaValue>();
   for (const field of schema) {
     if (field.default !== undefined) {
       defaultMap.set(field.name, field.default);

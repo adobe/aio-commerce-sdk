@@ -10,20 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-/** Context needed for schema operations. */
-export type SchemaContext = {
-  /** The namespace for isolating schema data. */
-  namespace: string;
+import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
+import { defineConfig, mergeConfig } from "vitest/config";
 
-  /** Cache timeout in milliseconds. */
-  cacheTimeout: number;
-};
-
-export type {
-  BusinessConfig,
-  BusinessConfigSchema,
-  BusinessConfigSchemaField,
-  BusinessConfigSchemaListOption,
-  BusinessConfigSchemaValue,
-  ExtensibilityConfig,
-} from "@adobe/aio-commerce-lib-extensibility/config";
+export default mergeConfig(
+  baseConfig,
+  defineConfig({
+    // Write your Vitest configuration here.
+  }),
+);

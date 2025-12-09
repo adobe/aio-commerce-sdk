@@ -27,13 +27,12 @@ export {
 } from "./config-utils";
 export * from "./types";
 
+export type { ConfigOrigin, ConfigValue } from "./modules/configuration";
 export type {
-  AcceptableConfigValue,
-  ConfigOrigin,
-  ConfigValue,
-} from "./modules/configuration";
-export type {
-  ConfigSchemaField,
-  ConfigSchemaOption,
-} from "./modules/schema/types";
+  BusinessConfig,
+  BusinessConfigSchema,
+  BusinessConfigSchemaField,
+  BusinessConfigSchemaListOption,
+  BusinessConfigSchemaValue,
+} from "./modules/schema";
 export type { ScopeNode, ScopeTree } from "./modules/scope-tree";

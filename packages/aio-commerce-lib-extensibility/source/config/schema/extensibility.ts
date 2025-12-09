@@ -15,27 +15,25 @@
 
 import * as v from "valibot";
 
-import { BusinessConfigurationSchema } from "./business-configuration";
+import {
+  BusinessConfigSchema,
+  BusinessConfigSchemaSchema,
+} from "./business-configuration";
 import { MetadataSchema } from "./metadata";
 
-import type { BusinessConfigurationConfig } from "./business-configuration";
-import type { ApplicationMetadata } from "./metadata";
+export const ExtensibilityConfigSchemas = {
+  metadata: MetadataSchema,
+  businessConfig: BusinessConfigSchema,
+  "businessConfig.schema": BusinessConfigSchemaSchema,
+} as const;
 
-/** The schema used to validate an extensibility config domain. */
-export const extensibilityConfigDomainsSchema = v.picklist(
-  ["businessConfig", "metadata"],
-  "Expected a valid extensibility config domain",
-);
-
-/** The different extensibility domains of Adobe Commerce apps. */
-export type ExtensibilityConfigDomain = v.InferOutput<
-  typeof extensibilityConfigDomainsSchema
->;
+/** Individual validatable domains of the extensibility config. */
+export type ExtensibilityConfigDomain = keyof typeof ExtensibilityConfigSchemas;
 
 /** The schema used to validate the extensibility config file. */
 export const ExtensibilityConfigSchema = v.object({
   metadata: MetadataSchema,
-  businessConfig: v.optional(BusinessConfigurationSchema),
+  businessConfig: v.optional(BusinessConfigSchema),
 });
 
 /** The input shape of the extensibility config schema. */
@@ -47,6 +45,3 @@ export type ExtensibilityConfig = v.InferInput<
 export type ExtensibilityConfigOutputModel = v.InferOutput<
   typeof ExtensibilityConfigSchema
 >;
-
-export { type BusinessConfigurationConfig, BusinessConfigurationSchema };
-export { type ApplicationMetadata, MetadataSchema };

@@ -10,9 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import type { BusinessConfigSchema } from "#modules/schema/schema";
+import type { BusinessConfigSchema } from "#modules/schema/types";
 
-export const VALID_CONFIGURATION: BusinessConfigSchema = [
+export const VALID_CONFIGURATION = [
   {
     name: "exampleList",
     type: "list",
@@ -42,7 +42,7 @@ export const VALID_CONFIGURATION: BusinessConfigSchema = [
     type: "text",
     label: "Test Field",
   },
-];
+] satisfies BusinessConfigSchema;
 
 export const INVALID_CONFIGURATION = [
   {

@@ -18,35 +18,30 @@ import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 
 import {
-  CONFIG_SCHEMA_FILE_NAME,
+  EXTENSIBILITY_MANIFEST_FILE,
   EXTENSION_POINT_FOLDER_PATH,
-  GENERATED_PATH,
 } from "#commands/constants";
-import { loadBusinessConfigSchema } from "#commands/schema/validate/lib";
+import { parseExtensibilityConfig } from "#config/lib/parser";
 
-/** Run the generate schema command */
+/** Run the generate manifest command */
 export async function run() {
+  consola.start("Generating extensibility manifest...");
   try {
-    consola.start("Generating schema file...");
+    consola.info("Reading extensibility config...");
+    const config = await parseExtensibilityConfig();
 
-    const validatedSchema = await loadBusinessConfigSchema();
-    await generateSchemaFile(validatedSchema);
+    consola.info("Generating extensibility manifest...");
+    const contents = JSON.stringify(config, null, 2);
+    const outputDir = await makeOutputDirFor(
+      `${EXTENSION_POINT_FOLDER_PATH}/.generated`,
+    );
 
-    consola.success(`Generated ${CONFIG_SCHEMA_FILE_NAME}`);
+    const manifestPath = join(outputDir, EXTENSIBILITY_MANIFEST_FILE);
+    await writeFile(manifestPath, contents, "utf-8");
+
+    consola.success(`Generated ${EXTENSIBILITY_MANIFEST_FILE}`);
   } catch (error) {
     consola.error(stringifyError(error));
     process.exit(1);
   }
-}
-
-/** Generate the schema file */
-async function generateSchemaFile(validatedSchema?: unknown) {
-  const outputDir = await makeOutputDirFor(
-    join(EXTENSION_POINT_FOLDER_PATH, GENERATED_PATH),
-  );
-
-  const schemaPath = join(outputDir, CONFIG_SCHEMA_FILE_NAME);
-  const schemaContent = validatedSchema ? validatedSchema : [];
-
-  await writeFile(schemaPath, JSON.stringify(schemaContent, null, 2), "utf-8");
 }

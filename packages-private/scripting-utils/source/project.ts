@@ -14,21 +14,13 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { findUp } from "find-up";
-import { createJiti } from "jiti";
-
-import { EXTENSIBILITY_CONFIG_FILE } from "#commands/constants";
 
 import type { PackageJson } from "type-fest";
-import type { ExtensibilityConfig } from "#modules/schema/types";
-
-const jiti = createJiti(import.meta.url);
 
 /**
  * Find the nearest package.json file in the current working directory or its parents
  * @param cwd The current working directory
- * @param logger - The logger to use
  */
 export async function findNearestPackageJson(cwd = process.cwd()) {
   const packageJsonPath = await findUp("package.json", { cwd });
@@ -40,7 +32,10 @@ export async function findNearestPackageJson(cwd = process.cwd()) {
   return packageJsonPath;
 }
 
-/** Read the package.json file */
+/**
+ * Read the package.json file
+ * @param cwd The current working directory
+ */
 export async function readPackageJson(
   cwd = process.cwd(),
 ): Promise<PackageJson | null> {
@@ -59,7 +54,9 @@ export async function readPackageJson(
 export async function isESM(cwd = process.cwd()) {
   const packageJson = await readPackageJson(cwd);
   if (!packageJson) {
-    return false;
+    throw new Error(
+      "Could not find a `package.json` file in the current working directory or its parents.",
+    );
   }
 
   return packageJson.type === "module";
@@ -81,7 +78,7 @@ export async function getProjectRootDirectory(cwd = process.cwd()) {
 }
 
 /**
- * Create the output directory for the generated files
+ * Create the output directory for the given file or folder (relative to the project root)
  * @param fileOrFolder - The file or folder to create
  */
 export async function makeOutputDirFor(fileOrFolder: string) {
@@ -95,37 +92,40 @@ export async function makeOutputDirFor(fileOrFolder: string) {
   return outputDir;
 }
 
-/**
- * Try to find (up to the nearest package.json file) the extensibility.config.js file.
- * @param cwd The current working directory
- */
-export async function readExtensibilityConfig(cwd = process.cwd()) {
-  const packageJsonPath = await findNearestPackageJson(cwd);
+/** The package manager used to install the package */
+export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
 
-  if (!packageJsonPath) {
-    return null;
+/** Detect the package manager by checking for lock files */
+export async function detectPackageManager(
+  cwd = process.cwd(),
+): Promise<PackageManager> {
+  const rootDirectory = await getProjectRootDirectory(cwd);
+  const lockFileMap = {
+    "bun.lockb": "bun",
+    "pnpm-lock.yaml": "pnpm",
+    "yarn.lock": "yarn",
+    "package-lock.json": "npm",
+  } as const;
+
+  const lockFileName = Object.keys(lockFileMap).find((name) =>
+    existsSync(join(rootDirectory, name)),
+  ) as keyof typeof lockFileMap;
+
+  if (!lockFileName) {
+    return "npm";
   }
 
-  const configPath = await findUp(EXTENSIBILITY_CONFIG_FILE, {
-    cwd,
-    stopAt: await getProjectRootDirectory(cwd),
-  });
-
-  if (!configPath) {
-    return null;
-  }
-
-  return await jiti.import<ExtensibilityConfig>(configPath);
+  return lockFileMap[lockFileName];
 }
 
-/**
- * Stringify an error to a human-friendly string.
- * @param error - The error to stringify.
- */
-export function stringifyError(error: Error) {
-  if (error instanceof CommerceSdkValidationError) {
-    return error.display();
-  }
+/** Get the appropriate exec command based on package manager */
+export function getExecCommand(packageManager: PackageManager): string {
+  const execCommandMap = {
+    pnpm: "pnpx",
+    yarn: "yarn dlx",
+    bun: "bunx",
+    npm: "npx",
+  } as const;
 
-  return error instanceof Error ? error.message : "Unknown error";
+  return execCommandMap[packageManager];
 }

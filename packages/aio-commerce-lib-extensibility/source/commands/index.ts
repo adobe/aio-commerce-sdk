@@ -16,11 +16,9 @@ import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import consola from "consola";
 
 import { run as generateActionsCommand } from "#commands/generate/actions/run";
-import { run as generateSchemaCommand } from "#commands/generate/schema/run";
-import { run as initCommand } from "#commands/init/run";
-import { run as validateSchemaCommand } from "#commands/schema/validate/run";
+import { run as generateManifestCommand } from "#commands/generate/manifest/run";
 
-const NAMESPACE = "@adobe/aio-commerce-lib-config";
+const NAMESPACE = "@adobe/aio-commerce-lib-extensibility";
 
 const args = process.argv.slice(2);
 const [command, subcommand] = args;
@@ -29,47 +27,32 @@ const USAGE = `
 Usage: ${NAMESPACE} <command> [target]
 
 Commands:
-  init                 Initialize the project (recommended for first-time setup)
-  
   generate <target>    Generate artifacts
-    all                Generate configuration schema and runtime actions
-    schema             Generate configuration schema only
+    all                Generate extensibility manifest and runtime actions
+    manifest           Generate extensibility manifest only
     actions            Generate runtime actions only
-
-  validate <target>    Validate configuration
-    schema             Validate configuration schema
 
   help                 Show this help message
 
 Examples:
-  ${NAMESPACE} init
   ${NAMESPACE} generate all
-  ${NAMESPACE} generate schema
+  ${NAMESPACE} generate manifest
   ${NAMESPACE} generate actions
-  ${NAMESPACE} validate schema
 `;
 
-/**
- * Run all generate targets in sequence
- */
+/** Run all generate targets in sequence */
 async function generateAll() {
-  await generateSchemaCommand();
-  consola.log.raw("");
   await generateActionsCommand();
+  consola.log.raw("");
+  await generateManifestCommand();
 }
 
-/**
- * Command handlers registry mapping command names to their subcommand handlers
- */
+/** Command handlers registry mapping command names to their subcommand handlers */
 const COMMANDS = {
-  init: initCommand,
   generate: {
-    schema: generateSchemaCommand,
     actions: generateActionsCommand,
+    manifest: generateManifestCommand,
     all: generateAll,
-  },
-  validate: {
-    schema: validateSchemaCommand,
   },
 } as const;
 
@@ -84,22 +67,21 @@ async function handleCommand(
   target: string,
   handlers: Record<string, () => Promise<unknown>>,
 ) {
-  if (!target) {
-    const availableTargets = Object.keys(handlers).join(", ");
-    consola.error(`No ${commandName} target specified`);
-    consola.info(`Available targets: ${availableTargets}`);
+  function invalidTargetError(message: string) {
+    consola.error(message);
+    consola.info(`Available targets: ${Object.keys(handlers).join(" | ")}`);
 
     process.exit(1);
+  }
+
+  if (!target) {
+    invalidTargetError(`No ${commandName} target specified`);
   }
 
   const handler = handlers[target];
 
   if (!handler) {
-    const availableTargets = Object.keys(handlers).join(", ");
-    consola.error(`Unknown ${commandName} target: ${target}`);
-    consola.info(`Available targets: ${availableTargets}`);
-
-    process.exit(1);
+    invalidTargetError(`Unknown ${commandName} target: ${target}`);
   }
 
   await handler();
@@ -122,20 +104,14 @@ async function main() {
     if (!handlers) {
       consola.error(`Unknown command: ${command}`);
       consola.log.raw(USAGE);
+
       process.exit(1);
     }
 
-    // Handle direct commands (like init) that don't have subcommands
-    if (typeof handlers === "function") {
-      await handlers();
-      return;
-    }
-
-    // Handle commands with subcommands (like generate, validate)
+    // Handle commands with subcommands (like generate)
     await handleCommand(command, subcommand, handlers);
   } catch (error) {
     consola.error(stringifyError(error));
-    process.exit(1);
   }
 }
 

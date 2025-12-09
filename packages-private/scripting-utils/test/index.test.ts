@@ -10,20 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-/** Context needed for schema operations. */
-export type SchemaContext = {
-  /** The namespace for isolating schema data. */
-  namespace: string;
+import { describe, expect, it } from "vitest";
 
-  /** Cache timeout in milliseconds. */
-  cacheTimeout: number;
-};
-
-export type {
-  BusinessConfig,
-  BusinessConfigSchema,
-  BusinessConfigSchemaField,
-  BusinessConfigSchemaListOption,
-  BusinessConfigSchemaValue,
-  ExtensibilityConfig,
-} from "@adobe/aio-commerce-lib-extensibility/config";
+describe("scripting-utils", () => {
+  it("should work", () => {
+    expect(true).toBe(true);
+  });
+});

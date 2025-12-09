@@ -10,16 +10,19 @@
  * governing permissions and limitations under the License.
  */
 
-import { stringifyError } from "#commands/utils";
-
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import {
   detectPackageManager,
+  getExecCommand,
+} from "@aio-commerce-sdk/scripting-utils/project";
+import { consola } from "consola";
+
+import {
   ensureAppConfig,
   ensureEnvFile,
   ensureExtensibilityConfig,
   ensureInstallYaml,
   ensurePackageJsonScript,
-  getExecCommand,
   installDependencies,
   runGeneration,
 } from "./lib";
@@ -34,9 +37,8 @@ function makeStep<T extends (...args: Parameters<T>) => ReturnType<T>>(
 
 /** Initialize the project with @adobe/aio-commerce-lib-config */
 export async function run() {
-  const { stdout, stderr } = process;
   try {
-    stdout.write("🚀 Initializing @adobe/aio-commerce-lib-config...\n");
+    consola.start("Initializing @adobe/aio-commerce-lib-config...");
 
     const packageManager = await detectPackageManager();
     const execCommand = getExecCommand(packageManager);
@@ -56,21 +58,22 @@ export async function run() {
       const result = await fn();
 
       if (!result) {
-        stderr.write(`❌ Initialization failed at step: ${name}\n`);
-        throw new Error(`Initialization failed at step: ${name}`);
+        consola.error(`Initialization failed at step: ${name}`);
+        process.exit(1);
       }
+
+      // Empty line between steps
+      consola.log.raw("");
     }
 
-    stdout.write("✅ Initialization complete!\n");
-    stdout.write(
-      "\n📝 Next steps:\n" +
+    consola.success("Initialization complete!");
+    consola.box(
+      "Next steps:\n" +
         "   1. Review and customize extensibility.config.js\n" +
-        "   2. Fill in the required values in your .env file\n\n",
+        "   2. Fill in the required values in your .env file",
     );
   } catch (error) {
-    stderr.write(`${stringifyError(error as Error)}\n`);
-    stderr.write("❌ Initialization failed\n");
-
-    throw new Error("Initialization failed", { cause: error });
+    consola.error(stringifyError(error));
+    process.exit(1);
   }
 }

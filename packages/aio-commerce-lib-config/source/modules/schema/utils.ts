@@ -13,14 +13,11 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { safeParse } from "valibot";
+import { validateConfigDomain } from "@adobe/aio-commerce-lib-extensibility/config";
 
 import { CONFIG_SCHEMA_PATH } from "#utils/constants";
 
-import { BusinessConfigSchema } from "./schema";
-
-import type { ConfigSchemaField } from "./index";
+import type { BusinessConfigSchema } from "./types";
 
 /**
  * Reads bundled schema file from the runtime action.
@@ -73,15 +70,10 @@ export async function readBundledSchemaWithVersion(): Promise<{
  * @throws {CommerceSdkValidationError} If the schema is invalid.
  */
 export function validateBusinessConfigSchema(value: unknown) {
-  const { output, success, issues } = safeParse(BusinessConfigSchema, value);
-
-  if (!success) {
-    throw new CommerceSdkValidationError("Invalid configuration schema", {
-      issues,
-    });
-  }
-
-  return output satisfies ConfigSchemaField[];
+  return validateConfigDomain(
+    value,
+    "businessConfig.schema",
+  ) satisfies BusinessConfigSchema;
 }
 
 /**
@@ -95,5 +87,5 @@ export function validateBusinessConfigSchema(value: unknown) {
  */
 export function validateSchemaFromContent(content: string) {
   const rawSchema = JSON.parse(content);
-  return validateBusinessConfigSchema(rawSchema) satisfies ConfigSchemaField[];
+  return validateBusinessConfigSchema(rawSchema);
 }

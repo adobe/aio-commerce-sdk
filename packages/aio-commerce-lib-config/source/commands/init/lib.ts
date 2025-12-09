@@ -16,6 +16,21 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import util from "node:util";
 
+import { readExtensibilityConfig } from "@adobe/aio-commerce-lib-extensibility/config";
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import {
+  detectPackageManager,
+  getExecCommand,
+  getProjectRootDirectory,
+  isESM,
+  readPackageJson,
+} from "@aio-commerce-sdk/scripting-utils/project";
+import {
+  getOrCreateMap,
+  getOrCreateSeq,
+  readYamlFile,
+} from "@aio-commerce-sdk/scripting-utils/yaml";
+import { consola } from "consola";
 import { isMap } from "yaml";
 
 import {
@@ -28,50 +43,44 @@ import {
   PACKAGE_JSON_FILE,
 } from "#commands/constants";
 import { COMMERCE_VARIABLES } from "#commands/generate/actions/constants";
-import {
-  getProjectRootDirectory,
-  isESM,
-  readExtensibilityConfig,
-  readPackageJson,
-  stringifyError,
-} from "#commands/utils";
-import {
-  getOrCreateMap,
-  getOrCreateSeq,
-  readYamlFile,
-} from "#commands/yaml-helpers";
 
 import {
   DEFAULT_EXTENSIBILITY_CONFIG_SCHEMA,
   ENV_VAR_REGEX,
 } from "./constants";
 
+import type { ExtensibilityConfig } from "@adobe/aio-commerce-lib-extensibility/config";
+import type { PackageManager } from "@aio-commerce-sdk/scripting-utils/project";
 import type { Document, YAMLSeq } from "yaml";
-import type { PackageManager } from "./types";
 
 /** Ensure extensibility.config.js exists, create it if it doesn't */
 export async function ensureExtensibilityConfig(cwd = process.cwd()) {
-  const extensibilityConfig = await readExtensibilityConfig(cwd);
-  const { stdout, stderr } = process;
+  let extensibilityConfig: unknown = null;
+  try {
+    extensibilityConfig = await readExtensibilityConfig(cwd);
+  } catch (_) {
+    // Do nothing
+  }
 
   if (extensibilityConfig) {
-    stdout.write(
-      `✅ ${EXTENSIBILITY_CONFIG_FILE} already exists. Continuing...\n`,
-    );
-
-    const schema = extensibilityConfig.businessConfig?.schema;
+    const typedConfig = extensibilityConfig as ExtensibilityConfig;
+    const schema = typedConfig.businessConfig?.schema;
     if (!schema) {
-      stderr.write(
-        "⚠️ No schema found in extensibility.config.js. Please add a `businessConfig.schema` property.\n",
+      consola.warn(
+        "No schema found in extensibility.config.js. Please add a `businessConfig.schema` property.",
       );
 
       return false;
     }
 
+    consola.success(
+      `${EXTENSIBILITY_CONFIG_FILE} already exists. Continuing...`,
+    );
+
     return true;
   }
 
-  stdout.write(`\n📝 Creating ${EXTENSIBILITY_CONFIG_FILE}...\n`);
+  consola.info(`Creating ${EXTENSIBILITY_CONFIG_FILE}...`);
   const exportKeyword = (await isESM(cwd))
     ? "export default"
     : "module.exports =";
@@ -81,49 +90,17 @@ export async function ensureExtensibilityConfig(cwd = process.cwd()) {
     colors: false,
   });
 
+  const importStatement =
+    "import { defineConfig } from '@adobe/aio-commerce-lib-extensibility/config';\n";
+
   await writeFile(
     join(await getProjectRootDirectory(cwd), EXTENSIBILITY_CONFIG_FILE),
-    `${exportKeyword} ${schema}\n`,
+    `${importStatement}\n${exportKeyword} defineConfig(${schema})\n`,
     "utf-8",
   );
 
-  stdout.write(`✅ Created ${EXTENSIBILITY_CONFIG_FILE}\n`);
+  consola.success(`Created ${EXTENSIBILITY_CONFIG_FILE}`);
   return true;
-}
-
-/** Detect the package manager by checking for lock files */
-export async function detectPackageManager(
-  cwd = process.cwd(),
-): Promise<PackageManager> {
-  const rootDirectory = await getProjectRootDirectory(cwd);
-  const lockFileMap = {
-    "bun.lockb": "bun",
-    "pnpm-lock.yaml": "pnpm",
-    "yarn.lock": "yarn",
-    "package-lock.json": "npm",
-  } as const;
-
-  const lockFileName = Object.keys(lockFileMap).find((name) =>
-    existsSync(join(rootDirectory, name)),
-  ) as keyof typeof lockFileMap;
-
-  if (!lockFileName) {
-    return "npm";
-  }
-
-  return lockFileMap[lockFileName];
-}
-
-/** Get the appropriate exec command based on package manager */
-export function getExecCommand(packageManager: PackageManager): string {
-  const execCommandMap = {
-    pnpm: "pnpx",
-    yarn: "yarn dlx",
-    bun: "bunx",
-    npm: "npx",
-  } as const;
-
-  return execCommandMap[packageManager];
 }
 
 /** Ensure package.json has the postinstall script */
@@ -133,14 +110,13 @@ export async function ensurePackageJsonScript(
 ) {
   const postinstallScript = `${execCommand} aio-commerce-lib-config generate all`;
   const packageJson = await readPackageJson(cwd);
-  const { stdout, stderr } = process;
 
   if (!packageJson) {
-    stderr.write(
-      "⚠️  package.json not found. Please add the postinstall script manually:\n",
+    consola.warn(
+      "package.json not found. Please add the postinstall script manually:",
     );
 
-    stdout.write(`   "postinstall": "${postinstallScript}"\n`);
+    consola.log.raw(`   "postinstall": "${postinstallScript}"`);
     return false;
   }
 
@@ -150,21 +126,21 @@ export async function ensurePackageJsonScript(
     packageJson.scripts.postinstall === postinstallScript ||
     packageJson.scripts.postinstall?.includes(postinstallScript)
   ) {
-    stdout.write(
-      `✅ postinstall script already configured in ${PACKAGE_JSON_FILE}\n`,
+    consola.success(
+      `postinstall script already configured in ${PACKAGE_JSON_FILE}`,
     );
 
     return true;
   }
 
   if (packageJson.scripts.postinstall) {
-    stderr.write(
-      `⚠️  ${PACKAGE_JSON_FILE} already has a postinstall script. Adding a new one...\n`,
+    consola.warn(
+      `${PACKAGE_JSON_FILE} already has a postinstall script. Adding a new one...`,
     );
 
     packageJson.scripts.postinstall += ` && ${postinstallScript}`;
   } else {
-    stdout.write(`📝 Adding postinstall script to ${PACKAGE_JSON_FILE}...\n`);
+    consola.info(`Adding postinstall script to ${PACKAGE_JSON_FILE}...`);
     packageJson.scripts = {
       postinstall: postinstallScript,
       ...packageJson.scripts,
@@ -177,7 +153,7 @@ export async function ensurePackageJsonScript(
     "utf-8",
   );
 
-  stdout.write(`✅ Added postinstall script to ${PACKAGE_JSON_FILE}\n`);
+  consola.success(`Added postinstall script to ${PACKAGE_JSON_FILE}`);
   return true;
 }
 
@@ -187,7 +163,6 @@ export async function ensureAppConfig(cwd = process.cwd()) {
   const appConfigPath = join(rootDirectory, APP_CONFIG_FILE);
   const includePath = join(EXTENSION_POINT_FOLDER_PATH, "ext.config.yaml");
 
-  const { stdout, stderr } = process;
   let doc: Document;
 
   try {
@@ -195,9 +170,9 @@ export async function ensureAppConfig(cwd = process.cwd()) {
   } catch (error) {
     const fallbackContent = `extensions:\n  ${EXTENSION_POINT_ID}:\n    $include: "${includePath}"`;
 
-    stderr.write(`${stringifyError(error as Error)}\n`);
-    stderr.write(
-      `❌ Failed to parse ${APP_CONFIG_FILE}. \nPlease add manually: \n\n${fallbackContent}\n`,
+    consola.error(stringifyError(error as Error));
+    consola.log.raw(
+      `Failed to parse ${APP_CONFIG_FILE}. \nPlease add manually: \n\n${fallbackContent}`,
     );
 
     return false;
@@ -206,11 +181,11 @@ export async function ensureAppConfig(cwd = process.cwd()) {
   if (
     doc.getIn(["extensions", EXTENSION_POINT_ID, "$include"]) === includePath
   ) {
-    stdout.write(`✅ Extension already configured in ${APP_CONFIG_FILE}\n`);
+    consola.success(`Extension already configured in ${APP_CONFIG_FILE}`);
     return true;
   }
 
-  stdout.write(`\n📝 Adding extension to ${APP_CONFIG_FILE}...\n`);
+  consola.info(`Adding extension to ${APP_CONFIG_FILE}...`);
   const extensions = getOrCreateMap(doc, ["extensions"], {
     onBeforeCreate: (pair) => {
       pair.key.spaceBefore = true;
@@ -232,7 +207,7 @@ export async function ensureAppConfig(cwd = process.cwd()) {
   commerceConfigExtension.set("$include", includePath);
 
   await writeFile(appConfigPath, doc.toString(), "utf-8");
-  stdout.write(`✅ Updated ${APP_CONFIG_FILE}\n`);
+  consola.success(`Updated ${APP_CONFIG_FILE}`);
 
   return true;
 }
@@ -296,7 +271,6 @@ function buildPaaSEnvSection(
 /** Ensure .env file has placeholder environment variables */
 export async function ensureEnvFile(cwd = process.cwd()) {
   const envPath = join(await getProjectRootDirectory(cwd), ENV_FILE);
-  const { stdout } = process;
 
   const envContent = existsSync(envPath)
     ? await readFile(envPath, "utf-8")
@@ -307,17 +281,15 @@ export async function ensureEnvFile(cwd = process.cwd()) {
   const missingVars = requiredVars.filter((v) => !existingEnvVars.has(v));
 
   if (missingVars.length === 0) {
-    stdout.write(
-      `\n✅ All required environment variables already present in ${ENV_FILE}\n`,
+    consola.success(
+      `All required environment variables already present in ${ENV_FILE}`,
     );
 
     return true;
   }
 
   let newContent = "";
-  stdout.write(
-    `\n📝 Adding environment variable placeholders to ${ENV_FILE}...\n`,
-  );
+  consola.info(`Adding environment variable placeholders to ${ENV_FILE}...`);
 
   if (!existingEnvVars.has("LOG_LEVEL")) {
     newContent += "# Logging level for runtime actions\n";
@@ -348,7 +320,7 @@ export async function ensureEnvFile(cwd = process.cwd()) {
   ]);
 
   await writeFile(envPath, `${newContent}\n${envContent}`, "utf-8");
-  stdout.write(`✅ Added environment variable placeholders to ${ENV_FILE}\n`);
+  consola.success(`Added environment variable placeholders to ${ENV_FILE}`);
 
   return true;
 }
@@ -358,8 +330,7 @@ export function installDependencies(
   packageManager: PackageManager,
   cwd = process.cwd(),
 ) {
-  const { stdout, stderr } = process;
-  stdout.write(`\n📦 Installing dependencies with ${packageManager}...\n`);
+  consola.info(`Installing dependencies with ${packageManager}...`);
 
   const packages = [
     "@adobe/aio-commerce-lib-config",
@@ -380,12 +351,12 @@ export function installDependencies(
       stdio: "inherit",
     });
 
-    stdout.write("\n✅ Dependencies installed successfully\n");
+    consola.success("Dependencies installed successfully");
     return true;
   } catch (error) {
-    stderr.write(`${stringifyError(error as Error)}\n`);
-    stderr.write(
-      `\n❌  Failed to install dependencies automatically. Please install manually: ${installCommand}\n`,
+    consola.error(stringifyError(error as Error));
+    consola.log.raw(
+      `Failed to install dependencies automatically. Please install manually: ${installCommand}`,
     );
 
     return false;
@@ -396,7 +367,6 @@ export function installDependencies(
 export async function runGeneration(cwd = process.cwd()) {
   const packageManager = await detectPackageManager(cwd);
   const execCommand = getExecCommand(packageManager);
-  const { stderr } = process;
 
   try {
     // Although we programatically add the postinstall script to package.json, we still need to run the generation
@@ -406,9 +376,9 @@ export async function runGeneration(cwd = process.cwd()) {
       stdio: "inherit",
     });
   } catch (error) {
-    stderr.write(`${stringifyError(error as Error)}\n`);
-    stderr.write(
-      `❌  Failed to run generation command. Please run manually: ${execCommand} aio-commerce-lib-config generate all\n`,
+    consola.error(stringifyError(error as Error));
+    consola.log.raw(
+      `Failed to run generation command. Please run manually: ${execCommand} aio-commerce-lib-config generate all`,
     );
 
     return false;
@@ -421,7 +391,6 @@ export async function runGeneration(cwd = process.cwd()) {
 export async function ensureInstallYaml(cwd = process.cwd()) {
   const rootDirectory = await getProjectRootDirectory(cwd);
   const installYamlPath = join(rootDirectory, INSTALL_YAML_FILE);
-  const { stdout, stderr } = process;
 
   let doc: Document;
   let extensions: YAMLSeq;
@@ -435,11 +404,11 @@ export async function ensureInstallYaml(cwd = process.cwd()) {
     });
   } catch (error) {
     const fallbackContent = `\nextensions:\n  - extensionPointId: ${EXTENSION_POINT_ID}`;
-    stderr.write(
-      `\n❌ Something went wrong while preparing "${INSTALL_YAML_FILE}": ${error}\n`,
+    consola.error(
+      `Something went wrong while preparing "${INSTALL_YAML_FILE}": ${error}`,
     );
 
-    stderr.write(`Please add manually: \n${fallbackContent}\n\n`);
+    consola.log.raw(`Please add manually: \n${fallbackContent}\n`);
     return false;
   }
 
@@ -450,17 +419,17 @@ export async function ensureInstallYaml(cwd = process.cwd()) {
         isMap(item) && item.get("extensionPointId") === EXTENSION_POINT_ID,
     )
   ) {
-    stdout.write(`✅ Extension already configured in ${INSTALL_YAML_FILE}\n`);
+    consola.success(`Extension already configured in ${INSTALL_YAML_FILE}`);
     return true;
   }
 
-  stdout.write(`\n📝 Adding extension to ${INSTALL_YAML_FILE}...\n`);
+  consola.info(`Adding extension to ${INSTALL_YAML_FILE}...`);
   const extension = doc.createPair("extensionPointId", EXTENSION_POINT_ID);
   extension.key.commentBefore = ` \`${EXTENSION_POINT_ID}\` is required by \`@adobe/aio-commerce-lib-config\`.`;
   extensions.items.unshift(extension);
 
   await writeFile(installYamlPath, doc.toString(), "utf-8");
-  stdout.write(`✅ Updated ${INSTALL_YAML_FILE}\n`);
+  consola.success(`Updated ${INSTALL_YAML_FILE}`);
 
   return true;
 }

@@ -10,20 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
-/** Context needed for schema operations. */
-export type SchemaContext = {
-  /** The namespace for isolating schema data. */
-  namespace: string;
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 
-  /** Cache timeout in milliseconds. */
-  cacheTimeout: number;
-};
+/**
+ * Stringify an error to a human-friendly string.
+ * @param error - The error to stringify.
+ */
+export function stringifyError(error: unknown) {
+  if (error instanceof CommerceSdkValidationError) {
+    return error.display();
+  }
 
-export type {
-  BusinessConfig,
-  BusinessConfigSchema,
-  BusinessConfigSchemaField,
-  BusinessConfigSchemaListOption,
-  BusinessConfigSchemaValue,
-  ExtensibilityConfig,
-} from "@adobe/aio-commerce-lib-extensibility/config";
+  return error instanceof Error ? error.message : String(error);
+}

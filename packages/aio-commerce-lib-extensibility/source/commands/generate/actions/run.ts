@@ -16,10 +16,8 @@ import { fileURLToPath } from "node:url";
 
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
-import {
-  createOrUpdateExtConfig,
-  readYamlFile,
-} from "@aio-commerce-sdk/scripting-utils/yaml";
+import { createOrUpdateExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
+import { readYamlFile } from "@aio-commerce-sdk/scripting-utils/yaml/index";
 import { consola } from "consola";
 import { formatTree } from "consola/utils";
 
@@ -47,7 +45,7 @@ export async function run() {
 }
 
 /** Update the ext.config.yaml file */
-async function updateExtConfig() {
+export async function updateExtConfig() {
   consola.info("Updating ext.config.yaml...");
 
   const outputDir = await makeOutputDirFor(EXTENSION_POINT_FOLDER_PATH);
@@ -59,7 +57,7 @@ async function updateExtConfig() {
 }
 
 /** Generate the action files */
-async function generateActionFiles() {
+export async function generateActionFiles() {
   consola.start("Generating runtime actions...");
   const outputDir = await makeOutputDirFor(
     join(EXTENSION_POINT_FOLDER_PATH, GENERATED_ACTIONS_PATH),

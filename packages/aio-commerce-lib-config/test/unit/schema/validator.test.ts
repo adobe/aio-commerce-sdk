@@ -23,12 +23,24 @@ import {
 } from "#test/fixtures/configuration-schema";
 
 vi.mock("node:fs");
-vi.mock("#commands/utils", async () => {
-  const actual =
-    await vi.importActual<typeof import("#commands/utils")>("#commands/utils");
+vi.mock("@aio-commerce-sdk/scripting-utils/project", async () => {
+  const actual = await vi.importActual<
+    typeof import("@aio-commerce-sdk/scripting-utils/project")
+  >("@aio-commerce-sdk/scripting-utils/project");
+
   return {
     ...actual,
     getProjectRootDirectory: vi.fn(),
+  };
+});
+
+vi.mock("@adobe/aio-commerce-lib-extensibility/config", async () => {
+  const actual = await vi.importActual<
+    typeof import("@adobe/aio-commerce-lib-extensibility/config")
+  >("@adobe/aio-commerce-lib-extensibility/config");
+
+  return {
+    ...actual,
     readExtensibilityConfig: vi.fn(),
   };
 });
@@ -53,12 +65,17 @@ describe("validator", () => {
   describe("loadBusinessConfigSchema()", () => {
     it("should validate if the file does exist and the content is valid", async () => {
       const tempDir = tmpdir();
-      const { getProjectRootDirectory, readExtensibilityConfig } = await import(
-        "#commands/utils"
+      const { getProjectRootDirectory } = await import(
+        "@aio-commerce-sdk/scripting-utils/project"
+      );
+
+      const { readExtensibilityConfig } = await import(
+        "@adobe/aio-commerce-lib-extensibility/config"
       );
 
       vi.mocked(getProjectRootDirectory).mockResolvedValueOnce(tempDir);
       vi.mocked(existsSync).mockReturnValueOnce(true);
+
       vi.mocked(readExtensibilityConfig).mockResolvedValueOnce({
         businessConfig: { schema: VALID_CONFIGURATION },
       });
@@ -70,7 +87,9 @@ describe("validator", () => {
 
     it("should return null if the file does not exist", async () => {
       const tempDir = tmpdir();
-      const { getProjectRootDirectory } = await import("#commands/utils");
+      const { getProjectRootDirectory } = await import(
+        "@aio-commerce-sdk/scripting-utils/project"
+      );
 
       vi.mocked(getProjectRootDirectory).mockResolvedValueOnce(tempDir);
       vi.mocked(existsSync).mockReturnValueOnce(false);
@@ -82,8 +101,12 @@ describe("validator", () => {
 
     it("should throw if loading the file fails with invalid syntax", async () => {
       const tempDir = tmpdir();
-      const { getProjectRootDirectory, readExtensibilityConfig } = await import(
-        "#commands/utils"
+      const { getProjectRootDirectory } = await import(
+        "@aio-commerce-sdk/scripting-utils/project"
+      );
+
+      const { readExtensibilityConfig } = await import(
+        "@adobe/aio-commerce-lib-extensibility/config"
       );
 
       vi.mocked(getProjectRootDirectory).mockResolvedValueOnce(tempDir);
