@@ -41,8 +41,18 @@ const configPaths = Object.freeze([
 ]);
 
 /**
- * Try to find (up to the nearest package.json file) the extensibility.config.js file.
+ * Try to find (up to the nearest package.json file) the extensibility config file.
+ *
+ * Searches for config files in the following order of priority:
+ * 1. `extensibility.config.js` - JavaScript (CommonJS or ESM)
+ * 2. `extensibility.config.ts` - TypeScript
+ * 3. `extensibility.config.cjs` - CommonJS
+ * 4. `extensibility.config.mjs` - ES Module
+ * 5. `extensibility.config.mts` - ES Module TypeScript
+ * 6. `extensibility.config.cts` - CommonJS TypeScript
+ *
  * @param cwd The current working directory
+ * @returns The path to the config file, or null if not found
  */
 export async function resolveExtensibilityConfig(cwd = process.cwd()) {
   const packageJsonPath = await findNearestPackageJson(cwd);
@@ -69,7 +79,13 @@ export async function resolveExtensibilityConfig(cwd = process.cwd()) {
 
 /**
  * Read the extensibility config file as-is, without validating it.
+ *
+ * Supports multiple config file formats (see {@link resolveExtensibilityConfig} for the list).
+ * The config file must export a default export with the configuration object.
+ *
  * @param cwd The current working directory
+ * @returns The raw config object from the file
+ * @throws {Error} If no config file is found or if the file doesn't export a default export
  */
 export async function readExtensibilityConfig(cwd = process.cwd()) {
   const configFilePath = await resolveExtensibilityConfig(cwd);
@@ -106,8 +122,14 @@ export async function readExtensibilityConfig(cwd = process.cwd()) {
 }
 
 /**
- * Read the extensibility config file and parses it's contents into it's schema.
- * @param configFilePath The path to the extensibility config file
+ * Read the extensibility config file and parse its contents into its schema.
+ *
+ * Supports multiple config file formats (see {@link resolveExtensibilityConfig} for the list).
+ * The config file must export a default export with the configuration object.
+ *
+ * @param cwd The current working directory
+ * @returns The validated and parsed config object
+ * @throws {Error} If no config file is found, if the file doesn't export a default export, or if validation fails
  */
 export async function parseExtensibilityConfig(cwd = process.cwd()) {
   const config = await readExtensibilityConfig(cwd);

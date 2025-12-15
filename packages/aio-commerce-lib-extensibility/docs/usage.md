@@ -27,7 +27,16 @@ npm install @adobe/aio-commerce-lib-extensibility
 
 #### 2. Create your extensibility configuration
 
-Create an `extensibility.config.js` file in your project root:
+Create an extensibility config file in your project root. The library supports multiple file formats:
+
+- `extensibility.config.js` - JavaScript (CommonJS or ESM, depending on `type` in `package.json`)
+- `extensibility.config.ts` - TypeScript
+- `extensibility.config.cjs` - CommonJS
+- `extensibility.config.mjs` - ES Module
+- `extensibility.config.mts` - ES Module TypeScript
+- `extensibility.config.cts` - CommonJS TypeScript
+
+**Example using ESM:**
 
 ```javascript
 import { defineConfig } from "@adobe/aio-commerce-lib-extensibility/config";
@@ -55,6 +64,24 @@ export default defineConfig({
       },
     ],
   },
+});
+```
+
+**Example using CommonJS:**
+
+```javascript
+const {
+  defineConfig,
+} = require("@adobe/aio-commerce-lib-extensibility/config");
+
+module.exports = defineConfig({
+  metadata: {
+    id: "my-commerce-app",
+    displayName: "My Commerce App",
+    description: "A custom Adobe Commerce application",
+    version: "1.0.0",
+  },
+  // ... rest of config
 });
 ```
 
