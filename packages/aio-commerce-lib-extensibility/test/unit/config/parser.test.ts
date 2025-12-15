@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -18,8 +19,6 @@ import {
   readExtensibilityConfig,
   resolveExtensibilityConfig,
 } from "#config/lib/parser";
-
-import { withTempFiles } from "../helpers/temp-fs";
 
 describe("resolveExtensibilityConfig", () => {
   test("should return null when no package.json is found", () => {
