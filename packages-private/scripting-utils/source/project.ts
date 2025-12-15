@@ -10,6 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
+/**
+ * This module exports shared project utilities for the AIO Commerce SDK.
+ * @packageDocumentation
+ */
+
 import { existsSync } from "node:fs";
 import { access, mkdir, readFile } from "node:fs/promises";
 import { dirname, join, parse } from "node:path";

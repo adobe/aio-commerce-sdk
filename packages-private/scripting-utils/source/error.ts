@@ -10,6 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
+/**
+ * This module exports shared error utilities for the AIO Commerce SDK.
+ * @packageDocumentation
+ */
+
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 
 /**

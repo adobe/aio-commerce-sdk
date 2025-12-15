@@ -10,6 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Public entrypoint for the yaml helpers. */
+/** biome-ignore-all lint/performance/noBarrelFile: Public entrypoint for the filesystem helpers. */
+
+/**
+ * This module exports shared filesystem utilities for the AIO Commerce SDK.
+ * @packageDocumentation
+ */
 
 export * from "./temp";
