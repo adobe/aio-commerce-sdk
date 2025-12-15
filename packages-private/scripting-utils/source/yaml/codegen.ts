@@ -35,7 +35,8 @@ export async function createOrUpdateExtConfig(
   config: ExtConfig,
   doc?: Document,
 ) {
-  const extConfigDoc = doc ?? new Document();
+  const extConfigDoc = doc ?? new Document({});
+
   config.hooks ??= {};
   config.operations ??= { workerProcess: [] };
   config.runtimeManifest ??= { packages: {} };
@@ -135,10 +136,7 @@ function buildOperations(extConfig: Document, operations: Operations) {
  * @param extConfig - The ext.config.yaml file
  * @param packages - The packages to build
  */
-export function buildRuntimeManifest(
-  extConfig: Document,
-  manifest: RuntimeManifest,
-) {
+function buildRuntimeManifest(extConfig: Document, manifest: RuntimeManifest) {
   getOrCreateMap(extConfig, ["runtimeManifest"], {
     onBeforeCreate: (pair) => {
       pair.key.spaceBefore = true;
@@ -161,20 +159,11 @@ export function buildRuntimeManifest(
     );
 
     const actions = new YAMLMap();
-    if (!isMap(actions)) {
-      throw new Error(
-        "The `actions` field in the package definition is not a map.",
-      );
-    }
 
     packageDef.set("license", pkg.license ?? "Apache-2.0");
     packageDef.set("actions", actions);
 
     for (const [actionName, action] of Object.entries(pkg.actions ?? {})) {
-      if (actions.has(actionName)) {
-        continue;
-      }
-
       const actionDef = buildActionDefinition(action);
       actions.set(actionName, actionDef);
     }
