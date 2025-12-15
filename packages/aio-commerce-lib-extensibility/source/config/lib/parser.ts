@@ -14,8 +14,10 @@ import { readFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
-import { findNearestPackageJson } from "@aio-commerce-sdk/scripting-utils/project";
-import { findUp } from "find-up";
+import {
+  findNearestPackageJson,
+  findUp,
+} from "@aio-commerce-sdk/scripting-utils/project";
 import { createJiti } from "jiti";
 
 import { validateConfig } from "./validate";
@@ -88,7 +90,13 @@ export async function readExtensibilityConfig(cwd = process.cwd()) {
     );
   }
 
-  if (config && !("default" in config)) {
+  if (
+    !(config && "default" in config) ||
+    config.default === undefined ||
+    config.default === null ||
+    (typeof config.default === "object" &&
+      Object.keys(config.default).length === 0)
+  ) {
     throw new Error(
       "Extensibility config file does not export a default export. Make sure you use `export default` or `module.exports = { /* your config */ }`",
     );

@@ -78,7 +78,6 @@
     "@adobe/aio-lib-files": "^4.0.0",
     "@adobe/aio-lib-state": "^5.0.0",
     "consola": "^3.4.2",
-    "find-up": "^8.0.0",
     "jiti": "^2.6.1",
     "uuid": "^13.0.0",
     "valibot": "^1.1.0",

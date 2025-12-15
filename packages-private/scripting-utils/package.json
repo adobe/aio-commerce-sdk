@@ -33,7 +33,6 @@
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "^0.5.1",
-    "find-up": "^8.0.0",
     "yaml": "^2.8.1"
   },
   "devDependencies": {
