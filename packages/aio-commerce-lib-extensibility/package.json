@@ -8,8 +8,7 @@
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
-  "description": "Description for @adobe/aio-commerce-lib-extensibility",
-  "keywords": [],
+  "description": "Extensibility configuration management library for Adobe Commerce applications",
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },

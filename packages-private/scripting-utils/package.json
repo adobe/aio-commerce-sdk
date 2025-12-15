@@ -7,7 +7,7 @@
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
-  "description": "Description for @aio-commerce-sdk/scripting-utils",
+  "description": "Utility functions for Adobe Commerce SDK scripts and build tools",
   "scripts": {
     "build": "tsdown",
     "docs": "typedoc && prettier --write '**/*.md'",
