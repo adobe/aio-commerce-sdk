@@ -12,7 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 
-import { validateConfig, validateConfigDomain } from "~/config/lib/validate";
+import { validateConfig, validateConfigDomain } from "#config/lib/validate";
 
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_DESCRIPTION_LENGTH = 255;

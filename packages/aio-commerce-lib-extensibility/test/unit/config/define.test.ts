@@ -12,7 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 
-import { defineConfig } from "~/config/lib/define";
+import { defineConfig } from "#config/lib/define";
 
 describe("defineConfig", () => {
   test("should return the config as-is", () => {

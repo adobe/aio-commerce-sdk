@@ -101,8 +101,12 @@ export async function readExtensibilityConfig(cwd = process.cwd()) {
   try {
     config = await jiti.import<ImportedConfig>(configFilePath);
   } catch (error) {
+    const message = stringifyError(error);
     throw new Error(
-      `Failed to read extensibility config file at ${configFilePath}: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to read extensibility config file at ${configFilePath}: ${message}`,
+      {
+        cause: error,
+      },
     );
   }
 

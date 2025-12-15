@@ -17,11 +17,18 @@ import {
   readBundledExtensibilityConfig,
   readExtensibilityConfig,
   resolveExtensibilityConfig,
-} from "~/config/lib/parser";
+} from "#config/lib/parser";
 
 import { withTempFiles } from "../helpers/temp-fs";
 
 describe("resolveExtensibilityConfig", () => {
+  test("should return null when no package.json is found", () => {
+    withTempFiles({}, async (tempDir) => {
+      const result = await resolveExtensibilityConfig(tempDir);
+      expect(result).toBeNull();
+    });
+  });
+
   test("should resolve extensibility config file", async () => {
     await withTempFiles(
       {
@@ -419,6 +426,30 @@ describe("parseExtensibilityConfig", () => {
         await expect(parseExtensibilityConfig(tempDir)).rejects.toThrow(
           "Invalid extensibility config",
         );
+      },
+    );
+  });
+
+  test("should throw on invalid syntax", async () => {
+    const configContent = `
+      export default {
+        metadata: {
+          // Use invalid quotes: “ instead of "
+          id: “invalid-app“,
+          displayName: "Invalid App",
+          description: "An invalid application",
+          version: "1.0.0",
+        },
+      };
+    `;
+
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test-project" }),
+        "extensibility.config.js": configContent,
+      },
+      async (tempDir) => {
+        await expect(parseExtensibilityConfig(tempDir)).rejects.toThrow();
       },
     );
   });
