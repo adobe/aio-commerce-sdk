@@ -11,6 +11,7 @@
  */
 
 import { existsSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import { join } from "node:path";
 
 import { describe, expect, test } from "vitest";
@@ -325,6 +326,9 @@ describe("makeOutputDirFor", () => {
 
         expect(outputPath).toContain("newdir");
         expect(existsSync(outputPath)).toBe(true);
+
+        // Clean up the created directory
+        await rm(outputPath, { recursive: true, force: true });
       },
     );
   });
