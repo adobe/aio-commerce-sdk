@@ -60,6 +60,58 @@ describe("resolveExtensibilityConfig", () => {
     );
   });
 
+  test("should find extensibility.config.mjs", async () => {
+    await withTempFiles(
+      {
+        "extensibility.config.mjs": "export default {};",
+        "package.json": JSON.stringify({ name: "test-app" }),
+      },
+      async (tempDir) => {
+        const result = await resolveExtensibilityConfig(tempDir);
+        expect(result).toContain("extensibility.config.mjs");
+      },
+    );
+  });
+
+  test("should find extensibility.config.mts", async () => {
+    await withTempFiles(
+      {
+        "extensibility.config.mts": "export default {};",
+        "package.json": JSON.stringify({ name: "test-app" }),
+      },
+      async (tempDir) => {
+        const result = await resolveExtensibilityConfig(tempDir);
+        expect(result).toContain("extensibility.config.mts");
+      },
+    );
+  });
+
+  test("should find extensibility.config.cjs", async () => {
+    await withTempFiles(
+      {
+        "extensibility.config.cjs": "module.exports = {};",
+        "package.json": JSON.stringify({ name: "test-app" }),
+      },
+      async (tempDir) => {
+        const result = await resolveExtensibilityConfig(tempDir);
+        expect(result).toContain("extensibility.config.cjs");
+      },
+    );
+  });
+
+  test("should find extensibility.config.cts", async () => {
+    await withTempFiles(
+      {
+        "extensibility.config.cts": "export default {};",
+        "package.json": JSON.stringify({ name: "test-app" }),
+      },
+      async (tempDir) => {
+        const result = await resolveExtensibilityConfig(tempDir);
+        expect(result).toContain("extensibility.config.cts");
+      },
+    );
+  });
+
   test("should prioritize .js over .ts", async () => {
     await withTempFiles(
       {
@@ -70,6 +122,34 @@ describe("resolveExtensibilityConfig", () => {
       async (tempDir) => {
         const result = await resolveExtensibilityConfig(tempDir);
         expect(result).toContain("extensibility.config.js");
+      },
+    );
+  });
+
+  test("should prioritize .ts over .mjs", async () => {
+    await withTempFiles(
+      {
+        "extensibility.config.mjs": "export default {};",
+        "extensibility.config.ts": "export default {};",
+        "package.json": JSON.stringify({ name: "test-app" }),
+      },
+      async (tempDir) => {
+        const result = await resolveExtensibilityConfig(tempDir);
+        expect(result).toContain("extensibility.config.ts");
+      },
+    );
+  });
+
+  test("should prioritize .cjs over .mjs", async () => {
+    await withTempFiles(
+      {
+        "extensibility.config.cjs": "module.exports = {};",
+        "extensibility.config.mjs": "export default {};",
+        "package.json": JSON.stringify({ name: "test-app" }),
+      },
+      async (tempDir) => {
+        const result = await resolveExtensibilityConfig(tempDir);
+        expect(result).toContain("extensibility.config.cjs");
       },
     );
   });
@@ -206,6 +286,87 @@ describe("readExtensibilityConfig", () => {
         expect(result.metadata.id).toBe("app-with-schema");
         expect(result.businessConfig?.schema).toHaveLength(1);
         expect(result.businessConfig?.schema[0].name).toBe("apiKey");
+      },
+    );
+  });
+
+  test("should read TypeScript config file (.ts)", async () => {
+    const configContent = `
+      export default {
+        metadata: {
+          id: "ts-app",
+          displayName: "TypeScript App",
+          description: "A TypeScript application",
+          version: "1.0.0",
+        },
+      };
+    `;
+
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test-project" }),
+        "extensibility.config.ts": configContent,
+      },
+      async (tempDir) => {
+        const result = (await readExtensibilityConfig(tempDir)) as {
+          metadata: { id: string; displayName: string };
+        };
+        expect(result.metadata.id).toBe("ts-app");
+        expect(result.metadata.displayName).toBe("TypeScript App");
+      },
+    );
+  });
+
+  test("should read ESM config file (.mjs)", async () => {
+    const configContent = `
+      export default {
+        metadata: {
+          id: "esm-app",
+          displayName: "ESM App",
+          description: "An ESM application",
+          version: "1.0.0",
+        },
+      };
+    `;
+
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test-project" }),
+        "extensibility.config.mjs": configContent,
+      },
+      async (tempDir) => {
+        const result = (await readExtensibilityConfig(tempDir)) as {
+          metadata: { id: string; displayName: string };
+        };
+        expect(result.metadata.id).toBe("esm-app");
+        expect(result.metadata.displayName).toBe("ESM App");
+      },
+    );
+  });
+
+  test("should read CommonJS config file (.cjs)", async () => {
+    const configContent = `
+      module.exports = {
+        metadata: {
+          id: "cjs-app",
+          displayName: "CJS App",
+          description: "A CommonJS application",
+          version: "1.0.0",
+        },
+      };
+    `;
+
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test-project" }),
+        "extensibility.config.cjs": configContent,
+      },
+      async (tempDir) => {
+        const result = (await readExtensibilityConfig(tempDir)) as {
+          metadata: { id: string; displayName: string };
+        };
+        expect(result.metadata.id).toBe("cjs-app");
+        expect(result.metadata.displayName).toBe("CJS App");
       },
     );
   });
