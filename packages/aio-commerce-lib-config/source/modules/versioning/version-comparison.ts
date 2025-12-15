@@ -191,9 +191,10 @@ function invertDiffOperations(changes: ConfigDiff[]): ConfigDiff[] {
           change.newValue,
           change.oldValue,
         );
-      default:
-        // TypeScript exhaustiveness check - this should never happen
-        return change satisfies never;
+      default: {
+        const _exhaustiveCheck: never = change as never;
+        throw new Error(`Unhandled diff type: ${JSON.stringify(change)}`);
+      }
     }
   });
 }

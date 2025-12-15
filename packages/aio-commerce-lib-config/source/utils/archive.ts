@@ -135,16 +135,11 @@ export async function archiveVersion(
   const files = await getSharedFiles();
   const state = await getSharedState();
 
-  // Generate archive path (with security validation)
   const archivePath = getArchivePath(scopeCode, version.id);
-
-  // Save to lib-files
   await files.write(archivePath, JSON.stringify(version));
 
-  // Use precalculated size if available to avoid redundant calculation
   const sizeInBytes = precalculatedSize ?? getValueSize(version);
 
-  // Create reference for lib-state
   const reference: ArchiveReference = {
     id: version.id,
     archived: true,
@@ -184,7 +179,6 @@ export async function restoreFromArchive(
 
   const entry = JSON.parse(stateValue.value);
 
-  // If it's an archive reference, fetch from lib-files
   if (isArchiveReference(entry)) {
     const files = await getSharedFiles();
     const archivedData = await files.read(entry.archivePath);
@@ -198,7 +192,6 @@ export async function restoreFromArchive(
     return JSON.parse(archivedData.toString());
   }
 
-  // It's a regular version in lib-state
   return entry as ConfigVersion;
 }
 
@@ -216,9 +209,7 @@ function isArchiveReference(entry: unknown): entry is ArchiveReference {
 }
 
 /**
- * Archives old versions for a scope.
- *
- * Uses parallel processing for better performance when handling multiple versions.
+ * Archives old versions for a scope with parallel processing.
  *
  * @param namespace - Storage namespace.
  * @param scopeCode - Scope code.
@@ -232,7 +223,6 @@ export async function archiveOldVersions(
   versionIds: string[],
   maxAgeDays: number = DEFAULT_ARCHIVE_AGE_DAYS,
 ): Promise<number> {
-  // Process all versions in parallel for better performance
   const results = await Promise.allSettled(
     versionIds.map(async (versionId) => {
       try {
@@ -246,7 +236,6 @@ export async function archiveOldVersions(
           return false;
         }
 
-        // Skip if already archived
         if (isArchiveReference(version)) {
           return false;
         }
@@ -265,7 +254,6 @@ export async function archiveOldVersions(
 
         return false;
       } catch (error) {
-        // Log but continue with other versions
         logger.warn(
           `Failed to archive version ${versionId}: ${error instanceof Error ? error.message : String(error)}`,
         );
@@ -274,7 +262,6 @@ export async function archiveOldVersions(
     }),
   );
 
-  // Count successful archives
   return results.filter(
     (result) => result.status === "fulfilled" && result.value === true,
   ).length;
@@ -295,9 +282,7 @@ export async function saveVersionWithAutoArchive(
 ): Promise<{ archived: boolean; reference?: ArchiveReference }> {
   const sizeInBytes = getValueSize(version);
 
-  // If approaching or exceeding 1MB, go directly to lib-files
   if (sizeInBytes >= ARCHIVE_SIZE_THRESHOLD) {
-    // Pass precalculated size to avoid redundant calculation
     const reference = await archiveVersion({
       namespace,
       scopeCode,
@@ -309,7 +294,6 @@ export async function saveVersionWithAutoArchive(
     return { archived: true, reference };
   }
 
-  // Save normally to lib-state
   const state = await getSharedState();
   const stateKey = `version:${scopeCode}:${version.id}`;
   await state.put(stateKey, JSON.stringify(version), { ttl: -1 });
@@ -318,16 +302,10 @@ export async function saveVersionWithAutoArchive(
 }
 
 /**
- * Gets the archive path for a version.
- * Validates inputs to prevent path traversal attacks.
- *
- * @param scopeCode - Scope code (must be alphanumeric, dash, or underscore).
- * @param versionId - Version ID (must be alphanumeric, dash, or underscore).
- * @returns Safe archive path.
- * @throws {Error} If inputs contain invalid characters.
+ * Validates and returns archive path for a version.
+ * Prevents path traversal attacks by restricting allowed characters.
  */
 function getArchivePath(scopeCode: string, versionId: string): string {
-  // Security: Validate inputs to prevent path traversal
   if (!SAFE_PATH_PATTERN.test(scopeCode)) {
     throw new Error(
       `Invalid scopeCode: "${scopeCode}". Only alphanumeric characters, dashes, and underscores are allowed.`,

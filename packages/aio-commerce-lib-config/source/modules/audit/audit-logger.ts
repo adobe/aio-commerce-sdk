@@ -177,28 +177,15 @@ async function persistAuditEntry(
 }
 
 /**
- * Gets audit log entries using Adobe recommended index-based pattern.
+ * Gets audit log entries with filtering and pagination.
  *
- * ⚠️ **PERFORMANCE WARNING**:
- * Due to lib-state limitations (no SQL-like queries), this function:
- * 1. Fetches ALL audit entries from the index into memory
- * 2. Filters in-memory
- * 3. Paginates results
- *
- * **Performance Impact**:
- * - With 1,000 entries: ~100ms, ~1MB memory
- * - With 10,000 entries: ~1s, ~10MB memory
- * - With 100,000+ entries: May cause out-of-memory errors
- *
- * **Mitigation Strategies**:
- * 1. Archive old audit logs to lib-files (recommended for >1,000 entries)
- * 2. Implement time-based filtering at the repository level
- * 3. For large-scale needs, consider migrating to a proper database
+ * WARNING: Loads all entries into memory due to lib-state limitations.
+ * Performance degrades significantly beyond 1,000 entries.
+ * Consider archiving old logs or time-based filtering for larger datasets.
  *
  * @param context - Audit context.
  * @param request - Audit log query request.
  * @returns Audit log entries with pagination.
- * @see https://developer.adobe.com/commerce/extensibility/app-development/best-practices/database-storage/
  */
 export async function getAuditLog(
   context: AuditContext,
@@ -261,8 +248,7 @@ function filterNullEntries(entries: (AuditEntry | null)[]): AuditEntry[] {
 }
 
 /**
- * Applies user-specified filters to audit entries.
- * Optimized to use single-pass filtering instead of multiple array iterations.
+ * Filters audit entries by user, action, and date range.
  */
 function applyAuditFilters(
   entries: AuditEntry[],
@@ -273,24 +259,19 @@ function applyAuditFilters(
     endDate?: string;
   },
 ): AuditEntry[] {
-  // Single-pass filter for better performance
   return entries.filter((entry) => {
-    // Filter by userId
     if (filters.userId && entry.actor.userId !== filters.userId) {
       return false;
     }
 
-    // Filter by action
     if (filters.action && entry.action !== filters.action) {
       return false;
     }
 
-    // Filter by startDate (inclusive)
     if (filters.startDate && entry.timestamp < filters.startDate) {
       return false;
     }
 
-    // Filter by endDate (inclusive)
     if (filters.endDate && entry.timestamp > filters.endDate) {
       return false;
     }
