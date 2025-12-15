@@ -65,6 +65,20 @@ export type SetConfigurationRequest = {
     /** The value to set (string, number, or boolean). */
     value: BusinessConfigSchemaValue;
   }>;
+  /** Optional metadata about who is making the change. */
+  metadata?: {
+    /** Actor information for audit logging. */
+    actor?: {
+      /** User identifier. */
+      userId?: string;
+      /** Source system or application. */
+      source?: string;
+      /** IP address (if available). */
+      ipAddress?: string;
+      /** User agent (if available). */
+      userAgent?: string;
+    };
+  };
 };
 
 /**
@@ -86,6 +100,13 @@ export type SetConfigurationResponse = {
     name: string;
     value: BusinessConfigSchemaValue;
   }>;
+  /** Version information for the update. */
+  versionInfo?: {
+    /** Unique version identifier. */
+    versionId: string;
+    /** Version number (incremental). */
+    versionNumber: number;
+  };
 };
 
 /**

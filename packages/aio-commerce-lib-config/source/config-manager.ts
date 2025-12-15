@@ -519,3 +519,392 @@ export async function setCustomScopeTree(
 
   return await setCustomScopeTreeModule(context, request);
 }
+
+/**
+ * Gets the version history for a configuration scope.
+ *
+ * This function retrieves the version history for a specific scope, showing
+ * all configuration changes over time with their diffs and metadata.
+ *
+ * @param scopeCode - The scope code to get history for.
+ * @param historyOptions - Optional pagination and filtering options.
+ * @param options - Optional library configuration options for cache timeout.
+ * @returns Promise resolving to version history with pagination.
+ *
+ * @example
+ * ```typescript
+ * import { getConfigurationHistory } from "@adobe/aio-commerce-lib-config";
+ *
+ * // Get latest 25 versions
+ * const history = await getConfigurationHistory("my-scope");
+ * console.log(`Total versions: ${history.pagination.total}`);
+ *
+ * history.versions.forEach((version) => {
+ *   console.log(`Version ${version.versionNumber}: ${version.timestamp}`);
+ *   console.log(`Changes: ${version.diff.length}`);
+ * });
+ * ```
+ *
+ * @example
+ * ```typescript
+ * import { getConfigurationHistory } from "@adobe/aio-commerce-lib-config";
+ *
+ * // Get versions with pagination
+ * const history = await getConfigurationHistory("my-scope", {
+ *   limit: 10,
+ *   offset: 0,
+ * });
+ *
+ * if (history.pagination.hasMore) {
+ *   console.log("More versions available");
+ * }
+ * ```
+ */
+export async function getConfigurationHistory(
+  scopeCode: string,
+  historyOptions?: { limit?: number; offset?: number },
+  _options?: LibConfigOptions,
+) {
+  const { getVersionHistory } = await import(
+    "./modules/versioning/version-manager"
+  );
+
+  const context = {
+    namespace: DEFAULT_NAMESPACE,
+    maxVersions: getMaxVersionsFromEnv(),
+  };
+
+  return getVersionHistory(context, {
+    scopeCode,
+    limit: historyOptions?.limit,
+    offset: historyOptions?.offset,
+  });
+}
+
+/**
+ * Gets the audit log entries with optional filtering.
+ *
+ * This function retrieves audit log entries for configuration changes,
+ * with support for filtering by scope, user, action type, and date range.
+ *
+ * @param filters - Optional filters for the audit log query.
+ * @param options - Optional library configuration options for cache timeout.
+ * @returns Promise resolving to audit log entries with pagination.
+ *
+ * @example
+ * ```typescript
+ * import { getAuditLog } from "@adobe/aio-commerce-lib-config";
+ *
+ * // Get all audit entries
+ * const auditLog = await getAuditLog();
+ * console.log(`Total entries: ${auditLog.pagination.total}`);
+ * ```
+ *
+ * @example
+ * ```typescript
+ * import { getAuditLog } from "@adobe/aio-commerce-lib-config";
+ *
+ * // Filter by scope and user
+ * const auditLog = await getAuditLog({
+ *   scopeCode: "my-scope",
+ *   userId: "user@example.com",
+ *   action: "update",
+ *   limit: 50,
+ * });
+ *
+ * auditLog.entries.forEach((entry) => {
+ *   console.log(`${entry.timestamp}: ${entry.actor.userId} performed ${entry.action}`);
+ *   console.log(`Version: ${entry.versionId}`);
+ *   console.log(`Changes: ${entry.changes.length}`);
+ * });
+ * ```
+ */
+export async function getAuditLog(
+  filters?: {
+    scopeCode?: string;
+    userId?: string;
+    action?: "create" | "update" | "rollback";
+    startDate?: string;
+    endDate?: string;
+    limit?: number;
+    offset?: number;
+  },
+  _options?: LibConfigOptions,
+) {
+  const { getAuditLog: getAuditLogModule } = await import(
+    "./modules/audit/audit-logger"
+  );
+
+  const context = {
+    namespace: DEFAULT_NAMESPACE,
+  };
+
+  return getAuditLogModule(context, filters ?? {});
+}
+
+/**
+ * Rolls back configuration to a previous version.
+ *
+ * This function restores configuration for a scope to a specific previous version,
+ * creating a new version entry and audit log record for the rollback operation.
+ *
+ * @param scopeCode - The scope code to rollback.
+ * @param versionId - The version ID to rollback to.
+ * @param metadata - Optional metadata about who is performing the rollback.
+ * @param options - Optional library configuration options for cache timeout.
+ * @returns Promise resolving to configuration response with updated scope and config values.
+ *
+ * @example
+ * ```typescript
+ * import { rollbackConfiguration } from "@adobe/aio-commerce-lib-config";
+ *
+ * // Rollback to a specific version
+ * const result = await rollbackConfiguration("my-scope", "version-id-123", {
+ *   actor: {
+ *     userId: "admin@example.com",
+ *     source: "admin-panel",
+ *   },
+ * });
+ *
+ * console.log(`Rolled back to version ${result.versionInfo?.versionNumber}`);
+ * console.log(`New version ID: ${result.versionInfo?.versionId}`);
+ * ```
+ */
+export async function rollbackConfiguration(
+  scopeCode: string,
+  versionId: string,
+  metadata?: {
+    actor?: {
+      userId?: string;
+      source?: string;
+      ipAddress?: string;
+      userAgent?: string;
+    };
+  },
+  options?: LibConfigOptions,
+) {
+  const { getVersionById: getVersionModule } = await import(
+    "./modules/versioning/version-manager"
+  );
+  const { setConfiguration: setConfigurationModule } = await import(
+    "./modules/configuration/set-config"
+  );
+
+  const context = {
+    namespace: DEFAULT_NAMESPACE,
+    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
+  };
+
+  const versionContext = {
+    namespace: DEFAULT_NAMESPACE,
+    maxVersions: getMaxVersionsFromEnv(),
+  };
+
+  // Get the version to rollback to
+  const targetVersion = await getVersionModule(
+    versionContext,
+    scopeCode,
+    versionId,
+  );
+
+  if (!targetVersion) {
+    throw new Error(`Version ${versionId} not found for scope ${scopeCode}`);
+  }
+
+  // Convert snapshot to config request format
+  const configRequest: SetConfigurationRequest & {
+    metadata?: { action?: "rollback" };
+  } = {
+    config: targetVersion.snapshot.map((item) => ({
+      name: item.name,
+      value: item.value,
+    })),
+    metadata: {
+      ...metadata,
+      action: "rollback" as const,
+    },
+  };
+
+  // Use existing setConfiguration logic with rollback metadata
+  return setConfigurationModule(context, configRequest, scopeCode);
+}
+
+/**
+ * Gets a before/after comparison for a specific version.
+ *
+ * This function retrieves a complete before/after view of configuration changes
+ * for a specific version, perfect for UI display.
+ *
+ * @param scopeCode - The scope code.
+ * @param versionId - The version ID to get comparison for.
+ * @param options - Optional library configuration options.
+ * @returns Promise resolving to version comparison or null if not found.
+ *
+ * @example
+ * ```typescript
+ * import { getVersionComparison } from "@adobe/aio-commerce-lib-config";
+ *
+ * const comparison = await getVersionComparison("my-scope", "version-id-123");
+ *
+ * if (comparison) {
+ *   console.log("Before:");
+ *   comparison.before.forEach(item => {
+ *     console.log(`  ${item.name}: ${item.value}`);
+ *   });
+ *
+ *   console.log("\nAfter:");
+ *   comparison.after.forEach(item => {
+ *     console.log(`  ${item.name}: ${item.value}`);
+ *   });
+ *
+ *   console.log("\nChanges:");
+ *   comparison.changes.forEach(change => {
+ *     if (change.type === "modified") {
+ *       console.log(`  ${change.name}: ${change.oldValue} → ${change.newValue}`);
+ *     } else if (change.type === "added") {
+ *       console.log(`  ${change.name}: (added) ${change.newValue}`);
+ *     } else {
+ *       console.log(`  ${change.name}: (removed)`);
+ *     }
+ *   });
+ * }
+ * ```
+ */
+export async function getVersionComparison(
+  scopeCode: string,
+  versionId: string,
+  _options?: LibConfigOptions,
+) {
+  const { getVersionComparison: getVersionComparisonModule } = await import(
+    "./modules/versioning/version-comparison"
+  );
+
+  const context = {
+    namespace: DEFAULT_NAMESPACE,
+    maxVersions: getMaxVersionsFromEnv(),
+  };
+
+  return getVersionComparisonModule(context, scopeCode, versionId);
+}
+
+/**
+ * Compares two versions side-by-side.
+ *
+ * This function compares any two versions and shows all differences between them,
+ * useful for UI features like "compare version 5 with version 10".
+ *
+ * @param scopeCode - The scope code.
+ * @param fromVersionId - Earlier version ID.
+ * @param toVersionId - Later version ID.
+ * @param options - Optional library configuration options.
+ * @returns Promise resolving to two-version comparison or null if either not found.
+ *
+ * @example
+ * ```typescript
+ * import { compareVersions } from "@adobe/aio-commerce-lib-config";
+ *
+ * const comparison = await compareVersions(
+ *   "my-scope",
+ *   "version-5-id",
+ *   "version-10-id"
+ * );
+ *
+ * if (comparison) {
+ *   console.log(`Comparing v${comparison.fromVersion.versionNumber} to v${comparison.toVersion.versionNumber}`);
+ *   console.log(`Changes: ${comparison.changes.length}`);
+ *
+ *   // Show side-by-side differences
+ *   comparison.changes.forEach(change => {
+ *     console.log(`\n${change.name}:`);
+ *     console.log(`  From: ${change.oldValue}`);
+ *     console.log(`  To:   ${change.newValue}`);
+ *     console.log(`  Type: ${change.type}`);
+ *   });
+ * }
+ * ```
+ */
+export async function compareVersions(
+  scopeCode: string,
+  fromVersionId: string,
+  toVersionId: string,
+  _options?: LibConfigOptions,
+) {
+  const { compareTwoVersions } = await import(
+    "./modules/versioning/version-comparison"
+  );
+
+  const context = {
+    namespace: DEFAULT_NAMESPACE,
+    maxVersions: getMaxVersionsFromEnv(),
+  };
+
+  return compareTwoVersions(context, scopeCode, fromVersionId, toVersionId);
+}
+
+/**
+ * Gets a specific version by ID with its complete configuration state.
+ *
+ * @param scopeCode - The scope code.
+ * @param versionId - The version ID.
+ * @param options - Optional library configuration options.
+ * @returns Promise resolving to version or null if not found.
+ *
+ * @example
+ * ```typescript
+ * import { getVersionById } from "@adobe/aio-commerce-lib-config";
+ *
+ * const version = await getVersionById("my-scope", "version-id-123");
+ *
+ * if (version) {
+ *   console.log(`Version ${version.versionNumber}`);
+ *   console.log(`Created: ${version.timestamp}`);
+ *   console.log(`Actor: ${version.actor?.userId || "unknown"}`);
+ *   console.log(`Changes: ${version.diff.length}`);
+ *   console.log(`Config items: ${version.snapshot.length}`);
+ * }
+ * ```
+ */
+export async function getVersionById(
+  scopeCode: string,
+  versionId: string,
+  _options?: LibConfigOptions,
+) {
+  const { getVersionById: getVersionModule } = await import(
+    "./modules/versioning/version-manager"
+  );
+
+  const context = {
+    namespace: DEFAULT_NAMESPACE,
+    maxVersions: getMaxVersionsFromEnv(),
+  };
+
+  return getVersionModule(context, scopeCode, versionId);
+}
+
+import {
+  DEFAULT_MAX_VERSIONS,
+  MAX_VERSIONS_ENV_VAR,
+  MIN_VERSION_COUNT,
+} from "#utils/versioning-constants";
+
+/**
+ * Gets the maximum number of versions to keep from environment or defaults.
+ *
+ * @returns Maximum number of versions to retain per scope.
+ * @internal
+ */
+function getMaxVersionsFromEnv(): number {
+  const envValue = process.env[MAX_VERSIONS_ENV_VAR];
+
+  if (!envValue) {
+    return DEFAULT_MAX_VERSIONS;
+  }
+
+  const parsedValue = Number.parseInt(envValue, 10);
+
+  if (Number.isNaN(parsedValue) || parsedValue < MIN_VERSION_COUNT) {
+    return DEFAULT_MAX_VERSIONS;
+  }
+
+  return parsedValue;
+}
