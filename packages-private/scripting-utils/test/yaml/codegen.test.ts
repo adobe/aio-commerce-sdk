@@ -17,9 +17,7 @@ import { describe, expect, test } from "vitest";
 import { Document, parseDocument } from "yaml";
 
 import { withTempFiles } from "#filesystem/temp";
-import { buildRuntimeManifest, createOrUpdateExtConfig } from "#yaml/codegen";
-
-import type { RuntimeManifest } from "#yaml/types";
+import { createOrUpdateExtConfig } from "#yaml/codegen";
 
 describe("createOrUpdateExtConfig", () => {
   test("should create a new ext.config.yaml file", async () => {
@@ -133,177 +131,388 @@ runtimeManifest:
       expect(doc.has("runtimeManifest")).toBe(true);
     });
   });
-});
 
-describe("buildRuntimeManifest", () => {
-  test("should build runtime manifest with packages and actions", () => {
-    const doc = new Document({});
-    const manifest = {
-      packages: {
-        "test-package": {
-          license: "MIT",
-          actions: {
-            "test-action": {
-              function: "actions/test.js",
-              web: "yes",
-              runtime: "nodejs:20",
+  test("should create document when none is provided", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      const configPath = join(tempDir, "ext.config.yaml");
+      const config = {
+        hooks: {
+          "test-hook": "echo test",
+        },
+      };
+
+      // Don't pass a document - tests line 38 (doc ?? new Document({}))
+      const doc = await createOrUpdateExtConfig(configPath, config);
+
+      expect(doc).toBeInstanceOf(Document);
+      expect(doc.has("hooks")).toBe(true);
+      expect(doc.get("hooks")).toBeDefined();
+    });
+  });
+
+  test("should handle config without operations.workerProcess", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      const configPath = join(tempDir, "ext.config.yaml");
+      const config = {
+        operations: {
+          // No workerProcess - tests line 114 (operations.workerProcess ?? [])
+        },
+      };
+
+      const doc = await createOrUpdateExtConfig(
+        configPath,
+        config,
+        new Document({}),
+      );
+
+      expect(doc.has("operations")).toBe(true);
+    });
+  });
+
+  test("should handle config without runtimeManifest.packages", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      const configPath = join(tempDir, "ext.config.yaml");
+      const config = {
+        runtimeManifest: {
+          // No packages - tests line 148 (manifest.packages ?? {})
+        },
+      };
+
+      const doc = await createOrUpdateExtConfig(
+        configPath,
+        config,
+        new Document({}),
+      );
+
+      expect(doc.has("runtimeManifest")).toBe(true);
+    });
+  });
+
+  test("should build runtime manifest with packages and actions", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      const configPath = join(tempDir, "ext.config.yaml");
+      const config = {
+        runtimeManifest: {
+          packages: {
+            "test-package": {
+              license: "MIT",
+              actions: {
+                "test-action": {
+                  function: "actions/test.js",
+                  web: "yes",
+                  runtime: "nodejs:20",
+                },
+              },
             },
           },
         },
-      },
-    };
+      };
 
-    buildRuntimeManifest(doc, manifest);
+      const doc = await createOrUpdateExtConfig(
+        configPath,
+        config,
+        new Document({}),
+      );
 
-    expect(doc.has("runtimeManifest")).toBe(true);
-    expect(
-      doc.getIn(["runtimeManifest", "packages", "test-package"]),
-    ).toBeDefined();
-    expect(
-      doc.getIn([
+      expect(doc.has("runtimeManifest")).toBe(true);
+      expect(
+        doc.getIn(["runtimeManifest", "packages", "test-package"]),
+      ).toBeDefined();
+      expect(
+        doc.getIn([
+          "runtimeManifest",
+          "packages",
+          "test-package",
+          "actions",
+          "test-action",
+        ]),
+      ).toBeDefined();
+    });
+  });
+
+  test("should use default license if not provided", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      const configPath = join(tempDir, "ext.config.yaml");
+      const config = {
+        runtimeManifest: {
+          packages: {
+            "test-package": {
+              actions: {
+                "test-action": {
+                  function: "actions/test.js",
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const doc = await createOrUpdateExtConfig(
+        configPath,
+        config,
+        new Document({}),
+      );
+
+      const license = doc.getIn([
+        "runtimeManifest",
+        "packages",
+        "test-package",
+        "license",
+      ]);
+      expect(license).toBe("Apache-2.0");
+    });
+  });
+
+  test("should handle action with includes", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      const configPath = join(tempDir, "ext.config.yaml");
+      const config = {
+        runtimeManifest: {
+          packages: {
+            "test-package": {
+              actions: {
+                "test-action": {
+                  function: "actions/test.js",
+                  include: [
+                    ["config.json", "config.json"] as [string, string],
+                    ["data.txt", "data.txt"] as [string, string],
+                  ],
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const doc = await createOrUpdateExtConfig(
+        configPath,
+        config,
+        new Document({}),
+      );
+
+      const action = doc.getIn([
         "runtimeManifest",
         "packages",
         "test-package",
         "actions",
         "test-action",
-      ]),
-    ).toBeDefined();
-  });
-
-  test("should use default license if not provided", () => {
-    const doc = new Document({});
-    const manifest = {
-      packages: {
-        "test-package": {
-          actions: {
-            "test-action": {
-              function: "actions/test.js",
-            },
-          },
-        },
-      },
-    };
-
-    buildRuntimeManifest(doc, manifest);
-
-    const license = doc.getIn([
-      "runtimeManifest",
-      "packages",
-      "test-package",
-      "license",
-    ]);
-    expect(license).toBe("Apache-2.0");
-  });
-
-  test("should handle action with includes", () => {
-    const doc = new Document({});
-    const manifest: RuntimeManifest = {
-      packages: {
-        "test-package": {
-          actions: {
-            "test-action": {
-              function: "actions/test.js",
-              include: [
-                ["config.json", "config.json"],
-                ["data.txt", "data.txt"],
-              ],
-            },
-          },
-        },
-      },
-    };
-
-    buildRuntimeManifest(doc, manifest);
-
-    const action = doc.getIn([
-      "runtimeManifest",
-      "packages",
-      "test-package",
-      "actions",
-      "test-action",
-    ]);
-    expect(action).toBeDefined();
-  });
-
-  test("should replace actions map with new one", () => {
-    const doc = new Document({
-      runtimeManifest: {
-        packages: {
-          "test-package": {
-            license: "MIT",
-            actions: {
-              "existing-action": {
-                function: "actions/existing.js",
-              },
-            },
-          },
-        },
-      },
+      ]);
+      expect(action).toBeDefined();
     });
+  });
 
-    const manifest = {
-      packages: {
-        "test-package": {
-          actions: {
-            "new-action": {
-              function: "actions/new.js",
-            },
+  test("should not duplicate existing operations", async () => {
+    const existingConfig = `
+operations:
+  workerProcess:
+    - type: action
+      impl: existing-action
+`;
+
+    await withTempFiles(
+      {
+        "ext.config.yaml": existingConfig,
+      },
+      async (tempDir) => {
+        const configPath = join(tempDir, "ext.config.yaml");
+        const existingDoc = parseDocument(existingConfig);
+
+        const config = {
+          operations: {
+            workerProcess: [
+              {
+                type: "action" as const,
+                impl: "existing-action",
+              },
+              {
+                type: "action" as const,
+                impl: "new-action",
+              },
+            ],
           },
-        },
+        };
+
+        await createOrUpdateExtConfig(configPath, config, existingDoc);
+
+        const fileContent = await readFile(configPath, "utf-8");
+        const doc = parseDocument(fileContent);
+
+        const ops = doc.toJSON().operations.workerProcess;
+        // Should have 2 operations: existing one + new one
+        expect(ops).toHaveLength(2);
+        expect(ops[0].impl).toBe("existing-action");
+        expect(ops[1].impl).toBe("new-action");
       },
-    };
-
-    buildRuntimeManifest(doc, manifest);
-
-    // Should create new actions map (replaces old one)
-    const newAction = doc.getIn([
-      "runtimeManifest",
-      "packages",
-      "test-package",
-      "actions",
-      "new-action",
-    ]);
-    expect(newAction).toBeDefined();
-
-    // Old action should not exist in new map
-    const existingAction = doc.getIn([
-      "runtimeManifest",
-      "packages",
-      "test-package",
-      "actions",
-      "existing-action",
-    ]);
-    expect(existingAction).toBeUndefined();
+    );
   });
 
-  test("should handle empty packages", () => {
-    const doc = new Document({});
-    const manifest = {
-      packages: {},
-    };
+  test("should throw error when hook value ends with .js", async () => {
+    const existingConfig = `
+hooks:
+  pre-app-build: scripts/build.js
+`;
 
-    buildRuntimeManifest(doc, manifest);
+    await withTempFiles(
+      {
+        "ext.config.yaml": existingConfig,
+      },
+      async (tempDir) => {
+        const configPath = join(tempDir, "ext.config.yaml");
+        const existingDoc = parseDocument(existingConfig);
 
-    expect(doc.has("runtimeManifest")).toBe(true);
-    expect(doc.getIn(["runtimeManifest", "packages"])).toBeDefined();
+        const config = {
+          hooks: {
+            "pre-app-build": "echo 'test'",
+          },
+        };
+
+        await expect(
+          createOrUpdateExtConfig(configPath, config, existingDoc),
+        ).rejects.toThrow(
+          'Conflicting hook definition found. The "pre-app-build" hook needs to be a command, not a script.',
+        );
+      },
+    );
   });
 
-  test("should handle package without actions", () => {
-    const doc = new Document({});
-    const manifest = {
-      packages: {
-        "test-package": {
-          license: "MIT",
-        },
+  test("should throw error when hook value ends with .ts", async () => {
+    const existingConfig = `
+hooks:
+  pre-app-build: scripts/build.ts
+`;
+
+    await withTempFiles(
+      {
+        "ext.config.yaml": existingConfig,
       },
-    };
+      async (tempDir) => {
+        const configPath = join(tempDir, "ext.config.yaml");
+        const existingDoc = parseDocument(existingConfig);
 
-    buildRuntimeManifest(doc, manifest);
+        const config = {
+          hooks: {
+            "pre-app-build": "echo 'test'",
+          },
+        };
 
-    const pkg = doc.getIn(["runtimeManifest", "packages", "test-package"]);
-    expect(pkg).toBeDefined();
-    expect(
-      doc.getIn(["runtimeManifest", "packages", "test-package", "license"]),
-    ).toBe("MIT");
+        await expect(
+          createOrUpdateExtConfig(configPath, config, existingDoc),
+        ).rejects.toThrow(
+          'Conflicting hook definition found. The "pre-app-build" hook needs to be a command, not a script.',
+        );
+      },
+    );
+  });
+
+  test("should chain hooks when previous value exists", async () => {
+    const existingConfig = `
+hooks:
+  pre-app-build: echo 'existing'
+`;
+
+    await withTempFiles(
+      {
+        "ext.config.yaml": existingConfig,
+      },
+      async (tempDir) => {
+        const configPath = join(tempDir, "ext.config.yaml");
+        const existingDoc = parseDocument(existingConfig);
+
+        const config = {
+          hooks: {
+            "pre-app-build": "echo 'new'",
+          },
+        };
+
+        await createOrUpdateExtConfig(configPath, config, existingDoc);
+
+        const fileContent = await readFile(configPath, "utf-8");
+        const doc = parseDocument(fileContent);
+
+        const hookValue = doc.getIn(["hooks", "pre-app-build"]);
+        // Should chain the commands with &&
+        expect(hookValue).toContain("echo 'existing'");
+        expect(hookValue).toContain("echo 'new'");
+        expect(hookValue).toContain("&&");
+      },
+    );
+  });
+
+  test("should handle empty previous hook value", async () => {
+    const existingConfig = `
+hooks:
+  pre-app-build: ""
+`;
+
+    await withTempFiles(
+      {
+        "ext.config.yaml": existingConfig,
+      },
+      async (tempDir) => {
+        const configPath = join(tempDir, "ext.config.yaml");
+        const existingDoc = parseDocument(existingConfig);
+
+        const config = {
+          hooks: {
+            "pre-app-build": "echo 'new'",
+          },
+        };
+
+        await createOrUpdateExtConfig(configPath, config, existingDoc);
+
+        const fileContent = await readFile(configPath, "utf-8");
+        const doc = parseDocument(fileContent);
+
+        const hookValue = doc.getIn(["hooks", "pre-app-build"]);
+        // Should just use the new value (not chain with empty)
+        expect(hookValue).toBe("echo 'new'");
+      },
+    );
+  });
+
+  test("should not chain when command already included in empty hook", async () => {
+    const existingConfig = `
+hooks:
+  pre-app-build: ""
+`;
+
+    await withTempFiles(
+      {
+        "ext.config.yaml": existingConfig,
+      },
+      async (tempDir) => {
+        const configPath = join(tempDir, "ext.config.yaml");
+        const existingDoc = parseDocument(existingConfig);
+
+        const config = {
+          hooks: {
+            "pre-app-build": "echo 'test'",
+          },
+        };
+
+        // First call
+        await createOrUpdateExtConfig(configPath, config, existingDoc);
+
+        // Read the updated doc
+        const fileContent = await readFile(configPath, "utf-8");
+        const updatedDoc = parseDocument(fileContent);
+
+        // Second call with same command - tests line 201
+        const config2 = {
+          hooks: {
+            "pre-app-build": "echo 'test'",
+          },
+        };
+
+        await createOrUpdateExtConfig(configPath, config2, updatedDoc);
+
+        const finalContent = await readFile(configPath, "utf-8");
+        const finalDoc = parseDocument(finalContent);
+
+        const hookValue = finalDoc.getIn(["hooks", "pre-app-build"]);
+        // Should not duplicate the command
+        expect(hookValue).toBe("echo 'test'");
+      },
+    );
   });
 });

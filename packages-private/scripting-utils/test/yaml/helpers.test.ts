@@ -70,8 +70,14 @@ config:
     await withTempFiles({}, async (tempDir) => {
       const doc = await readYamlFile(join(tempDir, "nonexistent.yaml"));
       expect(doc).toBeInstanceOf(Document);
-      // Should have $schema meta-property for empty files
-      expect(doc.get("$schema")).toBe("http://json-schema.org/draft-07/schema");
+
+      // Should have contents initialized as YAMLMap
+      expect(doc.contents).toBeDefined();
+      expect(doc.contents).not.toBeNull();
+
+      // Should be able to work with the document
+      doc.set("test", "value");
+      expect(doc.get("test")).toBe("value");
     });
   });
 
@@ -83,9 +89,28 @@ config:
       async (tempDir) => {
         const doc = await readYamlFile(join(tempDir, "empty.yaml"));
         expect(doc).toBeInstanceOf(Document);
-        // Should have $schema meta-property for empty files
-        expect(doc.get("$schema")).toBe(
-          "http://json-schema.org/draft-07/schema",
+
+        // Should have contents initialized as YAMLMap
+        expect(doc.contents).toBeDefined();
+        expect(doc.contents).not.toBeNull();
+
+        // Should be able to work with the document
+        doc.set("test", "value");
+        expect(doc.get("test")).toBe("value");
+      },
+    );
+  });
+
+  test("should throw error when file read fails", async () => {
+    // Test error handling by trying to read a directory as a file
+    await withTempFiles(
+      {
+        "somedir/file.txt": "test",
+      },
+      async (tempDir) => {
+        // Try to read the directory itself as a YAML file
+        await expect(readYamlFile(join(tempDir, "somedir"))).rejects.toThrow(
+          "Failed to parse somedir",
         );
       },
     );

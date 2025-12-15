@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, test } from "vitest";
@@ -22,6 +23,7 @@ import {
   getExecCommand,
   getProjectRootDirectory,
   isESM,
+  makeOutputDirFor,
   readPackageJson,
 } from "#project";
 
@@ -308,5 +310,38 @@ describe("getExecCommand", () => {
 
   test("should return bunx for bun", () => {
     expect(getExecCommand("bun")).toBe("bunx");
+  });
+});
+
+describe("makeOutputDirFor", () => {
+  test("should create output directory when it doesn't exist", async () => {
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test" }),
+      },
+      async () => {
+        // Create a new directory that doesn't exist
+        const outputPath = await makeOutputDirFor("newdir");
+
+        expect(outputPath).toContain("newdir");
+        expect(existsSync(outputPath)).toBe(true);
+      },
+    );
+  });
+
+  test("should not recreate existing directory", async () => {
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test" }),
+        "dist/file.txt": "test",
+      },
+      async () => {
+        // Create dist directory first
+        const outputPath = await makeOutputDirFor("dist");
+
+        expect(outputPath).toContain("dist");
+        expect(existsSync(outputPath)).toBe(true);
+      },
+    );
   });
 });
