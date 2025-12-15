@@ -87,8 +87,6 @@ await rollbackConfiguration("scope-code", "version-id-to-restore", {
 
 - [Usage Guide](./docs/usage.md) - Basic usage and configuration management
 - [Versioning and Audit Guide](./docs/versioning-and-audit.md) - Complete guide to versioning and audit features
-- [Adobe Storage Best Practices](./docs/adobe-storage-best-practices.md) - How we implement Adobe's recommended patterns
-- [Storage Architecture](./docs/storage-architecture.md) - **NEW!** How multiple config values are stored and archived
 
 ## Contributing
 
