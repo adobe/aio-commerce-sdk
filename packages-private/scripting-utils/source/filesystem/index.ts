@@ -10,10 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, it } from "vitest";
+/** biome-ignore-all lint/performance/noBarrelFile: Public entrypoint for the yaml helpers. */
 
-describe("scripting-utils", () => {
-  it("should work", () => {
-    expect(true).toBe(true);
-  });
-});
+export * from "./temp";
