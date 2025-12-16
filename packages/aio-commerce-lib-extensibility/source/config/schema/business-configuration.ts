@@ -148,7 +148,7 @@ const PhoneSchema = v.object({
   ),
 });
 
-/** Schema for a configuration field that can be one of various field types (list, text, password, boolean, number, date, email, url, or phone) */
+/** Schema for a configuration field that can be one of various field types (list, text, email, url, or phone) */
 const FieldSchema = v.variant("type", [
   ListSchema,
   TextSchema,
@@ -171,7 +171,7 @@ export const SchemaBusinessConfigSchema = v.pipe(
  * The schema type for a configuration field.
  *
  * Represents a single field definition in the configuration schema, which can be
- * one of various types: list, text, password, boolean, number, date, email, url, or phone.
+ * one of various types: list, text, email, url, or phone.
  */
 export type BusinessConfigSchemaField = v.InferInput<typeof FieldSchema>;
 
