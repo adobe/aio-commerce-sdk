@@ -162,7 +162,7 @@ const FieldSchema = v.variant("type", [
 ]);
 
 /** Schema for the schema of the business configuration, which is an array of configuration fields with at least one field required */
-export const BusinessConfigSchemaSchema = v.pipe(
+export const SchemaBusinessConfigSchema = v.pipe(
   v.array(FieldSchema, "Expected an array of configuration fields"),
   v.minLength(1, "At least one configuration parameter is required"),
 );
@@ -182,7 +182,7 @@ export type BusinessConfigSchemaField = v.InferInput<typeof FieldSchema>;
  * business configuration schema. Must contain at least one field.
  */
 export type BusinessConfigSchema = v.InferInput<
-  typeof BusinessConfigSchemaSchema
+  typeof SchemaBusinessConfigSchema
 >;
 
 /** The schema type for the business configuration schema. */
@@ -207,6 +207,6 @@ export type BusinessConfig = {
 };
 
 /** The schema used to validate the `businessConfig` settings in the extensibility config file. */
-export const BusinessConfigurationSchema = v.object({
-  schema: v.optional(BusinessConfigSchemaSchema, []),
+export const SchemaBusinessConfig = v.object({
+  schema: v.optional(SchemaBusinessConfigSchema, []),
 }) satisfies v.GenericSchema<BusinessConfig>;

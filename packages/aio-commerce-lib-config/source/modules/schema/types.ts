@@ -21,9 +21,9 @@ export type SchemaContext = {
 
 export type {
   BusinessConfig,
-  BusinessConfigSchema,
   BusinessConfigSchemaField,
   BusinessConfigSchemaListOption,
   BusinessConfigSchemaValue,
   ExtensibilityConfig,
+  SchemaBusinessConfig,
 } from "@adobe/aio-commerce-lib-extensibility/config";
