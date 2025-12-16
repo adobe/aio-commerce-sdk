@@ -21,6 +21,7 @@ export type SchemaContext = {
 
 export type {
   BusinessConfig,
+  BusinessConfigSchema,
   BusinessConfigSchemaField,
   BusinessConfigSchemaListOption,
   BusinessConfigSchemaValue,

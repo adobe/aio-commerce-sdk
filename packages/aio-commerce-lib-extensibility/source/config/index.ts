@@ -28,6 +28,7 @@ export { validateConfig, validateConfigDomain } from "./lib/validate";
 
 export type {
   BusinessConfig,
+  BusinessConfigSchema,
   BusinessConfigSchemaField,
   BusinessConfigSchemaListOption,
   BusinessConfigSchemaValue,
