@@ -207,6 +207,6 @@ export type BusinessConfig = {
 };
 
 /** The schema used to validate the `businessConfig` settings in the extensibility config file. */
-export const BusinessConfigSchema = v.object({
+export const BusinessConfigurationSchema = v.object({
   schema: v.optional(BusinessConfigSchemaSchema, []),
 }) satisfies v.GenericSchema<BusinessConfig>;

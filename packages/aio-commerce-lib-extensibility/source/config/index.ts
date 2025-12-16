@@ -28,10 +28,10 @@ export { validateConfig, validateConfigDomain } from "./lib/validate";
 
 export type {
   BusinessConfig,
-  BusinessConfigSchema,
   BusinessConfigSchemaField,
   BusinessConfigSchemaListOption,
   BusinessConfigSchemaValue,
+  BusinessConfigurationSchema as BusinessConfigSchema,
 } from "./schema/business-configuration";
 export type {
   ExtensibilityConfig,
