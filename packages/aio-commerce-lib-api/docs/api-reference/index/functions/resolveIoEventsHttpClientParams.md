@@ -6,7 +6,7 @@ function resolveIoEventsHttpClientParams(
 ): IoEventsHttpClientParams;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/io-events/helpers.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-api/source/lib/io-events/helpers.ts#L76)
+Defined in: [packages/aio-commerce-lib-api/source/lib/io-events/helpers.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-api/source/lib/io-events/helpers.ts#L76)
 
 Resolves the [IoEventsHttpClientParams](../type-aliases/IoEventsHttpClientParams.md) from the given App Builder action inputs.
 

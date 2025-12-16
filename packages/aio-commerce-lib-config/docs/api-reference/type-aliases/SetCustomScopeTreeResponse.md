@@ -8,7 +8,7 @@ type SetCustomScopeTreeResponse = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:122](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/types/api.ts#L122)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:122](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/api.ts#L122)
 
 Response type for setting custom scope tree.
 
@@ -20,7 +20,7 @@ Response type for setting custom scope tree.
 message: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:124](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/types/api.ts#L124)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:124](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/api.ts#L124)
 
 Success message.
 
@@ -32,7 +32,7 @@ Success message.
 scopes: CustomScopeOutput[];
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:128](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/types/api.ts#L128)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:128](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/api.ts#L128)
 
 Array of created/updated custom scopes with assigned IDs.
 
@@ -44,6 +44,6 @@ Array of created/updated custom scopes with assigned IDs.
 timestamp: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:126](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/types/api.ts#L126)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:126](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/api.ts#L126)
 
 ISO timestamp of when the custom scope tree was updated.

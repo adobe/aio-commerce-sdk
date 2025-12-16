@@ -11,7 +11,7 @@ const internalServerError: (
 ) => ErrorResponse<BodyRecordWithMessage, HeadersRecord>;
 ```
 
-Defined in: [responses/presets.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-core/source/responses/presets.ts#L96)
+Defined in: [responses/presets.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-core/source/responses/presets.ts#L96)
 
 Creates an error response with the HTTP status code 500.
 See [buildErrorResponse](../functions/buildErrorResponse.md) for details on the response payload.

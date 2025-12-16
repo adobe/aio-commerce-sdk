@@ -12,7 +12,7 @@ type StoreGroup = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/types/commerce.ts#L47)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/commerce.ts#L47)
 
 Represents a store group in Adobe Commerce.
 
@@ -24,7 +24,7 @@ Represents a store group in Adobe Commerce.
 code: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/types/commerce.ts#L59)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/commerce.ts#L59)
 
 Unique code identifier for the store group.
 
@@ -36,7 +36,7 @@ Unique code identifier for the store group.
 default_store_id: number;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/types/commerce.ts#L55)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/commerce.ts#L55)
 
 ID of the default store for this store group.
 
@@ -48,7 +48,7 @@ ID of the default store for this store group.
 optional extension_attributes: Record<string, unknown>;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/types/commerce.ts#L61)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/commerce.ts#L61)
 
 Optional extension attributes for additional data.
 
@@ -60,7 +60,7 @@ Optional extension attributes for additional data.
 id: number;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/types/commerce.ts#L49)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/commerce.ts#L49)
 
 Unique identifier for the store group.
 
@@ -72,7 +72,7 @@ Unique identifier for the store group.
 name: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/types/commerce.ts#L57)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/commerce.ts#L57)
 
 Display name of the store group.
 
@@ -84,7 +84,7 @@ Display name of the store group.
 root_category_id: number;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/types/commerce.ts#L53)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/commerce.ts#L53)
 
 Root category ID for this store group.
 
@@ -96,6 +96,6 @@ Root category ID for this store group.
 website_id: number;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:51](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/types/commerce.ts#L51)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:51](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/commerce.ts#L51)
 
 ID of the parent website.

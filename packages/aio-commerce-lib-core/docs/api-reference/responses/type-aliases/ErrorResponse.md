@@ -7,7 +7,7 @@ type ErrorResponse<TBody, THeaders> = {
 };
 ```
 
-Defined in: [responses/helpers.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-core/source/responses/helpers.ts#L36)
+Defined in: [responses/helpers.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-core/source/responses/helpers.ts#L36)
 
 Represents an error response from a runtime action
 
@@ -26,7 +26,7 @@ Represents an error response from a runtime action
 error: ResponsePayload<TBody, THeaders>;
 ```
 
-Defined in: [responses/helpers.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-core/source/responses/helpers.ts#L41)
+Defined in: [responses/helpers.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-core/source/responses/helpers.ts#L41)
 
 ---
 
@@ -36,4 +36,4 @@ Defined in: [responses/helpers.ts:41](https://github.com/adobe/aio-commerce-sdk/
 type: "error";
 ```
 
-Defined in: [responses/helpers.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-core/source/responses/helpers.ts#L40)
+Defined in: [responses/helpers.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-core/source/responses/helpers.ts#L40)

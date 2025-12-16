@@ -209,7 +209,7 @@ To ensure a consistent code style, we've configured a `pre-commit` hook via [`hu
 
 We use [TypeDoc](https://typedoc.org/) with the [TypeDoc Markdown Plugin](https://typedoc-plugin-markdown.org/docs) for generating API reference documentation. These tools automatically generate comprehensive Markdown documentation from JSDoc annotations in your TypeScript source code, allowing you to maintain documentation alongside your code and ensuring it stays up to date.
 
-See the base configuration in the [`@aio-commerce-sdk/config-typedoc`](../configs/typedoc/typedoc.json) package.
+See the base configuration in the [`@aio-commerce-sdk/config-typedoc`](../configs/typedoc/typedoc.base.json) package.
 
 ## How to Develop
 
