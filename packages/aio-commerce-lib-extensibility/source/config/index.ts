@@ -32,6 +32,7 @@ export type {
   BusinessConfigSchemaField,
   BusinessConfigSchemaListOption,
   BusinessConfigSchemaValue,
+  SchemaBusinessConfig,
 } from "./schema/business-configuration";
 export type {
   ExtensibilityConfig,
