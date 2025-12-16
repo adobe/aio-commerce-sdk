@@ -10,13 +10,55 @@
  * governing permissions and limitations under the License.
  */
 
-import { existsSync } from "node:fs";
-import { mkdir, readFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+/**
+ * This module exports shared project utilities for the AIO Commerce SDK.
+ * @packageDocumentation
+ */
 
-import { findUp } from "find-up";
+import { existsSync } from "node:fs";
+import { access, mkdir, readFile } from "node:fs/promises";
+import { dirname, join, parse } from "node:path";
 
 import type { PackageJson } from "type-fest";
+
+/**
+ * Find a file by walking up parent directories
+ * @param name - The file name to search for (or array of file names)
+ * @param options - Search options
+ * @returns The path to the file, or undefined if not found
+ */
+export async function findUp(
+  name: string | string[],
+  options: { cwd?: string; stopAt?: string } = {},
+): Promise<string | undefined> {
+  const names = Array.isArray(name) ? name : [name];
+  const cwd = options.cwd || process.cwd();
+  const { root } = parse(cwd);
+  const stopAt = options.stopAt || root;
+
+  let currentDir = cwd;
+
+  while (true) {
+    // Try to find any of the files in the current directory
+    for (const fileName of names) {
+      const filePath = join(currentDir, fileName);
+      try {
+        await access(filePath);
+        return filePath;
+      } catch {
+        // File doesn't exist, continue to next file name
+      }
+    }
+
+    // Stop if we've reached the stop directory or root
+    if (currentDir === stopAt || currentDir === root) {
+      return;
+    }
+
+    // Move up one directory
+    currentDir = dirname(currentDir);
+  }
+}
 
 /**
  * Find the nearest package.json file in the current working directory or its parents

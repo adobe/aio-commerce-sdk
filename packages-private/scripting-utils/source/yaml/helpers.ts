@@ -46,9 +46,8 @@ export async function readYamlFile(path: string) {
   }
 
   if (doc.contents === null) {
-    // Set a meta-property if file is empty.
-    // Otherwise, the file can't be worked with by the `yaml` library.
-    doc.setIn(["$schema"], "http://json-schema.org/draft-07/schema");
+    // Initialize with an empty map so the document can be worked with
+    doc.contents = new YAMLMap();
   }
 
   return doc;

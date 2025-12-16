@@ -8,7 +8,7 @@
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
-  "description": "Configuration management utilities for Adobe Commerce apps deployed in Adobe App Builder.",
+  "description": "Configuration management utilities for Adobe Commerce apps deployed in Adobe App Builder",
   "keywords": [],
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
@@ -78,7 +78,6 @@
     "@adobe/aio-lib-files": "^4.0.0",
     "@adobe/aio-lib-state": "^5.0.0",
     "consola": "^3.4.2",
-    "find-up": "^8.0.0",
     "jiti": "^2.6.1",
     "uuid": "^13.0.0",
     "valibot": "^1.1.0",

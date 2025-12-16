@@ -12,6 +12,11 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the config entrypoint */
 
+/**
+ * This module exports shared config utilities for the AIO Commerce SDK.
+ * @packageDocumentation
+ */
+
 export { defineConfig } from "./lib/define";
 export {
   parseExtensibilityConfig,

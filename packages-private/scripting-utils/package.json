@@ -7,7 +7,7 @@
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
-  "description": "Description for @aio-commerce-sdk/scripting-utils",
+  "description": "Utility functions for Adobe Commerce SDK scripts and build tools",
   "scripts": {
     "build": "tsdown",
     "docs": "typedoc && prettier --write '**/*.md'",
@@ -20,12 +20,14 @@
     "lint": "biome lint --no-errors-on-unmatched",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'",
-    "test": "vitest run",
-    "test:watch": "vitest --watch"
+    "test": "vitest run --coverage",
+    "test:watch": "vitest --coverage",
+    "test:ui": "vitest --ui --coverage"
   },
   "exports": {
     "./*": "./source/*.ts",
     "./yaml": "./source/yaml/index.ts",
+    "./filesystem": "./source/filesystem/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {
@@ -33,7 +35,6 @@
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "^0.5.1",
-    "find-up": "^8.0.0",
     "yaml": "^2.8.1"
   },
   "devDependencies": {

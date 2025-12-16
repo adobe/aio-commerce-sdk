@@ -10,10 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, it } from "vitest";
+/** biome-ignore-all lint/performance/noBarrelFile: Public entrypoint for the filesystem helpers. */
 
-describe("scripting-utils", () => {
-  it("should work", () => {
-    expect(true).toBe(true);
-  });
-});
+/**
+ * This module exports shared filesystem utilities for the AIO Commerce SDK.
+ * @packageDocumentation
+ */
+
+export * from "./temp";

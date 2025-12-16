@@ -12,6 +12,11 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: Public entrypoint for the yaml helpers. */
 
+/**
+ * This module exports shared YAML utilities for the AIO Commerce SDK.
+ * @packageDocumentation
+ */
+
 export * from "./codegen";
 export * from "./helpers";
 export * from "./types";
