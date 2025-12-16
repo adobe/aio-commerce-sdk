@@ -95,7 +95,7 @@ function getEventProviderById(
 }>;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts#L91)
+Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts#L91)
 
 Gets an event provider by ID.
 

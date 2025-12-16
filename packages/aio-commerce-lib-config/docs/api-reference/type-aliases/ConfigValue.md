@@ -4,11 +4,11 @@
 type ConfigValue = {
   name: string;
   origin: ConfigOrigin;
-  value: AcceptableConfigValue;
+  value: BusinessConfigSchemaValue;
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L37)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L29)
 
 Represents a configuration value with its origin information.
 
@@ -20,7 +20,7 @@ Represents a configuration value with its origin information.
 name: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L39)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L31)
 
 The name of the configuration field.
 
@@ -32,7 +32,7 @@ The name of the configuration field.
 origin: ConfigOrigin;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L43)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L35)
 
 The origin scope where this value was set or inherited from.
 
@@ -41,9 +41,9 @@ The origin scope where this value was set or inherited from.
 ### value
 
 ```ts
-value: AcceptableConfigValue;
+value: BusinessConfigSchemaValue;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L41)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L33)
 
 The configuration value (string, number, boolean, or undefined).

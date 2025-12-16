@@ -11,7 +11,7 @@ const unauthorized: (
 ) => ErrorResponse<BodyRecordWithMessage, HeadersRecord>;
 ```
 
-Defined in: [responses/presets.ts:78](https://github.com/adobe/aio-commerce-sdk/blob/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c/packages/aio-commerce-lib-core/source/responses/presets.ts#L78)
+Defined in: [responses/presets.ts:78](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-core/source/responses/presets.ts#L78)
 
 Creates an error response with the HTTP status code 401.
 See [buildErrorResponse](../functions/buildErrorResponse.md) for details on the response payload.

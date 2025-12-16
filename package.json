@@ -13,6 +13,7 @@
     "assist:apply": "turbo run assist:apply",
     "build": "turbo run build",
     "check:ci": "turbo run check:ci",
+    "docs": "turbo run docs",
     "format": "turbo run format",
     "format:markdown": "turbo run format:markdown",
     "format:check": "turbo run format:check",
