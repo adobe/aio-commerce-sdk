@@ -10,7 +10,7 @@ function buildSuccessResponse<TBody, THeaders>(
 ): SuccessResponse<TBody, THeaders>;
 ```
 
-Defined in: [responses/helpers.ts:149](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-core/source/responses/helpers.ts#L149)
+Defined in: [responses/helpers.ts:149](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-core/source/responses/helpers.ts#L149)
 
 Creates a standardized success response for runtime actions
 

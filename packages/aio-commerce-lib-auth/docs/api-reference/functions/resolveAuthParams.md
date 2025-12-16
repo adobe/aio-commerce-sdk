@@ -24,7 +24,7 @@ function resolveAuthParams(params: Record<string, unknown>):
     });
 ```
 
-Defined in: [packages/aio-commerce-lib-auth/source/lib/utils.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-auth/source/lib/utils.ts#L50)
+Defined in: [packages/aio-commerce-lib-auth/source/lib/utils.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-auth/source/lib/utils.ts#L50)
 
 Automatically detects and resolves authentication parameters from App Builder action inputs.
 Attempts to resolve IMS authentication first, then falls back to Integration authentication.

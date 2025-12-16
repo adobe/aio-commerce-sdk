@@ -4,7 +4,7 @@
 function makeOutputDirFor(fileOrFolder: string): Promise<string>;
 ```
 
-Defined in: [project.ts:126](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages-private/scripting-utils/source/project.ts#L126)
+Defined in: [project.ts:126](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages-private/scripting-utils/source/project.ts#L126)
 
 Create the output directory for the given file or folder (relative to the project root)
 

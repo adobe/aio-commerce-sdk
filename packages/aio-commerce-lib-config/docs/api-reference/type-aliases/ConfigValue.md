@@ -8,7 +8,7 @@ type ConfigValue = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L29)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L29)
 
 Represents a configuration value with its origin information.
 
@@ -20,7 +20,7 @@ Represents a configuration value with its origin information.
 name: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L31)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L31)
 
 The name of the configuration field.
 
@@ -32,7 +32,7 @@ The name of the configuration field.
 origin: ConfigOrigin;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L35)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L35)
 
 The origin scope where this value was set or inherited from.
 
@@ -44,6 +44,6 @@ The origin scope where this value was set or inherited from.
 value: BusinessConfigSchemaValue;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L33)
+Defined in: [packages/aio-commerce-lib-config/source/modules/configuration/types.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L33)
 
 The configuration value (string, number, boolean, or undefined).

@@ -16,7 +16,7 @@ type SetConfigurationResponse = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:73](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/api.ts#L73)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:73](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/types/api.ts#L73)
 
 Response type for setting configuration values.
 
@@ -32,7 +32,7 @@ config: {
 [];
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/api.ts#L85)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/types/api.ts#L85)
 
 Array of updated configuration values.
 
@@ -56,7 +56,7 @@ value: BusinessConfigSchemaValue;
 message: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:75](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/api.ts#L75)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:75](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/types/api.ts#L75)
 
 Success message.
 
@@ -72,7 +72,7 @@ scope: {
 }
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/api.ts#L79)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/types/api.ts#L79)
 
 Scope information including id, code, and level.
 
@@ -102,6 +102,6 @@ level: string;
 timestamp: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/types/api.ts#L77)
+Defined in: [packages/aio-commerce-lib-config/source/types/api.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/types/api.ts#L77)
 
 ISO timestamp of when the configuration was updated.

@@ -4,7 +4,7 @@
 function byCodeAndLevel(code: string, level: string): SelectorByCodeAndLevel;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/config-utils.ts:583](https://github.com/adobe/aio-commerce-sdk/blob/0a288d7c5e68ff4da901f82cbda502430799502f/packages/aio-commerce-lib-config/source/config-utils.ts#L583)
+Defined in: [packages/aio-commerce-lib-config/source/config-utils.ts:583](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/config-utils.ts#L583)
 
 Creates a scope selector that identifies a scope by its code and level.
 
