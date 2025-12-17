@@ -376,6 +376,15 @@ Assuming you want the SDK to re-export the [`@adobe/aio-commerce-lib-auth`](../p
 
 3. Update the `package.json` file to account for the new entrypoint you created in step 2, following the [exports](#configuring-the-exports) section.
 
+### Test it locally
+
+You can test your changes locally without waiting for them to be published. Just follow these steps:
+
+1. Go to the package you modified (e.g. `packages/aio-commerce-lib-config`) and run a build (`pnpm run build` in that package folder). If you need to build multiple packages, run the command from the repo root and let Turborepo figure out the build order.
+2. Once that’s done, run `pnpm pack` (still inside the package folder). This will generate a `.tgz` file with your built package.
+3. Copy that `.tgz` wherever you want to test it (e.g. a local test project) and run `npm install file.tgz`.
+4. Your project will now use your built artifacts, and you’ll be able to test your changes however you want.
+
 ## Release Process
 
 This project follows [Semantic Versioning](https://semver.org/) and uses [Changesets](https://github.com/changesets/changesets) to manage version updates and changelogs across the monorepo.
