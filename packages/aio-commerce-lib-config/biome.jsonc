@@ -11,7 +11,9 @@
         "source/types/index.ts",
         "source/modules/configuration/index.ts",
         "source/modules/schema/index.ts",
-        "source/modules/scope-tree/index.ts"
+        "source/modules/scope-tree/index.ts",
+        "source/modules/versioning/index.ts",
+        "source/modules/audit/index.ts"
       ],
 
       "linter": {
@@ -29,6 +31,16 @@
           "suspicious": {
             // We want to ensure the function always returns a Promise
             "useAwait": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["test/**/*.test.ts", "test/**/*.spec.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noMagicNumbers": "off"
           }
         }
       }
