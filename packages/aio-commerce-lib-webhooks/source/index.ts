@@ -10,7 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the webhook responses entrypoint */
+/** biome-ignore-all lint/performance/noBarrelFile: This is the entrypoint of the package API */
 
-// Export webhook-optimized response presets
-export * from "./presets";
+// Export the operations module
+export * from "./operations/index";
+// Export the responses module (webhook-optimized response functions)
+export * from "./responses/index";

@@ -60,7 +60,9 @@
     "test:watch": "vitest --watch"
   },
 
-  "dependencies": {},
+  "dependencies": {
+    "@adobe/aio-commerce-lib-core": "workspace:*"
+  },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",

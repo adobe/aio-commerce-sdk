@@ -10,7 +10,28 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the webhook responses entrypoint */
+/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the webhook operations entrypoint */
 
-// Export webhook-optimized response presets
+// Export webhook operation builders
+export {
+  buildAddOperation,
+  buildExceptionOperation,
+  buildRemoveOperation,
+  buildReplaceOperation,
+  buildSuccessOperation,
+} from "./helpers";
+// Export webhook operation presets
 export * from "./presets";
+
+// Export webhook operation types
+export type {
+  AddOperation,
+  ExceptionOperation,
+  RemoveOperation,
+  ReplaceOperation,
+  SuccessOperation,
+  WebhookOperation,
+  WebhookOperationResponse,
+  WebhookResponse,
+  WebhookResponseBase,
+} from "./helpers";
