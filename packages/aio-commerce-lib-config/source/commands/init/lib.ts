@@ -81,17 +81,17 @@ export async function ensureExtensibilityConfig(cwd = process.cwd()) {
   }
 
   consola.info(`Creating ${EXTENSIBILITY_CONFIG_FILE}...`);
-  const exportKeyword = (await isESM(cwd))
-    ? "export default"
-    : "module.exports =";
+  const isEcmaScript = await isESM(cwd);
+  const exportKeyword = isEcmaScript ? "export default" : "module.exports =";
 
   const schema = util.inspect(DEFAULT_EXTENSIBILITY_CONFIG_SCHEMA, {
     depth: null,
     colors: false,
   });
 
-  const importStatement =
-    "import { defineConfig } from '@adobe/aio-commerce-lib-extensibility/config';\n";
+  const importStatement = isEcmaScript
+    ? "import { defineConfig } from '@adobe/aio-commerce-lib-extensibility/config';\n"
+    : "const { defineConfig } = require('@adobe/aio-commerce-lib-extensibility/config');\n";
 
   await writeFile(
     join(await getProjectRootDirectory(cwd), EXTENSIBILITY_CONFIG_FILE),
