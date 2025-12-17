@@ -1,6 +1,17 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
-
   "root": false,
-  "extends": "//"
+  "$schema": "https://biomejs.dev/schemas/2.3.2/schema.json",
+  "extends": "//",
+  "overrides": [
+    {
+      "includes": ["test/**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noMagicNumbers": "off"
+          }
+        }
+      }
+    }
+  ]
 }

@@ -16,7 +16,7 @@ import {
 } from "@adobe/aio-commerce-lib-core/responses";
 
 import type { SuccessResponse } from "@adobe/aio-commerce-lib-core/responses";
-import type { WebhookOperationResponse } from "../operations/helpers";
+import type { WebhookOperationResponse } from "~/operations";
 
 /**
  * Creates an HTTP 200 OK response with webhook operation(s)

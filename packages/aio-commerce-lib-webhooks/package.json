@@ -3,7 +3,7 @@
   "type": "module",
   "author": "Adobe Inc.",
 
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
@@ -23,17 +23,35 @@
     "directory": "packages/aio-commerce-lib-webhooks"
   },
 
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/es/index.d.ts",
-        "default": "./dist/es/index.js"
+  "publishConfig": {
+    "exports": {
+      "./operations": {
+        "import": {
+          "types": "./dist/es/operations/index.d.mts",
+          "default": "./dist/es/operations/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/operations/index.d.cts",
+          "default": "./dist/cjs/operations/index.cjs"
+        }
       },
-      "require": {
-        "types": "./dist/cjs/index.d.cts",
-        "default": "./dist/cjs/index.cjs"
-      }
-    },
+      "./responses": {
+        "import": {
+          "types": "./dist/es/responses/index.d.mts",
+          "default": "./dist/es/responses/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/responses/index.d.cts",
+          "default": "./dist/cjs/responses/index.cjs"
+        }
+      },
+      "./package.json": "./package.json"
+    }
+  },
+
+  "exports": {
+    "./operations": "./source/operations/index.ts",
+    "./responses": "./source/responses/index.ts",
     "./package.json": "./package.json"
   },
 

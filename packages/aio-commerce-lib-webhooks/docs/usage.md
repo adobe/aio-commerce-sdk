@@ -21,6 +21,13 @@ For complete details on Adobe Commerce webhooks, see the [official documentation
 npm install @adobe/aio-commerce-lib-webhooks
 ```
 
+## Package Structure
+
+This package uses **dedicated subpackage entries** for better tree-shaking and clearer API separation:
+
+- **`@adobe/aio-commerce-lib-webhooks/operations`** - Webhook operation builders and presets
+- **`@adobe/aio-commerce-lib-webhooks/responses`** - Webhook-optimized HTTP response helpers
+
 ## Basic Concepts
 
 ### Webhook Operations vs Action Responses
@@ -36,7 +43,12 @@ This package provides **webhook-optimized versions** of `ok()` and `created()` t
 **Example:**
 
 ```typescript
-import { ok, successOperation } from "@adobe/aio-commerce-lib-webhooks";
+import {
+  successOperation,
+  addOperation,
+  removeOperation,
+} from "@adobe/aio-commerce-lib-webhooks/operations";
+import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
 // Webhook operation (body content)
 const operation = successOperation();
@@ -64,7 +76,8 @@ Adobe Commerce webhooks expect:
 Use when the webhook should allow the process to continue unchanged:
 
 ```typescript
-import { ok, successOperation } from "@adobe/aio-commerce-lib-webhooks";
+import { successOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
+import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function main(params) {
   // Your validation logic here...
@@ -79,7 +92,11 @@ export async function main(params) {
 Use when you need to block the Commerce process with an error:
 
 ```typescript
-import { ok, exceptionOperation } from "@adobe/aio-commerce-lib-webhooks";
+import {
+  successOperation,
+  exceptionOperation,
+} from "@adobe/aio-commerce-lib-webhooks/operations";
+import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function validateStock(params) {
   const { product } = params;
@@ -104,7 +121,8 @@ export async function validateStock(params) {
 Add new data to the event arguments:
 
 ```typescript
-import { ok, addOperation } from "@adobe/aio-commerce-lib-webhooks";
+import { addOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
+import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function addCustomShipping(params) {
   const { cart, shippingAddress } = params;
@@ -149,10 +167,10 @@ Modify existing values in the event arguments:
 
 ```typescript
 import {
-  ok,
   replaceOperation,
   successOperation,
-} from "@adobe/aio-commerce-lib-webhooks";
+} from "@adobe/aio-commerce-lib-webhooks/operations";
+import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function applyVipDiscount(params) {
   const { customer, cart } = params;
@@ -192,10 +210,10 @@ Remove data from the event arguments:
 
 ```typescript
 import {
-  ok,
   removeOperation,
   successOperation,
-} from "@adobe/aio-commerce-lib-webhooks";
+} from "@adobe/aio-commerce-lib-webhooks/operations";
+import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function restrictPaymentMethods(params) {
   const { shippingAddress } = params;
@@ -209,12 +227,17 @@ export async function restrictPaymentMethods(params) {
 }
 ```
 
-### Array of Operations
+## Array of Operations
 
 You can return multiple operations in a single webhook response. Operations are executed in the order they appear in the array.
 
+### Multiple Add Operations
+
+Add several items at once:
+
 ```typescript
-import { ok, addOperation } from "@adobe/aio-commerce-lib-webhooks";
+import { addOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
+import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function addMultipleShippingOptions(params) {
   const { cart, shippingAddress } = params;
@@ -270,4 +293,4 @@ export async function addMultipleShippingOptions(params) {
 For complete API documentation and additional details, see:
 
 - [Adobe Commerce Webhooks Documentation](https://developer.adobe.com/commerce/extensibility/webhooks/responses/)
-- [API Reference](./api-reference/README.md) (coming soon)
+- [API Reference](./api-reference/README.md)
