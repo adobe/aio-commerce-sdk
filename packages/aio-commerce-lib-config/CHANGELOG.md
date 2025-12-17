@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.9.1
+
+### Patch Changes
+
+- [#184](https://github.com/adobe/aio-commerce-sdk/pull/184) [`ee83466`](https://github.com/adobe/aio-commerce-sdk/commit/ee834662a3e1dae42864c4debcb8e43d1213858c) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fixes a bug within the `init` script, where `import` was always used in the template of `extensibility.config.js` and it doesn't work on non-ESM projects.
+
 ## 0.9.0
 
 ### Minor Changes
