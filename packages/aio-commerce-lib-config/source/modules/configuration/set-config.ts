@@ -25,7 +25,7 @@ import type {
   SetConfigurationRequest,
   SetConfigurationResponse,
 } from "#types/index";
-import type { ConfigContext } from "./types";
+import type { ConfigContext, ConfigValueWithOptionalOrigin } from "./types";
 // loadScopeConfig and persistConfiguration are now repository methods
 
 /**
@@ -104,9 +104,9 @@ export async function setConfiguration(
  * @returns Configuration entries with password fields encrypted.
  */
 function encryptPasswordFields(
-  entries: Array<{ name: string; value: unknown }>,
+  entries: ConfigValueWithOptionalOrigin[],
   passwordFields: Set<string>,
-): Array<{ name: string; value: unknown }> {
+): ConfigValueWithOptionalOrigin[] {
   return entries.map((entry) => {
     if (
       passwordFields.has(entry.name) &&
