@@ -26,6 +26,10 @@ export {
   type SelectorByScopeId,
 } from "./config-utils";
 export * from "./types";
+export {
+  generateEncryptionKey,
+  isEncryptionConfigured,
+} from "./utils/encryption";
 
 export type { ConfigOrigin, ConfigValue } from "./modules/configuration";
 export type {

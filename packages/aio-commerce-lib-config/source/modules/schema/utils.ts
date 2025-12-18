@@ -15,9 +15,10 @@ import { readFile } from "node:fs/promises";
 
 import { validateConfigDomain } from "@adobe/aio-commerce-lib-extensibility/config";
 
+import * as schemaRepository from "#modules/schema/config-schema-repository";
 import { CONFIG_SCHEMA_PATH } from "#utils/constants";
 
-import type { BusinessConfigSchema } from "./types";
+import type { BusinessConfigSchema, BusinessConfigSchemaField } from "./types";
 
 /**
  * Reads bundled schema file from the runtime action.
@@ -88,4 +89,30 @@ export function validateBusinessConfigSchema(value: unknown) {
 export function validateSchemaFromContent(content: string) {
   const rawSchema = JSON.parse(content);
   return validateBusinessConfigSchema(rawSchema);
+}
+
+/**
+ * Gets password field names from the schema.
+ *
+ * @param namespace - The namespace to get the schema from.
+ * @returns Set of field names that are of type "password".
+ */
+export async function getPasswordFields(
+  namespace: string,
+): Promise<Set<string>> {
+  try {
+    const cachedSchema = await schemaRepository.getCachedSchema(namespace);
+    const schema: BusinessConfigSchemaField[] =
+      cachedSchema || JSON.parse(await schemaRepository.getPersistedSchema());
+
+    const passwordFields = new Set<string>();
+    for (const field of schema) {
+      if (field.type === "password") {
+        passwordFields.add(field.name);
+      }
+    }
+    return passwordFields;
+  } catch (_) {
+    return new Set<string>();
+  }
 }

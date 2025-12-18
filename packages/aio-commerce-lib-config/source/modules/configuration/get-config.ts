@@ -16,7 +16,9 @@ import {
   mergeWithSchemaDefaults,
 } from "#config-utils";
 import * as schemaRepository from "#modules/schema/config-schema-repository";
+import { getPasswordFields } from "#modules/schema/utils";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
+import { decrypt } from "#utils/encryption";
 
 import * as configRepository from "./configuration-repository";
 
@@ -29,7 +31,8 @@ import type { ConfigContext } from "./types";
  * This function retrieves all configuration values for a specific scope, including
  * inherited values from parent scopes and schema defaults. The configuration is
  * merged according to the scope hierarchy, with values from more specific scopes
- * taking precedence over parent scopes.
+ * taking precedence over parent scopes. Password-type fields are automatically
+ * decrypted before being returned.
  *
  * @param context - Configuration context containing namespace and cache timeout.
  * @param args - Scope identifier: either `(id: string)` or `(code: string, level: string)`.
@@ -83,5 +86,39 @@ export async function getConfiguration(
     // Continue with original configData if merging fails
   }
 
-  return configData;
+  const passwordFields = await getPasswordFields(namespace);
+  return decryptPasswordFields(configData, passwordFields);
+}
+
+/**
+ * Decrypts password fields in the configuration data.
+ *
+ * @param configData - Configuration data to process.
+ * @param passwordFields - Set of field names that should be decrypted.
+ * @returns Configuration data with password fields decrypted.
+ */
+function decryptPasswordFields(
+  configData: GetConfigurationResponse,
+  passwordFields: Set<string>,
+): GetConfigurationResponse {
+  if (!Array.isArray(configData.config)) {
+    return configData;
+  }
+
+  return {
+    ...configData,
+    config: configData.config.map((entry) => {
+      if (
+        passwordFields.has(entry.name) &&
+        typeof entry.value === "string" &&
+        entry.value.length > 0
+      ) {
+        return {
+          ...entry,
+          value: decrypt(entry.value),
+        };
+      }
+      return entry;
+    }),
+  };
 }
