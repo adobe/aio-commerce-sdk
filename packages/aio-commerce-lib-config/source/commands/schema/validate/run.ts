@@ -80,7 +80,29 @@ async function setupEncryptionKey(): Promise<boolean> {
         consola.warn(
           "⚠️  CONFIG_ENCRYPTION_KEY found in .env but is invalid (wrong format or length)",
         );
-        consola.info("Regenerating a valid encryption key...");
+
+        if (process.stdin.isTTY && process.stdout.isTTY) {
+          consola.warn(
+            "⚠️  Regenerating the key will make any previously encrypted passwords unrecoverable",
+          );
+
+          const confirmed = await consola.prompt(
+            "Do you want to generate a new encryption key?",
+            {
+              type: "confirm",
+              initial: false,
+            },
+          );
+
+          if (!confirmed) {
+            consola.info(
+              "Key regeneration cancelled. Please manually fix CONFIG_ENCRYPTION_KEY in your .env file.",
+            );
+            return false;
+          }
+        } else {
+          consola.info("Automatically regenerating encryption key.");
+        }
 
         const updatedContent = envContent.replace(
           CONFIG_KEY_PATTERN,
