@@ -15,7 +15,9 @@ import {
   mergeScopes,
   sanitizeRequestEntries,
 } from "#config-utils";
+import { getPasswordFields } from "#modules/schema/utils";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
+import { encrypt } from "#utils/encryption";
 
 import * as configRepository from "./configuration-repository";
 
@@ -23,7 +25,7 @@ import type {
   SetConfigurationRequest,
   SetConfigurationResponse,
 } from "#types/index";
-import type { ConfigContext } from "./types";
+import type { ConfigContext, ConfigValueWithOptionalOrigin } from "./types";
 // loadScopeConfig and persistConfiguration are now repository methods
 
 /**
@@ -32,6 +34,7 @@ import type { ConfigContext } from "./types";
  * This function updates configuration values for a specific scope. The provided values
  * are merged with existing configuration, and the origin is set to the current scope.
  * Configuration values are inherited from parent scopes unless explicitly overridden.
+ * Password-type fields are automatically encrypted before storage.
  *
  * @param context - Configuration context containing namespace and cache timeout.
  * @param request - Configuration set request containing the config values to set.
@@ -55,6 +58,13 @@ export async function setConfiguration(
   );
 
   const sanitizedEntries = sanitizeRequestEntries(request?.config);
+
+  const passwordFields = await getPasswordFields(context.namespace);
+  const encryptedEntries = encryptPasswordFields(
+    sanitizedEntries,
+    passwordFields,
+  );
+
   const existingPersisted = await configRepository.loadConfig(scopeCode);
   const existingEntries = Array.isArray(existingPersisted?.config)
     ? (existingPersisted?.config ?? [])
@@ -62,7 +72,7 @@ export async function setConfiguration(
 
   const mergedScopeConfig = mergeScopes(
     existingEntries,
-    sanitizedEntries,
+    encryptedEntries,
     scopeCode,
     scopeLevel,
   );
@@ -84,4 +94,30 @@ export async function setConfiguration(
     scope: { id: String(scopeId), code: scopeCode, level: scopeLevel },
     config: responseConfig,
   };
+}
+
+/**
+ * Encrypts password fields in the configuration entries.
+ *
+ * @param entries - Configuration entries to process.
+ * @param passwordFields - Set of field names that should be encrypted.
+ * @returns Configuration entries with password fields encrypted.
+ */
+function encryptPasswordFields(
+  entries: ConfigValueWithOptionalOrigin[],
+  passwordFields: Set<string>,
+): ConfigValueWithOptionalOrigin[] {
+  return entries.map((entry) => {
+    if (
+      passwordFields.has(entry.name) &&
+      typeof entry.value === "string" &&
+      entry.value.length > 0
+    ) {
+      return {
+        ...entry,
+        value: encrypt(entry.value),
+      };
+    }
+    return entry;
+  });
 }

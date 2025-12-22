@@ -10,10 +10,24 @@
  * governing permissions and limitations under the License.
  */
 
+import { existsSync } from "node:fs";
+import { appendFile, readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
 
+import {
+  generateEncryptionKey,
+  isEncryptionConfigured,
+} from "#utils/encryption";
+
 import { loadBusinessConfigSchema } from "./lib";
+
+import type { BusinessConfigSchemaField } from "#modules/schema/types";
+
+const CONFIG_KEY_PATTERN = /CONFIG_ENCRYPTION_KEY=.*/;
 
 /**
  * Validate the configuration schema.
@@ -24,6 +38,19 @@ export async function run() {
   try {
     const result = await loadBusinessConfigSchema();
     if (result !== null) {
+      const hasPasswordFields = result.some(
+        (field: BusinessConfigSchemaField) => field.type === "password",
+      );
+      if (hasPasswordFields && !isEncryptionConfigured()) {
+        const setupSuccess = await setupEncryptionKey();
+        if (!setupSuccess) {
+          consola.error(
+            "Schema validation failed: encryption key could not be configured",
+          );
+          process.exit(1);
+        }
+      }
+
       consola.success("Configuration schema validation passed.");
       return result;
     }
@@ -33,5 +60,85 @@ export async function run() {
   } catch (error) {
     consola.error(stringifyError(error));
     process.exit(1);
+  }
+}
+
+/**
+ * Sets up encryption key by generating one and adding it to .env file.
+ * Only creates .env if running in development environment.
+ * @returns True if setup succeeded, false otherwise.
+ */
+async function setupEncryptionKey(): Promise<boolean> {
+  try {
+    const rootDir = await getProjectRootDirectory();
+    const envPath = resolve(rootDir, ".env");
+    const key = generateEncryptionKey();
+
+    if (existsSync(envPath)) {
+      const envContent = await readFile(envPath, "utf-8");
+      if (envContent.includes("CONFIG_ENCRYPTION_KEY=")) {
+        consola.warn(
+          "⚠️  CONFIG_ENCRYPTION_KEY found in .env but is invalid (wrong format or length)",
+        );
+
+        if (process.stdin.isTTY && process.stdout.isTTY) {
+          consola.warn(
+            "⚠️  Regenerating the key will make any previously encrypted passwords unrecoverable",
+          );
+
+          const confirmed = await consola.prompt(
+            "Do you want to generate a new encryption key?",
+            {
+              type: "confirm",
+              initial: false,
+            },
+          );
+
+          if (!confirmed) {
+            consola.info(
+              "Key regeneration cancelled. Please manually fix CONFIG_ENCRYPTION_KEY in your .env file.",
+            );
+            return false;
+          }
+        } else {
+          consola.info("Automatically regenerating encryption key.");
+        }
+
+        const updatedContent = envContent.replace(
+          CONFIG_KEY_PATTERN,
+          `CONFIG_ENCRYPTION_KEY=${key}`,
+        );
+        await writeFile(envPath, updatedContent, "utf-8");
+        process.env.CONFIG_ENCRYPTION_KEY = key;
+
+        consola.success(
+          "🔐 Generated new encryption key and updated .env file",
+        );
+        consola.warn(
+          "⚠️  Any previously encrypted passwords with the old key cannot be decrypted",
+        );
+        return true;
+      }
+
+      const keyLine = `\n# Auto-generated encryption key for password fields\nCONFIG_ENCRYPTION_KEY=${key}\n`;
+      await appendFile(envPath, keyLine, "utf-8");
+      process.env.CONFIG_ENCRYPTION_KEY = key;
+
+      consola.success("🔐 Generated encryption key and added to .env file");
+      return true;
+    }
+
+    consola.error(
+      "⚠️  CONFIG_ENCRYPTION_KEY not found and .env file doesn't exist",
+    );
+    consola.info("Generate a key with:");
+    consola.info(
+      "  import { generateEncryptionKey } from '@adobe/aio-commerce-lib-config';",
+    );
+    consola.info("  console.log(generateEncryptionKey());");
+    return false;
+  } catch (error) {
+    consola.error("Failed to setup encryption key:", stringifyError(error));
+    return false;
   }
 }

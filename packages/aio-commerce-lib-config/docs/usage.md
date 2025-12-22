@@ -517,6 +517,21 @@ Use phone fields for telephone numbers with format validation. Phone fields supp
 }
 ```
 
+**Password Field:**
+
+Use password fields for sensitive credentials like API keys, tokens, and secrets. Password values are automatically encrypted when stored and decrypted when retrieved. The encryption key is automatically generated during schema validation if password fields are detected.
+
+```javascript
+{
+  name: "api_key",
+  label: "API Key",
+  type: "password",
+  description: "Your secret API key"
+}
+```
+
+See the [Password Encryption Guide](./password-encryption.md) for more details on encryption, key management, and security best practices.
+
 **List Field (Dropdown):**
 
 Use list fields when you need to restrict values to a predefined set of options. This is useful for settings like log levels, environment modes, or payment methods. List fields require both options and a default value.
