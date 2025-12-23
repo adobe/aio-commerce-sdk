@@ -62,7 +62,7 @@ function getEncryptionKey(): Buffer | null {
   }
 
   const keyBuffer = Buffer.from(key, "hex");
-  if (keyBuffer.length !== KEY_LENGTH_BYTES) {
+  if (key.length !== KEY_LENGTH_HEX || keyBuffer.length !== KEY_LENGTH_BYTES) {
     logger.warn(
       `CONFIG_ENCRYPTION_KEY must be ${KEY_LENGTH_HEX} hex characters (${KEY_LENGTH_BYTES} bytes). Password encryption is disabled.`,
     );
