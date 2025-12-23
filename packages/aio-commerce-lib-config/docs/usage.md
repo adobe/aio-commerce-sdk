@@ -184,6 +184,14 @@ Scopes define the hierarchical boundaries where configuration values can be set 
 - `sync-commerce-scopes` - Sync scopes from Adobe Commerce
 - `set-custom-scope-tree` - Define custom scope hierarchies
 
+> [!NOTE]
+> The `sync-commerce-scopes` action can accept the Commerce base URL in two ways:
+>
+> 1. **From request parameter**: Pass `base_url` in the request body/query
+> 2. **From environment variable**: Use `AIO_COMMERCE_API_BASE_URL` from `.env` file
+>
+> The request parameter takes priority if both are provided.
+
 **Configuration Management Actions:**
 
 - `get-config-schema` - Retrieve configuration schema
