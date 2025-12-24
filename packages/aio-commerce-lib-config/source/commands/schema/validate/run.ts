@@ -27,7 +27,7 @@ import { loadBusinessConfigSchema } from "./lib";
 
 import type { BusinessConfigSchemaField } from "#modules/schema/types";
 
-const CONFIG_KEY_PATTERN = /CONFIG_ENCRYPTION_KEY=.*/;
+const CONFIG_KEY_PATTERN = /CONFIG_ENCRYPTION_KEY=(.+)/;
 
 /**
  * Validate the configuration schema.
@@ -41,13 +41,18 @@ export async function run() {
       const hasPasswordFields = result.some(
         (field: BusinessConfigSchemaField) => field.type === "password",
       );
-      if (hasPasswordFields && !isEncryptionConfigured()) {
-        const setupSuccess = await setupEncryptionKey();
-        if (!setupSuccess) {
-          consola.error(
-            "Schema validation failed: encryption key could not be configured",
-          );
-          process.exit(1);
+
+      if (hasPasswordFields) {
+        await loadEnvFile();
+
+        if (!isEncryptionConfigured()) {
+          const setupSuccess = await setupEncryptionKey();
+          if (!setupSuccess) {
+            consola.error(
+              "Schema validation failed: encryption key could not be configured",
+            );
+            process.exit(1);
+          }
         }
       }
 
@@ -64,18 +69,49 @@ export async function run() {
 }
 
 /**
+ * Loads CONFIG_ENCRYPTION_KEY from .env file into process.env if it exists.
+ */
+async function loadEnvFile(): Promise<void> {
+  try {
+    const { envContent } = await getEnvFile();
+    if (envContent) {
+      const keyMatch = envContent.match(CONFIG_KEY_PATTERN);
+      if (keyMatch?.[1]) {
+        process.env.CONFIG_ENCRYPTION_KEY = keyMatch[1].trim();
+      }
+    }
+  } catch (_error) {
+    // Ignore errors, encryption check will handle missing key
+  }
+}
+
+/**
+ * Gets the .env file path and optionally reads its content.
+ * @returns Object with envPath and optional envContent
+ */
+async function getEnvFile(): Promise<{ envPath: string; envContent?: string }> {
+  const rootDir = await getProjectRootDirectory();
+  const envPath = resolve(rootDir, ".env");
+
+  if (existsSync(envPath)) {
+    const envContent = await readFile(envPath, "utf-8");
+    return { envPath, envContent };
+  }
+
+  return { envPath };
+}
+
+/**
  * Sets up encryption key by generating one and adding it to .env file.
  * Only creates .env if running in development environment.
  * @returns True if setup succeeded, false otherwise.
  */
 async function setupEncryptionKey(): Promise<boolean> {
   try {
-    const rootDir = await getProjectRootDirectory();
-    const envPath = resolve(rootDir, ".env");
+    const { envPath, envContent } = await getEnvFile();
     const key = generateEncryptionKey();
 
-    if (existsSync(envPath)) {
-      const envContent = await readFile(envPath, "utf-8");
+    if (envContent) {
       if (envContent.includes("CONFIG_ENCRYPTION_KEY=")) {
         consola.warn(
           "⚠️  CONFIG_ENCRYPTION_KEY found in .env but is invalid (wrong format or length)",
