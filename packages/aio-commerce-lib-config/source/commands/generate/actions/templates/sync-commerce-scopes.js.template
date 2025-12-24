@@ -40,7 +40,14 @@ export async function main(params) {
   try {
     logger.debug("Syncing commerce scopes...");
 
-    const commerceConfig = resolveCommerceHttpClientParams(params);
+    const paramsWithBaseUrl = params.base_url
+      ? {
+          ...params,
+          AIO_COMMERCE_API_BASE_URL: params.base_url,
+        }
+      : params;
+
+    const commerceConfig = resolveCommerceHttpClientParams(paramsWithBaseUrl);
     const result = await syncCommerceScopes(commerceConfig);
 
     if (result.error) {
