@@ -17,3 +17,4 @@
 
 // biome-ignore lint/performance/noBarrelFile: export as part of the Public API
 export * from "./helpers";
+export * from "./types";
