@@ -43,6 +43,12 @@
           "options": {
             "style": "separatedType"
           }
+        },
+
+        "useConsistentTypeDefinitions": {
+          "options": {
+            "style": "type"
+          }
         }
       }
     }
