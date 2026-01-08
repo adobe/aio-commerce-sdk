@@ -39,7 +39,7 @@ npx @adobe/aio-commerce-lib-config init
 
 The `init` command will:
 
-- Create `extensibility.config.js` with a template schema (if it doesn't exist)
+- Create `app.commerce.config.js` with a template schema (if it doesn't exist)
 - Add the `postinstall` script to your `package.json`
 - Generate all required artifacts (schema and runtime actions)
 - Update your `app.config.yaml` with the extension reference
@@ -51,14 +51,14 @@ The command automatically detects your package manager (npm, pnpm, yarn, or bun)
 
 After running `init`, you'll need to:
 
-1. Review and customize `extensibility.config.js` with your configuration schema
+1. Review and customize `app.commerce.config.js` with your configuration schema
 2. Fill in the required values in your `.env` file
 
 #### Alternative: Manual Setup
 
 If you prefer to set up manually or need more control over the process:
 
-1. Create your configuration schema at `extensibility.config.js` in the project root:
+1. Create your configuration schema at `app.commerce.config.js` in the project root:
 
 Define the structure of your application's configuration using a JavaScript module. This example shows how to create different types of configuration fields, such as list and text. Each field definition specifies its type, label, and optional default values.
 
@@ -464,7 +464,7 @@ npx @adobe/aio-commerce-lib-config validate schema
 
 This command will:
 
-- Check that your `extensibility.config.js` file exists and is valid
+- Check that your `app.commerce.config.js` file exists and is valid
 - Validate the schema structure and field definitions
 - Ensure all required properties are present
 - Report any validation errors with clear, descriptive error messages

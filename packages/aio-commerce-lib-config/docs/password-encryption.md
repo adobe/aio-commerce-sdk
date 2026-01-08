@@ -18,7 +18,7 @@ All encryption uses AES-256-GCM, a secure and industry-standard encryption algor
 First, define fields with `type: "password"` in your configuration schema:
 
 ```typescript
-import { defineConfig } from "@adobe/aio-commerce-lib-extensibility/config";
+import { defineConfig } from "@adobe/aio-commerce-lib-app/config";
 
 export default defineConfig({
   businessConfig: {

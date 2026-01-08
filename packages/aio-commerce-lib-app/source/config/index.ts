@@ -10,21 +10,32 @@
  * governing permissions and limitations under the License.
  */
 
-/** Context needed for schema operations. */
-export type SchemaContext = {
-  /** The namespace for isolating schema data. */
-  namespace: string;
+/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the config entrypoint */
 
-  /** Cache timeout in milliseconds. */
-  cacheTimeout: number;
-};
+/**
+ * This module exports shared config utilities for the AIO Commerce SDK.
+ * @packageDocumentation
+ */
 
+export { defineConfig } from "./lib/define";
+export {
+  parseCommerceAppConfig,
+  readBundledCommerceAppConfig,
+  readCommerceAppConfig,
+  resolveCommerceAppConfig,
+} from "./lib/parser";
+export {
+  validateCommerceAppConfig,
+  validateCommerceAppConfigDomain,
+} from "./lib/validate";
+
+export type { CommerceAppConfig, CommerceAppConfigDomain } from "./schema/app";
 export type {
   BusinessConfig,
   BusinessConfigSchema,
   BusinessConfigSchemaField,
   BusinessConfigSchemaListOption,
   BusinessConfigSchemaValue,
-  CommerceAppConfig,
   SchemaBusinessConfig,
-} from "@adobe/aio-commerce-lib-app/config";
+} from "./schema/business-configuration";
+export type { ApplicationMetadata } from "./schema/metadata";

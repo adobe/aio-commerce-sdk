@@ -11,26 +11,20 @@
  */
 
 import { existsSync } from "node:fs";
-import { resolve } from "node:path";
 
 import {
-  readExtensibilityConfig,
-  validateConfigDomain,
-} from "@adobe/aio-commerce-lib-extensibility/config";
-import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
+  readCommerceAppConfig,
+  resolveCommerceAppConfig,
+  validateCommerceAppConfigDomain,
+} from "@adobe/aio-commerce-lib-app/config";
 
-import { EXTENSIBILITY_CONFIG_FILE } from "#commands/constants";
-
-import type { ExtensibilityConfig } from "@adobe/aio-commerce-lib-extensibility/config";
+import type { CommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
 
 /** Load the business configuration schema from the given path. */
 export async function loadBusinessConfigSchema() {
   let resolvedPath: string | null = null;
   try {
-    resolvedPath = resolve(
-      await getProjectRootDirectory(),
-      EXTENSIBILITY_CONFIG_FILE,
-    );
+    resolvedPath = await resolveCommerceAppConfig();
   } finally {
     if (!(resolvedPath && existsSync(resolvedPath))) {
       // biome-ignore lint/correctness/noUnsafeFinally: Safe to return null
@@ -38,13 +32,13 @@ export async function loadBusinessConfigSchema() {
     }
   }
 
-  const extensibilityConfig =
-    (await readExtensibilityConfig()) as Partial<ExtensibilityConfig>;
+  const commerceAppConfig =
+    (await readCommerceAppConfig()) as Partial<CommerceAppConfig>;
 
-  const schema = extensibilityConfig?.businessConfig?.schema ?? null;
+  const schema = commerceAppConfig?.businessConfig?.schema ?? null;
   if (!schema) {
     return null;
   }
 
-  return validateConfigDomain(schema, "businessConfig.schema");
+  return validateCommerceAppConfigDomain(schema, "businessConfig.schema");
 }

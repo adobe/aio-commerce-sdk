@@ -16,7 +16,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import util from "node:util";
 
-import { readExtensibilityConfig } from "@adobe/aio-commerce-lib-extensibility/config";
+import { readCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import {
   detectPackageManager,
@@ -35,8 +35,8 @@ import { isMap } from "yaml";
 
 import {
   APP_CONFIG_FILE,
+  COMMERCE_APP_CONFIG_FILE,
   ENV_FILE,
-  EXTENSIBILITY_CONFIG_FILE,
   EXTENSION_POINT_FOLDER_PATH,
   EXTENSION_POINT_ID,
   INSTALL_YAML_FILE,
@@ -49,38 +49,38 @@ import {
   ENV_VAR_REGEX,
 } from "./constants";
 
-import type { ExtensibilityConfig } from "@adobe/aio-commerce-lib-extensibility/config";
+import type { CommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
 import type { PackageManager } from "@aio-commerce-sdk/scripting-utils/project";
 import type { Document, YAMLSeq } from "yaml";
 
-/** Ensure extensibility.config.js exists, create it if it doesn't */
-export async function ensureExtensibilityConfig(cwd = process.cwd()) {
-  let extensibilityConfig: unknown = null;
+/** Ensure app.commerce.config.js exists, create it if it doesn't */
+export async function ensureCommerceAppConfig(cwd = process.cwd()) {
+  let commerceAppConfig: unknown = null;
   try {
-    extensibilityConfig = await readExtensibilityConfig(cwd);
+    commerceAppConfig = await readCommerceAppConfig(cwd);
   } catch (_) {
     // Do nothing
   }
 
-  if (extensibilityConfig) {
-    const typedConfig = extensibilityConfig as ExtensibilityConfig;
+  if (commerceAppConfig) {
+    const typedConfig = commerceAppConfig as CommerceAppConfig;
     const schema = typedConfig.businessConfig?.schema;
     if (!schema) {
       consola.warn(
-        "No schema found in extensibility.config.js. Please add a `businessConfig.schema` property.",
+        "No schema found in app.commerce.config. Please add a `businessConfig.schema` property.",
       );
 
       return false;
     }
 
     consola.success(
-      `${EXTENSIBILITY_CONFIG_FILE} already exists. Continuing...`,
+      `${COMMERCE_APP_CONFIG_FILE} already exists. Continuing...`,
     );
 
     return true;
   }
 
-  consola.info(`Creating ${EXTENSIBILITY_CONFIG_FILE}...`);
+  consola.info(`Creating ${COMMERCE_APP_CONFIG_FILE}.js...`);
   const isEcmaScript = await isESM(cwd);
   const exportKeyword = isEcmaScript ? "export default" : "module.exports =";
 
@@ -90,16 +90,16 @@ export async function ensureExtensibilityConfig(cwd = process.cwd()) {
   });
 
   const importStatement = isEcmaScript
-    ? "import { defineConfig } from '@adobe/aio-commerce-lib-extensibility/config';\n"
-    : "const { defineConfig } = require('@adobe/aio-commerce-lib-extensibility/config');\n";
+    ? "import { defineConfig } from '@adobe/aio-commerce-lib-app/config';\n"
+    : "const { defineConfig } = require('@adobe/aio-commerce-lib-app/config');\n";
 
   await writeFile(
-    join(await getProjectRootDirectory(cwd), EXTENSIBILITY_CONFIG_FILE),
+    join(await getProjectRootDirectory(cwd), `${COMMERCE_APP_CONFIG_FILE}.js`),
     `${importStatement}\n${exportKeyword} defineConfig(${schema})\n`,
     "utf-8",
   );
 
-  consola.success(`Created ${EXTENSIBILITY_CONFIG_FILE}`);
+  consola.success(`Created ${COMMERCE_APP_CONFIG_FILE}.js`);
   return true;
 }
 

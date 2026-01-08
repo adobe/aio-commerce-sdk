@@ -141,6 +141,37 @@ importers:
         specifier: workspace:*
         version: link:../../configs/vitest
 
+  packages/aio-commerce-lib-app:
+    dependencies:
+      '@adobe/aio-commerce-lib-core':
+        specifier: ^0.5.1
+        version: 0.5.1(typescript@5.9.2)
+      consola:
+        specifier: ^3.4.2
+        version: 3.4.2
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
+      valibot:
+        specifier: ^1.1.0
+        version: 1.1.0(typescript@5.9.2)
+    devDependencies:
+      '@aio-commerce-sdk/config-tsdown':
+        specifier: workspace:*
+        version: link:../../configs/tsdown
+      '@aio-commerce-sdk/config-typedoc':
+        specifier: workspace:*
+        version: link:../../configs/typedoc
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../../configs/typescript
+      '@aio-commerce-sdk/config-vitest':
+        specifier: workspace:*
+        version: link:../../configs/vitest
+      '@aio-commerce-sdk/scripting-utils':
+        specifier: workspace:*
+        version: link:../../packages-private/scripting-utils
+
   packages/aio-commerce-lib-auth:
     dependencies:
       '@adobe/aio-commerce-lib-core':
@@ -177,12 +208,12 @@ importers:
       '@adobe/aio-commerce-lib-api':
         specifier: workspace:*
         version: link:../aio-commerce-lib-api
+      '@adobe/aio-commerce-lib-app':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-app
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
-      '@adobe/aio-commerce-lib-extensibility':
-        specifier: workspace:*
-        version: link:../aio-commerce-lib-extensibility
       '@adobe/aio-lib-core-logging':
         specifier: ^3.0.2
         version: 3.0.2
@@ -277,37 +308,6 @@ importers:
         specifier: ^2.11.1
         version: 2.11.1(@types/node@24.3.0)(typescript@5.9.2)
 
-  packages/aio-commerce-lib-extensibility:
-    dependencies:
-      '@adobe/aio-commerce-lib-core':
-        specifier: ^0.5.1
-        version: 0.5.1(typescript@5.9.2)
-      consola:
-        specifier: ^3.4.2
-        version: 3.4.2
-      jiti:
-        specifier: ^2.6.1
-        version: 2.6.1
-      valibot:
-        specifier: ^1.1.0
-        version: 1.1.0(typescript@5.9.2)
-    devDependencies:
-      '@aio-commerce-sdk/config-tsdown':
-        specifier: workspace:*
-        version: link:../../configs/tsdown
-      '@aio-commerce-sdk/config-typedoc':
-        specifier: workspace:*
-        version: link:../../configs/typedoc
-      '@aio-commerce-sdk/config-typescript':
-        specifier: workspace:*
-        version: link:../../configs/typescript
-      '@aio-commerce-sdk/config-vitest':
-        specifier: workspace:*
-        version: link:../../configs/vitest
-      '@aio-commerce-sdk/scripting-utils':
-        specifier: workspace:*
-        version: link:../../packages-private/scripting-utils
-
   packages/aio-commerce-sdk:
     dependencies:
       '@adobe/aio-commerce-lib-api':
@@ -363,6 +363,7 @@ packages:
   '@adobe/aio-lib-core-networking@5.0.4':
     resolution: {integrity: sha512-LsFPKIXqfWiMwSjD9NJbb6uUSlZ+DZiV8p9NhpqPyzqAAl9NNONAH0jcIKtsKWSULcHc20INaRAw8dqKzQBTbw==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-core-tvm@4.0.3':
     resolution: {integrity: sha512-zwl4GeU5CryZBozpub4jI9tnGW2ewD6mMLaXX8HhO8DqKzcjnjYr+MbUS0c/QzGd8gTzZWbikm4J7tfpCn3cAA==}
@@ -371,6 +372,7 @@ packages:
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-files@4.1.2':
     resolution: {integrity: sha512-4Ll776OGB34R7nPgMF+UQpIYm33yjtH5yLUuvtvKNHZtRF/wODG1Q8Oqcy9pOFutRIacg/xM0AMB6OKrQTP+Xw==}

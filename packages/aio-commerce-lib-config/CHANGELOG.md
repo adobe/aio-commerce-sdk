@@ -26,7 +26,7 @@
 - [#181](https://github.com/adobe/aio-commerce-sdk/pull/181) [`3bbc49e`](https://github.com/adobe/aio-commerce-sdk/commit/3bbc49e9fe1757cba9838417d8b7f3d0e9b38f63) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove `find-up` dependency
 
 - Updated dependencies [[`a848588`](https://github.com/adobe/aio-commerce-sdk/commit/a8485880c6460624774c659985c44aaf91feb2b9), [`3bbc49e`](https://github.com/adobe/aio-commerce-sdk/commit/3bbc49e9fe1757cba9838417d8b7f3d0e9b38f63), [`3bbc49e`](https://github.com/adobe/aio-commerce-sdk/commit/3bbc49e9fe1757cba9838417d8b7f3d0e9b38f63), [`6ab0c02`](https://github.com/adobe/aio-commerce-sdk/commit/6ab0c02cc3710514cd0904ac24c7fcb00735c825)]:
-  - @adobe/aio-commerce-lib-extensibility@0.1.0
+  - @adobe/aio-commerce-lib-app@0.1.0
 
 ## 0.8.2
 

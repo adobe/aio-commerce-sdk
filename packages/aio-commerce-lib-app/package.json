@@ -1,46 +1,42 @@
 {
-  "name": "@adobe/aio-commerce-lib-config",
+  "name": "@adobe/aio-commerce-lib-app",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.9.1",
+  "version": "0.0.0",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
-  "description": "Configuration management utilities for Adobe Commerce apps deployed in Adobe App Builder",
-  "keywords": [],
+  "description": "App configuration management library for Adobe Commerce applications",
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/adobe/aio-commerce-sdk.git",
-    "directory": "packages/aio-commerce-lib-config"
+    "directory": "packages/aio-commerce-lib-app"
   },
-  "main": "./dist/cjs/index.cjs",
-  "module": "./dist/es/index.mjs",
-  "types": "./dist/cjs/index.d.cts",
   "bin": {
-    "@adobe/aio-commerce-lib-config": "./dist/es/commands/index.mjs"
+    "@adobe/aio-commerce-lib-app": "./dist/es/commands/index.mjs"
   },
   "publishConfig": {
     "exports": {
-      ".": {
+      "./config": {
         "import": {
-          "types": "./dist/es/index.d.mts",
-          "default": "./dist/es/index.mjs"
+          "types": "./dist/es/config/index.d.mts",
+          "default": "./dist/es/config/index.mjs"
         },
         "require": {
-          "types": "./dist/cjs/index.d.cts",
-          "default": "./dist/cjs/index.cjs"
+          "types": "./dist/cjs/config/index.d.cts",
+          "default": "./dist/cjs/config/index.cjs"
         }
       },
       "./package.json": "./package.json"
     }
   },
   "exports": {
-    ".": "./source/index.ts",
+    "./config": "./source/config/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {
@@ -68,20 +64,13 @@
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'",
     "test": "vitest run --coverage",
     "test:watch": "vitest --coverage",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui --coverage"
   },
   "dependencies": {
-    "@adobe/aio-commerce-lib-api": "workspace:*",
-    "@adobe/aio-commerce-lib-core": "workspace:*",
-    "@adobe/aio-commerce-lib-app": "workspace:*",
-    "@adobe/aio-lib-core-logging": "^3.0.2",
-    "@adobe/aio-lib-files": "^4.0.0",
-    "@adobe/aio-lib-state": "^5.0.0",
+    "@adobe/aio-commerce-lib-core": "^0.5.1",
     "consola": "^3.4.2",
     "jiti": "^2.6.1",
-    "uuid": "^13.0.0",
-    "valibot": "^1.1.0",
-    "yaml": "^2.6.1"
+    "valibot": "^1.1.0"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
