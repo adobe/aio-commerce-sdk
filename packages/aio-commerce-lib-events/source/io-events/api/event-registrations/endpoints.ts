@@ -15,18 +15,22 @@ import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/util
 import { parseOrThrow } from "#utils/valibot";
 
 import {
+  CreateRegistrationParamsSchema,
   GetAllRegistrationsByConsumerOrgParamsSchema,
   GetAllRegistrationsParamsSchema,
   GetRegistrationByIdParamsSchema,
+  UpdateRegistrationParamsSchema,
 } from "./schema";
 
 import type { AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api";
 import type { HTTPError, Options } from "@adobe/aio-commerce-lib-api/ky";
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import type {
+  CreateRegistrationParams,
   GetAllRegistrationsByConsumerOrgParams,
   GetAllRegistrationsParams,
   GetRegistrationByIdParams,
+  UpdateRegistrationParams,
 } from "./schema";
 import type {
   IoEventRegistrationManyResponse,
@@ -124,6 +128,126 @@ export async function getRegistrationById(
     .get(
       `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/registrations/${validatedParams.registrationId}`,
       fetchOptions,
+    )
+    .json<IoEventRegistrationOneResponse>();
+}
+
+/**
+ * Creates an event registration.
+ * @see https://developer.adobe.com/events/docs/api#operation/createRegistration
+ *
+ * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
+ * @param params - The parameters to create the registration with.
+ * @param fetchOptions - The {@link Options} to use to make the request.
+ *
+ * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
+ * @throws An {@link HTTPError} If the status code is not 2XX.
+ */
+export async function createRegistration(
+  httpClient: AdobeIoEventsHttpClient,
+  params: CreateRegistrationParams,
+  fetchOptions?: Options,
+) {
+  const validatedParams = parseOrThrow(CreateRegistrationParamsSchema, params);
+  const withHooksClient = httpClient.extend({
+    hooks: {
+      afterResponse: [buildCamelCaseKeysResponseHook()],
+    },
+  });
+
+  return withHooksClient
+    .post(
+      `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/registrations`,
+      {
+        ...fetchOptions,
+        json: {
+          name: validatedParams.name,
+          description: validatedParams.description,
+          webhook_url: validatedParams.webhookUrl,
+          events_of_interest: validatedParams.eventsOfInterest.map((event) => ({
+            provider_id: event.providerId,
+            event_code: event.eventCode,
+            provider_metadata_id: event.providerMetadataId,
+          })),
+          delivery_type: validatedParams.deliveryType,
+          runtime_action: validatedParams.runtimeAction,
+          enabled: validatedParams.enabled,
+          destination_metadata: validatedParams.destinationMetadata
+            ? {
+                aws_region: validatedParams.destinationMetadata.awsRegion,
+                aws_account_id:
+                  validatedParams.destinationMetadata.awsAccountId,
+              }
+            : undefined,
+          subscriber_filters: validatedParams.subscriberFilters?.map(
+            (filter) => ({
+              name: filter.name,
+              description: filter.description,
+              subscriber_filter: filter.subscriberFilter,
+            }),
+          ),
+        },
+      },
+    )
+    .json<IoEventRegistrationOneResponse>();
+}
+
+/**
+ * Updates an event registration.
+ * @see https://developer.adobe.com/events/docs/api#operation/updateRegistration
+ *
+ * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
+ * @param params - The parameters to update the registration with.
+ * @param fetchOptions - The {@link Options} to use to make the request.
+ *
+ * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
+ * @throws An {@link HTTPError} If the status code is not 2XX.
+ */
+export async function updateRegistration(
+  httpClient: AdobeIoEventsHttpClient,
+  params: UpdateRegistrationParams,
+  fetchOptions?: Options,
+) {
+  const validatedParams = parseOrThrow(UpdateRegistrationParamsSchema, params);
+  const withHooksClient = httpClient.extend({
+    hooks: {
+      afterResponse: [buildCamelCaseKeysResponseHook()],
+    },
+  });
+
+  return withHooksClient
+    .put(
+      `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/registrations/${validatedParams.registrationId}`,
+      {
+        ...fetchOptions,
+        json: {
+          name: validatedParams.name,
+          description: validatedParams.description,
+          webhook_url: validatedParams.webhookUrl,
+          events_of_interest: validatedParams.eventsOfInterest.map((event) => ({
+            provider_id: event.providerId,
+            event_code: event.eventCode,
+            provider_metadata_id: event.providerMetadataId,
+          })),
+          delivery_type: validatedParams.deliveryType,
+          runtime_action: validatedParams.runtimeAction,
+          enabled: validatedParams.enabled,
+          destination_metadata: validatedParams.destinationMetadata
+            ? {
+                aws_region: validatedParams.destinationMetadata.awsRegion,
+                aws_account_id:
+                  validatedParams.destinationMetadata.awsAccountId,
+              }
+            : undefined,
+          subscriber_filters: validatedParams.subscriberFilters?.map(
+            (filter) => ({
+              name: filter.name,
+              description: filter.description,
+              subscriber_filter: filter.subscriberFilter,
+            }),
+          ),
+        },
+      },
     )
     .json<IoEventRegistrationOneResponse>();
 }
