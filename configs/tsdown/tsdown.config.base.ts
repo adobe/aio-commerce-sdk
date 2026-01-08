@@ -89,10 +89,17 @@ export const baseConfig: UserConfig = {
             migratedDirs.add(join(absoluteParent, migratedDir));
           }
 
+          await mkdir(dirname(targetPath), { recursive: true });
           if (!(await fileExists(sourcePath))) {
+            // biome-ignore lint/suspicious/noConsole: debugging
+            console.error("Source path does not exist:", sourcePath);
             return;
           }
-          await mkdir(dirname(targetPath), { recursive: true });
+          if (!(await fileExists(targetPath))) {
+            // biome-ignore lint/suspicious/noConsole: debugging
+            console.error("Target path does not exist:", targetPath);
+            return;
+          }
           await rename(sourcePath, targetPath);
         }),
       );
