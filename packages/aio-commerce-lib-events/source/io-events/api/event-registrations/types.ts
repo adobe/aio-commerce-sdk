@@ -12,11 +12,20 @@
 
 import type { CamelCasedPropertiesDeep } from "type-fest";
 import type { HALLink } from "#io-events/types";
-import type {
-  DeliveryType,
-  DestinationMetadata,
-  EventsOfInterest,
-} from "./schema";
+import type { DeliveryType } from "./schema";
+
+/** Defines the events of interest for a registration (API response format - snake_case). */
+export type EventsOfInterest = {
+  provider_id: string;
+  event_code: string;
+  provider_metadata_id?: string;
+};
+
+/** Defines the destination metadata for AWS EventBridge delivery (API response format - snake_case). */
+export type DestinationMetadata = {
+  aws_region?: string;
+  aws_account_id?: string;
+};
 
 /** Defines a subscriber-defined filter (from API response). */
 export type SubscriberFilterModel = {

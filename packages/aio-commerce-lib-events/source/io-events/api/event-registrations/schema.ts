@@ -226,18 +226,6 @@ export type DeleteRegistrationParams = v.InferInput<
 >;
 
 /**
- * The events of interest for a registration.
- */
-export type EventsOfInterest = v.InferInput<typeof EventsOfInterestSchema>;
-
-/**
- * The destination metadata for AWS EventBridge delivery.
- */
-export type DestinationMetadata = v.InferInput<
-  typeof DestinationMetadataSchema
->;
-
-/**
  * The subscriber-defined filter for a registration.
  */
 export type SubscriberFilter = v.InferInput<typeof SubscriberFilterSchema>;
