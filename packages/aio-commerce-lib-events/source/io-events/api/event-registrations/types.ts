@@ -87,7 +87,7 @@ export type PageMetadata = {
   totalPages: number;
 };
 
-/** Defines the fields of many I/O event registration entities returned by the Adobe I/O Events API. */
+/** Defines the fields of many I/O event registration entities returned by the Adobe I/O Events API (workspace-specific). */
 export type IoEventRegistrationManyResponse = CamelCasedPropertiesDeep<{
   _embedded: {
     registrations: IoEventRegistrationHalModel[];
@@ -97,7 +97,7 @@ export type IoEventRegistrationManyResponse = CamelCasedPropertiesDeep<{
   };
 }>;
 
-/** Defines the fields of paginated I/O event registration entities returned by the Adobe I/O Events API. */
+/** Defines the fields of paginated I/O event registration entities returned by the Adobe I/O Events API (consumer org-level). */
 export type IoEventRegistrationPaginatedResponse = CamelCasedPropertiesDeep<{
   page: PageMetadata;
   _embedded: {

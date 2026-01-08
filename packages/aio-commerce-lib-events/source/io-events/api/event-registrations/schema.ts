@@ -135,8 +135,13 @@ const RegistrationBodySchema = v.object({
   ),
 });
 
-/** Schema for getting all registrations. */
+/** Schema for getting all registrations for a workspace. */
 export const GetAllRegistrationsParamsSchema = WorkspacePathParamsSchema;
+
+/** Schema for getting all registrations for a consumer organization. */
+export const GetAllRegistrationsByConsumerOrgParamsSchema = v.object({
+  consumerOrgId: stringValueSchema("consumerOrgId"),
+});
 
 /** Schema for getting a registration by ID. */
 export const GetRegistrationByIdParamsSchema = v.object({
@@ -164,11 +169,19 @@ export const DeleteRegistrationParamsSchema = v.object({
 });
 
 /**
- * The parameters for getting all registrations.
+ * The parameters for getting all registrations for a workspace.
  * @see https://developer.adobe.com/events/docs/api#operation/getAllRegistrations
  */
 export type GetAllRegistrationsParams = v.InferInput<
   typeof GetAllRegistrationsParamsSchema
+>;
+
+/**
+ * The parameters for getting all registrations for a consumer organization.
+ * @see https://developer.adobe.com/events/docs/api#operation/getAllRegistrationsForOrg
+ */
+export type GetAllRegistrationsByConsumerOrgParams = v.InferInput<
+  typeof GetAllRegistrationsByConsumerOrgParamsSchema
 >;
 
 /**
