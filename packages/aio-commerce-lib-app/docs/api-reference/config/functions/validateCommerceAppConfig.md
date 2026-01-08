@@ -1,7 +1,7 @@
-# `validateConfig()`
+# `validateCommerceAppConfig()`
 
 ```ts
-function validateConfig(config: unknown): {
+function validateCommerceAppConfig(config: unknown): {
   businessConfig?: {
     schema: (
       | {
@@ -40,6 +40,13 @@ function validateConfig(config: unknown): {
           description?: string;
           label?: string;
           name: string;
+          type: "password";
+        }
+      | {
+          default?: string;
+          description?: string;
+          label?: string;
+          name: string;
           type: "email";
         }
       | {
@@ -67,9 +74,9 @@ function validateConfig(config: unknown): {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-extensibility/source/config/lib/validate.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-extensibility/source/config/lib/validate.ts#L58)
+Defined in: [packages/aio-commerce-lib-app/source/config/lib/validate.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L58)
 
-Validates a complete extensibility configuration object against the schema.
+Validates a complete commerce app configuration object against the schema.
 
 ## Parameters
 
@@ -113,6 +120,13 @@ Validates a complete extensibility configuration object against the schema.
         label?: string;
         name: string;
         type: "text";
+      }
+        | {
+        default?: string;
+        description?: string;
+        label?: string;
+        name: string;
+        type: "password";
       }
         | {
         default?: string;
@@ -188,6 +202,13 @@ optional businessConfig: {
      description?: string;
      label?: string;
      name: string;
+     type: "password";
+   }
+     | {
+     default?: string;
+     description?: string;
+     label?: string;
+     name: string;
      type: "email";
    }
      | {
@@ -241,6 +262,13 @@ schema: (
   label?: string;
   name: string;
   type: "text";
+}
+  | {
+  default?: string;
+  description?: string;
+  label?: string;
+  name: string;
+  type: "password";
 }
   | {
   default?: string;
@@ -315,7 +343,7 @@ const config = {
 };
 
 try {
-  const validatedConfig = validateConfig(config);
+  const validatedConfig = validateCommerceAppConfig(config);
   // Use validatedConfig safely
 } catch (error) {
   if (error instanceof CommerceSdkValidationError) {

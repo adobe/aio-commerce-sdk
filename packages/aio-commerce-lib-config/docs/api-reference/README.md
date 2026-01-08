@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-config`: `v0.9.0`
+# `@adobe/aio-commerce-lib-config`: `v0.10.0`
 
 This module exports configuration management utilities for the AIO Commerce SDK.
 
@@ -6,7 +6,7 @@ This module exports configuration management utilities for the AIO Commerce SDK.
 
 | Type Alias                                                                       | Description                                                                                                                                      |
 | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [BusinessConfig](type-aliases/BusinessConfig.md)                                 | The keys of the `businessConfig` settings in the extensibility config file.                                                                      |
+| [BusinessConfig](type-aliases/BusinessConfig.md)                                 | The keys of the `businessConfig` settings in the app config file.                                                                                |
 | [BusinessConfigSchema](type-aliases/BusinessConfigSchema.md)                     | The schema type for the business configuration schema.                                                                                           |
 | [BusinessConfigSchemaField](type-aliases/BusinessConfigSchemaField.md)           | The schema type for a configuration field.                                                                                                       |
 | [BusinessConfigSchemaListOption](type-aliases/BusinessConfigSchemaListOption.md) | The schema type for an option in a list configuration field. Represents a single option that can be selected in a list-type configuration field. |
@@ -45,10 +45,12 @@ This module exports configuration management utilities for the AIO Commerce SDK.
 | [byCode](functions/byCode.md)                                       | Creates a scope selector that identifies a scope by its code only.                                         |
 | [byCodeAndLevel](functions/byCodeAndLevel.md)                       | Creates a scope selector that identifies a scope by its code and level.                                    |
 | [byScopeId](functions/byScopeId.md)                                 | Creates a scope selector that identifies a scope by its unique ID.                                         |
+| [generateEncryptionKey](functions/generateEncryptionKey.md)         | Generates a new encryption key suitable for CONFIG_ENCRYPTION_KEY.                                         |
 | [getConfigSchema](functions/getConfigSchema.md)                     | Gets the configuration schema with lazy initialization and version checking.                               |
 | [getConfiguration](functions/getConfiguration.md)                   | Gets configuration for a scope.                                                                            |
 | [getConfigurationByKey](functions/getConfigurationByKey.md)         | Gets a specific configuration value by key for a scope.                                                    |
 | [getScopeTree](functions/getScopeTree.md)                           | Gets the scope tree from cache or Commerce API.                                                            |
+| [isEncryptionConfigured](functions/isEncryptionConfigured.md)       | Checks if encryption is properly configured.                                                               |
 | [setConfiguration](functions/setConfiguration.md)                   | Sets configuration values for a scope.                                                                     |
 | [setCustomScopeTree](functions/setCustomScopeTree.md)               | Sets the custom scope tree, replacing all existing custom scopes with the provided ones.                   |
 | [setGlobalLibConfigOptions](functions/setGlobalLibConfigOptions.md) | Sets global library configuration options that will be used as defaults for all operations of the library. |

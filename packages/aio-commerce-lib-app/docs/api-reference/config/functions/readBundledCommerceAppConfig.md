@@ -1,7 +1,7 @@
-# `parseExtensibilityConfig()`
+# `readBundledCommerceAppConfig()`
 
 ```ts
-function parseExtensibilityConfig(cwd: string): Promise<{
+function readBundledCommerceAppConfig(): Promise<{
   businessConfig?: {
     schema: (
       | {
@@ -40,6 +40,13 @@ function parseExtensibilityConfig(cwd: string): Promise<{
           description?: string;
           label?: string;
           name: string;
+          type: "password";
+        }
+      | {
+          default?: string;
+          description?: string;
+          label?: string;
+          name: string;
           type: "email";
         }
       | {
@@ -67,18 +74,9 @@ function parseExtensibilityConfig(cwd: string): Promise<{
 }>;
 ```
 
-Defined in: [packages/aio-commerce-lib-extensibility/source/config/lib/parser.ts:138](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-extensibility/source/config/lib/parser.ts#L138)
+Defined in: [packages/aio-commerce-lib-app/source/config/lib/parser.ts:152](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L152)
 
-Read the extensibility config file and parse its contents into its schema.
-
-Supports multiple config file formats (see [resolveExtensibilityConfig](resolveExtensibilityConfig.md) for the list).
-The config file must export a default export with the configuration object.
-
-## Parameters
-
-| Parameter | Type     | Description                   |
-| --------- | -------- | ----------------------------- |
-| `cwd`     | `string` | The current working directory |
+Read the bundled commerce app config file
 
 ## Returns
 
@@ -121,6 +119,13 @@ The config file must export a default export with the configuration object.
 `description?`: `string`;
 `label?`: `string`;
 `name`: `string`;
+`type`: `"password"`;
+\}
+\| \{
+`default?`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
 `type`: `"email"`;
 \}
 \| \{
@@ -146,8 +151,6 @@ The config file must export a default export with the configuration object.
 \};
 \}\>
 
-The validated and parsed config object
-
 ## Throws
 
-If no config file is found, if the file doesn't export a default export, or if validation fails
+If the bundled commerce app config file is not found or if it is invalid

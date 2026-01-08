@@ -101,7 +101,7 @@ function create3rdPartyCustomEventProvider(
 }>;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts:115](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts#L115)
+Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts:115](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts#L115)
 
 Creates a 3rd Party Custom Events (of type `3rd_party_custom_events`) event provider.
 

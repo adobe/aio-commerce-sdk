@@ -1,7 +1,7 @@
-# `validateConfigDomain()`
+# `validateCommerceAppConfigDomain()`
 
 ```ts
-function validateConfigDomain<T>(
+function validateCommerceAppConfigDomain<T>(
   config: unknown,
   domain: T,
 ): NonNullable<
@@ -45,6 +45,13 @@ function validateConfigDomain<T>(
               description?: string;
               label?: string;
               name: string;
+              type: "password";
+            }
+          | {
+              default?: string;
+              description?: string;
+              label?: string;
+              name: string;
               type: "email";
             }
           | {
@@ -75,12 +82,12 @@ function validateConfigDomain<T>(
 >;
 ```
 
-Defined in: [packages/aio-commerce-lib-extensibility/source/config/lib/validate.ts:114](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-extensibility/source/config/lib/validate.ts#L114)
+Defined in: [packages/aio-commerce-lib-app/source/config/lib/validate.ts:114](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L114)
 
-Validates a specific domain configuration within the extensibility config.
+Validates a specific domain configuration within the commerce app config.
 
 This function validates only a specific domain's configuration rather than
-the entire extensibility configuration object. It first validates that the
+the entire commerce app configuration object. It first validates that the
 domain name is valid, then validates the configuration data against the
 schema for that specific domain.
 
@@ -138,6 +145,13 @@ schema for that specific domain.
 `description?`: `string`;
 `label?`: `string`;
 `name`: `string`;
+`type`: `"password"`;
+\}
+\| \{
+`default?`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
 `type`: `"email"`;
 \}
 \| \{
@@ -184,7 +198,7 @@ const businessConfig = {
 };
 
 try {
-  const validatedConfig = validateConfigDomain(
+  const validatedConfig = validateCommerceAppConfigDomain(
     businessConfig,
     "businessConfig",
   );
