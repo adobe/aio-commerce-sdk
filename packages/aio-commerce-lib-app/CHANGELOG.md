@@ -4,6 +4,12 @@
 
 ### Minor Changes
 
+- [#196](https://github.com/adobe/aio-commerce-sdk/pull/196) [`ca14df8`](https://github.com/adobe/aio-commerce-sdk/commit/ca14df8d1b351e09cbd41c5315f7e34a2daa0394) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Transfer code from `@adobe/aio-commerce-lib-extensibility` and adapt naming for consistency
+
+## 0.1.0
+
+### Minor Changes
+
 - [#177](https://github.com/adobe/aio-commerce-sdk/pull/177) [`6ab0c02`](https://github.com/adobe/aio-commerce-sdk/commit/6ab0c02cc3710514cd0904ac24c7fcb00735c825) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Implement `config` entrypoint for utilities related to `extensibility.config.js`
 
 ### Patch Changes

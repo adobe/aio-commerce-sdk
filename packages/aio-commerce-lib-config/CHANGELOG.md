@@ -1,5 +1,22 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.10.0
+
+### Minor Changes
+
+- [#192](https://github.com/adobe/aio-commerce-sdk/pull/192) [`72253b5`](https://github.com/adobe/aio-commerce-sdk/commit/72253b54e5393ed525a692b0618235c68a3a9556) Thanks [@emartinpalomas](https://github.com/emartinpalomas)! - Allow sync-commerce-scopes action to accept base_url from request parameter with .env fallback
+
+- [#189](https://github.com/adobe/aio-commerce-sdk/pull/189) [`fae57e2`](https://github.com/adobe/aio-commerce-sdk/commit/fae57e23d9d8fd6caf896e08fb2d09da9ce78bb9) Thanks [@emartinpalomas](https://github.com/emartinpalomas)! - Add password field encryption support with automatic key generation and AES-256-GCM encryption
+
+### Patch Changes
+
+- [#196](https://github.com/adobe/aio-commerce-sdk/pull/196) [`ca14df8`](https://github.com/adobe/aio-commerce-sdk/commit/ca14df8d1b351e09cbd41c5315f7e34a2daa0394) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Refactor to use recently migrated package `@adobe/aio-commerce-lib-app` instead of `@adobe/aio-commerce-lib-extensibility`
+
+- [#193](https://github.com/adobe/aio-commerce-sdk/pull/193) [`509eb85`](https://github.com/adobe/aio-commerce-sdk/commit/509eb857ae47735b5e96e7dd1d1f39dd942306fd) Thanks [@emartinpalomas](https://github.com/emartinpalomas)! - Load encryption key from .env during schema validation
+
+- Updated dependencies [[`ca14df8`](https://github.com/adobe/aio-commerce-sdk/commit/ca14df8d1b351e09cbd41c5315f7e34a2daa0394)]:
+  - @adobe/aio-commerce-lib-app@0.1.0
+
 ## 0.9.1
 
 ### Patch Changes
