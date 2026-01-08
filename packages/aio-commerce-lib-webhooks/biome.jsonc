@@ -1,0 +1,17 @@
+{
+  "root": false,
+  "$schema": "https://biomejs.dev/schemas/2.3.2/schema.json",
+  "extends": "//",
+  "overrides": [
+    {
+      "includes": ["test/**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noMagicNumbers": "off"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -308,6 +308,25 @@ importers:
         specifier: workspace:*
         version: link:../../packages-private/scripting-utils
 
+  packages/aio-commerce-lib-webhooks:
+    dependencies:
+      '@adobe/aio-commerce-lib-core':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-core
+    devDependencies:
+      '@aio-commerce-sdk/config-tsdown':
+        specifier: workspace:*
+        version: link:../../configs/tsdown
+      '@aio-commerce-sdk/config-typedoc':
+        specifier: workspace:*
+        version: link:../../configs/typedoc
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../../configs/typescript
+      '@aio-commerce-sdk/config-vitest':
+        specifier: workspace:*
+        version: link:../../configs/vitest
+
   packages/aio-commerce-sdk:
     dependencies:
       '@adobe/aio-commerce-lib-api':

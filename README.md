@@ -31,6 +31,7 @@ pnpm install @adobe/aio-commerce-lib-auth
 - **[`@adobe/aio-commerce-lib-core`](./packages/aio-commerce-lib-core)** - Provides foundational utilities and shared functionality used across all `@adobe/aio-commerce-sdk` libraries
 - **[`@adobe/aio-commerce-lib-events`](./packages/aio-commerce-lib-events)** - Facilitates event-driven integrations between Adobe Commerce and Adobe I/O Events
 - **[`@adobe/aio-commerce-lib-extensibility`](./packages/aio-commerce-lib-extensibility)** - Manages extensibility configurations for Adobe Commerce applications
+- **[`@adobe/aio-commerce-lib-webhooks`](./packages/aio-commerce-lib-extensibility)** - Facilitates webhook implementation for Adobe Commerce applications
 
 ## Architecture
 

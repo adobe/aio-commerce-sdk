@@ -1,0 +1,15 @@
+{
+  "$schema": "https://typedoc-plugin-markdown.org/schema.json",
+  "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.base.json"],
+
+  "entryPoints": [
+    "./source/operations/index.ts",
+    "./source/responses/index.ts"
+  ],
+  "entryPointStrategy": "expand",
+  "out": "docs/api-reference",
+
+  "validation": {
+    "notExported": false
+  }
+}
