@@ -16,6 +16,7 @@ import { parseOrThrow } from "#utils/valibot";
 
 import {
   CreateRegistrationParamsSchema,
+  DeleteRegistrationParamsSchema,
   GetAllRegistrationsByConsumerOrgParamsSchema,
   GetAllRegistrationsParamsSchema,
   GetRegistrationByIdParamsSchema,
@@ -27,6 +28,7 @@ import type { HTTPError, Options } from "@adobe/aio-commerce-lib-api/ky";
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import type {
   CreateRegistrationParams,
+  DeleteRegistrationParams,
   GetAllRegistrationsByConsumerOrgParams,
   GetAllRegistrationsParams,
   GetRegistrationByIdParams,
@@ -250,4 +252,31 @@ export async function updateRegistration(
       },
     )
     .json<IoEventRegistrationOneResponse>();
+}
+
+/**
+ * Deletes an event registration.
+ * @see https://developer.adobe.com/events/docs/api#operation/deleteRegistration
+ *
+ * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
+ * @param params - The parameters to delete the registration with.
+ * @param fetchOptions - The {@link Options} to use to make the request.
+ *
+ * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
+ * @throws An {@link HTTPError} If the status code is not 2XX.
+ */
+export async function deleteRegistration(
+  httpClient: AdobeIoEventsHttpClient,
+  params: DeleteRegistrationParams,
+  fetchOptions?: Options,
+) {
+  const validatedParams = parseOrThrow(DeleteRegistrationParamsSchema, params);
+  return httpClient
+    .delete(
+      `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/registrations/${validatedParams.registrationId}`,
+      fetchOptions,
+    )
+    .then((_res) => {
+      // We set this `then` to make the response type `void`
+    });
 }
