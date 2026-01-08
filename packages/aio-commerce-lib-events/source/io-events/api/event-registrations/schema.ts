@@ -22,6 +22,12 @@ const VALID_DELIVERY_TYPES = [
   "aws_eventbridge",
 ] as const;
 
+/** Regex pattern for AWS region validation. */
+const AWS_REGION_REGEX = /^(us|ca|eu|af|ap|cn|me|sa|il)-[a-z]+-\d$/;
+
+/** Regex pattern for AWS account ID validation (12 digits). */
+const AWS_ACCOUNT_ID_REGEX = /^\d{12}$/;
+
 /** Schema for delivery type validation. */
 export const DeliveryTypeSchema = v.picklist(
   VALID_DELIVERY_TYPES,
@@ -41,7 +47,7 @@ export const DestinationMetadataSchema = v.object({
     v.pipe(
       stringValueSchema("awsRegion"),
       v.regex(
-        /^(us|ca|eu|af|ap|cn|me|sa|il)-[a-z]+-\d$/,
+        AWS_REGION_REGEX,
         "Expected AWS region in format like 'us-east-1'",
       ),
     ),
@@ -49,7 +55,10 @@ export const DestinationMetadataSchema = v.object({
   awsAccountId: v.optional(
     v.pipe(
       stringValueSchema("awsAccountId"),
-      v.regex(/^\d{12}$/, "Expected AWS account ID to be a 12-digit number"),
+      v.regex(
+        AWS_ACCOUNT_ID_REGEX,
+        "Expected AWS account ID to be a 12-digit number",
+      ),
     ),
   ),
 });
