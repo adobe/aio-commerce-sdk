@@ -274,12 +274,49 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
               eventCode: "event-1",
             },
           ],
+          subscriberFilters: [
+            {
+              name: "Test Filter",
+              subscriberFilter: '{"key": "value"}',
+            },
+          ],
         },
         fetchOptions,
       );
     },
 
     hasInputValidation: true,
+    hasCamelCaseTransformer: true,
+  },
+  {
+    name: "createRegistration",
+    method: "POST",
+    pathname: "consumer-org-1/project-1/workspace-1/registrations",
+
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+      return client.createRegistration(
+        {
+          consumerOrgId: "consumer-org-1",
+          projectId: "project-1",
+          workspaceId: "workspace-1",
+          name: "AWS Registration",
+          deliveryType: "aws_eventbridge",
+          eventsOfInterest: [
+            {
+              providerId: "provider-1",
+              eventCode: "event-1",
+            },
+          ],
+          destinationMetadata: {
+            awsRegion: "us-east-1",
+            awsAccountId: "123456789012",
+          },
+        },
+        fetchOptions,
+      );
+    },
+
+    hasInputValidation: false,
     hasCamelCaseTransformer: true,
   },
   {
@@ -305,12 +342,51 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
               eventCode: "event-1",
             },
           ],
+          subscriberFilters: [
+            {
+              name: "Updated Filter",
+              subscriberFilter: '{"key": "updated"}',
+            },
+          ],
         },
         fetchOptions,
       );
     },
 
     hasInputValidation: true,
+    hasCamelCaseTransformer: true,
+  },
+  {
+    name: "updateRegistration",
+    method: "PUT",
+    pathname:
+      "consumer-org-1/project-1/workspace-1/registrations/registration-1",
+
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+      return client.updateRegistration(
+        {
+          consumerOrgId: "consumer-org-1",
+          projectId: "project-1",
+          workspaceId: "workspace-1",
+          registrationId: "registration-1",
+          name: "AWS Registration",
+          deliveryType: "aws_eventbridge",
+          eventsOfInterest: [
+            {
+              providerId: "provider-1",
+              eventCode: "event-1",
+            },
+          ],
+          destinationMetadata: {
+            awsRegion: "eu-west-1",
+            awsAccountId: "987654321098",
+          },
+        },
+        fetchOptions,
+      );
+    },
+
+    hasInputValidation: false,
     hasCamelCaseTransformer: true,
   },
   {
