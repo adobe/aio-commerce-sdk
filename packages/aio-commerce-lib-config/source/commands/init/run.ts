@@ -19,8 +19,8 @@ import { consola } from "consola";
 
 import {
   ensureAppConfig,
+  ensureCommerceAppConfig,
   ensureEnvFile,
-  ensureExtensibilityConfig,
   ensureInstallYaml,
   ensurePackageJsonScript,
   installDependencies,
@@ -44,7 +44,7 @@ export async function run() {
     const execCommand = getExecCommand(packageManager);
 
     const steps = [
-      makeStep("ensureExtensibilityConfig", ensureExtensibilityConfig),
+      makeStep("ensureExtensibilityConfig", ensureCommerceAppConfig),
       makeStep("ensurePackageJsonScript", ensurePackageJsonScript, execCommand),
       makeStep("installDependencies", installDependencies, packageManager),
       makeStep("runGeneration", runGeneration),
@@ -69,7 +69,7 @@ export async function run() {
     consola.success("Initialization complete!");
     consola.box(
       "Next steps:\n" +
-        "   1. Review and customize extensibility.config.js\n" +
+        "   1. Review and customize app.commerce.config.js\n" +
         "   2. Fill in the required values in your .env file",
     );
   } catch (error) {

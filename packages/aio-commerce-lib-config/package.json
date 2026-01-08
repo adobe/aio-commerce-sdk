@@ -73,7 +73,7 @@
   "dependencies": {
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
-    "@adobe/aio-commerce-lib-extensibility": "workspace:*",
+    "@adobe/aio-commerce-lib-app": "workspace:*",
     "@adobe/aio-lib-core-logging": "^3.0.2",
     "@adobe/aio-lib-files": "^4.0.0",
     "@adobe/aio-lib-state": "^5.0.0",

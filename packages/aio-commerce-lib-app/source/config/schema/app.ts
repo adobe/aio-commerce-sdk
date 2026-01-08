@@ -21,27 +21,25 @@ import {
 } from "./business-configuration";
 import { MetadataSchema } from "./metadata";
 
-export const ExtensibilityConfigSchemas = {
+export const CommerceAppConfigSchemas = {
   metadata: MetadataSchema,
   businessConfig: SchemaBusinessConfig,
   "businessConfig.schema": SchemaBusinessConfigSchema,
 } as const;
 
-/** Individual validatable domains of the extensibility config. */
-export type ExtensibilityConfigDomain = keyof typeof ExtensibilityConfigSchemas;
+/** Individual validatable domains of the commerce app config. */
+export type CommerceAppConfigDomain = keyof typeof CommerceAppConfigSchemas;
 
-/** The schema used to validate the extensibility config file. */
-export const ExtensibilityConfigSchema = v.object({
+/** The schema used to validate the commerce app config file. */
+export const CommerceAppConfigSchema = v.object({
   metadata: MetadataSchema,
   businessConfig: v.optional(SchemaBusinessConfig),
 });
 
-/** The input shape of the extensibility config schema. */
-export type ExtensibilityConfig = v.InferInput<
-  typeof ExtensibilityConfigSchema
->;
+/** The input shape of the commerce app config schema. */
+export type CommerceAppConfig = v.InferInput<typeof CommerceAppConfigSchema>;
 
-/** The output shape of the extensibility config schema. */
-export type ExtensibilityConfigOutputModel = v.InferOutput<
-  typeof ExtensibilityConfigSchema
+/** The output shape of the commerce app config schema. */
+export type CommerceAppConfigOutputModel = v.InferOutput<
+  typeof CommerceAppConfigSchema
 >;

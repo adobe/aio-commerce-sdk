@@ -14,22 +14,22 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import * as v from "valibot";
 
 import {
-  ExtensibilityConfigSchema,
-  ExtensibilityConfigSchemas,
-} from "#config/schema/extensibility";
+  CommerceAppConfigSchema,
+  CommerceAppConfigSchemas,
+} from "#config/schema/app";
 
 import type { Get } from "type-fest";
 import type {
-  ExtensibilityConfigDomain,
-  ExtensibilityConfigOutputModel,
-} from "#config/schema/extensibility";
+  CommerceAppConfigDomain,
+  CommerceAppConfigOutputModel,
+} from "#config/schema/app";
 
-const extensibilityConfigDomainsSchema = v.picklist(
-  Object.keys(ExtensibilityConfigSchemas),
+const commerceAppConfigDomainsSchema = v.picklist(
+  Object.keys(CommerceAppConfigSchemas),
 );
 
 /**
- * Validates a complete extensibility configuration object against the schema.
+ * Validates a complete commerce app configuration object against the schema.
  *
  * @param config - The configuration object to validate.
  * @returns The validated and typed configuration output model.
@@ -46,7 +46,7 @@ const extensibilityConfigDomainsSchema = v.picklist(
  * };
  *
  * try {
- *   const validatedConfig = validateConfig(config);
+ *   const validatedConfig = validateCommerceAppConfig(config);
  *   // Use validatedConfig safely
  * } catch (error) {
  *   if (error instanceof CommerceSdkValidationError) {
@@ -55,13 +55,13 @@ const extensibilityConfigDomainsSchema = v.picklist(
  * }
  * ```
  */
-export function validateConfig(
+export function validateCommerceAppConfig(
   config: unknown,
-): ExtensibilityConfigOutputModel {
-  const validatedConfig = v.safeParse(ExtensibilityConfigSchema, config);
+): CommerceAppConfigOutputModel {
+  const validatedConfig = v.safeParse(CommerceAppConfigSchema, config);
 
   if (!validatedConfig.success) {
-    throw new CommerceSdkValidationError("Invalid extensibility config", {
+    throw new CommerceSdkValidationError("Invalid commerce app config", {
       issues: validatedConfig.issues,
     });
   }
@@ -70,10 +70,10 @@ export function validateConfig(
 }
 
 /**
- * Validates a specific domain configuration within the extensibility config.
+ * Validates a specific domain configuration within the commerce app config.
  *
  * This function validates only a specific domain's configuration rather than
- * the entire extensibility configuration object. It first validates that the
+ * the entire commerce app configuration object. It first validates that the
  * domain name is valid, then validates the configuration data against the
  * schema for that specific domain.
  *
@@ -99,7 +99,7 @@ export function validateConfig(
  * };
  *
  * try {
- *   const validatedConfig = validateConfigDomain(
+ *   const validatedConfig = validateCommerceAppConfigDomain(
  *     businessConfig,
  *     'businessConfig'
  *   );
@@ -111,27 +111,23 @@ export function validateConfig(
  * }
  * ```
  */
-export function validateConfigDomain<T extends ExtensibilityConfigDomain>(
-  config: unknown,
-  domain: T,
-) {
-  const domainSchema = v.safeParse(extensibilityConfigDomainsSchema, domain);
+export function validateCommerceAppConfigDomain<
+  T extends CommerceAppConfigDomain,
+>(config: unknown, domain: T) {
+  const domainSchema = v.safeParse(commerceAppConfigDomainsSchema, domain);
 
   if (!domainSchema.success) {
-    throw new CommerceSdkValidationError(
-      "Invalid extensibility config domain",
-      {
-        issues: domainSchema.issues,
-      },
-    );
+    throw new CommerceSdkValidationError("Invalid commerce app config domain", {
+      issues: domainSchema.issues,
+    });
   }
 
-  const domainConfigSchema = ExtensibilityConfigSchemas[domain];
+  const domainConfigSchema = CommerceAppConfigSchemas[domain];
   const validatedConfig = v.safeParse(domainConfigSchema, config);
 
   if (!validatedConfig.success) {
     throw new CommerceSdkValidationError(
-      `Invalid extensibility config: ${domain}`,
+      `Invalid commerce app config: ${domain}`,
       {
         issues: validatedConfig.issues,
       },
@@ -139,6 +135,6 @@ export function validateConfigDomain<T extends ExtensibilityConfigDomain>(
   }
 
   return validatedConfig.output as NonNullable<
-    Get<ExtensibilityConfigOutputModel, T>
+    Get<CommerceAppConfigOutputModel, T>
   >;
 }

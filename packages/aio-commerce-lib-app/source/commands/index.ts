@@ -18,7 +18,7 @@ import consola from "consola";
 import { run as generateActionsCommand } from "#commands/generate/actions/run";
 import { run as generateManifestCommand } from "#commands/generate/manifest/run";
 
-const NAMESPACE = "@adobe/aio-commerce-lib-extensibility";
+const NAMESPACE = "@adobe/aio-commerce-lib-app";
 
 const args = process.argv.slice(2);
 const [command, subcommand] = args;
@@ -28,8 +28,8 @@ Usage: ${NAMESPACE} <command> [target]
 
 Commands:
   generate <target>    Generate artifacts
-    all                Generate extensibility manifest and runtime actions
-    manifest           Generate extensibility manifest only
+    all                Generate app manifest and runtime actions
+    manifest           Generate app manifest only
     actions            Generate runtime actions only
 
   help                 Show this help message

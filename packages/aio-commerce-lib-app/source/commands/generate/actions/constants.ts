@@ -11,7 +11,7 @@
  */
 
 import {
-  EXTENSIBILITY_MANIFEST_FILE,
+  APP_MANIFEST_FILE,
   GENERATED_ACTIONS_PATH,
   GENERATED_PATH,
   PACKAGE_NAME,
@@ -22,23 +22,22 @@ import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
 /** The list of runtime actions to generate */
 export const RUNTIME_ACTIONS = [
   {
-    name: "get-extensibility-config",
-    templateFile: "get-extensibility-config.js.template",
+    name: "get-app-config",
+    templateFile: "get-app-config.js.template",
   },
 ];
 
 /** The ext.config.yaml configuration */
 export const EXT_CONFIG: ExtConfig = {
   hooks: {
-    "pre-app-build":
-      "$packageExec aio-commerce-lib-extensibility generate manifest",
+    "pre-app-build": "$packageExec aio-commerce-lib-app generate manifest",
   },
 
   operations: {
     workerProcess: [
       {
         type: "action",
-        impl: `${PACKAGE_NAME}/get-extensibility-config`,
+        impl: `${PACKAGE_NAME}/get-app-config`,
       },
     ],
   },
@@ -48,13 +47,10 @@ export const EXT_CONFIG: ExtConfig = {
       [PACKAGE_NAME]: {
         license: "Apache-2.0",
         actions: {
-          "get-extensibility-config": {
-            function: `${GENERATED_ACTIONS_PATH}/get-extensibility-config.js`,
+          "get-app-config": {
+            function: `${GENERATED_ACTIONS_PATH}/get-app-config.js`,
             include: [
-              [
-                `${GENERATED_PATH}/${EXTENSIBILITY_MANIFEST_FILE}`,
-                `${PACKAGE_NAME}/`,
-              ],
+              [`${GENERATED_PATH}/${APP_MANIFEST_FILE}`, `${PACKAGE_NAME}/`],
             ],
 
             web: "yes",

@@ -12,7 +12,10 @@
 
 import { describe, expect, test } from "vitest";
 
-import { validateConfig, validateConfigDomain } from "#config/lib/validate";
+import {
+  validateCommerceAppConfig,
+  validateCommerceAppConfigDomain,
+} from "#config/lib/validate";
 
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_DESCRIPTION_LENGTH = 255;
@@ -49,8 +52,8 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).not.toThrow();
-    const validated = validateConfig(config);
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    const validated = validateCommerceAppConfig(config);
     expect(validated.metadata.id).toBe("test-app");
     expect(validated.businessConfig?.schema).toHaveLength(2);
   });
@@ -65,8 +68,8 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).not.toThrow();
-    const validated = validateConfig(config);
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    const validated = validateCommerceAppConfig(config);
     expect(validated.metadata.id).toBe("minimal-app");
     expect(validated.businessConfig).toBeUndefined();
   });
@@ -78,8 +81,8 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).toThrow(
-      "Invalid extensibility config",
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
     );
   });
 
@@ -92,8 +95,8 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).toThrow(
-      "Invalid extensibility config",
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
     );
   });
 
@@ -107,8 +110,8 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).toThrow(
-      "Invalid extensibility config",
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
     );
   });
 
@@ -122,7 +125,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).not.toThrow();
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
   test("should throw when displayName exceeds 50 characters", () => {
@@ -135,8 +138,8 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).toThrow(
-      "Invalid extensibility config",
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
     );
   });
 
@@ -150,7 +153,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).not.toThrow();
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
   test("should throw when description exceeds 255 characters", () => {
@@ -163,8 +166,8 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).toThrow(
-      "Invalid extensibility config",
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
     );
   });
 
@@ -178,7 +181,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).not.toThrow();
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
   test.each([
@@ -201,8 +204,8 @@ describe("validateConfig", () => {
         },
       };
 
-      expect(() => validateConfig(config)).toThrow(
-        "Invalid extensibility config",
+      expect(() => validateCommerceAppConfig(config)).toThrow(
+        "Invalid commerce app config",
       );
     },
   );
@@ -222,7 +225,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).not.toThrow();
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
   test("should throw when businessConfig.schema is empty array", () => {
@@ -238,8 +241,8 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).toThrow(
-      "Invalid extensibility config",
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
     );
   });
 
@@ -264,7 +267,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).not.toThrow();
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
   test("should validate email field type", () => {
@@ -287,7 +290,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).not.toThrow();
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
   test("should throw when email field has invalid default email", () => {
@@ -310,8 +313,8 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).toThrow(
-      "Invalid extensibility config",
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
     );
   });
 
@@ -335,7 +338,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).not.toThrow();
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
   test("should validate tel field type", () => {
@@ -358,7 +361,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).not.toThrow();
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
   test("should validate list field with single selection", () => {
@@ -386,7 +389,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).not.toThrow();
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
   test("should validate list field with multiple selection", () => {
@@ -414,7 +417,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).not.toThrow();
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
   test("should throw when list field with single selection has array default", () => {
@@ -442,8 +445,8 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).toThrow(
-      "Invalid extensibility config",
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
     );
   });
 
@@ -472,8 +475,8 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).toThrow(
-      "Invalid extensibility config",
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
     );
   });
 
@@ -496,8 +499,8 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).toThrow(
-      "Invalid extensibility config",
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
     );
   });
 
@@ -520,8 +523,8 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).toThrow(
-      "Invalid extensibility config",
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
     );
   });
 
@@ -544,7 +547,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateConfig(config)).not.toThrow();
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 });
 
@@ -557,8 +560,10 @@ describe("validateConfigDomain", () => {
       version: "1.0.0",
     };
 
-    expect(() => validateConfigDomain(metadata, "metadata")).not.toThrow();
-    const validated = validateConfigDomain(metadata, "metadata");
+    expect(() =>
+      validateCommerceAppConfigDomain(metadata, "metadata"),
+    ).not.toThrow();
+    const validated = validateCommerceAppConfigDomain(metadata, "metadata");
     expect(validated.id).toBe("test-app");
   });
 
@@ -570,8 +575,8 @@ describe("validateConfigDomain", () => {
       version: "1.0.0",
     };
 
-    expect(() => validateConfigDomain(metadata, "metadata")).toThrow(
-      "Invalid extensibility config: metadata",
+    expect(() => validateCommerceAppConfigDomain(metadata, "metadata")).toThrow(
+      "Invalid commerce app config: metadata",
     );
   });
 
@@ -586,9 +591,12 @@ describe("validateConfigDomain", () => {
     };
 
     expect(() =>
-      validateConfigDomain(businessConfig, "businessConfig"),
+      validateCommerceAppConfigDomain(businessConfig, "businessConfig"),
     ).not.toThrow();
-    const validated = validateConfigDomain(businessConfig, "businessConfig");
+    const validated = validateCommerceAppConfigDomain(
+      businessConfig,
+      "businessConfig",
+    );
     expect(validated.schema).toHaveLength(1);
   });
 
@@ -598,8 +606,8 @@ describe("validateConfigDomain", () => {
     };
 
     expect(() =>
-      validateConfigDomain(businessConfig, "businessConfig"),
-    ).toThrow("Invalid extensibility config: businessConfig");
+      validateCommerceAppConfigDomain(businessConfig, "businessConfig"),
+    ).toThrow("Invalid commerce app config: businessConfig");
   });
 
   test("should validate businessConfig.schema domain", () => {
@@ -622,9 +630,12 @@ describe("validateConfigDomain", () => {
     ];
 
     expect(() =>
-      validateConfigDomain(schema, "businessConfig.schema"),
+      validateCommerceAppConfigDomain(schema, "businessConfig.schema"),
     ).not.toThrow();
-    const validated = validateConfigDomain(schema, "businessConfig.schema");
+    const validated = validateCommerceAppConfigDomain(
+      schema,
+      "businessConfig.schema",
+    );
     expect(validated).toHaveLength(2);
   });
 
@@ -636,9 +647,9 @@ describe("validateConfigDomain", () => {
       },
     ];
 
-    expect(() => validateConfigDomain(schema, "businessConfig.schema")).toThrow(
-      "Invalid extensibility config: businessConfig.schema",
-    );
+    expect(() =>
+      validateCommerceAppConfigDomain(schema, "businessConfig.schema"),
+    ).toThrow("Invalid commerce app config: businessConfig.schema");
   });
 
   test("should throw when validating unknown domain", () => {
@@ -646,7 +657,7 @@ describe("validateConfigDomain", () => {
 
     expect(() =>
       // @ts-expect-error - Testing invalid domain
-      validateConfigDomain(data, "unknownDomain"),
+      validateCommerceAppConfigDomain(data, "unknownDomain"),
     ).toThrow();
   });
 });

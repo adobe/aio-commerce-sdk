@@ -18,28 +18,28 @@ import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 
 import {
-  EXTENSIBILITY_MANIFEST_FILE,
+  APP_MANIFEST_FILE,
   EXTENSION_POINT_FOLDER_PATH,
 } from "#commands/constants";
-import { parseExtensibilityConfig } from "#config/lib/parser";
+import { parseCommerceAppConfig } from "#config/lib/parser";
 
 /** Run the generate manifest command */
 export async function run() {
-  consola.start("Generating extensibility manifest...");
+  consola.start("Generating app manifest...");
   try {
-    consola.info("Reading extensibility config...");
-    const config = await parseExtensibilityConfig();
+    consola.info("Reading app config...");
+    const config = await parseCommerceAppConfig();
 
-    consola.info("Generating extensibility manifest...");
+    consola.info("Generating app manifest...");
     const contents = JSON.stringify(config, null, 2);
     const outputDir = await makeOutputDirFor(
       `${EXTENSION_POINT_FOLDER_PATH}/.generated`,
     );
 
-    const manifestPath = join(outputDir, EXTENSIBILITY_MANIFEST_FILE);
+    const manifestPath = join(outputDir, APP_MANIFEST_FILE);
     await writeFile(manifestPath, contents, "utf-8");
 
-    consola.success(`Generated ${EXTENSIBILITY_MANIFEST_FILE}`);
+    consola.success(`Generated ${APP_MANIFEST_FILE}`);
   } catch (error) {
     consola.error(stringifyError(error));
     process.exit(1);

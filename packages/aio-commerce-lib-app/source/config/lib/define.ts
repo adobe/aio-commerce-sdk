@@ -10,23 +10,23 @@
  * governing permissions and limitations under the License.
  */
 
-import type { ExtensibilityConfig } from "#config/schema/extensibility";
+import type { CommerceAppConfig } from "#config/schema/app";
 
 /**
- * Helper to type-safely define the extensibility config.
- * @param config - The extensibility config to define.
+ * Helper to type-safely define the app config.
+ * @param config - The app config to define.
  *
  * @example
  * ```typescript
- * import { defineConfig } from "@adobe/aio-commerce-lib-extensibility";
+ * import { defineConfig } from "@adobe/aio-commerce-lib-app";
  *
- * // In extensibility.config.js
+ * // In app.commerce.config.js
  * export default defineConfig({
  *   // You get autocompletion and type-safety for the config object.
  *   businessConfig: { ... }
  * });
  */
-export function defineConfig(config: ExtensibilityConfig) {
+export function defineConfig(config: CommerceAppConfig) {
   // This function does nothing, is only used for type-inference and autocompletion purposes.
   // It's a common pattern with configuration files. For example Vitest and TSDown,
   // two of the tools used in this repo, use this pattern for their config files.

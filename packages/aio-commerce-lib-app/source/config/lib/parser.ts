@@ -20,41 +20,41 @@ import {
 } from "@aio-commerce-sdk/scripting-utils/project";
 import { createJiti } from "jiti";
 
-import { validateConfig } from "./validate";
+import { validateCommerceAppConfig } from "./validate";
 
-import type { ExtensibilityConfigOutputModel } from "#config/schema/extensibility";
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 const jiti = createJiti(import.meta.url);
 
-/** The path to the bundled extensibility config file. */
-const BUNDLED_EXTENSIBILITY_CONFIG_PATH =
-  "app-management/extensibility.manifest.json";
+/** The path to the bundled app config file. */
+const BUNDLED_APP_COMMERCE_CONFIG_PATH =
+  "app-management/app.commerce.manifest.json";
 
 // Config paths to search for. In order of likely appearance to speed up the check.
 const configPaths = Object.freeze([
-  "extensibility.config.js",
-  "extensibility.config.ts",
-  "extensibility.config.cjs",
-  "extensibility.config.mjs",
-  "extensibility.config.mts",
-  "extensibility.config.cts",
+  "app.commerce.config.js",
+  "app.commerce.config.ts",
+  "app.commerce.config.cjs",
+  "app.commerce.config.mjs",
+  "app.commerce.config.mts",
+  "app.commerce.config.cts",
 ]);
 
 /**
- * Try to find (up to the nearest package.json file) the extensibility config file.
+ * Try to find (up to the nearest package.json file) the app config file.
  *
  * Searches for config files in the following order of priority:
- * 1. `extensibility.config.js` - JavaScript (CommonJS or ESM)
- * 2. `extensibility.config.ts` - TypeScript
- * 3. `extensibility.config.cjs` - CommonJS
- * 4. `extensibility.config.mjs` - ES Module
- * 5. `extensibility.config.mts` - ES Module TypeScript
- * 6. `extensibility.config.cts` - CommonJS TypeScript
+ * 1. `app.commerce.config.js` - JavaScript (CommonJS or ESM)
+ * 2. `app.commerce.config.ts` - TypeScript
+ * 3. `app.commerce.config.cjs` - CommonJS
+ * 4. `app.commerce.config.mjs` - ES Module
+ * 5. `app.commerce.config.mts` - ES Module TypeScript
+ * 6. `app.commerce.config.cts` - CommonJS TypeScript
  *
  * @param cwd The current working directory
  * @returns The path to the config file, or null if not found
  */
-export async function resolveExtensibilityConfig(cwd = process.cwd()) {
+export async function resolveCommerceAppConfig(cwd = process.cwd()) {
   const packageJsonPath = await findNearestPackageJson(cwd);
 
   if (!packageJsonPath) {
@@ -78,21 +78,23 @@ export async function resolveExtensibilityConfig(cwd = process.cwd()) {
 }
 
 /**
- * Read the extensibility config file as-is, without validating it.
+ * Read the commerce app config file as-is, without validating it.
  *
- * Supports multiple config file formats (see {@link resolveExtensibilityConfig} for the list).
+ * Supports multiple config file formats (see {@link resolveCommerceAppConfig} for the list).
  * The config file must export a default export with the configuration object.
  *
  * @param cwd The current working directory
  * @returns The raw config object from the file
  * @throws {Error} If no config file is found or if the file doesn't export a default export
  */
-export async function readExtensibilityConfig(cwd = process.cwd()) {
-  const configFilePath = await resolveExtensibilityConfig(cwd);
+export async function readCommerceAppConfig(
+  cwd = process.cwd(),
+): Promise<unknown> {
+  const configFilePath = await resolveCommerceAppConfig(cwd);
 
   if (!configFilePath) {
     throw new Error(
-      "Could not find a extensibility config file in the current working directory or its parents.",
+      "Could not find a commerce app config file in the current working directory or its parents.",
     );
   }
 
@@ -103,7 +105,7 @@ export async function readExtensibilityConfig(cwd = process.cwd()) {
   } catch (error) {
     const message = stringifyError(error);
     throw new Error(
-      `Failed to read extensibility config file at ${configFilePath}: ${message}`,
+      `Failed to read commerce app config file at ${configFilePath}: ${message}`,
       {
         cause: error,
       },
@@ -118,7 +120,7 @@ export async function readExtensibilityConfig(cwd = process.cwd()) {
       Object.keys(config.default).length === 0)
   ) {
     throw new Error(
-      "Extensibility config file does not export a default export. Make sure you use `export default` or `module.exports = { /* your config */ }`",
+      "Commerce app config file does not export a default export. Make sure you use `export default` or `module.exports = { /* your config */ }`",
     );
   }
 
@@ -126,37 +128,39 @@ export async function readExtensibilityConfig(cwd = process.cwd()) {
 }
 
 /**
- * Read the extensibility config file and parse its contents into its schema.
+ * Read the commerce app config file and parse its contents into its schema.
  *
- * Supports multiple config file formats (see {@link resolveExtensibilityConfig} for the list).
+ * Supports multiple config file formats (see {@link resolveCommerceAppConfig} for the list).
  * The config file must export a default export with the configuration object.
  *
  * @param cwd The current working directory
  * @returns The validated and parsed config object
  * @throws {Error} If no config file is found, if the file doesn't export a default export, or if validation fails
  */
-export async function parseExtensibilityConfig(cwd = process.cwd()) {
-  const config = await readExtensibilityConfig(cwd);
-  return validateConfig(config) satisfies ExtensibilityConfigOutputModel;
+export async function parseCommerceAppConfig(cwd = process.cwd()) {
+  const config = await readCommerceAppConfig(cwd);
+  return validateCommerceAppConfig(
+    config,
+  ) satisfies CommerceAppConfigOutputModel;
 }
 
 /**
- * Read the bundled extensibility config file
+ * Read the bundled commerce app config file
  *
- * @throws {Error} If the bundled extensibility config file is not found or if it is invalid
+ * @throws {Error} If the bundled commerce app config file is not found or if it is invalid
  */
-export async function readBundledExtensibilityConfig() {
+export async function readBundledCommerceAppConfig() {
   try {
     const fileContents = await readFile(
-      BUNDLED_EXTENSIBILITY_CONFIG_PATH,
+      BUNDLED_APP_COMMERCE_CONFIG_PATH,
       "utf-8",
     );
 
-    return validateConfig(JSON.parse(fileContents));
+    return validateCommerceAppConfig(JSON.parse(fileContents));
   } catch (error) {
     const message = stringifyError(error);
     throw new Error(
-      `Failed to read bundled extensibility config file: ${message}`,
+      `Failed to read bundled commerce app config file: ${message}`,
       { cause: error },
     );
   }

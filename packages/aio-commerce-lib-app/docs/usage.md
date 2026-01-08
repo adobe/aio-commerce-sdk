@@ -1,13 +1,13 @@
-# `@adobe/aio-commerce-lib-extensibility` Documentation
+# `@adobe/aio-commerce-lib-app` Documentation
 
 > [!WARNING]
 > This package is a work in progress and is not yet ready for use. You may be able to install it, but if you do, expect breaking changes.
 
 ## Overview
 
-The `@adobe/aio-commerce-lib-extensibility` library provides:
+The `@adobe/aio-commerce-lib-app` library provides:
 
-- **Configuration Management**: Define, validate and read/parse extensibility configurations for Adobe Commerce applications
+- **Configuration Management**: Define, validate and read/parse configurations for Adobe Commerce applications
 
 ## Reference
 
@@ -17,29 +17,29 @@ See the [API Reference](./api-reference/README.md) for more details.
 
 ### Setup
 
-Follow these steps to integrate the extensibility library into your Adobe Commerce App Builder application:
+Follow these steps to integrate the app library into your Adobe Commerce App Builder application:
 
 #### 1. Install the package
 
 ```bash
-npm install @adobe/aio-commerce-lib-extensibility
+npm install @adobe/aio-commerce-lib-app
 ```
 
-#### 2. Create your extensibility configuration
+#### 2. Create your app configuration
 
-Create an extensibility config file in your project root. The library supports multiple file formats:
+Create an app config file in your project root. The library supports multiple file formats:
 
-- `extensibility.config.js` - JavaScript (CommonJS or ESM, depending on `type` in `package.json`)
-- `extensibility.config.ts` - TypeScript
-- `extensibility.config.cjs` - CommonJS
-- `extensibility.config.mjs` - ES Module
-- `extensibility.config.mts` - ES Module TypeScript
-- `extensibility.config.cts` - CommonJS TypeScript
+- `app.commerce.config.js` - JavaScript (CommonJS or ESM, depending on `type` in `package.json`)
+- `app.commerce.config.ts` - TypeScript
+- `app.commerce.config.cjs` - CommonJS
+- `app.commerce.config.mjs` - ES Module
+- `app.commerce.config.mts` - ES Module TypeScript
+- `app.commerce.config.cts` - CommonJS TypeScript
 
 **Example using ESM:**
 
 ```javascript
-import { defineConfig } from "@adobe/aio-commerce-lib-extensibility/config";
+import { defineConfig } from "@adobe/aio-commerce-lib-app/config";
 
 export default defineConfig({
   metadata: {
@@ -70,9 +70,7 @@ export default defineConfig({
 **Example using CommonJS:**
 
 ```javascript
-const {
-  defineConfig,
-} = require("@adobe/aio-commerce-lib-extensibility/config");
+const { defineConfig } = require("@adobe/aio-commerce-lib-app/config");
 
 module.exports = defineConfig({
   metadata: {
@@ -87,18 +85,18 @@ module.exports = defineConfig({
 
 The `defineConfig` helper provides type-safe configuration definition with autocompletion support in your IDE.
 
-#### 3. Generate the extensibility artifacts
+#### 3. Generate the app artifacts
 
 Run the generate command to create the manifest and runtime action:
 
 ```bash
-npx @adobe/aio-commerce-lib-extensibility generate all
+npx @adobe/aio-commerce-lib-app generate all
 ```
 
 This will create:
 
-- **Extensibility Manifest** (`src/commerce-extensibility-1/.generated/extensibility.manifest.json`)
-- **Runtime Action** (`src/commerce-extensibility-1/.generated/actions/get-extensibility-config.js`)
+- **Extensibility Manifest** (`src/commerce-extensibility-1/.generated/app.commerce.manifest.json`)
+- **Runtime Action** (`src/commerce-extensibility-1/.generated/actions/get-app-config.js`)
 - **Extension Configuration** (`src/commerce-extensibility-1/ext.config.yaml`)
 
 #### 4. Reference the extension in your app configuration
@@ -124,7 +122,7 @@ The generated `ext.config.yaml` file includes a `pre-app-build` hook that automa
 
 ### Defining Configuration
 
-The current extensibility configuration definition (subject to change in the future) consists of two main parts: **metadata** and **businessConfig**.
+The current app configuration definition (subject to change in the future) consists of two main parts: **metadata** and **businessConfig**.
 
 #### Application Metadata
 
@@ -181,32 +179,32 @@ For detailed information about available field types and their usage, see the [`
 
 ### CLI Commands
 
-The library provides CLI commands to generate extensibility artifacts:
+The library provides CLI commands to generate app artifacts:
 
 ```bash
 # Generate all artifacts (manifest + runtime actions)
-npx @adobe/aio-commerce-lib-extensibility generate all
+npx @adobe/aio-commerce-lib-app generate all
 
-# Generate extensibility manifest only
-npx @adobe/aio-commerce-lib-extensibility generate manifest
+# Generate app manifest only
+npx @adobe/aio-commerce-lib-app generate manifest
 
 # Generate runtime actions only
-npx @adobe/aio-commerce-lib-extensibility generate actions
+npx @adobe/aio-commerce-lib-app generate actions
 ```
 
 ### Using the Configuration API
 
-The library provides functions for reading, parsing, and validating extensibility configurations. These are primarily used in build scripts and CLI tools.
+The library provides functions for reading, parsing, and validating app configurations. These are primarily used in build scripts and CLI tools.
 
 #### Reading Configuration in Scripts
 
-Use `parseExtensibilityConfig` to read and validate the configuration file in your build scripts or CLI tools:
+Use `parseCommerceAppConfig` to read and validate the configuration file in your build scripts or CLI tools:
 
 ```javascript
-import { parseExtensibilityConfig } from "@adobe/aio-commerce-lib-extensibility/config";
+import { parseCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
 
 try {
-  const config = await parseExtensibilityConfig();
+  const config = await parseCommerceAppConfig();
 
   console.log(`App: ${config.metadata.displayName}`);
   console.log(`Version: ${config.metadata.version}`);
@@ -222,15 +220,15 @@ try {
 
 #### Reading Bundled Configuration in Runtime Actions
 
-The `readBundledExtensibilityConfig` function is designed for use in runtime actions to read the bundled manifest:
+The `readBundledCommerceAppConfig` function is designed for use in runtime actions to read the bundled manifest:
 
 ```javascript
-import { readBundledExtensibilityConfig } from "@adobe/aio-commerce-lib-extensibility/config";
+import { readBundledCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
 
 export async function main(params) {
   try {
-    // Retrieve the bundled extensibility configuration
-    const config = await readBundledExtensibilityConfig();
+    // Retrieve the bundled app configuration
+    const config = await readBundledCommerceAppConfig();
 
     // Access metadata for version-based logic
     if (config.metadata.version >= "2.0.0") {
@@ -258,16 +256,19 @@ You can validate configuration programmatically in your scripts:
 
 ```typescript
 import {
-  validateConfig,
-  validateConfigDomain,
-} from "@adobe/aio-commerce-lib-extensibility/config";
+  validateCommerceAppConfig,
+  validateCommerceAppConfigDomain,
+} from "@adobe/aio-commerce-lib-app/config";
 
 try {
   // Validate the entire configuration
-  const validatedConfig = validateConfig(myConfig);
+  const validatedConfig = validateCommerceAppConfig(myConfig);
 
   // Validate a specific domain (e.g., 'metadata', 'businessConfig')
-  const validatedMetadata = validateConfigDomain(myConfig.metadata, "metadata");
+  const validatedMetadata = validateCommerceAppConfigDomain(
+    myConfig.metadata,
+    "metadata",
+  );
 
   console.log("Configuration is valid!");
 } catch (error) {

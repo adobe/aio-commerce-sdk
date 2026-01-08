@@ -19,13 +19,17 @@
 
 export { defineConfig } from "./lib/define";
 export {
-  parseExtensibilityConfig,
-  readBundledExtensibilityConfig,
-  readExtensibilityConfig,
-  resolveExtensibilityConfig,
+  parseCommerceAppConfig,
+  readBundledCommerceAppConfig,
+  readCommerceAppConfig,
+  resolveCommerceAppConfig,
 } from "./lib/parser";
-export { validateConfig, validateConfigDomain } from "./lib/validate";
+export {
+  validateCommerceAppConfig,
+  validateCommerceAppConfigDomain,
+} from "./lib/validate";
 
+export type { CommerceAppConfig, CommerceAppConfigDomain } from "./schema/app";
 export type {
   BusinessConfig,
   BusinessConfigSchema,
@@ -34,8 +38,4 @@ export type {
   BusinessConfigSchemaValue,
   SchemaBusinessConfig,
 } from "./schema/business-configuration";
-export type {
-  ExtensibilityConfig,
-  ExtensibilityConfigDomain,
-} from "./schema/extensibility";
 export type { ApplicationMetadata } from "./schema/metadata";

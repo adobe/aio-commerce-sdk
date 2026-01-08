@@ -14,106 +14,106 @@ import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { describe, expect, test } from "vitest";
 
 import {
-  parseExtensibilityConfig,
-  readBundledExtensibilityConfig,
-  readExtensibilityConfig,
-  resolveExtensibilityConfig,
+  parseCommerceAppConfig,
+  readBundledCommerceAppConfig,
+  readCommerceAppConfig,
+  resolveCommerceAppConfig,
 } from "#config/lib/parser";
 
 describe("resolveExtensibilityConfig", () => {
   test("should return null when no package.json is found", () => {
     withTempFiles({}, async (tempDir) => {
-      const result = await resolveExtensibilityConfig(tempDir);
+      const result = await resolveCommerceAppConfig(tempDir);
       expect(result).toBeNull();
     });
   });
 
-  test("should resolve extensibility config file", async () => {
+  test("should resolve app config file", async () => {
     await withTempFiles(
       {
-        "extensibility.config.js": "export {}",
+        "app.commerce.config.js": "export {}",
         "package.json": JSON.stringify({ name: "test-app" }),
       },
       async (tempDir) => {
-        const result = await resolveExtensibilityConfig(tempDir);
-        expect(result).toContain("extensibility.config.js");
+        const result = await resolveCommerceAppConfig(tempDir);
+        expect(result).toContain("app.commerce.config.js");
       },
     );
   });
 
-  test("should return null when extensibility config file is not found", async () => {
+  test("should return null when commerce app config file is not found", async () => {
     await withTempFiles(
       {
         "package.json": JSON.stringify({ name: "test-app" }),
       },
       async (tempDir) => {
-        const result = await resolveExtensibilityConfig(tempDir);
+        const result = await resolveCommerceAppConfig(tempDir);
         expect(result).toBeNull();
       },
     );
   });
 
-  test("should find extensibility.config.ts", async () => {
+  test("should find app.commerce.config.ts", async () => {
     await withTempFiles(
       {
-        "extensibility.config.ts": "export default {};",
+        "app.commerce.config.ts": "export default {};",
         "package.json": JSON.stringify({ name: "test-app" }),
       },
       async (tempDir) => {
-        const result = await resolveExtensibilityConfig(tempDir);
-        expect(result).toContain("extensibility.config.ts");
+        const result = await resolveCommerceAppConfig(tempDir);
+        expect(result).toContain("app.commerce.config.ts");
       },
     );
   });
 
-  test("should find extensibility.config.mjs", async () => {
+  test("should find app.commerce.config.mjs", async () => {
     await withTempFiles(
       {
-        "extensibility.config.mjs": "export default {};",
+        "app.commerce.config.mjs": "export default {};",
         "package.json": JSON.stringify({ name: "test-app" }),
       },
       async (tempDir) => {
-        const result = await resolveExtensibilityConfig(tempDir);
-        expect(result).toContain("extensibility.config.mjs");
+        const result = await resolveCommerceAppConfig(tempDir);
+        expect(result).toContain("app.commerce.config.mjs");
       },
     );
   });
 
-  test("should find extensibility.config.mts", async () => {
+  test("should find app.commerce.config.mts", async () => {
     await withTempFiles(
       {
-        "extensibility.config.mts": "export default {};",
+        "app.commerce.config.mts": "export default {};",
         "package.json": JSON.stringify({ name: "test-app" }),
       },
       async (tempDir) => {
-        const result = await resolveExtensibilityConfig(tempDir);
-        expect(result).toContain("extensibility.config.mts");
+        const result = await resolveCommerceAppConfig(tempDir);
+        expect(result).toContain("app.commerce.config.mts");
       },
     );
   });
 
-  test("should find extensibility.config.cjs", async () => {
+  test("should find app.commerce.config.cjs", async () => {
     await withTempFiles(
       {
-        "extensibility.config.cjs": "module.exports = {};",
+        "app.commerce.config.cjs": "module.exports = {};",
         "package.json": JSON.stringify({ name: "test-app" }),
       },
       async (tempDir) => {
-        const result = await resolveExtensibilityConfig(tempDir);
-        expect(result).toContain("extensibility.config.cjs");
+        const result = await resolveCommerceAppConfig(tempDir);
+        expect(result).toContain("app.commerce.config.cjs");
       },
     );
   });
 
-  test("should find extensibility.config.cts", async () => {
+  test("should find app.commerce.config.cts", async () => {
     await withTempFiles(
       {
-        "extensibility.config.cts": "export default {};",
+        "app.commerce.config.cts": "export default {};",
         "package.json": JSON.stringify({ name: "test-app" }),
       },
       async (tempDir) => {
-        const result = await resolveExtensibilityConfig(tempDir);
-        expect(result).toContain("extensibility.config.cts");
+        const result = await resolveCommerceAppConfig(tempDir);
+        expect(result).toContain("app.commerce.config.cts");
       },
     );
   });
@@ -121,13 +121,13 @@ describe("resolveExtensibilityConfig", () => {
   test("should prioritize .js over .ts", async () => {
     await withTempFiles(
       {
-        "extensibility.config.js": "export default {};",
-        "extensibility.config.ts": "export default {};",
+        "app.commerce.config.js": "export default {};",
+        "app.commerce.config.ts": "export default {};",
         "package.json": JSON.stringify({ name: "test-app" }),
       },
       async (tempDir) => {
-        const result = await resolveExtensibilityConfig(tempDir);
-        expect(result).toContain("extensibility.config.js");
+        const result = await resolveCommerceAppConfig(tempDir);
+        expect(result).toContain("app.commerce.config.js");
       },
     );
   });
@@ -135,13 +135,13 @@ describe("resolveExtensibilityConfig", () => {
   test("should prioritize .ts over .mjs", async () => {
     await withTempFiles(
       {
-        "extensibility.config.mjs": "export default {};",
-        "extensibility.config.ts": "export default {};",
+        "app.commerce.config.mjs": "export default {};",
+        "app.commerce.config.ts": "export default {};",
         "package.json": JSON.stringify({ name: "test-app" }),
       },
       async (tempDir) => {
-        const result = await resolveExtensibilityConfig(tempDir);
-        expect(result).toContain("extensibility.config.ts");
+        const result = await resolveCommerceAppConfig(tempDir);
+        expect(result).toContain("app.commerce.config.ts");
       },
     );
   });
@@ -149,13 +149,13 @@ describe("resolveExtensibilityConfig", () => {
   test("should prioritize .cjs over .mjs", async () => {
     await withTempFiles(
       {
-        "extensibility.config.cjs": "module.exports = {};",
-        "extensibility.config.mjs": "export default {};",
+        "app.commerce.config.cjs": "module.exports = {};",
+        "app.commerce.config.mjs": "export default {};",
         "package.json": JSON.stringify({ name: "test-app" }),
       },
       async (tempDir) => {
-        const result = await resolveExtensibilityConfig(tempDir);
-        expect(result).toContain("extensibility.config.cjs");
+        const result = await resolveCommerceAppConfig(tempDir);
+        expect(result).toContain("app.commerce.config.cjs");
       },
     );
   });
@@ -163,16 +163,16 @@ describe("resolveExtensibilityConfig", () => {
   test("should find config in parent directory", async () => {
     await withTempFiles(
       {
-        "extensibility.config.js": "export default {};",
+        "app.commerce.config.js": "export default {};",
         "package.json": JSON.stringify({ name: "test-app" }),
         "src/components/dummy.txt": "",
       },
       async (tempDir) => {
         const { join } = await import("node:path");
-        const result = await resolveExtensibilityConfig(
+        const result = await resolveCommerceAppConfig(
           join(tempDir, "src/components"),
         );
-        expect(result).toContain("extensibility.config.js");
+        expect(result).toContain("app.commerce.config.js");
       },
     );
   });
@@ -180,15 +180,13 @@ describe("resolveExtensibilityConfig", () => {
   test("should stop at package.json directory", async () => {
     await withTempFiles(
       {
-        "extensibility.config.js": "export default {};",
+        "app.commerce.config.js": "export default {};",
         "package.json": JSON.stringify({ name: "root-project" }),
         "project/package.json": JSON.stringify({ name: "nested-project" }),
       },
       async (tempDir) => {
         const { join } = await import("node:path");
-        const result = await resolveExtensibilityConfig(
-          join(tempDir, "project"),
-        );
+        const result = await resolveCommerceAppConfig(join(tempDir, "project"));
         expect(result).toBeNull();
       },
     );
@@ -202,8 +200,8 @@ describe("readExtensibilityConfig", () => {
         "package.json": JSON.stringify({ name: "test-project" }),
       },
       async (tempDir) => {
-        await expect(readExtensibilityConfig(tempDir)).rejects.toThrow(
-          "Could not find a extensibility config file",
+        await expect(readCommerceAppConfig(tempDir)).rejects.toThrow(
+          "Could not find a commerce app config file in the current working directory or its parents.",
         );
       },
     );
@@ -224,10 +222,10 @@ describe("readExtensibilityConfig", () => {
     await withTempFiles(
       {
         "package.json": JSON.stringify({ name: "test-project" }),
-        "extensibility.config.js": configContent,
+        "app.commerce.config.js": configContent,
       },
       async (tempDir) => {
-        const result = (await readExtensibilityConfig(tempDir)) as {
+        const result = (await readCommerceAppConfig(tempDir)) as {
           metadata: { id: string; displayName: string };
         };
 
@@ -245,10 +243,10 @@ describe("readExtensibilityConfig", () => {
     await withTempFiles(
       {
         "package.json": JSON.stringify({ name: "test-project" }),
-        "extensibility.config.js": configContent,
+        "app.commerce.config.js": configContent,
       },
       async (tempDir) => {
-        await expect(readExtensibilityConfig(tempDir)).rejects.toThrow(
+        await expect(readCommerceAppConfig(tempDir)).rejects.toThrow(
           "does not export a default export",
         );
       },
@@ -279,10 +277,10 @@ describe("readExtensibilityConfig", () => {
     await withTempFiles(
       {
         "package.json": JSON.stringify({ name: "test-project" }),
-        "extensibility.config.js": configContent,
+        "app.commerce.config.js": configContent,
       },
       async (tempDir) => {
-        const result = (await readExtensibilityConfig(tempDir)) as {
+        const result = (await readCommerceAppConfig(tempDir)) as {
           metadata: { id: string; displayName: string };
           businessConfig: {
             schema: { name: string; type: string; label: string }[];
@@ -311,10 +309,10 @@ describe("readExtensibilityConfig", () => {
     await withTempFiles(
       {
         "package.json": JSON.stringify({ name: "test-project" }),
-        "extensibility.config.ts": configContent,
+        "app.commerce.config.ts": configContent,
       },
       async (tempDir) => {
-        const result = (await readExtensibilityConfig(tempDir)) as {
+        const result = (await readCommerceAppConfig(tempDir)) as {
           metadata: { id: string; displayName: string };
         };
         expect(result.metadata.id).toBe("ts-app");
@@ -338,10 +336,10 @@ describe("readExtensibilityConfig", () => {
     await withTempFiles(
       {
         "package.json": JSON.stringify({ name: "test-project" }),
-        "extensibility.config.mjs": configContent,
+        "app.commerce.config.mjs": configContent,
       },
       async (tempDir) => {
-        const result = (await readExtensibilityConfig(tempDir)) as {
+        const result = (await readCommerceAppConfig(tempDir)) as {
           metadata: { id: string; displayName: string };
         };
         expect(result.metadata.id).toBe("esm-app");
@@ -365,10 +363,10 @@ describe("readExtensibilityConfig", () => {
     await withTempFiles(
       {
         "package.json": JSON.stringify({ name: "test-project" }),
-        "extensibility.config.cjs": configContent,
+        "app.commerce.config.cjs": configContent,
       },
       async (tempDir) => {
-        const result = (await readExtensibilityConfig(tempDir)) as {
+        const result = (await readCommerceAppConfig(tempDir)) as {
           metadata: { id: string; displayName: string };
         };
         expect(result.metadata.id).toBe("cjs-app");
@@ -394,10 +392,10 @@ describe("parseExtensibilityConfig", () => {
     await withTempFiles(
       {
         "package.json": JSON.stringify({ name: "test-project" }),
-        "extensibility.config.js": configContent,
+        "app.commerce.config.js": configContent,
       },
       async (tempDir) => {
-        const result = await parseExtensibilityConfig(tempDir);
+        const result = await parseCommerceAppConfig(tempDir);
         expect(result.metadata.id).toBe("valid-app");
         expect(result.metadata.displayName).toBe("Valid App");
       },
@@ -419,11 +417,11 @@ describe("parseExtensibilityConfig", () => {
     await withTempFiles(
       {
         "package.json": JSON.stringify({ name: "test-project" }),
-        "extensibility.config.js": configContent,
+        "app.commerce.config.js": configContent,
       },
       async (tempDir) => {
-        await expect(parseExtensibilityConfig(tempDir)).rejects.toThrow(
-          "Invalid extensibility config",
+        await expect(parseCommerceAppConfig(tempDir)).rejects.toThrow(
+          "Invalid commerce app config",
         );
       },
     );
@@ -445,10 +443,10 @@ describe("parseExtensibilityConfig", () => {
     await withTempFiles(
       {
         "package.json": JSON.stringify({ name: "test-project" }),
-        "extensibility.config.js": configContent,
+        "app.commerce.config.js": configContent,
       },
       async (tempDir) => {
-        await expect(parseExtensibilityConfig(tempDir)).rejects.toThrow();
+        await expect(parseCommerceAppConfig(tempDir)).rejects.toThrow();
       },
     );
   });
@@ -471,11 +469,11 @@ describe("parseExtensibilityConfig", () => {
     await withTempFiles(
       {
         "package.json": JSON.stringify({ name: "test-project" }),
-        "extensibility.config.js": configContent,
+        "app.commerce.config.js": configContent,
       },
       async (tempDir) => {
-        await expect(parseExtensibilityConfig(tempDir)).rejects.toThrow(
-          "Invalid extensibility config",
+        await expect(parseCommerceAppConfig(tempDir)).rejects.toThrow(
+          "Invalid commerce app config",
         );
       },
     );
@@ -496,11 +494,11 @@ describe("parseExtensibilityConfig", () => {
     await withTempFiles(
       {
         "package.json": JSON.stringify({ name: "test-project" }),
-        "extensibility.config.js": configContent,
+        "app.commerce.config.js": configContent,
       },
       async (tempDir) => {
-        await expect(parseExtensibilityConfig(tempDir)).rejects.toThrow(
-          "Invalid extensibility config",
+        await expect(parseCommerceAppConfig(tempDir)).rejects.toThrow(
+          "Invalid commerce app config",
         );
       },
     );
@@ -520,15 +518,14 @@ describe("readBundledExtensibilityConfig", () => {
 
     await withTempFiles(
       {
-        "app-management/extensibility.manifest.json":
-          JSON.stringify(mockConfig),
+        "app-management/app.commerce.manifest.json": JSON.stringify(mockConfig),
       },
       async (tempDir) => {
         const originalCwd = process.cwd();
         process.chdir(tempDir);
 
         try {
-          const result = await readBundledExtensibilityConfig();
+          const result = await readBundledCommerceAppConfig();
           expect(result.metadata.id).toBe("bundled-app");
           expect(result.metadata.displayName).toBe("Bundled App");
           expect(result.metadata.description).toBe("A bundled application");
@@ -546,8 +543,8 @@ describe("readBundledExtensibilityConfig", () => {
       process.chdir(tempDir);
 
       try {
-        await expect(readBundledExtensibilityConfig()).rejects.toThrow(
-          "Failed to read bundled extensibility config file",
+        await expect(readBundledCommerceAppConfig()).rejects.toThrow(
+          "Failed to read bundled commerce app config file",
         );
       } finally {
         process.chdir(originalCwd);
@@ -558,15 +555,15 @@ describe("readBundledExtensibilityConfig", () => {
   test("should throw when bundled config has invalid JSON", async () => {
     await withTempFiles(
       {
-        "app-management/extensibility.manifest.json": "{ invalid json }",
+        "app-management/app.commerce.manifest.json": "{ invalid json }",
       },
       async (tempDir) => {
         const originalCwd = process.cwd();
         process.chdir(tempDir);
 
         try {
-          await expect(readBundledExtensibilityConfig()).rejects.toThrow(
-            "Failed to read bundled extensibility config file",
+          await expect(readBundledCommerceAppConfig()).rejects.toThrow(
+            "Failed to read bundled commerce app config file",
           );
         } finally {
           process.chdir(originalCwd);
@@ -587,7 +584,7 @@ describe("readBundledExtensibilityConfig", () => {
 
     await withTempFiles(
       {
-        "app-management/extensibility.manifest.json":
+        "app-management/app.commerce.manifest.json":
           JSON.stringify(invalidConfig),
       },
       async (tempDir) => {
@@ -595,8 +592,8 @@ describe("readBundledExtensibilityConfig", () => {
         process.chdir(tempDir);
 
         try {
-          await expect(readBundledExtensibilityConfig()).rejects.toThrow(
-            "Failed to read bundled extensibility config file",
+          await expect(readBundledCommerceAppConfig()).rejects.toThrow(
+            "Failed to read bundled commerce app config file",
           );
         } finally {
           process.chdir(originalCwd);
@@ -626,15 +623,14 @@ describe("readBundledExtensibilityConfig", () => {
 
     await withTempFiles(
       {
-        "app-management/extensibility.manifest.json":
-          JSON.stringify(mockConfig),
+        "app-management/app.commerce.manifest.json": JSON.stringify(mockConfig),
       },
       async (tempDir) => {
         const originalCwd = process.cwd();
         process.chdir(tempDir);
 
         try {
-          const result = await readBundledExtensibilityConfig();
+          const result = await readBundledCommerceAppConfig();
           expect(result.metadata.id).toBe("complete-app");
           expect(result.metadata.displayName).toBe("Complete App");
           expect(result.metadata.description).toBe("A complete application");

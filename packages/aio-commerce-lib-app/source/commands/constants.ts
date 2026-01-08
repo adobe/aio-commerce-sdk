@@ -35,7 +35,7 @@ export const EXTENSION_POINT_FOLDER_NAME = EXTENSION_POINT_ID.replaceAll(
 export const EXTENSION_POINT_FOLDER_PATH = `src/${EXTENSION_POINT_FOLDER_NAME}`;
 
 /** The name of the configuration schema file */
-export const EXTENSIBILITY_MANIFEST_FILE = "extensibility.manifest.json";
+export const APP_MANIFEST_FILE = "app.commerce.manifest.json";
 
 /** The name of the project package file */
 export const PACKAGE_JSON_FILE = "package.json";

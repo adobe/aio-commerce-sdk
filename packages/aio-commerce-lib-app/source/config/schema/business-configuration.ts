@@ -197,7 +197,7 @@ export type BusinessConfigSchemaListOption = Extract<
   { type: "list" }
 >["options"][number];
 
-/** The keys of the `businessConfig` settings in the extensibility config file. */
+/** The keys of the `businessConfig` settings in the app config file. */
 export type BusinessConfig = {
   /**
    * The schema of the app business configuration.
@@ -206,7 +206,7 @@ export type BusinessConfig = {
   schema?: BusinessConfigSchema;
 };
 
-/** The schema used to validate the `businessConfig` settings in the extensibility config file. */
+/** The schema used to validate the `businessConfig` settings in the app config file. */
 export const SchemaBusinessConfig = v.object({
   schema: v.optional(SchemaBusinessConfigSchema, []),
 }) satisfies v.GenericSchema<BusinessConfig>;

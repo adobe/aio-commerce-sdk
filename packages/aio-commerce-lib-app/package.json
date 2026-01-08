@@ -1,5 +1,5 @@
 {
-  "name": "@adobe/aio-commerce-lib-extensibility",
+  "name": "@adobe/aio-commerce-lib-app",
   "type": "module",
   "author": "Adobe Inc.",
   "version": "0.1.0",
@@ -8,17 +8,17 @@
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
-  "description": "Extensibility configuration management library for Adobe Commerce applications",
+  "description": "App configuration management library for Adobe Commerce applications",
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/adobe/aio-commerce-sdk.git",
-    "directory": "packages/aio-commerce-lib-extensibility"
+    "directory": "packages/aio-commerce-lib-app"
   },
   "bin": {
-    "@adobe/aio-commerce-lib-extensibility": "./dist/es/commands/index.mjs"
+    "@adobe/aio-commerce-lib-app": "./dist/es/commands/index.mjs"
   },
   "publishConfig": {
     "exports": {

@@ -13,7 +13,7 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
-import { validateConfigDomain } from "@adobe/aio-commerce-lib-extensibility/config";
+import { validateCommerceAppConfigDomain } from "@adobe/aio-commerce-lib-app/config";
 
 import * as schemaRepository from "#modules/schema/config-schema-repository";
 import { CONFIG_SCHEMA_PATH } from "#utils/constants";
@@ -71,7 +71,7 @@ export async function readBundledSchemaWithVersion(): Promise<{
  * @throws {CommerceSdkValidationError} If the schema is invalid.
  */
 export function validateBusinessConfigSchema(value: unknown) {
-  return validateConfigDomain(
+  return validateCommerceAppConfigDomain(
     value,
     "businessConfig.schema",
   ) satisfies BusinessConfigSchema;

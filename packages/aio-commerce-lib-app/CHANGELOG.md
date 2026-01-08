@@ -1,4 +1,4 @@
-# @adobe/aio-commerce-lib-extensibility
+# @adobe/aio-commerce-lib-app
 
 ## 0.1.0
 
