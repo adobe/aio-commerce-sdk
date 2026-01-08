@@ -37,4 +37,5 @@ export type {
   IoEventRegistrationOneResponse,
   IoEventRegistrationPaginatedResponse,
   PageMetadata,
+  SubscriberFilterModel,
 } from "./api/event-registrations/types";

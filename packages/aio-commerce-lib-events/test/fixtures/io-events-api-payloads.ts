@@ -198,4 +198,140 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     hasInputValidation: true,
     hasCamelCaseTransformer: true,
   },
+  {
+    name: "getAllRegistrationsByConsumerOrg",
+    method: "GET",
+    pathname: "consumer-org-1/registrations",
+
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+      return client.getAllRegistrationsByConsumerOrg(
+        { consumerOrgId: "consumer-org-1" },
+        fetchOptions,
+      );
+    },
+
+    hasInputValidation: true,
+    hasCamelCaseTransformer: true,
+  },
+  {
+    name: "getAllRegistrations",
+    method: "GET",
+    pathname: "consumer-org-1/project-1/workspace-1/registrations",
+
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+      return client.getAllRegistrations(
+        {
+          consumerOrgId: "consumer-org-1",
+          projectId: "project-1",
+          workspaceId: "workspace-1",
+        },
+        fetchOptions,
+      );
+    },
+
+    hasInputValidation: true,
+    hasCamelCaseTransformer: true,
+  },
+  {
+    name: "getRegistrationById",
+    method: "GET",
+    pathname:
+      "consumer-org-1/project-1/workspace-1/registrations/registration-1",
+
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+      return client.getRegistrationById(
+        {
+          consumerOrgId: "consumer-org-1",
+          projectId: "project-1",
+          workspaceId: "workspace-1",
+          registrationId: "registration-1",
+        },
+        fetchOptions,
+      );
+    },
+
+    hasInputValidation: true,
+    hasCamelCaseTransformer: true,
+  },
+  {
+    name: "createRegistration",
+    method: "POST",
+    pathname: "consumer-org-1/project-1/workspace-1/registrations",
+
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+      return client.createRegistration(
+        {
+          consumerOrgId: "consumer-org-1",
+          projectId: "project-1",
+          workspaceId: "workspace-1",
+          name: "Test Registration",
+          description: "Test Description",
+          deliveryType: "webhook",
+          webhookUrl: "https://example.com/webhook",
+          eventsOfInterest: [
+            {
+              providerId: "provider-1",
+              eventCode: "event-1",
+            },
+          ],
+        },
+        fetchOptions,
+      );
+    },
+
+    hasInputValidation: true,
+    hasCamelCaseTransformer: true,
+  },
+  {
+    name: "updateRegistration",
+    method: "PUT",
+    pathname:
+      "consumer-org-1/project-1/workspace-1/registrations/registration-1",
+
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+      return client.updateRegistration(
+        {
+          consumerOrgId: "consumer-org-1",
+          projectId: "project-1",
+          workspaceId: "workspace-1",
+          registrationId: "registration-1",
+          name: "Updated Registration",
+          description: "Updated Description",
+          deliveryType: "webhook",
+          webhookUrl: "https://example.com/webhook",
+          eventsOfInterest: [
+            {
+              providerId: "provider-1",
+              eventCode: "event-1",
+            },
+          ],
+        },
+        fetchOptions,
+      );
+    },
+
+    hasInputValidation: true,
+    hasCamelCaseTransformer: true,
+  },
+  {
+    name: "deleteRegistration",
+    method: "DELETE",
+    pathname:
+      "consumer-org-1/project-1/workspace-1/registrations/registration-1",
+
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+      return client.deleteRegistration(
+        {
+          consumerOrgId: "consumer-org-1",
+          projectId: "project-1",
+          workspaceId: "workspace-1",
+          registrationId: "registration-1",
+        },
+        fetchOptions,
+      );
+    },
+
+    hasInputValidation: true,
+    hasCamelCaseTransformer: false,
+  },
 ] as const;
