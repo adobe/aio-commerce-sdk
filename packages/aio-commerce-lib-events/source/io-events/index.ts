@@ -15,6 +15,7 @@
 export * from "./api/event-metadata/endpoints";
 export * from "./api/event-providers/endpoints";
 export * from "./api/event-providers/shorthands";
+export * from "./api/event-registrations/endpoints";
 export * from "./lib/api-client";
 
 export type * from "./api/event-metadata/schema";
@@ -29,3 +30,11 @@ export type {
   IoEventProviderManyResponse,
   IoEventProviderOneResponse,
 } from "./api/event-providers/types";
+export type * from "./api/event-registrations/schema";
+export type {
+  IoEventRegistration,
+  IoEventRegistrationManyResponse,
+  IoEventRegistrationOneResponse,
+  IoEventRegistrationPaginatedResponse,
+  PageMetadata,
+} from "./api/event-registrations/types";
