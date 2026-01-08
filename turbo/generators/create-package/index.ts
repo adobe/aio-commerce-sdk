@@ -64,7 +64,6 @@ function getPackageData(options: WizardOptions) {
 
 /** Gathers the answers for the create-package generator. */
 async function createPackageWizard() {
-  // biome-ignore lint/suspicious/noConsole: Leave a bit of room for the prompt wizard.
   console.log("");
 
   const { ansis, prompts } = await __importDeps();
