@@ -14,18 +14,6 @@ type SchemaBusinessConfig = ObjectSchema<{
      label: OptionalSchema<..., ...>;
      name: SchemaWithPipe<...>;
      type: LiteralSchema<..., ...>;
-   }, undefined>, ObjectSchema<{
-     default: OptionalSchema<..., ...>;
-     description: OptionalSchema<..., ...>;
-     label: OptionalSchema<..., ...>;
-     name: SchemaWithPipe<...>;
-     type: LiteralSchema<..., ...>;
-   }, undefined>, ObjectSchema<{
-     default: OptionalSchema<..., ...>;
-     description: OptionalSchema<..., ...>;
-     label: OptionalSchema<..., ...>;
-     name: SchemaWithPipe<...>;
-     type: LiteralSchema<..., ...>;
    }, undefined>], undefined>, "Expected an array of configuration fields">, MinLengthAction<(
      | {
      default: string;
@@ -63,6 +51,13 @@ type SchemaBusinessConfig = ObjectSchema<{
      description?: string;
      label?: string;
      name: string;
+     type: "password";
+   }
+     | {
+     default?: string;
+     description?: string;
+     label?: string;
+     name: string;
      type: "email";
    }
      | {
@@ -82,6 +77,6 @@ type SchemaBusinessConfig = ObjectSchema<{
 }, undefined>;
 ```
 
-Defined in: [packages/aio-commerce-lib-extensibility/source/config/schema/business-configuration.ts:210](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-extensibility/source/config/schema/business-configuration.ts#L210)
+Defined in: [packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts:210](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L210)
 
-The schema used to validate the `businessConfig` settings in the extensibility config file.
+The schema used to validate the `businessConfig` settings in the app config file.

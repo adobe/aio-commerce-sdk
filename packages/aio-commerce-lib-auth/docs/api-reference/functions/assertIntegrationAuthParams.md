@@ -11,7 +11,7 @@ function assertIntegrationAuthParams(
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-auth/source/lib/integration-auth/utils.ts:71](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-auth/source/lib/integration-auth/utils.ts#L71)
+Defined in: [packages/aio-commerce-lib-auth/source/lib/integration-auth/utils.ts:71](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-auth/source/lib/integration-auth/utils.ts#L71)
 
 Asserts the provided configuration for an Adobe Commerce [IntegrationAuthProvider](../type-aliases/IntegrationAuthProvider.md).
 

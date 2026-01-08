@@ -39,6 +39,13 @@ function getConfigSchema(options?: LibConfigOptions): Promise<
         description?: string;
         label?: string;
         name: string;
+        type: "password";
+      }
+    | {
+        default?: string;
+        description?: string;
+        label?: string;
+        name: string;
         type: "email";
       }
     | {
@@ -59,7 +66,7 @@ function getConfigSchema(options?: LibConfigOptions): Promise<
 >;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/config-manager.ts:263](https://github.com/adobe/aio-commerce-sdk/blob/945f2e502f3b6166917844a3744609d215a8f7e2/packages/aio-commerce-lib-config/source/config-manager.ts#L263)
+Defined in: [packages/aio-commerce-lib-config/source/config-manager.ts:263](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-config/source/config-manager.ts#L263)
 
 Gets the configuration schema with lazy initialization and version checking.
 
@@ -106,6 +113,13 @@ cached and automatically updated when the bundled schema version changes.
 `label?`: `string`;
 `name`: `string`;
 `type`: `"text"`;
+\}
+\| \{
+`default?`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`type`: `"password"`;
 \}
 \| \{
 `default?`: `string`;
