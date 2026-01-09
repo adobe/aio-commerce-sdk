@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils";
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import * as v from "valibot";
 
@@ -59,12 +58,12 @@ export async function downloadWorkspaceJson(
 
   const withHooksClient = httpClient.extend({
     hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
+      afterResponse: [],
     },
   });
 
   return withHooksClient.get(
-    `/console/organizations/${orgId}/projects/${projectId}/workspaces/${workspaceId}/download`,
+    `console/organizations/${orgId}/projects/${projectId}/workspaces/${workspaceId}/download`,
     fetchOptions,
   );
 }

@@ -72,6 +72,7 @@
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-api": "workspace:*",
+    "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-events": "^0.3.6",
     "consola": "^3.4.2",
@@ -83,7 +84,8 @@
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "@aio-commerce-sdk/config-vitest": "workspace:*",
-    "@aio-commerce-sdk/scripting-utils": "workspace:*"
+    "@aio-commerce-sdk/scripting-utils": "workspace:*",
+    "msw": "^2.11.1"
   },
   "sideEffects": false
 }
