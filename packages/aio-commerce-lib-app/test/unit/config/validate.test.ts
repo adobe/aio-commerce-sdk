@@ -598,6 +598,7 @@ describe("validateConfig", () => {
               type: "all",
               names: ["*"],
             },
+            provider: "commerce-1",
           },
         },
         {
@@ -606,13 +607,49 @@ describe("validateConfig", () => {
             fields: {
               type: "subset",
             },
+            provider: "commerce-1",
           },
         },
       ],
     };
 
     expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid extensibility config",
+      "Invalid commerce app config",
+    );
+  });
+
+  test("should throw when eventSubscriptions.provider is invalid", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventSubscriptions: [
+        {
+          event: {
+            name: "order.created",
+            fields: {
+              type: "all",
+            },
+            provider: "commerce-1",
+          },
+        },
+        {
+          event: {
+            name: "order.updated",
+            fields: {
+              type: "subset",
+              names: ["status"],
+            },
+          },
+        },
+      ],
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
     );
   });
 });

@@ -15,6 +15,7 @@
 
 import * as v from "valibot";
 
+/** Schema for an event subscription configuration */
 export const EventSchema = v.object({
   name: v.pipe(
     v.string("Expected a string for the event name"),
@@ -35,8 +36,10 @@ export const EventSchema = v.object({
       ),
     }),
   ]),
+  provider: v.pipe(v.string(), v.minLength(1)),
 });
 
+/** The input type inferred from the `EventSchema` schema. */
 export type EventSchemaInput = v.InferInput<typeof EventSchema>;
 
 /** The keys of the `eventSubscription` settings in the extensibility config file. */
@@ -48,10 +51,7 @@ export type EventSubscriptionConfig = {
   event: EventSchemaInput;
 };
 
+/** Schema for event subscription configuration */
 export const SchemaEventSubscription = v.object({
   event: EventSchema,
 }) satisfies v.GenericSchema<EventSubscriptionConfig>;
-
-export type ApplicationEventSubscriptions = v.InferInput<
-  typeof SchemaEventSubscription
->;
