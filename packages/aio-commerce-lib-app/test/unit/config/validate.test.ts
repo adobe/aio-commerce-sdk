@@ -548,6 +548,73 @@ describe("validateConfig", () => {
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
+
+  test("should validate when eventSubscriptions.fields is valid", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventSubscriptions: [
+        {
+          event: {
+            name: "order.created",
+            fields: {
+              type: "all",
+            },
+          },
+        },
+        {
+          event: {
+            name: "order.updated",
+            fields: {
+              type: "subset",
+              names: ["status"],
+            },
+          },
+        },
+      ],
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow(
+      "Invalid extensibility config",
+    );
+  });
+  test("should throw when eventSubscriptions.fields is invalid", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventSubscriptions: [
+        {
+          event: {
+            name: "order.created",
+            fields: {
+              type: "all",
+              names: ["*"],
+            },
+          },
+        },
+        {
+          event: {
+            name: "order.updated",
+            fields: {
+              type: "subset",
+            },
+          },
+        },
+      ],
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid extensibility config",
+    );
+  });
 });
 
 describe("validateConfigDomain", () => {
@@ -649,6 +716,28 @@ describe("validateConfigDomain", () => {
     expect(() =>
       validateCommerceAppConfigDomain(schema, "businessConfig.schema"),
     ).toThrow("Invalid commerce app config: businessConfig.schema");
+  });
+
+  test("should validate eventSubscriptions domain", () => {
+    const eventSubscriptions = [
+      {
+        event: {
+          name: "order.created",
+          fields: {
+            type: "all",
+          },
+        },
+      },
+    ];
+
+    expect(() =>
+      validateCommerceAppConfigDomain(eventSubscriptions, "eventSubscriptions"),
+    ).not.toThrow();
+    const validated = validateCommerceAppConfigDomain(
+      eventSubscriptions,
+      "eventSubscriptions",
+    );
+    expect(validated).toHaveLength(1);
   });
 
   test("should throw when validating unknown domain", () => {
