@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { mkdir, rename, rm } from "node:fs/promises";
+import { mkdir, rename, rm, stat } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 
 import { globby } from "globby";
@@ -90,6 +90,16 @@ export const baseConfig: UserConfig = {
           }
 
           await mkdir(dirname(targetPath), { recursive: true });
+          if (!(await fileExists(sourcePath))) {
+            // biome-ignore lint/suspicious/noConsole: debugging
+            console.error("Source path does not exist:", sourcePath);
+            return;
+          }
+          if (!(await fileExists(targetPath))) {
+            // biome-ignore lint/suspicious/noConsole: debugging
+            console.error("Target path does not exist:", targetPath);
+            return;
+          }
           await rename(sourcePath, targetPath);
         }),
       );
@@ -101,4 +111,16 @@ export const baseConfig: UserConfig = {
       );
     },
   },
+};
+
+const fileExists = async (filePath: string) => {
+  try {
+    await stat(filePath);
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return false;
+    }
+    throw error;
+  }
 };
