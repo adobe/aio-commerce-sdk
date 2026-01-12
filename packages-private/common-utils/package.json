@@ -43,7 +43,8 @@
     "./package.json": "./package.json"
   },
   "imports": {
-    "#*": "./source/*.ts"
+    "#*": "./source/*.ts",
+    "#valibot/*": "./source/valibot/*.ts"
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "workspace:*",

@@ -14,7 +14,7 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 
-import { parseOrThrow } from "~/valibot";
+import { parseOrThrow } from "#valibot/utils";
 
 const SimpleObjectSchema = v.object({
   foo: v.string(),
