@@ -1,7 +1,7 @@
 # `@aio-commerce-sdk/common-utils`
 
 Utility functions for Adobe Commerce SDK packages and applications.
-This package provides reusable helpers for common tasks, code consistency, and reducing duplication across the Adobe Commerce SDK ecosystem. It is intended for internal use by other SDK packages and tools.
+This package provides reusable helpers for common tasks, code consistency, and reducing duplication across the Adobe Commerce SDK monorepo. It is intended for internal use by other SDK packages and tools.
 
 ## Installation
 
