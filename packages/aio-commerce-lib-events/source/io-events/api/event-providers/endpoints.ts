@@ -11,9 +11,9 @@
  */
 
 import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils";
+import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import { setArrayQueryParam, setQueryParamIfTruthy } from "#utils/query-params";
-import { parseOrThrow } from "#utils/valibot";
 
 import {
   EventProviderCreateParamsSchema,

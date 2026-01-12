@@ -79,6 +79,7 @@
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-api": "workspace:*",
+    "@aio-commerce-sdk/common-utils": "workspace:*",
     "valibot": "^1.1.0"
   },
   "devDependencies": {

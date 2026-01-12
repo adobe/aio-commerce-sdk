@@ -15,5 +15,5 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig({
   ...baseConfig,
-  entry: ["./source/*.ts"],
+  entry: ["./source/index.ts", "./source/valibot/index.ts"],
 });
