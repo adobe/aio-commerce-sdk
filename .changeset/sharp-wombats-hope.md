@@ -3,7 +3,7 @@
 "@aio-commerce-sdk/common-utils": patch
 ---
 
-Refactor lib-events to use a common package that can be used by future api client.
+Refactor library to extract common code out to a shared private package.
 
 Changes:
 
