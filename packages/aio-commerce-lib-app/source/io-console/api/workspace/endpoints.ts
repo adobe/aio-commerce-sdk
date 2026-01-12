@@ -10,32 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import * as v from "valibot";
+import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import { DownloadWorkspaceJsonParamsSchema } from "#io-console/api/workspace/schema";
 
 import type { AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api";
 import type { Options } from "@adobe/aio-commerce-lib-api/ky";
 import type { DownloadWorkspaceJsonParams } from "#io-console/api/workspace/schema";
-
-/**
- * Parses the input using the provided schema and throws a {@link CommerceSdkValidationError} error if the input is invalid. TODO: Move to core
- * @param schema - The schema to use for parsing.
- * @param input - The input to parse.
- */
-function parseOrThrow<
-  const TSchema extends v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>,
->(schema: TSchema, input: unknown): v.InferOutput<TSchema> {
-  const result = v.safeParse(schema, input);
-  if (!result.success) {
-    throw new CommerceSdkValidationError("Invalid input", {
-      issues: result.issues,
-    });
-  }
-
-  return result.output;
-}
 
 /**
  * Downloads the workspace JSON for the given organization, project, and workspace IDs.

@@ -758,6 +758,7 @@ describe("validateConfigDomain", () => {
   test("should validate eventSubscriptions domain", () => {
     const eventSubscriptions = [
       {
+        provider: "commerce-1",
         event: {
           name: "order.created",
           fields: {

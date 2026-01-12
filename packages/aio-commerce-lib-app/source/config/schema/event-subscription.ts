@@ -36,7 +36,6 @@ export const EventSchema = v.object({
       ),
     }),
   ]),
-  provider: v.pipe(v.string(), v.minLength(1)),
 });
 
 /** The input type inferred from the `EventSchema` schema. */
@@ -44,6 +43,7 @@ export type EventSchemaInput = v.InferInput<typeof EventSchema>;
 
 /** The keys of the `eventSubscription` settings in the extensibility config file. */
 export type EventSubscriptionConfig = {
+  provider: string;
   /**
    * The schema of the app business configuration.
    * @default {}
@@ -53,5 +53,9 @@ export type EventSubscriptionConfig = {
 
 /** Schema for event subscription configuration */
 export const SchemaEventSubscription = v.object({
+  provider: v.pipe(
+    v.string("Expected a string for the event name"),
+    v.nonEmpty("The event name must not be empty"),
+  ),
   event: EventSchema,
 }) satisfies v.GenericSchema<EventSubscriptionConfig>;

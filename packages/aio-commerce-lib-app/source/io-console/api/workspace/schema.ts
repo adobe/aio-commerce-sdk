@@ -10,12 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { stringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
-
-/** A schema for a string value. TODO: Move to core */
-export function stringValueSchema(propertyName: string) {
-  return v.string(`Expected a string value for property '${propertyName}'`);
-}
 
 export const DownloadWorkspaceJsonParamsSchema = v.object({
   orgId: stringValueSchema("orgId"),
