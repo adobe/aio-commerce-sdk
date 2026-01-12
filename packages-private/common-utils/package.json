@@ -39,6 +39,21 @@
       "./package.json": "./package.json"
     }
   },
+  "publishConfig": {
+    "exports": {
+      "./valibot": {
+        "import": {
+          "types": "./dist/es/valibot/index.d.mts",
+          "default": "./dist/es/valibot/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/valibot/index.d.cts",
+          "default": "./dist/cjs/valibot/index.cjs"
+        }
+      },
+      "./package.json": "./package.json"
+    }
+  },
   "exports": {
     "./valibot": "./source/valibot/index.ts",
     "./package.json": "./package.json"
