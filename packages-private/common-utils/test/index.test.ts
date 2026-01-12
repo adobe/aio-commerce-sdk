@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 
@@ -25,10 +26,9 @@ describe("parseOrThrow", () => {
     expect(parseOrThrow(SimpleObjectSchema, input)).toEqual({ foo: "bar" });
   });
 
-  it("should throw CommerceSdkValidationError on invalid input", () => {
-    const input = { foo: 123 };
-    expect(() => parseOrThrow(SimpleObjectSchema, input)).toThrowError(
-      "Invalid input",
+  it("should throw CommerceSdkValidationError", () => {
+    expect(() => parseOrThrow(SimpleObjectSchema, { foo: 123 })).toThrowError(
+      CommerceSdkValidationError,
     );
   });
 });
