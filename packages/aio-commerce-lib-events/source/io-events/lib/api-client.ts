@@ -41,6 +41,14 @@ export function createAdobeIoEventsApiClient(params: IoEventsHttpClientParams) {
 }
 
 /**
+ * An API Client for the Adobe I/O Events API.
+ * @see {@link createAdobeIoEventsApiClient}
+ */
+export type AdobeIoEventsApiClient = ReturnType<
+  typeof createAdobeIoEventsApiClient
+>;
+
+/**
  * Creates a customized Adobe I/O Events API client.
  * @param params - The parameters to build the Adobe I/O Events HTTP client that will communicate with the Adobe I/O Events API.
  * @param functions - The API functions to include in the client.

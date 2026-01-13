@@ -163,6 +163,7 @@ export async function createRegistration(
       {
         ...fetchOptions,
         json: {
+          client_id: validatedParams.clientId,
           name: validatedParams.name,
           description: validatedParams.description,
           webhook_url: validatedParams.webhookUrl,

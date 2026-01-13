@@ -261,6 +261,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.createRegistration(
         {
+          clientId: "client-1",
           consumerOrgId: "consumer-org-1",
           projectId: "project-1",
           workspaceId: "workspace-1",
@@ -296,6 +297,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.createRegistration(
         {
+          clientId: "client-1",
           consumerOrgId: "consumer-org-1",
           projectId: "project-1",
           workspaceId: "workspace-1",
@@ -328,6 +330,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.updateRegistration(
         {
+          clientId: "client-1",
           consumerOrgId: "consumer-org-1",
           projectId: "project-1",
           workspaceId: "workspace-1",
@@ -365,6 +368,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.updateRegistration(
         {
+          clientId: "client-1",
           consumerOrgId: "consumer-org-1",
           projectId: "project-1",
           workspaceId: "workspace-1",

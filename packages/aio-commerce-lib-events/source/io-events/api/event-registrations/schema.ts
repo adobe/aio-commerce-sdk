@@ -106,6 +106,11 @@ const EventsOfInterestArraySchema = v.pipe(
 
 /** Shared schema for registration body fields. */
 const RegistrationBodySchema = v.object({
+  clientId: v.pipe(
+    stringValueSchema("clientId"),
+    v.minLength(3, "Expected clientId to be at least 1 character"),
+    v.maxLength(255, "Expected clientId to be at most 255 characters"),
+  ),
   name: v.pipe(
     stringValueSchema("name"),
     v.minLength(3, "Expected registration name to be at least 3 characters"),
