@@ -147,12 +147,13 @@ export async function parseCommerceAppConfig(cwd = process.cwd()) {
 /**
  * Read the bundled commerce app config file
  *
+ * @param path - Optional path to the bundled config file. Defaults to BUNDLED_APP_COMMERCE_CONFIG_PATH
  * @throws {Error} If the bundled commerce app config file is not found or if it is invalid
  */
-export async function readBundledCommerceAppConfig() {
+export async function readBundledCommerceAppConfig(path?: string) {
   try {
     const fileContents = await readFile(
-      BUNDLED_APP_COMMERCE_CONFIG_PATH,
+      path ?? BUNDLED_APP_COMMERCE_CONFIG_PATH,
       "utf-8",
     );
 

@@ -16,7 +16,11 @@ import { defineConfig } from "tsdown";
 export default defineConfig({
   ...baseConfig,
 
-  entry: ["./source/config/index.ts", "./source/commands/index.ts"],
+  entry: [
+    "./source/config/index.ts",
+    "./source/commands/index.ts",
+    "source/management/index.ts",
+  ],
   copy: [
     {
       from: "./source/commands/generate/actions/templates",

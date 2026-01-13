@@ -146,6 +146,9 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: ^0.5.1
         version: 0.5.1(typescript@5.9.2)
+      '@adobe/aio-commerce-lib-events':
+        specifier: ^0.3.6
+        version: 0.3.6(typescript@5.9.2)
       consola:
         specifier: ^3.4.2
         version: 3.4.2
@@ -345,8 +348,20 @@ importers:
 
 packages:
 
+  '@adobe/aio-commerce-lib-api@0.4.1':
+    resolution: {integrity: sha512-7QOKbvj58sWegmTaMu14uVT4aJO+PF1BX1T13aCS4c6HbgE4rIMa4IrKzUEjviAteCPmQAOIOc/b3bYWgJUDow==}
+    engines: {node: '>=20 <=24'}
+
+  '@adobe/aio-commerce-lib-auth@0.6.2':
+    resolution: {integrity: sha512-EifzPMVN1yKHJmsniClm9my3xkZLxsn7ed4hsWIWvwTxEsxgyOeeOG6/BGffznaJv54/XlGLR3w4ywV1Mwm06g==}
+    engines: {node: '>=20 <=24'}
+
   '@adobe/aio-commerce-lib-core@0.5.1':
     resolution: {integrity: sha512-Kk4QKxfYGrIpu27HqQ8UPOhbkFG2zy+0Oc17i/X802qPmwmrc7lWoHN9El7FxFGzj3ntvouFe/ctzXI8oYDbmw==}
+    engines: {node: '>=20 <=24'}
+
+  '@adobe/aio-commerce-lib-events@0.3.6':
+    resolution: {integrity: sha512-O+faD36wHj2Lpm4Cf5wHJ6u5NqtY7R2DzYrhGjlcBCxvJQsrGOByq76ycvDndSpRm3V5qJCMiMsn3MUddmXYog==}
     engines: {node: '>=20 <=24'}
 
   '@adobe/aio-lib-core-config@5.0.1':
@@ -3250,11 +3265,45 @@ packages:
 
 snapshots:
 
+  '@adobe/aio-commerce-lib-api@0.4.1(typescript@5.9.2)':
+    dependencies:
+      '@adobe/aio-commerce-lib-auth': 0.6.2(typescript@5.9.2)
+      '@adobe/aio-commerce-lib-core': 0.5.1(typescript@5.9.2)
+      camelcase: 8.0.0
+      ky: 1.9.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+      - typescript
+
+  '@adobe/aio-commerce-lib-auth@0.6.2(typescript@5.9.2)':
+    dependencies:
+      '@adobe/aio-commerce-lib-core': 0.5.1(typescript@5.9.2)
+      '@adobe/aio-lib-ims': 8.1.0
+      ansis: 4.2.0
+      oauth-1.0a: 2.2.6
+      valibot: 1.1.0(typescript@5.9.2)
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+      - typescript
+
   '@adobe/aio-commerce-lib-core@0.5.1(typescript@5.9.2)':
     dependencies:
       ansis: 4.2.0
       valibot: 1.1.0(typescript@5.9.2)
     transitivePeerDependencies:
+      - typescript
+
+  '@adobe/aio-commerce-lib-events@0.3.6(typescript@5.9.2)':
+    dependencies:
+      '@adobe/aio-commerce-lib-api': 0.4.1(typescript@5.9.2)
+      '@adobe/aio-commerce-lib-auth': 0.6.2(typescript@5.9.2)
+      '@adobe/aio-commerce-lib-core': 0.5.1(typescript@5.9.2)
+      valibot: 1.1.0(typescript@5.9.2)
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
       - typescript
 
   '@adobe/aio-lib-core-config@5.0.1':
