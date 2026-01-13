@@ -11,8 +11,7 @@
  */
 
 import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils";
-
-import { parseOrThrow } from "#utils/valibot";
+import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import { EventSubscriptionCreateParamsSchema } from "./schema";
 

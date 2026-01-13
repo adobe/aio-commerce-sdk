@@ -91,6 +91,28 @@ importers:
 
   configs/vitest: {}
 
+  packages-private/common-utils:
+    dependencies:
+      '@adobe/aio-commerce-lib-core':
+        specifier: workspace:*
+        version: link:../../packages/aio-commerce-lib-core
+      valibot:
+        specifier: ^1.1.0
+        version: 1.1.0(typescript@5.9.2)
+    devDependencies:
+      '@aio-commerce-sdk/config-tsdown':
+        specifier: workspace:*
+        version: link:../../configs/tsdown
+      '@aio-commerce-sdk/config-typedoc':
+        specifier: workspace:*
+        version: link:../../configs/typedoc
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../../configs/typescript
+      '@aio-commerce-sdk/config-vitest':
+        specifier: workspace:*
+        version: link:../../configs/vitest
+
   packages-private/scripting-utils:
     dependencies:
       '@adobe/aio-commerce-lib-core':
@@ -288,6 +310,9 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
+      '@aio-commerce-sdk/common-utils':
+        specifier: workspace:*
+        version: link:../../packages-private/common-utils
       valibot:
         specifier: ^1.1.0
         version: 1.1.0(typescript@5.9.2)

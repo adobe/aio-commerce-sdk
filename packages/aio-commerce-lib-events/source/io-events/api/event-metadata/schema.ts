@@ -10,9 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { stringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
-
-import { stringValueSchema } from "#utils/schemas";
 
 const BASE64_ENCODED_STRING_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
 const BASE64_ENCODED_STRING_LENGTH_REMAINDER = 4;

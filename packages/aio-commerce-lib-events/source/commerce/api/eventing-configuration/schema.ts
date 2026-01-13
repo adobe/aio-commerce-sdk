@@ -10,14 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-import * as v from "valibot";
-
-import { workspaceConfigurationSchema } from "#commerce/lib/schema";
 import {
   alphaNumericOrUnderscoreOrHyphenSchema,
   alphaNumericOrUnderscoreSchema,
   booleanValueSchema,
-} from "#utils/schemas";
+} from "@aio-commerce-sdk/common-utils/valibot";
+import * as v from "valibot";
+
+import { workspaceConfigurationSchema } from "#commerce/lib/schema";
 
 /** The schema of the parameters received by the `updateConfiguration` Commerce Eventing API endpoint. */
 export const UpdateEventingConfigurationParamsSchema = v.partial(

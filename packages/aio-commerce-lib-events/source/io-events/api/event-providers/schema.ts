@@ -10,13 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  booleanValueSchema,
+  stringValueSchema,
+} from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
 import {
   DataResidencyRegionSchema,
   EventProviderTypeSchema,
 } from "#io-events/lib/schema";
-import { booleanValueSchema, stringValueSchema } from "#utils/schemas";
 
 export const EventProviderListAllParamsSchema = v.object({
   consumerOrgId: stringValueSchema("consumerOrgId"),

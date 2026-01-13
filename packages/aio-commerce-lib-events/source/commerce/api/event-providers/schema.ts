@@ -10,10 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
+import { stringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
 import { workspaceConfigurationSchema } from "#commerce/lib/schema";
-import { stringValueSchema } from "#utils/schemas";
 
 export const EventProviderGetByIdParamsSchema = v.object({
   providerId: stringValueSchema("providerId"),
