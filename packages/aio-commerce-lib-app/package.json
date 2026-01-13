@@ -20,23 +20,27 @@
   "bin": {
     "@adobe/aio-commerce-lib-app": "./dist/es/commands/index.mjs"
   },
-  "publishConfig": {
-    "exports": {
-      "./config": {
-        "import": {
-          "types": "./dist/es/config/index.d.mts",
-          "default": "./dist/es/config/index.mjs"
-        },
-        "require": {
-          "types": "./dist/cjs/config/index.d.cts",
-          "default": "./dist/cjs/config/index.cjs"
-        }
-      },
-      "./package.json": "./package.json"
-    }
-  },
   "exports": {
-    "./config": "./source/config/index.ts",
+    "./config": {
+      "import": {
+        "types": "./dist/es/config/index.d.mts",
+        "default": "./dist/es/config/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/config/index.d.cts",
+        "default": "./dist/cjs/config/index.cjs"
+      }
+    },
+    "./management": {
+      "import": {
+        "types": "./dist/es/management/index.d.mts",
+        "default": "./dist/es/management/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/management/index.d.cts",
+        "default": "./dist/cjs/management/index.cjs"
+      }
+    },
     "./package.json": "./package.json"
   },
   "imports": {
@@ -68,6 +72,7 @@
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "^0.5.1",
+    "@adobe/aio-commerce-lib-events": "^0.3.6",
     "consola": "^3.4.2",
     "jiti": "^2.6.1",
     "valibot": "^1.1.0"
