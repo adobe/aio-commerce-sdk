@@ -16,4 +16,5 @@ import { defineConfig } from "tsdown";
 export default defineConfig({
   ...baseConfig,
   entry: ["./source/commerce/index.ts", "./source/io-events/index.ts"],
+  noExternal: ["@aio-commerce-sdk/common-utils"],
 });
