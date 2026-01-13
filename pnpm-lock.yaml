@@ -165,6 +165,9 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: ^0.5.1
         version: 0.5.1(typescript@5.9.3)
+      '@adobe/aio-commerce-lib-events':
+        specifier: ^0.3.6
+        version: 0.3.6(typescript@5.9.3)
       consola:
         specifier: ^3.4.2
         version: 3.4.2
@@ -367,8 +370,20 @@ importers:
 
 packages:
 
+  '@adobe/aio-commerce-lib-api@0.4.1':
+    resolution: {integrity: sha512-7QOKbvj58sWegmTaMu14uVT4aJO+PF1BX1T13aCS4c6HbgE4rIMa4IrKzUEjviAteCPmQAOIOc/b3bYWgJUDow==}
+    engines: {node: '>=20 <=24'}
+
+  '@adobe/aio-commerce-lib-auth@0.6.2':
+    resolution: {integrity: sha512-EifzPMVN1yKHJmsniClm9my3xkZLxsn7ed4hsWIWvwTxEsxgyOeeOG6/BGffznaJv54/XlGLR3w4ywV1Mwm06g==}
+    engines: {node: '>=20 <=24'}
+
   '@adobe/aio-commerce-lib-core@0.5.1':
     resolution: {integrity: sha512-Kk4QKxfYGrIpu27HqQ8UPOhbkFG2zy+0Oc17i/X802qPmwmrc7lWoHN9El7FxFGzj3ntvouFe/ctzXI8oYDbmw==}
+    engines: {node: '>=20 <=24'}
+
+  '@adobe/aio-commerce-lib-events@0.3.6':
+    resolution: {integrity: sha512-O+faD36wHj2Lpm4Cf5wHJ6u5NqtY7R2DzYrhGjlcBCxvJQsrGOByq76ycvDndSpRm3V5qJCMiMsn3MUddmXYog==}
     engines: {node: '>=20 <=24'}
 
   '@adobe/aio-lib-core-config@5.0.1':
@@ -385,6 +400,7 @@ packages:
   '@adobe/aio-lib-core-networking@5.1.0':
     resolution: {integrity: sha512-RZgA73yUHhikjIGy7k0DRobPbIXbtuI/0ixrBXOVqj19WTqFFrEuyHtzOuRsBAmu0OvVkf6slQHtDTL9oPLxfg==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-core-tvm@4.0.3':
     resolution: {integrity: sha512-zwl4GeU5CryZBozpub4jI9tnGW2ewD6mMLaXX8HhO8DqKzcjnjYr+MbUS0c/QzGd8gTzZWbikm4J7tfpCn3cAA==}
@@ -393,6 +409,7 @@ packages:
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-files@4.1.2':
     resolution: {integrity: sha512-4Ll776OGB34R7nPgMF+UQpIYm33yjtH5yLUuvtvKNHZtRF/wODG1Q8Oqcy9pOFutRIacg/xM0AMB6OKrQTP+Xw==}
@@ -3357,11 +3374,45 @@ packages:
 
 snapshots:
 
+  '@adobe/aio-commerce-lib-api@0.4.1(typescript@5.9.3)':
+    dependencies:
+      '@adobe/aio-commerce-lib-auth': 0.6.2(typescript@5.9.3)
+      '@adobe/aio-commerce-lib-core': 0.5.1(typescript@5.9.3)
+      camelcase: 8.0.0
+      ky: 1.14.2
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+      - typescript
+
+  '@adobe/aio-commerce-lib-auth@0.6.2(typescript@5.9.3)':
+    dependencies:
+      '@adobe/aio-commerce-lib-core': 0.5.1(typescript@5.9.3)
+      '@adobe/aio-lib-ims': 8.1.1
+      ansis: 4.2.0
+      oauth-1.0a: 2.2.6
+      valibot: 1.2.0(typescript@5.9.3)
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+      - typescript
+
   '@adobe/aio-commerce-lib-core@0.5.1(typescript@5.9.3)':
     dependencies:
       ansis: 4.2.0
       valibot: 1.2.0(typescript@5.9.3)
     transitivePeerDependencies:
+      - typescript
+
+  '@adobe/aio-commerce-lib-events@0.3.6(typescript@5.9.3)':
+    dependencies:
+      '@adobe/aio-commerce-lib-api': 0.4.1(typescript@5.9.3)
+      '@adobe/aio-commerce-lib-auth': 0.6.2(typescript@5.9.3)
+      '@adobe/aio-commerce-lib-core': 0.5.1(typescript@5.9.3)
+      valibot: 1.2.0(typescript@5.9.3)
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
       - typescript
 
   '@adobe/aio-lib-core-config@5.0.1':
