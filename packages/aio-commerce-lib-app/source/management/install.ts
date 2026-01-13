@@ -16,7 +16,9 @@ import type {
   AdobeIoEventsApiClient,
   IoEventProviderManyResponse,
   IoEventProviderOneResponse,
+  IoEventRegistrationOneResponse,
 } from "@adobe/aio-commerce-lib-events/io-events";
+import type { CommerceEvent } from "#config/schema/eventing";
 import type { CommerceAppConfigOutputModel } from "~/config/schema/app";
 import type { ImsCredentials, WorkspaceContext } from "./types";
 
@@ -35,11 +37,23 @@ export async function installApp(
   credentials: ImsCredentials,
   workspaceContext: WorkspaceContext,
 ): Promise<void> {
-  await installCommerceProvidersAndMetadata(
-    appConfig,
-    credentials,
-    workspaceContext,
-  );
+  const ioEventsClient = getIoEventsClient(credentials);
+
+  try {
+    await installCommerceProvidersAndMetadata(
+      appConfig,
+      ioEventsClient,
+      workspaceContext,
+    );
+
+    await installEventRegistrations(appConfig, ioEventsClient, {
+      ...workspaceContext,
+      clientId: credentials.client_id,
+    });
+  } catch (error) {
+    console.error("Failed to install app:", error);
+    throw error;
+  }
 }
 
 /**
@@ -51,7 +65,7 @@ export async function installApp(
  */
 async function installCommerceProvidersAndMetadata(
   appConfig: CommerceAppConfigOutputModel,
-  credentials: ImsCredentials,
+  ioEventsClient: AdobeIoEventsApiClient,
   workspaceContext: WorkspaceContext,
 ): Promise<void> {
   if (!appConfig.eventing?.commerce) {
@@ -61,8 +75,6 @@ async function installCommerceProvidersAndMetadata(
     return;
   }
 
-  const ioEventsClient = getIoEventsClient(credentials);
-
   for (const commerceProvider of appConfig.eventing.commerce) {
     const instanceId = generateInstanceId(
       appConfig.metadata.id,
@@ -71,7 +83,8 @@ async function installCommerceProvidersAndMetadata(
     const allProviders = await ioEventsClient.getAllEventProviders({
       consumerOrgId: workspaceContext.orgId,
     });
-    const provider = findProviderByInstanceId(allProviders, instanceId);
+
+    let provider = findProviderByInstanceId(allProviders, instanceId);
 
     if (!provider) {
       console.log(`No provider found for commerce provider ${instanceId}`);
@@ -79,7 +92,7 @@ async function installCommerceProvidersAndMetadata(
         `Creating Commerce Provider: ${commerceProvider.provider.label}`,
       );
 
-      const provider = await ioEventsClient.createCommerceEventProvider({
+      provider = await ioEventsClient.createCommerceEventProvider({
         consumerOrgId: workspaceContext.orgId,
         projectId: workspaceContext.projectId,
         workspaceId: workspaceContext.workspaceId,
@@ -109,13 +122,84 @@ async function installCommerceProvidersAndMetadata(
           providerId: provider.id,
           description: event.description ?? "",
           label: event.name ?? "",
-          eventCode: `com.adobe.commerce.${event.name}`,
+          eventCode: getEventName(appConfig.metadata.id, event),
         },
       );
 
-      console.log(`Created event: ${eventMetadata.event_code}`);
+      console.log(`Created event: ${eventMetadata.eventCode}`);
     }
   }
+}
+
+async function installEventRegistrations(
+  appConfig: CommerceAppConfigOutputModel,
+  ioEventsClient: AdobeIoEventsApiClient,
+  context: WorkspaceContext & { clientId: string },
+) {
+  if (!appConfig.eventing?.commerce) {
+    console.log(
+      "No commerce eventing configuration found. Skipping event registration installation.",
+    );
+
+    return;
+  }
+
+  const allProviders = await ioEventsClient.getAllEventProviders({
+    consumerOrgId: context.orgId,
+  });
+
+  const registrationPromises: Promise<IoEventRegistrationOneResponse>[] = [];
+
+  for (const { provider, events } of appConfig.eventing.commerce) {
+    console.log(`Creating event registration for provider: ${provider.label}`);
+    const instanceId = generateInstanceId(
+      appConfig.metadata.id,
+      provider.key ?? provider.label,
+    );
+
+    const ioProvider = findProviderByInstanceId(allProviders, instanceId);
+
+    if (!ioProvider) {
+      throw new Error(`Failed to find provider for instance ID: ${instanceId}`);
+    }
+
+    for (const event of events) {
+      console.log(`Creating event registration for event: ${event.name}`);
+      registrationPromises.push(
+        ioEventsClient
+          .createRegistration({
+            clientId: context.clientId,
+            consumerOrgId: context.orgId,
+            projectId: context.projectId,
+            workspaceId: context.workspaceId,
+            name: `Registration for event ${event.label}`,
+            description: event.description,
+            runtimeAction: event.runtimeAction,
+            deliveryType: "webhook",
+            eventsOfInterest: [
+              {
+                providerId: ioProvider.id,
+                eventCode: getEventName(appConfig.metadata.id, event),
+              },
+            ],
+          })
+          .then((registration) => {
+            console.log(`Created event registration for event: ${event.name}`);
+            return registration;
+          })
+          .catch((error) => {
+            console.error(
+              `Failed to create event registration for event: ${event.name}`,
+              error,
+            );
+
+            throw error;
+          }),
+      );
+    }
+  }
+
+  return Promise.all(registrationPromises);
 }
 
 /**
@@ -152,6 +236,16 @@ function generateInstanceId(appId: string, providerKey: string): string {
 }
 
 /**
+ * Gets the event name for a given app ID and event.
+ *
+ * @param appId - The application ID as found in the `metadata.id` field of the app configuration.
+ * @param event - The event as defined in the app configuration.
+ */
+function getEventName(appId: string, event: CommerceEvent): string {
+  return `com.adobe.commerce.${appId}.${event.name}`; // TODO: Implement this properly.
+}
+
+/**
  * Gets or creates an Adobe I/O Events API client using IMS credentials.
  * The client is lazily initialized and cached for subsequent calls.
  *
@@ -168,6 +262,15 @@ function getIoEventsClient(credentials: ImsCredentials) {
         technicalAccountEmail: credentials.technical_account_email,
         scopes: credentials.scopes,
         imsOrgId: credentials.ims_org_id,
+        environment: "stage",
+      },
+
+      config: {
+        baseUrl: "https://api-stage.adobe.io/events",
+      },
+
+      fetchOptions: {
+        timeout: 30_000,
       },
     });
   }

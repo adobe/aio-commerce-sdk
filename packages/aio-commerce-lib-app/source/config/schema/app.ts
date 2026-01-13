@@ -19,7 +19,7 @@ import {
   SchemaBusinessConfig,
   SchemaBusinessConfigSchema,
 } from "./business-configuration";
-import { EventingSchema } from "./eventing-configuration";
+import { EventingSchema } from "./eventing";
 import { MetadataSchema } from "./metadata";
 
 export const CommerceAppConfigSchemas = {
@@ -33,7 +33,7 @@ export const CommerceAppConfigSchemas = {
 export type CommerceAppConfigDomain = keyof typeof CommerceAppConfigSchemas;
 
 /** The schema used to validate the commerce app config file. */
-export const CommerceAppConfigSchema = v.object({
+export const CommerceAppConfigSchema = v.looseObject({
   metadata: MetadataSchema,
   businessConfig: v.optional(SchemaBusinessConfig),
   eventing: v.optional(EventingSchema),

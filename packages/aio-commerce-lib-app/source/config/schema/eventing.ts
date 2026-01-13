@@ -60,10 +60,11 @@ const CommerceEventSchema = v.object({
   name: v.pipe(
     nonEmptyString("event name"),
     v.regex(
-      /^[a-z_][a-z0-9_]*$/,
-      "The event name must contain only lowercase alphanumeric characters and underscores, and start with a letter or underscore",
+      /^(?:[a-z_][a-z0-9_]*\.)?(?:(?:observer|plugin)\.)?[a-z_][a-z0-9_]*$/,
+      "The event name must contain only lowercase alphanumeric characters and underscores, and start with a letter or underscore. It may optionally be prefixed with 'prefix.', 'prefix.observer.', or 'prefix.plugin.'",
     ),
   ),
+
   fields: v.array(
     v.pipe(
       nonEmptyString("event field"),
@@ -75,6 +76,15 @@ const CommerceEventSchema = v.object({
     "Expected an array of event fields",
   ),
   runtimeAction: nonEmptyString("runtime action"),
+
+  label: v.pipe(
+    nonEmptyString("event label"),
+    v.maxLength(
+      MAX_LABEL_LENGTH,
+      `The event label must not be longer than ${MAX_LABEL_LENGTH} characters`,
+    ),
+  ),
+
   description: v.pipe(
     nonEmptyString("event description"),
     v.maxLength(
@@ -98,7 +108,11 @@ const ExternalEventSchema = v.object({
 /** Schema for Commerce event provider configuration */
 const CommerceProviderConfigSchema = v.object({
   provider: ProviderSchema,
-  events: v.array(CommerceEventSchema, "Expected an array of Commerce events"),
+  events: v.pipe(
+    v.array(CommerceEventSchema, "Expected an array of Commerce events"),
+    v.minLength(1, "Expected at least one Commerce event"),
+    v.maxLength(30, "Expected at most 30 Commerce events"),
+  ),
 });
 
 /** Schema for external event provider configuration */
@@ -115,12 +129,13 @@ export const EventingSchema = v.object({
       "Expected an array of Commerce provider configurations",
     ),
   ),
-  external: v.optional(
+  /** @todo Implement external eventing configuration */
+  /* external: v.optional(
     v.array(
       ExternalProviderConfigSchema,
       "Expected an array of external provider configurations",
     ),
-  ),
+  ), */
 });
 
 /** The eventing configuration for an Adobe Commerce application */
