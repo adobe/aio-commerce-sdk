@@ -10,10 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { mkdir, rename, rm } from "node:fs/promises";
-import { dirname, join, relative } from "node:path";
-
-import { globby } from "globby";
+import { join } from "node:path";
 
 import type { UserConfig } from "tsdown";
 
@@ -40,8 +37,20 @@ const ADOBE_LICENSE_BANNER = `
  */
 export const baseConfig: UserConfig = {
   entry: [],
-  format: ["cjs", "esm"],
+  format: {
+    cjs: {
+      outputOptions: {
+        dir: join(OUT_DIR, "cjs"),
+      },
+    },
+    esm: {
+      outputOptions: {
+        dir: join(OUT_DIR, "es"),
+      },
+    },
+  },
 
+  publint: true,
   outputOptions: {
     banner: ADOBE_LICENSE_BANNER,
     dir: OUT_DIR,
@@ -57,48 +66,4 @@ export const baseConfig: UserConfig = {
 
   dts: true,
   treeshake: true,
-
-  hooks: {
-    "build:before": (ctx) => {
-      if (ctx.buildOptions.output) {
-        // Move each output into its own directory.
-        const { format } = ctx.buildOptions.output;
-        ctx.buildOptions.output.dir += `/${format}`;
-      }
-    },
-
-    "build:done": async (_) => {
-      // For some reason the types and sub-directories of the CJS builds are being placed out of the CJS directory.
-      // This hook moves them after they're generated, respecting the directory structure.
-      const files = await globby("**/*.d.cts", {
-        cwd: OUT_DIR,
-        absolute: true,
-      });
-
-      const migratedDirs = new Set<string>();
-      await Promise.all(
-        files.map(async (sourcePath) => {
-          const relativePath = relative(OUT_DIR, sourcePath);
-          const targetPath = join(OUT_DIR, "cjs", relativePath);
-
-          if (relativePath.includes("/")) {
-            const [root] = relativePath.split("/");
-            const migratedDir = join(OUT_DIR, root);
-
-            const [absoluteParent] = sourcePath.split(migratedDir);
-            migratedDirs.add(join(absoluteParent, migratedDir));
-          }
-
-          await mkdir(dirname(targetPath), { recursive: true });
-          await rename(sourcePath, targetPath);
-        }),
-      );
-
-      await Promise.all(
-        Array.from(migratedDirs).map(async (dir) => {
-          await rm(dir, { recursive: true });
-        }),
-      );
-    },
-  },
 };
