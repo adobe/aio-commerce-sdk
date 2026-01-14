@@ -1,0 +1,51 @@
+/*
+ * Copyright 2026 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+import {
+  AdobeIoEventsHttpClient,
+  ApiClient,
+} from "@adobe/aio-commerce-lib-api";
+
+import * as workspaceEndpoints from "#io-console/api/workspace/endpoints";
+
+import type {
+  ApiFunction,
+  IoEventsHttpClientParams,
+} from "@adobe/aio-commerce-lib-api";
+
+/**
+ * Creates a new API client for the Adobe I/O API client.
+ * @param params - The parameters to build the Adobe I/O HTTP client that will communicate with the Adobe I/O API.
+ */
+export function createAdobeIoApiClient(params: IoEventsHttpClientParams) {
+  // By default, we create a client that has all the endpoints available.
+  // We should encourage creating custom clients (using the below factory function).
+  return ApiClient.create(
+    new AdobeIoEventsHttpClient(params),
+    workspaceEndpoints,
+  );
+}
+
+/**
+ * Creates a customized Adobe I/O Events client.
+ * @param params - The parameters to build the Adobe I/O Events HTTP client that will communicate with the Adobe I/O API.
+ * @param functions - The API functions to include in the client.
+ */
+export function createCustomAdobeIoApiClient<
+  TFunctions extends Record<
+    string,
+    // biome-ignore lint/suspicious/noExplicitAny: We can't know the type of the argument/return type.
+    ApiFunction<AdobeIoEventsHttpClient, any[], any>
+  >,
+>(params: IoEventsHttpClientParams, functions: TFunctions) {
+  return ApiClient.create(new AdobeIoEventsHttpClient(params), functions);
+}

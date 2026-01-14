@@ -651,6 +651,102 @@ describe("validateConfigDomain", () => {
     ).toThrow("Invalid commerce app config: businessConfig.schema");
   });
 
+  const baseEvent = {
+    provider: {
+      label: "ecommerce",
+      description: "ecommerce",
+      key: "ecommerce",
+      default: false,
+    },
+    events: [
+      {
+        name: "sales_order_place_after",
+        fields: ["order_id", "customer_email"], // will be replaced in test
+        runtimeAction: "actions/salesOrderPlaceAfter",
+        description: "Sales Order Place After",
+      },
+    ],
+  };
+
+  test.each([
+    { fields: ["order_id", "customer_email"], desc: "fields as string[]" },
+    { fields: "*", desc: 'fields as "*"' },
+  ])("should validate eventing.commerce domain with $desc", ({ fields }) => {
+    const schema = [
+      {
+        ...baseEvent,
+        events: baseEvent.events.map((event) => ({
+          ...event,
+          fields,
+        })),
+      },
+    ];
+
+    expect(() =>
+      validateCommerceAppConfigDomain(schema, "eventing.commerce"),
+    ).not.toThrow();
+    const validated = validateCommerceAppConfigDomain(
+      schema,
+      "eventing.commerce",
+    );
+    expect(validated).toHaveLength(1);
+  });
+
+  // test("should validate eventing.commerce domain", () => {
+  //   const schema = [
+  //     {
+  //       provider: {
+  //         label: "ecommerce",
+  //         description: "ecommerce",
+  //         key: "ecommerce",
+  //         default: false,
+  //       },
+  //       events: [
+  //         {
+  //           name: "sales_order_place_after",
+  //           fields: ["order_id", "customer_email"],
+  //           runtimeAction: "actions/salesOrderPlaceAfter",
+  //           description: "Sales Order Place After",
+  //         },
+  //       ],
+  //     },
+  //   ];
+  //
+  //   expect(() =>
+  //     validateCommerceAppConfigDomain(schema, "eventing.commerce"),
+  //   ).not.toThrow();
+  //   const validated = validateCommerceAppConfigDomain(
+  //     schema,
+  //     "eventing.commerce",
+  //   );
+  //   expect(validated).toHaveLength(1);
+  // });
+
+  test("should throw when validating invalid eventing.commerce domain", () => {
+    const schema = [
+      {
+        provider: {
+          label: "ecommerce",
+          description: "ecommerce",
+          key: "ecommerce",
+          default: false,
+        },
+        events: [
+          {
+            name: "sales.order.place_after",
+            fields: ["order_id", "customer_email"],
+            runtimeAction: "actions/salesOrderPlaceAfter",
+            description: "Sales Order Place After",
+          },
+        ],
+      },
+    ];
+
+    expect(() =>
+      validateCommerceAppConfigDomain(schema, "eventing.commerce"),
+    ).toThrow("Invalid commerce app config: eventing.commerce");
+  });
+
   test("should throw when validating unknown domain", () => {
     const data = { some: "data" };
 
