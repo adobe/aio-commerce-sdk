@@ -11,10 +11,18 @@ import type {
   ImsAuthParams,
   IntegrationAuthParams,
 } from "@adobe/aio-commerce-lib-auth";
-import type { CommerceEventProvider } from "@adobe/aio-commerce-lib-events/commerce";
+import type {
+  CommerceEventProvider,
+  CommerceEventsApiClient,
+} from "@adobe/aio-commerce-lib-events/commerce";
 import type { CamelCasedPropertiesDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "~/config/schema/app";
 
+/**
+ * Creates a Commerce Events API client based on the provided authentication parameters and base URL.
+ * @param authProvider
+ * @param baseUrl
+ */
 function getCommerceEventsClient(
   authProvider:
     | (ImsAuthParams & { strategy: "ims" })
@@ -22,7 +30,7 @@ function getCommerceEventsClient(
         strategy: "integration";
       }),
   baseUrl: string,
-) {
+): CommerceEventsApiClient {
   if (authProvider.strategy === "ims") {
     return createCommerceEventsApiClient({
       config: {
@@ -46,41 +54,17 @@ function getCommerceEventsClient(
   throw new Error("Invalid auth provider strategy");
 }
 
-export function installCommerceEvents(
+function createEventSubscriptions(
   appConfig: CommerceAppConfigOutputModel,
-  params: Record<string, unknown> & { AIO_COMMERCE_API_BASE_URL: string },
   registeredCommerceProviders: Map<
     string,
     CommerceEventProvider | CamelCasedPropertiesDeep<CommerceEventProvider>
   >,
+  commerceEventsClient: CommerceEventsApiClient,
 ) {
-  if (!appConfig.eventing?.commerce) {
-    console.log(
-      "No commerce eventing configuration found. Skipping event registration installation.",
-    );
-    return;
-  }
-
-  // validate the input against the CommerceProviderConfigSchema[] (?)
-  validateCommerceAppConfigDomain(
-    appConfig.eventing.commerce,
-    "eventing.commerce",
-  );
-
-  // get baseUrl from ENV params
-  const baseUrl = params.AIO_COMMERCE_API_BASE_URL;
-  const authProvider = resolveAuthParams(params);
-
-  const commerceEventsClient = getCommerceEventsClient(authProvider, baseUrl);
-
-  if (!commerceEventsClient) {
-    console.error("No valid commerce client could be created.");
-    return;
-  }
-
   const createSubscriptionPromises: Promise<void>[] = [];
 
-  for (const { provider, events } of appConfig.eventing.commerce) {
+  for (const { provider, events } of appConfig.eventing?.commerce || []) {
     const instanceId = generateInstanceId(
       appConfig.metadata.id,
       provider.key ?? provider.label,
@@ -114,6 +98,53 @@ export function installCommerceEvents(
   }
 
   return Promise.all(createSubscriptionPromises);
+}
+
+/**
+ * Installs commerce event subscriptions based on the provided app configuration.
+ * @param appConfig
+ * @param params
+ * @param registeredCommerceProviders
+ */
+export async function installCommerceEvents(
+  appConfig: CommerceAppConfigOutputModel,
+  params: Record<string, unknown> & { AIO_COMMERCE_API_BASE_URL: string },
+  registeredCommerceProviders: Map<
+    string,
+    CommerceEventProvider | CamelCasedPropertiesDeep<CommerceEventProvider>
+  >,
+) {
+  if (!appConfig.eventing?.commerce) {
+    console.log(
+      "No commerce eventing configuration found. Skipping event registration installation.",
+    );
+    return;
+  }
+
+  // validate the input against the CommerceProviderConfigSchema[] (?)
+  validateCommerceAppConfigDomain(
+    appConfig.eventing.commerce,
+    "eventing.commerce",
+  );
+
+  // get baseUrl from ENV params
+  const baseUrl = params.AIO_COMMERCE_API_BASE_URL;
+  const authProvider = resolveAuthParams(params);
+
+  const commerceEventsClient = getCommerceEventsClient(authProvider, baseUrl);
+
+  if (!commerceEventsClient) {
+    console.error("No valid commerce client could be created.");
+    return;
+  }
+
+  await createEventSubscriptions(
+    appConfig,
+    registeredCommerceProviders,
+    commerceEventsClient,
+  );
+
+  return;
 }
 
 /**

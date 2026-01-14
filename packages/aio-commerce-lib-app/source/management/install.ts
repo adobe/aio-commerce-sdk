@@ -12,6 +12,8 @@
 
 import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 
+import { installCommerceEvents } from "~/management/event-subscription";
+
 import type {
   AdobeIoEventsApiClient,
   IoEventProviderManyResponse,
@@ -35,11 +37,22 @@ export async function installApp(
   credentials: ImsCredentials,
   workspaceContext: WorkspaceContext,
 ): Promise<void> {
-  await installCommerceProvidersAndMetadata(
-    appConfig,
-    credentials,
-    workspaceContext,
-  );
+  try {
+    await installCommerceProvidersAndMetadata(
+      appConfig,
+      credentials,
+      workspaceContext,
+    );
+
+    await installCommerceEvents(
+      appConfig,
+      { AIO_COMMERCE_API_BASE_URL: "" },
+      new Map(),
+    );
+  } catch (error) {
+    console.error("Failed to install app:", error);
+    throw error;
+  }
 }
 
 /**
