@@ -1,5 +1,18 @@
 # @adobe/aio-commerce-lib-events
 
+## 0.4.0
+
+### Minor Changes
+
+- [#201](https://github.com/adobe/aio-commerce-sdk/pull/201) [`ed5d4ac`](https://github.com/adobe/aio-commerce-sdk/commit/ed5d4ac86b6fd62129715de7a94c511dd54985e4) Thanks [@jnatherley](https://github.com/jnatherley)! - Refactor library to extract common code out to use common-utils package
+
+- [#200](https://github.com/adobe/aio-commerce-sdk/pull/200) [`5373ab9`](https://github.com/adobe/aio-commerce-sdk/commit/5373ab9d151ca420df3052d33d163d66af02fe71) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Implement event registration endpoints for Adobe I/O events
+
+### Patch Changes
+
+- Updated dependencies [[`ed5d4ac`](https://github.com/adobe/aio-commerce-sdk/commit/ed5d4ac86b6fd62129715de7a94c511dd54985e4)]:
+  - @aio-commerce-sdk/common-utils@0.0.2
+
 ## 0.3.6
 
 ### Patch Changes
