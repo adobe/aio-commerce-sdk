@@ -38,6 +38,12 @@ describe("Adobe I/O Events API", () => {
       expect(client).toHaveProperty("getAllEventMetadataForProvider");
       expect(client).toHaveProperty("getEventMetadataForEventAndProvider");
       expect(client).toHaveProperty("createEventMetadataForProvider");
+      expect(client).toHaveProperty("getAllRegistrationsByConsumerOrg");
+      expect(client).toHaveProperty("getAllRegistrations");
+      expect(client).toHaveProperty("getRegistrationById");
+      expect(client).toHaveProperty("createRegistration");
+      expect(client).toHaveProperty("updateRegistration");
+      expect(client).toHaveProperty("deleteRegistration");
     });
   });
 

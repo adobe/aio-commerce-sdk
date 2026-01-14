@@ -201,6 +201,69 @@ const newMetadata = await ioEventsClient.createEventMetadataForProvider({
 });
 ```
 
+#### Managing Event Registrations
+
+```typescript
+// List all registrations for a consumer organization
+const registrations = await ioEventsClient.getAllRegistrationsByConsumerOrg({
+  consumerOrgId: "your-consumer-org-id",
+});
+
+// List all registrations for a project and workspace
+const registrations = await ioEventsClient.getAllRegistrations({
+  consumerOrgId: "your-consumer-org-id",
+  projectId: "your-project-id",
+  workspaceId: "your-workspace-id",
+});
+
+// Get a specific registration by ID
+const registration = await ioEventsClient.getRegistrationById({
+  consumerOrgId: "your-consumer-org-id",
+  projectId: "your-project-id",
+  workspaceId: "your-workspace-id",
+  registrationId: "my-registration-id",
+});
+
+// Create a new registration
+const registration = await ioEventsClient.createRegistration({
+  consumerOrgId: "your-consumer-org-id",
+  projectId: "your-project-id",
+  workspaceId: "your-workspace-id",
+  name: "my-registration",
+  deliveryType: "webhook",
+  eventsOfInterest: [
+    {
+      providerId: "my-provider-id",
+      eventCode: "my-event-code",
+    },
+  ],
+});
+
+// Update a registration
+const updatedRegistration = await ioEventsClient.updateRegistration({
+  consumerOrgId: "your-consumer-org-id",
+  projectId: "your-project-id",
+  workspaceId: "your-workspace-id",
+  registrationId: "my-registration-id",
+  name: "my-updated-registration",
+  deliveryType: "webhook",
+  eventsOfInterest: [
+    {
+      providerId: "my-provider-id",
+      eventCode: "my-event-code",
+    },
+  ],
+});
+
+// Delete a registration
+await ioEventsClient.deleteRegistration({
+  consumerOrgId: "your-consumer-org-id",
+  projectId: "your-project-id",
+  workspaceId: "your-workspace-id",
+  registrationId: "my-registration-id",
+});
+```
+
 ### Custom API Clients
 
 > [!TIP]

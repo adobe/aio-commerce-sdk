@@ -41,6 +41,14 @@ export function createCommerceEventsApiClient(
 }
 
 /**
+ * An API Client for the Commerce Events API.
+ * @see {@link createCommerceEventsApiClient}
+ */
+export type CommerceEventsApiClient = ReturnType<
+  typeof createCommerceEventsApiClient
+>;
+
+/**
  * Creates a customized Commerce Events API client.
  * @param params - The parameters to build the Commerce HTTP client that will communicate with the Commerce Events API.
  * @param functions - The API functions to include in the client.
