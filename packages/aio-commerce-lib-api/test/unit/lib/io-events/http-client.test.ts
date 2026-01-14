@@ -173,33 +173,33 @@ describe("lib/io-events/http-client", () => {
         baseUrl: "https://api.adobe.io/events",
         expectedUrl: "https://api.adobe.io/events/test",
       },
-    ])(
-      "should handle trailing slashes correctly with baseUrl: $baseUrl",
-      async ({ baseUrl, expectedUrl }) => {
-        const mockFetch = vi.fn(async () =>
-          Response.json({ hello: "world" }, { status: 200 }),
-        );
+    ])("should handle trailing slashes correctly with baseUrl: $baseUrl", async ({
+      baseUrl,
+      expectedUrl,
+    }) => {
+      const mockFetch = vi.fn(async () =>
+        Response.json({ hello: "world" }, { status: 200 }),
+      );
 
-        const params: IoEventsHttpClientParams = {
-          ...TEST_ADOBE_IO_EVENTS_HTTP_CLIENT_PARAMS,
-          config: {
-            baseUrl,
-          },
-        };
+      const params: IoEventsHttpClientParams = {
+        ...TEST_ADOBE_IO_EVENTS_HTTP_CLIENT_PARAMS,
+        config: {
+          baseUrl,
+        },
+      };
 
-        const testClient = new TestAdobeIoEventsHttpClient(params, mockFetch);
-        await testClient.get("test", {
-          hooks: {
-            beforeRequest: [
-              (request) => {
-                expect(request.url).toBe(expectedUrl);
-                // Ensure no double slashes in the path (except after protocol)
-                expect(request.url).not.toMatch(DOUBLE_SLASH_REGEX);
-              },
-            ],
-          },
-        });
-      },
-    );
+      const testClient = new TestAdobeIoEventsHttpClient(params, mockFetch);
+      await testClient.get("test", {
+        hooks: {
+          beforeRequest: [
+            (request) => {
+              expect(request.url).toBe(expectedUrl);
+              // Ensure no double slashes in the path (except after protocol)
+              expect(request.url).not.toMatch(DOUBLE_SLASH_REGEX);
+            },
+          ],
+        },
+      });
+    });
   });
 });
