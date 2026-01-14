@@ -17,6 +17,7 @@ import type {
 } from "@adobe/aio-commerce-lib-events/commerce";
 import type { CamelCasedPropertiesDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "~/config/schema/app";
+import type { CommerceEvent } from "~/config/schema/eventing-configuration";
 
 /**
  * Creates a Commerce Events API client based on the provided authentication parameters and base URL.
@@ -78,17 +79,16 @@ function createEventSubscriptions(
     }
 
     for (const event of events) {
-      const { name, fields } = event;
-      const namespacedEventName = createEventName(name, instanceId);
+      const namespacedEventName = getEventName(appConfig.metadata.id, event);
       const eventSpec = {
         name: namespacedEventName,
-        parent: name,
-        fields: allOrFields(fields),
+        parent: event.name,
+        fields: allOrFields(event.fields),
         providerId: instanceId,
       };
 
       console.log(
-        `Creating event subscription for event: ${namespacedEventName}:${name}`,
+        `Creating event subscription for event: ${namespacedEventName}:${event.name}`,
       );
 
       createSubscriptionPromises.push(
@@ -161,19 +161,11 @@ export function allOrFields(fields: string[] | "*") {
 
 /**
  * Creates a fully qualified event name for Adobe Commerce events.
- * @param eventName - The base event name
- * @param instanceId - The instance ID of the event provider
+ * @param appId - The application ID
+ * @param event - The Commerce event
  */
-export function createEventName(eventName: string, instanceId?: string) {
-  if (eventName.startsWith("be-observer")) {
-    return eventName;
-  }
-
-  if (instanceId) {
-    return `com.adobe.commerce.${instanceId}.${eventName}`;
-  }
-
-  return `com.adobe.commerce.${eventName}`;
+export function getEventName(appId: string, event: CommerceEvent) {
+  return `com.adobe.commerce.${appId}.${event.name}`;
 }
 
 /**
