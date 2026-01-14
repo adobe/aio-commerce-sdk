@@ -7,13 +7,48 @@ import { createCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/co
 
 import { validateCommerceAppConfigDomain } from "~/config";
 
+import type {
+  ImsAuthParams,
+  IntegrationAuthParams,
+} from "@adobe/aio-commerce-lib-auth";
 import type { CommerceEventProvider } from "@adobe/aio-commerce-lib-events/commerce";
 import type { CamelCasedPropertiesDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "~/config/schema/app";
 
+function getCommerceEventsClient(
+  authProvider:
+    | (ImsAuthParams & { strategy: "ims" })
+    | (IntegrationAuthParams & {
+        strategy: "integration";
+      }),
+  baseUrl: string,
+) {
+  if (authProvider.strategy === "ims") {
+    return createCommerceEventsApiClient({
+      config: {
+        baseUrl,
+        flavor: "saas",
+      },
+      auth: getImsAuthProvider(authProvider),
+    });
+  }
+
+  if (authProvider.strategy === "integration") {
+    return createCommerceEventsApiClient({
+      config: {
+        baseUrl,
+        flavor: "paas",
+      },
+      auth: getIntegrationAuthProvider(authProvider),
+    });
+  }
+
+  throw new Error("Invalid auth provider strategy");
+}
+
 export function installCommerceEvents(
   appConfig: CommerceAppConfigOutputModel,
-  params: Record<string, unknown>,
+  params: Record<string, unknown> & { AIO_COMMERCE_API_BASE_URL: string },
   registeredCommerceProviders: Map<
     string,
     CommerceEventProvider | CamelCasedPropertiesDeep<CommerceEventProvider>
@@ -33,29 +68,10 @@ export function installCommerceEvents(
   );
 
   // get baseUrl from ENV params
-  const baseUrl = params?.COMMERCE_BASE_URL as string;
+  const baseUrl = params.AIO_COMMERCE_API_BASE_URL;
   const authProvider = resolveAuthParams(params);
 
-  // biome-ignore lint/suspicious/noImplicitAnyLet: false positive
-  // biome-ignore lint/suspicious/noEvolvingTypes: false positive
-  let commerceEventsClient;
-  if (authProvider.strategy === "ims") {
-    commerceEventsClient = createCommerceEventsApiClient({
-      config: {
-        baseUrl,
-        flavor: "saas",
-      },
-      auth: getImsAuthProvider(authProvider),
-    });
-  } else if (authProvider.strategy === "integration") {
-    commerceEventsClient = createCommerceEventsApiClient({
-      config: {
-        baseUrl,
-        flavor: "paas",
-      },
-      auth: getIntegrationAuthProvider(authProvider),
-    });
-  }
+  const commerceEventsClient = getCommerceEventsClient(authProvider, baseUrl);
 
   if (!commerceEventsClient) {
     console.error("No valid commerce client could be created.");
