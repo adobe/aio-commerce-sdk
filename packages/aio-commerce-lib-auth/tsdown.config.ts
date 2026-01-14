@@ -11,9 +11,8 @@
  */
 
 import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { defineConfig } from "tsdown";
+import { mergeConfig } from "tsdown";
 
-export default defineConfig({
-  ...baseConfig,
+export default mergeConfig(baseConfig, {
   entry: ["./source/index.ts"],
 });
