@@ -19,21 +19,24 @@ import {
   SchemaBusinessConfig,
   SchemaBusinessConfigSchema,
 } from "./business-configuration";
+import { EventingSchema } from "./eventing";
 import { MetadataSchema } from "./metadata";
 
 export const CommerceAppConfigSchemas = {
   metadata: MetadataSchema,
   businessConfig: SchemaBusinessConfig,
   "businessConfig.schema": SchemaBusinessConfigSchema,
+  eventing: EventingSchema,
 } as const;
 
 /** Individual validatable domains of the commerce app config. */
 export type CommerceAppConfigDomain = keyof typeof CommerceAppConfigSchemas;
 
 /** The schema used to validate the commerce app config file. */
-export const CommerceAppConfigSchema = v.object({
+export const CommerceAppConfigSchema = v.looseObject({
   metadata: MetadataSchema,
   businessConfig: v.optional(SchemaBusinessConfig),
+  eventing: v.optional(EventingSchema),
 });
 
 /** The input shape of the commerce app config schema. */
