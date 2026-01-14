@@ -18,6 +18,8 @@ const BARREL_FILES = [
   "./source/index.ts",
   "./source/error/index.ts",
   "./source/responses/index.ts",
+  "./source/headers/index.ts",
+  "./source/headers/types.ts",
 ];
 
 export default mergeConfig(
