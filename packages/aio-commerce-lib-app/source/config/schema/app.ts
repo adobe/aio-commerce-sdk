@@ -27,6 +27,7 @@ export const CommerceAppConfigSchemas = {
   businessConfig: SchemaBusinessConfig,
   "businessConfig.schema": SchemaBusinessConfigSchema,
   eventing: EventingSchema,
+  "eventing.commerce": EventingSchema.entries.commerce,
 } as const;
 
 /** Individual validatable domains of the commerce app config. */

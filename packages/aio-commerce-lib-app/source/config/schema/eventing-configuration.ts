@@ -64,16 +64,19 @@ const CommerceEventSchema = v.object({
       "The event name must contain only lowercase alphanumeric characters and underscores, and start with a letter or underscore",
     ),
   ),
-  fields: v.array(
-    v.pipe(
-      nonEmptyString("event field"),
-      v.regex(
-        /^[a-z_][a-z0-9_]*$/,
-        "The event field must contain only lowercase alphanumeric characters and underscores",
+  fields: v.union([
+    v.literal("*"),
+    v.array(
+      v.pipe(
+        nonEmptyString("event field"),
+        v.regex(
+          /^[a-z_][a-z0-9_]*$/,
+          "The event field must contain only lowercase alphanumeric characters and underscores",
+        ),
       ),
+      "Expected an array of event fields",
     ),
-    "Expected an array of event fields",
-  ),
+  ]),
   runtimeAction: nonEmptyString("runtime action"),
   description: v.pipe(
     nonEmptyString("event description"),
@@ -96,7 +99,7 @@ const ExternalEventSchema = v.object({
 });
 
 /** Schema for Commerce event provider configuration */
-const CommerceProviderConfigSchema = v.object({
+export const CommerceProviderConfigSchema = v.object({
   provider: ProviderSchema,
   events: v.array(CommerceEventSchema, "Expected an array of Commerce events"),
 });
