@@ -1,3 +1,0 @@
-{
-  "extends": "@aio-commerce-sdk/config-typescript/tsconfig.base.json"
-}

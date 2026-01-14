@@ -12,8 +12,6 @@
 
 import { join } from "node:path";
 
-import type { UserConfig } from "tsdown";
-
 const OUT_DIR = "./dist";
 const ADOBE_LICENSE_BANNER = `
 /**
@@ -34,8 +32,9 @@ const ADOBE_LICENSE_BANNER = `
 /**
  * Base configuration to extend from for all TSDown configurations.
  * @see https://tsdown.dev/options/config-file
+ * @type {import("tsdown").UserConfig}
  */
-export const baseConfig: UserConfig = {
+export const baseConfig = {
   entry: [],
   format: {
     cjs: {
