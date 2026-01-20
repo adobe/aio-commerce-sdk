@@ -22,11 +22,11 @@ export default mergeConfig(baseConfig, {
   copy: [
     {
       from: "./source/commands/generate/actions/templates",
-      to: "./dist/cjs/commands/generate/actions/templates",
+      to: "./dist/cjs/commands/generate/actions/",
     },
     {
       from: "./source/commands/generate/actions/templates",
-      to: "./dist/es/commands/generate/actions/templates",
+      to: "./dist/es/commands/generate/actions/",
     },
   ],
 
