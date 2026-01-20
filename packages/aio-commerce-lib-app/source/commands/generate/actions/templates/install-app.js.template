@@ -30,9 +30,7 @@ import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-sdk/events/io-
 import AioLogger from "@adobe/aio-lib-core-logging";
 
 // The manifest is always at this relative constant path from the action.
-import commerceAppManifest from "../app.commerce.manifest.json" with {
-  type: "json",
-};
+import commerceAppManifest from "../app.commerce.manifest.json" with { type: "json" };
 
 // Shorthand to inspect an object.
 const inspect = (obj) => util.inspect(obj, { depth: null });
@@ -68,8 +66,17 @@ export async function main(params) {
 
       // Getter for the Commerce API client.
       getCommerceClient: () => {
-        if (ioEventsClient === null) {
-          const clientParams = resolveCommerceHttpClientParams(params);
+        if (commerceClient === null) {
+          const paramsWithBaseUrl = params.commerceBaseUrl
+            ? {
+                ...params,
+                AIO_COMMERCE_API_BASE_URL: params.commerceBaseUrl,
+              }
+            : params;
+
+          const clientParams =
+            resolveCommerceHttpClientParams(paramsWithBaseUrl);
+
           commerceClient = createCommerceEventsApiClient(clientParams);
         }
 
