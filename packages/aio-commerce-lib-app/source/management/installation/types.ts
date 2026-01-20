@@ -12,13 +12,16 @@
 
 import type { CommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
 import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
+import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { EmptyObject, Simplify } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Shared context available to all phases and steps during installation. */
 export type InstallationContext = {
-  getIoEventsClient: () => AdobeIoEventsApiClient;
-  getCommerceEventsClient: () => CommerceEventsApiClient;
+  get ioEventsClient(): AdobeIoEventsApiClient;
+  get commerceEventsClient(): CommerceEventsApiClient;
+
+  logger: ReturnType<typeof AioLogger>;
 };
 
 /** Defines an error that occurred during a step */

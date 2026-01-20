@@ -54,8 +54,10 @@ export async function main(params) {
     let commerceClient = null;
 
     const installationContext = {
+      logger,
+
       // Getter for the I/O events API client.
-      getIoEventsClient: () => {
+      get ioEventsClient() {
         if (ioEventsClient === null) {
           logger.debug("Creating I/O Events API client...");
           const clientParams = resolveIoEventsHttpClientParams(params);
@@ -66,7 +68,7 @@ export async function main(params) {
       },
 
       // Getter for the Commerce API client.
-      getCommerceClient: () => {
+      get commerceEventsClient() {
         if (commerceClient === null) {
           logger.debug("Creating Commerce API client...");
           const paramsWithBaseUrl = params.commerceBaseUrl
