@@ -26,7 +26,7 @@
   },
   "exports": {
     "./*": "./source/*.ts",
-    "./env": "./source/env/index.ts",
+    "./env": "./source/env.ts",
     "./yaml": "./source/yaml/index.ts",
     "./filesystem": "./source/filesystem/index.ts",
     "./package.json": "./package.json"

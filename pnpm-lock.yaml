@@ -217,6 +217,9 @@ importers:
       ansis:
         specifier: ^4.1.0
         version: 4.2.0
+      consola:
+        specifier: ^3.4.2
+        version: 3.4.2
       oauth-1.0a:
         specifier: ^2.2.6
         version: 2.2.6
@@ -236,6 +239,9 @@ importers:
       '@aio-commerce-sdk/config-vitest':
         specifier: workspace:*
         version: link:../../configs/vitest
+      '@aio-commerce-sdk/scripting-utils':
+        specifier: workspace:*
+        version: link:../../packages-private/scripting-utils
 
   packages/aio-commerce-lib-config:
     dependencies:
