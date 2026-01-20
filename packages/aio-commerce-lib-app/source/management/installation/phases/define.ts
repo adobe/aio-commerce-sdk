@@ -15,6 +15,7 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   AllPhaseData,
   DataBefore,
+  InstallationContext,
   PhaseDef,
   PhaseExecutors,
   PhaseFailure,
@@ -40,12 +41,13 @@ export function definePhase<
 >(phase: PhaseName, order: Order, executors: PhaseExecutors<Phase>) {
   return async (
     config: CommerceAppConfigOutputModel,
+    installationContext: InstallationContext,
   ): Promise<PhaseResult<Phase>> => {
     let accumulated = {};
 
     for (const step of order) {
       const executor = executors[step as keyof typeof executors];
-      const context: StepContext<Phase, typeof step> = {
+      const stepContext: StepContext<Phase, typeof step> = {
         phase,
         step,
         data: accumulated as DataBefore<
@@ -53,6 +55,7 @@ export function definePhase<
           Phase["steps"],
           typeof step
         >,
+        installationContext,
 
         helpers: {
           stepFailed: (key, errorPayload) => {
@@ -73,7 +76,7 @@ export function definePhase<
 
       let result: StepResult<Phase, typeof step>;
       try {
-        result = await executor(config, context);
+        result = await executor(config, stepContext);
       } catch (error) {
         result = {
           success: false as const,

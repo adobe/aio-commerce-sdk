@@ -10,8 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
+import type { CommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
+import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 import type { EmptyObject, Simplify } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+
+/** Shared context available to all phases and steps during installation. */
+export type InstallationContext = {
+  ioEventsClient: AdobeIoEventsApiClient;
+  commerceEventsClient: CommerceEventsApiClient;
+};
 
 /** Defines an error that occurred during a step */
 export type StepError<K extends string, Extra = EmptyObject> = {
@@ -147,6 +155,9 @@ export type StepContext<
 
   /** The data we have accumulated before this step */
   data: DataBefore<Phase["order"], Phase["steps"], Step>;
+
+  /** The shared installation context. */
+  installationContext: InstallationContext;
 
   /** Helpers for step execution */
   helpers: {
