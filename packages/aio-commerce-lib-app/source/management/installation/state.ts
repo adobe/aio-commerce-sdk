@@ -29,26 +29,24 @@ import type { PhaseState } from "#management/types";
  *
  * @example
  * ```ts
- * function handle(status: InstallationStatus) {
- *   if (status.phase === "events" && status.step === "registrations") {
- *     if (status.status === "completed") {
+ * function handle(state: InstallationState) {
+ *   if (state.phase === "events" && state.step === "registrations") {
+ *     if (state.status === "completed") {
  *       // data includes: providers + metadata + registrations
- *       console.log(status.data.providers, status.data.registrationIds);
+ *       console.log(state.data.providers, state.data.registrationIds);
  *     }
  *
- *     if (status.status === "failed") {
+ *     if (state.status === "failed") {
  *       // data includes: providers + metadata (not registrations)
  *       // error is narrowed to registration-specific errors
- *       console.log(status.error.key); // "CREATE_FAILED" | "INVALID_PROVIDER"
+ *       console.log(state.error.key); // "CREATE_FAILED" | "INVALID_PROVIDER"
  *     }
  *   }
  * }
  * ```
  */
-export type InstallationStatus = {
+export type InstallationState = {
   [P in InstallationPhase]: {
     phase: P;
   } & PhaseState<InstallationPhases[P]>;
 }[InstallationPhase];
-
-// TODO: Implement status manager.

@@ -12,12 +12,16 @@
 
 import type { Simplify } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { DataBefore } from "#management/types";
 import type {
   AllPhaseData,
   InstallationPhase,
   InstallationPhases,
   PhaseExecutors,
+  StepContext,
+  StepFailure,
   StepResult,
+  StepSuccess,
 } from "./types";
 
 /** Union of all possible step failures for a phase */
@@ -52,30 +56,35 @@ export function definePhase<Phase extends InstallationPhase>(
 
     for (const step of order) {
       const executor = executors[step as keyof typeof executors];
-      let result: StepResult<Phase, typeof step>;
+      const context: StepContext<Phase, typeof step> = {
+        phase,
+        step,
+        data: accumulated as DataBefore<
+          InstallationPhases[Phase]["order"],
+          InstallationPhases[Phase]["steps"],
+          typeof step
+        >,
 
-      try {
-        result = await executor(config, {
-          phase,
-          step,
-
-          data: accumulated,
-          helpers: {
-            stepFailed: (key, errorPayload) => {
-              return {
-                success: false as const,
-                error: { key, error: errorPayload },
-              };
-            },
-
-            stepSuccess: <T>(data: T) => {
-              return {
-                success: true as const,
-                data,
-              };
-            },
+        helpers: {
+          stepFailed: (key, errorPayload) => {
+            return {
+              success: false as const,
+              error: { key, ...errorPayload },
+            } as StepFailure<Phase, typeof step>;
           },
-        });
+
+          stepSuccess: (data) => {
+            return {
+              success: true as const,
+              data,
+            } as StepSuccess<Phase, typeof step>;
+          },
+        },
+      };
+
+      let result: StepResult<Phase, typeof step>;
+      try {
+        result = await executor(config, context);
       } catch (error) {
         result = {
           success: false as const,
@@ -89,7 +98,9 @@ export function definePhase<Phase extends InstallationPhase>(
       }
 
       if (result.success) {
-        accumulated = { ...accumulated, ...result.data };
+        if (typeof result.data === "object" && result.data !== null) {
+          accumulated = { ...accumulated, ...result.data };
+        }
       } else {
         return {
           status: "failed",

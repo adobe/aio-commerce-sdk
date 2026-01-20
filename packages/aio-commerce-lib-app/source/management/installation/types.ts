@@ -38,16 +38,29 @@ export type InstallationPhaseStepDef<
   Step extends InstallationPhaseStep<Phase>,
 > = InstallationPhases[Phase]["steps"][Step];
 
+/** Defines a successful step result. */
+export type StepSuccess<
+  Phase extends InstallationPhase,
+  Step extends InstallationPhaseStep<Phase>,
+> = {
+  success: true;
+  data: InstallationPhaseStepDef<Phase, Step>["data"];
+};
+
+/** Defines a failed step result. */
+export type StepFailure<
+  Phase extends InstallationPhase,
+  Step extends InstallationPhaseStep<Phase>,
+> = {
+  success: false;
+  error: InstallationPhaseStepDef<Phase, Step>["errors"];
+};
+
 /** The result of a step execution. */
 export type StepResult<
   Phase extends InstallationPhase,
   Step extends InstallationPhaseStep<Phase>,
-> = InstallationPhaseStepDef<Phase, Step> extends StepDef<
-  infer TData,
-  infer TErrors
->
-  ? { success: true; data: TData } | { success: false; error: TErrors }
-  : never;
+> = StepSuccess<Phase, Step> | StepFailure<Phase, Step>;
 
 /** What a step executor receives */
 export type StepContext<
