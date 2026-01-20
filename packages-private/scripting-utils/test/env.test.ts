@@ -110,7 +110,7 @@ describe("syncImsCredentials", () => {
           "AIO_COMMERCE_AUTH_IMS_CLIENT_ID=test-client-id",
         );
         expect(envContent).toContain(
-          "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS =test-secret",
+          "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS=test-secret",
         );
         expect(envContent).toContain(
           "AIO_COMMERCE_AUTH_IMS_ORG_ID=test-org-id",
@@ -297,10 +297,10 @@ describe("syncImsCredentials", () => {
           "AIO_COMMERCE_AUTH_IMS_CLIENT_ID=test-client-id",
         );
         expect(envContent).toContain(
-          "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS =test-secret",
+          "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS=test-secret",
         );
         expect(envContent).toContain(
-          "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL =test@example.com",
+          "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL=test@example.com",
         );
         expect(envContent).toContain(
           "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID=tech-account-123",
