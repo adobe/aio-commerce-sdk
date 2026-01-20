@@ -12,31 +12,19 @@
 
 import type { Simplify } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { DataBefore } from "#management/types";
 import type {
   AllPhaseData,
-  InstallationPhase,
-  InstallationPhases,
+  DataBefore,
+  PhaseDef,
   PhaseExecutors,
+  PhaseFailure,
+  PhaseResult,
   StepContext,
   StepFailure,
+  StepRecord,
   StepResult,
   StepSuccess,
-} from "./types";
-
-/** Union of all possible step failures for a phase */
-type PhaseFailure<Phase extends InstallationPhase> = {
-  [S in InstallationPhases[Phase]["order"][number]]: {
-    status: "failed";
-    step: S;
-    error: InstallationPhases[Phase]["steps"][S]["errors"];
-  };
-}[InstallationPhases[Phase]["order"][number]];
-
-/** Result of running a phase */
-export type PhaseResult<P extends InstallationPhase> =
-  | { status: "completed"; data: Simplify<AllPhaseData<InstallationPhases[P]>> }
-  | PhaseFailure<P>;
+} from "#management/installation/types";
 
 /**
  * Defines a phase with its order and executors.
@@ -44,11 +32,12 @@ export type PhaseResult<P extends InstallationPhase> =
  * @param order - The order of steps in the phase.
  * @param executors - The executors for each step in the phase.
  */
-export function definePhase<Phase extends InstallationPhase>(
-  phase: Phase,
-  order: InstallationPhases[Phase]["order"],
-  executors: PhaseExecutors<Phase>,
-) {
+export function definePhase<
+  const Order extends string[],
+  const Steps extends StepRecord<Order>,
+  const PhaseName extends string,
+  const Phase extends PhaseDef<PhaseName, Order, Steps>,
+>(phase: PhaseName, order: Order, executors: PhaseExecutors<Phase>) {
   return async (
     config: CommerceAppConfigOutputModel,
   ): Promise<PhaseResult<Phase>> => {
@@ -60,8 +49,8 @@ export function definePhase<Phase extends InstallationPhase>(
         phase,
         step,
         data: accumulated as DataBefore<
-          InstallationPhases[Phase]["order"],
-          InstallationPhases[Phase]["steps"],
+          Phase["order"],
+          Phase["steps"],
           typeof step
         >,
 
@@ -112,7 +101,7 @@ export function definePhase<Phase extends InstallationPhase>(
 
     return {
       status: "completed",
-      data: accumulated as Simplify<AllPhaseData<InstallationPhases[Phase]>>,
+      data: accumulated as Simplify<AllPhaseData<Phase>>,
     };
   };
 }

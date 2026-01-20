@@ -6,7 +6,9 @@
 
   "overrides": [
     {
-      "includes": ["source/management/installation/phases/events.ts"],
+      "includes": [
+        "source/management/installation/phases/{events,webhooks}.ts"
+      ],
       "linter": {
         "rules": {
           "suspicious": {

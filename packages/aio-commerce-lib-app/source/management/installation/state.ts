@@ -10,11 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
-import type {
-  InstallationPhase,
-  InstallationPhases,
-} from "#management/installation/types";
-import type { PhaseState } from "#management/types";
+import type { PhaseState } from "#management/installation/types";
+import type { EventsPhase } from "./phases/events";
+import type { WebhooksPhase } from "./phases/webhooks";
+
+export type InstallationPhases = {
+  events: EventsPhase;
+  webhooks: WebhooksPhase;
+};
+
+export type InstallationPhase = keyof InstallationPhases;
 
 /**
  * A discriminated union representing every possible state of the installation process.

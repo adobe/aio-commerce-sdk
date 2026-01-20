@@ -10,122 +10,192 @@
  * governing permissions and limitations under the License.
  */
 
+import type { EmptyObject, Simplify } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { EventsPhase } from "#management/installation/phases/events";
-import type {
-  DataBefore,
-  DataThrough,
-  PhaseDef,
-  StepDef,
-  StepError,
-} from "#management/types";
 
-/** The different phases of the installation process. */
-export type InstallationPhases = {
-  events: EventsPhase;
+/** Defines an error that occurred during a step */
+export type StepError<K extends string, Extra = EmptyObject> = {
+  key: K;
+  message?: string;
+} & Extra;
+
+/** Defines a step's own data and possible errors */
+export type StepDef<TData, TError extends StepError<string> = never> = {
+  data: TData;
+  error: TError | StepError<"UNEXPECTED_ERROR", { error: Error }>;
 };
 
-/** Defines a type with the different phases of the installation process. */
-export type InstallationPhase = keyof InstallationPhases;
+/** Placeholder for steps not yet defined */
+export type UnknownStepDef = StepDef<unknown, never>;
 
-/** Defines a type with the different steps of a phase in the installation process. */
-export type InstallationPhaseStep<Phase extends InstallationPhase> =
-  InstallationPhases[Phase]["order"][number];
+/** Defines a map of steps definitions. */
+export type StepRecord<TOrder extends readonly string[]> = Record<
+  TOrder[number],
+  StepDef<unknown, StepError<string>>
+>;
 
-/** Shorthand to get the step definition of the given step in the given phase. */
-export type InstallationPhaseStepDef<
-  Phase extends InstallationPhase,
-  Step extends InstallationPhaseStep<Phase>,
-> = InstallationPhases[Phase]["steps"][Step];
+/** Defines a phase as a collection of steps with a specific order. */
+export type PhaseDef<
+  TName extends string,
+  TOrder extends readonly string[],
+  TSteps extends Record<TOrder[number], StepDef<unknown, StepError<string>>>,
+> = {
+  name: TName;
+  order: TOrder;
+  steps: TSteps;
+};
 
-/** Defines a successful step result. */
+/**
+ * This type is a bit complex, as it uses recursion and conditionals, but is essentially
+ * telling TypeScript to accumulate data from steps before the target step (exclusive).
+ */
+export type DataBefore<
+  TOrder extends readonly string[],
+  TSteps extends Record<string, StepDef<unknown, StepError<string>>>,
+  Target extends string,
+  Acc = EmptyObject,
+> = TOrder extends readonly [
+  infer Head extends string,
+  ...infer Tail extends readonly string[],
+]
+  ? Head extends Target
+    ? Acc
+    : DataBefore<Tail, TSteps, Target, Acc & TSteps[Head]["data"]>
+  : Acc;
+
+/**
+ * This type is a bit complex, as it uses recursion and conditionals, but is essentially
+ * telling TypeScript to accumulate data from steps up to the target step (inclusive).
+ */
+export type DataThrough<
+  TOrder extends readonly string[],
+  TSteps extends Record<string, StepDef<unknown, StepError<string>>>,
+  Target extends string,
+  Acc = EmptyObject,
+> = TOrder extends readonly [
+  infer Head extends string,
+  ...infer Tail extends readonly string[],
+]
+  ? Head extends Target
+    ? Acc & TSteps[Head]["data"]
+    : DataThrough<Tail, TSteps, Target, Acc & TSteps[Head]["data"]>
+  : Acc;
+
+type GenericPhaseDef = PhaseDef<
+  string,
+  readonly string[],
+  Record<string, StepDef<unknown, StepError<string>>>
+>;
+
+/** The state of a step at runtime, with cumulative data */
+export type StepState<
+  TPhase extends GenericPhaseDef,
+  TStep extends TPhase["order"][number],
+> =
+  | {
+      status: "pending";
+      data: Simplify<DataBefore<TPhase["order"], TPhase["steps"], TStep>>;
+    }
+  | {
+      status: "started";
+      data: Simplify<DataBefore<TPhase["order"], TPhase["steps"], TStep>>;
+    }
+  | {
+      status: "completed";
+      data: Simplify<DataThrough<TPhase["order"], TPhase["steps"], TStep>>;
+    }
+  | {
+      status: "failed";
+      data: Simplify<DataBefore<TPhase["order"], TPhase["steps"], TStep>>;
+      error: TPhase["steps"][TStep]["error"];
+    };
+
 export type StepSuccess<
-  Phase extends InstallationPhase,
-  Step extends InstallationPhaseStep<Phase>,
+  Phase extends GenericPhaseDef,
+  Step extends Phase["order"][number],
 > = {
   success: true;
-  data: InstallationPhaseStepDef<Phase, Step>["data"];
+  data: Phase["steps"][Step]["data"];
 };
 
-/** Defines a failed step result. */
 export type StepFailure<
-  Phase extends InstallationPhase,
-  Step extends InstallationPhaseStep<Phase>,
+  Phase extends GenericPhaseDef,
+  Step extends Phase["order"][number],
 > = {
   success: false;
-  error: InstallationPhaseStepDef<Phase, Step>["errors"];
+  error: Phase["steps"][Step]["error"];
 };
 
-/** The result of a step execution. */
 export type StepResult<
-  Phase extends InstallationPhase,
-  Step extends InstallationPhaseStep<Phase>,
+  Phase extends GenericPhaseDef,
+  Step extends Phase["order"][number],
 > = StepSuccess<Phase, Step> | StepFailure<Phase, Step>;
 
-/** What a step executor receives */
 export type StepContext<
-  Phase extends InstallationPhase,
-  Step extends InstallationPhaseStep<Phase>,
+  Phase extends GenericPhaseDef,
+  Step extends Phase["order"][number],
 > = {
-  /** The phase of the installation */
-  phase: Phase;
+  /** The current phase the step belongs to. */
+  phase: Phase["name"];
 
-  /** The step of the installation */
+  /** The current step name. */
   step: Step;
 
-  /** The data we havez before this step */
-  data: DataBefore<
-    InstallationPhases[Phase]["order"],
-    InstallationPhases[Phase]["steps"],
-    Step
-  >;
+  /** The data we have accumulated before this step */
+  data: DataBefore<Phase["order"], Phase["steps"], Step>;
 
   /** Helpers for step execution */
   helpers: {
     /** Marks the step as successful */
     stepSuccess: (
-      data: InstallationPhaseStepDef<Phase, Step>["data"],
+      data: Phase["steps"][Step]["data"],
     ) => StepResult<Phase, Step>;
 
     /** Marks the step as failed, with the given error key. */
-    stepFailed: <
-      ErrorKey extends InstallationPhaseStepDef<Phase, Step>["errors"]["key"],
-    >(
+    stepFailed: <ErrorKey extends Phase["steps"][Step]["error"]["key"]>(
       key: ErrorKey,
       error: Omit<
-        Extract<
-          InstallationPhaseStepDef<Phase, Step>["errors"],
-          { key: ErrorKey }
-        >,
+        Extract<Phase["steps"][Step]["error"], { key: ErrorKey }>,
         "key"
       >,
     ) => StepResult<Phase, Step>;
   };
 };
 
-/** An executor function for a step, receives a context and returns a step result. */
 export type StepExecutor<
-  Phase extends InstallationPhase,
-  Step extends InstallationPhaseStep<Phase>,
+  Phase extends GenericPhaseDef,
+  Step extends Phase["order"][number],
 > = (
   config: CommerceAppConfigOutputModel,
   ctx: StepContext<Phase, Step>,
-) => Promise<StepResult<Phase, Step>>;
+) => Promise<StepResult<Phase, Step>> | StepResult<Phase, Step>;
 
-/** Registry of executors for a phase */
-export type PhaseExecutors<Phase extends InstallationPhase> = {
-  [Step in InstallationPhaseStep<Phase>]: StepExecutor<Phase, Step>;
+export type PhaseExecutors<Phase extends GenericPhaseDef> = {
+  [Step in Phase["order"][number]]: StepExecutor<Phase, Step>;
 };
 
-/** All data from a completed phase (all steps through the last one) */
-export type AllPhaseData<
-  TPhase extends PhaseDef<
-    string[],
-    Record<string, StepDef<unknown, StepError<string>>>
-  >,
-> = DataThrough<TPhase["order"], TPhase["steps"], TPhase["order"][number]>;
+/** All possible states for all steps in a phase */
+export type PhaseState<TPhase extends GenericPhaseDef> = {
+  [S in TPhase["order"][number]]: { step: S } & StepState<TPhase, S>;
+}[TPhase["order"][number]];
 
-/** The final data we have from running all the phases. */
-export type AllPhasesData = {
-  [P in InstallationPhase]: AllPhaseData<InstallationPhases[P]>;
-}[InstallationPhase];
+/** All data from a completed phase (all steps through the last one) */
+export type AllPhaseData<Phase extends GenericPhaseDef> = DataThrough<
+  Phase["order"],
+  Phase["steps"],
+  Phase["order"][number]
+>;
+
+/** Union of all possible step failures for a phase */
+export type PhaseFailure<Phase extends GenericPhaseDef> = {
+  [Step in Phase["order"][number]]: {
+    status: "failed";
+    step: Step;
+    error: Phase["steps"][Step]["error"];
+  };
+}[Phase["order"][number]];
+
+/** Result of running a phase */
+export type PhaseResult<Phase extends GenericPhaseDef> =
+  | { status: "completed"; data: Simplify<AllPhaseData<Phase>> }
+  | PhaseFailure<Phase>;

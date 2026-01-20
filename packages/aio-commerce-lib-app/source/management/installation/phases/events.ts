@@ -13,16 +13,16 @@
 import { definePhase } from "../runner";
 
 import type { IoEventProvider } from "@adobe/aio-commerce-lib-events/io-events";
-import type { PhaseExecutors } from "#management/installation/types";
 import type {
   PhaseDef,
+  PhaseExecutors,
   StepDef,
   StepError,
   UnknownStepDef,
-} from "#management/types";
+} from "#management/installation/types";
 
 /** The steps of the events phase (in the order they should be executed). */
-const EVENT_PHASE_STEPS = [
+const EVENTS_PHASE_STEPS = [
   "providers",
   "metadata",
   "registrations",
@@ -49,9 +49,10 @@ type CommerceConfigStep = UnknownStepDef;
 /** Describes the step for installing event commerce subscriptions. */
 type CommerceSubscriptionsStep = UnknownStepDef;
 
-/** Describes the event installation phase.  */
+/** Describes the events installation phase.  */
 export type EventsPhase = PhaseDef<
-  typeof EVENT_PHASE_STEPS,
+  "events",
+  typeof EVENTS_PHASE_STEPS,
   {
     providers: ProvidersStep;
     metadata: MetadataStep;
@@ -62,7 +63,7 @@ export type EventsPhase = PhaseDef<
 >;
 
 /** The registry of executors for the events phase */
-const eventPhaseExecutors: PhaseExecutors<"events"> = {
+const eventsPhaseExecutors: PhaseExecutors<EventsPhase> = {
   providers: async (config, { data, helpers }) => {
     // data is empty as it is the first step.
     console.log(config, data);
@@ -105,9 +106,9 @@ const eventPhaseExecutors: PhaseExecutors<"events"> = {
   },
 };
 
-/** Defines the event installation phase. */
-export const eventPhaseRunner = definePhase(
+/** The runner function that will run all the steps of the events phase */
+export const eventsPhaseRunner = definePhase(
   "events",
-  EVENT_PHASE_STEPS,
-  eventPhaseExecutors,
+  EVENTS_PHASE_STEPS,
+  eventsPhaseExecutors,
 );
