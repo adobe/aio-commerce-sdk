@@ -55,3 +55,5 @@ export type InstallationState = {
     phase: P;
   } & PhaseState<InstallationPhases[P]>;
 }[InstallationPhase];
+
+// TODO: Get Installation Status, should store on lib-state or Extension Manager?
