@@ -14,21 +14,23 @@ import type { CamelCasedPropertiesDeep } from "type-fest";
 import type { IoEventMetadataHalModel } from "#io-events/api/event-metadata/types";
 import type { HALLink } from "#io-events/types";
 
-/** Defines the base fields of an I/O event provider entity. */
-export type IoEventProvider = {
+type _IoEventProvider = {
   id: string;
-  instance_id?: string;
+  instance_id: string;
   label: string;
   source: string;
   publisher: string;
   provider_metadata: string;
   event_delivery_format: string;
-  description?: string;
-  docs_url?: string;
+  description: string;
+  docs_url: string;
 };
 
+/** Defines the base fields of an I/O event provider entity. */
+export type IoEventProvider = CamelCasedPropertiesDeep<_IoEventProvider>;
+
 /** Defines the fields of an I/O event provider entity returned by the Adobe I/O Events API. */
-export type IoEventProviderHalModel = IoEventProvider & {
+export type IoEventProviderHalModel = _IoEventProvider & {
   _embedded?: {
     eventmetadata: IoEventMetadataHalModel[];
   };

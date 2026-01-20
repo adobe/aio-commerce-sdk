@@ -2,5 +2,19 @@
   "$schema": "https://biomejs.dev/schemas/2.3.11/schema.json",
 
   "root": false,
-  "extends": "//"
+  "extends": "//",
+
+  "overrides": [
+    {
+      "includes": ["source/management/installation/phases/events.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            // While we have placeholder implementations, we don't want to enforce await usage
+            "useAwait": "off"
+          }
+        }
+      }
+    }
+  ]
 }
