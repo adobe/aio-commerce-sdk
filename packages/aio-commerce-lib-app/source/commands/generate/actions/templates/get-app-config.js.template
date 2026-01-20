@@ -23,7 +23,7 @@ import {
 import AioLogger from "@adobe/aio-lib-core-logging";
 
 // The manifest is always at this relative constant path from the action.
-import commerceAppManifest from "../app.commerce.manifest.json" with { type: "json" };
+import commerceAppManifest from "../../app.commerce.manifest.json" with { type: "json" };
 
 // Shorthand to inspect an object.
 const inspect = (obj) => util.inspect(obj, { depth: null });
