@@ -14,12 +14,12 @@ import type { PhaseState } from "#management/installation/types";
 import type { EventsPhase } from "./phases/events";
 import type { WebhooksPhase } from "./phases/webhooks";
 
-export type InstallationPhases = {
+type InstallationPhases = {
   events: EventsPhase;
   webhooks: WebhooksPhase;
 };
 
-export type InstallationPhase = keyof InstallationPhases;
+type InstallationPhase = keyof InstallationPhases;
 
 /**
  * A discriminated union representing every possible state of the installation process.

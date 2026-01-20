@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { definePhase } from "../runner";
+import { definePhase } from "./define";
 
 import type { IoEventProvider } from "@adobe/aio-commerce-lib-events/io-events";
 import type {
@@ -20,6 +20,9 @@ import type {
   StepError,
   UnknownStepDef,
 } from "#management/installation/types";
+
+/** The name of this phase. */
+const EVENTS_PHASE_NAME = "events" as const;
 
 /** The steps of the events phase (in the order they should be executed). */
 const EVENTS_PHASE_STEPS = [
@@ -51,7 +54,7 @@ type CommerceSubscriptionsStep = UnknownStepDef;
 
 /** Describes the events installation phase.  */
 export type EventsPhase = PhaseDef<
-  "events",
+  typeof EVENTS_PHASE_NAME,
   typeof EVENTS_PHASE_STEPS,
   {
     providers: ProvidersStep;
@@ -62,9 +65,8 @@ export type EventsPhase = PhaseDef<
   }
 >;
 
-/** The registry of executors for the events phase */
 const eventsPhaseExecutors: PhaseExecutors<EventsPhase> = {
-  providers: async (config, { data, helpers }) => {
+  providers: (config, { data, helpers }) => {
     // data is empty as it is the first step.
     console.log(config, data);
     const somethingGoesWrong = false;
@@ -81,25 +83,25 @@ const eventsPhaseExecutors: PhaseExecutors<EventsPhase> = {
     });
   },
 
-  metadata: async (config, { data, helpers }) => {
+  metadata: (config, { data, helpers }) => {
     // data contains the output of the previous "providers", step
     console.log(config, data);
     return helpers.stepSuccess({});
   },
 
-  registrations: async (config, { data, helpers }) => {
+  registrations: (config, { data, helpers }) => {
     // data contains the output of the previous "metadata" and "providers" steps
     console.log(config, data);
     return helpers.stepSuccess({});
   },
 
-  commerceConfig: async (config, { data, helpers }) => {
+  commerceConfig: (config, { data, helpers }) => {
     // data contains the output of the previous "metadata", "providers", and "registrations" steps
     console.log(config, data);
     return helpers.stepSuccess({});
   },
 
-  commerceSubscriptions: async (config, { data, helpers }) => {
+  commerceSubscriptions: (config, { data, helpers }) => {
     // data contains the output of the previous "metadata", "providers", "registrations", and "commerceConfig" steps
     console.log(config, data);
     return helpers.stepSuccess({});
@@ -108,7 +110,7 @@ const eventsPhaseExecutors: PhaseExecutors<EventsPhase> = {
 
 /** The runner function that will run all the steps of the events phase */
 export const eventsPhaseRunner = definePhase(
-  "events",
+  EVENTS_PHASE_NAME,
   EVENTS_PHASE_STEPS,
   eventsPhaseExecutors,
 );

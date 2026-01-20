@@ -16,3 +16,5 @@
  * This module exports shared application management utilities for the AIO Commerce SDK.
  * @packageDocumentation
  */
+
+export type { InstallationState } from "./installation/state";

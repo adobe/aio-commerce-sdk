@@ -51,7 +51,7 @@ export type PhaseDef<
  */
 export type DataBefore<
   TOrder extends readonly string[],
-  TSteps extends Record<string, StepDef<unknown, StepError<string>>>,
+  TSteps extends StepRecord<TOrder>,
   Target extends string,
   Acc = EmptyObject,
 > = TOrder extends readonly [
@@ -69,7 +69,7 @@ export type DataBefore<
  */
 export type DataThrough<
   TOrder extends readonly string[],
-  TSteps extends Record<string, StepDef<unknown, StepError<string>>>,
+  TSteps extends StepRecord<TOrder>,
   Target extends string,
   Acc = EmptyObject,
 > = TOrder extends readonly [
@@ -110,6 +110,7 @@ export type StepState<
       error: TPhase["steps"][TStep]["error"];
     };
 
+/** Defines a success result of a step execution. */
 export type StepSuccess<
   Phase extends GenericPhaseDef,
   Step extends Phase["order"][number],
@@ -118,6 +119,7 @@ export type StepSuccess<
   data: Phase["steps"][Step]["data"];
 };
 
+/** Defines a failure result of a step execution. */
 export type StepFailure<
   Phase extends GenericPhaseDef,
   Step extends Phase["order"][number],
@@ -126,11 +128,13 @@ export type StepFailure<
   error: Phase["steps"][Step]["error"];
 };
 
+/** Defines the result of a step execution. */
 export type StepResult<
   Phase extends GenericPhaseDef,
   Step extends Phase["order"][number],
 > = StepSuccess<Phase, Step> | StepFailure<Phase, Step>;
 
+/** The context received by a step when it's being executed. */
 export type StepContext<
   Phase extends GenericPhaseDef,
   Step extends Phase["order"][number],
@@ -162,6 +166,7 @@ export type StepContext<
   };
 };
 
+/** The signature of a step execution handler.  */
 export type StepExecutor<
   Phase extends GenericPhaseDef,
   Step extends Phase["order"][number],
@@ -170,11 +175,12 @@ export type StepExecutor<
   ctx: StepContext<Phase, Step>,
 ) => Promise<StepResult<Phase, Step>> | StepResult<Phase, Step>;
 
+/** Maps all the steps of the given phase to it's step executors. */
 export type PhaseExecutors<Phase extends GenericPhaseDef> = {
   [Step in Phase["order"][number]]: StepExecutor<Phase, Step>;
 };
 
-/** All possible states for all steps in a phase */
+/** Maps all the steps of the given phase to it's accumulated state. */
 export type PhaseState<TPhase extends GenericPhaseDef> = {
   [S in TPhase["order"][number]]: { step: S } & StepState<TPhase, S>;
 }[TPhase["order"][number]];
@@ -186,7 +192,7 @@ export type AllPhaseData<Phase extends GenericPhaseDef> = DataThrough<
   Phase["order"][number]
 >;
 
-/** Union of all possible step failures for a phase */
+/** Defines a failure result for a phase execution. */
 export type PhaseFailure<Phase extends GenericPhaseDef> = {
   [Step in Phase["order"][number]]: {
     status: "failed";
@@ -195,7 +201,13 @@ export type PhaseFailure<Phase extends GenericPhaseDef> = {
   };
 }[Phase["order"][number]];
 
-/** Result of running a phase */
+/** Defines a success result for a phase execution. */
+export type PhaseSuccess<Phase extends GenericPhaseDef> = {
+  status: "completed";
+  data: Simplify<AllPhaseData<Phase>>;
+};
+
+/** Defines the result of a phase execution. */
 export type PhaseResult<Phase extends GenericPhaseDef> =
-  | { status: "completed"; data: Simplify<AllPhaseData<Phase>> }
+  | PhaseSuccess<Phase>
   | PhaseFailure<Phase>;
