@@ -17,4 +17,7 @@
  * @packageDocumentation
  */
 
+export { runInstallation } from "./installation/runner";
+
 export type { InstallationState } from "./installation/state";
+export type { InstallationContext } from "./installation/types";

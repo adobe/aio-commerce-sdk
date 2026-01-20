@@ -17,8 +17,8 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Shared context available to all phases and steps during installation. */
 export type InstallationContext = {
-  ioEventsClient: AdobeIoEventsApiClient;
-  commerceEventsClient: CommerceEventsApiClient;
+  getIoEventsClient: () => AdobeIoEventsApiClient;
+  getCommerceEventsClient: () => CommerceEventsApiClient;
 };
 
 /** Defines an error that occurred during a step */

@@ -10,14 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  APP_MANIFEST_FILE,
-  GENERATED_ACTIONS_PATH,
-  GENERATED_PATH,
-  PACKAGE_NAME,
-} from "#commands/constants";
+import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
 
-import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
+import type {
+  ActionDefinition,
+  ExtConfig,
+} from "@aio-commerce-sdk/scripting-utils/yaml";
 
 /** The list of runtime actions to generate */
 export const RUNTIME_ACTIONS = [
@@ -25,7 +23,28 @@ export const RUNTIME_ACTIONS = [
     name: "get-app-config",
     templateFile: "get-app-config.js.template",
   },
+  {
+    name: "install-app",
+    templateFile: "install-app.js.template",
+  },
 ];
+
+/**
+ * Creates a runtime action configuration
+ * @param actionName - The name of the action
+ * @returns The action configuration object
+ */
+function createActionConfig(actionName: string): ActionDefinition {
+  return {
+    function: `${GENERATED_ACTIONS_PATH}/${actionName}.js`,
+    web: "yes",
+    runtime: "nodejs:22",
+    annotations: {
+      "require-adobe-auth": true,
+      final: true,
+    },
+  };
+}
 
 /** The ext.config.yaml configuration */
 export const EXT_CONFIG: ExtConfig = {
@@ -39,6 +58,10 @@ export const EXT_CONFIG: ExtConfig = {
         type: "action",
         impl: `${PACKAGE_NAME}/get-app-config`,
       },
+      {
+        type: "action",
+        impl: `${PACKAGE_NAME}/install`,
+      },
     ],
   },
 
@@ -47,19 +70,8 @@ export const EXT_CONFIG: ExtConfig = {
       [PACKAGE_NAME]: {
         license: "Apache-2.0",
         actions: {
-          "get-app-config": {
-            function: `${GENERATED_ACTIONS_PATH}/get-app-config.js`,
-            include: [
-              [`${GENERATED_PATH}/${APP_MANIFEST_FILE}`, `${PACKAGE_NAME}/`],
-            ],
-
-            web: "yes",
-            runtime: "nodejs:22",
-            annotations: {
-              "require-adobe-auth": true,
-              final: true,
-            },
-          },
+          "get-app-config": createActionConfig("get-app-config"),
+          install: createActionConfig("install"),
         },
       },
     },

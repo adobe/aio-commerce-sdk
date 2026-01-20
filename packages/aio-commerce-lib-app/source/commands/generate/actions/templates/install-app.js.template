@@ -16,14 +16,23 @@
 import util from "node:util";
 
 import { validateCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
+import { runInstallation } from "@adobe/aio-commerce-lib-app/management";
+import {
+  resolveCommerceHttpClientParams,
+  resolveIoEventsHttpClientParams,
+} from "@adobe/aio-commerce-sdk/api";
 import {
   internalServerError,
   ok,
 } from "@adobe/aio-commerce-sdk/core/responses";
+import { createCommerceEventsApiClient } from "@adobe/aio-commerce-sdk/events/commerce";
+import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-sdk/events/io-events";
 import AioLogger from "@adobe/aio-lib-core-logging";
 
 // The manifest is always at this relative constant path from the action.
-import commerceAppManifest from "../app.commerce.manifest.json" with { type: "json" };
+import commerceAppManifest from "../app.commerce.manifest.json" with {
+  type: "json",
+};
 
 // Shorthand to inspect an object.
 const inspect = (obj) => util.inspect(obj, { depth: null });
@@ -32,7 +41,7 @@ const inspect = (obj) => util.inspect(obj, { depth: null });
  * Get the app config.
  * @returns The response object containing the app config.
  */
-export function main(params) {
+export async function main(params) {
   const logger = AioLogger("get-app-config", {
     level: params.LOG_LEVEL || "info",
   });
@@ -43,8 +52,49 @@ export function main(params) {
     const appConfig = validateCommerceAppConfig(commerceAppManifest);
     logger.debug("Successfully validated the app config");
 
-    return ok({
-      body: appConfig,
+    let ioEventsClient = null;
+    let commerceClient = null;
+
+    const installationContext = {
+      // Getter for the I/O events API client.
+      getIoEventsClient: () => {
+        if (ioEventsClient === null) {
+          const clientParams = resolveIoEventsHttpClientParams(params);
+          ioEventsClient = createAdobeIoEventsApiClient(clientParams);
+        }
+
+        return ioEventsClient;
+      },
+
+      // Getter for the Commerce API client.
+      getCommerceClient: () => {
+        if (ioEventsClient === null) {
+          const clientParams = resolveCommerceHttpClientParams(params);
+          commerceClient = createCommerceEventsApiClient(clientParams);
+        }
+
+        return commerceClient;
+      },
+    };
+
+    const result = await runInstallation(appConfig, installationContext);
+
+    if (result.status === "completed") {
+      logger.debug("Application installed successfully.");
+      return ok("Application installed successfully");
+    }
+
+    logger.error(
+      `Something went wrong while running the app installation ${inspect(result.error)}`,
+    );
+
+    return internalServerError({
+      body: {
+        message: "The app failed to install",
+        error: result.error,
+        phase: result.phase,
+        step: result.step,
+      },
     });
   } catch (error) {
     logger.error(
