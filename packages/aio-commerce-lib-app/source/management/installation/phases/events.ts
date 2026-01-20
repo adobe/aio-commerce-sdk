@@ -66,9 +66,11 @@ export type EventsPhase = PhaseDef<
 >;
 
 const eventsPhaseExecutors: PhaseExecutors<EventsPhase> = {
-  providers: (config, { data, helpers }) => {
+  providers: (config, { data, installationContext, helpers }) => {
     // data is empty as it is the first step.
-    console.log(config, data);
+    const { logger } = installationContext;
+    logger.debug(config, data);
+
     const somethingGoesWrong = false;
 
     if (somethingGoesWrong) {
@@ -83,27 +85,35 @@ const eventsPhaseExecutors: PhaseExecutors<EventsPhase> = {
     });
   },
 
-  metadata: (config, { data, helpers }) => {
+  metadata: (config, { data, installationContext, helpers }) => {
     // data contains the output of the previous "providers", step
-    console.log(config, data);
+    const { logger } = installationContext;
+    logger.debug(config, data);
+
     return helpers.stepSuccess({});
   },
 
-  registrations: (config, { data, helpers }) => {
+  registrations: (config, { data, installationContext, helpers }) => {
     // data contains the output of the previous "metadata" and "providers" steps
-    console.log(config, data);
+    const { logger } = installationContext;
+    logger.debug(config, data);
+
     return helpers.stepSuccess({});
   },
 
-  commerceConfig: (config, { data, helpers }) => {
+  commerceConfig: (config, { data, installationContext, helpers }) => {
     // data contains the output of the previous "metadata", "providers", and "registrations" steps
-    console.log(config, data);
+    const { logger } = installationContext;
+    logger.debug(config, data);
+
     return helpers.stepSuccess({});
   },
 
-  commerceSubscriptions: (config, { data, helpers }) => {
+  commerceSubscriptions: (config, { data, installationContext, helpers }) => {
     // data contains the output of the previous "metadata", "providers", "registrations", and "commerceConfig" steps
-    console.log(config, data);
+    const { logger } = installationContext;
+    logger.debug(config, data);
+
     return helpers.stepSuccess({});
   },
 };
