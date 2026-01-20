@@ -57,6 +57,7 @@ export async function main(params) {
       // Getter for the I/O events API client.
       getIoEventsClient: () => {
         if (ioEventsClient === null) {
+          logger.debug("Creating I/O Events API client...");
           const clientParams = resolveIoEventsHttpClientParams(params);
           ioEventsClient = createAdobeIoEventsApiClient(clientParams);
         }
@@ -67,6 +68,7 @@ export async function main(params) {
       // Getter for the Commerce API client.
       getCommerceClient: () => {
         if (commerceClient === null) {
+          logger.debug("Creating Commerce API client...");
           const paramsWithBaseUrl = params.commerceBaseUrl
             ? {
                 ...params,
@@ -84,6 +86,7 @@ export async function main(params) {
       },
     };
 
+    logger.debug("Starting app installation...");
     const result = await runInstallation(appConfig, installationContext);
 
     if (result.status === "completed") {
