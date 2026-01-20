@@ -40,7 +40,7 @@ const inspect = (obj) => util.inspect(obj, { depth: null });
  * @returns The response object containing the app config.
  */
 export async function main(params) {
-  const logger = AioLogger("get-app-config", {
+  const logger = AioLogger("install-app", {
     level: params.LOG_LEVEL || "info",
   });
 
