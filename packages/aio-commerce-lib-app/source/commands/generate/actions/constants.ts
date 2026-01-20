@@ -17,6 +17,22 @@ import type {
   ExtConfig,
 } from "@aio-commerce-sdk/scripting-utils/yaml";
 
+/** The list of Commerce variables that are required for the runtime actions */
+export const COMMERCE_VARIABLES = [
+  "AIO_COMMERCE_API_BASE_URL",
+  "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
+  "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
+  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID",
+  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL",
+  "AIO_COMMERCE_AUTH_IMS_ORG_ID",
+  "AIO_COMMERCE_AUTH_IMS_SCOPES",
+] as const satisfies string[];
+
+/** The inputs for the generated runtime actions */
+export const COMMERCE_ACTION_INPUTS = Object.fromEntries(
+  COMMERCE_VARIABLES.map((variable) => [variable, `$${variable}`] as const),
+);
+
 /** The list of runtime actions to generate */
 export const RUNTIME_ACTIONS = [
   {
@@ -32,10 +48,13 @@ export const RUNTIME_ACTIONS = [
 /**
  * Creates a runtime action configuration
  * @param actionName - The name of the action
- * @returns The action configuration object
+ * @param inputs - Optional inputs for the action.
  */
-function createActionConfig(actionName: string): ActionDefinition {
-  return {
+function createActionConfig(
+  actionName: string,
+  inputs: Record<string, string> | null = null,
+) {
+  const def: ActionDefinition = {
     function: `${GENERATED_ACTIONS_PATH}/${actionName}.js`,
     web: "yes",
     runtime: "nodejs:22",
@@ -44,12 +63,19 @@ function createActionConfig(actionName: string): ActionDefinition {
       final: true,
     },
   };
+
+  if (inputs !== null) {
+    def.inputs = inputs;
+  }
+
+  return def;
 }
 
 /** The ext.config.yaml configuration */
 export const EXT_CONFIG: ExtConfig = {
   hooks: {
-    "pre-app-build": "$packageExec aio-commerce-lib-app generate manifest",
+    "pre-app-build":
+      "$packageExec aio-commerce-lib-app generate manifest && $packageExec aio-commerce-lib-auth sync-ims-credentials",
   },
 
   operations: {
@@ -60,7 +86,7 @@ export const EXT_CONFIG: ExtConfig = {
       },
       {
         type: "action",
-        impl: `${PACKAGE_NAME}/install`,
+        impl: `${PACKAGE_NAME}/install-app`,
       },
     ],
   },
@@ -71,7 +97,7 @@ export const EXT_CONFIG: ExtConfig = {
         license: "Apache-2.0",
         actions: {
           "get-app-config": createActionConfig("get-app-config"),
-          install: createActionConfig("install"),
+          "install-app": createActionConfig("install", COMMERCE_ACTION_INPUTS),
         },
       },
     },
