@@ -33,7 +33,8 @@ export const CommerceAppConfigSchemas = {
 export type CommerceAppConfigDomain = keyof typeof CommerceAppConfigSchemas;
 
 /** The schema used to validate the commerce app config file. */
-export const CommerceAppConfigSchema = v.object({
+export const CommerceAppConfigSchema = v.looseObject({
+  // TEMP: use `looseObject` for testing purposes, remove when all subsections of the config schema are implemented
   metadata: MetadataSchema,
   businessConfig: v.optional(SchemaBusinessConfig),
   eventing: v.optional(EventingSchema),
