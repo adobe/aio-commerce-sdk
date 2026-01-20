@@ -70,7 +70,7 @@ export function definePhase<Phase extends InstallationPhase>(
             return {
               success: false as const,
               error: { key, ...errorPayload },
-            } as StepFailure<Phase, typeof step>;
+            } as unknown as StepFailure<Phase, typeof step>;
           },
 
           stepSuccess: (data) => {
