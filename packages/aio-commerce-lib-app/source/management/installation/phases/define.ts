@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+
 import type { Simplify } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
@@ -19,7 +21,7 @@ import type {
   PhaseDef,
   PhaseExecutors,
   PhaseFailure,
-  PhaseResult,
+  PhaseRunner,
   StepContext,
   StepFailure,
   StepRecord,
@@ -38,11 +40,48 @@ export function definePhase<
   const Steps extends StepRecord<Order>,
   const PhaseName extends string,
   const Phase extends PhaseDef<PhaseName, Order, Steps>,
->(phase: PhaseName, order: Order, executors: PhaseExecutors<Phase>) {
+  TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
+>(
+  phase: PhaseName,
+  order: Order,
+  executors: PhaseExecutors<Phase, TConfig>,
+  runnerGuard: (
+    config: CommerceAppConfigOutputModel,
+  ) => asserts config is TConfig,
+): PhaseRunner<Phase> {
   return async (
     config: CommerceAppConfigOutputModel,
     installationContext: InstallationContext,
-  ): Promise<PhaseResult<Phase>> => {
+  ) => {
+    try {
+      runnerGuard(config);
+    } catch (error) {
+      if (error instanceof CommerceSdkValidationError) {
+        const stepError = {
+          key: "VALIDATION_ERROR",
+          error,
+        };
+
+        return {
+          status: "failed",
+          step: "validation",
+          error: stepError,
+        };
+      }
+      const stepError = {
+        key: "UNEXPECTED_ERROR",
+        error: new Error(
+          "Something went wrong while running the phase runner guard.",
+        ),
+      };
+
+      return {
+        status: "failed",
+        step: "validation",
+        error: stepError,
+      };
+    }
+
     let accumulated = {};
 
     for (const step of order) {

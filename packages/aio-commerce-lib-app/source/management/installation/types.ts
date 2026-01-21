@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import type { CommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
 import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 import type AioLogger from "@adobe/aio-lib-core-logging";
@@ -33,7 +34,10 @@ export type StepError<K extends string, Extra = EmptyObject> = {
 /** Defines a step's own data and possible errors */
 export type StepDef<TData, TError extends StepError<string> = never> = {
   data: TData;
-  error: TError | StepError<"UNEXPECTED_ERROR", { error: Error }>;
+  error:
+    | TError
+    | StepError<"UNEXPECTED_ERROR", { error: Error }>
+    | StepError<"VALIDATION_ERROR", { error: CommerceSdkValidationError }>;
 };
 
 /** Placeholder for steps not yet defined */
@@ -92,7 +96,8 @@ export type DataThrough<
     : DataThrough<Tail, TSteps, Target, Acc & TSteps[Head]["data"]>
   : Acc;
 
-type GenericPhaseDef = PhaseDef<
+/** Shorthand for a "wildcard" phase definition. */
+export type GenericPhaseDef = PhaseDef<
   string,
   readonly string[],
   Record<string, StepDef<unknown, StepError<string>>>
@@ -184,14 +189,18 @@ export type StepContext<
 export type StepExecutor<
   Phase extends GenericPhaseDef,
   Step extends Phase["order"][number],
+  TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
 > = (
-  config: CommerceAppConfigOutputModel,
+  config: TConfig,
   ctx: StepContext<Phase, Step>,
 ) => Promise<StepResult<Phase, Step>> | StepResult<Phase, Step>;
 
-/** Maps all the steps of the given phase to it's step executors. */
-export type PhaseExecutors<Phase extends GenericPhaseDef> = {
-  [Step in Phase["order"][number]]: StepExecutor<Phase, Step>;
+/** Maps all the steps of the given phase to its step executors. */
+export type PhaseExecutors<
+  Phase extends GenericPhaseDef,
+  TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
+> = {
+  [Step in Phase["order"][number]]: StepExecutor<Phase, Step, TConfig>;
 };
 
 /** Maps all the steps of the given phase to it's accumulated state. */
@@ -210,7 +219,7 @@ export type AllPhaseData<Phase extends GenericPhaseDef> = DataThrough<
 export type PhaseFailure<Phase extends GenericPhaseDef> = {
   [Step in Phase["order"][number]]: {
     status: "failed";
-    step: Step;
+    step: Step | "validation";
     error: Phase["steps"][Step]["error"];
   };
 }[Phase["order"][number]];
@@ -225,3 +234,9 @@ export type PhaseSuccess<Phase extends GenericPhaseDef> = {
 export type PhaseResult<Phase extends GenericPhaseDef> =
   | PhaseSuccess<Phase>
   | PhaseFailure<Phase>;
+
+/** Defines a function that runs a phase. */
+export type PhaseRunner<Phase extends GenericPhaseDef> = (
+  config: CommerceAppConfigOutputModel,
+  ctx: InstallationContext,
+) => Promise<PhaseResult<Phase>>;
