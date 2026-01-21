@@ -127,7 +127,7 @@ export type StepState<
       data: SimplifyDeep<DataBefore<TPhase["order"], TPhase["steps"], TStep>>;
     }
   | {
-      status: "completed";
+      status: "succeeded";
       data: SimplifyDeep<DataThrough<TPhase["order"], TPhase["steps"], TStep>>;
     }
   | {

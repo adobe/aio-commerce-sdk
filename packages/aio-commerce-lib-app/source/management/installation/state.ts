@@ -36,7 +36,7 @@ type InstallationPhase = keyof InstallationPhases;
  * ```ts
  * function handle(state: InstallationState) {
  *   if (state.phase === "events" && state.step === "registrations") {
- *     if (state.status === "completed") {
+ *     if (state.status === "succeeded") {
  *       // data includes: providers + metadata + registrations
  *       console.log(state.data.providers, state.data.registrationIds);
  *     }
