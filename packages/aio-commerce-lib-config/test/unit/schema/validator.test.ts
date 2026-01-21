@@ -15,7 +15,7 @@ import { existsSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
 import { loadBusinessConfigSchema } from "#commands/schema/validate/lib";
-import { validateBusinessConfigSchema } from "#modules/schema/utils";
+import { parseBusinessConfigSchema } from "#modules/schema/utils";
 import {
   INVALID_CONFIGURATION,
   VALID_CONFIGURATION,
@@ -39,16 +39,14 @@ describe("validator", () => {
   describe("validateSchema()", () => {
     it("should not throw with valid schema", () => {
       expect(() => {
-        const result = validateBusinessConfigSchema(VALID_CONFIGURATION);
+        const result = parseBusinessConfigSchema(VALID_CONFIGURATION);
         expect(Array.isArray(result)).toBe(true);
         expect(result.length).toBeGreaterThan(0);
       }).not.toThrow();
     });
 
     it("should throw with invalid schema", () => {
-      expect(() =>
-        validateBusinessConfigSchema(INVALID_CONFIGURATION),
-      ).toThrow();
+      expect(() => parseBusinessConfigSchema(INVALID_CONFIGURATION)).toThrow();
     });
   });
 

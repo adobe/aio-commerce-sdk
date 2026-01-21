@@ -13,9 +13,9 @@
 import { existsSync } from "node:fs";
 
 import {
+  parseCommerceAppConfigDomain,
   readCommerceAppConfig,
   resolveCommerceAppConfig,
-  validateCommerceAppConfigDomain,
 } from "@adobe/aio-commerce-lib-app/config";
 
 import type { CommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
@@ -40,5 +40,5 @@ export async function loadBusinessConfigSchema() {
     return null;
   }
 
-  return validateCommerceAppConfigDomain(schema, "businessConfig.schema");
+  return parseCommerceAppConfigDomain(schema, "businessConfig.schema");
 }

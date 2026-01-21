@@ -40,11 +40,11 @@ export function main(params) {
   try {
     logger.debug("Validating app config...");
 
-    const appConfig = validateCommerceAppConfig(commerceAppManifest);
+    validateCommerceAppConfig(commerceAppManifest);
     logger.debug("Successfully validated the app config");
 
     return ok({
-      body: appConfig,
+      body: commerceAppManifest,
     });
   } catch (error) {
     logger.error(

@@ -21,14 +21,17 @@ import {
   APP_MANIFEST_FILE,
   EXTENSION_POINT_FOLDER_PATH,
 } from "#commands/constants";
-import { parseCommerceAppConfig } from "#config/lib/parser";
+import {
+  parseCommerceAppConfig,
+  readCommerceAppConfig,
+} from "#config/lib/parser";
 
 /** Run the generate manifest command */
 export async function run() {
   consola.start("Generating app manifest...");
   try {
     consola.info("Reading app config...");
-    const config = await parseCommerceAppConfig();
+    const config = parseCommerceAppConfig(await readCommerceAppConfig());
 
     consola.info("Generating app manifest...");
     const contents = JSON.stringify(config, null, 2);

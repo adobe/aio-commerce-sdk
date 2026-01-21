@@ -53,9 +53,9 @@ describe("validateConfig", () => {
     };
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
-    const validated = validateCommerceAppConfig(config);
-    expect(validated.metadata.id).toBe("test-app");
-    expect(validated.businessConfig?.schema).toHaveLength(2);
+    validateCommerceAppConfig(config);
+    expect(config.metadata.id).toBe("test-app");
+    expect(config.businessConfig?.schema).toHaveLength(2);
   });
 
   test("should validate config with only required metadata", () => {
@@ -69,9 +69,9 @@ describe("validateConfig", () => {
     };
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
-    const validated = validateCommerceAppConfig(config);
-    expect(validated.metadata.id).toBe("minimal-app");
-    expect(validated.businessConfig).toBeUndefined();
+    validateCommerceAppConfig(config);
+    expect(config.metadata.id).toBe("minimal-app");
+    expect(config.businessConfig).toBeUndefined();
   });
 
   test("should throw CommerceSdkValidationError when metadata is missing", () => {
@@ -562,8 +562,8 @@ describe("validateConfigDomain", () => {
     expect(() =>
       validateCommerceAppConfigDomain(metadata, "metadata"),
     ).not.toThrow();
-    const validated = validateCommerceAppConfigDomain(metadata, "metadata");
-    expect(validated.id).toBe("test-app");
+    validateCommerceAppConfigDomain(metadata, "metadata");
+    expect(metadata.id).toBe("test-app");
   });
 
   test("should throw when validating invalid metadata domain", () => {
@@ -592,11 +592,8 @@ describe("validateConfigDomain", () => {
     expect(() =>
       validateCommerceAppConfigDomain(businessConfig, "businessConfig"),
     ).not.toThrow();
-    const validated = validateCommerceAppConfigDomain(
-      businessConfig,
-      "businessConfig",
-    );
-    expect(validated.schema).toHaveLength(1);
+    validateCommerceAppConfigDomain(businessConfig, "businessConfig");
+    expect(businessConfig.schema).toHaveLength(1);
   });
 
   test("should throw when validating invalid businessConfig domain", () => {
@@ -631,11 +628,8 @@ describe("validateConfigDomain", () => {
     expect(() =>
       validateCommerceAppConfigDomain(schema, "businessConfig.schema"),
     ).not.toThrow();
-    const validated = validateCommerceAppConfigDomain(
-      schema,
-      "businessConfig.schema",
-    );
-    expect(validated).toHaveLength(2);
+    validateCommerceAppConfigDomain(schema, "businessConfig.schema");
+    expect(schema).toHaveLength(2);
   });
 
   test("should throw when validating invalid businessConfig.schema domain", () => {
