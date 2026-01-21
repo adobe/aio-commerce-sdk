@@ -82,7 +82,7 @@ describe("syncImsCredentials", () => {
     );
   });
 
-  test("should sync IMS credentials to .env file when they do not exist", async () => {
+  test("should sync IMS credentials to .env file when they are not already present", async () => {
     vi.mocked(config.get).mockReturnValue([
       { integration_type: "oauth_server_to_server", name: "my-s2s-context" },
     ]);
