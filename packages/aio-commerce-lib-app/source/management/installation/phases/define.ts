@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type { Simplify } from "type-fest";
+import type { SimplifyDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   AllPhaseData,
@@ -51,7 +51,11 @@ export function definePhase<
     installationContext: InstallationContext,
   ) => {
     if (!shouldRun(config)) {
-      return { status: "skipped" };
+      return {
+        status: "skipped",
+        reason:
+          "The `shouldRun` handler determined that this phase should be skipped",
+      };
     }
 
     let accumulated = {};
@@ -61,12 +65,11 @@ export function definePhase<
       const stepContext: StepContext<Phase, typeof step> = {
         phase,
         step,
-        data: accumulated as DataBefore<
-          Phase["order"],
-          Phase["steps"],
-          typeof step
-        >,
+
         installationContext,
+        data: accumulated as SimplifyDeep<
+          DataBefore<Phase["order"], Phase["steps"], typeof step>
+        >,
 
         helpers: {
           stepFailed: (key, errorPayload) => {
@@ -115,7 +118,7 @@ export function definePhase<
 
     return {
       status: "completed",
-      data: accumulated as Simplify<AllPhaseData<Phase>>,
+      data: accumulated as SimplifyDeep<AllPhaseData<Phase>>,
     };
   };
 }

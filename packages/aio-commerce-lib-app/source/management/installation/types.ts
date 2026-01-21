@@ -13,7 +13,7 @@
 import type { CommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
 import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 import type AioLogger from "@adobe/aio-lib-core-logging";
-import type { EmptyObject, Simplify } from "type-fest";
+import type { EmptyObject, MergeDeep, SimplifyDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Shared context available to all phases and steps during installation. */
@@ -71,7 +71,7 @@ export type DataBefore<
 ]
   ? Head extends Target
     ? Acc
-    : DataBefore<Tail, TSteps, Target, Acc & TSteps[Head]["data"]>
+    : DataBefore<Tail, TSteps, Target, MergeDeep<Acc, TSteps[Head]["data"]>>
   : Acc;
 
 /**
@@ -89,7 +89,7 @@ export type DataThrough<
 ]
   ? Head extends Target
     ? Acc & TSteps[Head]["data"]
-    : DataThrough<Tail, TSteps, Target, Acc & TSteps[Head]["data"]>
+    : DataThrough<Tail, TSteps, Target, MergeDeep<Acc, TSteps[Head]["data"]>>
   : Acc;
 
 /** Shorthand for a "wildcard" phase definition. */
@@ -106,19 +106,19 @@ export type StepState<
 > =
   | {
       status: "pending";
-      data: Simplify<DataBefore<TPhase["order"], TPhase["steps"], TStep>>;
+      data: SimplifyDeep<DataBefore<TPhase["order"], TPhase["steps"], TStep>>;
     }
   | {
       status: "started";
-      data: Simplify<DataBefore<TPhase["order"], TPhase["steps"], TStep>>;
+      data: SimplifyDeep<DataBefore<TPhase["order"], TPhase["steps"], TStep>>;
     }
   | {
       status: "completed";
-      data: Simplify<DataThrough<TPhase["order"], TPhase["steps"], TStep>>;
+      data: SimplifyDeep<DataThrough<TPhase["order"], TPhase["steps"], TStep>>;
     }
   | {
       status: "failed";
-      data: Simplify<DataBefore<TPhase["order"], TPhase["steps"], TStep>>;
+      data: SimplifyDeep<DataBefore<TPhase["order"], TPhase["steps"], TStep>>;
       error: TPhase["steps"][TStep]["error"];
     };
 
@@ -158,7 +158,7 @@ export type StepContext<
   step: Step;
 
   /** The data we have accumulated before this step */
-  data: DataBefore<Phase["order"], Phase["steps"], Step>;
+  data: SimplifyDeep<DataBefore<Phase["order"], Phase["steps"], Step>>;
 
   /** The shared installation context. */
   installationContext: InstallationContext;
@@ -168,7 +168,7 @@ export type StepContext<
     /** Marks the step as successful */
     stepSuccess: (
       data: Phase["steps"][Step]["data"],
-    ) => StepResult<Phase, Step>;
+    ) => StepSuccess<Phase, Step>;
 
     /** Marks the step as failed, with the given error key. */
     stepFailed: <ErrorKey extends Phase["steps"][Step]["error"]["key"]>(
@@ -177,7 +177,7 @@ export type StepContext<
         Extract<Phase["steps"][Step]["error"], { key: ErrorKey }>,
         "key"
       >,
-    ) => StepResult<Phase, Step>;
+    ) => StepFailure<Phase, Step>;
   };
 };
 
@@ -200,19 +200,16 @@ export type PhaseExecutors<
 };
 
 /** Maps all the steps of the given phase to it's accumulated state. */
-export type PhaseState<TPhase extends GenericPhaseDef> = {
+export type PhaseState<TPhase extends GenericPhaseDef = GenericPhaseDef> = {
   [S in TPhase["order"][number]]: { step: S } & StepState<TPhase, S>;
 }[TPhase["order"][number]];
 
 /** All data from a completed phase (all steps through the last one) */
-export type AllPhaseData<Phase extends GenericPhaseDef> = DataThrough<
-  Phase["order"],
-  Phase["steps"],
-  Phase["order"][number]
->;
+export type AllPhaseData<Phase extends GenericPhaseDef = GenericPhaseDef> =
+  DataThrough<Phase["order"], Phase["steps"], Phase["order"][number]>;
 
 /** Defines a failure result for a phase execution. */
-export type PhaseFailure<Phase extends GenericPhaseDef> = {
+export type PhaseFailure<Phase extends GenericPhaseDef = GenericPhaseDef> = {
   [Step in Phase["order"][number]]: {
     status: "failed";
     step: Step;
@@ -221,24 +218,25 @@ export type PhaseFailure<Phase extends GenericPhaseDef> = {
 }[Phase["order"][number]];
 
 /** Defines a success result for a phase execution. */
-export type PhaseSuccess<Phase extends GenericPhaseDef> = {
+export type PhaseSuccess<Phase extends GenericPhaseDef = GenericPhaseDef> = {
   status: "completed";
-  data: Simplify<AllPhaseData<Phase>>;
+  data: SimplifyDeep<AllPhaseData<Phase>>;
 };
 
 /** Defines a skipped result for a phase execution (when config is not applicable). */
 export type PhaseSkipped = {
   status: "skipped";
+  reason?: string;
 };
 
 /** Defines the result of a phase execution. */
-export type PhaseResult<Phase extends GenericPhaseDef> =
+export type PhaseResult<Phase extends GenericPhaseDef = GenericPhaseDef> =
   | PhaseSuccess<Phase>
   | PhaseFailure<Phase>
   | PhaseSkipped;
 
 /** Defines a function that runs a phase. */
-export type PhaseRunner<Phase extends GenericPhaseDef> = (
+export type PhaseRunner<Phase extends GenericPhaseDef = GenericPhaseDef> = (
   config: CommerceAppConfigOutputModel,
   ctx: InstallationContext,
 ) => Promise<PhaseResult<Phase>>;

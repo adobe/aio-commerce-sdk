@@ -12,14 +12,20 @@
 
 import { definePhase } from "./define";
 
-import type { IoEventProvider } from "@adobe/aio-commerce-lib-events/io-events";
+import type { CommerceEventSubscription } from "@adobe/aio-commerce-lib-events/commerce";
+import type {
+  IoEventMetadata,
+  IoEventProvider,
+  IoEventRegistration,
+} from "@adobe/aio-commerce-lib-events/io-events";
+import type { EmptyObject } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { CommerceEvent, ExternalEvent } from "#config/schema/eventing";
 import type {
   PhaseDef,
   PhaseExecutors,
   StepDef,
   StepError,
-  UnknownStepDef,
 } from "#management/installation/types";
 
 /** The name of this phase. */
@@ -34,24 +40,57 @@ const EVENTS_PHASE_STEPS = [
   "commerceSubscriptions",
 ] as const satisfies string[];
 
+type WithProvider<TData> = TData & {
+  providerId: string;
+};
+
+type WithMetadataAndProvider<TData> = WithProvider<TData> & {
+  metadataId: string;
+};
+
+type WithMetadataProviderAndRegistration<TData> =
+  WithMetadataAndProvider<TData> & {
+    registrationId: string;
+  };
+
 /** Describes the step for installing event providers. */
 type ProvidersStep = StepDef<
-  { providers: IoEventProvider[] },
+  {
+    providers: Record<string, IoEventProvider>;
+    commerceEvents: WithProvider<CommerceEvent>[];
+    externalEvents: WithProvider<ExternalEvent>[];
+  },
   | StepError<"CREATE_FAILED", { providerInstanceId: string }>
   | StepError<"GET_FAILED", { providerId: string }>
 >;
 
 /** Describes the step for installing event metadata. */
-type MetadataStep = UnknownStepDef;
+type MetadataStep = StepDef<
+  {
+    metadatas: Record<string, IoEventMetadata>;
+    commerceEvents: WithMetadataAndProvider<CommerceEvent>[];
+    externalEvents: WithMetadataAndProvider<ExternalEvent>[];
+  },
+  StepError<"PROVIDER_NOT_FOUND", { providerId: string }>
+>;
 
 /** Describes the step for installing event registrations. */
-type RegistrationsStep = UnknownStepDef;
+type RegistrationsStep = StepDef<
+  {
+    registrations: Record<string, IoEventRegistration>;
+    commerceEvents: WithMetadataProviderAndRegistration<CommerceEvent>[];
+    externalEvents: WithMetadataProviderAndRegistration<ExternalEvent>[];
+  },
+  StepError<"PROVIDER_NOT_FOUND", { providerId: string }>
+>;
 
 /** Describes the step for installing event commerce configuration. */
-type CommerceConfigStep = UnknownStepDef;
+type CommerceConfigStep = StepDef<EmptyObject, never>;
 
 /** Describes the step for installing event commerce subscriptions. */
-type CommerceSubscriptionsStep = UnknownStepDef;
+type CommerceSubscriptionsStep = StepDef<{
+  subscriptions: Record<string, CommerceEventSubscription>;
+}>;
 
 /** Describes the events installation phase.  */
 export type EventsPhase = PhaseDef<
@@ -87,7 +126,9 @@ const eventsPhaseExecutors: PhaseExecutors<EventsPhase, EventsPhaseConfig> = {
     }
 
     return helpers.stepSuccess({
-      providers: [],
+      providers: {},
+      commerceEvents: [],
+      externalEvents: [],
     });
   },
 
@@ -96,7 +137,18 @@ const eventsPhaseExecutors: PhaseExecutors<EventsPhase, EventsPhaseConfig> = {
     const { logger } = installationContext;
     logger.debug(config, data);
 
-    return helpers.stepSuccess({});
+    return helpers.stepSuccess({
+      metadatas: {},
+      commerceEvents: data.commerceEvents.map((prev) => ({
+        ...prev,
+        metadataId: "id",
+      })),
+
+      externalEvents: data.externalEvents.map((prev) => ({
+        ...prev,
+        metadataId: "id",
+      })),
+    });
   },
 
   registrations: (config, { data, installationContext, helpers }) => {
@@ -104,7 +156,18 @@ const eventsPhaseExecutors: PhaseExecutors<EventsPhase, EventsPhaseConfig> = {
     const { logger } = installationContext;
     logger.debug(config, data);
 
-    return helpers.stepSuccess({});
+    return helpers.stepSuccess({
+      registrations: {},
+      commerceEvents: data.commerceEvents.map((prev) => ({
+        ...prev,
+        registrationId: "id",
+      })),
+
+      externalEvents: data.externalEvents.map((prev) => ({
+        ...prev,
+        registrationId: "id",
+      })),
+    });
   },
 
   commerceConfig: (config, { data, installationContext, helpers }) => {
@@ -120,7 +183,9 @@ const eventsPhaseExecutors: PhaseExecutors<EventsPhase, EventsPhaseConfig> = {
     const { logger } = installationContext;
     logger.debug(config, data);
 
-    return helpers.stepSuccess({});
+    return helpers.stepSuccess({
+      subscriptions: {},
+    });
   },
 };
 
