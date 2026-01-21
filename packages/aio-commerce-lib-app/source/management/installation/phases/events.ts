@@ -13,7 +13,6 @@
 import { definePhase } from "./define";
 
 import type { IoEventProvider } from "@adobe/aio-commerce-lib-events/io-events";
-import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   PhaseDef,
@@ -67,11 +66,10 @@ export type EventsPhase = PhaseDef<
   }
 >;
 
-/** Config type for the events phase. Commerce events will be defined. */
-export type EventsPhaseConfig = SetRequiredDeep<
-  CommerceAppConfigOutputModel,
-  "eventing" | "eventing.commerce"
->;
+/** Config type for the events phase. At least one event source must be defined. */
+export type EventsPhaseConfig = CommerceAppConfigOutputModel & {
+  eventing: NonNullable<CommerceAppConfigOutputModel["eventing"]>;
+};
 
 const eventsPhaseExecutors: PhaseExecutors<EventsPhase, EventsPhaseConfig> = {
   providers: (config, { data, installationContext, helpers }) => {
@@ -127,17 +125,14 @@ const eventsPhaseExecutors: PhaseExecutors<EventsPhase, EventsPhaseConfig> = {
 };
 
 /**
- * Type guard that checks if the config has commerce events that need to be installed.
+ * Type guard that checks if the config has event sources that need to be installed.
  * @param config - The config to check
+ * @returns true if the config has at least one event source configured, false otherwise
  */
-function hasCommerceEvents(
+function hasEventSources(
   config: CommerceAppConfigOutputModel,
 ): config is EventsPhaseConfig {
-  return (
-    config.eventing !== undefined &&
-    config.eventing.commerce !== undefined &&
-    config.eventing.commerce.length > 0
-  );
+  return config.eventing !== undefined;
 }
 
 /** The runner function that will run all the steps of the events phase */
@@ -145,5 +140,5 @@ export const eventsPhaseRunner = definePhase(
   EVENTS_PHASE_NAME,
   EVENTS_PHASE_STEPS,
   eventsPhaseExecutors,
-  hasCommerceEvents,
+  hasEventSources,
 );

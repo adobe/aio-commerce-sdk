@@ -1,6 +1,5 @@
 import { definePhase } from "./define";
 
-import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   PhaseDef,
@@ -29,10 +28,9 @@ export type WebhooksPhase = PhaseDef<
 >;
 
 /** Config type for the webhooks phase. Webhooks will be defined. */
-export type WebhooksPhaseConfig = SetRequiredDeep<
-  CommerceAppConfigOutputModel,
-  "webhooks"
->;
+export type WebhooksPhaseConfig = CommerceAppConfigOutputModel & {
+  webhooks: NonNullable<CommerceAppConfigOutputModel["webhooks"]>;
+};
 
 const webhooksPhaseExecutors: PhaseExecutors<
   WebhooksPhase,

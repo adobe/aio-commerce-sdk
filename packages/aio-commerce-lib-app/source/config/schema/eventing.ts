@@ -70,46 +70,47 @@ const ExternalEventSchema = v.object({
   name: alphaNumericOrUnderscoreSchema("event name", "lowercase"),
 });
 
-/** Schema for Commerce event provider configuration */
-const CommerceProviderConfigSchema = v.object({
+/** Schema for Commerce event source configuration */
+const CommerceEventSourceSchema = v.object({
+  type: v.literal("commerce"),
   provider: ProviderSchema,
   events: v.array(CommerceEventSchema, "Expected an array of Commerce events"),
 });
 
-/** Schema for external event provider configuration */
-const ExternalProviderConfigSchema = v.object({
+/** Schema for external event source configuration */
+const ExternalEventSourceSchema = v.object({
+  type: v.literal("external"),
   provider: ProviderSchema,
   events: v.array(ExternalEventSchema, "Expected an array of external events"),
 });
 
-/** Schema for eventing configuration */
-export const EventingSchema = v.object({
-  commerce: v.optional(
-    v.array(
-      CommerceProviderConfigSchema,
-      "Expected an array of Commerce provider configurations",
-    ),
-  ),
-  external: v.optional(
-    v.array(
-      ExternalProviderConfigSchema,
-      "Expected an array of external provider configurations",
-    ),
-  ),
-});
+/** Schema for event source - discriminated union by type */
+const EventSourceSchema = v.variant("type", [
+  CommerceEventSourceSchema,
+  ExternalEventSourceSchema,
+]);
+
+/** Schema for eventing configuration - an array of event sources */
+export const EventingSchema = v.pipe(
+  v.array(EventSourceSchema, "Expected an array of event sources"),
+  v.minLength(1, "At least one event source must be defined"),
+);
 
 /** The eventing configuration for an Adobe Commerce application */
 export type EventingConfiguration = v.InferInput<typeof EventingSchema>;
 
-/** Commerce event provider configuration */
-export type CommerceProviderConfig = v.InferInput<
-  typeof CommerceProviderConfigSchema
+/** Commerce event source configuration */
+export type CommerceEventSource = v.InferInput<
+  typeof CommerceEventSourceSchema
 >;
 
-/** External event provider configuration */
-export type ExternalProviderConfig = v.InferInput<
-  typeof ExternalProviderConfigSchema
+/** External event source configuration */
+export type ExternalEventSource = v.InferInput<
+  typeof ExternalEventSourceSchema
 >;
+
+/** Event source configuration (discriminated union) */
+export type EventSource = v.InferInput<typeof EventSourceSchema>;
 
 /** Commerce event configuration */
 export type CommerceEvent = v.InferInput<typeof CommerceEventSchema>;
