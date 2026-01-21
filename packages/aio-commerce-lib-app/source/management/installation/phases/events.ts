@@ -10,10 +10,21 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  resolveCommerceHttpClientParams,
+  resolveIoEventsHttpClientParams,
+} from "@adobe/aio-commerce-lib-api";
+import { createCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
+import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
+
 import { definePhase } from "./define";
 
-import type { CommerceEventSubscription } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
+  CommerceEventSubscription,
+  CommerceEventsApiClient,
+} from "@adobe/aio-commerce-lib-events/commerce";
+import type {
+  AdobeIoEventsApiClient,
   IoEventMetadata,
   IoEventProvider,
   IoEventRegistration,
@@ -22,6 +33,8 @@ import type { EmptyObject } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CommerceEvent, ExternalEvent } from "#config/schema/eventing";
 import type {
+  InstallationContext,
+  PhaseContextFactory,
   PhaseDef,
   PhaseExecutors,
   StepDef,
@@ -110,11 +123,55 @@ export type EventsPhaseConfig = CommerceAppConfigOutputModel & {
   eventing: NonNullable<CommerceAppConfigOutputModel["eventing"]>;
 };
 
-const eventsPhaseExecutors: PhaseExecutors<EventsPhase, EventsPhaseConfig> = {
-  providers: (config, { data, installationContext, helpers }) => {
+/** Phase context for the events phase, containing API clients for event operations. */
+export type EventsPhaseContext = {
+  /** API client for Adobe I/O Events operations. */
+  get ioEventsClient(): AdobeIoEventsApiClient;
+
+  /** API client for Commerce Events operations. */
+  get commerceEventsClient(): CommerceEventsApiClient;
+};
+
+/** Factory function that creates the phase context for each step in the events phase. */
+const createEventsPhaseContext: PhaseContextFactory<
+  EventsPhaseContext,
+  EventsPhase
+> = (_step, _data, installationContext: InstallationContext) => {
+  const { params } = installationContext;
+  let ioEventsClient: AdobeIoEventsApiClient | null = null;
+  let commerceEventsClient: CommerceEventsApiClient | null = null;
+
+  return {
+    get ioEventsClient() {
+      if (ioEventsClient === null) {
+        const ioEventsClientParams = resolveIoEventsHttpClientParams(params);
+        ioEventsClient = createAdobeIoEventsApiClient(ioEventsClientParams);
+      }
+
+      return ioEventsClient;
+    },
+
+    get commerceEventsClient() {
+      if (commerceEventsClient === null) {
+        const commerceClientParams = resolveCommerceHttpClientParams(params);
+        commerceEventsClient =
+          createCommerceEventsApiClient(commerceClientParams);
+      }
+
+      return commerceEventsClient;
+    },
+  };
+};
+
+const eventsPhaseExecutors: PhaseExecutors<
+  EventsPhase,
+  EventsPhaseConfig,
+  EventsPhaseContext
+> = {
+  providers: (config, { data, installationContext, phaseContext, helpers }) => {
     // data is empty as it is the first step.
     const { logger } = installationContext;
-    logger.debug(config, data);
+    logger.debug(config, data, phaseContext);
 
     const somethingGoesWrong = false;
 
@@ -132,10 +189,10 @@ const eventsPhaseExecutors: PhaseExecutors<EventsPhase, EventsPhaseConfig> = {
     });
   },
 
-  metadata: (config, { data, installationContext, helpers }) => {
+  metadata: (config, { data, installationContext, phaseContext, helpers }) => {
     // data contains the output of the previous "providers", step
     const { logger } = installationContext;
-    logger.debug(config, data);
+    logger.debug(config, data, phaseContext);
 
     return helpers.stepSuccess({
       metadatas: {},
@@ -151,10 +208,13 @@ const eventsPhaseExecutors: PhaseExecutors<EventsPhase, EventsPhaseConfig> = {
     });
   },
 
-  registrations: (config, { data, installationContext, helpers }) => {
+  registrations: (
+    config,
+    { data, installationContext, phaseContext, helpers },
+  ) => {
     // data contains the output of the previous "metadata" and "providers" steps
     const { logger } = installationContext;
-    logger.debug(config, data);
+    logger.debug(config, data, phaseContext);
 
     return helpers.stepSuccess({
       registrations: {},
@@ -170,18 +230,24 @@ const eventsPhaseExecutors: PhaseExecutors<EventsPhase, EventsPhaseConfig> = {
     });
   },
 
-  commerceConfig: (config, { data, installationContext, helpers }) => {
+  commerceConfig: (
+    config,
+    { data, installationContext, phaseContext, helpers },
+  ) => {
     // data contains the output of the previous "metadata", "providers", and "registrations" steps
     const { logger } = installationContext;
-    logger.debug(config, data);
+    logger.debug(config, data, phaseContext);
 
     return helpers.stepSuccess({});
   },
 
-  commerceSubscriptions: (config, { data, installationContext, helpers }) => {
+  commerceSubscriptions: (
+    config,
+    { data, installationContext, phaseContext, helpers },
+  ) => {
     // data contains the output of the previous "metadata", "providers", "registrations", and "commerceConfig" steps
     const { logger } = installationContext;
-    logger.debug(config, data);
+    logger.debug(config, data, phaseContext);
 
     return helpers.stepSuccess({
       subscriptions: {},
@@ -201,9 +267,10 @@ function hasEventSources(
 }
 
 /** The runner function that will run all the steps of the events phase */
-export const eventsPhaseRunner = definePhase(
-  EVENTS_PHASE_NAME,
-  EVENTS_PHASE_STEPS,
-  eventsPhaseExecutors,
-  hasEventSources,
-);
+export const eventsPhaseRunner = definePhase({
+  phase: EVENTS_PHASE_NAME,
+  order: EVENTS_PHASE_STEPS,
+  executors: eventsPhaseExecutors,
+  shouldRun: hasEventSources,
+  createPhaseContext: createEventsPhaseContext,
+});

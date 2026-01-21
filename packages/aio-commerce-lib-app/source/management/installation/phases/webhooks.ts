@@ -57,9 +57,9 @@ function hasWebhooks(
 }
 
 /** The runner function that will run all the steps of the webhooks phase */
-export const webhooksPhaseRunner = definePhase(
-  WEBHOOKS_PHASE_NAME,
-  WEBHOOKS_PHASE_STEPS,
-  webhooksPhaseExecutors,
-  hasWebhooks,
-);
+export const webhooksPhaseRunner = definePhase({
+  phase: WEBHOOKS_PHASE_NAME,
+  order: WEBHOOKS_PHASE_STEPS,
+  executors: webhooksPhaseExecutors,
+  shouldRun: hasWebhooks,
+});

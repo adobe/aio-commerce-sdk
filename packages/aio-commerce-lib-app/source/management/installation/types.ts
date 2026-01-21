@@ -10,17 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
-import type { CommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
-import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { EmptyObject, MergeDeep, SimplifyDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Shared context available to all phases and steps during installation. */
 export type InstallationContext = {
-  get ioEventsClient(): AdobeIoEventsApiClient;
-  get commerceEventsClient(): CommerceEventsApiClient;
+  /** The raw action parameters from the App Builder runtime action. */
+  params: Record<string, unknown>;
 
+  /** Logger instance for installation logging. */
   logger: ReturnType<typeof AioLogger>;
 };
 
@@ -99,6 +98,21 @@ export type GenericPhaseDef = PhaseDef<
   Record<string, StepDef<unknown, StepError<string>>>
 >;
 
+/**
+ * A factory function that creates the phase context for a given step.
+ * This is called before the step executes and the result is passed to the step.
+ * If not provided, defaults to an empty object.
+ */
+export type PhaseContextFactory<
+  TPhaseContext,
+  Phase extends GenericPhaseDef = GenericPhaseDef,
+  Step extends Phase["order"][number] = Phase["order"][number],
+> = (
+  step: Step,
+  data: SimplifyDeep<DataBefore<Phase["order"], Phase["steps"], Step>>,
+  installationContext: InstallationContext,
+) => TPhaseContext | Promise<TPhaseContext>;
+
 /** The state of a step at runtime, with cumulative data */
 export type StepState<
   TPhase extends GenericPhaseDef,
@@ -150,6 +164,7 @@ export type StepResult<
 export type StepContext<
   Phase extends GenericPhaseDef,
   Step extends Phase["order"][number],
+  TPhaseContext = EmptyObject,
 > = {
   /** The current phase the step belongs to. */
   phase: Phase["name"];
@@ -162,6 +177,9 @@ export type StepContext<
 
   /** The shared installation context. */
   installationContext: InstallationContext;
+
+  /** Phase-specific context created before the step runs. */
+  phaseContext: TPhaseContext;
 
   /** Helpers for step execution */
   helpers: {
@@ -186,17 +204,24 @@ export type StepExecutor<
   Phase extends GenericPhaseDef,
   Step extends Phase["order"][number],
   TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
+  TPhaseContext = EmptyObject,
 > = (
   config: TConfig,
-  ctx: StepContext<Phase, Step>,
+  ctx: StepContext<Phase, Step, TPhaseContext>,
 ) => Promise<StepResult<Phase, Step>> | StepResult<Phase, Step>;
 
 /** Maps all the steps of the given phase to its step executors. */
 export type PhaseExecutors<
   Phase extends GenericPhaseDef,
   TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
+  TPhaseContext = EmptyObject,
 > = {
-  [Step in Phase["order"][number]]: StepExecutor<Phase, Step, TConfig>;
+  [Step in Phase["order"][number]]: StepExecutor<
+    Phase,
+    Step,
+    TConfig,
+    TPhaseContext
+  >;
 };
 
 /** Maps all the steps of the given phase to it's accumulated state. */

@@ -10,12 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
-import type { SimplifyDeep } from "type-fest";
+import type { EmptyObject, SimplifyDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   AllPhaseData,
   DataBefore,
   InstallationContext,
+  PhaseContextFactory,
   PhaseDef,
   PhaseExecutors,
   PhaseFailure,
@@ -27,12 +28,38 @@ import type {
   StepSuccess,
 } from "#management/installation/types";
 
+/** Options for defining a phase. */
+export type DefinePhaseOptions<
+  Phase extends PhaseDef<
+    string,
+    readonly string[],
+    StepRecord<readonly string[]>
+  >,
+  TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
+  TPhaseContext = EmptyObject,
+> = {
+  /** The phase identifier. */
+  phase: Phase["name"];
+
+  /** The order of steps in the phase. */
+  order: Phase["order"];
+
+  /** The executors for each step in the phase. */
+  executors: PhaseExecutors<Phase, TConfig, TPhaseContext>;
+
+  /** Type guard that checks if the config is applicable for this phase. */
+  shouldRun: (config: CommerceAppConfigOutputModel) => config is TConfig;
+
+  /**
+   * Optional factory function that creates the phase context for each step.
+   * Called before each step executes. If not provided, defaults to an empty object.
+   */
+  createPhaseContext?: PhaseContextFactory<TPhaseContext, Phase>;
+};
+
 /**
  * Defines a phase with its order and executors.
- * @param phase - The phase identifier.
- * @param order - The order of steps in the phase.
- * @param executors - The executors for each step in the phase.
- * @param shouldRun - Type guard that checks if the config is applicable for this phase.
+ * @param options - The phase definition options.
  */
 export function definePhase<
   const Order extends string[],
@@ -40,12 +67,11 @@ export function definePhase<
   const PhaseName extends string,
   const Phase extends PhaseDef<PhaseName, Order, Steps>,
   TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
+  TPhaseContext = EmptyObject,
 >(
-  phase: PhaseName,
-  order: Order,
-  executors: PhaseExecutors<Phase, TConfig>,
-  shouldRun: (config: CommerceAppConfigOutputModel) => config is TConfig,
+  options: DefinePhaseOptions<Phase, TConfig, TPhaseContext>,
 ): PhaseRunner<Phase> {
+  const { phase, order, executors, shouldRun, createPhaseContext } = options;
   return async (
     config: CommerceAppConfigOutputModel,
     installationContext: InstallationContext,
@@ -62,14 +88,23 @@ export function definePhase<
 
     for (const step of order) {
       const executor = executors[step as keyof typeof executors];
-      const stepContext: StepContext<Phase, typeof step> = {
+
+      const data = accumulated as SimplifyDeep<
+        DataBefore<Phase["order"], Phase["steps"], typeof step>
+      >;
+
+      // Create phase context for this step (defaults to empty object if no factory provided)
+      const phaseContext = createPhaseContext
+        ? await createPhaseContext(step, data, installationContext)
+        : ({} as TPhaseContext);
+
+      const stepContext: StepContext<Phase, typeof step, TPhaseContext> = {
         phase,
         step,
 
         installationContext,
-        data: accumulated as SimplifyDeep<
-          DataBefore<Phase["order"], Phase["steps"], typeof step>
-        >,
+        phaseContext,
+        data,
 
         helpers: {
           stepFailed: (key, errorPayload) => {

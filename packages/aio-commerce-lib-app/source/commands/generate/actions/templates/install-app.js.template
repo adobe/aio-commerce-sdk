@@ -18,15 +18,9 @@ import util from "node:util";
 import { validateCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
 import { runInstallation } from "@adobe/aio-commerce-lib-app/management";
 import {
-  resolveCommerceHttpClientParams,
-  resolveIoEventsHttpClientParams,
-} from "@adobe/aio-commerce-sdk/api";
-import {
   internalServerError,
   ok,
 } from "@adobe/aio-commerce-sdk/core/responses";
-import { createCommerceEventsApiClient } from "@adobe/aio-commerce-sdk/events/commerce";
-import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-sdk/events/io-events";
 import AioLogger from "@adobe/aio-lib-core-logging";
 
 // The manifest is always at this relative constant path from the action.
@@ -50,42 +44,9 @@ export async function main(params) {
     const appConfig = validateCommerceAppConfig(commerceAppManifest);
     logger.debug("Successfully validated the app config");
 
-    let ioEventsClient = null;
-    let commerceClient = null;
-
     const installationContext = {
       logger,
-
-      // Getter for the I/O events API client.
-      get ioEventsClient() {
-        if (ioEventsClient === null) {
-          logger.debug("Creating I/O Events API client...");
-          const clientParams = resolveIoEventsHttpClientParams(params);
-          ioEventsClient = createAdobeIoEventsApiClient(clientParams);
-        }
-
-        return ioEventsClient;
-      },
-
-      // Getter for the Commerce API client.
-      get commerceEventsClient() {
-        if (commerceClient === null) {
-          logger.debug("Creating Commerce API client...");
-          const paramsWithBaseUrl = params.commerceBaseUrl
-            ? {
-                ...params,
-                AIO_COMMERCE_API_BASE_URL: params.commerceBaseUrl,
-              }
-            : params;
-
-          const clientParams =
-            resolveCommerceHttpClientParams(paramsWithBaseUrl);
-
-          commerceClient = createCommerceEventsApiClient(clientParams);
-        }
-
-        return commerceClient;
-      },
+      params,
     };
 
     logger.debug("Starting app installation...");
