@@ -27,7 +27,7 @@ type InstallationPhase = keyof InstallationPhases;
  * The type models a multi-phase, multi-step workflow where:
  * - Each phase contains ordered steps that execute sequentially
  * - Data accumulates as steps complete (step N has access to all data from steps 1..N-1)
- * - Each step can be `pending`, `started`, `completed`, or `failed`
+ * - Each step can be `pending`, `started`, `succeeded`, or `failed`
  * - Errors are scoped to their specific step (type-safe error handling)
  *
  * Narrow by `phase`, `step`, and `status` to get precise typing:

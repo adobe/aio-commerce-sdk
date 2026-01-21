@@ -23,7 +23,7 @@ const phaseRunners = [
 ] as const;
 
 /** Result of a successful installation. */
-export type InstallationSuccess = { status: "completed" };
+export type InstallationSuccess = { status: "succeeded" };
 
 /** Result of a failed installation. */
 export type InstallationFailure = {
@@ -59,5 +59,5 @@ export async function runInstallation(
     }
   }
 
-  return { status: "completed" };
+  return { status: "succeeded" };
 }

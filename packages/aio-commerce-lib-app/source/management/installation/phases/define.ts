@@ -152,7 +152,7 @@ export function definePhase<
     }
 
     return {
-      status: "completed",
+      status: "succeeded",
       data: accumulated as SimplifyDeep<AllPhaseData<Phase>>,
     };
   };

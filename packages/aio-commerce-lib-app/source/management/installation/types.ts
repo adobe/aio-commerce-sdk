@@ -229,7 +229,7 @@ export type PhaseState<TPhase extends GenericPhaseDef = GenericPhaseDef> = {
   [S in TPhase["order"][number]]: { step: S } & StepState<TPhase, S>;
 }[TPhase["order"][number]];
 
-/** All data from a completed phase (all steps through the last one) */
+/** All data from a succeeded phase (all steps through the last one) */
 export type AllPhaseData<Phase extends GenericPhaseDef = GenericPhaseDef> =
   DataThrough<Phase["order"], Phase["steps"], Phase["order"][number]>;
 
@@ -244,7 +244,7 @@ export type PhaseFailure<Phase extends GenericPhaseDef = GenericPhaseDef> = {
 
 /** Defines a success result for a phase execution. */
 export type PhaseSuccess<Phase extends GenericPhaseDef = GenericPhaseDef> = {
-  status: "completed";
+  status: "succeeded";
   data: SimplifyDeep<AllPhaseData<Phase>>;
 };
 
