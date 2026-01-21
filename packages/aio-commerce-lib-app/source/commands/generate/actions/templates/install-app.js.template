@@ -47,7 +47,7 @@ export async function main(params) {
   try {
     logger.debug("Validating app config...");
 
-    const appConfig = validateCommerceAppConfig(commerceAppManifest);
+    validateCommerceAppConfig(commerceAppManifest);
     logger.debug("Successfully validated the app config");
 
     let ioEventsClient = null;
@@ -89,7 +89,7 @@ export async function main(params) {
     };
 
     logger.debug("Starting app installation...");
-    const result = await runInstallation(appConfig, installationContext);
+    const result = await runInstallation(commerceAppManifest, installationContext);
 
     if (result.status === "completed") {
       logger.debug("Application installed successfully.");

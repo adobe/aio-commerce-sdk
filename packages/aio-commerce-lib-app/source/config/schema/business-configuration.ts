@@ -185,6 +185,10 @@ export type BusinessConfigSchema = v.InferInput<
   typeof SchemaBusinessConfigSchema
 >;
 
+export type BusinessConfigSchemaOutputModel = v.InferOutput<
+  typeof SchemaBusinessConfigSchema
+>;
+
 /** The schema type for the business configuration schema. */
 export type BusinessConfigSchemaValue = BusinessConfigSchemaField["default"];
 
@@ -197,16 +201,10 @@ export type BusinessConfigSchemaListOption = Extract<
   { type: "list" }
 >["options"][number];
 
-/** The keys of the `businessConfig` settings in the app config file. */
-export type BusinessConfig = {
-  /**
-   * The schema of the app business configuration.
-   * @default []
-   */
-  schema?: BusinessConfigSchema;
-};
-
 /** The schema used to validate the `businessConfig` settings in the app config file. */
 export const SchemaBusinessConfig = v.object({
   schema: v.optional(SchemaBusinessConfigSchema, []),
-}) satisfies v.GenericSchema<BusinessConfig>;
+});
+
+/** The type representing the `businessConfig` settings in the app config file. */
+export type BusinessConfig = v.InferInput<typeof SchemaBusinessConfig>;

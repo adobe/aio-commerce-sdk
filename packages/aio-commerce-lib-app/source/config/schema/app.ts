@@ -40,6 +40,10 @@ export const CommerceAppConfigSchema = v.looseObject({
   eventing: v.optional(EventingSchema),
 });
 
+export const CommerceAppConfigDomainsSchema = v.picklist(
+  Object.keys(CommerceAppConfigSchemas),
+);
+
 /** The input shape of the commerce app config schema. */
 export type CommerceAppConfig = v.InferInput<typeof CommerceAppConfigSchema>;
 

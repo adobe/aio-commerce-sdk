@@ -20,7 +20,7 @@
 export { defineConfig } from "./lib/define";
 export {
   parseCommerceAppConfig,
-  readBundledCommerceAppConfig,
+  parseCommerceAppConfigDomain,
   readCommerceAppConfig,
   resolveCommerceAppConfig,
 } from "./lib/parser";

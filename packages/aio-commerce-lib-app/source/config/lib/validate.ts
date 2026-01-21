@@ -14,25 +14,24 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import * as v from "valibot";
 
 import {
+  CommerceAppConfigDomainsSchema,
   CommerceAppConfigSchema,
   CommerceAppConfigSchemas,
 } from "#config/schema/app";
 
 import type { Get } from "type-fest";
 import type {
+  CommerceAppConfig,
   CommerceAppConfigDomain,
-  CommerceAppConfigOutputModel,
 } from "#config/schema/app";
-
-const commerceAppConfigDomainsSchema = v.picklist(
-  Object.keys(CommerceAppConfigSchemas),
-);
 
 /**
  * Validates a complete commerce app configuration object against the schema.
  *
+ * This is an assertion function that narrows the type of the config parameter
+ * to CommerceAppConfig if validation succeeds. It does not return a value.
+ *
  * @param config - The configuration object to validate.
- * @returns The validated and typed configuration output model.
  *
  * @throws {CommerceSdkValidationError} If the configuration is invalid, with
  * detailed validation issues included.
@@ -40,14 +39,18 @@ const commerceAppConfigDomainsSchema = v.picklist(
  * @example
  * ```typescript
  * const config = {
- *   businessConfiguration: {
- *     // ... configuration data
+ *   metadata: {
+ *     id: "my-app",
+ *     displayName: "My App",
+ *     description: "My application",
+ *     version: "1.0.0",
  *   }
  * };
  *
  * try {
- *   const validatedConfig = validateCommerceAppConfig(config);
- *   // Use validatedConfig safely
+ *   validateCommerceAppConfig(config);
+ *   // config is now typed as CommerceAppConfig
+ *   console.log(config.metadata.id);
  * } catch (error) {
  *   if (error instanceof CommerceSdkValidationError) {
  *     console.error('Validation failed:', error.display());
@@ -57,7 +60,7 @@ const commerceAppConfigDomainsSchema = v.picklist(
  */
 export function validateCommerceAppConfig(
   config: unknown,
-): CommerceAppConfigOutputModel {
+): asserts config is CommerceAppConfig {
   const validatedConfig = v.safeParse(CommerceAppConfigSchema, config);
 
   if (!validatedConfig.success) {
@@ -65,23 +68,21 @@ export function validateCommerceAppConfig(
       issues: validatedConfig.issues,
     });
   }
-
-  return validatedConfig.output;
 }
 
 /**
  * Validates a specific domain configuration within the commerce app config.
  *
- * This function validates only a specific domain's configuration rather than
- * the entire commerce app configuration object. It first validates that the
- * domain name is valid, then validates the configuration data against the
- * schema for that specific domain.
+ * This is an assertion function that validates only a specific domain's configuration
+ * rather than the entire commerce app configuration object. It first validates that the
+ * domain name is valid, then validates the configuration data against the schema for
+ * that specific domain. If validation succeeds, it narrows the type of the config
+ * parameter. It does not return a value.
  *
  * @template T - The type of the domain, constrained to valid domain names.
  *
  * @param config - The domain configuration object to validate.
- * @param domain - The name of the domain to validate (e.g., 'businessConfiguration').
- * @returns The validated and typed configuration for the specified domain.
+ * @param domain - The name of the domain to validate (e.g., 'metadata', 'businessConfig', 'businessConfig.schema').
  *
  * @throws {CommerceSdkValidationError} If the domain name is invalid or if the
  * configuration doesn't match the domain's schema.
@@ -89,21 +90,22 @@ export function validateCommerceAppConfig(
  * @example
  * ```typescript
  * const businessConfig = {
- *   fields: [
+ *   schema: [
  *     {
- *       name: 'category',
- *       type: 'dropdown',
- *       // ... field configuration
+ *       name: 'apiKey',
+ *       type: 'text',
+ *       label: 'API Key',
  *     }
  *   ]
  * };
  *
  * try {
- *   const validatedConfig = validateCommerceAppConfigDomain(
+ *   validateCommerceAppConfigDomain(
  *     businessConfig,
  *     'businessConfig'
  *   );
- *   // Use validatedConfig safely
+ *   // businessConfig is now typed correctly
+ *   console.log(businessConfig.schema[0].name);
  * } catch (error) {
  *   if (error instanceof CommerceSdkValidationError) {
  *     console.error('Domain validation failed:', error.issues);
@@ -113,8 +115,11 @@ export function validateCommerceAppConfig(
  */
 export function validateCommerceAppConfigDomain<
   T extends CommerceAppConfigDomain,
->(config: unknown, domain: T) {
-  const domainSchema = v.safeParse(commerceAppConfigDomainsSchema, domain);
+>(
+  config: unknown,
+  domain: T,
+): asserts config is NonNullable<Get<CommerceAppConfig, T>> {
+  const domainSchema = v.safeParse(CommerceAppConfigDomainsSchema, domain);
 
   if (!domainSchema.success) {
     throw new CommerceSdkValidationError("Invalid commerce app config domain", {
@@ -133,8 +138,4 @@ export function validateCommerceAppConfigDomain<
       },
     );
   }
-
-  return validatedConfig.output as NonNullable<
-    Get<CommerceAppConfigOutputModel, T>
-  >;
 }

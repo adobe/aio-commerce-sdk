@@ -15,7 +15,6 @@ import { describe, expect, test } from "vitest";
 
 import {
   parseCommerceAppConfig,
-  readBundledCommerceAppConfig,
   readCommerceAppConfig,
   resolveCommerceAppConfig,
 } from "#config/lib/parser";
@@ -377,239 +376,38 @@ describe("readExtensibilityConfig", () => {
 });
 
 describe("parseExtensibilityConfig", () => {
-  test("should parse and validate a valid config", async () => {
-    const configContent = `
-      module.exports = {
-        metadata: {
-          id: "valid-app",
-          displayName: "Valid App",
-          description: "A valid application",
-          version: "1.0.0",
-        },
-      };
-    `;
-
-    await withTempFiles(
-      {
-        "package.json": JSON.stringify({ name: "test-project" }),
-        "app.commerce.config.js": configContent,
-      },
-      async (tempDir) => {
-        const result = await parseCommerceAppConfig(tempDir);
-        expect(result.metadata.id).toBe("valid-app");
-        expect(result.metadata.displayName).toBe("Valid App");
-      },
-    );
-  });
-
-  test("should throw when config is invalid", async () => {
-    const configContent = `
-      module.exports = {
-        metadata: {
-          id: "invalid id!",
-          displayName: "Invalid App",
-          description: "An invalid application",
-          version: "1.0.0",
-        },
-      };
-    `;
-
-    await withTempFiles(
-      {
-        "package.json": JSON.stringify({ name: "test-project" }),
-        "app.commerce.config.js": configContent,
-      },
-      async (tempDir) => {
-        await expect(parseCommerceAppConfig(tempDir)).rejects.toThrow(
-          "Invalid commerce app config",
-        );
-      },
-    );
-  });
-
-  test("should throw on invalid syntax", async () => {
-    const configContent = `
-      export default {
-        metadata: {
-          // Use invalid quotes: “ instead of "
-          id: “invalid-app“,
-          displayName: "Invalid App",
-          description: "An invalid application",
-          version: "1.0.0",
-        },
-      };
-    `;
-
-    await withTempFiles(
-      {
-        "package.json": JSON.stringify({ name: "test-project" }),
-        "app.commerce.config.js": configContent,
-      },
-      async (tempDir) => {
-        await expect(parseCommerceAppConfig(tempDir)).rejects.toThrow();
-      },
-    );
-  });
-
-  test("should throw when metadata is missing", async () => {
-    const configContent = `
-      module.exports = {
-        businessConfig: {
-          schema: [
-            {
-              name: "apiKey",
-              type: "text",
-              label: "API Key",
-            },
-          ],
-        },
-      };
-    `;
-
-    await withTempFiles(
-      {
-        "package.json": JSON.stringify({ name: "test-project" }),
-        "app.commerce.config.js": configContent,
-      },
-      async (tempDir) => {
-        await expect(parseCommerceAppConfig(tempDir)).rejects.toThrow(
-          "Invalid commerce app config",
-        );
-      },
-    );
-  });
-
-  test("should throw when version is invalid", async () => {
-    const configContent = `
-      module.exports = {
-        metadata: {
-          id: "test-app",
-          displayName: "Test App",
-          description: "A test application",
-          version: "invalid-version",
-        },
-      };
-    `;
-
-    await withTempFiles(
-      {
-        "package.json": JSON.stringify({ name: "test-project" }),
-        "app.commerce.config.js": configContent,
-      },
-      async (tempDir) => {
-        await expect(parseCommerceAppConfig(tempDir)).rejects.toThrow(
-          "Invalid commerce app config",
-        );
-      },
-    );
-  });
-});
-
-describe("readBundledExtensibilityConfig", () => {
-  test("should read and parse bundled config file", async () => {
-    const mockConfig = {
+  test("should parse and validate a valid config", () => {
+    const config = {
       metadata: {
-        id: "bundled-app",
-        displayName: "Bundled App",
-        description: "A bundled application",
-        version: "2.0.0",
+        id: "valid-app",
+        displayName: "Valid App",
+        description: "A valid application",
+        version: "1.0.0",
       },
     };
 
-    await withTempFiles(
-      {
-        "app-management/app.commerce.manifest.json": JSON.stringify(mockConfig),
-      },
-      async (tempDir) => {
-        const originalCwd = process.cwd();
-        process.chdir(tempDir);
-
-        try {
-          const result = await readBundledCommerceAppConfig();
-          expect(result.metadata.id).toBe("bundled-app");
-          expect(result.metadata.displayName).toBe("Bundled App");
-          expect(result.metadata.description).toBe("A bundled application");
-          expect(result.metadata.version).toBe("2.0.0");
-        } finally {
-          process.chdir(originalCwd);
-        }
-      },
-    );
+    const result = parseCommerceAppConfig(config);
+    expect(result.metadata.id).toBe("valid-app");
+    expect(result.metadata.displayName).toBe("Valid App");
   });
 
-  test("should throw when bundled config file is not found", async () => {
-    await withTempFiles({}, async (tempDir) => {
-      const originalCwd = process.cwd();
-      process.chdir(tempDir);
-
-      try {
-        await expect(readBundledCommerceAppConfig()).rejects.toThrow(
-          "Failed to read bundled commerce app config file",
-        );
-      } finally {
-        process.chdir(originalCwd);
-      }
-    });
-  });
-
-  test("should throw when bundled config has invalid JSON", async () => {
-    await withTempFiles(
-      {
-        "app-management/app.commerce.manifest.json": "{ invalid json }",
-      },
-      async (tempDir) => {
-        const originalCwd = process.cwd();
-        process.chdir(tempDir);
-
-        try {
-          await expect(readBundledCommerceAppConfig()).rejects.toThrow(
-            "Failed to read bundled commerce app config file",
-          );
-        } finally {
-          process.chdir(originalCwd);
-        }
-      },
-    );
-  });
-
-  test("should throw when bundled config is invalid", async () => {
-    const invalidConfig = {
+  test("should throw when config is invalid", () => {
+    const config = {
       metadata: {
         id: "invalid id!",
-        displayName: "Test",
-        description: "Test",
+        displayName: "Invalid App",
+        description: "An invalid application",
         version: "1.0.0",
       },
     };
 
-    await withTempFiles(
-      {
-        "app-management/app.commerce.manifest.json":
-          JSON.stringify(invalidConfig),
-      },
-      async (tempDir) => {
-        const originalCwd = process.cwd();
-        process.chdir(tempDir);
-
-        try {
-          await expect(readBundledCommerceAppConfig()).rejects.toThrow(
-            "Failed to read bundled commerce app config file",
-          );
-        } finally {
-          process.chdir(originalCwd);
-        }
-      },
+    expect(() => parseCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
     );
   });
 
-  test("should validate complete config with business schema", async () => {
-    const mockConfig = {
-      metadata: {
-        id: "complete-app",
-        displayName: "Complete App",
-        description: "A complete application",
-        version: "1.0.0",
-      },
+  test("should throw when metadata is missing", () => {
+    const config = {
       businessConfig: {
         schema: [
           {
@@ -621,26 +419,23 @@ describe("readBundledExtensibilityConfig", () => {
       },
     };
 
-    await withTempFiles(
-      {
-        "app-management/app.commerce.manifest.json": JSON.stringify(mockConfig),
-      },
-      async (tempDir) => {
-        const originalCwd = process.cwd();
-        process.chdir(tempDir);
+    expect(() => parseCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
+    );
+  });
 
-        try {
-          const result = await readBundledCommerceAppConfig();
-          expect(result.metadata.id).toBe("complete-app");
-          expect(result.metadata.displayName).toBe("Complete App");
-          expect(result.metadata.description).toBe("A complete application");
-          expect(result.metadata.version).toBe("1.0.0");
-          expect(result.businessConfig?.schema).toHaveLength(1);
-          expect(result.businessConfig?.schema[0].name).toBe("apiKey");
-        } finally {
-          process.chdir(originalCwd);
-        }
+  test("should throw when version is invalid", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "invalid-version",
       },
+    };
+
+    expect(() => parseCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
     );
   });
 });

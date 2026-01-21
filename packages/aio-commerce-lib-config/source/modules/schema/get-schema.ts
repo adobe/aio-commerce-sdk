@@ -150,8 +150,7 @@ async function initializeSchemaFromBundledFile(
 ): Promise<BusinessConfigSchema> {
   try {
     const schemaContent = await schemaUtils.readBundledSchemaFile();
-    const validatedSchema =
-      schemaUtils.validateSchemaFromContent(schemaContent);
+    const validatedSchema = schemaUtils.parseSchemaFromContent(schemaContent);
     const currentVersion = schemaUtils.calculateSchemaVersion(schemaContent);
 
     await storeSchema(context, validatedSchema);
@@ -177,7 +176,7 @@ async function initializeSchemaFromContent(
   content: string,
   version: string,
 ): Promise<BusinessConfigSchema> {
-  const validatedSchema = schemaUtils.validateSchemaFromContent(content);
+  const validatedSchema = schemaUtils.parseSchemaFromContent(content);
 
   await storeSchema(context, validatedSchema);
   await storeSchemaVersion(context, version);

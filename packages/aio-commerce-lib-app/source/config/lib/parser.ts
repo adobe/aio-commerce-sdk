@@ -10,25 +10,30 @@
  * governing permissions and limitations under the License.
  */
 
-import { readFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import {
   findNearestPackageJson,
   findUp,
 } from "@aio-commerce-sdk/scripting-utils/project";
 import { createJiti } from "jiti";
+import * as v from "valibot";
 
-import { validateCommerceAppConfig } from "./validate";
+import {
+  CommerceAppConfigDomainsSchema,
+  CommerceAppConfigSchema,
+  CommerceAppConfigSchemas,
+} from "#config/schema/app";
 
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { Get } from "type-fest";
+import type {
+  CommerceAppConfigDomain,
+  CommerceAppConfigOutputModel,
+} from "#config/schema/app";
 
 const jiti = createJiti(import.meta.url);
-
-/** The path to the bundled app config file. */
-const BUNDLED_APP_COMMERCE_CONFIG_PATH =
-  "app-management/app.commerce.manifest.json";
 
 // Config paths to search for. In order of likely appearance to speed up the check.
 const configPaths = Object.freeze([
@@ -128,40 +133,115 @@ export async function readCommerceAppConfig(
 }
 
 /**
- * Read the commerce app config file and parse its contents into its schema.
+ * Parse and validate a commerce app configuration object.
  *
- * Supports multiple config file formats (see {@link resolveCommerceAppConfig} for the list).
- * The config file must export a default export with the configuration object.
+ * This function takes a raw configuration object and validates it against the
+ * commerce app config schema. If validation succeeds, it returns the validated
+ * and typed configuration output model with all transformations applied.
  *
- * @param cwd The current working directory
- * @returns The validated and parsed config object
- * @throws {Error} If no config file is found, if the file doesn't export a default export, or if validation fails
+ * @param config - The raw configuration object to parse and validate
+ * @returns The validated and parsed config object with output transformations applied
+ * @throws {CommerceSdkValidationError} If the configuration is invalid, with detailed validation issues
+ *
+ * @example
+ * ```typescript
+ * const rawConfig = {
+ *   metadata: {
+ *     id: "my-app",
+ *     displayName: "My App",
+ *     description: "My application",
+ *     version: "1.0.0",
+ *   }
+ * };
+ *
+ * try {
+ *   const validatedConfig = parseCommerceAppConfig(rawConfig);
+ *   console.log(validatedConfig.metadata.id); // "my-app"
+ * } catch (error) {
+ *   if (error instanceof CommerceSdkValidationError) {
+ *     console.error('Validation failed:', error.display());
+ *   }
+ * }
+ * ```
  */
-export async function parseCommerceAppConfig(cwd = process.cwd()) {
-  const config = await readCommerceAppConfig(cwd);
-  return validateCommerceAppConfig(
-    config,
-  ) satisfies CommerceAppConfigOutputModel;
+export function parseCommerceAppConfig(
+  config: unknown,
+): CommerceAppConfigOutputModel {
+  const validatedConfig = v.safeParse(CommerceAppConfigSchema, config);
+
+  if (!validatedConfig.success) {
+    throw new CommerceSdkValidationError("Invalid commerce app config", {
+      issues: validatedConfig.issues,
+    });
+  }
+
+  return validatedConfig.output;
 }
 
 /**
- * Read the bundled commerce app config file
+ * Parse and validate a specific domain configuration within the commerce app config.
  *
- * @throws {Error} If the bundled commerce app config file is not found or if it is invalid
+ * This function validates only a specific domain's configuration rather than
+ * the entire commerce app configuration object. It first validates that the
+ * domain name is valid, then validates the configuration data against the
+ * schema for that specific domain. If validation succeeds, it returns the
+ * validated and typed configuration output model for that domain.
+ *
+ * @template T - The type of the domain, constrained to valid domain names.
+ *
+ * @param config - The domain configuration object to parse and validate
+ * @param domain - The name of the domain to validate (e.g., 'metadata', 'businessConfig', 'businessConfig.schema')
+ * @returns The validated and parsed configuration for the specified domain with output transformations applied
+ * @throws {CommerceSdkValidationError} If the domain name is invalid or if the configuration doesn't match the domain's schema
+ *
+ * @example
+ * ```typescript
+ * const businessConfigSchema = [
+ *   {
+ *     name: 'apiKey',
+ *     type: 'text',
+ *     label: 'API Key',
+ *   }
+ * ];
+ *
+ * try {
+ *   const validatedSchema = parseCommerceAppConfigDomain(
+ *     businessConfigSchema,
+ *     'businessConfig.schema'
+ *   );
+ *   console.log(validatedSchema[0].name); // "apiKey"
+ * } catch (error) {
+ *   if (error instanceof CommerceSdkValidationError) {
+ *     console.error('Domain validation failed:', error.display());
+ *   }
+ * }
+ * ```
  */
-export async function readBundledCommerceAppConfig() {
-  try {
-    const fileContents = await readFile(
-      BUNDLED_APP_COMMERCE_CONFIG_PATH,
-      "utf-8",
-    );
+export function parseCommerceAppConfigDomain<T extends CommerceAppConfigDomain>(
+  config: unknown,
+  domain: T,
+): NonNullable<Get<CommerceAppConfigOutputModel, T>> {
+  const domainSchema = v.safeParse(CommerceAppConfigDomainsSchema, domain);
 
-    return validateCommerceAppConfig(JSON.parse(fileContents));
-  } catch (error) {
-    const message = stringifyError(error);
-    throw new Error(
-      `Failed to read bundled commerce app config file: ${message}`,
-      { cause: error },
+  if (!domainSchema.success) {
+    throw new CommerceSdkValidationError("Invalid commerce app config domain", {
+      issues: domainSchema.issues,
+    });
+  }
+
+  const domainConfigSchema = CommerceAppConfigSchemas[domain];
+  const validatedConfig = v.safeParse(domainConfigSchema, config);
+
+  if (!validatedConfig.success) {
+    throw new CommerceSdkValidationError(
+      `Invalid commerce app config: ${domain}`,
+      {
+        issues: validatedConfig.issues,
+      },
     );
   }
+
+  return validatedConfig.output as NonNullable<
+    Get<CommerceAppConfigOutputModel, T>
+  >;
 }
