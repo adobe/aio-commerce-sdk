@@ -10,11 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import * as v from "valibot";
-
-import { CommerceAppConfigSchema } from "#config/schema/app";
-
 import { definePhase } from "./define";
 
 import type { IoEventProvider } from "@adobe/aio-commerce-lib-events/io-events";
@@ -131,36 +126,18 @@ const eventsPhaseExecutors: PhaseExecutors<EventsPhase, EventsPhaseConfig> = {
   },
 };
 
-// Extends the default config schema with an additional check that allows to
-// verify if the eventing configuration is in-place for this phase.
-const HasCommerceEventsSchema = v.pipe(
-  CommerceAppConfigSchema,
-  v.check((config) => {
-    return (
-      config.eventing !== undefined &&
-      config.eventing.commerce !== undefined &&
-      config.eventing.commerce.length > 0
-    );
-  }),
-);
-
 /**
- * Type assert that verifies that the given config has commerce events that need to be installed.
- * @param config - The broad config to verify
+ * Type guard that checks if the config has commerce events that need to be installed.
+ * @param config - The config to check
  */
-function assertHasCommerceEvents(
+function hasCommerceEvents(
   config: CommerceAppConfigOutputModel,
-): asserts config is EventsPhaseConfig {
-  const result = v.safeParse(HasCommerceEventsSchema, config);
-
-  if (!result.success) {
-    throw new CommerceSdkValidationError(
-      "Invalid commerce eventing configuration",
-      {
-        issues: result.issues,
-      },
-    );
-  }
+): config is EventsPhaseConfig {
+  return (
+    config.eventing !== undefined &&
+    config.eventing.commerce !== undefined &&
+    config.eventing.commerce.length > 0
+  );
 }
 
 /** The runner function that will run all the steps of the events phase */
@@ -168,5 +145,5 @@ export const eventsPhaseRunner = definePhase(
   EVENTS_PHASE_NAME,
   EVENTS_PHASE_STEPS,
   eventsPhaseExecutors,
-  assertHasCommerceEvents,
+  hasCommerceEvents,
 );

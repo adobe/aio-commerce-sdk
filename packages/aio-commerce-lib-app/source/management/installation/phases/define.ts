@@ -10,8 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-
 import type { Simplify } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
@@ -34,6 +32,7 @@ import type {
  * @param phase - The phase identifier.
  * @param order - The order of steps in the phase.
  * @param executors - The executors for each step in the phase.
+ * @param shouldRun - Type guard that checks if the config is applicable for this phase.
  */
 export function definePhase<
   const Order extends string[],
@@ -45,41 +44,14 @@ export function definePhase<
   phase: PhaseName,
   order: Order,
   executors: PhaseExecutors<Phase, TConfig>,
-  runnerGuard: (
-    config: CommerceAppConfigOutputModel,
-  ) => asserts config is TConfig,
+  shouldRun: (config: CommerceAppConfigOutputModel) => config is TConfig,
 ): PhaseRunner<Phase> {
   return async (
     config: CommerceAppConfigOutputModel,
     installationContext: InstallationContext,
   ) => {
-    try {
-      runnerGuard(config);
-    } catch (error) {
-      if (error instanceof CommerceSdkValidationError) {
-        const stepError = {
-          key: "VALIDATION_ERROR",
-          error,
-        };
-
-        return {
-          status: "failed",
-          step: "validation",
-          error: stepError,
-        };
-      }
-      const stepError = {
-        key: "UNEXPECTED_ERROR",
-        error: new Error(
-          "Something went wrong while running the phase runner guard.",
-        ),
-      };
-
-      return {
-        status: "failed",
-        step: "validation",
-        error: stepError,
-      };
+    if (!shouldRun(config)) {
+      return { status: "skipped" };
     }
 
     let accumulated = {};

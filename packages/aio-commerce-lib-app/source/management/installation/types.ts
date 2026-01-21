@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import type { CommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
 import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 import type AioLogger from "@adobe/aio-lib-core-logging";
@@ -34,10 +33,7 @@ export type StepError<K extends string, Extra = EmptyObject> = {
 /** Defines a step's own data and possible errors */
 export type StepDef<TData, TError extends StepError<string> = never> = {
   data: TData;
-  error:
-    | TError
-    | StepError<"UNEXPECTED_ERROR", { error: Error }>
-    | StepError<"VALIDATION_ERROR", { error: CommerceSdkValidationError }>;
+  error: TError | StepError<"UNEXPECTED_ERROR", { error: Error }>;
 };
 
 /** Placeholder for steps not yet defined */
@@ -219,7 +215,7 @@ export type AllPhaseData<Phase extends GenericPhaseDef> = DataThrough<
 export type PhaseFailure<Phase extends GenericPhaseDef> = {
   [Step in Phase["order"][number]]: {
     status: "failed";
-    step: Step | "validation";
+    step: Step;
     error: Phase["steps"][Step]["error"];
   };
 }[Phase["order"][number]];
@@ -230,10 +226,16 @@ export type PhaseSuccess<Phase extends GenericPhaseDef> = {
   data: Simplify<AllPhaseData<Phase>>;
 };
 
+/** Defines a skipped result for a phase execution (when config is not applicable). */
+export type PhaseSkipped = {
+  status: "skipped";
+};
+
 /** Defines the result of a phase execution. */
 export type PhaseResult<Phase extends GenericPhaseDef> =
   | PhaseSuccess<Phase>
-  | PhaseFailure<Phase>;
+  | PhaseFailure<Phase>
+  | PhaseSkipped;
 
 /** Defines a function that runs a phase. */
 export type PhaseRunner<Phase extends GenericPhaseDef> = (
