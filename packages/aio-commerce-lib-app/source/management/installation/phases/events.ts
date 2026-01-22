@@ -17,8 +17,6 @@ import {
 import { createCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
 import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 
-import { createPhaseRunner } from "./define";
-
 import type {
   CommerceEventSubscription,
   CommerceEventsApiClient,
@@ -176,12 +174,10 @@ const eventsPhaseExecutors: PhaseExecutors<
   EventsPhaseContext
 > = {
   providers: (config, { data, installationContext, phaseContext, helpers }) => {
-    // data is empty as it is the first step.
     const { logger } = installationContext;
     logger.debug(config, data, phaseContext);
 
     const somethingGoesWrong = false;
-
     if (somethingGoesWrong) {
       return helpers.stepFailed("CREATE_FAILED", {
         message: "Something went wrong",
@@ -197,7 +193,6 @@ const eventsPhaseExecutors: PhaseExecutors<
   },
 
   metadata: (config, { data, installationContext, phaseContext, helpers }) => {
-    // data contains the output of the previous "providers", step
     const { logger } = installationContext;
     logger.debug(config, data, phaseContext);
 
@@ -207,7 +202,6 @@ const eventsPhaseExecutors: PhaseExecutors<
         ...prev,
         metadataId: "id",
       })),
-
       externalEvents: data.externalEvents.map((prev) => ({
         ...prev,
         metadataId: "id",
@@ -219,7 +213,6 @@ const eventsPhaseExecutors: PhaseExecutors<
     config,
     { data, installationContext, phaseContext, helpers },
   ) => {
-    // data contains the output of the previous "metadata" and "providers" steps
     const { logger } = installationContext;
     logger.debug(config, data, phaseContext);
 
@@ -229,7 +222,6 @@ const eventsPhaseExecutors: PhaseExecutors<
         ...prev,
         registrationId: "id",
       })),
-
       externalEvents: data.externalEvents.map((prev) => ({
         ...prev,
         registrationId: "id",
@@ -241,7 +233,6 @@ const eventsPhaseExecutors: PhaseExecutors<
     config,
     { data, installationContext, phaseContext, helpers },
   ) => {
-    // data contains the output of the previous "metadata", "providers", and "registrations" steps
     const { logger } = installationContext;
     logger.debug(config, data, phaseContext);
 
@@ -252,13 +243,10 @@ const eventsPhaseExecutors: PhaseExecutors<
     config,
     { data, installationContext, phaseContext, helpers },
   ) => {
-    // data contains the output of the previous "metadata", "providers", "registrations", and "commerceConfig" steps
     const { logger } = installationContext;
     logger.debug(config, data, phaseContext);
 
-    return helpers.stepSuccess({
-      subscriptions: {},
-    });
+    return helpers.stepSuccess({ subscriptions: {} });
   },
 };
 
@@ -298,6 +286,3 @@ export const eventsPhaseDefinition: PhaseDefinition<
   executors: eventsPhaseExecutors,
   createPhaseContext: createEventsPhaseContext,
 };
-
-/** The runner function that executes all steps of the events phase. */
-export const eventsPhaseRunner = createPhaseRunner(eventsPhaseDefinition);

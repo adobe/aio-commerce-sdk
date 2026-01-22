@@ -10,54 +10,187 @@
  * governing permissions and limitations under the License.
  */
 
-import { eventsPhaseRunner } from "./phases/events";
+import { findPhaseDefinition } from "./phases";
 
+import type { SimplifyDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { InstallationContext } from "#management/installation/types";
+import type { AnyPhaseDefinition } from "./phases";
+import type { InstallationPlan, PlannedPhase } from "./plan";
+import type {
+  DataBefore,
+  GenericPhaseDef,
+  InstallationContext,
+  StepContext,
+} from "./types";
 
-// import { webhooksPhaseRunner } from "./phases/webhooks";
+type StepExecutionResult =
+  | { success: true; data: unknown }
+  | { success: false; error: { key: string; [k: string]: unknown } };
 
-const phaseRunners = [
-  { name: "events", run: eventsPhaseRunner },
-  // { name: "webhooks", run: webhooksPhaseRunner },
-] as const;
+type PhaseExecutionResult =
+  | { success: true }
+  | { success: false; step: string; error: unknown };
 
-/** Result of a successful installation. */
-export type InstallationSuccess = { status: "succeeded" };
+export type InstallationResult =
+  | { status: "succeeded" }
+  | { status: "failed"; phase: string; step: string; error: unknown };
 
-/** Result of a failed installation. */
-export type InstallationFailure = {
-  status: "failed";
-  phase: string;
-  step: string;
-  error: unknown;
-};
+function stepFailed(
+  key: string,
+  errorPayload?: Record<string, unknown>,
+): StepExecutionResult {
+  return { success: false, error: { key, ...errorPayload } };
+}
 
-/** Result of running the installation. */
-export type InstallationResult = InstallationSuccess | InstallationFailure;
+function phaseSuccess(): PhaseExecutionResult {
+  return { success: true };
+}
+
+function phaseFailed(step: string, error: unknown): PhaseExecutionResult {
+  return { success: false, step, error };
+}
+
+function installationSuccess(): InstallationResult {
+  return { status: "succeeded" };
+}
+
+function installationFailed(
+  phase: string,
+  step: string,
+  error: unknown,
+): InstallationResult {
+  return { status: "failed", phase, step, error };
+}
 
 /**
- * Runs all installation phases sequentially.
+ * Executes an installation plan.
+ * @param plan - The installation plan to execute.
  * @param config - The commerce app configuration.
- * @param context - The shared installation context (API clients, logger, etc.).
- * @returns The result of the installation.
+ * @param context - The installation context.
  */
-export async function runInstallation(
+export async function executeInstallation(
+  plan: InstallationPlan,
   config: CommerceAppConfigOutputModel,
   context: InstallationContext,
-): Promise<InstallationResult> {
-  for (const { name, run } of phaseRunners) {
-    const result = await run(config, context);
+) {
+  for (const plannedPhase of plan.phases) {
+    const definition = findPhaseDefinition(plannedPhase.name);
+    if (!definition) {
+      return installationFailed(
+        plannedPhase.name,
+        "before-install",
+        new Error(`Unknown phase: ${plannedPhase.name}`),
+      );
+    }
 
-    if (result.status === "failed") {
-      return {
-        status: "failed",
-        phase: name,
-        step: result.step,
-        error: result.error,
-      };
+    const result = await executePhase(
+      definition,
+      plannedPhase,
+      config,
+      context,
+    );
+
+    if (!result.success) {
+      return installationFailed(plannedPhase.name, result.step, result.error);
     }
   }
 
-  return { status: "succeeded" };
+  return installationSuccess();
+}
+
+async function executePhase(
+  definition: AnyPhaseDefinition,
+  plannedPhase: PlannedPhase,
+  config: CommerceAppConfigOutputModel,
+  context: InstallationContext,
+): Promise<PhaseExecutionResult> {
+  const phaseContext = definition.createPhaseContext
+    ? await definition.createPhaseContext(context)
+    : {};
+
+  const plannedStepNames = new Set(plannedPhase.steps.map((s) => s.name));
+  let accumulated = {};
+
+  for (const stepName of definition.order) {
+    if (!plannedStepNames.has(stepName)) {
+      continue;
+    }
+
+    const result = await executeStep(
+      definition,
+      stepName,
+      accumulated,
+      phaseContext,
+      config,
+      context,
+    );
+
+    if (result.success) {
+      if (typeof result.data === "object" && result.data !== null) {
+        accumulated = { ...accumulated, ...result.data };
+      }
+    } else {
+      return phaseFailed(stepName, result.error);
+    }
+  }
+
+  return phaseSuccess();
+}
+
+async function executeStep(
+  definition: AnyPhaseDefinition,
+  stepName: string,
+  accumulated: Record<string, unknown>,
+  phaseContext: unknown,
+  config: CommerceAppConfigOutputModel,
+  context: InstallationContext,
+) {
+  // Shorthand as at this point we don't care about type-safety.
+  type GenericExecutor = (
+    c: CommerceAppConfigOutputModel,
+    ctx: StepContext<GenericPhaseDef, string, unknown>,
+  ) => Promise<StepExecutionResult> | StepExecutionResult;
+
+  const executors = definition.executors as unknown as Record<
+    string,
+    GenericExecutor
+  >;
+  const executor = executors[stepName];
+
+  if (!executor) {
+    return stepFailed("UNEXPECTED_ERROR", {
+      error: new Error(`Unknown step: ${stepName}`),
+    });
+  }
+
+  const data = accumulated as SimplifyDeep<
+    DataBefore<
+      GenericPhaseDef["order"],
+      GenericPhaseDef["steps"],
+      typeof stepName
+    >
+  >;
+
+  const stepContext: StepContext<GenericPhaseDef, string, unknown> = {
+    phase: definition.name,
+    step: stepName,
+    installationContext: context,
+    phaseContext,
+    data,
+    helpers: {
+      stepSuccess: (stepData) => ({ success: true, data: stepData }),
+      stepFailed: (key, errorPayload) => ({
+        success: false,
+        error: { key, ...errorPayload },
+      }),
+    },
+  };
+
+  try {
+    return await executor(config, stepContext);
+  } catch (error) {
+    return stepFailed("UNEXPECTED_ERROR", {
+      error: new Error("An unexpected error occurred", { cause: error }),
+    });
+  }
 }

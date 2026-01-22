@@ -1,5 +1,3 @@
-import { createPhaseRunner } from "./define";
-
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   PhaseDef,
@@ -68,6 +66,3 @@ export const webhooksPhaseDefinition: PhaseDefinition<
   stepConditions: {},
   executors: webhooksPhaseExecutors,
 };
-
-/** The runner function that executes all steps of the webhooks phase. */
-export const webhooksPhaseRunner = createPhaseRunner(webhooksPhaseDefinition);

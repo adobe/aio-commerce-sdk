@@ -17,7 +17,14 @@
  * @packageDocumentation
  */
 
-export { runInstallation } from "./installation/runner";
+export { createInstallationPlan } from "./installation/plan";
+export { executeInstallation } from "./installation/runner";
 
+export type {
+  InstallationPlan,
+  PlannedPhase,
+  PlannedStep,
+} from "./installation/plan";
+export type { InstallationResult } from "./installation/runner";
 export type { InstallationState } from "./installation/state";
 export type { InstallationContext } from "./installation/types";
