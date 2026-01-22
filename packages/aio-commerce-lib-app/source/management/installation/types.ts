@@ -29,26 +29,49 @@ export type StepError<K extends string, Extra = EmptyObject> = {
   message?: string;
 } & Extra;
 
-/** Defines a step's own data and possible errors */
+/** Defines a step's own data and possible errors. This step is required and always runs. */
 export type StepDef<TData, TError extends StepError<string> = never> = {
   data: TData;
   error: TError | StepError<"UNEXPECTED_ERROR", { error: Error }>;
 };
 
+/**
+ * Defines a step that may be skipped based on configuration.
+ * When skipped, this step does not execute and does not contribute data.
+ * In accumulated data types, optional steps' data becomes `Partial`.
+ */
+export type OptionalStepDef<
+  TData,
+  TError extends StepError<string> = never,
+> = StepDef<TData, TError> & {
+  /** Discriminator marking this step as optional. */
+  optional: true;
+};
+
+/** Any step definition (required or optional). */
+export type AnyStepDef =
+  | StepDef<unknown, StepError<string>>
+  | OptionalStepDef<unknown, StepError<string>>;
+
+/** Type helper to check if a step definition is optional. */
+export type IsOptionalStep<TStep> = TStep extends { optional: true }
+  ? true
+  : false;
+
 /** Placeholder for steps not yet defined */
 export type UnknownStepDef = StepDef<unknown, never>;
 
-/** Defines a map of steps definitions. */
+/** Defines a map of step definitions (required or optional). */
 export type StepRecord<TOrder extends readonly string[]> = Record<
   TOrder[number],
-  StepDef<unknown, StepError<string>>
+  AnyStepDef
 >;
 
 /** Defines a phase as a collection of steps with a specific order. */
 export type PhaseDef<
   TName extends string,
   TOrder extends readonly string[],
-  TSteps extends Record<TOrder[number], StepDef<unknown, StepError<string>>>,
+  TSteps extends Record<TOrder[number], AnyStepDef>,
 > = {
   name: TName;
   order: TOrder;
@@ -56,8 +79,8 @@ export type PhaseDef<
 };
 
 /**
- * This type is a bit complex, as it uses recursion and conditionals, but is essentially
- * telling TypeScript to accumulate data from steps before the target step (exclusive).
+ * Accumulates data from steps before the target step (exclusive).
+ * Optional steps contribute `Partial<data>` since they may have been skipped.
  */
 export type DataBefore<
   TOrder extends readonly string[],
@@ -70,12 +93,20 @@ export type DataBefore<
 ]
   ? Head extends Target
     ? Acc
-    : DataBefore<Tail, TSteps, Target, MergeDeep<Acc, TSteps[Head]["data"]>>
+    : DataBefore<
+        Tail,
+        TSteps,
+        Target,
+        IsOptionalStep<TSteps[Head]> extends true
+          ? MergeDeep<Acc, Partial<TSteps[Head]["data"]>>
+          : MergeDeep<Acc, TSteps[Head]["data"]>
+      >
   : Acc;
 
 /**
- * This type is a bit complex, as it uses recursion and conditionals, but is essentially
- * telling TypeScript to accumulate data from steps up to the target step (inclusive).
+ * Accumulates data from steps up to and including the target step.
+ * The target step's data is always required (since DataThrough implies the step ran).
+ * Previous optional steps contribute `Partial<data>` since they may have been skipped.
  */
 export type DataThrough<
   TOrder extends readonly string[],
@@ -87,15 +118,24 @@ export type DataThrough<
   ...infer Tail extends readonly string[],
 ]
   ? Head extends Target
-    ? Acc & TSteps[Head]["data"]
-    : DataThrough<Tail, TSteps, Target, MergeDeep<Acc, TSteps[Head]["data"]>>
+    ? // Target step: always include full data (step ran to get here)
+      MergeDeep<Acc, TSteps[Head]["data"]>
+    : // Previous steps: optional ones contribute Partial
+      DataThrough<
+        Tail,
+        TSteps,
+        Target,
+        IsOptionalStep<TSteps[Head]> extends true
+          ? MergeDeep<Acc, Partial<TSteps[Head]["data"]>>
+          : MergeDeep<Acc, TSteps[Head]["data"]>
+      >
   : Acc;
 
 /** Shorthand for a "wildcard" phase definition. */
 export type GenericPhaseDef = PhaseDef<
   string,
   readonly string[],
-  Record<string, StepDef<unknown, StepError<string>>>
+  Record<string, AnyStepDef>
 >;
 
 /**
@@ -120,6 +160,10 @@ export type StepState<
 > =
   | {
       status: "pending";
+      data: SimplifyDeep<DataBefore<TPhase["order"], TPhase["steps"], TStep>>;
+    }
+  | {
+      status: "skipped";
       data: SimplifyDeep<DataBefore<TPhase["order"], TPhase["steps"], TStep>>;
     }
   | {

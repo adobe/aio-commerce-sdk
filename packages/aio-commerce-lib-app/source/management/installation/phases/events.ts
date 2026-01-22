@@ -34,6 +34,7 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CommerceEvent, ExternalEvent } from "#config/schema/eventing";
 import type {
   InstallationContext,
+  OptionalStepDef,
   PhaseContextFactory,
   PhaseDef,
   PhaseExecutors,
@@ -97,11 +98,17 @@ type RegistrationsStep = StepDef<
   StepError<"PROVIDER_NOT_FOUND", { providerId: string }>
 >;
 
-/** Describes the step for installing event commerce configuration. */
-type CommerceConfigStep = StepDef<EmptyObject, never>;
+/**
+ * Describes the step for installing event commerce configuration.
+ * This step is optional - it only runs when commerce events are configured.
+ */
+type CommerceConfigStep = OptionalStepDef<EmptyObject, never>;
 
-/** Describes the step for installing event commerce subscriptions. */
-type CommerceSubscriptionsStep = StepDef<{
+/**
+ * Describes the step for installing event commerce subscriptions.
+ * This step is optional - it only runs when commerce events are configured.
+ */
+type CommerceSubscriptionsStep = OptionalStepDef<{
   subscriptions: Record<string, CommerceEventSubscription>;
 }>;
 
