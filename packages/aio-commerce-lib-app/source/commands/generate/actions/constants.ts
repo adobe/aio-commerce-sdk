@@ -113,9 +113,7 @@ export const EXT_CONFIG: ExtConfig = {
         license: "Apache-2.0",
         actions: {
           "get-app-config": createActionConfig("get-app-config"),
-          "plan-installation": createActionConfig("plan-installation", {
-            inputs: COMMERCE_ACTION_INPUTS,
-          }),
+          "plan-installation": createActionConfig("plan-installation"),
           "execute-installation": createActionConfig("execute-installation", {
             inputs: COMMERCE_ACTION_INPUTS,
             web: "no",
