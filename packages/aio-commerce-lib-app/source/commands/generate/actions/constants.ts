@@ -40,23 +40,35 @@ export const RUNTIME_ACTIONS = [
     templateFile: "get-app-config.js.template",
   },
   {
-    name: "install-app",
-    templateFile: "install-app.js.template",
+    name: "plan-installation",
+    templateFile: "plan-installation.js.template",
+  },
+  {
+    name: "execute-installation",
+    templateFile: "execute-installation.js.template",
   },
 ];
 
+type ActionConfigOptions = {
+  inputs?: Record<string, string>;
+  web?: "yes" | "no";
+  timeout?: number;
+};
+
 /**
- * Creates a runtime action configuration
- * @param actionName - The name of the action
- * @param inputs - Optional inputs for the action.
+ * Creates a runtime action configuration.
+ * @param actionName - The name of the action.
+ * @param options - Optional configuration options.
  */
 function createActionConfig(
   actionName: string,
-  inputs: Record<string, string> | null = null,
+  options: ActionConfigOptions = {},
 ) {
+  const { inputs, web = "yes", timeout } = options;
+
   const def: ActionDefinition = {
     function: `${GENERATED_ACTIONS_PATH}/${actionName}.js`,
-    web: "yes",
+    web,
     runtime: "nodejs:22",
     annotations: {
       "require-adobe-auth": true,
@@ -64,8 +76,12 @@ function createActionConfig(
     },
   };
 
-  if (inputs !== null) {
+  if (inputs !== undefined) {
     def.inputs = inputs;
+  }
+
+  if (timeout !== undefined) {
+    def.limits = { timeout };
   }
 
   return def;
@@ -86,7 +102,7 @@ export const EXT_CONFIG: ExtConfig = {
       },
       {
         type: "action",
-        impl: `${PACKAGE_NAME}/install-app`,
+        impl: `${PACKAGE_NAME}/plan-installation`,
       },
     ],
   },
@@ -97,10 +113,14 @@ export const EXT_CONFIG: ExtConfig = {
         license: "Apache-2.0",
         actions: {
           "get-app-config": createActionConfig("get-app-config"),
-          "install-app": createActionConfig(
-            "install-app",
-            COMMERCE_ACTION_INPUTS,
-          ),
+          "plan-installation": createActionConfig("plan-installation", {
+            inputs: COMMERCE_ACTION_INPUTS,
+          }),
+          "execute-installation": createActionConfig("execute-installation", {
+            inputs: COMMERCE_ACTION_INPUTS,
+            web: "no",
+            timeout: 600_000, // 10 minutes for long-running installation
+          }),
         },
       },
     },

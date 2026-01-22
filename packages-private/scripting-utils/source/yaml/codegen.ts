@@ -86,6 +86,10 @@ function buildActionDefinition(action: ActionDefinition) {
     actionDef.set("include", seq);
   }
 
+  if (action.limits !== undefined) {
+    actionDef.set("limits", action.limits);
+  }
+
   return actionDef;
 }
 

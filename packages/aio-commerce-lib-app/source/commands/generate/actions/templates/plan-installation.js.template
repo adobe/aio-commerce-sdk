@@ -14,71 +14,64 @@
 // Do not modify this file directly
 
 import util from "node:util";
+import openwhisk from "openwhisk";
 
 import { validateCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
-import { runInstallation } from "@adobe/aio-commerce-lib-app/management";
-import {
-  internalServerError,
-  ok,
-} from "@adobe/aio-commerce-sdk/core/responses";
+import { createInstallationPlan } from "@adobe/aio-commerce-lib-app/management";
+import { internalServerError, ok } from "@adobe/aio-commerce-sdk/core/responses";
 import AioLogger from "@adobe/aio-lib-core-logging";
 
 // The manifest is always at this relative constant path from the action.
 import commerceAppManifest from "../../app.commerce.manifest.json" with { type: "json" };
 
-// Shorthand to inspect an object.
 const inspect = (obj) => util.inspect(obj, { depth: null });
 
 /**
- * Get the app config.
- * @returns The response object containing the app config.
+ * Creates an installation plan and triggers async execution.
+ * Returns the plan immediately while execution continues in background.
  */
 export async function main(params) {
-  const logger = AioLogger("install-app", {
+  const logger = AioLogger("plan-installation", {
     level: params.LOG_LEVEL || "info",
   });
 
   try {
     logger.debug("Validating app config...");
-
     const appConfig = validateCommerceAppConfig(commerceAppManifest);
     logger.debug("Successfully validated the app config");
 
-    const installationContext = {
-      logger,
-      params,
-    };
+    logger.debug("Creating installation plan...");
+    const plan = createInstallationPlan(appConfig);
+    logger.info(`Created installation plan: ${plan.id} with ${plan.phases.length} phase(s)`);
 
-    logger.debug("Starting app installation...");
-    const result = await runInstallation(appConfig, installationContext);
+    // Invoke the execute-installation action asynchronously
+    logger.debug("Invoking execute-installation action async...");
+    const ow = openwhisk();
+    const activation = await ow.actions.invoke({
+      name: "execute-installation",
+      blocking: false,
+      result: false,
+      params: {
+        ...params,
+        __installation_plan: plan,
+      },
+    });
 
-    if (result.status === "succeeded") {
-      logger.debug("Application installed successfully.");
-      return ok("Application installed successfully");
-    }
-
-    logger.error(
-      `Something went wrong while running the app installation ${inspect(result.error)}`,
-    );
-
-    return internalServerError({
+    logger.info(`Installation triggered with activation: ${activation.activationId}`);
+    return ok({
       body: {
-        message: "The app failed to install",
-        error: result.error,
-        phase: result.phase,
-        step: result.step,
+        message: "Installation requested",
+        plan,
+        activationId: activation.activationId,
       },
     });
   } catch (error) {
-    logger.error(
-      `Something went wrong while validating app config: ${inspect(error)}`,
-    );
-
+    logger.error(`Something went wrong: ${inspect(error)}`);
     return internalServerError({
       body: {
         code: "INTERNAL_ERROR",
         details: error instanceof Error ? error.message : "Unknown error",
-        message: "An internal server error occurred",
+        message: "Failed to create installation plan",
       },
     });
   }
