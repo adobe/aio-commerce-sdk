@@ -38,13 +38,13 @@ type InstallationPhase = keyof InstallationPhases;
  *   if (state.phase === "events" && state.step === "registrations") {
  *     if (state.status === "succeeded") {
  *       // data includes: providers + metadata + registrations
- *       console.log(state.data.providers, state.data.registrationIds);
+ *       console.log(state.data.providers, state.data.registrations);
  *     }
  *
  *     if (state.status === "failed") {
  *       // data includes: providers + metadata (not registrations)
  *       // error is narrowed to registration-specific errors
- *       console.log(state.error.key); // "CREATE_FAILED" | "INVALID_PROVIDER"
+ *       console.log(state.error.key); // "WHATEVER_ERROR_CODE"
  *     }
  *   }
  * }
