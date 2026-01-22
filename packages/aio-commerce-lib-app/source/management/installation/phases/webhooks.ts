@@ -1,8 +1,9 @@
-import { definePhase } from "./define";
+import { createPhaseRunner } from "./define";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   PhaseDef,
+  PhaseDefinition,
   PhaseExecutors,
   UnknownStepDef,
 } from "#management/installation/types";
@@ -56,10 +57,17 @@ function hasWebhooks(
   return config.webhooks !== undefined;
 }
 
-/** The runner function that will run all the steps of the webhooks phase */
-export const webhooksPhaseRunner = definePhase({
-  phase: WEBHOOKS_PHASE_NAME,
+/** The complete definition of the webhooks phase, including metadata for plan building. */
+export const webhooksPhaseDefinition: PhaseDefinition<
+  WebhooksPhase,
+  WebhooksPhaseConfig
+> = {
+  name: WEBHOOKS_PHASE_NAME,
   order: WEBHOOKS_PHASE_STEPS,
-  executors: webhooksPhaseExecutors,
   shouldRun: hasWebhooks,
-});
+  stepConditions: {},
+  executors: webhooksPhaseExecutors,
+};
+
+/** The runner function that executes all steps of the webhooks phase. */
+export const webhooksPhaseRunner = createPhaseRunner(webhooksPhaseDefinition);

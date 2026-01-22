@@ -15,63 +15,39 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   AllPhaseData,
   DataBefore,
+  GenericPhaseDef,
   InstallationContext,
-  PhaseContextFactory,
-  PhaseDef,
-  PhaseExecutors,
+  PhaseDefinition,
   PhaseFailure,
   PhaseRunner,
   StepContext,
   StepFailure,
-  StepRecord,
   StepResult,
   StepSuccess,
 } from "#management/installation/types";
 
-/** Options for defining a phase. */
-export type DefinePhaseOptions<
-  Phase extends PhaseDef<
-    string,
-    readonly string[],
-    StepRecord<readonly string[]>
-  >,
-  TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
-  TPhaseContext = EmptyObject,
-> = {
-  /** The phase identifier. */
-  phase: Phase["name"];
-
-  /** The order of steps in the phase. */
-  order: Phase["order"];
-
-  /** The executors for each step in the phase. */
-  executors: PhaseExecutors<Phase, TConfig, TPhaseContext>;
-
-  /** Type guard that checks if the config is applicable for this phase. */
-  shouldRun: (config: CommerceAppConfigOutputModel) => config is TConfig;
-
-  /**
-   * Optional factory function that creates the phase context for each step.
-   * Called before each step executes. If not provided, defaults to an empty object.
-   */
-  createPhaseContext?: PhaseContextFactory<TPhaseContext, Phase>;
-};
-
 /**
- * Defines a phase with its order and executors.
- * @param options - The phase definition options.
+ * Creates a phase runner from a phase definition.
+ * Note: stepConditions are NOT evaluated here - they're for plan building only.
+ * The runner will be updated to follow the plan in a future iteration.
+ *
+ * @param definition - The phase definition containing all phase metadata.
+ * @returns A phase runner function.
  */
-export function definePhase<
-  const Order extends string[],
-  const Steps extends StepRecord<Order>,
-  const PhaseName extends string,
-  const Phase extends PhaseDef<PhaseName, Order, Steps>,
+export function createPhaseRunner<
+  Phase extends GenericPhaseDef,
   TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
   TPhaseContext = EmptyObject,
 >(
-  options: DefinePhaseOptions<Phase, TConfig, TPhaseContext>,
+  definition: PhaseDefinition<Phase, TConfig, TPhaseContext>,
 ): PhaseRunner<Phase> {
-  const { phase, order, executors, shouldRun, createPhaseContext } = options;
+  const {
+    name: phase,
+    order,
+    executors,
+    shouldRun,
+    createPhaseContext,
+  } = definition;
   return async (
     config: CommerceAppConfigOutputModel,
     installationContext: InstallationContext,
@@ -84,19 +60,18 @@ export function definePhase<
       };
     }
 
+    // Create phase context once before the phase starts (defaults to empty object if no factory provided)
+    const phaseContext = createPhaseContext
+      ? await createPhaseContext(installationContext)
+      : ({} as TPhaseContext);
+
     let accumulated = {};
 
     for (const step of order) {
       const executor = executors[step as keyof typeof executors];
-
       const data = accumulated as SimplifyDeep<
         DataBefore<Phase["order"], Phase["steps"], typeof step>
       >;
-
-      // Create phase context for this step (defaults to empty object if no factory provided)
-      const phaseContext = createPhaseContext
-        ? await createPhaseContext(step, data, installationContext)
-        : ({} as TPhaseContext);
 
       const stepContext: StepContext<Phase, typeof step, TPhaseContext> = {
         phase,

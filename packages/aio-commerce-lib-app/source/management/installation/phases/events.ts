@@ -17,7 +17,7 @@ import {
 import { createCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
 import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 
-import { definePhase } from "./define";
+import { createPhaseRunner } from "./define";
 
 import type {
   CommerceEventSubscription,
@@ -37,6 +37,7 @@ import type {
   OptionalStepDef,
   PhaseContextFactory,
   PhaseDef,
+  PhaseDefinition,
   PhaseExecutors,
   StepDef,
   StepError,
@@ -139,11 +140,10 @@ export type EventsPhaseContext = {
   get commerceEventsClient(): CommerceEventsApiClient;
 };
 
-/** Factory function that creates the phase context for each step in the events phase. */
-const createEventsPhaseContext: PhaseContextFactory<
-  EventsPhaseContext,
-  EventsPhase
-> = (_step, _data, installationContext: InstallationContext) => {
+/** Factory function that creates the phase context before the events phase runs. */
+const createEventsPhaseContext: PhaseContextFactory<EventsPhaseContext> = (
+  installationContext: InstallationContext,
+) => {
   const { params } = installationContext;
   let ioEventsClient: AdobeIoEventsApiClient | null = null;
   let commerceEventsClient: CommerceEventsApiClient | null = null;
@@ -265,7 +265,6 @@ const eventsPhaseExecutors: PhaseExecutors<
 /**
  * Type guard that checks if the config has event sources that need to be installed.
  * @param config - The config to check
- * @returns true if the config has at least one event source configured, false otherwise
  */
 function hasEventSources(
   config: CommerceAppConfigOutputModel,
@@ -273,11 +272,32 @@ function hasEventSources(
   return config.eventing !== undefined;
 }
 
-/** The runner function that will run all the steps of the events phase */
-export const eventsPhaseRunner = definePhase({
-  phase: EVENTS_PHASE_NAME,
+/**
+ * Checks if the config has commerce event sources.
+ * Used to determine if commerce-specific steps should run.
+ */
+function hasCommerceEventSources(config: EventsPhaseConfig): boolean {
+  return config.eventing.some((source) => source.type === "commerce");
+}
+
+/** The complete definition of the events phase, including metadata for plan building. */
+export const eventsPhaseDefinition: PhaseDefinition<
+  EventsPhase,
+  EventsPhaseConfig,
+  EventsPhaseContext
+> = {
+  name: EVENTS_PHASE_NAME,
   order: EVENTS_PHASE_STEPS,
-  executors: eventsPhaseExecutors,
   shouldRun: hasEventSources,
+
+  stepConditions: {
+    commerceConfig: hasCommerceEventSources,
+    commerceSubscriptions: hasCommerceEventSources,
+  },
+
+  executors: eventsPhaseExecutors,
   createPhaseContext: createEventsPhaseContext,
-});
+};
+
+/** The runner function that executes all steps of the events phase. */
+export const eventsPhaseRunner = createPhaseRunner(eventsPhaseDefinition);

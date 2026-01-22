@@ -139,17 +139,11 @@ export type GenericPhaseDef = PhaseDef<
 >;
 
 /**
- * A factory function that creates the phase context for a given step.
- * This is called before the step executes and the result is passed to the step.
+ * A factory function that creates the phase context before the phase runs.
+ * This is called once before the first step executes and the result is passed to all steps.
  * If not provided, defaults to an empty object.
  */
-export type PhaseContextFactory<
-  TPhaseContext,
-  Phase extends GenericPhaseDef = GenericPhaseDef,
-  Step extends Phase["order"][number] = Phase["order"][number],
-> = (
-  step: Step,
-  data: SimplifyDeep<DataBefore<Phase["order"], Phase["steps"], Step>>,
+export type PhaseContextFactory<TPhaseContext> = (
   installationContext: InstallationContext,
 ) => TPhaseContext | Promise<TPhaseContext>;
 
@@ -309,3 +303,57 @@ export type PhaseRunner<Phase extends GenericPhaseDef = GenericPhaseDef> = (
   config: CommerceAppConfigOutputModel,
   ctx: InstallationContext,
 ) => Promise<PhaseResult<Phase>>;
+
+/** Condition to determine if a step should run based on configuration. */
+export type StepCondition<TConfig> = (config: TConfig) => boolean;
+
+/**
+ * Extracts only the optional step names from a phase.
+ * Required steps are excluded from the resulting union type.
+ */
+export type OptionalStepNames<Phase extends GenericPhaseDef> = {
+  [Step in Phase["order"][number]]: IsOptionalStep<
+    Phase["steps"][Step]
+  > extends true
+    ? Step
+    : never;
+}[Phase["order"][number]];
+
+/**
+ * Step conditions type - all optional steps MUST have conditions.
+ * Required steps are not included in this type at all.
+ */
+export type StepConditions<Phase extends GenericPhaseDef, TConfig> = {
+  [Step in OptionalStepNames<Phase>]: StepCondition<TConfig>;
+};
+
+/**
+ * Complete definition of a phase, including metadata for plan building.
+ * This separates the static definition from runtime execution.
+ *
+ * `stepConditions` must provide a condition for each optional step.
+ * If there are no optional steps, provide an empty object `{}`.
+ */
+export type PhaseDefinition<
+  Phase extends GenericPhaseDef,
+  TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
+  TPhaseContext = EmptyObject,
+> = {
+  /** Phase identifier. */
+  name: Phase["name"];
+
+  /** Ordered list of all possible steps in this phase. */
+  order: Phase["order"];
+
+  /** Phase-level condition: should this phase run at all? */
+  shouldRun: (config: CommerceAppConfigOutputModel) => config is TConfig;
+
+  /** Conditions for optional steps. All optional steps must have a condition. */
+  stepConditions: StepConditions<Phase, TConfig>;
+
+  /** Executor functions for each step. */
+  executors: PhaseExecutors<Phase, TConfig, TPhaseContext>;
+
+  /** Optional factory to create phase context before steps run. */
+  createPhaseContext?: PhaseContextFactory<TPhaseContext>;
+};
