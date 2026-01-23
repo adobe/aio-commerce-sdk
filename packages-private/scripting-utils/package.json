@@ -26,6 +26,7 @@
   },
   "exports": {
     "./*": "./source/*.ts",
+    "./env": "./source/env.ts",
     "./yaml": "./source/yaml/index.ts",
     "./filesystem": "./source/filesystem/index.ts",
     "./package.json": "./package.json"
@@ -35,6 +36,9 @@
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "workspace:*",
+    "@adobe/aio-lib-core-config": "^5.0.1",
+    "@adobe/aio-lib-ims": "^8.1.1",
+    "dotenv": "^17.2.3",
     "yaml": "^2.8.1"
   },
   "devDependencies": {

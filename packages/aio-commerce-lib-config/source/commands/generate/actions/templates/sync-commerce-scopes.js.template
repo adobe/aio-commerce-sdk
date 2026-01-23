@@ -60,7 +60,6 @@ export async function main(params) {
       paramsWithCommerceConfig,
       { tryForwardAuthProvider: true },
     );
-
     const result = await syncCommerceScopes(commerceConfig);
 
     if (result.error) {
