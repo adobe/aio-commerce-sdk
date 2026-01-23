@@ -27,6 +27,9 @@
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/es/index.mjs",
   "types": "./dist/cjs/index.d.cts",
+  "bin": {
+    "@adobe/aio-commerce-lib-auth": "./dist/es/commands/index.mjs"
+  },
   "publishConfig": {
     "exports": {
       ".": {
@@ -45,6 +48,10 @@
   "exports": {
     ".": "./source/index.ts",
     "./package.json": "./package.json"
+  },
+  "imports": {
+    "#*": "./source/*.ts",
+    "#test/*": "./test/*.ts"
   },
   "files": [
     "dist",
@@ -73,6 +80,7 @@
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-lib-ims": "^8.1.0",
     "ansis": "^4.1.0",
+    "consola": "^3.4.2",
     "oauth-1.0a": "^2.2.6",
     "valibot": "^1.1.0"
   },
@@ -80,7 +88,8 @@
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@aio-commerce-sdk/config-vitest": "workspace:*"
+    "@aio-commerce-sdk/config-vitest": "workspace:*",
+    "@aio-commerce-sdk/scripting-utils": "workspace:*"
   },
   "sideEffects": false
 }
