@@ -39,6 +39,7 @@ export async function main(params) {
 
   try {
     logger.debug("Syncing commerce scopes...");
+
     const paramsWithBaseUrl = params.base_url
       ? {
           ...params,

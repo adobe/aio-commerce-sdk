@@ -86,10 +86,6 @@ function buildActionDefinition(action: ActionDefinition) {
     actionDef.set("include", seq);
   }
 
-  if (action.limits !== undefined) {
-    actionDef.set("limits", action.limits);
-  }
-
   return actionDef;
 }
 
@@ -192,7 +188,7 @@ async function buildHooks(extConfig: Document, hooks: Record<string, string>) {
   const execCommand = getExecCommand(packageManager);
 
   for (const [name, command] of Object.entries(hooks)) {
-    const fullCommand = `${command.replaceAll("$packageExec", execCommand)}`;
+    const fullCommand = `${command.replace("$packageExec", execCommand)}`;
     const prevValue = ((hooksMap.get(name) as string | undefined) ?? "").trim();
 
     if (prevValue.endsWith("js") || prevValue.endsWith("ts")) {
