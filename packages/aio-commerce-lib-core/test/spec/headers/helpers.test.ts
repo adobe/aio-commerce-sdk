@@ -12,7 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 
-import { getHeader, getHeadersFromParams } from "#headers";
+import { getHeader, getHeadersFromParams } from "#headers/index";
 
 describe("headers/helpers", () => {
   describe("getHeader", () => {

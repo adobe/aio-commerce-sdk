@@ -12,8 +12,8 @@
 
 import { describe, expect, test } from "vitest";
 
-import { CommerceSdkValidationError } from "#error";
-import { createHeaderAccessor } from "#headers";
+import { CommerceSdkValidationError } from "#error/index";
+import { createHeaderAccessor } from "#headers/index";
 
 describe("headers/accessor", () => {
   describe("createHeaderAccessor", () => {

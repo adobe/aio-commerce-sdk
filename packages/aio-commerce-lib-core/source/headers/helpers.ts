@@ -19,9 +19,9 @@ import {
   undefined as vUndefined,
 } from "valibot";
 
-import { CommerceSdkValidationError } from "#error";
+import { CommerceSdkValidationError } from "#error/index";
 
-import type { RuntimeActionParams } from "#params";
+import type { RuntimeActionParams } from "#params/index";
 import type {
   GetHeaderOptions,
   GetHeaderReturn,

@@ -20,9 +20,9 @@ import {
   parseBasicToken,
   parseBearerToken,
   parseOAuthToken,
-} from "#headers";
+} from "#headers/index";
 
-import type { GenericAuthorization } from "#headers";
+import type { GenericAuthorization } from "#headers/index";
 
 describe("headers/auth", () => {
   describe("parseAuthorization", () => {

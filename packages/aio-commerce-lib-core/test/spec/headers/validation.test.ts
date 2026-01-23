@@ -12,10 +12,13 @@
 
 import { describe, expect, test } from "vitest";
 
-import { CommerceSdkValidationError } from "#error";
-import { assertRequiredHeaders, getMissingOrEmptyHeaders } from "#headers";
+import { CommerceSdkValidationError } from "#error/index";
+import {
+  assertRequiredHeaders,
+  getMissingOrEmptyHeaders,
+} from "#headers/index";
 
-import type { HttpHeaders } from "#headers";
+import type { HttpHeaders } from "#headers/index";
 
 describe("headers/validation", () => {
   describe("assertRequiredHeaders", () => {

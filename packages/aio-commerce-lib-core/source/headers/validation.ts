@@ -12,7 +12,7 @@
 
 import { literal, object, pipe, rawCheck, safeParse, string } from "valibot";
 
-import { CommerceSdkValidationError } from "#error";
+import { CommerceSdkValidationError } from "#error/index";
 
 import { getHeader } from "./helpers";
 

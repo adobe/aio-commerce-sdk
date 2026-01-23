@@ -50,12 +50,8 @@
     "./package.json": "./package.json"
   },
   "imports": {
-    "#*": [
-      "./source/*/index.ts"
-    ],
-    "#test/*": [
-      "./test/*.ts"
-    ]
+    "#*": "./source/*.ts",
+    "#test/*": "./test/*.ts"
   },
   "files": [
     "dist",

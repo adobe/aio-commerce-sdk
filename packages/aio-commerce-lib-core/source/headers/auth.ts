@@ -21,7 +21,7 @@ import {
   trim,
 } from "valibot";
 
-import { CommerceSdkValidationError } from "#error";
+import { CommerceSdkValidationError } from "#error/index";
 
 /**
  * Represents a Bearer authentication scheme (RFC 6750).

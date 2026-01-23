@@ -27,7 +27,7 @@ import {
   notFound,
   ok,
   unauthorized,
-} from "~/responses/presets";
+} from "#responses/presets";
 
 describe("responses/presets", () => {
   describe("HTTP status code constants", () => {
