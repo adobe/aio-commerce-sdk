@@ -13,13 +13,10 @@
 import aioLibIms from "@adobe/aio-lib-ims";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { getImsAuthProvider, isImsAuthProvider } from "~/lib/ims-auth/provider";
-import {
-  assertImsAuthParams,
-  resolveImsAuthParams,
-} from "~/lib/ims-auth/utils";
+import { getImsAuthProvider, isImsAuthProvider } from "#lib/ims-auth/provider";
+import { assertImsAuthParams, resolveImsAuthParams } from "#lib/ims-auth/utils";
 
-import type { ImsAuthEnv, ImsAuthParams } from "~/lib/ims-auth/schema";
+import type { ImsAuthEnv, ImsAuthParams } from "#lib/ims-auth/schema";
 
 const { context, getToken } = aioLibIms;
 

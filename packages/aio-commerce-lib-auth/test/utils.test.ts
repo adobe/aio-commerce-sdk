@@ -12,7 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 
-import { resolveAuthParams } from "~/lib/utils";
+import { resolveAuthParams } from "#lib/utils";
 
 describe("aio-commerce-lib-auth/utils", () => {
   describe("resolveAuthParams", () => {
