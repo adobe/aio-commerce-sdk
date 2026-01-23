@@ -14,18 +14,33 @@ import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
 import { mergeConfig } from "tsdown";
 
 export default mergeConfig(baseConfig, {
-  entry: ["./source/config/index.ts", "./source/commands/index.ts"],
+  entry: [
+    "./source/config/index.ts",
+    "./source/commands/index.ts",
+    "./source/management/index.ts",
+  ],
   copy: [
     {
       from: "./source/commands/generate/actions/templates",
+<<<<<<< HEAD
       to: "./dist/cjs/commands/generate/actions",
     },
     {
       from: "./source/commands/generate/actions/templates",
       to: "./dist/es/commands/generate/actions",
+=======
+      to: "./dist/cjs/commands/generate/actions/",
+    },
+    {
+      from: "./source/commands/generate/actions/templates",
+      to: "./dist/es/commands/generate/actions/",
+>>>>>>> f1a1881 (feat: commerce event schema)
     },
   ],
 
   // This package is private and needs to be bundled as a no-external dependency.
-  noExternal: ["@aio-commerce-sdk/scripting-utils"],
+  noExternal: [
+    "@aio-commerce-sdk/scripting-utils",
+    "@aio-commerce-sdk/common-utils",
+  ],
 });

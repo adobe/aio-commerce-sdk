@@ -32,11 +32,22 @@
           "default": "./dist/cjs/config/index.cjs"
         }
       },
+      "./management": {
+        "import": {
+          "types": "./dist/es/management/index.d.mts",
+          "default": "./dist/es/management/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/management/index.d.cts",
+          "default": "./dist/cjs/management/index.cjs"
+        }
+      },
       "./package.json": "./package.json"
     }
   },
   "exports": {
     "./config": "./source/config/index.ts",
+    "./management": "./source/management/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {
@@ -68,11 +79,15 @@
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "workspace:*",
+    "@adobe/aio-commerce-lib-api": "workspace:*",
+    "@adobe/aio-commerce-lib-events": "workspace:*",
     "consola": "^3.4.2",
     "jiti": "^2.6.1",
     "valibot": "^1.1.0"
   },
   "devDependencies": {
+    "@adobe/aio-lib-core-logging": "^3.0.2",
+    "@aio-commerce-sdk/common-utils": "workspace:*",
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
