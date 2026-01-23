@@ -10,6 +10,7 @@ This package provides core utilities for the Adobe Commerce SDK libraries:
 - **[Error Handling](./guides/error-handling.md)**: Custom error classes with enhanced debugging capabilities
 - **[Response Helpers](./guides/response-helpers.md)**: Standardized response builders for Adobe I/O Runtime actions
 - **[Params Utilities](./guides/params-utilities.md)**: Runtime action parameter validation helpers
+- **[Headers Utilities](./guides/headers-utilities.md)**: HTTP header extraction and validation helpers
 
 ## API Reference
 
@@ -70,3 +71,26 @@ function main(params) {
 ```
 
 [Read the Params Utilities Guide →](./guides/params-utilities.md)
+
+### Headers Utilities
+
+```typescript
+import {
+  getHeadersFromParams,
+  createHeaderAccessor,
+  parseBearerToken,
+} from "@adobe/aio-commerce-lib-core/headers";
+
+function main(params) {
+  const headers = getHeadersFromParams(params);
+  const { xApiKey, authorization } = createHeaderAccessor(headers, [
+    "x-api-key",
+    "Authorization",
+  ]);
+
+  const { token } = parseBearerToken(authorization);
+  // Use validated headers and token...
+}
+```
+
+[Read the Headers Utilities Guide →](./guides/headers-utilities.md)
