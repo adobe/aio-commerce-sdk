@@ -13,15 +13,10 @@
 import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
 import { defineConfig, mergeConfig } from "vitest/config";
 
-// The default tsconfig-paths plugin is causing issues with the tests.
-// This is because they conflict with Node's subpath imports,
-// which we have started using because of this issue: https://github.com/vercel/turborepo/discussions/620
-// A future PR needs to remove this from the base config and migrate everything to use subpath imports.
-const { plugins: _, ...baseConfigWithoutPlugins } = baseConfig;
 const BARREL_FILES = ["./source/config/index.ts"];
 
 export default mergeConfig(
-  baseConfigWithoutPlugins,
+  baseConfig,
   defineConfig({
     plugins: [],
     test: {

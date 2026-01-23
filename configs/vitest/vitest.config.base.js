@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
 /**
@@ -25,7 +24,6 @@ import { defineConfig } from "vitest/config";
  * @see https://vitest.dev/config/
  */
 export const baseConfig = defineConfig({
-  plugins: [tsconfigPaths()],
   test: {
     globals: true,
     environment: "node",

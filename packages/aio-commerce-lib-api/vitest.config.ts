@@ -19,14 +19,8 @@ const BARREL_FILES = [
   "./source/utils/transformations/index.ts",
 ];
 
-// The default tsconfig-paths plugin is causing issues with the tests.
-// This is because they conflict with Node's subpath imports,
-// which we have started using because of this issue: https://github.com/vercel/turborepo/discussions/620
-// A future PR needs to remove this from the base config and migrate everything to use subpath imports.
-const { plugins: _, ...baseConfigWithoutPlugins } = baseConfig;
-
 export default mergeConfig(
-  baseConfigWithoutPlugins,
+  baseConfig,
   defineConfig({
     plugins: [],
     test: {
