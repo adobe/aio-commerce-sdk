@@ -10,10 +10,6 @@
     "rootDir": "${configDir}",
     "baseUrl": "${configDir}",
     "outDir": "${configDir}/dist",
-    "paths": {
-      "~/*": ["${configDir}/source/*"],
-      "~~/*": ["${configDir}/*"]
-    },
 
     "module": "ESNext",
     "moduleResolution": "bundler",
