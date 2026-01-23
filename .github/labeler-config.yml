@@ -1,67 +1,71 @@
 # See https://github.com/actions/labeler
 
 "pkg: aio-commerce-sdk":
-- changed-files:
-  - any-glob-to-any-file: 'packages/aio-commerce-sdk/**'
+  - changed-files:
+      - any-glob-to-any-file: "packages/aio-commerce-sdk/**"
 
 "pkg: aio-commerce-lib-auth":
-- changed-files:
-  - any-glob-to-any-file: 'packages/aio-commerce-lib-auth/**'
+  - changed-files:
+      - any-glob-to-any-file: "packages/aio-commerce-lib-auth/**"
 
 "pkg: aio-commerce-lib-core":
-- changed-files:
-  - any-glob-to-any-file: 'packages/aio-commerce-lib-core/**'
+  - changed-files:
+      - any-glob-to-any-file: "packages/aio-commerce-lib-core/**"
 
 "pkg: aio-commerce-lib-api":
-- changed-files:
-  - any-glob-to-any-file: 'packages-private/aio-commerce-lib-api/**'
+  - changed-files:
+      - any-glob-to-any-file: "packages-private/aio-commerce-lib-api/**"
 
 "pkg: aio-commerce-lib-events":
-- changed-files:
-  - any-glob-to-any-file: 'packages/aio-commerce-lib-events/**'
+  - changed-files:
+      - any-glob-to-any-file: "packages/aio-commerce-lib-events/**"
 
 "pkg: aio-commerce-lib-config":
-- changed-files:
-  - any-glob-to-any-file: 'packages/aio-commerce-lib-config/**'
+  - changed-files:
+      - any-glob-to-any-file: "packages/aio-commerce-lib-config/**"
 
 "pkg: aio-commerce-lib-app":
-- changed-files:
-  - any-glob-to-any-file: 'packages/aio-commerce-lib-app/**'
+  - changed-files:
+      - any-glob-to-any-file: "packages/aio-commerce-lib-app/**"
 
 "private-pkg: scripting-utils":
-- changed-files:
-  - any-glob-to-any-file: 'packages-private/scripting-utils/**'
+  - changed-files:
+      - any-glob-to-any-file: "packages-private/scripting-utils/**"
+
+"private-pkg: common-utils":
+  - changed-files:
+      - any-glob-to-any-file: "packages-private/common-utils/**"
 
 "generator":
-- changed-files:
-  - any-glob-to-any-file: 'turbo/generators/**'
+  - changed-files:
+      - any-glob-to-any-file: "turbo/generators/**"
 
 "cfg: tsdown":
-- changed-files:
-  - any-glob-to-any-file: 'configs/tsdown/**'
+  - changed-files:
+      - any-glob-to-any-file: "configs/tsdown/**"
 
 "cfg: turbo":
-- changed-files:
-  - any-glob-to-any-file: 'turbo.json'
+  - changed-files:
+      - any-glob-to-any-file: "turbo.json"
 
 "cfg: typedoc":
-- changed-files:
-  - any-glob-to-any-file: 'configs/typedoc/**'
+  - changed-files:
+      - any-glob-to-any-file: "configs/typedoc/**"
 
 "cfg: typescript":
-- changed-files:
-  - any-glob-to-any-file: 'configs/typescript/**'
+  - changed-files:
+      - any-glob-to-any-file: "configs/typescript/**"
 
 "cfg: vitest":
-- changed-files:
-  - any-glob-to-any-file: 'configs/vitest/**'
+  - changed-files:
+      - any-glob-to-any-file: "configs/vitest/**"
 
 "with-changeset":
-- changed-files:
-  - any-glob-to-any-file: '.changeset/**'
+  - changed-files:
+      - any-glob-to-any-file: ".changeset/**"
 
 "without-changeset":
-- all:
-  - changed-files:
-    - any-glob-to-any-file: '**/*'
-    - all-globs-to-all-files: '!.changeset/**'
+  - all:
+      - changed-files:
+          - any-glob-to-any-file: "**/*"
+          - all-globs-to-all-files: "!.changeset/**"
