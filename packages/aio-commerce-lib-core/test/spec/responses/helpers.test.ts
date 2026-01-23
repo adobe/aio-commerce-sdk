@@ -12,7 +12,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { buildErrorResponse, buildSuccessResponse } from "~/responses/helpers";
+import { buildErrorResponse, buildSuccessResponse } from "#responses/helpers";
 
 describe("responses/helpers", () => {
   describe("buildErrorResponse", () => {

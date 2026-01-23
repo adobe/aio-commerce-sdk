@@ -12,7 +12,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { allNonEmpty, nonEmpty } from "~/params/helpers";
+import { allNonEmpty, nonEmpty } from "#params/helpers";
 
 describe("params/helpers", () => {
   describe("nonEmpty", () => {

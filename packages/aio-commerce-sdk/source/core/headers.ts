@@ -10,14 +10,4 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the responses entrypoint */
-
-/**
- * This module exports core response utilities for the AIO Commerce SDK.
- * @packageDocumentation
- */
-
-export { buildErrorResponse, buildSuccessResponse } from "./helpers";
-export * from "./presets";
-
-export type { ActionResponse, ErrorResponse, SuccessResponse } from "./helpers";
+export * from "@adobe/aio-commerce-lib-core/headers";

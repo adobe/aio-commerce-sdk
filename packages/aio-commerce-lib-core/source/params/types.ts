@@ -10,14 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the responses entrypoint */
+/** The type of the runtime action parameters. */
+export type RuntimeActionParams = {
+  /** If the runtime action is invoked via HTTP, this will be the headers of the request. */
+  __ow_headers?: Record<string, string | undefined>;
 
-/**
- * This module exports core response utilities for the AIO Commerce SDK.
- * @packageDocumentation
- */
+  /** If the runtime action is invoked via HTTP, this will be the HTTP method of the request. */
+  __ow_method?: string;
 
-export { buildErrorResponse, buildSuccessResponse } from "./helpers";
-export * from "./presets";
-
-export type { ActionResponse, ErrorResponse, SuccessResponse } from "./helpers";
+  // Remaining unknown properties.
+  [key: string]: unknown;
+};
