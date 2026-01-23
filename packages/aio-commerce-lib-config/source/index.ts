@@ -10,16 +10,33 @@
  * governing permissions and limitations under the License.
  */
 
-export { init } from "./lib-config";
-export * from "./types";
+/**
+ * This module exports configuration management utilities for the AIO Commerce SDK.
+ * @packageDocumentation
+ */
 
+export * from "./config-manager";
+export {
+  byCode,
+  byCodeAndLevel,
+  byScopeId,
+  type SelectorBy,
+  type SelectorByCode,
+  type SelectorByCodeAndLevel,
+  type SelectorByScopeId,
+} from "./config-utils";
+export * from "./types";
+export {
+  generateEncryptionKey,
+  isEncryptionConfigured,
+} from "./utils/encryption";
+
+export type { ConfigOrigin, ConfigValue } from "./modules/configuration";
 export type {
-  AcceptableConfigValue,
-  ConfigOrigin,
-  ConfigValue,
-} from "./modules/configuration";
-export type {
-  ConfigSchemaField,
-  ConfigSchemaOption,
-} from "./modules/schema/types";
+  BusinessConfig,
+  BusinessConfigSchema,
+  BusinessConfigSchemaField,
+  BusinessConfigSchemaListOption,
+  BusinessConfigSchemaValue,
+} from "./modules/schema";
 export type { ScopeNode, ScopeTree } from "./modules/scope-tree";

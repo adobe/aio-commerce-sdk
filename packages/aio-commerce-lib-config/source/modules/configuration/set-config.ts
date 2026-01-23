@@ -1,56 +1,70 @@
 /*
-Copyright 2025 Adobe. All rights reserved.
-This file is licensed to you under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License. You may obtain a copy
-of the License at http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under
-the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
-OF ANY KIND, either express or implied. See the License for the specific language
-governing permissions and limitations under the License.
-*/
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 
 import {
   deriveScopeFromArgs,
   mergeScopes,
   sanitizeRequestEntries,
-} from "../../config-utils";
-import { ScopeTreeRepository } from "../scope-tree/scope-tree-repository";
-import { ConfigurationRepository } from "./configuration-repository";
+} from "#config-utils";
+import { getPasswordFields } from "#modules/schema/utils";
+import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
+import { encrypt } from "#utils/encryption";
+
+import * as configRepository from "./configuration-repository";
 
 import type {
   SetConfigurationRequest,
   SetConfigurationResponse,
-} from "../../types";
-import type { ConfigContext } from "./types";
+} from "#types/index";
+import type { ConfigContext, ConfigValueWithOptionalOrigin } from "./types";
 // loadScopeConfig and persistConfiguration are now repository methods
 
 /**
- * Set configuration for a scope identified by code and level or id.
- * @param context - Configuration context
- * @param request - Configuration set request
- * @param args - either (id) or (code, level)
- * @returns Promise resolving to configuration response
+ * Sets configuration values for a scope identified by code and level or id.
+ *
+ * This function updates configuration values for a specific scope. The provided values
+ * are merged with existing configuration, and the origin is set to the current scope.
+ * Configuration values are inherited from parent scopes unless explicitly overridden.
+ * Password-type fields are automatically encrypted before storage.
+ *
+ * @param context - Configuration context containing namespace and cache timeout.
+ * @param request - Configuration set request containing the config values to set.
+ * @param args - Scope identifier: either `(id: string)` or `(code: string, level: string)`.
+ * @returns Promise resolving to configuration response with updated scope and config values.
+ *
+ * @throws {Error} If the scope arguments are invalid or the scope is not found.
  */
 export async function setConfiguration(
   context: ConfigContext,
   request: SetConfigurationRequest,
   ...args: unknown[]
 ): Promise<SetConfigurationResponse> {
-  // Create repositories for each domain
-  const scopeTreeRepository = new ScopeTreeRepository();
-  const configRepository = new ConfigurationRepository();
-
-  // Get scope tree
   const scopeTree = await scopeTreeRepository.getPersistedScopeTree(
     context.namespace,
   );
+
   const { scopeCode, scopeLevel, scopeId } = deriveScopeFromArgs(
     args,
     scopeTree,
   );
 
   const sanitizedEntries = sanitizeRequestEntries(request?.config);
+
+  const passwordFields = await getPasswordFields(context.namespace);
+  const encryptedEntries = encryptPasswordFields(
+    sanitizedEntries,
+    passwordFields,
+  );
+
   const existingPersisted = await configRepository.loadConfig(scopeCode);
   const existingEntries = Array.isArray(existingPersisted?.config)
     ? (existingPersisted?.config ?? [])
@@ -58,7 +72,7 @@ export async function setConfiguration(
 
   const mergedScopeConfig = mergeScopes(
     existingEntries,
-    sanitizedEntries,
+    encryptedEntries,
     scopeCode,
     scopeLevel,
   );
@@ -69,7 +83,6 @@ export async function setConfiguration(
   };
 
   await configRepository.persistConfig(scopeCode, payload);
-
   const responseConfig = sanitizedEntries.map((entry) => ({
     name: entry.name,
     value: entry.value,
@@ -81,4 +94,30 @@ export async function setConfiguration(
     scope: { id: String(scopeId), code: scopeCode, level: scopeLevel },
     config: responseConfig,
   };
+}
+
+/**
+ * Encrypts password fields in the configuration entries.
+ *
+ * @param entries - Configuration entries to process.
+ * @param passwordFields - Set of field names that should be encrypted.
+ * @returns Configuration entries with password fields encrypted.
+ */
+function encryptPasswordFields(
+  entries: ConfigValueWithOptionalOrigin[],
+  passwordFields: Set<string>,
+): ConfigValueWithOptionalOrigin[] {
+  return entries.map((entry) => {
+    if (
+      passwordFields.has(entry.name) &&
+      typeof entry.value === "string" &&
+      entry.value.length > 0
+    ) {
+      return {
+        ...entry,
+        value: encrypt(entry.value),
+      };
+    }
+    return entry;
+  });
 }

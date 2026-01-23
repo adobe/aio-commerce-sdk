@@ -10,9 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  booleanValueSchema,
+  stringValueSchema,
+} from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
-
-import { booleanValueSchema, stringValueSchema } from "#utils/schemas";
 
 function fieldsSchema(propertyName: string) {
   return v.array(

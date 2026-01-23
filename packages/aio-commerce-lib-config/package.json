@@ -2,13 +2,13 @@
   "name": "@adobe/aio-commerce-lib-config",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.7.2",
+  "version": "0.10.0",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
-  "description": "Configuration management utilities for Adobe Commerce apps deployed in Adobe App Builder.",
+  "description": "Configuration management utilities for Adobe Commerce apps deployed in Adobe App Builder",
   "keywords": [],
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
@@ -19,17 +19,17 @@
     "directory": "packages/aio-commerce-lib-config"
   },
   "main": "./dist/cjs/index.cjs",
-  "module": "./dist/es/index.js",
+  "module": "./dist/es/index.mjs",
   "types": "./dist/cjs/index.d.cts",
   "bin": {
-    "@adobe/aio-commerce-lib-config": "./dist/es/commands/index.js"
+    "@adobe/aio-commerce-lib-config": "./dist/es/commands/index.mjs"
   },
   "publishConfig": {
     "exports": {
       ".": {
         "import": {
-          "types": "./dist/es/index.d.ts",
-          "default": "./dist/es/index.js"
+          "types": "./dist/es/index.d.mts",
+          "default": "./dist/es/index.mjs"
         },
         "require": {
           "types": "./dist/cjs/index.d.cts",
@@ -44,14 +44,8 @@
     "./package.json": "./package.json"
   },
   "imports": {
-    "#*": [
-      "./source/*.ts",
-      "./source/*/index.ts"
-    ],
-    "#test/*": [
-      "./test/*.ts",
-      "./test/*/index.ts"
-    ]
+    "#*": "./source/*.ts",
+    "#test/*": "./test/*.ts"
   },
   "files": [
     "dist",
@@ -61,6 +55,7 @@
   ],
   "scripts": {
     "build": "tsdown",
+    "publint": "publint",
     "docs": "typedoc && prettier --write '**/*.md'",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
@@ -78,10 +73,11 @@
   "dependencies": {
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
+    "@adobe/aio-commerce-lib-app": "workspace:*",
     "@adobe/aio-lib-core-logging": "^3.0.2",
     "@adobe/aio-lib-files": "^4.0.0",
     "@adobe/aio-lib-state": "^5.0.0",
-    "find-up": "^8.0.0",
+    "consola": "^3.4.2",
     "jiti": "^2.6.1",
     "uuid": "^13.0.0",
     "valibot": "^1.1.0",
@@ -91,7 +87,8 @@
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@aio-commerce-sdk/config-vitest": "workspace:*"
+    "@aio-commerce-sdk/config-vitest": "workspace:*",
+    "@aio-commerce-sdk/scripting-utils": "workspace:*"
   },
   "sideEffects": false
 }

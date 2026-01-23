@@ -1,42 +1,50 @@
 /*
-Copyright 2025 Adobe. All rights reserved.
-This file is licensed to you under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License. You may obtain a copy
-of the License at http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under
-the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
-OF ANY KIND, either express or implied. See the License for the specific language
-governing permissions and limitations under the License.
-*/
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 
 import {
   deriveScopeFromArgs,
   getSchemaDefaults,
   mergeWithSchemaDefaults,
-} from "../../config-utils";
-import { ConfigSchemaRepository } from "../schema/config-schema-repository";
-import { ScopeTreeRepository } from "../scope-tree/scope-tree-repository";
-import { ConfigurationRepository } from "./configuration-repository";
+} from "#config-utils";
+import * as schemaRepository from "#modules/schema/config-schema-repository";
+import { getPasswordFields } from "#modules/schema/utils";
+import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
+import { decrypt } from "#utils/encryption";
 
-import type { GetConfigurationResponse } from "../../types";
+import * as configRepository from "./configuration-repository";
+
+import type { GetConfigurationResponse } from "#types/index";
 import type { ConfigContext } from "./types";
 
 /**
- * Get configuration for a scope identified by code and level or id.
- * @param context - Configuration context
- * @param args - either (id) or (code, level)
- * @returns Promise resolving to configuration response
+ * Gets configuration for a scope identified by code and level or id.
+ *
+ * This function retrieves all configuration values for a specific scope, including
+ * inherited values from parent scopes and schema defaults. The configuration is
+ * merged according to the scope hierarchy, with values from more specific scopes
+ * taking precedence over parent scopes. Password-type fields are automatically
+ * decrypted before being returned.
+ *
+ * @param context - Configuration context containing namespace and cache timeout.
+ * @param args - Scope identifier: either `(id: string)` or `(code: string, level: string)`.
+ * @returns Promise resolving to configuration response with scope information and config values.
+ *
+ * @throws {Error} If the scope arguments are invalid or the scope is not found.
  */
 export async function getConfiguration(
   { namespace }: ConfigContext,
   ...args: unknown[]
 ): Promise<GetConfigurationResponse> {
   // Create repositories for each domain
-  const scopeTreeRepository = new ScopeTreeRepository();
-  const schemaRepository = new ConfigSchemaRepository();
-  const configRepository = new ConfigurationRepository();
-
   const scopeTree = await scopeTreeRepository.getPersistedScopeTree(namespace);
   const { scopeCode, scopeLevel, scopeId, scopePath } = deriveScopeFromArgs(
     args,
@@ -78,5 +86,39 @@ export async function getConfiguration(
     // Continue with original configData if merging fails
   }
 
-  return configData;
+  const passwordFields = await getPasswordFields(namespace);
+  return decryptPasswordFields(configData, passwordFields);
+}
+
+/**
+ * Decrypts password fields in the configuration data.
+ *
+ * @param configData - Configuration data to process.
+ * @param passwordFields - Set of field names that should be decrypted.
+ * @returns Configuration data with password fields decrypted.
+ */
+function decryptPasswordFields(
+  configData: GetConfigurationResponse,
+  passwordFields: Set<string>,
+): GetConfigurationResponse {
+  if (!Array.isArray(configData.config)) {
+    return configData;
+  }
+
+  return {
+    ...configData,
+    config: configData.config.map((entry) => {
+      if (
+        passwordFields.has(entry.name) &&
+        typeof entry.value === "string" &&
+        entry.value.length > 0
+      ) {
+        return {
+          ...entry,
+          value: decrypt(entry.value),
+        };
+      }
+      return entry;
+    }),
+  };
 }

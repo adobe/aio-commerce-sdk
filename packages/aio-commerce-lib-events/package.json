@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-lib-events",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.3.4",
+  "version": "0.3.6",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
@@ -18,15 +18,12 @@
     "url": "git+https://github.com/adobe/aio-commerce-sdk.git",
     "directory": "packages/aio-commerce-lib-events"
   },
-  "main": "./dist/cjs/index.cjs",
-  "module": "./dist/es/index.js",
-  "types": "./dist/cjs/index.d.cts",
   "publishConfig": {
     "exports": {
       "./commerce": {
         "import": {
-          "types": "./dist/es/commerce/index.d.ts",
-          "default": "./dist/es/commerce/index.js"
+          "types": "./dist/es/commerce/index.d.mts",
+          "default": "./dist/es/commerce/index.mjs"
         },
         "require": {
           "types": "./dist/cjs/commerce/index.d.cts",
@@ -35,8 +32,8 @@
       },
       "./io-events": {
         "import": {
-          "types": "./dist/es/io-events/index.d.ts",
-          "default": "./dist/es/io-events/index.js"
+          "types": "./dist/es/io-events/index.d.mts",
+          "default": "./dist/es/io-events/index.mjs"
         },
         "require": {
           "types": "./dist/cjs/io-events/index.d.cts",
@@ -52,14 +49,8 @@
     "./package.json": "./package.json"
   },
   "imports": {
-    "#*": [
-      "./source/*.ts",
-      "./source/*/index.ts"
-    ],
-    "#test/*": [
-      "./test/*.ts",
-      "./test/*/index.ts"
-    ]
+    "#*": "./source/*.ts",
+    "#test/*": "./test/*.ts"
   },
   "files": [
     "dist",
@@ -69,6 +60,7 @@
   ],
   "scripts": {
     "build": "tsdown",
+    "publint": "publint",
     "docs": "typedoc && prettier --write '**/*.md'",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
@@ -87,6 +79,7 @@
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-api": "workspace:*",
+    "@aio-commerce-sdk/common-utils": "workspace:*",
     "valibot": "^1.1.0"
   },
   "devDependencies": {

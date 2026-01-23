@@ -18,6 +18,7 @@ import {
 import * as eventMetadataEndpoints from "#io-events/api/event-metadata/endpoints";
 import * as eventProviderEndpoints from "#io-events/api/event-providers/endpoints";
 import * as eventProviderShorthands from "#io-events/api/event-providers/shorthands";
+import * as eventRegistrationEndpoints from "#io-events/api/event-registrations/endpoints";
 
 import type {
   ApiFunction,
@@ -35,8 +36,17 @@ export function createAdobeIoEventsApiClient(params: IoEventsHttpClientParams) {
     ...eventProviderEndpoints,
     ...eventMetadataEndpoints,
     ...eventProviderShorthands,
+    ...eventRegistrationEndpoints,
   });
 }
+
+/**
+ * An API Client for the Adobe I/O Events API.
+ * @see {@link createAdobeIoEventsApiClient}
+ */
+export type AdobeIoEventsApiClient = ReturnType<
+  typeof createAdobeIoEventsApiClient
+>;
 
 /**
  * Creates a customized Adobe I/O Events API client.

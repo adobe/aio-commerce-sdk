@@ -3,5 +3,16 @@
   "entryPoints": ["source/index.ts"],
   "out": "docs/api-reference",
 
-  "intentionallyNotExported": ["VariantTypeSchema"]
+  "intentionallyNotExported": ["FieldSchema"],
+
+  "externalSymbolLinkMappings": {
+    "@adobe/aio-commerce-lib-api": {
+      "AdobeCommerceHttpClient": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md",
+      "CommerceHttpClientParams": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/type-aliases/CommerceHttpClientParams.md"
+    },
+
+    "@adobe/aio-commerce-lib-core": {
+      "CommerceSdkValidationError": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-core/docs/api-reference/classes/CommerceSdkValidationError.md"
+    }
+  }
 }

@@ -245,39 +245,40 @@ describe("lib/commerce/http-client", () => {
         baseUrl: "https://api.commerce.adobe.com",
         expectedUrl: "https://api.commerce.adobe.com/V1/test",
       },
-    ])(
-      "should handle trailing slashes correctly for $flavor with baseUrl: $baseUrl",
-      async ({ flavor, baseUrl, expectedUrl }) => {
-        const mockFetch = vi.fn(async () =>
-          Response.json({ hello: "world" }, { status: 200 }),
-        );
+    ])("should handle trailing slashes correctly for $flavor with baseUrl: $baseUrl", async ({
+      flavor,
+      baseUrl,
+      expectedUrl,
+    }) => {
+      const mockFetch = vi.fn(async () =>
+        Response.json({ hello: "world" }, { status: 200 }),
+      );
 
-        const baseParams =
-          flavor === "paas"
-            ? TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_PAAS
-            : TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_SAAS;
+      const baseParams =
+        flavor === "paas"
+          ? TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_PAAS
+          : TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_SAAS;
 
-        const params = {
-          ...baseParams,
-          config: {
-            ...baseParams.config,
-            baseUrl,
-          },
-        } as CommerceHttpClientParams;
+      const params = {
+        ...baseParams,
+        config: {
+          ...baseParams.config,
+          baseUrl,
+        },
+      } as CommerceHttpClientParams;
 
-        const testClient = new TestAdobeCommerceHttpClient(params, mockFetch);
-        await testClient.get("test", {
-          hooks: {
-            beforeRequest: [
-              (request) => {
-                expect(request.url).toBe(expectedUrl);
-                // Ensure no double slashes in the path (except after protocol)
-                expect(request.url).not.toMatch(DOUBLE_SLASH_REGEX);
-              },
-            ],
-          },
-        });
-      },
-    );
+      const testClient = new TestAdobeCommerceHttpClient(params, mockFetch);
+      await testClient.get("test", {
+        hooks: {
+          beforeRequest: [
+            (request) => {
+              expect(request.url).toBe(expectedUrl);
+              // Ensure no double slashes in the path (except after protocol)
+              expect(request.url).not.toMatch(DOUBLE_SLASH_REGEX);
+            },
+          ],
+        },
+      });
+    });
   });
 });

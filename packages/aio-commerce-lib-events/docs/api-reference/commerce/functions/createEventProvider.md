@@ -25,7 +25,7 @@ function createEventProvider(
 }>;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/1660e782eb683cfc711de0cdc31ab1722ce9f118/packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts#L101)
+Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts#L101)
 
 Creates an event provider in the Commerce instance bound to the given [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md).
 

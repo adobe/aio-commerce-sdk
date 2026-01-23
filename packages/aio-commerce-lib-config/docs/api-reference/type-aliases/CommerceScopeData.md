@@ -8,7 +8,12 @@ type CommerceScopeData = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L17)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-config/source/types/commerce.ts#L19)
+
+Commerce API response data containing websites, store groups, and store views.
+
+This type represents the structure of scope data returned from the Adobe Commerce API
+when fetching scope information.
 
 ## Properties
 
@@ -18,7 +23,9 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:17](https
 storeGroups: StoreGroup[];
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L19)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-config/source/types/commerce.ts#L23)
+
+Array of store group definitions.
 
 ---
 
@@ -28,7 +35,9 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:19](https
 storeViews: StoreView[];
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L20)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-config/source/types/commerce.ts#L25)
+
+Array of store view definitions.
 
 ---
 
@@ -38,4 +47,6 @@ Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:20](https
 websites: Website[];
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/7a00f01d63dd49dc56fcae61314894f29322e96b/packages/aio-commerce-lib-config/source/types/commerce.ts#L18)
+Defined in: [packages/aio-commerce-lib-config/source/types/commerce.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-config/source/types/commerce.ts#L21)
+
+Array of website definitions.

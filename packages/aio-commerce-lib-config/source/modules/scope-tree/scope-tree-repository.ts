@@ -1,164 +1,166 @@
 /*
-Copyright 2025 Adobe. All rights reserved.
-This file is licensed to you under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License. You may obtain a copy
-of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 
-Unless required by applicable law or agreed to in writing, software distributed under
-the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
-OF ANY KIND, either express or implied. See the License for the specific language
-governing permissions and limitations under the License.
-*/
+import { getLogger } from "#utils/logger";
+import { getSharedFiles, getSharedState } from "#utils/repository";
+import { generateUUID } from "#utils/uuid";
 
-import AioLogger from "@adobe/aio-lib-core-logging";
-import { init as initFiles } from "@adobe/aio-lib-files";
-import { init as initState } from "@adobe/aio-lib-state";
-
-import { generateUUID } from "../../utils/uuid";
-
-import type { Files } from "@adobe/aio-lib-files";
-import type { AdobeState } from "@adobe/aio-lib-state";
 import type { ScopeNode, ScopeTree } from "./types";
 
-const logger = AioLogger(
-  "@adobe/aio-commerce-lib-config:scope-tree-repository",
-  {
-    level: process.env.LOG_LEVEL ?? "info",
-  },
-);
-
-// Shared instances to avoid re-initialization
-let sharedState: AdobeState | undefined;
-let sharedFiles: Files | undefined;
+/**
+ * Gets cached scope tree from state store.
+ *
+ * @param namespace - Namespace identifier for the scope tree.
+ * @returns Promise resolving to cached scope tree or null if not found.
+ */
+export async function getCachedScopeTree(
+  namespace: string,
+): Promise<ScopeNode[] | null> {
+  try {
+    const state = await getSharedState();
+    const cached = await state.get(`${namespace}:scope-tree`);
+    if (cached?.value) {
+      const parsed = JSON.parse(cached.value);
+      return parsed.data || null;
+    }
+    return null;
+  } catch (_error) {
+    return null;
+  }
+}
 
 /**
- * Repository for all scope tree related operations
- * Handles both state (caching) and files (persistence) operations
+ * Caches scope tree in state store with TTL.
+ *
+ * @param namespace - Namespace identifier for the scope tree.
+ * @param data - Scope tree data to cache.
+ * @param ttlSeconds - Time to live in seconds.
  */
-export class ScopeTreeRepository {
-  private async getState(): Promise<AdobeState> {
-    if (!sharedState) {
-      sharedState = await initState();
-    }
-    return sharedState;
+export async function setCachedScopeTree(
+  namespace: string,
+  data: ScopeNode[],
+  ttlSeconds: number,
+): Promise<void> {
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:scope-tree-repository",
+  );
+  try {
+    const state = await getSharedState();
+    await state.put(`${namespace}:scope-tree`, JSON.stringify({ data }), {
+      ttl: ttlSeconds,
+    });
+  } catch (error) {
+    logger.debug(
+      "Error caching scope tree:",
+      error instanceof Error ? error.message : String(error),
+    );
+    // Don't throw - caching failure shouldn't break functionality
   }
+}
 
-  private async getFiles(): Promise<Files> {
-    if (!sharedFiles) {
-      sharedFiles = await initFiles();
-    }
-    return sharedFiles;
-  }
+/**
+ * Gets persisted scope tree from files.
+ *
+ * @param namespace - Namespace identifier for the scope tree.
+ * @returns Promise resolving to scope tree, creating initial tree if not found.
+ */
+export async function getPersistedScopeTree(
+  namespace: string,
+): Promise<ScopeTree> {
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:scope-tree-repository",
+  );
+  try {
+    const files = await getSharedFiles();
+    const filePath = generateScopeFilePath(namespace);
 
-  /**
-   * Get cached scope tree from state store
-   */
-  public async getCachedScopeTree(
-    namespace: string,
-  ): Promise<ScopeNode[] | null> {
     try {
-      const state = await this.getState();
-      const cached = await state.get(`${namespace}:scope-tree`);
-      if (cached?.value) {
-        const parsed = JSON.parse(cached.value);
-        return parsed.data || null;
-      }
-      return null;
-    } catch (_error) {
-      return null;
+      const content = await files.read(filePath);
+      const data = JSON.parse(content.toString());
+      return data.scopes as ScopeTree;
+    } catch (_readError) {
+      // File doesn't exist, create and return initial tree
+      const initialTree = createInitialScopeTree();
+      await saveScopeTree(namespace, initialTree);
+      return initialTree;
     }
+  } catch (error) {
+    logger.debug(
+      "Error getting scope tree from files:",
+      error instanceof Error ? error.message : String(error),
+    );
+    // Return initial tree as fallback
+    return createInitialScopeTree();
   }
+}
 
-  /**
-   * Cache scope tree in state store with TTL
-   */
-  public async setCachedScopeTree(
-    namespace: string,
-    data: ScopeNode[],
-    ttlSeconds: number,
-  ): Promise<void> {
-    try {
-      const state = await this.getState();
-      await state.put(`${namespace}:scope-tree`, JSON.stringify({ data }), {
-        ttl: ttlSeconds,
-      });
-    } catch (error) {
-      logger.debug(
-        "Error caching scope tree:",
-        error instanceof Error ? error.message : String(error),
-      );
-      // Don't throw - caching failure shouldn't break functionality
-    }
+/**
+ * Saves scope tree to files.
+ *
+ * @param namespace - Namespace identifier for the scope tree.
+ * @param scopes - Scope tree to save.
+ *
+ * @throws {Error} If saving to files fails.
+ */
+export async function saveScopeTree(
+  namespace: string,
+  scopes: ScopeTree,
+): Promise<void> {
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:scope-tree-repository",
+  );
+  try {
+    const files = await getSharedFiles();
+    const filePath = generateScopeFilePath(namespace);
+    const data = {
+      scopes,
+      lastUpdated: new Date().toISOString(),
+      version: "1.0",
+    };
+    await files.write(filePath, JSON.stringify(data, null, 2));
+  } catch (error) {
+    logger.debug(
+      "Error saving scope tree to files:",
+      error instanceof Error ? error.message : String(error),
+    );
+    throw error;
   }
+}
 
-  /**
-   * Get persisted scope tree from files
-   */
-  public async getPersistedScopeTree(namespace: string): Promise<ScopeTree> {
-    try {
-      const files = await this.getFiles();
-      const filePath = this.generateScopeFilePath(namespace);
+/**
+ * Creates initial scope tree with global scope.
+ *
+ * @returns Initial scope tree containing only global scope.
+ */
+function createInitialScopeTree(): ScopeTree {
+  return [
+    {
+      id: generateUUID(),
+      code: "global",
+      label: "Global",
+      level: "global",
+      is_editable: true,
+      is_removable: false,
+      is_final: true,
+    },
+  ];
+}
 
-      try {
-        const content = await files.read(filePath);
-        const data = JSON.parse(content.toString());
-        return data.scopes as ScopeTree;
-      } catch (_readError) {
-        // File doesn't exist, create and return initial tree
-        const initialTree = this.createInitialScopeTree();
-        await this.saveScopeTree(namespace, initialTree);
-        return initialTree;
-      }
-    } catch (error) {
-      logger.debug(
-        "Error getting scope tree from files:",
-        error instanceof Error ? error.message : String(error),
-      );
-      // Return initial tree as fallback
-      return this.createInitialScopeTree();
-    }
-  }
-
-  /**
-   * Save scope tree to files
-   */
-  public async saveScopeTree(
-    namespace: string,
-    scopes: ScopeTree,
-  ): Promise<void> {
-    try {
-      const files = await this.getFiles();
-      const filePath = this.generateScopeFilePath(namespace);
-      const data = {
-        scopes,
-        lastUpdated: new Date().toISOString(),
-        version: "1.0",
-      };
-      await files.write(filePath, JSON.stringify(data, null, 2));
-    } catch (error) {
-      logger.debug(
-        "Error saving scope tree to files:",
-        error instanceof Error ? error.message : String(error),
-      );
-      throw error;
-    }
-  }
-
-  private createInitialScopeTree(): ScopeTree {
-    return [
-      {
-        id: generateUUID(),
-        code: "global",
-        label: "Global",
-        level: "global",
-        is_editable: true,
-        is_removable: false,
-        is_final: true,
-      },
-    ];
-  }
-
-  private generateScopeFilePath(namespace: string): string {
-    return `${namespace}/scope-tree.json`;
-  }
+/**
+ * Generates file path for scope tree storage.
+ *
+ * @param namespace - Namespace identifier.
+ * @returns File path string.
+ */
+function generateScopeFilePath(namespace: string): string {
+  return `${namespace}/scope-tree.json`;
 }

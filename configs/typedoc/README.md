@@ -26,12 +26,12 @@ This is a private package used internally within the monorepo. It's automaticall
 
 ## Usage
 
-In your package's `typedoc.json`:
+In your package's `typedoc.base.json`:
 
 ```json
 {
   "$schema": "https://typedoc.org/schema.json",
-  "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.json"],
+  "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.base.json"],
   "entryPoints": ["./source/index.ts"],
   "out": "./docs/api-reference"
 }
@@ -62,7 +62,7 @@ While the base configuration should work for most packages, you can override any
 ```json
 {
   "$schema": "https://typedoc.org/schema.json",
-  "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.json"],
+  "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.base.json"],
   "entryPoints": ["./source/index.ts"],
   "out": "./docs/api-reference",
 
@@ -78,7 +78,7 @@ For packages with multiple exports:
 
 ```json
 {
-  "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.json"],
+  "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.base.json"],
   "entryPoints": ["./source/index.ts", "./source/auth.ts", "./source/utils.ts"],
   "out": "./docs/api-reference"
 }

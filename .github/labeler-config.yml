@@ -24,6 +24,14 @@
 - changed-files:
   - any-glob-to-any-file: 'packages/aio-commerce-lib-config/**'
 
+"pkg: aio-commerce-lib-app":
+- changed-files:
+  - any-glob-to-any-file: 'packages/aio-commerce-lib-app/**'
+
+"private-pkg: scripting-utils":
+- changed-files:
+  - any-glob-to-any-file: 'packages-private/scripting-utils/**'
+
 "generator":
 - changed-files:
   - any-glob-to-any-file: 'turbo/generators/**'

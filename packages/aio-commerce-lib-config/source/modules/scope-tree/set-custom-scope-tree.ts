@@ -1,44 +1,89 @@
 /*
-Copyright 2025 Adobe. All rights reserved.
-This file is licensed to you under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License. You may obtain a copy
-of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 
-Unless required by applicable law or agreed to in writing, software distributed under
-the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
-OF ANY KIND, either express or implied. See the License for the specific language
-governing permissions and limitations under the License.
-*/
+import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "#utils/constants";
+import { generateUUID } from "#utils/uuid";
 
-import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "../../utils/constants";
-import { generateUUID } from "../../utils/uuid";
 import {
   COMMERCE_SCOPE_CODE,
   GLOBAL_SCOPE_CODE,
   validateCustomScopeRequest,
 } from "./custom-scope-tree-validation";
-import { ScopeTreeRepository } from "./scope-tree-repository";
+import * as scopeTreeRepository from "./scope-tree-repository";
 
 import type {
   CustomScopeInput,
   CustomScopeOutput,
   SetCustomScopeTreeRequest,
   SetCustomScopeTreeResponse,
-} from "../../types";
+} from "#types/index";
 import type { ScopeNode, ScopeTree, ScopeTreeContext } from "./types";
 
 /**
- * Set custom scope tree. Replaces all custom scopes with provided ones
+ * Sets the custom scope tree, replacing all existing custom scopes with the provided ones.
+ *
+ * Custom scopes allow you to define additional configuration scopes beyond the standard
+ * Commerce scopes (global, website, store, store_view). This function replaces all
+ * custom scopes, preserving system scopes (global and commerce).
+ *
+ * **Important:** If a scope with the same `code` and `level` already exists, its ID
+ * will be preserved. If `id` is provided in the input, it will be used; otherwise, a
+ * new UUID will be generated for new scopes.
+ *
+ * @param context - Scope tree context containing namespace and cache timeout.
+ * @param request - Custom scope tree request containing the scopes to set.
+ * @returns Promise resolving to response with updated custom scopes.
+ *
+ * @throws {Error} If the request validation fails (invalid scope structure, missing required fields, duplicate codes, etc.).
+ *
+ * @example
+ * ```typescript
+ * import { setCustomScopeTree } from "./modules/scope-tree";
+ *
+ * const context = { namespace: "my-app", cacheTimeout: 300000 };
+ *
+ * // Replace all custom scopes with new ones
+ * const result = await setCustomScopeTree(context, {
+ *   scopes: [
+ *     {
+ *       code: "region_us",
+ *       label: "US Region",
+ *       level: "custom",
+ *       is_editable: true,
+ *       is_final: false,
+ *       children: [
+ *         {
+ *           code: "region_us_west",
+ *           label: "US West",
+ *           level: "custom",
+ *           is_editable: true,
+ *           is_final: true,
+ *         },
+ *       ],
+ *     },
+ *   ],
+ * });
+ *
+ * // Existing scopes with matching code+level will preserve their IDs
+ * // New scopes will get new UUIDs assigned
+ * ```
  */
 export async function setCustomScopeTree(
   context: ScopeTreeContext,
   request: SetCustomScopeTreeRequest,
 ): Promise<SetCustomScopeTreeResponse> {
-  const repository = new ScopeTreeRepository();
-
   const validatedScopes = validateCustomScopeRequest(request);
 
-  const completeCurrentTree = await repository.getPersistedScopeTree(
+  const completeCurrentTree = await scopeTreeRepository.getPersistedScopeTree(
     context.namespace,
   );
   const existingCustomScopes = getExistingCustomScopes(completeCurrentTree);
@@ -50,10 +95,13 @@ export async function setCustomScopeTree(
     completeCurrentTree,
     processedCustomScopes,
   );
-  await repository.saveScopeTree(context.namespace, updatedCompleteTree);
+  await scopeTreeRepository.saveScopeTree(
+    context.namespace,
+    updatedCompleteTree,
+  );
 
   // Clear cache to ensure fresh data on next get-scope-tree call
-  await repository.setCachedScopeTree(
+  await scopeTreeRepository.setCachedScopeTree(
     context.namespace,
     updatedCompleteTree,
     0,
@@ -67,7 +115,10 @@ export async function setCustomScopeTree(
 }
 
 /**
- * Extract existing custom scopes from the complete tree
+ * Extracts existing custom scopes from the complete tree.
+ *
+ * @param completeTree - Complete scope tree including system and custom scopes.
+ * @returns Array of custom scope nodes (excluding global and commerce scopes).
  */
 function getExistingCustomScopes(completeTree: ScopeTree): ScopeNode[] {
   return completeTree.filter(
@@ -77,7 +128,11 @@ function getExistingCustomScopes(completeTree: ScopeTree): ScopeNode[] {
 }
 
 /**
- * Build updated complete tree by preserving system scopes and replacing custom scopes
+ * Builds updated complete tree by preserving system scopes and replacing custom scopes.
+ *
+ * @param currentCompleteTree - Current complete scope tree.
+ * @param newCustomScopes - New custom scopes to replace existing ones.
+ * @returns Updated complete scope tree with new custom scopes.
  */
 function buildUpdatedCompleteTree(
   currentCompleteTree: ScopeTree,
@@ -92,7 +147,11 @@ function buildUpdatedCompleteTree(
 }
 
 /**
- * Process custom scopes, preserving existing IDs where possible
+ * Processes custom scopes, preserving existing IDs where possible.
+ *
+ * @param inputScopes - Custom scope inputs to process.
+ * @param existingCustomScopes - Existing custom scopes to match against.
+ * @returns Array of processed scope nodes with preserved IDs.
  */
 function processCustomScopes(
   inputScopes: CustomScopeInput[],
@@ -104,7 +163,11 @@ function processCustomScopes(
 }
 
 /**
- * Helper to process a single scope recursively
+ * Processes a single scope recursively, preserving ID if found.
+ *
+ * @param inputScope - Custom scope input to process.
+ * @param existingCustomScopes - Existing custom scopes to match against.
+ * @returns Processed scope node with preserved or generated ID.
  */
 function processSingleScope(
   inputScope: CustomScopeInput,
@@ -135,7 +198,11 @@ function processSingleScope(
 }
 
 /**
- * Find existing ID for a scope based on code and level match
+ * Finds existing ID for a scope based on code and level match.
+ *
+ * @param inputScope - Custom scope input to find ID for.
+ * @param existingScopes - Existing scope nodes to search.
+ * @returns Existing scope ID if found, undefined otherwise.
  */
 function findExistingId(
   inputScope: CustomScopeInput,
@@ -153,7 +220,12 @@ function findExistingId(
 }
 
 /**
- * Helper to recursively search for a scope by code and level in a tree
+ * Recursively searches for a scope by code and level in a tree.
+ *
+ * @param targetCode - Scope code to find.
+ * @param targetLevel - Scope level to find.
+ * @param scopes - Array of scope nodes to search.
+ * @returns Scope ID if found, undefined otherwise.
  */
 function findInScopeTree(
   targetCode: string,
@@ -174,14 +246,20 @@ function findInScopeTree(
 }
 
 /**
- * Convert processed scopes to response format
+ * Converts processed scopes to response format.
+ *
+ * @param scopes - Processed scope nodes to convert.
+ * @returns Array of custom scope outputs.
  */
 function convertToResponseFormat(scopes: ScopeNode[]): CustomScopeOutput[] {
   return scopes.map(convertSingleScopeToOutput);
 }
 
 /**
- * Helper to convert a single scope to response format recursively
+ * Converts a single scope to response format recursively.
+ *
+ * @param scope - Scope node to convert.
+ * @returns Custom scope output.
  */
 function convertSingleScopeToOutput(scope: ScopeNode): CustomScopeOutput {
   const baseScope = {

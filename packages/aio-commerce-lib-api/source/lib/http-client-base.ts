@@ -31,6 +31,7 @@ export class HttpClientBase<T> implements KyHttpClient {
   public delete!: KyInstance["delete"];
   public patch!: KyInstance["patch"];
   public head!: KyInstance["head"];
+  public retry!: KyInstance["retry"];
   public stop!: KyInstance["stop"];
 
   /**
@@ -55,6 +56,7 @@ export class HttpClientBase<T> implements KyHttpClient {
     this.delete = this.httpClient.delete.bind(this.httpClient);
     this.patch = this.httpClient.patch.bind(this.httpClient);
     this.head = this.httpClient.head.bind(this.httpClient);
+    this.retry = this.httpClient.retry.bind(this.httpClient);
     this.stop = this.httpClient.stop;
   }
 

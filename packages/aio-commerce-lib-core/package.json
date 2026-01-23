@@ -31,8 +31,8 @@
     "exports": {
       "./*": {
         "import": {
-          "types": "./dist/es/*/index.d.ts",
-          "default": "./dist/es/*/index.js"
+          "types": "./dist/es/*/index.d.mts",
+          "default": "./dist/es/*/index.mjs"
         },
         "require": {
           "types": "./dist/cjs/*/index.d.cts",
@@ -66,6 +66,7 @@
   "scripts": {
     "prepublishOnly": "pnpm run docs",
     "build": "tsdown",
+    "publint": "publint",
     "docs": "typedoc && prettier --write '**/*.md'",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",

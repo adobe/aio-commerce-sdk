@@ -1,7 +1,7 @@
 {
   "name": "aio-commerce-sdk",
   "private": true,
-  "packageManager": "pnpm@10.22.0",
+  "packageManager": "pnpm@10.28.0",
   "engines": {
     "node": ">=20 <=24",
     "pnpm": ">=10"
@@ -13,6 +13,7 @@
     "assist:apply": "turbo run assist:apply",
     "build": "turbo run build",
     "check:ci": "turbo run check:ci",
+    "docs": "turbo run docs",
     "format": "turbo run format",
     "format:markdown": "turbo run format:markdown",
     "format:check": "turbo run format:check",
@@ -20,13 +21,14 @@
     "lint:fix": "turbo run lint:fix",
     "test": "turbo test",
     "typecheck": "turbo typecheck",
+    "publint": "turbo run publint",
     "clean:turbo": "pnpx rimraf './**/.turbo' --glob",
     "clean:modules": "pnpx rimraf './**/node_modules' --glob",
     "clean:dist": "pnpx rimraf './**/dist' --glob",
     "clean:all": "pnpm clean:turbo && pnpm clean:dist && pnpm clean:modules"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.3.2",
+    "@biomejs/biome": "2.3.11",
     "@changesets/changelog-github": "^0.5.1",
     "@changesets/cli": "^2.29.5",
     "@turbo/gen": "^2.5.4",
@@ -35,14 +37,15 @@
     "@vitest/ui": "^4.0.0",
     "husky": "^9.1.7",
     "prettier": "^3.6.2",
-    "tsdown": "^0.15.0",
+    "publint": "^0.3.15",
+    "tsdown": "^0.19.0",
     "turbo": "^2.5.4",
     "type-fest": "^5.0.0",
     "typedoc": "^0.28.7",
     "typedoc-plugin-markdown": "^4.7.1",
     "typescript": "^5.9.2",
-    "ultracite": "^6.0.0",
-    "vite-tsconfig-paths": "^5.1.4",
+    "ultracite": "^7.0.0",
+    "vite-tsconfig-paths": "^6.0.0",
     "vitest": "^4.0.0"
   },
   "lint-staged": {

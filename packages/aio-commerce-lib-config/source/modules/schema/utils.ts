@@ -1,15 +1,30 @@
+/*
+ * Copyright 2025 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { safeParse } from "valibot";
+import { validateCommerceAppConfigDomain } from "@adobe/aio-commerce-lib-app/config";
 
-import { CONFIG_SCHEMA_PATH } from "../../utils/constants";
-import { BusinessConfigSchema } from "./schema";
+import * as schemaRepository from "#modules/schema/config-schema-repository";
+import { CONFIG_SCHEMA_PATH } from "#utils/constants";
 
-import type { ConfigSchemaField } from "./index";
+import type { BusinessConfigSchema, BusinessConfigSchemaField } from "./types";
 
-/** Read bundled schema file from the runtime action */
+/**
+ * Reads bundled schema file from the runtime action.
+ *
+ * @returns Promise resolving to schema file content as JSON string, or empty array JSON if file not found.
+ */
 export async function readBundledSchemaFile(): Promise<string> {
   try {
     const configPath = CONFIG_SCHEMA_PATH;
@@ -20,7 +35,10 @@ export async function readBundledSchemaFile(): Promise<string> {
 }
 
 /**
- * Calculate schema version hash from content
+ * Calculates schema version hash from content.
+ *
+ * @param content - Schema content as string.
+ * @returns Schema version hash (first 8 characters of SHA-256 hash).
  */
 export function calculateSchemaVersion(content: string): string {
   const hashSubstringLength = 8;
@@ -31,7 +49,9 @@ export function calculateSchemaVersion(content: string): string {
 }
 
 /**
- * Read bundled schema file and return both content and calculated version
+ * Reads bundled schema file and returns both content and calculated version.
+ *
+ * @returns Promise resolving to object with schema content and version hash.
  */
 export async function readBundledSchemaWithVersion(): Promise<{
   content: string;
@@ -43,23 +63,56 @@ export async function readBundledSchemaWithVersion(): Promise<{
 }
 
 /**
- * Validate a business configuration schema, against the business config own schema.
- * @param value - The business configuration schema to validate
+ * Validates a business configuration schema against the business config schema.
+ *
+ * @param value - The business configuration schema to validate.
+ * @returns Validated schema as array of config schema fields.
+ *
+ * @throws {CommerceSdkValidationError} If the schema is invalid.
  */
 export function validateBusinessConfigSchema(value: unknown) {
-  const { output, success, issues } = safeParse(BusinessConfigSchema, value);
-
-  if (!success) {
-    throw new CommerceSdkValidationError("Invalid configuration schema", {
-      issues,
-    });
-  }
-
-  return output satisfies ConfigSchemaField[];
+  return validateCommerceAppConfigDomain(
+    value,
+    "businessConfig.schema",
+  ) satisfies BusinessConfigSchema;
 }
 
-/** Validate and parse schema from JSON content */
+/**
+ * Validates and parses schema from JSON content.
+ *
+ * @param content - Schema content as JSON string.
+ * @returns Validated schema as array of config schema fields.
+ *
+ * @throws {SyntaxError} If JSON parsing fails.
+ * @throws {CommerceSdkValidationError} If the schema is invalid.
+ */
 export function validateSchemaFromContent(content: string) {
   const rawSchema = JSON.parse(content);
-  return validateBusinessConfigSchema(rawSchema) satisfies ConfigSchemaField[];
+  return validateBusinessConfigSchema(rawSchema);
+}
+
+/**
+ * Gets password field names from the schema.
+ *
+ * @param namespace - The namespace to get the schema from.
+ * @returns Set of field names that are of type "password".
+ */
+export async function getPasswordFields(
+  namespace: string,
+): Promise<Set<string>> {
+  try {
+    const cachedSchema = await schemaRepository.getCachedSchema(namespace);
+    const schema: BusinessConfigSchemaField[] =
+      cachedSchema || JSON.parse(await schemaRepository.getPersistedSchema());
+
+    const passwordFields = new Set<string>();
+    for (const field of schema) {
+      if (field.type === "password") {
+        passwordFields.add(field.name);
+      }
+    }
+    return passwordFields;
+  } catch (_) {
+    return new Set<string>();
+  }
 }

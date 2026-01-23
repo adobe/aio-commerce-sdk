@@ -1,0 +1,131 @@
+name: Deprecate Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deprecate (e.g., 1.0.0 or @adobe/aio-commerce-lib-config@1.0.0)'
+        required: true
+        type: string
+
+      message:
+        description: 'Deprecation message'
+        required: true
+        type: string
+        default: 'This version has been deprecated. Please upgrade to the latest version.'
+      
+      unpublish:
+        description: 'Also unpublish the version (WARNING: Irreversible and discouraged by npm)'
+        required: false
+        type: boolean
+        default: false
+      
+      dry_run:
+        description: 'Dry run (simulate without making actual changes)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  deprecate:
+    name: Deprecate Package Version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Validate and normalize version
+        id: version
+        run: |
+          echo "Version input: ${{ inputs.version }}"
+          echo "Message: ${{ inputs.message }}"
+          echo "Also unpublish: ${{ inputs.unpublish }}"
+          echo "Dry run: ${{ inputs.dry_run }}"
+          
+          VERSION="${{ inputs.version }}"
+          
+          # Validate version format (major.minor.patch only)
+          # Regex source: Simplified semantic versioning pattern matching X.Y.Z format
+          # Reference: https://semver.org/ (basic version core: MAJOR.MINOR.PATCH)
+          if [[ "$VERSION" =~ ^(@[a-z0-9-]+/[a-z0-9-]+@)?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            # Valid format
+            if [[ "$VERSION" =~ ^@.+/.+@ ]]; then
+              # Already has package name
+              VALIDATED_VERSION="$VERSION"
+            else
+              # Add package name
+              VALIDATED_VERSION="@adobe/aio-lib-telemetry@$VERSION"
+            fi
+          else
+            echo "::error::Invalid version format. Expected: 'X.Y.Z' (e.g., '1.0.0') or '@adobe/aio-lib-telemetry@X.Y.Z'"
+            echo "::error::Pre-release versions and build metadata are not supported."
+            exit 1
+          fi
+          
+          echo "Validated version: $VALIDATED_VERSION"
+          echo "VALIDATED_VERSION=$VALIDATED_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Deprecate package version
+        run: |
+          VERSION="${{ steps.version.outputs.VALIDATED_VERSION }}"
+          
+          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+            echo "🔍 DRY RUN: Would deprecate: $VERSION"
+            echo "🔍 DRY RUN: With message: ${{ inputs.message }}"
+          else
+            echo "Deprecating: $VERSION"
+            npm deprecate "$VERSION" "${{ inputs.message }}"
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
+
+      - name: Unpublish package version
+        if: ${{ inputs.unpublish }}
+        run: |
+          VERSION="${{ steps.version.outputs.VALIDATED_VERSION }}"
+          
+          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+            echo "🔍 DRY RUN: Would unpublish: $VERSION"
+            echo "⚠️  WARNING: This action would be irreversible and is discouraged by npm."
+            echo "This action is irreversible and discouraged by npm."
+            echo "Consider using deprecate instead."
+          else
+            echo "Unpublishing: $VERSION"
+            npm unpublish "$VERSION"
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
+
+      - name: Verify action
+        run: |
+          VERSION="${{ steps.version.outputs.VALIDATED_VERSION }}"
+          
+          # Extract just the version number
+          VERSION_NUM="${VERSION##*@}"
+          
+          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+            echo "🔍 DRY RUN completed successfully - no actual changes were made"
+            echo "Would have deprecated version $VERSION_NUM"
+            echo "📝 With message: ${{ inputs.message }}"
+            
+            if [[ "${{ inputs.unpublish }}" == "true" ]]; then
+              echo "Would have also unpublished version $VERSION_NUM"
+            fi
+          else
+            echo "Action completed successfully"
+            echo "✅ Version $VERSION_NUM has been deprecated"
+            echo "📝 Message: ${{ inputs.message }}"
+            
+            if [[ "${{ inputs.unpublish }}" == "true" ]]; then
+              echo "✅ Version $VERSION_NUM has also been unpublished"
+            fi
+          fi

@@ -10,9 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { stringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
-
-import { stringValueSchema } from "#utils/schemas";
 
 /** The schema of the workspace configuration in the Developer Console. */
 export function workspaceConfigurationSchema(propertyName: string) {

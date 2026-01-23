@@ -1,5 +1,233 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.10.0
+
+### Minor Changes
+
+- [#192](https://github.com/adobe/aio-commerce-sdk/pull/192) [`72253b5`](https://github.com/adobe/aio-commerce-sdk/commit/72253b54e5393ed525a692b0618235c68a3a9556) Thanks [@emartinpalomas](https://github.com/emartinpalomas)! - Allow sync-commerce-scopes action to accept base_url from request parameter with .env fallback
+
+- [#189](https://github.com/adobe/aio-commerce-sdk/pull/189) [`fae57e2`](https://github.com/adobe/aio-commerce-sdk/commit/fae57e23d9d8fd6caf896e08fb2d09da9ce78bb9) Thanks [@emartinpalomas](https://github.com/emartinpalomas)! - Add password field encryption support with automatic key generation and AES-256-GCM encryption
+
+### Patch Changes
+
+- [#196](https://github.com/adobe/aio-commerce-sdk/pull/196) [`ca14df8`](https://github.com/adobe/aio-commerce-sdk/commit/ca14df8d1b351e09cbd41c5315f7e34a2daa0394) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Refactor to use recently migrated package `@adobe/aio-commerce-lib-app` instead of `@adobe/aio-commerce-lib-extensibility`
+
+- [#193](https://github.com/adobe/aio-commerce-sdk/pull/193) [`509eb85`](https://github.com/adobe/aio-commerce-sdk/commit/509eb857ae47735b5e96e7dd1d1f39dd942306fd) Thanks [@emartinpalomas](https://github.com/emartinpalomas)! - Load encryption key from .env during schema validation
+
+- Updated dependencies [[`ca14df8`](https://github.com/adobe/aio-commerce-sdk/commit/ca14df8d1b351e09cbd41c5315f7e34a2daa0394)]:
+  - @adobe/aio-commerce-lib-app@0.1.0
+
+## 0.9.1
+
+### Patch Changes
+
+- [#184](https://github.com/adobe/aio-commerce-sdk/pull/184) [`ee83466`](https://github.com/adobe/aio-commerce-sdk/commit/ee834662a3e1dae42864c4debcb8e43d1213858c) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fixes a bug within the `init` script, where `import` was always used in the template of `extensibility.config.js` and it doesn't work on non-ESM projects.
+
+## 0.9.0
+
+### Minor Changes
+
+- [#177](https://github.com/adobe/aio-commerce-sdk/pull/177) [`6ab0c02`](https://github.com/adobe/aio-commerce-sdk/commit/6ab0c02cc3710514cd0904ac24c7fcb00735c825) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - [BREAKING]: Renamed exported types for clarity:
+  - `AcceptableConfigValue` → `BusinessConfigSchemaValue`
+  - `ConfigSchemaField` → `BusinessConfigSchemaField`
+  - `ConfigSchemaOption` → `BusinessConfigSchemaListOption`
+
+  Added new exported types:
+  - `BusinessConfig`
+  - `BusinessConfigSchema`
+
+### Patch Changes
+
+- [#183](https://github.com/adobe/aio-commerce-sdk/pull/183) [`a848588`](https://github.com/adobe/aio-commerce-sdk/commit/a8485880c6460624774c659985c44aaf91feb2b9) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Rename schema object from `BusinessConfigSchema` to `SchemaBusinessConfig` to avoid confusion between the type and the schema object
+
+- [#181](https://github.com/adobe/aio-commerce-sdk/pull/181) [`3bbc49e`](https://github.com/adobe/aio-commerce-sdk/commit/3bbc49e9fe1757cba9838417d8b7f3d0e9b38f63) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove `find-up` dependency
+
+- Updated dependencies [[`a848588`](https://github.com/adobe/aio-commerce-sdk/commit/a8485880c6460624774c659985c44aaf91feb2b9), [`3bbc49e`](https://github.com/adobe/aio-commerce-sdk/commit/3bbc49e9fe1757cba9838417d8b7f3d0e9b38f63), [`3bbc49e`](https://github.com/adobe/aio-commerce-sdk/commit/3bbc49e9fe1757cba9838417d8b7f3d0e9b38f63), [`6ab0c02`](https://github.com/adobe/aio-commerce-sdk/commit/6ab0c02cc3710514cd0904ac24c7fcb00735c825)]:
+  - @adobe/aio-commerce-lib-app@0.1.0
+
+## 0.8.2
+
+### Patch Changes
+
+- [#173](https://github.com/adobe/aio-commerce-sdk/pull/173) [`6b16d0b`](https://github.com/adobe/aio-commerce-sdk/commit/6b16d0bd0d47b3f7207ca2bc8c7b54931221ca0c) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Temporarily remove unsupported field types: `password`, `boolean`, `number`, `date`.
+
+- [#171](https://github.com/adobe/aio-commerce-sdk/pull/171) [`9e4ad33`](https://github.com/adobe/aio-commerce-sdk/commit/9e4ad3363508e89878292ac898c81690f52ba456) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix `exports` in `package.json` for proper resolution
+
+- Updated dependencies [[`9e4ad33`](https://github.com/adobe/aio-commerce-sdk/commit/9e4ad3363508e89878292ac898c81690f52ba456)]:
+  - @adobe/aio-commerce-lib-api@0.4.1
+
+## 0.8.1
+
+### Patch Changes
+
+- [#167](https://github.com/adobe/aio-commerce-sdk/pull/167) [`2745786`](https://github.com/adobe/aio-commerce-sdk/commit/274578686e07261b68d912adfa4bae040a807c3a) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fixes a bug with the `generate schema` command where it was not inferring the correct command based on the package manager.
+
+- [#167](https://github.com/adobe/aio-commerce-sdk/pull/167) [`2745786`](https://github.com/adobe/aio-commerce-sdk/commit/274578686e07261b68d912adfa4bae040a807c3a) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Export the following types: `SelectorBy`, `SelectorByCode`, `SelectorByCodeAndLevel`, and `SelectorByScopeId`.
+
+- Updated dependencies [[`2745786`](https://github.com/adobe/aio-commerce-sdk/commit/274578686e07261b68d912adfa4bae040a807c3a)]:
+  - @adobe/aio-commerce-lib-api@0.4.0
+
+## 0.8.0
+
+### Minor Changes
+
+- [#163](https://github.com/adobe/aio-commerce-sdk/pull/163) [`4a66b81`](https://github.com/adobe/aio-commerce-sdk/commit/4a66b810c106e5d00f3392c7c3fc142aa3aef2d5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - [BREAKING] Refactor library to use tree-shakeable function-based API instead of class-based initialization pattern
+
+  **Breaking Changes**
+
+  **Removed `init()` function**
+
+  The library no longer uses an initialization function. Instead, all functions are exported directly from the module.
+
+  **Before:**
+
+  ```typescript
+  import { init } from "@adobe/aio-commerce-lib-config";
+
+  const config = init();
+  await config.getConfigSchema();
+  ```
+
+  **After:**
+
+  ```typescript
+  import * as libConfig from "@adobe/aio-commerce-lib-config";
+
+  await libConfig.getConfigSchema();
+  ```
+
+  **Function signature changes**
+
+  All functions now accept an optional `options` object as the last parameter for configuration options (`cacheTimeout`). Some examples:
+
+  **`getScopeTree()`**
+
+  **Before:**
+
+  ```typescript
+  await config.getScopeTree(remoteFetch?: boolean);
+  ```
+
+  **After:**
+
+  ```typescript
+  // For cached data (default)
+  await libConfig.getScopeTree();
+
+  // For fresh data from Commerce API
+  await libConfig.getScopeTree({
+    refreshData: true,
+    commerceConfig: {
+      /* Commerce client config */
+    },
+  });
+  ```
+
+  **`syncCommerceScopes()`**
+
+  **Before:**
+
+  ```typescript
+  const config = init({ commerce: commerceConfig });
+  await config.syncCommerceScopes();
+  ```
+
+  **After:**
+
+  ```typescript
+  await libConfig.syncCommerceScopes(commerceConfig, { cacheTimeout: 600 });
+  ```
+
+  **New `setGlobalLibConfigOptions()` function**
+
+  You can now set global defaults for `cacheTimeout` that will be used by all functions:
+
+  **Before:**
+
+  ```typescript
+  import { init } from "@adobe/aio-commerce-lib-config";
+
+  const config = init({
+    cacheTimeout: 3600,
+  });
+  ```
+
+  **After:**
+
+  ```typescript
+  import { setGlobalLibConfigOptions } from "@adobe/aio-commerce-lib-config";
+
+  // If not customized, the default cache timeout will be used (300 seconds)
+  setGlobalLibConfigOptions({
+    cacheTimeout: 3600,
+  });
+  ```
+
+  **Migration Guide**
+  1. Replace `import { init }` with `import * as libConfig` or use named imports
+  2. Remove all `const config = init()` calls
+  3. For `getScopeTree()` with `remoteFetch: true`, use the new `refreshData: true` pattern with `commerceConfig`
+  4. For `syncCommerceScopes()`, pass `commerceConfig` directly as the first parameter
+
+- [#163](https://github.com/adobe/aio-commerce-sdk/pull/163) [`4a66b81`](https://github.com/adobe/aio-commerce-sdk/commit/4a66b810c106e5d00f3392c7c3fc142aa3aef2d5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - [BREAKING] Refactor API to use selector pattern and improve type safety
+
+  **Breaking Changes**
+
+  **Scope Selection API Refactoring**
+
+  The configuration functions (`getConfiguration`, `getConfigurationByKey`, `setConfiguration`) now use a selector-based API instead of positional arguments with `...args`. This provides better type safety and clearer API usage.
+
+  **Before:**
+
+  ```typescript
+  import * as libConfig from "@adobe/aio-commerce-lib-config";
+
+  // Ambiguous - which argument is which?
+  await libConfig.getConfiguration("scope-id");
+  await libConfig.getConfiguration("website", "website");
+  await libConfig.getConfiguration("website");
+  ```
+
+  **After:**
+
+  ```typescript
+  import {
+    getConfiguration,
+    byScopeId,
+    byCodeAndLevel,
+    byCode,
+  } from "@adobe/aio-commerce-lib-config";
+
+  // Clear and type-safe
+  await getConfiguration(byScopeId("scope-id"));
+  await getConfiguration(byCodeAndLevel("website", "website"));
+  await getConfiguration(byCode("website"));
+  ```
+
+  **New Selector Helper Functions**
+
+  Three new helper functions are exported to create selector objects:
+  - `byScopeId(scopeId: string)` - Select a scope by its unique ID
+  - `byCodeAndLevel(code: string, level: string)` - Select a scope by code and level
+  - `byCode(code: string)` - Select a scope by code (uses default level)
+
+  **Migration Guide**
+  1. Replace positional arguments with selector helper functions:
+     - `getConfiguration("scope-id")` → `getConfiguration(byScopeId("scope-id"))`
+     - `getConfiguration("website", "website")` → `getConfiguration(byCodeAndLevel("website", "website"))`
+     - `getConfiguration("website")` → `getConfiguration(byCode("website"))`
+
+  **Documentation Improvements**
+  - Added comprehensive JSDoc comments with examples for all public API functions
+  - Added JSDoc comments for internal module functions with `@param` and `@throws` documentation
+  - Improved type documentation with descriptions
+
+### Patch Changes
+
+- [#163](https://github.com/adobe/aio-commerce-sdk/pull/163) [`4a66b81`](https://github.com/adobe/aio-commerce-sdk/commit/4a66b810c106e5d00f3392c7c3fc142aa3aef2d5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fixes a bug where the validation of business configuration schemas always succeeded as it never was actually performing a validation.
+
+- [#163](https://github.com/adobe/aio-commerce-sdk/pull/163) [`4a66b81`](https://github.com/adobe/aio-commerce-sdk/commit/4a66b810c106e5d00f3392c7c3fc142aa3aef2d5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fixes usages of the library binaries by using the package name only instead of the fully qualified org + package name. The latter was causing the binary to always be fetched from NPM, instead of using the locally installed one.
+
 ## 0.7.2
 
 ### Patch Changes

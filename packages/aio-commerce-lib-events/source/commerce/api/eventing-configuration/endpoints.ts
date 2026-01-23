@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { parseOrThrow } from "#utils/valibot";
+import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import { UpdateEventingConfigurationParamsSchema } from "./schema";
 

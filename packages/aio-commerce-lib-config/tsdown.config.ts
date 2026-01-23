@@ -11,11 +11,9 @@ governing permissions and limitations under the License.
 */
 
 import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { defineConfig } from "tsdown";
+import { mergeConfig } from "tsdown";
 
-export default defineConfig({
-  ...baseConfig,
-
+export default mergeConfig(baseConfig, {
   entry: ["./source/index.ts", "./source/commands/index.ts"],
   copy: [
     {
@@ -27,4 +25,7 @@ export default defineConfig({
       to: "./dist/es/commands/generate/actions/templates",
     },
   ],
+
+  // This package is private and needs to be bundled as a no-external dependency.
+  noExternal: ["@aio-commerce-sdk/scripting-utils"],
 });

@@ -25,7 +25,7 @@ The Commerce Events API allows you to manage event providers, subscriptions, and
 #### Creating a Commerce Events API Client
 
 ```typescript
-import { createCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events";
+import { createCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
 
 // For SaaS Commerce instances
 const commerceEventsClient = createCommerceEventsApiClient({
@@ -113,7 +113,7 @@ The Adobe I/O Events API allows you to manage event providers and metadata in th
 #### Creating an Adobe I/O Events API Client
 
 ```typescript
-import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events";
+import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 
 const ioEventsClient = createAdobeIoEventsApiClient({
   config: {
@@ -201,6 +201,69 @@ const newMetadata = await ioEventsClient.createEventMetadataForProvider({
 });
 ```
 
+#### Managing Event Registrations
+
+```typescript
+// List all registrations for a consumer organization
+const registrations = await ioEventsClient.getAllRegistrationsByConsumerOrg({
+  consumerOrgId: "your-consumer-org-id",
+});
+
+// List all registrations for a project and workspace
+const registrations = await ioEventsClient.getAllRegistrations({
+  consumerOrgId: "your-consumer-org-id",
+  projectId: "your-project-id",
+  workspaceId: "your-workspace-id",
+});
+
+// Get a specific registration by ID
+const registration = await ioEventsClient.getRegistrationById({
+  consumerOrgId: "your-consumer-org-id",
+  projectId: "your-project-id",
+  workspaceId: "your-workspace-id",
+  registrationId: "my-registration-id",
+});
+
+// Create a new registration
+const registration = await ioEventsClient.createRegistration({
+  consumerOrgId: "your-consumer-org-id",
+  projectId: "your-project-id",
+  workspaceId: "your-workspace-id",
+  name: "my-registration",
+  deliveryType: "webhook",
+  eventsOfInterest: [
+    {
+      providerId: "my-provider-id",
+      eventCode: "my-event-code",
+    },
+  ],
+});
+
+// Update a registration
+const updatedRegistration = await ioEventsClient.updateRegistration({
+  consumerOrgId: "your-consumer-org-id",
+  projectId: "your-project-id",
+  workspaceId: "your-workspace-id",
+  registrationId: "my-registration-id",
+  name: "my-updated-registration",
+  deliveryType: "webhook",
+  eventsOfInterest: [
+    {
+      providerId: "my-provider-id",
+      eventCode: "my-event-code",
+    },
+  ],
+});
+
+// Delete a registration
+await ioEventsClient.deleteRegistration({
+  consumerOrgId: "your-consumer-org-id",
+  projectId: "your-project-id",
+  workspaceId: "your-workspace-id",
+  registrationId: "my-registration-id",
+});
+```
+
 ### Custom API Clients
 
 > [!TIP]
@@ -209,7 +272,7 @@ const newMetadata = await ioEventsClient.createEventMetadataForProvider({
 You can create custom API clients with only the functions you need:
 
 ```typescript
-import { createCustomCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events";
+import { createCustomCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
 
 // Create a custom client with only specific functions
 const customClient = createCustomCommerceEventsApiClient(

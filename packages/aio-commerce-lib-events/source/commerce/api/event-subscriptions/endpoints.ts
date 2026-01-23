@@ -10,9 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils/transformations";
-
-import { parseOrThrow } from "#utils/valibot";
+import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils";
+import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import { EventSubscriptionCreateParamsSchema } from "./schema";
 
