@@ -52,14 +52,13 @@ export async function main(params) {
       });
     }
 
-    const paramsWithBaseUrl = params.commerceBaseUrl
-      ? {
-          ...params,
-          AIO_COMMERCE_API_BASE_URL: params.commerceBaseUrl,
-        }
-      : params;
+    const paramsWithCommerceConfig = {
+      ...params,
+      ...(params.commerceBaseUrl && { AIO_COMMERCE_API_BASE_URL: params.commerceBaseUrl }),
+      ...(params.commerceEnv && { AIO_COMMERCE_API_FLAVOR: params.commerceEnv }),
+    };
 
-    const commerceConfig = resolveCommerceHttpClientParams(paramsWithBaseUrl);
+    const commerceConfig = resolveCommerceHttpClientParams(paramsWithCommerceConfig);
     const result = await syncCommerceScopes(commerceConfig);
 
     if (result.error) {
