@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import type { CamelCasedPropertiesDeep } from "type-fest";
 import type { HALLink } from "#io-events/types";
 import type { DeliveryType } from "./schema";
 
@@ -69,8 +68,7 @@ export type IoEventRegistrationHalModel = IoEventRegistration & {
 };
 
 /** Defines the fields of an I/O event registration entity returned by the Adobe I/O Events API. */
-export type IoEventRegistrationOneResponse =
-  CamelCasedPropertiesDeep<IoEventRegistrationHalModel>;
+export type IoEventRegistrationOneResponse = IoEventRegistrationHalModel;
 
 /** Defines the pagination metadata for paginated responses. */
 export type PageMetadata = {
@@ -82,17 +80,17 @@ export type PageMetadata = {
 };
 
 /** Defines the fields of many I/O event registration entities returned by the Adobe I/O Events API (workspace-specific). */
-export type IoEventRegistrationManyResponse = CamelCasedPropertiesDeep<{
+export type IoEventRegistrationManyResponse = {
   _embedded: {
     registrations: IoEventRegistrationHalModel[];
   };
   _links: {
     self: HALLink;
   };
-}>;
+};
 
 /** Defines the fields of paginated I/O event registration entities returned by the Adobe I/O Events API (consumer org-level). */
-export type IoEventRegistrationPaginatedResponse = CamelCasedPropertiesDeep<{
+export type IoEventRegistrationPaginatedResponse = {
   page: PageMetadata;
   _embedded: {
     registrations: IoEventRegistrationHalModel[];
@@ -104,4 +102,4 @@ export type IoEventRegistrationPaginatedResponse = CamelCasedPropertiesDeep<{
     prev?: HALLink;
     self: HALLink;
   };
-}>;
+};

@@ -10,8 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import type { CamelCasedPropertiesDeep } from "type-fest";
-
 /** Defines the structure of a field in a Commerce event subscription. */
 export type CommerceEventSubscriptionField = {
   name: string;
@@ -40,9 +38,7 @@ export type CommerceEventSubscription = {
 };
 
 /** Defines the fields of an event subscription entity returned by the Commerce API. */
-export type CommerceEventSubscriptionOneResponse =
-  CamelCasedPropertiesDeep<CommerceEventSubscription>;
+export type CommerceEventSubscriptionOneResponse = CommerceEventSubscription;
 
 /** Defines the fields of many event subscription entities returned by the Commerce API. */
-export type CommerceEventSubscriptionManyResponse =
-  CommerceEventSubscriptionOneResponse[];
+export type CommerceEventSubscriptionManyResponse = CommerceEventSubscription[];

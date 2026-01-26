@@ -19,10 +19,8 @@
 
 ## Functions
 
-| Function                                                                                    | Description                                                                                  |
-| ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| [buildCamelCaseKeysResponseHook](functions/buildCamelCaseKeysResponseHook.md)               | Builds a hook that transforms the keys of an object to camel case.                           |
-| [buildImsAuthBeforeRequestHook](functions/buildImsAuthBeforeRequestHook.md)                 | Builds a before request hook for IMS authentication.                                         |
-| [buildIntegrationAuthBeforeRequestHook](functions/buildIntegrationAuthBeforeRequestHook.md) | Builds a before request hook for integration authentication.                                 |
-| [buildObjectKeyTransformerResponseHook](functions/buildObjectKeyTransformerResponseHook.md) | Builds a hook that transforms the keys of an object using the provided transformer function. |
-| [isAuthProvider](functions/isAuthProvider.md)                                               | Type guard to check if the given auth object is an auth provider.                            |
+| Function                                                                                    | Description                                                       |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [buildImsAuthBeforeRequestHook](functions/buildImsAuthBeforeRequestHook.md)                 | Builds a before request hook for IMS authentication.              |
+| [buildIntegrationAuthBeforeRequestHook](functions/buildIntegrationAuthBeforeRequestHook.md) | Builds a before request hook for integration authentication.      |
+| [isAuthProvider](functions/isAuthProvider.md)                                               | Type guard to check if the given auth object is an auth provider. |

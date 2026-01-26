@@ -29,7 +29,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "getEventProviderById",
@@ -46,7 +45,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "createEventProvider",
@@ -68,7 +66,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "getAllCommerceEventProviders",
@@ -83,7 +80,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "getAll3rdPartyCustomEventProviders",
@@ -98,7 +94,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "createCommerceEventProvider",
@@ -120,7 +115,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "create3rdPartyCustomEventProvider",
@@ -142,7 +136,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "getAllEventMetadataForProvider",
@@ -157,7 +150,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "getEventMetadataForEventAndProvider",
@@ -172,7 +164,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "createEventMetadataForProvider",
@@ -196,7 +187,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "getAllRegistrationsByConsumerOrg",
@@ -211,7 +201,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "getAllRegistrations",
@@ -230,7 +219,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "getRegistrationById",
@@ -251,7 +239,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "createRegistration",
@@ -287,7 +274,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "createRegistration",
@@ -319,7 +305,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: false,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "updateRegistration",
@@ -357,7 +342,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "updateRegistration",
@@ -391,7 +375,6 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: false,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "deleteRegistration",
@@ -412,6 +395,5 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: false,
   },
 ] as const;

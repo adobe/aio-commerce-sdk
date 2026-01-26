@@ -10,8 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import type { CamelCasedPropertiesDeep } from "type-fest";
-
 /** Defines the structure of a Commerce event provider. */
 export type CommerceEventProvider = {
   id: string;
@@ -23,9 +21,7 @@ export type CommerceEventProvider = {
 };
 
 /** Defines the fields of an event provider entity returned by the Commerce API. */
-export type CommerceEventProviderOneResponse =
-  CamelCasedPropertiesDeep<CommerceEventProvider>;
+export type CommerceEventProviderOneResponse = CommerceEventProvider;
 
 /** Defines the fields of many event provider entities returned by the Commerce API. */
-export type CommerceEventProviderManyResponse =
-  CommerceEventProviderOneResponse[];
+export type CommerceEventProviderManyResponse = CommerceEventProvider[];

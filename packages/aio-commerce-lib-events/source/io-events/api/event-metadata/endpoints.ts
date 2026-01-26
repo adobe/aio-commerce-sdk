@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils";
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import {
@@ -53,13 +52,7 @@ export async function getAllEventMetadataForProvider(
     params,
   );
 
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
-
-  return withHooksClient
+  return httpClient
     .get(`providers/${validatedParams.providerId}/eventmetadata`, fetchOptions)
     .json<IoEventMetadataManyResponse>();
 }
@@ -85,13 +78,7 @@ export async function getEventMetadataForEventAndProvider(
     params,
   );
 
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
-
-  return withHooksClient
+  return httpClient
     .get(
       `providers/${validatedParams.providerId}/eventmetadata/${validatedParams.eventCode}`,
       fetchOptions,
@@ -120,13 +107,7 @@ export async function createEventMetadataForProvider(
     params,
   );
 
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
-
-  return withHooksClient
+  return httpClient
     .post(
       `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/providers/${validatedParams.providerId}/eventmetadata`,
       {

@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils";
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import { EventSubscriptionCreateParamsSchema } from "./schema";
@@ -32,13 +31,7 @@ export async function getAllEventSubscriptions(
   httpClient: AdobeCommerceHttpClient,
   fetchOptions?: Options,
 ) {
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
-
-  return withHooksClient
+  return httpClient
     .get("eventing/getEventSubscriptions", fetchOptions)
     .json<CommerceEventSubscriptionManyResponse>();
 }

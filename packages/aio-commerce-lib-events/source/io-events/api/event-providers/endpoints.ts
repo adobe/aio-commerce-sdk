@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils";
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import { setArrayQueryParam, setQueryParamIfTruthy } from "#utils/query-params";
@@ -63,13 +62,7 @@ export async function getAllEventProviders(
     validatedParams.withEventMetadata,
   );
 
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
-
-  return withHooksClient
+  return httpClient
     .get(`${validatedParams.consumerOrgId}/providers`, {
       ...fetchOptions,
       searchParams: queryParams,
@@ -105,13 +98,7 @@ export async function getEventProviderById(
     validatedParams.withEventMetadata,
   );
 
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
-
-  return withHooksClient
+  return httpClient
     .get(`providers/${params.providerId}`, {
       ...fetchOptions,
       searchParams,
@@ -136,13 +123,8 @@ export async function createEventProvider(
   fetchOptions?: Options,
 ) {
   const validatedParams = parseOrThrow(EventProviderCreateParamsSchema, params);
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
 
-  return withHooksClient
+  return httpClient
     .post(
       `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/providers`,
       {
