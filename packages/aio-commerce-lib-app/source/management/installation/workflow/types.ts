@@ -51,8 +51,10 @@ export type InstallationState = {
   installationId: string;
   startedAt: string;
   completedAt?: string;
+
   status: InstallationStatus;
   phases: PhaseStatus[];
+
   data: Record<string, Record<string, unknown>>;
   error: InstallationError | null;
 };

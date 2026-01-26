@@ -11,7 +11,7 @@
  */
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { Phase, Step } from "./phase";
+import type { AnyStep, Phase } from "./phase";
 import type {
   InstallationError,
   InstallationPlan,
@@ -21,9 +21,6 @@ import type {
 
 // biome-ignore lint/suspicious/noExplicitAny: Phase/Step generics are complex, using any for flexibility
 type AnyPhase = Phase<string, any, any, any, any>;
-
-// biome-ignore lint/suspicious/noExplicitAny: Phase/Step generics are complex, using any for flexibility
-type AnyStep = Step<string, any, any, any, any>;
 
 /** Result of a step execution. */
 type StepResult<T> =

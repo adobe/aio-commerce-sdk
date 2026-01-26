@@ -10,43 +10,31 @@
  * governing permissions and limitations under the License.
  */
 
+import { definePhase } from "#management/installation/workflow/phase";
+
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { Phase } from "#management/installation/workflow/phase";
+import type { InferPhaseData } from "#management/installation/workflow/phase";
 
 /** Config type when webhooks are present. */
 type WebhooksConfig = CommerceAppConfigOutputModel & {
   webhooks: unknown[];
 };
 
-/** Error definitions for the webhooks phase. */
-type WebhooksErrors = {
-  SUBSCRIPTION_FAILED: { webhookId: string; reason: string };
-};
-
-/** Output data produced by the webhooks phase. */
-type WebhooksOutput = {
-  subscriptions: unknown[];
-};
-
 /** The webhooks installation phase. */
-export const webhooksPhase: Phase<
-  "webhooks",
-  WebhooksConfig,
-  Record<string, never>,
-  WebhooksOutput,
-  WebhooksErrors
-> = {
-  name: "webhooks",
-  when: (config): config is WebhooksConfig =>
-    "webhooks" in config && Array.isArray(config.webhooks),
-
-  steps: [
-    {
-      name: "subscriptions",
-      run({ config }) {
+export const webhooksPhase = definePhase(
+  {
+    name: "webhooks",
+    when: (config): config is WebhooksConfig =>
+      "webhooks" in config && Array.isArray(config.webhooks),
+  },
+  (steps) =>
+    steps.step("subscriptions", (s) =>
+      s.run(({ config }) => {
         const webhookCount = config.webhooks.length;
         return { subscriptionsCreated: webhookCount };
-      },
-    },
-  ],
-};
+      }),
+    ),
+);
+
+/** The accumulated output data type from the webhooks phase. */
+export type WebhooksPhaseData = InferPhaseData<typeof webhooksPhase>;

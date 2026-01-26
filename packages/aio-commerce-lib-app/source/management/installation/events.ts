@@ -10,60 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-import type { CommerceEventSubscription } from "@adobe/aio-commerce-lib-events/commerce";
-import type {
-  IoEventMetadata,
-  IoEventProvider,
-  IoEventRegistration,
-} from "@adobe/aio-commerce-lib-events/io-events";
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { CommerceEvent, ExternalEvent } from "#config/schema/eventing";
-import type { Phase } from "#management/installation/workflow/phase";
+import { definePhase } from "#management/installation/workflow/phase";
 
-const PHASE_NAME = "events" as const;
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { InferPhaseData } from "#management/installation/workflow/phase";
 
 /** Config type when eventing is present. */
 type EventsConfig = CommerceAppConfigOutputModel & {
   eventing: NonNullable<CommerceAppConfigOutputModel["eventing"]>;
-};
-
-/** Error definitions for the events phase. */
-type EventsErrors = {
-  PROVIDER_CREATION_FAILED: { providerId: string; reason: string };
-  METADATA_CREATION_FAILED: { eventType: string };
-  REGISTRATION_FAILED: { registrationId: string };
-};
-
-/** Output data produced by the events phase. */
-type EventsOutput = {
-  providers: IoEventProvider[];
-  metadata: IoEventMetadata[];
-  registrations: IoEventRegistration[];
-
-  commerce: {
-    eventingConfigured: boolean;
-    subscriptions: CommerceEventSubscription[];
-    events: Array<
-      CommerceEvent & {
-        // Link all the IDs of this phase to the events in the configuration.
-        registrationId: string;
-        subscriptionId: string;
-        metadataId: string;
-        providerId: string;
-      }
-    >;
-  };
-
-  external: {
-    events: Array<
-      // Link all the IDs of this phase to the events in the configuration.
-      ExternalEvent & {
-        registrationId: string;
-        metadataId: string;
-        providerId: string;
-      }
-    >;
-  };
 };
 
 /** Phase context with lazy-initialized API clients. */
@@ -86,69 +40,61 @@ function createEventsContext() {
   };
 }
 
-type EventsContext = ReturnType<typeof createEventsContext>;
-
 /** Check if config has commerce event sources. */
 function hasCommerceEvents(config: EventsConfig): boolean {
   return config.eventing.some((source) => source.type === "commerce");
 }
 
-/** The events installation phase. */
-export const eventsPhase: Phase<
-  typeof PHASE_NAME,
-  EventsConfig,
-  EventsContext,
-  EventsOutput,
-  EventsErrors
-> = {
-  name: PHASE_NAME,
-  when: (config): config is EventsConfig => config.eventing !== undefined,
-  context: createEventsContext,
+/** The events installation phase with type-safe step chaining. */
+export const eventsPhase = definePhase(
+  {
+    name: "events",
+    when: (config): config is EventsConfig => config.eventing !== undefined,
+    context: createEventsContext,
+  },
+  (steps) =>
+    steps
+      .step("providers", (s) =>
+        s.run(async ({ phase, fail }) => {
+          const result = await phase.ioEventsClient.createProvider();
+          if (!result.id) {
+            fail("PROVIDER_CREATION_FAILED", "No ID returned");
+          }
+          return { providerId: result.id, label: result.label };
+        }),
+      )
+      .step("metadata", (s) =>
+        s.run(async ({ phase, data }) => {
+          // ✅ data.providers is typed as { providerId: string; label: string }
+          console.log(
+            "Provider ID from previous step:",
+            data.providers.providerId,
+          );
+          const result = await phase.ioEventsClient.createMetadata();
+          return { metadataId: result.id };
+        }),
+      )
+      .step("registrations", (s) =>
+        s.run(async ({ phase, data }) => {
+          // ✅ data.metadata is also available and typed
+          console.log("Metadata ID:", data.metadata.metadataId);
+          const result = await phase.ioEventsClient.createRegistration();
+          return { registrationId: result.id };
+        }),
+      )
+      .step("commerceConfig", (s) =>
+        s.when(hasCommerceEvents).run(async ({ phase }) => {
+          await phase.commerceEventsClient.configure();
+          return { commerceConfigured: true };
+        }),
+      )
+      .step("commerceSubscriptions", (s) =>
+        s.when(hasCommerceEvents).run(async ({ phase }) => {
+          const result = await phase.commerceEventsClient.subscribe();
+          return { subscriptionId: result.subscriptionId };
+        }),
+      ),
+);
 
-  steps: [
-    {
-      name: "providers",
-      async run({ phase, fail }) {
-        const result = await phase.ioEventsClient.createProvider();
-        if (!result.id) {
-          fail("PROVIDER_CREATION_FAILED", {
-            providerId: "",
-            reason: "No ID returned",
-          });
-        }
-        return { providerId: result.id, label: result.label };
-      },
-    },
-    {
-      name: "metadata",
-      async run({ phase, data }) {
-        console.log("Provider ID from previous step:", data.providers);
-        const result = await phase.ioEventsClient.createMetadata();
-        return { metadataId: result.id };
-      },
-    },
-    {
-      name: "registrations",
-      async run({ phase }) {
-        const result = await phase.ioEventsClient.createRegistration();
-        return { registrationId: result.id };
-      },
-    },
-    {
-      name: "commerceConfig",
-      when: hasCommerceEvents,
-      async run({ phase }) {
-        await phase.commerceEventsClient.configure();
-        return { commerceConfigured: true };
-      },
-    },
-    {
-      name: "commerceSubscriptions",
-      when: hasCommerceEvents,
-      async run({ phase }) {
-        const result = await phase.commerceEventsClient.subscribe();
-        return { subscriptionId: result.subscriptionId };
-      },
-    },
-  ],
-};
+/** The accumulated output data type from the events phase. */
+export type EventsPhaseData = InferPhaseData<typeof eventsPhase>;
