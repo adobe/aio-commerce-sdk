@@ -13,7 +13,6 @@
 import {
   alphaNumericOrHyphenSchema,
   alphaNumericOrUnderscoreSchema,
-  alphaOrUnderscoreSchema,
   nonEmptyStringValueSchema,
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
@@ -22,8 +21,27 @@ const MAX_DESCRIPTION_LENGTH = 255;
 const MAX_LABEL_LENGTH = 100;
 const MAX_KEY_LENGTH = 50;
 
-/** Regex for Commerce event names that must start with "plugin." or "observer." */
-const COMMERCE_EVENT_PREFIX_REGEX = /^(?:plugin|observer)\.[a-z_]+$/;
+/**
+ * Regex for Commerce event names that must start with "plugin." or "observer."
+ * followed by lowercase letters and underscores only.
+ * Examples: "plugin.order_placed", "observer.catalog_update"
+ */
+const COMMERCE_EVENT_NAME_REGEX = /^(?:plugin|observer)\.[a-z_]+$/;
+
+/**
+ * Schema for Commerce event names.
+ * Validates that the event name starts with "plugin." or "observer."
+ * followed by lowercase letters and underscores only.
+ */
+function commerceEventNameSchema() {
+  return v.pipe(
+    nonEmptyStringValueSchema("event name"),
+    v.regex(
+      COMMERCE_EVENT_NAME_REGEX,
+      'Event name must start with "plugin." or "observer." followed by lowercase letters and underscores only (e.g., "plugin.order_placed")',
+    ),
+  );
+}
 
 /** Schema for event provider configuration */
 const ProviderSchema = v.object({
@@ -54,13 +72,7 @@ const ProviderSchema = v.object({
 
 /** Schema for Commerce event configuration */
 const CommerceEventSchema = v.object({
-  name: v.pipe(
-    alphaOrUnderscoreSchema("event name", "lowercase"),
-    v.regex(
-      COMMERCE_EVENT_PREFIX_REGEX,
-      'Event name must be prefixed with "plugin." or "observer."',
-    ),
-  ),
+  name: commerceEventNameSchema(),
   fields: v.array(
     alphaNumericOrUnderscoreSchema("event fields", "lowercase"),
     "Expected an array of event fields",

@@ -18,7 +18,6 @@ import {
   alphaNumericOrHyphenSchema,
   alphaNumericOrUnderscoreOrHyphenSchema,
   alphaNumericOrUnderscoreSchema,
-  alphaOrUnderscoreSchema,
   booleanValueSchema,
   nonEmptyStringValueSchema,
   stringValueSchema,
@@ -573,92 +572,6 @@ describe("alphaNumericOrHyphenSchema", () => {
     it("should include casing info in error message", () => {
       try {
         v.parse(schema, "test-value");
-        expect.fail("Should have thrown an error");
-      } catch (error) {
-        expect(error).toHaveProperty("issues");
-        expect((error as any).issues[0].message).toContain("uppercase only");
-      }
-    });
-  });
-});
-
-describe("alphaOrUnderscoreSchema", () => {
-  describe("with default casing (any)", () => {
-    const schema = alphaOrUnderscoreSchema("testField");
-
-    it("should accept lowercase alpha with underscores", () => {
-      expect(() => v.parse(schema, "test_value")).not.toThrow();
-    });
-
-    it("should accept uppercase alpha with underscores", () => {
-      expect(() => v.parse(schema, "TEST_VALUE")).not.toThrow();
-    });
-
-    it("should accept mixed case alpha with underscores", () => {
-      expect(() => v.parse(schema, "Test_Value")).not.toThrow();
-    });
-
-    it("should reject strings with numbers", () => {
-      expect(() => v.parse(schema, "test_value_123")).toThrow();
-    });
-
-    it("should reject strings with hyphens", () => {
-      expect(() => v.parse(schema, "test-value")).toThrow();
-    });
-
-    it("should reject strings with special characters", () => {
-      expect(() => v.parse(schema, "test@value")).toThrow();
-    });
-  });
-
-  describe("with lowercase casing", () => {
-    const schema = alphaOrUnderscoreSchema("testField", "lowercase");
-
-    it("should accept lowercase alpha with underscores", () => {
-      expect(() => v.parse(schema, "test_value")).not.toThrow();
-    });
-
-    it("should reject uppercase letters", () => {
-      expect(() => v.parse(schema, "TEST_VALUE")).toThrow();
-    });
-
-    it("should reject mixed case", () => {
-      expect(() => v.parse(schema, "Test_Value")).toThrow();
-    });
-
-    it("should reject numbers", () => {
-      expect(() => v.parse(schema, "test123")).toThrow();
-    });
-
-    it("should include casing info in error message", () => {
-      try {
-        v.parse(schema, "TEST_VALUE");
-        expect.fail("Should have thrown an error");
-      } catch (error) {
-        expect(error).toHaveProperty("issues");
-        expect((error as any).issues[0].message).toContain("lowercase only");
-      }
-    });
-  });
-
-  describe("with uppercase casing", () => {
-    const schema = alphaOrUnderscoreSchema("testField", "uppercase");
-
-    it("should accept uppercase alpha with underscores", () => {
-      expect(() => v.parse(schema, "TEST_VALUE")).not.toThrow();
-    });
-
-    it("should reject lowercase letters", () => {
-      expect(() => v.parse(schema, "test_value")).toThrow();
-    });
-
-    it("should reject mixed case", () => {
-      expect(() => v.parse(schema, "Test_Value")).toThrow();
-    });
-
-    it("should include casing info in error message", () => {
-      try {
-        v.parse(schema, "test_value");
         expect.fail("Should have thrown an error");
       } catch (error) {
         expect(error).toHaveProperty("issues");
