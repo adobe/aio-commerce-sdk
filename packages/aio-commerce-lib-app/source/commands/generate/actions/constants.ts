@@ -10,14 +10,28 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  APP_MANIFEST_FILE,
-  GENERATED_ACTIONS_PATH,
-  GENERATED_PATH,
-  PACKAGE_NAME,
-} from "#commands/constants";
+import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
 
-import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
+import type {
+  ActionDefinition,
+  ExtConfig,
+} from "@aio-commerce-sdk/scripting-utils/yaml";
+
+/** The list of Commerce variables that are required for the runtime actions */
+export const COMMERCE_VARIABLES = [
+  "AIO_COMMERCE_API_BASE_URL",
+  "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
+  "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
+  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID",
+  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL",
+  "AIO_COMMERCE_AUTH_IMS_ORG_ID",
+  "AIO_COMMERCE_AUTH_IMS_SCOPES",
+] as const satisfies string[];
+
+/** The inputs for the generated runtime actions */
+export const COMMERCE_ACTION_INPUTS = Object.fromEntries(
+  COMMERCE_VARIABLES.map((variable) => [variable, `$${variable}`] as const),
+);
 
 /** The list of runtime actions to generate */
 export const RUNTIME_ACTIONS = [
@@ -27,10 +41,49 @@ export const RUNTIME_ACTIONS = [
   },
 ];
 
+type ActionConfigOptions = {
+  inputs?: Record<string, string>;
+  web?: "yes" | "no";
+  timeout?: number;
+};
+
+/**
+ * Creates a runtime action configuration.
+ * @param actionName - The name of the action.
+ * @param options - Optional configuration options.
+ */
+function createActionConfig(
+  actionName: string,
+  options: ActionConfigOptions = {},
+) {
+  const { inputs, web = "yes", timeout } = options;
+
+  const def: ActionDefinition = {
+    function: `${GENERATED_ACTIONS_PATH}/${actionName}.js`,
+    web,
+    runtime: "nodejs:22",
+    annotations: {
+      "require-adobe-auth": true,
+      final: true,
+    },
+  };
+
+  if (inputs !== undefined) {
+    def.inputs = inputs;
+  }
+
+  if (timeout !== undefined) {
+    def.limits = { timeout };
+  }
+
+  return def;
+}
+
 /** The ext.config.yaml configuration */
 export const EXT_CONFIG: ExtConfig = {
   hooks: {
-    "pre-app-build": "$packageExec aio-commerce-lib-app generate manifest",
+    "pre-app-build":
+      "$packageExec aio-commerce-lib-app generate manifest && $packageExec aio-commerce-lib-auth sync-ims-credentials",
   },
 
   operations: {
@@ -47,19 +100,7 @@ export const EXT_CONFIG: ExtConfig = {
       [PACKAGE_NAME]: {
         license: "Apache-2.0",
         actions: {
-          "get-app-config": {
-            function: `${GENERATED_ACTIONS_PATH}/get-app-config.js`,
-            include: [
-              [`${GENERATED_PATH}/${APP_MANIFEST_FILE}`, `${PACKAGE_NAME}/`],
-            ],
-
-            web: "yes",
-            runtime: "nodejs:22",
-            annotations: {
-              "require-adobe-auth": true,
-              final: true,
-            },
-          },
+          "get-app-config": createActionConfig("get-app-config"),
         },
       },
     },

@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { readFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
@@ -25,10 +24,6 @@ import { validateCommerceAppConfig } from "./validate";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 const jiti = createJiti(import.meta.url);
-
-/** The path to the bundled app config file. */
-const BUNDLED_APP_COMMERCE_CONFIG_PATH =
-  "app-management/app.commerce.manifest.json";
 
 // Config paths to search for. In order of likely appearance to speed up the check.
 const configPaths = Object.freeze([
@@ -142,26 +137,4 @@ export async function parseCommerceAppConfig(cwd = process.cwd()) {
   return validateCommerceAppConfig(
     config,
   ) satisfies CommerceAppConfigOutputModel;
-}
-
-/**
- * Read the bundled commerce app config file
- *
- * @throws {Error} If the bundled commerce app config file is not found or if it is invalid
- */
-export async function readBundledCommerceAppConfig() {
-  try {
-    const fileContents = await readFile(
-      BUNDLED_APP_COMMERCE_CONFIG_PATH,
-      "utf-8",
-    );
-
-    return validateCommerceAppConfig(JSON.parse(fileContents));
-  } catch (error) {
-    const message = stringifyError(error);
-    throw new Error(
-      `Failed to read bundled commerce app config file: ${message}`,
-      { cause: error },
-    );
-  }
 }
