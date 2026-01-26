@@ -227,7 +227,9 @@ export function resolveCommerceHttpClientParams(
 ): CommerceHttpClientParams {
   if (allNonEmpty(params, ["AIO_COMMERCE_API_BASE_URL"])) {
     const baseUrl = String(params.AIO_COMMERCE_API_BASE_URL);
-    const flavor = resolveCommerceFlavorFromApiUrl(baseUrl);
+    const flavor =
+      (params.commerceEnv as CommerceFlavor) ||
+      resolveCommerceFlavorFromApiUrl(baseUrl);
     const authParams = resolveAuthParams(params);
 
     if (flavor === "saas" && authParams.strategy !== "ims") {
