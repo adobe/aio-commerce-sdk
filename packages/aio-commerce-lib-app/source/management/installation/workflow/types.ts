@@ -10,17 +10,20 @@
  * governing permissions and limitations under the License.
  */
 
+import type { EventsPhaseData } from "../events";
+import type { WebhooksPhaseData } from "../webhooks";
+
 /** Status of a phase or step. */
 export type ExecutionStatus =
   | "pending"
-  | "in_progress"
+  | "in-progress"
   | "succeeded"
   | "failed";
 
 /** Overall installation status. */
 export type InstallationStatus =
   | "pending"
-  | "in_progress"
+  | "in-progress"
   | "succeeded"
   | "failed";
 
@@ -46,6 +49,17 @@ export type PhaseStatus = {
   steps: StepStatus[];
 };
 
+/**
+ * Known phase data outputs.
+ * This provides type hints for known phases while allowing unknown step data.
+ */
+export type InstallationData = {
+  [key: string]: unknown;
+
+  events?: EventsPhaseData;
+  webhooks?: WebhooksPhaseData;
+};
+
 /** The full installation state, persisted and returned by get-install-status. */
 export type InstallationState = {
   installationId: string;
@@ -55,7 +69,7 @@ export type InstallationState = {
   status: InstallationStatus;
   phases: PhaseStatus[];
 
-  data: Record<string, Record<string, unknown>>;
+  data: InstallationData;
   error: InstallationError | null;
 };
 

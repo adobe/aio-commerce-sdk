@@ -59,7 +59,7 @@ function createInitialState(plan: InstallationPlan): InstallationState {
   return {
     installationId: plan.id,
     startedAt: new Date().toISOString(),
-    status: "in_progress",
+    status: "in-progress",
     phases: plan.phases.map((p) => ({
       name: p.name,
       status: "pending",
@@ -136,7 +136,7 @@ async function runPhase(
   const phaseCtx = phase.context ? await phase.context() : {};
   const phaseData: Record<string, unknown> = {};
 
-  phaseStatus.status = "in_progress";
+  phaseStatus.status = "in-progress";
   await store.save(state);
 
   for (const step of phase.steps) {
@@ -145,7 +145,7 @@ async function runPhase(
       continue; // Step was filtered out by condition
     }
 
-    stepStatus.status = "in_progress";
+    stepStatus.status = "in-progress";
     await store.save(state);
 
     const result = await runStep(step, phase.name, config, phaseCtx, phaseData);
