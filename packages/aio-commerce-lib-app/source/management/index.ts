@@ -17,4 +17,4 @@
  * @packageDocumentation
  */
 
-export type { PhaseDefinition } from "./installation/workflow/phase";
+export type { Phase } from "./installation/workflow/phase";

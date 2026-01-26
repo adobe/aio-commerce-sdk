@@ -10,115 +10,65 @@
  * governing permissions and limitations under the License.
  */
 
-import type AioLogger from "@adobe/aio-lib-core-logging";
-import type { EmptyObject } from "type-fest";
+/** Status of a phase or step. */
+export type ExecutionStatus =
+  | "pending"
+  | "in_progress"
+  | "succeeded"
+  | "failed";
 
-/** Shared context available to all phases and steps during installation. */
-export type InstallationContext = {
-  params: Record<string, unknown>;
-  logger: ReturnType<typeof AioLogger>;
+/** Overall installation status. */
+export type InstallationStatus =
+  | "pending"
+  | "in_progress"
+  | "succeeded"
+  | "failed";
+
+/** A structured error with a key for i18n and optional payload. */
+export type InstallationError<TPayload = unknown> = {
+  phase: string;
+  step: string;
+  key: string;
+  message?: string;
+  payload?: TPayload;
 };
 
-/**
- * Error definition map: maps error keys to their payload types.
- * Use `void` for errors with no payload.
- */
-export type ErrorDefinitions = Record<string, unknown>;
-
-/** Runtime error shape for step failures. */
-export type StepError<TPayload extends Record<string, unknown> = EmptyObject> =
-  {
-    key: string;
-    message?: string;
-    payload?: TPayload;
-  };
-
-/** The result of a step execution. */
-export type StepResult<TData> =
-  | { status: "success"; data: TData }
-  | { status: "failed"; error: StepError };
-
-/**
- * Helper utilities for step execution.
- * TErrorDefs maps error keys to their payload types.
- */
-export type StepHelpers<TErrorDefs extends ErrorDefinitions> = {
-  success: <T>(data: T) => StepResult<T>;
-  failed: <K extends keyof TErrorDefs & string>(
-    ...args: TErrorDefs[K] extends void
-      ? [key: K, message?: string]
-      : [key: K, payload: TErrorDefs[K], message?: string]
-  ) => StepResult<never>;
-};
-
-/** Metadata for a phase or step. */
-export type PhaseMeta = {
-  /** Human-readable label for displaying in UIs. */
-  label: string;
-
-  /** Description of what this phase/step does. */
-  description: string;
-};
-
-/** Metadata for a step within a phase. */
-export type StepMeta = PhaseMeta;
-
-/** A step definition returned by `planSteps`. */
-export type StepDefinition = {
-  /** Unique name of the step within the phase. */
+/** Status of a single step in the installation. */
+export type StepStatus = {
   name: string;
-
-  /** Metadata for the step. */
-  meta: StepMeta;
+  status: ExecutionStatus;
 };
 
-/** Context passed to step executor functions. */
-export type StepContext<
-  TData,
-  TPhaseCtx,
-  TErrorDefs extends ErrorDefinitions,
-> = {
-  /** Accumulated data from previous steps. */
-  data: TData;
-
-  /** Phase-specific context (API clients, etc.). */
-  phaseContext: TPhaseCtx;
-
-  /** Shared installation context (params, logger, etc.). */
-  installation: InstallationContext;
-
-  /** Helper functions for returning success/failure. */
-  helpers: StepHelpers<TErrorDefs>;
+/** Status of a phase in the installation. */
+export type PhaseStatus = {
+  name: string;
+  status: ExecutionStatus;
+  steps: StepStatus[];
 };
 
-/** A step executor function. */
-export type StepExecutor<
-  TConfig,
-  TData,
-  TPhaseCtx,
-  TOutput,
-  TErrorDefs extends ErrorDefinitions,
-> = (
-  config: TConfig,
-  ctx: StepContext<TData, TPhaseCtx, TErrorDefs>,
-) => Promise<StepResult<TOutput>> | StepResult<TOutput>;
+/** The full installation state, persisted and returned by get-install-status. */
+export type InstallationState = {
+  installationId: string;
+  startedAt: string;
+  completedAt?: string;
+  status: InstallationStatus;
+  phases: PhaseStatus[];
+  data: Record<string, Record<string, unknown>>;
+  error: InstallationError | null;
+};
 
-/**
- * The plan object passed to the phase handler.
- * Provides utilities for running steps and tracking progress.
- */
-export type PhasePlan<
-  TConfig,
-  TData,
-  TPhaseCtx,
-  TErrorDefs extends ErrorDefinitions = ErrorDefinitions,
-> = {
-  /**
-   * Run a step if it's in the plan.
-   * Automatically handles skipping, progress tracking, and data accumulation.
-   */
-  run: <TOutput>(
-    step: string,
-    executor: StepExecutor<TConfig, TData, TPhaseCtx, TOutput, TErrorDefs>,
-  ) => Promise<PhasePlan<TConfig, TData & TOutput, TPhaseCtx, TErrorDefs>>;
+/** Interface for persisting installation state. */
+export interface InstallationStateStore {
+  get(installationId: string): Promise<InstallationState | null>;
+  save(state: InstallationState): Promise<void>;
+}
+
+/** The serializable installation plan. */
+export type InstallationPlan = {
+  id: string;
+  createdAt: string;
+  phases: Array<{
+    name: string;
+    steps: string[];
+  }>;
 };

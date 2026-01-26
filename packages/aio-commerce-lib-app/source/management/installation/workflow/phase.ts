@@ -11,73 +11,61 @@
  */
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type {
-  ErrorDefinitions,
-  InstallationContext,
-  PhaseMeta,
-  PhasePlan,
-  StepDefinition,
-} from "./types";
 
-/**
- * A phase definition for the installation workflow.
- *
- * @example
- * const eventsPhase: PhaseDefinition<EventsConfig, EventsContext, EventsErrors> = {
- *   name: "events",
- *   meta: { label: "Events", description: "Sets up eventing" },
- *   when: hasEventSources,
- *   context: (installation) => ({
- *     ioEventsClient: createIoEventsClient(installation.params),
- *   }),
- *   planSteps: (config) => [...],
- *   async handler(config, installation, plan) {
- *     let p = plan;
- *     p = await p.run("step1", (cfg, { phaseContext, helpers }) => {
- *       phaseContext.ioEventsClient.doSomething();
- *       return helpers.success({ foo: 1 });
- *     });
- *     return p;
- *   },
- * };
- */
-export type PhaseDefinition<
-  TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
-  TPhaseCtx = unknown,
-  TErrorDefs extends ErrorDefinitions = ErrorDefinitions,
+/** Error definitions map: error keys to their payload types. */
+export type ErrorDefinitions = Record<string, unknown>;
+
+/** Context available to all steps during execution. */
+export type StepContext<
+  TConfig,
+  TPhaseCtx,
+  TErrors extends ErrorDefinitions,
 > = {
-  name: string;
-  meta: PhaseMeta;
-  when: (config: CommerceAppConfigOutputModel) => config is TConfig;
+  /** The narrowed app configuration. */
+  config: TConfig;
 
-  /** Optional factory to create phase-specific context (API clients, etc.). */
-  context?: (
-    installation: InstallationContext,
-  ) => TPhaseCtx | Promise<TPhaseCtx>;
+  /** Phase-specific context (API clients, etc.). */
+  phase: TPhaseCtx;
 
-  planSteps: (config: TConfig) => StepDefinition[];
-  handler: (
-    config: TConfig,
-    installation: InstallationContext,
-    plan: PhasePlan<TConfig, Record<string, never>, TPhaseCtx, TErrorDefs>,
-  ) => Promise<PhasePlan<TConfig, unknown, TPhaseCtx, TErrorDefs>>;
+  /** Accumulated data from previous steps, keyed by step name. */
+  data: Record<string, unknown>;
+
+  /** Fail the step with a typed error. */
+  fail: <K extends keyof TErrors & string>(
+    key: K,
+    ...args: TErrors[K] extends undefined
+      ? [message?: string]
+      : [payload: TErrors[K], message?: string]
+  ) => never;
 };
 
-/** Infer the output data of the given phase. */
-export type InferPhaseData<TPhase> =
-  TPhase extends PhaseDefinition<
-    infer _TConfig,
-    infer _TPhaseCtx,
-    infer _TErrorDefs
-  >
-    ? ReturnType<TPhase["handler"]> extends Promise<
-        PhasePlan<
-          infer _TConfig,
-          infer TData,
-          infer _TPhaseCtx,
-          infer _TErrorDefs
-        >
-      >
-      ? TData
-      : never
-    : never;
+/** A step definition within a phase. */
+export type Step<
+  TName extends string,
+  TConfig,
+  TPhaseCtx,
+  TOutput,
+  TErrors extends ErrorDefinitions,
+> = {
+  name: TName;
+  when?: (config: TConfig) => boolean;
+
+  run: (
+    ctx: StepContext<TConfig, TPhaseCtx, TErrors>,
+  ) => Promise<TOutput> | TOutput;
+};
+
+/** Phase definition. */
+export type Phase<
+  TName extends string,
+  TConfig extends CommerceAppConfigOutputModel,
+  TPhaseCtx,
+  _TOutput extends Record<string, unknown>,
+  TErrors extends ErrorDefinitions = ErrorDefinitions,
+> = {
+  name: TName;
+  when: (config: CommerceAppConfigOutputModel) => config is TConfig;
+
+  context?: () => TPhaseCtx | Promise<TPhaseCtx>;
+  steps: Step<string, TConfig, TPhaseCtx, unknown, TErrors>[];
+};

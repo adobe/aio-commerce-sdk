@@ -10,161 +10,145 @@
  * governing permissions and limitations under the License.
  */
 
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { CommerceEventSubscription } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
-  InferPhaseData,
-  PhaseDefinition,
-} from "#management/installation/workflow/phase";
-import type { StepDefinition } from "#management/installation/workflow/types";
+  IoEventMetadata,
+  IoEventProvider,
+  IoEventRegistration,
+} from "@adobe/aio-commerce-lib-events/io-events";
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { CommerceEvent, ExternalEvent } from "#config/schema/eventing";
+import type { Phase } from "#management/installation/workflow/phase";
 
-type EventsPhaseConfig = CommerceAppConfigOutputModel & {
+const PHASE_NAME = "events" as const;
+
+/** Config type when eventing is present. */
+type EventsConfig = CommerceAppConfigOutputModel & {
   eventing: NonNullable<CommerceAppConfigOutputModel["eventing"]>;
 };
 
-/** Error definitions for the events phase. Maps error keys to their payloads. */
-type EventsPhaseErrors = {
-  PROVIDER_CREATION_FAILED: { providerId: string };
+/** Error definitions for the events phase. */
+type EventsErrors = {
+  PROVIDER_CREATION_FAILED: { providerId: string; reason: string };
+  METADATA_CREATION_FAILED: { eventType: string };
+  REGISTRATION_FAILED: { registrationId: string };
 };
 
-/** Returns true if the given app config contains eventing data. */
-function hasEventSources(
-  config: CommerceAppConfigOutputModel,
-): config is EventsPhaseConfig {
-  return config.eventing !== undefined;
-}
+/** Output data produced by the events phase. */
+type EventsOutput = {
+  providers: IoEventProvider[];
+  metadata: IoEventMetadata[];
+  registrations: IoEventRegistration[];
 
-/** Tells whether the given eventing configuration has commerce events. */
-function hasCommerceEvents(config: EventsPhaseConfig): boolean {
-  return config.eventing.some((source) => source.type === "commerce");
-}
+  commerce: {
+    eventingConfigured: boolean;
+    subscriptions: CommerceEventSubscription[];
+    events: Array<
+      CommerceEvent & {
+        // Link all the IDs of this phase to the events in the configuration.
+        registrationId: string;
+        subscriptionId: string;
+        metadataId: string;
+        providerId: string;
+      }
+    >;
+  };
 
-/** Creates the phase context with lazy-initialized API clients. */
-function createEventsPhaseContext() {
+  external: {
+    events: Array<
+      // Link all the IDs of this phase to the events in the configuration.
+      ExternalEvent & {
+        registrationId: string;
+        metadataId: string;
+        providerId: string;
+      }
+    >;
+  };
+};
+
+/** Phase context with lazy-initialized API clients. */
+function createEventsContext() {
   return {
     get ioEventsClient() {
-      // Lazy init - would create the real client here
-      return { createProvider: () => Promise.resolve({ id: "provider-1" }) };
+      return {
+        createProvider: () =>
+          Promise.resolve({ id: "provider-1", label: "My Provider" }),
+        createMetadata: () => Promise.resolve({ id: "meta-1" }),
+        createRegistration: () => Promise.resolve({ id: "reg-1" }),
+      };
     },
     get commerceEventsClient() {
-      // Lazy init - would create the real client here
-      return { subscribe: () => Promise.resolve({ subscriptionId: "sub-1" }) };
+      return {
+        configure: () => Promise.resolve({ configured: true }),
+        subscribe: () => Promise.resolve({ subscriptionId: "sub-1" }),
+      };
     },
   };
 }
 
-/** The phase context type. */
-type EventsPhaseContext = ReturnType<typeof createEventsPhaseContext>;
+type EventsContext = ReturnType<typeof createEventsContext>;
 
-/** Phase metadata. */
-const PHASE_META = {
-  label: "Eventing Configuration",
-  description:
-    "Sets up eventing infrastructure (providers, metadata, registrations)",
-} as const;
+/** Check if config has commerce event sources. */
+function hasCommerceEvents(config: EventsConfig): boolean {
+  return config.eventing.some((source) => source.type === "commerce");
+}
 
-/** Step definitions. */
-const STEPS = {
-  providers: {
-    name: "providers",
-    meta: {
-      label: "Create Providers",
-      description: "Create the event providers in Adobe I/O",
-    },
-  },
-  metadata: {
-    name: "metadata",
-    meta: {
-      label: "Create Metadata",
-      description: "Create the metadata of each event to be installed",
-    },
-  },
-  registrations: {
-    name: "registrations",
-    meta: {
-      label: "Create Registrations",
-      description: "Bind the events to their specified runtime actions",
-    },
-  },
-  commerceConfig: {
-    name: "commerceConfig",
-    meta: {
-      label: "Configure Commerce Events",
-      description: "Set up commerce eventing",
-    },
-  },
-  commerceSubscriptions: {
-    name: "commerceSubscriptions",
-    meta: {
-      label: "Create Commerce Subscriptions",
-      description: "Subscribe the app events to Adobe Commerce",
-    },
-  },
-} as const satisfies Record<string, StepDefinition>;
+/** The events installation phase. */
+export const eventsPhase: Phase<
+  typeof PHASE_NAME,
+  EventsConfig,
+  EventsContext,
+  EventsOutput,
+  EventsErrors
+> = {
+  name: PHASE_NAME,
+  when: (config): config is EventsConfig => config.eventing !== undefined,
+  context: createEventsContext,
 
-/** The phase to install the eventing infrastructure of an app. */
-export const eventsPhase = {
-  name: "events",
-  meta: PHASE_META,
-
-  when: hasEventSources,
-  context: createEventsPhaseContext,
-
-  planSteps(config) {
-    const steps: StepDefinition[] = [
-      STEPS.providers,
-      STEPS.metadata,
-      STEPS.registrations,
-    ];
-
-    if (hasCommerceEvents(config)) {
-      steps.push(STEPS.commerceConfig, STEPS.commerceSubscriptions);
-    }
-
-    return steps;
-  },
-
-  async handler(_config, installation, plan) {
-    const { logger } = installation;
-
-    let p = plan;
-
-    p = await p.run("providers", async (_cfg, { phaseContext, helpers }) => {
-      logger.debug("Creating event providers...");
-      const provider = await phaseContext.ioEventsClient.createProvider();
-      return helpers.success({ providerId: provider.id });
-    });
-
-    p = await p.run("metadata", (_cfg, { helpers }) => {
-      logger.debug("Creating event metadata...");
-      return helpers.success({ metadataCreated: true });
-    });
-
-    p = await p.run("registrations", (_cfg, { helpers }) => {
-      logger.debug("Creating event registrations...");
-      return helpers.success({ registrationsCreated: true });
-    });
-
-    p = await p.run("commerceConfig", (_cfg, { helpers }) => {
-      logger.debug("Configuring commerce events...");
-      return helpers.success({ commerceConfigured: true });
-    });
-
-    p = await p.run(
-      "commerceSubscriptions",
-      async (_cfg, { phaseContext, helpers }) => {
-        logger.debug("Creating commerce subscriptions...");
-        const sub = await phaseContext.commerceEventsClient.subscribe();
-        return helpers.success({ subscriptionId: sub.subscriptionId });
+  steps: [
+    {
+      name: "providers",
+      async run({ phase, fail }) {
+        const result = await phase.ioEventsClient.createProvider();
+        if (!result.id) {
+          fail("PROVIDER_CREATION_FAILED", {
+            providerId: "",
+            reason: "No ID returned",
+          });
+        }
+        return { providerId: result.id, label: result.label };
       },
-    );
-
-    return p;
-  },
-} as const satisfies PhaseDefinition<
-  EventsPhaseConfig,
-  EventsPhaseContext,
-  EventsPhaseErrors
->;
-
-/** The output data of the events phase. */
-export type EventsPhaseData = InferPhaseData<typeof eventsPhase>;
+    },
+    {
+      name: "metadata",
+      async run({ phase, data }) {
+        console.log("Provider ID from previous step:", data.providers);
+        const result = await phase.ioEventsClient.createMetadata();
+        return { metadataId: result.id };
+      },
+    },
+    {
+      name: "registrations",
+      async run({ phase }) {
+        const result = await phase.ioEventsClient.createRegistration();
+        return { registrationId: result.id };
+      },
+    },
+    {
+      name: "commerceConfig",
+      when: hasCommerceEvents,
+      async run({ phase }) {
+        await phase.commerceEventsClient.configure();
+        return { commerceConfigured: true };
+      },
+    },
+    {
+      name: "commerceSubscriptions",
+      when: hasCommerceEvents,
+      async run({ phase }) {
+        const result = await phase.commerceEventsClient.subscribe();
+        return { subscriptionId: result.subscriptionId };
+      },
+    },
+  ],
+};

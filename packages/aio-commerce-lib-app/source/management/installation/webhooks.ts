@@ -11,56 +11,42 @@
  */
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { PhaseDefinition } from "#management/installation/workflow/phase";
-import type { StepDefinition } from "#management/installation/workflow/types";
+import type { Phase } from "#management/installation/workflow/phase";
 
-type WebhooksPhaseConfig = CommerceAppConfigOutputModel & {
-  webhooks: NonNullable<CommerceAppConfigOutputModel["webhooks"]>;
+/** Config type when webhooks are present. */
+type WebhooksConfig = CommerceAppConfigOutputModel & {
+  webhooks: unknown[];
 };
 
-/** Returns true if the given app config contains webhook data. */
-function hasWebhooks(
-  config: CommerceAppConfigOutputModel,
-): config is WebhooksPhaseConfig {
-  return config.webhooks !== undefined;
-}
+/** Error definitions for the webhooks phase. */
+type WebhooksErrors = {
+  SUBSCRIPTION_FAILED: { webhookId: string; reason: string };
+};
 
-/** Phase metadata. */
-const PHASE_META = {
-  label: "Webhooks Configuration",
-  description: "Configures webhook in Adobe Commerce",
-} as const;
+/** Output data produced by the webhooks phase. */
+type WebhooksOutput = {
+  subscriptions: unknown[];
+};
 
-/** Step definitions. */
-const STEPS = {
-  commerceSubscriptions: {
-    name: "commerceSubscriptions",
-    meta: {
-      label: "Create Commerce Subscriptions",
-      description:
-        "Create the subscriptions for each webhook in Adobe Commerce",
-    },
-  },
-} as const satisfies Record<string, StepDefinition>;
-
-/** The phase to install the webhooks infrastructure of an app. */
-export const webhooksPhase = {
+/** The webhooks installation phase. */
+export const webhooksPhase: Phase<
+  "webhooks",
+  WebhooksConfig,
+  Record<string, never>,
+  WebhooksOutput,
+  WebhooksErrors
+> = {
   name: "webhooks",
-  meta: PHASE_META,
+  when: (config): config is WebhooksConfig =>
+    "webhooks" in config && Array.isArray(config.webhooks),
 
-  when: hasWebhooks,
-  planSteps: () => [STEPS.commerceSubscriptions],
-
-  async handler(_config, installation, plan) {
-    const { logger } = installation;
-
-    let p = plan;
-
-    p = await p.run("commerceSubscriptions", (_cfg, { helpers }) => {
-      logger.debug("Creating webhook subscriptions...");
-      return helpers.success({ subscriptionsCreated: true });
-    });
-
-    return p;
-  },
-} as const satisfies PhaseDefinition<WebhooksPhaseConfig>;
+  steps: [
+    {
+      name: "subscriptions",
+      run({ config }) {
+        const webhookCount = config.webhooks.length;
+        return { subscriptionsCreated: webhookCount };
+      },
+    },
+  ],
+};
