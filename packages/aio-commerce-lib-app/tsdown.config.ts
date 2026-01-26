@@ -22,19 +22,11 @@ export default mergeConfig(baseConfig, {
   copy: [
     {
       from: "./source/commands/generate/actions/templates",
-<<<<<<< HEAD
       to: "./dist/cjs/commands/generate/actions",
     },
     {
       from: "./source/commands/generate/actions/templates",
       to: "./dist/es/commands/generate/actions",
-=======
-      to: "./dist/cjs/commands/generate/actions/",
-    },
-    {
-      from: "./source/commands/generate/actions/templates",
-      to: "./dist/es/commands/generate/actions/",
->>>>>>> f1a1881 (feat: commerce event schema)
     },
   ],
 
