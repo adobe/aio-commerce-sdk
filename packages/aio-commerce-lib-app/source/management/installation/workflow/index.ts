@@ -28,7 +28,7 @@ export type {
   StepContext,
   StepMeta,
 } from "./phase";
-export type { RunnerOptions } from "./runner";
+export type { CreatePlanOptions, RunnerOptions } from "./runner";
 export type { LibStateStoreOptions } from "./storage/lib-state";
 export type {
   ExecutionStatus,

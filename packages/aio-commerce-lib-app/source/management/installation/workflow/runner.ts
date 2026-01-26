@@ -30,7 +30,16 @@ type StepResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: InstallationError };
 
-/** Options for creating an installation runner. */
+/** Options for creating an installation plan. */
+export type CreatePlanOptions = {
+  /** The app configuration used to determine applicable phases/steps. */
+  config: CommerceAppConfigOutputModel;
+
+  /** Additional phases to include beyond the built-in ones. */
+  extraPhases?: AnyPhase[];
+};
+
+/** Options for running an installation. */
 export type RunnerOptions = {
   /** Shared installation context (params, logger, etc.). */
   installationContext: InstallationContext;
@@ -38,21 +47,32 @@ export type RunnerOptions = {
   /** The app configuration. */
   config: CommerceAppConfigOutputModel;
 
-  /** The phases to run. */
-  phases: AnyPhase[];
+  /** The pre-created installation plan to execute. */
+  plan: InstallationPlan;
+
+  /** Additional phases to include beyond the built-in ones. */
+  extraPhases?: AnyPhase[];
 
   /** State store for persisting installation progress. */
   store: InstallationStateStore;
 };
 
-// The phases built-in in the library.
+/** The phases built-in in the library. */
 const DEFAULT_PHASES: AnyPhase[] = [eventsPhase, webhooksPhase];
+
+/** Builds a phase registry map from phase name to phase definition. */
+function buildPhaseRegistry(
+  extraPhases: AnyPhase[] = [],
+): Map<string, AnyPhase> {
+  const allPhases = [...DEFAULT_PHASES, ...extraPhases];
+  return new Map(allPhases.map((phase) => [phase.name, phase]));
+}
 
 /** Creates an installation plan from the config and phase definitions. */
 export function createInstallationPlan(
-  config: CommerceAppConfigOutputModel,
-  extraPhases: AnyPhase[] = [],
+  options: CreatePlanOptions,
 ): InstallationPlan {
+  const { config, extraPhases = [] } = options;
   const phases = [...DEFAULT_PHASES, ...extraPhases];
   const applicablePhases = phases.filter((phase) => phase.when(config));
 
@@ -208,17 +228,34 @@ async function runPhase(
 export async function runInstallation(
   options: RunnerOptions,
 ): Promise<InstallationState> {
-  const { installationContext, config, phases, store } = options;
-  const plan = createInstallationPlan(config, phases);
+  const {
+    installationContext,
+    config,
+    plan,
+    extraPhases = [],
+    store,
+  } = options;
+  const phaseRegistry = buildPhaseRegistry(extraPhases);
   const state = createInitialState(plan);
-
   await store.save(state);
-  const applicablePhases = phases.filter((phase) =>
-    plan.phases.some((plannedPhase) => plannedPhase.name === phase.name),
-  );
 
   // Run phases sequentially to avoid race conditions on state writes
-  for (const phase of applicablePhases) {
+  for (const plannedPhase of plan.phases) {
+    const phase = phaseRegistry.get(plannedPhase.name);
+    if (!phase) {
+      state.status = "failed";
+      state.error = {
+        phase: plannedPhase.name,
+        step: "",
+        key: "PHASE_NOT_IN_REGISTRY",
+        message: `Phase "${plannedPhase.name}" not found in registry. Did you forget to pass it in extraPhases?`,
+      };
+
+      state.completedAt = new Date().toISOString();
+      await store.save(state);
+      return state;
+    }
+
     const error = await runPhase(
       phase,
       installationContext,
@@ -237,7 +274,6 @@ export async function runInstallation(
   }
 
   state.status = "succeeded";
-
   state.completedAt = new Date().toISOString();
   await store.save(state);
 
