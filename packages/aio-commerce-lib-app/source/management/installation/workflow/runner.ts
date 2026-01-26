@@ -11,7 +11,7 @@
  */
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { AnyStep, Phase } from "./phase";
+import type { AnyStep, InstallationContext, Phase } from "./phase";
 import type {
   InstallationError,
   InstallationPlan,
@@ -29,9 +29,16 @@ type StepResult<T> =
 
 /** Options for creating an installation runner. */
 export type RunnerOptions = {
+  /** Shared installation context (params, logger, etc.). */
+  installationContext: InstallationContext;
+
+  /** The app configuration. */
   config: CommerceAppConfigOutputModel;
+
+  /** The phases to run. */
   phases: AnyPhase[];
 
+  /** State store for persisting installation progress. */
   store: InstallationStateStore;
 };
 
@@ -40,16 +47,16 @@ export function createPlan(
   config: CommerceAppConfigOutputModel,
   phases: AnyPhase[],
 ): InstallationPlan {
-  const applicablePhases = phases.filter((p) => p.when(config));
-
+  const applicablePhases = phases.filter((phase) => phase.when(config));
   return {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
-    phases: applicablePhases.map((p) => ({
-      name: p.name,
-      steps: p.steps
-        .filter((s: AnyStep) => !s.when || s.when(config))
-        .map((s: AnyStep) => s.name),
+    phases: applicablePhases.map((phase) => ({
+      name: phase.name,
+      meta: phase.meta,
+      steps: phase.steps
+        .filter((step: AnyStep) => !step.when || step.when(config))
+        .map((step: AnyStep) => ({ name: step.name, meta: step.meta })),
     })),
   };
 }
@@ -60,11 +67,15 @@ function createInitialState(plan: InstallationPlan): InstallationState {
     installationId: plan.id,
     startedAt: new Date().toISOString(),
     status: "in-progress",
-    phases: plan.phases.map((p) => ({
-      name: p.name,
+    phases: plan.phases.map((phase) => ({
+      name: phase.name,
       status: "pending",
-      steps: p.steps.map((s) => ({ name: s, status: "pending" })),
+      steps: phase.steps.map((step) => ({
+        name: step.name,
+        status: "pending",
+      })),
     })),
+
     data: {},
     error: null,
   };
@@ -74,6 +85,7 @@ function createInitialState(plan: InstallationPlan): InstallationState {
 async function runStep(
   step: AnyStep,
   phaseName: string,
+  installationContext: InstallationContext,
   config: CommerceAppConfigOutputModel,
   phaseCtx: unknown,
   phaseData: Record<string, unknown>,
@@ -91,11 +103,11 @@ async function runStep(
 
   try {
     const output = await step.run({
+      installationContext,
       config,
-      phase: phaseCtx,
+      phaseContext: phaseCtx,
       data: phaseData,
-      // biome-ignore lint/suspicious/noExplicitAny: Type assertion needed for fail function
-      fail: fail as any,
+      fail,
     });
     return { ok: true, data: output };
   } catch (err) {
@@ -103,7 +115,7 @@ async function runStep(
     if (stepError !== undefined) {
       return { ok: false, error: stepError };
     }
-    // Unexpected error - wrap it
+
     return {
       ok: false,
       error: {
@@ -119,6 +131,7 @@ async function runStep(
 /** Runs a single phase. Returns error if any step fails. */
 async function runPhase(
   phase: AnyPhase,
+  installationContext: InstallationContext,
   config: CommerceAppConfigOutputModel,
   state: InstallationState,
   store: InstallationStateStore,
@@ -133,14 +146,19 @@ async function runPhase(
     };
   }
 
-  const phaseCtx = phase.context ? await phase.context() : {};
-  const phaseData: Record<string, unknown> = {};
+  const phaseCtx = phase.context
+    ? await phase.context(installationContext)
+    : {};
 
+  const phaseData: Record<string, unknown> = {};
   phaseStatus.status = "in-progress";
   await store.save(state);
 
   for (const step of phase.steps) {
-    const stepStatus = phaseStatus.steps.find((s) => s.name === step.name);
+    const stepStatus = phaseStatus.steps.find(
+      (phaseStep) => phaseStep.name === step.name,
+    );
+
     if (!stepStatus) {
       continue; // Step was filtered out by condition
     }
@@ -148,18 +166,27 @@ async function runPhase(
     stepStatus.status = "in-progress";
     await store.save(state);
 
-    const result = await runStep(step, phase.name, config, phaseCtx, phaseData);
+    const result = await runStep(
+      step,
+      phase.name,
+      installationContext,
+      config,
+      phaseCtx,
+      phaseData,
+    );
 
     if (!result.ok) {
       stepStatus.status = "failed";
       phaseStatus.status = "failed";
       await store.save(state);
+
       return result.error;
     }
 
     phaseData[step.name] = result.data;
     state.data[step.name] = result.data as Record<string, unknown>;
     stepStatus.status = "succeeded";
+
     await store.save(state);
   }
 
@@ -173,24 +200,24 @@ async function runPhase(
 export async function runInstallation(
   options: RunnerOptions,
 ): Promise<InstallationState> {
-  const { config, phases, store } = options;
+  const { installationContext, config, phases, store } = options;
   const plan = createPlan(config, phases);
   const state = createInitialState(plan);
 
   await store.save(state);
-
-  // Get phases that are in the plan
-  const applicablePhases = phases.filter((p) =>
-    plan.phases.some((pp) => pp.name === p.name),
+  const applicablePhases = phases.filter((phase) =>
+    plan.phases.some((plannedPhase) => plannedPhase.name === phase.name),
   );
 
   // Run all phases in parallel, collect results
   const results = await Promise.all(
-    applicablePhases.map((phase) => runPhase(phase, config, state, store)),
+    applicablePhases.map((phase) =>
+      runPhase(phase, installationContext, config, state, store),
+    ),
   );
 
   // Check if any phase failed
-  const firstError = results.find((r) => r !== null);
+  const firstError = results.find((result) => result !== null);
 
   if (firstError) {
     state.status = "failed";

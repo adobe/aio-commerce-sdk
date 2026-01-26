@@ -19,15 +19,21 @@ export type {
   AnyStep,
   ErrorDefinitions,
   InferPhaseData,
+  InstallationContext,
   Phase,
+  PhaseContextFactory,
+  PhaseMeta,
   Step,
   StepContext,
+  StepMeta,
 } from "./phase";
 export type { RunnerOptions } from "./runner";
 export type {
   ExecutionStatus,
   InstallationError,
   InstallationPlan,
+  InstallationPlanPhase,
+  InstallationPlanStep,
   InstallationState,
   InstallationStateStore,
   InstallationStatus,

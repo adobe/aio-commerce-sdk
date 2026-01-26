@@ -20,16 +20,29 @@ type WebhooksConfig = CommerceAppConfigOutputModel & {
   webhooks: unknown[];
 };
 
+const PHASE_META = {
+  label: "Webhooks",
+  description: "Sets up Commerce webhooks",
+} as const;
+
+const STEPS_META = {
+  subscriptions: {
+    label: "Create Subscriptions",
+    description: "Creates webhook subscriptions in Adobe Commerce",
+  },
+} as const;
+
 /** The webhooks installation phase. */
 export const webhooksPhase = definePhase(
   {
     name: "webhooks",
+    meta: PHASE_META,
     when: (config): config is WebhooksConfig =>
       "webhooks" in config && Array.isArray(config.webhooks),
   },
-  (steps) =>
-    steps.step("subscriptions", (s) =>
-      s.run(({ config }) => {
+  (phase) =>
+    phase.step("subscriptions", STEPS_META.subscriptions, (step) =>
+      step.run(({ config }) => {
         const webhookCount = config.webhooks.length;
         return { subscriptionsCreated: webhookCount };
       }),

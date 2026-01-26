@@ -12,6 +12,7 @@
 
 import type { EventsPhaseData } from "../events";
 import type { WebhooksPhaseData } from "../webhooks";
+import type { PhaseMeta, StepMeta } from "./phase";
 
 /** Status of a phase or step. */
 export type ExecutionStatus =
@@ -79,12 +80,22 @@ export interface InstallationStateStore {
   save(state: InstallationState): Promise<void>;
 }
 
+/** Step info in the installation plan. */
+export type InstallationPlanStep = {
+  name: string;
+  meta: StepMeta;
+};
+
+/** Phase info in the installation plan. */
+export type InstallationPlanPhase = {
+  name: string;
+  meta: PhaseMeta;
+  steps: InstallationPlanStep[];
+};
+
 /** The serializable installation plan. */
 export type InstallationPlan = {
   id: string;
   createdAt: string;
-  phases: Array<{
-    name: string;
-    steps: string[];
-  }>;
+  phases: InstallationPlanPhase[];
 };

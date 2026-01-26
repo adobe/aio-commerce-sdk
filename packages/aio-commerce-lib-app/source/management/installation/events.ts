@@ -10,35 +10,91 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  resolveCommerceHttpClientParams,
+  resolveIoEventsHttpClientParams,
+} from "@adobe/aio-commerce-lib-api";
+import { createCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
+import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
+
 import { definePhase } from "#management/installation/workflow/phase";
 
+import type { CommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
+import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { InferPhaseData } from "#management/installation/workflow/phase";
+import type {
+  InferPhaseData,
+  PhaseContextFactory,
+} from "#management/installation/workflow/phase";
 
 /** Config type when eventing is present. */
 type EventsConfig = CommerceAppConfigOutputModel & {
   eventing: NonNullable<CommerceAppConfigOutputModel["eventing"]>;
 };
 
-/** Phase context with lazy-initialized API clients. */
-function createEventsContext() {
+const PHASE_META = {
+  label: "Events",
+  description: "Sets up I/O Events and Commerce Events",
+} as const;
+
+const STEPS_META = {
+  providers: {
+    label: "Create Providers",
+    description: "Creates I/O Events providers for the application",
+  },
+  metadata: {
+    label: "Create Metadata",
+    description: "Registers event metadata with I/O Events",
+  },
+  registrations: {
+    label: "Create Registrations",
+    description: "Creates event registrations linking providers to webhooks",
+  },
+  commerceConfig: {
+    label: "Configure Commerce Events",
+    description: "Configures Adobe Commerce to emit events",
+  },
+  commerceSubscriptions: {
+    label: "Create Commerce Subscriptions",
+    description: "Subscribes to Commerce events",
+  },
+} as const;
+
+/** Context available to all steps in the events phase. */
+interface EventsPhaseContext {
+  get ioEventsClient(): AdobeIoEventsApiClient;
+  get commerceEventsClient(): CommerceEventsApiClient;
+}
+
+/** Creates the events phase context with lazy-initialized API clients. */
+const createEventsPhaseContext: PhaseContextFactory<EventsPhaseContext> = (
+  installation,
+) => {
+  const { params } = installation;
+  let ioEventsClient: AdobeIoEventsApiClient | null = null;
+  let commerceEventsClient: CommerceEventsApiClient | null = null;
+
   return {
     get ioEventsClient() {
-      return {
-        createProvider: () =>
-          Promise.resolve({ id: "provider-1", label: "My Provider" }),
-        createMetadata: () => Promise.resolve({ id: "meta-1" }),
-        createRegistration: () => Promise.resolve({ id: "reg-1" }),
-      };
+      if (ioEventsClient === null) {
+        const ioEventsClientParams = resolveIoEventsHttpClientParams(params);
+        ioEventsClient = createAdobeIoEventsApiClient(ioEventsClientParams);
+      }
+
+      return ioEventsClient;
     },
+
     get commerceEventsClient() {
-      return {
-        configure: () => Promise.resolve({ configured: true }),
-        subscribe: () => Promise.resolve({ subscriptionId: "sub-1" }),
-      };
+      if (commerceEventsClient === null) {
+        const commerceClientParams = resolveCommerceHttpClientParams(params);
+        commerceEventsClient =
+          createCommerceEventsApiClient(commerceClientParams);
+      }
+
+      return commerceEventsClient;
     },
   };
-}
+};
 
 /** Check if config has commerce event sources. */
 function hasCommerceEvents(config: EventsConfig): boolean {
@@ -49,49 +105,50 @@ function hasCommerceEvents(config: EventsConfig): boolean {
 export const eventsPhase = definePhase(
   {
     name: "events",
+    meta: PHASE_META,
     when: (config): config is EventsConfig => config.eventing !== undefined,
-    context: createEventsContext,
+    context: createEventsPhaseContext,
   },
   (steps) =>
     steps
-      .step("providers", (s) =>
-        s.run(async ({ phase, fail }) => {
-          const result = await phase.ioEventsClient.createProvider();
-          if (!result.id) {
-            fail("PROVIDER_CREATION_FAILED", "No ID returned");
-          }
-          return { providerId: result.id, label: result.label };
+      .step("providers", STEPS_META.providers, (step) =>
+        step.run(({ installationContext }) => {
+          const { logger } = installationContext;
+          logger.info("Creating I/O Events Providers...");
+
+          return { providerId: "TODO", label: "TODO" };
         }),
       )
-      .step("metadata", (s) =>
-        s.run(async ({ phase, data }) => {
-          // ✅ data.providers is typed as { providerId: string; label: string }
-          console.log(
-            "Provider ID from previous step:",
-            data.providers.providerId,
-          );
-          const result = await phase.ioEventsClient.createMetadata();
-          return { metadataId: result.id };
+      .step("metadata", STEPS_META.metadata, (step) =>
+        step.run(({ installationContext }) => {
+          const { logger } = installationContext;
+          logger.info("Creating I/O Event Metadata...");
+
+          return { metadataId: "TODO" };
         }),
       )
-      .step("registrations", (s) =>
-        s.run(async ({ phase, data }) => {
-          // ✅ data.metadata is also available and typed
-          console.log("Metadata ID:", data.metadata.metadataId);
-          const result = await phase.ioEventsClient.createRegistration();
-          return { registrationId: result.id };
+      .step("registrations", STEPS_META.registrations, (step) =>
+        step.run(({ installationContext }) => {
+          const { logger } = installationContext;
+          logger.info("Creating I/O Events Registrations...");
+
+          return { registrationId: "TODO" };
         }),
       )
-      .step("commerceConfig", (s) =>
-        s.when(hasCommerceEvents).run(async ({ phase }) => {
-          await phase.commerceEventsClient.configure();
+      .step("commerceConfig", STEPS_META.commerceConfig, (step) =>
+        step.when(hasCommerceEvents).run(({ installationContext }) => {
+          const { logger } = installationContext;
+          logger.info("Configuring Commerce Eventing...");
+
           return { commerceConfigured: true };
         }),
       )
-      .step("commerceSubscriptions", (s) =>
-        s.when(hasCommerceEvents).run(async ({ phase }) => {
-          const result = await phase.commerceEventsClient.subscribe();
-          return { subscriptionId: result.subscriptionId };
+      .step("commerceSubscriptions", STEPS_META.commerceSubscriptions, (step) =>
+        step.when(hasCommerceEvents).run(({ installationContext }) => {
+          const { logger } = installationContext;
+          logger.info("Creating Commerce Subscriptions...");
+
+          return { subscriptionId: "TODO" };
         }),
       ),
 );
