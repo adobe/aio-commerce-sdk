@@ -10,6 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
+import { eventsPhase } from "../events";
+import { webhooksPhase } from "../webhooks";
+
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AnyStep, InstallationContext, Phase } from "./phase";
 import type {
@@ -42,12 +45,17 @@ export type RunnerOptions = {
   store: InstallationStateStore;
 };
 
+// The phases built-in in the library.
+const DEFAULT_PHASES: AnyPhase[] = [eventsPhase, webhooksPhase];
+
 /** Creates an installation plan from the config and phase definitions. */
-export function createPlan(
+export function createInstallationPlan(
   config: CommerceAppConfigOutputModel,
-  phases: AnyPhase[],
+  extraPhases: AnyPhase[] = [],
 ): InstallationPlan {
+  const phases = [...DEFAULT_PHASES, ...extraPhases];
   const applicablePhases = phases.filter((phase) => phase.when(config));
+
   return {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
@@ -201,7 +209,7 @@ export async function runInstallation(
   options: RunnerOptions,
 ): Promise<InstallationState> {
   const { installationContext, config, phases, store } = options;
-  const plan = createPlan(config, phases);
+  const plan = createInstallationPlan(config, phases);
   const state = createInitialState(plan);
 
   await store.save(state);
@@ -209,22 +217,26 @@ export async function runInstallation(
     plan.phases.some((plannedPhase) => plannedPhase.name === phase.name),
   );
 
-  // Run all phases in parallel, collect results
-  const results = await Promise.all(
-    applicablePhases.map((phase) =>
-      runPhase(phase, installationContext, config, state, store),
-    ),
-  );
+  // Run phases sequentially to avoid race conditions on state writes
+  for (const phase of applicablePhases) {
+    const error = await runPhase(
+      phase,
+      installationContext,
+      config,
+      state,
+      store,
+    );
 
-  // Check if any phase failed
-  const firstError = results.find((result) => result !== null);
-
-  if (firstError) {
-    state.status = "failed";
-    state.error = firstError;
-  } else {
-    state.status = "succeeded";
+    if (error) {
+      state.status = "failed";
+      state.error = error;
+      state.completedAt = new Date().toISOString();
+      await store.save(state);
+      return state;
+    }
   }
+
+  state.status = "succeeded";
 
   state.completedAt = new Date().toISOString();
   await store.save(state);

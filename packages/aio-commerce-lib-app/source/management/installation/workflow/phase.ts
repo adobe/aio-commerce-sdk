@@ -33,7 +33,7 @@ export type StepContext<
   TData extends Record<string, unknown>,
   TErrors extends ErrorDefinitions,
 > = {
-  /** Shared installation context (params, logger, etc.). */
+  /** Shared installation context */
   installationContext: InstallationContext;
 
   /** The narrowed app configuration. */
@@ -201,12 +201,14 @@ type PhaseOptions<
   TName extends string,
   TConfig extends CommerceAppConfigOutputModel,
   TPhaseCtx,
-  _TErrors extends ErrorDefinitions,
+  TErrors extends ErrorDefinitions,
 > = {
   name: TName;
   meta: PhaseMeta;
   when: (config: CommerceAppConfigOutputModel) => config is TConfig;
+
   context?: PhaseContextFactory<TPhaseCtx>;
+  _errors?: TErrors;
 };
 
 /**

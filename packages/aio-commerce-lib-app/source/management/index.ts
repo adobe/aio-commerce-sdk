@@ -17,4 +17,10 @@
  * @packageDocumentation
  */
 
-export type { Phase } from "./installation/workflow/phase";
+export {
+  createInstallationPlan,
+  createLibStateStore,
+  runInstallation,
+} from "./installation/workflow";
+
+export type * from "./installation/workflow";

@@ -37,6 +37,15 @@ const PHASE_META = {
   description: "Sets up I/O Events and Commerce Events",
 } as const;
 
+/** Error definitions for the events phase. */
+type EventsPhaseErrors = {
+  PROVIDER_CREATION_FAILED: { providerId?: string; reason: string };
+  METADATA_CREATION_FAILED: { providerId: string; eventCode: string };
+  REGISTRATION_CREATION_FAILED: { registrationName: string };
+  COMMERCE_CONFIG_FAILED: { reason: string };
+  COMMERCE_SUBSCRIPTION_FAILED: { eventType: string };
+};
+
 const STEPS_META = {
   providers: {
     label: "Create Providers",
@@ -108,6 +117,7 @@ export const eventsPhase = definePhase(
     meta: PHASE_META,
     when: (config): config is EventsConfig => config.eventing !== undefined,
     context: createEventsPhaseContext,
+    _errors: {} as EventsPhaseErrors,
   },
   (steps) =>
     steps

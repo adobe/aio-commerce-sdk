@@ -13,7 +13,8 @@
 /** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the workflow module */
 
 export { definePhase } from "./phase";
-export { createPlan, runInstallation } from "./runner";
+export { createInstallationPlan, runInstallation } from "./runner";
+export { createLibStateStore } from "./storage/lib-state";
 
 export type {
   AnyStep,
@@ -28,6 +29,7 @@ export type {
   StepMeta,
 } from "./phase";
 export type { RunnerOptions } from "./runner";
+export type { LibStateStoreOptions } from "./storage/lib-state";
 export type {
   ExecutionStatus,
   InstallationError,
