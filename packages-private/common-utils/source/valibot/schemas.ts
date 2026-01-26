@@ -115,25 +115,3 @@ export function alphaNumericOrHyphenSchema(
     ),
   );
 }
-
-const ALPHA_OR_UNDERSCORE_REGEX = {
-  any: /^[a-zA-Z_]+$/,
-  lowercase: /^[a-z_]+$/,
-  uppercase: /^[A-Z_]+$/,
-};
-
-/**
- * A schema for a string that only contains alphabetic characters and underscores (no numbers).
- * @param name The name of the field this schema refers to.
- * @param casing The allowed casing for the string (default: "any").
- */
-export function alphaOrUnderscoreSchema(name: string, casing: Casing = "any") {
-  const casingLabel = casing === "any" ? "" : ` (${casing} only)`;
-  return v.pipe(
-    stringValueSchema(name),
-    v.regex(
-      ALPHA_OR_UNDERSCORE_REGEX[casing],
-      `Only alphabetic characters and underscores are allowed in string value of "${name}"${casingLabel}`,
-    ),
-  );
-}

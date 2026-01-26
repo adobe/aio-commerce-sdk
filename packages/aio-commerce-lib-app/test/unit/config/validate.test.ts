@@ -192,22 +192,23 @@ describe("validateConfig", () => {
     { version: "1.0.0+build", reason: "Has build metadata" },
     { version: "1.0.0-beta+build", reason: "Has both prerelease and build" },
     { version: "invalid", reason: "Not a version at all" },
-  ])("should throw when version is not in semver format: $reason", ({
-    version,
-  }) => {
-    const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version,
-      },
-    };
+  ])(
+    "should throw when version is not in semver format: $reason",
+    ({ version }) => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test App",
+          description: "A test application",
+          version,
+        },
+      };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
-  });
+      expect(() => validateCommerceAppConfig(config)).toThrow(
+        "Invalid commerce app config",
+      );
+    },
+  );
 
   test.each([
     { version: "1.0.0" },
