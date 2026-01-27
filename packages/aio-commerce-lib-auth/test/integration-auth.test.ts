@@ -15,11 +15,11 @@ import { describe, expect, test } from "vitest";
 import {
   getIntegrationAuthProvider,
   isIntegrationAuthProvider,
-} from "~/lib/integration-auth/provider";
+} from "#lib/integration-auth/provider";
 import {
   assertIntegrationAuthParams,
   resolveIntegrationAuthParams,
-} from "~/lib/integration-auth/utils";
+} from "#lib/integration-auth/utils";
 
 /** Regex to match the OAuth 1.0a header format. */
 const OAUTH1_REGEX =

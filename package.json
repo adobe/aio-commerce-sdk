@@ -1,7 +1,7 @@
 {
   "name": "aio-commerce-sdk",
   "private": true,
-  "packageManager": "pnpm@10.28.0",
+  "packageManager": "pnpm@10.28.1",
   "engines": {
     "node": ">=20 <=24",
     "pnpm": ">=10"
@@ -45,7 +45,6 @@
     "typedoc-plugin-markdown": "^4.7.1",
     "typescript": "^5.9.2",
     "ultracite": "^7.0.0",
-    "vite-tsconfig-paths": "^6.0.0",
     "vitest": "^4.0.0"
   },
   "lint-staged": {

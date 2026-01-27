@@ -15,13 +15,13 @@
 import { safeParse } from "valibot";
 import { describe, expect, it } from "vitest";
 
-import { CommerceSdkValidationError } from "~/error/validation-error";
+import { CommerceSdkValidationError } from "#error/validation-error";
 import {
   mockInvalidUserForInputError,
   mockInvalidUserForSchemaValidationError,
   mockInvalidUserForTransformationError,
   mockUserSchema,
-} from "~~/test/fixtures/valibot";
+} from "#test/fixtures/valibot";
 
 import type { GenericIssue } from "valibot";
 
