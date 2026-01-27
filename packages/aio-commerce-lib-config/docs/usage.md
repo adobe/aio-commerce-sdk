@@ -185,11 +185,10 @@ Scopes define the hierarchical boundaries where configuration values can be set 
 - `set-custom-scope-tree` - Define custom scope hierarchies
 
 > [!NOTE]
-> The `sync-commerce-scopes` action requires the Commerce base URL to be passed as a request parameter:
+> The `sync-commerce-scopes` action accepts the following request parameters:
 >
-> - Pass `commerceBaseUrl` in the request body/query parameters
->
-> This parameter is **required** and the action will return an error if not provided.
+> - **`commerceBaseUrl`** (required) - The base URL of your Commerce instance
+> - **`commerceEnv`** (optional) - Commerce flavor: `"saas"` or `"paas"`. Auto-detected from the URL if not provided.
 
 **Configuration Management Actions:**
 
