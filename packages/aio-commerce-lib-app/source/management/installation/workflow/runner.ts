@@ -14,21 +14,14 @@ import { eventsPhase } from "../events";
 import { webhooksPhase } from "../webhooks";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { AnyStep, InstallationContext, Phase } from "./phase";
+import type { AnyPhase, InstallationContext, StepDeclaration } from "./phase";
 import type {
   InstallationError,
   InstallationPlan,
   InstallationState,
   InstallationStateStore,
+  PhaseStatus,
 } from "./types";
-
-// biome-ignore lint/suspicious/noExplicitAny: Phase/Step generics are complex, using any for flexibility
-type AnyPhase = Phase<string, any, any, any, any>;
-
-/** Result of a step execution. */
-type StepResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: InstallationError };
 
 /** Options for creating an installation plan. */
 export type CreatePlanOptions = {
@@ -79,13 +72,24 @@ export function createInstallationPlan(
   return {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
-    phases: applicablePhases.map((phase) => ({
-      name: phase.name,
-      meta: phase.meta,
-      steps: phase.steps
-        .filter((step: AnyStep) => !step.when || step.when(config))
-        .map((step: AnyStep) => ({ name: step.name, meta: step.meta })),
-    })),
+    phases: applicablePhases.map((phase) => {
+      const stepEntries = Object.entries(phase.steps) as [
+        string,
+        StepDeclaration,
+      ][];
+      const applicableSteps = stepEntries.filter(
+        ([_, step]) => !step.when || step.when(config),
+      );
+
+      return {
+        name: phase.name,
+        meta: phase.meta,
+        steps: applicableSteps.map(([name, step]) => ({
+          name,
+          meta: { label: step.label, description: step.description },
+        })),
+      };
+    }),
   };
 }
 
@@ -103,60 +107,51 @@ function createInitialState(plan: InstallationPlan): InstallationState {
         status: "pending",
       })),
     })),
-
     data: {},
     error: null,
   };
 }
 
-/** Runs a single step and returns the result. */
-async function runStep(
-  step: AnyStep,
+function createStepRunner(
   phaseName: string,
-  installationContext: InstallationContext,
-  config: CommerceAppConfigOutputModel,
-  phaseCtx: unknown,
-  phaseData: Record<string, unknown>,
-): Promise<StepResult<unknown>> {
-  let stepError: InstallationError | undefined;
+  phaseStatus: PhaseStatus,
+  state: InstallationState,
+  store: InstallationStateStore,
+) {
+  return async <T>(stepName: string, fn: () => T | Promise<T>): Promise<T> => {
+    const stepStatus = phaseStatus.steps.find((s) => s.name === stepName);
 
-  const fail = (key: string, ...args: unknown[]): never => {
-    const hasPayload = args.length > 0 && typeof args[0] === "object";
-    const payload = hasPayload ? args[0] : undefined;
-    stepError = { phase: phaseName, step: step.name, key, payload };
-
-    // Throw to exit the step.run() execution, but we'll catch it
-    throw stepError;
-  };
-
-  try {
-    const output = await step.run({
-      installationContext,
-      config,
-      phaseContext: phaseCtx,
-      data: phaseData,
-      fail,
-    });
-    return { ok: true, data: output };
-  } catch (err) {
-    // If it's our controlled error from fail(), return it
-    if (stepError !== undefined) {
-      return { ok: false, error: stepError };
+    if (!stepStatus) {
+      return fn();
     }
 
-    return {
-      ok: false,
-      error: {
+    stepStatus.status = "in-progress";
+    await store.save(state);
+
+    try {
+      const result = await fn();
+
+      stepStatus.status = "succeeded";
+      state.data[stepName] = result as Record<string, unknown>;
+      await store.save(state);
+
+      return result;
+    } catch (error) {
+      stepStatus.status = "failed";
+      phaseStatus.status = "failed";
+      state.error = {
         phase: phaseName,
-        step: step.name,
-        key: "UNEXPECTED_ERROR",
-        message: err instanceof Error ? err.message : String(err),
-      },
-    };
-  }
+        step: stepName,
+        key: "STEP_EXECUTION_FAILED",
+        message: error instanceof Error ? error.message : String(error),
+      };
+
+      await store.save(state);
+      throw error;
+    }
+  };
 }
 
-/** Runs a single phase. Returns error if any step fails. */
 async function runPhase(
   phase: AnyPhase,
   installationContext: InstallationContext,
@@ -174,57 +169,47 @@ async function runPhase(
     };
   }
 
-  const phaseCtx = phase.context
+  const phaseContext = phase.context
     ? await phase.context(installationContext)
     : {};
 
-  const phaseData: Record<string, unknown> = {};
   phaseStatus.status = "in-progress";
   await store.save(state);
 
-  for (const step of phase.steps) {
-    const stepStatus = phaseStatus.steps.find(
-      (phaseStep) => phaseStep.name === step.name,
-    );
-
-    if (!stepStatus) {
-      continue; // Step was filtered out by condition
-    }
-
-    stepStatus.status = "in-progress";
-    await store.save(state);
-
-    const result = await runStep(
-      step,
-      phase.name,
+  const run = createStepRunner(phase.name, phaseStatus, state, store);
+  try {
+    await phase.run({
       installationContext,
       config,
-      phaseCtx,
-      phaseData,
-    );
+      phaseContext,
+      run,
+    });
 
-    if (!result.ok) {
-      stepStatus.status = "failed";
-      phaseStatus.status = "failed";
-      await store.save(state);
+    phaseStatus.status = "succeeded";
+    await store.save(state);
 
-      return result.error;
+    return null;
+  } catch (error) {
+    if (!state.error) {
+      state.error = {
+        phase: phase.name,
+        step: "",
+        key: "PHASE_EXECUTION_FAILED",
+        message: error instanceof Error ? error.message : String(error),
+      };
     }
 
-    phaseData[step.name] = result.data;
-    state.data[step.name] = result.data as Record<string, unknown>;
-    stepStatus.status = "succeeded";
-
+    phaseStatus.status = "failed";
     await store.save(state);
+
+    return state.error;
   }
-
-  phaseStatus.status = "succeeded";
-  await store.save(state);
-
-  return null;
 }
 
-/** Runs the full installation workflow. Returns the final state (never throws). */
+/**
+ * Runs the full installation workflow. Returns the final state (never throws).
+ * @param options The options for the installation workflow.
+ */
 export async function runInstallation(
   options: RunnerOptions,
 ): Promise<InstallationState> {

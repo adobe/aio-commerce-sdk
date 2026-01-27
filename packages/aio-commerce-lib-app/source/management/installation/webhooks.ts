@@ -13,7 +13,7 @@
 import { definePhase } from "#management/installation/workflow/phase";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { InferPhaseData } from "#management/installation/workflow/phase";
+import type { InferPhaseOutput } from "#management/installation/workflow/phase";
 
 /** Config type when webhooks are present. */
 type WebhooksConfig = CommerceAppConfigOutputModel & {
@@ -32,22 +32,27 @@ const STEPS_META = {
   },
 } as const;
 
-/** The webhooks installation phase. */
-export const webhooksPhase = definePhase(
-  {
-    name: "webhooks",
-    meta: PHASE_META,
-    when: (config): config is WebhooksConfig =>
-      "webhooks" in config && Array.isArray(config.webhooks),
-  },
-  (phase) =>
-    phase.step("subscriptions", STEPS_META.subscriptions, (step) =>
-      step.run(({ config }) => {
-        const webhookCount = config.webhooks.length;
-        return { subscriptionsCreated: webhookCount };
-      }),
-    ),
-);
+function createSubscriptions(config: WebhooksConfig) {
+  const webhookCount = config.webhooks.length;
+  return { subscriptionsCreated: webhookCount };
+}
 
-/** The accumulated output data type from the webhooks phase. */
-export type WebhooksPhaseData = InferPhaseData<typeof webhooksPhase>;
+/** The webhooks installation phase. */
+export const webhooksPhase = definePhase({
+  name: "webhooks",
+  meta: PHASE_META,
+  steps: STEPS_META,
+
+  when: (config): config is WebhooksConfig =>
+    "webhooks" in config && Array.isArray(config.webhooks),
+
+  run: async ({ config, run }) => {
+    const subscriptions = await run("subscriptions", () =>
+      createSubscriptions(config),
+    );
+
+    return { subscriptions };
+  },
+});
+
+export type WebhooksPhaseOutput = InferPhaseOutput<typeof webhooksPhase>;

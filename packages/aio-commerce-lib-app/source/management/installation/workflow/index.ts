@@ -17,16 +17,16 @@ export { createInstallationPlan, runInstallation } from "./runner";
 export { createLibStateStore } from "./storage/lib-state";
 
 export type {
-  AnyStep,
-  ErrorDefinitions,
-  InferPhaseData,
+  AnyPhase,
+  InferPhaseOutput,
   InstallationContext,
   Phase,
   PhaseContextFactory,
   PhaseMeta,
-  Step,
-  StepContext,
+  PhaseRunContext,
+  StepDeclaration,
   StepMeta,
+  StepRunner,
 } from "./phase";
 export type { CreatePlanOptions, RunnerOptions } from "./runner";
 export type { LibStateStoreOptions } from "./storage/lib-state";

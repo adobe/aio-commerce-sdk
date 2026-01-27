@@ -11,13 +11,9 @@
  */
 
 import type AioLogger from "@adobe/aio-lib-core-logging";
-import type { Merge, Simplify } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-/** Error definitions map: error keys to their payload types. */
-export type ErrorDefinitions = Record<string, unknown>;
-
-/** Shared context available to all phases and steps during installation. */
+/** Shared context available to all phases during installation. */
 export type InstallationContext = {
   /** The raw action parameters from the App Builder runtime action. */
   params: Record<string, unknown>;
@@ -26,59 +22,17 @@ export type InstallationContext = {
   logger: ReturnType<typeof AioLogger>;
 };
 
-/** Context available to a step during execution. */
-export type StepContext<
-  TConfig,
-  TPhaseCtx,
-  TData extends Record<string, unknown>,
-  TErrors extends ErrorDefinitions,
-> = {
-  /** Shared installation context */
-  installationContext: InstallationContext;
-
-  /** The narrowed app configuration. */
-  config: TConfig;
-
-  /** Phase-specific context (API clients, etc.). */
-  phaseContext: TPhaseCtx;
-
-  /** Accumulated data from previous steps, keyed by step name. */
-  data: TData;
-
-  /** Fail the step with a typed error. */
-  fail: <K extends keyof TErrors & string>(
-    key: K,
-    ...args: TErrors[K] extends undefined
-      ? [message?: string]
-      : [payload: TErrors[K], message?: string]
-  ) => never;
-};
-
 /** Metadata for a step (for UI display). */
 export type StepMeta = {
   label: string;
   description?: string;
 };
 
-/** Internal step representation. */
-export type Step<
-  TName extends string,
-  TConfig,
-  TPhaseCtx,
-  TData extends Record<string, unknown>,
-  TOutput,
-  TErrors extends ErrorDefinitions,
-> = {
-  name: TName;
-  meta: StepMeta;
-  when?: (config: TConfig) => boolean;
-  run: (
-    ctx: StepContext<TConfig, TPhaseCtx, TData, TErrors>,
-  ) => Promise<TOutput> | TOutput;
+/** Step declaration with optional condition. */
+export type StepDeclaration = StepMeta & {
+  /** Optional condition to determine if this step should be included in the plan. */
+  when?: (config: CommerceAppConfigOutputModel) => boolean;
 };
-
-// biome-ignore lint/suspicious/noExplicitAny: Internal type for runtime step storage
-export type AnyStep = Step<string, any, any, any, any, any>;
 
 /** Metadata for a phase (for UI display). */
 export type PhaseMeta = {
@@ -91,179 +45,155 @@ export type PhaseContextFactory<TPhaseCtx> = (
   installation: InstallationContext,
 ) => TPhaseCtx | Promise<TPhaseCtx>;
 
-/** Phase definition. */
+/**
+ * Function to execute a step with automatic state management.
+ * Marks step as in-progress, executes the function, then marks as succeeded/failed.
+ */
+export type StepRunner<TSteps extends Record<string, StepDeclaration>> = <T>(
+  stepName: keyof TSteps & string,
+  fn: () => T | Promise<T>,
+) => Promise<T>;
+
+/** Context provided to the phase run handler. */
+export type PhaseRunContext<
+  TConfig extends CommerceAppConfigOutputModel,
+  TPhaseCtx,
+  TSteps extends Record<string, StepDeclaration>,
+> = {
+  /** Shared installation context (params, logger). */
+  installationContext: InstallationContext;
+
+  /** The narrowed app configuration. */
+  config: TConfig;
+
+  /** Phase-specific context (API clients, etc.). */
+  phaseContext: TPhaseCtx;
+
+  /**
+   * Execute a step with automatic state management.
+   * @param stepName - Must be a key from the steps declaration.
+   * @param fn - The function to execute for this step.
+   */
+  run: StepRunner<TSteps>;
+};
+
+/** Phase definition with static steps and a run handler. */
 export type Phase<
   TName extends string = string,
   TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
   TPhaseCtx = unknown,
-  TOutput extends Record<string, unknown> = Record<string, unknown>,
-  TErrors extends ErrorDefinitions = ErrorDefinitions,
+  TSteps extends Record<string, StepDeclaration> = Record<
+    string,
+    StepDeclaration
+  >,
+  TOutput = unknown,
 > = {
   name: TName;
   meta: PhaseMeta;
   when: (config: CommerceAppConfigOutputModel) => config is TConfig;
   context?: PhaseContextFactory<TPhaseCtx>;
-  steps: AnyStep[];
-  _output?: TOutput;
-  _errors?: TErrors;
+  steps: TSteps;
+  run: (
+    ctx: PhaseRunContext<TConfig, TPhaseCtx, TSteps>,
+  ) => TOutput | Promise<TOutput>;
 };
 
-/** Infer the output data type from a phase. */
-export type InferPhaseData<TPhase> =
+// biome-ignore lint/suspicious/noExplicitAny: Internal type for runtime phase storage
+export type AnyPhase = Phase<string, any, any, any, any>;
+
+/** Infer the output type from a phase. */
+export type InferPhaseOutput<TPhase> =
   TPhase extends Phase<
-    string,
-    CommerceAppConfigOutputModel,
-    unknown,
-    infer TOutput,
-    ErrorDefinitions
+    infer _TName,
+    infer _TConfig,
+    infer _Ctx,
+    infer _Steps,
+    infer TOutput
   >
-    ? Simplify<TOutput>
+    ? Awaited<TOutput>
     : never;
 
-/** Step builder for fluent API. */
-class StepBuilder<
-  TName extends string,
-  TConfig,
-  TPhaseCtx,
-  TData extends Record<string, unknown>,
-  TErrors extends ErrorDefinitions,
-> {
-  private _when?: (config: TConfig) => boolean;
-  private readonly _name: TName;
-  private readonly _meta: StepMeta;
-
-  public constructor(name: TName, meta: StepMeta) {
-    this._name = name;
-    this._meta = meta;
-  }
-
-  public when(predicate: (config: TConfig) => boolean): this {
-    this._when = predicate;
-    return this;
-  }
-
-  public run<TOutput>(
-    fn: (
-      ctx: StepContext<TConfig, TPhaseCtx, TData, TErrors>,
-    ) => Promise<TOutput> | TOutput,
-  ): BuiltStep<TName, TConfig, TPhaseCtx, TData, TOutput, TErrors> {
-    return { name: this._name, meta: this._meta, when: this._when, run: fn };
-  }
-}
-
-type BuiltStep<
-  TName extends string,
-  TConfig,
-  TPhaseCtx,
-  TData extends Record<string, unknown>,
-  TOutput,
-  TErrors extends ErrorDefinitions,
-> = Step<TName, TConfig, TPhaseCtx, TData, TOutput, TErrors>;
-
-/** Builder for chaining steps with accumulated type safety. */
-class PhaseBuilder<
-  TConfig,
-  TPhaseCtx,
-  TData extends Record<string, unknown>,
-  TErrors extends ErrorDefinitions,
-> {
-  private readonly _steps: AnyStep[] = [];
-
-  public step<TName extends string, TOutput>(
-    name: TName,
-    meta: StepMeta,
-    configure: (
-      s: StepBuilder<TName, TConfig, TPhaseCtx, TData, TErrors>,
-    ) => BuiltStep<TName, TConfig, TPhaseCtx, TData, TOutput, TErrors>,
-  ) {
-    const builder = new StepBuilder<TName, TConfig, TPhaseCtx, TData, TErrors>(
-      name,
-      meta,
-    );
-
-    const stepDef = configure(builder);
-    this._steps.push(stepDef);
-
-    return this as unknown as PhaseBuilder<
-      TConfig,
-      TPhaseCtx,
-      AddToData<TData, TName, TOutput>,
-      TErrors
-    >;
-  }
-
-  public build(): { steps: AnyStep[]; _data: TData } {
-    return { steps: this._steps, _data: undefined as unknown as TData };
-  }
-}
-
-type PhaseOptions<
+/** Options for defining a phase. */
+export type PhaseOptions<
   TName extends string,
   TConfig extends CommerceAppConfigOutputModel,
   TPhaseCtx,
-  TErrors extends ErrorDefinitions,
+  TSteps extends Record<string, StepDeclaration>,
+  TOutput,
 > = {
+  /** Unique name for the phase. */
   name: TName;
+
+  /** Metadata for UI display. */
   meta: PhaseMeta;
+
+  /** Condition to determine if this phase applies to the given config. */
   when: (config: CommerceAppConfigOutputModel) => config is TConfig;
 
+  /** Optional factory to create phase-specific context (API clients, etc.). */
   context?: PhaseContextFactory<TPhaseCtx>;
-  _errors?: TErrors;
+
+  /** Static step declarations for plan generation. */
+  steps: TSteps;
+
+  /** The phase handler that orchestrates step execution. */
+  run: (
+    ctx: PhaseRunContext<TConfig, TPhaseCtx, TSteps>,
+  ) => TOutput | Promise<TOutput>;
 };
 
 /**
- * Define a phase with type-safe step chaining.
+ * Define a phase with static step declarations and a run handler.
  *
  * @example
- * const myPhase = definePhase(
- *   {
- *     name: "events",
- *     meta: { label: "Events", description: "Sets up I/O Events" },
- *     when: (cfg): cfg is EventsConfig => cfg.eventing !== undefined,
- *     context: () => ({ client: createClient() }),
+ * ```typescript
+ * const eventsPhase = definePhase({
+ *   name: "events",
+ *   meta: { label: "Events", description: "Sets up I/O Events" },
+ *   when: (config): config is EventsConfig => config.eventing !== undefined,
+ *   context: createEventsPhaseContext,
+ *
+ *   steps: {
+ *     providers: { label: "Create Providers" },
+ *     metadata: { label: "Create Metadata" },
+ *     commerceConfig: { label: "Configure Commerce", when: hasCommerceEvents },
  *   },
- *   (phase) => phase
- *     .step("providers", { label: "Providers" }, (s) => s.run(async ({ phase }) => {
- *       return { providerId: "abc" };
- *     }))
- *     .step("metadata", { label: "Metadata" }, (s) => s.run(async ({ data }) => {
- *       // data.providers is typed!
- *       console.log(data.providers.providerId);
- *       return { metadataId: "xyz" };
- *     })),
- * );
+ *
+ *   run: async ({ config, phaseContext, run }) => {
+ *     const provider = await run("providers", () =>
+ *       createProviders(phaseContext, config)
+ *     );
+ *
+ *     const metadata = await run("metadata", () =>
+ *       createMetadata(phaseContext, provider.providerId)
+ *     );
+ *
+ *     if (hasCommerceEvents(config)) {
+ *       await run("commerceConfig", () =>
+ *         configureCommerce(phaseContext, provider.providerId)
+ *       );
+ *     }
+ *
+ *     return { provider, metadata };
+ *   },
+ * });
+ * ```
  */
 export function definePhase<
   TName extends string,
   TConfig extends CommerceAppConfigOutputModel,
   TPhaseCtx,
-  TErrors extends ErrorDefinitions,
-  TData extends Record<string, unknown>,
+  TSteps extends Record<string, StepDeclaration>,
+  TOutput,
 >(
-  options: PhaseOptions<TName, TConfig, TPhaseCtx, TErrors>,
-  buildSteps: (
-    steps: PhaseBuilder<TConfig, TPhaseCtx, Record<string, never>, TErrors>,
-  ) => PhaseBuilder<TConfig, TPhaseCtx, TData, TErrors>,
-): Phase<TName, TConfig, TPhaseCtx, TData, TErrors> {
-  const stepsBuilder = new PhaseBuilder<
-    TConfig,
-    TPhaseCtx,
-    Record<string, never>,
-    TErrors
-  >();
-  const result = buildSteps(stepsBuilder).build();
+  options: PhaseOptions<TName, TConfig, TPhaseCtx, TSteps, TOutput>,
+): Phase<TName, TConfig, TPhaseCtx, TSteps, TOutput> {
   return {
     name: options.name,
     meta: options.meta,
     when: options.when,
     context: options.context,
-    steps: result.steps,
+    steps: options.steps,
+    run: options.run,
   };
 }
-
-/** Merges a new step output into the accumulated data type. */
-type AddToData<
-  TData extends Record<string, unknown>,
-  TName extends string,
-  TOutput,
-> = Simplify<Merge<TData, Record<TName, TOutput>>>;

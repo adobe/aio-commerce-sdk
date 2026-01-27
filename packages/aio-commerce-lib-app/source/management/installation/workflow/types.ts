@@ -10,8 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import type { EventsPhaseData } from "../events";
-import type { WebhooksPhaseData } from "../webhooks";
+import type { EventsPhaseOutput } from "../events";
+import type { WebhooksPhaseOutput } from "../webhooks";
 import type { PhaseMeta, StepMeta } from "./phase";
 
 /** Status of a phase or step. */
@@ -57,8 +57,8 @@ export type PhaseStatus = {
 export type InstallationData = {
   [key: string]: unknown;
 
-  events?: EventsPhaseData;
-  webhooks?: WebhooksPhaseData;
+  events?: EventsPhaseOutput;
+  webhooks?: WebhooksPhaseOutput;
 };
 
 /** The full installation state, persisted and returned by get-install-status. */
