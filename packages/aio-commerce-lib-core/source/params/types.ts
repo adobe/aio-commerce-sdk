@@ -10,24 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
-import { defineConfig, mergeConfig } from "vitest/config";
+/** The type of the runtime action parameters. */
+export type RuntimeActionParams = {
+  /** If the runtime action is invoked via HTTP, this will be the headers of the request. */
+  __ow_headers?: Record<string, string | undefined>;
 
-const BARREL_FILES = [
-  "./source/index.ts",
-  "./source/utils/http/index.ts",
-  "./source/utils/transformations/index.ts",
-];
+  /** If the runtime action is invoked via HTTP, this will be the HTTP method of the request. */
+  __ow_method?: string;
 
-export default mergeConfig(
-  baseConfig,
-  defineConfig({
-    plugins: [],
-    test: {
-      coverage: {
-        // Exclude files that don't contain "logic".
-        exclude: [...BARREL_FILES, "./source/utils/http/codes.ts"],
-      },
-    },
-  }),
-);
+  // Remaining unknown properties.
+  [key: string]: unknown;
+};

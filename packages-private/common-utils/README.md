@@ -9,6 +9,10 @@ This package provides reusable helpers for common tasks, code consistency, and r
 pnpm add @aio-commerce-sdk/common-utils
 ```
 
+## Usage
+
+See the [Usage Guide](./docs/usage.md) for more information.
+
 ## Reference
 
 See the [API Reference](./docs/api-reference/README.md) for a full list of functions exported by the library.

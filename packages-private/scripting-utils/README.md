@@ -10,6 +10,10 @@ This package provides common utilities for working with project structure (findi
 pnpm add @aio-commerce-sdk/scripting-utils
 ```
 
+## Usage
+
+See the [Usage Guide](./docs/usage.md) for more information.
+
 ## Reference
 
 See the [API Reference](./docs/api-reference/README.md) for a full list of functions exported by the library.

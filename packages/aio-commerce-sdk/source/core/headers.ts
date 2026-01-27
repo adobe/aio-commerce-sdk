@@ -10,24 +10,4 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
-import { defineConfig, mergeConfig } from "vitest/config";
-
-const BARREL_FILES = [
-  "./source/index.ts",
-  "./source/utils/http/index.ts",
-  "./source/utils/transformations/index.ts",
-];
-
-export default mergeConfig(
-  baseConfig,
-  defineConfig({
-    plugins: [],
-    test: {
-      coverage: {
-        // Exclude files that don't contain "logic".
-        exclude: [...BARREL_FILES, "./source/utils/http/codes.ts"],
-      },
-    },
-  }),
-);
+export * from "@adobe/aio-commerce-lib-core/headers";
