@@ -10,37 +10,42 @@
  * governing permissions and limitations under the License.
  */
 
-import type { AppConfigWithDefinedEvents, EventsPhaseContext } from "./utils";
+import type { EventsContext } from "./utils";
 
-export function createProviders(
-  _ctx: EventsPhaseContext,
-  _config: AppConfigWithDefinedEvents,
-) {
-  return { providerId: "TODO", label: "TODO" };
+export function createProviders(context: EventsContext) {
+  const { config, logger } = context;
+  logger.info("Creating event providers in Commerce for config:", config);
+
+  return [{ providerId: "TODO" }];
 }
 
-export function createMetadata(_ctx: EventsPhaseContext, _providerId: string) {
-  return { metadataId: "TODO" };
+export function createMetadata(context: EventsContext) {
+  const { config, logger } = context;
+  logger.info(
+    "Creating event metadata in Commerce for provider and config",
+    config,
+  );
+
+  return [{ metadataId: "TODO" }];
 }
 
-export function createRegistrations(
-  _ctx: EventsPhaseContext,
-  _providerId: string,
-  _metadataId: string,
-) {
-  return { registrationId: "TODO" };
+export function createRegistrations(context: EventsContext) {
+  const { config, logger } = context;
+  logger.info("Creating event registrations in Commerce for config:", config);
+
+  return [{ registrationId: "TODO" }];
 }
 
-export function configureCommerce(
-  _ctx: EventsPhaseContext,
-  _providerId: string,
-) {
+export function configureCommerce(context: EventsContext) {
+  const { config, logger } = context;
+  logger.info("Configuring Commerce Eventing with config:", config);
+
   return { commerceConfigured: true };
 }
 
-export function createCommerceSubscriptions(
-  _ctx: EventsPhaseContext,
-  _providerId: string,
-) {
-  return { subscriptionId: "TODO" };
+export function createCommerceSubscriptions(context: EventsContext) {
+  const { config, logger } = context;
+  logger.info("Creating event subscriptions in Commerce for config:", config);
+
+  return [{ subscriptionId: "TODO" }];
 }

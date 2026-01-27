@@ -15,7 +15,11 @@ import { definePhase } from "#management/installation/workflow/phase";
 import { createWebhookSubscriptions } from "./steps";
 import { hasWebhooks } from "./utils";
 
-import type { InferPhaseOutput } from "#management/installation/workflow/phase";
+import type {
+  ExecutionContext,
+  InferPhaseOutput,
+} from "#management/installation/workflow/phase";
+import type { WebhooksConfig } from "./utils";
 
 const PHASE_META = {
   label: "Webhooks",
@@ -35,9 +39,9 @@ export const webhooksPhase = definePhase({
   steps: STEPS_META,
   when: hasWebhooks,
 
-  run: async ({ config, run }) => {
+  run: async ({ context, run }) => {
     const subscriptions = await run("subscriptions", () =>
-      createWebhookSubscriptions(config),
+      createWebhookSubscriptions(context),
     );
 
     return { subscriptions };
@@ -46,3 +50,6 @@ export const webhooksPhase = definePhase({
 
 /** The output data of the Commerce Webhooks phase. */
 export type WebhooksPhaseOutput = InferPhaseOutput<typeof webhooksPhase>;
+
+/** The execution context for the Commerce Webhooks phase. */
+export type WebhooksPhaseContext = ExecutionContext<WebhooksConfig>;

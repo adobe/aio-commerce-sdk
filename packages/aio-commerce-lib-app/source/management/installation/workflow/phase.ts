@@ -11,6 +11,7 @@
  */
 
 import type AioLogger from "@adobe/aio-lib-core-logging";
+import type { EmptyObject } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Shared context available to all phases during installation. */
@@ -22,10 +23,10 @@ export type InstallationContext = {
   logger: ReturnType<typeof AioLogger>;
 };
 
-/** Metadata for a step (for UI display). */
+/** Metadata for a step. */
 export type StepMeta = {
   label: string;
-  description?: string;
+  description: string;
 };
 
 /** Step declaration with optional condition. */
@@ -34,10 +35,10 @@ export type StepDeclaration = StepMeta & {
   when?: (config: CommerceAppConfigOutputModel) => boolean;
 };
 
-/** Metadata for a phase (for UI display). */
+/** Metadata for a phase. */
 export type PhaseMeta = {
   label: string;
-  description?: string;
+  description: string;
 };
 
 /** Factory function type for creating phase context. */
@@ -54,20 +55,24 @@ export type StepRunner<TSteps extends Record<string, StepDeclaration>> = <T>(
   fn: () => T | Promise<T>,
 ) => Promise<T>;
 
+/** The execution context of phase. */
+export type ExecutionContext<
+  TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
+  TPhaseCtx = EmptyObject,
+> = InstallationContext &
+  TPhaseCtx & {
+    /** The narrowed app configuration. */
+    config: TConfig;
+  };
+
 /** Context provided to the phase run handler. */
 export type PhaseRunContext<
   TConfig extends CommerceAppConfigOutputModel,
-  TPhaseCtx,
-  TSteps extends Record<string, StepDeclaration>,
+  TPhaseCtx = EmptyObject,
+  TSteps extends Record<string, StepDeclaration> = EmptyObject,
 > = {
-  /** Shared installation context (params, logger). */
-  installationContext: InstallationContext;
-
-  /** The narrowed app configuration. */
-  config: TConfig;
-
-  /** Phase-specific context (API clients, etc.). */
-  phaseContext: TPhaseCtx;
+  /** Shared execution context */
+  context: ExecutionContext<TConfig, TPhaseCtx>;
 
   /**
    * Execute a step with automatic state management.
@@ -81,11 +86,8 @@ export type PhaseRunContext<
 export type Phase<
   TName extends string = string,
   TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
-  TPhaseCtx = unknown,
-  TSteps extends Record<string, StepDeclaration> = Record<
-    string,
-    StepDeclaration
-  >,
+  TPhaseCtx = EmptyObject,
+  TSteps extends Record<string, StepDeclaration> = EmptyObject,
   TOutput = unknown,
 > = {
   name: TName;

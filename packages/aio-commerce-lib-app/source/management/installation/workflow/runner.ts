@@ -65,38 +65,6 @@ function buildPhaseRegistry(
   return new Map(allPhases.map((phase) => [phase.name, phase]));
 }
 
-/** Creates an installation plan from the config and phase definitions. */
-export function createInstallationPlan(
-  options: CreatePlanOptions,
-): InstallationPlan {
-  const { config, extraPhases = [] } = options;
-  const phases = [...DEFAULT_PHASES, ...extraPhases];
-  const applicablePhases = phases.filter((phase) => phase.when(config));
-
-  return {
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
-    phases: applicablePhases.map((phase) => {
-      const stepEntries = Object.entries(phase.steps) as [
-        string,
-        StepDeclaration,
-      ][];
-      const applicableSteps = stepEntries.filter(
-        ([_, step]) => !step.when || step.when(config),
-      );
-
-      return {
-        name: phase.name,
-        meta: phase.meta,
-        steps: applicableSteps.map(([name, step]) => ({
-          name,
-          meta: { label: step.label, description: step.description },
-        })),
-      };
-    }),
-  };
-}
-
 /** Creates the initial installation state from a plan. */
 function createInitialState(plan: InstallationPlan): InstallationState {
   return {
@@ -116,6 +84,7 @@ function createInitialState(plan: InstallationPlan): InstallationState {
   };
 }
 
+/** Create a handler that will run a step of a phase. */
 function createStepRunner(
   phaseName: string,
   phaseStatus: PhaseStatus,
@@ -156,6 +125,7 @@ function createStepRunner(
   };
 }
 
+/** Runs a phase with automatic state management. */
 async function runPhase(
   phase: AnyPhase,
   installationContext: InstallationContext,
@@ -183,9 +153,11 @@ async function runPhase(
   const run = createStepRunner(phase.name, phaseStatus, state, store);
   try {
     await phase.run({
-      installationContext,
-      config,
-      phaseContext,
+      context: {
+        ...installationContext,
+        ...phaseContext,
+        config,
+      },
       run,
     });
 
@@ -208,6 +180,38 @@ async function runPhase(
 
     return state.error;
   }
+}
+
+/** Creates an installation plan from the config and phase definitions. */
+export function createInstallationPlan(
+  options: CreatePlanOptions,
+): InstallationPlan {
+  const { config, extraPhases = [] } = options;
+  const phases = [...DEFAULT_PHASES, ...extraPhases];
+  const applicablePhases = phases.filter((phase) => phase.when(config));
+
+  return {
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    phases: applicablePhases.map((phase) => {
+      const stepEntries = Object.entries(phase.steps) as [
+        string,
+        StepDeclaration,
+      ][];
+      const applicableSteps = stepEntries.filter(
+        ([_, step]) => !step.when || step.when(config),
+      );
+
+      return {
+        name: phase.name,
+        meta: phase.meta,
+        steps: applicableSteps.map(([name, step]) => ({
+          name,
+          meta: { label: step.label, description: step.description },
+        })),
+      };
+    }),
+  };
 }
 
 /**

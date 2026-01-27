@@ -47,21 +47,11 @@ export const externalEventsPhase = definePhase({
   context: createEventsPhaseContext,
   when: hasExternalEvents,
 
-  run: async ({ config, phaseContext, run }) => {
-    const provider = await run("providers", () =>
-      createProviders(phaseContext, config),
-    );
-
-    const metadata = await run("metadata", () =>
-      createMetadata(phaseContext, provider.providerId),
-    );
-
+  run: async ({ context, run }) => {
+    const provider = await run("providers", () => createProviders(context));
+    const metadata = await run("metadata", () => createMetadata(context));
     const registration = await run("registrations", () =>
-      createRegistrations(
-        phaseContext,
-        provider.providerId,
-        metadata.metadataId,
-      ),
+      createRegistrations(context),
     );
 
     return { provider, metadata, registration };

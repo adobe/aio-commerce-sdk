@@ -61,29 +61,16 @@ export const commerceEventsPhase = definePhase({
   context: createEventsPhaseContext,
   when: hasCommerceEvents,
 
-  run: async ({ config, phaseContext, run }) => {
-    const provider = await run("providers", () =>
-      createProviders(phaseContext, config),
-    );
-
-    const metadata = await run("metadata", () =>
-      createMetadata(phaseContext, provider.providerId),
-    );
-
+  run: async ({ context, run }) => {
+    const provider = await run("providers", () => createProviders(context));
+    const metadata = await run("metadata", () => createMetadata(context));
     const registration = await run("registrations", () =>
-      createRegistrations(
-        phaseContext,
-        provider.providerId,
-        metadata.metadataId,
-      ),
+      createRegistrations(context),
     );
 
-    await run("commerceConfig", () =>
-      configureCommerce(phaseContext, provider.providerId),
-    );
-
+    await run("commerceConfig", () => configureCommerce(context));
     await run("commerceSubscriptions", () =>
-      createCommerceSubscriptions(phaseContext, provider.providerId),
+      createCommerceSubscriptions(context),
     );
 
     return { provider, metadata, registration };

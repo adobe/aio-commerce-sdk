@@ -17,4 +17,4 @@ export { externalEventsPhase } from "./external";
 
 export type { CommerceEventsPhaseOutput } from "./commerce";
 export type { ExternalEventsPhaseOutput } from "./external";
-export type { AppConfigWithDefinedEvents, EventsPhaseContext } from "./utils";
+export type { EventsConfig, EventsPhaseContext } from "./utils";

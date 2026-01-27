@@ -20,10 +20,13 @@ import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-
 import type { CommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
 import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { PhaseContextFactory } from "#management/installation/workflow/phase";
+import type {
+  ExecutionContext,
+  PhaseContextFactory,
+} from "#management/installation/workflow/phase";
 
 /** Config type when eventing is present. */
-export type AppConfigWithDefinedEvents = CommerceAppConfigOutputModel & {
+export type EventsConfig = CommerceAppConfigOutputModel & {
   eventing: NonNullable<CommerceAppConfigOutputModel["eventing"]>;
 };
 
@@ -64,13 +67,16 @@ export const createEventsPhaseContext: PhaseContextFactory<
 /** Check if config has commerce event sources. */
 export function hasCommerceEvents(
   config: CommerceAppConfigOutputModel,
-): config is AppConfigWithDefinedEvents {
+): config is EventsConfig {
   return config.eventing?.some((source) => source.type === "commerce") ?? false;
 }
 
 /** Check if config has external event sources. */
 export function hasExternalEvents(
   config: CommerceAppConfigOutputModel,
-): config is AppConfigWithDefinedEvents {
+): config is EventsConfig {
   return config.eventing?.some((source) => source.type === "external") ?? false;
 }
+
+/** The execution context for the Events phases. */
+export type EventsContext = ExecutionContext<EventsConfig, EventsPhaseContext>;
