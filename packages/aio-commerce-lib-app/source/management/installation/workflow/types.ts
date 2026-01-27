@@ -10,7 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import type { EventsPhaseOutput } from "../events";
+import type {
+  CommerceEventsPhaseOutput,
+  ExternalEventsPhaseOutput,
+} from "../events";
 import type { WebhooksPhaseOutput } from "../webhooks";
 import type { PhaseMeta, StepMeta } from "./phase";
 
@@ -57,7 +60,8 @@ export type PhaseStatus = {
 export type InstallationData = {
   [key: string]: unknown;
 
-  events?: EventsPhaseOutput;
+  commerceEvents?: CommerceEventsPhaseOutput;
+  externalEvents?: ExternalEventsPhaseOutput;
   webhooks?: WebhooksPhaseOutput;
 };
 

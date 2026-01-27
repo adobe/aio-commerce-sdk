@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { eventsPhase } from "../events";
+import { commerceEventsPhase, externalEventsPhase } from "../events";
 import { webhooksPhase } from "../webhooks";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -51,7 +51,11 @@ export type RunnerOptions = {
 };
 
 /** The phases built-in in the library. */
-const DEFAULT_PHASES: AnyPhase[] = [eventsPhase, webhooksPhase];
+const DEFAULT_PHASES: AnyPhase[] = [
+  commerceEventsPhase,
+  externalEventsPhase,
+  webhooksPhase,
+];
 
 /** Builds a phase registry map from phase name to phase definition. */
 function buildPhaseRegistry(

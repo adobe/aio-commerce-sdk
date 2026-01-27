@@ -12,13 +12,10 @@
 
 import { definePhase } from "#management/installation/workflow/phase";
 
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { InferPhaseOutput } from "#management/installation/workflow/phase";
+import { createWebhookSubscriptions } from "./steps";
+import { hasWebhooks } from "./utils";
 
-/** Config type when webhooks are present. */
-type WebhooksConfig = CommerceAppConfigOutputModel & {
-  webhooks: unknown[];
-};
+import type { InferPhaseOutput } from "#management/installation/workflow/phase";
 
 const PHASE_META = {
   label: "Webhooks",
@@ -32,27 +29,20 @@ const STEPS_META = {
   },
 } as const;
 
-function createSubscriptions(config: WebhooksConfig) {
-  const webhookCount = config.webhooks.length;
-  return { subscriptionsCreated: webhookCount };
-}
-
-/** The webhooks installation phase. */
 export const webhooksPhase = definePhase({
   name: "webhooks",
   meta: PHASE_META,
   steps: STEPS_META,
-
-  when: (config): config is WebhooksConfig =>
-    "webhooks" in config && Array.isArray(config.webhooks),
+  when: hasWebhooks,
 
   run: async ({ config, run }) => {
     const subscriptions = await run("subscriptions", () =>
-      createSubscriptions(config),
+      createWebhookSubscriptions(config),
     );
 
     return { subscriptions };
   },
 });
 
+/** The output data of the Commerce Webhooks phase. */
 export type WebhooksPhaseOutput = InferPhaseOutput<typeof webhooksPhase>;
