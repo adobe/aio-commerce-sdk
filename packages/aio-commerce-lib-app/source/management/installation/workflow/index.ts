@@ -17,7 +17,18 @@ export { createInstallationPlan, runInstallation } from "./runner";
 export { createLibStateStore } from "./storage/lib-state";
 
 export type {
-  AnyPhase,
+  InstallationHooks,
+  PhaseEvent,
+  PhaseFailedEvent,
+  PhaseStartedEvent,
+  PhaseSucceededEvent,
+  StepEvent,
+  StepFailedEvent,
+  StepStartedEvent,
+  StepSucceededEvent,
+} from "./hooks";
+export type {
+  ExecutionContext,
   InferPhaseOutput,
   InstallationContext,
   Phase,

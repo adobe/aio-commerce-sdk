@@ -40,7 +40,7 @@ const STEPS_META = {
 
 /** The phase for installing external event sources. */
 export const externalEventsPhase = definePhase({
-  name: "external-events",
+  name: "externalEvents",
   meta: PHASE_META,
   steps: STEPS_META,
 

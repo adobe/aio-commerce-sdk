@@ -54,7 +54,7 @@ const STEPS_META = {
 
 /** The phase for installing commerce event sources. */
 export const commerceEventsPhase = definePhase({
-  name: "commerce-events",
+  name: "commerceEvents",
   meta: PHASE_META,
   steps: STEPS_META,
 

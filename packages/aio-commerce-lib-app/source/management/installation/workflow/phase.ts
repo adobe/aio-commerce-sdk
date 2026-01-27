@@ -100,9 +100,6 @@ export type Phase<
   ) => TOutput | Promise<TOutput>;
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: Internal type for runtime phase storage
-export type AnyPhase = Phase<string, any, any, any, any>;
-
 /** Infer the output type from a phase. */
 export type InferPhaseOutput<TPhase> =
   TPhase extends Phase<

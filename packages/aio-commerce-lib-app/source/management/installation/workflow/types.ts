@@ -10,12 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import type {
-  CommerceEventsPhaseOutput,
-  ExternalEventsPhaseOutput,
-} from "../events";
-import type { WebhooksPhaseOutput } from "../webhooks";
-import type { PhaseMeta, StepMeta } from "./phase";
+import type { InferPhaseOutput, PhaseMeta, StepMeta } from "./phase";
+import type { DEFAULT_PHASES } from "./registry";
 
 /** Status of a phase or step. */
 export type ExecutionStatus =
@@ -53,16 +49,14 @@ export type PhaseStatus = {
   steps: StepStatus[];
 };
 
-/**
- * Known phase data outputs.
- * This provides type hints for known phases while allowing unknown step data.
- */
-export type InstallationData = {
-  [key: string]: unknown;
+/** Known phase outputs derived from the default phases. */
+type DefaultPhaseData = {
+  [P in (typeof DEFAULT_PHASES)[number] as P["name"]]?: InferPhaseOutput<P>;
+};
 
-  commerceEvents?: CommerceEventsPhaseOutput;
-  externalEvents?: ExternalEventsPhaseOutput;
-  webhooks?: WebhooksPhaseOutput;
+/** Installation data with known phases and extensible for extra phases. */
+export type InstallationData = DefaultPhaseData & {
+  [key: string]: unknown;
 };
 
 /** The full installation state, persisted and returned by get-install-status. */
