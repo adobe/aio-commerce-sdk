@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the workflow module */
+/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoing for the workflow module */
 
 export { definePhase } from "./phase";
 export { createInstallationPlan, runInstallation } from "./runner";

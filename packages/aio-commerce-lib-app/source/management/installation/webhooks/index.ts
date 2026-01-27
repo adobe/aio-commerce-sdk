@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Public API for webhooks phase */
+/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoing for the webhooks module */
 
 export { webhooksPhase } from "./phase";
 

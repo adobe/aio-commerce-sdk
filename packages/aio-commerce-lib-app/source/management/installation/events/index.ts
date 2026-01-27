@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Public API for events phases */
+/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoing for the events module */
 
 export { commerceEventsPhase } from "./commerce";
 export { externalEventsPhase } from "./external";
