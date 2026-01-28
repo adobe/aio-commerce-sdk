@@ -12,6 +12,7 @@
 
 import { allNonEmpty } from "@adobe/aio-commerce-lib-core/params";
 
+import { forwardImsAuthProviderFromParams } from "./ims-auth/provider";
 import { resolveImsAuthParams } from "./ims-auth/utils";
 import { resolveIntegrationAuthParams } from "./integration-auth/utils";
 
@@ -31,6 +32,11 @@ const INTEGRATION_AUTH_PARAMS = [
   "AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET",
 ] as const satisfies string[];
 
+const FORWARDED_IMS_PARAMS = [
+  "AIO_COMMERCE_IMS_AUTH_TOKEN",
+  "AIO_COMMERCE_IMS_AUTH_API_KEY",
+] as const satisfies string[];
+
 /**
  * Automatically detects and resolves authentication parameters from App Builder action inputs.
  * Attempts to resolve IMS authentication first, then falls back to Integration authentication.
@@ -48,21 +54,27 @@ const INTEGRATION_AUTH_PARAMS = [
  * ```
  */
 export function resolveAuthParams(params: Record<string, unknown>) {
+  try {
+    const provider = forwardImsAuthProviderFromParams(params);
+    return { ...provider, strategy: "ims" as const };
+  } catch {
+    // Do nothing, the needed parameters are not there, try the next method.
+  }
+
   if (allNonEmpty(params, IMS_AUTH_PARAMS)) {
-    return Object.assign(resolveImsAuthParams(params), {
-      strategy: "ims",
-    } as const);
+    const provider = resolveImsAuthParams(params);
+    return { ...provider, strategy: "ims" as const };
   }
 
   if (allNonEmpty(params, INTEGRATION_AUTH_PARAMS)) {
-    return Object.assign(resolveIntegrationAuthParams(params), {
-      strategy: "integration",
-    } as const);
+    const provider = resolveIntegrationAuthParams(params);
+    return { ...provider, strategy: "integration" as const };
   }
 
   throw new Error(
     "Can't resolve authentication options for the given params. " +
-      `Please provide either IMS options (${IMS_AUTH_PARAMS.join(", ")}) ` +
+      `Please provide either a pre-created token and (optionally) an API key (${FORWARDED_IMS_PARAMS.join(",")})` +
+      `or IMS options (${IMS_AUTH_PARAMS.join(", ")}) ` +
       `or Commerce integration options (${INTEGRATION_AUTH_PARAMS.join(", ")}).`,
   );
 }
