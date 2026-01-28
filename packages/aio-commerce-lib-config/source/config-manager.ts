@@ -19,7 +19,9 @@ import {
 } from "./modules/configuration";
 import { getSchema as getSchemaModule } from "./modules/schema";
 import {
+  getPersistedScopeTree,
   getScopeTree as getScopeTreeModule,
+  saveScopeTree,
   setCustomScopeTree as setCustomScopeTreeModule,
 } from "./modules/scope-tree";
 
@@ -221,6 +223,41 @@ export async function syncCommerceScopes(
       `Failed to sync Commerce scopes: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
+}
+
+/**
+ *
+ * @returns The success message.
+ * @example
+ * ```typescript
+ * import { unsyncCommerceScopes } from "@adobe/aio-commerce-lib-config";
+ *
+ * const result = await unsyncCommerceScopes();
+ * console.log(result); // "Commerce scope removed successfully"
+ * ```
+ *
+ */
+export async function unsyncCommerceScopes() {
+  const COMMERCE_SCOPE_CODE = "commerce";
+  const MESSAGES = {
+    ALREADY_REMOVED: "Commerce scope is already removed, no need to unsync",
+    SUCCESS: "Commerce scope removed successfully",
+  };
+  const scopeTree = await getPersistedScopeTree(DEFAULT_NAMESPACE);
+
+  if (!scopeTree.find((scope) => scope.code === COMMERCE_SCOPE_CODE)) {
+    return MESSAGES.ALREADY_REMOVED;
+  }
+
+  // Remove 'commerce' scope
+  const updatedScopeTree = scopeTree.filter(
+    (scope) => scope.code !== COMMERCE_SCOPE_CODE,
+  );
+
+  // Save updated scope tree
+  await saveScopeTree(DEFAULT_NAMESPACE, updatedScopeTree);
+
+  return MESSAGES.SUCCESS;
 }
 
 /**
