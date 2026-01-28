@@ -79,7 +79,7 @@ When building actions that receive authenticated requests and need to forward th
 
 #### Auto-Detection with `forwardImsAuthProvider`
 
-The simplest way to forward authentication is using `forwardImsAuthProvider`, which automatically detects the source of credentials:
+Use `forwardImsAuthProvider` to automatically detect the source of credentials:
 
 ```typescript
 import { forwardImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
@@ -101,59 +101,14 @@ export const main = async function (params: Record<string, unknown>) {
 
 The function tries sources in this order:
 
-1. **Params token** - Looks for `AIO_COMMERCE_IMS_AUTH_TOKEN` in the params object
+1. **Params token** - Looks for `AIO_COMMERCE_IMS_AUTH_TOKEN` (and optionally `AIO_COMMERCE_IMS_AUTH_API_KEY`) in the params object
 2. **HTTP headers** - Falls back to `Authorization` header in `__ow_headers`
 
 If neither source provides valid credentials, it throws an error.
 
-#### From Runtime Action Parameters
+#### Explicit Source with `getForwardedImsAuthProvider`
 
-When credentials are passed as action parameters (e.g., via `app.config.yaml` inputs), use `forwardImsAuthProviderFromParams`:
-
-```typescript
-import { forwardImsAuthProviderFromParams } from "@adobe/aio-commerce-lib-auth";
-
-export const main = async function (params: Record<string, unknown>) {
-  // params contains: { AIO_COMMERCE_IMS_AUTH_TOKEN: "eyJ...", AIO_COMMERCE_IMS_AUTH_API_KEY: "..." }
-  const authProvider = forwardImsAuthProviderFromParams(params);
-
-  // Use the forwarded credentials in downstream API calls
-  const response = await fetch("https://api.adobe.io/some-endpoint", {
-    headers: await authProvider.getHeaders(),
-  });
-
-  return { statusCode: 200, body: await response.json() };
-};
-```
-
-The function reads the following parameters:
-
-- `AIO_COMMERCE_IMS_AUTH_TOKEN` (required) - The IMS access token
-- `AIO_COMMERCE_IMS_AUTH_API_KEY` (optional) - The API key
-
-#### From a Runtime Action Incoming Request (Invoked via HTTP)
-
-When credentials come from HTTP request headers, use `forwardImsAuthProviderFromRequest`:
-
-```typescript
-import { forwardImsAuthProviderFromRequest } from "@adobe/aio-commerce-lib-auth";
-
-export const main = async function (params: Record<string, unknown>) {
-  // Forward the authentication from the incoming request headers
-  const authProvider = forwardImsAuthProviderFromRequest(params);
-
-  // Use the forwarded credentials in downstream API calls
-  const response = await fetch("https://api.adobe.io/some-endpoint", {
-    headers: await authProvider.getHeaders(),
-  });
-
-  return { statusCode: 200, body: await response.json() };
-};
-```
-
-#### From Various Sources
-
-For more flexibility, use `getForwardedImsAuthProvider` while specifying the credential source:
+For more control, use `getForwardedImsAuthProvider` to explicitly specify the credential source:
 
 ```typescript
 import { getForwardedImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
@@ -328,11 +283,11 @@ If neither set is complete, it throws an error.
 > If you need to work with a specific authentication type, use the provider-specific methods (`getImsAuthProvider` or `getIntegrationAuthProvider`) along with their assertion functions (`assertImsAuthParams` or `assertIntegrationAuthParams`) as shown in the sections above.
 
 > [!NOTE]
-> For forwarding pre-existing IMS tokens (e.g., `AIO_COMMERCE_IMS_AUTH_TOKEN`), use `forwardImsAuthProvider` or `forwardImsAuthProviderFromParams` instead of `resolveAuthParams`.
+> For forwarding pre-existing IMS tokens (e.g., `AIO_COMMERCE_IMS_AUTH_TOKEN`), use `forwardImsAuthProvider` instead of `resolveAuthParams`.
 
 ## Best Practices
 
 1. **Use `resolveAuthParams` for flexibility** - Automatically detects auth type, making your code work with both IMS and Integration auth
 2. **Use specific providers when needed** - Use `getImsAuthProvider` or `getIntegrationAuthProvider` with their respective `assert*` functions when you need to enforce a specific auth type
-3. **Use forwarding for proxy patterns** - When your action receives authenticated requests and needs to call downstream services, use `forwardImsAuthProvider`, `forwardImsAuthProviderFromParams`, `forwardImsAuthProviderFromRequest`, or `getForwardedImsAuthProvider` to pass credentials without regenerating tokens
+3. **Use forwarding for proxy patterns** - When your action receives authenticated requests and needs to call downstream services, use `forwardImsAuthProvider` or `getForwardedImsAuthProvider` to pass credentials without regenerating tokens
 4. **Handle errors gracefully** - Catch and properly handle validation and authentication errors

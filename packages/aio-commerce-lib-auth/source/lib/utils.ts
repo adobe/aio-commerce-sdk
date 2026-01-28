@@ -60,7 +60,7 @@ export function resolveAuthParams(params: Record<string, unknown>) {
 
   throw new Error(
     "Can't resolve authentication options for the given params. " +
-      `Please provide either IMS options (${IMS_AUTH_PARAMS.join(", ")})` +
+      `Please provide either IMS options (${IMS_AUTH_PARAMS.join(", ")}) ` +
       `or Commerce integration options (${INTEGRATION_AUTH_PARAMS.join(", ")}).`,
   );
 }
