@@ -82,7 +82,7 @@ export function resolveIoEventsHttpClientParams(
 ): IoEventsHttpClientParams {
   let clientAuth: IoEventsHttpClientParams["auth"];
 
-  if (allNonEmpty(params, ["AIO_COMMERCE_AUTH_IMS_TOKEN"])) {
+  if (allNonEmpty(params, ["AIO_COMMERCE_IMS_AUTH_TOKEN"])) {
     clientAuth = forwardImsAuthProvider(params);
   } else {
     const authParams = resolveAuthParams(params);
