@@ -243,6 +243,59 @@ const response = await client.get("products").json();
 // { product_name: "..." } becomes { productName: "..." }
 ```
 
+### Forwarding IMS Authentication
+
+When your action receives a pre-existing IMS token (e.g., from an upstream service or API Gateway), you can forward it to downstream API calls using `AIO_COMMERCE_IMS_AUTH_TOKEN`:
+
+```yaml
+# app.config.yaml
+actions:
+  my-action:
+    function: src/actions/my-action/index.js
+    inputs:
+      AIO_COMMERCE_API_BASE_URL: $AIO_COMMERCE_API_BASE_URL
+      AIO_COMMERCE_IMS_AUTH_TOKEN: $AIO_COMMERCE_IMS_AUTH_TOKEN # Pre-existing token
+      AIO_COMMERCE_IMS_AUTH_API_KEY: $AIO_COMMERCE_IMS_AUTH_API_KEY # Optional
+```
+
+```typescript
+// src/actions/my-action/index.js
+import {
+  resolveCommerceHttpClientParams,
+  AdobeCommerceHttpClient,
+} from "@adobe/aio-commerce-lib-api/commerce";
+
+export const main = async function (params) {
+  // Automatically detects and uses the forwarded token
+  const clientParams = resolveCommerceHttpClientParams(params);
+  const client = new AdobeCommerceHttpClient(clientParams);
+
+  return await client.get("products").json();
+};
+```
+
+The resolver prioritizes forwarded tokens over full IMS/Integration auth parameters. This is useful for:
+
+- **Proxy patterns**: When your action acts as a proxy and needs to forward the caller's credentials
+- **Token injection**: When tokens are injected by an API Gateway or upstream service
+- **Testing**: When you want to use a specific token without full IMS configuration
+
+The same pattern works for I/O Events:
+
+```typescript
+import {
+  resolveIoEventsHttpClientParams,
+  AdobeIoEventsHttpClient,
+} from "@adobe/aio-commerce-lib-api/io-events";
+
+export const main = async function (params) {
+  const clientParams = resolveIoEventsHttpClientParams(params);
+  const client = new AdobeIoEventsHttpClient(clientParams);
+
+  return await client.get("events").json();
+};
+```
+
 ### Custom Auth Providers
 
 You can also use pre-initialized auth providers:
