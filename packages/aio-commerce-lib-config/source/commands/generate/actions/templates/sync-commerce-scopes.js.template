@@ -58,6 +58,7 @@ export async function main(params) {
 
     const commerceConfig = resolveCommerceHttpClientParams(
       paramsWithCommerceConfig,
+      { tryForwardAuthProvider: true },
     );
 
     const result = await syncCommerceScopes(commerceConfig);

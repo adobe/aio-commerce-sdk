@@ -191,14 +191,16 @@ describe("lib/commerce/helpers", () => {
       );
     });
 
-    test("should resolve SaaS Commerce params with forwarded IMS auth token", () => {
+    test("should resolve SaaS Commerce params with forwarded IMS auth token when tryForwardAuthProvider is true", () => {
       const params = {
         AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/my-tenant/",
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "forwarded-token",
-        AIO_COMMERCE_IMS_AUTH_API_KEY: "forwarded-api-key",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_API_KEY: "forwarded-api-key",
       };
 
-      const result = resolveCommerceHttpClientParams(params);
+      const result = resolveCommerceHttpClientParams(params, {
+        tryForwardAuthProvider: true,
+      });
 
       expect(result.config.flavor).toBe("saas");
       expect(result.config.baseUrl).toBe(
@@ -209,13 +211,15 @@ describe("lib/commerce/helpers", () => {
       expect(result.auth).toHaveProperty("getHeaders");
     });
 
-    test("should resolve PaaS Commerce params with forwarded IMS auth token", () => {
+    test("should resolve PaaS Commerce params with forwarded IMS auth token when tryForwardAuthProvider is true", () => {
       const params = {
         AIO_COMMERCE_API_BASE_URL: "https://my-store.example.com/",
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
       };
 
-      const result = resolveCommerceHttpClientParams(params);
+      const result = resolveCommerceHttpClientParams(params, {
+        tryForwardAuthProvider: true,
+      });
 
       expect(result.config.flavor).toBe("paas");
       expect(result.config.baseUrl).toBe("https://my-store.example.com/");
@@ -223,10 +227,31 @@ describe("lib/commerce/helpers", () => {
       expect(result.auth).toHaveProperty("getHeaders");
     });
 
-    test("should prioritize forwarded IMS auth token over full IMS params", () => {
+    test("should use forwarded IMS auth when tryForwardAuthProvider is true even with full IMS params", () => {
       const params = {
         AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/my-tenant/",
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+        AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+      };
+
+      const result = resolveCommerceHttpClientParams(params, {
+        tryForwardAuthProvider: true,
+      });
+
+      // Should use forwarded token (ImsAuthProvider), not full IMS params
+      expect(result.auth).toHaveProperty("getAccessToken");
+      expect(result.auth).not.toHaveProperty("clientId");
+    });
+
+    test("should use full IMS params by default even when forwarded token is present", () => {
+      const params = {
+        AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/my-tenant/",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
         AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
@@ -237,19 +262,21 @@ describe("lib/commerce/helpers", () => {
 
       const result = resolveCommerceHttpClientParams(params);
 
-      // Should use forwarded token (ImsAuthProvider), not full IMS params
-      expect(result.auth).toHaveProperty("getAccessToken");
-      expect(result.auth).not.toHaveProperty("clientId");
+      // Should use full IMS params, not forwarded token
+      expect(result.auth).toHaveProperty("clientId", "test-client-id");
+      expect(result.auth).not.toHaveProperty("getAccessToken");
     });
 
     test("forwarded IMS auth provider should return correct token and headers", () => {
       const params = {
         AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/my-tenant/",
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "my-forwarded-token",
-        AIO_COMMERCE_IMS_AUTH_API_KEY: "my-api-key",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "my-forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_API_KEY: "my-api-key",
       };
 
-      const result = resolveCommerceHttpClientParams(params);
+      const result = resolveCommerceHttpClientParams(params, {
+        tryForwardAuthProvider: true,
+      });
       const auth = result.auth as ImsAuthProvider;
 
       expect(auth.getAccessToken()).toBe("my-forwarded-token");
@@ -262,10 +289,12 @@ describe("lib/commerce/helpers", () => {
     test("forwarded IMS auth provider should work without API key", () => {
       const params = {
         AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/my-tenant/",
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "my-forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "my-forwarded-token",
       };
 
-      const result = resolveCommerceHttpClientParams(params);
+      const result = resolveCommerceHttpClientParams(params, {
+        tryForwardAuthProvider: true,
+      });
       const auth = result.auth as ImsAuthProvider;
 
       expect(auth.getAccessToken()).toBe("my-forwarded-token");

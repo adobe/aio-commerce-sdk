@@ -86,7 +86,7 @@ import { forwardImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
 
 export const main = async function (params: Record<string, unknown>) {
   // Automatically detects credentials from:
-  // 1. AIO_COMMERCE_IMS_AUTH_TOKEN param (if present)
+  // 1. AIO_COMMERCE_AUTH_IMS_TOKEN param (if present)
   // 2. Authorization header in __ow_headers (fallback)
   const authProvider = forwardImsAuthProvider(params);
 
@@ -101,7 +101,7 @@ export const main = async function (params: Record<string, unknown>) {
 
 The function tries sources in this order:
 
-1. **Params token** - Looks for `AIO_COMMERCE_IMS_AUTH_TOKEN` (and optionally `AIO_COMMERCE_IMS_AUTH_API_KEY`) in the params object
+1. **Params token** - Looks for `AIO_COMMERCE_AUTH_IMS_TOKEN` (and optionally `AIO_COMMERCE_AUTH_IMS_API_KEY`) in the params object
 2. **HTTP headers** - Falls back to `Authorization` header in `__ow_headers`
 
 If neither source provides valid credentials, it throws an error.
@@ -117,8 +117,8 @@ import { getForwardedImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
 const provider1 = getForwardedImsAuthProvider({
   from: "params",
   params: {
-    AIO_COMMERCE_IMS_AUTH_TOKEN: "my-token",
-    AIO_COMMERCE_IMS_AUTH_API_KEY: "my-api-key",
+    AIO_COMMERCE_AUTH_IMS_TOKEN: "my-token",
+    AIO_COMMERCE_AUTH_IMS_API_KEY: "my-api-key",
   },
 });
 
@@ -237,7 +237,7 @@ The resolver checks for the following parameter keys:
 > **Note:** In App Builder runtime actions, these parameters are typically provided via runtime action inputs in your `app.config.yaml` file and automatically passed to your action's `params` object.
 
 > [!TIP]
-> For forwarding pre-existing IMS tokens, use `forwardImsAuthProvider` with `AIO_COMMERCE_IMS_AUTH_TOKEN` instead. See [Forwarding IMS Authentication](#forwarding-ims-authentication).
+> For forwarding pre-existing IMS tokens, use `forwardImsAuthProvider` with `AIO_COMMERCE_AUTH_IMS_TOKEN` instead. See [Forwarding IMS Authentication](#forwarding-ims-authentication).
 
 #### Basic Usage
 
@@ -283,7 +283,7 @@ If neither set is complete, it throws an error.
 > If you need to work with a specific authentication type, use the provider-specific methods (`getImsAuthProvider` or `getIntegrationAuthProvider`) along with their assertion functions (`assertImsAuthParams` or `assertIntegrationAuthParams`) as shown in the sections above.
 
 > [!NOTE]
-> For forwarding pre-existing IMS tokens (e.g., `AIO_COMMERCE_IMS_AUTH_TOKEN`), use `forwardImsAuthProvider` instead of `resolveAuthParams`.
+> For forwarding pre-existing IMS tokens (e.g., `AIO_COMMERCE_AUTH_IMS_TOKEN`), use `forwardImsAuthProvider` instead of `resolveAuthParams`.
 
 ## Best Practices
 

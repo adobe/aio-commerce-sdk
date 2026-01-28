@@ -14,6 +14,8 @@ import { describe, expect, test } from "vitest";
 
 import { resolveIoEventsHttpClientParams } from "#lib/io-events/helpers";
 
+import type { ImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
+
 describe("lib/io-events/helpers", () => {
   describe("resolveIoEventsHttpClientParams", () => {
     test("should resolve IO Events params with IMS auth and default base URL", () => {
@@ -112,13 +114,15 @@ describe("lib/io-events/helpers", () => {
       expect(result.config?.baseUrl).toBeUndefined();
     });
 
-    test("should resolve IO Events params with forwarded IMS auth token", () => {
+    test("should resolve IO Events params with forwarded IMS auth token when tryForwardAuthProvider is true", () => {
       const params = {
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "forwarded-token",
-        AIO_COMMERCE_IMS_AUTH_API_KEY: "forwarded-api-key",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_API_KEY: "forwarded-api-key",
       };
 
-      const result = resolveIoEventsHttpClientParams(params);
+      const result = resolveIoEventsHttpClientParams(params, {
+        tryForwardAuthProvider: true,
+      });
 
       // Auth should be an ImsAuthProvider (has getAccessToken and getHeaders)
       expect(result.auth).toHaveProperty("getAccessToken");
@@ -128,18 +132,40 @@ describe("lib/io-events/helpers", () => {
     test("should resolve IO Events params with forwarded IMS auth token and custom base URL", () => {
       const params = {
         AIO_EVENTS_API_BASE_URL: "https://custom-events.adobe.io",
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
       };
 
-      const result = resolveIoEventsHttpClientParams(params);
+      const result = resolveIoEventsHttpClientParams(params, {
+        tryForwardAuthProvider: true,
+      });
 
       expect(result.auth).toHaveProperty("getAccessToken");
       expect(result.config?.baseUrl).toBe("https://custom-events.adobe.io");
     });
 
-    test("should prioritize forwarded IMS auth token over full IMS params", () => {
+    test("should use forwarded IMS auth when tryForwardAuthProvider is true even with full IMS params", () => {
       const params = {
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+        AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+      };
+
+      const result = resolveIoEventsHttpClientParams(params, {
+        tryForwardAuthProvider: true,
+      });
+
+      // Should use forwarded token (ImsAuthProvider), not full IMS params
+      expect(result.auth).toHaveProperty("getAccessToken");
+      expect(result.auth).not.toHaveProperty("clientId");
+    });
+
+    test("should use full IMS params by default even when forwarded token is present", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
         AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
@@ -150,22 +176,21 @@ describe("lib/io-events/helpers", () => {
 
       const result = resolveIoEventsHttpClientParams(params);
 
-      // Should use forwarded token (ImsAuthProvider), not full IMS params
-      expect(result.auth).toHaveProperty("getAccessToken");
-      expect(result.auth).not.toHaveProperty("clientId");
+      // Should use full IMS params, not forwarded token
+      expect(result.auth).toHaveProperty("clientId", "test-client-id");
+      expect(result.auth).not.toHaveProperty("getAccessToken");
     });
 
     test("forwarded IMS auth provider should return correct token and headers", () => {
       const params = {
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "my-forwarded-token",
-        AIO_COMMERCE_IMS_AUTH_API_KEY: "my-api-key",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "my-forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_API_KEY: "my-api-key",
       };
 
-      const result = resolveIoEventsHttpClientParams(params);
-      const auth = result.auth as {
-        getAccessToken: () => string;
-        getHeaders: () => { Authorization: string; "x-api-key"?: string };
-      };
+      const result = resolveIoEventsHttpClientParams(params, {
+        tryForwardAuthProvider: true,
+      });
+      const auth = result.auth as ImsAuthProvider;
 
       expect(auth.getAccessToken()).toBe("my-forwarded-token");
       expect(auth.getHeaders()).toEqual({
@@ -176,14 +201,13 @@ describe("lib/io-events/helpers", () => {
 
     test("forwarded IMS auth provider should work without API key", () => {
       const params = {
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "my-forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "my-forwarded-token",
       };
 
-      const result = resolveIoEventsHttpClientParams(params);
-      const auth = result.auth as {
-        getAccessToken: () => string;
-        getHeaders: () => { Authorization: string; "x-api-key"?: string };
-      };
+      const result = resolveIoEventsHttpClientParams(params, {
+        tryForwardAuthProvider: true,
+      });
+      const auth = result.auth as ImsAuthProvider;
 
       expect(auth.getAccessToken()).toBe("my-forwarded-token");
       expect(auth.getHeaders()).toEqual({
