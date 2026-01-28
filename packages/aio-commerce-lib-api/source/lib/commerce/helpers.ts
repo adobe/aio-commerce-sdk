@@ -239,7 +239,6 @@ export function resolveCommerceHttpClientParams(
     const flavor = isFlavor(params.AIO_COMMERCE_API_FLAVOR)
       ? params.AIO_COMMERCE_API_FLAVOR
       : resolveCommerceFlavorFromApiUrl(baseUrl);
-
     const authParams = resolveAuthParams(params);
 
     if (flavor === "saas" && authParams.strategy !== "ims") {
