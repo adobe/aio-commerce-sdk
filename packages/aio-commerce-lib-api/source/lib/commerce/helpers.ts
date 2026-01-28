@@ -196,6 +196,15 @@ export function buildCommerceHttpClient(
 }
 
 /**
+ * Type guard to check if a value is a valid {@link CommerceFlavor}.
+ * @param input The value to check.
+ * @returns True if the value is a valid CommerceFlavor, false otherwise.
+ */
+function isFlavor(input: unknown): input is CommerceFlavor {
+  return input === "saas" || input === "paas";
+}
+
+/**
  * Resolves the {@link CommerceFlavor} from the given API URL.
  * @param apiUrl The API URL to resolve the {@link CommerceFlavor} from.
  */
@@ -227,7 +236,9 @@ export function resolveCommerceHttpClientParams(
 ): CommerceHttpClientParams {
   if (allNonEmpty(params, ["AIO_COMMERCE_API_BASE_URL"])) {
     const baseUrl = String(params.AIO_COMMERCE_API_BASE_URL);
-    const flavor = resolveCommerceFlavorFromApiUrl(baseUrl);
+    const flavor = isFlavor(params.AIO_COMMERCE_API_FLAVOR)
+      ? params.AIO_COMMERCE_API_FLAVOR
+      : resolveCommerceFlavorFromApiUrl(baseUrl);
     const authParams = resolveAuthParams(params);
 
     if (flavor === "saas" && authParams.strategy !== "ims") {

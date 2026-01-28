@@ -185,12 +185,10 @@ Scopes define the hierarchical boundaries where configuration values can be set 
 - `set-custom-scope-tree` - Define custom scope hierarchies
 
 > [!NOTE]
-> The `sync-commerce-scopes` action can accept the Commerce base URL in two ways:
+> The `sync-commerce-scopes` action accepts the following request parameters:
 >
-> 1. **From request parameter**: Pass `base_url` in the request body/query
-> 2. **From environment variable**: Use `AIO_COMMERCE_API_BASE_URL` from `.env` file
->
-> The request parameter takes priority if both are provided.
+> - **`commerceBaseUrl`** (required) - The base URL of your Commerce instance
+> - **`commerceEnv`** (optional) - Commerce flavor: `"saas"` or `"paas"`. Auto-detected from the URL if not provided.
 
 **Configuration Management Actions:**
 
