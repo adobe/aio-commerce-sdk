@@ -15,7 +15,7 @@ export {
   getForwardedImsAuthProvider,
 } from "./lib/ims-auth/forwarding";
 export {
-  forwardImsAuthProviderFromParams,
+  forwardImsAuthProviderFromRequest,
   getImsAuthProvider,
   isImsAuthProvider,
 } from "./lib/ims-auth/provider";

@@ -16,7 +16,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { getForwardedImsAuthProvider } from "#lib/ims-auth/forwarding";
 import {
-  forwardImsAuthProviderFromParams,
+  forwardImsAuthProviderFromRequest,
   getImsAuthProvider,
   isImsAuthProvider,
 } from "#lib/ims-auth/provider";
@@ -986,7 +986,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
     });
   });
 
-  describe("forwardImsAuthProviderFromParams", () => {
+  describe("forwardImsAuthProviderFromRequest", () => {
     test("should forward auth from runtime action params", () => {
       const params = {
         __ow_headers: {
@@ -995,7 +995,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         },
       };
 
-      const provider = forwardImsAuthProviderFromParams(params);
+      const provider = forwardImsAuthProviderFromRequest(params);
 
       expect(provider.getAccessToken()).toBe("runtime-token");
       expect(provider.getHeaders()).toEqual({
@@ -1006,7 +1006,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
 
     test("should handle missing __ow_headers gracefully", () => {
       const params = {};
-      expect(() => forwardImsAuthProviderFromParams(params)).toThrow();
+      expect(() => forwardImsAuthProviderFromRequest(params)).toThrow();
     });
 
     test("should handle empty __ow_headers", () => {
@@ -1014,7 +1014,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         __ow_headers: {},
       };
 
-      expect(() => forwardImsAuthProviderFromParams(params)).toThrow();
+      expect(() => forwardImsAuthProviderFromRequest(params)).toThrow();
     });
 
     test("should work without x-api-key header", () => {
@@ -1024,7 +1024,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         },
       };
 
-      const provider = forwardImsAuthProviderFromParams(params);
+      const provider = forwardImsAuthProviderFromRequest(params);
 
       expect(provider.getAccessToken()).toBe("runtime-token");
       expect(provider.getHeaders()).toEqual({

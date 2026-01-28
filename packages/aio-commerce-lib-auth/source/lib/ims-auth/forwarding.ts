@@ -46,8 +46,8 @@ const ForwardedImsAuthSourceSchema = v.variant("from", [
 /**
  * Discriminated union for different sources of forwarded IMS auth credentials.
  *
- * - `headers`: Extract credentials from a raw headers object (e.g., from Express, OpenWhisk).
- * - `credentials`: Use explicit credentials that you can manually set.
+ * - `headers`: Extract credentials from a raw headers object (e.g. an HTTP request).
+ * - `credentials`: Use explicit credentials (e.g. from environment variables or cache).
  * - `getter`: Use a function that returns IMS auth headers (sync or async).
  */
 export type ForwardedImsAuthSource = InferOutput<
@@ -56,11 +56,6 @@ export type ForwardedImsAuthSource = InferOutput<
 
 /**
  * Creates an {@link ImsAuthProvider} by forwarding authentication credentials from various sources.
- *
- * This is the core factory function that accepts a discriminated union of credential sources:
- * - `headers`: Extract credentials from a raw headers object (e.g., from Express, OpenWhisk).
- * - `credentials`: Use manually provided credentials.
- * - `getter`: Use a function that returns IMS auth headers (sync or async).
  *
  * @param source The source of the credentials to forward, as a {@link ForwardedImsAuthSource}.
  * @returns An {@link ImsAuthProvider} instance that returns the forwarded access token and headers.
@@ -73,13 +68,13 @@ export type ForwardedImsAuthSource = InferOutput<
  * ```typescript
  * import { getForwardedImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
  *
- * // From raw headers (will look into Authorization and optionally x-api-key)
+ * // From raw headers (e.g. from an HTTP request).
  * const provider1 = getForwardedImsAuthProvider({
  *   from: "headers",
  *   headers: params.__ow_headers,
  * });
  *
- * // From explicit credentials
+ * // From explicit credentials (e.g. from environment variables or cache).
  * const provider2 = getForwardedImsAuthProvider({
  *   from: "credentials",
  *   accessToken: process.env.ACCESS_TOKEN,

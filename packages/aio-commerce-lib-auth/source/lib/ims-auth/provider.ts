@@ -154,14 +154,14 @@ export function getImsAuthProvider(authParams: ImsAuthParams) {
  *
  * @example
  * ```typescript
- * import { forwardImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
+ * import { forwardImsAuthProviderFromRequest } from "@adobe/aio-commerce-lib-auth";
  *
  * // In an Adobe I/O Runtime action
  * async function main(params) {
  *   // params.__ow_headers contains: { Authorization: "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."}
  *
  *   // Forward the authentication from the incoming request
- *   const authProvider = forwardImsAuthProvider(params);
+ *   const authProvider = forwardImsAuthProviderFromRequest(params);
  *
  *   // Get the forwarded access token
  *   const token = await authProvider.getAccessToken();
@@ -184,7 +184,7 @@ export function getImsAuthProvider(authParams: ImsAuthParams) {
  * }
  * ```
  */
-export function forwardImsAuthProviderFromParams(
+export function forwardImsAuthProviderFromRequest(
   params: RuntimeActionParams,
 ): ImsAuthProvider {
   return getForwardedImsAuthProvider({
