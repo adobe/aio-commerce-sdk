@@ -48,6 +48,7 @@ import type {
   CommerceFlavor,
   CommerceHttpClientParams,
   PaaSClientParams,
+  ResolveCommerceHttpClientParamsOptions,
   SaaSClientParams,
 } from "./types";
 
@@ -234,6 +235,7 @@ function resolveCommerceFlavorFromApiUrl(apiUrl: string): CommerceFlavor {
  */
 export function resolveCommerceHttpClientParams(
   params: Record<string, unknown>,
+  options: ResolveCommerceHttpClientParamsOptions = {},
 ): CommerceHttpClientParams {
   if (allNonEmpty(params, ["AIO_COMMERCE_API_BASE_URL"])) {
     const baseUrl = String(params.AIO_COMMERCE_API_BASE_URL);
@@ -241,13 +243,13 @@ export function resolveCommerceHttpClientParams(
       ? params.AIO_COMMERCE_API_FLAVOR
       : resolveCommerceFlavorFromApiUrl(baseUrl);
 
-    let clientAuth: CommerceHttpClientParams["auth"];
+    const { tryForwardAuthProvider = false } = options;
+    let clientAuth: CommerceHttpClientParams["auth"] | undefined;
 
-    if (allNonEmpty(params, ["AIO_COMMERCE_IMS_AUTH_TOKEN"])) {
+    if (tryForwardAuthProvider) {
       clientAuth = forwardImsAuthProvider(params);
     } else {
       const authParams = resolveAuthParams(params);
-
       if (flavor === "saas" && authParams.strategy !== "ims") {
         throw new Error(
           "Resolved incorrect auth parameters for SaaS. Only IMS auth is supported",

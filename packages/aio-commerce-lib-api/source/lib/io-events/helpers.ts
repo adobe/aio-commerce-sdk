@@ -14,7 +14,6 @@ import {
   forwardImsAuthProvider,
   resolveAuthParams,
 } from "@adobe/aio-commerce-lib-auth";
-import { allNonEmpty } from "@adobe/aio-commerce-lib-core/params";
 import ky from "ky";
 
 import {
@@ -25,7 +24,10 @@ import { ensureImsScopes } from "#utils/auth/ims-scopes";
 import { optionallyExtendKy } from "#utils/http/ky";
 
 import type { IoEventsHttpClientParamsWithRequiredConfig } from "./http-client";
-import type { IoEventsHttpClientParams } from "./types";
+import type {
+  IoEventsHttpClientParams,
+  ResolveIoEventsHttpClientParamsOptions,
+} from "./types";
 
 const IO_EVENTS_IMS_REQUIRED_SCOPES = ["adobeio_api"];
 
@@ -79,14 +81,15 @@ export function buildIoEventsHttpClient(
  */
 export function resolveIoEventsHttpClientParams(
   params: Record<string, unknown>,
+  options: ResolveIoEventsHttpClientParamsOptions = {},
 ): IoEventsHttpClientParams {
-  let clientAuth: IoEventsHttpClientParams["auth"];
+  const { tryForwardAuthProvider = false } = options;
+  let clientAuth: IoEventsHttpClientParams["auth"] | undefined;
 
-  if (allNonEmpty(params, ["AIO_COMMERCE_IMS_AUTH_TOKEN"])) {
+  if (tryForwardAuthProvider) {
     clientAuth = forwardImsAuthProvider(params);
   } else {
     const authParams = resolveAuthParams(params);
-
     if (authParams.strategy !== "ims") {
       throw new Error(
         "Resolved incorrect auth parameters for I/O Events. Only IMS auth is supported",
