@@ -11,8 +11,12 @@
  */
 
 import aioLibIms from "@adobe/aio-lib-ims";
+import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
-import { getForwardedImsAuthProvider } from "./forwarding";
+import {
+  getForwardedImsAuthProvider,
+  ImsAuthParamsInputSchema,
+} from "./forwarding";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { SnakeCasedProperties } from "type-fest";
@@ -190,5 +194,49 @@ export function forwardImsAuthProviderFromRequest(
   return getForwardedImsAuthProvider({
     from: "headers",
     headers: params.__ow_headers ?? {},
+  });
+}
+
+/**
+ * Creates an {@link ImsAuthProvider} by forwarding authentication credentials from a params object.
+ *
+ * This is a convenience wrapper around {@link getForwardedImsAuthProvider} for the common case
+ * of forwarding credentials from runtime action parameters. It reads:
+ * - `AIO_COMMERCE_IMS_AUTH_TOKEN` for the access token (required)
+ * - `AIO_COMMERCE_IMS_AUTH_API_KEY` for the API key (optional)
+ *
+ * @param params The params object containing the authentication credentials.
+ * @returns An {@link ImsAuthProvider} instance that returns the access token and headers from the params.
+ *
+ * @throws {CommerceSdkValidationError} If `AIO_COMMERCE_IMS_AUTH_TOKEN` is not set or is empty.
+ *
+ * @example
+ * ```typescript
+ * import { forwardImsAuthProviderFromParams } from "@adobe/aio-commerce-lib-auth";
+ *
+ * // In an Adobe I/O Runtime action
+ * async function main(params) {
+ *   // params contains: { AIO_COMMERCE_IMS_AUTH_TOKEN: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..." }
+ *   const authProvider = forwardImsAuthProviderFromParams(params);
+ *
+ *   // Get the access token
+ *   const token = await authProvider.getAccessToken();
+ *
+ *   // Get headers for downstream API requests
+ *   const headers = await authProvider.getHeaders();
+ *   // {
+ *   //   Authorization: "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...",
+ *   //   "x-api-key": "my-api-key" // Only if AIO_COMMERCE_IMS_AUTH_API_KEY is set
+ *   // }
+ * }
+ * ```
+ */
+export function forwardImsAuthProviderFromParams(
+  params: Record<string, unknown>,
+): ImsAuthProvider {
+  const validatedParams = parseOrThrow(ImsAuthParamsInputSchema, params);
+  return getForwardedImsAuthProvider({
+    from: "params",
+    params: validatedParams,
   });
 }

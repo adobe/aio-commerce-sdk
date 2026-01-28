@@ -16,6 +16,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { getForwardedImsAuthProvider } from "#lib/ims-auth/forwarding";
 import {
+  forwardImsAuthProviderFromParams,
   forwardImsAuthProviderFromRequest,
   getImsAuthProvider,
   isImsAuthProvider,
@@ -967,6 +968,84 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       });
     });
 
+    describe('from: "params"', () => {
+      test("should extract token from params", () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "params",
+          params: {
+            AIO_COMMERCE_IMS_AUTH_TOKEN: "params-token",
+          },
+        });
+
+        expect(provider.getAccessToken()).toBe("params-token");
+      });
+
+      test("should extract token and api key from params", () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "params",
+          params: {
+            AIO_COMMERCE_IMS_AUTH_TOKEN: "params-token",
+            AIO_COMMERCE_IMS_AUTH_API_KEY: "params-api-key",
+          },
+        });
+
+        expect(provider.getHeaders()).toEqual({
+          Authorization: "Bearer params-token",
+          "x-api-key": "params-api-key",
+        });
+      });
+
+      test("should return headers without x-api-key when not present", () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "params",
+          params: {
+            AIO_COMMERCE_IMS_AUTH_TOKEN: "params-token",
+          },
+        });
+
+        const headers = provider.getHeaders();
+        expect(headers).toEqual({
+          Authorization: "Bearer params-token",
+        });
+        expect(headers).not.toHaveProperty("x-api-key");
+      });
+
+      test("should throw when token param is missing", () => {
+        expect(() =>
+          getForwardedImsAuthProvider({
+            from: "params",
+            // @ts-expect-error - testing invalid input
+            params: {},
+          }),
+        ).toThrow(CommerceSdkValidationError);
+      });
+
+      test("should throw when token param is not a string", () => {
+        expect(() =>
+          getForwardedImsAuthProvider({
+            from: "params",
+            params: {
+              // @ts-expect-error - testing invalid input
+              AIO_COMMERCE_IMS_AUTH_TOKEN: 123,
+            },
+          }),
+        ).toThrow(CommerceSdkValidationError);
+      });
+
+      test("should allow extra params in the object", () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "params",
+          params: {
+            AIO_COMMERCE_IMS_AUTH_TOKEN: "params-token",
+            someOtherParam: "value",
+            anotherParam: 123,
+          },
+        });
+
+        expect(provider.getAccessToken()).toBe("params-token");
+      });
+    });
+
     describe("validation errors", () => {
       test("should throw CommerceSdkValidationError for invalid source", () => {
         expect(() =>
@@ -1030,6 +1109,53 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       expect(provider.getHeaders()).toEqual({
         Authorization: "Bearer runtime-token",
       });
+    });
+  });
+
+  describe("forwardImsAuthProviderFromParams", () => {
+    test("should forward auth from params object", () => {
+      const params = {
+        AIO_COMMERCE_IMS_AUTH_TOKEN: "forwarded-token",
+        AIO_COMMERCE_IMS_AUTH_API_KEY: "forwarded-api-key",
+      };
+
+      const provider = forwardImsAuthProviderFromParams(params);
+
+      expect(provider.getAccessToken()).toBe("forwarded-token");
+      expect(provider.getHeaders()).toEqual({
+        Authorization: "Bearer forwarded-token",
+        "x-api-key": "forwarded-api-key",
+      });
+    });
+
+    test("should work without api key", () => {
+      const params = {
+        AIO_COMMERCE_IMS_AUTH_TOKEN: "forwarded-token",
+      };
+
+      const provider = forwardImsAuthProviderFromParams(params);
+
+      expect(provider.getAccessToken()).toBe("forwarded-token");
+      expect(provider.getHeaders()).toEqual({
+        Authorization: "Bearer forwarded-token",
+      });
+    });
+
+    test("should throw when token is missing", () => {
+      expect(() => forwardImsAuthProviderFromParams({})).toThrow(
+        CommerceSdkValidationError,
+      );
+    });
+
+    test("should accept Record<string, unknown> with extra properties", () => {
+      const params: Record<string, unknown> = {
+        AIO_COMMERCE_IMS_AUTH_TOKEN: "forwarded-token",
+        extraProp: "extra-value",
+        numericProp: 42,
+      };
+
+      const provider = forwardImsAuthProviderFromParams(params);
+      expect(provider.getAccessToken()).toBe("forwarded-token");
     });
   });
 });

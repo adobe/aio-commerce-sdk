@@ -21,8 +21,17 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import type { InferOutput } from "valibot";
 import type { ImsAuthHeaders, ImsAuthProvider } from "./types";
+
+const IMS_AUTH_TOKEN_PARAM = "AIO_COMMERCE_IMS_AUTH_TOKEN";
+const IMS_AUTH_API_KEY_PARAM = "AIO_COMMERCE_IMS_AUTH_API_KEY";
+
+export const ImsAuthParamsInputSchema = v.looseObject({
+  [IMS_AUTH_TOKEN_PARAM]: stringValueSchema(IMS_AUTH_TOKEN_PARAM),
+  [IMS_AUTH_API_KEY_PARAM]: v.optional(
+    stringValueSchema(IMS_AUTH_API_KEY_PARAM),
+  ),
+});
 
 const ForwardedImsAuthSourceSchema = v.variant("from", [
   v.object({
@@ -41,6 +50,10 @@ const ForwardedImsAuthSourceSchema = v.variant("from", [
       "Expected a function for getHeaders",
     ),
   }),
+  v.object({
+    from: v.literal("params"),
+    params: ImsAuthParamsInputSchema,
+  }),
 ]);
 
 /**
@@ -49,8 +62,9 @@ const ForwardedImsAuthSourceSchema = v.variant("from", [
  * - `headers`: Extract credentials from a raw headers object (e.g. an HTTP request).
  * - `credentials`: Use explicit credentials (e.g. from environment variables or cache).
  * - `getter`: Use a function that returns IMS auth headers (sync or async).
+ * - `params`: Read credentials from a params object using `AIO_COMMERCE_IMS_AUTH_TOKEN` and `AIO_COMMERCE_IMS_AUTH_API_KEY` keys.
  */
-export type ForwardedImsAuthSource = InferOutput<
+export type ForwardedImsAuthSource = v.InferOutput<
   typeof ForwardedImsAuthSourceSchema
 >;
 
@@ -63,6 +77,7 @@ export type ForwardedImsAuthSource = InferOutput<
  * @throws {CommerceSdkValidationError} If the source object is invalid.
  * @throws {CommerceSdkValidationError} If `from: "headers"` is used and the `Authorization` header is missing.
  * @throws {CommerceSdkValidationError} If `from: "headers"` is used and the `Authorization` header is not in Bearer token format.
+ * @throws {CommerceSdkValidationError} If `from: "params"` is used and `AIO_COMMERCE_IMS_AUTH_TOKEN` is missing or empty.
  *
  * @example
  * ```typescript
@@ -90,13 +105,19 @@ export type ForwardedImsAuthSource = InferOutput<
  *   },
  * });
  *
+ * // From a params object (using AIO_COMMERCE_IMS_AUTH_TOKEN and AIO_COMMERCE_IMS_AUTH_API_KEY keys)
+ * const provider4 = getForwardedImsAuthProvider({
+ *   from: "params",
+ *   params: actionParams,
+ * });
+ *
  * // Use the provider
  * const token = await provider1.getAccessToken();
  * const headers = await provider1.getHeaders();
  * ```
  */
 export function getForwardedImsAuthProvider(
-  source: ForwardedImsAuthSource,
+  source: v.InferInput<typeof ForwardedImsAuthSourceSchema>,
 ): ImsAuthProvider {
   const validatedSource = parseOrThrow(ForwardedImsAuthSourceSchema, source);
 
@@ -151,6 +172,27 @@ export function getForwardedImsAuthProvider(
           const headers = await validatedSource.getHeaders();
           const { token } = parseBearerToken(headers.Authorization);
           return token;
+        },
+      };
+    }
+
+    case "params": {
+      const { params } = validatedSource;
+      const accessToken = params[IMS_AUTH_TOKEN_PARAM];
+      const apiKey = params[IMS_AUTH_API_KEY_PARAM];
+
+      return {
+        getAccessToken: () => accessToken,
+        getHeaders: () => {
+          const imsHeaders: ImsAuthHeaders = {
+            Authorization: `Bearer ${accessToken}`,
+          };
+
+          if (apiKey) {
+            imsHeaders["x-api-key"] = apiKey;
+          }
+
+          return imsHeaders;
         },
       };
     }
