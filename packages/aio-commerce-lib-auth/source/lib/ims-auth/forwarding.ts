@@ -53,6 +53,18 @@ const ForwardedImsAuthSourceSchema = v.variant("from", [
   }),
 ]);
 
+function buildImsHeaders(accessToken: string, apiKey?: string): ImsAuthHeaders {
+  const imsHeaders: ImsAuthHeaders = {
+    Authorization: `Bearer ${accessToken}`,
+  };
+
+  if (apiKey) {
+    imsHeaders["x-api-key"] = apiKey;
+  }
+
+  return imsHeaders;
+}
+
 /**
  * Discriminated union for different sources of forwarded IMS auth credentials.
  *
@@ -126,17 +138,7 @@ export function getForwardedImsAuthProvider(
 
       return {
         getAccessToken: () => token,
-        getHeaders: () => {
-          const imsHeaders: ImsAuthHeaders = {
-            Authorization: `Bearer ${token}`,
-          };
-
-          if (apiKey) {
-            imsHeaders["x-api-key"] = apiKey;
-          }
-
-          return imsHeaders;
-        },
+        getHeaders: () => buildImsHeaders(token, apiKey),
       };
     }
 
@@ -158,17 +160,7 @@ export function getForwardedImsAuthProvider(
 
       return {
         getAccessToken: () => accessToken,
-        getHeaders: () => {
-          const imsHeaders: ImsAuthHeaders = {
-            Authorization: `Bearer ${accessToken}`,
-          };
-
-          if (apiKey) {
-            imsHeaders["x-api-key"] = apiKey;
-          }
-
-          return imsHeaders;
-        },
+        getHeaders: () => buildImsHeaders(accessToken, apiKey),
       };
     }
   }
@@ -323,20 +315,16 @@ export function forwardImsAuthProviderFromParams(
 export function forwardImsAuthProvider(
   params: Record<string, unknown>,
 ): ImsAuthProvider {
-  let provider: ImsAuthProvider;
-
   try {
     // Try from params first.
-    provider = forwardImsAuthProviderFromParams(params);
-    return provider;
+    return forwardImsAuthProviderFromParams(params);
   } catch {
     // Do nothing, we could not resolve it, we'll throw a different error.
   }
 
   try {
     // Try from HTTP headers.
-    provider = forwardImsAuthProviderFromRequest(params);
-    return provider;
+    return forwardImsAuthProviderFromRequest(params);
   } catch {
     // Do nothing, we could not resolve it, we'll throw a different error.
   }

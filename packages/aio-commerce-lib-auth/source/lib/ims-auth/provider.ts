@@ -12,6 +12,8 @@
 
 import aioLibIms from "@adobe/aio-lib-ims";
 
+import { buildImsHeaders } from "./utils";
+
 import type { SnakeCasedProperties } from "type-fest";
 import type { ImsAuthEnv, ImsAuthParams } from "./schema";
 import type { ImsAuthProvider } from "./types";
@@ -124,10 +126,7 @@ export function getImsAuthProvider(authParams: ImsAuthParams) {
 
   const getHeaders = async () => {
     const accessToken = await getAccessToken();
-    return {
-      Authorization: `Bearer ${accessToken}`,
-      "x-api-key": authParams.clientId,
-    };
+    return buildImsHeaders(accessToken, authParams.clientId);
   };
 
   return {

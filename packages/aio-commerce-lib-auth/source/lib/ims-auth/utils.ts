@@ -19,7 +19,7 @@ import {
 } from "./schema";
 
 import type { ImsAuthParams } from "./schema";
-import type { ImsAuthProvider } from "./types";
+import type { ImsAuthHeaders, ImsAuthProvider } from "./types";
 
 /**
  * Transforms a value using the string array transformation schema.
@@ -151,4 +151,21 @@ export function resolveImsAuthParams(
   };
 
   return __parseImsAuthParams(resolvedParams);
+}
+
+/**
+ * Shorthand to build IMS authentication headers.
+ * @param accessToken - The token to use in the Authorization header.
+ * @param apiKey - The API key to include in the x-api-key header (optional).
+ */
+export function buildImsHeaders(accessToken: string, apiKey?: string) {
+  const imsHeaders: ImsAuthHeaders = {
+    Authorization: `Bearer ${accessToken}`,
+  };
+
+  if (apiKey) {
+    imsHeaders["x-api-key"] = apiKey;
+  }
+
+  return imsHeaders;
 }
