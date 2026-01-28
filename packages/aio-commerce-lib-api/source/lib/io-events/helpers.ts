@@ -10,7 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+import {
+  forwardImsAuthProvider,
+  resolveAuthParams,
+} from "@adobe/aio-commerce-lib-auth";
+import { allNonEmpty } from "@adobe/aio-commerce-lib-core/params";
 import ky from "ky";
 
 import {
@@ -76,16 +80,24 @@ export function buildIoEventsHttpClient(
 export function resolveIoEventsHttpClientParams(
   params: Record<string, unknown>,
 ): IoEventsHttpClientParams {
-  const authParams = resolveAuthParams(params);
+  let clientAuth: IoEventsHttpClientParams["auth"];
 
-  if (authParams.strategy !== "ims") {
-    throw new Error(
-      "Resolved incorrect auth parameters for I/O Events. Only IMS auth is supported",
-    );
+  if (allNonEmpty(params, ["AIO_COMMERCE_AUTH_IMS_TOKEN"])) {
+    clientAuth = forwardImsAuthProvider(params);
+  } else {
+    const authParams = resolveAuthParams(params);
+
+    if (authParams.strategy !== "ims") {
+      throw new Error(
+        "Resolved incorrect auth parameters for I/O Events. Only IMS auth is supported",
+      );
+    }
+
+    clientAuth = authParams;
   }
 
   return {
-    auth: authParams,
+    auth: clientAuth,
     config: {
       // This is already optional, so only set if it is provided.
       baseUrl: params.AIO_EVENTS_API_BASE_URL

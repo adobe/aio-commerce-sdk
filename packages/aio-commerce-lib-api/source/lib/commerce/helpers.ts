@@ -11,6 +11,7 @@
  */
 
 import {
+  forwardImsAuthProvider,
   isImsAuthProvider,
   resolveAuthParams,
 } from "@adobe/aio-commerce-lib-auth";
@@ -239,17 +240,26 @@ export function resolveCommerceHttpClientParams(
     const flavor = isFlavor(params.AIO_COMMERCE_API_FLAVOR)
       ? params.AIO_COMMERCE_API_FLAVOR
       : resolveCommerceFlavorFromApiUrl(baseUrl);
-    const authParams = resolveAuthParams(params);
 
-    if (flavor === "saas" && authParams.strategy !== "ims") {
-      throw new Error(
-        "Resolved incorrect auth parameters for SaaS. Only IMS auth is supported",
-      );
+    let clientAuth: CommerceHttpClientParams["auth"];
+
+    if (allNonEmpty(params, ["AIO_COMMERCE_IMS_AUTH_TOKEN"])) {
+      clientAuth = forwardImsAuthProvider(params);
+    } else {
+      const authParams = resolveAuthParams(params);
+
+      if (flavor === "saas" && authParams.strategy !== "ims") {
+        throw new Error(
+          "Resolved incorrect auth parameters for SaaS. Only IMS auth is supported",
+        );
+      }
+
+      clientAuth = authParams;
     }
 
     // @ts-expect-error - TypeScript is not able to smartly discriminate, but we know that authParams is correct for both flavors at this point.
     return {
-      auth: authParams,
+      auth: clientAuth,
       config: {
         baseUrl,
         flavor,
