@@ -22,6 +22,8 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
+import { buildImsHeaders } from "./utils";
+
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { ImsAuthHeaders, ImsAuthProvider } from "./types";
 
@@ -52,18 +54,6 @@ const ForwardedImsAuthSourceSchema = v.variant("from", [
     params: ImsAuthParamsInputSchema,
   }),
 ]);
-
-function buildImsHeaders(accessToken: string, apiKey?: string): ImsAuthHeaders {
-  const imsHeaders: ImsAuthHeaders = {
-    Authorization: `Bearer ${accessToken}`,
-  };
-
-  if (apiKey) {
-    imsHeaders["x-api-key"] = apiKey;
-  }
-
-  return imsHeaders;
-}
 
 /**
  * Discriminated union for different sources of forwarded IMS auth credentials.
