@@ -867,53 +867,6 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       });
     });
 
-    describe('from: "credentials"', () => {
-      test("should return provided access token", () => {
-        const provider = getForwardedImsAuthProvider({
-          from: "credentials",
-          accessToken: "my-access-token",
-        });
-
-        expect(provider.getAccessToken()).toBe("my-access-token");
-      });
-
-      test("should return headers with access token", () => {
-        const provider = getForwardedImsAuthProvider({
-          from: "credentials",
-          accessToken: "my-access-token",
-        });
-
-        const headers = provider.getHeaders();
-        expect(headers).toEqual({
-          Authorization: "Bearer my-access-token",
-        });
-      });
-
-      test("should include api key in headers when provided", () => {
-        const provider = getForwardedImsAuthProvider({
-          from: "credentials",
-          accessToken: "my-access-token",
-          apiKey: "my-api-key",
-        });
-
-        const headers = provider.getHeaders();
-        expect(headers).toEqual({
-          Authorization: "Bearer my-access-token",
-          "x-api-key": "my-api-key",
-        });
-      });
-
-      test("should throw when accessToken is not a string", () => {
-        expect(() =>
-          getForwardedImsAuthProvider({
-            from: "credentials",
-            // @ts-expect-error - testing invalid input
-            accessToken: 123,
-          }),
-        ).toThrow(CommerceSdkValidationError);
-      });
-    });
-
     describe('from: "getter"', () => {
       test("should use sync getter for headers", () => {
         const provider = getForwardedImsAuthProvider({

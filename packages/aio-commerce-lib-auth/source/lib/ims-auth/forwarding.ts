@@ -39,11 +39,6 @@ const ForwardedImsAuthSourceSchema = v.variant("from", [
     headers: v.record(v.string(), v.optional(v.string())),
   }),
   v.object({
-    from: v.literal("credentials"),
-    accessToken: stringValueSchema("accessToken"),
-    apiKey: v.optional(stringValueSchema("apiKey")),
-  }),
-  v.object({
     from: v.literal("getter"),
     getHeaders: v.custom<() => ImsAuthHeaders | Promise<ImsAuthHeaders>>(
       (input) => typeof input === "function",
@@ -60,7 +55,6 @@ const ForwardedImsAuthSourceSchema = v.variant("from", [
  * Discriminated union for different sources of forwarded IMS auth credentials.
  *
  * - `headers`: Extract credentials from a raw headers object (e.g. an HTTP request).
- * - `credentials`: Use explicit credentials (e.g. from environment variables or cache).
  * - `getter`: Use a function that returns IMS auth headers (sync or async).
  * - `params`: Read credentials from a params object using `AIO_COMMERCE_IMS_AUTH_TOKEN` and `AIO_COMMERCE_IMS_AUTH_API_KEY` keys.
  */
@@ -89,15 +83,8 @@ export type ForwardedImsAuthSource = v.InferOutput<
  *   headers: params.__ow_headers,
  * });
  *
- * // From explicit credentials (e.g. from environment variables or cache).
- * const provider2 = getForwardedImsAuthProvider({
- *   from: "credentials",
- *   accessToken: process.env.ACCESS_TOKEN,
- *   apiKey: process.env.API_KEY,
- * });
- *
  * // From async getter (e.g. fetch from secret manager)
- * const provider3 = getForwardedImsAuthProvider({
+ * const provider2 = getForwardedImsAuthProvider({
  *   from: "getter",
  *   getHeaders: async () => {
  *     const token = await secretManager.getSecret("ims-token");
@@ -106,7 +93,7 @@ export type ForwardedImsAuthSource = v.InferOutput<
  * });
  *
  * // From a params object (using AIO_COMMERCE_IMS_AUTH_TOKEN and AIO_COMMERCE_IMS_AUTH_API_KEY keys)
- * const provider4 = getForwardedImsAuthProvider({
+ * const provider3 = getForwardedImsAuthProvider({
  *   from: "params",
  *   params: actionParams,
  * });
@@ -119,7 +106,11 @@ export type ForwardedImsAuthSource = v.InferOutput<
 export function getForwardedImsAuthProvider(
   source: v.InferInput<typeof ForwardedImsAuthSourceSchema>,
 ): ImsAuthProvider {
-  const validatedSource = parseOrThrow(ForwardedImsAuthSourceSchema, source);
+  const validatedSource = parseOrThrow(
+    ForwardedImsAuthSourceSchema,
+    source,
+    "Invalid forwarded IMS auth source",
+  );
 
   // biome-ignore lint/style/useDefaultSwitchClause: `parseOrThrow` catches invalid sources.
   switch (validatedSource.from) {
@@ -136,24 +127,6 @@ export function getForwardedImsAuthProvider(
         getHeaders: () => {
           const imsHeaders: ImsAuthHeaders = {
             Authorization: `Bearer ${token}`,
-          };
-
-          if (apiKey) {
-            imsHeaders["x-api-key"] = apiKey;
-          }
-
-          return imsHeaders;
-        },
-      };
-    }
-
-    case "credentials": {
-      const { accessToken, apiKey } = validatedSource;
-      return {
-        getAccessToken: () => accessToken,
-        getHeaders: () => {
-          const imsHeaders: ImsAuthHeaders = {
-            Authorization: `Bearer ${accessToken}`,
           };
 
           if (apiKey) {

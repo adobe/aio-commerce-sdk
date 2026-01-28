@@ -147,15 +147,8 @@ const provider2 = getForwardedImsAuthProvider({
   },
 });
 
-// From explicit credentials (e.g. from environment variables or cache)
-const provider3 = getForwardedImsAuthProvider({
-  from: "credentials",
-  accessToken: process.env.ACCESS_TOKEN,
-  apiKey: process.env.API_KEY,
-});
-
 // From an async getter (e.g. fetch from secret manager)
-const provider4 = getForwardedImsAuthProvider({
+const provider3 = getForwardedImsAuthProvider({
   from: "getter",
   getHeaders: async () => {
     const token = await secretManager.getSecret("ims-token");

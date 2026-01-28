@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { getHeadersFromParams } from "@adobe/aio-commerce-lib-core/headers";
 import aioLibIms from "@adobe/aio-lib-ims";
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
@@ -193,7 +194,7 @@ export function forwardImsAuthProviderFromRequest(
 ): ImsAuthProvider {
   return getForwardedImsAuthProvider({
     from: "headers",
-    headers: params.__ow_headers ?? {},
+    headers: getHeadersFromParams(params),
   });
 }
 
@@ -234,7 +235,11 @@ export function forwardImsAuthProviderFromRequest(
 export function forwardImsAuthProviderFromParams(
   params: Record<string, unknown>,
 ): ImsAuthProvider {
-  const validatedParams = parseOrThrow(ImsAuthParamsInputSchema, params);
+  const validatedParams = parseOrThrow(
+    ImsAuthParamsInputSchema,
+    params,
+    "Missing AIO_COMMERCE_IMS_AUTH_TOKEN in params",
+  );
   return getForwardedImsAuthProvider({
     from: "params",
     params: validatedParams,
