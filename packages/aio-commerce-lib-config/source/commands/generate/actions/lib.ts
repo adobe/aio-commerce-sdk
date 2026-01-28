@@ -17,14 +17,11 @@ import {
   PACKAGE_NAME,
 } from "#commands/constants";
 
-import { ACTION_INPUTS } from "./constants";
-
 import type { ActionDefinition } from "@aio-commerce-sdk/scripting-utils/yaml/types";
 
 export type ActionConfig = {
   name: string;
   templateFile: string;
-  requiresCommerce?: boolean;
   requiresSchema?: boolean;
 };
 
@@ -43,10 +40,6 @@ export function buildActionDefinition(action: ActionConfig): ActionDefinition {
     def.include = [
       [`${GENERATED_PATH}/${CONFIG_SCHEMA_FILE_NAME}`, `${PACKAGE_NAME}/`],
     ];
-  }
-
-  if (action.requiresCommerce) {
-    def.inputs = ACTION_INPUTS;
   }
 
   return def;
