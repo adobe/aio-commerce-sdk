@@ -12,20 +12,12 @@
 
 import aioLibIms from "@adobe/aio-lib-ims";
 
+import { getForwardedImsAuthProvider } from "./forwarding";
+
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { SnakeCasedProperties } from "type-fest";
 import type { ImsAuthEnv, ImsAuthParams } from "./schema";
-
-/** Defines the header keys used for IMS authentication. */
-type ImsAuthHeader = "Authorization" | "x-api-key";
-
-/** Defines the headers required for IMS authentication. */
-type ImsAuthHeaders = Record<ImsAuthHeader, string>;
-
-/** Defines an authentication provider for Adobe IMS. */
-export type ImsAuthProvider = {
-  getAccessToken: () => Promise<string>;
-  getHeaders: () => Promise<ImsAuthHeaders>;
-};
+import type { ImsAuthProvider } from "./types";
 
 /** The shape of the configuration expected by `aio-lib-ims`. */
 type ImsAuthConfig = Omit<
@@ -37,6 +29,7 @@ type ImsAuthConfig = Omit<
 };
 
 const { context, getToken } = aioLibIms;
+
 /**
  * Converts IMS auth configuration properties to snake_case format.
  * @param config The IMS auth configuration with camelCase properties.
@@ -143,5 +136,59 @@ export function getImsAuthProvider(authParams: ImsAuthParams) {
   return {
     getAccessToken,
     getHeaders,
-  };
+  } satisfies ImsAuthProvider;
+}
+
+/**
+ * Creates an {@link ImsAuthProvider} by forwarding authentication credentials from incoming
+ * runtime action request headers.
+ *
+ * This is a convenience wrapper around {@link getForwardedImsAuthProvider} for the common case
+ * of forwarding credentials from Adobe I/O Runtime action parameters.
+ *
+ * @param params The runtime action parameters containing the `__ow_headers` object with authentication headers.
+ * @returns An {@link ImsAuthProvider} instance that returns the forwarded access token and headers.
+ *
+ * @throws {Error} If the `Authorization` header is missing from the request headers.
+ * @throws {Error} If the `Authorization` header is not in the correct Bearer token format.
+ *
+ * @example
+ * ```typescript
+ * import { forwardImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
+ *
+ * // In an Adobe I/O Runtime action
+ * async function main(params) {
+ *   // params.__ow_headers contains: { Authorization: "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."}
+ *
+ *   // Forward the authentication from the incoming request
+ *   const authProvider = forwardImsAuthProvider(params);
+ *
+ *   // Get the forwarded access token
+ *   const token = await authProvider.getAccessToken();
+ *   console.log(token); // "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
+ *
+ *   // Get headers for downstream API requests
+ *   const headers = await authProvider.getHeaders();
+ *   console.log(headers);
+ *   // {
+ *   //   Authorization: "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...",
+ *   //   "x-api-key": "client-id-from-request" // Only if present in original request
+ *   // }
+ *
+ *   // Use the forwarded credentials in downstream API calls
+ *   const response = await fetch('...', {
+ *     headers: await authProvider.getHeaders()
+ *   });
+ *
+ *   return { statusCode: 200, body: await response.json() };
+ * }
+ * ```
+ */
+export function forwardImsAuthProviderFromParams(
+  params: RuntimeActionParams,
+): ImsAuthProvider {
+  return getForwardedImsAuthProvider({
+    from: "headers",
+    headers: params.__ow_headers ?? {},
+  });
 }
