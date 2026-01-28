@@ -18,8 +18,8 @@ import {
   StringArrayTransformSchema as stringArrayTransformSchema,
 } from "./schema";
 
-import type { ImsAuthProvider } from "./provider";
 import type { ImsAuthParams } from "./schema";
+import type { ImsAuthProvider } from "./types";
 
 /**
  * Transforms a value using the string array transformation schema.

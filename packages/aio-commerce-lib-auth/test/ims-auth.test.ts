@@ -14,13 +14,13 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import aioLibIms from "@adobe/aio-lib-ims";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { getForwardedImsAuthProvider } from "#lib/ims-auth/forwarding";
 import {
+  forwardImsAuthProvider,
   forwardImsAuthProviderFromParams,
   forwardImsAuthProviderFromRequest,
-  getImsAuthProvider,
-  isImsAuthProvider,
-} from "#lib/ims-auth/provider";
+  getForwardedImsAuthProvider,
+} from "#lib/ims-auth/forwarding";
+import { getImsAuthProvider, isImsAuthProvider } from "#lib/ims-auth/provider";
 import { assertImsAuthParams, resolveImsAuthParams } from "#lib/ims-auth/utils";
 
 import type { ImsAuthEnv, ImsAuthParams } from "#lib/ims-auth/schema";
@@ -1109,6 +1109,66 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
 
       const provider = forwardImsAuthProviderFromParams(params);
       expect(provider.getAccessToken()).toBe("forwarded-token");
+    });
+  });
+
+  describe("forwardImsAuthProvider", () => {
+    test("should forward auth from params when AIO_COMMERCE_IMS_AUTH_TOKEN is present", () => {
+      const params = {
+        AIO_COMMERCE_IMS_AUTH_TOKEN: "params-token",
+        AIO_COMMERCE_IMS_AUTH_API_KEY: "params-api-key",
+      };
+
+      const provider = forwardImsAuthProvider(params);
+
+      expect(provider.getAccessToken()).toBe("params-token");
+      expect(provider.getHeaders()).toEqual({
+        Authorization: "Bearer params-token",
+        "x-api-key": "params-api-key",
+      });
+    });
+
+    test("should forward auth from headers when params token is not present", () => {
+      const params = {
+        __ow_headers: {
+          authorization: "Bearer header-token",
+          "x-api-key": "header-api-key",
+        },
+      };
+
+      const provider = forwardImsAuthProvider(params);
+
+      expect(provider.getAccessToken()).toBe("header-token");
+      expect(provider.getHeaders()).toEqual({
+        Authorization: "Bearer header-token",
+        "x-api-key": "header-api-key",
+      });
+    });
+
+    test("should prioritize params token over headers", () => {
+      const params = {
+        AIO_COMMERCE_IMS_AUTH_TOKEN: "params-token",
+        __ow_headers: {
+          authorization: "Bearer header-token",
+        },
+      };
+
+      const provider = forwardImsAuthProvider(params);
+      expect(provider.getAccessToken()).toBe("params-token");
+    });
+
+    test("should throw when neither params token nor headers are present", () => {
+      expect(() => forwardImsAuthProvider({})).toThrow();
+    });
+
+    test("should throw when headers are present but missing Authorization", () => {
+      const params = {
+        __ow_headers: {
+          "x-api-key": "some-api-key",
+        },
+      };
+
+      expect(() => forwardImsAuthProvider(params)).toThrow();
     });
   });
 });

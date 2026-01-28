@@ -12,7 +12,6 @@
 
 import { allNonEmpty } from "@adobe/aio-commerce-lib-core/params";
 
-import { forwardImsAuthProviderFromParams } from "./ims-auth/provider";
 import { resolveImsAuthParams } from "./ims-auth/utils";
 import { resolveIntegrationAuthParams } from "./integration-auth/utils";
 
@@ -30,11 +29,6 @@ const INTEGRATION_AUTH_PARAMS = [
   "AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET",
   "AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN",
   "AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET",
-] as const satisfies string[];
-
-const FORWARDED_IMS_PARAMS = [
-  "AIO_COMMERCE_IMS_AUTH_TOKEN",
-  "AIO_COMMERCE_IMS_AUTH_API_KEY",
 ] as const satisfies string[];
 
 /**
@@ -64,17 +58,9 @@ export function resolveAuthParams(params: Record<string, unknown>) {
     return { ...provider, strategy: "integration" as const };
   }
 
-  try {
-    const provider = forwardImsAuthProviderFromParams(params);
-    return { ...provider, strategy: "ims" as const };
-  } catch {
-    // Do nothing, the needed parameters are not there.
-  }
-
   throw new Error(
     "Can't resolve authentication options for the given params. " +
       `Please provide either IMS options (${IMS_AUTH_PARAMS.join(", ")})` +
-      `or Commerce integration options (${INTEGRATION_AUTH_PARAMS.join(", ")}).` +
-      `or a pre-created token and (optionally) an API key (${FORWARDED_IMS_PARAMS.join(",")})`,
+      `or Commerce integration options (${INTEGRATION_AUTH_PARAMS.join(", ")}).`,
   );
 }
