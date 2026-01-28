@@ -54,13 +54,6 @@ const FORWARDED_IMS_PARAMS = [
  * ```
  */
 export function resolveAuthParams(params: Record<string, unknown>) {
-  try {
-    const provider = forwardImsAuthProviderFromParams(params);
-    return { ...provider, strategy: "ims" as const };
-  } catch {
-    // Do nothing, the needed parameters are not there, try the next method.
-  }
-
   if (allNonEmpty(params, IMS_AUTH_PARAMS)) {
     const provider = resolveImsAuthParams(params);
     return { ...provider, strategy: "ims" as const };
@@ -71,10 +64,17 @@ export function resolveAuthParams(params: Record<string, unknown>) {
     return { ...provider, strategy: "integration" as const };
   }
 
+  try {
+    const provider = forwardImsAuthProviderFromParams(params);
+    return { ...provider, strategy: "ims" as const };
+  } catch {
+    // Do nothing, the needed parameters are not there.
+  }
+
   throw new Error(
     "Can't resolve authentication options for the given params. " +
-      `Please provide either a pre-created token and (optionally) an API key (${FORWARDED_IMS_PARAMS.join(",")})` +
-      `or IMS options (${IMS_AUTH_PARAMS.join(", ")}) ` +
-      `or Commerce integration options (${INTEGRATION_AUTH_PARAMS.join(", ")}).`,
+      `Please provide either IMS options (${IMS_AUTH_PARAMS.join(", ")})` +
+      `or Commerce integration options (${INTEGRATION_AUTH_PARAMS.join(", ")}).` +
+      `or a pre-created token and (optionally) an API key (${FORWARDED_IMS_PARAMS.join(",")})`,
   );
 }

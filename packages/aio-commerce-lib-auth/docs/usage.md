@@ -257,6 +257,12 @@ The resolver checks for the following parameter keys:
 | `AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN` | OAuth access token |
 | `AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET` | OAuth access token secret |
 
+**Forwarded IMS Token** (fallback when full IMS/Integration params are not present):
+| Parameter Key | Description |
+|---------------|-------------|
+| `AIO_COMMERCE_IMS_AUTH_TOKEN` | Pre-created IMS access token (required) |
+| `AIO_COMMERCE_IMS_AUTH_API_KEY` | API key for downstream calls (optional) |
+
 > **Note:** In App Builder runtime actions, these parameters are typically provided via runtime action inputs in your `app.config.yaml` file and automatically passed to your action's `params` object.
 
 #### Basic Usage
@@ -292,7 +298,13 @@ export const main = async function (params: Record<string, unknown>) {
 
 #### How Detection Works
 
-The resolver checks for IMS parameters first. If all IMS parameters are present, it returns IMS auth with `strategy: "ims"`. Otherwise, it checks for Integration parameters. If all Integration parameters are present, it returns Integration auth with `strategy: "integration"`. If neither set is complete, it throws an error.
+The resolver checks parameters in the following order:
+
+1. **Full IMS parameters** - If all IMS parameters are present, returns IMS auth with `strategy: "ims"`
+2. **Integration parameters** - If all Integration parameters are present, returns Integration auth with `strategy: "integration"`
+3. **Forwarded IMS token** - If `AIO_COMMERCE_IMS_AUTH_TOKEN` is present, returns a forwarded IMS auth provider with `strategy: "ims"`
+
+If none of these sets are complete, it throws an error.
 
 > [!TIP]
 > If you need to work with a specific authentication type, use the provider-specific methods (`getImsAuthProvider` or `getIntegrationAuthProvider`) along with their assertion functions (`assertImsAuthParams` or `assertIntegrationAuthParams`) as shown in the sections above.
