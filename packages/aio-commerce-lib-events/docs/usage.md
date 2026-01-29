@@ -352,5 +352,4 @@ const client = createCommerceEventsApiClient({
 1. **Always validate parameters** - The library validates parameters automatically, but handle validation errors gracefully
 2. **Handle errors appropriately** - Catch and properly handle validation and HTTP errors
 3. **Use custom clients** - Create custom API clients with only the functions you need for better performance
-4. **Use TypeScript** - The library is fully typed, so your editor will help you with the correct response field names
-5. **Configure timeouts** - Set appropriate timeouts for your use case to avoid hanging requests
+4. **Configure timeouts** - Set appropriate timeouts for your use case to avoid hanging requests
