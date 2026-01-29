@@ -217,32 +217,6 @@ const updated = await commerceApiClient.updateProduct("test-sku", {
 });
 ```
 
-### Response Transformations
-
-The library provides utilities for transforming API responses:
-
-```typescript
-import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils";
-
-const client = new AdobeCommerceHttpClient({
-  config: {
-    /* ... */
-  },
-  auth: {
-    /* ... */
-  },
-  fetchOptions: {
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  },
-});
-
-// Response keys will be automatically converted from snake_case to camelCase
-const response = await client.get("products").json();
-// { product_name: "..." } becomes { productName: "..." }
-```
-
 ### Forwarding IMS Authentication
 
 When your action receives a pre-existing IMS token (e.g., from an upstream service or API Gateway), you can forward it to downstream API calls using the `tryForwardAuthProvider` option:

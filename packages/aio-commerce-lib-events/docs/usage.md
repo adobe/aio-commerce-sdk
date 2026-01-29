@@ -311,16 +311,6 @@ try {
 }
 ```
 
-### Response Transformations
-
-For awareness, know that the library automatically transforms response keys from `snake_case` to `camelCase`. If you're comparing the response keys to the API documentation, you should keep this in mind. Everything is fully type-safe, so your editor should be able to help you with the correct keys.
-
-```typescript
-// Response keys are automatically converted
-const response = await commerceEventsClient.getAllEventProviders();
-// { provider_id: "..." } becomes { providerId: "..." }
-```
-
 ### Advanced Usage
 
 #### Custom Fetch Options
@@ -362,5 +352,4 @@ const client = createCommerceEventsApiClient({
 1. **Always validate parameters** - The library validates parameters automatically, but handle validation errors gracefully
 2. **Handle errors appropriately** - Catch and properly handle validation and HTTP errors
 3. **Use custom clients** - Create custom API clients with only the functions you need for better performance
-4. **Leverage response transformations** - The automatic camelCase transformation makes responses more JavaScript-friendly
-5. **Configure timeouts** - Set appropriate timeouts for your use case to avoid hanging requests
+4. **Configure timeouts** - Set appropriate timeouts for your use case to avoid hanging requests

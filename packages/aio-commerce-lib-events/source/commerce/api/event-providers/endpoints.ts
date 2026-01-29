@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils";
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
@@ -43,13 +42,7 @@ export async function getAllEventProviders(
   httpClient: AdobeCommerceHttpClient,
   fetchOptions?: Options,
 ) {
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
-
-  return withHooksClient
+  return httpClient
     .get("eventing/eventProvider", fetchOptions)
     .json<CommerceEventProviderManyResponse>();
 }
@@ -75,13 +68,7 @@ export async function getEventProviderById(
     params,
   );
 
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
-
-  return withHooksClient
+  return httpClient
     .get(`eventing/eventProvider/${validatedParams.providerId}`, fetchOptions)
     .json<CommerceEventProviderOneResponse>();
 }
@@ -103,13 +90,8 @@ export async function createEventProvider(
   fetchOptions?: Options,
 ) {
   const validatedParams = parseOrThrow(EventProviderCreateParamsSchema, params);
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
 
-  return withHooksClient
+  return httpClient
     .post("eventing/eventProvider", {
       ...fetchOptions,
       json: {
