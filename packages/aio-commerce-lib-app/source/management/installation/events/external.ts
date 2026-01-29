@@ -12,7 +12,11 @@
 
 import { defineLeafStep } from "#management/installation/workflow/step";
 
-import { createMetadata, createProviders, createRegistrations } from "./steps";
+import {
+  createMetadata,
+  createProviders,
+  createRegistrations,
+} from "./helpers";
 
 import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";

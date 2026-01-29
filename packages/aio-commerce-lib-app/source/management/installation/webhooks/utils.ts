@@ -26,4 +26,4 @@ export function hasWebhooks(
 }
 
 /** The execution context for webhook leaf steps. */
-export type WebhooksExecutionContext = ExecutionContext<WebhooksConfig>;
+export type WebhooksExecutionContext = ExecutionContext;

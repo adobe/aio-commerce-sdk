@@ -15,7 +15,7 @@ import {
   defineLeafStep,
 } from "#management/installation/workflow/step";
 
-import { createWebhookSubscriptions } from "./steps";
+import { createWebhookSubscriptions } from "./helpers";
 import { hasWebhooks } from "./utils";
 
 import type { WebhooksExecutionContext } from "./utils";

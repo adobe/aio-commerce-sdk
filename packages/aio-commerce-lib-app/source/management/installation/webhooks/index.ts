@@ -12,6 +12,6 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the webhooks module */
 
-export { webhooksStep } from "./phase";
+export { webhooksStep } from "./branch";
 
 export type { WebhooksConfig } from "./utils";

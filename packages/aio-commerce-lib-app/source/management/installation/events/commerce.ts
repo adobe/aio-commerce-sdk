@@ -18,7 +18,7 @@ import {
   createMetadata,
   createProviders,
   createRegistrations,
-} from "./steps";
+} from "./helpers";
 
 import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
