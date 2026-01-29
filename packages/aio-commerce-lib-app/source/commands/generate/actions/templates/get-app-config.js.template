@@ -48,7 +48,7 @@ export function main(params) {
     });
   } catch (error) {
     logger.error(
-      `Something wen't wrong while validating app config: ${inspect(error)}`,
+      `Something went wrong while validating app config: ${inspect(error)}`,
     );
 
     return internalServerError({
