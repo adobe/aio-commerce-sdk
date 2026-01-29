@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-events
 
+## 0.5.1
+
+### Patch Changes
+
+- [#230](https://github.com/adobe/aio-commerce-sdk/pull/230) [`0d17bcc`](https://github.com/adobe/aio-commerce-sdk/commit/0d17bcc22c3c556c95975dd3df5969b74e765e67) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix common-utils should be a private development only dependency
+
 ## 0.5.0
 
 ### Minor Changes
