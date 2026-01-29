@@ -15,7 +15,10 @@
 
 import util from "node:util";
 
-import { unsyncCommerceScopes } from "@adobe/aio-commerce-lib-config";
+import {
+  UnsyncCommerceScopeResult,
+  unsyncCommerceScopes,
+} from "@adobe/aio-commerce-lib-config";
 import {
   internalServerError,
   ok,
@@ -26,7 +29,7 @@ const inspect = (obj) => util.inspect(obj, { depth: null });
 /**
  * Unsync commerce scopes - removes commerce scope from the persisted scope tree.
  * @param params - The input parameters.
- * @returns The response object containing updated scope tree.
+ * @returns The response object with appropriate status based on the operation result.
  */
 export async function main(params) {
   const logger = AioLogger("unsync-commerce-scopes", {
@@ -36,12 +39,19 @@ export async function main(params) {
   try {
     const result = await unsyncCommerceScopes();
 
-    logger.info(result);
-    return ok({
-      body: {
-        message: result,
-      },
-    });
+    if (result === UnsyncCommerceScopeResult.NotFound) {
+      return ok({
+        body: {
+          message: "Commerce scope not found, already removed",
+        },
+      });
+    }
+
+      return ok({
+        body: {
+          message: "Commerce scope removed successfully",
+        },
+      });
   } catch (error) {
     logger.error(`Error unsyncing commerce scopes: ${inspect(error)}`);
 

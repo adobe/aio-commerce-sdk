@@ -226,27 +226,61 @@ export async function syncCommerceScopes(
 }
 
 /**
+ * Result status constants for unsyncCommerceScopes operation.
  *
- * @returns The success message.
  * @example
  * ```typescript
- * import { unsyncCommerceScopes } from "@adobe/aio-commerce-lib-config";
+ * import { unsyncCommerceScopes, UnsyncCommerceScopeResult } from "@adobe/aio-commerce-lib-config";
  *
  * const result = await unsyncCommerceScopes();
- * console.log(result); // "Commerce scope removed successfully"
- * ```
  *
+ * if (result === UnsyncCommerceScopeResult.NotFound) {
+ *   console.log("Commerce scope was not found");
+ * } else if (result === UnsyncCommerceScopeResult.Ok) {
+ *   console.log("Commerce scope removed successfully");
+ * }
+ * ```
  */
-export async function unsyncCommerceScopes() {
+export const UnsyncCommerceScopeResult = {
+  NotFound: "NOT_FOUND",
+  Ok: "OK",
+} as const;
+
+/**
+ * Type representing the possible result values from unsyncCommerceScopes.
+ */
+export type UnsyncCommerceScopeResultType =
+  (typeof UnsyncCommerceScopeResult)[keyof typeof UnsyncCommerceScopeResult];
+
+/**
+ * Removes the commerce scope from the persisted scope tree.
+ *
+ * This function will check if a commerce scope exists in the persisted scope tree
+ * and remove it if found. Use the returned status to determine the appropriate
+ * action or response in your application.
+ *
+ * @returns Promise resolving to a status indicating whether the scope was found and removed,
+ *   or if it was already not present.
+ *
+ * @example
+ * ```typescript
+ * import { unsyncCommerceScopes, UnsyncCommerceScopeResult } from "@adobe/aio-commerce-lib-config";
+ *
+ * const result = await unsyncCommerceScopes();
+ *
+ * if (result === UnsyncCommerceScopeResult.NotFound) {
+ *   console.log("Commerce scope not found, already removed");
+ * } else if (result === UnsyncCommerceScopeResult.Ok) {
+ *   console.log("Commerce scope removed successfully");
+ * }
+ * ```
+ */
+export async function unsyncCommerceScopes(): Promise<UnsyncCommerceScopeResultType> {
   const COMMERCE_SCOPE_CODE = "commerce";
-  const MESSAGES = {
-    ALREADY_REMOVED: "Commerce scope is already removed, no need to unsync",
-    SUCCESS: "Commerce scope removed successfully",
-  };
   const scopeTree = await getPersistedScopeTree(DEFAULT_NAMESPACE);
 
   if (!scopeTree.find((scope) => scope.code === COMMERCE_SCOPE_CODE)) {
-    return MESSAGES.ALREADY_REMOVED;
+    return UnsyncCommerceScopeResult.NotFound;
   }
 
   // Remove 'commerce' scope
@@ -257,7 +291,7 @@ export async function unsyncCommerceScopes() {
   // Save updated scope tree
   await saveScopeTree(DEFAULT_NAMESPACE, updatedScopeTree);
 
-  return MESSAGES.SUCCESS;
+  return UnsyncCommerceScopeResult.Ok;
 }
 
 /**
