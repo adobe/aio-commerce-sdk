@@ -1,10 +1,10 @@
 # `findNearestPackageJson()`
 
 ```ts
-function findNearestPackageJson(cwd: string): Promise<null | string>;
+function findNearestPackageJson(cwd: string): Promise<string | null>;
 ```
 
-Defined in: [project.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages-private/scripting-utils/source/project.ts#L67)
+Defined in: [project.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages-private/scripting-utils/source/project.ts#L67)
 
 Find the nearest package.json file in the current working directory or its parents
 
@@ -16,4 +16,4 @@ Find the nearest package.json file in the current working directory or its paren
 
 ## Returns
 
-`Promise`\<`null` \| `string`\>
+`Promise`\<`string` \| `null`\>

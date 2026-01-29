@@ -1,10 +1,10 @@
 # `resolveCommerceAppConfig()`
 
 ```ts
-function resolveCommerceAppConfig(cwd: string): Promise<null | string>;
+function resolveCommerceAppConfig(cwd: string): Promise<string | null>;
 ```
 
-Defined in: [packages/aio-commerce-lib-app/source/config/lib/parser.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L57)
+Defined in: [config/lib/parser.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L57)
 
 Try to find (up to the nearest package.json file) the app config file.
 
@@ -25,6 +25,6 @@ Searches for config files in the following order of priority:
 
 ## Returns
 
-`Promise`\<`null` \| `string`\>
+`Promise`\<`string` \| `null`\>
 
 The path to the config file, or null if not found

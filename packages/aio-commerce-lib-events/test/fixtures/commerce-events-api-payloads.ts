@@ -26,7 +26,6 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: false,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "getEventProviderById",
@@ -43,7 +42,6 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "createEventProvider",
@@ -64,7 +62,6 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "getAllEventSubscriptions",
@@ -76,7 +73,6 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: false,
-    hasCamelCaseTransformer: true,
   },
   {
     name: "createEventSubscription",
@@ -95,7 +91,6 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: false,
   },
   {
     name: "updateEventingConfiguration",
@@ -112,6 +107,5 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     },
 
     hasInputValidation: true,
-    hasCamelCaseTransformer: false,
   },
 ] as const;

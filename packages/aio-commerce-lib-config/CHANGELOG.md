@@ -1,5 +1,28 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.11.1
+
+### Patch Changes
+
+- Updated dependencies [[`43cd7d1`](https://github.com/adobe/aio-commerce-sdk/commit/43cd7d16ae676e59ee501ccbe89a38c20d777740)]:
+  - @adobe/aio-commerce-lib-api@0.6.0
+  - @adobe/aio-commerce-lib-app@0.1.1
+
+## 0.11.0
+
+### Minor Changes
+
+- [#215](https://github.com/adobe/aio-commerce-sdk/pull/215) [`7e05220`](https://github.com/adobe/aio-commerce-sdk/commit/7e052205268a0194453999989116b6a35959ea57) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Rename the `base_url` input parameter of `sync-commerce-scopes` and remove the possibility to get if from `.env`. Add new input for specifying the commerce flavor.
+
+### Patch Changes
+
+- [#224](https://github.com/adobe/aio-commerce-sdk/pull/224) [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove need of env parameters by implementing IMS token forwarding
+
+- Updated dependencies [[`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312), [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055), [`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312), [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055), [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055)]:
+  - @adobe/aio-commerce-lib-core@0.6.0
+  - @adobe/aio-commerce-lib-api@0.5.0
+  - @adobe/aio-commerce-lib-app@0.1.1
+
 ## 0.10.0
 
 ### Minor Changes

@@ -7,10 +7,10 @@ function findUp(
     cwd?: string;
     stopAt?: string;
   },
-): Promise<undefined | string>;
+): Promise<string | undefined>;
 ```
 
-Defined in: [project.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages-private/scripting-utils/source/project.ts#L30)
+Defined in: [project.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages-private/scripting-utils/source/project.ts#L30)
 
 Find a file by walking up parent directories
 
@@ -25,6 +25,6 @@ Find a file by walking up parent directories
 
 ## Returns
 
-`Promise`\<`undefined` \| `string`\>
+`Promise`\<`string` \| `undefined`\>
 
 The path to the file, or undefined if not found

@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-events`: `v0.3.6`
+# `@adobe/aio-commerce-lib-events`: `v0.4.0`
 
 ## Modules
 

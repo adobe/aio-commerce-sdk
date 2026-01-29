@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-lib-events",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.3.6",
+  "version": "0.5.1",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
@@ -79,7 +79,6 @@
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-api": "workspace:*",
-    "@aio-commerce-sdk/common-utils": "workspace:*",
     "valibot": "^1.1.0"
   },
   "devDependencies": {
@@ -87,6 +86,7 @@
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "@aio-commerce-sdk/config-vitest": "workspace:*",
+    "@aio-commerce-sdk/common-utils": "workspace:*",
     "msw": "^2.11.1"
   },
   "sideEffects": false

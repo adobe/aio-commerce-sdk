@@ -17,6 +17,7 @@ import util from "node:util";
 
 import { syncCommerceScopes } from "@adobe/aio-commerce-lib-config";
 import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-sdk/api";
+import { allNonEmpty } from "@adobe/aio-commerce-sdk/core/params";
 import {
   badRequest,
   internalServerError,
@@ -41,24 +42,24 @@ export async function main(params) {
   try {
     logger.debug("Syncing commerce scopes...");
 
-    if (!params.commerceBaseUrl) {
+    if (!allNonEmpty(params, ["commerceBaseUrl"])) {
       logger.error("Missing required parameter: commerceBaseUrl");
-      
-      return badRequest({
-        body: {
-          code: "BAD_REQUEST",
-          message: "Missing required parameter: commerceBaseUrl",
-        },
-      });
+      return badRequest("Missing required parameter: commerceBaseUrl");
     }
 
     const paramsWithCommerceConfig = {
       ...params,
-      ...(params.commerceBaseUrl && { AIO_COMMERCE_API_BASE_URL: params.commerceBaseUrl }),
-      ...(params.commerceEnv && { AIO_COMMERCE_API_FLAVOR: params.commerceEnv }),
+      AIO_COMMERCE_API_BASE_URL: params.commerceBaseUrl,
+
+      ...(params.commerceEnv && {
+        AIO_COMMERCE_API_FLAVOR: params.commerceEnv,
+      }),
     };
 
-    const commerceConfig = resolveCommerceHttpClientParams(paramsWithCommerceConfig);
+    const commerceConfig = resolveCommerceHttpClientParams(
+      paramsWithCommerceConfig,
+      { tryForwardAuthProvider: true },
+    );
     const result = await syncCommerceScopes(commerceConfig);
 
     if (result.error) {

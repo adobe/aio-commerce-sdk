@@ -11,8 +11,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { existsSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import util from "node:util";
 
@@ -36,13 +35,11 @@ import { isMap } from "yaml";
 import {
   APP_CONFIG_FILE,
   COMMERCE_APP_CONFIG_FILE,
-  ENV_FILE,
   EXTENSION_POINT_FOLDER_PATH,
   EXTENSION_POINT_ID,
   INSTALL_YAML_FILE,
   PACKAGE_JSON_FILE,
 } from "#commands/constants";
-import { COMMERCE_VARIABLES } from "#commands/generate/actions/constants";
 
 import {
   DEFAULT_EXTENSIBILITY_CONFIG_SCHEMA,
@@ -225,104 +222,6 @@ export function extractEnvVars(envContent: string): Set<string> {
   }
 
   return existingEnvVars;
-}
-
-/** Build SaaS environment variables section */
-function buildSaaSEnvSection(
-  existingEnvVars: Set<string>,
-  saasVars: readonly string[],
-): string {
-  const missingSaaSVars = saasVars.filter((v) => !existingEnvVars.has(v));
-  if (missingSaaSVars.length === 0) {
-    return "";
-  }
-
-  let section = "# For SaaS instances:\n";
-  section += "\n# IMS Authentication (SaaS)\n";
-
-  for (const varName of missingSaaSVars) {
-    if (varName !== "AIO_COMMERCE_API_BASE_URL") {
-      section += `${varName}=your-${varName.toLowerCase().replace(/_/g, "-")}\n`;
-    }
-  }
-
-  return `${section}\n`;
-}
-
-/** Build PaaS environment variables section */
-function buildPaaSEnvSection(
-  existingEnvVars: Set<string>,
-  paasVars: readonly string[],
-): string {
-  const missingPaaSVars = paasVars.filter((v) => !existingEnvVars.has(v));
-  if (missingPaaSVars.length === 0) {
-    return "";
-  }
-
-  let section = "# For PaaS instances:\n";
-  section += "# Integration Authentication (PaaS)\n";
-  for (const varName of missingPaaSVars) {
-    section += `${varName}=your-${varName.toLowerCase().replace(/_/g, "-")}\n`;
-  }
-
-  return `${section}\n`;
-}
-
-/** Ensure .env file has placeholder environment variables */
-export async function ensureEnvFile(cwd = process.cwd()) {
-  const envPath = join(await getProjectRootDirectory(cwd), ENV_FILE);
-
-  const envContent = existsSync(envPath)
-    ? await readFile(envPath, "utf-8")
-    : "";
-
-  const existingEnvVars = extractEnvVars(envContent);
-  const requiredVars = ["LOG_LEVEL", ...COMMERCE_VARIABLES];
-  const missingVars = requiredVars.filter((v) => !existingEnvVars.has(v));
-
-  if (missingVars.length === 0) {
-    consola.success(
-      `All required environment variables already present in ${ENV_FILE}`,
-    );
-
-    return true;
-  }
-
-  let newContent = "";
-  consola.info(`Adding environment variable placeholders to ${ENV_FILE}...`);
-
-  if (!existingEnvVars.has("LOG_LEVEL")) {
-    newContent += "# Logging level for runtime actions\n";
-    newContent += "LOG_LEVEL=info\n\n";
-  }
-
-  newContent += "# Adobe Commerce API configuration\n";
-
-  if (!existingEnvVars.has("AIO_COMMERCE_API_BASE_URL")) {
-    newContent +=
-      "AIO_COMMERCE_API_BASE_URL=https://your-commerce-instance.com\n\n";
-  }
-
-  newContent += buildSaaSEnvSection(existingEnvVars, [
-    "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
-    "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
-    "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID",
-    "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL",
-    "AIO_COMMERCE_AUTH_IMS_ORG_ID",
-    "AIO_COMMERCE_AUTH_IMS_SCOPES",
-  ]);
-
-  newContent += buildPaaSEnvSection(existingEnvVars, [
-    "AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY",
-    "AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET",
-    "AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN",
-    "AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET",
-  ]);
-
-  await writeFile(envPath, `${newContent}\n${envContent}`, "utf-8");
-  consola.success(`Added environment variable placeholders to ${ENV_FILE}`);
-
-  return true;
 }
 
 /** Install required dependencies */

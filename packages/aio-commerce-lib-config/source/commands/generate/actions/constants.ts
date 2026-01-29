@@ -17,26 +17,6 @@ import { buildActionDefinition } from "./lib";
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
 import type { ActionConfig } from "./lib";
 
-/** The list of Commerce variables that are required for the runtime actions */
-export const COMMERCE_VARIABLES = [
-  "AIO_COMMERCE_API_BASE_URL",
-  "AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY",
-  "AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET",
-  "AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN",
-  "AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET",
-  "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
-  "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
-  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID",
-  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL",
-  "AIO_COMMERCE_AUTH_IMS_ORG_ID",
-  "AIO_COMMERCE_AUTH_IMS_SCOPES",
-] as const satisfies string[];
-
-/** The inputs for the generated runtime actions */
-export const ACTION_INPUTS = Object.fromEntries(
-  COMMERCE_VARIABLES.map((variable) => [variable, `$${variable}`] as const),
-);
-
 /** The list of runtime actions to generate */
 export const RUNTIME_ACTIONS: ActionConfig[] = [
   {
@@ -64,7 +44,6 @@ export const RUNTIME_ACTIONS: ActionConfig[] = [
   {
     name: "sync-commerce-scopes",
     templateFile: "sync-commerce-scopes.js.template",
-    requiresCommerce: true,
   },
   {
     name: "unsync-commerce-scopes",

@@ -10,6 +10,8 @@ The library supports two main authentication providers:
 - **IMS Provider**: For authenticating users or services via Adobe Identity Management System (IMS) using OAuth2
 - **Integrations Provider**: For authenticating with Adobe Commerce integrations using OAuth 1.0a
 
+Additionally, the library provides **forwarding utilities** for passing authentication credentials from incoming requests to downstream services, useful for proxy patterns or service chaining.
+
 These providers abstract the complexity of authentication, making it easy to obtain and use access tokens in your App Builder applications.
 
 ### Quick Start
@@ -69,6 +71,78 @@ export const main = async function (params: Record<string, unknown>) {
     throw error;
   }
 };
+```
+
+### Forwarding IMS Authentication
+
+When building actions that receive authenticated requests and need to forward those credentials to downstream services, use the forwarding utilities. This is useful for proxy patterns or when chaining multiple services.
+
+#### Auto-Detection with `forwardImsAuthProvider`
+
+Use `forwardImsAuthProvider` to automatically detect the source of credentials:
+
+```typescript
+import { forwardImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
+
+export const main = async function (params: Record<string, unknown>) {
+  // Automatically detects credentials from:
+  // 1. AIO_COMMERCE_AUTH_IMS_TOKEN param (if present)
+  // 2. Authorization header in __ow_headers (fallback)
+  const authProvider = forwardImsAuthProvider(params);
+
+  // Use the forwarded credentials in downstream API calls
+  const response = await fetch("https://api.adobe.io/some-endpoint", {
+    headers: await authProvider.getHeaders(),
+  });
+
+  return { statusCode: 200, body: await response.json() };
+};
+```
+
+The function tries sources in this order:
+
+1. **Params token** - Looks for `AIO_COMMERCE_AUTH_IMS_TOKEN` (and optionally `AIO_COMMERCE_AUTH_IMS_API_KEY`) in the params object
+2. **HTTP headers** - Falls back to `Authorization` header in `__ow_headers`
+
+If neither source provides valid credentials, it throws an error.
+
+#### Explicit Source with `getForwardedImsAuthProvider`
+
+For more control, use `getForwardedImsAuthProvider` to explicitly specify the credential source:
+
+```typescript
+import { getForwardedImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
+
+// From a params object (e.g. runtime action parameters)
+const provider1 = getForwardedImsAuthProvider({
+  from: "params",
+  params: {
+    AIO_COMMERCE_AUTH_IMS_TOKEN: "my-token",
+    AIO_COMMERCE_AUTH_IMS_API_KEY: "my-api-key",
+  },
+});
+
+// From raw headers (e.g. from an HTTP request)
+const provider2 = getForwardedImsAuthProvider({
+  from: "headers",
+  headers: {
+    authorization: "Bearer my-token",
+    "x-api-key": "my-api-key",
+  },
+});
+
+// From an async getter (e.g. fetch from secret manager)
+const provider3 = getForwardedImsAuthProvider({
+  from: "getter",
+  getHeaders: async () => {
+    const token = await secretManager.getSecret("ims-token");
+    return { Authorization: `Bearer ${token}` };
+  },
+});
+
+// Use any provider the same way
+const token = await provider1.getAccessToken();
+const headers = await provider1.getHeaders();
 ```
 
 ### Integrations Provider
@@ -162,6 +236,9 @@ The resolver checks for the following parameter keys:
 
 > **Note:** In App Builder runtime actions, these parameters are typically provided via runtime action inputs in your `app.config.yaml` file and automatically passed to your action's `params` object.
 
+> [!TIP]
+> For forwarding pre-existing IMS tokens, use `forwardImsAuthProvider` with `AIO_COMMERCE_AUTH_IMS_TOKEN` instead. See [Forwarding IMS Authentication](#forwarding-ims-authentication).
+
 #### Basic Usage
 
 ```typescript
@@ -195,13 +272,64 @@ export const main = async function (params: Record<string, unknown>) {
 
 #### How Detection Works
 
-The resolver checks for IMS parameters first. If all IMS parameters are present, it returns IMS auth with `strategy: "ims"`. Otherwise, it checks for Integration parameters. If all Integration parameters are present, it returns Integration auth with `strategy: "integration"`. If neither set is complete, it throws an error.
+The resolver checks parameters in the following order:
+
+1. **Full IMS parameters** - If all IMS parameters are present, returns IMS auth with `strategy: "ims"`
+2. **Integration parameters** - If all Integration parameters are present, returns Integration auth with `strategy: "integration"`
+
+If neither set is complete, it throws an error.
 
 > [!TIP]
 > If you need to work with a specific authentication type, use the provider-specific methods (`getImsAuthProvider` or `getIntegrationAuthProvider`) along with their assertion functions (`assertImsAuthParams` or `assertIntegrationAuthParams`) as shown in the sections above.
+
+> [!NOTE]
+> For forwarding pre-existing IMS tokens (e.g., `AIO_COMMERCE_AUTH_IMS_TOKEN`), use `forwardImsAuthProvider` instead of `resolveAuthParams`.
 
 ## Best Practices
 
 1. **Use `resolveAuthParams` for flexibility** - Automatically detects auth type, making your code work with both IMS and Integration auth
 2. **Use specific providers when needed** - Use `getImsAuthProvider` or `getIntegrationAuthProvider` with their respective `assert*` functions when you need to enforce a specific auth type
-3. **Handle errors gracefully** - Catch and properly handle validation and authentication errors
+3. **Use forwarding for proxy patterns** - When your action receives authenticated requests and needs to call downstream services, use `forwardImsAuthProvider` or `getForwardedImsAuthProvider` to pass credentials without regenerating tokens
+4. **Handle errors gracefully** - Catch and properly handle validation and authentication errors
+
+## CLI Commands
+
+The library provides CLI commands to help manage authentication credentials:
+
+```bash
+# Sync IMS credentials from the current workspace context to the .env file
+npx @adobe/aio-commerce-lib-auth sync-ims-credentials
+```
+
+### `sync-ims-credentials`
+
+Synchronizes the IMS credentials from your current Adobe I/O workspace context (stored in `.aio`) to the `.env` file, mapping them to the environment variables expected by this library.
+
+This command reads the IMS S2S credentials from your configured workspace and writes them to your `.env` file using the `AIO_COMMERCE_AUTH_IMS_*` naming convention.
+
+**Mapped environment variables:**
+
+| Source (`.aio` context)   | Target (`.env` file)                            |
+| ------------------------- | ----------------------------------------------- |
+| `client_id`               | `AIO_COMMERCE_AUTH_IMS_CLIENT_ID`               |
+| `client_secrets`          | `AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS`          |
+| `technical_account_email` | `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL` |
+| `technical_account_id`    | `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID`    |
+| `scopes`                  | `AIO_COMMERCE_AUTH_IMS_SCOPES`                  |
+| `ims_org_id`              | `AIO_COMMERCE_AUTH_IMS_ORG_ID`                  |
+
+**Usage:**
+
+> [!TIP]
+> Run this command after setting up your Adobe I/O workspace credentials with `aio app use` to automatically populate your `.env` file with the IMS authentication parameters required by the library.
+
+```bash
+npx @adobe/aio-commerce-lib-auth sync-ims-credentials
+```
+
+**Example output:**
+
+```
+ℹ Syncing IMS credentials...
+✔ IMS credentials successfully synced to their AIO_COMMERCE_IMS_AUTH counterparts!
+```

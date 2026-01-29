@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { buildCamelCaseKeysResponseHook } from "@adobe/aio-commerce-lib-api/utils";
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import {
@@ -60,13 +59,7 @@ export async function getAllRegistrationsByConsumerOrg(
     params,
   );
 
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
-
-  return withHooksClient
+  return httpClient
     .get(`${validatedParams.consumerOrgId}/registrations`, fetchOptions)
     .json<IoEventRegistrationPaginatedResponse>();
 }
@@ -88,13 +81,8 @@ export async function getAllRegistrations(
   fetchOptions?: Options,
 ) {
   const validatedParams = parseOrThrow(GetAllRegistrationsParamsSchema, params);
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
 
-  return withHooksClient
+  return httpClient
     .get(
       `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/registrations`,
       fetchOptions,
@@ -119,13 +107,8 @@ export async function getRegistrationById(
   fetchOptions?: Options,
 ) {
   const validatedParams = parseOrThrow(GetRegistrationByIdParamsSchema, params);
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
 
-  return withHooksClient
+  return httpClient
     .get(
       `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/registrations/${validatedParams.registrationId}`,
       fetchOptions,
@@ -150,13 +133,8 @@ export async function createRegistration(
   fetchOptions?: Options,
 ) {
   const validatedParams = parseOrThrow(CreateRegistrationParamsSchema, params);
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
 
-  return withHooksClient
+  return httpClient
     .post(
       `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/registrations`,
       {
@@ -211,13 +189,8 @@ export async function updateRegistration(
   fetchOptions?: Options,
 ) {
   const validatedParams = parseOrThrow(UpdateRegistrationParamsSchema, params);
-  const withHooksClient = httpClient.extend({
-    hooks: {
-      afterResponse: [buildCamelCaseKeysResponseHook()],
-    },
-  });
 
-  return withHooksClient
+  return httpClient
     .put(
       `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/registrations/${validatedParams.registrationId}`,
       {

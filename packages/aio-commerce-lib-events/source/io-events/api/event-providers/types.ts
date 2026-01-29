@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import type { CamelCasedPropertiesDeep } from "type-fest";
 import type { IoEventMetadataHalModel } from "#io-events/api/event-metadata/types";
 import type { HALLink } from "#io-events/types";
 
@@ -39,15 +38,14 @@ export type IoEventProviderHalModel = IoEventProvider & {
 };
 
 /** Defines the fields of an I/O event provider entity returned by the Adobe I/O Events API. */
-export type IoEventProviderOneResponse =
-  CamelCasedPropertiesDeep<IoEventProviderHalModel>;
+export type IoEventProviderOneResponse = IoEventProviderHalModel;
 
 /** Defines the fields of many I/O event provider entities returned by the Adobe I/O Events API. */
-export type IoEventProviderManyResponse = CamelCasedPropertiesDeep<{
+export type IoEventProviderManyResponse = {
   _embedded: {
     providers: IoEventProviderHalModel[];
   };
   _links: {
     self: HALLink;
   };
-}>;
+};

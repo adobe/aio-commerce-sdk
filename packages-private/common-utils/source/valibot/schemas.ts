@@ -12,37 +12,106 @@
 
 import * as v from "valibot";
 
-const ALPHANUMERIC_OR_UNDERSCORE_REGEX = /^[a-zA-Z0-9_]+$/;
-const ALPHANUMERIC_OR_UNDERSCORE_OR_HYPHEN_REGEX = /^[a-zA-Z0-9_-]+$/;
+type Casing = "lowercase" | "uppercase" | "any";
 
-/** A schema for a string value. */
-export function stringValueSchema(propertyName: string) {
-  return v.string(`Expected a string value for property '${propertyName}'`);
+const ALPHANUMERIC_OR_UNDERSCORE_REGEX = {
+  any: /^[a-zA-Z0-9_]+$/,
+  lowercase: /^[a-z0-9_]+$/,
+  uppercase: /^[A-Z0-9_]+$/,
+};
+
+const ALPHANUMERIC_OR_UNDERSCORE_OR_HYPHEN_REGEX = {
+  any: /^[a-zA-Z0-9_-]+$/,
+  lowercase: /^[a-z0-9_-]+$/,
+  uppercase: /^[A-Z0-9_-]+$/,
+};
+
+const ALPHANUMERIC_OR_HYPHEN_REGEX = {
+  any: /^[a-zA-Z0-9-]+$/,
+  lowercase: /^[a-z0-9-]+$/,
+  uppercase: /^[A-Z0-9-]+$/,
+};
+
+/**
+ * A schema for a string value.
+ * @param name The name of the field this schema refers to.
+ */
+export function stringValueSchema(name: string) {
+  return v.string(`Expected a string value for '${name}'`);
 }
 
-/** A schema for a boolean value. */
-export function booleanValueSchema(propertyName: string) {
-  return v.boolean(`Expected a boolean value for property '${propertyName}'`);
+/**
+ * A schema for a non-empty string value.
+ * @param name The name of the field this schema refers to.
+ */
+export function nonEmptyStringValueSchema(name: string) {
+  return v.pipe(
+    stringValueSchema(name),
+    v.nonEmpty(`The value of "${name}" must not be empty`),
+  );
 }
 
-/** A schema for a string that only contains alphanumeric characters and underscores. */
-export function alphaNumericOrUnderscoreSchema(name: string) {
+/**
+ * A schema for a boolean value.
+ * @param name The name of the field this schema refers to.
+ */
+export function booleanValueSchema(name: string) {
+  return v.boolean(`Expected a boolean value for '${name}'`);
+}
+
+/**
+ * A schema for a string that only contains alphanumeric characters and underscores.
+ * @param name The name of the field this schema refers to.
+ * @param casing The allowed casing for the string (default: "any").
+ */
+export function alphaNumericOrUnderscoreSchema(
+  name: string,
+  casing: Casing = "any",
+) {
+  const casingLabel = casing === "any" ? "" : ` (${casing} only)`;
   return v.pipe(
     stringValueSchema(name),
     v.regex(
-      ALPHANUMERIC_OR_UNDERSCORE_REGEX,
-      `Only alphanumeric characters and underscores are allowed for "${name}"`,
+      ALPHANUMERIC_OR_UNDERSCORE_REGEX[casing],
+      `Only alphanumeric characters and underscores are allowed in string value of "${name}"${casingLabel}`,
     ),
   );
 }
 
-/** A schema for a string that only contains alphanumeric characters, underscores, and hyphens. */
-export function alphaNumericOrUnderscoreOrHyphenSchema(name: string) {
+/**
+ * A schema for a string that only contains alphanumeric characters, underscores, and hyphens.
+ * @param name The name of the field this schema refers to.
+ * @param casing The allowed casing for the string (default: "any").
+ */
+export function alphaNumericOrUnderscoreOrHyphenSchema(
+  name: string,
+  casing: Casing = "any",
+) {
+  const casingLabel = casing === "any" ? "" : ` (${casing} only)`;
   return v.pipe(
     stringValueSchema(name),
     v.regex(
-      ALPHANUMERIC_OR_UNDERSCORE_OR_HYPHEN_REGEX,
-      `Only alphanumeric characters, underscores, and hyphens are allowed for property "${name}"`,
+      ALPHANUMERIC_OR_UNDERSCORE_OR_HYPHEN_REGEX[casing],
+      `Only alphanumeric characters, underscores, and hyphens are allowed in string value of "${name}"${casingLabel}`,
+    ),
+  );
+}
+
+/**
+ * A schema for a string that only contains alphanumeric characters and hyphens.
+ * @param name The name of the field this schema refers to.
+ * @param casing The allowed casing for the string (default: "any").
+ */
+export function alphaNumericOrHyphenSchema(
+  name: string,
+  casing: Casing = "any",
+) {
+  const casingLabel = casing === "any" ? "" : ` (${casing} only)`;
+  return v.pipe(
+    stringValueSchema(name),
+    v.regex(
+      ALPHANUMERIC_OR_HYPHEN_REGEX[casing],
+      `Only alphanumeric characters and hyphens are allowed in string value of "${name}"${casingLabel}`,
     ),
   );
 }

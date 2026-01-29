@@ -3,18 +3,20 @@
 ```ts
 function resolveCommerceHttpClientParams(
   params: Record<string, unknown>,
+  options: ResolveCommerceHttpClientParamsOptions,
 ): CommerceHttpClientParams;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/helpers.ts:225](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/commerce/helpers.ts#L225)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/helpers.ts:236](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/commerce/helpers.ts#L236)
 
 Resolves the [CommerceHttpClientParams](../type-aliases/CommerceHttpClientParams.md) from the given App Builder action inputs.
 
 ## Parameters
 
-| Parameter | Type                            | Description                                                                                                                |
-| --------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `params`  | `Record`\<`string`, `unknown`\> | The App Builder action inputs to resolve the [CommerceHttpClientParams](../type-aliases/CommerceHttpClientParams.md) from. |
+| Parameter | Type                                                                                                  | Description                                                                                                                |
+| --------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `params`  | `Record`\<`string`, `unknown`\>                                                                       | The App Builder action inputs to resolve the [CommerceHttpClientParams](../type-aliases/CommerceHttpClientParams.md) from. |
+| `options` | [`ResolveCommerceHttpClientParamsOptions`](../type-aliases/ResolveCommerceHttpClientParamsOptions.md) | -                                                                                                                          |
 
 ## Returns
 

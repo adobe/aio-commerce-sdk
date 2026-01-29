@@ -12,20 +12,11 @@
 
 import aioLibIms from "@adobe/aio-lib-ims";
 
+import { buildImsHeaders } from "./utils";
+
 import type { SnakeCasedProperties } from "type-fest";
 import type { ImsAuthEnv, ImsAuthParams } from "./schema";
-
-/** Defines the header keys used for IMS authentication. */
-type ImsAuthHeader = "Authorization" | "x-api-key";
-
-/** Defines the headers required for IMS authentication. */
-type ImsAuthHeaders = Record<ImsAuthHeader, string>;
-
-/** Defines an authentication provider for Adobe IMS. */
-export type ImsAuthProvider = {
-  getAccessToken: () => Promise<string>;
-  getHeaders: () => Promise<ImsAuthHeaders>;
-};
+import type { ImsAuthProvider } from "./types";
 
 /** The shape of the configuration expected by `aio-lib-ims`. */
 type ImsAuthConfig = Omit<
@@ -37,6 +28,7 @@ type ImsAuthConfig = Omit<
 };
 
 const { context, getToken } = aioLibIms;
+
 /**
  * Converts IMS auth configuration properties to snake_case format.
  * @param config The IMS auth configuration with camelCase properties.
@@ -134,14 +126,11 @@ export function getImsAuthProvider(authParams: ImsAuthParams) {
 
   const getHeaders = async () => {
     const accessToken = await getAccessToken();
-    return {
-      Authorization: `Bearer ${accessToken}`,
-      "x-api-key": authParams.clientId,
-    };
+    return buildImsHeaders(accessToken, authParams.clientId);
   };
 
   return {
     getAccessToken,
     getHeaders,
-  };
+  } satisfies ImsAuthProvider;
 }

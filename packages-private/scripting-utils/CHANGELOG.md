@@ -1,5 +1,20 @@
 # @aio-commerce-sdk/scripting-utils
 
+## 0.2.0
+
+### Minor Changes
+
+- [#217](https://github.com/adobe/aio-commerce-sdk/pull/217) [`6063a97`](https://github.com/adobe/aio-commerce-sdk/commit/6063a97299c9b44f663314420b59cee7998b2f89) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Added env utilities and `limits` configuration to `ExtConfig`.
+
+## 0.1.2
+
+### Patch Changes
+
+- [#227](https://github.com/adobe/aio-commerce-sdk/pull/227) [`042a6e1`](https://github.com/adobe/aio-commerce-sdk/commit/042a6e15038a5a5d5142e33dc41ff2305e1a66d1) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix missing workspace dependency
+
+- Updated dependencies [[`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312), [`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312)]:
+  - @adobe/aio-commerce-lib-core@0.6.0
+
 ## 0.1.1
 
 ### Patch Changes

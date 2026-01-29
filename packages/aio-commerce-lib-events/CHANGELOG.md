@@ -1,5 +1,40 @@
 # @adobe/aio-commerce-lib-events
 
+## 0.5.1
+
+### Patch Changes
+
+- [#230](https://github.com/adobe/aio-commerce-sdk/pull/230) [`0d17bcc`](https://github.com/adobe/aio-commerce-sdk/commit/0d17bcc22c3c556c95975dd3df5969b74e765e67) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix common-utils should be a private development only dependency
+
+## 0.5.0
+
+### Minor Changes
+
+- [#220](https://github.com/adobe/aio-commerce-sdk/pull/220) [`43cd7d1`](https://github.com/adobe/aio-commerce-sdk/commit/43cd7d16ae676e59ee501ccbe89a38c20d777740) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - [BREAKING]: Remove camel case transformations on responses
+
+### Patch Changes
+
+- Updated dependencies [[`43cd7d1`](https://github.com/adobe/aio-commerce-sdk/commit/43cd7d16ae676e59ee501ccbe89a38c20d777740), [`6063a97`](https://github.com/adobe/aio-commerce-sdk/commit/6063a97299c9b44f663314420b59cee7998b2f89), [`6063a97`](https://github.com/adobe/aio-commerce-sdk/commit/6063a97299c9b44f663314420b59cee7998b2f89)]:
+  - @adobe/aio-commerce-lib-api@0.6.0
+  - @aio-commerce-sdk/common-utils@0.1.0
+  - @adobe/aio-commerce-lib-auth@0.8.0
+
+## 0.4.0
+
+### Minor Changes
+
+- [#201](https://github.com/adobe/aio-commerce-sdk/pull/201) [`ed5d4ac`](https://github.com/adobe/aio-commerce-sdk/commit/ed5d4ac86b6fd62129715de7a94c511dd54985e4) Thanks [@jnatherley](https://github.com/jnatherley)! - Refactor library to extract common code out to use common-utils package
+
+- [#200](https://github.com/adobe/aio-commerce-sdk/pull/200) [`5373ab9`](https://github.com/adobe/aio-commerce-sdk/commit/5373ab9d151ca420df3052d33d163d66af02fe71) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Implement event registration endpoints for Adobe I/O events
+
+### Patch Changes
+
+- Updated dependencies [[`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312), [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055), [`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312), [`ed5d4ac`](https://github.com/adobe/aio-commerce-sdk/commit/ed5d4ac86b6fd62129715de7a94c511dd54985e4), [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055), [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055), [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055)]:
+  - @adobe/aio-commerce-lib-core@0.6.0
+  - @adobe/aio-commerce-lib-api@0.5.0
+  - @aio-commerce-sdk/common-utils@0.0.2
+  - @adobe/aio-commerce-lib-auth@0.7.0
+
 ## 0.3.6
 
 ### Patch Changes

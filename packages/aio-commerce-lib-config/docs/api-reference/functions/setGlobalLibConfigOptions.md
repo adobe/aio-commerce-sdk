@@ -4,7 +4,7 @@
 function setGlobalLibConfigOptions(options: LibConfigOptions): void;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/config-manager.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-config/source/config-manager.ts#L54)
+Defined in: [aio-commerce-lib-config/source/config-manager.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages/aio-commerce-lib-config/source/config-manager.ts#L54)
 
 Sets global library configuration options that will be used as defaults for all operations of the library.
 

@@ -11,7 +11,7 @@ type CommerceEventProvider = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts#L16)
+Defined in: [commerce/api/event-providers/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts#L16)
 
 Defines the structure of a Commerce event provider.
 
@@ -23,7 +23,7 @@ Defines the structure of a Commerce event provider.
 optional description: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts#L21)
+Defined in: [commerce/api/event-providers/types.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts#L21)
 
 ---
 
@@ -33,7 +33,7 @@ Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-provider
 id: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts#L17)
+Defined in: [commerce/api/event-providers/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts#L17)
 
 ---
 
@@ -43,7 +43,7 @@ Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-provider
 optional instance_id: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts#L19)
+Defined in: [commerce/api/event-providers/types.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts#L19)
 
 ---
 
@@ -53,7 +53,7 @@ Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-provider
 optional label: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts#L20)
+Defined in: [commerce/api/event-providers/types.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts#L20)
 
 ---
 
@@ -63,7 +63,7 @@ Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-provider
 provider_id: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts#L18)
+Defined in: [commerce/api/event-providers/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts#L18)
 
 ---
 
@@ -73,4 +73,4 @@ Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-provider
 optional workspace_configuration: string;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts#L22)
+Defined in: [commerce/api/event-providers/types.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/commerce/api/event-providers/types.ts#L22)

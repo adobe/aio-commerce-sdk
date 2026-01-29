@@ -74,7 +74,7 @@ function validateCommerceAppConfig(config: unknown): {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-app/source/config/lib/validate.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L58)
+Defined in: [config/lib/validate.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L58)
 
 Validates a complete commerce app configuration object against the schema.
 

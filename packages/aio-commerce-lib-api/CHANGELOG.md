@@ -1,5 +1,30 @@
 # @adobe/aio-commerce-lib-api
 
+## 0.6.0
+
+### Minor Changes
+
+- [#220](https://github.com/adobe/aio-commerce-sdk/pull/220) [`43cd7d1`](https://github.com/adobe/aio-commerce-sdk/commit/43cd7d16ae676e59ee501ccbe89a38c20d777740) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - [BREAKING]: Remove transformation utils
+
+### Patch Changes
+
+- Updated dependencies [[`6063a97`](https://github.com/adobe/aio-commerce-sdk/commit/6063a97299c9b44f663314420b59cee7998b2f89)]:
+  - @adobe/aio-commerce-lib-auth@0.8.0
+
+## 0.5.0
+
+### Minor Changes
+
+- [#224](https://github.com/adobe/aio-commerce-sdk/pull/224) [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Implement opt-in token forwarding for the HTTP client parameter resolution
+
+### Patch Changes
+
+- [#224](https://github.com/adobe/aio-commerce-sdk/pull/224) [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Make the `x-api-key` of IMS auth only be added to headers if present.
+
+- Updated dependencies [[`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312), [`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312), [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055)]:
+  - @adobe/aio-commerce-lib-core@0.6.0
+  - @adobe/aio-commerce-lib-auth@0.7.0
+
 ## 0.4.1
 
 ### Patch Changes

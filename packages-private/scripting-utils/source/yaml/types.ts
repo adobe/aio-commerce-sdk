@@ -26,6 +26,11 @@ export type ActionDefinition = {
   inputs?: Record<string, string>;
   annotations?: Record<string, boolean | string>;
   include?: [string, string][];
+  limits?: {
+    timeout?: number;
+    memory?: number;
+    concurrency?: number;
+  };
 };
 
 export type Package = {

@@ -177,6 +177,69 @@ businessConfig: {
 
 For detailed information about available field types and their usage, see the [`@adobe/aio-commerce-lib-config` documentation](../../aio-commerce-lib-config/docs/usage.md#schema-validation).
 
+#### Eventing Configuration
+
+The `eventing` field allows you to configure event sources for your application. There are two types of event sources: **commerce** (for Adobe Commerce events) and **external** (for third-party events).
+
+```javascript
+eventing: {
+  commerce: [
+    {
+      provider: {
+        label: "My Commerce Events",
+        description: "Events from Adobe Commerce",
+        key: "my-commerce-provider", // optional
+      },
+      events: [
+        {
+          name: "plugin.order_placed",
+          fields: ["order_id", "customer_id"],
+          runtimeAction: "handle-order",
+          description: "Triggered when an order is placed",
+        },
+        {
+          name: "observer.catalog_update",
+          fields: ["product_id"],
+          runtimeAction: "sync-catalog",
+          description: "Triggered when catalog is updated",
+        },
+      ],
+    },
+  ],
+  external: [
+    {
+      provider: {
+        label: "External Events Provider",
+        description: "Events from third-party services",
+      },
+      events: [
+        { name: "webhook_received" },
+        { name: "external_notification" },
+      ],
+    },
+  ],
+}
+```
+
+**Commerce Events:**
+
+- **name**: Must start with `plugin.` or `observer.` followed by lowercase letters and underscores (e.g., `plugin.order_placed`, `observer.catalog_update`)
+- **fields**: Array of field names (lowercase alphanumeric with underscores)
+- **runtimeAction**: The runtime action to invoke when the event is triggered
+- **description**: Description of the event (max 255 characters)
+
+**External Events:**
+
+- **name**: Lowercase alphanumeric with underscores
+
+**Provider Configuration:**
+
+- **label**: Display name for the provider (max 100 characters)
+- **description**: Description of the provider (max 255 characters)
+- **key**: Optional unique key for the provider (max 50 characters, alphanumeric with hyphens)
+
+Both `commerce` and `external` arrays are optional, you can configure one, both, or neither depending on your application's needs.
+
 ### CLI Commands
 
 The library provides CLI commands to generate app artifacts:

@@ -90,7 +90,7 @@ function getAll3rdPartyCustomEventProviders(
 }>;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts:64](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts#L64)
+Defined in: [io-events/api/event-providers/shorthands.ts:64](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts#L64)
 
 Lists all 3rd Party Custom Events (of type `3rd_party_custom_events`) event providers for the given consumer organization ID.
 
