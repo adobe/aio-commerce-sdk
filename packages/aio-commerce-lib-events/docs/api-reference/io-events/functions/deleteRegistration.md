@@ -1,0 +1,46 @@
+# `deleteRegistration()`
+
+```ts
+function deleteRegistration(
+  httpClient: AdobeIoEventsHttpClient,
+  params: {
+    consumerOrgId: string;
+    projectId: string;
+    registrationId: string;
+    workspaceId: string;
+  },
+  fetchOptions?: Options,
+): Promise<void>;
+```
+
+Defined in: [io-events/api/event-registrations/endpoints.ts:268](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/endpoints.ts#L268)
+
+Deletes an event registration.
+
+## Parameters
+
+| Parameter                | Type                                                                                                                                                                 | Description                                                                                                                                                                                        |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `httpClient`             | [`AdobeIoEventsHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeIoEventsHttpClient.md) | The [AdobeIoEventsHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeIoEventsHttpClient.md) to use to make the request. |
+| `params`                 | \{ `consumerOrgId`: `string`; `projectId`: `string`; `registrationId`: `string`; `workspaceId`: `string`; \}                                                         | The parameters to delete the registration with.                                                                                                                                                    |
+| `params.consumerOrgId`   | `string`                                                                                                                                                             | -                                                                                                                                                                                                  |
+| `params.projectId?`      | `string`                                                                                                                                                             | -                                                                                                                                                                                                  |
+| `params.registrationId?` | `string`                                                                                                                                                             | -                                                                                                                                                                                                  |
+| `params.workspaceId?`    | `string`                                                                                                                                                             | -                                                                                                                                                                                                  |
+| `fetchOptions?`          | [`Options`](https://github.com/sindresorhus/ky?tab=readme-ov-file#options)                                                                                           | The [Options](https://github.com/sindresorhus/ky?tab=readme-ov-file#options) to use to make the request.                                                                                           |
+
+## Returns
+
+`Promise`\<`void`\>
+
+## See
+
+https://developer.adobe.com/events/docs/api#operation/deleteRegistration
+
+## Throws
+
+A [CommerceSdkValidationError](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-core/docs/api-reference/classes/CommerceSdkValidationError.md) If the parameters are in the wrong format.
+
+## Throws
+
+An [HTTPError](https://github.com/sindresorhus/ky?tab=readme-ov-file#httperror) If the status code is not 2XX.

@@ -31,7 +31,7 @@
 
 ## Functions
 
-| Function                                                  | Description                                                                                         |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| [buildErrorResponse](functions/buildErrorResponse.md)     | biome-ignore-all lint/performance/noBarrelFile: This is the public API for the responses entrypoint |
-| [buildSuccessResponse](functions/buildSuccessResponse.md) | biome-ignore-all lint/performance/noBarrelFile: This is the public API for the responses entrypoint |
+| Function                                                  | Description                                                 |
+| --------------------------------------------------------- | ----------------------------------------------------------- |
+| [buildErrorResponse](functions/buildErrorResponse.md)     | Creates a standardized error response for runtime actions   |
+| [buildSuccessResponse](functions/buildSuccessResponse.md) | Creates a standardized success response for runtime actions |

@@ -1,5 +1,14 @@
 # @adobe/aio-commerce-lib-app
 
+## 0.1.1
+
+### Patch Changes
+
+- [#224](https://github.com/adobe/aio-commerce-sdk/pull/224) [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix target directory for runtime action templates being nested twice
+
+- Updated dependencies [[`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312), [`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312)]:
+  - @adobe/aio-commerce-lib-core@0.6.0
+
 ## 0.1.0
 
 ### Minor Changes

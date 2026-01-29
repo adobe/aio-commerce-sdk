@@ -12,14 +12,11 @@ function getImsAuthProvider(authParams: {
   technicalAccountId: string;
 }): {
   getAccessToken: () => Promise<string>;
-  getHeaders: () => Promise<{
-     Authorization: string;
-     x-api-key: string;
-  }>;
+  getHeaders: () => Promise<ImsAuthHeaders>;
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:127](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L127)
+Defined in: [ims-auth/provider.ts:119](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L119)
 
 Creates an [ImsAuthProvider](../type-aliases/ImsAuthProvider.md) based on the provided configuration.
 
@@ -42,10 +39,7 @@ Creates an [ImsAuthProvider](../type-aliases/ImsAuthProvider.md) based on the pr
 ```ts
 {
   getAccessToken: () => Promise<string>;
-  getHeaders: () => Promise<{
-     Authorization: string;
-     x-api-key: string;
-  }>;
+  getHeaders: () => Promise<ImsAuthHeaders>;
 }
 ```
 
@@ -64,18 +58,12 @@ getAccessToken: () => Promise<string>;
 ### getHeaders()
 
 ```ts
-getHeaders: () => Promise<{
-  Authorization: string;
-  x-api-key: string;
-}>;
+getHeaders: () => Promise<ImsAuthHeaders>;
 ```
 
 #### Returns
 
-`Promise`\<\{
-`Authorization`: `string`;
-`x-api-key`: `string`;
-\}\>
+`Promise`\<[`ImsAuthHeaders`](../type-aliases/ImsAuthHeaders.md)\>
 
 ## Example
 

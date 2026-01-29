@@ -2,6 +2,12 @@
 
 This module exports core parameter utilities for the AIO Commerce SDK.
 
+## Type Aliases
+
+| Type Alias                                                 | Description                                |
+| ---------------------------------------------------------- | ------------------------------------------ |
+| [RuntimeActionParams](type-aliases/RuntimeActionParams.md) | The type of the runtime action parameters. |
+
 ## Functions
 
 | Function                                | Description                                                  |

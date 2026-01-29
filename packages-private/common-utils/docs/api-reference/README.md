@@ -1,4 +1,4 @@
-# `@aio-commerce-sdk/common-utils`: `v0.0.1`
+# `@aio-commerce-sdk/common-utils`: `v0.0.2`
 
 ## Functions
 

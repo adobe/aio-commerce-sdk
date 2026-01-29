@@ -2,29 +2,27 @@
 
 ```ts
 function resolveAuthParams(params: Record<string, unknown>):
-  | ({
+  | {
       clientId: string;
       clientSecrets: string[];
       context?: string;
       environment?: "prod" | "stage";
       imsOrgId: string;
       scopes: string[];
+      strategy: "ims";
       technicalAccountEmail: string;
       technicalAccountId: string;
-    } & {
-      strategy: "ims";
-    })
-  | ({
+    }
+  | {
       accessToken: string;
       accessTokenSecret: string;
       consumerKey: string;
       consumerSecret: string;
-    } & {
       strategy: "integration";
-    });
+    };
 ```
 
-Defined in: [packages/aio-commerce-lib-auth/source/lib/utils.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-auth/source/lib/utils.ts#L50)
+Defined in: [utils.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-auth/source/lib/utils.ts#L50)
 
 Automatically detects and resolves authentication parameters from App Builder action inputs.
 Attempts to resolve IMS authentication first, then falls back to Integration authentication.
@@ -44,17 +42,15 @@ Attempts to resolve IMS authentication first, then falls back to Integration aut
 `environment?`: `"prod"` \| `"stage"`;
 `imsOrgId`: `string`;
 `scopes`: `string`[];
+`strategy`: `"ims"`;
 `technicalAccountEmail`: `string`;
 `technicalAccountId`: `string`;
-\} & \{
-`strategy`: `"ims"`;
 \}
 \| \{
 `accessToken`: `string`;
 `accessTokenSecret`: `string`;
 `consumerKey`: `string`;
 `consumerSecret`: `string`;
-\} & \{
 `strategy`: `"integration"`;
 \}
 

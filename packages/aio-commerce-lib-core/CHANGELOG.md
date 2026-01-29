@@ -1,5 +1,13 @@
 # @adobe/aio-commerce-lib-core
 
+## 0.6.0
+
+### Minor Changes
+
+- [#144](https://github.com/adobe/aio-commerce-sdk/pull/144) [`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add various header utilities
+
+- [#144](https://github.com/adobe/aio-commerce-sdk/pull/144) [`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add a common type alias for `RuntimeActionParams`
+
 ## 0.5.1
 
 ### Patch Changes

@@ -1,10 +1,10 @@
 # `readPackageJson()`
 
 ```ts
-function readPackageJson(cwd: string): Promise<null | PackageJson>;
+function readPackageJson(cwd: string): Promise<PackageJson | null>;
 ```
 
-Defined in: [project.ts:81](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages-private/scripting-utils/source/project.ts#L81)
+Defined in: [project.ts:81](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages-private/scripting-utils/source/project.ts#L81)
 
 Read the package.json file
 
@@ -16,4 +16,4 @@ Read the package.json file
 
 ## Returns
 
-`Promise`\<`null` \| `PackageJson`\>
+`Promise`\<`PackageJson` \| `null`\>

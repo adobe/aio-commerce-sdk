@@ -90,7 +90,7 @@ function getAllEventProviders(
 }>;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts#L45)
+Defined in: [io-events/api/event-providers/endpoints.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts#L45)
 
 Lists all event providers for the given consumer organization ID.
 
