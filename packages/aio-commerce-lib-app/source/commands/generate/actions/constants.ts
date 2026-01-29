@@ -45,12 +45,6 @@ export const RUNTIME_ACTIONS = [
   },
 ];
 
-type ActionConfigOptions = {
-  inputs?: Record<string, string>;
-  web?: "yes" | "no";
-  timeout?: number;
-};
-
 /**
  * Creates a runtime action configuration.
  * @param actionName - The name of the action.
@@ -58,29 +52,19 @@ type ActionConfigOptions = {
  */
 function createActionConfig(
   actionName: string,
-  options: ActionConfigOptions = {},
+  options: Omit<ActionDefinition, "function"> = {},
 ) {
-  const { inputs, web = "yes", timeout } = options;
+  return {
+    ...options,
 
-  const def: ActionDefinition = {
     function: `${GENERATED_ACTIONS_PATH}/${actionName}.js`,
-    web,
+    web: options.web ?? "yes",
     runtime: "nodejs:22",
     annotations: {
       "require-adobe-auth": true,
       final: true,
     },
   };
-
-  if (inputs !== undefined) {
-    def.inputs = inputs;
-  }
-
-  if (timeout !== undefined) {
-    def.limits = { timeout };
-  }
-
-  return def;
 }
 
 /** The ext.config.yaml configuration */
@@ -110,8 +94,10 @@ export const EXT_CONFIG: ExtConfig = {
         actions: {
           "get-app-config": createActionConfig("get-app-config"),
           installation: createActionConfig("installation", {
-            timeout: 600_000, // 10 minutes in milliseconds
             inputs: COMMERCE_ACTION_INPUTS,
+            limits: {
+              timeout: 600_000,
+            },
           }),
         },
       },
