@@ -12,7 +12,7 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the workflow module */
 
-export { createInstallationPlan, runInstallation } from "./runner";
+export { buildPlan, executeWorkflow } from "./runner";
 export {
   defineBranchStep,
   defineLeafStep,
@@ -35,7 +35,7 @@ export type {
   StepStartedEvent,
   StepSucceededEvent,
 } from "./hooks";
-export type { CreatePlanOptions, RunnerOptions } from "./runner";
+export type { BuildPlanOptions, ExecuteWorkflowOptions } from "./runner";
 export type {
   AnyStep,
   BranchStep,

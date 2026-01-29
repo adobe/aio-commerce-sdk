@@ -66,8 +66,8 @@ type InstallationStateBase = {
   /** Unique installation identifier. */
   installationId: string;
 
-  /** Root of the step status tree. */
-  steps: StepStatus[];
+  /** Root step status. */
+  step: StepStatus;
 
   /** Results from executed leaf steps, keyed by path. */
   data: InstallationData;
@@ -182,6 +182,6 @@ export type InstallationPlan = {
   /** ISO timestamp when plan was created. */
   createdAt: string;
 
-  /** Root steps of the installation tree. */
-  steps: InstallationPlanStep[];
+  /** Root step of the installation tree. */
+  step: InstallationPlanStep;
 };

@@ -89,7 +89,6 @@ class LibStateStore implements InstallationStateStore {
 
   /**
    * Saves installation state.
-   *
    * @param state - The installation state to save.
    */
   public async save(state: InstallationState): Promise<void> {

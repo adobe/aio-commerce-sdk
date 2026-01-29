@@ -17,15 +17,19 @@
  * @packageDocumentation
  */
 
+// Export installation-specific functions
+export { createInstallationPlan, runInstallation } from "./installation/runner";
 export {
-  createInstallationPlan,
   createLibStateStore,
   isCompletedState,
   isFailedState,
   isInProgressState,
   isPendingState,
   isSucceededState,
-  runInstallation,
 } from "./installation/workflow";
 
+export type {
+  CreateInstallationPlanOptions,
+  RunInstallationOptions,
+} from "./installation/runner";
 export type * from "./installation/workflow";
