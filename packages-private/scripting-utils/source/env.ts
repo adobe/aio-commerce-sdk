@@ -127,9 +127,7 @@ export async function syncImsCredentials() {
       continue;
     }
 
-    if (!envVars[oauthKey]) {
-      replaceEnvVar(envPath, oauthKey, value);
-    } else if (envVars[oauthKey] !== value) {
+    if (!envVars[oauthKey] || envVars[oauthKey] !== value) {
       replaceEnvVar(envPath, oauthKey, value);
     }
   }
