@@ -291,3 +291,45 @@ If neither set is complete, it throws an error.
 2. **Use specific providers when needed** - Use `getImsAuthProvider` or `getIntegrationAuthProvider` with their respective `assert*` functions when you need to enforce a specific auth type
 3. **Use forwarding for proxy patterns** - When your action receives authenticated requests and needs to call downstream services, use `forwardImsAuthProvider` or `getForwardedImsAuthProvider` to pass credentials without regenerating tokens
 4. **Handle errors gracefully** - Catch and properly handle validation and authentication errors
+
+## CLI Commands
+
+The library provides CLI commands to help manage authentication credentials:
+
+```bash
+# Sync IMS credentials from the current workspace context to the .env file
+npx @adobe/aio-commerce-lib-auth sync-ims-credentials
+```
+
+### `sync-ims-credentials`
+
+Synchronizes the IMS credentials from your current Adobe I/O workspace context (stored in `.aio`) to the `.env` file, mapping them to the environment variables expected by this library.
+
+This command reads the IMS S2S credentials from your configured workspace and writes them to your `.env` file using the `AIO_COMMERCE_AUTH_IMS_*` naming convention.
+
+**Mapped environment variables:**
+
+| Source (`.aio` context)   | Target (`.env` file)                            |
+| ------------------------- | ----------------------------------------------- |
+| `client_id`               | `AIO_COMMERCE_AUTH_IMS_CLIENT_ID`               |
+| `client_secrets`          | `AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS`          |
+| `technical_account_email` | `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL` |
+| `technical_account_id`    | `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID`    |
+| `scopes`                  | `AIO_COMMERCE_AUTH_IMS_SCOPES`                  |
+| `ims_org_id`              | `AIO_COMMERCE_AUTH_IMS_ORG_ID`                  |
+
+**Usage:**
+
+> [!TIP]
+> Run this command after setting up your Adobe I/O workspace credentials with `aio app use` to automatically populate your `.env` file with the IMS authentication parameters required by the library.
+
+```bash
+npx @adobe/aio-commerce-lib-auth sync-ims-credentials
+```
+
+**Example output:**
+
+```
+ℹ Syncing IMS credentials...
+✔ IMS credentials successfully synced to their AIO_COMMERCE_IMS_AUTH counterparts!
+```

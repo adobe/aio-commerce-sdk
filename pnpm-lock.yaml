@@ -112,6 +112,15 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../../packages/aio-commerce-lib-core
+      '@adobe/aio-lib-core-config':
+        specifier: ^5.0.1
+        version: 5.0.1
+      '@adobe/aio-lib-ims':
+        specifier: ^8.1.1
+        version: 8.1.1
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
       yaml:
         specifier: ^2.8.1
         version: 2.8.2
@@ -199,6 +208,9 @@ importers:
       ansis:
         specifier: ^4.1.0
         version: 4.2.0
+      consola:
+        specifier: ^3.4.2
+        version: 3.4.2
       oauth-1.0a:
         specifier: ^2.2.6
         version: 2.2.6
@@ -221,6 +233,9 @@ importers:
       '@aio-commerce-sdk/config-vitest':
         specifier: workspace:*
         version: link:../../configs/vitest
+      '@aio-commerce-sdk/scripting-utils':
+        specifier: workspace:*
+        version: link:../../packages-private/scripting-utils
 
   packages/aio-commerce-lib-config:
     dependencies:
@@ -1721,6 +1736,10 @@ packages:
 
   dotenv@16.3.1:
     resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}
+    engines: {node: '>=12'}
+
+  dotenv@17.2.3:
+    resolution: {integrity: sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w==}
     engines: {node: '>=12'}
 
   dotenv@8.6.0:
@@ -4746,6 +4765,8 @@ snapshots:
       no-case: 2.3.2
 
   dotenv@16.3.1: {}
+
+  dotenv@17.2.3: {}
 
   dotenv@8.6.0: {}
 
