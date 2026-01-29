@@ -166,7 +166,16 @@ export async function runInstallation(
       if (!step) {
         throw new Error(`Step "${stepStatus.name}" not found`);
       }
-      await executeStep(step, stepStatus, installationContext, config, {}, exec, stepRegistry, hooks);
+      await executeStep(
+        step,
+        stepStatus,
+        installationContext,
+        config,
+        {},
+        exec,
+        stepRegistry,
+        hooks,
+      );
     }
 
     const succeeded: SucceededInstallationState = {
@@ -212,7 +221,12 @@ async function executeStep(
   const isLeaf = isLeafStep(step);
 
   stepStatus.status = "in-progress";
-  await callHook(hooks, "onStepStart", { path, stepName: step.name, isLeaf }, snapshot(exec));
+  await callHook(
+    hooks,
+    "onStepStart",
+    { path, stepName: step.name, isLeaf },
+    snapshot(exec),
+  );
 
   try {
     if (isBranchStep(step)) {
@@ -225,7 +239,16 @@ async function executeStep(
         if (!childStep) {
           throw new Error(`Step "${child.name}" not found`);
         }
-        await executeStep(childStep, child, ctx, config, childCtx, exec, registry, hooks);
+        await executeStep(
+          childStep,
+          child,
+          ctx,
+          config,
+          childCtx,
+          exec,
+          registry,
+          hooks,
+        );
       }
     } else if (isLeafStep(step)) {
       const result = await step.run(config, { ...ctx, ...inherited });
@@ -233,7 +256,12 @@ async function executeStep(
     }
 
     stepStatus.status = "succeeded";
-    await callHook(hooks, "onStepSuccess", { path, stepName: step.name, isLeaf, result: getAtPath(exec.data, path) }, snapshot(exec));
+    await callHook(
+      hooks,
+      "onStepSuccess",
+      { path, stepName: step.name, isLeaf, result: getAtPath(exec.data, path) },
+      snapshot(exec),
+    );
   } catch (err) {
     stepStatus.status = "failed";
     exec.error ??= {
@@ -241,7 +269,12 @@ async function executeStep(
       key: "STEP_EXECUTION_FAILED",
       message: err instanceof Error ? err.message : String(err),
     };
-    await callHook(hooks, "onStepFailure", { path, stepName: step.name, isLeaf, error: exec.error }, snapshot(exec));
+    await callHook(
+      hooks,
+      "onStepFailure",
+      { path, stepName: step.name, isLeaf, error: exec.error },
+      snapshot(exec),
+    );
     throw err;
   }
 }

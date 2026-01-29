@@ -36,7 +36,10 @@ export function setAtPath(
 }
 
 /** Gets a value at a nested path in the data object. */
-export function getAtPath(data: Record<string, unknown>, path: string[]): unknown {
+export function getAtPath(
+  data: Record<string, unknown>,
+  path: string[],
+): unknown {
   let current: unknown = data;
   for (const key of path) {
     if (current == null || typeof current !== "object") {
@@ -46,4 +49,3 @@ export function getAtPath(data: Record<string, unknown>, path: string[]): unknow
   }
   return current;
 }
-
