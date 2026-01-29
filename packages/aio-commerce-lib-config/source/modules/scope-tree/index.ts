@@ -10,8 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-export { DEFAULT_NAMESPACE } from "#utils/constants";
-
 // Main scope tree functionality
 export { getScopeTree } from "./get-scope-tree";
 // Commerce scope merging utilities
