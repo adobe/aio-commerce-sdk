@@ -49,15 +49,13 @@ const INTEGRATION_AUTH_PARAMS = [
  */
 export function resolveAuthParams(params: Record<string, unknown>) {
   if (allNonEmpty(params, IMS_AUTH_PARAMS)) {
-    return Object.assign(resolveImsAuthParams(params), {
-      strategy: "ims",
-    } as const);
+    const provider = resolveImsAuthParams(params);
+    return { ...provider, strategy: "ims" as const };
   }
 
   if (allNonEmpty(params, INTEGRATION_AUTH_PARAMS)) {
-    return Object.assign(resolveIntegrationAuthParams(params), {
-      strategy: "integration",
-    } as const);
+    const provider = resolveIntegrationAuthParams(params);
+    return { ...provider, strategy: "integration" as const };
   }
 
   throw new Error(

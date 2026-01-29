@@ -75,8 +75,12 @@ export function buildImsAuthBeforeRequestHook(
 
   return async (request: KyRequest) => {
     const headers = await imsAuthProvider.getHeaders();
-
     request.headers.set("Authorization", headers.Authorization);
-    request.headers.set("x-api-key", headers["x-api-key"]);
+
+    const xApiKey = headers["x-api-key"];
+
+    if (xApiKey) {
+      request.headers.set("x-api-key", xApiKey);
+    }
   };
 }

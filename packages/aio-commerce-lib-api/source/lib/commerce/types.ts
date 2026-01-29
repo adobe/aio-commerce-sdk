@@ -77,3 +77,12 @@ export type PaaSClientParams = {
 
 /** Defines the parameters required to build an Adobe Commerce HTTP client (either SaaS or PaaS). */
 export type CommerceHttpClientParams = SaaSClientParams | PaaSClientParams;
+
+/** Custom options to be taken into account when resolving Commerce HTTP client parameters. */
+export type ResolveCommerceHttpClientParamsOptions = {
+  /**
+   * Whether to attempt to forward the IMS auth provider from a pre-existing token or an auth header.
+   * @default false
+   */
+  tryForwardAuthProvider?: boolean;
+};

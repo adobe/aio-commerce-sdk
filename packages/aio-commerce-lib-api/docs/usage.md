@@ -243,6 +243,71 @@ const response = await client.get("products").json();
 // { product_name: "..." } becomes { productName: "..." }
 ```
 
+### Forwarding IMS Authentication
+
+When your action receives a pre-existing IMS token (e.g., from an upstream service or API Gateway), you can forward it to downstream API calls using the `tryForwardAuthProvider` option:
+
+```yaml
+# app.config.yaml
+actions:
+  my-action:
+    function: src/actions/my-action/index.js
+    inputs:
+      AIO_COMMERCE_API_BASE_URL: $AIO_COMMERCE_API_BASE_URL
+      AIO_COMMERCE_AUTH_IMS_TOKEN: $AIO_COMMERCE_AUTH_IMS_TOKEN # Pre-existing token
+      AIO_COMMERCE_AUTH_IMS_API_KEY: $AIO_COMMERCE_AUTH_IMS_API_KEY # Optional
+```
+
+```typescript
+// src/actions/my-action/index.js
+import {
+  resolveCommerceHttpClientParams,
+  AdobeCommerceHttpClient,
+} from "@adobe/aio-commerce-lib-api/commerce";
+
+export const main = async function (params) {
+  // Use tryForwardAuthProvider to forward the pre-existing token
+  const clientParams = resolveCommerceHttpClientParams(params, {
+    tryForwardAuthProvider: true,
+  });
+  const client = new AdobeCommerceHttpClient(clientParams);
+
+  return await client.get("products").json();
+};
+```
+
+When `tryForwardAuthProvider: true` is set, the resolver will use `forwardImsAuthProvider` from `@adobe/aio-commerce-lib-auth` to detect credentials from:
+
+1. **Params token** - `AIO_COMMERCE_AUTH_IMS_TOKEN` (and optionally `AIO_COMMERCE_AUTH_IMS_API_KEY`)
+2. **HTTP headers** - `Authorization` header in `__ow_headers`
+
+This is useful for:
+
+- **Proxy patterns**: When your action acts as a proxy and needs to forward the caller's credentials
+- **Token injection**: When tokens are injected by an API Gateway or upstream service
+- **Testing**: When you want to use a specific token without full IMS configuration
+
+The same pattern works for I/O Events:
+
+```typescript
+import {
+  resolveIoEventsHttpClientParams,
+  AdobeIoEventsHttpClient,
+} from "@adobe/aio-commerce-lib-api/io-events";
+
+export const main = async function (params) {
+  const clientParams = resolveIoEventsHttpClientParams(params, {
+    tryForwardAuthProvider: true,
+  });
+  const client = new AdobeIoEventsHttpClient(clientParams);
+
+  return await client.get("events").json();
+};
+```
+
+> [!NOTE]
+> By default (`tryForwardAuthProvider: false`), the resolver uses `resolveAuthParams` which requires full IMS or Integration auth parameters. Set `tryForwardAuthProvider: true` explicitly when you want to forward pre-existing tokens.
+
 ### Custom Auth Providers
 
 You can also use pre-initialized auth providers:

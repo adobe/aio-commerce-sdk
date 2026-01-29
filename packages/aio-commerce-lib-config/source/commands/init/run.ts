@@ -20,7 +20,6 @@ import { consola } from "consola";
 import {
   ensureAppConfig,
   ensureCommerceAppConfig,
-  ensureEnvFile,
   ensureInstallYaml,
   ensurePackageJsonScript,
   installDependencies,
@@ -50,7 +49,6 @@ export async function run() {
       makeStep("runGeneration", runGeneration),
       makeStep("ensureAppConfig", ensureAppConfig),
       makeStep("ensureInstallYaml", ensureInstallYaml),
-      makeStep("ensureEnvFile", ensureEnvFile),
     ];
 
     for (const step of steps) {
@@ -68,9 +66,9 @@ export async function run() {
 
     consola.success("Initialization complete!");
     consola.box(
-      "Next steps:\n" +
-        "   1. Review and customize app.commerce.config.js\n" +
-        "   2. Fill in the required values in your .env file",
+      ["Next steps:", "  - Review and customize app.commerce.config.js"].join(
+        "\n",
+      ),
     );
   } catch (error) {
     consola.error(stringifyError(error));

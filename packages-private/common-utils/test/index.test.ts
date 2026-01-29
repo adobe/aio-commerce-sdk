@@ -31,4 +31,14 @@ describe("parseOrThrow", () => {
       CommerceSdkValidationError,
     );
   });
+
+  it("should throw CommerceSdkValidationError with custom message", () => {
+    const customMessage = "Custom validation error message";
+    try {
+      parseOrThrow(SimpleObjectSchema, { foo: 123 }, customMessage);
+    } catch (error) {
+      expect(error).toBeInstanceOf(CommerceSdkValidationError);
+      expect((error as CommerceSdkValidationError).message).toBe(customMessage);
+    }
+  });
 });

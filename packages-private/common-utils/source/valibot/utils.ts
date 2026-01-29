@@ -19,13 +19,14 @@ import type { BaseIssue, BaseSchema, InferOutput } from "valibot";
  * Parses the input using the provided schema and throws a {@link CommerceSdkValidationError} error if the input is invalid.
  * @param schema - The schema to use for parsing.
  * @param input - The input to parse.
+ * @param message - Optional custom error message for the validation error.
  */
 export function parseOrThrow<
   const TSchema extends BaseSchema<unknown, unknown, BaseIssue<unknown>>,
->(schema: TSchema, input: unknown): InferOutput<TSchema> {
+>(schema: TSchema, input: unknown, message?: string): InferOutput<TSchema> {
   const result = v.safeParse(schema, input);
   if (!result.success) {
-    throw new CommerceSdkValidationError("Invalid input", {
+    throw new CommerceSdkValidationError(message ?? "Invalid input", {
       issues: result.issues,
     });
   }

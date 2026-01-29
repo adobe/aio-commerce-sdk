@@ -10,9 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import aioLibIms from "@adobe/aio-lib-ims";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+import {
+  forwardImsAuthProvider,
+  forwardImsAuthProviderFromParams,
+  forwardImsAuthProviderFromRequest,
+  getForwardedImsAuthProvider,
+} from "#lib/ims-auth/forwarding";
 import { getImsAuthProvider, isImsAuthProvider } from "#lib/ims-auth/provider";
 import { assertImsAuthParams, resolveImsAuthParams } from "#lib/ims-auth/utils";
 
@@ -781,6 +788,387 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
           getHeaders: () => Promise.resolve({}),
         }),
       ).toBe(true);
+    });
+  });
+
+  describe("getForwardedImsAuthProvider", () => {
+    describe('from: "headers"', () => {
+      test("should extract token from Authorization header", () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "headers",
+          headers: {
+            authorization: "Bearer test-token-123",
+          },
+        });
+
+        expect(provider.getAccessToken()).toBe("test-token-123");
+      });
+
+      test("should extract token and api key from headers", () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "headers",
+          headers: {
+            authorization: "Bearer test-token-123",
+            "x-api-key": "my-api-key",
+          },
+        });
+
+        const headers = provider.getHeaders();
+        expect(headers).toEqual({
+          Authorization: "Bearer test-token-123",
+          "x-api-key": "my-api-key",
+        });
+      });
+
+      test("should work with case-insensitive Authorization header", () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "headers",
+          headers: {
+            Authorization: "Bearer test-token-123",
+          },
+        });
+
+        expect(provider.getAccessToken()).toBe("test-token-123");
+      });
+
+      test("should return headers without x-api-key when not present", () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "headers",
+          headers: {
+            authorization: "Bearer test-token-123",
+          },
+        });
+
+        const headers = provider.getHeaders();
+        expect(headers).toEqual({
+          Authorization: "Bearer test-token-123",
+        });
+        expect(headers).not.toHaveProperty("x-api-key");
+      });
+
+      test("should throw when Authorization header is missing", () => {
+        expect(() =>
+          getForwardedImsAuthProvider({
+            from: "headers",
+            headers: {},
+          }),
+        ).toThrow();
+      });
+
+      test("should throw when Authorization header is not Bearer format", () => {
+        expect(() =>
+          getForwardedImsAuthProvider({
+            from: "headers",
+            headers: {
+              authorization: "Basic dXNlcjpwYXNz",
+            },
+          }),
+        ).toThrow();
+      });
+    });
+
+    describe('from: "getter"', () => {
+      test("should use sync getter for headers", () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "getter",
+          getHeaders: () => ({
+            Authorization: "Bearer getter-token",
+          }),
+        });
+
+        const headers = provider.getHeaders();
+        expect(headers).toEqual({
+          Authorization: "Bearer getter-token",
+        });
+      });
+
+      test("should use async getter for headers", async () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "getter",
+          getHeaders: async () => ({
+            Authorization: "Bearer async-getter-token",
+            "x-api-key": "async-api-key",
+          }),
+        });
+
+        const headers = await provider.getHeaders();
+        expect(headers).toEqual({
+          Authorization: "Bearer async-getter-token",
+          "x-api-key": "async-api-key",
+        });
+      });
+
+      test("should extract token from getter headers for getAccessToken", async () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "getter",
+          getHeaders: () => ({
+            Authorization: "Bearer extracted-token",
+          }),
+        });
+
+        const token = await provider.getAccessToken();
+        expect(token).toBe("extracted-token");
+      });
+
+      test("should throw when getter is not a function", () => {
+        expect(() =>
+          getForwardedImsAuthProvider({
+            from: "getter",
+            // @ts-expect-error - testing invalid input
+            getHeaders: "not-a-function",
+          }),
+        ).toThrow(CommerceSdkValidationError);
+      });
+    });
+
+    describe('from: "params"', () => {
+      test("should extract token from params", () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "params",
+          params: {
+            AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
+          },
+        });
+
+        expect(provider.getAccessToken()).toBe("params-token");
+      });
+
+      test("should extract token and api key from params", () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "params",
+          params: {
+            AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
+            AIO_COMMERCE_AUTH_IMS_API_KEY: "params-api-key",
+          },
+        });
+
+        expect(provider.getHeaders()).toEqual({
+          Authorization: "Bearer params-token",
+          "x-api-key": "params-api-key",
+        });
+      });
+
+      test("should return headers without x-api-key when not present", () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "params",
+          params: {
+            AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
+          },
+        });
+
+        const headers = provider.getHeaders();
+        expect(headers).toEqual({
+          Authorization: "Bearer params-token",
+        });
+        expect(headers).not.toHaveProperty("x-api-key");
+      });
+
+      test("should throw when token param is missing", () => {
+        expect(() =>
+          getForwardedImsAuthProvider({
+            from: "params",
+            // @ts-expect-error - testing invalid input
+            params: {},
+          }),
+        ).toThrow(CommerceSdkValidationError);
+      });
+
+      test("should throw when token param is not a string", () => {
+        expect(() =>
+          getForwardedImsAuthProvider({
+            from: "params",
+            params: {
+              // @ts-expect-error - testing invalid input
+              AIO_COMMERCE_AUTH_IMS_TOKEN: 123,
+            },
+          }),
+        ).toThrow(CommerceSdkValidationError);
+      });
+
+      test("should allow extra params in the object", () => {
+        const provider = getForwardedImsAuthProvider({
+          from: "params",
+          params: {
+            AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
+            someOtherParam: "value",
+            anotherParam: 123,
+          },
+        });
+
+        expect(provider.getAccessToken()).toBe("params-token");
+      });
+    });
+
+    describe("validation errors", () => {
+      test("should throw CommerceSdkValidationError for invalid source", () => {
+        expect(() =>
+          getForwardedImsAuthProvider({
+            // @ts-expect-error - testing invalid input
+            from: "invalid",
+          }),
+        ).toThrow(CommerceSdkValidationError);
+      });
+
+      test("should throw CommerceSdkValidationError for missing from field", () => {
+        expect(() =>
+          // @ts-expect-error - testing invalid input
+          getForwardedImsAuthProvider({}),
+        ).toThrow(CommerceSdkValidationError);
+      });
+    });
+  });
+
+  describe("forwardImsAuthProviderFromRequest", () => {
+    test("should forward auth from runtime action params", () => {
+      const params = {
+        __ow_headers: {
+          authorization: "Bearer runtime-token",
+          "x-api-key": "runtime-api-key",
+        },
+      };
+
+      const provider = forwardImsAuthProviderFromRequest(params);
+
+      expect(provider.getAccessToken()).toBe("runtime-token");
+      expect(provider.getHeaders()).toEqual({
+        Authorization: "Bearer runtime-token",
+        "x-api-key": "runtime-api-key",
+      });
+    });
+
+    test("should handle missing __ow_headers gracefully", () => {
+      const params = {};
+      expect(() => forwardImsAuthProviderFromRequest(params)).toThrow();
+    });
+
+    test("should handle empty __ow_headers", () => {
+      const params = {
+        __ow_headers: {},
+      };
+
+      expect(() => forwardImsAuthProviderFromRequest(params)).toThrow();
+    });
+
+    test("should work without x-api-key header", () => {
+      const params = {
+        __ow_headers: {
+          authorization: "Bearer runtime-token",
+        },
+      };
+
+      const provider = forwardImsAuthProviderFromRequest(params);
+
+      expect(provider.getAccessToken()).toBe("runtime-token");
+      expect(provider.getHeaders()).toEqual({
+        Authorization: "Bearer runtime-token",
+      });
+    });
+  });
+
+  describe("forwardImsAuthProviderFromParams", () => {
+    test("should forward auth from params object", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_API_KEY: "forwarded-api-key",
+      };
+
+      const provider = forwardImsAuthProviderFromParams(params);
+
+      expect(provider.getAccessToken()).toBe("forwarded-token");
+      expect(provider.getHeaders()).toEqual({
+        Authorization: "Bearer forwarded-token",
+        "x-api-key": "forwarded-api-key",
+      });
+    });
+
+    test("should work without api key", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
+      };
+
+      const provider = forwardImsAuthProviderFromParams(params);
+
+      expect(provider.getAccessToken()).toBe("forwarded-token");
+      expect(provider.getHeaders()).toEqual({
+        Authorization: "Bearer forwarded-token",
+      });
+    });
+
+    test("should throw when token is missing", () => {
+      expect(() => forwardImsAuthProviderFromParams({})).toThrow(
+        CommerceSdkValidationError,
+      );
+    });
+
+    test("should accept Record<string, unknown> with extra properties", () => {
+      const params: Record<string, unknown> = {
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
+        extraProp: "extra-value",
+        numericProp: 42,
+      };
+
+      const provider = forwardImsAuthProviderFromParams(params);
+      expect(provider.getAccessToken()).toBe("forwarded-token");
+    });
+  });
+
+  describe("forwardImsAuthProvider", () => {
+    test("should forward auth from params when AIO_COMMERCE_AUTH_IMS_TOKEN is present", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
+        AIO_COMMERCE_AUTH_IMS_API_KEY: "params-api-key",
+      };
+
+      const provider = forwardImsAuthProvider(params);
+
+      expect(provider.getAccessToken()).toBe("params-token");
+      expect(provider.getHeaders()).toEqual({
+        Authorization: "Bearer params-token",
+        "x-api-key": "params-api-key",
+      });
+    });
+
+    test("should forward auth from headers when params token is not present", () => {
+      const params = {
+        __ow_headers: {
+          authorization: "Bearer header-token",
+          "x-api-key": "header-api-key",
+        },
+      };
+
+      const provider = forwardImsAuthProvider(params);
+
+      expect(provider.getAccessToken()).toBe("header-token");
+      expect(provider.getHeaders()).toEqual({
+        Authorization: "Bearer header-token",
+        "x-api-key": "header-api-key",
+      });
+    });
+
+    test("should prioritize params token over headers", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
+        __ow_headers: {
+          authorization: "Bearer header-token",
+        },
+      };
+
+      const provider = forwardImsAuthProvider(params);
+      expect(provider.getAccessToken()).toBe("params-token");
+    });
+
+    test("should throw when neither params token nor headers are present", () => {
+      expect(() => forwardImsAuthProvider({})).toThrow();
+    });
+
+    test("should throw when headers are present but missing Authorization", () => {
+      const params = {
+        __ow_headers: {
+          "x-api-key": "some-api-key",
+        },
+      };
+
+      expect(() => forwardImsAuthProvider(params)).toThrow();
     });
   });
 });
