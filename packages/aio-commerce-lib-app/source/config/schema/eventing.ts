@@ -94,29 +94,31 @@ const ExternalEventSchema = v.object({
 
 /** Schema for Commerce event source configuration */
 const CommerceEventSourceSchema = v.object({
-  type: v.literal("commerce"),
   provider: ProviderSchema,
   events: v.array(CommerceEventSchema, "Expected an array of Commerce events"),
 });
 
 /** Schema for external event source configuration */
 const ExternalEventSourceSchema = v.object({
-  type: v.literal("external"),
   provider: ProviderSchema,
   events: v.array(ExternalEventSchema, "Expected an array of external events"),
 });
 
-/** Schema for event source - discriminated union by type */
-const EventSourceSchema = v.variant("type", [
-  CommerceEventSourceSchema,
-  ExternalEventSourceSchema,
-]);
-
-/** Schema for eventing configuration - an array of event sources */
-export const EventingSchema = v.pipe(
-  v.array(EventSourceSchema, "Expected an array of event sources"),
-  v.minLength(1, "At least one event source must be defined"),
-);
+/** Schema for eventing configuration with separate commerce and external arrays */
+export const EventingSchema = v.object({
+  commerce: v.optional(
+    v.array(
+      CommerceEventSourceSchema,
+      "Expected an array of Commerce event sources",
+    ),
+  ),
+  external: v.optional(
+    v.array(
+      ExternalEventSourceSchema,
+      "Expected an array of external event sources",
+    ),
+  ),
+});
 
 /** The eventing configuration for an Adobe Commerce application */
 export type EventingConfiguration = v.InferInput<typeof EventingSchema>;
@@ -130,9 +132,6 @@ export type CommerceEventSource = v.InferInput<
 export type ExternalEventSource = v.InferInput<
   typeof ExternalEventSourceSchema
 >;
-
-/** Event source configuration (discriminated union) */
-export type EventSource = v.InferInput<typeof EventSourceSchema>;
 
 /** Commerce event configuration */
 export type CommerceEvent = v.InferInput<typeof CommerceEventSchema>;
