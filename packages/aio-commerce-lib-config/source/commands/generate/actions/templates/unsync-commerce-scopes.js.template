@@ -36,6 +36,7 @@ export async function main(params) {
   try {
     const result = await unsyncCommerceScopes();
 
+    logger.info(result);
     return ok({
       body: {
         message: result,
