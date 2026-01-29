@@ -110,8 +110,8 @@ importers:
   packages-private/scripting-utils:
     dependencies:
       '@adobe/aio-commerce-lib-core':
-        specifier: ^0.5.1
-        version: 0.5.1(typescript@5.9.3)
+        specifier: workspace:*
+        version: link:../../packages/aio-commerce-lib-core
       yaml:
         specifier: ^2.8.1
         version: 2.8.2
