@@ -356,7 +356,9 @@ describe("unsyncCommerceScopes", () => {
   });
 
   it("returns NotFound when commerce scope does not exist", async () => {
-    const scopeTreeWithoutCommerce: ScopeTree = [mockScopeTree[0]];
+    const scopeTreeWithoutCommerce: ScopeTree = mockScopeTree.filter(
+      (scope) => scope.code !== "commerce",
+    );
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       scopeTreeWithoutCommerce,
     );
