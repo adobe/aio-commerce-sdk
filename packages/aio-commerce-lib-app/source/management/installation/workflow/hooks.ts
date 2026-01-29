@@ -48,9 +48,6 @@ export type StepFailedEvent = StepEvent & {
   error: InstallationError;
 };
 
-/** Event payload when a step is skipped (condition not met). */
-export type StepSkippedEvent = StepEvent;
-
 /** Lifecycle hooks for installation execution. */
 export type InstallationHooks = {
   onInstallationStart?: InstallationHook;
@@ -60,7 +57,6 @@ export type InstallationHooks = {
   onStepStart?: HookFunction<StepStartedEvent>;
   onStepSuccess?: HookFunction<StepSucceededEvent>;
   onStepFailure?: HookFunction<StepFailedEvent>;
-  onStepSkipped?: HookFunction<StepSkippedEvent>;
 };
 
 /** Helper to call a hook if it exists. */

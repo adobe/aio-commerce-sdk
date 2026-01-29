@@ -17,8 +17,7 @@ export type ExecutionStatus =
   | "pending"
   | "in-progress"
   | "succeeded"
-  | "failed"
-  | "skipped";
+  | "failed";
 
 /** Overall installation status. */
 export type InstallationStatus =

@@ -32,7 +32,6 @@ export type {
   InstallationHooks,
   StepEvent,
   StepFailedEvent,
-  StepSkippedEvent,
   StepStartedEvent,
   StepSucceededEvent,
 } from "./hooks";
