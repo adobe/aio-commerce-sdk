@@ -10,20 +10,18 @@
  * governing permissions and limitations under the License.
  */
 
-import { commerceEventsPhase, externalEventsPhase } from "../events";
-import { webhooksPhase } from "../webhooks";
+import { eventingStep } from "../events";
+import { webhooksStep } from "../webhooks";
 
-import type { Phase } from "./phase";
+import type { AnyStep } from "./step";
 
-/** The phases built-in in the library. */
-export const DEFAULT_PHASES = [
-  commerceEventsPhase,
-  externalEventsPhase,
-  webhooksPhase,
-] as const;
+/** The root steps built-in in the library. */
+export const DEFAULT_STEPS: AnyStep[] = [eventingStep, webhooksStep];
 
-/** Builds a phase registry map from phase name to phase definition. */
-export function buildPhaseRegistry(extraPhases: Phase[] = []) {
-  const allPhases = [...DEFAULT_PHASES, ...extraPhases];
-  return new Map(allPhases.map((phase) => [phase.name, phase]));
+/** Builds a step registry map from step name to step definition. */
+export function buildStepRegistry(
+  extraSteps: AnyStep[] = [],
+): Map<string, AnyStep> {
+  const allSteps = [...DEFAULT_STEPS, ...extraSteps];
+  return new Map(allSteps.map((step) => [step.name, step]));
 }

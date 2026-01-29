@@ -10,14 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import type { WebhooksPhaseContext } from "./phase";
+import type { WebhooksExecutionContext } from "./utils";
 
-export function createWebhookSubscriptions({
-  config,
-  logger,
-}: WebhooksPhaseContext) {
-  const webhookCount = config.webhooks.length;
+export function createWebhookSubscriptions(context: WebhooksExecutionContext) {
+  const { logger } = context;
   logger.info("Creating webhooks in Commerce");
 
-  return { subscriptionsCreated: webhookCount };
+  return { subscriptionsCreated: true };
 }

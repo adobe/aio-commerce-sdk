@@ -10,15 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-import type { InferPhaseOutput, PhaseMeta, StepMeta } from "./phase";
-import type { DEFAULT_PHASES } from "./registry";
+import type { StepMeta } from "./step";
 
-/** Status of a phase or step. */
+/** Status of a step execution. */
 export type ExecutionStatus =
   | "pending"
   | "in-progress"
   | "succeeded"
-  | "failed";
+  | "failed"
+  | "skipped";
 
 /** Overall installation status. */
 export type InstallationStatus =
@@ -27,48 +27,63 @@ export type InstallationStatus =
   | "succeeded"
   | "failed";
 
-/** A structured error with a key for i18n and optional payload. */
+/** A structured error with path to the failing step. */
 export type InstallationError<TPayload = unknown> = {
-  phase: string;
-  step: string;
+  /** Path to the step that failed (e.g., ["eventing", "commerce", "providers"]). */
+  path: string[];
+
+  /** Error key for easy identification. */
   key: string;
+
+  /** Human-readable error message. */
   message?: string;
+
+  /** Additional error payload. */
   payload?: TPayload;
 };
 
-/** Status of a single step in the installation. */
+/** Status of a step in the installation tree. */
 export type StepStatus = {
+  /** Step name (unique among siblings). */
   name: string;
+
+  /** Full path from root to this step. */
+  path: string[];
+
+  /** Current execution status. */
   status: ExecutionStatus;
+
+  /** Child step statuses (empty for leaf steps). */
+  children: StepStatus[];
 };
 
-/** Status of a phase in the installation. */
-export type PhaseStatus = {
-  name: string;
-  status: ExecutionStatus;
-  steps: StepStatus[];
+/** Data collected during installation, keyed by step path. */
+export type InstallationData = {
+  /** Step results keyed by path (e.g., "eventing.commerce.providers"). */
+  [pathKey: string]: unknown;
 };
 
-/** Known phase outputs derived from the default phases. */
-type DefaultPhaseData = {
-  [P in (typeof DEFAULT_PHASES)[number] as P["name"]]?: InferPhaseOutput<P>;
-};
-
-/** Installation data with known phases and extensible for extra phases. */
-export type InstallationData = DefaultPhaseData & {
-  [key: string]: unknown;
-};
-
-/** The full installation state, persisted and returned by get-install-status. */
+/** The full installation state (persisted and returned by status endpoints). */
 export type InstallationState = {
+  /** Unique installation identifier. */
   installationId: string;
+
+  /** ISO timestamp when installation started. */
   startedAt: string;
+
+  /** ISO timestamp when installation completed (success or failure). */
   completedAt?: string;
 
+  /** Overall installation status. */
   status: InstallationStatus;
-  phases: PhaseStatus[];
 
+  /** Root of the step status tree. */
+  steps: StepStatus[];
+
+  /** Results from executed leaf steps, keyed by path. */
   data: InstallationData;
+
+  /** Error information if installation failed. */
   error: InstallationError | null;
 };
 
@@ -78,22 +93,26 @@ export interface InstallationStateStore {
   save(state: InstallationState): Promise<void>;
 }
 
-/** Step info in the installation plan. */
+/** A step in the installation plan (tree structure). */
 export type InstallationPlanStep = {
+  /** Step name. */
   name: string;
-  meta: StepMeta;
-};
 
-/** Phase info in the installation plan. */
-export type InstallationPlanPhase = {
-  name: string;
-  meta: PhaseMeta;
-  steps: InstallationPlanStep[];
+  /** Step metadata for UI display. */
+  meta: StepMeta;
+
+  /** Child steps (empty for leaf steps). */
+  children: InstallationPlanStep[];
 };
 
 /** The serializable installation plan. */
 export type InstallationPlan = {
+  /** Unique plan identifier. */
   id: string;
+
+  /** ISO timestamp when plan was created. */
   createdAt: string;
-  phases: InstallationPlanPhase[];
+
+  /** Root steps of the installation tree. */
+  steps: InstallationPlanStep[];
 };

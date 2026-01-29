@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { definePhase } from "#management/installation/workflow/phase";
+import { defineLeafStep } from "#management/installation/workflow/step";
 
 import {
   configureCommerce,
@@ -19,65 +19,54 @@ import {
   createProviders,
   createRegistrations,
 } from "./steps";
-import { createEventsPhaseContext, hasCommerceEvents } from "./utils";
 
-import type { InferPhaseOutput } from "#management/installation/workflow/phase";
+import type { SetRequiredDeep } from "type-fest";
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { InferStepOutput } from "#management/installation/workflow/step";
+import type { EventsConfig, EventsExecutionContext } from "./utils";
 
-const PHASE_META = {
-  label: "Commerce Events",
-  description: "Sets up I/O Events for Adobe Commerce event sources",
-} as const;
+/** Config type when commerce event sources are present. */
+export type CommerceEventsConfig = SetRequiredDeep<
+  EventsConfig,
+  "eventing.commerce"
+>;
 
-const STEPS_META = {
-  providers: {
-    label: "Create Providers",
-    description: "Creates I/O Events providers for Commerce events",
-  },
-  metadata: {
-    label: "Create Metadata",
-    description: "Registers Commerce event metadata with I/O Events",
-  },
-  registrations: {
-    label: "Create Registrations",
-    description:
-      "Creates event registrations linking providers to runtime actions",
-  },
-  commerceConfig: {
-    label: "Configure Commerce Eventing",
-    description: "Configures Adobe Commerce instance to emit events",
-  },
-  commerceSubscriptions: {
-    label: "Create Commerce Subscriptions",
-    description: "Subscribes to Commerce events",
-  },
-} as const;
+/** Check if config has commerce event sources. */
+export function hasCommerceEvents(
+  config: CommerceAppConfigOutputModel,
+): config is CommerceEventsConfig {
+  return (
+    Array.isArray(config?.eventing?.commerce) &&
+    config.eventing.commerce.length > 0
+  );
+}
 
-/** The phase for installing commerce event sources. */
-export const commerceEventsPhase = definePhase({
-  name: "commerceEvents",
-  meta: PHASE_META,
-  steps: STEPS_META,
+/** Leaf step for installing commerce event sources. */
+export const commerceEventsStep = defineLeafStep({
+  name: "commerce",
+  meta: {
+    label: "Configure Commerce Events",
+    description: "Sets up I/O Events for Adobe Commerce event sources",
+  },
 
-  context: createEventsPhaseContext,
   when: hasCommerceEvents,
+  run: (config, context: EventsExecutionContext) => {
+    const { logger } = context;
+    logger.debug(config);
 
-  run: async ({ context, run }) => {
-    const provider = await run("providers", () => createProviders(context));
-    const metadata = await run("metadata", () => createMetadata(context));
-    const registration = await run("registrations", () =>
-      createRegistrations(context),
-    );
+    const commerceEventSources = config.eventing.commerce;
+    const configProviders = commerceEventSources.map((c) => c.provider);
 
-    await run("commerceConfig", () => configureCommerce(context));
-    await run("commerceSubscriptions", () =>
-      createCommerceSubscriptions(context),
-    );
+    const providers = createProviders(context, configProviders);
+    const metadata = createMetadata(context);
+    const registrations = createRegistrations(context);
 
-    return { provider, metadata, registration };
+    configureCommerce(context);
+    createCommerceSubscriptions(context);
+
+    return { providers, metadata, registrations };
   },
 });
 
-/** The output data of the Commerce Events phase. */
-export type CommerceEventsPhaseOutput = InferPhaseOutput<
-  typeof commerceEventsPhase
->;
+/** The output data of the Commerce Eventing step (auto-inferred). */
+export type CommerceEventsStepData = InferStepOutput<typeof commerceEventsStep>;

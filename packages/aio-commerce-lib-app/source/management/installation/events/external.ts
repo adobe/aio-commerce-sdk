@@ -10,55 +10,54 @@
  * governing permissions and limitations under the License.
  */
 
-import { definePhase } from "#management/installation/workflow/phase";
+import { defineLeafStep } from "#management/installation/workflow/step";
 
 import { createMetadata, createProviders, createRegistrations } from "./steps";
-import { createEventsPhaseContext, hasExternalEvents } from "./utils";
 
-import type { InferPhaseOutput } from "#management/installation/workflow/phase";
+import type { SetRequiredDeep } from "type-fest";
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { InferStepOutput } from "#management/installation/workflow/step";
+import type { EventsConfig, EventsExecutionContext } from "./utils";
 
-const PHASE_META = {
-  label: "External Events",
-  description: "Sets up I/O Events for external event sources",
-} as const;
+/** Config type when external event sources are present. */
+export type ExternalEventsConfig = SetRequiredDeep<
+  EventsConfig,
+  "eventing.external"
+>;
 
-const STEPS_META = {
-  providers: {
-    label: "Create Providers",
-    description: "Creates I/O Events providers for external events",
+/** Check if config has external event sources. */
+export function hasExternalEvents(
+  config: CommerceAppConfigOutputModel,
+): config is ExternalEventsConfig {
+  return (
+    Array.isArray(config?.eventing?.external) &&
+    config.eventing.external.length > 0
+  );
+}
+
+/** Leaf step for installing external event sources. */
+export const externalEventsStep = defineLeafStep({
+  name: "external",
+  meta: {
+    label: "External Events",
+    description: "Sets up I/O Events for external event sources",
   },
-  metadata: {
-    label: "Create Metadata",
-    description: "Registers external event metadata with I/O Events",
-  },
-  registrations: {
-    label: "Create Registrations",
-    description:
-      "Creates event registrations linking providers to runtime actions",
-  },
-} as const;
 
-/** The phase for installing external event sources. */
-export const externalEventsPhase = definePhase({
-  name: "externalEvents",
-  meta: PHASE_META,
-  steps: STEPS_META,
-
-  context: createEventsPhaseContext,
   when: hasExternalEvents,
+  run: (config, context: EventsExecutionContext) => {
+    const { logger } = context;
+    logger.debug(config);
 
-  run: async ({ context, run }) => {
-    const provider = await run("providers", () => createProviders(context));
-    const metadata = await run("metadata", () => createMetadata(context));
-    const registration = await run("registrations", () =>
-      createRegistrations(context),
-    );
+    const externalEventSources = config.eventing.external;
+    const configProviders = externalEventSources.map((c) => c.provider);
 
-    return { provider, metadata, registration };
+    const providers = createProviders(context, configProviders);
+    const metadata = createMetadata(context);
+    const registrations = createRegistrations(context);
+
+    return { providers, metadata, registrations };
   },
 });
 
-/** The output data of the External Events phase. */
-export type ExternalEventsPhaseOutput = InferPhaseOutput<
-  typeof externalEventsPhase
->;
+/** The output data of the Commerce Eventing step (auto-inferred). */
+export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;

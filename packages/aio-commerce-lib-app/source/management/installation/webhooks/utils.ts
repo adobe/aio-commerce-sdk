@@ -11,6 +11,7 @@
  */
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { ExecutionContext } from "#management/installation/workflow/step";
 
 /** Config type when webhooks is present. */
 export type WebhooksConfig = CommerceAppConfigOutputModel & {
@@ -23,3 +24,6 @@ export function hasWebhooks(
 ): config is WebhooksConfig {
   return "webhooks" in config && Array.isArray(config.webhooks);
 }
+
+/** The execution context for webhook leaf steps. */
+export type WebhooksExecutionContext = ExecutionContext<WebhooksConfig>;

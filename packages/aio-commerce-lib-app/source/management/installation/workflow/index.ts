@@ -10,46 +10,48 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoing for the workflow module */
+/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the workflow module */
 
-export { definePhase } from "./phase";
 export { createInstallationPlan, runInstallation } from "./runner";
+export {
+  defineBranchStep,
+  defineLeafStep,
+  isBranchStep,
+  isLeafStep,
+} from "./step";
 export { createLibStateStore } from "./storage/lib-state";
 
 export type {
   InstallationHooks,
-  PhaseEvent,
-  PhaseFailedEvent,
-  PhaseStartedEvent,
-  PhaseSucceededEvent,
   StepEvent,
   StepFailedEvent,
+  StepSkippedEvent,
   StepStartedEvent,
   StepSucceededEvent,
 } from "./hooks";
-export type {
-  ExecutionContext,
-  InferPhaseOutput,
-  InstallationContext,
-  Phase,
-  PhaseContextFactory,
-  PhaseMeta,
-  PhaseRunContext,
-  StepDeclaration,
-  StepMeta,
-  StepRunner,
-} from "./phase";
 export type { CreatePlanOptions, RunnerOptions } from "./runner";
+export type {
+  AnyStep,
+  BranchStep,
+  BranchStepOptions,
+  ExecutionContext,
+  InferStepOutput,
+  InstallationContext,
+  LeafStep,
+  LeafStepOptions,
+  Step,
+  StepContextFactory,
+  StepMeta,
+} from "./step";
 export type { LibStateStoreOptions } from "./storage/lib-state";
 export type {
   ExecutionStatus,
+  InstallationData,
   InstallationError,
   InstallationPlan,
-  InstallationPlanPhase,
   InstallationPlanStep,
   InstallationState,
   InstallationStateStore,
   InstallationStatus,
-  PhaseStatus,
   StepStatus,
 } from "./types";

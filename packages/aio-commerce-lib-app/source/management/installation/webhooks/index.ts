@@ -10,9 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoing for the webhooks module */
+/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the webhooks module */
 
-export { webhooksPhase } from "./phase";
+export { webhooksStep } from "./phase";
 
-export type { WebhooksPhaseOutput } from "./phase";
 export type { WebhooksConfig } from "./utils";

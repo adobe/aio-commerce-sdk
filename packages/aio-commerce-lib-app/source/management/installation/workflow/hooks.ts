@@ -12,49 +12,44 @@
 
 import type { InstallationError, InstallationState } from "./types";
 
+/** Hook function that receives an event and the current state. */
 type HookFunction<TEvent> = (
   event: TEvent,
   state: InstallationState,
 ) => void | Promise<void>;
 
+/** Hook function that only receives the current state. */
 type InstallationHook = (state: InstallationState) => void | Promise<void>;
 
-/** Base event payload with phase and step names. */
+/** Base event payload for step events. */
 export type StepEvent = {
-  phaseName: string;
+  /** Full path to the step (e.g., ["eventing", "commerce", "providers"]). */
+  path: string[];
+
+  /** Step name (last element of path, for convenience). */
   stepName: string;
+
+  /** Whether this is a leaf step (executable) or branch step (container). */
+  isLeaf: boolean;
 };
 
-/** Event payload when a step starts. */
+/** Event payload when a step starts execution. */
 export type StepStartedEvent = StepEvent;
 
 /** Event payload when a step succeeds. */
 export type StepSucceededEvent = StepEvent & {
+  /** Result returned by the step (only for leaf steps). */
   result: unknown;
 };
 
 /** Event payload when a step fails. */
 export type StepFailedEvent = StepEvent & {
+  /** Error information. */
   error: InstallationError;
 };
 
-/** Base event payload for phase events. */
-export type PhaseEvent = {
-  phaseName: string;
-};
-
-/** Event payload when a phase starts. */
-export type PhaseStartedEvent = PhaseEvent;
-
-/** Event payload when a phase succeeds. */
-export type PhaseSucceededEvent = PhaseEvent & {
-  result: unknown;
-};
-
-/** Event payload when a phase fails. */
-export type PhaseFailedEvent = PhaseEvent & {
-  error: InstallationError;
-};
+/** Event payload when a step is skipped (condition not met). */
+export type StepSkippedEvent = StepEvent;
 
 /** Lifecycle hooks for installation execution. */
 export type InstallationHooks = {
@@ -62,13 +57,10 @@ export type InstallationHooks = {
   onInstallationSuccess?: InstallationHook;
   onInstallationFailure?: InstallationHook;
 
-  onPhaseStart?: HookFunction<PhaseStartedEvent>;
-  onPhaseSuccess?: HookFunction<PhaseSucceededEvent>;
-  onPhaseFailure?: HookFunction<PhaseFailedEvent>;
-
   onStepStart?: HookFunction<StepStartedEvent>;
   onStepSuccess?: HookFunction<StepSucceededEvent>;
   onStepFailure?: HookFunction<StepFailedEvent>;
+  onStepSkipped?: HookFunction<StepSkippedEvent>;
 };
 
 /** Helper to call a hook if it exists. */

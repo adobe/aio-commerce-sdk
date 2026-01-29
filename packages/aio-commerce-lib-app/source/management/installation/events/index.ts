@@ -10,11 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoing for the events module */
+/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the events module */
 
-export { commerceEventsPhase } from "./commerce";
-export { externalEventsPhase } from "./external";
+export { eventingStep } from "./branch";
+export { commerceEventsStep } from "./commerce";
+export { externalEventsStep } from "./external";
 
-export type { CommerceEventsPhaseOutput } from "./commerce";
-export type { ExternalEventsPhaseOutput } from "./external";
-export type { EventsConfig, EventsPhaseContext } from "./utils";
+export type { EventsConfig, EventsStepContext } from "./utils";
