@@ -67,7 +67,7 @@
     "test:ui": "vitest --ui --coverage"
   },
   "dependencies": {
-    "@adobe/aio-commerce-lib-core": "^0.6.0",
+    "@adobe/aio-commerce-lib-core": "workspace:*",
     "consola": "^3.4.2",
     "jiti": "^2.6.1",
     "valibot": "^1.1.0"
