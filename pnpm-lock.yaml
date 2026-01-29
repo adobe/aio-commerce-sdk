@@ -168,9 +168,15 @@ importers:
 
   packages/aio-commerce-lib-app:
     dependencies:
+      '@adobe/aio-commerce-lib-api':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-api
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
+      '@adobe/aio-commerce-lib-events':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-events
       consola:
         specifier: ^3.4.2
         version: 3.4.2
@@ -181,6 +187,12 @@ importers:
         specifier: ^1.1.0
         version: 1.2.0(typescript@5.9.3)
     devDependencies:
+      '@adobe/aio-lib-core-logging':
+        specifier: ^3.0.2
+        version: 3.0.2
+      '@aio-commerce-sdk/common-utils':
+        specifier: workspace:*
+        version: link:../../packages-private/common-utils
       '@aio-commerce-sdk/config-tsdown':
         specifier: workspace:*
         version: link:../../configs/tsdown

@@ -548,6 +548,384 @@ describe("validateConfig", () => {
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
+
+  test("should validate config with eventing - commerce type", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              label: "Commerce Events Provider",
+              description: "Provides commerce events",
+            },
+            events: [
+              {
+                name: "plugin.order_placed",
+                fields: ["order_id", "customer_id"],
+                runtimeAction: "handle-order",
+                description: "Triggered when an order is placed",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    const validated = validateCommerceAppConfig(config);
+    expect(validated.eventing?.commerce).toHaveLength(1);
+  });
+
+  test("should validate config with eventing - external type", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        external: [
+          {
+            provider: {
+              label: "External Events Provider",
+              description: "Provides external events",
+            },
+            events: [{ name: "external_event" }],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    const validated = validateCommerceAppConfig(config);
+    expect(validated.eventing?.external).toHaveLength(1);
+  });
+
+  test("should validate config with multiple event sources", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              label: "Commerce Provider",
+              description: "Commerce events",
+            },
+            events: [
+              {
+                name: "observer.catalog_update",
+                fields: ["product_id"],
+                runtimeAction: "sync-catalog",
+                description: "Catalog update event",
+              },
+            ],
+          },
+        ],
+        external: [
+          {
+            provider: {
+              label: "External Provider",
+              description: "External events",
+            },
+            events: [{ name: "webhook_received" }],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    const validated = validateCommerceAppConfig(config);
+    expect(validated.eventing?.commerce).toHaveLength(1);
+    expect(validated.eventing?.external).toHaveLength(1);
+  });
+
+  test("should validate config with empty eventing object", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {},
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+  });
+
+  test("should throw when commerce event name does not have required prefix", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              label: "Commerce Provider",
+              description: "Commerce events",
+            },
+            events: [
+              {
+                name: "invalid_event", // Missing plugin. or observer. prefix
+                fields: ["field"],
+                runtimeAction: "action",
+                description: "Invalid event",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
+    );
+  });
+
+  test("should accept commerce event with plugin prefix", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              label: "Commerce Provider",
+              description: "Commerce events",
+            },
+            events: [
+              {
+                name: "plugin.my_event",
+                fields: ["field"],
+                runtimeAction: "action",
+                description: "Plugin event",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+  });
+
+  test("should accept commerce event with observer prefix", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              label: "Commerce Provider",
+              description: "Commerce events",
+            },
+            events: [
+              {
+                name: "observer.my_event",
+                fields: ["field"],
+                runtimeAction: "action",
+                description: "Observer event",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+  });
+
+  test("should throw when provider label exceeds max length", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        external: [
+          {
+            provider: {
+              label: "A".repeat(101), // Max is 100
+              description: "Provider description",
+            },
+            events: [{ name: "event" }],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
+    );
+  });
+
+  test("should throw when provider description exceeds max length", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        external: [
+          {
+            provider: {
+              label: "Provider",
+              description: "A".repeat(256), // Max is 255
+            },
+            events: [{ name: "event" }],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
+    );
+  });
+
+  test("should accept provider with optional key", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        external: [
+          {
+            provider: {
+              label: "Provider",
+              description: "Provider description",
+              key: "my-provider-key",
+            },
+            events: [{ name: "event" }],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+  });
+
+  test("should throw when provider key exceeds max length", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        external: [
+          {
+            provider: {
+              label: "Provider",
+              description: "Provider description",
+              key: "A".repeat(51), // Max is 50
+            },
+            events: [{ name: "event" }],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
+    );
+  });
+
+  test("should throw when commerce event description exceeds max length", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              label: "Commerce Provider",
+              description: "Commerce events",
+            },
+            events: [
+              {
+                name: "plugin.my_event",
+                fields: ["field"],
+                runtimeAction: "action",
+                description: "A".repeat(256), // Max is 255
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
+    );
+  });
+
+  test("should throw when commerce event source is missing provider", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        commerce: [
+          {
+            // Missing provider
+            events: [
+              {
+                name: "plugin.my_event",
+                fields: ["field"],
+                runtimeAction: "action",
+                description: "Event description",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
+    );
+  });
 });
 
 describe("validateConfigDomain", () => {
@@ -658,5 +1036,56 @@ describe("validateConfigDomain", () => {
       // @ts-expect-error - Testing invalid domain
       validateCommerceAppConfigDomain(data, "unknownDomain"),
     ).toThrow();
+  });
+
+  test("should validate eventing domain with commerce events", () => {
+    const eventing = {
+      commerce: [
+        {
+          provider: {
+            label: "My Commerce Provider",
+            description: "Provider for commerce events",
+          },
+          events: [
+            {
+              name: "plugin.my_event",
+              fields: ["field_one", "field_two"],
+              runtimeAction: "my-action",
+              description: "My commerce event",
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(() =>
+      validateCommerceAppConfigDomain(eventing, "eventing"),
+    ).not.toThrow();
+  });
+
+  test("should validate eventing domain with external events", () => {
+    const eventing = {
+      external: [
+        {
+          provider: {
+            label: "External Provider",
+            description: "Provider for external events",
+          },
+          events: [{ name: "external_event" }],
+        },
+      ],
+    };
+
+    expect(() =>
+      validateCommerceAppConfigDomain(eventing, "eventing"),
+    ).not.toThrow();
+  });
+
+  test("should validate eventing domain with empty object", () => {
+    const eventing = {};
+
+    expect(() =>
+      validateCommerceAppConfigDomain(eventing, "eventing"),
+    ).not.toThrow();
   });
 });
