@@ -10,6 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
+import type {
+  FailedInstallationState,
+  InstallationError,
+  StepStatus,
+  SucceededInstallationState,
+} from "./types";
+
 /** Returns the current time as an ISO string. */
 export function nowIsoString(): string {
   return new Date().toISOString();
@@ -48,4 +55,49 @@ export function getAtPath(
     current = (current as Record<string, unknown>)[key];
   }
   return current;
+}
+
+/** Creates an installation error from an exception. */
+export function createInstallationError(
+  err: unknown,
+  path: string[],
+  key = "STEP_EXECUTION_FAILED",
+): InstallationError {
+  return {
+    path,
+    key,
+    message: err instanceof Error ? err.message : String(err),
+  };
+}
+
+/** Base properties for creating final installation states. */
+type FinalStateBase = {
+  installationId: string;
+  startedAt: string;
+  steps: StepStatus[];
+  data: Record<string, unknown>;
+};
+
+/** Creates a succeeded installation state. */
+export function createSucceededState(
+  base: FinalStateBase,
+): SucceededInstallationState {
+  return {
+    ...base,
+    status: "succeeded",
+    completedAt: nowIsoString(),
+  };
+}
+
+/** Creates a failed installation state. */
+export function createFailedState(
+  base: FinalStateBase,
+  error: InstallationError,
+): FailedInstallationState {
+  return {
+    ...base,
+    status: "failed",
+    completedAt: nowIsoString(),
+    error,
+  };
 }

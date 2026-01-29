@@ -13,11 +13,23 @@
 import { callHook } from "./hooks";
 import { buildStepRegistry, DEFAULT_STEPS } from "./registry";
 import { isBranchStep, isLeafStep } from "./step";
-import { getAtPath, nowIsoString, setAtPath } from "./utils";
+import {
+  createFailedState,
+  createInstallationError,
+  createSucceededState,
+  getAtPath,
+  nowIsoString,
+  setAtPath,
+} from "./utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InstallationHooks } from "./hooks";
-import type { AnyStep, InstallationContext } from "./step";
+import type {
+  AnyStep,
+  BranchStep,
+  InstallationContext,
+  LeafStep,
+} from "./step";
 import type {
   FailedInstallationState,
   InProgressInstallationState,
@@ -55,6 +67,22 @@ export type RunnerOptions = {
   hooks?: InstallationHooks;
 };
 
+/** Type for the step registry map. */
+type StepRegistry = Map<string, AnyStep>;
+
+/** Context for step execution containing all necessary dependencies. */
+type StepExecutionContext = {
+  installationContext: InstallationContext;
+  config: CommerceAppConfigOutputModel;
+  installationId: string;
+  startedAt: string;
+  steps: StepStatus[];
+  data: Record<string, unknown>;
+  error: InstallationError | null;
+  registry: StepRegistry;
+  hooks?: InstallationHooks;
+};
+
 /**
  * Creates an installation plan from the config and step definitions.
  * Filters steps based on their `when` conditions and builds a tree structure.
@@ -72,6 +100,52 @@ export function createInstallationPlan(
   };
 }
 
+/**
+ * Runs the full installation workflow. Returns the final state (never throws).
+ */
+export async function runInstallation(
+  options: RunnerOptions,
+): Promise<SucceededInstallationState | FailedInstallationState> {
+  const { installationContext, config, plan, extraSteps = [], hooks } = options;
+  const context: StepExecutionContext = {
+    installationContext,
+    config,
+    installationId: plan.id,
+    startedAt: nowIsoString(),
+    steps: buildInitialStepStatuses(plan.steps, []),
+    data: {},
+    error: null,
+    registry: buildStepRegistry(extraSteps),
+    hooks,
+  };
+
+  await callHook(hooks, "onInstallationStart", snapshot(context));
+
+  try {
+    for (const stepStatus of context.steps) {
+      const step = context.registry.get(stepStatus.name);
+      if (!step) {
+        throw new Error(`Step "${stepStatus.name}" not found`);
+      }
+
+      await executeStep(step, stepStatus, {}, context);
+    }
+
+    const succeeded = createSucceededState(context);
+    await callHook(hooks, "onInstallationSuccess", succeeded);
+
+    return succeeded;
+  } catch (err) {
+    const error =
+      context.error ?? createInstallationError(err, [], "INSTALLATION_FAILED");
+
+    const failed = createFailedState(context, error);
+    await callHook(hooks, "onInstallationFailure", failed);
+
+    return failed;
+  }
+}
+
 /** Recursively builds plan steps, filtering by `when` conditions. */
 function buildPlanSteps(
   steps: AnyStep[],
@@ -80,7 +154,6 @@ function buildPlanSteps(
   const planSteps: InstallationPlanStep[] = [];
 
   for (const step of steps) {
-    // Check if step applies to this config
     if (step.when && !step.when(config)) {
       continue;
     }
@@ -91,7 +164,6 @@ function buildPlanSteps(
       children: [],
     };
 
-    // Recursively process children for branch steps
     if (isBranchStep(step)) {
       planStep.children = buildPlanSteps(step.children, config);
     }
@@ -118,163 +190,101 @@ function buildInitialStepStatuses(
   });
 }
 
-/** Type for the step registry map. */
-type StepRegistry = Map<string, AnyStep>;
-
-/** Mutable context passed through execution. */
-type Execution = {
-  readonly installationId: string;
-  readonly startedAt: string;
-  readonly steps: StepStatus[];
-  readonly data: Record<string, unknown>;
-  error: InstallationError | null;
-};
-
 /** Snapshot current execution as InProgressInstallationState. */
-function snapshot(exec: Execution): InProgressInstallationState {
+function snapshot(context: StepExecutionContext): InProgressInstallationState {
   return {
-    installationId: exec.installationId,
-    startedAt: exec.startedAt,
+    installationId: context.installationId,
+    startedAt: context.startedAt,
     status: "in-progress",
-    steps: exec.steps,
-    data: exec.data,
+    steps: context.steps,
+    data: context.data,
   };
 }
 
-/**
- * Runs the full installation workflow. Returns the final state (never throws).
- */
-export async function runInstallation(
-  options: RunnerOptions,
-): Promise<SucceededInstallationState | FailedInstallationState> {
-  const { installationContext, config, plan, extraSteps = [], hooks } = options;
-
-  const exec: Execution = {
-    installationId: plan.id,
-    startedAt: nowIsoString(),
-    steps: buildInitialStepStatuses(plan.steps, []),
-    data: {},
-    error: null,
-  };
-
-  const stepRegistry = buildStepRegistry(extraSteps);
-  await callHook(hooks, "onInstallationStart", snapshot(exec));
-
-  try {
-    for (const stepStatus of exec.steps) {
-      const step = stepRegistry.get(stepStatus.name);
-      if (!step) {
-        throw new Error(`Step "${stepStatus.name}" not found`);
-      }
-      await executeStep(
-        step,
-        stepStatus,
-        installationContext,
-        config,
-        {},
-        exec,
-        stepRegistry,
-        hooks,
-      );
-    }
-
-    const succeeded: SucceededInstallationState = {
-      installationId: exec.installationId,
-      startedAt: exec.startedAt,
-      status: "succeeded",
-      completedAt: nowIsoString(),
-      steps: exec.steps,
-      data: exec.data,
-    };
-    await callHook(hooks, "onInstallationSuccess", succeeded);
-    return succeeded;
-  } catch (err) {
-    const failed: FailedInstallationState = {
-      installationId: exec.installationId,
-      startedAt: exec.startedAt,
-      status: "failed",
-      completedAt: nowIsoString(),
-      steps: exec.steps,
-      data: exec.data,
-      error: exec.error ?? {
-        path: [],
-        key: "INSTALLATION_FAILED",
-        message: err instanceof Error ? err.message : String(err),
-      },
-    };
-    await callHook(hooks, "onInstallationFailure", failed);
-    return failed;
-  }
-}
-
+/** Executes a single step (branch or leaf) recursively. */
 async function executeStep(
   step: AnyStep,
   stepStatus: StepStatus,
-  ctx: InstallationContext,
-  config: CommerceAppConfigOutputModel,
   inherited: Record<string, unknown>,
-  exec: Execution,
-  registry: StepRegistry,
-  hooks?: InstallationHooks,
+  context: StepExecutionContext,
 ): Promise<void> {
   const { path } = stepStatus;
   const isLeaf = isLeafStep(step);
 
   stepStatus.status = "in-progress";
   await callHook(
-    hooks,
+    context.hooks,
     "onStepStart",
     { path, stepName: step.name, isLeaf },
-    snapshot(exec),
+    snapshot(context),
   );
 
   try {
     if (isBranchStep(step)) {
-      let childCtx = inherited;
-      if (step.context) {
-        childCtx = { ...inherited, ...(await step.context(ctx)) };
-      }
-      for (const child of stepStatus.children) {
-        const childStep = step.children.find((c) => c.name === child.name);
-        if (!childStep) {
-          throw new Error(`Step "${child.name}" not found`);
-        }
-        await executeStep(
-          childStep,
-          child,
-          ctx,
-          config,
-          childCtx,
-          exec,
-          registry,
-          hooks,
-        );
-      }
+      await executeBranchStep(step, stepStatus, inherited, context);
     } else if (isLeafStep(step)) {
-      const result = await step.run(config, { ...ctx, ...inherited });
-      setAtPath(exec.data, path, result);
+      await executeLeafStep(step, stepStatus, inherited, context);
     }
 
     stepStatus.status = "succeeded";
     await callHook(
-      hooks,
+      context.hooks,
       "onStepSuccess",
-      { path, stepName: step.name, isLeaf, result: getAtPath(exec.data, path) },
-      snapshot(exec),
+      {
+        path,
+        stepName: step.name,
+        isLeaf,
+        result: getAtPath(context.data, path),
+      },
+      snapshot(context),
     );
   } catch (err) {
     stepStatus.status = "failed";
-    exec.error ??= {
-      path,
-      key: "STEP_EXECUTION_FAILED",
-      message: err instanceof Error ? err.message : String(err),
-    };
+
+    context.error ??= createInstallationError(err, path);
     await callHook(
-      hooks,
+      context.hooks,
       "onStepFailure",
-      { path, stepName: step.name, isLeaf, error: exec.error },
-      snapshot(exec),
+      { path, stepName: step.name, isLeaf, error: context.error },
+      snapshot(context),
     );
+
     throw err;
   }
+}
+
+/** Executes a branch step by processing its children. */
+async function executeBranchStep(
+  step: BranchStep,
+  stepStatus: StepStatus,
+  inherited: Record<string, unknown>,
+  context: StepExecutionContext,
+): Promise<void> {
+  let childContext = inherited;
+  if (step.context) {
+    const stepContext = await step.context(context.installationContext);
+    childContext = { ...inherited, ...stepContext };
+  }
+
+  for (const child of stepStatus.children) {
+    const childStep = step.children.find((c) => c.name === child.name);
+    if (!childStep) {
+      throw new Error(`Step "${child.name}" not found`);
+    }
+
+    await executeStep(childStep, child, childContext, context);
+  }
+}
+
+/** Executes a leaf step and stores its result. */
+async function executeLeafStep(
+  step: LeafStep,
+  stepStatus: StepStatus,
+  inherited: Record<string, unknown>,
+  context: StepExecutionContext,
+): Promise<void> {
+  const executionContext = { ...context.installationContext, ...inherited };
+  const result = await step.run(context.config, executionContext);
+
+  setAtPath(context.data, stepStatus.path, result);
 }
