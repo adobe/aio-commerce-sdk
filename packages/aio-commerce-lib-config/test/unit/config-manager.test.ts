@@ -12,14 +12,21 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getConfiguration, setConfiguration } from "#config-manager";
+import {
+  getConfiguration,
+  setConfiguration,
+  UnsyncCommerceScopeResult,
+  unsyncCommerceScopes,
+} from "#config-manager";
 import { byCodeAndLevel, byScopeId } from "#config-utils";
 import * as configRepository from "#modules/configuration/configuration-repository";
+import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
 import { createMockLibFiles } from "#test/mocks/lib-files";
 import { createMockLibState } from "#test/mocks/lib-state";
 
 import type { ConfigValue } from "#index";
+import type { ScopeTree } from "#modules/scope-tree/types";
 
 const MockState = createMockLibState();
 const MockFiles = createMockLibFiles();
@@ -321,5 +328,55 @@ describe("ConfigManager functions", () => {
     expect(response.config).toEqual([
       { name: "exampleList", value: "option1" },
     ]);
+  });
+});
+
+describe("unsyncCommerceScopes", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns Ok when commerce scope exists and is removed", async () => {
+    const scopeTreeWithCommerce: ScopeTree = [...mockScopeTree];
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      scopeTreeWithCommerce,
+    );
+
+    const result = await unsyncCommerceScopes();
+
+    expect(result).toBe(UnsyncCommerceScopeResult.Ok);
+
+    expect(scopeTreeRepository.saveScopeTree).toHaveBeenCalledTimes(1);
+    const savedScopeTree = vi.mocked(scopeTreeRepository.saveScopeTree).mock
+      .calls[0][1];
+    expect(savedScopeTree).toEqual([mockScopeTree[0]]);
+    expect(savedScopeTree.find((scope) => scope.code === "commerce")).toBe(
+      undefined,
+    );
+  });
+
+  it("returns NotFound when commerce scope does not exist", async () => {
+    const scopeTreeWithoutCommerce: ScopeTree = [mockScopeTree[0]];
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      scopeTreeWithoutCommerce,
+    );
+
+    const result = await unsyncCommerceScopes();
+
+    expect(result).toBe(UnsyncCommerceScopeResult.NotFound);
+    expect(scopeTreeRepository.saveScopeTree).not.toHaveBeenCalled();
+  });
+
+  it("when error is thrown", async () => {
+    const error = new Error("Failed to access persistent storage");
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockRejectedValue(
+      error,
+    );
+
+    await expect(unsyncCommerceScopes()).rejects.toThrow(
+      "Failed to access persistent storage",
+    );
+
+    expect(scopeTreeRepository.saveScopeTree).not.toHaveBeenCalled();
   });
 });
