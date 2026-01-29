@@ -2,12 +2,12 @@
 
 ```ts
 type ImsAuthProvider = {
-  getAccessToken: () => Promise<string>;
-  getHeaders: () => Promise<ImsAuthHeaders>;
+  getAccessToken: () => Promise<string> | string;
+  getHeaders: () => Promise<ImsAuthHeaders> | ImsAuthHeaders;
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L25)
+Defined in: [ims-auth/types.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-auth/source/lib/ims-auth/types.ts#L20)
 
 Defines an authentication provider for Adobe IMS.
 
@@ -16,25 +16,28 @@ Defines an authentication provider for Adobe IMS.
 ### getAccessToken()
 
 ```ts
-getAccessToken: () => Promise<string>;
+getAccessToken: () => Promise<string> | string;
 ```
 
-Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L26)
+Defined in: [ims-auth/types.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-auth/source/lib/ims-auth/types.ts#L21)
 
 #### Returns
 
-`Promise`\<`string`\>
+`Promise`\<`string`\> \| `string`
 
 ---
 
 ### getHeaders()
 
 ```ts
-getHeaders: () => Promise<ImsAuthHeaders>;
+getHeaders: () =>
+  | Promise<ImsAuthHeaders>
+  | ImsAuthHeaders;
 ```
 
-Defined in: [packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L27)
+Defined in: [ims-auth/types.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-auth/source/lib/ims-auth/types.ts#L22)
 
 #### Returns
 
-`Promise`\<`ImsAuthHeaders`\>
+\| `Promise`\<[`ImsAuthHeaders`](ImsAuthHeaders.md)\>
+\| [`ImsAuthHeaders`](ImsAuthHeaders.md)

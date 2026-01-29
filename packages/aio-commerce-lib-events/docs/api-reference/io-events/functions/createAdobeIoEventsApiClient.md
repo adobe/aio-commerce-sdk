@@ -6,16 +6,22 @@ function createAdobeIoEventsApiClient(params: IoEventsHttpClientParams): ApiClie
   createCommerceEventProvider: ;
   createEventMetadataForProvider: ;
   createEventProvider: ;
+  createRegistration: ;
+  deleteRegistration: ;
   getAll3rdPartyCustomEventProviders: ;
   getAllCommerceEventProviders: ;
   getAllEventMetadataForProvider: ;
   getAllEventProviders: ;
+  getAllRegistrations: ;
+  getAllRegistrationsByConsumerOrg: ;
   getEventMetadataForEventAndProvider: ;
   getEventProviderById: ;
+  getRegistrationById: ;
+  updateRegistration: ;
 }>;
 ```
 
-Defined in: [packages/aio-commerce-lib-events/source/io-events/lib/api-client.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-events/source/io-events/lib/api-client.ts#L31)
+Defined in: [io-events/lib/api-client.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/lib/api-client.ts#L32)
 
 Creates a new API client for the Adobe I/O Events API client.
 
@@ -32,10 +38,16 @@ Creates a new API client for the Adobe I/O Events API client.
 `createCommerceEventProvider`: ;
 `createEventMetadataForProvider`: ;
 `createEventProvider`: ;
+`createRegistration`: ;
+`deleteRegistration`: ;
 `getAll3rdPartyCustomEventProviders`: ;
 `getAllCommerceEventProviders`: ;
 `getAllEventMetadataForProvider`: ;
 `getAllEventProviders`: ;
+`getAllRegistrations`: ;
+`getAllRegistrationsByConsumerOrg`: ;
 `getEventMetadataForEventAndProvider`: ;
 `getEventProviderById`: ;
+`getRegistrationById`: ;
+`updateRegistration`: ;
 \}\>

@@ -1,6 +1,6 @@
 # `error`: Module
 
-This module exports the core error classes for the AIO Commerce SDK.
+This module exports core error utilities for the AIO Commerce SDK.
 
 ## Classes
 

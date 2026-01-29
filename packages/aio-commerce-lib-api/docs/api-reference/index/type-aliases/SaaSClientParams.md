@@ -8,7 +8,7 @@ type SaaSClientParams = {
 };
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:60](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L60)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:60](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L60)
 
 Defines the configuration required to build an Adobe Commerce HTTP client for SaaS.
 
@@ -22,7 +22,7 @@ auth:
   | ImsAuthParamsWithOptionalScopes;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L61)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L61)
 
 ---
 
@@ -32,7 +32,7 @@ Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:61](http
 config: CommerceHttpClientConfigSaaS;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:62](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L62)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:62](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L62)
 
 ---
 
@@ -42,4 +42,4 @@ Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:62](http
 optional fetchOptions: Options;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/types.ts:63](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L63)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:63](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L63)

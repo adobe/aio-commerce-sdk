@@ -1,6 +1,6 @@
 # `AdobeCommerceHttpClient`
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/http-client.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/commerce/http-client.ts#L48)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/http-client.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/commerce/http-client.ts#L48)
 
 A Ky-based HTTP client used to make requests to the Commerce API.
 
@@ -20,7 +20,7 @@ https://github.com/sindresorhus/ky
 new AdobeCommerceHttpClient(params: CommerceHttpClientParams): AdobeCommerceHttpClient;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/commerce/http-client.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/commerce/http-client.ts#L53)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/http-client.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/commerce/http-client.ts#L53)
 
 Creates a new Commerce HTTP client instance.
 
@@ -48,7 +48,7 @@ HttpClientBase<RequiredComerceHttpClientConfig>.constructor
 readonly config: Readonly<RequiredComerceHttpClientConfig>;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/http-client-base.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L26)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L26)
 
 The configuration used by the HTTP client.
 
@@ -66,7 +66,7 @@ HttpClientBase.config;
 delete: <T>(url: Input, options?: Options) => ResponsePromise<T>;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/http-client-base.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L31)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L31)
 
 Fetch the given `url` using the option `{method: 'delete'}`.
 
@@ -103,7 +103,7 @@ HttpClientBase.delete;
 get: <T>(url: Input, options?: Options) => ResponsePromise<T>;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/http-client-base.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L28)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L28)
 
 Fetch the given `url` using the option `{method: 'get'}`.
 
@@ -140,7 +140,7 @@ HttpClientBase.get;
 head: (url: Input, options?: Options) => ResponsePromise;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/http-client-base.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L33)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L33)
 
 Fetch the given `url` using the option `{method: 'head'}`.
 
@@ -171,7 +171,7 @@ HttpClientBase.head;
 protected httpClient: Readonly<KyInstance>;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/http-client-base.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L23)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L23)
 
 The actual HTTP client instance.
 
@@ -189,7 +189,7 @@ HttpClientBase.httpClient;
 patch: <T>(url: Input, options?: Options) => ResponsePromise<T>;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/http-client-base.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L32)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L32)
 
 Fetch the given `url` using the option `{method: 'patch'}`.
 
@@ -226,7 +226,7 @@ HttpClientBase.patch;
 post: <T>(url: Input, options?: Options) => ResponsePromise<T>;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/http-client-base.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L29)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L29)
 
 Fetch the given `url` using the option `{method: 'post'}`.
 
@@ -263,7 +263,7 @@ HttpClientBase.post;
 put: <T>(url: Input, options?: Options) => ResponsePromise<T>;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/http-client-base.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L30)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L30)
 
 Fetch the given `url` using the option `{method: 'put'}`.
 
@@ -294,13 +294,167 @@ HttpClientBase.put;
 
 ---
 
+### retry()
+
+```ts
+retry: (options?: ForceRetryOptions) => RetryMarker;
+```
+
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L34)
+
+Force a retry from an `afterResponse` hook.
+
+This allows you to retry a request based on the response content, even if the response has a successful status code. The retry will respect the `retry.limit` option and skip the `shouldRetry` check. The forced retry is observable in `beforeRetry` hooks, where the error will be a `ForceRetryError`.
+
+Force a retry from an `afterResponse` hook.
+
+This allows you to retry a request based on the response content, even if the response has a successful status code. The retry will respect the `retry.limit` option and skip the `shouldRetry` check. The forced retry is observable in `beforeRetry` hooks, where the error will be a `ForceRetryError`.
+
+#### Parameters
+
+| Parameter  | Type                | Description                           |
+| ---------- | ------------------- | ------------------------------------- |
+| `options?` | `ForceRetryOptions` | Optional configuration for the retry. |
+
+#### Returns
+
+`RetryMarker`
+
+#### Example
+
+```
+import ky, {isForceRetryError} from 'ky';
+
+const api = ky.extend({
+    hooks: {
+        afterResponse: [
+            async (request, options, response) => {
+                // Retry based on response body content
+                if (response.status === 200) {
+                    const data = await response.clone().json();
+
+                    // Simple retry with default delay
+                    if (data.error?.code === 'TEMPORARY_ERROR') {
+                        return ky.retry();
+                    }
+
+                    // Retry with custom delay from API response
+                    if (data.error?.code === 'RATE_LIMIT') {
+                        return ky.retry({
+                            delay: data.error.retryAfter * 1000,
+                            code: 'RATE_LIMIT'
+                        });
+                    }
+
+                    // Retry with a modified request (e.g., fallback endpoint)
+                    if (data.error?.code === 'FALLBACK_TO_BACKUP') {
+                        return ky.retry({
+                            request: new Request('https://backup-api.com/endpoint', {
+                                method: request.method,
+                                headers: request.headers,
+                            }),
+                            code: 'BACKUP_ENDPOINT'
+                        });
+                    }
+
+                    // Retry with refreshed authentication
+                    if (data.error?.code === 'TOKEN_REFRESH' && data.newToken) {
+                        return ky.retry({
+                            request: new Request(request, {
+                                headers: {
+                                    ...Object.fromEntries(request.headers),
+                                    'Authorization': `Bearer ${data.newToken}`
+                                }
+                            }),
+                            code: 'TOKEN_REFRESHED'
+                        });
+                    }
+
+                    // Retry with cause to preserve error chain
+                    try {
+                        validateResponse(data);
+                    } catch (error) {
+                        return ky.retry({
+                            code: 'VALIDATION_FAILED',
+                            cause: error
+                        });
+                    }
+                }
+            }
+        ],
+        beforeRetry: [
+            ({error, retryCount}) => {
+                // Observable in beforeRetry hooks
+                if (isForceRetryError(error)) {
+                    console.log(`Forced retry #${retryCount}: ${error.message}`);
+                    // Example output: "Forced retry #1: Forced retry: RATE_LIMIT"
+                }
+            }
+        ]
+    }
+});
+
+const response = await api.get('https://example.com/api');
+```
+
+#### Example
+
+```
+import ky, {isForceRetryError} from 'ky';
+
+const api = ky.extend({
+    hooks: {
+        afterResponse: [
+            async (request, options, response) => {
+                // Retry based on response body content
+                if (response.status === 200) {
+                    const data = await response.clone().json();
+
+                    // Simple retry with default delay
+                    if (data.error?.code === 'TEMPORARY_ERROR') {
+                        return ky.retry();
+                    }
+
+                    // Retry with custom delay from API response
+                    if (data.error?.code === 'RATE_LIMIT') {
+                        return ky.retry({
+                            delay: data.error.retryAfter * 1000,
+                            code: 'RATE_LIMIT'
+                        });
+                    }
+                }
+            }
+        ],
+        beforeRetry: [
+            ({error, retryCount}) => {
+                // Observable in beforeRetry hooks
+                if (isForceRetryError(error)) {
+                    console.log(`Forced retry #${retryCount}: ${error.message}`);
+                    // Example output: "Forced retry #1: Forced retry: RATE_LIMIT"
+                }
+            }
+        ]
+    }
+});
+
+const response = await api.get('https://example.com/api');
+```
+
+#### Inherited from
+
+```ts
+HttpClientBase.retry;
+```
+
+---
+
 ### stop
 
 ```ts
 stop: typeof stop;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/http-client-base.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L34)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L35)
 
 A `Symbol` that can be returned by a `beforeRetry` hook to stop the retry. This will also short circuit the remaining `beforeRetry` hooks.
 
@@ -347,7 +501,7 @@ HttpClientBase.stop;
 extend(options: Options | (parentOptions: Options) => Options): HttpClientBase<Readonly<RequiredComerceHttpClientConfig>>;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/http-client-base.ts:65](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L65)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L67)
 
 Extends the current HTTP client instance with the given options.
 
@@ -375,7 +529,7 @@ HttpClientBase.extend;
 protected setHttpClient(httpClient: KyInstance): void;
 ```
 
-Defined in: [packages/aio-commerce-lib-api/source/lib/http-client-base.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L50)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:51](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L51)
 
 Sets the HTTP client instance.
 

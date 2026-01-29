@@ -6,7 +6,7 @@ function getConfigurationByKey(
   selector: SelectorBy,
   options?: LibConfigOptions,
 ): Promise<{
-  config: null | ConfigValue;
+  config: ConfigValue | null;
   scope: {
     code: string;
     id: string;
@@ -15,7 +15,7 @@ function getConfigurationByKey(
 }>;
 ```
 
-Defined in: [packages/aio-commerce-lib-config/source/config-manager.ts:352](https://github.com/adobe/aio-commerce-sdk/blob/81080e04f8384168b56346d297e863e6ad7389cd/packages/aio-commerce-lib-config/source/config-manager.ts#L352)
+Defined in: [aio-commerce-lib-config/source/config-manager.ts:352](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages/aio-commerce-lib-config/source/config-manager.ts#L352)
 
 Gets a specific configuration value by key for a scope.
 
@@ -33,7 +33,7 @@ when you only need one configuration field rather than the entire configuration 
 ## Returns
 
 `Promise`\<\{
-`config`: `null` \| [`ConfigValue`](../type-aliases/ConfigValue.md);
+`config`: [`ConfigValue`](../type-aliases/ConfigValue.md) \| `null`;
 `scope`: \{
 `code`: `string`;
 `id`: `string`;

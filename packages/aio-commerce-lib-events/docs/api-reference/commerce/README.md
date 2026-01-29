@@ -7,6 +7,7 @@
 | [CommerceEventProvider](type-aliases/CommerceEventProvider.md)                                 | Defines the structure of a Commerce event provider.                                                  |
 | [CommerceEventProviderManyResponse](type-aliases/CommerceEventProviderManyResponse.md)         | Defines the fields of many event provider entities returned by the Commerce API.                     |
 | [CommerceEventProviderOneResponse](type-aliases/CommerceEventProviderOneResponse.md)           | Defines the fields of an event provider entity returned by the Commerce API.                         |
+| [CommerceEventsApiClient](type-aliases/CommerceEventsApiClient.md)                             | An API Client for the Commerce Events API.                                                           |
 | [CommerceEventSubscription](type-aliases/CommerceEventSubscription.md)                         | Defines the structure of a Commerce event subscription.                                              |
 | [CommerceEventSubscriptionField](type-aliases/CommerceEventSubscriptionField.md)               | Defines the structure of a field in a Commerce event subscription.                                   |
 | [CommerceEventSubscriptionManyResponse](type-aliases/CommerceEventSubscriptionManyResponse.md) | Defines the fields of many event subscription entities returned by the Commerce API.                 |
