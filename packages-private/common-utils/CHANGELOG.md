@@ -1,5 +1,11 @@
 # @aio-commerce-sdk/common-utils
 
+## 0.1.0
+
+### Minor Changes
+
+- [#217](https://github.com/adobe/aio-commerce-sdk/pull/217) [`6063a97`](https://github.com/adobe/aio-commerce-sdk/commit/6063a97299c9b44f663314420b59cee7998b2f89) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Enhanced schema utilities
+
 ## 0.0.2
 
 ### Patch Changes
