@@ -34,7 +34,7 @@
     "#*": "./source/*.ts"
   },
   "dependencies": {
-    "@adobe/aio-commerce-lib-core": "^0.5.1",
+    "@adobe/aio-commerce-lib-core": "workspace:*",
     "yaml": "^2.8.1"
   },
   "devDependencies": {
