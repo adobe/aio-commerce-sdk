@@ -1,5 +1,16 @@
 # @adobe/aio-commerce-lib-api
 
+## 0.6.0
+
+### Minor Changes
+
+- [#220](https://github.com/adobe/aio-commerce-sdk/pull/220) [`43cd7d1`](https://github.com/adobe/aio-commerce-sdk/commit/43cd7d16ae676e59ee501ccbe89a38c20d777740) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - [BREAKING]: Remove transformation utils
+
+### Patch Changes
+
+- Updated dependencies [[`6063a97`](https://github.com/adobe/aio-commerce-sdk/commit/6063a97299c9b44f663314420b59cee7998b2f89)]:
+  - @adobe/aio-commerce-lib-auth@0.8.0
+
 ## 0.5.0
 
 ### Minor Changes
