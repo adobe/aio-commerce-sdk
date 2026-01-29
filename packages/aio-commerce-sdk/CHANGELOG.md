@@ -1,5 +1,19 @@
 # @adobe/aio-commerce-sdk
 
+## 0.7.0
+
+### Minor Changes
+
+- [#144](https://github.com/adobe/aio-commerce-sdk/pull/144) [`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add the new `headers` entrypoint for `core` utilities.
+
+### Patch Changes
+
+- Updated dependencies [[`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312), [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055), [`ed5d4ac`](https://github.com/adobe/aio-commerce-sdk/commit/ed5d4ac86b6fd62129715de7a94c511dd54985e4), [`f2b6f34`](https://github.com/adobe/aio-commerce-sdk/commit/f2b6f34709a5adcca93b852b5855cb6b1c852312), [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055), [`5373ab9`](https://github.com/adobe/aio-commerce-sdk/commit/5373ab9d151ca420df3052d33d163d66af02fe71), [`ac46985`](https://github.com/adobe/aio-commerce-sdk/commit/ac46985186961c65eddc6be3200dbe1e00369055)]:
+  - @adobe/aio-commerce-lib-core@0.6.0
+  - @adobe/aio-commerce-lib-api@0.5.0
+  - @adobe/aio-commerce-lib-events@0.4.0
+  - @adobe/aio-commerce-lib-auth@0.7.0
+
 ## 0.6.4
 
 ### Patch Changes
