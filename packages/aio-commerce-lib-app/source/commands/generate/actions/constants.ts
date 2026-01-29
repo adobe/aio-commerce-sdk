@@ -39,6 +39,10 @@ export const RUNTIME_ACTIONS = [
     name: "get-app-config",
     templateFile: "get-app-config.js.template",
   },
+  {
+    name: "installation",
+    templateFile: "installation.js.template",
+  },
 ];
 
 type ActionConfigOptions = {
@@ -92,6 +96,10 @@ export const EXT_CONFIG: ExtConfig = {
         type: "action",
         impl: `${PACKAGE_NAME}/get-app-config`,
       },
+      {
+        type: "action",
+        impl: `${PACKAGE_NAME}/installation`,
+      },
     ],
   },
 
@@ -101,6 +109,10 @@ export const EXT_CONFIG: ExtConfig = {
         license: "Apache-2.0",
         actions: {
           "get-app-config": createActionConfig("get-app-config"),
+          installation: createActionConfig("installation", {
+            timeout: 600_000, // 10 minutes in milliseconds
+            inputs: COMMERCE_ACTION_INPUTS,
+          }),
         },
       },
     },

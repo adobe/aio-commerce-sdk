@@ -35,6 +35,15 @@ return created({
   body: { message: "Resource created", id: "456" },
   headers: { Location: "/api/resources/456" },
 });
+
+// Accepted response for async processing
+return accepted({
+  body: {
+    message: "Request accepted for processing",
+    jobId: "job-789",
+    statusUrl: "/api/jobs/job-789",
+  },
+});
 ```
 
 Success responses spread the body properties directly into the response object, making them easy to work with. The payload parameter is optional, allowing you to create responses without any body or headers.
@@ -109,10 +118,12 @@ The library provides the following convenience functions:
 
 - `ok(payload?)` - HTTP 200 (Success)
 - `created(payload?)` - HTTP 201 (Created)
+- `accepted(payload?)` - HTTP 202 (Accepted)
 - `badRequest(payload)` - HTTP 400 (Bad Request)
 - `unauthorized(payload)` - HTTP 401 (Unauthorized)
 - `forbidden(payload)` - HTTP 403 (Forbidden)
 - `notFound(payload)` - HTTP 404 (Not Found)
+- `methodNotAllowed(payload)` - HTTP 405 (Method Not Allowed)
 - `internalServerError(payload)` - HTTP 500 (Internal Server Error)
 
 ### Payload Options
@@ -140,7 +151,7 @@ badRequest({ body: { message: "Error", code: "..." }, headers: {...} })
 ok(); // Returns empty success response
 ```
 
-Success presets (`ok`, `created`) accept an optional payload. Error presets require a payload (string or object with `body.message`). All object payloads can include an optional `headers` field.
+Success presets (`ok`, `created`, `accepted`) accept an optional payload. Error presets require a payload (string or object with `body.message`). All object payloads can include an optional `headers` field.
 
 ## Type Discrimination
 
