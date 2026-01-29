@@ -926,7 +926,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         const provider = getForwardedImsAuthProvider({
           from: "params",
           params: {
-            AIO_COMMERCE_IMS_AUTH_TOKEN: "params-token",
+            AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
           },
         });
 
@@ -937,8 +937,8 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         const provider = getForwardedImsAuthProvider({
           from: "params",
           params: {
-            AIO_COMMERCE_IMS_AUTH_TOKEN: "params-token",
-            AIO_COMMERCE_IMS_AUTH_API_KEY: "params-api-key",
+            AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
+            AIO_COMMERCE_AUTH_IMS_API_KEY: "params-api-key",
           },
         });
 
@@ -952,7 +952,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         const provider = getForwardedImsAuthProvider({
           from: "params",
           params: {
-            AIO_COMMERCE_IMS_AUTH_TOKEN: "params-token",
+            AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
           },
         });
 
@@ -979,7 +979,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
             from: "params",
             params: {
               // @ts-expect-error - testing invalid input
-              AIO_COMMERCE_IMS_AUTH_TOKEN: 123,
+              AIO_COMMERCE_AUTH_IMS_TOKEN: 123,
             },
           }),
         ).toThrow(CommerceSdkValidationError);
@@ -989,7 +989,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         const provider = getForwardedImsAuthProvider({
           from: "params",
           params: {
-            AIO_COMMERCE_IMS_AUTH_TOKEN: "params-token",
+            AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
             someOtherParam: "value",
             anotherParam: 123,
           },
@@ -1068,8 +1068,8 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
   describe("forwardImsAuthProviderFromParams", () => {
     test("should forward auth from params object", () => {
       const params = {
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "forwarded-token",
-        AIO_COMMERCE_IMS_AUTH_API_KEY: "forwarded-api-key",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_API_KEY: "forwarded-api-key",
       };
 
       const provider = forwardImsAuthProviderFromParams(params);
@@ -1083,7 +1083,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
 
     test("should work without api key", () => {
       const params = {
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
       };
 
       const provider = forwardImsAuthProviderFromParams(params);
@@ -1102,7 +1102,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
 
     test("should accept Record<string, unknown> with extra properties", () => {
       const params: Record<string, unknown> = {
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "forwarded-token",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
         extraProp: "extra-value",
         numericProp: 42,
       };
@@ -1113,10 +1113,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
   });
 
   describe("forwardImsAuthProvider", () => {
-    test("should forward auth from params when AIO_COMMERCE_IMS_AUTH_TOKEN is present", () => {
+    test("should forward auth from params when AIO_COMMERCE_AUTH_IMS_TOKEN is present", () => {
       const params = {
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "params-token",
-        AIO_COMMERCE_IMS_AUTH_API_KEY: "params-api-key",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
+        AIO_COMMERCE_AUTH_IMS_API_KEY: "params-api-key",
       };
 
       const provider = forwardImsAuthProvider(params);
@@ -1147,7 +1147,7 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
 
     test("should prioritize params token over headers", () => {
       const params = {
-        AIO_COMMERCE_IMS_AUTH_TOKEN: "params-token",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
         __ow_headers: {
           authorization: "Bearer header-token",
         },

@@ -10,7 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+import {
+  forwardImsAuthProvider,
+  resolveAuthParams,
+} from "@adobe/aio-commerce-lib-auth";
 import ky from "ky";
 
 import {
@@ -21,7 +24,10 @@ import { ensureImsScopes } from "#utils/auth/ims-scopes";
 import { optionallyExtendKy } from "#utils/http/ky";
 
 import type { IoEventsHttpClientParamsWithRequiredConfig } from "./http-client";
-import type { IoEventsHttpClientParams } from "./types";
+import type {
+  IoEventsHttpClientParams,
+  ResolveIoEventsHttpClientParamsOptions,
+} from "./types";
 
 const IO_EVENTS_IMS_REQUIRED_SCOPES = ["adobeio_api"];
 
@@ -75,17 +81,26 @@ export function buildIoEventsHttpClient(
  */
 export function resolveIoEventsHttpClientParams(
   params: Record<string, unknown>,
+  options: ResolveIoEventsHttpClientParamsOptions = {},
 ): IoEventsHttpClientParams {
-  const authParams = resolveAuthParams(params);
+  const { tryForwardAuthProvider = false } = options;
+  let clientAuth: IoEventsHttpClientParams["auth"] | undefined;
 
-  if (authParams.strategy !== "ims") {
-    throw new Error(
-      "Resolved incorrect auth parameters for I/O Events. Only IMS auth is supported",
-    );
+  if (tryForwardAuthProvider) {
+    clientAuth = forwardImsAuthProvider(params);
+  } else {
+    const authParams = resolveAuthParams(params);
+    if (authParams.strategy !== "ims") {
+      throw new Error(
+        "Resolved incorrect auth parameters for I/O Events. Only IMS auth is supported",
+      );
+    }
+
+    clientAuth = authParams;
   }
 
   return {
-    auth: authParams,
+    auth: clientAuth,
     config: {
       // This is already optional, so only set if it is provided.
       baseUrl: params.AIO_EVENTS_API_BASE_URL

@@ -36,3 +36,12 @@ export type IoEventsHttpClientParams = {
   /** Additional fetch options to use for the I/O Events HTTP requests. */
   fetchOptions?: Options;
 };
+
+/** Custom options to be taken into account when resolving I/O Events HTTP client parameters. */
+export type ResolveIoEventsHttpClientParamsOptions = {
+  /**
+   * Whether to attempt to forward the IMS auth provider from a pre-existing token or an auth header.
+   * @default false
+   */
+  tryForwardAuthProvider?: boolean;
+};

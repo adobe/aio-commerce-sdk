@@ -27,8 +27,8 @@ import { buildImsHeaders } from "./utils";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { ImsAuthHeaders, ImsAuthProvider } from "./types";
 
-const IMS_AUTH_TOKEN_PARAM = "AIO_COMMERCE_IMS_AUTH_TOKEN";
-const IMS_AUTH_API_KEY_PARAM = "AIO_COMMERCE_IMS_AUTH_API_KEY";
+const IMS_AUTH_TOKEN_PARAM = "AIO_COMMERCE_AUTH_IMS_TOKEN";
+const IMS_AUTH_API_KEY_PARAM = "AIO_COMMERCE_AUTH_IMS_API_KEY";
 
 export const ImsAuthParamsInputSchema = v.looseObject({
   [IMS_AUTH_TOKEN_PARAM]: stringValueSchema(IMS_AUTH_TOKEN_PARAM),
@@ -60,7 +60,7 @@ const ForwardedImsAuthSourceSchema = v.variant("from", [
  *
  * - `headers`: Extract credentials from a raw headers object (e.g. an HTTP request).
  * - `getter`: Use a function that returns IMS auth headers (sync or async).
- * - `params`: Read credentials from a params object using `AIO_COMMERCE_IMS_AUTH_TOKEN` and `AIO_COMMERCE_IMS_AUTH_API_KEY` keys.
+ * - `params`: Read credentials from a params object using `AIO_COMMERCE_AUTH_IMS_TOKEN` and `AIO_COMMERCE_AUTH_IMS_API_KEY` keys.
  */
 export type ForwardedImsAuthSource = v.InferOutput<
   typeof ForwardedImsAuthSourceSchema
@@ -75,7 +75,7 @@ export type ForwardedImsAuthSource = v.InferOutput<
  * @throws {CommerceSdkValidationError} If the source object is invalid.
  * @throws {CommerceSdkValidationError} If `from: "headers"` is used and the `Authorization` header is missing.
  * @throws {CommerceSdkValidationError} If `from: "headers"` is used and the `Authorization` header is not in Bearer token format.
- * @throws {CommerceSdkValidationError} If `from: "params"` is used and `AIO_COMMERCE_IMS_AUTH_TOKEN` is missing or empty.
+ * @throws {CommerceSdkValidationError} If `from: "params"` is used and `AIO_COMMERCE_AUTH_IMS_TOKEN` is missing or empty.
  *
  * @example
  * ```typescript
@@ -96,7 +96,7 @@ export type ForwardedImsAuthSource = v.InferOutput<
  *   },
  * });
  *
- * // From a params object (using AIO_COMMERCE_IMS_AUTH_TOKEN and AIO_COMMERCE_IMS_AUTH_API_KEY keys)
+ * // From a params object (using AIO_COMMERCE_AUTH_IMS_TOKEN and AIO_COMMERCE_AUTH_IMS_API_KEY keys)
  * const provider3 = getForwardedImsAuthProvider({
  *   from: "params",
  *   params: actionParams,
@@ -215,13 +215,13 @@ export function forwardImsAuthProviderFromRequest(
  *
  * This is a convenience wrapper around {@link getForwardedImsAuthProvider} for the common case
  * of forwarding credentials from runtime action parameters. It reads:
- * - `AIO_COMMERCE_IMS_AUTH_TOKEN` for the access token (required)
- * - `AIO_COMMERCE_IMS_AUTH_API_KEY` for the API key (optional)
+ * - `AIO_COMMERCE_AUTH_IMS_TOKEN` for the access token (required)
+ * - `AIO_COMMERCE_AUTH_IMS_API_KEY` for the API key (optional)
  *
  * @param params The params object containing the authentication credentials.
  * @returns An {@link ImsAuthProvider} instance that returns the access token and headers from the params.
  *
- * @throws {CommerceSdkValidationError} If `AIO_COMMERCE_IMS_AUTH_TOKEN` is not set or is empty.
+ * @throws {CommerceSdkValidationError} If `AIO_COMMERCE_AUTH_IMS_TOKEN` is not set or is empty.
  *
  * @example
  * ```typescript
@@ -229,7 +229,7 @@ export function forwardImsAuthProviderFromRequest(
  *
  * // In an Adobe I/O Runtime action
  * async function main(params) {
- *   // params contains: { AIO_COMMERCE_IMS_AUTH_TOKEN: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..." }
+ *   // params contains: { AIO_COMMERCE_AUTH_IMS_TOKEN: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..." }
  *   const authProvider = forwardImsAuthProviderFromParams(params);
  *
  *   // Get the access token
@@ -239,7 +239,7 @@ export function forwardImsAuthProviderFromRequest(
  *   const headers = await authProvider.getHeaders();
  *   // {
  *   //   Authorization: "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...",
- *   //   "x-api-key": "my-api-key" // Only if AIO_COMMERCE_IMS_AUTH_API_KEY is set
+ *   //   "x-api-key": "my-api-key" // Only if AIO_COMMERCE_AUTH_IMS_API_KEY is set
  *   // }
  * }
  * ```
@@ -250,7 +250,7 @@ export function forwardImsAuthProviderFromParams(
   const validatedParams = parseOrThrow(
     ImsAuthParamsInputSchema,
     params,
-    "Missing AIO_COMMERCE_IMS_AUTH_TOKEN in params",
+    "Missing AIO_COMMERCE_AUTH_IMS_TOKEN in params",
   );
   return getForwardedImsAuthProvider({
     from: "params",
@@ -262,14 +262,14 @@ export function forwardImsAuthProviderFromParams(
  * Creates an {@link ImsAuthProvider} by forwarding authentication credentials from runtime action parameters.
  *
  * This function automatically detects the source of credentials by trying multiple strategies in order:
- * 1. **Params token** - Looks for `AIO_COMMERCE_IMS_AUTH_TOKEN` (and optionally `AIO_COMMERCE_IMS_AUTH_API_KEY`) in the params object
+ * 1. **Params token** - Looks for `AIO_COMMERCE_AUTH_IMS_TOKEN` (and optionally `AIO_COMMERCE_AUTH_IMS_API_KEY`) in the params object
  * 2. **HTTP headers** - Falls back to extracting the `Authorization` header from `__ow_headers`
  *
  * Use this function when building actions that receive authenticated requests and need to forward
  * those credentials to downstream services (proxy pattern).
  *
  * @param params The runtime action parameters object. Can contain either:
- *   - `AIO_COMMERCE_IMS_AUTH_TOKEN` and optionally `AIO_COMMERCE_IMS_AUTH_API_KEY` for direct token forwarding
+ *   - `AIO_COMMERCE_AUTH_IMS_TOKEN` and optionally `AIO_COMMERCE_AUTH_IMS_API_KEY` for direct token forwarding
  *   - `__ow_headers` with an `Authorization` header for HTTP request forwarding
  * @returns An {@link ImsAuthProvider} instance that returns the forwarded access token and headers.
  *
@@ -321,7 +321,7 @@ export function forwardImsAuthProvider(
 
   throw new Error(
     `Can't forward IMS authentication from the given params. ` +
-      "Make sure your params contain an AIO_COMMERCE_IMS_AUTH_TOKEN input " +
+      "Make sure your params contain an AIO_COMMERCE_AUTH_IMS_TOKEN input " +
       "or an Authorization header with an IMS token.",
   );
 }
