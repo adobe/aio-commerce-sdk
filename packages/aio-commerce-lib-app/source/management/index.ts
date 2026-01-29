@@ -20,6 +20,11 @@
 export {
   createInstallationPlan,
   createLibStateStore,
+  isCompletedState,
+  isFailedState,
+  isInProgressState,
+  isPendingState,
+  isSucceededState,
   runInstallation,
 } from "./installation/workflow";
 

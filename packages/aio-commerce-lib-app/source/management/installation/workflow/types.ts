@@ -57,35 +57,105 @@ export type StepStatus = {
   children: StepStatus[];
 };
 
-/** Data collected during installation, keyed by step path. */
+/** Data collected during installation as a nested structure following step paths. */
 export type InstallationData = {
-  /** Step results keyed by path (e.g., "eventing.commerce.providers"). */
-  [pathKey: string]: unknown;
+  [key: string]: unknown | InstallationData;
 };
 
-/** The full installation state (persisted and returned by status endpoints). */
-export type InstallationState = {
+/** Base properties shared by all installation states. */
+type InstallationStateBase = {
   /** Unique installation identifier. */
   installationId: string;
-
-  /** ISO timestamp when installation started. */
-  startedAt: string;
-
-  /** ISO timestamp when installation completed (success or failure). */
-  completedAt?: string;
-
-  /** Overall installation status. */
-  status: InstallationStatus;
 
   /** Root of the step status tree. */
   steps: StepStatus[];
 
   /** Results from executed leaf steps, keyed by path. */
   data: InstallationData;
-
-  /** Error information if installation failed. */
-  error: InstallationError | null;
 };
+
+/** Installation state when pending (not yet started). */
+export type PendingInstallationState = InstallationStateBase & {
+  status: "pending";
+};
+
+/** Installation state when in progress. */
+export type InProgressInstallationState = InstallationStateBase & {
+  status: "in-progress";
+
+  /** ISO timestamp when installation started. */
+  startedAt: string;
+};
+
+/** Installation state when completed successfully. */
+export type SucceededInstallationState = InstallationStateBase & {
+  status: "succeeded";
+
+  /** ISO timestamp when installation started. */
+  startedAt: string;
+
+  /** ISO timestamp when installation completed. */
+  completedAt: string;
+};
+
+/** Installation state when failed. */
+export type FailedInstallationState = InstallationStateBase & {
+  status: "failed";
+
+  /** ISO timestamp when installation started. */
+  startedAt: string;
+
+  /** ISO timestamp when installation failed. */
+  completedAt: string;
+
+  /** Error information about the failure. */
+  error: InstallationError;
+};
+
+/**
+ * The full installation state (persisted and returned by status endpoints).
+ * Discriminated union by `status` field.
+ */
+export type InstallationState =
+  | PendingInstallationState
+  | InProgressInstallationState
+  | SucceededInstallationState
+  | FailedInstallationState;
+
+/** Type guard for pending installation state. */
+export function isPendingState(
+  state: InstallationState,
+): state is PendingInstallationState {
+  return state.status === "pending";
+}
+
+/** Type guard for in-progress installation state. */
+export function isInProgressState(
+  state: InstallationState,
+): state is InProgressInstallationState {
+  return state.status === "in-progress";
+}
+
+/** Type guard for succeeded installation state. */
+export function isSucceededState(
+  state: InstallationState,
+): state is SucceededInstallationState {
+  return state.status === "succeeded";
+}
+
+/** Type guard for failed installation state. */
+export function isFailedState(
+  state: InstallationState,
+): state is FailedInstallationState {
+  return state.status === "failed";
+}
+
+/** Type guard for completed installation state (succeeded or failed). */
+export function isCompletedState(
+  state: InstallationState,
+): state is SucceededInstallationState | FailedInstallationState {
+  return state.status === "succeeded" || state.status === "failed";
+}
 
 /** Interface for persisting installation state. */
 export interface InstallationStateStore {
@@ -98,7 +168,7 @@ export type InstallationPlanStep = {
   /** Step name. */
   name: string;
 
-  /** Step metadata for UI display. */
+  /** Step metadata */
   meta: StepMeta;
 
   /** Child steps (empty for leaf steps). */

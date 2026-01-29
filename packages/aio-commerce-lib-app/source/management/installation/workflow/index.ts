@@ -20,6 +20,13 @@ export {
   isLeafStep,
 } from "./step";
 export { createLibStateStore } from "./storage/lib-state";
+export {
+  isCompletedState,
+  isFailedState,
+  isInProgressState,
+  isPendingState,
+  isSucceededState,
+} from "./types";
 
 export type {
   InstallationHooks,
@@ -46,6 +53,8 @@ export type {
 export type { LibStateStoreOptions } from "./storage/lib-state";
 export type {
   ExecutionStatus,
+  FailedInstallationState,
+  InProgressInstallationState,
   InstallationData,
   InstallationError,
   InstallationPlan,
@@ -53,5 +62,7 @@ export type {
   InstallationState,
   InstallationStateStore,
   InstallationStatus,
+  PendingInstallationState,
   StepStatus,
+  SucceededInstallationState,
 } from "./types";
