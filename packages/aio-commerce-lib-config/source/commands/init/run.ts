@@ -20,7 +20,6 @@ import { consola } from "consola";
 import {
   ensureAppConfig,
   ensureCommerceAppConfig,
-  ensureEnvFile,
   ensureInstallYaml,
   ensurePackageJsonScript,
   installDependencies,
@@ -50,7 +49,6 @@ export async function run() {
       makeStep("runGeneration", runGeneration),
       makeStep("ensureAppConfig", ensureAppConfig),
       makeStep("ensureInstallYaml", ensureInstallYaml),
-      makeStep("ensureEnvFile", ensureEnvFile),
     ];
 
     for (const step of steps) {
