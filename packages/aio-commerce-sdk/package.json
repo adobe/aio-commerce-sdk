@@ -85,6 +85,7 @@
   ],
   "scripts": {
     "build": "tsdown",
+    "pack": "pnpm pack",
     "publint": "publint",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
@@ -105,6 +106,11 @@
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*"
+  },
+  "lint-staged": {
+    "*.{ts,d.ts,d.cts,d.mts,tsx}": [
+      "pnpm run typecheck --filter @adobe/aio-commerce-sdk"
+    ]
   },
   "sideEffects": false
 }

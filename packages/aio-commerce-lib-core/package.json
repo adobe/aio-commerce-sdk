@@ -62,6 +62,7 @@
   "scripts": {
     "prepublishOnly": "pnpm run docs",
     "build": "tsdown",
+    "pack": "pnpm pack",
     "publint": "publint",
     "docs": "typedoc && prettier --write '**/*.md'",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
@@ -87,6 +88,11 @@
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "@aio-commerce-sdk/config-vitest": "workspace:*"
+  },
+  "lint-staged": {
+    "*.{ts,d.ts,d.cts,d.mts,tsx}": [
+      "pnpm run typecheck --filter @adobe/aio-commerce-lib-core"
+    ]
   },
   "sideEffects": false
 }
