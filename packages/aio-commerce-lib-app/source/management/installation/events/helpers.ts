@@ -471,3 +471,12 @@ function toEventSpec(
 function getNamespacedEvent(metadata: ApplicationMetadata, name: string) {
   return `${metadata.id}.${name}`;
 }
+
+/**
+ * Creates a fully qualified event name for Adobe Commerce events.
+ * @param appId - The application ID
+ * @param event - The Commerce event
+ */
+export function getEventName(appId: string, event: CommerceEvent) {
+  return `com.adobe.commerce.${appId}.${event.name}`;
+}
