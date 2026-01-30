@@ -279,7 +279,7 @@ export async function unsyncCommerceScopes(): Promise<UnsyncCommerceScopeResultT
   const COMMERCE_SCOPE_CODE = "commerce";
   const scopeTree = await getPersistedScopeTree(DEFAULT_NAMESPACE);
 
-  if (!scopeTree.some(scope => scope.code === COMMERCE_SCOPE_CODE)) {
+  if (!scopeTree.some((scope) => scope.code === COMMERCE_SCOPE_CODE)) {
     return UnsyncCommerceScopeResult.NotFound;
   }
 
