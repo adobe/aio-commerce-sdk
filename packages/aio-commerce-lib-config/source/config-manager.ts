@@ -285,7 +285,7 @@ export async function unsyncCommerceScopes(): Promise<UnsyncCommerceScopeResultT
 
   // Remove 'commerce' scope
   const updatedScopeTree = scopeTree.filter(
-    (scope) => scope.code !== COMMERCE_SCOPE_CODE,
+    scope => scope.code !== COMMERCE_SCOPE_CODE,
   );
 
   // Save updated scope tree
