@@ -68,6 +68,12 @@ export const commerceEventsStep = defineLeafStep({
         existingIoEventsData,
       );
 
+    createCommerceSubscriptions(
+      context,
+      { metadata: config.metadata, eventSources: config.eventing.commerce },
+      providers,
+    );
+
       stepData.push({
         provider: {
           config: provider,

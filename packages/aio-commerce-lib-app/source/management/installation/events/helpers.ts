@@ -36,7 +36,13 @@ import type {
   OnboardIoEventsParams,
 } from "./types";
 import type { EventsExecutionContext, ExistingIoEventsData } from "./utils";
-
+import type {
+  CommerceEvent,
+  CommerceEventSource,
+  EventProvider,
+} from "#config/schema/eventing";
+import type { ApplicationMetadata } from "#config/schema/metadata";
+import type { EventsExecutionContext } from "./utils";
 /**
  * Creates an event provider if it does not already exist.
  * @param params - The parameters necessary to create the provider.
@@ -258,9 +264,49 @@ export function configureCommerce(context: EventsExecutionContext) {
   return { commerceConfigured: true };
 }
 
-export function createCommerceSubscriptions(context: EventsExecutionContext) {
-  const { logger } = context;
+export function createCommerceSubscriptions(
+  context: EventsExecutionContext,
+  config: {
+    metadata: ApplicationMetadata;
+    eventSources: CommerceEventSource[];
+  },
+  providers: ReturnType<typeof createProviders>,
+) {
+  const { logger, commerceEventsClient } = context;
+  const { metadata, eventSources } = config;
   logger.info("Creating event subscriptions in Commerce");
+
+  //TODO: map providers by an instance id for easy lookup
+  const providersMap = new Map(providers.map((p) => [p.providerId, p]));
+
+  for (const source of eventSources) {
+    //TODO: use the instance id or similar to lookup the provider created earlier
+    const instanceId = source.provider.label;
+    const provider = providersMap.get(instanceId);
+
+    for (const event of source.events) {
+      const namespacedEventName = getEventName(metadata.id, event);
+
+      logger.info(
+        `Creating subscription for event: ${namespacedEventName} with provider: ${provider?.providerId}`,
+      );
+
+      const eventSpec = {
+        name: namespacedEventName,
+        parent: event.name,
+        fields: event.fields.map((field) => ({ name: field })),
+        providerId: instanceId,
+      };
+
+      logger.info(
+        `Creating event subscription for event: ${namespacedEventName}:${event.name}`,
+      );
+
+      commerceEventsClient.createEventSubscription(eventSpec);
+    }
+  }
+
+  logger.info("Created commerce event subscriptions");
 
   return [{ subscriptionId: "TODO" }];
 }
@@ -349,4 +395,13 @@ export async function onboardIoEvents(
     providerData,
     eventsData,
   };
+}
+
+/**
+ * Creates a fully qualified event name for Adobe Commerce events.
+ * @param appId - The application ID
+ * @param event - The Commerce event
+ */
+export function getEventName(appId: string, event: CommerceEvent) {
+  return `com.adobe.commerce.${appId}.${event.name}`;
 }
