@@ -59,8 +59,9 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsdown",
     "publint": "publint",
+    "build": "tsdown",
+    "pack": "pnpm pack",
     "docs": "typedoc && prettier --write '**/*.md'",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
@@ -88,6 +89,11 @@
     "@aio-commerce-sdk/config-vitest": "workspace:*",
     "@aio-commerce-sdk/common-utils": "workspace:*",
     "msw": "^2.11.1"
+  },
+  "lint-staged": {
+    "*.{ts,d.ts,d.cts,d.mts,tsx}": [
+      "pnpm run typecheck --filter @adobe/aio-commerce-lib-events"
+    ]
   },
   "sideEffects": false
 }
