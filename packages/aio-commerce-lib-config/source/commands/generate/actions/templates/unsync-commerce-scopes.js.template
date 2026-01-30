@@ -40,18 +40,10 @@ export async function main(params) {
     const result = await unsyncCommerceScopes();
 
     if (result === UnsyncCommerceScopeResult.NotFound) {
-      return ok({
-        body: {
-          message: "Commerce scope not found, already removed",
-        },
-      });
+      return ok("Commerce scope not found, already removed");
     }
 
-      return ok({
-        body: {
-          message: "Commerce scope removed successfully",
-        },
-      });
+    return ok("Commerce scope removed successfully");
   } catch (error) {
     logger.error(`Error unsyncing commerce scopes: ${inspect(error)}`);
 
