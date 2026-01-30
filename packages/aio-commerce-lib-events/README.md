@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-core`
+# `@adobe/aio-commerce-lib-events`
 
 > [!WARNING]
 > This package is a work in progress and is not yet ready for use yet. You may be able to install it, but if you do, expect breaking changes.

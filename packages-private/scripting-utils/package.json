@@ -47,5 +47,10 @@
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "@aio-commerce-sdk/config-vitest": "workspace:*"
   },
+  "lint-staged": {
+    "*.{ts,d.ts,d.cts,d.mts,tsx}": [
+      "pnpm run typecheck --filter @aio-commerce-sdk/scripting-utils"
+    ]
+  },
   "sideEffects": false
 }
