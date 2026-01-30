@@ -13,17 +13,21 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  accepted,
   badRequest,
   created,
   forbidden,
+  HTTP_ACCEPTED,
   HTTP_BAD_REQUEST,
   HTTP_CREATED,
   HTTP_FORBIDDEN,
   HTTP_INTERNAL_SERVER_ERROR,
+  HTTP_METHOD_NOT_ALLOWED,
   HTTP_NOT_FOUND,
   HTTP_OK,
   HTTP_UNAUTHORIZED,
   internalServerError,
+  methodNotAllowed,
   notFound,
   ok,
   unauthorized,
@@ -34,10 +38,12 @@ describe("responses/presets", () => {
     it("should export correct HTTP status codes", () => {
       expect(HTTP_OK).toBe(200);
       expect(HTTP_CREATED).toBe(201);
+      expect(HTTP_ACCEPTED).toBe(202);
       expect(HTTP_BAD_REQUEST).toBe(400);
       expect(HTTP_UNAUTHORIZED).toBe(401);
       expect(HTTP_FORBIDDEN).toBe(403);
       expect(HTTP_NOT_FOUND).toBe(404);
+      expect(HTTP_METHOD_NOT_ALLOWED).toBe(405);
       expect(HTTP_INTERNAL_SERVER_ERROR).toBe(500);
     });
   });
@@ -93,6 +99,39 @@ describe("responses/presets", () => {
         type: "success",
         statusCode: 201,
         body: { message: "Resource created successfully" },
+      });
+    });
+  });
+
+  describe("accepted (202)", () => {
+    it("should create a 202 Accepted success response", () => {
+      const result = accepted({
+        body: { message: "Request accepted for processing" },
+      });
+
+      expect(result).toEqual({
+        type: "success",
+        statusCode: 202,
+        body: { message: "Request accepted for processing" },
+      });
+    });
+
+    it("should accept string shorthand", () => {
+      const result = accepted("Request accepted for processing");
+
+      expect(result).toEqual({
+        type: "success",
+        statusCode: 202,
+        body: { message: "Request accepted for processing" },
+      });
+    });
+
+    it("should create response without payload", () => {
+      const result = accepted();
+
+      expect(result).toEqual({
+        type: "success",
+        statusCode: 202,
       });
     });
   });
@@ -187,6 +226,38 @@ describe("responses/presets", () => {
           statusCode: 404,
           body: {
             message: "Resource not found",
+          },
+        },
+      });
+    });
+  });
+
+  describe("methodNotAllowed (405)", () => {
+    it("should create a 405 Method Not Allowed error response", () => {
+      const result = methodNotAllowed({
+        body: { message: "Method not allowed" },
+      });
+
+      expect(result).toEqual({
+        type: "error",
+        error: {
+          statusCode: 405,
+          body: {
+            message: "Method not allowed",
+          },
+        },
+      });
+    });
+
+    it("should accept string shorthand", () => {
+      const result = methodNotAllowed("Method not allowed");
+
+      expect(result).toEqual({
+        type: "error",
+        error: {
+          statusCode: 405,
+          body: {
+            message: "Method not allowed",
           },
         },
       });
