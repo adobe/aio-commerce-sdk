@@ -45,6 +45,10 @@ export const RUNTIME_ACTIONS: ActionConfig[] = [
     name: "sync-commerce-scopes",
     templateFile: "sync-commerce-scopes.js.template",
   },
+  {
+    name: "unsync-commerce-scopes",
+    templateFile: "unsync-commerce-scopes.js.template",
+  },
 ];
 
 export const EXT_CONFIG: ExtConfig = {
