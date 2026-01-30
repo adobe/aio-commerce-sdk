@@ -62,7 +62,12 @@ export const commerceEventsStep = defineLeafStep({
     const registrations = createRegistrations(context);
 
     configureCommerce(context);
-    createCommerceSubscriptions(context);
+
+    createCommerceSubscriptions(
+      context,
+      { metadata: config.metadata, eventSources: config.eventing.commerce },
+      providers,
+    );
 
     return { providers, metadata, registrations };
   },
