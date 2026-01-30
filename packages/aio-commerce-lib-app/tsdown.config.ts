@@ -14,7 +14,11 @@ import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
 import { mergeConfig } from "tsdown";
 
 export default mergeConfig(baseConfig, {
-  entry: ["./source/config/index.ts", "./source/commands/index.ts"],
+  entry: [
+    "./source/config/index.ts",
+    "./source/commands/index.ts",
+    "./source/management/index.ts",
+  ],
   copy: [
     {
       from: "./source/commands/generate/actions/templates",
@@ -26,7 +30,7 @@ export default mergeConfig(baseConfig, {
     },
   ],
 
-  // These packages are private and need to be bundled as no-external dependencies.
+  // This package is private and needs to be bundled as a no-external dependency.
   noExternal: [
     "@aio-commerce-sdk/scripting-utils",
     "@aio-commerce-sdk/common-utils",

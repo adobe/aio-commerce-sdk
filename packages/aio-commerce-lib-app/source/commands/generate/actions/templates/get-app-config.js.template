@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -15,12 +15,15 @@
 
 import util from "node:util";
 
-import { readBundledCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
+import { validateCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
 import {
   internalServerError,
   ok,
 } from "@adobe/aio-commerce-sdk/core/responses";
 import AioLogger from "@adobe/aio-lib-core-logging";
+
+// The manifest is always at this relative constant path from the action.
+import commerceAppManifest from "../../app.commerce.manifest.json" with { type: "json" };
 
 // Shorthand to inspect an object.
 const inspect = (obj) => util.inspect(obj, { depth: null });
@@ -29,25 +32,23 @@ const inspect = (obj) => util.inspect(obj, { depth: null });
  * Get the app config.
  * @returns The response object containing the app config.
  */
-export async function main(params) {
+export function main(params) {
   const logger = AioLogger("get-app-config", {
     level: params.LOG_LEVEL || "info",
   });
 
   try {
-    logger.debug("Retrieving app config...");
-    const appConfig = await readBundledCommerceAppConfig();
+    logger.debug("Validating app config...");
 
-    logger.debug(
-      "Successfully retrieved and validated the app config",
-    );
+    const appConfig = validateCommerceAppConfig(commerceAppManifest);
+    logger.debug("Successfully validated the app config");
 
     return ok({
       body: appConfig,
     });
   } catch (error) {
     logger.error(
-      `Something wen't wrong while retrieving app config: ${inspect(error)}`,
+      `Something went wrong while validating app config: ${inspect(error)}`,
     );
 
     return internalServerError({
@@ -56,6 +57,6 @@ export async function main(params) {
         details: error instanceof Error ? error.message : "Unknown error",
         message: "An internal server error occurred",
       },
-    }); 
+    });
   }
 }
