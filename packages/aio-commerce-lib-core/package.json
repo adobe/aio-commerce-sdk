@@ -43,6 +43,7 @@
     }
   },
   "exports": {
+    "./actions": "./source/actions/index.ts",
     "./error": "./source/error/index.ts",
     "./headers": "./source/headers/index.ts",
     "./params": "./source/params/index.ts",
