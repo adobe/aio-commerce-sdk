@@ -451,7 +451,13 @@ export function defineRoute<
   TBodySchema extends StandardSchemaV1 | undefined = undefined,
   TQuerySchema extends StandardSchemaV1 | undefined = undefined,
 >(
-  config: RouteConfig<string, TParamsSchema, TBodySchema, TQuerySchema, TContext>,
+  config: RouteConfig<
+    string,
+    TParamsSchema,
+    TBodySchema,
+    TQuerySchema,
+    TContext
+  >,
 ): RouteConfig<string, TParamsSchema, TBodySchema, TQuerySchema, TContext> {
   return config;
 }

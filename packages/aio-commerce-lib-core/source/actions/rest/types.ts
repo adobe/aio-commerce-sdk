@@ -167,13 +167,12 @@ type MissingPathParams<TPattern extends string, TSchemaOutput> = Exclude<
 type ValidParamsSchema<
   TPattern extends string,
   TParamsSchema extends StandardSchemaV1,
-> =
-  SchemaCoversPathParams<
-    ExtractParams<TPattern>,
-    StandardSchemaV1.InferOutput<TParamsSchema>
-  > extends true
-    ? TParamsSchema
-    : `Error: Schema is missing path parameter(s): ${MissingPathParams<TPattern, StandardSchemaV1.InferOutput<TParamsSchema>> & string}`;
+> = SchemaCoversPathParams<
+  ExtractParams<TPattern>,
+  StandardSchemaV1.InferOutput<TParamsSchema>
+> extends true
+  ? TParamsSchema
+  : `Error: Schema is missing path parameter(s): ${MissingPathParams<TPattern, StandardSchemaV1.InferOutput<TParamsSchema>> & string}`;
 
 /**
  * Route configuration with type inference from schemas and context.
