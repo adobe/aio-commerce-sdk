@@ -79,8 +79,10 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@standard-schema/spec": "^1.0.0",
     "ansis": "^4.1.0",
     "camelcase": "^8.0.0",
+    "regexparam": "^3.0.0",
     "valibot": "^1.1.0"
   },
   "devDependencies": {
