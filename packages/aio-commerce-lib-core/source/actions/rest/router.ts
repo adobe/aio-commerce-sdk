@@ -27,7 +27,6 @@ import type {
   BaseContext,
   CompiledRoute,
   ContextBuilder,
-  FullContext,
   RouteConfig,
   RouteResponse,
 } from "./types";
@@ -219,18 +218,18 @@ export class Router {
   /**
    * Builds the full context by running all context builders.
    */
-  private async buildContext(args: RuntimeActionParams): Promise<FullContext> {
-    const base: BaseContext = { raw: args };
-    let extended: Record<string, unknown> = {};
+  private async buildContext(args: RuntimeActionParams): Promise<BaseContext> {
+    // biome-ignore lint/suspicious/noExplicitAny: Runtime context building requires dynamic typing
+    let context: any = { raw: args };
 
     for (const builder of this.contextBuilders) {
-      const result = await builder(base);
+      const result = await builder(context);
       if (result) {
-        extended = { ...extended, ...result };
+        context = { ...context, ...result };
       }
     }
 
-    return { ...base, ...extended } as FullContext;
+    return context as BaseContext;
   }
 
   /**
@@ -296,7 +295,7 @@ export class Router {
     headers: Record<string, string>,
     method: HttpMethod,
     path: string,
-    context: FullContext,
+    context: BaseContext,
   ): Promise<RouteResponse | null> {
     const params: Record<string, string> = {};
     route.keys.forEach((key, i) => {
@@ -334,15 +333,17 @@ export class Router {
     }
 
     try {
-      return await route.handler({
-        params: paramsResult.data,
-        body: bodyResult.data,
-        query: queryResult.data,
-        headers,
-        method,
-        path,
+      return await route.handler(
+        {
+          params: paramsResult.data,
+          body: bodyResult.data,
+          query: queryResult.data,
+          headers,
+          method,
+          path,
+        },
         context,
-      });
+      );
     } catch (err) {
       console.error("Handler error:", err);
       return internalServerError({
@@ -419,25 +420,38 @@ export class Router {
  * Define a route handler separately from registration.
  * Useful for organizing route handlers in separate files or reusing handlers.
  *
+ * @template TContext - Optional context type for typed context access
+ *
  * @example
  * ```typescript
  * import { object, string } from "valibot";
  *
+ * // Basic usage
  * const getUserById = defineRoute({
  *   params: object({ id: string() }),
  *   handler: (req) => ok({ id: req.params.id })
  * });
  *
+ * // With typed context
+ * interface MyContext extends BaseContext {
+ *   user: { id: string; name: string };
+ * }
+ *
+ * const getMe = defineRoute<MyContext>({
+ *   handler: (req) => ok({ name: req.context.user.name })
+ * });
+ *
  * router.get("/users/:id", getUserById);
+ * router.get("/me", getMe);
  * ```
  */
 export function defineRoute<
-  TPattern extends string,
+  TContext extends BaseContext = BaseContext,
   TParamsSchema extends StandardSchemaV1 | undefined = undefined,
   TBodySchema extends StandardSchemaV1 | undefined = undefined,
   TQuerySchema extends StandardSchemaV1 | undefined = undefined,
 >(
-  config: RouteConfig<TPattern, TParamsSchema, TBodySchema, TQuerySchema>,
-): RouteConfig<TPattern, TParamsSchema, TBodySchema, TQuerySchema> {
+  config: RouteConfig<string, TParamsSchema, TBodySchema, TQuerySchema, TContext>,
+): RouteConfig<string, TParamsSchema, TBodySchema, TQuerySchema, TContext> {
   return config;
 }

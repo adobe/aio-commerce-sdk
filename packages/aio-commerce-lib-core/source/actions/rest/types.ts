@@ -48,17 +48,16 @@ export interface BaseContext {
 }
 
 /**
- * Combined context type - base context merged with user-extended RouteContext.
- */
-export type FullContext = BaseContext & RouteContext;
-
-/**
  * Context builder function type.
- * Receives base context and returns extended context (sync or async).
+ * Receives current context and returns additional context properties (sync or async).
+ *
+ * @template TExisting - The existing context type
+ * @template TNew - The new context properties being added
  */
-export type ContextBuilder = (
-  base: BaseContext,
-) => Promisable<RouteContext | undefined>;
+export type ContextBuilder<
+  TExisting extends BaseContext = BaseContext,
+  TNew extends Record<string, unknown> = Record<string, unknown>,
+> = (ctx: TExisting) => Promisable<TNew | undefined>;
 
 // Extract named :param segments
 type ExtractNamedParams<T extends string> =
@@ -114,9 +113,6 @@ export interface RouteRequest<TParams, TBody, TQuery> {
 
   /** The matched path */
   path: string;
-
-  /** Context object with raw params and user-extended properties */
-  context: FullContext;
 }
 
 /** Internal compiled route representation used by the router. */
@@ -143,6 +139,8 @@ export interface CompiledRoute {
   handler: (
     // biome-ignore lint/suspicious/noExplicitAny: Internal storage needs to accept any route handler signature
     req: RouteRequest<any, any, any>,
+    // biome-ignore lint/suspicious/noExplicitAny: Internal storage needs to accept any context type
+    ctx: any,
   ) => Promisable<RouteResponse>;
 }
 
@@ -178,7 +176,7 @@ type ValidParamsSchema<
     : `Error: Schema is missing path parameter(s): ${MissingPathParams<TPattern, StandardSchemaV1.InferOutput<TParamsSchema>> & string}`;
 
 /**
- * Route configuration with type inference from schemas.
+ * Route configuration with type inference from schemas and context.
  * If schemas are provided, they're used for both validation AND type inference.
  * Otherwise, types are inferred from the path pattern.
  *
@@ -186,12 +184,14 @@ type ValidParamsSchema<
  * @template TParamsSchema - Optional schema for route parameters
  * @template TBodySchema - Optional schema for request body
  * @template TQuerySchema - Optional schema for query parameters
+ * @template TContext - The context type (defaults to BaseContext)
  */
 export type RouteConfig<
-  TPattern extends string,
-  TParamsSchema extends StandardSchemaV1 | undefined,
-  TBodySchema extends StandardSchemaV1 | undefined,
-  TQuerySchema extends StandardSchemaV1 | undefined,
+  TPattern extends string = string,
+  TParamsSchema extends StandardSchemaV1 | undefined = undefined,
+  TBodySchema extends StandardSchemaV1 | undefined = undefined,
+  TQuerySchema extends StandardSchemaV1 | undefined = undefined,
+  TContext extends BaseContext = BaseContext,
 > = {
   /**
    * Optional schema for validating and typing route parameters.
@@ -207,7 +207,7 @@ export type RouteConfig<
   /** Optional schema for validating and typing query parameters */
   query?: TQuerySchema;
 
-  /** Route handler with properly typed request - returns RouteResponse from existing response utilities */
+  /** Route handler with properly typed request and context */
   handler: (
     req: RouteRequest<
       TParamsSchema extends StandardSchemaV1
@@ -220,5 +220,6 @@ export type RouteConfig<
         ? StandardSchemaV1.InferOutput<TQuerySchema>
         : Record<string, string>
     >,
+    ctx: TContext,
   ) => Promisable<RouteResponse>;
 };
