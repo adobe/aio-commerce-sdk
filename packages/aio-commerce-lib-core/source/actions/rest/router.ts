@@ -368,15 +368,16 @@ export class Router {
    */
   public handler() {
     return async (args: RuntimeActionParams): Promise<RouteResponse> => {
-      const method = (args.__ow_method || "get").toUpperCase() as HttpMethod;
-      const path = (args.__ow_path as string) || "/";
-      const headers = (args.__ow_headers as Record<string, string>) || {};
-      const body = parseRequestBody(args.__ow_body);
+      const method = (args.__ow_method ?? "get").toUpperCase() as HttpMethod;
+      const rawPath = (args.__ow_path as string) ?? "/";
+
+      const path = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
+      const headers = (args.__ow_headers as Record<string, string>) ?? {};
+      const body = parseRequestBody(args.__ow_body, args);
       const query = parseQueryParams(args.__ow_query, args);
 
       // Build context from all registered context builders
       const context = await this.buildContext(args);
-
       const matchedMethods: HttpMethod[] = [];
 
       for (const route of this.routes) {

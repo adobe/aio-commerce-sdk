@@ -55,25 +55,60 @@ export async function validateSchema<TInput, TOutput>(
 }
 
 /**
- * Parses a base64-encoded request body from OpenWhisk/Runtime.
- * @param encodedBody - Base64-encoded body string from __ow_body
+ * Parses a request body from OpenWhisk/Runtime.
+ * Handles multiple formats:
+ * - Base64-encoded strings (__ow_body)
+ * - Already-parsed objects
+ * - Body properties mixed into args (web actions with JSON content-type)
+ *
+ * @param owBody - Body from __ow_body (base64 string, JSON string, or object)
+ * @param args - Full args object to extract body from if __ow_body is not present
  *
  * @example
  * ```typescript
- * const body = parseRequestBody(params.__ow_body);
+ * const body = parseRequestBody(params.__ow_body, params);
  * ```
  */
-export function parseRequestBody(encodedBody?: string): unknown {
-  if (!encodedBody) {
-    return {};
+export function parseRequestBody(
+  owBody?: unknown,
+  args?: Record<string, unknown>,
+): unknown {
+  if (owBody) {
+    if (typeof owBody === "object") {
+      return owBody;
+    }
+
+    if (typeof owBody === "string") {
+      try {
+        return JSON.parse(owBody);
+      } catch {
+        // Not valid JSON, try base64 decoding
+      }
+
+      try {
+        const decoded = Buffer.from(owBody, "base64").toString();
+        return JSON.parse(decoded);
+      } catch {
+        // Fall through to args extraction
+      }
+    }
   }
 
-  try {
-    const decoded = Buffer.from(encodedBody, "base64").toString();
-    return JSON.parse(decoded);
-  } catch {
-    return {};
+  // For web actions with JSON content-type, body properties are merged into args
+  // Extract non-__ow_* properties as the body
+  if (args && typeof args === "object") {
+    const body: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(args)) {
+      if (!key.startsWith("__ow_")) {
+        body[key] = value;
+      }
+    }
+
+    return body;
   }
+
+  return {};
 }
 
 /**
