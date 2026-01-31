@@ -12,7 +12,7 @@
 
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { EmptyObject, Promisable, Simplify } from "type-fest";
-import type { HttpMethod } from "#params/types";
+import type { HttpMethod, RuntimeActionParams } from "#params/types";
 import type { ErrorResponse, SuccessResponse } from "#responses/helpers";
 
 /**
@@ -20,6 +20,45 @@ import type { ErrorResponse, SuccessResponse } from "#responses/helpers";
  * Allows both success responses (with any body) and error responses (with message).
  */
 export type RouteResponse = SuccessResponse | ErrorResponse;
+
+/**
+ * Base context interface for route handlers.
+ * This interface can be extended via declaration merging to add custom context properties.
+ *
+ * @example
+ * ```typescript
+ * // Extend the context in your application
+ * declare module "@adobe/aio-commerce-lib-core/actions" {
+ *   interface RouteContext {
+ *     user: { id: string; name: string };
+ *     logger: Logger;
+ *   }
+ * }
+ * ```
+ */
+// biome-ignore lint/suspicious/noEmptyInterface: Intentionally empty for declaration merging
+export interface RouteContext {}
+
+/**
+ * Internal context with raw action params, always available.
+ */
+export interface BaseContext {
+  /** Raw OpenWhisk/Runtime action parameters */
+  raw: RuntimeActionParams;
+}
+
+/**
+ * Combined context type - base context merged with user-extended RouteContext.
+ */
+export type FullContext = BaseContext & RouteContext;
+
+/**
+ * Context builder function type.
+ * Receives base context and returns extended context (sync or async).
+ */
+export type ContextBuilder = (
+  base: BaseContext,
+) => Promisable<RouteContext | undefined>;
 
 // Extract named :param segments
 type ExtractNamedParams<T extends string> =
@@ -75,6 +114,9 @@ export interface RouteRequest<TParams, TBody, TQuery> {
 
   /** The matched path */
   path: string;
+
+  /** Context object with raw params and user-extended properties */
+  context: FullContext;
 }
 
 /** Internal compiled route representation used by the router. */

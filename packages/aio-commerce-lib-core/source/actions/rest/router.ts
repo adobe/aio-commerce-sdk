@@ -23,7 +23,14 @@ import { parseQueryParams, parseRequestBody, validateSchema } from "./utils";
 
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { HttpMethod, RuntimeActionParams } from "#params/types";
-import type { CompiledRoute, RouteConfig, RouteResponse } from "./types";
+import type {
+  BaseContext,
+  CompiledRoute,
+  ContextBuilder,
+  FullContext,
+  RouteConfig,
+  RouteResponse,
+} from "./types";
 
 /**
  * REST router for Adobe I/O Runtime actions.
@@ -34,14 +41,20 @@ import type { CompiledRoute, RouteConfig, RouteResponse } from "./types";
  * const router = new Router();
  *
  * router.get("/users/:id", {
- *   handler: (req) => ok({ id: req.params.id })
+ *   handler: (req) => ok({ id: req.params.id, context: req.context })
  * });
+ *
+ * // Add context builders
+ * router.use(async (base) => ({
+ *   user: await getUser(base.raw.__ow_headers?.authorization),
+ * }));
  *
  * export const main = router.handler();
  * ```
  */
 export class Router {
   private readonly routes: CompiledRoute[] = [];
+  private readonly contextBuilders: ContextBuilder[] = [];
 
   /**
    * Internal method to add a route to the router.
@@ -183,6 +196,44 @@ export class Router {
   }
 
   /**
+   * Register a context builder that runs before route handlers.
+   * Context builders can add properties to the request context.
+   * Multiple builders are executed in order and their results are merged.
+   *
+   * @param builder - Function that receives base context and returns additional context
+   * @returns The router instance for chaining
+   *
+   * @example
+   * ```typescript
+   * router.use(async (base) => ({
+   *   user: await authenticateUser(base.raw.__ow_headers?.authorization),
+   *   logger: createLogger(base.raw),
+   * }));
+   * ```
+   */
+  public use(builder: ContextBuilder): this {
+    this.contextBuilders.push(builder);
+    return this;
+  }
+
+  /**
+   * Builds the full context by running all context builders.
+   */
+  private async buildContext(args: RuntimeActionParams): Promise<FullContext> {
+    const base: BaseContext = { raw: args };
+    let extended: Record<string, unknown> = {};
+
+    for (const builder of this.contextBuilders) {
+      const result = await builder(base);
+      if (result) {
+        extended = { ...extended, ...result };
+      }
+    }
+
+    return { ...base, ...extended } as FullContext;
+  }
+
+  /**
    * Validates and extracts route parameters.
    */
   private async validateParams(
@@ -245,6 +296,7 @@ export class Router {
     headers: Record<string, string>,
     method: HttpMethod,
     path: string,
+    context: FullContext,
   ): Promise<RouteResponse | null> {
     const params: Record<string, string> = {};
     route.keys.forEach((key, i) => {
@@ -289,6 +341,7 @@ export class Router {
         headers,
         method,
         path,
+        context,
       });
     } catch (err) {
       console.error("Handler error:", err);
@@ -320,6 +373,9 @@ export class Router {
       const body = parseRequestBody(args.__ow_body);
       const query = parseQueryParams(args.__ow_query, args);
 
+      // Build context from all registered context builders
+      const context = await this.buildContext(args);
+
       const matchedMethods: HttpMethod[] = [];
 
       for (const route of this.routes) {
@@ -341,6 +397,7 @@ export class Router {
           headers,
           method,
           path,
+          context,
         );
 
         if (response) {
