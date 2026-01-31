@@ -15,6 +15,26 @@
  * @packageDocumentation
  */
 
-// biome-ignore lint/performance/noBarrelFile: export as part of the Public API
+/* biome-ignore-all lint/performance/noBarrelFile: export as part of the Public API */
+
+import { ok } from "#responses/presets";
+import { Router } from "./rest/router";
+export { defineRoute, Router } from "./rest/router";
+
+import * as v from "valibot";
+
+export const router = new Router();
+
+router.get("/test/:id", {
+  params: v.object({ id: v.string() }),
+  handler: (req) => {
+    return ok({
+      body: {
+        message: "Test route successful",
+        receivedId: req.params.id,
+      },
+    });
+  },
+});
 
 export type * from "./rest/types";

@@ -23,8 +23,7 @@ import { parseQueryParams, parseRequestBody, validateSchema } from "./utils";
 
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { HttpMethod, RuntimeActionParams } from "#params/types";
-import type { ActionResponse } from "#responses/helpers";
-import type { CompiledRoute, RouteConfig } from "./types";
+import type { CompiledRoute, RouteConfig, RouteResponse } from "./types";
 
 /**
  * REST router for Adobe I/O Runtime actions.
@@ -62,7 +61,8 @@ export class Router {
       method,
       pattern,
       keys,
-      params: config.params,
+      // Cast needed because config.params type includes compile-time error type
+      params: config.params as StandardSchemaV1 | undefined,
       body: config.body,
       query: config.query,
       handler: config.handler,
@@ -245,7 +245,7 @@ export class Router {
     headers: Record<string, string>,
     method: HttpMethod,
     path: string,
-  ): Promise<ActionResponse | null> {
+  ): Promise<RouteResponse | null> {
     const params: Record<string, string> = {};
     route.keys.forEach((key, i) => {
       params[key] = decodeURIComponent(match[i + 1] || "");
@@ -313,7 +313,7 @@ export class Router {
    * ```
    */
   public handler() {
-    return async (args: RuntimeActionParams): Promise<ActionResponse> => {
+    return async (args: RuntimeActionParams): Promise<RouteResponse> => {
       const method = (args.__ow_method || "get").toUpperCase() as HttpMethod;
       const path = (args.__ow_path as string) || "/";
       const headers = (args.__ow_headers as Record<string, string>) || {};
@@ -356,4 +356,31 @@ export class Router {
       return notFound(`No route matches ${path}`);
     };
   }
+}
+
+/**
+ * Define a route handler separately from registration.
+ * Useful for organizing route handlers in separate files or reusing handlers.
+ *
+ * @example
+ * ```typescript
+ * import { object, string } from "valibot";
+ *
+ * const getUserById = defineRoute({
+ *   params: object({ id: string() }),
+ *   handler: (req) => ok({ id: req.params.id })
+ * });
+ *
+ * router.get("/users/:id", getUserById);
+ * ```
+ */
+export function defineRoute<
+  TPattern extends string,
+  TParamsSchema extends StandardSchemaV1 | undefined = undefined,
+  TBodySchema extends StandardSchemaV1 | undefined = undefined,
+  TQuerySchema extends StandardSchemaV1 | undefined = undefined,
+>(
+  config: RouteConfig<TPattern, TParamsSchema, TBodySchema, TQuerySchema>,
+): RouteConfig<TPattern, TParamsSchema, TBodySchema, TQuerySchema> {
+  return config;
 }

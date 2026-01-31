@@ -13,7 +13,13 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { EmptyObject, Promisable, Simplify } from "type-fest";
 import type { HttpMethod } from "#params/types";
-import type { ActionResponse } from "#responses/helpers";
+import type { ErrorResponse, SuccessResponse } from "#responses/helpers";
+
+/**
+ * Response type for route handlers.
+ * Allows both success responses (with any body) and error responses (with message).
+ */
+export type RouteResponse = SuccessResponse | ErrorResponse;
 
 // Extract named :param segments
 type ExtractNamedParams<T extends string> =
@@ -95,8 +101,39 @@ export interface CompiledRoute {
   handler: (
     // biome-ignore lint/suspicious/noExplicitAny: Internal storage needs to accept any route handler signature
     req: RouteRequest<any, any, any>,
-  ) => Promisable<ActionResponse>;
+  ) => Promisable<RouteResponse>;
 }
+
+/**
+ * Helper type to check if schema output contains all required path params.
+ * Returns `true` if TSchemaOutput has all keys from TPathParams.
+ */
+type SchemaCoversPathParams<TPathParams, TSchemaOutput> =
+  keyof TPathParams extends keyof TSchemaOutput ? true : false;
+
+/**
+ * Extracts the missing keys from the schema compared to path params.
+ */
+type MissingPathParams<TPattern extends string, TSchemaOutput> = Exclude<
+  keyof ExtractParams<TPattern>,
+  keyof TSchemaOutput
+>;
+
+/**
+ * Constraint type for params schema - must cover all path parameters.
+ * If the schema doesn't cover path params, returns a descriptive error type
+ * showing which parameters are missing.
+ */
+type ValidParamsSchema<
+  TPattern extends string,
+  TParamsSchema extends StandardSchemaV1,
+> =
+  SchemaCoversPathParams<
+    ExtractParams<TPattern>,
+    StandardSchemaV1.InferOutput<TParamsSchema>
+  > extends true
+    ? TParamsSchema
+    : `Error: Schema is missing path parameter(s): ${MissingPathParams<TPattern, StandardSchemaV1.InferOutput<TParamsSchema>> & string}`;
 
 /**
  * Route configuration with type inference from schemas.
@@ -114,8 +151,13 @@ export type RouteConfig<
   TBodySchema extends StandardSchemaV1 | undefined,
   TQuerySchema extends StandardSchemaV1 | undefined,
 > = {
-  /** Optional schema for validating and typing route parameters */
-  params?: TParamsSchema;
+  /**
+   * Optional schema for validating and typing route parameters.
+   * If provided, must include all parameters from the path pattern.
+   */
+  params?: TParamsSchema extends StandardSchemaV1
+    ? ValidParamsSchema<TPattern, TParamsSchema>
+    : undefined;
 
   /** Optional schema for validating and typing request body */
   body?: TBodySchema;
@@ -123,7 +165,7 @@ export type RouteConfig<
   /** Optional schema for validating and typing query parameters */
   query?: TQuerySchema;
 
-  /** Route handler with properly typed request - returns ActionResponse from existing response utilities */
+  /** Route handler with properly typed request - returns RouteResponse from existing response utilities */
   handler: (
     req: RouteRequest<
       TParamsSchema extends StandardSchemaV1
@@ -136,5 +178,5 @@ export type RouteConfig<
         ? StandardSchemaV1.InferOutput<TQuerySchema>
         : Record<string, string>
     >,
-  ) => Promisable<ActionResponse>;
+  ) => Promisable<RouteResponse>;
 };
