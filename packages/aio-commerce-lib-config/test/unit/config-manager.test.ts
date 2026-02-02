@@ -15,7 +15,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getConfiguration,
   setConfiguration,
-  UnsyncCommerceScopeResult,
   unsyncCommerceScopes,
 } from "#config-manager";
 import { byCodeAndLevel, byScopeId } from "#config-utils";
@@ -344,7 +343,7 @@ describe("unsyncCommerceScopes", () => {
 
     const result = await unsyncCommerceScopes();
 
-    expect(result).toBe(UnsyncCommerceScopeResult.Ok);
+    expect(result).toBe("ok");
 
     expect(scopeTreeRepository.saveScopeTree).toHaveBeenCalledTimes(1);
     const savedScopeTree = vi.mocked(scopeTreeRepository.saveScopeTree).mock
@@ -365,7 +364,7 @@ describe("unsyncCommerceScopes", () => {
 
     const result = await unsyncCommerceScopes();
 
-    expect(result).toBe(UnsyncCommerceScopeResult.NotFound);
+    expect(result).toBe("not-found");
     expect(scopeTreeRepository.saveScopeTree).not.toHaveBeenCalled();
   });
 
