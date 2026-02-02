@@ -90,8 +90,17 @@
     "@aio-commerce-sdk/config-vitest": "workspace:*"
   },
   "lint-staged": {
+    "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+      "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
+    ],
     "*.{ts,d.ts,d.cts,d.mts,tsx}": [
       "pnpm run typecheck --filter @adobe/aio-commerce-lib-core"
+    ],
+    "*.md": [
+      "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\""
+    ],
+    "*": [
+      "biome check --no-errors-on-unmatched --files-ignore-unknown=true"
     ]
   },
   "sideEffects": false
