@@ -225,37 +225,33 @@ export async function syncCommerceScopes(
   }
 }
 
-export type UnsyncCommerceScopeResult = "ok" | "not-found";
-
 /**
  * Removes the commerce scope from the persisted scope tree.
  *
- * This function will check if a commerce scope exists in the persisted scope tree
- * and remove it if found. Use the returned status to determine the appropriate
- * action or response in your application.
- *
- * @returns Promise resolving to a status indicating whether the scope was found and removed,
+ * @returns Promise resolving to a boolean indicating whether the scope was found and removed,
  *   or if it was already not present.
  *
  * @example
  * ```typescript
- * import { unsyncCommerceScopes, UnsyncCommerceScopeResult } from "@adobe/aio-commerce-lib-config";
+ * import { unsyncCommerceScopes } from "@adobe/aio-commerce-lib-config";
  *
- * const result = await unsyncCommerceScopes();
+ * try {
+ *   const result = await unsyncCommerceScopes();
  *
- * if (result === UnsyncCommerceScopeResult.NotFound) {
- *   console.log("Commerce scope not found, already removed");
- * } else if (result === UnsyncCommerceScopeResult.Ok) {
- *   console.log("Commerce scope removed successfully");
+ *   if (result) {
+ *     console.log("Commerce scope removed successfully");
+ *   }
+ * } catch (error) {
+ *   console.error("Failed to unsync commerce scopes:", error);
  * }
  * ```
  */
-export async function unsyncCommerceScopes(): Promise<UnsyncCommerceScopeResult> {
+export async function unsyncCommerceScopes(): Promise<boolean> {
   const COMMERCE_SCOPE_CODE = "commerce";
   const scopeTree = await getPersistedScopeTree(DEFAULT_NAMESPACE);
 
   if (!scopeTree.some((scope) => scope.code === COMMERCE_SCOPE_CODE)) {
-    return "not-found";
+    return true;
   }
 
   // Remove 'commerce' scope
@@ -266,7 +262,7 @@ export async function unsyncCommerceScopes(): Promise<UnsyncCommerceScopeResult>
   // Save updated scope tree
   await saveScopeTree(DEFAULT_NAMESPACE, updatedScopeTree);
 
-  return "ok";
+  return true;
 }
 
 /**

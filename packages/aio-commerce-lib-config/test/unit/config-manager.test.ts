@@ -343,7 +343,7 @@ describe("unsyncCommerceScopes", () => {
 
     const result = await unsyncCommerceScopes();
 
-    expect(result).toBe("ok");
+    expect(result).toBe(true);
 
     expect(scopeTreeRepository.saveScopeTree).toHaveBeenCalledTimes(1);
     const savedScopeTree = vi.mocked(scopeTreeRepository.saveScopeTree).mock
@@ -364,7 +364,7 @@ describe("unsyncCommerceScopes", () => {
 
     const result = await unsyncCommerceScopes();
 
-    expect(result).toBe("not-found");
+    expect(result).toBe(true);
     expect(scopeTreeRepository.saveScopeTree).not.toHaveBeenCalled();
   });
 
