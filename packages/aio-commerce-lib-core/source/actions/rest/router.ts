@@ -459,6 +459,6 @@ export function defineRoute<
     TQuerySchema,
     TContext
   >,
-): RouteConfig<string, TParamsSchema, TBodySchema, TQuerySchema, TContext> {
+) {
   return config;
 }
