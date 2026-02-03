@@ -36,6 +36,7 @@ export const RUNTIME_ACTIONS: ActionConfig[] = [
   {
     name: "set-configuration",
     templateFile: "set-configuration.js.template",
+    requiresEncryptionKey: true,
   },
   {
     name: "set-custom-scope-tree",

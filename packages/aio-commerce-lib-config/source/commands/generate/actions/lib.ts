@@ -23,6 +23,7 @@ export type ActionConfig = {
   name: string;
   templateFile: string;
   requiresSchema?: boolean;
+  requiresEncryptionKey?: boolean;
 };
 
 export function buildActionDefinition(action: ActionConfig): ActionDefinition {
@@ -40,6 +41,13 @@ export function buildActionDefinition(action: ActionConfig): ActionDefinition {
     def.include = [
       [`${GENERATED_PATH}/${CONFIG_SCHEMA_FILE_NAME}`, `${PACKAGE_NAME}/`],
     ];
+  }
+
+  if (action.requiresEncryptionKey) {
+    def.inputs = {
+      ...def.inputs,
+      CONFIG_ENCRYPTION_KEY: "$CONFIG_ENCRYPTION_KEY",
+    };
   }
 
   return def;
