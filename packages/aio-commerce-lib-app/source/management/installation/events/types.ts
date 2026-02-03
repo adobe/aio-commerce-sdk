@@ -14,6 +14,7 @@ import type {
   EventProviderType,
   IoEventProvider,
 } from "@adobe/aio-commerce-lib-events/io-events";
+import type { ApplicationMetadata } from "#config/index";
 import type {
   CommerceEvent,
   EventProvider,
@@ -33,4 +34,12 @@ export type CreateProviderEventsMetadataParams = {
   type: EventProviderType;
   provider: IoEventProvider;
   event: CommerceEvent | ExternalEvent;
+};
+
+export type OnboardIoEventsParams = {
+  context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
+  provider: EventProvider;
+  events: Array<CommerceEvent | ExternalEvent>;
+  providerType: EventProviderType;
 };

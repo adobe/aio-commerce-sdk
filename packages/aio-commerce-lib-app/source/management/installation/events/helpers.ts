@@ -16,6 +16,7 @@ import {
   COMMERCE_PROVIDER_TYPE,
   findExistingProvider,
   findExistingProviderMetadata,
+  generateInstanceId,
 } from "./utils";
 
 import type {
@@ -25,8 +26,9 @@ import type {
 import type {
   CreateProviderEventsMetadataParams,
   CreateProviderParams,
+  OnboardIoEventsParams,
 } from "./types";
-import type { EventsExecutionContext } from "./utils";
+import type { EventsExecutionContext, ExistingIoEventsData } from "./utils";
 
 /**
  * Creates an event provider if it does not already exist.
@@ -121,7 +123,7 @@ export async function createMetadata(
 
       label: event.label,
       description: event.description,
-      eventCode: `com.adobe.commerce.${event.name}`,
+      eventCode,
     })
     .then((res) => {
       logger.info(
@@ -151,7 +153,13 @@ export async function createOrGetIoProviderEventMetadata(
   const { context, provider, event } = params;
   const { logger } = context;
 
-  const existing = findExistingProviderMetadata(existingData, event.name);
+  // Generate the full event code to search for existing metadata
+  const eventCode =
+    params.type === COMMERCE_PROVIDER_TYPE
+      ? `com.adobe.commerce.${event.name}`
+      : event.name;
+
+  const existing = findExistingProviderMetadata(existingData, eventCode);
   if (existing) {
     logger.info(
       `Event metadata "${event.label}" already exists for provider "${provider.label}" (instance ID: ${provider.instance_id}), skipping creation.`,
@@ -182,4 +190,62 @@ export function createCommerceSubscriptions(context: EventsExecutionContext) {
   logger.info("Creating event subscriptions in Commerce");
 
   return [{ subscriptionId: "TODO" }];
+}
+
+/**
+ * Onboards a single event source to I/O Events by creating/retrieving the provider and its event metadata.
+ * This is the shared logic inside the loop for both commerce and external event installation steps.
+ *
+ * @param params - Configuration for onboarding a single event source
+ * @returns Onboarded event source data with provider and events
+ */
+export async function onboardIoEvents(
+  params: OnboardIoEventsParams,
+  existingData: ExistingIoEventsData,
+) {
+  const { providersWithMetadata } = existingData;
+  const { context, metadata, provider, events, providerType } = params;
+
+  const instanceId = generateInstanceId(metadata, provider);
+  const providerData = await createOrGetProvider(
+    {
+      context,
+      provider: {
+        ...provider,
+        instanceId,
+        type: providerType,
+      },
+    },
+    providersWithMetadata,
+  );
+
+  // Retrieve the existing metadata for this provider, if any.
+  const existingProviderMetadata =
+    providersWithMetadata.find((p) => p.id === providerData.id)?.metadata ?? [];
+
+  // Create a Promise for each event metadata creation.
+  const eventPromises = events.map(async (event) => {
+    const metadata = await createOrGetIoProviderEventMetadata(
+      {
+        context,
+        type: providerType,
+        provider: providerData,
+        event,
+      },
+      existingProviderMetadata,
+    );
+
+    return {
+      config: event,
+      data: {
+        metadata,
+      },
+    };
+  });
+
+  const eventsData = await Promise.all(eventPromises);
+  return {
+    providerData,
+    eventsData,
+  };
 }

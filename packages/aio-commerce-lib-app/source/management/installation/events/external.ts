@@ -12,6 +12,9 @@
 
 import { defineLeafStep } from "#management/installation/workflow/step";
 
+import { onboardIoEvents } from "./helpers";
+import { EXTERNAL_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
+
 import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InferStepOutput } from "#management/installation/workflow/step";
@@ -37,25 +40,41 @@ export function hasExternalEvents(
 export const externalEventsStep = defineLeafStep({
   name: "external",
   meta: {
-    label: "External Events",
+    label: "Configure External Events",
     description: "Sets up I/O Events for external event sources",
   },
 
   when: hasExternalEvents,
-  run: (config, context: EventsExecutionContext) => {
+  run: async (config, context: EventsExecutionContext) => {
     const { logger } = context;
-    logger.debug(config);
+    logger.debug(
+      "Starting installation of External Events with config:",
+      config,
+    );
 
-    const externalEventSources = config.eventing.external;
-    const configProviders = externalEventSources.map((c) => c.provider);
+    // biome-ignore lint/suspicious/noEvolvingTypes: We want the type to be auto-inferred
+    const stepData = [];
+    const existingIoEventsData = await getIoEventsExistingData(context);
 
-    //const providers = createProvider(context, configProviders);
-    //const metadata = createMetadata(context);
-    //const registrations = createRegistrations(context);
+    for (const { provider, events } of config.eventing.external) {
+      const eventSourceData = await onboardIoEvents(
+        {
+          context,
+          metadata: config.metadata,
+          provider,
+          events,
+          providerType: EXTERNAL_PROVIDER_TYPE,
+        },
+        existingIoEventsData,
+      );
 
-    return {};
+      stepData.push(eventSourceData);
+    }
+
+    logger.debug("Completed External Events installation step.");
+    return stepData;
   },
 });
 
-/** The output data of the Commerce Eventing step (auto-inferred). */
+/** The output data of the External Eventing step (auto-inferred). */
 export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;

@@ -12,15 +12,8 @@
 
 import { defineLeafStep } from "#management/installation/workflow/step";
 
-import {
-  createOrGetIoProviderEventMetadata,
-  createOrGetProvider,
-} from "./helpers";
-import {
-  COMMERCE_PROVIDER_TYPE,
-  generateInstanceId,
-  getIoEventsExistingData,
-} from "./utils";
+import { onboardIoEvents } from "./helpers";
+import { COMMERCE_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
 
 import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -64,48 +57,18 @@ export const commerceEventsStep = defineLeafStep({
     const existingIoEventsData = await getIoEventsExistingData(context);
 
     for (const { provider, events } of config.eventing.commerce) {
-      const instanceId = generateInstanceId(config.metadata, provider);
-      const providerData = await createOrGetProvider(
+      const { providerData, eventsData } = await onboardIoEvents(
         {
           context,
-          provider: {
-            ...provider,
-            instanceId,
-            type: COMMERCE_PROVIDER_TYPE,
-          },
+          metadata: config.metadata,
+          provider,
+          events,
+          providerType: COMMERCE_PROVIDER_TYPE,
         },
-        existingIoEventsData.providersWithMetadata,
+        existingIoEventsData,
       );
 
-      // Retrieve the existing metadata for this provider, if any.
-      const existingProviderMetadata =
-        existingIoEventsData.providersWithMetadata.find(
-          (p) => p.id === providerData.id,
-        )?.metadata ?? [];
-
-      // Create a Promise for each event metadata creation.
-      const eventPromises = events.map(async (event) => {
-        const metadata = await createOrGetIoProviderEventMetadata(
-          {
-            context,
-            type: COMMERCE_PROVIDER_TYPE,
-            provider: providerData,
-            event,
-          },
-          existingProviderMetadata,
-        );
-
-        return {
-          config: event,
-          data: {
-            metadata,
-          },
-        };
-      });
-
-      const eventsData = await Promise.all(eventPromises);
       stepData.push({
-        // Store both the config and the actual data from I/O Events.
         provider: {
           config: provider,
           data: {
