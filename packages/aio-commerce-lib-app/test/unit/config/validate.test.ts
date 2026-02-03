@@ -567,6 +567,7 @@ describe("validateConfig", () => {
             events: [
               {
                 name: "plugin.order_placed",
+                label: "Order Placed",
                 fields: ["order_id", "customer_id"],
                 runtimeAction: "handle-order",
                 description: "Triggered when an order is placed",
@@ -597,7 +598,13 @@ describe("validateConfig", () => {
               label: "External Events Provider",
               description: "Provides external events",
             },
-            events: [{ name: "external_event" }],
+            events: [
+              {
+                name: "external_event",
+                label: "External Event",
+                description: "An external event",
+              },
+            ],
           },
         ],
       },
@@ -626,6 +633,7 @@ describe("validateConfig", () => {
             events: [
               {
                 name: "observer.catalog_update",
+                label: "Catalog Update",
                 fields: ["product_id"],
                 runtimeAction: "sync-catalog",
                 description: "Catalog update event",
@@ -639,7 +647,13 @@ describe("validateConfig", () => {
               label: "External Provider",
               description: "External events",
             },
-            events: [{ name: "webhook_received" }],
+            events: [
+              {
+                name: "webhook_received",
+                label: "Webhook Received",
+                description: "Webhook event received",
+              },
+            ],
           },
         ],
       },
@@ -683,6 +697,7 @@ describe("validateConfig", () => {
             events: [
               {
                 name: "invalid_event", // Missing plugin. or observer. prefix
+                label: "Invalid Event",
                 fields: ["field"],
                 runtimeAction: "action",
                 description: "Invalid event",
@@ -716,6 +731,7 @@ describe("validateConfig", () => {
             events: [
               {
                 name: "plugin.my_event",
+                label: "My Event",
                 fields: ["field"],
                 runtimeAction: "action",
                 description: "Plugin event",
@@ -747,6 +763,7 @@ describe("validateConfig", () => {
             events: [
               {
                 name: "observer.my_event",
+                label: "My Event",
                 fields: ["field"],
                 runtimeAction: "action",
                 description: "Observer event",
@@ -775,7 +792,13 @@ describe("validateConfig", () => {
               label: "A".repeat(101), // Max is 100
               description: "Provider description",
             },
-            events: [{ name: "event" }],
+            events: [
+              {
+                name: "event",
+                label: "Event",
+                description: "An event",
+              },
+            ],
           },
         ],
       },
@@ -801,7 +824,13 @@ describe("validateConfig", () => {
               label: "Provider",
               description: "A".repeat(256), // Max is 255
             },
-            events: [{ name: "event" }],
+            events: [
+              {
+                name: "event",
+                label: "Event",
+                description: "An event",
+              },
+            ],
           },
         ],
       },
@@ -828,7 +857,13 @@ describe("validateConfig", () => {
               description: "Provider description",
               key: "my-provider-key",
             },
-            events: [{ name: "event" }],
+            events: [
+              {
+                name: "event",
+                label: "Event",
+                description: "An event",
+              },
+            ],
           },
         ],
       },
@@ -853,7 +888,13 @@ describe("validateConfig", () => {
               description: "Provider description",
               key: "A".repeat(51), // Max is 50
             },
-            events: [{ name: "event" }],
+            events: [
+              {
+                name: "event",
+                label: "Event",
+                description: "An event",
+              },
+            ],
           },
         ],
       },
@@ -882,6 +923,7 @@ describe("validateConfig", () => {
             events: [
               {
                 name: "plugin.my_event",
+                label: "My Event",
                 fields: ["field"],
                 runtimeAction: "action",
                 description: "A".repeat(256), // Max is 255
@@ -1049,6 +1091,7 @@ describe("validateConfigDomain", () => {
           events: [
             {
               name: "plugin.my_event",
+              label: "My Event",
               fields: ["field_one", "field_two"],
               runtimeAction: "my-action",
               description: "My commerce event",
@@ -1071,7 +1114,13 @@ describe("validateConfigDomain", () => {
             label: "External Provider",
             description: "Provider for external events",
           },
-          events: [{ name: "external_event" }],
+          events: [
+            {
+              name: "external_event",
+              label: "External Event",
+              description: "An external event",
+            },
+          ],
         },
       ],
     };
