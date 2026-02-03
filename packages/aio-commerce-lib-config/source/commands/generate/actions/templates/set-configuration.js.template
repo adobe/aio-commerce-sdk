@@ -89,6 +89,10 @@ export async function main(params) {
       });
     }
 
+    if (params.CONFIG_ENCRYPTION_KEY) {
+      process.env.CONFIG_ENCRYPTION_KEY = params.CONFIG_ENCRYPTION_KEY;
+    }
+
     const payload = { config: candidateConfig };
     logger.debug(`Setting configuration with payload: ${inspect(payload)}`);
 
