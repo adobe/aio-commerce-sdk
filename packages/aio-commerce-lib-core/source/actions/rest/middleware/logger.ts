@@ -15,13 +15,13 @@ import AioLogger from "@adobe/aio-lib-core-logging";
 import type { BaseContext, ContextBuilder } from "../types";
 
 type LoggerInstance = ReturnType<typeof AioLogger>;
-type LoggerOptions = Parameters<typeof AioLogger>[1];
+type AioLoggerOptions = Parameters<typeof AioLogger>[1];
 
-interface Options extends NonNullable<LoggerOptions> {
+export interface LoggerOptions extends NonNullable<AioLoggerOptions> {
   name?: (ctx: BaseContext) => string;
 }
 
-interface Context extends Record<string, unknown> {
+export interface LoggerContext extends Record<string, unknown> {
   logger: LoggerInstance;
 }
 
@@ -43,7 +43,7 @@ interface Context extends Record<string, unknown> {
 export function logger({
   name,
   ...restOptions
-}: Options = {}): ContextBuilder<BaseContext, Context> {
+}: LoggerOptions = {}): ContextBuilder<BaseContext, LoggerContext> {
   return (ctx) => {
     const params = ctx.raw;
 

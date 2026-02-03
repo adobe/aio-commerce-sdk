@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -39,19 +39,15 @@ const getConfigRoute = defineRoute(router, {
   handler: async (req, ctx) => {
     const { id, code, level } = req.query;
     const { logger } = ctx;
-
     logger.debug(
       `Retrieving configuration with params: ${inspect({ id, code, level })}`,
     );
 
     if (!(id || code)) {
-      logger.warn("Invalid params: Either id or code query param is required");
-      return badRequest({
-        body: {
-          code: "INVALID_PARAMS",
-          message: "Either id or code query param is required",
-        },
-      });
+      const message = "Either id or code query param is required";
+
+      logger.warn(`Invalid params: ${message}`);
+      return badRequest(message);
     }
 
     let selector: SelectorBy;
@@ -88,16 +84,16 @@ const setConfigRoute = defineRoute(router, {
     ),
   }),
 
-  handler: async (req) => {
+  handler: async (req, ctx) => {
     const { id, code, level } = req.query;
+    const { logger } = ctx;
 
     if (!(id || (code && level))) {
-      return badRequest({
-        body: {
-          code: "INVALID_PARAMS",
-          message: "Either id or both code and level query params are required",
-        },
-      });
+      const message =
+        "Either id or both code and level query params are required";
+
+      logger.warn(`Invalid params: ${message}`);
+      return badRequest(message);
     }
 
     const payload = { config: req.body.config } as SetConfigurationRequest;
@@ -106,7 +102,6 @@ const setConfigRoute = defineRoute(router, {
       : byCodeAndLevel(code as string, level as string);
 
     const result = await setConfiguration(payload, selector);
-
     return ok({
       body: { result },
       headers: { "Cache-Control": "no-store" },
@@ -115,7 +110,7 @@ const setConfigRoute = defineRoute(router, {
 });
 
 /** The handler method for the config action. */
-export const routeHandler = router
+export const configRuntimeAction = router
   .get("/config", getConfigRoute)
   .post("/config", setConfigRoute)
   .handler();

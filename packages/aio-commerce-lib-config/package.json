@@ -36,11 +36,22 @@
           "default": "./dist/cjs/index.cjs"
         }
       },
+      "./actions": {
+        "import": {
+          "types": "./dist/es/actions/index.d.mts",
+          "default": "./dist/es/actions/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/actions/index.d.cts",
+          "default": "./dist/cjs/actions/index.cjs"
+        }
+      },
       "./package.json": "./package.json"
     }
   },
   "exports": {
     ".": "./source/index.ts",
+    "./actions": "./source/actions/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {

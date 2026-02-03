@@ -13,3 +13,5 @@
 /** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint */
 
 export * from "./logger";
+
+export type * from "./logger";

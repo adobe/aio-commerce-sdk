@@ -20,34 +20,13 @@ import type { ActionConfig } from "./lib";
 /** The list of runtime actions to generate */
 export const RUNTIME_ACTIONS: ActionConfig[] = [
   {
-    name: "get-scope-tree",
-    templateFile: "get-scope-tree.js.template",
-  },
-  {
-    name: "get-config-schema",
-    templateFile: "get-config-schema.js.template",
+    name: "config",
+    templateFile: "config.js.template",
     requiresSchema: true,
   },
   {
-    name: "get-configuration",
-    templateFile: "get-configuration.js.template",
-    requiresSchema: true,
-  },
-  {
-    name: "set-configuration",
-    templateFile: "set-configuration.js.template",
-  },
-  {
-    name: "set-custom-scope-tree",
-    templateFile: "set-custom-scope-tree.js.template",
-  },
-  {
-    name: "sync-commerce-scopes",
-    templateFile: "sync-commerce-scopes.js.template",
-  },
-  {
-    name: "unsync-commerce-scopes",
-    templateFile: "unsync-commerce-scopes.js.template",
+    name: "scope-tree",
+    templateFile: "scope-tree.js.template",
   },
 ];
 
