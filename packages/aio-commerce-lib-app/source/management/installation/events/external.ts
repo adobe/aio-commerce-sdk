@@ -12,12 +12,6 @@
 
 import { defineLeafStep } from "#management/installation/workflow/step";
 
-import {
-  createMetadata,
-  createProviders,
-  createRegistrations,
-} from "./helpers";
-
 import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InferStepOutput } from "#management/installation/workflow/step";
@@ -55,11 +49,11 @@ export const externalEventsStep = defineLeafStep({
     const externalEventSources = config.eventing.external;
     const configProviders = externalEventSources.map((c) => c.provider);
 
-    const providers = createProviders(context, configProviders);
-    const metadata = createMetadata(context);
-    const registrations = createRegistrations(context);
+    //const providers = createProvider(context, configProviders);
+    //const metadata = createMetadata(context);
+    //const registrations = createRegistrations(context);
 
-    return { providers, metadata, registrations };
+    return {};
   },
 });
 

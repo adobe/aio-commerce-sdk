@@ -21,6 +21,7 @@ import {
   booleanValueSchema,
   nonEmptyStringValueSchema,
   stringValueSchema,
+  titleCaseSchema,
 } from "#valibot/schemas";
 import { parseOrThrow } from "#valibot/utils";
 
@@ -313,5 +314,69 @@ describe("alphaNumericOrHyphenSchema", () => {
         expect((error as any).issues[0].message).toContain("uppercase only");
       }
     });
+  });
+});
+
+describe("titleCaseSchema", () => {
+  const schema = titleCaseSchema("testField");
+
+  it("should accept single word in Title Case", () => {
+    expect(() => v.parse(schema, "Commerce")).not.toThrow();
+  });
+
+  it("should accept multiple words in Title Case", () => {
+    expect(() => v.parse(schema, "My Provider")).not.toThrow();
+  });
+
+  it("should accept multiple words with longer names", () => {
+    expect(() => v.parse(schema, "Order Events Handler")).not.toThrow();
+  });
+
+  it("should reject all lowercase", () => {
+    expect(() => v.parse(schema, "my provider")).toThrow();
+  });
+
+  it("should reject all uppercase", () => {
+    expect(() => v.parse(schema, "MY PROVIDER")).toThrow();
+  });
+
+  it("should reject camelCase", () => {
+    expect(() => v.parse(schema, "myProvider")).toThrow();
+  });
+
+  it("should reject lowercase first word", () => {
+    expect(() => v.parse(schema, "my Provider")).toThrow();
+  });
+
+  it("should reject lowercase subsequent word", () => {
+    expect(() => v.parse(schema, "My provider")).toThrow();
+  });
+
+  it("should reject strings with numbers", () => {
+    expect(() => v.parse(schema, "Provider123")).toThrow();
+  });
+
+  it("should reject strings with special characters", () => {
+    expect(() => v.parse(schema, "My-Provider")).toThrow();
+    expect(() => v.parse(schema, "My_Provider")).toThrow();
+    expect(() => v.parse(schema, "My@Provider")).toThrow();
+  });
+
+  it("should reject empty strings", () => {
+    expect(() => v.parse(schema, "")).toThrow();
+  });
+
+  it("should reject multiple spaces between words", () => {
+    expect(() => v.parse(schema, "My  Provider")).toThrow();
+  });
+
+  it("should include Title Case info in error message", () => {
+    try {
+      v.parse(schema, "my provider");
+      expect.fail("Should have thrown an error");
+    } catch (error) {
+      expect(error).toHaveProperty("issues");
+      expect((error as any).issues[0].message).toContain("Title Case");
+    }
   });
 });

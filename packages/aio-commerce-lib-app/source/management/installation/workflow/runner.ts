@@ -103,7 +103,6 @@ export async function executeWorkflow(
   options: ExecuteWorkflowOptions,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
   const { rootStep, installationContext, config, plan, hooks } = options;
-
   const context: StepExecutionContext = {
     installationContext,
     config,
@@ -129,6 +128,7 @@ export async function executeWorkflow(
     const error =
       context.error ?? createInstallationError(err, [], "INSTALLATION_FAILED");
     const failed = createFailedState(context, error);
+
     await callHook(hooks, "onInstallationFailure", failed);
     return failed;
   }

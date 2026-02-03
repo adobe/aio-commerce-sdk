@@ -10,24 +10,157 @@
  * governing permissions and limitations under the License.
  */
 
-import type { EventProvider } from "#config/schema/eventing";
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+
+import {
+  COMMERCE_PROVIDER_TYPE,
+  findExistingProvider,
+  findExistingProviderMetadata,
+} from "./utils";
+
+import type {
+  IoEventMetadata,
+  IoEventProvider,
+} from "@adobe/aio-commerce-lib-events/io-events";
+import type {
+  CreateProviderEventsMetadataParams,
+  CreateProviderParams,
+} from "./types";
 import type { EventsExecutionContext } from "./utils";
 
-export function createProviders(
-  context: EventsExecutionContext,
-  providers: EventProvider[],
-) {
-  const { logger } = context;
-  logger.info("Creating event providers", providers);
+/**
+ * Creates an event provider if it does not already exist.
+ * @param params - The parameters necessary to create the provider.
+ */
+export async function createProvider(params: CreateProviderParams) {
+  const { context, provider } = params;
+  const { appCredentials, ioEventsClient, logger } = context;
 
-  return [{ providerId: "TODO" }];
+  logger.info(
+    `Creating provider '${provider.label}' with instance ID '${provider.instanceId}'`,
+  );
+
+  return ioEventsClient
+    .createEventProvider({
+      ...appCredentials,
+
+      label: provider.label,
+      providerType: provider.type,
+      instanceId: provider.instanceId,
+      description: provider.description,
+    })
+    .then((res) => {
+      logger.info(`Provider "${provider.label}" created with ID '${res.id}'`);
+      return res;
+    })
+    .catch((error) => {
+      logger.error(
+        `Failed to create provider "${provider.label}": ${stringifyError(error)}`,
+      );
+
+      throw error;
+    });
 }
 
-export function createMetadata(context: EventsExecutionContext) {
+/**
+ * Creates or retrieves an existing I/O Events provider for Adobe Commerce.
+ * @param context - The eventing execution context.
+ * @param existingData - Existing I/O Events data.
+ * @param provider - The provider configuration.
+ */
+export async function createOrGetProvider(
+  params: CreateProviderParams,
+  existingData: IoEventProvider[],
+) {
+  const { context, provider } = params;
   const { logger } = context;
-  logger.info("Creating event metadata for provider");
+  const { instanceId, ...providerData } = provider;
 
-  return [{ metadataId: "TODO" }];
+  const existing = findExistingProvider(existingData, instanceId);
+  if (existing) {
+    logger.info(
+      `Provider '${provider.label}' already exists with ID '${existing.id}', skipping creation.`,
+    );
+
+    return existing;
+  }
+
+  return createProvider({
+    context,
+    provider: {
+      ...providerData,
+      instanceId,
+    },
+  });
+}
+
+/**
+ * Creates an event metadata for a given provider and event.
+ * @param params - The parameters necessary to create the event metadata.
+ */
+export async function createMetadata(
+  params: CreateProviderEventsMetadataParams,
+) {
+  const { context } = params;
+  const { appCredentials, ioEventsClient, logger } = context;
+
+  const eventCode =
+    params.type === COMMERCE_PROVIDER_TYPE
+      ? `com.adobe.commerce.${params.event.name}`
+      : params.event.name;
+
+  const { provider, event } = params;
+  logger.info(
+    `Creating event metadata (${eventCode}) for provider "${provider.label}" (instance ID: ${provider.instance_id}))`,
+  );
+
+  return ioEventsClient
+    .createEventMetadataForProvider({
+      ...appCredentials,
+      providerId: provider.id,
+
+      label: event.label,
+      description: event.description,
+      eventCode: `com.adobe.commerce.${event.name}`,
+    })
+    .then((res) => {
+      logger.info(
+        `Event metadata "${event.label}" created for provider "${provider.label}"`,
+      );
+
+      return res;
+    })
+    .catch((error) => {
+      logger.error(
+        `Failed to create event metadata "${event.label}" for provider "${provider.label}": ${stringifyError(error)}`,
+      );
+
+      throw error;
+    });
+}
+
+/**
+ * Creates or retrieves existing I/O Events metadata for a given provider and event.
+ * @param params - The parameters necessary to create or get the event metadata.
+ * @param existingData - Existing I/O Events metadata for the provider.
+ */
+export async function createOrGetIoProviderEventMetadata(
+  params: CreateProviderEventsMetadataParams,
+  existingData: IoEventMetadata[],
+) {
+  const { context, provider, event } = params;
+  const { logger } = context;
+
+  const existing = findExistingProviderMetadata(existingData, event.name);
+  if (existing) {
+    logger.info(
+      `Event metadata "${event.label}" already exists for provider "${provider.label}" (instance ID: ${provider.instance_id}), skipping creation.`,
+    );
+
+    return existing;
+  }
+
+  return createMetadata(params);
 }
 
 export function createRegistrations(context: EventsExecutionContext) {

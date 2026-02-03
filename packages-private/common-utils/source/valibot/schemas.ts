@@ -33,6 +33,14 @@ const ALPHANUMERIC_OR_HYPHEN_REGEX = {
 };
 
 /**
+ * Regex for Title Case strings.
+ * Each word must start with an uppercase letter followed by zero or more lowercase letters.
+ * Words are separated by single spaces.
+ * Examples: "My Provider", "Commerce", "Order Events Handler"
+ */
+const TITLE_CASE_REGEX = /^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/;
+
+/**
  * A schema for a string value.
  * @param name The name of the field this schema refers to.
  */
@@ -112,6 +120,20 @@ export function alphaNumericOrHyphenSchema(
     v.regex(
       ALPHANUMERIC_OR_HYPHEN_REGEX[casing],
       `Only alphanumeric characters and hyphens are allowed in string value of "${name}"${casingLabel}`,
+    ),
+  );
+}
+
+/**
+ * A schema for a string in Title Case format.
+ * @param name The name of the field this schema refers to.
+ */
+export function titleCaseSchema(name: string) {
+  return v.pipe(
+    nonEmptyStringValueSchema(name),
+    v.regex(
+      TITLE_CASE_REGEX,
+      `The value of "${name}" must be in Title Case, which means, an uppercase letter after each space (e.g., "Some Title Case")`,
     ),
   );
 }

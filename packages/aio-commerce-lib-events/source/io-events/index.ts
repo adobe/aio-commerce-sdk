@@ -39,3 +39,4 @@ export type {
   PageMetadata,
   SubscriberFilterModel,
 } from "./api/event-registrations/types";
+export type * from "./lib/schema";
