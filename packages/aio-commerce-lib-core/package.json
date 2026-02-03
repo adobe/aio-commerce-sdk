@@ -80,6 +80,7 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@adobe/aio-lib-core-logging": "^3.0.2",
     "@standard-schema/spec": "^1.0.0",
     "ansis": "^4.1.0",
     "camelcase": "^8.0.0",

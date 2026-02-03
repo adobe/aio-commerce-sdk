@@ -16,6 +16,7 @@
  */
 
 // biome-ignore lint/performance/noBarrelFile: Public API entrypoint
+export * from "./rest/middleware";
 export { defineRoute, Router } from "./rest/router";
 
 export type * from "./rest/types";

@@ -51,7 +51,7 @@ import type {
  * export const main = router.handler();
  * ```
  */
-export class Router {
+export class Router<TContext extends BaseContext = BaseContext> {
   private readonly routes: CompiledRoute[] = [];
   private readonly contextBuilders: ContextBuilder[] = [];
 
@@ -66,7 +66,13 @@ export class Router {
   >(
     method: HttpMethod,
     path: TPattern,
-    config: RouteConfig<TPattern, TParamsSchema, TBodySchema, TQuerySchema>,
+    config: RouteConfig<
+      TPattern,
+      TParamsSchema,
+      TBodySchema,
+      TQuerySchema,
+      TContext
+    >,
   ): this {
     const { pattern, keys } = parse(path);
     this.routes.push({
@@ -99,7 +105,13 @@ export class Router {
     TQuerySchema extends StandardSchemaV1 | undefined = undefined,
   >(
     path: TPattern,
-    config: RouteConfig<TPattern, TParamsSchema, undefined, TQuerySchema>,
+    config: RouteConfig<
+      TPattern,
+      TParamsSchema,
+      undefined,
+      TQuerySchema,
+      TContext
+    >,
   ): this {
     return this.addRoute("GET", path, config);
   }
@@ -122,7 +134,13 @@ export class Router {
     TQuerySchema extends StandardSchemaV1 | undefined = undefined,
   >(
     path: TPattern,
-    config: RouteConfig<TPattern, TParamsSchema, TBodySchema, TQuerySchema>,
+    config: RouteConfig<
+      TPattern,
+      TParamsSchema,
+      TBodySchema,
+      TQuerySchema,
+      TContext
+    >,
   ): this {
     return this.addRoute("POST", path, config);
   }
@@ -145,7 +163,13 @@ export class Router {
     TQuerySchema extends StandardSchemaV1 | undefined = undefined,
   >(
     path: TPattern,
-    config: RouteConfig<TPattern, TParamsSchema, TBodySchema, TQuerySchema>,
+    config: RouteConfig<
+      TPattern,
+      TParamsSchema,
+      TBodySchema,
+      TQuerySchema,
+      TContext
+    >,
   ): this {
     return this.addRoute("PUT", path, config);
   }
@@ -168,7 +192,13 @@ export class Router {
     TQuerySchema extends StandardSchemaV1 | undefined = undefined,
   >(
     path: TPattern,
-    config: RouteConfig<TPattern, TParamsSchema, TBodySchema, TQuerySchema>,
+    config: RouteConfig<
+      TPattern,
+      TParamsSchema,
+      TBodySchema,
+      TQuerySchema,
+      TContext
+    >,
   ): this {
     return this.addRoute("PATCH", path, config);
   }
@@ -189,7 +219,13 @@ export class Router {
     TQuerySchema extends StandardSchemaV1 | undefined = undefined,
   >(
     path: TPattern,
-    config: RouteConfig<TPattern, TParamsSchema, undefined, TQuerySchema>,
+    config: RouteConfig<
+      TPattern,
+      TParamsSchema,
+      undefined,
+      TQuerySchema,
+      TContext
+    >,
   ): this {
     return this.addRoute("DELETE", path, config);
   }
@@ -199,20 +235,31 @@ export class Router {
    * Context builders can add properties to the request context.
    * Multiple builders are executed in order and their results are merged.
    *
+   * The returned router has an updated context type that includes the new properties,
+   * enabling type-safe access in route handlers.
+   *
    * @param builder - Function that receives base context and returns additional context
-   * @returns The router instance for chaining
+   * @returns The router instance with updated context type for chaining
    *
    * @example
    * ```typescript
-   * router.use(async (base) => ({
-   *   user: await authenticateUser(base.raw.__ow_headers?.authorization),
-   *   logger: createLogger(base.raw),
-   * }));
+   * const router = new Router()
+   *   .use(logger()) // Router<BaseContext & { logger: Logger }>
+   *   .use(auth());  // Router<BaseContext & { logger: Logger } & { user: User }>
+   *
+   * router.get("/me", {
+   *   handler: (req, ctx) => {
+   *     ctx.logger.info("Hello"); // ✅ typed
+   *     return ok({ body: ctx.user }); // ✅ typed
+   *   },
+   * });
    * ```
    */
-  public use(builder: ContextBuilder): this {
-    this.contextBuilders.push(builder);
-    return this;
+  public use<TNew extends Record<string, unknown>>(
+    builder: ContextBuilder<TContext, TNew>,
+  ): Router<TContext & TNew> {
+    this.contextBuilders.push(builder as ContextBuilder);
+    return this as unknown as Router<TContext & TNew>;
   }
 
   /**
@@ -419,39 +466,15 @@ export class Router {
 
 /**
  * Define a route handler separately from registration.
- * Useful for organizing route handlers in separate files or reusing handlers.
- *
- * @template TContext - Optional context type for typed context access
- *
- * @example
- * ```typescript
- * import { object, string } from "valibot";
- *
- * // Basic usage
- * const getUserById = defineRoute({
- *   params: object({ id: string() }),
- *   handler: (req) => ok({ id: req.params.id })
- * });
- *
- * // With typed context
- * interface MyContext extends BaseContext {
- *   user: { id: string; name: string };
- * }
- *
- * const getMe = defineRoute<MyContext>({
- *   handler: (req) => ok({ name: req.context.user.name })
- * });
- *
- * router.get("/users/:id", getUserById);
- * router.get("/me", getMe);
- * ```
+ * Pass a router to infer context type from middleware.
  */
 export function defineRoute<
-  TContext extends BaseContext = BaseContext,
+  TContext extends BaseContext,
   TParamsSchema extends StandardSchemaV1 | undefined = undefined,
   TBodySchema extends StandardSchemaV1 | undefined = undefined,
   TQuerySchema extends StandardSchemaV1 | undefined = undefined,
 >(
+  _router: Router<TContext>,
   config: RouteConfig<
     string,
     TParamsSchema,
