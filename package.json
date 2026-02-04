@@ -47,5 +47,16 @@
     "typescript": "^5.9.2",
     "ultracite": "^7.0.0",
     "vitest": "^4.0.0"
+  },
+  "lint-staged": {
+    "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+      "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
+    ],
+    "*.md": [
+      "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\""
+    ],
+    "*": [
+      "biome check --no-errors-on-unmatched --files-ignore-unknown=true"
+    ]
   }
 }

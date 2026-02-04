@@ -71,9 +71,8 @@ export async function createProvider(params: CreateProviderParams) {
 
 /**
  * Creates or retrieves an existing I/O Events provider for Adobe Commerce.
- * @param context - The eventing execution context.
+ * @param params - Parameters needed to create or get the provider.
  * @param existingData - Existing I/O Events data.
- * @param provider - The provider configuration.
  */
 export async function createOrGetProvider(
   params: CreateProviderParams,
@@ -207,7 +206,7 @@ export function createCommerceSubscriptions(context: EventsExecutionContext) {
  * This is the shared logic inside the loop for both commerce and external event installation steps.
  *
  * @param params - Configuration for onboarding a single event source
- * @returns Onboarded event source data with provider and events
+ * @param existingData - Existing I/O Events data
  */
 export async function onboardIoEvents(
   params: OnboardIoEventsParams,

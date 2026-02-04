@@ -133,7 +133,7 @@ export const createEventsStepContext: StepContextFactory<EventsStepContext> = (
 
 /**
  * Generates a unique instance ID for the given event provider within the context of the provided config.
- * @param config - The commerce app configuration
+ * @param metadata - The metadata of the application
  * @param provider - The event provider for which to generate the instance ID
  */
 export function generateInstanceId(
