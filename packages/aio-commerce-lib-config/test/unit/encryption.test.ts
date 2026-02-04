@@ -12,6 +12,7 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { setGlobalLibConfigOptions } from "#config-manager";
 import {
   decrypt,
   ENCRYPTED_PREFIX,
@@ -21,7 +22,6 @@ import {
   isEncryptionConfigured,
   KEY_LENGTH_HEX,
 } from "#utils/encryption";
-import { setGlobalLibConfigOptions } from "#config-manager";
 
 describe("encryption utilities", () => {
   let encryptionKey: string | undefined;
