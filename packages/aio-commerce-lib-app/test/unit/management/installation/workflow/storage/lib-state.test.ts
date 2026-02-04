@@ -65,7 +65,7 @@ describe("LibStateStore.get", () => {
 
     expect(result).toBeNull();
     expect(mockStateInstance.get).toHaveBeenCalledWith(
-      "installation:non-existent-id",
+      "installation-non-existent-id",
     );
   });
 
@@ -94,7 +94,7 @@ describe("LibStateStore.get", () => {
     await store.get("my-installation-id");
 
     expect(mockStateInstance.get).toHaveBeenCalledWith(
-      "installation:my-installation-id",
+      "installation-my-installation-id",
     );
   });
 });
@@ -114,7 +114,7 @@ describe("LibStateStore.save", () => {
     await store.save(state);
 
     expect(mockStateInstance.put).toHaveBeenCalledWith(
-      "installation:save-test-id",
+      "installation-save-test-id",
       JSON.stringify(state),
       expect.objectContaining({ ttl: expect.any(Number) }),
     );
