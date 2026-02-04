@@ -70,7 +70,7 @@ type InstallationStateBase = {
   step: StepStatus;
 
   /** Results from executed leaf steps, keyed by path. */
-  data: InstallationData;
+  data: InstallationData | null;
 };
 
 /** Installation state when pending (not yet started). */

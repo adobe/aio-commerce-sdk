@@ -43,14 +43,19 @@ export async function createProvider(params: CreateProviderParams) {
   );
 
   return ioEventsClient
-    .createEventProvider({
-      ...appCredentials,
+    .createEventProvider(
+      {
+        ...appCredentials,
 
-      label: provider.label,
-      providerType: provider.type,
-      instanceId: provider.instanceId,
-      description: provider.description,
-    })
+        label: provider.label,
+        providerType: provider.type,
+        instanceId: provider.instanceId,
+        description: provider.description,
+      },
+      {
+        timeout: 1000 * 60 * 5, // 5 minutes
+      },
+    )
     .then((res) => {
       logger.info(`Provider "${provider.label}" created with ID '${res.id}'`);
       return res;
@@ -117,14 +122,19 @@ export async function createMetadata(
   );
 
   return ioEventsClient
-    .createEventMetadataForProvider({
-      ...appCredentials,
-      providerId: provider.id,
+    .createEventMetadataForProvider(
+      {
+        ...appCredentials,
+        providerId: provider.id,
 
-      label: event.label,
-      description: event.description,
-      eventCode,
-    })
+        label: event.label,
+        description: event.description,
+        eventCode,
+      },
+      {
+        timeout: 1000 * 60 * 5, // 5 minutes
+      },
+    )
     .then((res) => {
       logger.info(
         `Event metadata "${event.label}" created for provider "${provider.label}"`,

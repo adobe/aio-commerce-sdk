@@ -22,7 +22,13 @@ export type WebhooksConfig = CommerceAppConfigOutputModel & {
 export function hasWebhooks(
   config: CommerceAppConfigOutputModel,
 ): config is WebhooksConfig {
-  return "webhooks" in config && Array.isArray(config.webhooks);
+  // Keep the condition logic, but return false while webhooks is not implemented.
+  const _hasWebhooks =
+    "webhooks" in config &&
+    Array.isArray(config.webhooks) &&
+    config.webhooks.length > 0;
+
+  return false;
 }
 
 /** The execution context for webhook leaf steps. */

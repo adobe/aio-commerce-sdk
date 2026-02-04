@@ -55,18 +55,19 @@ describe("parseOrThrow", () => {
 describe("stringValueSchema", () => {
   const schema = stringValueSchema("testField");
 
-  it("should accept string values", () => {
-    expect(() => v.parse(schema, "test")).not.toThrow();
+  it.each([
+    { value: "test", description: "string values" },
+    { value: "", description: "empty strings" },
+  ])("should accept $description", ({ value }) => {
+    expect(() => v.parse(schema, value)).not.toThrow();
   });
 
-  it("should accept empty strings", () => {
-    expect(() => v.parse(schema, "")).not.toThrow();
-  });
-
-  it("should reject non-string values", () => {
-    expect(() => v.parse(schema, 123)).toThrow();
-    expect(() => v.parse(schema, true)).toThrow();
-    expect(() => v.parse(schema, null)).toThrow();
+  it.each([
+    { value: 123, description: "numbers" },
+    { value: true, description: "booleans" },
+    { value: null, description: "null" },
+  ])("should reject $description", ({ value }) => {
+    expect(() => v.parse(schema, value)).toThrow();
   });
 });
 
@@ -77,27 +78,30 @@ describe("nonEmptyStringValueSchema", () => {
     expect(() => v.parse(schema, "test")).not.toThrow();
   });
 
-  it("should reject empty strings", () => {
-    expect(() => v.parse(schema, "")).toThrow();
-  });
-
-  it("should reject non-string values", () => {
-    expect(() => v.parse(schema, 123)).toThrow();
+  it.each([
+    { value: "", description: "empty strings" },
+    { value: 123, description: "numbers" },
+  ])("should reject $description", ({ value }) => {
+    expect(() => v.parse(schema, value)).toThrow();
   });
 });
 
 describe("booleanValueSchema", () => {
   const schema = booleanValueSchema("testField");
 
-  it("should accept boolean values", () => {
-    expect(() => v.parse(schema, true)).not.toThrow();
-    expect(() => v.parse(schema, false)).not.toThrow();
+  it.each([
+    { value: true, description: "true" },
+    { value: false, description: "false" },
+  ])("should accept $description", ({ value }) => {
+    expect(() => v.parse(schema, value)).not.toThrow();
   });
 
-  it("should reject non-boolean values", () => {
-    expect(() => v.parse(schema, "true")).toThrow();
-    expect(() => v.parse(schema, 1)).toThrow();
-    expect(() => v.parse(schema, null)).toThrow();
+  it.each([
+    { value: "true", description: "string 'true'" },
+    { value: 1, description: "number 1" },
+    { value: null, description: "null" },
+  ])("should reject $description", ({ value }) => {
+    expect(() => v.parse(schema, value)).toThrow();
   });
 });
 
@@ -105,24 +109,28 @@ describe("alphaNumericOrUnderscoreSchema", () => {
   describe("with default casing (any)", () => {
     const schema = alphaNumericOrUnderscoreSchema("testField");
 
-    it("should accept lowercase alphanumeric with underscores", () => {
-      expect(() => v.parse(schema, "test_value_123")).not.toThrow();
+    it.each([
+      {
+        value: "test_value_123",
+        description: "lowercase alphanumeric with underscores",
+      },
+      {
+        value: "TEST_VALUE_123",
+        description: "uppercase alphanumeric with underscores",
+      },
+      {
+        value: "Test_Value_123",
+        description: "mixed case alphanumeric with underscores",
+      },
+    ])("should accept $description", ({ value }) => {
+      expect(() => v.parse(schema, value)).not.toThrow();
     });
 
-    it("should accept uppercase alphanumeric with underscores", () => {
-      expect(() => v.parse(schema, "TEST_VALUE_123")).not.toThrow();
-    });
-
-    it("should accept mixed case alphanumeric with underscores", () => {
-      expect(() => v.parse(schema, "Test_Value_123")).not.toThrow();
-    });
-
-    it("should reject strings with hyphens", () => {
-      expect(() => v.parse(schema, "test-value")).toThrow();
-    });
-
-    it("should reject strings with special characters", () => {
-      expect(() => v.parse(schema, "test@value")).toThrow();
+    it.each([
+      { value: "test-value", description: "strings with hyphens" },
+      { value: "test@value", description: "strings with special characters" },
+    ])("should reject $description", ({ value }) => {
+      expect(() => v.parse(schema, value)).toThrow();
     });
   });
 
@@ -133,12 +141,11 @@ describe("alphaNumericOrUnderscoreSchema", () => {
       expect(() => v.parse(schema, "test_value_123")).not.toThrow();
     });
 
-    it("should reject uppercase letters", () => {
-      expect(() => v.parse(schema, "TEST_VALUE")).toThrow();
-    });
-
-    it("should reject mixed case", () => {
-      expect(() => v.parse(schema, "Test_Value")).toThrow();
+    it.each([
+      { value: "TEST_VALUE", description: "uppercase letters" },
+      { value: "Test_Value", description: "mixed case" },
+    ])("should reject $description", ({ value }) => {
+      expect(() => v.parse(schema, value)).toThrow();
     });
 
     it("should include casing info in error message", () => {
@@ -159,12 +166,11 @@ describe("alphaNumericOrUnderscoreSchema", () => {
       expect(() => v.parse(schema, "TEST_VALUE_123")).not.toThrow();
     });
 
-    it("should reject lowercase letters", () => {
-      expect(() => v.parse(schema, "test_value")).toThrow();
-    });
-
-    it("should reject mixed case", () => {
-      expect(() => v.parse(schema, "Test_Value")).toThrow();
+    it.each([
+      { value: "test_value", description: "lowercase letters" },
+      { value: "Test_Value", description: "mixed case" },
+    ])("should reject $description", ({ value }) => {
+      expect(() => v.parse(schema, value)).toThrow();
     });
 
     it("should include casing info in error message", () => {
@@ -183,16 +189,21 @@ describe("alphaNumericOrUnderscoreOrHyphenSchema", () => {
   describe("with default casing (any)", () => {
     const schema = alphaNumericOrUnderscoreOrHyphenSchema("testField");
 
-    it("should accept lowercase alphanumeric with underscores and hyphens", () => {
-      expect(() => v.parse(schema, "test-value_123")).not.toThrow();
-    });
-
-    it("should accept uppercase alphanumeric with underscores and hyphens", () => {
-      expect(() => v.parse(schema, "TEST-VALUE_123")).not.toThrow();
-    });
-
-    it("should accept mixed case alphanumeric with underscores and hyphens", () => {
-      expect(() => v.parse(schema, "Test-Value_123")).not.toThrow();
+    it.each([
+      {
+        value: "test-value_123",
+        description: "lowercase alphanumeric with underscores and hyphens",
+      },
+      {
+        value: "TEST-VALUE_123",
+        description: "uppercase alphanumeric with underscores and hyphens",
+      },
+      {
+        value: "Test-Value_123",
+        description: "mixed case alphanumeric with underscores and hyphens",
+      },
+    ])("should accept $description", ({ value }) => {
+      expect(() => v.parse(schema, value)).not.toThrow();
     });
 
     it("should reject strings with special characters", () => {
@@ -210,12 +221,11 @@ describe("alphaNumericOrUnderscoreOrHyphenSchema", () => {
       expect(() => v.parse(schema, "test-value_123")).not.toThrow();
     });
 
-    it("should reject uppercase letters", () => {
-      expect(() => v.parse(schema, "TEST-VALUE")).toThrow();
-    });
-
-    it("should reject mixed case", () => {
-      expect(() => v.parse(schema, "Test-Value")).toThrow();
+    it.each([
+      { value: "TEST-VALUE", description: "uppercase letters" },
+      { value: "Test-Value", description: "mixed case" },
+    ])("should reject $description", ({ value }) => {
+      expect(() => v.parse(schema, value)).toThrow();
     });
   });
 
@@ -229,12 +239,11 @@ describe("alphaNumericOrUnderscoreOrHyphenSchema", () => {
       expect(() => v.parse(schema, "TEST-VALUE_123")).not.toThrow();
     });
 
-    it("should reject lowercase letters", () => {
-      expect(() => v.parse(schema, "test-value")).toThrow();
-    });
-
-    it("should reject mixed case", () => {
-      expect(() => v.parse(schema, "Test-Value")).toThrow();
+    it.each([
+      { value: "test-value", description: "lowercase letters" },
+      { value: "Test-Value", description: "mixed case" },
+    ])("should reject $description", ({ value }) => {
+      expect(() => v.parse(schema, value)).toThrow();
     });
   });
 });
@@ -243,24 +252,28 @@ describe("alphaNumericOrHyphenSchema", () => {
   describe("with default casing (any)", () => {
     const schema = alphaNumericOrHyphenSchema("testField");
 
-    it("should accept lowercase alphanumeric with hyphens", () => {
-      expect(() => v.parse(schema, "test-value-123")).not.toThrow();
+    it.each([
+      {
+        value: "test-value-123",
+        description: "lowercase alphanumeric with hyphens",
+      },
+      {
+        value: "TEST-VALUE-123",
+        description: "uppercase alphanumeric with hyphens",
+      },
+      {
+        value: "Test-Value-123",
+        description: "mixed case alphanumeric with hyphens",
+      },
+    ])("should accept $description", ({ value }) => {
+      expect(() => v.parse(schema, value)).not.toThrow();
     });
 
-    it("should accept uppercase alphanumeric with hyphens", () => {
-      expect(() => v.parse(schema, "TEST-VALUE-123")).not.toThrow();
-    });
-
-    it("should accept mixed case alphanumeric with hyphens", () => {
-      expect(() => v.parse(schema, "Test-Value-123")).not.toThrow();
-    });
-
-    it("should reject strings with underscores", () => {
-      expect(() => v.parse(schema, "test_value")).toThrow();
-    });
-
-    it("should reject strings with special characters", () => {
-      expect(() => v.parse(schema, "test@value")).toThrow();
+    it.each([
+      { value: "test_value", description: "strings with underscores" },
+      { value: "test@value", description: "strings with special characters" },
+    ])("should reject $description", ({ value }) => {
+      expect(() => v.parse(schema, value)).toThrow();
     });
   });
 
@@ -271,12 +284,11 @@ describe("alphaNumericOrHyphenSchema", () => {
       expect(() => v.parse(schema, "test-value-123")).not.toThrow();
     });
 
-    it("should reject uppercase letters", () => {
-      expect(() => v.parse(schema, "TEST-VALUE")).toThrow();
-    });
-
-    it("should reject mixed case", () => {
-      expect(() => v.parse(schema, "Test-Value")).toThrow();
+    it.each([
+      { value: "TEST-VALUE", description: "uppercase letters" },
+      { value: "Test-Value", description: "mixed case" },
+    ])("should reject $description", ({ value }) => {
+      expect(() => v.parse(schema, value)).toThrow();
     });
 
     it("should include casing info in error message", () => {
@@ -297,12 +309,11 @@ describe("alphaNumericOrHyphenSchema", () => {
       expect(() => v.parse(schema, "TEST-VALUE-123")).not.toThrow();
     });
 
-    it("should reject lowercase letters", () => {
-      expect(() => v.parse(schema, "test-value")).toThrow();
-    });
-
-    it("should reject mixed case", () => {
-      expect(() => v.parse(schema, "Test-Value")).toThrow();
+    it.each([
+      { value: "test-value", description: "lowercase letters" },
+      { value: "Test-Value", description: "mixed case" },
+    ])("should reject $description", ({ value }) => {
+      expect(() => v.parse(schema, value)).toThrow();
     });
 
     it("should include casing info in error message", () => {
@@ -320,54 +331,31 @@ describe("alphaNumericOrHyphenSchema", () => {
 describe("titleCaseSchema", () => {
   const schema = titleCaseSchema("testField");
 
-  it("should accept single word in Title Case", () => {
-    expect(() => v.parse(schema, "Commerce")).not.toThrow();
+  it.each([
+    { value: "Commerce", description: "single word in Title Case" },
+    { value: "My Provider", description: "multiple words in Title Case" },
+    {
+      value: "Order Events Handler",
+      description: "multiple words with longer names",
+    },
+  ])("should accept $description", ({ value }) => {
+    expect(() => v.parse(schema, value)).not.toThrow();
   });
 
-  it("should accept multiple words in Title Case", () => {
-    expect(() => v.parse(schema, "My Provider")).not.toThrow();
-  });
-
-  it("should accept multiple words with longer names", () => {
-    expect(() => v.parse(schema, "Order Events Handler")).not.toThrow();
-  });
-
-  it("should reject all lowercase", () => {
-    expect(() => v.parse(schema, "my provider")).toThrow();
-  });
-
-  it("should reject all uppercase", () => {
-    expect(() => v.parse(schema, "MY PROVIDER")).toThrow();
-  });
-
-  it("should reject camelCase", () => {
-    expect(() => v.parse(schema, "myProvider")).toThrow();
-  });
-
-  it("should reject lowercase first word", () => {
-    expect(() => v.parse(schema, "my Provider")).toThrow();
-  });
-
-  it("should reject lowercase subsequent word", () => {
-    expect(() => v.parse(schema, "My provider")).toThrow();
-  });
-
-  it("should reject strings with numbers", () => {
-    expect(() => v.parse(schema, "Provider123")).toThrow();
-  });
-
-  it("should reject strings with special characters", () => {
-    expect(() => v.parse(schema, "My-Provider")).toThrow();
-    expect(() => v.parse(schema, "My_Provider")).toThrow();
-    expect(() => v.parse(schema, "My@Provider")).toThrow();
-  });
-
-  it("should reject empty strings", () => {
-    expect(() => v.parse(schema, "")).toThrow();
-  });
-
-  it("should reject multiple spaces between words", () => {
-    expect(() => v.parse(schema, "My  Provider")).toThrow();
+  it.each([
+    { value: "my provider", description: "all lowercase" },
+    { value: "MY PROVIDER", description: "all uppercase" },
+    { value: "myProvider", description: "camelCase" },
+    { value: "my Provider", description: "lowercase first word" },
+    { value: "My provider", description: "lowercase subsequent word" },
+    { value: "Provider123", description: "strings with numbers" },
+    { value: "My-Provider", description: "strings with hyphens" },
+    { value: "My_Provider", description: "strings with underscores" },
+    { value: "My@Provider", description: "strings with special characters" },
+    { value: "", description: "empty strings" },
+    { value: "My  Provider", description: "multiple spaces between words" },
+  ])("should reject $description", ({ value }) => {
+    expect(() => v.parse(schema, value)).toThrow();
   });
 
   it("should include Title Case info in error message", () => {

@@ -20,13 +20,6 @@ export type InstallationContext = {
 
   /** Logger instance for installation logging. */
   logger: ReturnType<typeof AioLogger>;
-
-  /** Credentials of where the application is deployed. */
-  appCredentials: {
-    consumerOrgId: string;
-    projectId: string;
-    workspaceId: string;
-  };
 };
 
 /** Factory function type for creating step-specific context. */

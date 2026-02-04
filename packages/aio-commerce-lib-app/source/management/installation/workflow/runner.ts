@@ -76,7 +76,7 @@ type StepExecutionContext = {
   installationId: string;
   startedAt: string;
   step: StepStatus;
-  data: Record<string, unknown>;
+  data: Record<string, unknown> | null;
   error: InstallationError | null;
   registry: StepRegistry;
   hooks?: InstallationHooks;
@@ -109,7 +109,7 @@ export async function executeWorkflow(
     installationId: plan.id,
     startedAt: nowIsoString(),
     step: buildInitialStepStatus(plan.step, []),
-    data: {},
+    data: null,
     error: null,
     registry: new Map(rootStep.children.map((step) => [step.name, step])),
     hooks,
@@ -127,7 +127,16 @@ export async function executeWorkflow(
   } catch (err) {
     const error =
       context.error ?? createInstallationError(err, [], "INSTALLATION_FAILED");
-    const failed = createFailedState(context, error);
+
+    const failed = createFailedState(
+      {
+        step: context.step,
+        installationId: context.installationId,
+        startedAt: context.startedAt,
+        data: context.data,
+      },
+      error,
+    );
 
     await callHook(hooks, "onInstallationFailure", failed);
     return failed;
@@ -145,7 +154,7 @@ function buildPlanStep(
     children: [],
   };
 
-  if (isBranchStep(step)) {
+  if (isBranchStep(step) && step.children.length > 0) {
     planStep.children = buildPlanStepsForChildren(step.children, config);
   }
 
@@ -223,6 +232,8 @@ async function executeStep(
     }
 
     stepStatus.status = "succeeded";
+    context.data ??= {};
+
     await callHook(
       context.hooks,
       "onStepSuccess",
@@ -282,5 +293,6 @@ async function executeLeafStep(
   const executionContext = { ...context.installationContext, ...inherited };
   const result = await step.run(context.config, executionContext);
 
+  context.data ??= {};
   setAtPath(context.data, stepStatus.path, result);
 }
