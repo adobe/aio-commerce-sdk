@@ -33,7 +33,8 @@ export const eventingStep = defineBranchStep({
   name: "eventing",
   meta: {
     label: "Eventing",
-    description: "Sets up I/O Events for the application",
+    description:
+      "Sets up the I/O Events and the Commerce events required by the application",
   },
 
   when: hasEventing,
