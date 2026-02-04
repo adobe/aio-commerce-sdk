@@ -46,6 +46,9 @@ export type StepStatus = {
   /** Step name (unique among siblings). */
   name: string;
 
+  /** Unique step identifier (e.g., UUID). */
+  id: string;
+
   /** Full path from root to this step. */
   path: string[];
 

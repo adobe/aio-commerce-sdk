@@ -120,8 +120,13 @@ export async function executeWorkflow(
   try {
     // Execute the root step
     await executeStep(rootStep, context.step, {}, context);
+    const succeeded = createSucceededState({
+      installationId: context.installationId,
+      startedAt: context.startedAt,
+      step: context.step,
+      data: context.data,
+    });
 
-    const succeeded = createSucceededState(context);
     await callHook(hooks, "onInstallationSuccess", succeeded);
     return succeeded;
   } catch (err) {
@@ -188,6 +193,7 @@ function buildInitialStepStatus(
   return {
     name: planStep.name,
     path,
+    id: crypto.randomUUID(),
     status: "pending" as const,
     children: planStep.children.map((child) =>
       buildInitialStepStatus(child, path),
