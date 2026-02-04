@@ -27,7 +27,7 @@ import { loadBusinessConfigSchema } from "./lib";
 
 import type { BusinessConfigSchemaField } from "#modules/schema/types";
 
-const CONFIG_KEY_PATTERN = /CONFIG_ENCRYPTION_KEY=(.+)/;
+const CONFIG_KEY_PATTERN = /AIO_COMMERCE_CONFIG_ENCRYPTION_KEY=(.+)/;
 
 /**
  * Validate the configuration schema.
@@ -69,7 +69,7 @@ export async function run() {
 }
 
 /**
- * Loads CONFIG_ENCRYPTION_KEY from .env file into process.env if it exists.
+ * Loads AIO_COMMERCE_CONFIG_ENCRYPTION_KEY from .env file into process.env if it exists.
  */
 async function loadEnvFile(): Promise<void> {
   try {
@@ -77,7 +77,7 @@ async function loadEnvFile(): Promise<void> {
     if (envContent) {
       const keyMatch = envContent.match(CONFIG_KEY_PATTERN);
       if (keyMatch?.[1]) {
-        process.env.CONFIG_ENCRYPTION_KEY = keyMatch[1].trim();
+        process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = keyMatch[1].trim();
       }
     }
   } catch (_error) {
@@ -112,9 +112,9 @@ async function setupEncryptionKey(): Promise<boolean> {
     const key = generateEncryptionKey();
 
     if (envContent) {
-      if (envContent.includes("CONFIG_ENCRYPTION_KEY=")) {
+      if (envContent.includes("AIO_COMMERCE_CONFIG_ENCRYPTION_KEY=")) {
         consola.warn(
-          "⚠️  CONFIG_ENCRYPTION_KEY found in .env but is invalid (wrong format or length)",
+          "⚠️  AIO_COMMERCE_CONFIG_ENCRYPTION_KEY found in .env but is invalid (wrong format or length)",
         );
 
         if (process.stdin.isTTY && process.stdout.isTTY) {
@@ -132,7 +132,7 @@ async function setupEncryptionKey(): Promise<boolean> {
 
           if (!confirmed) {
             consola.info(
-              "Key regeneration cancelled. Please manually fix CONFIG_ENCRYPTION_KEY in your .env file.",
+              "Key regeneration cancelled. Please manually fix AIO_COMMERCE_CONFIG_ENCRYPTION_KEY in your .env file.",
             );
             return false;
           }
@@ -142,10 +142,10 @@ async function setupEncryptionKey(): Promise<boolean> {
 
         const updatedContent = envContent.replace(
           CONFIG_KEY_PATTERN,
-          `CONFIG_ENCRYPTION_KEY=${key}`,
+          `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY=${key}`,
         );
         await writeFile(envPath, updatedContent, "utf-8");
-        process.env.CONFIG_ENCRYPTION_KEY = key;
+        process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = key;
 
         consola.success(
           "🔐 Generated new encryption key and updated .env file",
@@ -156,16 +156,16 @@ async function setupEncryptionKey(): Promise<boolean> {
         return true;
       }
 
-      const keyLine = `\n# Auto-generated encryption key for password fields\nCONFIG_ENCRYPTION_KEY=${key}\n`;
+      const keyLine = `\n# Auto-generated encryption key for password fields\nAIO_COMMERCE_CONFIG_ENCRYPTION_KEY=${key}\n`;
       await appendFile(envPath, keyLine, "utf-8");
-      process.env.CONFIG_ENCRYPTION_KEY = key;
+      process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = key;
 
       consola.success("🔐 Generated encryption key and added to .env file");
       return true;
     }
 
     consola.error(
-      "⚠️  CONFIG_ENCRYPTION_KEY not found and .env file doesn't exist",
+      "⚠️  AIO_COMMERCE_CONFIG_ENCRYPTION_KEY not found and .env file doesn't exist",
     );
     consola.info("Generate a key with:");
     consola.info(

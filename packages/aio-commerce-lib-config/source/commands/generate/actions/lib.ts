@@ -46,7 +46,7 @@ export function buildActionDefinition(action: ActionConfig): ActionDefinition {
   if (action.requiresEncryptionKey) {
     def.inputs = {
       ...def.inputs,
-      CONFIG_ENCRYPTION_KEY: "$CONFIG_ENCRYPTION_KEY",
+      AIO_COMMERCE_CONFIG_ENCRYPTION_KEY: "$AIO_COMMERCE_CONFIG_ENCRYPTION_KEY",
     };
   }
 

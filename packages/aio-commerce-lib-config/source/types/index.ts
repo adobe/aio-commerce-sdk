@@ -17,10 +17,15 @@ export * from "./commerce";
 export type LibConfigOptions = {
   /** Optional cache timeout in milliseconds. */
   cacheTimeout?: number;
+  /** Optional encryption key for encrypting/decrypting password fields. If not provided, falls back to AIO_COMMERCE_CONFIG_ENCRYPTION_KEY environment variable. */
+  encryptionKey?: string;
 };
 
 /**
  * Global fetch options with all properties required.
  * @internal
  */
-export type GlobalLibConfigOptions = Required<LibConfigOptions>;
+export type GlobalLibConfigOptions = {
+  cacheTimeout: number;
+  encryptionKey?: string;
+};

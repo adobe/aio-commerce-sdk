@@ -37,6 +37,7 @@ import type {
 
 const globalLibConfigOptions: GlobalLibConfigOptions = {
   cacheTimeout: DEFAULT_CACHE_TIMEOUT,
+  encryptionKey: undefined,
 };
 
 /**
@@ -49,13 +50,29 @@ const globalLibConfigOptions: GlobalLibConfigOptions = {
  * // Set a global cache timeout of 5 minutes (300000ms)
  * setGlobalLibConfigOptions({ cacheTimeout: 300000 });
  *
+ * // Set encryption key programmatically instead of using environment variable
+ * setGlobalLibConfigOptions({
+ *   encryptionKey: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+ * });
+ *
  * // All subsequent calls will use this cache timeout unless overridden
  * const schema = await getConfigSchema();
  * ```
  */
 export function setGlobalLibConfigOptions(options: LibConfigOptions) {
   globalLibConfigOptions.cacheTimeout =
-    options.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT;
+    options.cacheTimeout ?? globalLibConfigOptions.cacheTimeout;
+  globalLibConfigOptions.encryptionKey =
+    options.encryptionKey ?? globalLibConfigOptions.encryptionKey;
+}
+
+/**
+ * Gets the global encryption key.
+ * @returns The encryption key or undefined if not set.
+ * @internal
+ */
+export function getGlobalLibConfigOptions(): GlobalLibConfigOptions {
+  return globalLibConfigOptions;
 }
 
 /** Parameters for getting the scope tree from Commerce API. */

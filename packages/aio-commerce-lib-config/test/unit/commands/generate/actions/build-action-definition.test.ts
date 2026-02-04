@@ -50,7 +50,8 @@ describe("buildActionDefinition", () => {
       },
       include: [[".generated/configuration-schema.json", "app-management/"]],
       inputs: {
-        CONFIG_ENCRYPTION_KEY: "$CONFIG_ENCRYPTION_KEY",
+        AIO_COMMERCE_CONFIG_ENCRYPTION_KEY:
+          "$AIO_COMMERCE_CONFIG_ENCRYPTION_KEY",
       },
     });
   });

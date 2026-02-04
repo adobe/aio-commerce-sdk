@@ -50,14 +50,14 @@ import { validateSchema } from "@adobe/aio-commerce-lib-config/commands";
 // This will automatically:
 // 1. Check if your schema has password fields
 // 2. Generate an encryption key if needed
-// 3. Add CONFIG_ENCRYPTION_KEY to your .env file
+// 3. Add AIO_COMMERCE_CONFIG_ENCRYPTION_KEY to your .env file
 await validateSchema();
 ```
 
 The validation command will:
 
 - ✅ Automatically generate a secure 256-bit encryption key
-- ✅ Add `CONFIG_ENCRYPTION_KEY` to your `.env` file (if it exists)
+- ✅ Add `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY` to your `.env` file (if it exists)
 - ✅ Set the key in your environment for immediate use
 
 **That's it!** Your encryption is now configured and ready to use.
@@ -71,13 +71,13 @@ import { generateEncryptionKey } from "@adobe/aio-commerce-lib-config";
 
 const key = generateEncryptionKey();
 console.log("Add this to your .env file:");
-console.log(`CONFIG_ENCRYPTION_KEY=${key}`);
+console.log(`AIO_COMMERCE_CONFIG_ENCRYPTION_KEY=${key}`);
 ```
 
 Then manually add the key to your `.env` file:
 
 ```bash
-CONFIG_ENCRYPTION_KEY=your_generated_64_character_hex_key_here
+AIO_COMMERCE_CONFIG_ENCRYPTION_KEY=your_generated_64_character_hex_key_here
 ```
 
 **Important Security Notes:**
@@ -98,7 +98,7 @@ Password values are automatically encrypted when you set them. **Note:** A valid
 import { setConfiguration, byScopeId } from "@adobe/aio-commerce-lib-config";
 
 // The password will be encrypted before storage
-// Throws an error if CONFIG_ENCRYPTION_KEY is not configured
+// Throws an error if AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not configured
 await setConfiguration(
   {
     config: [
@@ -121,7 +121,7 @@ try {
     byScopeId("scope-123"),
   );
 } catch (error) {
-  // Will throw if CONFIG_ENCRYPTION_KEY is not configured
+  // Will throw if AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not configured
   console.error("Failed to save configuration:", error.message);
 }
 ```
@@ -202,7 +202,7 @@ enc:a1b2c3d4e5f6g7h8:i9j0k1l2m3n4o5p6:q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2g3h4i5j6
 
 ```bash
 # .env.dist
-CONFIG_ENCRYPTION_KEY=your_key_here
+AIO_COMMERCE_CONFIG_ENCRYPTION_KEY=your_key_here
 ```
 
 ### 2. Key Rotation
@@ -211,7 +211,7 @@ To rotate your encryption key:
 
 1. Generate a new key using `generateEncryptionKey()`
 2. Decrypt all existing passwords with the old key
-3. Update `CONFIG_ENCRYPTION_KEY` with the new key
+3. Update `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY` with the new key
 4. Re-encrypt all passwords with the new key
 
 ```typescript
@@ -226,7 +226,7 @@ const oldConfig = await getConfiguration(byScopeId("scope-123"));
 
 // 2. Generate and set new key
 const newKey = generateEncryptionKey();
-process.env.CONFIG_ENCRYPTION_KEY = newKey;
+process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = newKey;
 
 // 3. Re-save configs (will encrypt with new key)
 await setConfiguration({ config: oldConfig.config }, byScopeId("scope-123"));
@@ -269,7 +269,7 @@ Password encryption is **strictly enforced** at multiple levels:
 
 **At Schema Validation:**
 
-- If your schema contains password fields and `CONFIG_ENCRYPTION_KEY` is not configured, schema validation **fails**
+- If your schema contains password fields and `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY` is not configured, schema validation **fails**
 - The validation process attempts to automatically generate and configure the key
 - If automatic setup fails (e.g., no `.env` file exists), validation exits with an error
 
@@ -285,7 +285,7 @@ This strict enforcement is a **security feature** to prevent accidentally storin
 
 **When setting passwords:**
 
-- If encryption fails, an error is thrown (most commonly: `CONFIG_ENCRYPTION_KEY` not configured)
+- If encryption fails, an error is thrown (most commonly: `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY` not configured)
 - Passwords are **never** stored in plain text
 
 **When getting encrypted passwords (if key is missing, invalid, or decryption fails):**
@@ -306,17 +306,17 @@ This strict enforcement is a **security feature** to prevent accidentally storin
 2. Run schema validation again, which will automatically generate and add the key
 3. Alternatively, manually generate a key and add it to your environment
 
-### "CONFIG_ENCRYPTION_KEY not found" Warning
+### "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY not found" Warning
 
 **Cause**: The environment variable is not set at runtime.
 
 **Solution**: Ensure the encryption key is in your `.env` file:
 
 ```bash
-CONFIG_ENCRYPTION_KEY=your_64_character_hex_key
+AIO_COMMERCE_CONFIG_ENCRYPTION_KEY=your_64_character_hex_key
 ```
 
-### "CONFIG_ENCRYPTION_KEY is not a valid hex string" Warning
+### "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not a valid hex string" Warning
 
 **Cause**: The key format is incorrect.
 

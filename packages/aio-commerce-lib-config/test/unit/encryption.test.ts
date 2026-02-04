@@ -26,14 +26,14 @@ describe("encryption utilities", () => {
   let originalEnv: string | undefined;
 
   beforeEach(() => {
-    originalEnv = process.env.CONFIG_ENCRYPTION_KEY;
+    originalEnv = process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY;
   });
 
   afterEach(() => {
     if (originalEnv) {
-      process.env.CONFIG_ENCRYPTION_KEY = originalEnv;
+      process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = originalEnv;
     } else {
-      process.env.CONFIG_ENCRYPTION_KEY = undefined;
+      process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = undefined;
     }
   });
 
@@ -52,25 +52,25 @@ describe("encryption utilities", () => {
   });
 
   describe("isEncryptionConfigured", () => {
-    it("should return false when CONFIG_ENCRYPTION_KEY is not set", () => {
-      process.env.CONFIG_ENCRYPTION_KEY = undefined;
+    it("should return false when AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not set", () => {
+      process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = undefined;
       expect(isEncryptionConfigured()).toBe(false);
     });
 
-    it("should return false when CONFIG_ENCRYPTION_KEY is invalid", () => {
-      process.env.CONFIG_ENCRYPTION_KEY = "invalid-key";
+    it("should return false when AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is invalid", () => {
+      process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = "invalid-key";
       expect(isEncryptionConfigured()).toBe(false);
     });
 
-    it("should return true when CONFIG_ENCRYPTION_KEY is valid", () => {
-      process.env.CONFIG_ENCRYPTION_KEY = generateEncryptionKey();
+    it("should return true when AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is valid", () => {
+      process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = generateEncryptionKey();
       expect(isEncryptionConfigured()).toBe(true);
     });
   });
 
   describe("encrypt and decrypt", () => {
     beforeEach(() => {
-      process.env.CONFIG_ENCRYPTION_KEY = generateEncryptionKey();
+      process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = generateEncryptionKey();
     });
 
     it("should encrypt and decrypt a password correctly", () => {
@@ -125,22 +125,22 @@ describe("encryption utilities", () => {
 
   describe("encrypt without encryption key", () => {
     beforeEach(() => {
-      process.env.CONFIG_ENCRYPTION_KEY = undefined;
+      process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = undefined;
     });
 
     it("should throw an error when encryption key is not configured", () => {
       const plainText = "my-secret-password";
       expect(() => encrypt(plainText)).toThrow(
-        "CONFIG_ENCRYPTION_KEY is not configured",
+        "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not configured",
       );
     });
 
     it("should return encrypted value when decryption key is not configured", () => {
-      process.env.CONFIG_ENCRYPTION_KEY = generateEncryptionKey();
+      process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = generateEncryptionKey();
       const plainText = "my-secret-password";
       const encrypted = encrypt(plainText);
 
-      process.env.CONFIG_ENCRYPTION_KEY = undefined;
+      process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = undefined;
       const decrypted = decrypt(encrypted);
       expect(decrypted).toBe(encrypted);
     });
@@ -148,11 +148,11 @@ describe("encryption utilities", () => {
 
   describe("decrypt with wrong key", () => {
     it("should handle decryption with wrong key gracefully", () => {
-      process.env.CONFIG_ENCRYPTION_KEY = generateEncryptionKey();
+      process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = generateEncryptionKey();
       const plainText = "my-secret-password";
       const encrypted = encrypt(plainText);
 
-      process.env.CONFIG_ENCRYPTION_KEY = generateEncryptionKey();
+      process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = generateEncryptionKey();
       const decrypted = decrypt(encrypted);
 
       expect(decrypted).toBe(encrypted);
@@ -161,7 +161,7 @@ describe("encryption utilities", () => {
 
   describe("decrypt with invalid format", () => {
     beforeEach(() => {
-      process.env.CONFIG_ENCRYPTION_KEY = generateEncryptionKey();
+      process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = generateEncryptionKey();
     });
 
     it("should handle invalid encrypted format gracefully", () => {
