@@ -54,6 +54,7 @@ export function createMockStepStatus(
   overrides?: Partial<StepStatus>,
 ): StepStatus {
   return {
+    id: "root-id",
     name: "root",
     path: ["root"],
     status: "pending" as ExecutionStatus,
@@ -153,6 +154,7 @@ const commerceEventingPart = {
       events: [
         {
           name: "plugin.order_placed",
+          label: "Order Placed",
           fields: ["order_id", "customer_id"],
           runtimeAction: "handle-order",
           description: "Triggered when an order is placed",
@@ -170,7 +172,13 @@ const externalEventingPart = {
         label: "External Events Provider",
         description: "Provides external events",
       },
-      events: [{ name: "external_event" }],
+      events: [
+        {
+          name: "external_event",
+          label: "External Event",
+          description: "An external event",
+        },
+      ],
     },
   ],
 };
