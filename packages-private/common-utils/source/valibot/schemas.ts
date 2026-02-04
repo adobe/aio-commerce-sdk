@@ -32,12 +32,6 @@ const ALPHANUMERIC_OR_HYPHEN_REGEX = {
   uppercase: /^[A-Z0-9-]+$/,
 };
 
-/**
- * Regex for Title Case strings.
- * Each word must start with an uppercase letter followed by zero or more lowercase letters.
- * Words are separated by single spaces.
- * Examples: "My Provider", "Commerce", "Order Events Handler"
- */
 const TITLE_CASE_REGEX = /^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/;
 
 /**
