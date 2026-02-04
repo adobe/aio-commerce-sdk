@@ -20,6 +20,7 @@ import {
   byCodeAndLevel,
   byScopeId,
   getConfiguration,
+  setGlobalLibConfigOptions,
 } from "@adobe/aio-commerce-lib-config";
 import {
   badRequest,
