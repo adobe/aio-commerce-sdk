@@ -63,7 +63,9 @@ export function setGlobalLibConfigOptions(options: LibConfigOptions) {
   globalLibConfigOptions.cacheTimeout =
     options.cacheTimeout ?? globalLibConfigOptions.cacheTimeout;
   globalLibConfigOptions.encryptionKey =
-    options.encryptionKey ?? globalLibConfigOptions.encryptionKey;
+    options.encryptionKey !== undefined
+      ? options.encryptionKey
+      : globalLibConfigOptions.encryptionKey;
 }
 
 /**
