@@ -13,7 +13,23 @@
 import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
 import { defineConfig, mergeConfig } from "vitest/config";
 
-const BARREL_FILES = ["./source/config/index.ts"];
+const BARREL_FILES = [
+  "./source/config/index.ts",
+  "./source/management/index.ts",
+  "./source/management/installation/events/index.ts",
+  "./source/management/installation/webhooks/index.ts",
+  "./source/management/installation/workflow/index.ts",
+];
+
+// Files with placeholder implementations pending full development
+const PLACEHOLDER_FILES = [
+  "./source/management/installation/events/helpers.ts",
+  "./source/management/installation/events/utils.ts",
+  "./source/management/installation/events/commerce.ts",
+  "./source/management/installation/events/external.ts",
+  "./source/management/installation/webhooks/helpers.ts",
+  "./source/management/installation/webhooks/branch.ts",
+];
 
 export default mergeConfig(
   baseConfig,
@@ -21,8 +37,8 @@ export default mergeConfig(
     plugins: [],
     test: {
       coverage: {
-        // Exclude files that don't contain "logic".
-        exclude: [...BARREL_FILES],
+        // Exclude barrel files and placeholder implementations
+        exclude: [...BARREL_FILES, ...PLACEHOLDER_FILES],
       },
     },
   }),
