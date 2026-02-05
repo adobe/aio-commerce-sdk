@@ -93,10 +93,5 @@
     "@aio-commerce-sdk/common-utils": "workspace:*",
     "@aio-commerce-sdk/scripting-utils": "workspace:*"
   },
-  "lint-staged": {
-    "*.{ts,d.ts,d.cts,d.mts,tsx}": [
-      "pnpm run typecheck --filter @adobe/aio-commerce-lib-auth"
-    ]
-  },
   "sideEffects": false
 }

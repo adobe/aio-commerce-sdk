@@ -76,7 +76,7 @@ type StepExecutionContext = {
   installationId: string;
   startedAt: string;
   step: StepStatus;
-  data: Record<string, unknown>;
+  data: Record<string, unknown> | null;
   error: InstallationError | null;
   registry: StepRegistry;
   hooks?: InstallationHooks;
@@ -103,14 +103,13 @@ export async function executeWorkflow(
   options: ExecuteWorkflowOptions,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
   const { rootStep, installationContext, config, plan, hooks } = options;
-
   const context: StepExecutionContext = {
     installationContext,
     config,
     installationId: plan.id,
     startedAt: nowIsoString(),
     step: buildInitialStepStatus(plan.step, []),
-    data: {},
+    data: null,
     error: null,
     registry: new Map(rootStep.children.map((step) => [step.name, step])),
     hooks,
@@ -121,14 +120,29 @@ export async function executeWorkflow(
   try {
     // Execute the root step
     await executeStep(rootStep, context.step, {}, context);
+    const succeeded = createSucceededState({
+      installationId: context.installationId,
+      startedAt: context.startedAt,
+      step: context.step,
+      data: context.data,
+    });
 
-    const succeeded = createSucceededState(context);
     await callHook(hooks, "onInstallationSuccess", succeeded);
     return succeeded;
   } catch (err) {
     const error =
       context.error ?? createInstallationError(err, [], "INSTALLATION_FAILED");
-    const failed = createFailedState(context, error);
+
+    const failed = createFailedState(
+      {
+        step: context.step,
+        installationId: context.installationId,
+        startedAt: context.startedAt,
+        data: context.data,
+      },
+      error,
+    );
+
     await callHook(hooks, "onInstallationFailure", failed);
     return failed;
   }
@@ -145,7 +159,7 @@ function buildPlanStep(
     children: [],
   };
 
-  if (isBranchStep(step)) {
+  if (isBranchStep(step) && step.children.length > 0) {
     planStep.children = buildPlanStepsForChildren(step.children, config);
   }
 
@@ -179,6 +193,7 @@ function buildInitialStepStatus(
   return {
     name: planStep.name,
     path,
+    id: crypto.randomUUID(),
     status: "pending" as const,
     children: planStep.children.map((child) =>
       buildInitialStepStatus(child, path),
@@ -223,6 +238,8 @@ async function executeStep(
     }
 
     stepStatus.status = "succeeded";
+    context.data ??= {};
+
     await callHook(
       context.hooks,
       "onStepSuccess",
@@ -282,5 +299,6 @@ async function executeLeafStep(
   const executionContext = { ...context.installationContext, ...inherited };
   const result = await step.run(context.config, executionContext);
 
+  context.data ??= {};
   setAtPath(context.data, stepStatus.path, result);
 }

@@ -107,10 +107,5 @@
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*"
   },
-  "lint-staged": {
-    "*.{ts,d.ts,d.cts,d.mts,tsx}": [
-      "pnpm run typecheck --filter @adobe/aio-commerce-sdk"
-    ]
-  },
   "sideEffects": false
 }

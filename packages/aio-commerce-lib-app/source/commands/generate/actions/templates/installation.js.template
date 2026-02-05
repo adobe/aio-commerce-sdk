@@ -19,8 +19,8 @@ import { validateCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
 import {
   createInstallationPlan,
   runInstallation,
+  createLibStateStore,
 } from "@adobe/aio-commerce-lib-app/management";
-import { createLibStateStore } from "@adobe/aio-commerce-lib-app/management/installation/workflow/storage";
 import {
   accepted,
   badRequest,
@@ -159,10 +159,7 @@ async function handleExecuteInstallation(plan, params, logger) {
   });
 
   const hooks = createInstallationHooks(store, logger);
-  const installationContext = {
-    params,
-    logger,
-  };
+  const installationContext = { params, logger };
 
   const result = await runInstallation({
     installationContext,

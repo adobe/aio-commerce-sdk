@@ -75,7 +75,7 @@ type FinalStateBase = {
   installationId: string;
   startedAt: string;
   step: StepStatus;
-  data: Record<string, unknown>;
+  data: Record<string, unknown> | null;
 };
 
 /** Creates a succeeded installation state. */

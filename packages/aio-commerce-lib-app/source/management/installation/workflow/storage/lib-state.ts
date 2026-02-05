@@ -102,6 +102,6 @@ class LibStateStore implements InstallationStateStore {
    * Builds the state key for an installation ID.
    */
   private buildKey(installationId: string): string {
-    return `${STATE_KEY_PREFIX}:${installationId}`;
+    return `${STATE_KEY_PREFIX}-${installationId}`;
   }
 }
