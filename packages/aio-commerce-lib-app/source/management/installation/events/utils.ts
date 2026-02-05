@@ -55,6 +55,7 @@ const PROJECT_ID_LENGTH = 19;
 const WORKSPACE_ID_LENGTH = 19;
 
 const AppCredentialsSchema = v.object({
+  clientId: nonEmptyStringValueSchema("clientId"),
   consumerOrgId: v.pipe(
     nonEmptyStringValueSchema("consumerOrgId"),
     v.length(
@@ -88,6 +89,7 @@ export type EventsConfig = CommerceAppConfigOutputModel & {
 /** Context available to event steps (inherited from eventing branch). */
 export interface EventsStepContext extends Record<string, unknown> {
   get appCredentials(): {
+    clientId: string;
     consumerOrgId: string;
     projectId: string;
     workspaceId: string;
@@ -110,6 +112,7 @@ export const createEventsStepContext: StepContextFactory<EventsStepContext> = (
   let ioEventsClient: AdobeIoEventsApiClient | null = null;
 
   const appCredentials = parseOrThrow(AppCredentialsSchema, {
+    clientId: params.clientId,
     consumerOrgId: params.consumerOrgId,
     projectId: params.projectId,
     workspaceId: params.workspaceId,

@@ -188,7 +188,6 @@ export async function createRegistration(params: CreateRegistrationParams) {
   return ioEventsClient
     .createRegistration({
       ...appCredentials,
-      clientId: "",
 
       name,
       description,
@@ -230,11 +229,15 @@ export async function createOrGetEventRegistration(
   registrations: IoEventRegistration[],
 ) {
   const { context, provider, runtimeAction } = params;
-  const { logger } = context;
+  const { appCredentials, logger } = context;
 
   // Check if a registration already exists for this provider and runtime action.
   const name = getRegistrationName(provider, runtimeAction);
-  const existing = findExistingRegistrations(registrations, "", name);
+  const existing = findExistingRegistrations(
+    registrations,
+    appCredentials.clientId,
+    name,
+  );
 
   if (existing) {
     logger.info(
