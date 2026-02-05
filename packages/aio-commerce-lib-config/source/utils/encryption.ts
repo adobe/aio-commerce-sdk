@@ -41,8 +41,7 @@ export function isEncryptionConfigured(): boolean {
 }
 
 /**
- * Gets the encryption key from global config or environment variables.
- * Priority: globalLibConfigOptions.encryptionKey > process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY
+ * Gets the encryption key from global config.
  * @returns The encryption key as a Buffer, or null if not configured.
  */
 function getEncryptionKey(): Buffer | null {
