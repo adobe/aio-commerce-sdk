@@ -70,23 +70,18 @@ export const commerceEventsStep = defineLeafStep({
         existingIoEventsData,
       );
 
-      const existingSubscriptionsData =
-        await context.commerceEventsClient.getAllEventSubscriptions();
       const commerceEventsData =
         eventsData satisfies EventsDataFromIo<CommerceEvent>;
 
-      const { subscriptionsData } = await onboardCommerceSubscriptions(
-        {
-          context,
-          metadata: config.metadata,
-          provider,
-          data: {
-            ...providerData,
-            events: commerceEventsData,
-          },
+      const { subscriptionsData } = await onboardCommerceSubscriptions({
+        context,
+        metadata: config.metadata,
+        provider,
+        data: {
+          ...providerData,
+          events: commerceEventsData,
         },
-        existingSubscriptionsData,
-      );
+      });
 
       stepData.push({
         provider: {

@@ -15,7 +15,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { onboardCommerceSubscriptions } from "#management/installation/events/helpers";
 import { createMockLogger } from "#test/fixtures/installation";
 
-import type { CommerceEventSubscriptionManyResponse } from "@adobe/aio-commerce-lib-events/commerce";
 import type { OnboardCommerceEventSubscriptionParams } from "#management/installation/events/types";
 import type { EventsExecutionContext } from "#management/installation/events/utils";
 
@@ -24,8 +23,6 @@ describe("onboardCommerceSubscriptions", () => {
 
   const mockCommerceEventsClient = {
     createEventSubscription: vi.fn(),
-    updateEventSubscription: vi.fn(),
-    getAllEventSubscriptions: vi.fn(),
   };
 
   const mockContext = {
@@ -42,7 +39,7 @@ describe("onboardCommerceSubscriptions", () => {
       return mockCommerceEventsClient as any;
     },
     get ioEventsClient() {
-      return {} as any;
+      return {};
     },
   } as EventsExecutionContext;
 
@@ -75,7 +72,6 @@ describe("onboardCommerceSubscriptions", () => {
             description: "Triggered when an order is placed",
             fields: ["order_id", "customer_id"],
             runtimeAction: "handle-order",
-            providerType: "dx_commerce_events",
           },
           data: {
             metadata: {
@@ -86,24 +82,19 @@ describe("onboardCommerceSubscriptions", () => {
           },
         },
       ],
-    },
+    } as any,
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test("should create a new subscription when no existing subscriptions exist", async () => {
-    const existingSubscriptions: CommerceEventSubscriptionManyResponse = [];
-
+  test("should create a single subscription", async () => {
     mockCommerceEventsClient.createEventSubscription.mockResolvedValue(
       undefined,
     );
 
-    const result = await onboardCommerceSubscriptions(
-      baseParams,
-      existingSubscriptions,
-    );
+    const result = await onboardCommerceSubscriptions(baseParams);
 
     expect(
       mockCommerceEventsClient.createEventSubscription,
@@ -116,9 +107,7 @@ describe("onboardCommerceSubscriptions", () => {
       fields: [{ name: "order_id" }, { name: "customer_id" }],
       providerId: "test-app_commerce-events-provider",
     });
-    expect(
-      mockCommerceEventsClient.updateEventSubscription,
-    ).not.toHaveBeenCalled();
+
     expect(result.subscriptionsData).toHaveLength(1);
     expect(result.subscriptionsData[0]).toEqual({
       name: "test-app.plugin.order_placed",
@@ -128,47 +117,7 @@ describe("onboardCommerceSubscriptions", () => {
     });
   });
 
-  test("should update an existing subscription when it exists and differs", async () => {
-    const existingSubscriptions: CommerceEventSubscriptionManyResponse = [
-      {
-        name: "test-app.plugin.order_placed",
-        parent: "plugin.order_placed",
-        provider_id: "test-app_commerce-events-provider",
-        fields: [{ name: "order_id" }],
-        rules: [],
-        destination: "default",
-        priority: false,
-        hipaa_audit_required: false,
-      },
-    ];
-
-    mockCommerceEventsClient.updateEventSubscription.mockResolvedValue(
-      undefined,
-    );
-
-    const result = await onboardCommerceSubscriptions(
-      baseParams,
-      existingSubscriptions,
-    );
-
-    expect(
-      mockCommerceEventsClient.updateEventSubscription,
-    ).toHaveBeenCalledTimes(1);
-    expect(
-      mockCommerceEventsClient.updateEventSubscription,
-    ).toHaveBeenCalledWith({
-      name: "test-app.plugin.order_placed",
-      parent: "plugin.order_placed",
-      fields: [{ name: "order_id" }, { name: "customer_id" }],
-      providerId: "test-app_commerce-events-provider",
-    });
-    expect(
-      mockCommerceEventsClient.createEventSubscription,
-    ).not.toHaveBeenCalled();
-    expect(result.subscriptionsData).toHaveLength(1);
-  });
-
-  test("should create one subscription and update another when processing multiple events", async () => {
+  test("should create multiple subscriptions for multiple events", async () => {
     const paramsWithTwoEvents: OnboardCommerceEventSubscriptionParams = {
       ...baseParams,
       data: {
@@ -181,7 +130,6 @@ describe("onboardCommerceSubscriptions", () => {
               description: "Triggered when an order is placed",
               fields: ["order_id", "customer_id"],
               runtimeAction: "handle-order",
-              providerType: "dx_commerce_events",
             },
             data: {
               metadata: {
@@ -198,7 +146,6 @@ describe("onboardCommerceSubscriptions", () => {
               description: "Triggered when a product is updated",
               fields: ["product_id", "sku"],
               runtimeAction: "handle-product-update",
-              providerType: "dx_commerce_events",
             },
             data: {
               metadata: {
@@ -210,52 +157,29 @@ describe("onboardCommerceSubscriptions", () => {
             },
           },
         ],
-      },
+      } as any,
     };
-
-    const existingSubscriptions: CommerceEventSubscriptionManyResponse = [
-      {
-        name: "test-app.plugin.product_updated",
-        parent: "plugin.product_updated",
-        provider_id: "test-app_commerce-events-provider",
-        fields: [{ name: "product_id" }],
-        rules: [],
-        destination: "default",
-        priority: false,
-        hipaa_audit_required: false,
-      },
-    ];
 
     mockCommerceEventsClient.createEventSubscription.mockResolvedValue(
       undefined,
     );
-    mockCommerceEventsClient.updateEventSubscription.mockResolvedValue(
-      undefined,
-    );
 
-    const result = await onboardCommerceSubscriptions(
-      paramsWithTwoEvents,
-      existingSubscriptions,
-    );
+    const result = await onboardCommerceSubscriptions(paramsWithTwoEvents);
 
     expect(
       mockCommerceEventsClient.createEventSubscription,
-    ).toHaveBeenCalledTimes(1);
+    ).toHaveBeenCalledTimes(2);
     expect(
       mockCommerceEventsClient.createEventSubscription,
-    ).toHaveBeenCalledWith({
+    ).toHaveBeenNthCalledWith(1, {
       name: "test-app.plugin.order_placed",
       parent: "plugin.order_placed",
       fields: [{ name: "order_id" }, { name: "customer_id" }],
       providerId: "test-app_commerce-events-provider",
     });
-
     expect(
-      mockCommerceEventsClient.updateEventSubscription,
-    ).toHaveBeenCalledTimes(1);
-    expect(
-      mockCommerceEventsClient.updateEventSubscription,
-    ).toHaveBeenCalledWith({
+      mockCommerceEventsClient.createEventSubscription,
+    ).toHaveBeenNthCalledWith(2, {
       name: "test-app.plugin.product_updated",
       parent: "plugin.product_updated",
       fields: [{ name: "product_id" }, { name: "sku" }],
@@ -263,5 +187,17 @@ describe("onboardCommerceSubscriptions", () => {
     });
 
     expect(result.subscriptionsData).toHaveLength(2);
+    expect(result.subscriptionsData[0]).toEqual({
+      name: "test-app.plugin.order_placed",
+      parent: "plugin.order_placed",
+      fields: [{ name: "order_id" }, { name: "customer_id" }],
+      providerId: "test-app_commerce-events-provider",
+    });
+    expect(result.subscriptionsData[1]).toEqual({
+      name: "test-app.plugin.product_updated",
+      parent: "plugin.product_updated",
+      fields: [{ name: "product_id" }, { name: "sku" }],
+      providerId: "test-app_commerce-events-provider",
+    });
   });
 });
