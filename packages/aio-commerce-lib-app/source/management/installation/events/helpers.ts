@@ -23,26 +23,27 @@ import {
   groupEventsByRuntimeActions,
 } from "./utils";
 
+import type { CommerceEventSubscriptionManyResponse } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   EventProviderType,
   IoEventMetadata,
   IoEventProvider,
   IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
+import type { ArrayElement } from "type-fest";
+import type { CommerceEvent, ExternalEvent } from "#config/schema/eventing";
+import type { ApplicationMetadata } from "#config/schema/metadata";
 import type {
   CreateProviderEventsMetadataParams,
   CreateProviderParams,
   CreateRegistrationParams,
+  CreateSubscriptionParams,
+  EventsDataFromIo,
+  OnboardCommerceEventSubscriptionParams,
   OnboardIoEventsParams,
 } from "./types";
 import type { EventsExecutionContext, ExistingIoEventsData } from "./utils";
-import type {
-  CommerceEvent,
-  CommerceEventSource,
-  EventProvider,
-} from "#config/schema/eventing";
-import type { ApplicationMetadata } from "#config/schema/metadata";
-import type { EventsExecutionContext } from "./utils";
+
 /**
  * Creates an event provider if it does not already exist.
  * @param params - The parameters necessary to create the provider.
@@ -264,51 +265,55 @@ export function configureCommerce(context: EventsExecutionContext) {
   return { commerceConfigured: true };
 }
 
-export function createCommerceSubscriptions(
-  context: EventsExecutionContext,
-  config: {
-    metadata: ApplicationMetadata;
-    eventSources: CommerceEventSource[];
-  },
-  providers: ReturnType<typeof createProviders>,
+export async function createOrUpdateSubscription(
+  params: CreateSubscriptionParams,
+  existingData: Map<
+    string,
+    ArrayElement<CommerceEventSubscriptionManyResponse>
+  >,
 ) {
-  const { logger, commerceEventsClient } = context;
-  const { metadata, eventSources } = config;
-  logger.info("Creating event subscriptions in Commerce");
+  const { context, metadata, provider, event } = params;
+  const eventSpec = toEventSpec(metadata, provider, event);
 
-  //TODO: map providers by an instance id for easy lookup
-  const providersMap = new Map(providers.map((p) => [p.providerId, p]));
+  if (existingData.has(eventSpec.name)) {
+    context.logger.info(
+      `Update event subscription for event: ${event.config.name}`,
+    );
 
-  for (const source of eventSources) {
-    //TODO: use the instance id or similar to lookup the provider created earlier
-    const instanceId = source.provider.label;
-    const provider = providersMap.get(instanceId);
-
-    for (const event of source.events) {
-      const namespacedEventName = getEventName(metadata.id, event);
-
-      logger.info(
-        `Creating subscription for event: ${namespacedEventName} with provider: ${provider?.providerId}`,
+    try {
+      await context.commerceEventsClient.updateEventSubscription(eventSpec);
+      context.logger.info("Updated commerce event subscriptions");
+      return eventSpec;
+    } catch (error) {
+      context.logger.error(
+        `Failed to update event subscription for event: ${event.config.name}:${event.config.name} - ${stringifyError(
+          error,
+        )}`,
       );
+      throw error;
+    }
+  } else {
+    context.logger.info(
+      `Creating subscription for event: ${event.config.name} with provider: ${provider.instance_id}`,
+    );
 
-      const eventSpec = {
-        name: namespacedEventName,
-        parent: event.name,
-        fields: event.fields.map((field) => ({ name: field })),
-        providerId: instanceId,
-      };
+    context.logger.info(
+      `Creating event subscription for event: ${event.config.name}`,
+    );
 
-      logger.info(
-        `Creating event subscription for event: ${namespacedEventName}:${event.name}`,
+    try {
+      await context.commerceEventsClient.createEventSubscription(eventSpec);
+      context.logger.info("Created commerce event subscriptions");
+      return eventSpec;
+    } catch (error) {
+      context.logger.error(
+        `Failed to create event subscription for event: ${event.config.name}:${event.config.name} - ${stringifyError(
+          error,
+        )}`,
       );
-
-      commerceEventsClient.createEventSubscription(eventSpec);
+      throw error;
     }
   }
-
-  logger.info("Created commerce event subscriptions");
-
-  return [{ subscriptionId: "TODO" }];
 }
 
 /**
@@ -318,8 +323,10 @@ export function createCommerceSubscriptions(
  * @param params - Configuration for onboarding a single event source
  * @param existingData - Existing I/O Events data
  */
-export async function onboardIoEvents(
-  params: OnboardIoEventsParams,
+export async function onboardIoEvents<
+  EventType extends CommerceEvent | ExternalEvent,
+>(
+  params: OnboardIoEventsParams<EventType>,
   existingData: ExistingIoEventsData,
 ) {
   const { providersWithMetadata, registrations } = existingData;
@@ -383,7 +390,7 @@ export async function onboardIoEvents(
     });
 
     return {
-      config: event,
+      config: { ...event, providerType },
       data: {
         metadata: metadataData[index],
         registrations: eventRegistrations,
@@ -397,11 +404,70 @@ export async function onboardIoEvents(
   };
 }
 
+export async function onboardCommerceSubscriptions(
+  params: OnboardCommerceEventSubscriptionParams,
+  existingSubscriptionsData: CommerceEventSubscriptionManyResponse,
+) {
+  const { context, metadata, provider, data } = params;
+  const { events, ...providerData } = data;
+
+  const instanceId =
+    providerData.instance_id ?? generateInstanceId(metadata, provider);
+
+  context.logger.info(
+    `Onboarding Commerce event subscriptions with provider instance ID: ${instanceId}`,
+  );
+
+  const existingProviderByEventName = new Map(
+    existingSubscriptionsData.map((subscription) => [
+      subscription.name,
+      subscription,
+    ]),
+  );
+
+  const subscriptionsPromises = events.map((event) =>
+    createOrUpdateSubscription(
+      {
+        context,
+        metadata,
+        provider: providerData,
+        event,
+      },
+      existingProviderByEventName,
+    ),
+  );
+
+  const subscriptionsData = await Promise.all(subscriptionsPromises);
+
+  return {
+    subscriptionsData,
+  };
+}
+
 /**
- * Creates a fully qualified event name for Adobe Commerce events.
- * @param appId - The application ID
- * @param event - The Commerce event
+ * Converts event data from I/O Events to the format required for Commerce event subscriptions.
+ * @param metadata
+ * @param provider
+ * @param event
  */
-export function getEventName(appId: string, event: CommerceEvent) {
-  return `com.adobe.commerce.${appId}.${event.name}`;
+function toEventSpec(
+  metadata: ApplicationMetadata,
+  provider: IoEventProvider,
+  event: ArrayElement<EventsDataFromIo<CommerceEvent>>,
+) {
+  return {
+    name: getNamespacedEvent(metadata, event.config.name),
+    parent: event.config.name,
+    fields: event.config.fields.map((field) => ({ name: field })),
+    providerId: provider.instance_id,
+  };
+}
+
+/**
+ * Generates a namespaced event name by combining the application ID with the event name.
+ * @param metadata
+ * @param name
+ */
+function getNamespacedEvent(metadata: ApplicationMetadata, name: string) {
+  return `${metadata.id}.${name}`;
 }

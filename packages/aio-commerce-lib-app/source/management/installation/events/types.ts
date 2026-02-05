@@ -14,6 +14,7 @@ import type {
   EventProviderType,
   IoEventProvider,
 } from "@adobe/aio-commerce-lib-events/io-events";
+import type { ArrayElement } from "type-fest";
 import type { ApplicationMetadata } from "#config/index";
 import type {
   AppEvent,
@@ -21,6 +22,7 @@ import type {
   EventProvider,
   ExternalEvent,
 } from "#config/schema/eventing";
+import type { onboardIoEvents } from "#management/installation/events/helpers";
 import type { EventsExecutionContext } from "./utils";
 
 // Combine EventProvider with its type for easier handling.
@@ -50,10 +52,47 @@ export type CreateRegistrationParams = {
   runtimeAction: string;
 };
 
-export type OnboardIoEventsParams = {
+export type OnboardIoEventsParams<
+  EventType extends CommerceEvent | ExternalEvent,
+> = {
   context: EventsExecutionContext;
   metadata: ApplicationMetadata;
   provider: EventProvider;
-  events: AppEvent[];
+  events: EventType[];
   providerType: EventProviderType;
+};
+
+/**
+ * Extracts a nested property type from an async function's return type.
+ * @example
+ * type ProviderData = AwaitedPropertyOf<typeof onboardIoEvents, "providerData">;
+ * type EventsData = AwaitedPropertyOf<typeof onboardIoEvents, "eventsData">;
+ */
+export type AwaitedPropertyOf<
+  TFunc extends (...args: never[]) => unknown,
+  TKey extends keyof Awaited<ReturnType<TFunc>>,
+> = Awaited<ReturnType<TFunc>>[TKey];
+
+export type AwaitedProviderDataAfterIoEvents = AwaitedPropertyOf<
+  typeof onboardIoEvents,
+  "providerData"
+>;
+
+export type EventsDataFromIo<EventType extends CommerceEvent | ExternalEvent> =
+  Awaited<ReturnType<typeof onboardIoEvents<EventType>>>["eventsData"];
+
+export type CreateSubscriptionParams = {
+  context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
+  provider: AwaitedProviderDataAfterIoEvents;
+  event: ArrayElement<EventsDataFromIo<CommerceEvent>>;
+};
+
+export type OnboardCommerceEventSubscriptionParams = {
+  context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
+  provider: EventProvider;
+  data: AwaitedProviderDataAfterIoEvents & {
+    events: EventsDataFromIo<CommerceEvent>;
+  };
 };
