@@ -145,7 +145,6 @@ async function setupEncryptionKey(): Promise<boolean> {
           `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY=${key}`,
         );
         await writeFile(envPath, updatedContent, "utf-8");
-        process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = key;
 
         consola.success(
           "🔐 Generated new encryption key and updated .env file",
