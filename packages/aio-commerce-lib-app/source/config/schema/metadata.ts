@@ -1,3 +1,4 @@
+import { alphaNumericOrHyphenSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
 const MAX_DESCRIPTION_LENGTH = 255;
@@ -20,14 +21,7 @@ function nonEmptyString(fieldName: string) {
 
 /** The schema for the metadata of the application. */
 export const MetadataSchema = v.object({
-  id: v.pipe(
-    nonEmptyString("application id"),
-    v.regex(
-      /^[a-zA-Z0-9-]+$/,
-      "The application id must contain only alphanumeric characters and dashes",
-    ),
-  ),
-
+  id: alphaNumericOrHyphenSchema("application id (metadata.id)"),
   displayName: v.pipe(
     nonEmptyString("application display name"),
     v.maxLength(

@@ -12,13 +12,8 @@
 
 import { defineLeafStep } from "#management/installation/workflow/step";
 
-import {
-  configureCommerce,
-  createCommerceSubscriptions,
-  createMetadata,
-  createProviders,
-  createRegistrations,
-} from "./helpers";
+import { onboardIoEvents } from "./helpers";
+import { COMMERCE_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
 
 import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -50,21 +45,42 @@ export const commerceEventsStep = defineLeafStep({
   },
 
   when: hasCommerceEvents,
-  run: (config, context: EventsExecutionContext) => {
+  run: async (config, context: EventsExecutionContext) => {
     const { logger } = context;
-    logger.debug(config);
+    logger.debug(
+      "Starting installation of Commerce Events with config:",
+      config,
+    );
 
-    const commerceEventSources = config.eventing.commerce;
-    const configProviders = commerceEventSources.map((c) => c.provider);
+    // biome-ignore lint/suspicious/noEvolvingTypes: We want the type to be auto-inferred
+    const stepData = [];
+    const existingIoEventsData = await getIoEventsExistingData(context);
 
-    const providers = createProviders(context, configProviders);
-    const metadata = createMetadata(context);
-    const registrations = createRegistrations(context);
+    for (const { provider, events } of config.eventing.commerce) {
+      const { providerData, eventsData } = await onboardIoEvents(
+        {
+          context,
+          metadata: config.metadata,
+          provider,
+          events,
+          providerType: COMMERCE_PROVIDER_TYPE,
+        },
+        existingIoEventsData,
+      );
 
-    configureCommerce(context);
-    createCommerceSubscriptions(context);
+      stepData.push({
+        provider: {
+          config: provider,
+          data: {
+            ...providerData,
+            events: eventsData,
+          },
+        },
+      });
+    }
 
-    return { providers, metadata, registrations };
+    logger.debug("Completed Commerce Events installation step.");
+    return stepData;
   },
 });
 

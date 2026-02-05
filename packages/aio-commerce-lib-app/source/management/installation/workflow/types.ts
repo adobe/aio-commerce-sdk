@@ -46,6 +46,9 @@ export type StepStatus = {
   /** Step name (unique among siblings). */
   name: string;
 
+  /** Unique step identifier (e.g., UUID). */
+  id: string;
+
   /** Full path from root to this step. */
   path: string[];
 
@@ -70,7 +73,7 @@ type InstallationStateBase = {
   step: StepStatus;
 
   /** Results from executed leaf steps, keyed by path. */
-  data: InstallationData;
+  data: InstallationData | null;
 };
 
 /** Installation state when pending (not yet started). */

@@ -14,6 +14,7 @@ import {
   alphaNumericOrHyphenSchema,
   alphaNumericOrUnderscoreSchema,
   nonEmptyStringValueSchema,
+  titleCaseSchema,
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
@@ -46,7 +47,7 @@ function commerceEventNameSchema() {
 /** Schema for event provider configuration */
 const ProviderSchema = v.object({
   label: v.pipe(
-    nonEmptyStringValueSchema("provider label"),
+    titleCaseSchema("provider label"),
     v.maxLength(
       MAX_LABEL_LENGTH,
       `The provider label must not be longer than ${MAX_LABEL_LENGTH} characters`,
@@ -70,14 +71,16 @@ const ProviderSchema = v.object({
   ),
 });
 
-/** Schema for Commerce event configuration */
-const CommerceEventSchema = v.object({
-  name: commerceEventNameSchema(),
-  fields: v.array(
-    alphaNumericOrUnderscoreSchema("event fields", "lowercase"),
-    "Expected an array of event fields",
+/** Schema for base shared properties between event types. */
+const BaseEventSchema = v.object({
+  label: v.pipe(
+    titleCaseSchema("event label"),
+    v.maxLength(
+      MAX_LABEL_LENGTH,
+      `The event label must not be longer than ${MAX_LABEL_LENGTH} characters`,
+    ),
   ),
-  runtimeAction: nonEmptyStringValueSchema("runtime action"),
+
   description: v.pipe(
     nonEmptyStringValueSchema("event description"),
     v.maxLength(
@@ -87,8 +90,22 @@ const CommerceEventSchema = v.object({
   ),
 });
 
+/** Schema for Commerce event configuration */
+const CommerceEventSchema = v.object({
+  ...BaseEventSchema.entries,
+
+  name: commerceEventNameSchema(),
+  fields: v.array(
+    alphaNumericOrUnderscoreSchema("event fields", "lowercase"),
+    "Expected an array of event fields",
+  ),
+
+  runtimeAction: nonEmptyStringValueSchema("runtime action"),
+});
+
 /** Schema for external event configuration */
 const ExternalEventSchema = v.object({
+  ...BaseEventSchema.entries,
   name: alphaNumericOrUnderscoreSchema("event name", "lowercase"),
 });
 
