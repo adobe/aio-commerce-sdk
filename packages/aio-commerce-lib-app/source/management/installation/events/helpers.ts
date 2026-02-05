@@ -201,6 +201,11 @@ export function configureCommerce(context: EventsExecutionContext) {
   return { commerceConfigured: true };
 }
 
+/**
+ * Creates or updates a Commerce event subscription based on existing subscriptions.
+ * @param params
+ * @param existingData
+ */
 export async function createOrUpdateSubscription(
   params: CreateSubscriptionParams,
   existingData: Map<
@@ -312,6 +317,11 @@ export async function onboardIoEvents<
   };
 }
 
+/**
+ * Onboards Commerce event subscriptions by creating or updating them based on existing subscriptions.
+ * @param params
+ * @param existingSubscriptionsData
+ */
 export async function onboardCommerceSubscriptions(
   params: OnboardCommerceEventSubscriptionParams,
   existingSubscriptionsData: CommerceEventSubscriptionManyResponse,
