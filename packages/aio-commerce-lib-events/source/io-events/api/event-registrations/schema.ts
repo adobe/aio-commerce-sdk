@@ -40,7 +40,6 @@ export const DeliveryTypeSchema = v.picklist(
 export const EventsOfInterestSchema = v.object({
   providerId: stringValueSchema("providerId"),
   eventCode: stringValueSchema("eventCode"),
-  providerMetadataId: v.optional(stringValueSchema("providerMetadataId")),
 });
 
 /** Schema for AWS EventBridge destination metadata. */

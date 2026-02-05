@@ -13,19 +13,25 @@
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 
 import {
-  COMMERCE_PROVIDER_TYPE,
   findExistingProvider,
   findExistingProviderMetadata,
+  findExistingRegistrations,
   generateInstanceId,
+  getIoEventCode,
+  getRegistrationDescription,
+  getRegistrationName,
 } from "./utils";
 
 import type {
+  EventProviderType,
   IoEventMetadata,
   IoEventProvider,
+  IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type {
   CreateProviderEventsMetadataParams,
   CreateProviderParams,
+  CreateRegistrationParams,
   OnboardIoEventsParams,
 } from "./types";
 import type { EventsExecutionContext, ExistingIoEventsData } from "./utils";
@@ -43,19 +49,14 @@ export async function createProvider(params: CreateProviderParams) {
   );
 
   return ioEventsClient
-    .createEventProvider(
-      {
-        ...appCredentials,
+    .createEventProvider({
+      ...appCredentials,
 
-        label: provider.label,
-        providerType: provider.type,
-        instanceId: provider.instanceId,
-        description: provider.description,
-      },
-      {
-        timeout: 1000 * 60 * 5, // 5 minutes
-      },
-    )
+      label: provider.label,
+      providerType: provider.type,
+      instanceId: provider.instanceId,
+      description: provider.description,
+    })
     .then((res) => {
       logger.info(`Provider "${provider.label}" created with ID '${res.id}'`);
       return res;
@@ -70,7 +71,7 @@ export async function createProvider(params: CreateProviderParams) {
 }
 
 /**
- * Creates or retrieves an existing I/O Events provider for Adobe Commerce.
+ * Creates or retrieves an existing I/O Events provider.
  * @param params - Parameters needed to create or get the provider.
  * @param existingData - Existing I/O Events data.
  */
@@ -107,33 +108,23 @@ export async function createOrGetProvider(
 export async function createMetadata(
   params: CreateProviderEventsMetadataParams,
 ) {
-  const { context } = params;
+  const { context, event, provider, type } = params;
   const { appCredentials, ioEventsClient, logger } = context;
 
-  const eventCode =
-    params.type === COMMERCE_PROVIDER_TYPE
-      ? `com.adobe.commerce.${params.event.name}`
-      : params.event.name;
-
-  const { provider, event } = params;
+  const eventCode = getIoEventCode(event.name, type);
   logger.info(
     `Creating event metadata (${eventCode}) for provider "${provider.label}" (instance ID: ${provider.instance_id}))`,
   );
 
   return ioEventsClient
-    .createEventMetadataForProvider(
-      {
-        ...appCredentials,
-        providerId: provider.id,
+    .createEventMetadataForProvider({
+      ...appCredentials,
+      providerId: provider.id,
 
-        label: event.label,
-        description: event.description,
-        eventCode,
-      },
-      {
-        timeout: 1000 * 60 * 5, // 5 minutes
-      },
-    )
+      label: event.label,
+      description: event.description,
+      eventCode,
+    })
     .then((res) => {
       logger.info(
         `Event metadata "${event.label}" created for provider "${provider.label}"`,
@@ -159,15 +150,10 @@ export async function createOrGetIoProviderEventMetadata(
   params: CreateProviderEventsMetadataParams,
   existingData: IoEventMetadata[],
 ) {
-  const { context, provider, event } = params;
+  const { context, event, provider, type } = params;
   const { logger } = context;
 
-  // Generate the full event code to search for existing metadata
-  const eventCode =
-    params.type === COMMERCE_PROVIDER_TYPE
-      ? `com.adobe.commerce.${event.name}`
-      : event.name;
-
+  const eventCode = getIoEventCode(event.name, type);
   const existing = findExistingProviderMetadata(existingData, eventCode);
   if (existing) {
     logger.info(
@@ -180,11 +166,85 @@ export async function createOrGetIoProviderEventMetadata(
   return createMetadata(params);
 }
 
-export function createRegistrations(context: EventsExecutionContext) {
-  const { logger } = context;
-  logger.info("Creating event registrations");
+/**
+ * Creates an event registration bound to the given provider ID for a set of events targeting the given runtime action.
+ * @param params - The parameters necessary to create the registration.
+ */
+export async function createRegistration(params: CreateRegistrationParams) {
+  const { context, events, provider, runtimeAction } = params;
+  const { appCredentials, ioEventsClient, logger } = context;
 
-  return [{ registrationId: "TODO" }];
+  logger.info(
+    `Creating registration(s) to runtime action "${runtimeAction}" for ${events.length} event(s) with provider "${provider.label}" (instance ID: ${provider.instance_id}))`,
+  );
+
+  const name = getRegistrationName(provider, runtimeAction);
+  const description = getRegistrationDescription(
+    provider,
+    events,
+    runtimeAction,
+  );
+
+  return ioEventsClient
+    .createRegistration({
+      ...appCredentials,
+      clientId: "",
+
+      name,
+      description,
+      deliveryType: "webhook",
+      runtimeAction,
+
+      enabled: true,
+      eventsOfInterest: events.map((event) => ({
+        providerId: provider.id,
+        eventCode: getIoEventCode(
+          event.name,
+          provider.provider_metadata as EventProviderType,
+        ),
+      })),
+    })
+    .then((res) => {
+      logger.info(
+        `Registration "${name}" created for provider "${provider.label}" with ID '${res.id}'`,
+      );
+
+      return res;
+    })
+    .catch((error) => {
+      logger.error(
+        `Failed to create registration "${name}" for provider "${provider.label}": ${stringifyError(error)}`,
+      );
+
+      throw error;
+    });
+}
+
+/**
+ * Creates or retrieves an existing I/O Events registration.
+ * @param params - Parameters needed to create or get the registration.
+ * @param existingData - Existing I/O Events data.
+ */
+export async function createOrGetEventRegistration(
+  params: CreateRegistrationParams,
+  registrations: IoEventRegistration[],
+) {
+  const { context, provider, runtimeAction } = params;
+  const { logger } = context;
+
+  // Check if a registration already exists for this provider and runtime action.
+  const name = getRegistrationName(provider, runtimeAction);
+  const existing = findExistingRegistrations(registrations, "", name);
+
+  if (existing) {
+    logger.info(
+      `Registration "${name}" already exists for provider "${provider.label}" with ID '${existing.id}', skipping creation.`,
+    );
+
+    return existing;
+  }
+
+  return createRegistration(params);
 }
 
 export function configureCommerce(context: EventsExecutionContext) {
@@ -212,8 +272,8 @@ export async function onboardIoEvents(
   params: OnboardIoEventsParams,
   existingData: ExistingIoEventsData,
 ) {
-  const { providersWithMetadata } = existingData;
-  const { context, metadata, provider, events, providerType } = params;
+  const { providersWithMetadata, registrations } = existingData;
+  const { context, metadata, provider, providerType, events } = params;
 
   const instanceId = generateInstanceId(metadata, provider);
   const providerData = await createOrGetProvider(
@@ -228,31 +288,56 @@ export async function onboardIoEvents(
     providersWithMetadata,
   );
 
-  // Retrieve the existing metadata for this provider, if any.
-  const existingProviderMetadata =
-    providersWithMetadata.find((p) => p.id === providerData.id)?.metadata ?? [];
-
-  // Create a Promise for each event metadata creation.
-  const eventPromises = events.map(async (event) => {
-    const metadata = await createOrGetIoProviderEventMetadata(
+  const metadataPromises = events.map((event) =>
+    createOrGetIoProviderEventMetadata(
       {
         context,
         type: providerType,
         provider: providerData,
         event,
       },
-      existingProviderMetadata,
+
+      // Retrieve the existing metadata for this provider, if any.
+      providersWithMetadata.find((p) => p.id === providerData.id)?.metadata ??
+        [],
+    ),
+  );
+
+  // We want to create a single registration if many events target the same runtime action.
+  const actionEvents = Object.groupBy(events, (event) => event.runtimeAction);
+  const registrationPromises = Object.entries(actionEvents).map(
+    ([runtimeAction, groupedEvents]) =>
+      createOrGetEventRegistration(
+        {
+          context,
+          events: groupedEvents ?? [],
+          provider: providerData,
+          runtimeAction,
+        },
+        registrations,
+      ),
+  );
+
+  const [metadataData, registrationsData] = await Promise.all([
+    Promise.all(metadataPromises),
+    Promise.all(registrationPromises),
+  ]);
+
+  // Map events to their registrations
+  const eventsData = events.map((event, index) => {
+    const registrationIndex = Object.keys(actionEvents).indexOf(
+      event.runtimeAction,
     );
 
     return {
       config: event,
       data: {
-        metadata,
+        metadata: metadataData[index],
+        registration: registrationsData[registrationIndex],
       },
     };
   });
 
-  const eventsData = await Promise.all(eventPromises);
   return {
     providerData,
     eventsData,

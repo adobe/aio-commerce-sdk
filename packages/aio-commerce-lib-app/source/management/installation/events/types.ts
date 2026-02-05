@@ -16,6 +16,7 @@ import type {
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { ApplicationMetadata } from "#config/index";
 import type {
+  AppEvent,
   CommerceEvent,
   EventProvider,
   ExternalEvent,
@@ -24,6 +25,7 @@ import type { EventsExecutionContext } from "./utils";
 
 // Combine EventProvider with its type for easier handling.
 export type ProviderWithType = EventProvider & { type: EventProviderType };
+
 export type CreateProviderParams = {
   context: EventsExecutionContext;
   provider: ProviderWithType & { instanceId: string };
@@ -36,10 +38,22 @@ export type CreateProviderEventsMetadataParams = {
   event: CommerceEvent | ExternalEvent;
 };
 
+export type AppEventWithoutRuntimeAction = Omit<
+  CommerceEvent | ExternalEvent,
+  "runtimeAction"
+>;
+
+export type CreateRegistrationParams = {
+  context: EventsExecutionContext;
+  events: AppEventWithoutRuntimeAction[];
+  provider: IoEventProvider;
+  runtimeAction: string;
+};
+
 export type OnboardIoEventsParams = {
   context: EventsExecutionContext;
   metadata: ApplicationMetadata;
   provider: EventProvider;
-  events: Array<CommerceEvent | ExternalEvent>;
+  events: AppEvent[];
   providerType: EventProviderType;
 };

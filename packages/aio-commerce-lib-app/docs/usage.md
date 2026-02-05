@@ -194,13 +194,13 @@ eventing: {
         {
           name: "plugin.order_placed",
           fields: ["order_id", "customer_id"],
-          runtimeAction: "handle-order",
+          runtimeAction: "my-package/handle-order",
           description: "Triggered when an order is placed",
         },
         {
           name: "observer.catalog_update",
           fields: ["product_id"],
-          runtimeAction: "sync-catalog",
+          runtimeAction: "my-package/sync-catalog",
           description: "Triggered when catalog is updated",
         },
       ],
@@ -225,7 +225,7 @@ eventing: {
 
 - **name**: Must start with `plugin.` or `observer.` followed by lowercase letters and underscores (e.g., `plugin.order_placed`, `observer.catalog_update`)
 - **fields**: Array of field names (lowercase alphanumeric with underscores)
-- **runtimeAction**: The runtime action to invoke when the event is triggered
+- **runtimeAction**: The runtime action to invoke when the event is triggered, in the format `<package>/<action>` (e.g., `my-package/my-action`)
 - **description**: Description of the event (max 255 characters)
 
 **External Events:**
