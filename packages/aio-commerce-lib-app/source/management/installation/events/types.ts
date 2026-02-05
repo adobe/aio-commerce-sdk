@@ -15,13 +15,13 @@ import type {
   IoEventProvider,
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { ArrayElement } from "type-fest";
-import type { ApplicationMetadata } from "#config/index";
 import type {
   AppEvent,
   CommerceEvent,
   EventProvider,
   ExternalEvent,
 } from "#config/schema/eventing";
+import type { ApplicationMetadata } from "#config/schema/metadata";
 import type { onboardIoEvents } from "#management/installation/events/helpers";
 import type { EventsExecutionContext } from "./utils";
 
