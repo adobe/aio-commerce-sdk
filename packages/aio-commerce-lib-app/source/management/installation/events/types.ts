@@ -68,7 +68,8 @@ export type OnboardIoEventsParams<
  * type EventsData = AwaitedPropertyOf<typeof onboardIoEvents, "eventsData">;
  */
 export type AwaitedPropertyOf<
-  TFunc extends (...args: never[]) => unknown,
+  // biome-ignore lint/suspicious/noExplicitAny: Generic utility requires flexible function signature
+  TFunc extends (...args: any) => any,
   TKey extends keyof Awaited<ReturnType<TFunc>>,
 > = Awaited<ReturnType<TFunc>>[TKey];
 
