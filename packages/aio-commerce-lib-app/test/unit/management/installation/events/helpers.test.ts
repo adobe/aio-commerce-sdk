@@ -12,17 +12,18 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { onboardCommerceSubscriptions } from "#management/installation/events/helpers";
+import { onboardCommerce } from "#management/installation/events/helpers";
 import { createMockLogger } from "#test/fixtures/installation";
 
 import type { OnboardCommerceEventSubscriptionParams } from "#management/installation/events/types";
 import type { EventsExecutionContext } from "#management/installation/events/utils";
 
-describe("onboardCommerceSubscriptions", () => {
+describe("onboardCommerce", () => {
   const mockLogger = createMockLogger();
 
   const mockCommerceEventsClient = {
     createEventSubscription: vi.fn(),
+    getAllEventSubscriptions: vi.fn(),
   };
 
   const mockContext = {
@@ -90,11 +91,12 @@ describe("onboardCommerceSubscriptions", () => {
   });
 
   test("should create a single subscription", async () => {
+    mockCommerceEventsClient.getAllEventSubscriptions.mockResolvedValue([]);
     mockCommerceEventsClient.createEventSubscription.mockResolvedValue(
       undefined,
     );
 
-    const result = await onboardCommerceSubscriptions(baseParams);
+    const result = await onboardCommerce(baseParams);
 
     expect(
       mockCommerceEventsClient.createEventSubscription,
@@ -160,11 +162,12 @@ describe("onboardCommerceSubscriptions", () => {
       } as any,
     };
 
+    mockCommerceEventsClient.getAllEventSubscriptions.mockResolvedValue([]);
     mockCommerceEventsClient.createEventSubscription.mockResolvedValue(
       undefined,
     );
 
-    const result = await onboardCommerceSubscriptions(paramsWithTwoEvents);
+    const result = await onboardCommerce(paramsWithTwoEvents);
 
     expect(
       mockCommerceEventsClient.createEventSubscription,
@@ -199,5 +202,117 @@ describe("onboardCommerceSubscriptions", () => {
       fields: [{ name: "product_id" }, { name: "sku" }],
       providerId: "test-app_commerce-events-provider",
     });
+  });
+
+  test("should skip creating subscriptions that already exist", async () => {
+    const paramsWithTwoEvents: OnboardCommerceEventSubscriptionParams = {
+      ...baseParams,
+      data: {
+        ...baseParams.data,
+        events: [
+          {
+            config: {
+              name: "plugin.order_placed",
+              label: "Order Placed",
+              description: "Triggered when an order is placed",
+              fields: ["order_id", "customer_id"],
+              runtimeAction: "handle-order",
+            },
+            data: {
+              metadata: {
+                event_code: "com.adobe.commerce.test-app.plugin.order_placed",
+                label: "Order Placed",
+                description: "Triggered when an order is placed",
+              },
+            },
+          },
+          {
+            config: {
+              name: "plugin.product_updated",
+              label: "Product Updated",
+              description: "Triggered when a product is updated",
+              fields: ["product_id", "sku"],
+              runtimeAction: "handle-product-update",
+            },
+            data: {
+              metadata: {
+                event_code:
+                  "com.adobe.commerce.test-app.plugin.product_updated",
+                label: "Product Updated",
+                description: "Triggered when a product is updated",
+              },
+            },
+          },
+        ],
+      } as any,
+    };
+
+    // Mock that one subscription already exists
+    mockCommerceEventsClient.getAllEventSubscriptions.mockResolvedValue([
+      {
+        name: "test-app.plugin.order_placed",
+        parent: "plugin.order_placed",
+        provider_id: "test-app_commerce-events-provider",
+        fields: [{ name: "order_id" }, { name: "customer_id" }],
+        rules: [],
+        destination: "default",
+        priority: false,
+        hipaa_audit_required: false,
+      },
+    ]);
+
+    mockCommerceEventsClient.createEventSubscription.mockResolvedValue(
+      undefined,
+    );
+
+    const result = await onboardCommerce(paramsWithTwoEvents);
+
+    // Should only create 1 subscription (product_updated), not 2
+    expect(
+      mockCommerceEventsClient.createEventSubscription,
+    ).toHaveBeenCalledTimes(1);
+    expect(
+      mockCommerceEventsClient.createEventSubscription,
+    ).toHaveBeenCalledWith({
+      name: "test-app.plugin.product_updated",
+      parent: "plugin.product_updated",
+      fields: [{ name: "product_id" }, { name: "sku" }],
+      providerId: "test-app_commerce-events-provider",
+    });
+
+    // Should return only the newly created subscription
+    expect(result.subscriptionsData).toHaveLength(1);
+    expect(result.subscriptionsData[0]).toEqual({
+      name: "test-app.plugin.product_updated",
+      parent: "plugin.product_updated",
+      fields: [{ name: "product_id" }, { name: "sku" }],
+      providerId: "test-app_commerce-events-provider",
+    });
+  });
+
+  test("should not create any subscriptions when all already exist", async () => {
+    // Mock that the subscription already exists
+    mockCommerceEventsClient.getAllEventSubscriptions.mockResolvedValue([
+      {
+        name: "test-app.plugin.order_placed",
+        parent: "plugin.order_placed",
+        provider_id: "test-app_commerce-events-provider",
+        fields: [{ name: "order_id" }, { name: "customer_id" }],
+        rules: [],
+        destination: "default",
+        priority: false,
+        hipaa_audit_required: false,
+      },
+    ]);
+
+    const result = await onboardCommerce(baseParams);
+
+    // Should not create any subscriptions
+    expect(
+      mockCommerceEventsClient.createEventSubscription,
+    ).not.toHaveBeenCalled();
+
+    // Should return empty array
+    expect(result.subscriptionsData).toHaveLength(0);
   });
 });

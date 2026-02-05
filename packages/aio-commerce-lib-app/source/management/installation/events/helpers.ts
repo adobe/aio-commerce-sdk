@@ -29,7 +29,6 @@ import type {
   IoEventProvider,
   IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
-import type { ArrayElement } from "type-fest";
 import type { CommerceEvent, ExternalEvent } from "#config/schema/eventing";
 import type { ApplicationMetadata } from "#config/schema/metadata";
 import type {
@@ -37,7 +36,6 @@ import type {
   CreateProviderParams,
   CreateRegistrationParams,
   CreateSubscriptionParams,
-  EventsDataFromIo,
   OnboardCommerceEventSubscriptionParams,
   OnboardIoEventsParams,
 } from "./types";
@@ -270,10 +268,29 @@ export function configureCommerce(context: EventsExecutionContext) {
  */
 export async function createSubscription(params: CreateSubscriptionParams) {
   const { context, metadata, provider, event } = params;
-  const eventSpec = toEventSpec(metadata, provider, event);
+  const { logger, commerceEventsClient } = context;
+  const eventSpec = {
+    name: getNamespacedEvent(metadata, event.config.name),
+    parent: event.config.name,
+    fields: event.config.fields.map((field) => ({ name: field })),
+    providerId: provider.instance_id,
+  };
 
-  await context.commerceEventsClient.createEventSubscription(eventSpec);
-  return eventSpec;
+  return commerceEventsClient
+    .createEventSubscription(eventSpec)
+    .then((_res) => {
+      logger.info(
+        `Created event subscription for event "${event.config.name}" to provider "${provider.label} (instance ID: ${provider.instance_id})"`,
+      );
+      return eventSpec;
+    })
+    .catch((err) => {
+      logger.error(
+        `Failed to create event subscription for event "${event.config.name}" to provider "${provider.label}": ${stringifyError(err)}`,
+      );
+
+      throw err;
+    });
 }
 
 /**
@@ -368,20 +385,44 @@ export async function onboardIoEvents<
  * Onboards Commerce event subscriptions by creating or updating them based on existing subscriptions.
  * @param params
  */
-export async function onboardCommerceSubscriptions(
+export async function onboardCommerce(
   params: OnboardCommerceEventSubscriptionParams,
 ) {
   const { context, metadata, provider, data } = params;
+  const { logger, commerceEventsClient } = context;
   const { events, ...providerData } = data;
 
   const instanceId =
     providerData.instance_id ?? generateInstanceId(metadata, provider);
 
-  context.logger.info(
+  logger.info(
     `Onboarding Commerce event subscriptions with provider instance ID: ${instanceId}`,
   );
 
-  const subscriptionsPromises = events.map((event) =>
+  const existingSubscriptionsMap = new Map(
+    (await commerceEventsClient.getAllEventSubscriptions()).map(
+      (subscription) => [subscription.name, subscription],
+    ),
+  );
+
+  const eventsToCreate = events.filter((event) => {
+    const eventName = getNamespacedEvent(metadata, event.config.name);
+    const exists = existingSubscriptionsMap.has(eventName);
+
+    if (exists) {
+      logger.info(
+        `Subscription already exists for event: ${eventName}, skipping creation`,
+      );
+    }
+
+    return !exists;
+  });
+
+  logger.info(
+    `Creating ${eventsToCreate.length} new subscriptions (${events.length - eventsToCreate.length} already exist)`,
+  );
+
+  const subscriptionsPromises = eventsToCreate.map((event) =>
     createSubscription({
       context,
       metadata,
@@ -390,29 +431,8 @@ export async function onboardCommerceSubscriptions(
     }),
   );
 
-  const subscriptionsData = await Promise.all(subscriptionsPromises);
-
   return {
-    subscriptionsData,
-  };
-}
-
-/**
- * Converts event data from I/O Events to the format required for Commerce event subscriptions.
- * @param metadata
- * @param provider
- * @param event
- */
-function toEventSpec(
-  metadata: ApplicationMetadata,
-  provider: IoEventProvider,
-  event: ArrayElement<EventsDataFromIo<CommerceEvent>>,
-) {
-  return {
-    name: getNamespacedEvent(metadata, event.config.name),
-    parent: event.config.name,
-    fields: event.config.fields.map((field) => ({ name: field })),
-    providerId: provider.instance_id,
+    subscriptionsData: await Promise.all(subscriptionsPromises),
   };
 }
 
