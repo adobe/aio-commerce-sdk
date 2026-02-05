@@ -16,7 +16,6 @@ import type {
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { ArrayElement } from "type-fest";
 import type {
-  AppEvent,
   CommerceEvent,
   EventProvider,
   ExternalEvent,
