@@ -24,7 +24,6 @@ import type { ApplicationMetadata } from "#config/schema/metadata";
 import type { onboardIoEvents } from "#management/installation/events/helpers";
 import type { EventsExecutionContext } from "./utils";
 
-// Combine EventProvider with its type for easier handling.
 export type ProviderWithType = EventProvider & { type: EventProviderType };
 
 export type CreateProviderParams = {
@@ -61,22 +60,9 @@ export type OnboardIoEventsParams<
   providerType: EventProviderType;
 };
 
-/**
- * Extracts a nested property type from an async function's return type.
- * @example
- * type ProviderData = AwaitedPropertyOf<typeof onboardIoEvents, "providerData">;
- * type EventsData = AwaitedPropertyOf<typeof onboardIoEvents, "eventsData">;
- */
-export type AwaitedPropertyOf<
-  // biome-ignore lint/suspicious/noExplicitAny: Generic utility requires flexible function signature
-  TFunc extends (...args: any) => any,
-  TKey extends keyof Awaited<ReturnType<TFunc>>,
-> = Awaited<ReturnType<TFunc>>[TKey];
-
-export type ProviderDataFromIo = AwaitedPropertyOf<
-  typeof onboardIoEvents,
-  "providerData"
->;
+export type ProviderDataFromIo<
+  EventType extends CommerceEvent | ExternalEvent,
+> = Awaited<ReturnType<typeof onboardIoEvents<EventType>>>["providerData"];
 
 export type EventsDataFromIo<EventType extends CommerceEvent | ExternalEvent> =
   Awaited<ReturnType<typeof onboardIoEvents<EventType>>>["eventsData"];
@@ -84,7 +70,7 @@ export type EventsDataFromIo<EventType extends CommerceEvent | ExternalEvent> =
 export type CreateSubscriptionParams = {
   context: EventsExecutionContext;
   metadata: ApplicationMetadata;
-  provider: ProviderDataFromIo;
+  provider: ProviderDataFromIo<CommerceEvent>;
   event: ArrayElement<EventsDataFromIo<CommerceEvent>>;
 };
 
@@ -92,7 +78,7 @@ export type OnboardCommerceEventSubscriptionParams = {
   context: EventsExecutionContext;
   metadata: ApplicationMetadata;
   provider: EventProvider;
-  data: ProviderDataFromIo & {
+  data: ProviderDataFromIo<CommerceEvent> & {
     events: EventsDataFromIo<CommerceEvent>;
   };
 };
