@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { customInstallationStep } from "./custom-installation";
 import { eventingStep } from "./events";
 import { webhooksStep } from "./webhooks";
 import { defineBranchStep } from "./workflow";
@@ -17,7 +18,11 @@ import { defineBranchStep } from "./workflow";
 import type { AnyStep, BranchStep } from "./workflow";
 
 /** The default child steps built-in in the library. */
-const DEFAULT_CHILD_STEPS: AnyStep[] = [eventingStep, webhooksStep];
+const DEFAULT_CHILD_STEPS: AnyStep[] = [
+  eventingStep,
+  webhooksStep,
+  customInstallationStep,
+];
 
 /** The root installation branch step. */
 export const ROOT_INSTALLATION_STEP = defineBranchStep({
