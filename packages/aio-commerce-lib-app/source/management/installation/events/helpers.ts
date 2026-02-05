@@ -23,7 +23,6 @@ import {
   groupEventsByRuntimeActions,
 } from "./utils";
 
-import type { CommerceEventSubscriptionManyResponse } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   EventProviderType,
   IoEventMetadata,
@@ -266,59 +265,15 @@ export function configureCommerce(context: EventsExecutionContext) {
 }
 
 /**
- * Creates or updates a Commerce event subscription based on existing subscriptions.
+ * Creates a Commerce event subscription based on existing subscriptions.
  * @param params
- * @param existingData
  */
-export async function createOrUpdateSubscription(
-  params: CreateSubscriptionParams,
-  existingData: Map<
-    string,
-    ArrayElement<CommerceEventSubscriptionManyResponse>
-  >,
-) {
+export async function createSubscription(params: CreateSubscriptionParams) {
   const { context, metadata, provider, event } = params;
   const eventSpec = toEventSpec(metadata, provider, event);
 
-  if (existingData.has(eventSpec.name)) {
-    context.logger.info(
-      `Update event subscription for event: ${event.config.name}`,
-    );
-
-    try {
-      await context.commerceEventsClient.updateEventSubscription(eventSpec);
-      context.logger.info("Updated commerce event subscriptions");
-      return eventSpec;
-    } catch (error) {
-      context.logger.error(
-        `Failed to update event subscription for event: ${event.config.name}:${event.config.name} - ${stringifyError(
-          error,
-        )}`,
-      );
-      throw error;
-    }
-  } else {
-    context.logger.info(
-      `Creating subscription for event: ${event.config.name} with provider: ${provider.instance_id}`,
-    );
-
-    context.logger.info(
-      `Creating event subscription for event: ${event.config.name}`,
-    );
-
-    try {
-      await context.commerceEventsClient.createEventSubscription(eventSpec);
-      context.logger.info("Created commerce event subscriptions");
-      return eventSpec;
-    } catch (error) {
-      context.logger.error(
-        `Failed to create event subscription for event: ${event.config.name}:${event.config.name} - ${stringifyError(
-          error,
-        )}`,
-      );
-      throw error;
-    }
-  }
+  await context.commerceEventsClient.createEventSubscription(eventSpec);
+  return eventSpec;
 }
 
 /**
@@ -412,11 +367,9 @@ export async function onboardIoEvents<
 /**
  * Onboards Commerce event subscriptions by creating or updating them based on existing subscriptions.
  * @param params
- * @param existingSubscriptionsData
  */
 export async function onboardCommerceSubscriptions(
   params: OnboardCommerceEventSubscriptionParams,
-  existingSubscriptionsData: CommerceEventSubscriptionManyResponse,
 ) {
   const { context, metadata, provider, data } = params;
   const { events, ...providerData } = data;
@@ -428,23 +381,13 @@ export async function onboardCommerceSubscriptions(
     `Onboarding Commerce event subscriptions with provider instance ID: ${instanceId}`,
   );
 
-  const existingProviderByEventName = new Map(
-    existingSubscriptionsData.map((subscription) => [
-      subscription.name,
-      subscription,
-    ]),
-  );
-
   const subscriptionsPromises = events.map((event) =>
-    createOrUpdateSubscription(
-      {
-        context,
-        metadata,
-        provider: providerData,
-        event,
-      },
-      existingProviderByEventName,
-    ),
+    createSubscription({
+      context,
+      metadata,
+      provider: providerData,
+      event,
+    }),
   );
 
   const subscriptionsData = await Promise.all(subscriptionsPromises);
