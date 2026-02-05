@@ -80,3 +80,43 @@ export async function createEventSubscription(
       // We set this `then` to make the response type `void`
     });
 }
+
+/**
+ * Updates an event subscription in the Commerce instance bound to the given {@link AdobeCommerceHttpClient}.
+ * @see https://developer.adobe.com/commerce/extensibility/events/api/#subscribe-to-events
+ *
+ * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
+ * @param params - The parameters to create the event subscription with.
+ * @param fetchOptions - The {@link Options} to use to make the request.
+ *
+ * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
+ * @throws An {@link HTTPError} If the status code is not 2XX.
+ */
+export async function updateEventSubscription(
+  httpClient: AdobeCommerceHttpClient,
+  params: Omit<EventSubscriptionCreateParams, "force">,
+  fetchOptions?: Options,
+) {
+  const validatedParams = parseOrThrow(
+    EventSubscriptionCreateParamsSchema,
+    params,
+  );
+
+  const { ...event } = validatedParams;
+  return httpClient
+    .post(`eventing/eventSubscribe/${event.name}`, {
+      ...fetchOptions,
+      json: {
+        event: {
+          name: event.name,
+          parent: event.parent,
+          fields: event.fields,
+          destination: event.destination,
+          hipaa_audit_required: event.hipaaAuditRequired,
+          priority: event.prioritary,
+          provider_id: event.providerId,
+        },
+      },
+    })
+    .json();
+}
