@@ -73,7 +73,7 @@ export type AwaitedPropertyOf<
   TKey extends keyof Awaited<ReturnType<TFunc>>,
 > = Awaited<ReturnType<TFunc>>[TKey];
 
-export type AwaitedProviderDataAfterIoEvents = AwaitedPropertyOf<
+export type ProviderDataFromIo = AwaitedPropertyOf<
   typeof onboardIoEvents,
   "providerData"
 >;
@@ -84,7 +84,7 @@ export type EventsDataFromIo<EventType extends CommerceEvent | ExternalEvent> =
 export type CreateSubscriptionParams = {
   context: EventsExecutionContext;
   metadata: ApplicationMetadata;
-  provider: AwaitedProviderDataAfterIoEvents;
+  provider: ProviderDataFromIo;
   event: ArrayElement<EventsDataFromIo<CommerceEvent>>;
 };
 
@@ -92,7 +92,7 @@ export type OnboardCommerceEventSubscriptionParams = {
   context: EventsExecutionContext;
   metadata: ApplicationMetadata;
   provider: EventProvider;
-  data: AwaitedProviderDataAfterIoEvents & {
+  data: ProviderDataFromIo & {
     events: EventsDataFromIo<CommerceEvent>;
   };
 };
