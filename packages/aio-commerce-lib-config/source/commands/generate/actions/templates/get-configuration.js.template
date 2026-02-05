@@ -20,6 +20,7 @@ import {
   byCodeAndLevel,
   byScopeId,
   getConfiguration,
+  setGlobalLibConfigOptions,
 } from "@adobe/aio-commerce-lib-config";
 import {
   badRequest,
@@ -42,6 +43,12 @@ export async function main(params) {
   });
 
   try {
+   if (params.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
+      setGlobalLibConfigOptions({
+        encryptionKey: params.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+     });
+    }
+
     const id = params.id;
     const code = params.code;
     const level = params.level;
