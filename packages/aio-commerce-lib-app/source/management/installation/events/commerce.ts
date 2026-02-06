@@ -17,8 +17,6 @@ import { COMMERCE_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
 
 import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { CommerceEvent } from "#config/schema/eventing";
-import type { EventsDataFromIo } from "#management/installation/events/types";
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { EventsConfig, EventsExecutionContext } from "./utils";
 
@@ -70,16 +68,13 @@ export const commerceEventsStep = defineLeafStep({
         existingIoEventsData,
       );
 
-      const commerceEventsData =
-        eventsData satisfies EventsDataFromIo<CommerceEvent>;
-
       const { subscriptionsData } = await onboardCommerce({
         context,
         metadata: config.metadata,
         provider,
         data: {
           ...providerData,
-          events: commerceEventsData,
+          events: eventsData,
         },
       });
 
@@ -88,8 +83,12 @@ export const commerceEventsStep = defineLeafStep({
           config: provider,
           data: {
             ...providerData,
-            events: eventsData,
-            subscriptions: subscriptionsData,
+            events: eventsData.map((data, index) => {
+              return {
+                ...data,
+                subscription: subscriptionsData[index],
+              };
+            }),
           },
         },
       });
