@@ -1,5 +1,20 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.12.0
+
+### Minor Changes
+
+- [#226](https://github.com/adobe/aio-commerce-sdk/pull/226) [`3167595`](https://github.com/adobe/aio-commerce-sdk/commit/3167595c3b276833c4516524b3f829f4e5e419df) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Implement Unsync Commerce Scopes action
+
+- [#244](https://github.com/adobe/aio-commerce-sdk/pull/244) [`76105e4`](https://github.com/adobe/aio-commerce-sdk/commit/76105e4255704a35db634e62a8519328d5295121) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Explicitly throw exception in case of failure
+
+- [#240](https://github.com/adobe/aio-commerce-sdk/pull/240) [`888ee1d`](https://github.com/adobe/aio-commerce-sdk/commit/888ee1d79c3c035eb715506c9a45329e8ea5001e) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Fix CONFIG_ENCRYPTION_KEY misusage in set-configuration action
+
+### Patch Changes
+
+- Updated dependencies [[`24b391f`](https://github.com/adobe/aio-commerce-sdk/commit/24b391f911a64786df0e6ef695d6baaf4c467ea2), [`2707605`](https://github.com/adobe/aio-commerce-sdk/commit/2707605b914b7aab3f7700f845bc8e27f48958ca), [`4a9a407`](https://github.com/adobe/aio-commerce-sdk/commit/4a9a407e8141687e7507ba1f4bc85bfb3e4a144e)]:
+  - @adobe/aio-commerce-lib-app@0.2.0
+
 ## 0.11.1
 
 ### Patch Changes

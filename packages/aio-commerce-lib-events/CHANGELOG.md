@@ -1,5 +1,16 @@
 # @adobe/aio-commerce-lib-events
 
+## 0.5.2
+
+### Patch Changes
+
+- [#242](https://github.com/adobe/aio-commerce-sdk/pull/242) [`4a9a407`](https://github.com/adobe/aio-commerce-sdk/commit/4a9a407e8141687e7507ba1f4bc85bfb3e4a144e) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove `providerMetadataId` from the input parameters when creating a registration as it's not a valid field.
+
+- [#241](https://github.com/adobe/aio-commerce-sdk/pull/241) [`2707605`](https://github.com/adobe/aio-commerce-sdk/commit/2707605b914b7aab3f7700f845bc8e27f48958ca) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Export additional types of I/O Events schema.
+
+- Updated dependencies []:
+  - @adobe/aio-commerce-lib-auth@0.8.0
+
 ## 0.5.1
 
 ### Patch Changes
