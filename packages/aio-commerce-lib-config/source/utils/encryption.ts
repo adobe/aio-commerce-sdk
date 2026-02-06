@@ -12,6 +12,7 @@
 
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 
+import { getGlobalLibConfigOptions } from "#config-manager";
 import { getLogger } from "#utils/logger";
 
 const ALGORITHM = "aes-256-gcm";
@@ -24,7 +25,7 @@ export const HEX_PATTERN = /^[\da-f]+$/i;
 const ENCRYPTED_PARTS_COUNT = 3;
 
 /**
- * Generates a new encryption key suitable for CONFIG_ENCRYPTION_KEY.
+ * Generates a new encryption key suitable for AIO_COMMERCE_CONFIG_ENCRYPTION_KEY.
  * @returns A hex string representing a 256-bit encryption key.
  */
 export function generateEncryptionKey(): string {
@@ -40,23 +41,21 @@ export function isEncryptionConfigured(): boolean {
 }
 
 /**
- * Gets the encryption key from environment variables.
+ * Gets the encryption key from global config.
  * @returns The encryption key as a Buffer, or null if not configured.
  */
 function getEncryptionKey(): Buffer | null {
   const logger = getLogger("@adobe/aio-commerce-lib-config:encryption");
 
-  const key = process.env.CONFIG_ENCRYPTION_KEY;
+  const key = getGlobalLibConfigOptions().encryptionKey;
+
   if (!key) {
-    logger.warn(
-      "CONFIG_ENCRYPTION_KEY not found in environment variables. Password encryption is disabled.",
-    );
     return null;
   }
 
   if (!HEX_PATTERN.test(key)) {
     logger.warn(
-      "CONFIG_ENCRYPTION_KEY is not a valid hex string. Password encryption is disabled.",
+      "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not a valid hex string. Password encryption is disabled.",
     );
     return null;
   }
@@ -64,7 +63,7 @@ function getEncryptionKey(): Buffer | null {
   const keyBuffer = Buffer.from(key, "hex");
   if (key.length !== KEY_LENGTH_HEX || keyBuffer.length !== KEY_LENGTH_BYTES) {
     logger.warn(
-      `CONFIG_ENCRYPTION_KEY must be ${KEY_LENGTH_HEX} hex characters (${KEY_LENGTH_BYTES} bytes). Password encryption is disabled.`,
+      `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY must be ${KEY_LENGTH_HEX} hex characters (${KEY_LENGTH_BYTES} bytes). Password encryption is disabled.`,
     );
     return null;
   }
@@ -84,7 +83,7 @@ export function encrypt(plainText: string): string {
   const key = getEncryptionKey();
   if (!key) {
     const error = new Error(
-      "CONFIG_ENCRYPTION_KEY is not configured. Cannot encrypt password field. Ensure the encryption key is set in your environment variables.",
+      "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not configured. Cannot encrypt password field. Ensure the encryption key is set in your environment variables.",
     );
     logger.error(error.message);
     throw error;
@@ -117,10 +116,11 @@ export function decrypt(encryptedText: string): string {
 
   const key = getEncryptionKey();
   if (!key) {
-    logger.warn(
-      "Encryption key not available, cannot decrypt password. Returning encrypted value.",
+    const error = new Error(
+      "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not configured. Cannot encrypt password field. Ensure the encryption key is set in your environment variables.",
     );
-    return encryptedText;
+    logger.error(error.message);
+    throw error;
   }
 
   try {
