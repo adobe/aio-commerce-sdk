@@ -67,7 +67,7 @@ export type ProviderDataFromIo<
 export type EventsDataFromIo<EventType extends CommerceEvent | ExternalEvent> =
   Awaited<ReturnType<typeof onboardIoEvents<EventType>>>["eventsData"];
 
-export type CreateSubscriptionParams = {
+export type CreateOrGetSubscriptionParams = {
   context: EventsExecutionContext;
   metadata: ApplicationMetadata;
   provider: ProviderDataFromIo<CommerceEvent>;

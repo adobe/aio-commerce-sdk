@@ -22,7 +22,10 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import type { CommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
+import type {
+  CommerceEventSubscription,
+  CommerceEventsApiClient,
+} from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   AdobeIoEventsApiClient,
   EventProviderType,
@@ -190,6 +193,7 @@ export function findExistingProviderMetadata(
 }
 
 /**
+<<<<<<< HEAD
  * Find existing event registrations by client ID and name.
  * @param allRegistrations - The list of all existing event registrations.
  * @param clientId - The client ID of the workspace where the registration was created.
@@ -287,6 +291,18 @@ export function kebabToTitleCase(str: string) {
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+/*
+ * Find an existing Commerce event subscription by its event name.
+ * @param allSubscriptions - Map of all existing event subscriptions keyed by event name.
+ * @param eventName - The namespaced event name to search for.
+ */
+export function findExistingSubscription(
+  allSubscriptions: Map<string, CommerceEventSubscription>,
+  eventName: string,
+) {
+  return allSubscriptions.get(eventName) ?? null;
 }
 
 /**

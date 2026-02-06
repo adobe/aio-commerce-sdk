@@ -16,6 +16,7 @@ import {
   findExistingProvider,
   findExistingProviderMetadata,
   findExistingRegistrations,
+  findExistingSubscription,
   generateInstanceId,
   getIoEventCode,
   getRegistrationDescription,
@@ -23,6 +24,7 @@ import {
   groupEventsByRuntimeActions,
 } from "./utils";
 
+import type { CommerceEventSubscription } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   EventProviderType,
   IoEventMetadata,
@@ -32,10 +34,10 @@ import type {
 import type { CommerceEvent, ExternalEvent } from "#config/schema/eventing";
 import type { ApplicationMetadata } from "#config/schema/metadata";
 import type {
+  CreateOrGetSubscriptionParams,
   CreateProviderEventsMetadataParams,
   CreateProviderParams,
   CreateRegistrationParams,
-  CreateSubscriptionParams,
   OnboardCommerceEventSubscriptionParams,
   OnboardIoEventsParams,
 } from "./types";
@@ -263,14 +265,33 @@ export function configureCommerce(context: EventsExecutionContext) {
 }
 
 /**
- * Creates a Commerce event subscription based on existing subscriptions.
- * @param params - The parameters necessary to create the event subscription.
+ * Creates or retrieves an existing Commerce event subscription.
+ * @param params - Parameters needed to create or get the subscription.
+ * @param existingData - Map of existing Commerce subscriptions keyed by event name.
  */
-export async function createSubscription(params: CreateSubscriptionParams) {
+async function createOrGetSubscription(
+  params: CreateOrGetSubscriptionParams,
+  existingData: Map<string, CommerceEventSubscription>,
+) {
   const { context, metadata, provider, event } = params;
   const { logger, commerceEventsClient } = context;
+  const eventName = getNamespacedEvent(metadata, event.config.name);
+
+  const existing = findExistingSubscription(existingData, eventName);
+  if (existing) {
+    logger.info(
+      `Subscription for event "${event.config.name}" already exists, skipping creation.`,
+    );
+    return {
+      name: existing.name,
+      parent: existing.parent,
+      fields: existing.fields,
+      providerId: existing.provider_id,
+    };
+  }
+
   const eventSpec = {
-    name: getNamespacedEvent(metadata, event.config.name),
+    name: eventName,
     parent: event.config.name,
     fields: event.config.fields.map((field) => ({ name: field })),
     providerId: provider.instance_id,
@@ -398,41 +419,28 @@ export async function onboardCommerce(
     `Onboarding Commerce event subscriptions with provider instance ID: ${instanceId}`,
   );
 
+  const existingSubscriptions =
+    await commerceEventsClient.getAllEventSubscriptions();
   const existingSubscriptionsMap = new Map(
-    (await commerceEventsClient.getAllEventSubscriptions()).map(
-      (subscription) => [subscription.name, subscription],
+    existingSubscriptions.map((subscription) => [
+      subscription.name,
+      subscription,
+    ]),
+  );
+
+  const subscriptionsPromises = events.map((event) =>
+    createOrGetSubscription(
+      {
+        context,
+        metadata,
+        provider: providerData,
+        event,
+      },
+      existingSubscriptionsMap,
     ),
   );
 
-  const eventsToCreate = events.filter((event) => {
-    const eventName = getNamespacedEvent(metadata, event.config.name);
-    const exists = existingSubscriptionsMap.has(eventName);
-
-    if (exists) {
-      logger.info(
-        `Subscription already exists for event: ${eventName}, skipping creation`,
-      );
-    }
-
-    return !exists;
-  });
-
-  logger.info(
-    `Creating ${eventsToCreate.length} new subscriptions (${events.length - eventsToCreate.length} already exist)`,
-  );
-
-  const subscriptionsPromises = eventsToCreate.map((event) =>
-    createSubscription({
-      context,
-      metadata,
-      provider: providerData,
-      event,
-    }),
-  );
-
-  return {
-    subscriptionsData: await Promise.all(subscriptionsPromises),
-  };
+  return Promise.all(subscriptionsPromises);
 }
 
 /**
