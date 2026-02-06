@@ -150,22 +150,20 @@ describe("commerceEventsStep", () => {
 
     const onboardCommerceSpy = vi
       .spyOn(helpers, "onboardCommerce")
-      .mockResolvedValue({
-        subscriptionsData: [
-          {
-            name: "test-app.plugin.order_placed",
-            parent: "plugin.order_placed",
-            fields: [{ name: "order_id" }, { name: "customer_id" }],
-            providerId: "test-app_commerce-events-provider",
-          },
-          {
-            name: "test-app.plugin.product_updated",
-            parent: "plugin.product_updated",
-            fields: [{ name: "product_id" }, { name: "sku" }],
-            providerId: "test-app_commerce-events-provider",
-          },
-        ],
-      });
+      .mockResolvedValue([
+        {
+          name: "test-app.plugin.order_placed",
+          parent: "plugin.order_placed",
+          fields: [{ name: "order_id" }, { name: "customer_id" }],
+          providerId: "test-app_commerce-events-provider",
+        },
+        {
+          name: "test-app.plugin.product_updated",
+          parent: "plugin.product_updated",
+          fields: [{ name: "product_id" }, { name: "sku" }],
+          providerId: "test-app_commerce-events-provider",
+        },
+      ]);
 
     const result = await commerceEventsStep.run(mockConfig, mockContext);
 

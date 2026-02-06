@@ -110,8 +110,8 @@ describe("onboardCommerce", () => {
       providerId: "test-app_commerce-events-provider",
     });
 
-    expect(result.subscriptionsData).toHaveLength(1);
-    expect(result.subscriptionsData[0]).toEqual({
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
       name: "test-app.plugin.order_placed",
       parent: "plugin.order_placed",
       fields: [{ name: "order_id" }, { name: "customer_id" }],
@@ -189,14 +189,14 @@ describe("onboardCommerce", () => {
       providerId: "test-app_commerce-events-provider",
     });
 
-    expect(result.subscriptionsData).toHaveLength(2);
-    expect(result.subscriptionsData[0]).toEqual({
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({
       name: "test-app.plugin.order_placed",
       parent: "plugin.order_placed",
       fields: [{ name: "order_id" }, { name: "customer_id" }],
       providerId: "test-app_commerce-events-provider",
     });
-    expect(result.subscriptionsData[1]).toEqual({
+    expect(result[1]).toEqual({
       name: "test-app.plugin.product_updated",
       parent: "plugin.product_updated",
       fields: [{ name: "product_id" }, { name: "sku" }],
@@ -247,7 +247,6 @@ describe("onboardCommerce", () => {
       } as any,
     };
 
-    // Mock that one subscription already exists
     mockCommerceEventsClient.getAllEventSubscriptions.mockResolvedValue([
       {
         name: "test-app.plugin.order_placed",
@@ -267,7 +266,6 @@ describe("onboardCommerce", () => {
 
     const result = await onboardCommerce(paramsWithTwoEvents);
 
-    // Should only create 1 subscription (product_updated), not 2
     expect(
       mockCommerceEventsClient.createEventSubscription,
     ).toHaveBeenCalledTimes(1);
@@ -280,9 +278,14 @@ describe("onboardCommerce", () => {
       providerId: "test-app_commerce-events-provider",
     });
 
-    // Should return only the newly created subscription
-    expect(result.subscriptionsData).toHaveLength(1);
-    expect(result.subscriptionsData[0]).toEqual({
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({
+      name: "test-app.plugin.order_placed",
+      parent: "plugin.order_placed",
+      fields: [{ name: "order_id" }, { name: "customer_id" }],
+      providerId: "test-app_commerce-events-provider",
+    });
+    expect(result[1]).toEqual({
       name: "test-app.plugin.product_updated",
       parent: "plugin.product_updated",
       fields: [{ name: "product_id" }, { name: "sku" }],
@@ -307,12 +310,16 @@ describe("onboardCommerce", () => {
 
     const result = await onboardCommerce(baseParams);
 
-    // Should not create any subscriptions
     expect(
       mockCommerceEventsClient.createEventSubscription,
     ).not.toHaveBeenCalled();
 
-    // Should return empty array
-    expect(result.subscriptionsData).toHaveLength(0);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      name: "test-app.plugin.order_placed",
+      parent: "plugin.order_placed",
+      fields: [{ name: "order_id" }, { name: "customer_id" }],
+      providerId: "test-app_commerce-events-provider",
+    });
   });
 });
