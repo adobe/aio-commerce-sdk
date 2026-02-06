@@ -70,7 +70,7 @@ export type InstallationData = {
 /** Base properties shared by all installation states. */
 type InstallationStateBase = {
   /** Unique installation identifier. */
-  installationId: string;
+  id: string;
 
   /** Root step status. */
   step: StepStatus;

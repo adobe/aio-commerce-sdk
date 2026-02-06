@@ -38,7 +38,7 @@ describe("createInitialState", () => {
     vi.useRealTimers();
   });
 
-  test("should create initial state with unique installationId and pending status", () => {
+  test("should create initial state with unique id and pending status", () => {
     const rootStep = defineBranchStep({
       name: "root",
       meta: { label: "Root" },
@@ -47,9 +47,9 @@ describe("createInitialState", () => {
 
     const state = createInitialState({ rootStep, config: minimalValidConfig });
 
-    expect(state.installationId).toBeDefined();
-    expect(typeof state.installationId).toBe("string");
-    expect(state.installationId.length).toBeGreaterThan(0);
+    expect(state.id).toBeDefined();
+    expect(typeof state.id).toBe("string");
+    expect(state.id.length).toBeGreaterThan(0);
     expect(state.status).toBe("pending");
   });
 
@@ -182,7 +182,7 @@ describe("executeWorkflow", () => {
     });
 
     expect(result.status).toBe("succeeded");
-    expect(result.installationId).toBe(initialState.installationId);
+    expect(result.id).toBe(initialState.id);
   });
 
   test("should return failed state when a step throws an error", async () => {
@@ -251,7 +251,7 @@ describe("executeWorkflow", () => {
     expect(hooks.onInstallationStart).toHaveBeenCalledWith(
       expect.objectContaining({
         status: "in-progress",
-        installationId: initialState.installationId,
+        id: initialState.id,
       }),
     );
   });
@@ -289,7 +289,7 @@ describe("executeWorkflow", () => {
     expect(hooks.onInstallationSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
         status: "succeeded",
-        installationId: initialState.installationId,
+        id: initialState.id,
       }),
     );
   });
@@ -329,7 +329,7 @@ describe("executeWorkflow", () => {
     expect(hooks.onInstallationFailure).toHaveBeenCalledWith(
       expect.objectContaining({
         status: "failed",
-        installationId: initialState.installationId,
+        id: initialState.id,
         error: expect.objectContaining({
           message: "Failure",
         }),

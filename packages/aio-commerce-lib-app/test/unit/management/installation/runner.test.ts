@@ -110,14 +110,14 @@ describe("createInitialInstallationState", () => {
     expect(customStep?.meta.label).toBe("Custom Step");
   });
 
-  test("should return state with unique installationId and pending status", () => {
+  test("should return state with unique id and pending status", () => {
     const state = createInitialInstallationState({
       config: minimalValidConfig,
     });
 
-    expect(state.installationId).toBeDefined();
-    expect(typeof state.installationId).toBe("string");
-    expect(state.installationId.length).toBeGreaterThan(0);
+    expect(state.id).toBeDefined();
+    expect(typeof state.id).toBe("string");
+    expect(state.id.length).toBeGreaterThan(0);
     expect(state.status).toBe("pending");
   });
 });
@@ -152,7 +152,7 @@ describe("runInstallation", () => {
     });
 
     expect(result.status).toBe("succeeded");
-    expect(result.installationId).toBe(initialState.installationId);
+    expect(result.id).toBe(initialState.id);
   });
 
   test("should return failed state when a step fails", async () => {

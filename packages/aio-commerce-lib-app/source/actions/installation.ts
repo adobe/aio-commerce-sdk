@@ -21,9 +21,8 @@ import {
 } from "@adobe/aio-commerce-lib-core/responses";
 import { createCombinedStore } from "@adobe/aio-commerce-lib-core/storage";
 import openwhisk from "openwhisk";
-import { object } from "valibot";
+import { object, string } from "valibot";
 
-import { validateCommerceAppConfig } from "#config/lib/validate";
 import {
   createInitialInstallationState,
   isCompletedState,
@@ -35,7 +34,6 @@ import {
 } from "#management/index";
 import { AppCredentialsSchema } from "#management/installation/schema";
 
-import type { BaseContext } from "@adobe/aio-commerce-lib-core/actions";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { KeyValueStore } from "@adobe/aio-commerce-lib-core/storage";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -77,7 +75,7 @@ function createInstallationHooks(
 ) {
   const logAndSave = async (message: string, data: InstallationState) => {
     logFn(message);
-    await store.put(data.installationId, data);
+    await store.put(data.id, data);
   };
 
   return {
@@ -97,31 +95,6 @@ function createInstallationHooks(
   };
 }
 
-/** Plugin function to be used by the router to parse the app configuration at runtime. */
-function appConfig() {
-  return (_: BaseContext) => {
-    const appConfiguration: CommerceAppConfigOutputModel | null = null;
-    return {
-      async getAppConfig() {
-        if (appConfiguration !== null) {
-          return appConfiguration;
-        }
-
-        const manifestPathAtRuntime =
-          "../../app.commerce.manifest.json" as string;
-
-        const manifest = await import(manifestPathAtRuntime, {
-          with: {
-            type: "json",
-          },
-        });
-
-        return validateCommerceAppConfig(manifest);
-      },
-    };
-  };
-}
-
 /**
  * Installation action router.
  *
@@ -130,9 +103,7 @@ function appConfig() {
  * - GET /installation/execution - Get current execution status
  * - POST /installation/execution - Execute installation (internal, called async)
  */
-const router = new HttpActionRouter()
-  .use(logger({ name: () => "installation" }))
-  .use(appConfig());
+let router = new HttpActionRouter().use(logger({ name: () => "installation" }));
 
 /**
  * GET /installation/execution - Get current execution status
@@ -142,7 +113,7 @@ const router = new HttpActionRouter()
  * 2. If found: return execution plan with step statuses
  * 3. If not found: return empty status
  */
-router.get("/installation/execution", {
+router = router.get("/execution", {
   handler: async (_req, { logger }) => {
     logger.debug("Getting installation execution status...");
 
@@ -151,7 +122,7 @@ router.get("/installation/execution", {
 
     if (state) {
       logger.debug(`Found execution: ${state.status}`);
-      return ok({ body: { state } });
+      return ok({ body: state });
     }
 
     // No execution found - return 204 No Content
@@ -168,12 +139,17 @@ router.get("/installation/execution", {
  * 2. If found and (pending/in-progress or succeeded): return 409 Conflict
  * 3. If not found or failed: create plan, invoke execution async, return 202 Accepted
  */
-router.post("/installation", {
+router = router.post("/", {
   body: object({
     appCredentials: AppCredentialsSchema,
+
+    commerceBaseUrl: string(),
+    commerceEnv: string(),
+    ioEventsUrl: string(),
+    ioEventsEnv: string(),
   }),
 
-  handler: async (req, { logger, getAppConfig, rawParams }) => {
+  handler: async (req, { logger, rawParams }) => {
     const appCredentials = req.body.appCredentials;
 
     logger.debug("Starting installation...");
@@ -199,7 +175,7 @@ router.post("/installation", {
       logger.debug("Previous installation failed, allowing retry");
     }
 
-    const appConfig = await getAppConfig();
+    const appConfig = (rawParams as ExecutionParams).appConfig;
     if (!appConfig) {
       return internalServerError(
         "Could not find or parse the app.commerce.manifest.json file, is it present and valid?.",
@@ -207,7 +183,7 @@ router.post("/installation", {
     }
 
     const initialState = createInitialInstallationState({ config: appConfig });
-    logger.debug(`Created initial state: ${initialState.installationId}`);
+    logger.debug(`Created initial state: ${initialState.id}`);
 
     await store.put("current", initialState);
     const ow = openwhisk();
@@ -220,12 +196,17 @@ router.post("/installation", {
       params: {
         ...rawParams,
 
+        AIO_EVENTS_API_BASE_URL: req.body.ioEventsUrl,
+        AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: req.body.ioEventsEnv,
+        AIO_COMMERCE_API_BASE_URL: req.body.commerceBaseUrl,
+        AIO_COMMERCE_API_FLAVOR: req.body.commerceEnv,
+
         appCredentials,
         initialState,
         appConfig,
 
         // Override path to hit the execution endpoint
-        __ow_path: "/installation/execution",
+        __ow_path: "/execution",
         __ow_method: "post",
       },
     });
@@ -234,9 +215,8 @@ router.post("/installation", {
     return accepted({
       body: {
         message: "Installation started",
-        installationId: initialState.installationId,
         activationId: activation.activationId,
-        state: initialState,
+        ...initialState,
       },
     });
   },
@@ -248,7 +228,7 @@ router.post("/installation", {
  * This endpoint is called asynchronously by POST /installation.
  * It runs the actual installation workflow and saves state.
  */
-router.post("/installation/execution", {
+router = router.post("/execution", {
   handler: async (_req, { logger, rawParams }) => {
     const params = rawParams as ExecutionParams;
     const { initialState, appConfig } = params;
@@ -268,7 +248,7 @@ router.post("/installation/execution", {
       logger,
     };
 
-    logger.debug(`Executing installation: ${initialState.installationId}`);
+    logger.debug(`Executing installation: ${initialState.id}`);
     const result = await runInstallation({
       installationContext,
       config: appConfig,
@@ -294,4 +274,12 @@ router.post("/installation/execution", {
 });
 
 /** The route handler for the runtime action. */
-export const installationRuntimeAction = router.handler();
+export const installationRuntimeAction =
+  (appConfig: CommerceAppConfigOutputModel) =>
+  (params: RuntimeActionParams) => {
+    const handler = router.handler();
+    return handler({
+      ...params,
+      appConfig,
+    });
+  };

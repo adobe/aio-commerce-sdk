@@ -72,7 +72,7 @@ type StepRegistry = Map<string, AnyStep>;
 type StepExecutionContext = {
   installationContext: InstallationContext;
   config: CommerceAppConfigOutputModel;
-  installationId: string;
+  id: string;
   startedAt: string;
   step: StepStatus;
   data: Record<string, unknown> | null;
@@ -91,7 +91,7 @@ export function createInitialState(
 ): PendingInstallationState {
   const { rootStep, config } = options;
   return {
-    installationId: crypto.randomUUID(),
+    id: crypto.randomUUID(),
     status: "pending",
     step: buildInitialStepStatus(rootStep, config, []),
     data: null,
@@ -112,7 +112,7 @@ export async function executeWorkflow(
   const context: StepExecutionContext = {
     installationContext,
     config,
-    installationId: initialState.installationId,
+    id: initialState.id,
     startedAt: nowIsoString(),
     step,
     data: null,
@@ -126,7 +126,7 @@ export async function executeWorkflow(
     // Execute the root step
     await executeStep(rootStep, context.step, {}, context);
     const succeeded = createSucceededState({
-      installationId: context.installationId,
+      id: context.id,
       startedAt: context.startedAt,
       step: context.step,
       data: context.data,
@@ -141,7 +141,7 @@ export async function executeWorkflow(
     const failed = createFailedState(
       {
         step: context.step,
-        installationId: context.installationId,
+        id: context.id,
         startedAt: context.startedAt,
         data: context.data,
       },
@@ -189,7 +189,7 @@ function buildInitialStepStatus(
 /** Snapshot current execution as InProgressInstallationState. */
 function snapshot(context: StepExecutionContext): InProgressInstallationState {
   return {
-    installationId: context.installationId,
+    id: context.id,
     startedAt: context.startedAt,
     status: "in-progress",
     step: context.step,

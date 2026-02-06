@@ -85,7 +85,7 @@ export function createMockInstallationError(
 
 /** Base properties shared by all installation states. */
 const baseStateProps = {
-  installationId: "test-installation-1",
+  id: "test-installation-1",
   step: createMockStepStatus(),
   data: {},
 };
