@@ -20,6 +20,9 @@ export type InstallationContext = {
 
   /** Logger instance for installation logging. */
   logger: ReturnType<typeof AioLogger>;
+
+  /** Custom scripts defined in the configuration (if any). */
+  customScripts?: Record<string, unknown>;
 };
 
 /** Factory function type for creating step-specific context. */

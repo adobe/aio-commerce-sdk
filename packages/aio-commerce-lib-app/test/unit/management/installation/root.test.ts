@@ -12,6 +12,7 @@
 
 import { describe, expect, test, vi } from "vitest";
 
+import { customInstallationStep } from "#management/installation/custom-installation/branch";
 import { eventingStep } from "#management/installation/events/branch";
 import {
   createRootInstallationStep,
@@ -37,10 +38,11 @@ describe("ROOT_INSTALLATION_STEP", () => {
     expect(ROOT_INSTALLATION_STEP.meta.description).toBeDefined();
   });
 
-  test("should have default children (eventingStep and webhooksStep)", () => {
+  test("should have default children (eventingStep, webhooksStep, and customInstallationStep)", () => {
     expect(ROOT_INSTALLATION_STEP.children).toEqual([
       eventingStep,
       webhooksStep,
+      customInstallationStep,
     ]);
   });
 });
@@ -67,6 +69,7 @@ describe("createRootInstallationStep", () => {
     expect(result.children).toEqual([
       eventingStep,
       webhooksStep,
+      customInstallationStep,
       mockExtraStep,
     ]);
   });
@@ -81,7 +84,7 @@ describe("createRootInstallationStep", () => {
 
     createRootInstallationStep([mockExtraStep]);
     expect(ROOT_INSTALLATION_STEP.children).toEqual(originalChildren);
-    expect(ROOT_INSTALLATION_STEP.children).toHaveLength(2);
+    expect(ROOT_INSTALLATION_STEP.children).toHaveLength(3);
   });
 
   test("should handle multiple extra steps", () => {
@@ -98,10 +101,11 @@ describe("createRootInstallationStep", () => {
     });
 
     const result = createRootInstallationStep([extraStep1, extraStep2]);
-    expect(result.children).toHaveLength(4);
+    expect(result.children).toHaveLength(5);
     expect(result.children).toEqual([
       eventingStep,
       webhooksStep,
+      customInstallationStep,
       extraStep1,
       extraStep2,
     ]);
