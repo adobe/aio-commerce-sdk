@@ -15,10 +15,7 @@
 
 import util from "node:util";
 
-import {
-  UnsyncCommerceScopeResult,
-  unsyncCommerceScopes,
-} from "@adobe/aio-commerce-lib-config";
+import { unsyncCommerceScopes } from "@adobe/aio-commerce-lib-config";
 import {
   internalServerError,
   ok,
@@ -41,6 +38,9 @@ export async function main(params) {
 
     if (result) {
       return ok("Commerce scope unsynced successfully");
+    } else {
+      logger.warn("Failed to unsync commerce scopes. Commerce scopes not found.");
+      return ok("Failed to unsync commerce scopes. Commerce scopes not found.");
     }
   } catch (error) {
     logger.error(`Error unsyncing commerce scopes: ${inspect(error)}`);
