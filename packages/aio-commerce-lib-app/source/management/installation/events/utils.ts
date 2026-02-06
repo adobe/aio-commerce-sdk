@@ -22,7 +22,10 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import type { CommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
+import type {
+  CommerceEventSubscription,
+  CommerceEventsApiClient,
+} from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   AdobeIoEventsApiClient,
   IoEventMetadata,
@@ -168,6 +171,18 @@ export function findExistingProviderMetadata(
   eventName: string,
 ) {
   return allMetadata.find((meta) => meta.event_code === eventName) ?? null;
+}
+
+/**
+ * Find an existing Commerce event subscription by its event name.
+ * @param allSubscriptions - Map of all existing event subscriptions keyed by event name.
+ * @param eventName - The namespaced event name to search for.
+ */
+export function findExistingSubscription(
+  allSubscriptions: Map<string, CommerceEventSubscription>,
+  eventName: string,
+) {
+  return allSubscriptions.get(eventName) ?? null;
 }
 
 /**

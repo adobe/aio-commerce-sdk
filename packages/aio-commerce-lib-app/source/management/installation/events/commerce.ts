@@ -12,7 +12,7 @@
 
 import { defineLeafStep } from "#management/installation/workflow/step";
 
-import { onboardIoEvents } from "./helpers";
+import { onboardCommerce, onboardIoEvents } from "./helpers";
 import { COMMERCE_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
 
 import type { SetRequiredDeep } from "type-fest";
@@ -68,12 +68,27 @@ export const commerceEventsStep = defineLeafStep({
         existingIoEventsData,
       );
 
+      const subscriptionsData = await onboardCommerce({
+        context,
+        metadata: config.metadata,
+        provider,
+        data: {
+          ...providerData,
+          events: eventsData,
+        },
+      });
+
       stepData.push({
         provider: {
           config: provider,
           data: {
             ...providerData,
-            events: eventsData,
+            events: eventsData.map((data, index) => {
+              return {
+                ...data,
+                subscription: subscriptionsData[index],
+              };
+            }),
           },
         },
       });

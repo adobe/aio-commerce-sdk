@@ -14,15 +14,16 @@ import type {
   EventProviderType,
   IoEventProvider,
 } from "@adobe/aio-commerce-lib-events/io-events";
-import type { ApplicationMetadata } from "#config/index";
+import type { ArrayElement } from "type-fest";
 import type {
   CommerceEvent,
   EventProvider,
   ExternalEvent,
 } from "#config/schema/eventing";
+import type { ApplicationMetadata } from "#config/schema/metadata";
+import type { onboardIoEvents } from "#management/installation/events/helpers";
 import type { EventsExecutionContext } from "./utils";
 
-// Combine EventProvider with its type for easier handling.
 export type ProviderWithType = EventProvider & { type: EventProviderType };
 export type CreateProviderParams = {
   context: EventsExecutionContext;
@@ -36,10 +37,35 @@ export type CreateProviderEventsMetadataParams = {
   event: CommerceEvent | ExternalEvent;
 };
 
-export type OnboardIoEventsParams = {
+export type OnboardIoEventsParams<
+  EventType extends CommerceEvent | ExternalEvent,
+> = {
   context: EventsExecutionContext;
   metadata: ApplicationMetadata;
   provider: EventProvider;
-  events: Array<CommerceEvent | ExternalEvent>;
+  events: EventType[];
   providerType: EventProviderType;
+};
+
+export type ProviderDataFromIo<
+  EventType extends CommerceEvent | ExternalEvent,
+> = Awaited<ReturnType<typeof onboardIoEvents<EventType>>>["providerData"];
+
+export type EventsDataFromIo<EventType extends CommerceEvent | ExternalEvent> =
+  Awaited<ReturnType<typeof onboardIoEvents<EventType>>>["eventsData"];
+
+export type CreateOrGetSubscriptionParams = {
+  context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
+  provider: ProviderDataFromIo<CommerceEvent>;
+  event: ArrayElement<EventsDataFromIo<CommerceEvent>>;
+};
+
+export type OnboardCommerceEventSubscriptionParams = {
+  context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
+  provider: EventProvider;
+  data: ProviderDataFromIo<CommerceEvent> & {
+    events: EventsDataFromIo<CommerceEvent>;
+  };
 };
