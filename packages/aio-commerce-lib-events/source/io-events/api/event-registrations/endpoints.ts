@@ -147,7 +147,6 @@ export async function createRegistration(
           events_of_interest: validatedParams.eventsOfInterest.map((event) => ({
             provider_id: event.providerId,
             event_code: event.eventCode,
-            provider_metadata_id: event.providerMetadataId,
           })),
           delivery_type: validatedParams.deliveryType,
           runtime_action: validatedParams.runtimeAction,
@@ -202,7 +201,6 @@ export async function updateRegistration(
           events_of_interest: validatedParams.eventsOfInterest.map((event) => ({
             provider_id: event.providerId,
             event_code: event.eventCode,
-            provider_metadata_id: event.providerMetadataId,
           })),
           delivery_type: validatedParams.deliveryType,
           runtime_action: validatedParams.runtimeAction,

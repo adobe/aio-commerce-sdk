@@ -194,13 +194,13 @@ eventing: {
         {
           name: "plugin.order_placed",
           fields: ["order_id", "customer_id"],
-          runtimeAction: "handle-order",
+          runtimeActions: ["my-package/handle-order"],
           description: "Triggered when an order is placed",
         },
         {
           name: "observer.catalog_update",
           fields: ["product_id"],
-          runtimeAction: "sync-catalog",
+          runtimeActions: ["my-package/sync-catalog"],
           description: "Triggered when catalog is updated",
         },
       ],
@@ -213,8 +213,18 @@ eventing: {
         description: "Events from third-party services",
       },
       events: [
-        { name: "webhook_received" },
-        { name: "external_notification" },
+        {
+          name: "webhook_received",
+          label: "Webhook Received",
+          description: "Triggered when a webhook is received",
+          runtimeActions: ["my-package/handle-webhook"],
+        },
+        {
+          name: "external_notification",
+          label: "External Notification",
+          description: "Triggered by external notification",
+          runtimeActions: ["my-package/handle-notification"],
+        },
       ],
     },
   ],
@@ -225,12 +235,15 @@ eventing: {
 
 - **name**: Must start with `plugin.` or `observer.` followed by lowercase letters and underscores (e.g., `plugin.order_placed`, `observer.catalog_update`)
 - **fields**: Array of field names (lowercase alphanumeric with underscores)
-- **runtimeAction**: The runtime action to invoke when the event is triggered
+- **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
 - **description**: Description of the event (max 255 characters)
 
 **External Events:**
 
 - **name**: Lowercase alphanumeric with underscores
+- **label**: Display name for the event (max 100 characters)
+- **description**: Description of the event (max 255 characters)
+- **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
 
 **Provider Configuration:**
 
