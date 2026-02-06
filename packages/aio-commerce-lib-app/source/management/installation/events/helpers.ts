@@ -200,7 +200,7 @@ export function configureCommerce(context: EventsExecutionContext) {
 
 /**
  * Creates a Commerce event subscription based on existing subscriptions.
- * @param params
+ * @param params - The parameters necessary to create the event subscription.
  */
 export async function createSubscription(params: CreateSubscriptionParams) {
   const { context, metadata, provider, event } = params;
@@ -289,7 +289,7 @@ export async function onboardIoEvents<
 
 /**
  * Onboards Commerce event subscriptions by creating or updating them based on existing subscriptions.
- * @param params
+ * @param params - The parameters necessary to onboard Commerce event subscriptions.
  */
 export async function onboardCommerce(
   params: OnboardCommerceEventSubscriptionParams,
