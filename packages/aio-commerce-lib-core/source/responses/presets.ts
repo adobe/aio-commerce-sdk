@@ -27,6 +27,7 @@ export const HTTP_UNAUTHORIZED = 401;
 export const HTTP_FORBIDDEN = 403;
 export const HTTP_NOT_FOUND = 404;
 export const HTTP_METHOD_NOT_ALLOWED = 405;
+export const HTTP_CONFLICT = 409;
 export const HTTP_INTERNAL_SERVER_ERROR = 500;
 
 function curryBuildSuccessResponse(code: number) {
@@ -104,6 +105,12 @@ export const notFound = curryBuildErrorResponse(HTTP_NOT_FOUND);
 export const methodNotAllowed = curryBuildErrorResponse(
   HTTP_METHOD_NOT_ALLOWED,
 );
+
+/**
+ * Creates an error response with the HTTP status code 409.
+ * See {@link buildErrorResponse} for details on the response payload.
+ */
+export const conflict = curryBuildErrorResponse(HTTP_CONFLICT);
 
 /**
  * Creates an error response with the HTTP status code 500.

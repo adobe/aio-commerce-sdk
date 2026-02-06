@@ -52,6 +52,9 @@ export type StepStatus = {
   /** Full path from root to this step. */
   path: string[];
 
+  /** Step metadata (for display purposes). */
+  meta: StepMeta;
+
   /** Current execution status. */
   status: ExecutionStatus;
 
@@ -164,27 +167,3 @@ export interface InstallationStateStore {
   get(installationId: string): Promise<InstallationState | null>;
   save(state: InstallationState): Promise<void>;
 }
-
-/** A step in the installation plan (tree structure). */
-export type InstallationPlanStep = {
-  /** Step name. */
-  name: string;
-
-  /** Step metadata */
-  meta: StepMeta;
-
-  /** Child steps (empty for leaf steps). */
-  children: InstallationPlanStep[];
-};
-
-/** The serializable installation plan. */
-export type InstallationPlan = {
-  /** Unique plan identifier. */
-  id: string;
-
-  /** ISO timestamp when plan was created. */
-  createdAt: string;
-
-  /** Root step of the installation tree. */
-  step: InstallationPlanStep;
-};

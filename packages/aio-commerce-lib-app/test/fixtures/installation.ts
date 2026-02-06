@@ -57,6 +57,7 @@ export function createMockStepStatus(
     id: "root-id",
     name: "root",
     path: ["root"],
+    meta: { label: "Root Step", description: "Root step for testing" },
     status: "pending" as ExecutionStatus,
     children: [],
     ...overrides,
