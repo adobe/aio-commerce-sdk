@@ -20,6 +20,7 @@ import {
   getIoEventCode,
   getRegistrationDescription,
   getRegistrationName,
+  groupEventsByRuntimeActions,
 } from "./utils";
 
 import type {
@@ -306,14 +307,13 @@ export async function onboardIoEvents(
     ),
   );
 
-  // We want to create a single registration if many events target the same runtime action.
-  const actionEvents = Object.groupBy(events, (event) => event.runtimeAction);
-  const registrationPromises = Object.entries(actionEvents).map(
+  const actionEventsMap = groupEventsByRuntimeActions(events);
+  const registrationPromises = Array.from(actionEventsMap.entries()).map(
     ([runtimeAction, groupedEvents]) =>
       createOrGetEventRegistration(
         {
           context,
-          events: groupedEvents ?? [],
+          events: groupedEvents,
           provider: providerData,
           runtimeAction,
         },
@@ -327,16 +327,20 @@ export async function onboardIoEvents(
   ]);
 
   // Map events to their registrations
+  // Each event can have multiple registrations (one per runtime action)
   const eventsData = events.map((event, index) => {
-    const registrationIndex = Object.keys(actionEvents).indexOf(
-      event.runtimeAction,
-    );
+    const eventRegistrations = event.runtimeActions.map((runtimeAction) => {
+      const registrationIndex = Array.from(actionEventsMap.keys()).indexOf(
+        runtimeAction,
+      );
+      return registrationsData[registrationIndex];
+    });
 
     return {
       config: event,
       data: {
         metadata: metadataData[index],
-        registration: registrationsData[registrationIndex],
+        registrations: eventRegistrations,
       },
     };
   });

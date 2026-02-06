@@ -32,13 +32,13 @@ import type {
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { ApplicationMetadata } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { EventProvider } from "#config/schema/eventing";
+import type { AppEvent, EventProvider } from "#config/schema/eventing";
 import type {
   ExecutionContext,
   InstallationContext,
   StepContextFactory,
 } from "#management/installation/workflow/step";
-import type { AppEventWithoutRuntimeAction } from "./types";
+import type { AppEventWithoutRuntimeActions } from "./types";
 
 // The two different provider types we support.
 export const COMMERCE_PROVIDER_TYPE = "dx_commerce_events";
@@ -246,15 +246,36 @@ export function getRegistrationName(
  */
 export function getRegistrationDescription(
   provider: IoEventProvider,
-  events: AppEventWithoutRuntimeAction[],
+  events: AppEventWithoutRuntimeActions[],
   runtimeAction: string,
 ) {
   return [
-    "This registration was automatically created by `@adobe/aio-commerce-lib-app`.",
-    `It belongs to the provider ${provider.label} with instance ID: ${provider.instance_id}.`,
-    `It routes the following ${events.length} event(s) to the runtime action "${runtimeAction}:\n".`,
-    ...events.map((event) => `- ${event.name}`),
+    "This registration was automatically created by @adobe/aio-commerce-lib-app. ",
+    `It belongs to the provider "${provider.label}" (instance ID: ${provider.instance_id}). `,
+    `It routes ${events.length} event(s) to the runtime action "${runtimeAction}".`,
   ].join("\n");
+}
+
+/**
+ * Groups events by their runtime actions. Since each event can have multiple
+ * runtime actions, this function creates a mapping where each unique runtime
+ * action points to all events that target it.
+ *
+ * @param events - The events to group by runtime actions.
+ */
+export function groupEventsByRuntimeActions(
+  events: AppEvent[],
+): Map<string, AppEvent[]> {
+  const actionEventsMap = new Map<string, AppEvent[]>();
+
+  for (const event of events) {
+    for (const runtimeAction of event.runtimeActions) {
+      const existingEvents = actionEventsMap.get(runtimeAction) ?? [];
+      actionEventsMap.set(runtimeAction, [...existingEvents, event]);
+    }
+  }
+
+  return actionEventsMap;
 }
 
 /**

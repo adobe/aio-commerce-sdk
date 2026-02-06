@@ -89,12 +89,15 @@ const BaseEventSchema = v.object({
     ),
   ),
 
-  runtimeAction: v.pipe(
-    nonEmptyStringValueSchema("runtime action"),
-    v.regex(
-      /^[a-z0-9-]+\/[a-z0-9-]+$/,
-      'Runtime action must be in the format "<package>/<action>" (e.g., "my-package/my-action")',
+  runtimeActions: v.array(
+    v.pipe(
+      nonEmptyStringValueSchema("runtime action"),
+      v.regex(
+        /^[a-z0-9-]+\/[a-z0-9-]+$/,
+        'Runtime action must be in the format "<package>/<action>" (e.g., "my-package/my-action")',
+      ),
     ),
+    "Expected an array of runtime actions in the format <package>/<action>",
   ),
 });
 

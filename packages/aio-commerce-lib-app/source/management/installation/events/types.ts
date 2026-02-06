@@ -38,14 +38,14 @@ export type CreateProviderEventsMetadataParams = {
   event: CommerceEvent | ExternalEvent;
 };
 
-export type AppEventWithoutRuntimeAction = Omit<
+export type AppEventWithoutRuntimeActions = Omit<
   CommerceEvent | ExternalEvent,
-  "runtimeAction"
+  "runtimeActions"
 >;
 
 export type CreateRegistrationParams = {
   context: EventsExecutionContext;
-  events: AppEventWithoutRuntimeAction[];
+  events: AppEventWithoutRuntimeActions[];
   provider: IoEventProvider;
   runtimeAction: string;
 };
