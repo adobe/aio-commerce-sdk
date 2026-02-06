@@ -25,26 +25,37 @@ import * as v from "valibot";
 import type { CommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   AdobeIoEventsApiClient,
+  EventProviderType,
   IoEventMetadata,
   IoEventProvider,
+  IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { ApplicationMetadata } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { EventProvider } from "#config/schema/eventing";
+import type { AppEvent, EventProvider } from "#config/schema/eventing";
 import type {
   ExecutionContext,
   InstallationContext,
   StepContextFactory,
 } from "#management/installation/workflow/step";
+import type { AppEventWithoutRuntimeActions } from "./types";
 
+// The two different provider types we support.
 export const COMMERCE_PROVIDER_TYPE = "dx_commerce_events";
 export const EXTERNAL_PROVIDER_TYPE = "3rd_party_custom_events";
+
+// Map each provider type to a human-readable label.
+const PROVIDER_TYPE_TO_LABEL = {
+  [COMMERCE_PROVIDER_TYPE]: "Commerce",
+  [EXTERNAL_PROVIDER_TYPE]: "External",
+} as const;
 
 const CONSUMER_ORG_ID_LENGTH = 6;
 const PROJECT_ID_LENGTH = 19;
 const WORKSPACE_ID_LENGTH = 19;
 
 const AppCredentialsSchema = v.object({
+  clientId: nonEmptyStringValueSchema("clientId"),
   consumerOrgId: v.pipe(
     nonEmptyStringValueSchema("consumerOrgId"),
     v.length(
@@ -78,6 +89,7 @@ export type EventsConfig = CommerceAppConfigOutputModel & {
 /** Context available to event steps (inherited from eventing branch). */
 export interface EventsStepContext extends Record<string, unknown> {
   get appCredentials(): {
+    clientId: string;
     consumerOrgId: string;
     projectId: string;
     workspaceId: string;
@@ -100,6 +112,7 @@ export const createEventsStepContext: StepContextFactory<EventsStepContext> = (
   let ioEventsClient: AdobeIoEventsApiClient | null = null;
 
   const appCredentials = parseOrThrow(AppCredentialsSchema, {
+    clientId: params.clientId,
     consumerOrgId: params.consumerOrgId,
     projectId: params.projectId,
     workspaceId: params.workspaceId,
@@ -109,6 +122,9 @@ export const createEventsStepContext: StepContextFactory<EventsStepContext> = (
     get commerceEventsClient() {
       if (commerceEventsClient === null) {
         const commerceClientParams = resolveCommerceHttpClientParams(params);
+        commerceClientParams.fetchOptions ??= {};
+        commerceClientParams.fetchOptions.timeout = 1000 * 60 * 2; // 2 minutes
+
         commerceEventsClient =
           createCommerceEventsApiClient(commerceClientParams);
       }
@@ -119,6 +135,9 @@ export const createEventsStepContext: StepContextFactory<EventsStepContext> = (
     get ioEventsClient() {
       if (ioEventsClient === null) {
         const ioEventsClientParams = resolveIoEventsHttpClientParams(params);
+        ioEventsClientParams.fetchOptions ??= {};
+        ioEventsClientParams.fetchOptions.timeout = 1000 * 60 * 2; // 2 minutes
+
         ioEventsClient = createAdobeIoEventsApiClient(ioEventsClientParams);
       }
 
@@ -171,6 +190,106 @@ export function findExistingProviderMetadata(
 }
 
 /**
+ * Find existing event registrations by client ID and name.
+ * @param allRegistrations - The list of all existing event registrations.
+ * @param clientId - The client ID of the workspace where the registration was created.
+ * @param name - The name of the registration to search for.
+ */
+export function findExistingRegistrations(
+  allRegistrations: IoEventRegistration[],
+  clientId: string,
+  name: string,
+) {
+  // We don't have an ID to search for, but names are deterministic and calculated by us so it should be fine.
+  // To be safe, the `allRegistrations` should come from the current installation data.
+  return allRegistrations.find(
+    (reg) => reg.client_id === clientId && reg.name === name,
+  );
+}
+
+/**
+ * Get the fully qualified name of an event for I/O Events based on the provider type.
+ * @param name - The name of the event.
+ * @param providerType - The type of the event provider.
+ */
+export function getIoEventCode(name: string, providerType: EventProviderType) {
+  return providerType === COMMERCE_PROVIDER_TYPE
+    ? `com.adobe.commerce.${name}`
+    : name;
+}
+
+/**
+ * Generates a registration name and description based on the provider, events, and runtime action.
+ * @param provider - The provider this registration is associated to.
+ * @param runtimeAction - The runtime action this registration points to.
+ */
+export function getRegistrationName(
+  provider: IoEventProvider,
+  runtimeAction: string,
+) {
+  const providerType = provider.provider_metadata as EventProviderType;
+  const providerLabel = PROVIDER_TYPE_TO_LABEL[providerType] ?? "Unknown";
+
+  // As per the schema, runtimeAction is always in the format "package-name/action-name".
+  const [packageName, actionName] = runtimeAction
+    .split("/")
+    .map(kebabToTitleCase);
+
+  return `${providerLabel} Event Registration: ${actionName} (${packageName})`;
+}
+
+/**
+ * Generates a registration name and description based on the provider, events, and runtime action.
+ * @param provider - The provider this registration is associated to.
+ * @param events - The events routed by this registration.
+ * @param runtimeAction - The runtime action this registration points to.
+ */
+export function getRegistrationDescription(
+  provider: IoEventProvider,
+  events: AppEventWithoutRuntimeActions[],
+  runtimeAction: string,
+) {
+  return [
+    "This registration was automatically created by @adobe/aio-commerce-lib-app. ",
+    `It belongs to the provider "${provider.label}" (instance ID: ${provider.instance_id}). `,
+    `It routes ${events.length} event(s) to the runtime action "${runtimeAction}".`,
+  ].join("\n");
+}
+
+/**
+ * Groups events by their runtime actions. Since each event can have multiple
+ * runtime actions, this function creates a mapping where each unique runtime
+ * action points to all events that target it.
+ *
+ * @param events - The events to group by runtime actions.
+ */
+export function groupEventsByRuntimeActions(
+  events: AppEvent[],
+): Map<string, AppEvent[]> {
+  const actionEventsMap = new Map<string, AppEvent[]>();
+
+  for (const event of events) {
+    for (const runtimeAction of event.runtimeActions) {
+      const existingEvents = actionEventsMap.get(runtimeAction) ?? [];
+      actionEventsMap.set(runtimeAction, [...existingEvents, event]);
+    }
+  }
+
+  return actionEventsMap;
+}
+
+/**
+ * Converts a kebab-case string to Title Case.
+ * @param str - The kebab-case string to convert.
+ */
+export function kebabToTitleCase(str: string) {
+  return str
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+/**
  * Retrieves the current existing data and returns it in a normalized way.
  * @param context The execution context.
  */
@@ -179,15 +298,10 @@ export async function getIoEventsExistingData(context: EventsExecutionContext) {
   const { ioEventsClient, appCredentials } = context;
   const {
     _embedded: { providers: existingProviders },
-  } = await ioEventsClient.getAllEventProviders(
-    {
-      consumerOrgId: appCredentials.consumerOrgId,
-      withEventMetadata: true,
-    },
-    {
-      timeout: 1000 * 60 * 5, // 5 minutes
-    },
-  );
+  } = await ioEventsClient.getAllEventProviders({
+    consumerOrgId: appCredentials.consumerOrgId,
+    withEventMetadata: true,
+  });
 
   // Collect all the metadata from the providers HAL model for easier data access.
   const providersWithMetadata = existingProviders.map((providerHal) => {
@@ -207,8 +321,14 @@ export async function getIoEventsExistingData(context: EventsExecutionContext) {
     };
   });
 
+  const {
+    _embedded: { registrations: registrationsHal },
+  } = await ioEventsClient.getAllRegistrations(appCredentials);
+
+  const registrations = registrationsHal.map(({ _links, ...reg }) => reg);
   return {
     providersWithMetadata,
+    registrations,
   };
 }
 

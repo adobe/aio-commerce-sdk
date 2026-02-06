@@ -88,6 +88,17 @@ const BaseEventSchema = v.object({
       `The event description must not be longer than ${MAX_DESCRIPTION_LENGTH} characters`,
     ),
   ),
+
+  runtimeActions: v.array(
+    v.pipe(
+      nonEmptyStringValueSchema("runtime action"),
+      v.regex(
+        /^[a-z0-9-]+\/[a-z0-9-]+$/,
+        'Runtime action must be in the format "<package>/<action>" (e.g., "my-package/my-action")',
+      ),
+    ),
+    "Expected an array of runtime actions in the format <package>/<action>",
+  ),
 });
 
 /** Schema for Commerce event configuration */
@@ -99,8 +110,6 @@ const CommerceEventSchema = v.object({
     alphaNumericOrUnderscoreSchema("event fields", "lowercase"),
     "Expected an array of event fields",
   ),
-
-  runtimeAction: nonEmptyStringValueSchema("runtime action"),
 });
 
 /** Schema for external event configuration */
@@ -129,6 +138,7 @@ export const EventingSchema = v.object({
       "Expected an array of Commerce event sources",
     ),
   ),
+
   external: v.optional(
     v.array(
       ExternalEventSourceSchema,
@@ -155,6 +165,9 @@ export type CommerceEvent = v.InferInput<typeof CommerceEventSchema>;
 
 /** External event configuration */
 export type ExternalEvent = v.InferInput<typeof ExternalEventSchema>;
+
+/** Union type of all supported event configurations */
+export type AppEvent = CommerceEvent | ExternalEvent;
 
 /** Event provider configuration */
 export type EventProvider = v.InferInput<typeof ProviderSchema>;

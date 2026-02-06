@@ -569,7 +569,7 @@ describe("validateConfig", () => {
                 name: "plugin.order_placed",
                 label: "Order Placed",
                 fields: ["order_id", "customer_id"],
-                runtimeAction: "handle-order",
+                runtimeActions: ["my-package/handle-order"],
                 description: "Triggered when an order is placed",
               },
             ],
@@ -603,6 +603,7 @@ describe("validateConfig", () => {
                 name: "external_event",
                 label: "External Event",
                 description: "An external event",
+                runtimeActions: ["my-package/external-handler"],
               },
             ],
           },
@@ -635,7 +636,7 @@ describe("validateConfig", () => {
                 name: "observer.catalog_update",
                 label: "Catalog Update",
                 fields: ["product_id"],
-                runtimeAction: "sync-catalog",
+                runtimeActions: ["my-package/sync-catalog"],
                 description: "Catalog update event",
               },
             ],
@@ -652,6 +653,7 @@ describe("validateConfig", () => {
                 name: "webhook_received",
                 label: "Webhook Received",
                 description: "Webhook event received",
+                runtimeActions: ["my-package/webhook-handler"],
               },
             ],
           },
@@ -699,7 +701,7 @@ describe("validateConfig", () => {
                 name: "invalid_event", // Missing plugin. or observer. prefix
                 label: "Invalid Event",
                 fields: ["field"],
-                runtimeAction: "action",
+                runtimeActions: ["my-package/action"],
                 description: "Invalid event",
               },
             ],
@@ -733,7 +735,7 @@ describe("validateConfig", () => {
                 name: "plugin.my_event",
                 label: "My Event",
                 fields: ["field"],
-                runtimeAction: "action",
+                runtimeActions: ["my-package/action"],
                 description: "Plugin event",
               },
             ],
@@ -765,7 +767,7 @@ describe("validateConfig", () => {
                 name: "observer.my_event",
                 label: "My Event",
                 fields: ["field"],
-                runtimeAction: "action",
+                runtimeActions: ["my-package/action"],
                 description: "Observer event",
               },
             ],
@@ -862,6 +864,7 @@ describe("validateConfig", () => {
                 name: "event",
                 label: "Event",
                 description: "An event",
+                runtimeActions: ["my-package/event-handler"],
               },
             ],
           },
@@ -925,7 +928,7 @@ describe("validateConfig", () => {
                 name: "plugin.my_event",
                 label: "My Event",
                 fields: ["field"],
-                runtimeAction: "action",
+                runtimeActions: ["my-package/action"],
                 description: "A".repeat(256), // Max is 255
               },
             ],
@@ -955,7 +958,41 @@ describe("validateConfig", () => {
               {
                 name: "plugin.my_event",
                 fields: ["field"],
-                runtimeAction: "action",
+                runtimeAction: "my-package/action",
+                description: "Event description",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
+    );
+  });
+
+  test("should throw when commerce event runtimeAction is not in package/action format", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              label: "Commerce Provider",
+              description: "Commerce events",
+            },
+            events: [
+              {
+                name: "plugin.my_event",
+                label: "My Event",
+                fields: ["field"],
+                runtimeActions: ["invalid-action"], // Missing package/ prefix
                 description: "Event description",
               },
             ],
@@ -1093,7 +1130,7 @@ describe("validateConfigDomain", () => {
               name: "plugin.my_event",
               label: "My Event",
               fields: ["field_one", "field_two"],
-              runtimeAction: "my-action",
+              runtimeActions: ["my-package/my-action"],
               description: "My commerce event",
             },
           ],
@@ -1119,6 +1156,7 @@ describe("validateConfigDomain", () => {
               name: "external_event",
               label: "External Event",
               description: "An external event",
+              runtimeActions: ["my-package/external-handler"],
             },
           ],
         },
