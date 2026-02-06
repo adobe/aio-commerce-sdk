@@ -119,7 +119,7 @@ async function generateInstallationTemplate(
   template: string,
   appManifest: Partial<CommerceAppConfigOutputModel>,
 ) {
-  const customSteps = appManifest?.installation?.customInstallationStep || [];
+  const customSteps = appManifest?.installation?.customInstallationSteps || [];
 
   if (customSteps.length === 0) {
     return template.replace(
@@ -154,7 +154,7 @@ async function generateInstallationTemplate(
  * @returns {Promise<Object>} Object mapping script paths to loaded modules
  */
 async function loadCustomInstallationScripts(appConfig, logger) {
-  const customSteps = appConfig.installation?.customInstallationStep || [];
+  const customSteps = appConfig.installation?.customInstallationSteps || [];
   
   if (customSteps.length === 0) {
     logger.debug("No custom installation scripts configured");

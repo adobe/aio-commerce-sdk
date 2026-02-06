@@ -242,11 +242,11 @@ Both `commerce` and `external` arrays are optional, you can configure one, both,
 
 #### Custom Installation Steps
 
-The `installation.customInstallationStep` field allows you to define custom scripts that run during the application installation process. These scripts are pre-loaded and executed in the order they are defined.
+The `installation.customInstallationSteps` field allows you to define custom scripts that run during the application installation process. These scripts are pre-loaded and executed in the order they are defined.
 
 ```javascript
 installation: {
-  customInstallationStep: [
+  customInstallationSteps: [
     {
       script: "./scripts/configure-webhooks.js",
       name: "Configure Webhooks",
@@ -269,7 +269,7 @@ installation: {
 
 **Script Requirements:**
 
-Your custom installation scripts must export a function (default export or named `run` export) with the following signature:
+Your custom installation scripts must export a default function with the following signature:
 
 ```javascript
 /**
@@ -367,16 +367,9 @@ export default async function (config, context, params) {
 }
 ```
 
-**Alternative Export Style (Named `run` Export):**
-
-```javascript
-export async function run(config, context, params) {
-  // Your installation logic
-}
-```
-
 **Important Notes:**
 
+- Scripts **must** use `export default` to export the main function (named exports like `export { run }` are not supported)
 - Scripts are executed **sequentially** in the order defined in the configuration
 - If any script throws an error, the entire installation fails and subsequent scripts are not executed
 - Scripts have access to the complete app configuration and can use it to make decisions
@@ -404,7 +397,7 @@ npx @adobe/aio-commerce-lib-app generate actions
 When you run `generate actions`, the CLI automatically:
 
 1. Reads your `app.commerce.config.*` file
-2. Finds all custom installation scripts defined in `installation.customInstallationStep`
+2. Finds all custom installation scripts defined in `installation.customInstallationSteps`
 3. Generates static ES6 imports for each script in the installation action
 4. Creates a `loadCustomInstallationScripts()` function that maps script paths to loaded modules
 5. Updates the installation context to include pre-loaded scripts

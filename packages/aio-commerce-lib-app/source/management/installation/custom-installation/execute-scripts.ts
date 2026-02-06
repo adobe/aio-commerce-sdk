@@ -27,7 +27,7 @@ type CustomScriptsContext = ExecutionContext & {
 /** Config type when custom installation steps are present. */
 export type CustomInstallationConfig = SetRequiredDeep<
   CommerceAppConfigOutputModel,
-  "installation.customInstallationStep"
+  "installation.customInstallationSteps"
 >;
 
 /** Check if config has custom installation steps. */
@@ -35,8 +35,8 @@ export function hasCustomInstallationSteps(
   config: CommerceAppConfigOutputModel,
 ): config is CustomInstallationConfig {
   return (
-    Array.isArray(config?.installation?.customInstallationStep) &&
-    config.installation.customInstallationStep.length > 0
+    Array.isArray(config?.installation?.customInstallationSteps) &&
+    config.installation.customInstallationSteps.length > 0
   );
 }
 
@@ -67,12 +67,12 @@ export const executeCustomInstallationScripts = defineLeafStep({
     const customScripts = (context as CustomScriptsContext).customScripts || {};
 
     logger.debug(
-      `Starting execution of ${config.installation?.customInstallationStep.length} custom installation script(s)`,
+      `Starting execution of ${config.installation?.customInstallationSteps.length} custom installation script(s)`,
     );
 
     const results: ScriptExecutionResult[] = [];
 
-    for (const step of config.installation?.customInstallationStep || []) {
+    for (const step of config.installation?.customInstallationSteps || []) {
       const { script, name, description } = step;
 
       logger.info(`Executing custom installation script: ${name}`);
@@ -87,13 +87,18 @@ export const executeCustomInstallationScripts = defineLeafStep({
           );
         }
 
-        //·@ts-expect-error
-        const runFunction =
-          scriptModule.default ?? scriptModule.run ?? scriptModule;
+        // Only support default export
+        if (typeof scriptModule !== "object" || !("default" in scriptModule)) {
+          throw new Error(
+            `Script ${script} must export a default function. Use "export default async function run(config, context, params) { ... }"`,
+          );
+        }
+
+        const runFunction = scriptModule.default;
 
         if (typeof runFunction !== "function") {
           throw new Error(
-            `Script ${script} does not export a function (default export, run export, or module itself must be a function)`,
+            `Script ${script} default export must be a function, got ${typeof runFunction}`,
           );
         }
 

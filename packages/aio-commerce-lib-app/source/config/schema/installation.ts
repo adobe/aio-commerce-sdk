@@ -59,7 +59,7 @@ const CustomInstallationStepSchema = v.object({
  * Schema for installation configuration
  */
 export const InstallationSchema = v.object({
-  customInstallationStep: v.optional(
+  customInstallationSteps: v.optional(
     v.array(
       CustomInstallationStepSchema,
       "Expected an array of custom installation steps",
