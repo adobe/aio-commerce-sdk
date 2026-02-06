@@ -32,10 +32,12 @@ export const RUNTIME_ACTIONS: ActionConfig[] = [
     name: "get-configuration",
     templateFile: "get-configuration.js.template",
     requiresSchema: true,
+    requiresEncryptionKey: true,
   },
   {
     name: "set-configuration",
     templateFile: "set-configuration.js.template",
+    requiresEncryptionKey: true,
   },
   {
     name: "set-custom-scope-tree",
