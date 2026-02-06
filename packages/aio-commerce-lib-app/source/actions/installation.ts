@@ -18,45 +18,60 @@ import {
   internalServerError,
   ok,
 } from "@adobe/aio-commerce-lib-core/responses";
+import { createCombinedStore } from "@adobe/aio-commerce-lib-core/storage";
 import openwhisk from "openwhisk";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import {
   createInitialInstallationState,
-  createLibStateStore,
+  isCompletedState,
   isFailedState,
+  isInProgressState,
+  isPendingState,
+  isSucceededState,
   runInstallation,
 } from "#management/index";
 
+import type { BaseContext } from "@adobe/aio-commerce-lib-core/actions";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+import type { KeyValueStore } from "@adobe/aio-commerce-lib-core/storage";
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   InstallationState,
-  InstallationStateStore,
   PendingInstallationState,
 } from "#management/installation/workflow/types";
-
-// TTL for installation state (10 minutes in seconds)
-const INSTALLATION_TTL_SECONDS = 10 * 60;
 
 // Action name for async invocation
 const DEFAULT_ACTION_NAME = "app-management/installation";
 
-/** Type for params with manifest and internal flags */
 type InstallationParams = RuntimeActionParams & {
-  manifest?: unknown;
   initialState?: PendingInstallationState;
+  appConfig?: CommerceAppConfigOutputModel;
 };
 
 /**
- * Creates hooks to sync installation state to lib-state.
+ * Creates an installation state store using lib-core combined storage.
+ */
+function createInstallationStore() {
+  return createCombinedStore<InstallationState>({
+    cache: { keyPrefix: "installation" },
+    persistent: {
+      dirPrefix: "installation",
+      shouldPersist: isCompletedState,
+    },
+  });
+}
+
+/**
+ * Creates hooks to sync installation state to storage.
  */
 function createInstallationHooks(
-  store: InstallationStateStore,
+  store: KeyValueStore<InstallationState>,
   logFn: (message: string) => void,
 ) {
   const logAndSave = async (message: string, data: InstallationState) => {
     logFn(message);
-    await store.save(data);
+    await store.put(data.installationId, data);
   };
 
   return {
@@ -76,6 +91,29 @@ function createInstallationHooks(
   };
 }
 
+/** Plugin function to be used by the router to parse the app configuration at runtime. */
+function appConfig() {
+  return (_: BaseContext) => {
+    const appConfiguration: CommerceAppConfigOutputModel | null = null;
+    return {
+      async getAppConfig() {
+        if (appConfiguration !== null) {
+          return appConfiguration;
+        }
+
+        const manifestPathAtRuntime = "../../app.commerce.manifest.json";
+        const manifest = await import(manifestPathAtRuntime, {
+          with: {
+            type: "json",
+          },
+        });
+
+        return validateCommerceAppConfig(manifest);
+      },
+    };
+  };
+}
+
 /**
  * Installation action router.
  *
@@ -84,9 +122,9 @@ function createInstallationHooks(
  * - GET /installation/execution - Get current execution status
  * - POST /installation/execution - Execute installation (internal, called async)
  */
-const router = new HttpActionRouter().use(
-  logger({ name: () => "installation" }),
-);
+const router = new HttpActionRouter()
+  .use(logger({ name: () => "installation" }))
+  .use(appConfig());
 
 /**
  * GET /installation/execution - Get current execution status
@@ -100,11 +138,9 @@ router.get("/installation/execution", {
   handler: async (_req, { logger }) => {
     logger.debug("Getting installation execution status...");
 
-    const store = await createLibStateStore({
-      ttlSeconds: INSTALLATION_TTL_SECONDS,
-    });
-
+    const store = await createInstallationStore();
     const state = await store.get("current");
+
     if (state) {
       logger.debug(`Found execution: ${state.status}`);
       return ok({ body: { state } });
@@ -130,19 +166,13 @@ router.get("/installation/execution", {
  * 3. If not found or failed: create plan, invoke execution async, return 202 Accepted
  */
 router.post("/installation", {
-  handler: async (_req, { logger, rawParams }) => {
+  handler: async (_req, { logger, getAppConfig, rawParams }) => {
     logger.debug("Starting installation...");
-    const store = await createLibStateStore({
-      ttlSeconds: INSTALLATION_TTL_SECONDS,
-    });
-
+    const store = await createInstallationStore();
     const existingState = await store.get("current");
+
     if (existingState) {
-      // If pending or in-progress, return conflict
-      if (
-        existingState.status === "pending" ||
-        existingState.status === "in-progress"
-      ) {
+      if (isPendingState(existingState) || isInProgressState(existingState)) {
         logger.debug(
           `Installation already in progress: ${existingState.status}`,
         );
@@ -152,27 +182,25 @@ router.post("/installation", {
         );
       }
 
-      // If succeeded, return conflict
-      if (existingState.status === "succeeded") {
+      if (isSucceededState(existingState)) {
         logger.debug("Installation already succeeded");
         return conflict("Installation has already completed successfully.");
       }
 
-      // If failed, allow retry - continue to create new plan
       logger.debug("Previous installation failed, allowing retry");
     }
 
-    // The manifest should be passed in params or loaded from a known location
-    const { manifest } = rawParams;
-    if (!manifest) {
-      return badRequest("manifest is required in params");
+    const appConfig = await getAppConfig();
+    if (!appConfig) {
+      return internalServerError(
+        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?.",
+      );
     }
 
-    const appConfig = validateCommerceAppConfig(manifest);
     const initialState = createInitialInstallationState({ config: appConfig });
     logger.debug(`Created initial state: ${initialState.installationId}`);
 
-    await store.save({ ...initialState, installationId: "current" });
+    await store.put("current", initialState);
     const ow = openwhisk();
 
     const activation = await ow.actions.invoke({
@@ -183,6 +211,7 @@ router.post("/installation", {
       params: {
         ...rawParams,
         initialState,
+        appConfig,
 
         // Override path to hit the execution endpoint
         __ow_path: "/installation/execution",
@@ -210,30 +239,24 @@ router.post("/installation", {
  */
 router.post("/installation/execution", {
   handler: async (_req, { logger, rawParams }) => {
-    const { initialState, manifest } = rawParams as InstallationParams;
+    const { initialState, appConfig } = rawParams as InstallationParams;
 
     if (!initialState) {
       return badRequest("initialState is required for execution");
     }
 
-    if (!manifest) {
-      return badRequest("manifest is required for execution");
+    if (!appConfig) {
+      return badRequest("appConfig is required for execution");
     }
 
-    logger.debug(`Executing installation: ${initialState.installationId}`);
-
-    const appConfig = validateCommerceAppConfig(manifest);
-    const store = await createLibStateStore({
-      ttlSeconds: INSTALLATION_TTL_SECONDS,
-    });
-
+    const store = await createInstallationStore();
     const hooks = createInstallationHooks(store, (msg) => logger.debug(msg));
-
     const installationContext = {
       params: rawParams as Record<string, unknown>,
       logger,
     };
 
+    logger.debug(`Executing installation: ${initialState.installationId}`);
     const result = await runInstallation({
       installationContext,
       config: appConfig,
@@ -241,8 +264,7 @@ router.post("/installation/execution", {
       hooks,
     });
 
-    // Save final state with "current" key for status lookups
-    await store.save({ ...result, installationId: "current" });
+    await store.put("current", result);
     logger.debug(`Installation completed: ${result.status}`);
 
     if (isFailedState(result)) {
@@ -259,5 +281,5 @@ router.post("/installation/execution", {
   },
 });
 
-/** Export the router handler for Adobe I/O Runtime */
-export const main = router.handler();
+/** The route handler for the runtime action. */
+export const installationRuntimeAction = router.handler();

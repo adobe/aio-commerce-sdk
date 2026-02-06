@@ -23,7 +23,6 @@ export {
   runInstallation,
 } from "./installation/runner";
 export {
-  createLibStateStore,
   isCompletedState,
   isFailedState,
   isInProgressState,

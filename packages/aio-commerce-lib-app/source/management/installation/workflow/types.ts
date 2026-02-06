@@ -161,9 +161,3 @@ export function isCompletedState(
 ): state is SucceededInstallationState | FailedInstallationState {
   return state.status === "succeeded" || state.status === "failed";
 }
-
-/** Interface for persisting installation state. */
-export interface InstallationStateStore {
-  get(installationId: string): Promise<InstallationState | null>;
-  save(state: InstallationState): Promise<void>;
-}

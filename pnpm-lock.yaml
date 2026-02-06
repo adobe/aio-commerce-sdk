@@ -177,6 +177,9 @@ importers:
       '@adobe/aio-commerce-lib-events':
         specifier: workspace:*
         version: link:../aio-commerce-lib-events
+      '@adobe/aio-lib-files':
+        specifier: ^4.1.2
+        version: 4.1.2
       '@adobe/aio-lib-state':
         specifier: ^5.3.0
         version: 5.3.0
@@ -312,6 +315,12 @@ importers:
       '@adobe/aio-lib-core-logging':
         specifier: ^3.0.2
         version: 3.0.2
+      '@adobe/aio-lib-files':
+        specifier: ^4.1.2
+        version: 4.1.2
+      '@adobe/aio-lib-state':
+        specifier: ^5.3.1
+        version: 5.3.1
       '@standard-schema/spec':
         specifier: ^1.0.0
         version: 1.1.0
@@ -459,6 +468,10 @@ packages:
 
   '@adobe/aio-lib-state@5.3.0':
     resolution: {integrity: sha512-Dlv8STuZmcuIe5AwVgrfKY6sqch+izJWE01B9MlcHJ7luKm6BhcsXuc6h9DK1iywEZ6zVBUXwi9PUD0Ec4ZNQw==}
+    engines: {node: '>=18'}
+
+  '@adobe/aio-lib-state@5.3.1':
+    resolution: {integrity: sha512-eCyJrp2a2RvCQ7DrUyTuTeJ74KNmyKk60ohMZ/ooLY1jx8/xk/9LQea/ZIwrC0Z7FT/uOTMzvCh2vsnIu/Ow6Q==}
     engines: {node: '>=18'}
 
   '@azure/abort-controller@2.1.2':
@@ -3536,6 +3549,18 @@ snapshots:
       - supports-color
 
   '@adobe/aio-lib-state@5.3.0':
+    dependencies:
+      '@adobe/aio-lib-core-errors': 4.0.1
+      '@adobe/aio-lib-core-logging': 3.0.2
+      '@adobe/aio-lib-core-networking': 5.1.0
+      '@adobe/aio-lib-env': 3.0.1
+      ajv: 8.17.1
+      lodash.clonedeep: 4.5.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+  '@adobe/aio-lib-state@5.3.1':
     dependencies:
       '@adobe/aio-lib-core-errors': 4.0.1
       '@adobe/aio-lib-core-logging': 3.0.2

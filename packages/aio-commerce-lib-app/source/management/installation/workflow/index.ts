@@ -19,7 +19,6 @@ export {
   isBranchStep,
   isLeafStep,
 } from "./step";
-export { createLibStateStore } from "./storage/lib-state";
 export {
   isCompletedState,
   isFailedState,
@@ -52,7 +51,6 @@ export type {
   StepContextFactory,
   StepMeta,
 } from "./step";
-export type { LibStateStoreOptions } from "./storage/lib-state";
 export type {
   ExecutionStatus,
   FailedInstallationState,
@@ -60,7 +58,6 @@ export type {
   InstallationData,
   InstallationError,
   InstallationState,
-  InstallationStateStore,
   InstallationStatus,
   PendingInstallationState,
   StepStatus,
