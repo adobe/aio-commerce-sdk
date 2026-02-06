@@ -32,12 +32,12 @@ import type {
 } from "./types";
 
 /**
- * REST router for Adobe I/O Runtime actions.
+ * HTTP router for Adobe I/O Runtime actions.
  * Provides type-safe routing with schema validation and OpenWhisk integration.
  *
  * @example
  * ```typescript
- * const router = new Router();
+ * const router = new HttpActionRouter();
  *
  * router.get("/users/:id", {
  *   handler: (req) => ok({ id: req.params.id, context: req.context })
@@ -51,7 +51,7 @@ import type {
  * export const main = router.handler();
  * ```
  */
-export class Router<TContext extends BaseContext = BaseContext> {
+export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
   private readonly routes: CompiledRoute[] = [];
   private readonly contextBuilders: ContextBuilder[] = [];
 
@@ -243,9 +243,9 @@ export class Router<TContext extends BaseContext = BaseContext> {
    *
    * @example
    * ```typescript
-   * const router = new Router()
-   *   .use(logger()) // Router<BaseContext & { logger: Logger }>
-   *   .use(auth());  // Router<BaseContext & { logger: Logger } & { user: User }>
+   * const router = new HttpActionRouter()
+   *   .use(logger()) // HttpActionRouter<BaseContext & { logger: Logger }>
+   *   .use(auth());  // HttpActionRouter<BaseContext & { logger: Logger } & { user: User }>
    *
    * router.get("/me", {
    *   handler: (req, ctx) => {
@@ -257,9 +257,9 @@ export class Router<TContext extends BaseContext = BaseContext> {
    */
   public use<TNew extends Record<string, unknown>>(
     builder: ContextBuilder<TContext, TNew>,
-  ): Router<TContext & TNew> {
+  ): HttpActionRouter<TContext & TNew> {
     this.contextBuilders.push(builder as ContextBuilder);
-    return this as unknown as Router<TContext & TNew>;
+    return this as unknown as HttpActionRouter<TContext & TNew>;
   }
 
   /**
@@ -407,7 +407,7 @@ export class Router<TContext extends BaseContext = BaseContext> {
    *
    * @example
    * ```typescript
-   * const router = new Router();
+   * const router = new HttpActionRouter();
    * router.get("/hello", { handler: () => ok({ message: "Hello!" }) });
    *
    * export const main = router.handler();
@@ -474,7 +474,7 @@ export function defineRoute<
   TBodySchema extends StandardSchemaV1 | undefined = undefined,
   TQuerySchema extends StandardSchemaV1 | undefined = undefined,
 >(
-  _router: Router<TContext>,
+  _router: HttpActionRouter<TContext>,
   config: RouteConfig<
     string,
     TParamsSchema,

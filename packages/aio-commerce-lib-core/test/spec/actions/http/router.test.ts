@@ -13,7 +13,7 @@
 import { minLength, object, optional, pipe, string } from "valibot";
 import { describe, expect, it } from "vitest";
 
-import { Router } from "#actions/rest/router";
+import { HttpActionRouter } from "#actions/http/router";
 import { ok } from "#responses/presets";
 
 import type { RuntimeActionParams } from "#params/types";
@@ -21,7 +21,7 @@ import type { RuntimeActionParams } from "#params/types";
 describe("actions/rest/router", () => {
   describe("route matching", () => {
     it("should match GET /users/:id and extract params", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
 
       router.get("/users/:id", {
         handler: (req, ctx) =>
@@ -42,7 +42,7 @@ describe("actions/rest/router", () => {
     });
 
     it("should match path without leading slash", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
 
       router.get("/products/:sku", {
         handler: (req) => ok({ body: { sku: req.params.sku } }),
@@ -62,7 +62,7 @@ describe("actions/rest/router", () => {
     });
 
     it("should match multiple params", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
 
       router.get("/orgs/:orgId/users/:userId", {
         handler: (req) =>
@@ -85,7 +85,7 @@ describe("actions/rest/router", () => {
 
   describe("route not found (404)", () => {
     it("should return 404 when no route matches the path", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
 
       router.get("/users", {
         handler: () => ok({ body: { users: [] } }),
@@ -109,7 +109,7 @@ describe("actions/rest/router", () => {
 
   describe("method not allowed (405)", () => {
     it("should return 405 when path matches but method does not", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
 
       router.get("/users", {
         handler: () => ok({ body: { users: [] } }),
@@ -131,7 +131,7 @@ describe("actions/rest/router", () => {
     });
 
     it("should return 405 with correct method when multiple routes exist", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
 
       router.get("/items/:id", {
         handler: () => ok({ body: {} }),
@@ -158,7 +158,7 @@ describe("actions/rest/router", () => {
 
   describe("schema validation", () => {
     it("should validate params schema and return 400 on failure", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
 
       router.get("/users/:id", {
         params: object({ id: pipe(string(), minLength(5)) }),
@@ -181,7 +181,7 @@ describe("actions/rest/router", () => {
     });
 
     it("should validate body schema and return 400 on failure", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
 
       router.post("/users", {
         body: object({ name: string(), email: string() }),
@@ -205,7 +205,7 @@ describe("actions/rest/router", () => {
     });
 
     it("should validate query schema and return 400 on failure", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
 
       router.get("/search", {
         query: object({ q: pipe(string(), minLength(1)) }),
@@ -229,7 +229,7 @@ describe("actions/rest/router", () => {
     });
 
     it("should pass valid data through schema validation", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
 
       router.post("/users/:id", {
         params: object({ id: string() }),
@@ -263,7 +263,7 @@ describe("actions/rest/router", () => {
 
   describe("context builders with .use()", () => {
     it("should add context via .use() builder", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
 
       router.use(() => ({
         requestId: "req-123",
@@ -299,7 +299,7 @@ describe("actions/rest/router", () => {
     });
 
     it("should merge multiple context builders in order", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
 
       router.use(() => ({ first: "one" }));
       router.use(() => ({ second: "two" }));
@@ -332,7 +332,7 @@ describe("actions/rest/router", () => {
     });
 
     it("should support async context builders", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
 
       router.use(async () => {
         await Promise.resolve();
@@ -360,7 +360,7 @@ describe("actions/rest/router", () => {
     });
 
     it("should provide raw params in base context", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
 
       router.use((base) => ({
         hasRaw: !!base.rawParams,
@@ -390,7 +390,7 @@ describe("actions/rest/router", () => {
 
   describe("handler receives (req, ctx) as separate parameters", () => {
     it("should pass req and ctx as separate parameters to handler", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
       let receivedReq: unknown;
       let receivedCtx: unknown;
 
@@ -433,7 +433,7 @@ describe("actions/rest/router", () => {
       ["patch", "PATCH"],
       ["delete", "DELETE"],
     ])("should handle .%s() method", async (method, uppercase) => {
-      const router = new Router();
+      const router = new HttpActionRouter();
       const routerAny = router as unknown as Record<string, CallableFunction>;
 
       routerAny[method]("/resource", {

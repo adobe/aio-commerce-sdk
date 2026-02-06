@@ -1,6 +1,6 @@
-# REST Router Guide
+# HTTP Action Router Guide
 
-The `@adobe/aio-commerce-lib-core/actions` module provides a type-safe REST router for Adobe I/O Runtime actions, with built-in schema validation, path parameter extraction, and middleware support.
+The `@adobe/aio-commerce-lib-core/actions` module provides a type-safe HTTP router for Adobe I/O Runtime actions, with built-in schema validation, path parameter extraction, and middleware support.
 
 ## Overview
 
@@ -11,15 +11,15 @@ When building Adobe I/O Runtime actions, you often need to:
 - Add shared context (authentication, logging) across routes
 - Handle errors consistently
 
-The REST Router simplifies these common patterns with a fluent, Express-like API.
+The HTTP Action Router simplifies these common patterns with a fluent, Express-like API.
 
 ## Basic Usage
 
 ```typescript
-import { Router } from "@adobe/aio-commerce-lib-core/actions";
+import { HttpActionRouter } from "@adobe/aio-commerce-lib-core/actions";
 import { ok, notFound } from "@adobe/aio-commerce-lib-core/responses";
 
-const router = new Router();
+const router = new HttpActionRouter();
 
 router.get("/users/:id", {
   handler: (req) => {
@@ -169,9 +169,9 @@ router.get("/example", {
 Use `.use()` to register context builders (middleware) that run before route handlers:
 
 ```typescript
-import { Router, logger } from "@adobe/aio-commerce-lib-core/actions";
+import { HttpActionRouter, logger } from "@adobe/aio-commerce-lib-core/actions";
 
-const router = new Router()
+const router = new HttpActionRouter()
   .use(logger({ level: "debug" }))
   .use(async (ctx) => ({
     user: await authenticateUser(ctx.rawParams.__ow_headers?.authorization),
@@ -193,9 +193,9 @@ router.get("/me", {
 The `logger` middleware adds an `@adobe/aio-lib-core-logging` instance to the context:
 
 ```typescript
-import { Router, logger } from "@adobe/aio-commerce-lib-core/actions";
+import { HttpActionRouter, logger } from "@adobe/aio-commerce-lib-core/actions";
 
-const router = new Router().use(
+const router = new HttpActionRouter().use(
   logger({
     level: "debug",
     name: (ctx) => "my-action", // Custom logger name
@@ -218,7 +218,7 @@ router.get("/test", {
 Create your own middleware by returning an object with context properties:
 
 ```typescript
-import { Router } from "@adobe/aio-commerce-lib-core/actions";
+import { HttpActionRouter } from "@adobe/aio-commerce-lib-core/actions";
 
 interface AuthContext {
   user: { id: string; role: string };
@@ -232,7 +232,7 @@ function authMiddleware() {
   };
 }
 
-const router = new Router().use(authMiddleware());
+const router = new HttpActionRouter().use(authMiddleware());
 
 // TypeScript knows ctx.user is available
 router.get("/admin", {
@@ -282,10 +282,10 @@ export const getUser = defineRoute(router, {
 });
 
 // router.ts
-import { Router, logger } from "@adobe/aio-commerce-lib-core/actions";
+import { HttpActionRouter, logger } from "@adobe/aio-commerce-lib-core/actions";
 import { getUser } from "./routes/users";
 
-export const router = new Router().use(logger());
+export const router = new HttpActionRouter().use(logger());
 
 router.get("/users/:id", getUser);
 ```
@@ -337,7 +337,10 @@ router.post("/users", {
 
 ```typescript
 // ✅ Build context incrementally
-const router = new Router().use(logger()).use(auth()).use(rateLimit());
+const router = new HttpActionRouter()
+  .use(logger())
+  .use(auth())
+  .use(rateLimit());
 
 // All routes have access to logger, auth, and rateLimit context
 ```

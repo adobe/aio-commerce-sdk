@@ -7,7 +7,7 @@
 
 This package provides core utilities for the Adobe Commerce SDK libraries:
 
-- **[REST Router](./guides/rest-router.md)**: Type-safe REST router with schema validation and middleware support
+- **[HTTP Action Router](./guides/http-action-router.md)**: Type-safe HTTP router with schema validation and middleware support
 - **[Error Handling](./guides/error-handling.md)**: Custom error classes with enhanced debugging capabilities
 - **[Response Helpers](./guides/response-helpers.md)**: Standardized response builders for Adobe I/O Runtime actions
 - **[Params Utilities](./guides/params-utilities.md)**: Runtime action parameter validation helpers
@@ -19,13 +19,13 @@ For a complete list of all available types, functions, and classes, see the [API
 
 ## Quick Start
 
-### REST Router
+### HTTP Action Router
 
 ```typescript
-import { Router, logger } from "@adobe/aio-commerce-lib-core/actions";
+import { HttpActionRouter, logger } from "@adobe/aio-commerce-lib-core/actions";
 import { ok, created, notFound } from "@adobe/aio-commerce-lib-core/responses";
 
-const router = new Router().use(logger());
+const router = new HttpActionRouter().use(logger());
 
 router.get("/users/:id", {
   handler: (req, ctx) => {
@@ -41,7 +41,7 @@ router.post("/users", {
 export const main = router.handler();
 ```
 
-[Read the REST Router Guide →](./guides/rest-router.md)
+[Read the HTTP Action Router Guide →](./guides/http-action-router.md)
 
 ### Error Handling
 

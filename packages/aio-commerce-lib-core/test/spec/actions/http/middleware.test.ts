@@ -12,8 +12,8 @@
 
 import { describe, expect, it } from "vitest";
 
-import { logger } from "#actions/rest/middleware/index";
-import { Router } from "#actions/rest/router";
+import { logger } from "#actions/http/middleware/index";
+import { HttpActionRouter } from "#actions/http/router";
 import { ok } from "#responses/presets";
 
 import type { RuntimeActionParams } from "#params/types";
@@ -27,7 +27,7 @@ interface LoggerContext {
 describe("Middleware Plugins", () => {
   describe("logger()", () => {
     it("should add logger to context", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
       router.use(logger());
 
       router.get("/test", {
@@ -50,7 +50,7 @@ describe("Middleware Plugins", () => {
     });
 
     it("should use custom name function", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
       router.use(logger({ name: () => "custom-action" }));
 
       router.get("/test", {
@@ -73,7 +73,7 @@ describe("Middleware Plugins", () => {
     });
 
     it("should use LOG_LEVEL from params", async () => {
-      const router = new Router();
+      const router = new HttpActionRouter();
       router.use(logger());
 
       router.get("/test", {

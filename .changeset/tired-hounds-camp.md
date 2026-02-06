@@ -2,4 +2,4 @@
 "@adobe/aio-commerce-lib-core": minor
 ---
 
-Implement REST router for web actions
+Implement HTTP router for web actions
