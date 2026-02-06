@@ -1,5 +1,20 @@
 # @adobe/aio-commerce-lib-app
 
+## 0.2.0
+
+### Minor Changes
+
+- [#221](https://github.com/adobe/aio-commerce-sdk/pull/221) [`24b391f`](https://github.com/adobe/aio-commerce-sdk/commit/24b391f911a64786df0e6ef695d6baaf4c467ea2) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add `eventing` section in configuration schema of `app.commerce.config`
+
+- [#241](https://github.com/adobe/aio-commerce-sdk/pull/241) [`2707605`](https://github.com/adobe/aio-commerce-sdk/commit/2707605b914b7aab3f7700f845bc8e27f48958ca) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Implement installation flow for I/O Providers and Event Metadata.
+
+- [#242](https://github.com/adobe/aio-commerce-sdk/pull/242) [`4a9a407`](https://github.com/adobe/aio-commerce-sdk/commit/4a9a407e8141687e7507ba1f4bc85bfb3e4a144e) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add support for installing event registrations.
+
+### Patch Changes
+
+- Updated dependencies [[`4a9a407`](https://github.com/adobe/aio-commerce-sdk/commit/4a9a407e8141687e7507ba1f4bc85bfb3e4a144e), [`2707605`](https://github.com/adobe/aio-commerce-sdk/commit/2707605b914b7aab3f7700f845bc8e27f48958ca)]:
+  - @adobe/aio-commerce-lib-events@0.5.2
+
 ## 0.1.1
 
 ### Patch Changes

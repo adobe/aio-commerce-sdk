@@ -1,5 +1,11 @@
 # @aio-commerce-sdk/common-utils
 
+## 0.1.1
+
+### Patch Changes
+
+- [#241](https://github.com/adobe/aio-commerce-sdk/pull/241) [`2707605`](https://github.com/adobe/aio-commerce-sdk/commit/2707605b914b7aab3f7700f845bc8e27f48958ca) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add additional schema shorthands for title case.
+
 ## 0.1.0
 
 ### Minor Changes
