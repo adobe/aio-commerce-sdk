@@ -43,6 +43,7 @@
     }
   },
   "exports": {
+    "./actions": "./source/actions/index.ts",
     "./error": "./source/error/index.ts",
     "./headers": "./source/headers/index.ts",
     "./params": "./source/params/index.ts",
@@ -79,8 +80,11 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@adobe/aio-lib-core-logging": "^3.0.2",
+    "@standard-schema/spec": "^1.0.0",
     "ansis": "^4.1.0",
     "camelcase": "^8.0.0",
+    "regexparam": "^3.0.0",
     "valibot": "^1.1.0"
   },
   "devDependencies": {

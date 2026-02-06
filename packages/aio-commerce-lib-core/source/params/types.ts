@@ -10,13 +10,41 @@
  * governing permissions and limitations under the License.
  */
 
+/**
+ * Standard HTTP methods supported by Adobe I/O Runtime.
+ * These are the methods that can be used when invoking runtime actions via HTTP.
+ */
+export type HttpMethod =
+  | "GET"
+  | "POST"
+  | "PUT"
+  | "PATCH"
+  | "DELETE"
+  | "HEAD"
+  | "OPTIONS";
+
+/**
+ * Lowercase HTTP method as sent by OpenWhisk/Adobe I/O Runtime.
+ * OpenWhisk sends methods in lowercase (e.g., "get", "post").
+ */
+export type HttpMethodLowercase = Lowercase<HttpMethod>;
+
 /** The type of the runtime action parameters. */
 export type RuntimeActionParams = {
   /** If the runtime action is invoked via HTTP, this will be the headers of the request. */
   __ow_headers?: Record<string, string | undefined>;
 
   /** If the runtime action is invoked via HTTP, this will be the HTTP method of the request. */
-  __ow_method?: string;
+  __ow_method?: HttpMethodLowercase;
+
+  /** If the runtime action is invoked via HTTP, this will be the unmatched path of the request (matching stops after consuming the action extension) */
+  __ow_path?: string;
+
+  /** If the runtime action is invoked via HTTP, this will be the request body entity, as a base64-encoded string when its content is binary or JSON object/array, or as a plain string otherwise */
+  __ow_body?: string;
+
+  /** If the runtime action is invoked via HTTP, this will be the query parameters of the request, as an unparsed string. */
+  __ow_query?: string;
 
   // Remaining unknown properties.
   [key: string]: unknown;
