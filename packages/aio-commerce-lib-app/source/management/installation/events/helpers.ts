@@ -388,12 +388,11 @@ export async function onboardIoEvents<
 export async function onboardCommerce(
   params: OnboardCommerceEventSubscriptionParams,
 ) {
-  const { context, metadata, provider, data } = params;
+  const { context, metadata, data } = params;
   const { logger, commerceEventsClient } = context;
   const { events, ...providerData } = data;
 
-  const instanceId =
-    providerData.instance_id ?? generateInstanceId(metadata, provider);
+  const instanceId = providerData.instance_id;
 
   logger.info(
     `Onboarding Commerce event subscriptions with provider instance ID: ${instanceId}`,
