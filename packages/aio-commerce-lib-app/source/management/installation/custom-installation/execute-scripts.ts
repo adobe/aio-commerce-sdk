@@ -10,8 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { pathToFileURL } from "node:url";
-
 import { defineLeafStep } from "#management/installation/workflow/step";
 
 import type { SetRequiredDeep } from "type-fest";
@@ -20,6 +18,11 @@ import type {
   ExecutionContext,
   InferStepOutput,
 } from "#management/installation/workflow/step";
+
+/** Context type with custom scripts loaded from generated action */
+type CustomScriptsContext = ExecutionContext & {
+  customScripts?: Record<string, unknown>;
+};
 
 /** Config type when custom installation steps are present. */
 export type CustomInstallationConfig = SetRequiredDeep<
@@ -45,17 +48,10 @@ type ScriptExecutionResult = {
   /** The script path that was executed. */
   script: string;
 
-  /** Whether the script executed successfully. */
-  success: boolean;
-
   /** Any data returned by the script. */
   data?: unknown;
-
-  /** Error message if the script failed. */
-  error?: string;
 };
 
-/** Leaf step for executing custom installation scripts. */
 export const executeCustomInstallationScripts = defineLeafStep({
   name: "execute-scripts",
   meta: {
@@ -67,6 +63,9 @@ export const executeCustomInstallationScripts = defineLeafStep({
   when: hasCustomInstallationSteps,
   run: async (config: CustomInstallationConfig, context: ExecutionContext) => {
     const { logger, params } = context;
+    // Get pre-loaded scripts from context (from generated action)
+    const customScripts = (context as CustomScriptsContext).customScripts || {};
+
     logger.debug(
       `Starting execution of ${config.installation?.customInstallationStep.length} custom installation script(s)`,
     );
@@ -80,20 +79,17 @@ export const executeCustomInstallationScripts = defineLeafStep({
       logger.debug(`Script path: ${script}, Description: ${description}`);
 
       try {
-        // Convert the script path to an absolute file URL
-        // Assuming scripts are relative to the project root
-        const scriptPath = pathToFileURL(
-          `${process.cwd()}${script}`,
-        ).toString();
+        const scriptModule = customScripts[script];
 
-        logger.debug(`Resolved script path: ${scriptPath}`);
+        if (!scriptModule) {
+          throw new Error(
+            `Script ${script} not found in customScripts context. Make sure the script is defined in the configuration and the action was generated with custom scripts support.`,
+          );
+        }
 
-        // Dynamically import the script module
-        const scriptModule = await import(scriptPath);
-
-        // Check if the module has a default export or a run function
+        //·@ts-expect-error
         const runFunction =
-          scriptModule.default || scriptModule.run || scriptModule;
+          scriptModule.default ?? scriptModule.run ?? scriptModule;
 
         if (typeof runFunction !== "function") {
           throw new Error(
@@ -103,26 +99,17 @@ export const executeCustomInstallationScripts = defineLeafStep({
 
         // Execute the script with config and context
         const scriptResult = await runFunction(config, context, params);
-
         logger.info(`Successfully executed script: ${name}`);
 
         results.push({
           name,
           script,
-          success: true,
           data: scriptResult,
         });
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         logger.error(`Failed to execute script ${name}: ${errorMessage}`);
-
-        results.push({
-          name,
-          script,
-          success: false,
-          error: errorMessage,
-        });
 
         throw new Error(
           `Custom installation script "${name}" failed: ${errorMessage}`,

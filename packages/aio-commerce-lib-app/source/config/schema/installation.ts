@@ -17,11 +17,14 @@ const MAX_DESCRIPTION_LENGTH = 255;
 const MAX_NAME_LENGTH = 255;
 
 /**
- * Regex for script paths that must start with a forward slash
- * and end with .js or .ts extension.
- * Examples: "/scripts/lib/setup.js", "/scripts/install.ts"
+ * Regex for script paths that can be relative or absolute.
+ * Must end with .js or .ts extension
+ * Examples:
+ *   - "./scripts/setup.js"
+ *   - "./setup.js"
+ *   - "../../scripts/setup.js"
  */
-const SCRIPT_PATH_REGEX = /^\/(?:[\w-]+\/)*[\w-]+\.(js|ts)$/;
+const SCRIPT_PATH_REGEX = /^(?:\.{0,2}\/)*[\w-/]*[\w-]+\.(js|ts)$/;
 
 /**
  * Schema for custom installation step configuration
@@ -31,7 +34,7 @@ const CustomInstallationStepSchema = v.object({
     nonEmptyStringValueSchema("script path"),
     v.regex(
       SCRIPT_PATH_REGEX,
-      'Script path must start with "/" and end with .js or .ts extension (e.g., "/scripts/setup.js")',
+      'Script path must end with .js or .ts (e.g., "./setup.js", "./scripts/setup.js", or "../../scripts/setup.js")',
     ),
   ),
 
