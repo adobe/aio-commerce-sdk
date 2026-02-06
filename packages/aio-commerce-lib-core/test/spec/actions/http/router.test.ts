@@ -18,7 +18,7 @@ import { ok } from "#responses/presets";
 
 import type { RuntimeActionParams } from "#params/types";
 
-describe("actions/rest/router", () => {
+describe("actions/http/router", () => {
   describe("route matching", () => {
     it("should match GET /users/:id and extract params", async () => {
       const router = new HttpActionRouter();

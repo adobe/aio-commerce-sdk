@@ -17,9 +17,9 @@ import {
   parseQueryParams,
   parseRequestBody,
   validateSchema,
-} from "#actions/rest/utils";
+} from "#actions/http/utils";
 
-describe("actions/rest/utils", () => {
+describe("actions/http/utils", () => {
   describe("parseRequestBody", () => {
     it("should return object body as-is", () => {
       const body = { name: "test", value: 123 };
