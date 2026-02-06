@@ -43,7 +43,16 @@ export function createMockInstallationContext(
   overrides?: Partial<InstallationContext>,
 ): InstallationContext {
   return {
-    params: {},
+    params: {
+      appCredentials: {
+        consumerOrgId: "consumerOrgId",
+        projectId: "projectId",
+        workspaceId: "workspaceId",
+      },
+
+      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "clientId",
+    },
+
     logger: createMockLogger(),
     ...overrides,
   };
@@ -57,6 +66,7 @@ export function createMockStepStatus(
     id: "root-id",
     name: "root",
     path: ["root"],
+    meta: { label: "Root Step", description: "Root step for testing" },
     status: "pending" as ExecutionStatus,
     children: [],
     ...overrides,
@@ -77,7 +87,7 @@ export function createMockInstallationError(
 
 /** Base properties shared by all installation states. */
 const baseStateProps = {
-  installationId: "test-installation-1",
+  id: "test-installation-1",
   step: createMockStepStatus(),
   data: {},
 };

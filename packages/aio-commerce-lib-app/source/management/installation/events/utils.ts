@@ -16,11 +16,6 @@ import {
 } from "@adobe/aio-commerce-lib-api";
 import { createCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
 import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
-import {
-  nonEmptyStringValueSchema,
-  parseOrThrow,
-} from "@aio-commerce-sdk/common-utils/valibot";
-import * as v from "valibot";
 
 import type { CommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
@@ -33,6 +28,7 @@ import type {
 import type { ApplicationMetadata } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AppEvent, EventProvider } from "#config/schema/eventing";
+import type { AppCredentials } from "#management/installation/schema";
 import type {
   ExecutionContext,
   InstallationContext,
@@ -44,42 +40,10 @@ import type { AppEventWithoutRuntimeActions } from "./types";
 export const COMMERCE_PROVIDER_TYPE = "dx_commerce_events";
 export const EXTERNAL_PROVIDER_TYPE = "3rd_party_custom_events";
 
-// Map each provider type to a human-readable label.
 const PROVIDER_TYPE_TO_LABEL = {
   [COMMERCE_PROVIDER_TYPE]: "Commerce",
   [EXTERNAL_PROVIDER_TYPE]: "External",
-} as const;
-
-const CONSUMER_ORG_ID_LENGTH = 6;
-const PROJECT_ID_LENGTH = 19;
-const WORKSPACE_ID_LENGTH = 19;
-
-const AppCredentialsSchema = v.object({
-  clientId: nonEmptyStringValueSchema("clientId"),
-  consumerOrgId: v.pipe(
-    nonEmptyStringValueSchema("consumerOrgId"),
-    v.length(
-      CONSUMER_ORG_ID_LENGTH,
-      `consumerOrgId must be ${CONSUMER_ORG_ID_LENGTH} characters long`,
-    ),
-  ),
-
-  projectId: v.pipe(
-    nonEmptyStringValueSchema("projectId"),
-    v.length(
-      PROJECT_ID_LENGTH,
-      `projectId must be ${PROJECT_ID_LENGTH} characters long`,
-    ),
-  ),
-
-  workspaceId: v.pipe(
-    nonEmptyStringValueSchema("workspaceId"),
-    v.length(
-      WORKSPACE_ID_LENGTH,
-      `workspaceId must be ${WORKSPACE_ID_LENGTH} characters long`,
-    ),
-  ),
-});
+};
 
 /** Config type when eventing is present. */
 export type EventsConfig = CommerceAppConfigOutputModel & {
@@ -88,13 +52,7 @@ export type EventsConfig = CommerceAppConfigOutputModel & {
 
 /** Context available to event steps (inherited from eventing branch). */
 export interface EventsStepContext extends Record<string, unknown> {
-  get appCredentials(): {
-    clientId: string;
-    consumerOrgId: string;
-    projectId: string;
-    workspaceId: string;
-  };
-
+  get appCredentials(): AppCredentials;
   get commerceEventsClient(): CommerceEventsApiClient;
   get ioEventsClient(): AdobeIoEventsApiClient;
 }
@@ -110,13 +68,7 @@ export const createEventsStepContext: StepContextFactory<EventsStepContext> = (
 
   let commerceEventsClient: CommerceEventsApiClient | null = null;
   let ioEventsClient: AdobeIoEventsApiClient | null = null;
-
-  const appCredentials = parseOrThrow(AppCredentialsSchema, {
-    clientId: params.clientId,
-    consumerOrgId: params.consumerOrgId,
-    projectId: params.projectId,
-    workspaceId: params.workspaceId,
-  });
+  const appCredentials = params.appCredentials;
 
   return {
     get commerceEventsClient() {

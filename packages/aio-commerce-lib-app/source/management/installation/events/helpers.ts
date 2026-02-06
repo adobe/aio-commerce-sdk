@@ -173,7 +173,12 @@ export async function createOrGetIoProviderEventMetadata(
  */
 export async function createRegistration(params: CreateRegistrationParams) {
   const { context, events, provider, runtimeAction } = params;
-  const { appCredentials, ioEventsClient, logger } = context;
+  const {
+    appCredentials,
+    ioEventsClient,
+    logger,
+    params: runtimeParams,
+  } = context;
 
   logger.info(
     `Creating registration(s) to runtime action "${runtimeAction}" for ${events.length} event(s) with provider "${provider.label}" (instance ID: ${provider.instance_id}))`,
@@ -189,6 +194,7 @@ export async function createRegistration(params: CreateRegistrationParams) {
   return ioEventsClient
     .createRegistration({
       ...appCredentials,
+      clientId: runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
 
       name,
       description,
@@ -230,13 +236,13 @@ export async function createOrGetEventRegistration(
   registrations: IoEventRegistration[],
 ) {
   const { context, provider, runtimeAction } = params;
-  const { appCredentials, logger } = context;
+  const { logger, params: runtimeParams } = context;
 
   // Check if a registration already exists for this provider and runtime action.
   const name = getRegistrationName(provider, runtimeAction);
   const existing = findExistingRegistrations(
     registrations,
-    appCredentials.clientId,
+    runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
     name,
   );
 

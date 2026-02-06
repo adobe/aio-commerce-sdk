@@ -141,7 +141,7 @@ describe("createSucceededState", () => {
 
   test("should create correct state with status succeeded and completedAt", () => {
     const base = {
-      installationId: "install-123",
+      id: "install-123",
       startedAt: FAKE_SYSTEM_TIME,
       step: mockStep,
       data: { result: "some-data" },
@@ -150,7 +150,7 @@ describe("createSucceededState", () => {
     const result = createSucceededState(base);
 
     expect(result).toEqual({
-      installationId: "install-123",
+      id: "install-123",
       startedAt: FAKE_SYSTEM_TIME,
       step: mockStep,
       data: { result: "some-data" },
@@ -170,7 +170,7 @@ describe("createFailedState", () => {
 
   test("should create correct state with status failed, completedAt, and error", () => {
     const base = {
-      installationId: "install-456",
+      id: "install-456",
       startedAt: FAKE_SYSTEM_TIME,
       step: mockStep,
       data: { partial: "data" },
@@ -182,7 +182,7 @@ describe("createFailedState", () => {
 
     const result = createFailedState(base, error);
     expect(result).toEqual({
-      installationId: "install-456",
+      id: "install-456",
       startedAt: FAKE_SYSTEM_TIME,
       step: mockStep,
       data: { partial: "data" },

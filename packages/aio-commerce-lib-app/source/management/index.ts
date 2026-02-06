@@ -18,9 +18,11 @@
  */
 
 // Export installation-specific functions
-export { createInstallationPlan, runInstallation } from "./installation/runner";
 export {
-  createLibStateStore,
+  createInitialInstallationState,
+  runInstallation,
+} from "./installation/runner";
+export {
   isCompletedState,
   isFailedState,
   isInProgressState,
@@ -29,7 +31,7 @@ export {
 } from "./installation/workflow";
 
 export type {
-  CreateInstallationPlanOptions,
+  CreateInitialInstallationStateOptions,
   RunInstallationOptions,
 } from "./installation/runner";
 export type * from "./installation/workflow";

@@ -10,13 +10,21 @@
  * governing permissions and limitations under the License.
  */
 
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { AppCredentials } from "../schema";
 
 /** Shared context available to all steps during installation. */
 export type InstallationContext = {
   /** The raw action parameters from the App Builder runtime action. */
-  params: Record<string, unknown>;
+  params: RuntimeActionParams & {
+    /** The credentials needed to onboard the resources of the app */
+    appCredentials: AppCredentials;
+
+    // Environment inputs
+    AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
+  };
 
   /** Logger instance for installation logging. */
   logger: ReturnType<typeof AioLogger>;
