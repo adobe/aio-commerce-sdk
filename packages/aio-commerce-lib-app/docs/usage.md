@@ -248,22 +248,25 @@ The `installation.customInstallationSteps` field allows you to define custom scr
 installation: {
   customInstallationSteps: [
     {
-      script: "./scripts/configure-webhooks.js",
+      script: "./configure-webhooks.js",
       name: "Configure Webhooks",
       description: "Set up webhook endpoints for order notifications",
     },
     {
-      script: "./scripts/initialize-database.js",
+      script: "./initialize-database.js",
       name: "Initialize Database",
       description: "Create required database tables and indexes",
     },
-  ],
+  ];
 }
 ```
 
 **Configuration Fields:**
 
-- **script**: Path to the script file (must end with `.js` or `.ts`). Can be relative (e.g., `./scripts/setup.js`) or use parent directory references (e.g., `../../shared/setup.js`)
+- **script**: Path to the script file (must end with `.js` or `.ts`). The path must be relative to the generated `app-management/installation.js` action file. For example:
+  - `"./demo-success.js"` - Script in the same directory as installation.js
+  - `"../../scripts/setup.js"` - Script in a parent directory
+  - `"../shared/configure.js"` - Script in a sibling directory
 - **name**: Display name for the installation step (max 255 characters)
 - **description**: Description of what the step does (max 255 characters)
 
@@ -301,7 +304,7 @@ export default async function (config, context, params) {
 **Example: Successful Installation Script**
 
 ```javascript
-// scripts/configure-webhooks.js
+// configure-webhooks.js (located in same directory as installation.js)
 
 /**
  * Configures webhook endpoints for the application
@@ -334,7 +337,7 @@ export default async function (config, context, params) {
 **Example: Script with Error Handling**
 
 ```javascript
-// scripts/initialize-database.js
+// initialize-database.js (located in same directory as installation.js)
 
 /**
  * Initializes database tables and indexes
