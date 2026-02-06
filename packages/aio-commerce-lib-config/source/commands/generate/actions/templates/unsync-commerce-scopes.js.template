@@ -40,13 +40,7 @@ export async function main(params) {
       return ok("Commerce scope unsynced successfully");
     } else {
       logger.warn("Failed to unsync commerce scopes. Commerce scopes not found.");
-      return ok({
-        body: {
-          code: "ALREADY_REMOVED",
-          message: "Failed to unsync commerce scopes",
-          details: "Commerce scopes not found",
-        },
-      });
+      return ok("Failed to unsync commerce scopes. Commerce scopes not found.");
     }
   } catch (error) {
     logger.error(`Error unsyncing commerce scopes: ${inspect(error)}`);
