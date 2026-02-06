@@ -78,7 +78,6 @@ export function runInstallation(
     hooks,
   } = options;
   const rootStep = createRootInstallationStep(extraSteps);
-
   return executeWorkflow({
     rootStep,
     installationContext,

@@ -49,6 +49,8 @@ export function createMockInstallationContext(
         projectId: "projectId",
         workspaceId: "workspaceId",
       },
+
+      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "clientId",
     },
 
     logger: createMockLogger(),

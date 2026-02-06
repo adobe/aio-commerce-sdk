@@ -51,6 +51,8 @@ type ExecutionParams = RuntimeActionParams & {
   appCredentials: AppCredentials;
   initialState: PendingInstallationState;
   appConfig: CommerceAppConfigOutputModel;
+
+  AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
 };
 
 /**
