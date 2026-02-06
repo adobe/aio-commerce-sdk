@@ -240,6 +240,150 @@ eventing: {
 
 Both `commerce` and `external` arrays are optional, you can configure one, both, or neither depending on your application's needs.
 
+#### Custom Installation Steps
+
+The `installation.customInstallationStep` field allows you to define custom scripts that run during the application installation process. These scripts are pre-loaded and executed in the order they are defined.
+
+```javascript
+installation: {
+  customInstallationStep: [
+    {
+      script: "./scripts/configure-webhooks.js",
+      name: "Configure Webhooks",
+      description: "Set up webhook endpoints for order notifications",
+    },
+    {
+      script: "./scripts/initialize-database.js",
+      name: "Initialize Database",
+      description: "Create required database tables and indexes",
+    },
+  ],
+}
+```
+
+**Configuration Fields:**
+
+- **script**: Path to the script file (must end with `.js` or `.ts`). Can be relative (e.g., `./scripts/setup.js`) or use parent directory references (e.g., `../../shared/setup.js`)
+- **name**: Display name for the installation step (max 255 characters)
+- **description**: Description of what the step does (max 255 characters)
+
+**Script Requirements:**
+
+Your custom installation scripts must export a function (default export or named `run` export) with the following signature:
+
+```javascript
+/**
+ * Custom installation script
+ *
+ * @param {object} config - The complete commerce app configuration
+ * @param {object} context - Execution context with logger and customScripts
+ * @param {object} params - Additional runtime parameters
+ * @returns {Promise<object>} Result data (optional)
+ */
+export default async function (config, context, params) {
+  const { logger } = context;
+
+  logger.info("Installation step started");
+
+  // Your installation logic here
+  // Access config: config.metadata, config.businessConfig, etc.
+  // Use logger for output: logger.info(), logger.debug(), logger.error()
+
+  logger.info("Installation step completed");
+
+  return {
+    status: "success",
+    // Return any data you want to include in the installation results
+  };
+}
+```
+
+**Example: Successful Installation Script**
+
+```javascript
+// scripts/configure-webhooks.js
+
+/**
+ * Configures webhook endpoints for the application
+ */
+export default async function (config, context, params) {
+  const { logger } = context;
+
+  logger.info("Setting up webhook endpoints...");
+
+  // Example: Use configuration to set up webhooks
+  const apiKey = params.apiKey || "default-key";
+
+  // Simulate webhook configuration
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  logger.info("Webhook endpoints configured successfully");
+
+  return {
+    status: "success",
+    message: "Webhooks configured",
+    timestamp: new Date().toISOString(),
+    webhooks: [
+      { name: "order_placed", url: "/webhooks/orders" },
+      { name: "inventory_updated", url: "/webhooks/inventory" },
+    ],
+  };
+}
+```
+
+**Example: Script with Error Handling**
+
+```javascript
+// scripts/initialize-database.js
+
+/**
+ * Initializes database tables and indexes
+ */
+export default async function (config, context, params) {
+  const { logger } = context;
+
+  logger.info("Initializing database...");
+
+  try {
+    // Example: Check if required configuration exists
+    if (!config.businessConfig?.schema) {
+      throw new Error("Business configuration schema is required");
+    }
+
+    // Simulate database initialization
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    logger.info("Database initialized successfully");
+
+    return {
+      status: "success",
+      message: "Database tables and indexes created",
+      tables: ["orders", "customers", "products"],
+    };
+  } catch (error) {
+    logger.error(`Database initialization failed: ${error.message}`);
+    throw error; // Re-throw to fail the installation step
+  }
+}
+```
+
+**Alternative Export Style (Named `run` Export):**
+
+```javascript
+export async function run(config, context, params) {
+  // Your installation logic
+}
+```
+
+**Important Notes:**
+
+- Scripts are executed **sequentially** in the order defined in the configuration
+- If any script throws an error, the entire installation fails and subsequent scripts are not executed
+- Scripts have access to the complete app configuration and can use it to make decisions
+- Use `context.logger` for logging - it's automatically configured with appropriate log levels
+- Scripts are pre-loaded and bundled with your action during the `generate actions` command
+- After modifying custom installation scripts, run `npx @adobe/aio-commerce-lib-app generate actions` to regenerate the installation action
+
 ### CLI Commands
 
 The library provides CLI commands to generate app artifacts:
@@ -254,6 +398,31 @@ npx @adobe/aio-commerce-lib-app generate manifest
 # Generate runtime actions only
 npx @adobe/aio-commerce-lib-app generate actions
 ```
+
+**Custom Installation Scripts:**
+
+When you run `generate actions`, the CLI automatically:
+
+1. Reads your `app.commerce.config.*` file
+2. Finds all custom installation scripts defined in `installation.customInstallationStep`
+3. Generates static ES6 imports for each script in the installation action
+4. Creates a `loadCustomInstallationScripts()` function that maps script paths to loaded modules
+5. Updates the installation context to include pre-loaded scripts
+
+This means your custom scripts are:
+
+- **Pre-loaded** at action startup (no dynamic imports at runtime)
+- **Bundled** with the installation action
+- **Type-checked** (if using TypeScript)
+- **Ready to execute** without file system operations
+
+After modifying your custom installation scripts or their configuration, always run:
+
+```bash
+npx @adobe/aio-commerce-lib-app generate actions
+```
+
+This ensures your installation action includes the latest script imports and configuration.
 
 ### Using the Configuration API
 
@@ -342,3 +511,21 @@ try {
 ## Best Practices
 
 1. **Use `defineConfig` for type safety** - Get autocompletion and type checking in your IDE
+
+2. **Keep installation scripts focused** - Each custom installation script should do one thing well. Split complex setup into multiple scripts for better maintainability and error handling.
+
+3. **Use descriptive names** - Choose clear, meaningful names for your installation steps (e.g., "Configure Webhooks" instead of "Setup Step 1").
+
+4. **Handle errors gracefully** - Always wrap risky operations in try-catch blocks and provide meaningful error messages. Remember that throwing an error will fail the entire installation.
+
+5. **Log appropriately** - Use `logger.info()` for important milestones, `logger.debug()` for detailed information, and `logger.error()` for errors. This helps with troubleshooting.
+
+6. **Return meaningful data** - Return structured data from your scripts that describes what was accomplished. This data is included in installation results and can be useful for debugging.
+
+7. **Test your scripts** - Test installation scripts in a development environment before deploying to production. Consider creating test configurations with different scenarios.
+
+8. **Regenerate after changes** - Always run `npx @adobe/aio-commerce-lib-app generate actions` after modifying custom installation scripts or their configuration to ensure your changes are bundled.
+
+9. **Keep scripts idempotent when possible** - If an installation is retried, your scripts should handle cases where resources may already exist.
+
+10. **Use configuration wisely** - Access `config` parameter to make installation steps conditional or configurable based on business configuration values.
