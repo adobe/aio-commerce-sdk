@@ -363,8 +363,8 @@ describe("actions/rest/router", () => {
       const router = new Router();
 
       router.use((base) => ({
-        hasRaw: !!base.raw,
-        method: base.raw.__ow_method,
+        hasRaw: !!base.rawParams,
+        method: base.rawParams.__ow_method,
       }));
 
       router.get("/raw", {
@@ -417,7 +417,7 @@ describe("actions/rest/router", () => {
       });
 
       expect(receivedCtx).toMatchObject({
-        raw: expect.objectContaining({
+        rawParams: expect.objectContaining({
           __ow_method: "get",
           __ow_path: "/test/456",
         }),

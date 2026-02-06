@@ -16,6 +16,7 @@ import { defineConfig, mergeConfig } from "vitest/config";
 // Barrel files are those that only contain exports.
 const BARREL_FILES = [
   "./source/index.ts",
+  "./source/actions/index.ts",
   "./source/error/index.ts",
   "./source/responses/index.ts",
   "./source/headers/index.ts",

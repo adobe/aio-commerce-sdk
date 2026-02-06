@@ -45,7 +45,7 @@ import type {
  *
  * // Add context builders
  * router.use(async (base) => ({
- *   user: await getUser(base.raw.__ow_headers?.authorization),
+ *   user: await getUser(base.rawParams.__ow_headers?.authorization),
  * }));
  *
  * export const main = router.handler();
@@ -267,7 +267,7 @@ export class Router<TContext extends BaseContext = BaseContext> {
    */
   private async buildContext(args: RuntimeActionParams): Promise<BaseContext> {
     // biome-ignore lint/suspicious/noExplicitAny: Runtime context building requires dynamic typing
-    let context: any = { raw: args };
+    let context: any = { rawParams: args };
 
     for (const builder of this.contextBuilders) {
       const result = await builder(context);

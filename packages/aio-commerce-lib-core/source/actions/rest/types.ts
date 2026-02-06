@@ -44,7 +44,7 @@ export interface RouteContext {}
  */
 export interface BaseContext {
   /** Raw OpenWhisk/Runtime action parameters */
-  raw: RuntimeActionParams;
+  rawParams: RuntimeActionParams;
 }
 
 /**

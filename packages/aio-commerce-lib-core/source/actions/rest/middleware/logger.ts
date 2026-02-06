@@ -45,7 +45,7 @@ export function logger({
   ...restOptions
 }: LoggerOptions = {}): ContextBuilder<BaseContext, LoggerContext> {
   return (ctx) => {
-    const params = ctx.raw;
+    const params = ctx.rawParams;
 
     const loggerName = `${params.__ow_method}-${name?.(ctx) ?? process.env.__OW_ACTION_NAME}`;
     const logger = AioLogger(loggerName, {
