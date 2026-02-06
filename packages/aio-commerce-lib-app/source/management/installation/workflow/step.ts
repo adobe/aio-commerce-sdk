@@ -12,11 +12,17 @@
 
 import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { AppCredentials } from "../schema";
 
 /** Shared context available to all steps during installation. */
 export type InstallationContext = {
   /** The raw action parameters from the App Builder runtime action. */
-  params: Record<string, unknown>;
+  params: {
+    /** The credentials needed to onboard the resources of the app */
+    appCredentials: AppCredentials;
+
+    [x: string]: unknown;
+  };
 
   /** Logger instance for installation logging. */
   logger: ReturnType<typeof AioLogger>;

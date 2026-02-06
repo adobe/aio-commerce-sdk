@@ -16,10 +16,12 @@ import {
   badRequest,
   conflict,
   internalServerError,
+  noContent,
   ok,
 } from "@adobe/aio-commerce-lib-core/responses";
 import { createCombinedStore } from "@adobe/aio-commerce-lib-core/storage";
 import openwhisk from "openwhisk";
+import { object } from "valibot";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import {
@@ -31,11 +33,13 @@ import {
   isSucceededState,
   runInstallation,
 } from "#management/index";
+import { AppCredentialsSchema } from "#management/installation/schema";
 
 import type { BaseContext } from "@adobe/aio-commerce-lib-core/actions";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { KeyValueStore } from "@adobe/aio-commerce-lib-core/storage";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { AppCredentials } from "#management/installation/schema";
 import type {
   InstallationState,
   PendingInstallationState,
@@ -44,9 +48,11 @@ import type {
 // Action name for async invocation
 const DEFAULT_ACTION_NAME = "app-management/installation";
 
-type InstallationParams = RuntimeActionParams & {
-  initialState?: PendingInstallationState;
-  appConfig?: CommerceAppConfigOutputModel;
+/** Params received during async execution (internal invocation). */
+type ExecutionParams = RuntimeActionParams & {
+  appCredentials: AppCredentials;
+  initialState: PendingInstallationState;
+  appConfig: CommerceAppConfigOutputModel;
 };
 
 /**
@@ -146,14 +152,9 @@ router.get("/installation/execution", {
       return ok({ body: { state } });
     }
 
-    // No execution found - return empty status
+    // No execution found - return 204 No Content
     logger.debug("No execution found");
-    return ok({
-      body: {
-        status: "not_started",
-        message: "No installation has been started",
-      },
-    });
+    return noContent();
   },
 });
 
@@ -166,7 +167,13 @@ router.get("/installation/execution", {
  * 3. If not found or failed: create plan, invoke execution async, return 202 Accepted
  */
 router.post("/installation", {
-  handler: async (_req, { logger, getAppConfig, rawParams }) => {
+  body: object({
+    appCredentials: AppCredentialsSchema,
+  }),
+
+  handler: async (req, { logger, getAppConfig, rawParams }) => {
+    const appCredentials = req.body.appCredentials;
+
     logger.debug("Starting installation...");
     const store = await createInstallationStore();
     const existingState = await store.get("current");
@@ -210,6 +217,8 @@ router.post("/installation", {
 
       params: {
         ...rawParams,
+
+        appCredentials,
         initialState,
         appConfig,
 
@@ -239,7 +248,8 @@ router.post("/installation", {
  */
 router.post("/installation/execution", {
   handler: async (_req, { logger, rawParams }) => {
-    const { initialState, appConfig } = rawParams as InstallationParams;
+    const params = rawParams as ExecutionParams;
+    const { initialState, appConfig } = params;
 
     if (!initialState) {
       return badRequest("initialState is required for execution");
@@ -252,7 +262,7 @@ router.post("/installation/execution", {
     const store = await createInstallationStore();
     const hooks = createInstallationHooks(store, (msg) => logger.debug(msg));
     const installationContext = {
-      params: rawParams as Record<string, unknown>,
+      params,
       logger,
     };
 
