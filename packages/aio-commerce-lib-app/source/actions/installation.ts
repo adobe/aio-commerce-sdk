@@ -107,7 +107,9 @@ function appConfig() {
           return appConfiguration;
         }
 
-        const manifestPathAtRuntime = "../../app.commerce.manifest.json";
+        const manifestPathAtRuntime =
+          "../../app.commerce.manifest.json" as string;
+
         const manifest = await import(manifestPathAtRuntime, {
           with: {
             type: "json",
