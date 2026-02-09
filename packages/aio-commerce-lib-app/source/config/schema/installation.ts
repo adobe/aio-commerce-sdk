@@ -60,22 +60,22 @@ const CustomInstallationStepSchema = v.object({
  * Schema for installation messages configuration
  */
 const MessagesSchema = v.object({
-  "pre-installation": v.optional(
+  preInstallation: v.optional(
     v.pipe(
-      nonEmptyStringValueSchema("pre-installation message"),
+      nonEmptyStringValueSchema("preInstallation message"),
       v.maxLength(
         MAX_MESSAGE_LENGTH,
-        `The pre-installation message must not be longer than ${MAX_MESSAGE_LENGTH} characters`,
+        `The preInstallation message must not be longer than ${MAX_MESSAGE_LENGTH} characters`,
       ),
     ),
   ),
 
-  "post-installation": v.optional(
+  postInstallation: v.optional(
     v.pipe(
-      nonEmptyStringValueSchema("post-installation message"),
+      nonEmptyStringValueSchema("postInstallation message"),
       v.maxLength(
         MAX_MESSAGE_LENGTH,
-        `The post-installation message must not be longer than ${MAX_MESSAGE_LENGTH} characters`,
+        `The postInstallation message must not be longer than ${MAX_MESSAGE_LENGTH} characters`,
       ),
     ),
   ),

@@ -264,16 +264,16 @@ You can define messages that will be displayed to users before and after the ins
 ```javascript
 installation: {
   messages: {
-    "pre-installation": "This App requires configuration A & B to be completed before clicking Install.",
-    "post-installation": "Configure your email settings to complete the setup.",
+    "preInstallation": "This App requires configuration A & B to be completed before clicking Install.",
+    "postInstallation": "Configure your email settings to complete the setup.",
   },
 }
 ```
 
 **Message Fields:**
 
-- **pre-installation** (optional): Message displayed to users before installation starts (max 1000 characters)
-- **post-installation** (optional): Message displayed to users after installation completes (max 1000 characters)
+- **preInstallation** (optional): Message displayed to users before installation starts (max 1000 characters)
+- **postInstallation** (optional): Message displayed to users after installation completes (max 1000 characters)
 
 Both message fields are optional. You can provide one, both, or neither depending on your needs.
 
@@ -284,7 +284,7 @@ The `installation.customInstallationSteps` field allows you to define custom scr
 ```javascript
 installation: {
   messages: {
-    "pre-installation": "Please ensure all prerequisites are met before installation.",
+    "preInstallation": "Please ensure all prerequisites are met before installation.",
   },
   customInstallationSteps: [
     {
