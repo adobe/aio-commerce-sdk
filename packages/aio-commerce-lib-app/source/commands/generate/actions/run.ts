@@ -133,7 +133,7 @@ async function generateInstallationTemplate(
     .map((step: CustomInstallationStep, index: number) => {
       const scriptPath = step.script;
       const importName = `customScript${index}`;
-      return `import * as ${importName} from '${scriptPath}';`;
+      return `import ${importName} from "${scriptPath}";`;
     })
     .join("\n");
 
