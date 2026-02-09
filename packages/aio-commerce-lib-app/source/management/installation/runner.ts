@@ -15,7 +15,6 @@ import { buildPlan, executeWorkflow } from "./workflow";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
-  AnyStep,
   FailedInstallationState,
   InstallationContext,
   InstallationHooks,
@@ -27,9 +26,6 @@ import type {
 export type CreateInstallationPlanOptions = {
   /** The app configuration used to determine applicable steps. */
   config: CommerceAppConfigOutputModel;
-
-  /** Additional steps to include beyond the built-in ones. */
-  extraSteps?: AnyStep[];
 };
 
 /** Options for running an installation. */
@@ -43,9 +39,6 @@ export type RunInstallationOptions = {
   /** The pre-created installation plan to execute. */
   plan: InstallationPlan;
 
-  /** Additional steps to include beyond the built-in ones. */
-  extraSteps?: AnyStep[];
-
   /** Lifecycle hooks for status change notifications. */
   hooks?: InstallationHooks;
 };
@@ -57,8 +50,8 @@ export type RunInstallationOptions = {
 export function createInstallationPlan(
   options: CreateInstallationPlanOptions,
 ): InstallationPlan {
-  const { config, extraSteps = [] } = options;
-  const rootStep = createRootInstallationStep(extraSteps);
+  const { config } = options;
+  const rootStep = createRootInstallationStep();
 
   return buildPlan({ rootStep, config });
 }
@@ -69,8 +62,8 @@ export function createInstallationPlan(
 export function runInstallation(
   options: RunInstallationOptions,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
-  const { installationContext, config, plan, extraSteps = [], hooks } = options;
-  const rootStep = createRootInstallationStep(extraSteps);
+  const { installationContext, config, plan, hooks } = options;
+  const rootStep = createRootInstallationStep();
 
   return executeWorkflow({
     rootStep,

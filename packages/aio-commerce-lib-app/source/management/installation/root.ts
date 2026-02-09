@@ -35,18 +35,8 @@ export const ROOT_INSTALLATION_STEP = defineBranchStep({
 });
 
 /**
- * Creates a root installation step with additional custom steps.
- * Merges the default steps with any extra steps provided.
+ * Creates a root installation step.
  */
-export function createRootInstallationStep(
-  extraSteps: AnyStep[] = [],
-): BranchStep {
-  if (extraSteps.length === 0) {
-    return ROOT_INSTALLATION_STEP;
-  }
-
-  return {
-    ...ROOT_INSTALLATION_STEP,
-    children: [...DEFAULT_CHILD_STEPS, ...extraSteps],
-  };
+export function createRootInstallationStep(): BranchStep {
+  return ROOT_INSTALLATION_STEP;
 }

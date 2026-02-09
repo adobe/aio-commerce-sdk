@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { customInstallationStep } from "#management/installation/custom-installation/branch";
 import { eventingStep } from "#management/installation/events/branch";
@@ -19,10 +19,6 @@ import {
   ROOT_INSTALLATION_STEP,
 } from "#management/installation/root";
 import { webhooksStep } from "#management/installation/webhooks/branch";
-import {
-  defineBranchStep,
-  defineLeafStep,
-} from "#management/installation/workflow/step";
 
 describe("ROOT_INSTALLATION_STEP", () => {
   test("should be a branch step with type 'branch'", () => {
@@ -56,58 +52,5 @@ describe("createRootInstallationStep", () => {
   test("should return ROOT_INSTALLATION_STEP when empty array provided", () => {
     const result = createRootInstallationStep([]);
     expect(result).toBe(ROOT_INSTALLATION_STEP);
-  });
-
-  test("should return a new step with extra steps appended to children", () => {
-    const mockExtraStep = defineLeafStep({
-      name: "extra-step",
-      meta: { label: "Extra Step" },
-      run: vi.fn(() => ({ result: "test" })),
-    });
-
-    const result = createRootInstallationStep([mockExtraStep]);
-    expect(result.children).toEqual([
-      eventingStep,
-      webhooksStep,
-      customInstallationStep,
-      mockExtraStep,
-    ]);
-  });
-
-  test("should not mutate the original ROOT_INSTALLATION_STEP", () => {
-    const originalChildren = [...ROOT_INSTALLATION_STEP.children];
-    const mockExtraStep = defineLeafStep({
-      name: "mutate-test-step",
-      meta: { label: "Mutate Test Step" },
-      run: vi.fn(() => ({ result: "test" })),
-    });
-
-    createRootInstallationStep([mockExtraStep]);
-    expect(ROOT_INSTALLATION_STEP.children).toEqual(originalChildren);
-    expect(ROOT_INSTALLATION_STEP.children).toHaveLength(3);
-  });
-
-  test("should handle multiple extra steps", () => {
-    const extraStep1 = defineLeafStep({
-      name: "extra-1",
-      meta: { label: "Extra 1" },
-      run: vi.fn(() => ({ result: "1" })),
-    });
-
-    const extraStep2 = defineBranchStep({
-      name: "extra-2",
-      meta: { label: "Extra 2" },
-      children: [],
-    });
-
-    const result = createRootInstallationStep([extraStep1, extraStep2]);
-    expect(result.children).toHaveLength(5);
-    expect(result.children).toEqual([
-      eventingStep,
-      webhooksStep,
-      customInstallationStep,
-      extraStep1,
-      extraStep2,
-    ]);
   });
 });
