@@ -14,6 +14,7 @@ import {
   alphaNumericOrHyphenSchema,
   alphaNumericOrUnderscoreSchema,
   nonEmptyStringValueSchema,
+  stringValueSchema,
   titleCaseSchema,
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
@@ -101,14 +102,43 @@ const BaseEventSchema = v.object({
   ),
 });
 
+/** Schema for Commerce event field configuration */
+const CommerceEventFieldSchema = v.union([
+  alphaNumericOrUnderscoreSchema("event field", "lowercase"),
+  v.object({
+    name: v.pipe(
+      nonEmptyStringValueSchema("field name"),
+      v.regex(
+        /^[a-z0-9_]+$/,
+        'Field name must be lowercase alphanumeric with underscores (e.g., "field_name" or "_origData")',
+      ),
+    ),
+    converter: v.optional(stringValueSchema("converter")),
+    source: v.optional(stringValueSchema("source")),
+  }),
+]);
+
+/** Schema for Commerce event rule configuration */
+const CommerceEventRuleSchema = v.object({
+  field: nonEmptyStringValueSchema("rule field"),
+  operator: nonEmptyStringValueSchema("rule operator"),
+  value: nonEmptyStringValueSchema("rule value"),
+});
+
 /** Schema for Commerce event configuration */
 const CommerceEventSchema = v.object({
   ...BaseEventSchema.entries,
 
   name: commerceEventNameSchema(),
   fields: v.array(
-    alphaNumericOrUnderscoreSchema("event fields", "lowercase"),
-    "Expected an array of event fields",
+    CommerceEventFieldSchema,
+    "Expected an array of event fields (strings or objects with name, optional converter, and optional source)",
+  ),
+  rules: v.optional(
+    v.array(
+      CommerceEventRuleSchema,
+      "Expected an array of event rules with field, operator, and value",
+    ),
   ),
 });
 

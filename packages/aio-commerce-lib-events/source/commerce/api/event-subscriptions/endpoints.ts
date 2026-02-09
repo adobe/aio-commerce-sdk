@@ -67,6 +67,7 @@ export async function createEventSubscription(
           name: event.name,
           parent: event.parent,
           fields: event.fields,
+          rules: event.rules,
           destination: event.destination,
           hipaa_audit_required: event.hipaaAuditRequired,
           priority: event.prioritary,

@@ -20,8 +20,21 @@ function fieldsSchema(propertyName: string) {
   return v.array(
     v.object({
       name: stringValueSchema(`${propertyName}[i].name`),
+      converter: v.optional(stringValueSchema(`${propertyName}[i].converter`)),
+      source: v.optional(stringValueSchema(`${propertyName}[i].source`)),
     }),
     `Expected an array of objects with a 'name' property for the property "${propertyName}"`,
+  );
+}
+
+function rulesSchema(propertyName: string) {
+  return v.array(
+    v.object({
+      field: stringValueSchema(`${propertyName}[i].field`),
+      operator: stringValueSchema(`${propertyName}[i].operator`),
+      value: stringValueSchema(`${propertyName}[i].value`),
+    }),
+    `Expected an array of objects with 'field', 'operator', and 'value' properties for the property "${propertyName}"`,
   );
 }
 
@@ -31,6 +44,7 @@ export const EventSubscriptionCreateParamsSchema = v.object({
   providerId: v.optional(stringValueSchema("providerId")),
   parent: v.optional(stringValueSchema("parent")),
   fields: fieldsSchema("fields"),
+  rules: v.optional(rulesSchema("rules")),
 
   destination: v.optional(stringValueSchema("destination")),
   hipaaAuditRequired: v.optional(booleanValueSchema("hipaaAuditRequired")),

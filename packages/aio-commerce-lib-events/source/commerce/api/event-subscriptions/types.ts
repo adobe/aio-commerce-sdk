@@ -14,6 +14,7 @@
 export type CommerceEventSubscriptionField = {
   name: string;
   converter?: string;
+  source?: string;
 };
 
 /** Defines the structure of a filtering rule in a Commerce event subscription. */
