@@ -527,8 +527,6 @@ try {
 
 4. **Handle errors gracefully** - Always wrap risky operations in try-catch blocks and provide meaningful error messages. Remember that throwing an error will fail the entire installation.
 
-5. **Log appropriately** - Use `logger.info()` for important milestones, `logger.debug()` for detailed information, and `logger.error()` for errors. This helps with troubleshooting.
+5. **Test your scripts** - Test installation scripts in a development environment before deploying to production. Consider creating test configurations with different scenarios.
 
-6. **Test your scripts** - Test installation scripts in a development environment before deploying to production. Consider creating test configurations with different scenarios.
-
-7. **Keep scripts idempotent when possible** - If an installation is retried, your scripts should handle cases where resources may already exist.
+6. **Keep scripts idempotent when possible** - If an installation is retried, your scripts should handle cases where resources may already exist.
