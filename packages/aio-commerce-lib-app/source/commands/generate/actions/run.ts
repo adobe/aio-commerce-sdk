@@ -128,12 +128,32 @@ async function generateInstallationTemplate(
     );
   }
 
+  // The generated installation.js will be at:
+  // src/commerce-extensibility-1/.generated/actions/app-management/installation.js
+  // We need to resolve paths from project root to relative imports from this location
+  const projectRoot = process.cwd();
+  const installationActionDir = join(
+    projectRoot,
+    EXTENSION_POINT_FOLDER_PATH,
+    GENERATED_ACTIONS_PATH,
+  );
+
   // Generate import statements
   const importStatements = customSteps
     .map((step: CustomInstallationStep, index: number) => {
-      const scriptPath = step.script;
+      // step.script is relative to project root (e.g., "./scripts/setup.js")
+      const absoluteScriptPath = join(projectRoot, step.script);
+      let relativeImportPath = relative(
+        installationActionDir,
+        absoluteScriptPath,
+      );
+      if (!relativeImportPath.startsWith(".")) {
+        relativeImportPath = `./${relativeImportPath}`;
+      }
+      relativeImportPath = relativeImportPath.replace(/\\/g, "/");
+
       const importName = `customScript${index}`;
-      return `import ${importName} from "${scriptPath}";`;
+      return `import ${importName} from "${relativeImportPath}";`;
     })
     .join("\n");
 

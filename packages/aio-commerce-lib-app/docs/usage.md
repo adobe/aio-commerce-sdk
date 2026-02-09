@@ -261,12 +261,12 @@ The `installation.customInstallationSteps` field allows you to define custom scr
 installation: {
   customInstallationSteps: [
     {
-      script: "./configure-webhooks.js",
+      script: "./scripts/configure-webhooks.js",
       name: "Configure Webhooks",
       description: "Set up webhook endpoints for order notifications",
     },
     {
-      script: "./initialize-database.js",
+      script: "./scripts/initialize-database.js",
       name: "Initialize Database",
       description: "Create required database tables and indexes",
     },
@@ -276,10 +276,13 @@ installation: {
 
 **Configuration Fields:**
 
-- **script**: Path to the script file (must end with `.js` or `.ts`). The path must be relative to the generated `app-management/installation.js` action file. For example:
-  - `"./demo-success.js"` - Script in the same directory as installation.js
-  - `"../../scripts/setup.js"` - Script in a parent directory
-  - `"../shared/configure.js"` - Script in a sibling directory
+- **script**: Path to the `.js` script file **relative to your project root**. For example:
+  - `"./scripts/setup.js"` - Script in a `scripts` folder at project root
+  - `"./src/installation/configure.js"` - Script in a nested directory
+  - `"./setup.js"` - Script at project root
+
+  The build process will automatically resolve these paths to the correct relative imports in the generated installation action.
+
 - **name**: Display name for the installation step (max 255 characters)
 - **description**: Description of what the step does (max 255 characters)
 
@@ -317,7 +320,7 @@ export default async function (config, context, params) {
 **Example: Successful Installation Script**
 
 ```javascript
-// configure-webhooks.js (located in same directory as installation.js)
+// scripts/configure-webhooks.js (at project root)
 
 /**
  * Configures webhook endpoints for the application
@@ -350,7 +353,7 @@ export default async function (config, context, params) {
 **Example: Script with Error Handling**
 
 ```javascript
-// initialize-database.js (located in same directory as installation.js)
+// scripts/initialize-database.js (at project root)
 
 /**
  * Initializes database tables and indexes
