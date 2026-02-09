@@ -50,7 +50,7 @@ describe("createRootInstallationStep", () => {
   });
 
   test("should return ROOT_INSTALLATION_STEP when empty array provided", () => {
-    const result = createRootInstallationStep([]);
+    const result = createRootInstallationStep();
     expect(result).toBe(ROOT_INSTALLATION_STEP);
   });
 });
