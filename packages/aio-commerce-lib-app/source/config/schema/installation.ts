@@ -15,6 +15,7 @@ import * as v from "valibot";
 
 const MAX_DESCRIPTION_LENGTH = 255;
 const MAX_NAME_LENGTH = 255;
+const MAX_MESSAGE_LENGTH = 1000;
 
 /**
  * Regex for script paths that can be relative or absolute.
@@ -56,9 +57,36 @@ const CustomInstallationStepSchema = v.object({
 });
 
 /**
+ * Schema for installation messages configuration
+ */
+const MessagesSchema = v.object({
+  "pre-installation": v.optional(
+    v.pipe(
+      nonEmptyStringValueSchema("pre-installation message"),
+      v.maxLength(
+        MAX_MESSAGE_LENGTH,
+        `The pre-installation message must not be longer than ${MAX_MESSAGE_LENGTH} characters`,
+      ),
+    ),
+  ),
+
+  "post-installation": v.optional(
+    v.pipe(
+      nonEmptyStringValueSchema("post-installation message"),
+      v.maxLength(
+        MAX_MESSAGE_LENGTH,
+        `The post-installation message must not be longer than ${MAX_MESSAGE_LENGTH} characters`,
+      ),
+    ),
+  ),
+});
+
+/**
  * Schema for installation configuration
  */
 export const InstallationSchema = v.object({
+  messages: v.optional(MessagesSchema),
+
   customInstallationSteps: v.optional(
     v.array(
       CustomInstallationStepSchema,
