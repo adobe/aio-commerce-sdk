@@ -290,48 +290,48 @@ installation: {
 
 Your custom installation scripts must export a default function with the following signature:
 
-```javascript
+```typescript
+import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
+
 /**
- * Custom installation script
- *
- * @param {object} config - The complete commerce app configuration
- * @param {object} context - Execution context with logger and customScripts
- * @param {object} params - Additional runtime parameters
- * @returns {Promise<object>} Result data (optional)
+ * Custom installation script with type-safe parameters
  */
-export default async function (config, context, params) {
-  const { logger } = context;
+export default defineCustomInstallationStep(async (config, context) => {
+  const { logger, params } = context;
 
   logger.info("Installation step started");
 
   // Your installation logic here
-  // Access config: config.metadata, config.businessConfig, etc.
-  // Use logger for output: logger.info(), logger.debug(), logger.error()
+  // TypeScript provides autocompletion for:
+  // - config.metadata, config.businessConfig, config.eventing, etc.
+  // - context.logger, context.params
 
   logger.info("Installation step completed");
 
   return {
     status: "success",
-    // Return any data you want to include in the installation results
+    message: "Custom installation step completed",
+    timestamp: new Date().toISOString(),
   };
-}
+});
 ```
 
 **Example: Successful Installation Script**
 
-```javascript
+```typescript
 // scripts/configure-webhooks.js (at project root)
+import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
 
 /**
  * Configures webhook endpoints for the application
  */
-export default async function (config, context, params) {
-  const { logger } = context;
+export default defineCustomInstallationStep(async (config, context) => {
+  const { logger, params } = context;
 
   logger.info("Setting up webhook endpoints...");
 
-  // Example: Use configuration to set up webhooks
-  const apiKey = params.apiKey || "default-key";
+  // Access typed config properties with autocompletion
+  logger.info(`Configuring webhooks for ${config.metadata.displayName}`);
 
   // Simulate webhook configuration
   await new Promise((resolve) => setTimeout(resolve, 500));
@@ -342,32 +342,34 @@ export default async function (config, context, params) {
     status: "success",
     message: "Webhooks configured",
     timestamp: new Date().toISOString(),
-    webhooks: [
-      { name: "order_placed", url: "/webhooks/orders" },
-      { name: "inventory_updated", url: "/webhooks/inventory" },
-    ],
   };
-}
+});
 ```
 
 **Example: Script with Error Handling**
 
-```javascript
+```typescript
 // scripts/initialize-database.js (at project root)
+import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
 
 /**
  * Initializes database tables and indexes
  */
-export default async function (config, context, params) {
+export default defineCustomInstallationStep(async (config, context) => {
   const { logger } = context;
 
   logger.info("Initializing database...");
 
   try {
     // Example: Check if required configuration exists
+    // TypeScript will validate that businessConfig exists on config
     if (!config.businessConfig?.schema) {
       throw new Error("Business configuration schema is required");
     }
+
+    logger.info(
+      `Setting up database for ${config.metadata.displayName} v${config.metadata.version}`,
+    );
 
     // Simulate database initialization
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -380,10 +382,11 @@ export default async function (config, context, params) {
       tables: ["orders", "customers", "products"],
     };
   } catch (error) {
-    logger.error(`Database initialization failed: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error(`Database initialization failed: ${errorMessage}`);
     throw error; // Re-throw to fail the installation step
   }
-}
+});
 ```
 
 **Important Notes:**

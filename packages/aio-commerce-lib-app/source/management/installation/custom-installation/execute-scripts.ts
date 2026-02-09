@@ -62,7 +62,7 @@ export const executeCustomInstallationScripts = defineLeafStep({
 
   when: hasCustomInstallationSteps,
   run: async (config: CustomInstallationConfig, context: ExecutionContext) => {
-    const { logger, params } = context;
+    const { logger } = context;
     // Get pre-loaded scripts from context (from generated action)
     const customScripts = (context as CustomScriptsContext).customScripts || {};
 
@@ -90,7 +90,7 @@ export const executeCustomInstallationScripts = defineLeafStep({
         // Only support default export
         if (typeof scriptModule !== "object" || !("default" in scriptModule)) {
           throw new Error(
-            `Script ${script} must export a default function. Use "export default async function run(config, context, params) { ... }"`,
+            `Script ${script} must export a default function. Use defineCustomInstallationStep helper.`,
           );
         }
 
@@ -102,8 +102,7 @@ export const executeCustomInstallationScripts = defineLeafStep({
           );
         }
 
-        // Execute the script with config and context
-        const scriptResult = await runFunction(config, context, params);
+        const scriptResult = await runFunction(config, context);
         logger.info(`Successfully executed script: ${name}`);
 
         results.push({
