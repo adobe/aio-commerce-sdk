@@ -418,13 +418,6 @@ When you run `generate actions`, the CLI automatically:
 4. Creates a `loadCustomInstallationScripts()` function that maps script paths to loaded modules
 5. Updates the installation context to include pre-loaded scripts
 
-This means your custom scripts are:
-
-- **Pre-loaded** at action startup (no dynamic imports at runtime)
-- **Bundled** with the installation action
-- **Type-checked** (if using TypeScript)
-- **Ready to execute** without file system operations
-
 After modifying your custom installation scripts or their configuration, always run:
 
 ```bash
