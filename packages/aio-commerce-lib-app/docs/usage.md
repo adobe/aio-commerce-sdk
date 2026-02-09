@@ -529,12 +529,6 @@ try {
 
 5. **Log appropriately** - Use `logger.info()` for important milestones, `logger.debug()` for detailed information, and `logger.error()` for errors. This helps with troubleshooting.
 
-6. **Return meaningful data** - Return structured data from your scripts that describes what was accomplished. This data is included in installation results and can be useful for debugging.
+6. **Test your scripts** - Test installation scripts in a development environment before deploying to production. Consider creating test configurations with different scenarios.
 
-7. **Test your scripts** - Test installation scripts in a development environment before deploying to production. Consider creating test configurations with different scenarios.
-
-8. **Regenerate after changes** - Always run `npx @adobe/aio-commerce-lib-app generate actions` after modifying custom installation scripts or their configuration to ensure your changes are bundled.
-
-9. **Keep scripts idempotent when possible** - If an installation is retried, your scripts should handle cases where resources may already exist.
-
-10. **Use configuration wisely** - Access `config` parameter to make installation steps conditional or configurable based on business configuration values.
+7. **Keep scripts idempotent when possible** - If an installation is retried, your scripts should handle cases where resources may already exist.
