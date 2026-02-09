@@ -19,11 +19,6 @@ import type {
   InferStepOutput,
 } from "#management/installation/workflow/step";
 
-/** Context type with custom scripts loaded from generated action */
-type CustomScriptsContext = ExecutionContext & {
-  customScripts?: Record<string, unknown>;
-};
-
 /** Config type when custom installation steps are present. */
 export type CustomInstallationConfig = SetRequiredDeep<
   CommerceAppConfigOutputModel,
@@ -63,8 +58,8 @@ export const executeCustomInstallationScripts = defineLeafStep({
   when: hasCustomInstallationSteps,
   run: async (config: CustomInstallationConfig, context: ExecutionContext) => {
     const { logger } = context;
-    // Get pre-loaded scripts from context (from generated action)
-    const customScripts = (context as CustomScriptsContext).customScripts || {};
+
+    const customScripts = context.customScripts || {};
 
     logger.debug(
       `Starting execution of ${config.installation?.customInstallationSteps.length} custom installation script(s)`,
