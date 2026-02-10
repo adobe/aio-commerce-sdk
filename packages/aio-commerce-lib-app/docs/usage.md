@@ -391,8 +391,6 @@ export default defineCustomInstallationStep(async (config, context) => {
 - Scripts are executed **sequentially** in the order defined in the configuration
 - If any script throws an error, the entire installation fails and subsequent scripts are not executed
 - Scripts have access to the complete app configuration and can use it to make decisions
-- You can use `context.logger` for logging
-- Scripts are pre-loaded and bundled with your action during the `generate actions` command
 
 ### CLI Commands
 

@@ -15,7 +15,10 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
-import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
+import {
+  getProjectRootDirectory,
+  makeOutputDirFor,
+} from "@aio-commerce-sdk/scripting-utils/project";
 import { createOrUpdateExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
 import { readYamlFile } from "@aio-commerce-sdk/scripting-utils/yaml/index";
 import { consola } from "consola";
@@ -131,7 +134,7 @@ async function generateInstallationTemplate(
   // The generated installation.js will be at:
   // src/commerce-extensibility-1/.generated/actions/app-management/installation.js
   // We need to resolve paths from project root to relative imports from this location
-  const projectRoot = process.cwd();
+  const projectRoot = await getProjectRootDirectory();
   const installationActionDir = join(
     projectRoot,
     EXTENSION_POINT_FOLDER_PATH,

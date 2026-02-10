@@ -14,6 +14,7 @@ import { defineLeafStep } from "#management/installation/workflow/step";
 
 import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { CustomInstallationStep } from "#config/schema/installation";
 import type {
   AnyStep,
   ExecutionContext,
@@ -47,18 +48,14 @@ type ScriptExecutionResult = {
 /**
  * Creates a leaf step for executing a single custom installation script.
  */
-function createCustomScriptStep(scriptConfig: {
-  script: string;
-  name: string;
-  description: string;
-}): AnyStep {
+function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
   const { script, name, description } = scriptConfig;
 
   return defineLeafStep({
     name,
     meta: {
       label: name,
-      description: description || `Execute custom script: ${script}`,
+      description,
     },
 
     run: async (
@@ -116,7 +113,7 @@ export function createCustomScriptSteps(
     return [];
   }
 
-  return config?.installation?.customInstallationSteps.map((scriptConfig) =>
+  return config.installation?.customInstallationSteps.map((scriptConfig) =>
     createCustomScriptStep(scriptConfig),
   );
 }
