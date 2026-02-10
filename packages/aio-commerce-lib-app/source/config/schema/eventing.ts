@@ -104,7 +104,7 @@ const BaseEventSchema = v.object({
 
 /** Schema for Commerce event field configuration */
 const CommerceEventFieldSchema = v.union([
-  alphaNumericOrUnderscoreSchema("event field", "lowercase"),
+  alphaNumericOrUnderscoreSchema("event field", "any"),
   v.object({
     name: v.pipe(
       nonEmptyStringValueSchema("field name"),
