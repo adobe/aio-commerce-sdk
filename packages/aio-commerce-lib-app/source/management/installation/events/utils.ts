@@ -10,21 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  resolveCommerceHttpClientParams,
-  resolveIoEventsHttpClientParams,
-} from "@adobe/aio-commerce-lib-api";
-import { createCommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
-import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
-import {
-  nonEmptyStringValueSchema,
-  parseOrThrow,
-} from "@aio-commerce-sdk/common-utils/valibot";
-import * as v from "valibot";
-
-import type { CommerceEventsApiClient } from "@adobe/aio-commerce-lib-events/commerce";
+import type { CommerceEventSubscription } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
-  AdobeIoEventsApiClient,
   EventProviderType,
   IoEventMetadata,
   IoEventProvider,
@@ -32,12 +19,12 @@ import type {
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { ApplicationMetadata } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { AppEvent, EventProvider } from "#config/schema/eventing";
 import type {
-  ExecutionContext,
-  InstallationContext,
-  StepContextFactory,
-} from "#management/installation/workflow/step";
+  AppEvent,
+  CommerceEvent,
+  EventProvider,
+} from "#config/schema/eventing";
+import type { EventsExecutionContext } from "./context";
 import type { AppEventWithoutRuntimeActions } from "./types";
 
 // The two different provider types we support.
@@ -50,104 +37,9 @@ const PROVIDER_TYPE_TO_LABEL = {
   [EXTERNAL_PROVIDER_TYPE]: "External",
 } as const;
 
-const CONSUMER_ORG_ID_LENGTH = 6;
-const PROJECT_ID_LENGTH = 19;
-const WORKSPACE_ID_LENGTH = 19;
-
-const AppCredentialsSchema = v.object({
-  clientId: nonEmptyStringValueSchema("clientId"),
-  consumerOrgId: v.pipe(
-    nonEmptyStringValueSchema("consumerOrgId"),
-    v.length(
-      CONSUMER_ORG_ID_LENGTH,
-      `consumerOrgId must be ${CONSUMER_ORG_ID_LENGTH} characters long`,
-    ),
-  ),
-
-  projectId: v.pipe(
-    nonEmptyStringValueSchema("projectId"),
-    v.length(
-      PROJECT_ID_LENGTH,
-      `projectId must be ${PROJECT_ID_LENGTH} characters long`,
-    ),
-  ),
-
-  workspaceId: v.pipe(
-    nonEmptyStringValueSchema("workspaceId"),
-    v.length(
-      WORKSPACE_ID_LENGTH,
-      `workspaceId must be ${WORKSPACE_ID_LENGTH} characters long`,
-    ),
-  ),
-});
-
 /** Config type when eventing is present. */
 export type EventsConfig = CommerceAppConfigOutputModel & {
   eventing: NonNullable<CommerceAppConfigOutputModel["eventing"]>;
-};
-
-/** Context available to event steps (inherited from eventing branch). */
-export interface EventsStepContext extends Record<string, unknown> {
-  get appCredentials(): {
-    clientId: string;
-    consumerOrgId: string;
-    projectId: string;
-    workspaceId: string;
-  };
-
-  get commerceEventsClient(): CommerceEventsApiClient;
-  get ioEventsClient(): AdobeIoEventsApiClient;
-}
-
-/** The execution context for event leaf steps. */
-export type EventsExecutionContext = ExecutionContext<EventsStepContext>;
-
-/** Creates the events step context with lazy-initialized API clients. */
-export const createEventsStepContext: StepContextFactory<EventsStepContext> = (
-  installation: InstallationContext,
-) => {
-  const { params } = installation;
-
-  let commerceEventsClient: CommerceEventsApiClient | null = null;
-  let ioEventsClient: AdobeIoEventsApiClient | null = null;
-
-  const appCredentials = parseOrThrow(AppCredentialsSchema, {
-    clientId: params.clientId,
-    consumerOrgId: params.consumerOrgId,
-    projectId: params.projectId,
-    workspaceId: params.workspaceId,
-  });
-
-  return {
-    get commerceEventsClient() {
-      if (commerceEventsClient === null) {
-        const commerceClientParams = resolveCommerceHttpClientParams(params);
-        commerceClientParams.fetchOptions ??= {};
-        commerceClientParams.fetchOptions.timeout = 1000 * 60 * 2; // 2 minutes
-
-        commerceEventsClient =
-          createCommerceEventsApiClient(commerceClientParams);
-      }
-
-      return commerceEventsClient;
-    },
-
-    get ioEventsClient() {
-      if (ioEventsClient === null) {
-        const ioEventsClientParams = resolveIoEventsHttpClientParams(params);
-        ioEventsClientParams.fetchOptions ??= {};
-        ioEventsClientParams.fetchOptions.timeout = 1000 * 60 * 2; // 2 minutes
-
-        ioEventsClient = createAdobeIoEventsApiClient(ioEventsClientParams);
-      }
-
-      return ioEventsClient;
-    },
-
-    get appCredentials() {
-      return appCredentials;
-    },
-  };
 };
 
 /**
@@ -190,6 +82,7 @@ export function findExistingProviderMetadata(
 }
 
 /**
+<<<<<<< HEAD
  * Find existing event registrations by client ID and name.
  * @param allRegistrations - The list of all existing event registrations.
  * @param clientId - The client ID of the workspace where the registration was created.
@@ -205,6 +98,27 @@ export function findExistingRegistrations(
   return allRegistrations.find(
     (reg) => reg.client_id === clientId && reg.name === name,
   );
+}
+
+/**
+ * Generates a namespaced event name by combining the application ID with the event name.
+ * @param metadata
+ * @param name
+ */
+export function getNamespacedEvent(
+  metadata: ApplicationMetadata,
+  name: string,
+) {
+  return `${metadata.id}.${name}`;
+}
+
+/**
+ * Creates a fully qualified event name for Adobe Commerce events.
+ * @param appId - The application ID
+ * @param event - The Commerce event
+ */
+export function getEventName(appId: string, event: CommerceEvent) {
+  return `${appId}.${event.name}`;
 }
 
 /**
@@ -289,6 +203,18 @@ export function kebabToTitleCase(str: string) {
     .join(" ");
 }
 
+/*
+ * Find an existing Commerce event subscription by its event name.
+ * @param allSubscriptions - Map of all existing event subscriptions keyed by event name.
+ * @param eventName - The namespaced event name to search for.
+ */
+export function findExistingSubscription(
+  allSubscriptions: Map<string, CommerceEventSubscription>,
+  eventName: string,
+) {
+  return allSubscriptions.get(eventName) ?? null;
+}
+
 /**
  * Retrieves the current existing data and returns it in a normalized way.
  * @param context The execution context.
@@ -332,7 +258,33 @@ export async function getIoEventsExistingData(context: EventsExecutionContext) {
   };
 }
 
-/** The data that we may already have in I/O Events. */
+/** The I/O Events data that we may already have. */
 export type ExistingIoEventsData = Awaited<
   ReturnType<typeof getIoEventsExistingData>
+>;
+
+/**
+ * Retrieves the current existing Commerce eventing data and returns it in a normalized way.
+ * @param context - The execution context.
+ */
+export async function getCommerceEventingExistingData(
+  context: EventsExecutionContext,
+) {
+  const { commerceEventsClient } = context;
+  const existingSubscriptions =
+    await commerceEventsClient.getAllEventSubscriptions();
+
+  const subscriptions = new Map(
+    existingSubscriptions.map((subscription) => [
+      subscription.name,
+      subscription,
+    ]),
+  );
+
+  return { subscriptions };
+}
+
+/** The Commerce Eventing data that we may already have. */
+export type ExistingCommerceEventingData = Awaited<
+  ReturnType<typeof getCommerceEventingExistingData>
 >;
