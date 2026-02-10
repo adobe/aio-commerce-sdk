@@ -16,4 +16,5 @@ export { eventingStep } from "./branch";
 export { commerceEventsStep } from "./commerce";
 export { externalEventsStep } from "./external";
 
-export type { EventsConfig, EventsStepContext } from "./utils";
+export type { EventsStepContext } from "./context";
+export type { EventsConfig } from "./utils";

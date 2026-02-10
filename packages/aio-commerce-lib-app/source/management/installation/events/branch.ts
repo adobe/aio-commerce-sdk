@@ -10,10 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { defineBranchStep } from "../workflow";
+import { defineBranchStep } from "#management/installation/workflow/index";
+
 import { commerceEventsStep, hasCommerceEvents } from "./commerce";
+import { createEventsStepContext } from "./context";
 import { externalEventsStep, hasExternalEvents } from "./external";
-import { createEventsStepContext } from "./utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { EventsConfig } from "./utils";
