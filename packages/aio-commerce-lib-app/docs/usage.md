@@ -302,9 +302,6 @@ export default defineCustomInstallationStep(async (config, context) => {
   logger.info("Installation step started");
 
   // Your installation logic here
-  // TypeScript provides autocompletion for:
-  // - config.metadata, config.businessConfig, config.eventing, etc.
-  // - context.logger, context.params
 
   logger.info("Installation step completed");
 
@@ -362,7 +359,6 @@ export default defineCustomInstallationStep(async (config, context) => {
 
   try {
     // Example: Check if required configuration exists
-    // TypeScript will validate that businessConfig exists on config
     if (!config.businessConfig?.schema) {
       throw new Error("Business configuration schema is required");
     }
@@ -395,9 +391,8 @@ export default defineCustomInstallationStep(async (config, context) => {
 - Scripts are executed **sequentially** in the order defined in the configuration
 - If any script throws an error, the entire installation fails and subsequent scripts are not executed
 - Scripts have access to the complete app configuration and can use it to make decisions
-- Use `context.logger` for logging - it's automatically configured with appropriate log levels
+- You can use `context.logger` for logging
 - Scripts are pre-loaded and bundled with your action during the `generate actions` command
-- After modifying custom installation scripts, run `npx @adobe/aio-commerce-lib-app generate actions` to regenerate the installation action
 
 ### CLI Commands
 
@@ -420,15 +415,10 @@ When you run `generate actions`, the CLI automatically:
 
 1. Reads your `app.commerce.config.*` file
 2. Finds all custom installation scripts defined in `installation.customInstallationSteps`
-3. Generates static ES6 imports for each script in the installation action
-4. Creates a `loadCustomInstallationScripts()` function that maps script paths to loaded modules
-5. Updates the installation context to include pre-loaded scripts
+3. Appends them to the generated `installation` action.
 
-After modifying your custom installation scripts or their configuration, always run:
-
-```bash
-npx @adobe/aio-commerce-lib-app generate actions
-```
+> [!IMPORTANT]
+> Scripts are pre-loaded and bundled with your action during the `generate actions` command. After modifying custom installation scripts, run `npx aio-commerce-lib-app generate actions` to regenerate the `installation` action.
 
 This ensures your installation action includes the latest script imports and configuration.
 
