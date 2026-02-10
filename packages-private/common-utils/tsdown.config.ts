@@ -14,5 +14,9 @@ import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
 import { mergeConfig } from "tsdown";
 
 export default mergeConfig(baseConfig, {
-  entry: ["./source/logging.ts", "./source/valibot/index.ts"],
+  entry: [
+    "./source/logging.ts",
+    "./source/actions/index.ts",
+    "./source/valibot/index.ts",
+  ],
 });

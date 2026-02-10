@@ -1,5 +1,5 @@
 ---
-"@adobe/aio-commerce-lib-core": minor
+"@adobe/aio-commerce-lib-core": patch
 ---
 
-Implement HTTP router for web actions
+Enhance core type definitions.
