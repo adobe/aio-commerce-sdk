@@ -45,7 +45,7 @@ This module exports configuration management utilities for the AIO Commerce SDK.
 | [byCode](functions/byCode.md)                                       | Creates a scope selector that identifies a scope by its code only.                                         |
 | [byCodeAndLevel](functions/byCodeAndLevel.md)                       | Creates a scope selector that identifies a scope by its code and level.                                    |
 | [byScopeId](functions/byScopeId.md)                                 | Creates a scope selector that identifies a scope by its unique ID.                                         |
-| [generateEncryptionKey](functions/generateEncryptionKey.md)         | Generates a new encryption key suitable for AIO_COMMERCE_CONFIG_ENCRYPTION_KEY.                            |
+| [generateEncryptionKey](functions/generateEncryptionKey.md)         | Generates a new encryption key suitable for AIO_COMMERCE_CONFIG_ENCRYPTION_KEY.                                         |
 | [getConfigSchema](functions/getConfigSchema.md)                     | Gets the configuration schema with lazy initialization and version checking.                               |
 | [getConfiguration](functions/getConfiguration.md)                   | Gets configuration for a scope.                                                                            |
 | [getConfigurationByKey](functions/getConfigurationByKey.md)         | Gets a specific configuration value by key for a scope.                                                    |
