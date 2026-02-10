@@ -20,16 +20,20 @@ import type {
   ExecutionContext,
 } from "#management/installation/workflow/step";
 
+export type InstallationConfig = CommerceAppConfigOutputModel & {
+  installation: NonNullable<CommerceAppConfigOutputModel["installation"]>;
+};
+
 /** Config type when custom installation steps are present. */
-export type CustomInstallationConfig = SetRequiredDeep<
-  CommerceAppConfigOutputModel,
+export type ConfigWithInstallationSteps = SetRequiredDeep<
+  InstallationConfig,
   "installation.customInstallationSteps"
 >;
 
 /** Check if config has custom installation steps. */
 export function hasCustomInstallationSteps(
   config: CommerceAppConfigOutputModel,
-): config is CustomInstallationConfig {
+): config is ConfigWithInstallationSteps {
   return (
     Array.isArray(config?.installation?.customInstallationSteps) &&
     config.installation.customInstallationSteps.length > 0
@@ -59,7 +63,7 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
     },
 
     run: async (
-      config: CustomInstallationConfig,
+      config: ConfigWithInstallationSteps,
       context: ExecutionContext,
     ): Promise<ScriptExecutionResult> => {
       const { logger } = context;
@@ -113,7 +117,7 @@ export function createCustomScriptSteps(
     return [];
   }
 
-  return config.installation?.customInstallationSteps.map((scriptConfig) =>
+  return config.installation.customInstallationSteps.map((scriptConfig) =>
     createCustomScriptStep(scriptConfig),
   );
 }

@@ -17,12 +17,12 @@ import {
 } from "./custom-scripts";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { CustomInstallationConfig } from "./custom-scripts";
+import type { ConfigWithInstallationSteps } from "./custom-scripts";
 
 /** Check if config has custom installation steps. */
 export function hasCustomInstallation(
   config: CommerceAppConfigOutputModel,
-): config is CustomInstallationConfig {
+): config is ConfigWithInstallationSteps {
   return hasCustomInstallationSteps(config);
 }
 
