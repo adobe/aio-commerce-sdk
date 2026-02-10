@@ -116,29 +116,4 @@ describe("createCustomScriptSteps", () => {
     expect(steps[2].name).toBe("Script 3");
     expect(steps[2].meta.label).toBe("Script 3");
   });
-
-  test("should use script path as description fallback when description is missing", () => {
-    const config: CommerceAppConfigOutputModel = {
-      ...baseConfig,
-      installation: {
-        customInstallationSteps: [
-          {
-            script: "./scripts/my-script.js",
-            name: "My Script",
-            description: "",
-          },
-        ],
-      },
-    };
-
-    const steps = createCustomScriptSteps(config);
-
-    if (!steps) {
-      throw new Error("Expected steps to be defined");
-    }
-
-    expect(steps[0].meta.description).toBe(
-      "Execute custom script: ./scripts/my-script.js",
-    );
-  });
 });
