@@ -39,6 +39,18 @@ describe("PaaS Commerce Events API - Integration Tests", () => {
     return `${baseUrl}/${pathname}`;
   }
 
+  function extractEventSubscriptionData(body: Record<string, unknown> | null) {
+    if (!body) {
+      return null;
+    }
+
+    const event = body.event as Record<string, unknown>;
+    const fields = event.fields as Record<string, unknown>[];
+    const rules = event.rules as Record<string, unknown>[];
+
+    return { event, fields, rules };
+  }
+
   // All tests are the same with different payloads, so we just parameterize them.
   describe.each(COMMERCE_EVENTS_API_PAYLOADS)("$name", (payload) => {
     test("should make a request using the correct HTTP method", async () => {
@@ -156,23 +168,21 @@ describe("PaaS Commerce Events API - Integration Tests", () => {
         ],
       });
 
-      if (!capture.body) {
+      const data = extractEventSubscriptionData(capture.body);
+      if (!data) {
         expect.fail("Captured request body is null");
+        return;
       }
 
-      const event = capture.body.event as Record<string, unknown>;
-      const fields = event.fields as Record<string, unknown>[];
-      const rules = event.rules as Record<string, unknown>[];
-
-      expect(event).toHaveProperty(
+      expect(data.event).toHaveProperty(
         "name",
         "observer.catalog_product_save_after",
       );
-      expect(fields).toHaveLength(3);
-      expect(fields).toContainEqual({ name: "name" });
-      expect(fields).toContainEqual({ name: "price" });
-      expect(fields).toContainEqual({ name: "_origData" });
-      expect(rules).toEqual([
+      expect(data.fields).toHaveLength(3);
+      expect(data.fields).toContainEqual({ name: "name" });
+      expect(data.fields).toContainEqual({ name: "price" });
+      expect(data.fields).toContainEqual({ name: "_origData" });
+      expect(data.rules).toEqual([
         {
           field: "price",
           operator: "lessThan",
@@ -230,23 +240,21 @@ describe("PaaS Commerce Events API - Integration Tests", () => {
         rules: commerceEvent.rules,
       });
 
-      if (!capture.body) {
+      const data = extractEventSubscriptionData(capture.body);
+      if (!data) {
         expect.fail("Captured request body is null");
+        return;
       }
 
-      const event = capture.body.event as Record<string, unknown>;
-      const fields = event.fields as Record<string, unknown>[];
-      const rules = event.rules as Record<string, unknown>[];
-
-      expect(event).toHaveProperty(
+      expect(data.event).toHaveProperty(
         "name",
         "observer.catalog_product_save_after",
       );
-      expect(fields).toHaveLength(3);
-      expect(fields).toContainEqual({ name: "name" });
-      expect(fields).toContainEqual({ name: "price" });
-      expect(fields).toContainEqual({ name: "_origData" });
-      expect(rules).toEqual([
+      expect(data.fields).toHaveLength(3);
+      expect(data.fields).toContainEqual({ name: "name" });
+      expect(data.fields).toContainEqual({ name: "price" });
+      expect(data.fields).toContainEqual({ name: "_origData" });
+      expect(data.rules).toEqual([
         {
           field: "price",
           operator: "lessThan",
