@@ -268,6 +268,10 @@ export function configureCommerce(context: EventsExecutionContext) {
   return { commerceConfigured: true };
 }
 
+/**
+ * Creates an event subscription in Commerce for the given event and provider.
+ * @param params - The parameters necessary to create the Commerce event subscription.
+ */
 async function createCommerceEventSubscription(
   params: CreateCommerceEventSubscriptionParams,
 ) {
