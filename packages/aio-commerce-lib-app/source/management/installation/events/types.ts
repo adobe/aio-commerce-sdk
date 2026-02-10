@@ -14,35 +14,37 @@ import type {
   EventProviderType,
   IoEventProvider,
 } from "@adobe/aio-commerce-lib-events/io-events";
-import type { ApplicationMetadata } from "#config/index";
+import type { ArrayElement } from "type-fest";
 import type {
   AppEvent,
   CommerceEvent,
   EventProvider,
-  ExternalEvent,
 } from "#config/schema/eventing";
-import type { EventsExecutionContext } from "./utils";
+import type { ApplicationMetadata } from "#config/schema/metadata";
+import type { onboardIoEvents } from "#management/installation/events/helpers";
+import type { EventsExecutionContext } from "./context";
 
-// Combine EventProvider with its type for easier handling.
+/** Augmented provider data with it's type. */
 export type ProviderWithType = EventProvider & { type: EventProviderType };
 
-export type CreateProviderParams = {
+/** Parameters needed to create a provider in Adobe I/O Events */
+export type CreateIoProviderParams = {
   context: EventsExecutionContext;
   provider: ProviderWithType & { instanceId: string };
 };
 
-export type CreateProviderEventsMetadataParams = {
+/** Parameters needed to create event metadata of a provider in Adobe I/O Events */
+export type CreateIoProviderEventsMetadataParams = {
   context: EventsExecutionContext;
   type: EventProviderType;
   provider: IoEventProvider;
-  event: CommerceEvent | ExternalEvent;
+  event: AppEvent;
 };
 
-export type AppEventWithoutRuntimeActions = Omit<
-  CommerceEvent | ExternalEvent,
-  "runtimeActions"
->;
+/** Event data with runtime actions omitted.  */
+export type AppEventWithoutRuntimeActions = Omit<AppEvent, "runtimeActions">;
 
+/** Parameters needed to create event event registrations in Adobe I/O Events. */
 export type CreateRegistrationParams = {
   context: EventsExecutionContext;
   events: AppEventWithoutRuntimeActions[];
@@ -50,10 +52,41 @@ export type CreateRegistrationParams = {
   runtimeAction: string;
 };
 
-export type OnboardIoEventsParams = {
+/** Parameters needed to onboard all the entities of Adobe I/O Events. */
+export type OnboardIoEventsParams<EventType extends AppEvent> = {
   context: EventsExecutionContext;
   metadata: ApplicationMetadata;
   provider: EventProvider;
-  events: AppEvent[];
+  events: EventType[];
   providerType: EventProviderType;
+};
+
+/** The returned data of an onboarded Adobe I/O event provider. */
+export type ProviderDataFromIo<EventType extends AppEvent> = Awaited<
+  ReturnType<typeof onboardIoEvents<EventType>>
+>["providerData"];
+
+/** The returned data of onboarded Adobe I/O events. */
+export type EventsDataFromIo<EventType extends AppEvent> = Awaited<
+  ReturnType<typeof onboardIoEvents<EventType>>
+>["eventsData"];
+
+/** The parameters needed to onboard all the entities of Commerce Eventing. */
+export type OnboardCommerceEventingParams = {
+  context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
+  provider: EventProvider;
+
+  ioData: {
+    provider: ProviderDataFromIo<CommerceEvent>;
+    events: EventsDataFromIo<CommerceEvent>;
+  };
+};
+
+/** The parameters needed to create event subscriptions in Commerce. */
+export type CreateCommerceEventSubscriptionParams = {
+  context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
+  provider: ProviderDataFromIo<CommerceEvent>;
+  event: ArrayElement<EventsDataFromIo<CommerceEvent>>;
 };

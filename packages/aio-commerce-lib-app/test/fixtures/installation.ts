@@ -43,9 +43,16 @@ export function createMockInstallationContext(
   overrides?: Partial<InstallationContext>,
 ): InstallationContext {
   return {
-    params: {},
-    logger: createMockLogger(),
-    ...overrides,
+    appCredentials: {
+      clientId: "test-client-id",
+      consumerOrgId: "test-consumer-org-id",
+      projectId: "test-project-id",
+      workspaceId: "test-workspace-id",
+      ...(overrides?.appCredentials ?? {}),
+    },
+
+    params: { ...(overrides?.params ?? {}) },
+    logger: overrides?.logger ?? createMockLogger(),
   };
 }
 
@@ -136,7 +143,7 @@ export function createMockFailedState(
 }
 
 /** Base metadata for test configs. */
-const baseMetadata = {
+export const mockMetadata = {
   id: "test-app",
   displayName: "Test App",
   description: "A test application",
@@ -194,18 +201,18 @@ const webhooksPart = [
 
 /** Minimal valid config with only required metadata fields. */
 export const minimalValidConfig: CommerceAppConfigOutputModel = {
-  metadata: baseMetadata,
+  metadata: mockMetadata,
 };
 
 /** Config fixture with eventing.commerce configured. */
 export const configWithCommerceEventing: CommerceAppConfigOutputModel = {
-  metadata: { ...baseMetadata, id: "test-app-commerce-events" },
+  metadata: { ...mockMetadata, id: "test-app-commerce-events" },
   eventing: commerceEventingPart,
 };
 
 /** Config fixture with eventing.external configured. */
 export const configWithExternalEventing: CommerceAppConfigOutputModel = {
-  metadata: { ...baseMetadata, id: "test-app-external-events" },
+  metadata: { ...mockMetadata, id: "test-app-external-events" },
   eventing: externalEventingPart,
 };
 
@@ -213,13 +220,13 @@ export const configWithExternalEventing: CommerceAppConfigOutputModel = {
 export const configWithWebhooks: CommerceAppConfigOutputModel & {
   webhooks: unknown[];
 } = {
-  metadata: { ...baseMetadata, id: "test-app-webhooks" },
+  metadata: { ...mockMetadata, id: "test-app-webhooks" },
   webhooks: webhooksPart,
 };
 
 /** Config fixture with both commerce and external eventing. */
 export const configWithFullEventing: CommerceAppConfigOutputModel = {
-  metadata: { ...baseMetadata, id: "test-app-full-eventing" },
+  metadata: { ...mockMetadata, id: "test-app-full-eventing" },
   eventing: {
     ...commerceEventingPart,
     ...externalEventingPart,
@@ -230,7 +237,7 @@ export const configWithFullEventing: CommerceAppConfigOutputModel = {
 export const configWithEventingAndWebhooks: CommerceAppConfigOutputModel & {
   webhooks: unknown[];
 } = {
-  metadata: { ...baseMetadata, id: "test-app-full" },
+  metadata: { ...mockMetadata, id: "test-app-full" },
   eventing: {
     ...commerceEventingPart,
     ...externalEventingPart,

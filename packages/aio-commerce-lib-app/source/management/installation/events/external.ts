@@ -18,7 +18,8 @@ import { EXTERNAL_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
 import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InferStepOutput } from "#management/installation/workflow/step";
-import type { EventsConfig, EventsExecutionContext } from "./utils";
+import type { EventsExecutionContext } from "./context";
+import type { EventsConfig } from "./utils";
 
 /** Config type when external event sources are present. */
 export type ExternalEventsConfig = SetRequiredDeep<
@@ -57,7 +58,7 @@ export const externalEventsStep = defineLeafStep({
     const existingIoEventsData = await getIoEventsExistingData(context);
 
     for (const { provider, events } of config.eventing.external) {
-      const eventSourceData = await onboardIoEvents(
+      const { providerData, eventsData } = await onboardIoEvents(
         {
           context,
           metadata: config.metadata,
@@ -68,7 +69,18 @@ export const externalEventsStep = defineLeafStep({
         existingIoEventsData,
       );
 
-      stepData.push(eventSourceData);
+      stepData.push({
+        provider: {
+          config: provider,
+          data: {
+            ...providerData,
+            events: {
+              config: events,
+              data: eventsData,
+            },
+          },
+        },
+      });
     }
 
     logger.debug("Completed External Events installation step.");
