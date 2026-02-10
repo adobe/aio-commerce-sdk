@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "workspace:*",
+    "@adobe/aio-lib-core-logging": "^3.0.2",
     "@standard-schema/spec": "^1.1.0",
     "regexparam": "^3.0.0",
     "valibot": "^1.1.0"

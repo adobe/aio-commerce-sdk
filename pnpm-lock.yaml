@@ -90,6 +90,9 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../../packages/aio-commerce-lib-core
+      '@adobe/aio-lib-core-logging':
+        specifier: ^3.0.2
+        version: 3.0.2
       '@standard-schema/spec':
         specifier: ^1.1.0
         version: 1.1.0
@@ -312,21 +315,12 @@ importers:
 
   packages/aio-commerce-lib-core:
     dependencies:
-      '@adobe/aio-lib-core-logging':
-        specifier: ^3.0.2
-        version: 3.0.2
-      '@standard-schema/spec':
-        specifier: ^1.0.0
-        version: 1.1.0
       ansis:
         specifier: ^4.1.0
         version: 4.2.0
       camelcase:
         specifier: ^8.0.0
         version: 8.0.0
-      regexparam:
-        specifier: ^3.0.0
-        version: 3.0.0
       valibot:
         specifier: ^1.1.0
         version: 1.2.0(typescript@5.9.3)
