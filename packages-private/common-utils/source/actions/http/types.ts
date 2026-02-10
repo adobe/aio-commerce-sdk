@@ -10,10 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
+import type {
+  HttpMethod,
+  RuntimeActionParams,
+} from "@adobe/aio-commerce-lib-core/params";
+import type {
+  ErrorResponse,
+  SuccessResponse,
+} from "@adobe/aio-commerce-lib-core/responses";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { EmptyObject, Promisable, Simplify } from "type-fest";
-import type { HttpMethod, RuntimeActionParams } from "#params/types";
-import type { ErrorResponse, SuccessResponse } from "#responses/helpers";
 
 /**
  * Response type for route handlers.

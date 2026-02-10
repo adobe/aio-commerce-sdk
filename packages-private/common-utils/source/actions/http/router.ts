@@ -10,19 +10,21 @@
  * governing permissions and limitations under the License.
  */
 
-import { parse } from "regexparam";
-
 import {
   badRequest,
   internalServerError,
   methodNotAllowed,
   notFound,
-} from "#responses/presets";
+} from "@adobe/aio-commerce-lib-core/responses";
+import { parse } from "regexparam";
 
 import { parseQueryParams, parseRequestBody, validateSchema } from "./utils";
 
+import type {
+  HttpMethod,
+  RuntimeActionParams,
+} from "@adobe/aio-commerce-lib-core/params";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type { HttpMethod, RuntimeActionParams } from "#params/types";
 import type {
   BaseContext,
   CompiledRoute,
