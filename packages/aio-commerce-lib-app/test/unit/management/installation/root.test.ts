@@ -12,45 +12,62 @@
 
 import { describe, expect, test } from "vitest";
 
-import { customInstallationStep } from "#management/installation/custom-installation/branch";
 import { eventingStep } from "#management/installation/events/branch";
-import {
-  createRootInstallationStep,
-  ROOT_INSTALLATION_STEP,
-} from "#management/installation/root";
+import { createRootInstallationStep } from "#management/installation/root";
 import { webhooksStep } from "#management/installation/webhooks/branch";
 
-describe("ROOT_INSTALLATION_STEP", () => {
-  test("should be a branch step with type 'branch'", () => {
-    expect(ROOT_INSTALLATION_STEP.type).toBe("branch");
-  });
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-  test("should have name 'installation'", () => {
-    expect(ROOT_INSTALLATION_STEP.name).toBe("installation");
-  });
-
-  test("should have meta", () => {
-    expect(ROOT_INSTALLATION_STEP.meta.label).toBeDefined();
-    expect(ROOT_INSTALLATION_STEP.meta.description).toBeDefined();
-  });
-
-  test("should have default children (eventingStep, webhooksStep, and customInstallationStep)", () => {
-    expect(ROOT_INSTALLATION_STEP.children).toEqual([
-      eventingStep,
-      webhooksStep,
-      customInstallationStep,
-    ]);
-  });
-});
+const baseConfig: CommerceAppConfigOutputModel = {
+  metadata: {
+    id: "test-app",
+    displayName: "Test App",
+    description: "Test App description",
+    version: "1.0.0",
+  },
+};
 
 describe("createRootInstallationStep", () => {
-  test("should return ROOT_INSTALLATION_STEP when no extra steps provided", () => {
-    const result = createRootInstallationStep();
-    expect(result).toBe(ROOT_INSTALLATION_STEP);
+  test("should create installation step with default children", () => {
+    const result = createRootInstallationStep(baseConfig);
+
+    expect(result.type).toBe("branch");
+    expect(result.name).toBe("installation");
+    expect(result.children.length).toBe(3);
+    expect(result.children[0]).toBe(eventingStep);
+    expect(result.children[1]).toBe(webhooksStep);
+    expect(result.children[2].name).toBe("Custom Installation Steps");
   });
 
-  test("should return ROOT_INSTALLATION_STEP when empty array provided", () => {
-    const result = createRootInstallationStep();
-    expect(result).toBe(ROOT_INSTALLATION_STEP);
+  test("should create custom installation step with dynamic children when config has custom steps", () => {
+    const configWithCustomSteps: CommerceAppConfigOutputModel = {
+      ...baseConfig,
+      installation: {
+        customInstallationSteps: [
+          {
+            script: "./scripts/my-script.js",
+            name: "My Custom Script",
+            description: "Does something custom",
+          },
+        ],
+      },
+    };
+
+    const result = createRootInstallationStep(configWithCustomSteps);
+
+    expect(result.children.length).toBe(3);
+    const customInstallationStep = result.children[2];
+    expect(customInstallationStep.name).toBe("Custom Installation Steps");
+    expect(customInstallationStep.type).toBe("branch");
+
+    // The custom installation step should have children (script steps directly)
+    if (
+      customInstallationStep.type === "branch" &&
+      customInstallationStep.children
+    ) {
+      expect(customInstallationStep.children.length).toBe(1);
+      expect(customInstallationStep.children[0].name).toBe("My Custom Script");
+      expect(customInstallationStep.children[0].type).toBe("leaf");
+    }
   });
 });

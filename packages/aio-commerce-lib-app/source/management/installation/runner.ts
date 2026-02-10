@@ -51,7 +51,7 @@ export function createInstallationPlan(
   options: CreateInstallationPlanOptions,
 ): InstallationPlan {
   const { config } = options;
-  const rootStep = createRootInstallationStep();
+  const rootStep = createRootInstallationStep(config);
 
   return buildPlan({ rootStep, config });
 }
@@ -63,7 +63,7 @@ export function runInstallation(
   options: RunInstallationOptions,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
   const { installationContext, config, plan, hooks } = options;
-  const rootStep = createRootInstallationStep();
+  const rootStep = createRootInstallationStep(config);
 
   return executeWorkflow({
     rootStep,

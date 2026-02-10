@@ -10,33 +10,35 @@
  * governing permissions and limitations under the License.
  */
 
-import { customInstallationStep } from "./custom-installation";
+import { createCustomInstallationStep } from "./custom-installation";
 import { eventingStep } from "./events";
 import { webhooksStep } from "./webhooks";
 import { defineBranchStep } from "./workflow";
 
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AnyStep, BranchStep } from "./workflow";
 
-/** The default child steps built-in in the library. */
-const DEFAULT_CHILD_STEPS: AnyStep[] = [
-  eventingStep,
-  webhooksStep,
-  customInstallationStep,
-];
-
-/** The root installation branch step. */
-export const ROOT_INSTALLATION_STEP = defineBranchStep({
-  name: "installation",
-  meta: {
-    label: "Installation",
-    description: "App installation workflow",
-  },
-  children: DEFAULT_CHILD_STEPS,
-});
+/**
+ * Creates the default child steps built-in in the library with dynamic children based on the config.
+ */
+function createDefaultChildSteps(
+  config: CommerceAppConfigOutputModel,
+): AnyStep[] {
+  return [eventingStep, webhooksStep, createCustomInstallationStep(config)];
+}
 
 /**
- * Creates a root installation step.
+ * Creates a root installation step with dynamic children based on the config.
  */
-export function createRootInstallationStep(): BranchStep {
-  return ROOT_INSTALLATION_STEP;
+export function createRootInstallationStep(
+  config: CommerceAppConfigOutputModel,
+): BranchStep {
+  return defineBranchStep({
+    name: "installation",
+    meta: {
+      label: "Installation",
+      description: "App installation workflow",
+    },
+    children: createDefaultChildSteps(config),
+  });
 }

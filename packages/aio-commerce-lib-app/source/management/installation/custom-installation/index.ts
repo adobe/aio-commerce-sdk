@@ -12,12 +12,9 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the custom installation module */
 
-export { customInstallationStep } from "./branch";
+export { createCustomInstallationStep } from "./branch";
+export { createCustomScriptSteps } from "./custom-scripts";
 export { defineCustomInstallationStep } from "./define";
-export { executeCustomInstallationScripts } from "./execute-scripts";
 
+export type { CustomInstallationConfig } from "./custom-scripts";
 export type { CustomInstallationStepHandler } from "./define";
-export type {
-  CustomInstallationConfig,
-  CustomInstallationScriptsStepData,
-} from "./execute-scripts";

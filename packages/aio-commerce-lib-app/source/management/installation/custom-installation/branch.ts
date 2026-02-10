@@ -12,12 +12,12 @@
 
 import { defineBranchStep } from "../workflow";
 import {
-  executeCustomInstallationScripts,
+  createCustomScriptSteps,
   hasCustomInstallationSteps,
-} from "./execute-scripts";
+} from "./custom-scripts";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { CustomInstallationConfig } from "./execute-scripts";
+import type { CustomInstallationConfig } from "./custom-scripts";
 
 /** Check if config has custom installation steps. */
 export function hasCustomInstallation(
@@ -27,14 +27,27 @@ export function hasCustomInstallation(
 }
 
 /** Root custom installation step that executes custom installation scripts. */
-export const customInstallationStep = defineBranchStep({
-  name: "custom-installation",
+const customInstallationStepBase = defineBranchStep({
+  name: "Custom Installation Steps",
   meta: {
-    label: "Custom Installation",
+    label: "Custom Installation Steps",
     description:
       "Executes custom installation scripts defined in the application configuration",
   },
 
   when: hasCustomInstallation,
-  children: [executeCustomInstallationScripts],
+  children: [],
 });
+
+/**
+ * Creates the custom installation step with dynamic children based on config.
+ * Each custom script becomes a direct child step.
+ */
+export function createCustomInstallationStep(
+  config: CommerceAppConfigOutputModel,
+) {
+  return {
+    ...customInstallationStepBase,
+    children: createCustomScriptSteps(config),
+  };
+}
