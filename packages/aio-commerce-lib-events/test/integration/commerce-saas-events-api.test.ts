@@ -229,9 +229,12 @@ describe("SaaS Commerce Events API - Integration Tests", () => {
       await client.createEventSubscription({
         name: "observer.catalog_product_save_after",
         fields: [
-          { name: "name" },
-          { name: "price", source: "catalog" },
-          { name: "_origData", source: "order" },
+          { name: "price" },
+          { name: "_origData" },
+          {
+            name: "quoteId",
+            source: "context_checkout_session.get_quote.get_id",
+          },
         ],
       });
 
@@ -246,11 +249,11 @@ describe("SaaS Commerce Events API - Integration Tests", () => {
         "observer.catalog_product_save_after",
       );
       expect(data.fields).toHaveLength(3);
-      expect(data.fields).toContainEqual({ name: "name" });
-      expect(data.fields).toContainEqual({ name: "price", source: "catalog" });
+      expect(data.fields).toContainEqual({ name: "price" });
+      expect(data.fields).toContainEqual({ name: "_origData" });
       expect(data.fields).toContainEqual({
-        name: "_origData",
-        source: "order",
+        name: "quoteId",
+        source: "context_checkout_session.get_quote.get_id",
       });
     });
   });
