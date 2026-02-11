@@ -15,7 +15,10 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
-import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
+import {
+  getProjectRootDirectory,
+  makeOutputDirFor,
+} from "@aio-commerce-sdk/scripting-utils/project";
 import { createOrUpdateExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
 import { readYamlFile } from "@aio-commerce-sdk/scripting-utils/yaml/index";
 import { consola } from "consola";
@@ -128,12 +131,32 @@ async function generateInstallationTemplate(
     );
   }
 
+  // The generated installation.js will be at:
+  // src/commerce-extensibility-1/.generated/actions/app-management/installation.js
+  // We need to resolve paths from project root to relative imports from this location
+  const projectRoot = await getProjectRootDirectory();
+  const installationActionDir = join(
+    projectRoot,
+    EXTENSION_POINT_FOLDER_PATH,
+    GENERATED_ACTIONS_PATH,
+  );
+
   // Generate import statements
   const importStatements = customSteps
     .map((step: CustomInstallationStep, index: number) => {
-      const scriptPath = step.script;
+      // step.script is relative to project root (e.g., "./scripts/setup.js")
+      const absoluteScriptPath = join(projectRoot, step.script);
+      let relativeImportPath = relative(
+        installationActionDir,
+        absoluteScriptPath,
+      );
+      if (!relativeImportPath.startsWith(".")) {
+        relativeImportPath = `./${relativeImportPath}`;
+      }
+      relativeImportPath = relativeImportPath.replace(/\\/g, "/");
+
       const importName = `customScript${index}`;
-      return `import * as ${importName} from '${scriptPath}';`;
+      return `import * as ${importName} from "${relativeImportPath}";`;
     })
     .join("\n");
 

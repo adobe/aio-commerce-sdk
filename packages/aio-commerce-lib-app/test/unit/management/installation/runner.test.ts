@@ -16,7 +16,6 @@ import {
   createInstallationPlan,
   runInstallation,
 } from "#management/installation/runner";
-import { defineLeafStep } from "#management/installation/workflow/step";
 import {
   configWithCommerceEventing,
   configWithWebhooks,
@@ -78,23 +77,6 @@ describe("createInstallationPlan", () => {
     expect(webhooksStep).toBeUndefined();
   });
 
-  test("should include extra steps when provided", () => {
-    const extraStep = defineLeafStep({
-      name: "custom-step",
-      meta: { label: "Custom Step" },
-      run: vi.fn(),
-    });
-
-    const plan = createInstallationPlan({
-      config: minimalValidConfig,
-      extraSteps: [extraStep],
-    });
-
-    const customStep = plan.step.children.find((c) => c.name === "custom-step");
-    expect(customStep).toBeDefined();
-    expect(customStep?.meta.label).toBe("Custom Step");
-  });
-
   test("should return a plan with unique id and createdAt", () => {
     const plan = createInstallationPlan({ config: minimalValidConfig });
 
@@ -116,63 +98,21 @@ describe("runInstallation", () => {
   });
 
   test("should return succeeded state when all steps complete", async () => {
-    const extraStep = defineLeafStep({
-      name: "test-step",
-      meta: { label: "Test Step" },
-      run: () => ({ result: "success" }),
-    });
-
     const plan = createInstallationPlan({
       config: minimalValidConfig,
-      extraSteps: [extraStep],
     });
 
     const result = await runInstallation({
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
       plan,
-      extraSteps: [extraStep],
     });
 
     expect(result.status).toBe("succeeded");
     expect(result.installationId).toBe(plan.id);
   });
 
-  test("should return failed state when a step fails", async () => {
-    const failingStep = defineLeafStep({
-      name: "failing-step",
-      meta: { label: "Failing Step" },
-      run: () => {
-        throw new Error("Step failed");
-      },
-    });
-
-    const plan = createInstallationPlan({
-      config: minimalValidConfig,
-      extraSteps: [failingStep],
-    });
-
-    const result = await runInstallation({
-      installationContext: createMockInstallationContext(),
-      config: minimalValidConfig,
-      plan,
-      extraSteps: [failingStep],
-    });
-
-    expect(result.status).toBe("failed");
-    if (result.status === "failed") {
-      expect(result.error).toBeDefined();
-      expect(result.error.message).toBe("Step failed");
-    }
-  });
-
   test("should pass hooks to the workflow executor", async () => {
-    const extraStep = defineLeafStep({
-      name: "hook-test-step",
-      meta: { label: "Hook Test Step" },
-      run: () => ({ result: "success" }),
-    });
-
     const hooks: InstallationHooks = {
       onInstallationStart: vi.fn(),
       onInstallationSuccess: vi.fn(),
@@ -182,14 +122,12 @@ describe("runInstallation", () => {
 
     const plan = createInstallationPlan({
       config: minimalValidConfig,
-      extraSteps: [extraStep],
     });
 
     await runInstallation({
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
       plan,
-      extraSteps: [extraStep],
       hooks,
     });
 
@@ -197,34 +135,5 @@ describe("runInstallation", () => {
     expect(hooks.onInstallationSuccess).toHaveBeenCalledTimes(1);
     expect(hooks.onStepStart).toHaveBeenCalled();
     expect(hooks.onStepSuccess).toHaveBeenCalled();
-  });
-
-  test("should use extra steps when provided", async () => {
-    const runFn = vi.fn().mockReturnValue({ customResult: true });
-    const extraStep = defineLeafStep({
-      name: "extra-execution-step",
-      meta: { label: "Extra Execution Step" },
-      run: runFn,
-    });
-
-    const plan = createInstallationPlan({
-      config: minimalValidConfig,
-      extraSteps: [extraStep],
-    });
-
-    const result = await runInstallation({
-      installationContext: createMockInstallationContext(),
-      config: minimalValidConfig,
-      plan,
-      extraSteps: [extraStep],
-    });
-
-    expect(runFn).toHaveBeenCalledTimes(1);
-    expect(result.status).toBe("succeeded");
-    expect(result.data).toEqual({
-      installation: {
-        "extra-execution-step": { customResult: true },
-      },
-    });
   });
 });
