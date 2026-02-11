@@ -37,7 +37,7 @@ export interface KeyValueStore<T> {
    * @param key - The key to delete.
    * @returns True if the key existed and was deleted.
    */
-  delete?(key: string): Promise<boolean>;
+  delete(key: string): Promise<boolean>;
 }
 
 /**
