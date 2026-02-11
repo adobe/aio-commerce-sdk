@@ -18,7 +18,14 @@ export default {
             label: "Product Save",
             description: "Triggered when a product is saved",
             runtimeActions: ["test-package/handle-product"],
-            fields: ["name", "price", "_origData"],
+            fields: [
+              { name: "price" },
+              { name: "_origData" },
+              {
+                name: "quoteId",
+                source: "context_checkout_session.get_quote.get_id",
+              },
+            ],
             rules: [
               {
                 field: "price",

@@ -1175,4 +1175,53 @@ describe("validateConfigDomain", () => {
       validateCommerceAppConfigDomain(eventing, "eventing"),
     ).not.toThrow();
   });
+
+  test("should validate commerce event with fields that have optional source", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              label: "Commerce Provider",
+              description: "Commerce events",
+            },
+            events: [
+              {
+                name: "observer.catalog_update",
+                label: "Catalog Update",
+                fields: [
+                  { name: "price" },
+                  { name: "_origData" },
+                  {
+                    name: "quoteId",
+                    source: "context_checkout_session.get_quote.get_id",
+                  },
+                ],
+                runtimeActions: ["my-package/sync-catalog"],
+                description: "Catalog update event",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    const validated = validateCommerceAppConfig(config);
+    expect(validated.eventing?.commerce).toHaveLength(1);
+    const event = validated.eventing?.commerce?.[0]?.events[0];
+    expect(event?.fields).toHaveLength(3);
+    expect(event?.fields?.[0]).toEqual({ name: "price" });
+    expect(event?.fields?.[1]).toEqual({ name: "_origData" });
+    expect(event?.fields?.[2]).toEqual({
+      name: "quoteId",
+      source: "context_checkout_session.get_quote.get_id",
+    });
+  });
 });
