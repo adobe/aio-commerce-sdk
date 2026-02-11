@@ -264,6 +264,7 @@ eventing: {
   - **operator**: The comparison operator (e.g., `"lessThan"`, `"greaterThan"`, `"equals"`)
   - **value**: The value to compare against
   - **Note**: If `rules` is provided, `parent` must also be provided
+  - **Note**: When using rules with PAAS, the minimum version of `magento/commerce-eventing` must be 1.17
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
 - **description**: Description of the event (max 255 characters)
 
