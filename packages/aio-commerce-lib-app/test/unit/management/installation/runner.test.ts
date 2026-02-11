@@ -16,7 +16,6 @@ import {
   createInitialInstallationState,
   runInstallation,
 } from "#management/installation/runner";
-import { defineLeafStep } from "#management/installation/workflow/step";
 import {
   configWithCommerceEventing,
   configWithWebhooks,
@@ -141,7 +140,6 @@ describe("runInstallation", () => {
 
     const initialState = createInitialInstallationState({
       config: minimalValidConfig,
-      extraSteps: [extraStep],
     });
 
     const result = await runInstallation({
@@ -184,12 +182,6 @@ describe("runInstallation", () => {
   });
 
   test("should pass hooks to the workflow executor", async () => {
-    const extraStep = defineLeafStep({
-      name: "hook-test-step",
-      meta: { label: "Hook Test Step" },
-      run: () => ({ result: "success" }),
-    });
-
     const hooks: InstallationHooks = {
       onInstallationStart: vi.fn(),
       onInstallationSuccess: vi.fn(),
@@ -199,7 +191,6 @@ describe("runInstallation", () => {
 
     const initialState = createInitialInstallationState({
       config: minimalValidConfig,
-      extraSteps: [extraStep],
     });
 
     await runInstallation({

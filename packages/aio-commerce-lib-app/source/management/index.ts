@@ -17,6 +17,7 @@
  * @packageDocumentation
  */
 
+export { defineCustomInstallationStep } from "./installation/custom-installation";
 // Export installation-specific functions
 export {
   createInitialInstallationState,
@@ -30,6 +31,7 @@ export {
   isSucceededState,
 } from "./installation/workflow";
 
+export type { CustomInstallationStepHandler } from "./installation/custom-installation";
 export type {
   CreateInitialInstallationStateOptions,
   RunInstallationOptions,

@@ -15,7 +15,6 @@ import { createInitialState, executeWorkflow } from "./workflow";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
-  AnyStep,
   FailedInstallationState,
   InstallationContext,
   InstallationHooks,
@@ -27,9 +26,6 @@ import type {
 export type CreateInitialInstallationStateOptions = {
   /** The app configuration used to determine applicable steps. */
   config: CommerceAppConfigOutputModel;
-
-  /** Additional steps to include beyond the built-in ones. */
-  extraSteps?: AnyStep[];
 };
 
 /** Options for running an installation. */
@@ -42,9 +38,6 @@ export type RunInstallationOptions = {
 
   /** The initial installation state (with all steps pending). */
   initialState: PendingInstallationState;
-
-  /** Additional steps to include beyond the built-in ones. */
-  extraSteps?: AnyStep[];
 
   /** Lifecycle hooks for status change notifications. */
   hooks?: InstallationHooks;
