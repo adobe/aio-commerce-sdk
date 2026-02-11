@@ -289,7 +289,7 @@ export async function generateInstallationTemplate(
  */
 async function loadCustomInstallationScripts(appConfig, logger) {
   const customSteps = appConfig.installation?.customInstallationSteps || [];
-  
+
   if (customSteps.length === 0) {
     return {};
   }
