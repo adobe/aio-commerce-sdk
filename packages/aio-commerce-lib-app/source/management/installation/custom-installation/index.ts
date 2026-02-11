@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,13 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
+/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the custom installation module */
 
-export default mergeConfig(baseConfig, {
-  entry: [
-    "./source/logging.ts",
-    "./source/actions/index.ts",
-    "./source/valibot/index.ts",
-  ],
-});
+export { createCustomInstallationStep } from "./branch";
+export { createCustomScriptSteps } from "./custom-scripts";
+export { defineCustomInstallationStep } from "./define";
+
+export type { ConfigWithInstallationSteps } from "./custom-scripts";
+export type { CustomInstallationStepHandler } from "./define";

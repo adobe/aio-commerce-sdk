@@ -4,6 +4,30 @@
 
 This package provides common utility functions for the Adobe Commerce SDK packages and applications. It includes reusable helpers for validation and schema definitions using [Valibot](https://valibot.dev/).
 
+## HTTP Action Router
+
+```typescript
+import { HttpActionRouter, logger } from "@adobe/aio-commerce-lib-core/actions";
+import { ok, created, notFound } from "@adobe/aio-commerce-lib-core/responses";
+
+const router = new HttpActionRouter().use(logger());
+
+router.get("/users/:id", {
+  handler: (req, ctx) => {
+    ctx.logger.info(`Fetching user ${req.params.id}`);
+    return ok({ body: { id: req.params.id } });
+  },
+});
+
+router.post("/users", {
+  handler: (req) => created({ body: req.body }),
+});
+
+export const main = router.handler();
+```
+
+[Read the HTTP Action Router Guide →](./guides/http-action-router.md)
+
 ## Valibot Utilities
 
 The package exports Valibot-related utilities through the `@aio-commerce-sdk/common-utils/valibot` entrypoint.
