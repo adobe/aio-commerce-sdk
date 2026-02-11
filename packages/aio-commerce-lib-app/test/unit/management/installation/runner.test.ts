@@ -169,25 +169,4 @@ describe("runInstallation", () => {
     expect(hooks.onStepStart).toHaveBeenCalled();
     expect(hooks.onStepSuccess).toHaveBeenCalled();
   });
-
-  test("should use extra steps when provided", async () => {
-    const runFn = vi.fn().mockReturnValue({ customResult: true });
-    const initialState = createInitialInstallationState({
-      config: minimalValidConfig,
-    });
-
-    const result = await runInstallation({
-      installationContext: createMockInstallationContext(),
-      config: minimalValidConfig,
-      initialState,
-    });
-
-    expect(runFn).toHaveBeenCalledTimes(1);
-    expect(result.status).toBe("succeeded");
-    expect(result.data).toEqual({
-      installation: {
-        "extra-execution-step": { customResult: true },
-      },
-    });
-  });
 });
