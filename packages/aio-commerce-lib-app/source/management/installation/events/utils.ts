@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+
 import type {
   CommerceEventProvider,
   CommerceEventSubscription,
@@ -225,15 +227,23 @@ export function findExistingSubscription(
  */
 export function makeWorkspaceConfig(context: EventsExecutionContext) {
   const { appCredentials, params } = context;
-
   const { consumerOrgId, projectId, workspaceId } = appCredentials;
+  const authParams = resolveAuthParams(params);
+
+  if (authParams.strategy !== "ims") {
+    throw new Error(
+      "Failed to resolve IMS authentication parameters from the runtime action inputs.",
+    );
+  }
+
   const {
-    AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
-    AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
-    AIO_COMMERCE_AUTH_IMS_SCOPES,
-    AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL,
-    AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID,
-  } = params;
+    clientId,
+    clientSecrets,
+    technicalAccountEmail,
+    technicalAccountId,
+    imsOrgId,
+    scopes,
+  } = authParams;
 
   return {
     project: {
@@ -244,7 +254,7 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
       org: {
         id: consumerOrgId,
         name: `org-${consumerOrgId}`,
-        ims_org_id: params.AIO_COMMERCE_AUTH_IMS_ORG_ID,
+        ims_org_id: imsOrgId,
       },
 
       workspace: {
@@ -260,17 +270,11 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
               name: "credential-name",
               integration_type: "oauth_server_to_server",
               oauth_server_to_server: {
-                client_id: AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
-                client_secrets: AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
-                ims_scopes: AIO_COMMERCE_AUTH_IMS_SCOPES.split(",").map(
-                  (scope) => scope.trim(),
-                ),
-
-                technical_account_email:
-                  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL,
-
-                technical_account_id:
-                  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID,
+                client_id: clientId,
+                client_secrets: clientSecrets,
+                technical_account_email: technicalAccountEmail,
+                technical_account_id: technicalAccountId,
+                ims_scopes: scopes.map((scope) => scope.trim()),
               },
             },
           ],

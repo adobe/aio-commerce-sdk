@@ -50,12 +50,18 @@ export function createMockInstallationContext(
       ...(overrides?.appCredentials ?? {}),
     },
 
+    logger: overrides?.logger ?? createMockLogger(),
     params: {
       ...(overrides?.params ?? {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["test-secret-1"],
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-ims-org-id",
+        AIO_COMMERCE_AUTH_IMS_SCOPES: ["test-scope1", "test-scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL:
+          "test-technical-account-email",
       }),
     },
-    logger: overrides?.logger ?? createMockLogger(),
   };
 }
 
