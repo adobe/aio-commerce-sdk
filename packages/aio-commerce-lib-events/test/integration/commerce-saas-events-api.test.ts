@@ -232,10 +232,7 @@ describe("SaaS Commerce Events API - Integration Tests", () => {
       const commerceEvent = config.eventing?.commerce?.[0]?.events[0] as
         | {
             name: string;
-            fields: (
-              | string
-              | { name: string; converter?: string; source?: string }
-            )[];
+            fields: string[];
             rules?: { field: string; operator: string; value: string }[];
           }
         | undefined;
@@ -245,20 +242,9 @@ describe("SaaS Commerce Events API - Integration Tests", () => {
         return;
       }
 
-      const normalizedFields = commerceEvent.fields.map(
-        (
-          field: string | { name: string; converter?: string; source?: string },
-        ) => {
-          if (typeof field === "string") {
-            return { name: field };
-          }
-          return {
-            name: field.name,
-            ...(field.converter && { converter: field.converter }),
-            ...(field.source && { source: field.source }),
-          };
-        },
-      );
+      const normalizedFields = commerceEvent.fields.map((field) => ({
+        name: field,
+      }));
 
       await client.createEventSubscription({
         name: commerceEvent.name,

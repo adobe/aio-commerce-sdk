@@ -203,6 +203,19 @@ eventing: {
           runtimeActions: ["my-package/sync-catalog"],
           description: "Triggered when catalog is updated",
         },
+        {
+          name: "observer.catalog_product_save_after",
+          fields: ["name", "price", "_origData"],
+          rules: [
+            {
+              field: "price",
+              operator: "lessThan",
+              value: "300.00",
+            },
+          ],
+          runtimeActions: ["my-package/handle-product"],
+          description: "Triggered when a product is saved with price filter",
+        },
       ],
     },
   ],
@@ -234,7 +247,12 @@ eventing: {
 **Commerce Events:**
 
 - **name**: Must start with `plugin.` or `observer.` followed by lowercase letters and underscores (e.g., `plugin.order_placed`, `observer.catalog_update`)
-- **fields**: Array of field names (lowercase alphanumeric with underscores)
+- **fields**: Array of field names (alphanumeric with underscores, case-insensitive, e.g., `"name"`, `"price"`, `"_origData"`)
+- **rules**: Optional array of filtering rules. Each rule must have:
+  - **field**: The field name to filter on
+  - **operator**: The comparison operator (e.g., `"lessThan"`, `"greaterThan"`, `"equals"`)
+  - **value**: The value to compare against
+  - **Note**: If `rules` is provided, `parent` must also be provided
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
 - **description**: Description of the event (max 255 characters)
 
