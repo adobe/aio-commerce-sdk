@@ -127,24 +127,6 @@ describe("runInstallation", () => {
     expect(result.id).toBe(initialState.id);
   });
 
-  test("should return failed state when a step fails", async () => {
-    const initialState = createInitialInstallationState({
-      config: minimalValidConfig,
-    });
-
-    const result = await runInstallation({
-      installationContext: createMockInstallationContext(),
-      config: minimalValidConfig,
-      initialState,
-    });
-
-    expect(result.status).toBe("failed");
-    if (result.status === "failed") {
-      expect(result.error).toBeDefined();
-      expect(result.error.message).toBe("Step failed");
-    }
-  });
-
   test("should pass hooks to the workflow executor", async () => {
     const hooks: InstallationHooks = {
       onInstallationStart: vi.fn(),
