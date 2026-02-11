@@ -341,7 +341,7 @@ export async function createCommerceProvider(
   const { commerceEventsClient, logger } = context;
 
   logger.info(
-    `Creating Commerce provider "${provider.label}"" with instance ID "${provider.instance_id}"`,
+    `Creating Commerce provider "${provider.label}" with instance ID "${provider.instance_id}"`,
   );
 
   return commerceEventsClient
