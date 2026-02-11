@@ -295,7 +295,7 @@ async function configureCommerceEventing(
   if (existingData.isDefaultWorkspaceConfigurationEmpty) {
     if (!config.workspaceConfiguration) {
       const message =
-        "Workspace configuration is required to enable Commerce Eventing when there is no existing workspace configuration.";
+        "Workspace configuration is required to enable Commerce Eventing when there is not an existing one.";
 
       logger.error(message);
       throw new Error(message);
