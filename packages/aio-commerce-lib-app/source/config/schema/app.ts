@@ -20,6 +20,7 @@ import {
   SchemaBusinessConfigSchema,
 } from "./business-configuration";
 import { EventingSchema } from "./eventing";
+import { InstallationSchema } from "./installation";
 import { MetadataSchema } from "./metadata";
 
 export const CommerceAppConfigSchemas = {
@@ -27,6 +28,7 @@ export const CommerceAppConfigSchemas = {
   businessConfig: SchemaBusinessConfig,
   "businessConfig.schema": SchemaBusinessConfigSchema,
   eventing: EventingSchema,
+  installation: InstallationSchema,
 } as const;
 
 /** Individual validatable domains of the commerce app config. */
@@ -38,6 +40,7 @@ export const CommerceAppConfigSchema = v.looseObject({
   metadata: MetadataSchema,
   businessConfig: v.optional(SchemaBusinessConfig),
   eventing: v.optional(EventingSchema),
+  installation: v.optional(InstallationSchema),
 });
 
 /** The input shape of the commerce app config schema. */
