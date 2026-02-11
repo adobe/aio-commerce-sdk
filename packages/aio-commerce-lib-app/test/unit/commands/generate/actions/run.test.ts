@@ -10,148 +10,259 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 
-import {
-  CUSTOM_IMPORTS_PLACEHOLDER,
-  CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
-  CUSTOM_SCRIPTS_MAP_PLACEHOLDER,
-} from "#commands/generate/actions/constants";
-import {
-  applyCustomScripts,
-  generateCustomScriptsTemplate,
-} from "#commands/generate/actions/run";
-import { templates } from "#test/fixtures/commands";
-import {
-  configWithCustomInstallationSteps,
-  minimalValidConfig,
-} from "#test/fixtures/installation";
+import { generateInstallationTemplate } from "#test/fixtures/installation";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-vi.mock("@aio-commerce-sdk/scripting-utils/project", () => ({
-  getProjectRootDirectory: () => "/fake/project/root",
-}));
+// Regex pattern to check if installationContext was replaced
+const INSTALLATION_CONTEXT_NOT_REPLACED_PATTERN =
+  /const installationContext = { params, logger };(?!\s*customScripts)/;
 
-describe("applyCustomScripts", () => {
+describe("generateInstallationTemplate", () => {
   describe("when no custom installation steps are configured", () => {
-    test("should not replace args or import customScriptsLoader", async () => {
-      const scriptsTemplate = await generateCustomScriptsTemplate(
-        templates.customScripts,
-        minimalValidConfig,
-      );
+    test("should replace placeholder with comment and not modify installationContext", async () => {
+      const template = `
+// Some code before
+// {{CUSTOM_SCRIPT_IMPORTS}}
+// Some code after
 
-      const result = applyCustomScripts(
-        templates.installation,
-        scriptsTemplate,
-      );
+async function handleExecuteInstallation(plan, params, logger) {
+  const appConfig = validateCommerceAppConfig(commerceAppManifest);
+  const hooks = createInstallationHooks(store, logger);
+  const installationContext = { params, logger };
 
-      expect(result).toContain("const args = { appConfig };");
-      expect(result).toContain("// No custom installation scripts configured");
-      expect(result).not.toContain("function customScriptsLoader");
-      expect(result).not.toContain(CUSTOM_SCRIPTS_LOADER_PLACEHOLDER);
-    });
+  const result = await runInstallation({
+    installationContext,
+    config: appConfig,
+    plan,
+    hooks,
   });
 
-  describe("when custom installation steps are configured", () => {
-    test("should replace args with customScriptsLoader and import the loader", async () => {
-      const scriptsTemplate = await generateCustomScriptsTemplate(
-        templates.customScripts,
-        configWithCustomInstallationSteps,
-      );
+  return result;
+}
+`;
 
-      const result = applyCustomScripts(
-        templates.installation,
-        scriptsTemplate,
-      );
+      const appManifest: Partial<CommerceAppConfigOutputModel> = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test App",
+          description: "Test",
+          version: "1.0.0",
+        },
+      };
 
-      expect(result).toContain("function customScriptsLoader");
+      const result = await generateInstallationTemplate(template, appManifest);
+
+      // Verify placeholder replacement
+      expect(result).toContain("// No custom installation scripts configured");
+      expect(result).not.toContain("{{CUSTOM_SCRIPT_IMPORTS}}");
+
+      // Verify installationContext remains unchanged
       expect(result).toContain(
-        "const args = { appConfig, customScriptsLoader };",
+        "const installationContext = { params, logger };",
       );
-
-      expect(result).not.toContain(CUSTOM_SCRIPTS_LOADER_PLACEHOLDER);
-    });
-  });
-
-  describe("edge cases", () => {
-    test("should handle empty installation object", async () => {
-      const appManifest: Partial<CommerceAppConfigOutputModel> = {
-        installation: {},
-      };
-
-      const scriptsTemplate = await generateCustomScriptsTemplate(
-        templates.customScripts,
-        appManifest as CommerceAppConfigOutputModel,
-      );
-
-      const result = applyCustomScripts(
-        templates.installation,
-        scriptsTemplate,
-      );
-
-      expect(result).toContain("const args = { appConfig };");
-      expect(result).toContain("// No custom installation scripts configured");
-      expect(result).not.toContain("function customScriptsLoader");
-    });
-  });
-});
-
-describe("generateCustomScriptsTemplate", () => {
-  describe("when no custom installation steps are configured", () => {
-    test("should return null", async () => {
-      const result = await generateCustomScriptsTemplate(
-        templates.customScripts,
-        minimalValidConfig,
-      );
-
-      expect(result).toBeNull();
+      expect(result).not.toContain("await loadCustomInstallationScripts");
+      expect(result).not.toContain("customScripts");
     });
   });
 
   describe("when custom installation steps are configured", () => {
-    test("should generate import statements for each script and script map", async () => {
-      const result = await generateCustomScriptsTemplate(
-        templates.customScripts,
-        configWithCustomInstallationSteps,
+    test("should generate import statements for each script", async () => {
+      const template = `
+// {{CUSTOM_SCRIPT_IMPORTS}}
+
+async function handleExecuteInstallation(plan, params, logger) {
+  const installationContext = { params, logger };
+}
+`;
+
+      const appManifest: Partial<CommerceAppConfigOutputModel> = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test App",
+          description: "Test",
+          version: "1.0.0",
+        },
+        installation: {
+          customInstallationSteps: [
+            {
+              script: "./demo-success.js",
+              name: "Demo Success",
+              description: "Success script",
+            },
+            {
+              script: "./demo-error.js",
+              name: "Demo Error",
+              description: "Error script",
+            },
+          ],
+        },
+      };
+
+      const result = await generateInstallationTemplate(template, appManifest);
+
+      // Check that import statements are generated
+      expect(result).toContain(
+        "import * as customScript0 from './demo-success.js';",
+      );
+      expect(result).toContain(
+        "import * as customScript1 from './demo-error.js';",
       );
 
-      const expectedImports = [
-        // The path re-calculation logic places the scripts 5 levels up from the generated file location
-        'import * as customScript0 from "../../../../../demo-success.js";',
-        'import * as customScript1 from "../../../../../demo-error.js";',
-      ];
+      // Check that {{CUSTOM_SCRIPT_IMPORTS}} placeholder is replaced
+      expect(result).not.toContain("{{CUSTOM_SCRIPT_IMPORTS}}");
 
-      const expectedScriptMapEntries = [
-        '"./demo-success.js": customScript0,',
-        '"./demo-error.js": customScript1,',
-      ];
+      // Check that loadCustomInstallationScripts function is generated
+      expect(result).toContain("async function loadCustomInstallationScripts");
+      expect(result).toContain("const loadedScripts = {");
+      expect(result).toContain("'./demo-success.js': customScript0,");
+      expect(result).toContain("'./demo-error.js': customScript1,");
+    });
 
-      expect(result).not.toContain(CUSTOM_IMPORTS_PLACEHOLDER);
-      expect(result).not.toContain(CUSTOM_SCRIPTS_MAP_PLACEHOLDER);
+    test("should replace installationContext to include customScripts", async () => {
+      const template = `
+// {{CUSTOM_SCRIPT_IMPORTS}}
 
-      for (const entry of expectedScriptMapEntries) {
-        expect(result).toContain(entry);
-      }
+async function handleExecuteInstallation(plan, params, logger) {
+  const appConfig = validateCommerceAppConfig(commerceAppManifest);
+  const hooks = createInstallationHooks(store, logger);
+  const installationContext = { params, logger };
 
-      for (const importStatement of expectedImports) {
-        expect(result).toContain(importStatement);
-      }
+  const result = await runInstallation({
+    installationContext,
+    config: appConfig,
+    plan,
+    hooks,
+  });
+
+  return result;
+}
+`;
+
+      const appManifest: Partial<CommerceAppConfigOutputModel> = {
+        installation: {
+          customInstallationSteps: [
+            {
+              script: "./setup.js",
+              name: "Setup",
+              description: "Setup script",
+            },
+          ],
+        },
+      };
+
+      const result = await generateInstallationTemplate(template, appManifest);
+
+      // Check that installationContext is updated
+      expect(result).toContain(
+        "await loadCustomInstallationScripts(appConfig, logger)",
+      );
+      expect(result).toContain(
+        "const installationContext = { params, logger, customScripts };",
+      );
+
+      // Original pattern should be replaced
+      expect(result).not.toMatch(INSTALLATION_CONTEXT_NOT_REPLACED_PATTERN);
+    });
+
+    test("should handle multiple custom scripts correctly", async () => {
+      const template = `
+// {{CUSTOM_SCRIPT_IMPORTS}}
+const installationContext = { params, logger };
+`;
+
+      const appManifest: Partial<CommerceAppConfigOutputModel> = {
+        installation: {
+          customInstallationSteps: [
+            {
+              script: "./script1.js",
+              name: "Script 1",
+              description: "First script",
+            },
+            {
+              script: "./script2.js",
+              name: "Script 2",
+              description: "Second script",
+            },
+            {
+              script: "../../shared/script3.js",
+              name: "Script 3",
+              description: "Third script",
+            },
+          ],
+        },
+      };
+
+      const result = await generateInstallationTemplate(template, appManifest);
+
+      // Check all imports are generated
+      expect(result).toContain(
+        "import * as customScript0 from './script1.js';",
+      );
+      expect(result).toContain(
+        "import * as customScript1 from './script2.js';",
+      );
+      expect(result).toContain(
+        "import * as customScript2 from '../../shared/script3.js';",
+      );
+
+      // Check all scripts are mapped
+      expect(result).toContain("'./script1.js': customScript0,");
+      expect(result).toContain("'./script2.js': customScript1,");
+      expect(result).toContain("'../../shared/script3.js': customScript2,");
+
+      // Check context is updated
+      expect(result).toContain("customScripts");
     });
   });
 
   describe("edge cases", () => {
     test("should handle empty installation object", async () => {
+      const template = `
+// {{CUSTOM_SCRIPT_IMPORTS}}
+const installationContext = { params, logger };
+`;
+
       const appManifest: Partial<CommerceAppConfigOutputModel> = {
         installation: {},
       };
 
-      const result = await generateCustomScriptsTemplate(
-        templates.customScripts,
-        appManifest as CommerceAppConfigOutputModel,
-      );
+      const result = await generateInstallationTemplate(template, appManifest);
 
-      expect(result).toBeNull();
+      expect(result).toContain("// No custom installation scripts configured");
+      expect(result).toContain(
+        "const installationContext = { params, logger };",
+      );
+      expect(result).not.toContain("customScripts");
+    });
+
+    test("should handle single custom script", async () => {
+      const template = `
+// {{CUSTOM_SCRIPT_IMPORTS}}
+const installationContext = { params, logger };
+`;
+
+      const appManifest: Partial<CommerceAppConfigOutputModel> = {
+        installation: {
+          customInstallationSteps: [
+            {
+              script: "./single-script.js",
+              name: "Single Script",
+              description: "Only one script",
+            },
+          ],
+        },
+      };
+
+      const result = await generateInstallationTemplate(template, appManifest);
+
+      expect(result).toContain(
+        "import * as customScript0 from './single-script.js';",
+      );
+      expect(result).toContain("'./single-script.js': customScript0,");
+      expect(result).toContain("customScripts");
     });
   });
 });

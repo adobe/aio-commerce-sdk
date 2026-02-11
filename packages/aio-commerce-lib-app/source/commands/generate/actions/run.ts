@@ -41,6 +41,9 @@ import {
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
 
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { CustomInstallationStep } from "#config/schema/installation";
+
 // This will point to the directory where the script is running from.
 // This is the dist/commands directory (as we use a facade to run the commands)
 const __filename = fileURLToPath(import.meta.url);
@@ -59,12 +62,20 @@ export async function run() {
 }
 
 /** Load the app commerce config */
-async function loadAppManifest() {
-  // If the config file is invalid or missing, we want to fail early before generating any files
-  const appConfig = await parseCommerceAppConfig();
-  consola.debug("Loaded app commerce config");
-
-  return appConfig;
+async function loadAppManifest(): Promise<
+  Partial<CommerceAppConfigOutputModel>
+> {
+  try {
+    const appConfig = await parseCommerceAppConfig();
+    consola.debug("Loaded app commerce config");
+    return appConfig;
+  } catch (error) {
+    consola.warn(
+      `Could not load app commerce config: ${stringifyError(error)}`,
+    );
+    consola.info("Using default configuration");
+    return {};
+  }
 }
 
 /** Update the ext.config.yaml file */
@@ -80,7 +91,9 @@ async function updateExtConfig() {
 }
 
 /** Generate the action files */
-async function generateActionFiles(appManifest: CommerceAppConfigOutputModel) {
+export async function generateActionFiles(
+  appManifest: Partial<CommerceAppConfigOutputModel>,
+) {
   consola.start("Generating runtime actions...");
   const outputDir = await makeOutputDirFor(
     join(EXTENSION_POINT_FOLDER_PATH, GENERATED_ACTIONS_PATH),
@@ -95,17 +108,7 @@ async function generateActionFiles(appManifest: CommerceAppConfigOutputModel) {
 
     // For installation action, inject custom script imports
     if (action.name === "installation") {
-      const customScriptsTemplatePath = join(
-        templatesDir,
-        "custom-scripts.js.template",
-      );
-
-      const scriptsTemplate = await generateCustomScriptsTemplate(
-        await readFile(customScriptsTemplatePath, "utf-8"),
-        appManifest,
-      );
-
-      template = applyCustomScripts(template, scriptsTemplate);
+      template = await generateInstallationTemplate(template, appManifest);
     }
 
     const actionPath = join(outputDir, `${action.name}.js`);
@@ -122,49 +125,23 @@ async function generateActionFiles(appManifest: CommerceAppConfigOutputModel) {
 }
 
 /**
- * Applies the given custom scripts template code to the given installation template.
- * @param installationTemplate - The installation code runtime action template
- * @param customScriptsTemplate - The custom scripts dynamically generated template.
- */
-export function applyCustomScripts(
-  installationTemplate: string,
-  customScriptsTemplate: string | null,
-) {
-  // There are scripts file to include.
-  if (customScriptsTemplate !== null) {
-    return installationTemplate
-      .replace(CUSTOM_SCRIPTS_LOADER_PLACEHOLDER, customScriptsTemplate)
-      .replace(
-        "const args = { appConfig };",
-        "const args = { appConfig, customScriptsLoader };",
-      );
-  }
-  // No custom scripts, remove the loader references
-  consola.debug(
-    "No custom installation steps found, skipping custom-scripts.js generation...",
-  );
-
-  return installationTemplate.replace(
-    CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
-    "// No custom installation scripts configured",
-  );
-}
-
-/**
  * Generate the installation template with dynamic custom script imports
  */
-export async function generateCustomScriptsTemplate(
+async function generateInstallationTemplate(
   template: string,
-  appManifest: CommerceAppConfigOutputModel,
+  appManifest: Partial<CommerceAppConfigOutputModel>,
 ) {
-  const customSteps = appManifest.installation?.customInstallationSteps || [];
+  const customSteps = appManifest?.installation?.customInstallationSteps || [];
 
   if (customSteps.length === 0) {
-    return null;
+    return template.replace(
+      "// {{CUSTOM_SCRIPT_IMPORTS}}",
+      "// No custom installation scripts configured",
+    );
   }
 
-  // The generated installation action with will be at:
-  // src/commerce-extensibility-1/.generated/actions/.generated/app-management
+  // The generated installation.js will be at:
+  // src/commerce-extensibility-1/.generated/actions/app-management/installation.js
   // We need to resolve paths from project root to relative imports from this location
   const projectRoot = await getProjectRootDirectory();
   const installationActionDir = join(
@@ -197,13 +174,51 @@ export async function generateCustomScriptsTemplate(
     .map((step: CustomInstallationStep, index: number) => {
       const scriptPath = step.script;
       const importName = `customScript${index}`;
-      const entry = `"${scriptPath}": ${importName},`;
-
-      return entry.padStart(entry.length + 6); // add indentation
+      return `      '${scriptPath}': ${importName},`;
     })
     .join("\n");
 
+  const loadFunction = `
+/**
+ * Loads custom installation scripts defined in the manifest
+ * @param {Object} appConfig - Application configuration from manifest
+ * @param {Object} logger - Logger instance
+ * @returns {Promise<Object>} Object mapping script paths to loaded modules
+ */
+async function loadCustomInstallationScripts(appConfig, logger) {
+  const customSteps = appConfig.installation?.customInstallationSteps || [];
+  
+  if (customSteps.length === 0) {
+    logger.debug("No custom installation scripts configured");
+    return {};
+  }
+
+  try {
+    const loadedScripts = {
+${scriptMap}
+    };
+
+    logger.debug(\`Loaded \${Object.keys(loadedScripts).length} custom installation script(s)\`);
+    return loadedScripts;
+  } catch (error) {
+    logger.error(\`Failed to load custom installation scripts: \${error.message}\`);
+    throw new Error(\`Failed to load custom installation scripts: \${error.message}\`);
+  }
+}
+`;
+
   // Inject imports and function into template
-  const result = template.replace(CUSTOM_IMPORTS_PLACEHOLDER, importStatements);
-  return result.replace(CUSTOM_SCRIPTS_MAP_PLACEHOLDER, scriptMap);
+  let result = template.replace(
+    "// {{CUSTOM_SCRIPT_IMPORTS}}",
+    `${importStatements}\n\n${loadFunction}`,
+  );
+
+  // Update installationContext to include customScripts
+  result = result.replace(
+    "const installationContext = { params, logger };",
+    `const customScripts = await loadCustomInstallationScripts(appConfig, logger);
+  const installationContext = { params, logger, customScripts };`,
+  );
+
+  return result;
 }

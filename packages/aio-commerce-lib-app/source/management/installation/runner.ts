@@ -39,9 +39,6 @@ export type RunInstallationOptions = {
   /** The initial installation state (with all steps pending). */
   initialState: PendingInstallationState;
 
-  /** Additional steps to include beyond the built-in ones. */
-  extraSteps?: AnyStep[];
-
   /** Lifecycle hooks for status change notifications. */
   hooks?: InstallationHooks;
 };
@@ -51,11 +48,11 @@ export type RunInstallationOptions = {
  * Filters steps based on their `when` conditions and builds a tree structure
  * with all steps set to "pending".
  */
-export function createInitialInstallationState(
-  options: CreateInitialInstallationStateOptions,
-): PendingInstallationState {
-  const { config, extraSteps = [] } = options;
-  const rootStep = createRootInstallationStep(extraSteps);
+export function createInstallationPlan(
+  options: CreateInstallationPlanOptions,
+): InstallationPlan {
+  const { config } = options;
+  const rootStep = createRootInstallationStep(config);
 
   return createInitialState({ rootStep, config });
 }
@@ -66,14 +63,9 @@ export function createInitialInstallationState(
 export function runInstallation(
   options: RunInstallationOptions,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
-  const {
-    installationContext,
-    config,
-    initialState,
-    extraSteps = [],
-    hooks,
-  } = options;
-  const rootStep = createRootInstallationStep(extraSteps);
+  const { installationContext, config, plan, hooks } = options;
+  const rootStep = createRootInstallationStep(config);
+
   return executeWorkflow({
     rootStep,
     installationContext,
