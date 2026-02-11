@@ -17,6 +17,7 @@ import {
   COMMERCE_PROVIDER_TYPE,
   getCommerceEventingExistingData,
   getIoEventsExistingData,
+  makeWorkspaceConfig,
 } from "./utils";
 
 import type { SetRequiredDeep } from "type-fest";
@@ -60,6 +61,7 @@ export const commerceEventsStep = defineLeafStep({
     // biome-ignore lint/suspicious/noEvolvingTypes: We want the type to be auto-inferred
     const stepData = [];
 
+    const workspaceConfiguration = JSON.stringify(makeWorkspaceConfig(context));
     const existingIoEventsData = await getIoEventsExistingData(context);
     const commerceEventingExistingData =
       await getCommerceEventingExistingData(context);
@@ -84,6 +86,7 @@ export const commerceEventsStep = defineLeafStep({
           ioData: {
             provider: providerData,
             events: eventsData,
+            workspaceConfiguration,
           },
         },
         commerceEventingExistingData,

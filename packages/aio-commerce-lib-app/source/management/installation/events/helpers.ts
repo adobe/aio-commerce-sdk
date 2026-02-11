@@ -25,7 +25,11 @@ import {
   groupEventsByRuntimeActions,
 } from "./utils";
 
-import type { CommerceEventSubscription } from "@adobe/aio-commerce-lib-events/commerce";
+import type {
+  CommerceEventProvider,
+  CommerceEventSubscription,
+  UpdateEventingConfigurationParams,
+} from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   EventProviderType,
   IoEventMetadata,
@@ -33,9 +37,10 @@ import type {
   IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { AppEvent } from "#config/schema/eventing";
-import type { EventsExecutionContext } from "./context";
 import type {
+  ConfigureCommerceEventingParams,
   CreateCommerceEventSubscriptionParams,
+  CreateCommerceProviderParams,
   CreateIoProviderEventsMetadataParams,
   CreateIoProviderParams,
   CreateRegistrationParams,
@@ -56,7 +61,7 @@ async function createIoEventProvider(params: CreateIoProviderParams) {
   const { appCredentials, ioEventsClient, logger } = context;
 
   logger.info(
-    `Creating provider '${provider.label}' with instance ID '${provider.instanceId}'`,
+    `Creating provider "${provider.label}" with instance ID "${provider.instanceId}"`,
   );
 
   return ioEventsClient
@@ -97,7 +102,7 @@ async function createOrGetIoEventProvider(
   const existing = findExistingProvider(existingData, instanceId);
   if (existing) {
     logger.info(
-      `Provider '${provider.label}' already exists with ID '${existing.id}', skipping creation.`,
+      `Provider "${provider.label}" already exists with ID "${existing.id}", skipping creation.`,
     );
 
     return existing;
@@ -267,11 +272,135 @@ async function createOrGetIoEventRegistration(
   return createIoEventRegistration(params);
 }
 
-export function configureCommerce(context: EventsExecutionContext) {
-  const { logger } = context;
-  logger.info("Configuring Commerce Eventing");
+/**
+ * Ensures Commerce Eventing is configured with the given configuration, updating it if it already exists.
+ * @param eventsClient
+ * @param params
+ * @param existingData
+ */
+async function configureCommerceEventing(
+  params: ConfigureCommerceEventingParams,
+  existingData: ExistingCommerceEventingData,
+) {
+  const { context, config } = params;
+  const { commerceEventsClient, logger } = context;
+  logger.info("Starting configuration of the Commerce Eventing Module");
 
-  return { commerceConfigured: true };
+  // Always ensure eventing is enabled
+  let updateParams: UpdateEventingConfigurationParams = {
+    ...config,
+    enabled: true,
+  };
+
+  if (existingData.isDefaultWorkspaceConfigurationEmpty) {
+    if (!config.workspaceConfiguration) {
+      const message =
+        "Workspace configuration is required to enable Commerce Eventing when there is no existing workspace configuration.";
+
+      logger.error(message);
+      throw new Error(message);
+    }
+
+    logger.info(
+      "Default provider workspace configuration already present, it will not be overriden",
+    );
+
+    // Remove the workspace configuration to avoid overriding it
+    const { workspaceConfiguration, ...rest } = updateParams;
+    updateParams = rest;
+  }
+
+  logger.info(
+    "Updating Commerce Eventing configuration with provided workspace configuration.",
+  );
+
+  return commerceEventsClient
+    .updateEventingConfiguration(updateParams)
+    .then((success) => {
+      if (success) {
+        logger.info("Commerce Eventing Module configured successfully.");
+        return;
+      }
+
+      const message =
+        "Something went wrong while configuring Commerce Eventing Module. Response was not successful but no error was thrown.";
+
+      logger.error(message);
+      throw new Error(message);
+    })
+    .catch((err) => {
+      logger.error(
+        `Failed to configure Commerce Eventing Module: ${stringifyError(err)}`,
+      );
+
+      throw err;
+    });
+}
+
+/**
+ * Creates an event provider in Commerce for a given {@link IoEventProvider}.
+ * @param params - The parameters necessary to create the Commerce provider.
+ */
+export async function createCommerceProvider(
+  params: CreateCommerceProviderParams,
+) {
+  const { context, provider } = params;
+  const { commerceEventsClient, logger } = context;
+
+  logger.info(
+    `Creating Commerce provider "${provider.label}"" with instance ID "${provider.instance_id}"`,
+  );
+
+  return commerceEventsClient
+    .createEventProvider({
+      providerId: provider.id,
+      instanceId: provider.instance_id,
+      label: provider.label,
+      description: provider.description,
+      associatedWorkspaceConfiguration: provider.workspaceConfiguration,
+    })
+    .then((res) => {
+      logger.info(
+        `Commerce provider "${provider.label}" created with ID '${res.provider_id}'`,
+      );
+
+      return res;
+    })
+    .catch((err) => {
+      logger.error(
+        `Failed to create Commerce provider "${provider.label}": ${stringifyError(err)}`,
+      );
+
+      throw err;
+    });
+}
+
+/**
+ * Creates or retrieves an existing Commerce event provider.
+ * @param params - Parameters needed to create or get the Commerce provider.
+ * @param existingData - Existing Commerce providers.
+ */
+export async function createOrGetCommerceProvider(
+  params: CreateCommerceProviderParams,
+  existingProviders: CommerceEventProvider[],
+) {
+  const { context, provider } = params;
+  const { logger } = context;
+
+  const existing = findExistingProvider(
+    existingProviders,
+    provider.instance_id,
+  );
+
+  if (existing) {
+    logger.info(
+      `Provider "${provider.label}" already exists with ID "${existing.id}", skipping creation.`,
+    );
+
+    return existing;
+  }
+
+  return createCommerceProvider(params);
 }
 
 /**
@@ -441,12 +570,32 @@ export async function onboardCommerceEventing(
   existingData: ExistingCommerceEventingData,
 ) {
   const { context, metadata, ioData } = params;
-  const { logger } = context;
-  const { events, provider } = ioData;
-
+  const { events, provider, workspaceConfiguration } = ioData;
   const instanceId = provider.instance_id;
-  logger.info(
-    `Onboarding Commerce event subscriptions with provider instance ID: ${instanceId}`,
+
+  // The eventing module must be configured before creating the other entities.
+  await configureCommerceEventing(
+    {
+      context,
+      config: {
+        workspaceConfiguration,
+      },
+    },
+    existingData,
+  );
+
+  const providerPromise = createOrGetCommerceProvider(
+    {
+      context,
+      provider: {
+        id: provider.id,
+        instance_id: instanceId,
+        label: provider.label,
+        description: provider.description,
+        workspaceConfiguration,
+      },
+    },
+    existingData.providers,
   );
 
   const subscriptionsPromises = events.map((event) =>
@@ -456,7 +605,13 @@ export async function onboardCommerceEventing(
     ),
   );
 
+  const [commerceProvider, subscriptions] = await Promise.all([
+    providerPromise,
+    Promise.all(subscriptionsPromises),
+  ]);
+
   return {
-    subscriptions: await Promise.all(subscriptionsPromises),
+    commerceProvider,
+    subscriptions,
   };
 }

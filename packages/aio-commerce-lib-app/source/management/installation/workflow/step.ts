@@ -23,6 +23,11 @@ export type InstallationContext = {
   /** The raw action parameters from the App Builder runtime action. */
   params: RuntimeActionParams & {
     AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
+    AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: string;
+    AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: string;
+    AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: string;
+    AIO_COMMERCE_AUTH_IMS_ORG_ID: string;
+    AIO_COMMERCE_AUTH_IMS_SCOPES: string;
   };
 
   /** Logger instance for installation logging. */
