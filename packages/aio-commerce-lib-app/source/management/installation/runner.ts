@@ -51,8 +51,8 @@ export type RunInstallationOptions = {
 export function createInitialInstallationState(
   options: CreateInitialInstallationStateOptions,
 ): PendingInstallationState {
-  const { config, extraSteps = [] } = options;
-  const rootStep = createRootInstallationStep(extraSteps);
+  const { config } = options;
+  const rootStep = createRootInstallationStep(config);
 
   return createInitialState({ rootStep, config });
 }
@@ -63,14 +63,8 @@ export function createInitialInstallationState(
 export function runInstallation(
   options: RunInstallationOptions,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
-  const {
-    installationContext,
-    config,
-    initialState,
-    extraSteps = [],
-    hooks,
-  } = options;
-  const rootStep = createRootInstallationStep(extraSteps);
+  const { installationContext, config, initialState, hooks } = options;
+  const rootStep = createRootInstallationStep(config);
   return executeWorkflow({
     rootStep,
     installationContext,

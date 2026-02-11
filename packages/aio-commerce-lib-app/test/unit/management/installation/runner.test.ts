@@ -90,25 +90,6 @@ describe("createInitialInstallationState", () => {
     expect(webhooksStep).toBeUndefined();
   });
 
-  test("should include extra steps when provided", () => {
-    const extraStep = defineLeafStep({
-      name: "custom-step",
-      meta: { label: "Custom Step" },
-      run: vi.fn(),
-    });
-
-    const state = createInitialInstallationState({
-      config: minimalValidConfig,
-      extraSteps: [extraStep],
-    });
-
-    const customStep = state.step.children.find(
-      (c) => c.name === "custom-step",
-    );
-    expect(customStep).toBeDefined();
-    expect(customStep?.meta.label).toBe("Custom Step");
-  });
-
   test("should return state with unique id and pending status", () => {
     const state = createInitialInstallationState({
       config: minimalValidConfig,
@@ -132,12 +113,6 @@ describe("runInstallation", () => {
   });
 
   test("should return succeeded state when all steps complete", async () => {
-    const extraStep = defineLeafStep({
-      name: "test-step",
-      meta: { label: "Test Step" },
-      run: () => ({ result: "success" }),
-    });
-
     const initialState = createInitialInstallationState({
       config: minimalValidConfig,
     });
@@ -146,7 +121,6 @@ describe("runInstallation", () => {
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
       initialState,
-      extraSteps: [extraStep],
     });
 
     expect(result.status).toBe("succeeded");
@@ -154,24 +128,14 @@ describe("runInstallation", () => {
   });
 
   test("should return failed state when a step fails", async () => {
-    const failingStep = defineLeafStep({
-      name: "failing-step",
-      meta: { label: "Failing Step" },
-      run: () => {
-        throw new Error("Step failed");
-      },
-    });
-
     const initialState = createInitialInstallationState({
       config: minimalValidConfig,
-      extraSteps: [failingStep],
     });
 
     const result = await runInstallation({
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
       initialState,
-      extraSteps: [failingStep],
     });
 
     expect(result.status).toBe("failed");
@@ -197,7 +161,6 @@ describe("runInstallation", () => {
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
       initialState,
-      extraSteps: [extraStep],
       hooks,
     });
 
@@ -209,22 +172,14 @@ describe("runInstallation", () => {
 
   test("should use extra steps when provided", async () => {
     const runFn = vi.fn().mockReturnValue({ customResult: true });
-    const extraStep = defineLeafStep({
-      name: "extra-execution-step",
-      meta: { label: "Extra Execution Step" },
-      run: runFn,
-    });
-
     const initialState = createInitialInstallationState({
       config: minimalValidConfig,
-      extraSteps: [extraStep],
     });
 
     const result = await runInstallation({
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
       initialState,
-      extraSteps: [extraStep],
     });
 
     expect(runFn).toHaveBeenCalledTimes(1);
