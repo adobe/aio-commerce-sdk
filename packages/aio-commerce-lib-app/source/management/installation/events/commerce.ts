@@ -12,13 +12,18 @@
 
 import { defineLeafStep } from "#management/installation/workflow/step";
 
-import { onboardIoEvents } from "./helpers";
-import { COMMERCE_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
+import { onboardCommerceEventing, onboardIoEvents } from "./helpers";
+import {
+  COMMERCE_PROVIDER_TYPE,
+  getCommerceEventingExistingData,
+  getIoEventsExistingData,
+} from "./utils";
 
 import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InferStepOutput } from "#management/installation/workflow/step";
-import type { EventsConfig, EventsExecutionContext } from "./utils";
+import type { EventsExecutionContext } from "./context";
+import type { EventsConfig } from "./utils";
 
 /** Config type when commerce event sources are present. */
 export type CommerceEventsConfig = SetRequiredDeep<
@@ -54,7 +59,10 @@ export const commerceEventsStep = defineLeafStep({
 
     // biome-ignore lint/suspicious/noEvolvingTypes: We want the type to be auto-inferred
     const stepData = [];
+
     const existingIoEventsData = await getIoEventsExistingData(context);
+    const commerceEventingExistingData =
+      await getCommerceEventingExistingData(context);
 
     for (const { provider, events } of config.eventing.commerce) {
       const { providerData, eventsData } = await onboardIoEvents(
@@ -68,12 +76,30 @@ export const commerceEventsStep = defineLeafStep({
         existingIoEventsData,
       );
 
+      const { subscriptions } = await onboardCommerceEventing(
+        {
+          context,
+          metadata: config.metadata,
+          provider,
+          ioData: {
+            provider: providerData,
+            events: eventsData,
+          },
+        },
+        commerceEventingExistingData,
+      );
+
       stepData.push({
         provider: {
           config: provider,
           data: {
             ...providerData,
-            events: eventsData,
+            events: eventsData.map((data, index) => {
+              return {
+                ...data,
+                subscription: subscriptions[index],
+              };
+            }),
           },
         },
       });

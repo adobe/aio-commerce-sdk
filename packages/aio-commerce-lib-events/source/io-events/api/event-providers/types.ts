@@ -16,7 +16,7 @@ import type { HALLink } from "#io-events/types";
 /** Defines the base fields of an I/O event provider entity. */
 export type IoEventProvider = {
   id: string;
-  instance_id?: string;
+  instance_id: string;
   label: string;
   source: string;
   publisher: string;
