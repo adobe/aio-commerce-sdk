@@ -261,13 +261,13 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
         id: workspaceId,
         name: `workspace-${workspaceId}`,
         title: `Workspace ${workspaceId}`,
-        action_url: "",
-        app_url: "",
+        action_url: `https://${process.env.__OW_NAMESPACE}.adobeioruntime.net`,
+        app_url: `https://${process.env.__OW_NAMESPACE}.adobeio-static.net`,
         details: {
           credentials: [
             {
-              id: "credential-id",
-              name: "credential-name",
+              id: "000000",
+              name: `aio-${workspaceId}`,
               integration_type: "oauth_server_to_server",
               oauth_server_to_server: {
                 client_id: clientId,
