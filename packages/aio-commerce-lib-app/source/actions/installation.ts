@@ -40,7 +40,7 @@ import { AppCredentialsSchema } from "#management/installation/schema";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { AppCredentials } from "#management/installation/schema";
+import type { InstallationContext } from "#management/index";
 import type {
   InstallationState,
   PendingInstallationState,
@@ -50,12 +50,10 @@ import type {
 const DEFAULT_ACTION_NAME = "app-management/installation";
 
 /** Params received during async execution (internal invocation). */
-type ExecutionParams = RuntimeActionParams & {
-  appCredentials: AppCredentials;
+type ExecutionParams = InstallationContext["params"] & {
+  appCredentials: InstallationContext["appCredentials"];
   initialState: PendingInstallationState;
   appConfig: CommerceAppConfigOutputModel;
-
-  AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
 };
 
 /**
@@ -118,7 +116,7 @@ let router = new HttpActionRouter().use(logger({ name: () => "installation" }));
  * 2. If found: return execution plan with step statuses
  * 3. If not found: return empty status
  */
-router = router.get("/execution", {
+router = router.get("/", {
   handler: async (_req, { logger }) => {
     logger.debug("Getting installation execution status...");
 
@@ -137,7 +135,7 @@ router = router.get("/execution", {
 });
 
 /**
- * POST /installation - Start installation
+ * POST / - Start installation
  *
  * Flow:
  * 1. Find execution in state store
@@ -235,7 +233,7 @@ router = router.post("/", {
  */
 router = router.post("/execution", {
   handler: async (_req, { logger, rawParams }) => {
-    const params = rawParams as ExecutionParams;
+    const { appCredentials, ...params } = rawParams as ExecutionParams;
     const { initialState, appConfig } = params;
 
     if (!initialState) {
@@ -248,7 +246,8 @@ router = router.post("/execution", {
 
     const store = await createInstallationStore();
     const hooks = createInstallationHooks(store, (msg) => logger.debug(msg));
-    const installationContext = {
+    const installationContext: InstallationContext = {
+      appCredentials,
       params,
       logger,
     };
@@ -275,6 +274,23 @@ router = router.post("/execution", {
     }
 
     return ok({ body: result });
+  },
+});
+
+/**
+ * DELETE / - Clear installation state
+ *
+ * This endpoint allows clearing the installation state.
+ */
+router = router.delete("/", {
+  handler: async (_req, { logger }) => {
+    logger.debug("Clearing installation state...");
+
+    const store = await createInstallationStore();
+    await store.delete("current");
+    logger.debug("Installation state cleared");
+
+    return noContent();
   },
 });
 
