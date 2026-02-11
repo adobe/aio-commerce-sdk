@@ -80,6 +80,7 @@
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-api": "workspace:*",
+    "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-events": "workspace:*",
     "@adobe/aio-lib-state": "^5.3.0",
