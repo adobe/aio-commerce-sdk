@@ -20,8 +20,6 @@ function fieldsSchema(propertyName: string) {
   return v.array(
     v.object({
       name: stringValueSchema(`${propertyName}[i].name`),
-      converter: v.optional(stringValueSchema(`${propertyName}[i].converter`)),
-      source: v.optional(stringValueSchema(`${propertyName}[i].source`)),
     }),
     `Expected an array of objects with a 'name' property for the property "${propertyName}"`,
   );
