@@ -90,8 +90,10 @@ describe("createInitialInstallationState", () => {
     expect(webhooksStep).toBeUndefined();
   });
 
-  test("should return a plan with unique id and createdAt", () => {
-    const plan = createInstallationPlan({ config: minimalValidConfig });
+  test("should return state with unique id and pending status", () => {
+    const state = createInitialInstallationState({
+      config: minimalValidConfig,
+    });
 
     expect(state.id).toBeDefined();
     expect(typeof state.id).toBe("string");
@@ -111,18 +113,36 @@ describe("runInstallation", () => {
   });
 
   test("should return succeeded state when all steps complete", async () => {
-    const plan = createInstallationPlan({
+    const initialState = createInitialInstallationState({
       config: minimalValidConfig,
     });
 
     const result = await runInstallation({
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
     });
 
     expect(result.status).toBe("succeeded");
     expect(result.id).toBe(initialState.id);
+  });
+
+  test("should return failed state when a step fails", async () => {
+    const initialState = createInitialInstallationState({
+      config: minimalValidConfig,
+    });
+
+    const result = await runInstallation({
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(result.status).toBe("failed");
+    if (result.status === "failed") {
+      expect(result.error).toBeDefined();
+      expect(result.error.message).toBe("Step failed");
+    }
   });
 
   test("should pass hooks to the workflow executor", async () => {
@@ -140,7 +160,7 @@ describe("runInstallation", () => {
     await runInstallation({
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
       hooks,
     });
 
@@ -148,5 +168,26 @@ describe("runInstallation", () => {
     expect(hooks.onInstallationSuccess).toHaveBeenCalledTimes(1);
     expect(hooks.onStepStart).toHaveBeenCalled();
     expect(hooks.onStepSuccess).toHaveBeenCalled();
+  });
+
+  test("should use extra steps when provided", async () => {
+    const runFn = vi.fn().mockReturnValue({ customResult: true });
+    const initialState = createInitialInstallationState({
+      config: minimalValidConfig,
+    });
+
+    const result = await runInstallation({
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(runFn).toHaveBeenCalledTimes(1);
+    expect(result.status).toBe("succeeded");
+    expect(result.data).toEqual({
+      installation: {
+        "extra-execution-step": { customResult: true },
+      },
+    });
   });
 });

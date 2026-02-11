@@ -48,9 +48,9 @@ export type RunInstallationOptions = {
  * Filters steps based on their `when` conditions and builds a tree structure
  * with all steps set to "pending".
  */
-export function createInstallationPlan(
-  options: CreateInstallationPlanOptions,
-): InstallationPlan {
+export function createInitialInstallationState(
+  options: CreateInitialInstallationStateOptions,
+): PendingInstallationState {
   const { config } = options;
   const rootStep = createRootInstallationStep(config);
 
@@ -63,9 +63,8 @@ export function createInstallationPlan(
 export function runInstallation(
   options: RunInstallationOptions,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
-  const { installationContext, config, plan, hooks } = options;
+  const { installationContext, config, initialState, hooks } = options;
   const rootStep = createRootInstallationStep(config);
-
   return executeWorkflow({
     rootStep,
     installationContext,
