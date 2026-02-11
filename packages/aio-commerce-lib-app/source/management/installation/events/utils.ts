@@ -10,7 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import type { CommerceEventSubscription } from "@adobe/aio-commerce-lib-events/commerce";
+import type {
+  CommerceEventProvider,
+  CommerceEventSubscription,
+} from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   EventProviderType,
   IoEventMetadata,
@@ -60,10 +63,9 @@ export function generateInstanceId(
  * @param allProviders - The list of all existing event providers.
  * @param instanceId - The instance ID to search for.
  */
-export function findExistingProvider(
-  allProviders: IoEventProvider[],
-  instanceId: string,
-) {
+export function findExistingProvider<
+  TProvider extends IoEventProvider | CommerceEventProvider,
+>(allProviders: TProvider[], instanceId: string) {
   return (
     allProviders.find((provider) => provider.instance_id === instanceId) ?? null
   );
@@ -216,6 +218,69 @@ export function findExistingSubscription(
 }
 
 /**
+ * Creates a partially filled workspace configuration object based on the app credentials and parameters.
+ * This configuration is used when creating an event provider in Commerce.
+ *
+ * @param context - The execution context containing app credentials and parameters.
+ */
+export function makeWorkspaceConfig(context: EventsExecutionContext) {
+  const { appCredentials, params } = context;
+
+  const { consumerOrgId, projectId, workspaceId } = appCredentials;
+  const {
+    AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+    AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
+    AIO_COMMERCE_AUTH_IMS_SCOPES,
+    AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL,
+    AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID,
+  } = params;
+
+  return {
+    project: {
+      id: projectId,
+      name: `project-${projectId}`,
+      title: `Project ${projectId}`,
+
+      org: {
+        id: consumerOrgId,
+        name: `org-${consumerOrgId}`,
+        ims_org_id: params.AIO_COMMERCE_AUTH_IMS_ORG_ID,
+      },
+
+      workspace: {
+        id: workspaceId,
+        name: `workspace-${workspaceId}`,
+        title: `Workspace ${workspaceId}`,
+        action_url: "",
+        app_url: "",
+        details: {
+          credentials: [
+            {
+              id: "credential-id",
+              name: "credential-name",
+              integration_type: "oauth_server_to_server",
+              oauth_server_to_server: {
+                client_id: AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+                client_secrets: AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
+                ims_scopes: AIO_COMMERCE_AUTH_IMS_SCOPES.split(",").map(
+                  (scope) => scope.trim(),
+                ),
+
+                technical_account_email:
+                  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL,
+
+                technical_account_id:
+                  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID,
+              },
+            },
+          ],
+        },
+      },
+    },
+  };
+}
+
+/**
  * Retrieves the current existing data and returns it in a normalized way.
  * @param context The execution context.
  */
@@ -271,8 +336,17 @@ export async function getCommerceEventingExistingData(
   context: EventsExecutionContext,
 ) {
   const { commerceEventsClient } = context;
+
+  const existingProviders = await commerceEventsClient.getAllEventProviders();
   const existingSubscriptions =
     await commerceEventsClient.getAllEventSubscriptions();
+
+  // The eventing module is empty if one of the providers (the default one doesn't have an ID)
+  // has an empty or undefined workspace configuration.
+  const isDefaultWorkspaceConfigurationEmpty = existingProviders.some(
+    (provider) =>
+      !("id" in provider || provider.workspace_configuration?.trim()),
+  );
 
   const subscriptions = new Map(
     existingSubscriptions.map((subscription) => [
@@ -281,7 +355,11 @@ export async function getCommerceEventingExistingData(
     ]),
   );
 
-  return { subscriptions };
+  return {
+    isDefaultWorkspaceConfigurationEmpty,
+    providers: existingProviders,
+    subscriptions,
+  };
 }
 
 /** The Commerce Eventing data that we may already have. */
