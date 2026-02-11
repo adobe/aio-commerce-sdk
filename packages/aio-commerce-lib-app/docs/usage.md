@@ -253,12 +253,37 @@ eventing: {
 
 Both `commerce` and `external` arrays are optional, you can configure one, both, or neither depending on your application's needs.
 
+#### Custom Installation Process
+
+The `installation` field allows you to configure custom scripts and messages for the application installation process.
+
+##### Installation Messages
+
+You can define messages that will be displayed to users before and after the installation process:
+
+```javascript
+installation: {
+  messages: {
+    "preInstallation": "This App requires configuration A & B to be completed before clicking Install.",
+    "postInstallation": "Configure your email settings to complete the setup.",
+  },
+}
+```
+
+**Message Fields:**
+
+- **preInstallation** (optional): Message displayed to users before installation starts (max 1000 characters)
+- **postInstallation** (optional): Message displayed to users after installation completes (max 1000 characters)
+
+Both message fields are optional. You can provide one, both, or neither depending on your needs.
+
 #### Custom Installation Steps
 
 The `installation.customInstallationSteps` field allows you to define custom scripts that run during the application installation process. These scripts are pre-loaded and executed in the order they are defined.
 
 ```javascript
 installation: {
+  preInstallation: "Please ensure all prerequisites are met before installation.",
   customInstallationSteps: [
     {
       script: "./scripts/configure-webhooks.js",
