@@ -12,14 +12,39 @@
 
 import {
   booleanValueSchema,
+  nonEmptyStringValueSchema,
   stringValueSchema,
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
+/**
+ * Regex for field names according to XSD fieldName pattern.
+ * Field name can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
+ * @see https://github.com/magento-commerce/commerce-eventing/blob/main/AdobeCommerceEventsClient/etc/io_events.xsd#L107-L115
+ */
+const FIELD_NAME_REGEX = /^([a-zA-Z0-9_\-.[\]]+|\*)$/;
+
+/**
+ * Schema for field names.
+ * Validates that the field name matches the XSD fieldName pattern:
+ * can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
+ * @see https://github.com/magento-commerce/commerce-eventing/blob/main/AdobeCommerceEventsClient/etc/io_events.xsd#L107-L115
+ */
+function fieldNameSchema(propertyName: string) {
+  return v.pipe(
+    nonEmptyStringValueSchema(propertyName),
+    v.regex(
+      FIELD_NAME_REGEX,
+      "Field name can either contain only [a-zA-Z0-9_\\-\\.\\[\\]] or be set to *",
+    ),
+  );
+}
+
 function fieldsSchema(propertyName: string) {
   return v.array(
     v.object({
-      name: stringValueSchema(`${propertyName}[i].name`),
+      name: fieldNameSchema(`${propertyName}[i].name`),
+      source: v.optional(stringValueSchema(`${propertyName}[i].source`)),
     }),
     `Expected an array of objects with a 'name' property for the property "${propertyName}"`,
   );
@@ -28,7 +53,7 @@ function fieldsSchema(propertyName: string) {
 function rulesSchema(propertyName: string) {
   return v.array(
     v.object({
-      field: stringValueSchema(`${propertyName}[i].field`),
+      field: fieldNameSchema(`${propertyName}[i].field`),
       operator: stringValueSchema(`${propertyName}[i].operator`),
       value: stringValueSchema(`${propertyName}[i].value`),
     }),

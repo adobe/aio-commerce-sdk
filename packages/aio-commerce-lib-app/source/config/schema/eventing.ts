@@ -14,6 +14,7 @@ import {
   alphaNumericOrHyphenSchema,
   alphaNumericOrUnderscoreSchema,
   nonEmptyStringValueSchema,
+  stringValueSchema,
   titleCaseSchema,
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
@@ -30,6 +31,13 @@ const MAX_KEY_LENGTH = 50;
 const COMMERCE_EVENT_NAME_REGEX = /^(?:plugin|observer)\.[a-z_]+$/;
 
 /**
+ * Regex for field names according to XSD fieldName pattern.
+ * Field name can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
+ * @see https://github.com/magento-commerce/commerce-eventing/blob/main/AdobeCommerceEventsClient/etc/io_events.xsd#L107-L115
+ */
+const FIELD_NAME_REGEX = /^([a-zA-Z0-9_\-.[\]]+|\*)$/;
+
+/**
  * Schema for Commerce event names.
  * Validates that the event name starts with "plugin." or "observer."
  * followed by lowercase letters and underscores only.
@@ -42,6 +50,33 @@ function commerceEventNameSchema() {
       'Event name must start with "plugin." or "observer." followed by lowercase letters and underscores only (e.g., "plugin.order_placed")',
     ),
   );
+}
+
+/**
+ * Schema for field names.
+ * Validates that the field name matches the XSD fieldName pattern:
+ * can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
+ * @see https://github.com/magento-commerce/commerce-eventing/blob/main/AdobeCommerceEventsClient/etc/io_events.xsd#L107-L115
+ */
+function fieldNameSchema() {
+  return v.pipe(
+    nonEmptyStringValueSchema("field name"),
+    v.regex(
+      FIELD_NAME_REGEX,
+      "Field name can either contain only [a-zA-Z0-9_\\-\\.\\[\\]] or be set to *",
+    ),
+  );
+}
+
+/**
+ * Schema for field objects in Commerce events.
+ * Each field has a required name and an optional source.
+ */
+function commerceEventFieldSchema() {
+  return v.object({
+    name: fieldNameSchema(),
+    source: v.optional(stringValueSchema("field source")),
+  });
 }
 
 /** Schema for event provider configuration */
@@ -114,8 +149,8 @@ const CommerceEventSchema = v.object({
 
   name: commerceEventNameSchema(),
   fields: v.array(
-    alphaNumericOrUnderscoreSchema("event fields", "any"),
-    "Expected an array of event fields",
+    commerceEventFieldSchema(),
+    "Expected an array of event field objects with a 'name' property",
   ),
   rules: v.optional(
     v.array(

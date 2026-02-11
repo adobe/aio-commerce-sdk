@@ -11,6 +11,10 @@ const EventSubscriptionCreateParamsSchema: ObjectSchema<
       ObjectSchema<
         {
           name: StringSchema<`Expected a string value for property '${string}'`>;
+          source: OptionalSchema<
+            StringSchema<`Expected a string value for property '${string}'`>,
+            undefined
+          >;
         },
         undefined
       >,

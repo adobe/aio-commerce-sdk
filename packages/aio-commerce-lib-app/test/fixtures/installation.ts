@@ -155,7 +155,7 @@ const commerceEventingPart = {
         {
           name: "plugin.order_placed",
           label: "Order Placed",
-          fields: ["order_id", "customer_id"],
+          fields: [{ name: "order_id" }, { name: "customer_id" }],
           runtimeActions: ["my-package/handle-order"],
           description: "Triggered when an order is placed",
         },

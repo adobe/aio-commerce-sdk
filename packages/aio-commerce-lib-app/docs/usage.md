@@ -193,19 +193,28 @@ eventing: {
       events: [
         {
           name: "plugin.order_placed",
-          fields: ["order_id", "customer_id"],
+          fields: [
+            { name: "order_id" },
+            { name: "customer_id" },
+          ],
           runtimeActions: ["my-package/handle-order"],
           description: "Triggered when an order is placed",
         },
         {
           name: "observer.catalog_update",
-          fields: ["product_id"],
+          fields: [
+            { name: "product_id", source: "catalog" },
+          ],
           runtimeActions: ["my-package/sync-catalog"],
           description: "Triggered when catalog is updated",
         },
         {
           name: "observer.catalog_product_save_after",
-          fields: ["name", "price", "_origData"],
+          fields: [
+            { name: "name" },
+            { name: "price" },
+            { name: "_origData" },
+          ],
           rules: [
             {
               field: "price",
@@ -247,7 +256,9 @@ eventing: {
 **Commerce Events:**
 
 - **name**: Must start with `plugin.` or `observer.` followed by lowercase letters and underscores (e.g., `plugin.order_placed`, `observer.catalog_update`)
-- **fields**: Array of field names (alphanumeric with underscores, case-insensitive, e.g., `"name"`, `"price"`, `"_origData"`)
+- **fields**: Array of field objects. Each field object must have:
+  - **name** (required): The field name. Field names can contain letters (a-z, A-Z), numbers (0-9), underscores (\_), dashes (-), dots (.), and square brackets ([, ]), or be exactly `"*"` (e.g., `"name"`, `"price"`, `"_origData"`, `"field.name"`, `"items[0]"`, `"*"`)
+  - **source** (optional): A string value for the field source (e.g., `"catalog"`, `"order"`)
 - **rules**: Optional array of filtering rules. Each rule must have:
   - **field**: The field name to filter on
   - **operator**: The comparison operator (e.g., `"lessThan"`, `"greaterThan"`, `"equals"`)
