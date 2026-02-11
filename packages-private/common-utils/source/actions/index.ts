@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,13 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
+/**
+ * This module exports core action utilities for the AIO Commerce SDK.
+ * @packageDocumentation
+ */
 
-export default mergeConfig(baseConfig, {
-  entry: [
-    "./source/logging.ts",
-    "./source/actions/index.ts",
-    "./source/valibot/index.ts",
-  ],
-});
+// biome-ignore lint/performance/noBarrelFile: Public API entrypoint
+export * from "./http/middleware";
+export { defineRoute, HttpActionRouter } from "./http/router";
+
+export type * from "./http/types";
