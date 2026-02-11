@@ -322,11 +322,10 @@ async function configureCommerceEventing(
         return;
       }
 
-      const message =
-        "Something went wrong while configuring Commerce Eventing Module. Response was not successful but no error was thrown.";
-
-      logger.error(message);
-      throw new Error(message);
+      // This will be catched by the catch block below, and logged accordingly.
+      throw new Error(
+        "Something went wrong while configuring Commerce Eventing Module. Response was not successful but no error was thrown.",
+      );
     })
     .catch((err) => {
       logger.error(
