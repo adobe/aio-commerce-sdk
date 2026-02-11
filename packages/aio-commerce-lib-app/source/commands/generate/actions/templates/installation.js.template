@@ -16,6 +16,4 @@
 import { installationRuntimeAction } from "@adobe/aio-commerce-lib-app/actions"
 import appConfig from "../../app.commerce.manifest.json" with { type: "json" };
 
-// {{CUSTOM_SCRIPTS_LOADER}}
-const args = { appConfig };
-export const main = installationRuntimeAction(args);
+export const main = installationRuntimeAction(appConfig);

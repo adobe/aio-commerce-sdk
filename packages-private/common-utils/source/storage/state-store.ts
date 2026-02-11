@@ -73,7 +73,7 @@ class StateStore<T> implements KeyValueStore<T> {
     const fullKey = this.buildKey(key);
     const result = await this.state.get(fullKey);
 
-    if (!result?.value) {
+    if (!result.value) {
       return null;
     }
 

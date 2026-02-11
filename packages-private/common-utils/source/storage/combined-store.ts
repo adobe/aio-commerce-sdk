@@ -95,18 +95,17 @@ class CombinedStore<T> implements KeyValueStore<T> {
   public async get(key: string): Promise<T | null> {
     // Try cache first (fast path)
     const cached = await this.cache.get(key);
-    if (cached !== null && cached !== undefined) {
+    if (cached) {
       return cached;
     }
 
     // Fall back to persistent storage
     const persisted = await this.persistent.get(key);
-    if (persisted !== null && persisted !== undefined) {
+    if (persisted) {
       // Re-populate cache for future reads
       await this.cache.put(key, persisted).catch(() => {
         // Ignore cache write errors
       });
-
       return persisted;
     }
 
