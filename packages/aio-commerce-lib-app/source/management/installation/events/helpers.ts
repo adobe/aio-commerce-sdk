@@ -415,7 +415,7 @@ async function createCommerceEventSubscription(
     name: eventName,
     parent: event.config.name,
     fields: event.config.fields.map((field) => ({ name: field })),
-    providerId: provider.instance_id,
+    providerId: provider.id,
   };
 
   return commerceEventsClient
