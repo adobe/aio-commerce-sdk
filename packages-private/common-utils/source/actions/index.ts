@@ -10,11 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the events module */
+/**
+ * This module exports core action utilities for the AIO Commerce SDK.
+ * @packageDocumentation
+ */
 
-export { eventingStep } from "./branch";
-export { commerceEventsStep } from "./commerce";
-export { externalEventsStep } from "./external";
+// biome-ignore lint/performance/noBarrelFile: Public API entrypoint
+export * from "./http/middleware";
+export { defineRoute, HttpActionRouter } from "./http/router";
 
-export type { EventsStepContext } from "./context";
-export type { EventsConfig } from "./utils";
+export type * from "./http/types";

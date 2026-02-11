@@ -10,11 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the events module */
+/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the custom installation module */
 
-export { eventingStep } from "./branch";
-export { commerceEventsStep } from "./commerce";
-export { externalEventsStep } from "./external";
+export { createCustomInstallationStep } from "./branch";
+export { createCustomScriptSteps } from "./custom-scripts";
+export { defineCustomInstallationStep } from "./define";
 
-export type { EventsStepContext } from "./context";
-export type { EventsConfig } from "./utils";
+export type { ConfigWithInstallationSteps } from "./custom-scripts";
+export type { CustomInstallationStepHandler } from "./define";
