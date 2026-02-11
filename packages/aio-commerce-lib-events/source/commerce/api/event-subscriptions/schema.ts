@@ -20,7 +20,6 @@ import * as v from "valibot";
 /**
  * Regex for field names according to XSD fieldName pattern.
  * Field name can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
- * @see https://github.com/magento-commerce/commerce-eventing/blob/main/AdobeCommerceEventsClient/etc/io_events.xsd#L107-L115
  */
 const FIELD_NAME_REGEX = /^([a-zA-Z0-9_\-.[\]]+|\*)$/;
 
@@ -28,7 +27,6 @@ const FIELD_NAME_REGEX = /^([a-zA-Z0-9_\-.[\]]+|\*)$/;
  * Schema for field names.
  * Validates that the field name matches the XSD fieldName pattern:
  * can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
- * @see https://github.com/magento-commerce/commerce-eventing/blob/main/AdobeCommerceEventsClient/etc/io_events.xsd#L107-L115
  */
 function fieldNameSchema(propertyName: string) {
   return v.pipe(

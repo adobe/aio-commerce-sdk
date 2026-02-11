@@ -211,9 +211,9 @@ eventing: {
         {
           name: "observer.catalog_product_save_after",
           fields: [
-            { name: "name" },
             { name: "price" },
             { name: "_origData" },
+            { name: "quoteId" , source: "context_checkout_session.get_quote.get_id" },
           ],
           rules: [
             {
@@ -257,7 +257,7 @@ eventing: {
 
 - **name**: Must start with `plugin.` or `observer.` followed by lowercase letters and underscores (e.g., `plugin.order_placed`, `observer.catalog_update`)
 - **fields**: Array of field objects. Each field object must have:
-  - **name** (required): The field name. Field names can contain letters (a-z, A-Z), numbers (0-9), underscores (\_), dashes (-), dots (.), and square brackets ([, ]), or be exactly `"*"` (e.g., `"name"`, `"price"`, `"_origData"`, `"field.name"`, `"items[0]"`, `"*"`)
+  - **name** (required): The field name. Field names can contain letters (a-z, A-Z), numbers (0-9), underscores (\_), dashes (-), dots (.), and square brackets ([, ]), or be exactly `"*"` (e.g., `"name"`, `"price"`, `"_origData"`, `"*"`)
   - **source** (optional): A string value for the field source (e.g., `"catalog"`, `"order"`)
 - **rules**: Optional array of filtering rules. Each rule must have:
   - **field**: The field name to filter on

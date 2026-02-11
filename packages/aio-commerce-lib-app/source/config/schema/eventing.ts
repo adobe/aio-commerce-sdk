@@ -33,7 +33,6 @@ const COMMERCE_EVENT_NAME_REGEX = /^(?:plugin|observer)\.[a-z_]+$/;
 /**
  * Regex for field names according to XSD fieldName pattern.
  * Field name can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
- * @see https://github.com/magento-commerce/commerce-eventing/blob/main/AdobeCommerceEventsClient/etc/io_events.xsd#L107-L115
  */
 const FIELD_NAME_REGEX = /^([a-zA-Z0-9_\-.[\]]+|\*)$/;
 
@@ -56,7 +55,6 @@ function commerceEventNameSchema() {
  * Schema for field names.
  * Validates that the field name matches the XSD fieldName pattern:
  * can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
- * @see https://github.com/magento-commerce/commerce-eventing/blob/main/AdobeCommerceEventsClient/etc/io_events.xsd#L107-L115
  */
 function fieldNameSchema() {
   return v.pipe(
