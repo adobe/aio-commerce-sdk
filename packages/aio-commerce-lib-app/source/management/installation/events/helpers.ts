@@ -286,7 +286,7 @@ async function createCommerceEventSubscription(
   const eventSpec = {
     name: eventName,
     parent: event.config.name,
-    fields: event.config.fields.map((field) => ({ name: field })),
+    fields: event.config.fields,
     providerId: provider.instance_id,
   };
 
