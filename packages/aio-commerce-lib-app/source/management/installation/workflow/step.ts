@@ -13,16 +13,12 @@
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { AppCredentials } from "../schema";
 
 /** Shared context available to all steps during installation. */
 export type InstallationContext = {
   /** The credentials of the app being installed */
-  appCredentials: {
-    clientId: string;
-    consumerOrgId: string;
-    projectId: string;
-    workspaceId: string;
-  };
+  appCredentials: AppCredentials;
 
   /** The raw action parameters from the App Builder runtime action. */
   params: RuntimeActionParams;

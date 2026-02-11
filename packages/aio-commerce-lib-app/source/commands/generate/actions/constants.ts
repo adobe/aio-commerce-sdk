@@ -94,7 +94,7 @@ export const EXT_CONFIG: ExtConfig = {
         actions: {
           "get-app-config": createActionConfig("get-app-config"),
           installation: createActionConfig("installation", {
-            inputs: COMMERCE_ACTION_INPUTS,
+            inputs: { ...COMMERCE_ACTION_INPUTS, LOG_LEVEL: "$LOG_LEVEL" },
             limits: {
               timeout: 600_000,
             },

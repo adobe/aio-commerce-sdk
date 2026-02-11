@@ -22,6 +22,16 @@
   },
   "publishConfig": {
     "exports": {
+      "./actions": {
+        "import": {
+          "types": "./dist/es/actions/index.d.mts",
+          "default": "./dist/es/actions/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/actions/index.d.cts",
+          "default": "./dist/cjs/actions/index.cjs"
+        }
+      },
       "./config": {
         "import": {
           "types": "./dist/es/config/index.d.mts",
@@ -46,6 +56,7 @@
     }
   },
   "exports": {
+    "./actions": "./source/actions/index.ts",
     "./config": "./source/config/index.ts",
     "./management": "./source/management/index.ts",
     "./package.json": "./package.json"
@@ -82,9 +93,9 @@
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-events": "workspace:*",
-    "@adobe/aio-lib-state": "^5.3.0",
     "consola": "^3.4.2",
     "jiti": "^2.6.1",
+    "openwhisk": "^3.21.8",
     "valibot": "^1.1.0"
   },
   "devDependencies": {
