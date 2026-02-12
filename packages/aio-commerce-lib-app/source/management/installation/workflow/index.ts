@@ -23,7 +23,6 @@ export {
   isCompletedState,
   isFailedState,
   isInProgressState,
-  isPendingState,
   isSucceededState,
 } from "./types";
 
