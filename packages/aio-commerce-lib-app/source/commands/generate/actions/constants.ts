@@ -33,6 +33,10 @@ export const COMMERCE_ACTION_INPUTS = Object.fromEntries(
   COMMERCE_VARIABLES.map((variable) => [variable, `$${variable}`] as const),
 );
 
+export const CUSTOM_IMPORTS_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_IMPORTS}}";
+export const CUSTOM_SCRIPTS_MAP_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_MAP}}";
+export const CUSTOM_SCRIPTS_LOADER_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_LOADER}}";
+
 /** The list of runtime actions to generate */
 export const RUNTIME_ACTIONS = [
   {

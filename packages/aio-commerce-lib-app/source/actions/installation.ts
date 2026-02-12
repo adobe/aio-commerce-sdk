@@ -49,16 +49,21 @@ import type {
 // Action name for async invocation
 const DEFAULT_ACTION_NAME = "app-management/installation";
 
-/** Params received during async execution (internal invocation). */
-type ExecutionParams = InstallationContext["params"] & {
-  appCredentials: InstallationContext["appCredentials"];
-  initialState: PendingInstallationState;
+type CustomScriptsLoader = (
+  config: CommerceAppConfigOutputModel,
+  logger: InstallationContext["logger"],
+) => Record<string, unknown>;
+
+type RuntimeActionFactoryArgs = {
   appConfig: CommerceAppConfigOutputModel;
+  customScriptsLoader?: CustomScriptsLoader;
 };
 
-/**
- * Creates an installation state store using lib-core combined storage.
- */
+/** Params received by all handlers. */
+type RuntimeActionArgs = InstallationContext["params"] &
+  RuntimeActionFactoryArgs;
+
+/** Creates an installation state store using lib-core combined storage. */
 function createInstallationStore() {
   return createCombinedStore<InstallationState>({
     cache: { keyPrefix: "installation" },
@@ -67,6 +72,13 @@ function createInstallationStore() {
       shouldPersist: isCompletedState,
     },
   });
+}
+
+/** Returns the storage key used to store the current installation ID. */
+function getStorageKey() {
+  // For simplicity, we use a single key to store the current installation state.
+  // In the future we might use the installation ID.
+  return "current";
 }
 
 /**
@@ -78,7 +90,7 @@ function createInstallationHooks(
 ) {
   const logAndSave = async (message: string, data: InstallationState) => {
     logFn(message);
-    await store.put(data.id, data);
+    await store.put(getStorageKey(), data);
   };
 
   return {
@@ -106,7 +118,9 @@ function createInstallationHooks(
  * - GET /installation/execution - Get current execution status
  * - POST /installation/execution - Execute installation (internal, called async)
  */
-let router = new HttpActionRouter().use(logger({ name: () => "installation" }));
+const router = new HttpActionRouter().use(
+  logger({ name: () => "installation" }),
+);
 
 /**
  * GET /installation/execution - Get current execution status
@@ -116,12 +130,12 @@ let router = new HttpActionRouter().use(logger({ name: () => "installation" }));
  * 2. If found: return execution plan with step statuses
  * 3. If not found: return empty status
  */
-router = router.get("/", {
+router.get("/", {
   handler: async (_req, { logger }) => {
     logger.debug("Getting installation execution status...");
 
     const store = await createInstallationStore();
-    const state = await store.get("current");
+    const state = await store.get(getStorageKey());
 
     if (state) {
       logger.debug(`Found execution: ${state.status}`);
@@ -142,7 +156,7 @@ router = router.get("/", {
  * 2. If found and (pending/in-progress or succeeded): return 409 Conflict
  * 3. If not found or failed: create plan, invoke execution async, return 202 Accepted
  */
-router = router.post("/", {
+router.post("/", {
   body: object({
     appCredentials: AppCredentialsSchema,
 
@@ -154,10 +168,10 @@ router = router.post("/", {
 
   handler: async (req, { logger, rawParams }) => {
     const appCredentials = req.body.appCredentials;
-
     logger.debug("Starting installation...");
+
     const store = await createInstallationStore();
-    const existingState = await store.get("current");
+    const existingState = await store.get(getStorageKey());
 
     if (existingState) {
       if (isPendingState(existingState) || isInProgressState(existingState)) {
@@ -178,17 +192,19 @@ router = router.post("/", {
       logger.debug("Previous installation failed, allowing retry");
     }
 
-    const appConfig = (rawParams as ExecutionParams).appConfig;
+    const executionParams = rawParams as RuntimeActionArgs;
+    const appConfig = executionParams.appConfig;
+
     if (!appConfig) {
       return internalServerError(
-        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?.",
+        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
       );
     }
 
     const initialState = createInitialInstallationState({ config: appConfig });
     logger.debug(`Created initial state: ${initialState.id}`);
 
-    await store.put("current", initialState);
+    await store.put(getStorageKey(), initialState);
     const ow = openwhisk();
 
     const activation = await ow.actions.invoke({
@@ -231,9 +247,13 @@ router = router.post("/", {
  * This endpoint is called asynchronously by POST /installation.
  * It runs the actual installation workflow and saves state.
  */
-router = router.post("/execution", {
+router.post("/execution", {
   handler: async (_req, { logger, rawParams }) => {
-    const { appCredentials, ...params } = rawParams as ExecutionParams;
+    const { appCredentials, ...params } = rawParams as RuntimeActionArgs & {
+      initialState: PendingInstallationState;
+      appCredentials: InstallationContext["appCredentials"];
+    };
+
     const { initialState, appConfig } = params;
 
     if (!initialState) {
@@ -250,6 +270,7 @@ router = router.post("/execution", {
       appCredentials,
       params,
       logger,
+      customScripts: params.customScriptsLoader?.(appConfig, logger) || {},
     };
 
     logger.debug(`Executing installation: ${initialState.id}`);
@@ -260,7 +281,7 @@ router = router.post("/execution", {
       hooks,
     });
 
-    await store.put("current", result);
+    await store.put(getStorageKey(), result);
     logger.debug(`Installation completed: ${result.status}`);
 
     if (isFailedState(result)) {
@@ -282,12 +303,12 @@ router = router.post("/execution", {
  *
  * This endpoint allows clearing the installation state.
  */
-router = router.delete("/", {
+router.delete("/", {
   handler: async (_req, { logger }) => {
     logger.debug("Clearing installation state...");
 
     const store = await createInstallationStore();
-    await store.delete("current");
+    await store.delete(getStorageKey());
     logger.debug("Installation state cleared");
 
     return noContent();
@@ -296,11 +317,12 @@ router = router.delete("/", {
 
 /** The route handler for the runtime action. */
 export const installationRuntimeAction =
-  (appConfig: CommerceAppConfigOutputModel) =>
+  ({ appConfig, customScriptsLoader }: RuntimeActionFactoryArgs) =>
   (params: RuntimeActionParams) => {
     const handler = router.handler();
     return handler({
       ...params,
       appConfig,
+      customScriptsLoader,
     });
   };
