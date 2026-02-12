@@ -345,11 +345,12 @@ export async function getCommerceEventingExistingData(
   const existingSubscriptions =
     await commerceEventsClient.getAllEventSubscriptions();
 
-  // The eventing module is empty if one of the providers (the default one doesn't have an ID)
-  // has an empty or undefined workspace configuration.
+  // The eventing module workspace configuration is empty if the default provider
+  // (the one without an ID), has a falsy or whitespace-only workspace_configuration.
   const isDefaultWorkspaceConfigurationEmpty = existingProviders.some(
     (provider) =>
-      !("id" in provider || provider.workspace_configuration?.trim()),
+      // biome-ignore lint/complexity/useSimplifiedLogicExpression: This is more readable this way
+      !("id" in provider) && !provider.workspace_configuration?.trim(),
   );
 
   const subscriptions = new Map(
