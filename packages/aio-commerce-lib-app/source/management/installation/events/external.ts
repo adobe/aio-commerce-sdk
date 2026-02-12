@@ -73,7 +73,7 @@ export const externalEventsStep = defineLeafStep({
         provider: {
           config: provider,
           data: {
-            ...providerData,
+            ioEvents: providerData,
             events: {
               config: events,
               data: eventsData,

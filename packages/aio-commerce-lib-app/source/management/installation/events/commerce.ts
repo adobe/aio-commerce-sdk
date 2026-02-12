@@ -96,12 +96,15 @@ export const commerceEventsStep = defineLeafStep({
         provider: {
           config: provider,
           data: {
-            ...providerData,
-            commerceProvider,
-            events: eventsData.map((data, index) => {
+            ioEvents: providerData,
+            commerce: commerceProvider,
+            events: eventsData.map(({ config, data }, index) => {
               return {
-                ...data,
-                subscription: subscriptions[index],
+                config,
+                data: {
+                  ...data,
+                  subscription: subscriptions[index],
+                },
               };
             }),
           },
