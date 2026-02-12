@@ -13,35 +13,11 @@
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-const CONSUMER_ORG_ID_LENGTH = 6;
-const PROJECT_ID_LENGTH = 19;
-const WORKSPACE_ID_LENGTH = 19;
-
 /** Schema for validating Adobe I/O app credentials required for installation. */
 export const AppCredentialsSchema = v.object({
-  consumerOrgId: v.pipe(
-    nonEmptyStringValueSchema("consumerOrgId"),
-    v.length(
-      CONSUMER_ORG_ID_LENGTH,
-      `consumerOrgId must be ${CONSUMER_ORG_ID_LENGTH} characters long`,
-    ),
-  ),
-
-  projectId: v.pipe(
-    nonEmptyStringValueSchema("projectId"),
-    v.length(
-      PROJECT_ID_LENGTH,
-      `projectId must be ${PROJECT_ID_LENGTH} characters long`,
-    ),
-  ),
-
-  workspaceId: v.pipe(
-    nonEmptyStringValueSchema("workspaceId"),
-    v.length(
-      WORKSPACE_ID_LENGTH,
-      `workspaceId must be ${WORKSPACE_ID_LENGTH} characters long`,
-    ),
-  ),
+  consumerOrgId: v.pipe(nonEmptyStringValueSchema("consumerOrgId")),
+  projectId: v.pipe(nonEmptyStringValueSchema("projectId")),
+  workspaceId: v.pipe(nonEmptyStringValueSchema("workspaceId")),
 });
 
 /** Type for Adobe I/O app credentials. */

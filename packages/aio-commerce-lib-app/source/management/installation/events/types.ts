@@ -49,6 +49,7 @@ export type AppEventWithoutRuntimeActions = Omit<AppEvent, "runtimeActions">;
 /** Parameters needed to create event event registrations in Adobe I/O Events. */
 export type CreateRegistrationParams = {
   context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
   events: AppEventWithoutRuntimeActions[];
   provider: IoEventProvider;
   runtimeAction: string;

@@ -197,7 +197,7 @@ async function createOrGetIoProviderEventMetadata(
  * @param params - The parameters necessary to create the registration.
  */
 async function createIoEventRegistration(params: CreateRegistrationParams) {
-  const { context, events, provider, runtimeAction } = params;
+  const { context, events, provider, runtimeAction, metadata } = params;
   const {
     appCredentials,
     ioEventsClient,
@@ -230,7 +230,7 @@ async function createIoEventRegistration(params: CreateRegistrationParams) {
       eventsOfInterest: events.map((event) => ({
         providerId: provider.id,
         eventCode: getIoEventCode(
-          event.name,
+          getNamespacedEvent(metadata, event.name),
           provider.provider_metadata as EventProviderType,
         ),
       })),
@@ -537,6 +537,7 @@ export async function onboardIoEvents<EventType extends AppEvent>(
     ([runtimeAction, groupedEvents]) =>
       createOrGetIoEventRegistration(
         {
+          metadata,
           context,
           events: groupedEvents,
           provider: providerData,
