@@ -454,8 +454,6 @@ async function createCommerceEventSubscription(
         `Failed to create event subscription for event "${event.config.name}" to provider "${provider.label}": ${stringifyError(err)}`,
       );
 
-      logger.error(inspect(err));
-
       throw err;
     });
 }
