@@ -590,7 +590,9 @@ export async function onboardCommerceEventing(
 ) {
   const { context, metadata, ioData } = params;
   const { events, provider, workspaceConfiguration } = ioData;
+
   const instanceId = provider.instance_id;
+  const subscriptions: Partial<CommerceEventSubscription>[] = [];
 
   // The eventing module must be configured before creating the other entities.
   await configureCommerceEventing(
@@ -617,7 +619,9 @@ export async function onboardCommerceEventing(
     existingData.providers,
   );
 
-  const subscriptions: Partial<CommerceEventSubscription>[] = [];
+  // Remove sensitive data from the provider data before returning it.
+  const { workspace_configuration: _, ...commerceProviderData } =
+    commerceProvider;
 
   for (const event of events) {
     subscriptions.push(
@@ -629,7 +633,7 @@ export async function onboardCommerceEventing(
   }
 
   return {
-    commerceProvider,
+    commerceProvider: commerceProviderData,
     subscriptions,
   };
 }

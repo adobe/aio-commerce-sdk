@@ -78,7 +78,7 @@ export const commerceEventsStep = defineLeafStep({
         existingIoEventsData,
       );
 
-      const { subscriptions } = await onboardCommerceEventing(
+      const { commerceProvider, subscriptions } = await onboardCommerceEventing(
         {
           context,
           metadata: config.metadata,
@@ -97,6 +97,7 @@ export const commerceEventsStep = defineLeafStep({
           config: provider,
           data: {
             ...providerData,
+            commerceProvider,
             events: eventsData.map((data, index) => {
               return {
                 ...data,
