@@ -31,7 +31,6 @@ import {
   isCompletedState,
   isFailedState,
   isInProgressState,
-  isPendingState,
   isSucceededState,
   runInstallation,
 } from "#management/index";
@@ -174,7 +173,7 @@ router.post("/", {
     const existingState = await store.get(getStorageKey());
 
     if (existingState) {
-      if (isPendingState(existingState) || isInProgressState(existingState)) {
+      if (isInProgressState(existingState)) {
         logger.debug(
           `Installation already in progress: ${existingState.status}`,
         );
