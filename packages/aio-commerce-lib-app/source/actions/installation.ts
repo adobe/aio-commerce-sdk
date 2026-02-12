@@ -318,9 +318,9 @@ router.delete("/", {
 /** The route handler for the runtime action. */
 export const installationRuntimeAction =
   ({ appConfig, customScriptsLoader }: RuntimeActionFactoryArgs) =>
-  (params: RuntimeActionParams) => {
+  async (params: RuntimeActionParams) => {
     const handler = router.handler();
-    return handler({
+    return await handler({
       ...params,
       appConfig,
       customScriptsLoader,
