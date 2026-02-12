@@ -38,7 +38,7 @@ describe("createInitialState", () => {
     vi.useRealTimers();
   });
 
-  test("should create initial state with unique id and pending status", () => {
+  test("should create initial state with unique id and in-progress status", () => {
     const rootStep = defineBranchStep({
       name: "root",
       meta: { label: "Root" },
@@ -50,7 +50,7 @@ describe("createInitialState", () => {
     expect(state.id).toBeDefined();
     expect(typeof state.id).toBe("string");
     expect(state.id.length).toBeGreaterThan(0);
-    expect(state.status).toBe("pending");
+    expect(state.status).toBe("in-progress");
   });
 
   test("should build step status from root step with name and meta", () => {

@@ -42,8 +42,8 @@ import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InstallationContext } from "#management/index";
 import type {
+  InProgressInstallationState,
   InstallationState,
-  PendingInstallationState,
 } from "#management/installation/workflow/types";
 
 // Action name for async invocation

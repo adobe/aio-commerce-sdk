@@ -16,9 +16,9 @@ import { createInitialState, executeWorkflow } from "./workflow";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   FailedInstallationState,
+  InProgressInstallationState,
   InstallationContext,
   InstallationHooks,
-  PendingInstallationState,
   SucceededInstallationState,
 } from "./workflow";
 
@@ -37,7 +37,7 @@ export type RunInstallationOptions = {
   config: CommerceAppConfigOutputModel;
 
   /** The initial installation state (with all steps pending). */
-  initialState: PendingInstallationState;
+  initialState: InProgressInstallationState;
 
   /** Lifecycle hooks for status change notifications. */
   hooks?: InstallationHooks;
@@ -50,7 +50,7 @@ export type RunInstallationOptions = {
  */
 export function createInitialInstallationState(
   options: CreateInitialInstallationStateOptions,
-): PendingInstallationState {
+): InProgressInstallationState {
   const { config } = options;
   const rootStep = createRootInstallationStep(config);
 

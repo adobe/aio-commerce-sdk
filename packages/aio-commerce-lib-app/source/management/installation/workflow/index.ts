@@ -59,7 +59,6 @@ export type {
   InstallationError,
   InstallationState,
   InstallationStatus,
-  PendingInstallationState,
   StepStatus,
   SucceededInstallationState,
 } from "./types";

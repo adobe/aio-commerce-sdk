@@ -20,7 +20,6 @@ import type {
   FailedInstallationState,
   InProgressInstallationState,
   InstallationError,
-  PendingInstallationState,
   StepStatus,
   SucceededInstallationState,
 } from "#management/installation/workflow/types";
@@ -98,17 +97,6 @@ const baseStateProps = {
   step: createMockStepStatus(),
   data: {},
 };
-
-/** Creates a mock PendingInstallationState. */
-export function createMockPendingState(
-  overrides?: Partial<PendingInstallationState>,
-): PendingInstallationState {
-  return {
-    ...baseStateProps,
-    status: "pending",
-    ...overrides,
-  };
-}
 
 /** Creates a mock InProgressInstallationState. */
 export function createMockInProgressState(

@@ -78,12 +78,6 @@ type InstallationStateBase = {
   /** Results from executed leaf steps, keyed by path. */
   data: InstallationData | null;
 };
-
-/** Installation state when pending (not yet started). */
-export type PendingInstallationState = InstallationStateBase & {
-  status: "pending";
-};
-
 /** Installation state when in progress. */
 export type InProgressInstallationState = InstallationStateBase & {
   status: "in-progress";
@@ -122,17 +116,11 @@ export type FailedInstallationState = InstallationStateBase & {
  * Discriminated union by `status` field.
  */
 export type InstallationState =
-  | PendingInstallationState
   | InProgressInstallationState
   | SucceededInstallationState
   | FailedInstallationState;
 
 /** Type guard for pending installation state. */
-export function isPendingState(
-  state: InstallationState,
-): state is PendingInstallationState {
-  return state.status === "pending";
-}
 
 /** Type guard for in-progress installation state. */
 export function isInProgressState(
