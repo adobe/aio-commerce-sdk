@@ -42,7 +42,10 @@ import type {
  * @param params - The runtime action params to resolve the client params from.
  */
 function createCommerceEventsApiClient(params: RuntimeActionParams) {
-  const commerceClientParams = resolveCommerceHttpClientParams(params);
+  const commerceClientParams = resolveCommerceHttpClientParams(params, {
+    tryForwardAuthProvider: true,
+  });
+
   commerceClientParams.fetchOptions ??= {};
   commerceClientParams.fetchOptions.timeout = 1000 * 60 * 2; // 2 minutes
 

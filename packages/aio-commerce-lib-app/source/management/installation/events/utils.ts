@@ -274,7 +274,7 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
                 client_secrets: clientSecrets,
                 technical_account_email: technicalAccountEmail,
                 technical_account_id: technicalAccountId,
-                ims_scopes: scopes.map((scope) => scope.trim()),
+                scopes: scopes.map((scope) => scope.trim()),
               },
             },
           ],

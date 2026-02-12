@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 
 import {
@@ -124,10 +125,14 @@ async function createOrGetIoEventProvider(
 async function createIoEventProviderEventMetadata(
   params: CreateIoProviderEventsMetadataParams,
 ) {
-  const { context, event, provider, type } = params;
+  const { context, event, provider, type, metadata } = params;
   const { appCredentials, ioEventsClient, logger } = context;
 
-  const eventCode = getIoEventCode(event.name, type);
+  const eventCode = getIoEventCode(
+    getNamespacedEvent(metadata, event.name),
+    type,
+  );
+
   logger.info(
     `Creating event metadata (${eventCode}) for provider "${provider.label}" (instance ID: ${provider.instance_id}))`,
   );
@@ -166,10 +171,14 @@ async function createOrGetIoProviderEventMetadata(
   params: CreateIoProviderEventsMetadataParams,
   existingData: IoEventMetadata[],
 ) {
-  const { context, event, provider, type } = params;
+  const { context, event, provider, type, metadata } = params;
   const { logger } = context;
 
-  const eventCode = getIoEventCode(event.name, type);
+  const eventCode = getIoEventCode(
+    getNamespacedEvent(metadata, event.name),
+    type,
+  );
+
   const existing = findExistingProviderMetadata(existingData, eventCode);
   if (existing) {
     logger.info(
@@ -424,6 +433,10 @@ async function createCommerceEventSubscription(
     providerId: provider.id,
   };
 
+  logger.debug(
+    `Event subscription specification for event "${event.config.name}": ${inspect(eventSpec)}`,
+  );
+
   return commerceEventsClient
     .createEventSubscription(eventSpec)
     .then((_res) => {
@@ -437,6 +450,8 @@ async function createCommerceEventSubscription(
       logger.error(
         `Failed to create event subscription for event "${event.config.name}" to provider "${provider.label}": ${stringifyError(err)}`,
       );
+
+      logger.error(inspect(err));
 
       throw err;
     });
@@ -503,6 +518,7 @@ export async function onboardIoEvents<EventType extends AppEvent>(
   const metadataPromises = events.map((event) =>
     createOrGetIoProviderEventMetadata(
       {
+        metadata,
         context,
         type: providerType,
         provider: providerData,
@@ -583,7 +599,7 @@ export async function onboardCommerceEventing(
     existingData,
   );
 
-  const providerPromise = createOrGetCommerceProvider(
+  const commerceProvider = await createOrGetCommerceProvider(
     {
       context,
       provider: {
@@ -597,17 +613,16 @@ export async function onboardCommerceEventing(
     existingData.providers,
   );
 
-  const subscriptionsPromises = events.map((event) =>
-    createOrGetCommerceEventSubscription(
-      { context, metadata, provider, event },
-      existingData.subscriptions,
-    ),
-  );
+  const subscriptions: Partial<CommerceEventSubscription>[] = [];
 
-  const [commerceProvider, subscriptions] = await Promise.all([
-    providerPromise,
-    Promise.all(subscriptionsPromises),
-  ]);
+  for (const event of events) {
+    subscriptions.push(
+      await createOrGetCommerceEventSubscription(
+        { context, metadata, provider, event },
+        existingData.subscriptions,
+      ),
+    );
+  }
 
   return {
     commerceProvider,

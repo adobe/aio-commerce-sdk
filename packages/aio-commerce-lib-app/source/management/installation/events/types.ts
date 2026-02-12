@@ -36,6 +36,7 @@ export type CreateIoProviderParams = {
 
 /** Parameters needed to create event metadata of a provider in Adobe I/O Events */
 export type CreateIoProviderEventsMetadataParams = {
+  metadata: ApplicationMetadata;
   context: EventsExecutionContext;
   type: EventProviderType;
   provider: IoEventProvider;
