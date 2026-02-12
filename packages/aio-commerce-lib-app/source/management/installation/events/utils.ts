@@ -349,7 +349,7 @@ export async function getCommerceEventingExistingData(
   // (the one without an ID), has a falsy or whitespace-only workspace_configuration.
   const isDefaultWorkspaceConfigurationEmpty = existingProviders.some(
     (provider) =>
-      // biome-ignore lint/complexity/useSimplifiedLogicExpression: This is more readable this way
+      // biome-ignore lint/complexity/useSimplifiedLogicExpression: It's more readable this way
       !("id" in provider) && !provider.workspace_configuration?.trim(),
   );
 
