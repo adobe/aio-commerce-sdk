@@ -13,6 +13,7 @@
 import {
   alphaNumericOrHyphenSchema,
   alphaNumericOrUnderscoreSchema,
+  booleanValueSchema,
   nonEmptyStringValueSchema,
   titleCaseSchema,
 } from "@aio-commerce-sdk/common-utils/valibot";
@@ -110,6 +111,11 @@ const CommerceEventSchema = v.object({
     alphaNumericOrUnderscoreSchema("event fields", "lowercase"),
     "Expected an array of event fields",
   ),
+
+  destination: v.optional(nonEmptyStringValueSchema("destination")),
+  hipaaAuditRequired: v.optional(booleanValueSchema("hipaaAuditRequired")),
+  prioritary: v.optional(booleanValueSchema("prioritary")),
+  force: v.optional(booleanValueSchema("force")),
 });
 
 /** Schema for external event configuration */

@@ -29,6 +29,7 @@ import {
 import type {
   CommerceEventProvider,
   CommerceEventSubscription,
+  EventSubscriptionCreateParams,
   UpdateEventingConfigurationParams,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
@@ -426,7 +427,9 @@ async function createCommerceEventSubscription(
     `Creating event subscription for event "${event.config.name}" to provider "${provider.label}" (instance ID: ${provider.instance_id})`,
   );
 
-  const eventSpec = {
+  const eventSpec: EventSubscriptionCreateParams = {
+    ...event.config,
+
     name: eventName,
     parent: event.config.name,
     fields: event.config.fields.map((field) => ({ name: field })),
