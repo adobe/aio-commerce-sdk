@@ -59,24 +59,16 @@ export async function run() {
 }
 
 /** Load the app commerce config */
-async function loadAppManifest(): Promise<
-  Partial<CommerceAppConfigOutputModel>
-> {
-  try {
-    const appConfig = await parseCommerceAppConfig();
-    consola.debug("Loaded app commerce config");
-    return appConfig;
-  } catch (error) {
-    consola.warn(
-      `Could not load app commerce config: ${stringifyError(error)}`,
-    );
-    consola.info("Using default configuration");
-    return {};
-  }
+async function loadAppManifest() {
+  // If the config file is invalid or missing, we want to fail early before generating any files
+  const appConfig = await parseCommerceAppConfig();
+  consola.debug("Loaded app commerce config");
+
+  return appConfig;
 }
 
 /** Update the ext.config.yaml file */
-export async function updateExtConfig() {
+async function updateExtConfig() {
   consola.info("Updating ext.config.yaml...");
 
   const outputDir = await makeOutputDirFor(EXTENSION_POINT_FOLDER_PATH);
@@ -88,9 +80,7 @@ export async function updateExtConfig() {
 }
 
 /** Generate the action files */
-export async function generateActionFiles(
-  appManifest: Partial<CommerceAppConfigOutputModel>,
-) {
+async function generateActionFiles(appManifest: CommerceAppConfigOutputModel) {
   consola.start("Generating runtime actions...");
   const outputDir = await makeOutputDirFor(
     join(EXTENSION_POINT_FOLDER_PATH, GENERATED_ACTIONS_PATH),
@@ -115,25 +105,7 @@ export async function generateActionFiles(
         appManifest,
       );
 
-      // There are scripts file to include.
-      if (scriptsTemplate !== null) {
-        template = template
-          .replace(CUSTOM_SCRIPTS_LOADER_PLACEHOLDER, scriptsTemplate)
-          .replace(
-            "const args = { appConfig };",
-            "const args = { appConfig, customScriptsLoader };",
-          );
-      } else {
-        // No custom scripts, remove the loader references
-        consola.debug(
-          "No custom installation steps found, skipping custom-scripts.js generation...",
-        );
-
-        template = template.replace(
-          CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
-          "// No custom installation scripts configured",
-        );
-      }
+      template = applyCustomScripts(template, scriptsTemplate);
     }
 
     const actionPath = join(outputDir, `${action.name}.js`);
@@ -150,13 +122,42 @@ export async function generateActionFiles(
 }
 
 /**
+ * Applies the given custom scripts template code to the given installation template.
+ * @param installationTemplate - The installation code runtime action template
+ * @param customScriptsTemplate - The custom scripts dynamically generated template.
+ */
+export function applyCustomScripts(
+  installationTemplate: string,
+  customScriptsTemplate: string | null,
+) {
+  // There are scripts file to include.
+  if (customScriptsTemplate !== null) {
+    return installationTemplate
+      .replace(CUSTOM_SCRIPTS_LOADER_PLACEHOLDER, customScriptsTemplate)
+      .replace(
+        "const args = { appConfig };",
+        "const args = { appConfig, customScriptsLoader };",
+      );
+  }
+  // No custom scripts, remove the loader references
+  consola.debug(
+    "No custom installation steps found, skipping custom-scripts.js generation...",
+  );
+
+  return installationTemplate.replace(
+    CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
+    "// No custom installation scripts configured",
+  );
+}
+
+/**
  * Generate the installation template with dynamic custom script imports
  */
-async function generateCustomScriptsTemplate(
+export async function generateCustomScriptsTemplate(
   template: string,
-  appManifest: Partial<CommerceAppConfigOutputModel>,
+  appManifest: CommerceAppConfigOutputModel,
 ) {
-  const customSteps = appManifest?.installation?.customInstallationSteps || [];
+  const customSteps = appManifest.installation?.customInstallationSteps || [];
 
   if (customSteps.length === 0) {
     return null;

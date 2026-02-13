@@ -63,7 +63,8 @@
   },
   "imports": {
     "#*": "./source/*.ts",
-    "#test/*": "./test/*.ts"
+    "#test/*": "./test/*.ts",
+    "#templates/*": "./source/commands/generate/actions/templates/*.template"
   },
   "files": [
     "dist",
