@@ -32,7 +32,7 @@ const ALPHANUMERIC_OR_HYPHEN_REGEX = {
   uppercase: /^[A-Z0-9-]+$/,
 };
 
-const TITLE_CASE_REGEX = /^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/;
+const TITLE_CASE_REGEX = /^[A-Z][a-zA-Z]*(?:\s[A-Z][a-zA-Z]*)*$/;
 
 /**
  * A schema for a string value.
