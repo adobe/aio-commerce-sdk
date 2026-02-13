@@ -14,18 +14,9 @@ import type {
   HttpMethod,
   RuntimeActionParams,
 } from "@adobe/aio-commerce-lib-core/params";
-import type {
-  ErrorResponse,
-  SuccessResponse,
-} from "@adobe/aio-commerce-lib-core/responses";
+import type { ActionResponse } from "@adobe/aio-commerce-lib-core/responses";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { EmptyObject, Promisable, Simplify } from "type-fest";
-
-/**
- * Response type for route handlers.
- * Allows both success responses (with any body) and error responses (with message).
- */
-export type RouteResponse = SuccessResponse | ErrorResponse;
 
 /**
  * Base context interface for route handlers.
@@ -147,7 +138,7 @@ export interface CompiledRoute {
     req: RouteRequest<any, any, any>,
     // biome-ignore lint/suspicious/noExplicitAny: Internal storage needs to accept any context type
     ctx: any,
-  ) => Promisable<RouteResponse>;
+  ) => Promisable<ActionResponse>;
 }
 
 /**
@@ -226,5 +217,5 @@ export type RouteConfig<
         : Record<string, string>
     >,
     ctx: TContext,
-  ) => Promisable<RouteResponse>;
+  ) => Promisable<ActionResponse>;
 };

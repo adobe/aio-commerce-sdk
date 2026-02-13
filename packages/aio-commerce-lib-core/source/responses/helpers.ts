@@ -59,9 +59,12 @@ export type SuccessResponse<
  * @template THeaders - Custom response headers
  */
 export type ActionResponse<
-  TBody extends BodyRecordWithMessage = BodyRecordWithMessage,
+  TSuccessBody extends BodyRecord = BodyRecord,
+  TErrorBody extends BodyRecordWithMessage = BodyRecordWithMessage,
   THeaders extends HeadersRecord = HeadersRecord,
-> = SuccessResponse<TBody, THeaders> | ErrorResponse<TBody, THeaders>;
+> =
+  | SuccessResponse<TSuccessBody, THeaders>
+  | ErrorResponse<TErrorBody, THeaders>;
 
 /**
  * Creates a standardized error response for runtime actions
