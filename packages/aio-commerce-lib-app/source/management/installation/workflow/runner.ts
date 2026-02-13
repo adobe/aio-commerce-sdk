@@ -113,7 +113,6 @@ export async function executeWorkflow(
     step,
     data: null,
     error: null,
-    registry: new Map(rootStep.children.map((s) => [s.name, s])),
     hooks,
   };
 
