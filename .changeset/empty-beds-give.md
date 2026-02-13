@@ -2,4 +2,4 @@
 "@adobe/aio-commerce-lib-app": patch
 ---
 
-Require title case for custom script names
+Relax casing constraints for display names in schema
