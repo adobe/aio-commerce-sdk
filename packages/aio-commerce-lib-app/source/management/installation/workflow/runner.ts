@@ -65,9 +65,6 @@ export type ExecuteWorkflowOptions = {
   hooks?: InstallationHooks;
 };
 
-/** Type for the step registry map. */
-type StepRegistry = Map<string, AnyStep>;
-
 /** Context for step execution containing all necessary dependencies. */
 type StepExecutionContext = {
   installationContext: InstallationContext;
@@ -77,7 +74,6 @@ type StepExecutionContext = {
   step: StepStatus;
   data: Record<string, unknown> | null;
   error: InstallationError | null;
-  registry: StepRegistry;
   hooks?: InstallationHooks;
 };
 
@@ -117,7 +113,6 @@ export async function executeWorkflow(
     step,
     data: null,
     error: null,
-    registry: new Map(rootStep.children.map((s) => [s.name, s])),
     hooks,
   };
 
