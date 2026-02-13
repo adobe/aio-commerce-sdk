@@ -33,7 +33,6 @@ import type {
   FailedInstallationState,
   InProgressInstallationState,
   InstallationError,
-  PendingInstallationState,
   StepStatus,
   SucceededInstallationState,
 } from "./types";
@@ -59,7 +58,7 @@ export type ExecuteWorkflowOptions = {
   config: CommerceAppConfigOutputModel;
 
   /** The initial installation state (with all steps pending). */
-  initialState: PendingInstallationState;
+  initialState: InProgressInstallationState;
 
   /** Lifecycle hooks for status change notifications. */
   hooks?: InstallationHooks;
@@ -79,16 +78,18 @@ type StepExecutionContext = {
 
 /**
  * Creates an initial installation state from a root step and config.
- * Filters steps based on their `when` conditions and builds a tree structure
- * with all steps set to "pending".
+ *
+ * Filters steps based on their `when` conditions and builds a
+ * tree structure with all steps set to "pending".
  */
 export function createInitialState(
   options: CreateInitialStateOptions,
-): PendingInstallationState {
+): InProgressInstallationState {
   const { rootStep, config } = options;
   return {
     id: crypto.randomUUID(),
-    status: "pending",
+    startedAt: nowIsoString(),
+    status: "in-progress",
     step: buildInitialStepStatus(rootStep, config, []),
     data: null,
   };
@@ -109,7 +110,7 @@ export async function executeWorkflow(
     installationContext,
     config,
     id: initialState.id,
-    startedAt: nowIsoString(),
+    startedAt: initialState.startedAt,
     step,
     data: null,
     error: null,

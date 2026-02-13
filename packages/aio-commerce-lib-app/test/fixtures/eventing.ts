@@ -13,8 +13,11 @@ export function createMockCommerceEventsClient(
   overrides?: Partial<CustomCommerceEventsApiClient>,
 ) {
   return {
+    createEventProvider: vi.fn(overrides?.createEventProvider),
+    getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     createEventSubscription: vi.fn(overrides?.createEventSubscription),
     getAllEventSubscriptions: vi.fn(overrides?.getAllEventSubscriptions),
+    updateEventingConfiguration: vi.fn(overrides?.updateEventingConfiguration),
   } satisfies CustomCommerceEventsApiClient;
 }
 

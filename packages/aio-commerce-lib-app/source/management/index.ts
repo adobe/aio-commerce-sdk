@@ -27,7 +27,6 @@ export {
   isCompletedState,
   isFailedState,
   isInProgressState,
-  isPendingState,
   isSucceededState,
 } from "./installation/workflow";
 

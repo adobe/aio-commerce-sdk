@@ -23,7 +23,6 @@ export {
   isCompletedState,
   isFailedState,
   isInProgressState,
-  isPendingState,
   isSucceededState,
 } from "./types";
 
@@ -59,7 +58,6 @@ export type {
   InstallationError,
   InstallationState,
   InstallationStatus,
-  PendingInstallationState,
   StepStatus,
   SucceededInstallationState,
 } from "./types";

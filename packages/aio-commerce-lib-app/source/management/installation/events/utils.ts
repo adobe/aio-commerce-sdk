@@ -10,7 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-import type { CommerceEventSubscription } from "@adobe/aio-commerce-lib-events/commerce";
+import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+
+import type {
+  CommerceEventProvider,
+  CommerceEventSubscription,
+} from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   EventProviderType,
   IoEventMetadata,
@@ -60,10 +65,9 @@ export function generateInstanceId(
  * @param allProviders - The list of all existing event providers.
  * @param instanceId - The instance ID to search for.
  */
-export function findExistingProvider(
-  allProviders: IoEventProvider[],
-  instanceId: string,
-) {
+export function findExistingProvider<
+  TProvider extends IoEventProvider | CommerceEventProvider,
+>(allProviders: TProvider[], instanceId: string) {
   return (
     allProviders.find((provider) => provider.instance_id === instanceId) ?? null
   );
@@ -216,16 +220,96 @@ export function findExistingSubscription(
 }
 
 /**
+ * Creates a partially filled workspace configuration object based on the app credentials and parameters.
+ * This configuration is used when creating an event provider in Commerce.
+ *
+ * @param context - The execution context containing app credentials and parameters.
+ */
+export function makeWorkspaceConfig(context: EventsExecutionContext) {
+  const { appData, params } = context;
+  const {
+    consumerOrgId,
+    orgName,
+    projectId,
+    projectName,
+    projectTitle,
+    workspaceId,
+    workspaceName,
+    workspaceTitle,
+  } = appData;
+
+  const authParams = resolveAuthParams(params);
+  if (authParams.strategy !== "ims") {
+    throw new Error(
+      "Failed to resolve IMS authentication parameters from the runtime action inputs.",
+    );
+  }
+
+  const {
+    clientId,
+    clientSecrets,
+    technicalAccountEmail,
+    technicalAccountId,
+    imsOrgId,
+    scopes,
+  } = authParams;
+
+  return {
+    project: {
+      id: projectId,
+      name: projectName,
+      title: projectTitle,
+
+      org: {
+        id: consumerOrgId,
+        name: orgName,
+        ims_org_id: imsOrgId,
+      },
+
+      workspace: {
+        id: workspaceId,
+        name: workspaceName,
+        title: workspaceTitle,
+        action_url: `https://${process.env.__OW_NAMESPACE}.adobeioruntime.net`,
+        app_url: `https://${process.env.__OW_NAMESPACE}.adobeio-static.net`,
+        details: {
+          credentials: [
+            {
+              id: "000000",
+              name: `aio-${workspaceId}`,
+              integration_type: "oauth_server_to_server",
+              oauth_server_to_server: {
+                client_id: clientId,
+                client_secrets: clientSecrets,
+                technical_account_email: technicalAccountEmail,
+                technical_account_id: technicalAccountId,
+                scopes: scopes.map((scope) => scope.trim()),
+              },
+            },
+          ],
+        },
+      },
+    },
+  };
+}
+
+/**
  * Retrieves the current existing data and returns it in a normalized way.
  * @param context The execution context.
  */
 export async function getIoEventsExistingData(context: EventsExecutionContext) {
   // Ask for all the providers, and we'll create only those that are missing.
-  const { ioEventsClient, appCredentials } = context;
+  const { ioEventsClient, appData } = context;
+  const appCredentials = {
+    consumerOrgId: appData.consumerOrgId,
+    projectId: appData.projectId,
+    workspaceId: appData.workspaceId,
+  };
+
   const {
     _embedded: { providers: existingProviders },
   } = await ioEventsClient.getAllEventProviders({
-    consumerOrgId: appCredentials.consumerOrgId,
+    consumerOrgId: appData.consumerOrgId,
     withEventMetadata: true,
   });
 
@@ -271,8 +355,18 @@ export async function getCommerceEventingExistingData(
   context: EventsExecutionContext,
 ) {
   const { commerceEventsClient } = context;
+
+  const existingProviders = await commerceEventsClient.getAllEventProviders();
   const existingSubscriptions =
     await commerceEventsClient.getAllEventSubscriptions();
+
+  // The eventing module workspace configuration is empty if the default provider
+  // (the one without an ID), has a falsy or whitespace-only workspace_configuration.
+  const isDefaultWorkspaceConfigurationEmpty = existingProviders.some(
+    (provider) =>
+      // biome-ignore lint/complexity/useSimplifiedLogicExpression: It's more readable this way
+      !("id" in provider) && !provider.workspace_configuration?.trim(),
+  );
 
   const subscriptions = new Map(
     existingSubscriptions.map((subscription) => [
@@ -281,7 +375,11 @@ export async function getCommerceEventingExistingData(
     ]),
   );
 
-  return { subscriptions };
+  return {
+    isDefaultWorkspaceConfigurationEmpty,
+    providers: existingProviders,
+    subscriptions,
+  };
 }
 
 /** The Commerce Eventing data that we may already have. */

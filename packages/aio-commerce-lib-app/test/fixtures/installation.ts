@@ -20,7 +20,6 @@ import type {
   FailedInstallationState,
   InProgressInstallationState,
   InstallationError,
-  PendingInstallationState,
   StepStatus,
   SucceededInstallationState,
 } from "#management/installation/workflow/types";
@@ -43,19 +42,30 @@ export function createMockInstallationContext(
   overrides?: Partial<InstallationContext>,
 ): InstallationContext {
   return {
-    appCredentials: {
+    appData: {
       consumerOrgId: "test-consumer-org-id",
       projectId: "test-project-id",
       workspaceId: "test-workspace-id",
-      ...(overrides?.appCredentials ?? {}),
+      orgName: "test-org-name",
+      projectName: "test-project-name",
+      projectTitle: "Test Project Title",
+      workspaceName: "test-workspace-name",
+      workspaceTitle: "Test Workspace Title",
+      ...(overrides?.appData ?? {}),
     },
 
+    logger: overrides?.logger ?? createMockLogger(),
     params: {
       ...(overrides?.params ?? {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["test-secret-1"],
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-ims-org-id",
+        AIO_COMMERCE_AUTH_IMS_SCOPES: ["test-scope1", "test-scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL:
+          "test-technical-account-email",
       }),
     },
-    logger: overrides?.logger ?? createMockLogger(),
   };
 }
 
@@ -92,17 +102,6 @@ const baseStateProps = {
   step: createMockStepStatus(),
   data: {},
 };
-
-/** Creates a mock PendingInstallationState. */
-export function createMockPendingState(
-  overrides?: Partial<PendingInstallationState>,
-): PendingInstallationState {
-  return {
-    ...baseStateProps,
-    status: "pending",
-    ...overrides,
-  };
-}
 
 /** Creates a mock InProgressInstallationState. */
 export function createMockInProgressState(

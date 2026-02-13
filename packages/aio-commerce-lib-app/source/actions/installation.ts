@@ -31,19 +31,18 @@ import {
   isCompletedState,
   isFailedState,
   isInProgressState,
-  isPendingState,
   isSucceededState,
   runInstallation,
 } from "#management/index";
-import { AppCredentialsSchema } from "#management/installation/schema";
+import { AppDataSchema } from "#management/installation/schema";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InstallationContext } from "#management/index";
 import type {
+  InProgressInstallationState,
   InstallationState,
-  PendingInstallationState,
 } from "#management/installation/workflow/types";
 
 // Action name for async invocation
@@ -158,8 +157,7 @@ router.get("/", {
  */
 router.post("/", {
   body: object({
-    appCredentials: AppCredentialsSchema,
-
+    appData: AppDataSchema,
     commerceBaseUrl: string(),
     commerceEnv: string(),
     ioEventsUrl: string(),
@@ -167,14 +165,13 @@ router.post("/", {
   }),
 
   handler: async (req, { logger, rawParams }) => {
-    const appCredentials = req.body.appCredentials;
     logger.debug("Starting installation...");
 
     const store = await createInstallationStore();
     const existingState = await store.get(getStorageKey());
 
     if (existingState) {
-      if (isPendingState(existingState) || isInProgressState(existingState)) {
+      if (isInProgressState(existingState)) {
         logger.debug(
           `Installation already in progress: ${existingState.status}`,
         );
@@ -215,12 +212,12 @@ router.post("/", {
       params: {
         ...rawParams,
 
+        appData: req.body.appData,
         AIO_EVENTS_API_BASE_URL: req.body.ioEventsUrl,
         AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: req.body.ioEventsEnv,
         AIO_COMMERCE_API_BASE_URL: req.body.commerceBaseUrl,
         AIO_COMMERCE_API_FLAVOR: req.body.commerceEnv,
 
-        appCredentials,
         initialState,
         appConfig,
 
@@ -249,9 +246,9 @@ router.post("/", {
  */
 router.post("/execution", {
   handler: async (_req, { logger, rawParams }) => {
-    const { appCredentials, ...params } = rawParams as RuntimeActionArgs & {
-      initialState: PendingInstallationState;
-      appCredentials: InstallationContext["appCredentials"];
+    const { appData, ...params } = rawParams as RuntimeActionArgs & {
+      initialState: InProgressInstallationState;
+      appData: InstallationContext["appData"];
     };
 
     const { initialState, appConfig } = params;
@@ -267,7 +264,7 @@ router.post("/execution", {
     const store = await createInstallationStore();
     const hooks = createInstallationHooks(store, (msg) => logger.debug(msg));
     const installationContext: InstallationContext = {
-      appCredentials,
+      appData,
       params,
       logger,
       customScripts: params.customScriptsLoader?.(appConfig, logger) || {},
@@ -318,9 +315,9 @@ router.delete("/", {
 /** The route handler for the runtime action. */
 export const installationRuntimeAction =
   ({ appConfig, customScriptsLoader }: RuntimeActionFactoryArgs) =>
-  (params: RuntimeActionParams) => {
+  async (params: RuntimeActionParams) => {
     const handler = router.handler();
-    return handler({
+    return await handler({
       ...params,
       appConfig,
       customScriptsLoader,

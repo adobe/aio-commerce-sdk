@@ -13,36 +13,17 @@
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-const CONSUMER_ORG_ID_LENGTH = 6;
-const PROJECT_ID_LENGTH = 19;
-const WORKSPACE_ID_LENGTH = 19;
-
 /** Schema for validating Adobe I/O app credentials required for installation. */
-export const AppCredentialsSchema = v.object({
-  consumerOrgId: v.pipe(
-    nonEmptyStringValueSchema("consumerOrgId"),
-    v.length(
-      CONSUMER_ORG_ID_LENGTH,
-      `consumerOrgId must be ${CONSUMER_ORG_ID_LENGTH} characters long`,
-    ),
-  ),
-
-  projectId: v.pipe(
-    nonEmptyStringValueSchema("projectId"),
-    v.length(
-      PROJECT_ID_LENGTH,
-      `projectId must be ${PROJECT_ID_LENGTH} characters long`,
-    ),
-  ),
-
-  workspaceId: v.pipe(
-    nonEmptyStringValueSchema("workspaceId"),
-    v.length(
-      WORKSPACE_ID_LENGTH,
-      `workspaceId must be ${WORKSPACE_ID_LENGTH} characters long`,
-    ),
-  ),
+export const AppDataSchema = v.object({
+  consumerOrgId: nonEmptyStringValueSchema("consumerOrgId"),
+  orgName: nonEmptyStringValueSchema("orgName"),
+  projectId: nonEmptyStringValueSchema("projectId"),
+  projectName: nonEmptyStringValueSchema("projectName"),
+  projectTitle: nonEmptyStringValueSchema("projectTitle"),
+  workspaceId: nonEmptyStringValueSchema("workspaceId"),
+  workspaceName: nonEmptyStringValueSchema("workspaceName"),
+  workspaceTitle: nonEmptyStringValueSchema("workspaceTitle"),
 });
 
 /** Type for Adobe I/O app credentials. */
-export type AppCredentials = v.InferOutput<typeof AppCredentialsSchema>;
+export type AppData = v.InferOutput<typeof AppDataSchema>;

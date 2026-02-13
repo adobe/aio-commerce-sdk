@@ -16,8 +16,11 @@ import {
 } from "@adobe/aio-commerce-lib-api";
 import {
   createCustomCommerceEventsApiClient,
+  createEventProvider as createEventProviderCommerce,
   createEventSubscription,
+  getAllEventProviders as getAllEventProvidersCommerce,
   getAllEventSubscriptions,
+  updateEventingConfiguration,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import {
   createCustomAdobeIoEventsApiClient,
@@ -39,13 +42,19 @@ import type {
  * @param params - The runtime action params to resolve the client params from.
  */
 function createCommerceEventsApiClient(params: RuntimeActionParams) {
-  const commerceClientParams = resolveCommerceHttpClientParams(params);
+  const commerceClientParams = resolveCommerceHttpClientParams(params, {
+    tryForwardAuthProvider: true,
+  });
+
   commerceClientParams.fetchOptions ??= {};
   commerceClientParams.fetchOptions.timeout = 1000 * 60 * 2; // 2 minutes
 
   return createCustomCommerceEventsApiClient(commerceClientParams, {
-    getAllEventSubscriptions,
+    createEventProvider: createEventProviderCommerce,
+    getAllEventProviders: getAllEventProvidersCommerce,
     createEventSubscription,
+    getAllEventSubscriptions,
+    updateEventingConfiguration,
   });
 }
 

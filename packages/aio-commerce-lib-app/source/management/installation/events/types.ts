@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import type { UpdateEventingConfigurationParams } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   EventProviderType,
   IoEventProvider,
@@ -35,6 +36,7 @@ export type CreateIoProviderParams = {
 
 /** Parameters needed to create event metadata of a provider in Adobe I/O Events */
 export type CreateIoProviderEventsMetadataParams = {
+  metadata: ApplicationMetadata;
   context: EventsExecutionContext;
   type: EventProviderType;
   provider: IoEventProvider;
@@ -47,6 +49,7 @@ export type AppEventWithoutRuntimeActions = Omit<AppEvent, "runtimeActions">;
 /** Parameters needed to create event event registrations in Adobe I/O Events. */
 export type CreateRegistrationParams = {
   context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
   events: AppEventWithoutRuntimeActions[];
   provider: IoEventProvider;
   runtimeAction: string;
@@ -71,6 +74,29 @@ export type EventsDataFromIo<EventType extends AppEvent> = Awaited<
   ReturnType<typeof onboardIoEvents<EventType>>
 >["eventsData"];
 
+/** The parameters needed to update the eventing module in Commerce. */
+export type ConfigureCommerceEventingParams = {
+  context: EventsExecutionContext;
+  config: UpdateEventingConfigurationParams;
+};
+
+/** The parameters needed to create an event provider in Commerce */
+export type CreateCommerceProviderParams = {
+  context: EventsExecutionContext;
+  provider: Pick<
+    IoEventProvider,
+    "label" | "description" | "instance_id" | "id"
+  > & { workspaceConfiguration: string };
+};
+
+/** The parameters needed to create event subscriptions in Commerce. */
+export type CreateCommerceEventSubscriptionParams = {
+  context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
+  provider: ProviderDataFromIo<CommerceEvent>;
+  event: ArrayElement<EventsDataFromIo<CommerceEvent>>;
+};
+
 /** The parameters needed to onboard all the entities of Commerce Eventing. */
 export type OnboardCommerceEventingParams = {
   context: EventsExecutionContext;
@@ -80,13 +106,6 @@ export type OnboardCommerceEventingParams = {
   ioData: {
     provider: ProviderDataFromIo<CommerceEvent>;
     events: EventsDataFromIo<CommerceEvent>;
+    workspaceConfiguration: string;
   };
-};
-
-/** The parameters needed to create event subscriptions in Commerce. */
-export type CreateCommerceEventSubscriptionParams = {
-  context: EventsExecutionContext;
-  metadata: ApplicationMetadata;
-  provider: ProviderDataFromIo<CommerceEvent>;
-  event: ArrayElement<EventsDataFromIo<CommerceEvent>>;
 };

@@ -41,7 +41,7 @@ describe("createInitialInstallationState", () => {
       config: minimalValidConfig,
     });
 
-    expect(state.status).toBe("pending");
+    expect(state.status).toBe("in-progress");
     expect(state.step.name).toBe("installation");
     expect(state.step.meta).toEqual({
       label: "Installation",
@@ -98,7 +98,7 @@ describe("createInitialInstallationState", () => {
     expect(state.id).toBeDefined();
     expect(typeof state.id).toBe("string");
     expect(state.id.length).toBeGreaterThan(0);
-    expect(state.status).toBe("pending");
+    expect(state.status).toBe("in-progress");
   });
 });
 
