@@ -96,10 +96,10 @@ export const InstallationSchema = v.object({
     ),
     v.check((input) => {
       const steps = input || [];
-      const stepNames = new Set<string>(steps.map((step) => step.name));
+      const uniqueNames = new Set<string>(steps.map((step) => step.name));
 
-      // Ensure that step names are unique
-      return stepNames.size === steps.length;
+      // Ensure that step names are unique, size must match
+      return uniqueNames.size === steps.length;
     }, "Duplicate step names detected in custom installation steps. Each step must have a unique name."),
   ),
 });
