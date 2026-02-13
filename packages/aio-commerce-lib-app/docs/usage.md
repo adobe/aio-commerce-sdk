@@ -257,7 +257,7 @@ eventing: {
 
 - **name**: Must start with `plugin.` or `observer.` followed by lowercase letters and underscores (e.g., `plugin.order_placed`, `observer.catalog_update`)
 - **fields**: Array of field objects. Each field object must have:
-  - **name** (required): The field name. Field names can contain letters (a-z, A-Z), numbers (0-9), underscores (\_), dashes (-), dots (.), and square brackets ([, ]), or be exactly `"*"` (e.g., `"name"`, `"price"`, `"_origData"`, `"*"`)
+  - **name** (required): The field name.
   - **source** (optional): A string value for the field source (e.g., `"catalog"`, `"order"`)
 - **rules**: Optional array of filtering rules. Each rule must have:
   - **field**: The field name to filter on
