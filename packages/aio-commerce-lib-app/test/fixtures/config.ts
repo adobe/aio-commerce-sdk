@@ -58,53 +58,49 @@ const webhooksPart = [
 ];
 
 /** Minimal valid config with only required metadata fields. */
-export const minimalValidConfig: CommerceAppConfigOutputModel = {
+export const minimalValidConfig = {
   metadata: mockMetadata,
-};
+} satisfies CommerceAppConfigOutputModel;
 
 /** Config fixture with eventing.commerce configured. */
-export const configWithCommerceEventing: CommerceAppConfigOutputModel = {
+export const configWithCommerceEventing = {
   metadata: { ...mockMetadata, id: "test-app-commerce-events" },
   eventing: commerceEventingPart,
-};
+} satisfies CommerceAppConfigOutputModel;
 
 /** Config fixture with eventing.external configured. */
-export const configWithExternalEventing: CommerceAppConfigOutputModel = {
+export const configWithExternalEventing = {
   metadata: { ...mockMetadata, id: "test-app-external-events" },
   eventing: externalEventingPart,
-};
+} satisfies CommerceAppConfigOutputModel;
 
 /** Config fixture with webhooks configured. */
-export const configWithWebhooks: CommerceAppConfigOutputModel & {
-  webhooks: unknown[];
-} = {
+export const configWithWebhooks = {
   metadata: { ...mockMetadata, id: "test-app-webhooks" },
   webhooks: webhooksPart,
-};
+} satisfies CommerceAppConfigOutputModel;
 
 /** Config fixture with both commerce and external eventing. */
-export const configWithFullEventing: CommerceAppConfigOutputModel = {
+export const configWithFullEventing = {
   metadata: { ...mockMetadata, id: "test-app-full-eventing" },
   eventing: {
     ...commerceEventingPart,
     ...externalEventingPart,
   },
-};
+} satisfies CommerceAppConfigOutputModel;
 
 /** Config fixture with both eventing and webhooks configured. */
-export const configWithEventingAndWebhooks: CommerceAppConfigOutputModel & {
-  webhooks: unknown[];
-} = {
+export const configWithEventingAndWebhooks = {
   metadata: { ...mockMetadata, id: "test-app-full" },
   eventing: {
     ...commerceEventingPart,
     ...externalEventingPart,
   },
   webhooks: webhooksPart,
-};
+} satisfies CommerceAppConfigOutputModel;
 
 /** Config fixture with custom installation steps. */
-export const configWithCustomInstallationSteps: CommerceAppConfigOutputModel = {
+export const configWithCustomInstallationSteps = {
   metadata: { ...mockMetadata, id: "test-app-with-custom-installation-steps" },
   installation: {
     customInstallationSteps: [
@@ -120,4 +116,4 @@ export const configWithCustomInstallationSteps: CommerceAppConfigOutputModel = {
       },
     ],
   },
-};
+} satisfies CommerceAppConfigOutputModel;

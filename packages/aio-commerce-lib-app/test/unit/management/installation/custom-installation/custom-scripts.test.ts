@@ -73,4 +73,14 @@ describe("createCustomScriptSteps", () => {
     expect(steps[1].meta.label).toBe("Demo Error");
     expect(steps[1].meta.description).toBe("Error script");
   });
+
+  test("should throw if multiple steps have the same name", () => {
+    // Grab the config and duplicate a step.
+    const config = structuredClone(configWithCustomInstallationSteps);
+    config.installation.customInstallationSteps.push(
+      config.installation.customInstallationSteps[0],
+    );
+
+    expect(() => createCustomScriptSteps(config)).toThrow();
+  });
 });

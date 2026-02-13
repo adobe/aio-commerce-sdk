@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import * as changeCase from "change-case";
+import camelcase from "camelcase";
 
 import { defineLeafStep } from "#management/installation/workflow/step";
 
@@ -57,9 +57,9 @@ type ScriptExecutionResult = {
 function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
   const { script, name, description } = scriptConfig;
   return defineLeafStep({
-    name: changeCase.camelCase(name),
+    name: camelcase(name),
     meta: {
-      label: changeCase.capitalCase(name),
+      label: name,
       description,
     },
 
@@ -118,7 +118,14 @@ export function createCustomScriptSteps(
     return [];
   }
 
-  return config.installation.customInstallationSteps.map((scriptConfig) =>
-    createCustomScriptStep(scriptConfig),
-  );
+  const steps = config.installation.customInstallationSteps;
+  const uniqueNames = new Set<string>(steps.map((step) => step.name));
+
+  if (uniqueNames.size !== steps.length) {
+    throw new Error(
+      "Duplicate step names detected in custom installation steps. Each step must have a unique name.",
+    );
+  }
+
+  return steps.map((scriptConfig) => createCustomScriptStep(scriptConfig));
 }

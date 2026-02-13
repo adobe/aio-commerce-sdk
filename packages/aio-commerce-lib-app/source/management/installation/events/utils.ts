@@ -11,7 +11,6 @@
  */
 
 import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
-import * as changeCase from "change-case";
 
 import type {
   CommerceEventProvider,
@@ -152,7 +151,7 @@ export function getRegistrationName(
   // As per the schema, runtimeAction is always in the format "package-name/action-name".
   const [packageName, actionName] = runtimeAction
     .split("/")
-    .map((word) => changeCase.capitalCase(word));
+    .map(kebabToTitleCase);
 
   return `${providerLabel} Event Registration: ${actionName} (${packageName})`;
 }
@@ -173,6 +172,17 @@ export function getRegistrationDescription(
     `It belongs to the provider "${provider.label}" (instance ID: ${provider.instance_id}). `,
     `It routes ${events.length} event(s) to the runtime action "${runtimeAction}".`,
   ].join("\n");
+}
+
+/**
+ * Converts a kebab-case string to Title Case.
+ * @param str - The kebab-case string to convert.
+ */
+export function kebabToTitleCase(str: string) {
+  return str
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 /**
