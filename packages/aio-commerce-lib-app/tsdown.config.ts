@@ -15,6 +15,7 @@ import { mergeConfig } from "tsdown";
 
 export default mergeConfig(baseConfig, {
   entry: [
+    "./source/actions/index.ts",
     "./source/config/index.ts",
     "./source/commands/index.ts",
     "./source/management/index.ts",

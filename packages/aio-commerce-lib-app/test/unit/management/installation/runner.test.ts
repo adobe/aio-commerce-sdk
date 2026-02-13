@@ -13,7 +13,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
-  createInstallationPlan,
+  createInitialInstallationState,
   runInstallation,
 } from "#management/installation/runner";
 import {
@@ -26,7 +26,7 @@ import {
 
 import type { InstallationHooks } from "#management/installation/workflow/hooks";
 
-describe("createInstallationPlan", () => {
+describe("createInitialInstallationState", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(FAKE_SYSTEM_TIME));
@@ -36,27 +36,36 @@ describe("createInstallationPlan", () => {
     vi.useRealTimers();
   });
 
-  test("should create a plan from config with default steps", () => {
-    const plan = createInstallationPlan({ config: minimalValidConfig });
+  test("should create initial state from config with default steps", () => {
+    const state = createInitialInstallationState({
+      config: minimalValidConfig,
+    });
 
-    expect(plan.step.name).toBe("installation");
-    expect(plan.step.meta).toEqual({
+    expect(state.status).toBe("pending");
+    expect(state.step.name).toBe("installation");
+    expect(state.step.meta).toEqual({
       label: "Installation",
       description: "App installation workflow",
     });
   });
 
   test("should include eventing step when config has eventing", () => {
-    const plan = createInstallationPlan({ config: configWithCommerceEventing });
+    const state = createInitialInstallationState({
+      config: configWithCommerceEventing,
+    });
 
-    const eventingStep = plan.step.children.find((c) => c.name === "eventing");
+    const eventingStep = state.step.children.find((c) => c.name === "eventing");
     expect(eventingStep).toBeDefined();
     expect(eventingStep?.meta.label).toBe("Eventing");
   });
 
   test("should include webhooks step when config has webhooks", () => {
-    const plan = createInstallationPlan({ config: configWithWebhooks });
-    const _webhooksStep = plan.step.children.find((c) => c.name === "webhooks");
+    const state = createInitialInstallationState({
+      config: configWithWebhooks,
+    });
+    const _webhooksStep = state.step.children.find(
+      (c) => c.name === "webhooks",
+    );
 
     // TODO: Undo this when webhooks is implemented
     // expect(webhooksStep).toBeDefined();
@@ -64,26 +73,32 @@ describe("createInstallationPlan", () => {
   });
 
   test("should exclude eventing step when config has no eventing", () => {
-    const plan = createInstallationPlan({ config: minimalValidConfig });
+    const state = createInitialInstallationState({
+      config: minimalValidConfig,
+    });
 
-    const eventingStep = plan.step.children.find((c) => c.name === "eventing");
+    const eventingStep = state.step.children.find((c) => c.name === "eventing");
     expect(eventingStep).toBeUndefined();
   });
 
   test("should exclude webhooks step when config has no webhooks", () => {
-    const plan = createInstallationPlan({ config: minimalValidConfig });
+    const state = createInitialInstallationState({
+      config: minimalValidConfig,
+    });
 
-    const webhooksStep = plan.step.children.find((c) => c.name === "webhooks");
+    const webhooksStep = state.step.children.find((c) => c.name === "webhooks");
     expect(webhooksStep).toBeUndefined();
   });
 
-  test("should return a plan with unique id and createdAt", () => {
-    const plan = createInstallationPlan({ config: minimalValidConfig });
+  test("should return state with unique id and pending status", () => {
+    const state = createInitialInstallationState({
+      config: minimalValidConfig,
+    });
 
-    expect(plan.id).toBeDefined();
-    expect(typeof plan.id).toBe("string");
-    expect(plan.id.length).toBeGreaterThan(0);
-    expect(plan.createdAt).toBe(FAKE_SYSTEM_TIME);
+    expect(state.id).toBeDefined();
+    expect(typeof state.id).toBe("string");
+    expect(state.id.length).toBeGreaterThan(0);
+    expect(state.status).toBe("pending");
   });
 });
 
@@ -98,18 +113,18 @@ describe("runInstallation", () => {
   });
 
   test("should return succeeded state when all steps complete", async () => {
-    const plan = createInstallationPlan({
+    const initialState = createInitialInstallationState({
       config: minimalValidConfig,
     });
 
     const result = await runInstallation({
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
     });
 
     expect(result.status).toBe("succeeded");
-    expect(result.installationId).toBe(plan.id);
+    expect(result.id).toBe(initialState.id);
   });
 
   test("should pass hooks to the workflow executor", async () => {
@@ -120,14 +135,14 @@ describe("runInstallation", () => {
       onStepSuccess: vi.fn(),
     };
 
-    const plan = createInstallationPlan({
+    const initialState = createInitialInstallationState({
       config: minimalValidConfig,
     });
 
     await runInstallation({
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
       hooks,
     });
 

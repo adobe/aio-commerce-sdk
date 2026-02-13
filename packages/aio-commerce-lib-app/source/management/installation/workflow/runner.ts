@@ -33,15 +33,14 @@ import type {
   FailedInstallationState,
   InProgressInstallationState,
   InstallationError,
-  InstallationPlan,
-  InstallationPlanStep,
+  PendingInstallationState,
   StepStatus,
   SucceededInstallationState,
 } from "./types";
 
-/** Options for building a plan from a root step. */
-export type BuildPlanOptions = {
-  /** The root branch step to build the plan from. */
+/** Options for creating an initial installation state. */
+export type CreateInitialStateOptions = {
+  /** The root branch step to build the state from. */
   rootStep: BranchStep;
 
   /** The app configuration used to determine applicable steps. */
@@ -59,69 +58,70 @@ export type ExecuteWorkflowOptions = {
   /** The app configuration. */
   config: CommerceAppConfigOutputModel;
 
-  /** The pre-created installation plan to execute. */
-  plan: InstallationPlan;
+  /** The initial installation state (with all steps pending). */
+  initialState: PendingInstallationState;
 
   /** Lifecycle hooks for status change notifications. */
   hooks?: InstallationHooks;
 };
 
-/** Type for the step registry map. */
-type StepRegistry = Map<string, AnyStep>;
-
 /** Context for step execution containing all necessary dependencies. */
 type StepExecutionContext = {
   installationContext: InstallationContext;
   config: CommerceAppConfigOutputModel;
-  installationId: string;
+  id: string;
   startedAt: string;
   step: StepStatus;
   data: Record<string, unknown> | null;
   error: InstallationError | null;
-  registry: StepRegistry;
   hooks?: InstallationHooks;
 };
 
 /**
- * Builds a plan from a root step and config.
- * Filters steps based on their `when` conditions and builds a tree structure.
+ * Creates an initial installation state from a root step and config.
+ * Filters steps based on their `when` conditions and builds a tree structure
+ * with all steps set to "pending".
  */
-export function buildPlan(options: BuildPlanOptions): InstallationPlan {
+export function createInitialState(
+  options: CreateInitialStateOptions,
+): PendingInstallationState {
   const { rootStep, config } = options;
-
   return {
     id: crypto.randomUUID(),
-    createdAt: nowIsoString(),
-    step: buildPlanStep(rootStep, config),
+    status: "pending",
+    step: buildInitialStepStatus(rootStep, config, []),
+    data: null,
   };
 }
 
 /**
- * Executes a workflow from a root step. Returns the final state (never throws).
+ * Executes a workflow from an initial state. Returns the final state (never throws).
  */
 export async function executeWorkflow(
   options: ExecuteWorkflowOptions,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
-  const { rootStep, installationContext, config, plan, hooks } = options;
+  const { rootStep, installationContext, config, initialState, hooks } =
+    options;
+
+  // Deep clone the step status so we don't mutate the original
+  const step = structuredClone(initialState.step);
   const context: StepExecutionContext = {
     installationContext,
     config,
-    installationId: plan.id,
+    id: initialState.id,
     startedAt: nowIsoString(),
-    step: buildInitialStepStatus(plan.step, []),
+    step,
     data: null,
     error: null,
-    registry: new Map(rootStep.children.map((step) => [step.name, step])),
     hooks,
   };
 
   await callHook(hooks, "onInstallationStart", snapshot(context));
-
   try {
     // Execute the root step
     await executeStep(rootStep, context.step, {}, context);
     const succeeded = createSucceededState({
-      installationId: context.installationId,
+      id: context.id,
       startedAt: context.startedAt,
       step: context.step,
       data: context.data,
@@ -136,7 +136,7 @@ export async function executeWorkflow(
     const failed = createFailedState(
       {
         step: context.step,
-        installationId: context.installationId,
+        id: context.id,
         startedAt: context.startedAt,
         data: context.data,
       },
@@ -148,63 +148,43 @@ export async function executeWorkflow(
   }
 }
 
-/** Builds a plan step from a step definition, filtering by `when` conditions. */
-function buildPlanStep(
+/**
+ * Builds initial step status from a step definition.
+ * Filters steps based on their `when` conditions.
+ */
+function buildInitialStepStatus(
   step: AnyStep,
   config: CommerceAppConfigOutputModel,
-): InstallationPlanStep {
-  const planStep: InstallationPlanStep = {
-    name: step.name,
-    meta: step.meta,
-    children: [],
-  };
-
-  if (isBranchStep(step) && step.children.length > 0) {
-    planStep.children = buildPlanStepsForChildren(step.children, config);
-  }
-
-  return planStep;
-}
-
-/** Recursively builds plan steps for children, filtering by `when` conditions. */
-function buildPlanStepsForChildren(
-  steps: AnyStep[],
-  config: CommerceAppConfigOutputModel,
-): InstallationPlanStep[] {
-  const planSteps: InstallationPlanStep[] = [];
-
-  for (const step of steps) {
-    if (step.when && !step.when(config)) {
-      continue;
-    }
-
-    planSteps.push(buildPlanStep(step, config));
-  }
-
-  return planSteps;
-}
-
-/** Builds initial step status from a plan step. */
-function buildInitialStepStatus(
-  planStep: InstallationPlanStep,
   parentPath: string[],
 ): StepStatus {
-  const path = [...parentPath, planStep.name];
+  const path = [...parentPath, step.name];
+  const children: StepStatus[] = [];
+
+  if (isBranchStep(step) && step.children.length > 0) {
+    for (const child of step.children) {
+      // Skip steps that don't match their `when` condition
+      if (child.when && !child.when(config)) {
+        continue;
+      }
+
+      children.push(buildInitialStepStatus(child, config, path));
+    }
+  }
+
   return {
-    name: planStep.name,
-    path,
     id: crypto.randomUUID(),
+    name: step.name,
+    path,
+    meta: step.meta,
     status: "pending" as const,
-    children: planStep.children.map((child) =>
-      buildInitialStepStatus(child, path),
-    ),
+    children,
   };
 }
 
 /** Snapshot current execution as InProgressInstallationState. */
 function snapshot(context: StepExecutionContext): InProgressInstallationState {
   return {
-    installationId: context.installationId,
+    id: context.id,
     startedAt: context.startedAt,
     status: "in-progress",
     step: context.step,

@@ -17,6 +17,7 @@ import { defineConfig, mergeConfig } from "vitest/config";
 const BARREL_FILES = [
   "source/index.ts",
   "source/actions/index.ts",
+  "source/storage/index.ts",
   "source/valibot/index.ts",
 ];
 

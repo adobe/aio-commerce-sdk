@@ -44,14 +44,17 @@ export function createMockInstallationContext(
 ): InstallationContext {
   return {
     appCredentials: {
-      clientId: "test-client-id",
       consumerOrgId: "test-consumer-org-id",
       projectId: "test-project-id",
       workspaceId: "test-workspace-id",
       ...(overrides?.appCredentials ?? {}),
     },
 
-    params: { ...(overrides?.params ?? {}) },
+    params: {
+      ...(overrides?.params ?? {
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+      }),
+    },
     logger: overrides?.logger ?? createMockLogger(),
   };
 }
@@ -65,6 +68,7 @@ export function createMockStepStatus(
     name: "root",
     path: ["root"],
     status: "pending" as ExecutionStatus,
+    meta: { label: "Root Step", description: "Root step for testing" },
     children: [],
     ...overrides,
   };
@@ -84,7 +88,7 @@ export function createMockInstallationError(
 
 /** Base properties shared by all installation states. */
 const baseStateProps = {
-  installationId: "test-installation-1",
+  id: "test-installation-1",
   step: createMockStepStatus(),
   data: {},
 };
@@ -245,74 +249,21 @@ export const configWithEventingAndWebhooks: CommerceAppConfigOutputModel & {
   webhooks: webhooksPart,
 };
 
-/**
- * Helper function that replicates the generateInstallationTemplate logic
- * for testing purposes. This follows the same implementation as the actual
- * function in run.ts.
- */
-export async function generateInstallationTemplate(
-  template: string,
-  manifest: Partial<CommerceAppConfigOutputModel>,
-): Promise<string> {
-  const customSteps = manifest?.installation?.customInstallationSteps || [];
-
-  if (customSteps.length === 0) {
-    return template.replace(
-      "// {{CUSTOM_SCRIPT_IMPORTS}}",
-      "// No custom installation scripts configured",
-    );
-  }
-
-  // Generate import statements
-  const importStatements = customSteps
-    .map((step, index) => {
-      const importName = `customScript${index}`;
-      return `import * as ${importName} from '${step.script}';`;
-    })
-    .join("\n");
-
-  // Generate script map for loadCustomInstallationScripts function
-  const scriptMap = customSteps
-    .map((step, index) => {
-      const importName = `customScript${index}`;
-      return `      '${step.script}': ${importName},`;
-    })
-    .join("\n");
-
-  const loadFunction = `
-/**
- * Loads custom installation scripts defined in the manifest
- */
-async function loadCustomInstallationScripts(appConfig, logger) {
-  const customSteps = appConfig.installation?.customInstallationSteps || [];
-  
-  if (customSteps.length === 0) {
-    return {};
-  }
-
-  try {
-    const loadedScripts = {
-${scriptMap}
-    };
-    return loadedScripts;
-  } catch (error) {
-    throw new Error(\`Failed to load custom installation scripts: \${error.message}\`);
-  }
-}
-`;
-
-  // Replace the placeholder with imports and function
-  let result = template.replace(
-    "// {{CUSTOM_SCRIPT_IMPORTS}}",
-    `${importStatements}\n\n${loadFunction}`,
-  );
-
-  // Replace installationContext to include customScripts
-  result = result.replace(
-    "const installationContext = { params, logger };",
-    `const customScripts = await loadCustomInstallationScripts(appConfig, logger);
-  const installationContext = { params, logger, customScripts };`,
-  );
-
-  return result;
-}
+/** Config fixture with custom installation steps. */
+export const configWithCustomInstallationSteps: CommerceAppConfigOutputModel = {
+  metadata: { ...mockMetadata, id: "test-app-with-custom-installation-steps" },
+  installation: {
+    customInstallationSteps: [
+      {
+        script: "./demo-success.js",
+        name: "Demo Success",
+        description: "Success script",
+      },
+      {
+        script: "./demo-error.js",
+        name: "Demo Error",
+        description: "Error script",
+      },
+    ],
+  },
+};

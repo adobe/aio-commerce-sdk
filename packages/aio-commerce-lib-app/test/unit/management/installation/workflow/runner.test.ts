@@ -13,7 +13,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
-  buildPlan,
+  createInitialState,
   executeWorkflow,
 } from "#management/installation/workflow/runner";
 import {
@@ -28,7 +28,7 @@ import {
 
 import type { InstallationHooks } from "#management/installation/workflow/hooks";
 
-describe("buildPlan", () => {
+describe("createInitialState", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(FAKE_SYSTEM_TIME));
@@ -38,35 +38,36 @@ describe("buildPlan", () => {
     vi.useRealTimers();
   });
 
-  test("should create a plan with unique id and createdAt timestamp", () => {
+  test("should create initial state with unique id and pending status", () => {
     const rootStep = defineBranchStep({
       name: "root",
       meta: { label: "Root" },
       children: [],
     });
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const state = createInitialState({ rootStep, config: minimalValidConfig });
 
-    expect(plan.id).toBeDefined();
-    expect(typeof plan.id).toBe("string");
-    expect(plan.id.length).toBeGreaterThan(0);
-    expect(plan.createdAt).toBe(FAKE_SYSTEM_TIME);
+    expect(state.id).toBeDefined();
+    expect(typeof state.id).toBe("string");
+    expect(state.id.length).toBeGreaterThan(0);
+    expect(state.status).toBe("pending");
   });
 
-  test("should build plan step from root step with name and meta", () => {
+  test("should build step status from root step with name and meta", () => {
     const rootStep = defineBranchStep({
       name: "installation",
       meta: { label: "Installation", description: "Main installation" },
       children: [],
     });
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const state = createInitialState({ rootStep, config: minimalValidConfig });
 
-    expect(plan.step.name).toBe("installation");
-    expect(plan.step.meta).toEqual({
+    expect(state.step.name).toBe("installation");
+    expect(state.step.meta).toEqual({
       label: "Installation",
       description: "Main installation",
     });
+    expect(state.step.status).toBe("pending");
   });
 
   test("should filter children based on when conditions (include steps where when returns true)", () => {
@@ -94,9 +95,9 @@ describe("buildPlan", () => {
       children: [includedStep, excludedStep],
     });
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
-    expect(plan.step.children).toHaveLength(1);
-    expect(plan.step.children[0].name).toBe("included");
+    const state = createInitialState({ rootStep, config: minimalValidConfig });
+    expect(state.step.children).toHaveLength(1);
+    expect(state.step.children[0].name).toBe("included");
   });
 
   test("should recursively build children for branch steps", () => {
@@ -118,11 +119,11 @@ describe("buildPlan", () => {
       children: [childBranch],
     });
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
-    expect(plan.step.children).toHaveLength(1);
-    expect(plan.step.children[0].name).toBe("child-branch");
-    expect(plan.step.children[0].children).toHaveLength(1);
-    expect(plan.step.children[0].children[0].name).toBe("grandchild");
+    const state = createInitialState({ rootStep, config: minimalValidConfig });
+    expect(state.step.children).toHaveLength(1);
+    expect(state.step.children[0].name).toBe("child-branch");
+    expect(state.step.children[0].children).toHaveLength(1);
+    expect(state.step.children[0].children[0].name).toBe("grandchild");
   });
 
   test("should handle leaf steps (no children)", () => {
@@ -138,11 +139,11 @@ describe("buildPlan", () => {
       children: [leafStep],
     });
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const state = createInitialState({ rootStep, config: minimalValidConfig });
 
-    expect(plan.step.children).toHaveLength(1);
-    expect(plan.step.children[0].name).toBe("leaf");
-    expect(plan.step.children[0].children).toEqual([]);
+    expect(state.step.children).toHaveLength(1);
+    expect(state.step.children[0].name).toBe("leaf");
+    expect(state.step.children[0].children).toEqual([]);
   });
 });
 
@@ -169,16 +170,19 @@ describe("executeWorkflow", () => {
       children: [leafStep],
     });
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
     const result = await executeWorkflow({
       rootStep,
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
     });
 
     expect(result.status).toBe("succeeded");
-    expect(result.installationId).toBe(plan.id);
+    expect(result.id).toBe(initialState.id);
   });
 
   test("should return failed state when a step throws an error", async () => {
@@ -196,12 +200,15 @@ describe("executeWorkflow", () => {
       children: [failingStep],
     });
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
     const result = await executeWorkflow({
       rootStep,
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
     });
 
     expect(result.status).toBe("failed");
@@ -228,12 +235,15 @@ describe("executeWorkflow", () => {
       onInstallationStart: vi.fn(),
     };
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
     await executeWorkflow({
       rootStep,
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
       hooks,
     });
 
@@ -241,7 +251,7 @@ describe("executeWorkflow", () => {
     expect(hooks.onInstallationStart).toHaveBeenCalledWith(
       expect.objectContaining({
         status: "in-progress",
-        installationId: plan.id,
+        id: initialState.id,
       }),
     );
   });
@@ -263,12 +273,15 @@ describe("executeWorkflow", () => {
       onInstallationSuccess: vi.fn(),
     };
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
     await executeWorkflow({
       rootStep,
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
       hooks,
     });
 
@@ -276,7 +289,7 @@ describe("executeWorkflow", () => {
     expect(hooks.onInstallationSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
         status: "succeeded",
-        installationId: plan.id,
+        id: initialState.id,
       }),
     );
   });
@@ -300,12 +313,15 @@ describe("executeWorkflow", () => {
       onInstallationFailure: vi.fn(),
     };
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
     await executeWorkflow({
       rootStep,
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
       hooks,
     });
 
@@ -313,7 +329,7 @@ describe("executeWorkflow", () => {
     expect(hooks.onInstallationFailure).toHaveBeenCalledWith(
       expect.objectContaining({
         status: "failed",
-        installationId: plan.id,
+        id: initialState.id,
         error: expect.objectContaining({
           message: "Failure",
         }),
@@ -339,12 +355,15 @@ describe("executeWorkflow", () => {
       onStepSuccess: vi.fn(),
     };
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
     await executeWorkflow({
       rootStep,
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
       hooks,
     });
 
@@ -383,12 +402,15 @@ describe("executeWorkflow", () => {
       onStepFailure: vi.fn(),
     };
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
     await executeWorkflow({
       rootStep,
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
       hooks,
     });
 
@@ -419,13 +441,16 @@ describe("executeWorkflow", () => {
     });
 
     const installationContext = createMockInstallationContext();
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
 
     await executeWorkflow({
       rootStep,
       installationContext,
       config: minimalValidConfig,
-      plan,
+      initialState,
     });
 
     expect(runFn).toHaveBeenCalledTimes(1);
@@ -451,12 +476,15 @@ describe("executeWorkflow", () => {
       children: [leafStep],
     });
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
     const result = await executeWorkflow({
       rootStep,
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
     });
 
     // Path is ["root", "step1"], so data should be { root: { step1: { key: "value" } } }
@@ -503,12 +531,15 @@ describe("executeWorkflow", () => {
       children: [step1, step2, step3],
     });
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
     await executeWorkflow({
       rootStep,
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
     });
 
     expect(executionOrder).toEqual(["step1", "step2", "step3"]);
@@ -537,13 +568,16 @@ describe("executeWorkflow", () => {
     });
 
     const installationContext = createMockInstallationContext();
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
 
     await executeWorkflow({
       rootStep,
       installationContext,
       config: minimalValidConfig,
-      plan,
+      initialState,
     });
 
     expect(runFn).toHaveBeenCalledWith(
@@ -584,12 +618,15 @@ describe("executeWorkflow", () => {
       },
     };
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
     await executeWorkflow({
       rootStep,
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
       hooks,
     });
 
@@ -631,12 +668,15 @@ describe("executeWorkflow", () => {
       },
     };
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
     await executeWorkflow({
       rootStep,
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
       hooks,
     });
 
@@ -685,13 +725,16 @@ describe("executeWorkflow", () => {
     });
 
     const installationContext = createMockInstallationContext();
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
 
     await executeWorkflow({
       rootStep,
       installationContext,
       config: minimalValidConfig,
-      plan,
+      initialState,
     });
 
     // The deep leaf should receive merged context from both branches
@@ -729,12 +772,15 @@ describe("executeWorkflow", () => {
       children: [step1, step2, step3],
     });
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
     const result = await executeWorkflow({
       rootStep,
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
     });
 
     expect(result.status).toBe("succeeded");
@@ -784,12 +830,15 @@ describe("executeWorkflow", () => {
       children: [eventsBranch, webhooksBranch],
     });
 
-    const plan = buildPlan({ rootStep, config: minimalValidConfig });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
     const result = await executeWorkflow({
       rootStep,
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      plan,
+      initialState,
     });
 
     expect(result.status).toBe("succeeded");
