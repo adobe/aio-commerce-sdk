@@ -249,7 +249,7 @@ router.post("/", {
 router.post("/execution", {
   handler: async (_req, { logger, rawParams }) => {
     const { appCredentials, ...params } = rawParams as RuntimeActionArgs & {
-      initialState: PendingInstallationState;
+      initialState: InProgressInstallationState;
       appCredentials: InstallationContext["appCredentials"];
     };
 
