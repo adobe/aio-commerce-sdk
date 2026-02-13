@@ -289,7 +289,7 @@ importers:
         version: 4.1.2
       '@adobe/aio-lib-state':
         specifier: ^5.0.0
-        version: 5.3.0
+        version: 5.3.1
       consola:
         specifier: ^3.4.2
         version: 3.4.2
@@ -432,7 +432,6 @@ packages:
   '@adobe/aio-lib-core-networking@5.1.0':
     resolution: {integrity: sha512-RZgA73yUHhikjIGy7k0DRobPbIXbtuI/0ixrBXOVqj19WTqFFrEuyHtzOuRsBAmu0OvVkf6slQHtDTL9oPLxfg==}
     engines: {node: '>=18'}
-    bundledDependencies: []
 
   '@adobe/aio-lib-core-tvm@4.0.3':
     resolution: {integrity: sha512-zwl4GeU5CryZBozpub4jI9tnGW2ewD6mMLaXX8HhO8DqKzcjnjYr+MbUS0c/QzGd8gTzZWbikm4J7tfpCn3cAA==}
@@ -441,7 +440,6 @@ packages:
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
-    bundledDependencies: []
 
   '@adobe/aio-lib-files@4.1.2':
     resolution: {integrity: sha512-4Ll776OGB34R7nPgMF+UQpIYm33yjtH5yLUuvtvKNHZtRF/wODG1Q8Oqcy9pOFutRIacg/xM0AMB6OKrQTP+Xw==}
@@ -461,10 +459,6 @@ packages:
 
   '@adobe/aio-lib-ims@8.1.1':
     resolution: {integrity: sha512-qLnaO3fgYYRqVGn7Hpy0yDKBkSBWnzN6DIA+BMp3f4sCzHYyCtEykhxYa5qoTsV9rkqBgpDG8b/bK7GPzs8p6w==}
-    engines: {node: '>=18'}
-
-  '@adobe/aio-lib-state@5.3.0':
-    resolution: {integrity: sha512-Dlv8STuZmcuIe5AwVgrfKY6sqch+izJWE01B9MlcHJ7luKm6BhcsXuc6h9DK1iywEZ6zVBUXwi9PUD0Ec4ZNQw==}
     engines: {node: '>=18'}
 
   '@adobe/aio-lib-state@5.3.1':
@@ -2038,7 +2032,7 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   globby@10.0.2:
     resolution: {integrity: sha512-7dUi7RvCoT/xast/o/dLN53oqND4yk0nsHkhRgn9w65C4PofCLOoJ39iSOg+qVDdWQPIEj+eszMHQ+aLVwwQSg==}
@@ -3541,18 +3535,6 @@ snapshots:
       form-data: 4.0.5
       lodash.clonedeep: 4.5.0
       lru-cache: 5.1.1
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
-
-  '@adobe/aio-lib-state@5.3.0':
-    dependencies:
-      '@adobe/aio-lib-core-errors': 4.0.1
-      '@adobe/aio-lib-core-logging': 3.0.2
-      '@adobe/aio-lib-core-networking': 5.1.0
-      '@adobe/aio-lib-env': 3.0.1
-      ajv: 8.17.1
-      lodash.clonedeep: 4.5.0
     transitivePeerDependencies:
       - encoding
       - supports-color
