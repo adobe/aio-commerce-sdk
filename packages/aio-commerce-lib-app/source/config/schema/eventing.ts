@@ -134,10 +134,26 @@ const BaseEventSchema = v.object({
   ),
 });
 
+/**
+ * Schema for rule operator values.
+ * Valid operators for Commerce event filtering rules.
+ */
+const ruleOperatorSchema = v.union(
+  [
+    v.literal("greaterThan"),
+    v.literal("lessThan"),
+    v.literal("equal"),
+    v.literal("regex"),
+    v.literal("in"),
+    v.literal("onChange"),
+  ],
+  'Operator must be one of: "greaterThan", "lessThan", "equal", "regex", "in", or "onChange"',
+);
+
 /** Schema for Commerce event rule configuration */
 const CommerceEventRuleSchema = v.object({
   field: nonEmptyStringValueSchema("rule field"),
-  operator: nonEmptyStringValueSchema("rule operator"),
+  operator: ruleOperatorSchema,
   value: nonEmptyStringValueSchema("rule value"),
 });
 

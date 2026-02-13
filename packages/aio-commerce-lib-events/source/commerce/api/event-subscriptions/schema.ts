@@ -48,11 +48,27 @@ function fieldsSchema(propertyName: string) {
   );
 }
 
+/**
+ * Schema for rule operator values.
+ * Valid operators for Commerce event filtering rules.
+ */
+const ruleOperatorSchema = v.union(
+  [
+    v.literal("greaterThan"),
+    v.literal("lessThan"),
+    v.literal("equal"),
+    v.literal("regex"),
+    v.literal("in"),
+    v.literal("onChange"),
+  ],
+  'Operator must be one of: "greaterThan", "lessThan", "equal", "regex", "in", or "onChange"',
+);
+
 function rulesSchema(propertyName: string) {
   return v.array(
     v.object({
       field: fieldNameSchema(`${propertyName}[i].field`),
-      operator: stringValueSchema(`${propertyName}[i].operator`),
+      operator: ruleOperatorSchema,
       value: stringValueSchema(`${propertyName}[i].value`),
     }),
     `Expected an array of objects with 'field', 'operator', and 'value' properties for the property "${propertyName}"`,

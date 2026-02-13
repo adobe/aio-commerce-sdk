@@ -261,7 +261,7 @@ eventing: {
   - **source** (optional): A string value for the field source (e.g., `"catalog"`, `"order"`)
 - **rules**: Optional array of filtering rules. Each rule must have:
   - **field**: The field name to filter on
-  - **operator**: The comparison operator (e.g., `"lessThan"`, `"greaterThan"`, `"equals"`)
+  - **operator**: The comparison operator. Valid values: `"greaterThan"`, `"lessThan"`, `"equal"`, `"regex"`, `"in"`, `"onChange"`
   - **value**: The value to compare against
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
 - **description**: Description of the event (max 255 characters)
