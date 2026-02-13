@@ -12,6 +12,8 @@
 
 import { defineLeafStep } from "#management/installation/workflow/step";
 
+import { titleToCamelCase } from "../events/utils";
+
 import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
@@ -56,7 +58,7 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
   const { script, name, description } = scriptConfig;
 
   return defineLeafStep({
-    name,
+    name: titleToCamelCase(name),
     meta: {
       label: name,
       description,

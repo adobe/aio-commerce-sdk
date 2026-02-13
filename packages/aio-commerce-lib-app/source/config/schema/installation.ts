@@ -10,7 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
+import {
+  nonEmptyStringValueSchema,
+  titleCaseSchema,
+} from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
 const MAX_DESCRIPTION_LENGTH = 255;
@@ -40,7 +43,7 @@ const CustomInstallationStepSchema = v.object({
   ),
 
   name: v.pipe(
-    nonEmptyStringValueSchema("step name"),
+    titleCaseSchema("step name"),
     v.maxLength(
       MAX_NAME_LENGTH,
       `The step name must not be longer than ${MAX_NAME_LENGTH} characters`,

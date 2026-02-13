@@ -28,7 +28,7 @@ export function hasCustomInstallation(
 
 /** Root custom installation step that executes custom installation scripts. */
 const customInstallationStepBase = defineBranchStep({
-  name: "Custom Installation Steps",
+  name: "customInstallationSteps",
   meta: {
     label: "Custom Installation Steps",
     description:

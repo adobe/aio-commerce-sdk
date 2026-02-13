@@ -207,6 +207,22 @@ export function kebabToTitleCase(str: string) {
     .join(" ");
 }
 
+/**
+ * Converts a Title Case string to camelCase.
+ * @param str - The Title Case string to convert.
+ */
+export function titleToCamelCase(str: string) {
+  return str
+    .split(" ")
+    .map((word, index) => {
+      const lowerCased = word.toLowerCase();
+      return index === 0
+        ? lowerCased
+        : lowerCased.charAt(0).toUpperCase() + lowerCased.slice(1);
+    })
+    .join("");
+}
+
 /*
  * Find an existing Commerce event subscription by its event name.
  * @param allSubscriptions - Map of all existing event subscriptions keyed by event name.
