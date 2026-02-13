@@ -52,16 +52,17 @@ function fieldsSchema(propertyName: string) {
  * Schema for rule operator values.
  * Valid operators for Commerce event filtering rules.
  */
+const OPERATORS = [
+  "greaterThan",
+  "lessThan",
+  "equal",
+  "regex",
+  "in",
+  "onChange",
+] as const;
 const ruleOperatorSchema = v.union(
-  [
-    v.literal("greaterThan"),
-    v.literal("lessThan"),
-    v.literal("equal"),
-    v.literal("regex"),
-    v.literal("in"),
-    v.literal("onChange"),
-  ],
-  'Operator must be one of: "greaterThan", "lessThan", "equal", "regex", "in", or "onChange"',
+  OPERATORS.map((op) => v.literal(op)),
+  `Operator must be one of: ${OPERATORS.join(", ")}`,
 );
 
 function rulesSchema(propertyName: string) {
