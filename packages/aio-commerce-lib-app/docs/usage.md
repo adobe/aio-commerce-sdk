@@ -266,10 +266,6 @@ eventing: {
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
 - **description**: Description of the event (max 255 characters)
 
-> [!NOTE]
-> When using `rules` with PaaS, the minimum version of `magento/commerce-eventing` must be 1.17.
-> If `rules` is provided, `parent` must also be provided
-
 **External Events:**
 
 - **name**: Lowercase alphanumeric with underscores

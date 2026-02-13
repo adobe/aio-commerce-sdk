@@ -10,10 +10,6 @@ Defined in: [commerce/api/event-subscriptions/schema.ts:46](https://github.com/a
 
 The schema of the parameters received by the POST `eventing/eventSubscribe` Commerce API endpoint.
 
-## Notes
-
-- If `rules` is provided, `parent` must also be provided.
-
 ## See
 
 https://developer.adobe.com/commerce/extensibility/events/api/#subscribe-to-events
