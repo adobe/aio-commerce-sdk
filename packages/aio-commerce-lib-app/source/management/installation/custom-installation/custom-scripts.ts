@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import camelcase from "camelcase";
+
 import { defineLeafStep } from "#management/installation/workflow/step";
 
 import type { SetRequiredDeep } from "type-fest";
@@ -54,9 +56,8 @@ type ScriptExecutionResult = {
  */
 function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
   const { script, name, description } = scriptConfig;
-
   return defineLeafStep({
-    name,
+    name: camelcase(name),
     meta: {
       label: name,
       description,
@@ -117,7 +118,14 @@ export function createCustomScriptSteps(
     return [];
   }
 
-  return config.installation.customInstallationSteps.map((scriptConfig) =>
-    createCustomScriptStep(scriptConfig),
-  );
+  const steps = config.installation.customInstallationSteps;
+  const uniqueNames = new Set<string>(steps.map((step) => step.name));
+
+  if (uniqueNames.size !== steps.length) {
+    throw new Error(
+      "Duplicate step names detected in custom installation steps. Each step must have a unique name.",
+    );
+  }
+
+  return steps.map((scriptConfig) => createCustomScriptStep(scriptConfig));
 }

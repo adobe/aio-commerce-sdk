@@ -25,7 +25,7 @@ import { templates } from "#test/fixtures/commands";
 import {
   configWithCustomInstallationSteps,
   minimalValidConfig,
-} from "#test/fixtures/installation";
+} from "#test/fixtures/config";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 

@@ -87,11 +87,20 @@ const MessagesSchema = v.object({
 export const InstallationSchema = v.object({
   messages: v.optional(MessagesSchema),
 
-  customInstallationSteps: v.optional(
-    v.array(
-      CustomInstallationStepSchema,
-      "Expected an array of custom installation steps",
+  customInstallationSteps: v.pipe(
+    v.optional(
+      v.array(
+        CustomInstallationStepSchema,
+        "Expected an array of custom installation steps",
+      ),
     ),
+    v.check((input) => {
+      const steps = input || [];
+      const uniqueNames = new Set<string>(steps.map((step) => step.name));
+
+      // Ensure that step names are unique, size must match
+      return uniqueNames.size === steps.length;
+    }, "Duplicate step names detected in custom installation steps. Each step must have a unique name."),
   ),
 });
 

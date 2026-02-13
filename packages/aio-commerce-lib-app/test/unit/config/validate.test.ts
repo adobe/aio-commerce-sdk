@@ -16,6 +16,7 @@ import {
   validateCommerceAppConfig,
   validateCommerceAppConfigDomain,
 } from "#config/lib/validate";
+import { configWithCustomInstallationSteps } from "#test/fixtures/config";
 
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_DESCRIPTION_LENGTH = 255;
@@ -1004,6 +1005,15 @@ describe("validateConfig", () => {
     expect(() => validateCommerceAppConfig(config)).toThrow(
       "Invalid commerce app config",
     );
+  });
+
+  test("should throw when custom installation steps have duplicate names", () => {
+    const config = structuredClone(configWithCustomInstallationSteps);
+    config.installation.customInstallationSteps.push(
+      config.installation.customInstallationSteps[0],
+    );
+
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 });
 
