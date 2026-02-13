@@ -1,5 +1,15 @@
 # @adobe/aio-commerce-lib-core
 
+## 0.6.1
+
+### Patch Changes
+
+- [#246](https://github.com/adobe/aio-commerce-sdk/pull/246) [`b3b41f5`](https://github.com/adobe/aio-commerce-sdk/commit/b3b41f576cf0341bbb4a19bb534bfe35fb562aad) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add new `noContent` and `conflict` response presets
+
+- [#246](https://github.com/adobe/aio-commerce-sdk/pull/246) [`b3b41f5`](https://github.com/adobe/aio-commerce-sdk/commit/b3b41f576cf0341bbb4a19bb534bfe35fb562aad) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Split generics on `ActionResponse` type for appropriate inference
+
+- [#245](https://github.com/adobe/aio-commerce-sdk/pull/245) [`b7fb4da`](https://github.com/adobe/aio-commerce-sdk/commit/b7fb4da5b8a9f468d4c33a25194dcc0a6e4d16a1) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Enhance core type definitions.
+
 ## 0.6.0
 
 ### Minor Changes
