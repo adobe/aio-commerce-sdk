@@ -14,11 +14,16 @@ import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibo
 import * as v from "valibot";
 
 /** Schema for validating Adobe I/O app credentials required for installation. */
-export const AppCredentialsSchema = v.object({
-  consumerOrgId: v.pipe(nonEmptyStringValueSchema("consumerOrgId")),
-  projectId: v.pipe(nonEmptyStringValueSchema("projectId")),
-  workspaceId: v.pipe(nonEmptyStringValueSchema("workspaceId")),
+export const AppDataSchema = v.object({
+  consumerOrgId: nonEmptyStringValueSchema("consumerOrgId"),
+  orgName: nonEmptyStringValueSchema("orgName"),
+  projectId: nonEmptyStringValueSchema("projectId"),
+  projectName: nonEmptyStringValueSchema("projectName"),
+  projectTitle: nonEmptyStringValueSchema("projectTitle"),
+  workspaceId: nonEmptyStringValueSchema("workspaceId"),
+  workspaceName: nonEmptyStringValueSchema("workspaceName"),
+  workspaceTitle: nonEmptyStringValueSchema("workspaceTitle"),
 });
 
 /** Type for Adobe I/O app credentials. */
-export type AppCredentials = v.InferOutput<typeof AppCredentialsSchema>;
+export type AppData = v.InferOutput<typeof AppDataSchema>;

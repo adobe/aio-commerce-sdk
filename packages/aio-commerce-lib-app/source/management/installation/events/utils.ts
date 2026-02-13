@@ -226,10 +226,19 @@ export function findExistingSubscription(
  * @param context - The execution context containing app credentials and parameters.
  */
 export function makeWorkspaceConfig(context: EventsExecutionContext) {
-  const { appCredentials, params } = context;
-  const { consumerOrgId, projectId, workspaceId } = appCredentials;
-  const authParams = resolveAuthParams(params);
+  const { appData, params } = context;
+  const {
+    consumerOrgId,
+    orgName,
+    projectId,
+    projectName,
+    projectTitle,
+    workspaceId,
+    workspaceName,
+    workspaceTitle,
+  } = appData;
 
+  const authParams = resolveAuthParams(params);
   if (authParams.strategy !== "ims") {
     throw new Error(
       "Failed to resolve IMS authentication parameters from the runtime action inputs.",
@@ -248,19 +257,19 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
   return {
     project: {
       id: projectId,
-      name: `project-${projectId}`,
-      title: `Project ${projectId}`,
+      name: projectName,
+      title: projectTitle,
 
       org: {
         id: consumerOrgId,
-        name: `org-${consumerOrgId}`,
+        name: orgName,
         ims_org_id: imsOrgId,
       },
 
       workspace: {
         id: workspaceId,
-        name: `workspace-${workspaceId}`,
-        title: `Workspace ${workspaceId}`,
+        name: workspaceName,
+        title: workspaceTitle,
         action_url: `https://${process.env.__OW_NAMESPACE}.adobeioruntime.net`,
         app_url: `https://${process.env.__OW_NAMESPACE}.adobeio-static.net`,
         details: {
@@ -290,11 +299,17 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
  */
 export async function getIoEventsExistingData(context: EventsExecutionContext) {
   // Ask for all the providers, and we'll create only those that are missing.
-  const { ioEventsClient, appCredentials } = context;
+  const { ioEventsClient, appData } = context;
+  const appCredentials = {
+    consumerOrgId: appData.consumerOrgId,
+    projectId: appData.projectId,
+    workspaceId: appData.workspaceId,
+  };
+
   const {
     _embedded: { providers: existingProviders },
   } = await ioEventsClient.getAllEventProviders({
-    consumerOrgId: appCredentials.consumerOrgId,
+    consumerOrgId: appData.consumerOrgId,
     withEventMetadata: true,
   });
 

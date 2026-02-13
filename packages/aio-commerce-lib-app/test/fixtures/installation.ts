@@ -42,11 +42,16 @@ export function createMockInstallationContext(
   overrides?: Partial<InstallationContext>,
 ): InstallationContext {
   return {
-    appCredentials: {
+    appData: {
       consumerOrgId: "test-consumer-org-id",
       projectId: "test-project-id",
       workspaceId: "test-workspace-id",
-      ...(overrides?.appCredentials ?? {}),
+      orgName: "test-org-name",
+      projectName: "test-project-name",
+      projectTitle: "Test Project Title",
+      workspaceName: "test-workspace-name",
+      workspaceTitle: "Test Workspace Title",
+      ...(overrides?.appData ?? {}),
     },
 
     logger: overrides?.logger ?? createMockLogger(),

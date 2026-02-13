@@ -60,7 +60,12 @@ import type {
  */
 async function createIoEventProvider(params: CreateIoProviderParams) {
   const { context, provider } = params;
-  const { appCredentials, ioEventsClient, logger } = context;
+  const { appData, ioEventsClient, logger } = context;
+  const appCredentials = {
+    consumerOrgId: appData.consumerOrgId,
+    projectId: appData.projectId,
+    workspaceId: appData.workspaceId,
+  };
 
   logger.info(
     `Creating provider "${provider.label}" with instance ID "${provider.instanceId}"`,
@@ -127,7 +132,12 @@ async function createIoEventProviderEventMetadata(
   params: CreateIoProviderEventsMetadataParams,
 ) {
   const { context, event, provider, type, metadata } = params;
-  const { appCredentials, ioEventsClient, logger } = context;
+  const { appData, ioEventsClient, logger } = context;
+  const appCredentials = {
+    consumerOrgId: appData.consumerOrgId,
+    projectId: appData.projectId,
+    workspaceId: appData.workspaceId,
+  };
 
   const eventCode = getIoEventCode(
     getNamespacedEvent(metadata, event.name),
@@ -198,12 +208,12 @@ async function createOrGetIoProviderEventMetadata(
  */
 async function createIoEventRegistration(params: CreateRegistrationParams) {
   const { context, events, provider, runtimeAction, metadata } = params;
-  const {
-    appCredentials,
-    ioEventsClient,
-    logger,
-    params: runtimeParams,
-  } = context;
+  const { appData, ioEventsClient, logger, params: runtimeParams } = context;
+  const appCredentials = {
+    consumerOrgId: appData.consumerOrgId,
+    projectId: appData.projectId,
+    workspaceId: appData.workspaceId,
+  };
 
   logger.info(
     `Creating registration(s) to runtime action "${runtimeAction}" for ${events.length} event(s) with provider "${provider.label}" (instance ID: ${provider.instance_id}))`,
