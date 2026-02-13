@@ -10,9 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { defineLeafStep } from "#management/installation/workflow/step";
+import * as changeCase from "change-case";
 
-import { titleToCamelCase } from "../events/utils";
+import { defineLeafStep } from "#management/installation/workflow/step";
 
 import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -56,11 +56,10 @@ type ScriptExecutionResult = {
  */
 function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
   const { script, name, description } = scriptConfig;
-
   return defineLeafStep({
-    name: titleToCamelCase(name),
+    name: changeCase.camelCase(name),
     meta: {
-      label: name,
+      label: changeCase.capitalCase(name),
       description,
     },
 

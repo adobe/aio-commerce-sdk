@@ -195,6 +195,9 @@ importers:
       '@adobe/aio-commerce-lib-events':
         specifier: workspace:*
         version: link:../aio-commerce-lib-events
+      change-case:
+        specifier: ^5.4.4
+        version: 5.4.4
       consola:
         specifier: ^3.4.2
         version: 3.4.2
@@ -432,6 +435,7 @@ packages:
   '@adobe/aio-lib-core-networking@5.1.0':
     resolution: {integrity: sha512-RZgA73yUHhikjIGy7k0DRobPbIXbtuI/0ixrBXOVqj19WTqFFrEuyHtzOuRsBAmu0OvVkf6slQHtDTL9oPLxfg==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-core-tvm@4.0.3':
     resolution: {integrity: sha512-zwl4GeU5CryZBozpub4jI9tnGW2ewD6mMLaXX8HhO8DqKzcjnjYr+MbUS0c/QzGd8gTzZWbikm4J7tfpCn3cAA==}
@@ -440,6 +444,7 @@ packages:
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-files@4.1.2':
     resolution: {integrity: sha512-4Ll776OGB34R7nPgMF+UQpIYm33yjtH5yLUuvtvKNHZtRF/wODG1Q8Oqcy9pOFutRIacg/xM0AMB6OKrQTP+Xw==}
@@ -1613,6 +1618,9 @@ packages:
 
   change-case@3.1.0:
     resolution: {integrity: sha512-2AZp7uJZbYEzRPsFoa+ijKdvp9zsrnnt6+yFokfwEpeJm0xuJDVoxiRCAaTzyJND8GJkofo2IcKWaUZ/OECVzw==}
+
+  change-case@5.4.4:
+    resolution: {integrity: sha512-HRQyTk2/YPEkt9TnUPbOpr64Uw3KOicFWPVBb+xiHvd6eBx/qPr9xqfBFDT8P2vWsvvz4jbEkfDe71W3VyNu2w==}
 
   chardet@0.7.0:
     resolution: {integrity: sha512-mT8iDcrh03qDGRRmoA2hmBJnxpllMR+0/0qlzjqZES6NdiWDcZkCNAk4rPFZ9Q85r27unkiNNg8ZOiwZXBHwcA==}
@@ -4703,6 +4711,8 @@ snapshots:
       title-case: 2.1.1
       upper-case: 1.1.3
       upper-case-first: 1.1.2
+
+  change-case@5.4.4: {}
 
   chardet@0.7.0: {}
 
