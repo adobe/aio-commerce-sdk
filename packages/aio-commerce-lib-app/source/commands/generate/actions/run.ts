@@ -187,7 +187,7 @@ async function generateCustomScriptsTemplate(
       relativeImportPath = relativeImportPath.replace(/\\/g, "/");
 
       const importName = `customScript${index}`;
-      return `import ${importName} from "${relativeImportPath}";`;
+      return `import * as ${importName} from "${relativeImportPath}";`;
     })
     .join("\n");
 

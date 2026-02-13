@@ -6,7 +6,7 @@
  * @param {object} logger - Logger instance
  * @returns {Promise<object>} Object mapping script paths to loaded modules
  */
-export async function customScriptsLoader(appConfig, logger) {
+export function customScriptsLoader(appConfig, logger) {
   const customSteps = appConfig.installation?.customInstallationSteps || [];
 
   if (customSteps.length === 0) {
