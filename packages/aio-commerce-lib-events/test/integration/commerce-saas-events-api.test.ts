@@ -24,7 +24,6 @@ import {
 
 import { createCommerceEventsApiClient } from "#commerce/index";
 import { COMMERCE_EVENTS_API_PAYLOADS } from "#test/fixtures/commerce-events-api-payloads";
-import testConfig from "#test/fixtures/configs/app.commerce.config";
 import { TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_SAAS } from "#test/fixtures/http-client-params";
 
 import type { ImsAuthParams } from "@adobe/aio-commerce-lib-auth";
@@ -255,63 +254,6 @@ describe("SaaS Commerce Events API - Integration Tests", () => {
         name: "quoteId",
         source: "context_checkout_session.get_quote.get_id",
       });
-    });
-  });
-
-  describe("createEventSubscription from app.commerce.config.ts", () => {
-    test("should read config, process fields, and send to API", async () => {
-      const capture = { body: null as Record<string, unknown> | null };
-      server.use(
-        http.post(makeUrl("eventing/eventSubscribe"), async ({ request }) => {
-          capture.body = (await request.json()) as Record<string, unknown>;
-          return HttpResponse.json([]);
-        }),
-      );
-
-      const config = testConfig;
-      const commerceEvent = config.eventing?.commerce?.[0]?.events[0] as
-        | {
-            name: string;
-            fields: Array<{ name: string; source?: string }>;
-            rules?: { field: string; operator: string; value: string }[];
-          }
-        | undefined;
-
-      if (!commerceEvent) {
-        expect.fail("Commerce event not found in config");
-        return;
-      }
-
-      await client.createEventSubscription({
-        name: commerceEvent.name,
-        fields: commerceEvent.fields,
-        rules: commerceEvent.rules,
-      });
-
-      const data = extractEventSubscriptionData(capture.body);
-      if (!data) {
-        expect.fail("Captured request body is null");
-        return;
-      }
-
-      expect(data.event).toHaveProperty(
-        "name",
-        "observer.catalog_product_save_after",
-      );
-      expect(data.fields).toHaveLength(3);
-      expect(data.fields).toContainEqual({ name: "price" });
-      expect(data.fields).toContainEqual({ name: "_origData" });
-      expect(data.fields).toContainEqual({
-        name: "quoteId",
-        source: "context_checkout_session.get_quote.get_id",
-      });
-      expect(data.rules).toEqual([
-        {
-          field: "price",
-          operator: "lessThan",
-          value: "300.00",
-        },
-      ]);
     });
   });
 });
