@@ -11,19 +11,19 @@
  */
 
 import { createRootInstallationStep } from "./root";
-import { buildPlan, executeWorkflow } from "./workflow";
+import { createInitialState, executeWorkflow } from "./workflow";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   FailedInstallationState,
+  InProgressInstallationState,
   InstallationContext,
   InstallationHooks,
-  InstallationPlan,
   SucceededInstallationState,
 } from "./workflow";
 
-/** Options for creating an installation plan. */
-export type CreateInstallationPlanOptions = {
+/** Options for creating an initial installation state. */
+export type CreateInitialInstallationStateOptions = {
   /** The app configuration used to determine applicable steps. */
   config: CommerceAppConfigOutputModel;
 };
@@ -36,24 +36,25 @@ export type RunInstallationOptions = {
   /** The app configuration. */
   config: CommerceAppConfigOutputModel;
 
-  /** The pre-created installation plan to execute. */
-  plan: InstallationPlan;
+  /** The initial installation state (with all steps pending). */
+  initialState: InProgressInstallationState;
 
   /** Lifecycle hooks for status change notifications. */
   hooks?: InstallationHooks;
 };
 
 /**
- * Creates an installation plan from the config and step definitions.
- * Filters steps based on their `when` conditions and builds a tree structure.
+ * Creates an initial installation state from the config and step definitions.
+ * Filters steps based on their `when` conditions and builds a tree structure
+ * with all steps set to "pending".
  */
-export function createInstallationPlan(
-  options: CreateInstallationPlanOptions,
-): InstallationPlan {
+export function createInitialInstallationState(
+  options: CreateInitialInstallationStateOptions,
+): InProgressInstallationState {
   const { config } = options;
   const rootStep = createRootInstallationStep(config);
 
-  return buildPlan({ rootStep, config });
+  return createInitialState({ rootStep, config });
 }
 
 /**
@@ -62,14 +63,13 @@ export function createInstallationPlan(
 export function runInstallation(
   options: RunInstallationOptions,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
-  const { installationContext, config, plan, hooks } = options;
+  const { installationContext, config, initialState, hooks } = options;
   const rootStep = createRootInstallationStep(config);
-
   return executeWorkflow({
     rootStep,
     installationContext,
     config,
-    plan,
+    initialState,
     hooks,
   });
 }

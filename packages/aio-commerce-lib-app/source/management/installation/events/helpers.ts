@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 
 import {
@@ -25,7 +26,12 @@ import {
   groupEventsByRuntimeActions,
 } from "./utils";
 
-import type { CommerceEventSubscription } from "@adobe/aio-commerce-lib-events/commerce";
+import type {
+  CommerceEventProvider,
+  CommerceEventSubscription,
+  EventSubscriptionCreateParams,
+  UpdateEventingConfigurationParams,
+} from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   EventProviderType,
   IoEventMetadata,
@@ -33,9 +39,10 @@ import type {
   IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { AppEvent } from "#config/schema/eventing";
-import type { EventsExecutionContext } from "./context";
 import type {
+  ConfigureCommerceEventingParams,
   CreateCommerceEventSubscriptionParams,
+  CreateCommerceProviderParams,
   CreateIoProviderEventsMetadataParams,
   CreateIoProviderParams,
   CreateRegistrationParams,
@@ -53,10 +60,15 @@ import type {
  */
 async function createIoEventProvider(params: CreateIoProviderParams) {
   const { context, provider } = params;
-  const { appCredentials, ioEventsClient, logger } = context;
+  const { appData, ioEventsClient, logger } = context;
+  const appCredentials = {
+    consumerOrgId: appData.consumerOrgId,
+    projectId: appData.projectId,
+    workspaceId: appData.workspaceId,
+  };
 
   logger.info(
-    `Creating provider '${provider.label}' with instance ID '${provider.instanceId}'`,
+    `Creating provider "${provider.label}" with instance ID "${provider.instanceId}"`,
   );
 
   return ioEventsClient
@@ -97,7 +109,7 @@ async function createOrGetIoEventProvider(
   const existing = findExistingProvider(existingData, instanceId);
   if (existing) {
     logger.info(
-      `Provider '${provider.label}' already exists with ID '${existing.id}', skipping creation.`,
+      `Provider "${provider.label}" already exists with ID "${existing.id}", skipping creation.`,
     );
 
     return existing;
@@ -119,10 +131,19 @@ async function createOrGetIoEventProvider(
 async function createIoEventProviderEventMetadata(
   params: CreateIoProviderEventsMetadataParams,
 ) {
-  const { context, event, provider, type } = params;
-  const { appCredentials, ioEventsClient, logger } = context;
+  const { context, event, provider, type, metadata } = params;
+  const { appData, ioEventsClient, logger } = context;
+  const appCredentials = {
+    consumerOrgId: appData.consumerOrgId,
+    projectId: appData.projectId,
+    workspaceId: appData.workspaceId,
+  };
 
-  const eventCode = getIoEventCode(event.name, type);
+  const eventCode = getIoEventCode(
+    getNamespacedEvent(metadata, event.name),
+    type,
+  );
+
   logger.info(
     `Creating event metadata (${eventCode}) for provider "${provider.label}" (instance ID: ${provider.instance_id}))`,
   );
@@ -161,10 +182,14 @@ async function createOrGetIoProviderEventMetadata(
   params: CreateIoProviderEventsMetadataParams,
   existingData: IoEventMetadata[],
 ) {
-  const { context, event, provider, type } = params;
+  const { context, event, provider, type, metadata } = params;
   const { logger } = context;
 
-  const eventCode = getIoEventCode(event.name, type);
+  const eventCode = getIoEventCode(
+    getNamespacedEvent(metadata, event.name),
+    type,
+  );
+
   const existing = findExistingProviderMetadata(existingData, eventCode);
   if (existing) {
     logger.info(
@@ -182,8 +207,13 @@ async function createOrGetIoProviderEventMetadata(
  * @param params - The parameters necessary to create the registration.
  */
 async function createIoEventRegistration(params: CreateRegistrationParams) {
-  const { context, events, provider, runtimeAction } = params;
-  const { appCredentials, ioEventsClient, logger } = context;
+  const { context, events, provider, runtimeAction, metadata } = params;
+  const { appData, ioEventsClient, logger, params: runtimeParams } = context;
+  const appCredentials = {
+    consumerOrgId: appData.consumerOrgId,
+    projectId: appData.projectId,
+    workspaceId: appData.workspaceId,
+  };
 
   logger.info(
     `Creating registration(s) to runtime action "${runtimeAction}" for ${events.length} event(s) with provider "${provider.label}" (instance ID: ${provider.instance_id}))`,
@@ -201,6 +231,7 @@ async function createIoEventRegistration(params: CreateRegistrationParams) {
       ...appCredentials,
 
       name,
+      clientId: runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
       description,
       deliveryType: "webhook",
       runtimeAction,
@@ -209,7 +240,7 @@ async function createIoEventRegistration(params: CreateRegistrationParams) {
       eventsOfInterest: events.map((event) => ({
         providerId: provider.id,
         eventCode: getIoEventCode(
-          event.name,
+          getNamespacedEvent(metadata, event.name),
           provider.provider_metadata as EventProviderType,
         ),
       })),
@@ -240,13 +271,13 @@ async function createOrGetIoEventRegistration(
   registrations: IoEventRegistration[],
 ) {
   const { context, provider, runtimeAction } = params;
-  const { appCredentials, logger } = context;
+  const { logger, params: runtimeParams } = context;
 
   // Check if a registration already exists for this provider and runtime action.
   const name = getRegistrationName(provider, runtimeAction);
   const existing = findExistingRegistrations(
     registrations,
-    appCredentials.clientId,
+    runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
     name,
   );
 
@@ -261,11 +292,134 @@ async function createOrGetIoEventRegistration(
   return createIoEventRegistration(params);
 }
 
-export function configureCommerce(context: EventsExecutionContext) {
-  const { logger } = context;
-  logger.info("Configuring Commerce Eventing");
+/**
+ * Ensures Commerce Eventing is configured with the given configuration, updating it if it already exists.
+ * @param eventsClient
+ * @param params
+ * @param existingData
+ */
+async function configureCommerceEventing(
+  params: ConfigureCommerceEventingParams,
+  existingData: ExistingCommerceEventingData,
+) {
+  const { context, config } = params;
+  const { commerceEventsClient, logger } = context;
+  logger.info("Starting configuration of the Commerce Eventing Module");
 
-  return { commerceConfigured: true };
+  // Always ensure eventing is enabled
+  let updateParams: UpdateEventingConfigurationParams = {
+    ...config,
+    enabled: true,
+  };
+
+  if (existingData.isDefaultWorkspaceConfigurationEmpty) {
+    if (!config.workspaceConfiguration) {
+      const message =
+        "Workspace configuration is required to enable Commerce Eventing when there is not an existing one.";
+
+      logger.error(message);
+      throw new Error(message);
+    }
+
+    logger.info(
+      "Default provider workspace configuration already present, it will not be overriden",
+    );
+
+    // Remove the workspace configuration to avoid overriding it
+    const { workspaceConfiguration, ...rest } = updateParams;
+    updateParams = rest;
+  }
+
+  logger.info(
+    "Updating Commerce Eventing configuration with provided workspace configuration.",
+  );
+
+  return commerceEventsClient
+    .updateEventingConfiguration(updateParams)
+    .then((success) => {
+      if (success) {
+        logger.info("Commerce Eventing Module configured successfully.");
+        return;
+      }
+
+      // This will be catched by the catch block below, and logged accordingly.
+      throw new Error(
+        "Something went wrong while configuring Commerce Eventing Module. Response was not successful but no error was thrown.",
+      );
+    })
+    .catch((err) => {
+      logger.error(
+        `Failed to configure Commerce Eventing Module: ${stringifyError(err)}`,
+      );
+
+      throw err;
+    });
+}
+
+/**
+ * Creates an event provider in Commerce for a given {@link IoEventProvider}.
+ * @param params - The parameters necessary to create the Commerce provider.
+ */
+export async function createCommerceProvider(
+  params: CreateCommerceProviderParams,
+) {
+  const { context, provider } = params;
+  const { commerceEventsClient, logger } = context;
+
+  logger.info(
+    `Creating Commerce provider "${provider.label}" with instance ID "${provider.instance_id}"`,
+  );
+
+  return commerceEventsClient
+    .createEventProvider({
+      providerId: provider.id,
+      instanceId: provider.instance_id,
+      label: provider.label,
+      description: provider.description,
+      associatedWorkspaceConfiguration: provider.workspaceConfiguration,
+    })
+    .then((res) => {
+      logger.info(
+        `Commerce provider "${provider.label}" created with ID '${res.provider_id}'`,
+      );
+
+      return res;
+    })
+    .catch((err) => {
+      logger.error(
+        `Failed to create Commerce provider "${provider.label}": ${stringifyError(err)}`,
+      );
+
+      throw err;
+    });
+}
+
+/**
+ * Creates or retrieves an existing Commerce event provider.
+ * @param params - Parameters needed to create or get the Commerce provider.
+ * @param existingData - Existing Commerce providers.
+ */
+export async function createOrGetCommerceProvider(
+  params: CreateCommerceProviderParams,
+  existingProviders: CommerceEventProvider[],
+) {
+  const { context, provider } = params;
+  const { logger } = context;
+
+  const existing = findExistingProvider(
+    existingProviders,
+    provider.instance_id,
+  );
+
+  if (existing) {
+    logger.info(
+      `Provider "${provider.label}" already exists with ID "${existing.id}", skipping creation.`,
+    );
+
+    return existing;
+  }
+
+  return createCommerceProvider(params);
 }
 
 /**
@@ -283,12 +437,20 @@ async function createCommerceEventSubscription(
     `Creating event subscription for event "${event.config.name}" to provider "${provider.label}" (instance ID: ${provider.instance_id})`,
   );
 
-  const eventSpec = {
+  const eventSpec: EventSubscriptionCreateParams = {
     name: eventName,
     parent: event.config.name,
     fields: event.config.fields,
-    providerId: provider.instance_id,
+    providerId: provider.id,
+    destination: event.config.destination,
+    hipaaAuditRequired: event.config.hipaaAuditRequired,
+    prioritary: event.config.prioritary,
+    force: event.config.force,
   };
+
+  logger.debug(
+    `Event subscription specification for event "${event.config.name}": ${inspect(eventSpec)}`,
+  );
 
   return commerceEventsClient
     .createEventSubscription(eventSpec)
@@ -369,6 +531,7 @@ export async function onboardIoEvents<EventType extends AppEvent>(
   const metadataPromises = events.map((event) =>
     createOrGetIoProviderEventMetadata(
       {
+        metadata,
         context,
         type: providerType,
         provider: providerData,
@@ -386,6 +549,7 @@ export async function onboardIoEvents<EventType extends AppEvent>(
     ([runtimeAction, groupedEvents]) =>
       createOrGetIoEventRegistration(
         {
+          metadata,
           context,
           events: groupedEvents,
           provider: providerData,
@@ -435,22 +599,51 @@ export async function onboardCommerceEventing(
   existingData: ExistingCommerceEventingData,
 ) {
   const { context, metadata, ioData } = params;
-  const { logger } = context;
-  const { events, provider } = ioData;
+  const { events, provider, workspaceConfiguration } = ioData;
 
   const instanceId = provider.instance_id;
-  logger.info(
-    `Onboarding Commerce event subscriptions with provider instance ID: ${instanceId}`,
+  const subscriptions: Partial<CommerceEventSubscription>[] = [];
+
+  // The eventing module must be configured before creating the other entities.
+  await configureCommerceEventing(
+    {
+      context,
+      config: {
+        workspaceConfiguration,
+      },
+    },
+    existingData,
   );
 
-  const subscriptionsPromises = events.map((event) =>
-    createOrGetCommerceEventSubscription(
-      { context, metadata, provider, event },
-      existingData.subscriptions,
-    ),
+  const commerceProvider = await createOrGetCommerceProvider(
+    {
+      context,
+      provider: {
+        id: provider.id,
+        instance_id: instanceId,
+        label: provider.label,
+        description: provider.description,
+        workspaceConfiguration,
+      },
+    },
+    existingData.providers,
   );
+
+  // Remove sensitive data from the provider data before returning it.
+  const { workspace_configuration: _, ...commerceProviderData } =
+    commerceProvider;
+
+  for (const event of events) {
+    subscriptions.push(
+      await createOrGetCommerceEventSubscription(
+        { context, metadata, provider, event },
+        existingData.subscriptions,
+      ),
+    );
+  }
 
   return {
-    subscriptions: await Promise.all(subscriptionsPromises),
+    commerceProvider: commerceProviderData,
+    subscriptions,
   };
 }

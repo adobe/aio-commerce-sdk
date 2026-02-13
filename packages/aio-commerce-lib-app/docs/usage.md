@@ -311,7 +311,10 @@ The `installation.customInstallationSteps` field allows you to define custom scr
 
 ```javascript
 installation: {
-  preInstallation: "Please ensure all prerequisites are met before installation.",
+  messages: {
+    preInstallation: "Please ensure all prerequisites are met before installation.",
+  },
+
   customInstallationSteps: [
     {
       script: "./scripts/configure-webhooks.js",

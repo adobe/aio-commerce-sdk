@@ -24,13 +24,13 @@ import type {
   HttpMethod,
   RuntimeActionParams,
 } from "@adobe/aio-commerce-lib-core/params";
+import type { ActionResponse } from "@adobe/aio-commerce-lib-core/responses";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type {
   BaseContext,
   CompiledRoute,
   ContextBuilder,
   RouteConfig,
-  RouteResponse,
 } from "./types";
 
 /**
@@ -345,7 +345,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
     method: HttpMethod,
     path: string,
     context: BaseContext,
-  ): Promise<RouteResponse | null> {
+  ) {
     const params: Record<string, string> = {};
     route.keys.forEach((key, i) => {
       params[key] = decodeURIComponent(match[i + 1] || "");
@@ -416,7 +416,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
    * ```
    */
   public handler() {
-    return async (args: RuntimeActionParams): Promise<RouteResponse> => {
+    return async (args: RuntimeActionParams): Promise<ActionResponse> => {
       const method = (args.__ow_method ?? "get").toUpperCase() as HttpMethod;
       const rawPath = (args.__ow_path as string) ?? "/";
 

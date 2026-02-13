@@ -72,7 +72,7 @@ export function createInstallationError(
 
 /** Base properties for creating final installation states. */
 type FinalStateBase = {
-  installationId: string;
+  id: string;
   startedAt: string;
   step: StepStatus;
   data: Record<string, unknown> | null;

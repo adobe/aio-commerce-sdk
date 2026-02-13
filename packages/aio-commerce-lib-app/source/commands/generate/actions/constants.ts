@@ -33,6 +33,10 @@ export const COMMERCE_ACTION_INPUTS = Object.fromEntries(
   COMMERCE_VARIABLES.map((variable) => [variable, `$${variable}`] as const),
 );
 
+export const CUSTOM_IMPORTS_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_IMPORTS}}";
+export const CUSTOM_SCRIPTS_MAP_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_MAP}}";
+export const CUSTOM_SCRIPTS_LOADER_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_LOADER}}";
+
 /** The list of runtime actions to generate */
 export const RUNTIME_ACTIONS = [
   {
@@ -94,7 +98,7 @@ export const EXT_CONFIG: ExtConfig = {
         actions: {
           "get-app-config": createActionConfig("get-app-config"),
           installation: createActionConfig("installation", {
-            inputs: COMMERCE_ACTION_INPUTS,
+            inputs: { ...COMMERCE_ACTION_INPUTS, LOG_LEVEL: "$LOG_LEVEL" },
             limits: {
               timeout: 600_000,
             },

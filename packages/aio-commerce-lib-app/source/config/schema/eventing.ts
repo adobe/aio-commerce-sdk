@@ -13,6 +13,7 @@
 import {
   alphaNumericOrHyphenSchema,
   alphaNumericOrUnderscoreSchema,
+  booleanValueSchema,
   nonEmptyStringValueSchema,
   stringValueSchema,
   titleCaseSchema,
@@ -138,9 +139,16 @@ const BaseEventSchema = v.object({
  * Schema for rule operator values.
  * Valid operators for Commerce event filtering rules.
  */
-const OPERATORS = ["greaterThan", "lessThan", "equal", "regex", "in", "onChange"] as const;
+const OPERATORS = [
+  "greaterThan",
+  "lessThan",
+  "equal",
+  "regex",
+  "in",
+  "onChange",
+] as const;
 const ruleOperatorSchema = v.union(
-  OPERATORS.map(op => v.literal(op)),
+  OPERATORS.map((op) => v.literal(op)),
   `Operator must be one of: ${OPERATORS.join(", ")}`,
 );
 
@@ -166,6 +174,11 @@ const CommerceEventSchema = v.object({
       "Expected an array of event rules with field, operator, and value",
     ),
   ),
+
+  destination: v.optional(nonEmptyStringValueSchema("destination")),
+  hipaaAuditRequired: v.optional(booleanValueSchema("hipaaAuditRequired")),
+  prioritary: v.optional(booleanValueSchema("prioritary")),
+  force: v.optional(booleanValueSchema("force")),
 });
 
 /** Schema for external event configuration */

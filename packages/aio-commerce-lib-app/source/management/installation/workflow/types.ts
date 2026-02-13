@@ -52,6 +52,9 @@ export type StepStatus = {
   /** Full path from root to this step. */
   path: string[];
 
+  /** Step metadata (for display purposes). */
+  meta: StepMeta;
+
   /** Current execution status. */
   status: ExecutionStatus;
 
@@ -67,7 +70,7 @@ export type InstallationData = {
 /** Base properties shared by all installation states. */
 type InstallationStateBase = {
   /** Unique installation identifier. */
-  installationId: string;
+  id: string;
 
   /** Root step status. */
   step: StepStatus;
@@ -75,12 +78,6 @@ type InstallationStateBase = {
   /** Results from executed leaf steps, keyed by path. */
   data: InstallationData | null;
 };
-
-/** Installation state when pending (not yet started). */
-export type PendingInstallationState = InstallationStateBase & {
-  status: "pending";
-};
-
 /** Installation state when in progress. */
 export type InProgressInstallationState = InstallationStateBase & {
   status: "in-progress";
@@ -119,17 +116,11 @@ export type FailedInstallationState = InstallationStateBase & {
  * Discriminated union by `status` field.
  */
 export type InstallationState =
-  | PendingInstallationState
   | InProgressInstallationState
   | SucceededInstallationState
   | FailedInstallationState;
 
 /** Type guard for pending installation state. */
-export function isPendingState(
-  state: InstallationState,
-): state is PendingInstallationState {
-  return state.status === "pending";
-}
 
 /** Type guard for in-progress installation state. */
 export function isInProgressState(
@@ -158,33 +149,3 @@ export function isCompletedState(
 ): state is SucceededInstallationState | FailedInstallationState {
   return state.status === "succeeded" || state.status === "failed";
 }
-
-/** Interface for persisting installation state. */
-export interface InstallationStateStore {
-  get(installationId: string): Promise<InstallationState | null>;
-  save(state: InstallationState): Promise<void>;
-}
-
-/** A step in the installation plan (tree structure). */
-export type InstallationPlanStep = {
-  /** Step name. */
-  name: string;
-
-  /** Step metadata */
-  meta: StepMeta;
-
-  /** Child steps (empty for leaf steps). */
-  children: InstallationPlanStep[];
-};
-
-/** The serializable installation plan. */
-export type InstallationPlan = {
-  /** Unique plan identifier. */
-  id: string;
-
-  /** ISO timestamp when plan was created. */
-  createdAt: string;
-
-  /** Root step of the installation tree. */
-  step: InstallationPlanStep;
-};

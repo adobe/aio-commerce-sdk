@@ -12,19 +12,17 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the workflow module */
 
-export { buildPlan, executeWorkflow } from "./runner";
+export { createInitialState, executeWorkflow } from "./runner";
 export {
   defineBranchStep,
   defineLeafStep,
   isBranchStep,
   isLeafStep,
 } from "./step";
-export { createLibStateStore } from "./storage/lib-state";
 export {
   isCompletedState,
   isFailedState,
   isInProgressState,
-  isPendingState,
   isSucceededState,
 } from "./types";
 
@@ -35,7 +33,10 @@ export type {
   StepStartedEvent,
   StepSucceededEvent,
 } from "./hooks";
-export type { BuildPlanOptions, ExecuteWorkflowOptions } from "./runner";
+export type {
+  CreateInitialStateOptions,
+  ExecuteWorkflowOptions,
+} from "./runner";
 export type {
   AnyStep,
   BranchStep,
@@ -49,19 +50,14 @@ export type {
   StepContextFactory,
   StepMeta,
 } from "./step";
-export type { LibStateStoreOptions } from "./storage/lib-state";
 export type {
   ExecutionStatus,
   FailedInstallationState,
   InProgressInstallationState,
   InstallationData,
   InstallationError,
-  InstallationPlan,
-  InstallationPlanStep,
   InstallationState,
-  InstallationStateStore,
   InstallationStatus,
-  PendingInstallationState,
   StepStatus,
   SucceededInstallationState,
 } from "./types";

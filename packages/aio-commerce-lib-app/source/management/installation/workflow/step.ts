@@ -13,19 +13,22 @@
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { AppData } from "../schema";
 
 /** Shared context available to all steps during installation. */
 export type InstallationContext = {
   /** The credentials of the app being installed */
-  appCredentials: {
-    clientId: string;
-    consumerOrgId: string;
-    projectId: string;
-    workspaceId: string;
-  };
+  appData: AppData;
 
   /** The raw action parameters from the App Builder runtime action. */
-  params: RuntimeActionParams;
+  params: RuntimeActionParams & {
+    AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
+    AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: string | string[];
+    AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: string;
+    AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: string;
+    AIO_COMMERCE_AUTH_IMS_ORG_ID: string;
+    AIO_COMMERCE_AUTH_IMS_SCOPES: string | string[];
+  };
 
   /** Logger instance for installation logging. */
   logger: ReturnType<typeof AioLogger>;

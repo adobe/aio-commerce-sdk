@@ -19,19 +19,20 @@
 
 export { defineCustomInstallationStep } from "./installation/custom-installation";
 // Export installation-specific functions
-export { createInstallationPlan, runInstallation } from "./installation/runner";
 export {
-  createLibStateStore,
+  createInitialInstallationState,
+  runInstallation,
+} from "./installation/runner";
+export {
   isCompletedState,
   isFailedState,
   isInProgressState,
-  isPendingState,
   isSucceededState,
 } from "./installation/workflow";
 
 export type { CustomInstallationStepHandler } from "./installation/custom-installation";
 export type {
-  CreateInstallationPlanOptions,
+  CreateInitialInstallationStateOptions,
   RunInstallationOptions,
 } from "./installation/runner";
 export type * from "./installation/workflow";
