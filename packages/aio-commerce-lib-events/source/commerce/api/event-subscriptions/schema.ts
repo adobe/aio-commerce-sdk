@@ -33,7 +33,7 @@ function fieldNameSchema(propertyName: string) {
     nonEmptyStringValueSchema(propertyName),
     v.regex(
       FIELD_NAME_REGEX,
-      "Field name can either contain only [a-zA-Z0-9_\\-\\.\\[\\]] or be set to *",
+      'Field name must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), dashes (-), dots (.), and square brackets ([, ]), or be exactly "*"',
     ),
   );
 }
