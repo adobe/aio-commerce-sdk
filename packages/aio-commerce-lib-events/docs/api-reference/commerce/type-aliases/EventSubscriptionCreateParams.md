@@ -13,7 +13,7 @@ The schema of the parameters received by the POST `eventing/eventSubscribe` Comm
 ## Notes
 
 - If `rules` is provided, `parent` must also be provided.
-- When using `rules` with PAAS (Platform as a Service), the minimum version of `magento/commerce-eventing` must be 1.17.
+- When using `rules` with PAAS, the minimum version of `magento/commerce-eventing` must be 1.17.
 
 ## See
 

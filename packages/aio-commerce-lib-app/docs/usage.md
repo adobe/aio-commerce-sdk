@@ -255,9 +255,6 @@ eventing: {
 
 **Commerce Events:**
 
-> [!NOTE]
-> When using `rules` with PaaS...
-
 - **name**: Must start with `plugin.` or `observer.` followed by lowercase letters and underscores (e.g., `plugin.order_placed`, `observer.catalog_update`)
 - **fields**: Array of field objects. Each field object must have:
   - **name** (required): The field name. Field names can contain letters (a-z, A-Z), numbers (0-9), underscores (\_), dashes (-), dots (.), and square brackets ([, ]), or be exactly `"*"` (e.g., `"name"`, `"price"`, `"_origData"`, `"*"`)
@@ -266,10 +263,12 @@ eventing: {
   - **field**: The field name to filter on
   - **operator**: The comparison operator (e.g., `"lessThan"`, `"greaterThan"`, `"equals"`)
   - **value**: The value to compare against
-  - **Note**: If `rules` is provided, `parent` must also be provided
-  - **Note**: When using rules with PAAS, the minimum version of `magento/commerce-eventing` must be 1.17
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
 - **description**: Description of the event (max 255 characters)
+
+> [!NOTE]
+> When using `rules` with PaaS, the minimum version of `magento/commerce-eventing` must be 1.17.
+> If `rules` is provided, `parent` must also be provided
 
 **External Events:**
 
