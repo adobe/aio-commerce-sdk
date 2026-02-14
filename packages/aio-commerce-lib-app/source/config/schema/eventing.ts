@@ -15,6 +15,7 @@ import {
   alphaNumericOrUnderscoreSchema,
   booleanValueSchema,
   nonEmptyStringValueSchema,
+  stringValueSchema,
   titleCaseSchema,
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
@@ -31,6 +32,12 @@ const MAX_KEY_LENGTH = 50;
 const COMMERCE_EVENT_NAME_REGEX = /^(?:plugin|observer)\.[a-z_]+$/;
 
 /**
+ * Regex for field names according to XSD fieldName pattern.
+ * Field name can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
+ */
+const FIELD_NAME_REGEX = /^([a-zA-Z0-9_\-.[\]]+|\*)$/;
+
+/**
  * Schema for Commerce event names.
  * Validates that the event name starts with "plugin." or "observer."
  * followed by lowercase letters and underscores only.
@@ -43,6 +50,32 @@ function commerceEventNameSchema() {
       'Event name must start with "plugin." or "observer." followed by lowercase letters and underscores only (e.g., "plugin.order_placed")',
     ),
   );
+}
+
+/**
+ * Schema for field names.
+ * Validates that the field name matches the XSD fieldName pattern:
+ * can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
+ */
+function fieldNameSchema() {
+  return v.pipe(
+    nonEmptyStringValueSchema("field name"),
+    v.regex(
+      FIELD_NAME_REGEX,
+      'Field name must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), dashes (-), dots (.), and square brackets ([, ]), or be exactly "*"',
+    ),
+  );
+}
+
+/**
+ * Schema for field objects in Commerce events.
+ * Each field has a required name and an optional source.
+ */
+function commerceEventFieldSchema() {
+  return v.object({
+    name: fieldNameSchema(),
+    source: v.optional(stringValueSchema("field source")),
+  });
 }
 
 /** Schema for event provider configuration */
@@ -102,14 +135,44 @@ const BaseEventSchema = v.object({
   ),
 });
 
+/**
+ * Schema for rule operator values.
+ * Valid operators for Commerce event filtering rules.
+ */
+const OPERATORS = [
+  "greaterThan",
+  "lessThan",
+  "equal",
+  "regex",
+  "in",
+  "onChange",
+] as const;
+const ruleOperatorSchema = v.union(
+  OPERATORS.map((op) => v.literal(op)),
+  `Operator must be one of: ${OPERATORS.join(", ")}`,
+);
+
+/** Schema for Commerce event rule configuration */
+const CommerceEventRuleSchema = v.object({
+  field: nonEmptyStringValueSchema("rule field"),
+  operator: ruleOperatorSchema,
+  value: nonEmptyStringValueSchema("rule value"),
+});
+
 /** Schema for Commerce event configuration */
 const CommerceEventSchema = v.object({
   ...BaseEventSchema.entries,
 
   name: commerceEventNameSchema(),
   fields: v.array(
-    alphaNumericOrUnderscoreSchema("event fields", "lowercase"),
-    "Expected an array of event fields",
+    commerceEventFieldSchema(),
+    "Expected an array of event field objects with a 'name' property",
+  ),
+  rules: v.optional(
+    v.array(
+      CommerceEventRuleSchema,
+      "Expected an array of event rules with field, operator, and value",
+    ),
   ),
 
   destination: v.optional(nonEmptyStringValueSchema("destination")),
