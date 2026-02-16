@@ -25,21 +25,28 @@ import { consola } from "consola";
 import { formatTree } from "consola/utils";
 
 import {
+  CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   GENERATED_ACTIONS_PATH,
   getExtensionPointFolderPath,
 } from "#commands/constants";
-import { getConfigDomains, hasCustomInstallationSteps } from "#config/index";
+import {
+  getConfigDomains,
+  hasBusinessConfigSchema,
+  hasCustomInstallationSteps,
+} from "#config/index";
 import { parseCommerceAppConfig } from "#config/lib/parser";
 
 import {
-  buildExtConfig,
+  buildAppManagementExtConfig,
+  buildBusinessConfigurationExtConfig,
   CUSTOM_IMPORTS_PLACEHOLDER,
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
   CUSTOM_SCRIPTS_MAP_PLACEHOLDER,
   getRuntimeActions,
 } from "./config";
 
+import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
 import type { TemplateAction } from "./config";
@@ -49,16 +56,35 @@ import type { TemplateAction } from "./config";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const EXTENSION_POINT_FOLDER_PATH = getExtensionPointFolderPath(
-  EXTENSIBILITY_EXTENSION_POINT_ID,
-);
+type ValidExtensionPointId =
+  | typeof EXTENSIBILITY_EXTENSION_POINT_ID
+  | typeof CONFIGURATION_EXTENSION_POINT_ID;
 
 export async function run(appManifest: CommerceAppConfigOutputModel) {
-  const extConfig = await updateExtConfig(appManifest);
+  const appManagementExtConfig = await updateExtConfig(
+    appManifest,
+    EXTENSIBILITY_EXTENSION_POINT_ID,
+  );
+
   await generateActionFiles(
     appManifest,
-    getRuntimeActions(extConfig, "app-management"),
+    getRuntimeActions(appManagementExtConfig, "app-management"),
+    EXTENSIBILITY_EXTENSION_POINT_ID,
   );
+
+  // If the app has a business configuration schema, generate the business configuration actions and files
+  if (hasBusinessConfigSchema(appManifest)) {
+    const businessConfigExtConfig = await updateExtConfig(
+      appManifest,
+      CONFIGURATION_EXTENSION_POINT_ID,
+    );
+
+    await generateActionFiles(
+      appManifest,
+      getRuntimeActions(businessConfigExtConfig, "business-configuration"),
+      CONFIGURATION_EXTENSION_POINT_ID,
+    );
+  }
 }
 
 /** Run the generate actions command */
@@ -86,17 +112,36 @@ async function loadAppManifest() {
 }
 
 /** Update the ext.config.yaml file */
-async function updateExtConfig(appConfig: CommerceAppConfigOutputModel) {
-  consola.info("Updating ext.config.yaml...");
+async function updateExtConfig(
+  appConfig: CommerceAppConfigOutputModel,
+  extensionPointId: ValidExtensionPointId,
+) {
+  consola.info(`Updating ext.config.yaml for ${extensionPointId}...`);
+  const extensionPointFolderPath =
+    getExtensionPointFolderPath(extensionPointId);
 
-  const outputDir = await makeOutputDirFor(EXTENSION_POINT_FOLDER_PATH);
+  const outputDir = await makeOutputDirFor(extensionPointFolderPath);
   const extConfigPath = join(outputDir, "ext.config.yaml");
   const extConfigDoc = await readYamlFile(extConfigPath);
 
-  const extConfig = buildExtConfig(getConfigDomains(appConfig));
-  await createOrUpdateExtConfig(extConfigPath, extConfig, extConfigDoc);
-  consola.success("Updated ext.config.yaml");
+  let extConfig: ExtConfig;
+  switch (extensionPointId) {
+    case EXTENSIBILITY_EXTENSION_POINT_ID: {
+      extConfig = buildAppManagementExtConfig(getConfigDomains(appConfig));
+      break;
+    }
 
+    case CONFIGURATION_EXTENSION_POINT_ID: {
+      extConfig = buildBusinessConfigurationExtConfig();
+      break;
+    }
+
+    default: {
+      throw new Error(`Unsupported extension point ID: ${extensionPointId}`);
+    }
+  }
+
+  await createOrUpdateExtConfig(extConfigPath, extConfig, extConfigDoc);
   return extConfig;
 }
 
@@ -104,10 +149,14 @@ async function updateExtConfig(appConfig: CommerceAppConfigOutputModel) {
 async function generateActionFiles(
   appManifest: CommerceAppConfigOutputModel,
   actions: TemplateAction[],
+  extensionPointId: ValidExtensionPointId,
 ) {
   consola.start("Generating runtime actions...");
+  const extensionPointFolderPath =
+    getExtensionPointFolderPath(extensionPointId);
+
   const outputDir = await makeOutputDirFor(
-    join(EXTENSION_POINT_FOLDER_PATH, GENERATED_ACTIONS_PATH),
+    join(extensionPointFolderPath, GENERATED_ACTIONS_PATH),
   );
 
   const outputFiles: string[] = [];
@@ -192,7 +241,7 @@ export async function generateCustomScriptsTemplate(
   const projectRoot = await getProjectRootDirectory();
   const installationActionDir = join(
     projectRoot,
-    EXTENSION_POINT_FOLDER_PATH,
+    getExtensionPointFolderPath(EXTENSIBILITY_EXTENSION_POINT_ID),
     GENERATED_ACTIONS_PATH,
   );
 

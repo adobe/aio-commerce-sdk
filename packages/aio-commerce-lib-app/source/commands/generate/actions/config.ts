@@ -12,7 +12,12 @@
 
 import { join } from "node:path";
 
-import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
+import {
+  CONFIG_SCHEMA_FILE_NAME,
+  GENERATED_ACTIONS_PATH,
+  GENERATED_PATH,
+  PACKAGE_NAME,
+} from "#commands/constants";
 
 import type {
   ActionDefinition,
@@ -20,7 +25,12 @@ import type {
 } from "@aio-commerce-sdk/scripting-utils/yaml";
 import type { CommerceAppConfigDomain } from "#config/schema/domains";
 
-export type TemplateAction = {
+type ActionConfig = {
+  requiresSchema?: boolean;
+  requiresEncryptionKey?: boolean;
+};
+
+export type TemplateAction = ActionConfig & {
   name: string;
   templateFile: string;
 };
@@ -50,11 +60,12 @@ export const CUSTOM_SCRIPTS_LOADER_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_LOADER}}";
  * @param actionName - The name of the action.
  * @param options - Optional configuration options.
  */
-function createActionConfig(
+function createActionDefinition(
   actionName: string,
+  config: ActionConfig = {},
   options: Omit<ActionDefinition, "function"> = {},
 ) {
-  return {
+  const def: ActionDefinition = {
     ...options,
 
     function: `${GENERATED_ACTIONS_PATH}/${actionName}.js`,
@@ -65,13 +76,46 @@ function createActionConfig(
       final: true,
     },
   };
+
+  if (config.requiresSchema) {
+    def.include = [
+      [`${GENERATED_PATH}/${CONFIG_SCHEMA_FILE_NAME}`, `${PACKAGE_NAME}/`],
+    ];
+  }
+
+  if (config.requiresEncryptionKey) {
+    def.inputs = {
+      ...def.inputs,
+      AIO_COMMERCE_CONFIG_ENCRYPTION_KEY: "$AIO_COMMERCE_CONFIG_ENCRYPTION_KEY",
+    };
+  }
+
+  return def;
+}
+
+/**
+ * Gets the runtime actions to be generated from the ext.config.yaml configuration.
+ * @param extConfig - The ext.config.yaml configuration.
+ */
+export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
+  return Object.entries(
+    extConfig.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions ?? {},
+  ).map(
+    ([name, _]) =>
+      ({
+        name,
+        templateFile: join(dir, `${name}.js.template`),
+      }) satisfies TemplateAction,
+  );
 }
 
 /**
  * Builds the ext.config.yaml configuration for the extensibility extension.
  * @param features - The features that are enabled for the app.
  */
-export function buildExtConfig(features: Set<CommerceAppConfigDomain>) {
+export function buildAppManagementExtConfig(
+  features: Set<CommerceAppConfigDomain>,
+) {
   const extConfig = {
     hooks: {
       "pre-app-build":
@@ -92,7 +136,7 @@ export function buildExtConfig(features: Set<CommerceAppConfigDomain>) {
         [PACKAGE_NAME]: {
           license: "Apache-2.0",
           actions: {
-            "get-app-config": createActionConfig("get-app-config"),
+            "get-app-config": createActionDefinition("get-app-config"),
           } as Record<string, ActionDefinition>,
         },
       },
@@ -114,29 +158,82 @@ export function buildExtConfig(features: Set<CommerceAppConfigDomain>) {
     });
 
     extConfig.runtimeManifest.packages[PACKAGE_NAME].actions.installation =
-      createActionConfig("installation", {
-        inputs: { ...COMMERCE_ACTION_INPUTS, LOG_LEVEL: "$LOG_LEVEL" },
-        limits: {
-          timeout: 600_000,
+      createActionDefinition(
+        "installation",
+        {},
+        {
+          inputs: { ...COMMERCE_ACTION_INPUTS, LOG_LEVEL: "$LOG_LEVEL" },
+          limits: {
+            timeout: 600_000,
+          },
         },
-      });
+      );
   }
 
   return extConfig;
 }
 
-/**
- * Gets the runtime actions to be generated from the ext.config.yaml configuration.
- * @param extConfig - The ext.config.yaml configuration.
- */
-export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
-  return Object.entries(
-    extConfig.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions ?? {},
-  ).map(
-    ([name, _]) =>
-      ({
-        name,
-        templateFile: join(dir, `${name}.js.template`),
-      }) satisfies TemplateAction,
-  );
+/** Builds the ext.config.yaml configuration for the business configuration extension. */
+export function buildBusinessConfigurationExtConfig() {
+  const actions = [
+    {
+      name: "get-scope-tree",
+      templateFile: "get-scope-tree.js.template",
+    },
+    {
+      name: "get-config-schema",
+      templateFile: "get-config-schema.js.template",
+      requiresSchema: true,
+    },
+    {
+      name: "get-configuration",
+      templateFile: "get-configuration.js.template",
+      requiresSchema: true,
+      requiresEncryptionKey: true,
+    },
+    {
+      name: "set-configuration",
+      templateFile: "set-configuration.js.template",
+      requiresEncryptionKey: true,
+    },
+    {
+      name: "set-custom-scope-tree",
+      templateFile: "set-custom-scope-tree.js.template",
+    },
+    {
+      name: "sync-commerce-scopes",
+      templateFile: "sync-commerce-scopes.js.template",
+    },
+    {
+      name: "unsync-commerce-scopes",
+      templateFile: "unsync-commerce-scopes.js.template",
+    },
+  ] satisfies TemplateAction[];
+
+  return {
+    hooks: {
+      "pre-app-build": "$packageExec aio-commerce-lib-config generate schema",
+    },
+
+    operations: {
+      workerProcess: actions.map((action) => ({
+        type: "action",
+        impl: `${PACKAGE_NAME}/${action.name}`,
+      })),
+    },
+
+    runtimeManifest: {
+      packages: {
+        [PACKAGE_NAME]: {
+          license: "Apache-2.0",
+          actions: Object.fromEntries(
+            actions.map((action) => [
+              action.name,
+              createActionDefinition(action.name, action),
+            ]),
+          ),
+        },
+      },
+    },
+  } satisfies ExtConfig;
 }

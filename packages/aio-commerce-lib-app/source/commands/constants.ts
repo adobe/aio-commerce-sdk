@@ -34,6 +34,9 @@ export const APP_MANIFEST_FILE = "app.commerce.manifest.json";
 /** The name of the commerce app configuration file */
 export const COMMERCE_APP_CONFIG_FILE = "app.commerce.config";
 
+/** The name of the configuration schema file */
+export const CONFIG_SCHEMA_FILE_NAME = "configuration-schema.json";
+
 /** The name of the project package file */
 export const PACKAGE_JSON_FILE = "package.json";
 
