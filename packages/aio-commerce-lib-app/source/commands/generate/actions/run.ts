@@ -28,18 +28,20 @@ import {
   EXTENSION_POINT_FOLDER_PATH,
   GENERATED_ACTIONS_PATH,
 } from "#commands/constants";
+import { getConfigDomains } from "#config/index";
 import { parseCommerceAppConfig } from "#config/lib/parser";
 
 import {
+  buildExtConfig,
   CUSTOM_IMPORTS_PLACEHOLDER,
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
   CUSTOM_SCRIPTS_MAP_PLACEHOLDER,
-  EXT_CONFIG,
-  RUNTIME_ACTIONS,
-} from "./constants";
+  getRuntimeActions,
+} from "./config";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
+import type { TemplateAction } from "./config";
 
 // This will point to the directory where the script is running from.
 // This is the dist/commands directory (as we use a facade to run the commands)
@@ -50,8 +52,9 @@ const __dirname = dirname(__filename);
 export async function run() {
   try {
     const appManifest = await loadAppManifest();
-    await generateActionFiles(appManifest);
-    await updateExtConfig();
+    const extConfig = await updateExtConfig(appManifest);
+
+    await generateActionFiles(appManifest, getRuntimeActions(extConfig));
   } catch (error) {
     consola.error(stringifyError(error));
     process.exit(1);
@@ -68,19 +71,25 @@ async function loadAppManifest() {
 }
 
 /** Update the ext.config.yaml file */
-async function updateExtConfig() {
+async function updateExtConfig(appConfig: CommerceAppConfigOutputModel) {
   consola.info("Updating ext.config.yaml...");
 
   const outputDir = await makeOutputDirFor(EXTENSION_POINT_FOLDER_PATH);
   const extConfigPath = join(outputDir, "ext.config.yaml");
   const extConfigDoc = await readYamlFile(extConfigPath);
 
-  await createOrUpdateExtConfig(extConfigPath, EXT_CONFIG, extConfigDoc);
+  const extConfig = buildExtConfig(getConfigDomains(appConfig));
+  await createOrUpdateExtConfig(extConfigPath, extConfig, extConfigDoc);
   consola.success("Updated ext.config.yaml");
+
+  return extConfig;
 }
 
 /** Generate the action files */
-async function generateActionFiles(appManifest: CommerceAppConfigOutputModel) {
+async function generateActionFiles(
+  appManifest: CommerceAppConfigOutputModel,
+  actions: TemplateAction[],
+) {
   consola.start("Generating runtime actions...");
   const outputDir = await makeOutputDirFor(
     join(EXTENSION_POINT_FOLDER_PATH, GENERATED_ACTIONS_PATH),
@@ -89,7 +98,7 @@ async function generateActionFiles(appManifest: CommerceAppConfigOutputModel) {
   const templatesDir = join(__dirname, "generate/actions/templates");
   const outputFiles: string[] = [];
 
-  for (const action of RUNTIME_ACTIONS) {
+  for (const action of actions) {
     const templatePath = join(templatesDir, action.templateFile);
     let template = await readFile(templatePath, "utf-8");
 
@@ -115,7 +124,7 @@ async function generateActionFiles(appManifest: CommerceAppConfigOutputModel) {
   }
 
   consola.success(
-    `Generated ${RUNTIME_ACTIONS.length} action(s) in ${GENERATED_ACTIONS_PATH}`,
+    `Generated ${actions.length} action(s) in ${GENERATED_ACTIONS_PATH}`,
   );
 
   consola.log.raw(formatTree(outputFiles, { color: "green" }));

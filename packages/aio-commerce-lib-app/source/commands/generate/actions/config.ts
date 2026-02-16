@@ -16,6 +16,12 @@ import type {
   ActionDefinition,
   ExtConfig,
 } from "@aio-commerce-sdk/scripting-utils/yaml";
+import type { CommerceAppConfigDomain } from "#config/schema/domains";
+
+export type TemplateAction = {
+  name: string;
+  templateFile: string;
+};
 
 /** The list of Commerce variables that are required for the runtime actions */
 export const COMMERCE_VARIABLES = [
@@ -36,18 +42,6 @@ export const COMMERCE_ACTION_INPUTS = Object.fromEntries(
 export const CUSTOM_IMPORTS_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_IMPORTS}}";
 export const CUSTOM_SCRIPTS_MAP_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_MAP}}";
 export const CUSTOM_SCRIPTS_LOADER_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_LOADER}}";
-
-/** The list of runtime actions to generate */
-export const RUNTIME_ACTIONS = [
-  {
-    name: "get-app-config",
-    templateFile: "get-app-config.js.template",
-  },
-  {
-    name: "installation",
-    templateFile: "installation.js.template",
-  },
-];
 
 /**
  * Creates a runtime action configuration.
@@ -71,40 +65,68 @@ function createActionConfig(
   };
 }
 
-/** The ext.config.yaml configuration */
-export const EXT_CONFIG: ExtConfig = {
-  hooks: {
-    "pre-app-build":
-      "$packageExec aio-commerce-lib-app generate manifest && $packageExec aio-commerce-lib-auth sync-ims-credentials",
-  },
+/**
+ * Builds the ext.config.yaml configuration for the extensibility extension.
+ * @param features - The features that are enabled for the app.
+ */
+export function buildExtConfig(features: Set<CommerceAppConfigDomain>) {
+  const extConfig = {
+    hooks: {
+      "pre-app-build":
+        "$packageExec aio-commerce-lib-app generate manifest && $packageExec aio-commerce-lib-auth sync-ims-credentials",
+    },
 
-  operations: {
-    workerProcess: [
-      {
-        type: "action",
-        impl: `${PACKAGE_NAME}/get-app-config`,
-      },
-      {
-        type: "action",
-        impl: `${PACKAGE_NAME}/installation`,
-      },
-    ],
-  },
+    operations: {
+      workerProcess: [
+        {
+          type: "action",
+          impl: `${PACKAGE_NAME}/get-app-config`,
+        },
+      ],
+    },
 
-  runtimeManifest: {
-    packages: {
-      [PACKAGE_NAME]: {
-        license: "Apache-2.0",
-        actions: {
-          "get-app-config": createActionConfig("get-app-config"),
-          installation: createActionConfig("installation", {
-            inputs: { ...COMMERCE_ACTION_INPUTS, LOG_LEVEL: "$LOG_LEVEL" },
-            limits: {
-              timeout: 600_000,
-            },
-          }),
+    runtimeManifest: {
+      packages: {
+        [PACKAGE_NAME]: {
+          license: "Apache-2.0",
+          actions: {
+            "get-app-config": createActionConfig("get-app-config"),
+          },
         },
       },
     },
-  },
-};
+  } satisfies ExtConfig;
+
+  const featuresRequiringInstallationAction: CommerceAppConfigDomain[] = [
+    "installation",
+    "eventing.commerce",
+    "eventing.external",
+  ];
+
+  if (
+    featuresRequiringInstallationAction.some((feature) => features.has(feature))
+  ) {
+    extConfig.operations.workerProcess.push({
+      type: "action",
+      impl: `${PACKAGE_NAME}/installation`,
+    });
+  }
+
+  return extConfig;
+}
+
+/**
+ * Gets the runtime actions to be generated from the ext.config.yaml configuration.
+ * @param extConfig - The ext.config.yaml configuration.
+ */
+export function getRuntimeActions(extConfig: ExtConfig) {
+  return Object.entries(
+    extConfig.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions ?? {},
+  ).map(
+    ([name, _]) =>
+      ({
+        name,
+        templateFile: `${name}.js.template`,
+      }) satisfies TemplateAction,
+  );
+}

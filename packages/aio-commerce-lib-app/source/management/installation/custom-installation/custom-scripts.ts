@@ -12,35 +12,18 @@
 
 import camelcase from "camelcase";
 
+import { hasCustomInstallationSteps } from "#config/schema/installation";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
-import type { SetRequiredDeep } from "type-fest";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { CustomInstallationStep } from "#config/schema/installation";
+import type {
+  ConfigWithInstallationSteps,
+  CustomInstallationStep,
+} from "#config/schema/installation";
 import type {
   AnyStep,
   ExecutionContext,
 } from "#management/installation/workflow/step";
-
-export type InstallationConfig = CommerceAppConfigOutputModel & {
-  installation: NonNullable<CommerceAppConfigOutputModel["installation"]>;
-};
-
-/** Config type when custom installation steps are present. */
-export type ConfigWithInstallationSteps = SetRequiredDeep<
-  InstallationConfig,
-  "installation.customInstallationSteps"
->;
-
-/** Check if config has custom installation steps. */
-export function hasCustomInstallationSteps(
-  config: CommerceAppConfigOutputModel,
-): config is ConfigWithInstallationSteps {
-  return (
-    Array.isArray(config?.installation?.customInstallationSteps) &&
-    config.installation.customInstallationSteps.length > 0
-  );
-}
 
 /** Result of executing a single custom installation script. */
 type ScriptExecutionResult = {

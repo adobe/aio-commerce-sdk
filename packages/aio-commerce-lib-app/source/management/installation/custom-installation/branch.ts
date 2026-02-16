@@ -10,21 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
+import { hasCustomInstallationSteps } from "#config/schema/installation";
+
 import { defineBranchStep } from "../workflow";
-import {
-  createCustomScriptSteps,
-  hasCustomInstallationSteps,
-} from "./custom-scripts";
+import { createCustomScriptSteps } from "./custom-scripts";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { ConfigWithInstallationSteps } from "./custom-scripts";
-
-/** Check if config has custom installation steps. */
-export function hasCustomInstallation(
-  config: CommerceAppConfigOutputModel,
-): config is ConfigWithInstallationSteps {
-  return hasCustomInstallationSteps(config);
-}
 
 /** Root custom installation step that executes custom installation scripts. */
 const customInstallationStepBase = defineBranchStep({
@@ -35,7 +26,7 @@ const customInstallationStepBase = defineBranchStep({
       "Executes custom installation scripts defined in the application configuration",
   },
 
-  when: hasCustomInstallation,
+  when: hasCustomInstallationSteps,
   children: [],
 });
 

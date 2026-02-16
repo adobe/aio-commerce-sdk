@@ -11,8 +11,10 @@
  */
 
 import type { InferOutput } from "valibot";
-import type { CommerceAppConfigDomain } from "#config/index";
-import type { CommerceAppConfigSchemas } from "#config/schema/app";
+import type {
+  CommerceAppConfigDomain,
+  CommerceAppConfigSchemas,
+} from "#config/index";
 
 type FeatureDefaults = Partial<{
   [Key in CommerceAppConfigDomain]: InferOutput<

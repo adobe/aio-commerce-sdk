@@ -16,7 +16,7 @@ import {
   CUSTOM_IMPORTS_PLACEHOLDER,
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
   CUSTOM_SCRIPTS_MAP_PLACEHOLDER,
-} from "#commands/generate/actions/constants";
+} from "#commands/generate/actions/config";
 import {
   applyCustomScripts,
   generateCustomScriptsTemplate,
