@@ -17,4 +17,3 @@ export { commerceEventsStep } from "./commerce";
 export { externalEventsStep } from "./external";
 
 export type { EventsStepContext } from "./context";
-export type { EventsConfig } from "./utils";

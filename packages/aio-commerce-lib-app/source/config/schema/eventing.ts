@@ -285,3 +285,13 @@ export function hasExternalEvents(
     config.eventing.external.length > 0
   );
 }
+
+/**
+ * Check if config has any eventing configuration.
+ * @param config - The configuration to check.
+ */
+export function hasEventing(
+  config: CommerceAppConfigOutputModel,
+): config is EventsConfig {
+  return config.eventing !== undefined;
+}

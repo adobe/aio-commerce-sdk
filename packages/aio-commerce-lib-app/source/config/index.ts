@@ -36,7 +36,11 @@ export {
   getConfigDomains,
   hasConfigDomain,
 } from "./schema/domains";
-export { hasCommerceEvents, hasExternalEvents } from "./schema/eventing";
+export {
+  hasCommerceEvents,
+  hasEventing,
+  hasExternalEvents,
+} from "./schema/eventing";
 export {
   hasCustomInstallation,
   hasCustomInstallationSteps,
