@@ -3,14 +3,14 @@
 ```ts
 function findUp(
   name: string | string[],
-  options: {
+  options?: {
     cwd?: string;
     stopAt?: string;
   },
 ): Promise<string | undefined>;
 ```
 
-Defined in: [project.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages-private/scripting-utils/source/project.ts#L30)
+Defined in: [project.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages-private/scripting-utils/source/project.ts#L30)
 
 Find a file by walking up parent directories
 

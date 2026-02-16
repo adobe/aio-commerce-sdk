@@ -1,5 +1,22 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.12.0
+
+### Minor Changes
+
+- [#226](https://github.com/adobe/aio-commerce-sdk/pull/226) [`3167595`](https://github.com/adobe/aio-commerce-sdk/commit/3167595c3b276833c4516524b3f829f4e5e419df) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Implement Unsync Commerce Scopes action
+
+- [#244](https://github.com/adobe/aio-commerce-sdk/pull/244) [`76105e4`](https://github.com/adobe/aio-commerce-sdk/commit/76105e4255704a35db634e62a8519328d5295121) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Explicitly throw exception in case of failure
+
+- [#240](https://github.com/adobe/aio-commerce-sdk/pull/240) [`888ee1d`](https://github.com/adobe/aio-commerce-sdk/commit/888ee1d79c3c035eb715506c9a45329e8ea5001e) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Fix CONFIG_ENCRYPTION_KEY misusage in set-configuration action
+
+### Patch Changes
+
+- Updated dependencies [[`b3b41f5`](https://github.com/adobe/aio-commerce-sdk/commit/b3b41f576cf0341bbb4a19bb534bfe35fb562aad), [`f6663ff`](https://github.com/adobe/aio-commerce-sdk/commit/f6663ffd2a508ac0128ef8fc573ed1c10427a836), [`50c5538`](https://github.com/adobe/aio-commerce-sdk/commit/50c553809c7c699026d4952487295f5c25b7d1f0), [`24b391f`](https://github.com/adobe/aio-commerce-sdk/commit/24b391f911a64786df0e6ef695d6baaf4c467ea2), [`74eae28`](https://github.com/adobe/aio-commerce-sdk/commit/74eae28a3a3145452cf9051ef6b51c1aa84ece96), [`b3b41f5`](https://github.com/adobe/aio-commerce-sdk/commit/b3b41f576cf0341bbb4a19bb534bfe35fb562aad), [`3fc7bfe`](https://github.com/adobe/aio-commerce-sdk/commit/3fc7bfe523092c10edabc017a0b3cbeb0fbee383), [`2707605`](https://github.com/adobe/aio-commerce-sdk/commit/2707605b914b7aab3f7700f845bc8e27f48958ca), [`4a9a407`](https://github.com/adobe/aio-commerce-sdk/commit/4a9a407e8141687e7507ba1f4bc85bfb3e4a144e), [`9566d2b`](https://github.com/adobe/aio-commerce-sdk/commit/9566d2b7c19c583e090be87c297384d1a49449b5), [`b3b41f5`](https://github.com/adobe/aio-commerce-sdk/commit/b3b41f576cf0341bbb4a19bb534bfe35fb562aad), [`b7fb4da`](https://github.com/adobe/aio-commerce-sdk/commit/b7fb4da5b8a9f468d4c33a25194dcc0a6e4d16a1)]:
+  - @adobe/aio-commerce-lib-app@0.2.0
+  - @adobe/aio-commerce-lib-core@0.6.1
+  - @adobe/aio-commerce-lib-api@0.6.1
+
 ## 0.11.1
 
 ### Patch Changes

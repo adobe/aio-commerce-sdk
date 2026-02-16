@@ -6,7 +6,7 @@ const SubscriberFilterSchema: ObjectSchema<
     description: OptionalSchema<
       SchemaWithPipe<
         readonly [
-          StringSchema<`Expected a string value for property '${string}'`>,
+          StringSchema<`Expected a string value for '${string}'`>,
           MaxLengthAction<
             string,
             250,
@@ -18,7 +18,7 @@ const SubscriberFilterSchema: ObjectSchema<
     >;
     name: SchemaWithPipe<
       readonly [
-        StringSchema<`Expected a string value for property '${string}'`>,
+        StringSchema<`Expected a string value for '${string}'`>,
         MinLengthAction<
           string,
           3,
@@ -31,12 +31,12 @@ const SubscriberFilterSchema: ObjectSchema<
         >,
       ]
     >;
-    subscriberFilter: StringSchema<`Expected a string value for property '${string}'`>;
+    subscriberFilter: StringSchema<`Expected a string value for '${string}'`>;
   },
   undefined
 >;
 ```
 
-Defined in: [io-events/api/event-registrations/schema.ts:69](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/schema.ts#L69)
+Defined in: [io-events/api/event-registrations/schema.ts:68](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/schema.ts#L68)
 
 Schema for subscriber-defined filter.

@@ -21,7 +21,7 @@ function createAdobeIoEventsApiClient(params: IoEventsHttpClientParams): ApiClie
 }>;
 ```
 
-Defined in: [io-events/lib/api-client.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/lib/api-client.ts#L32)
+Defined in: [io-events/lib/api-client.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/lib/api-client.ts#L32)
 
 Creates a new API client for the Adobe I/O Events API client.
 

@@ -2,100 +2,16 @@
 
 ```ts
 function getEventProviderById(
-   httpClient: AdobeIoEventsHttpClient,
-   params: {
-  providerId: string;
-  withEventMetadata?: boolean;
-},
-   fetchOptions?: Options): Promise<{
-  description?: string;
-  docsUrl?: string;
-  embedded?: {
-     eventmetadata: {
-        description: string;
-        embedded?: {
-           sampleEvent?: {
-              format: string;
-              links: {
-                 self: ...;
-              };
-              samplePayload?: ... | ...;
-           };
-        };
-        eventCode: string;
-        label: string;
-        links: {
-           rel:sampleEvent?: {
-              deprecation?: string;
-              href: string;
-              hreflang?: string;
-              name?: string;
-              profile?: string;
-              seen?: string;
-              templated?: boolean;
-              title?: string;
-              type?: string;
-           };
-           rel:update?: {
-              deprecation?: string;
-              href: string;
-              hreflang?: string;
-              name?: string;
-              profile?: string;
-              seen?: string;
-              templated?: boolean;
-              title?: string;
-              type?: string;
-           };
-           self: {
-              deprecation?: string;
-              href: string;
-              hreflang?: string;
-              name?: string;
-              profile?: string;
-              seen?: string;
-              templated?: boolean;
-              title?: string;
-              type?: string;
-           };
-        };
-     }[];
-  };
-  eventDeliveryFormat: string;
-  id: string;
-  instanceId?: string;
-  label: string;
-  links: {
-     rel:eventmetadata?: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-     self: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-  };
-  providerMetadata: string;
-  publisher: string;
-  source: string;
-}>;
+  httpClient: AdobeIoEventsHttpClient,
+  params: {
+    providerId: string;
+    withEventMetadata?: boolean;
+  },
+  fetchOptions?: Options,
+): Promise<IoEventProviderHalModel>;
 ```
 
-Defined in: [io-events/api/event-providers/endpoints.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts#L91)
+Defined in: [io-events/api/event-providers/endpoints.ts:84](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts#L84)
 
 Gets an event provider by ID.
 
@@ -111,92 +27,7 @@ Gets an event provider by ID.
 
 ## Returns
 
-`Promise`\<\{
-`description?`: `string`;
-`docsUrl?`: `string`;
-`embedded?`: \{
-`eventmetadata`: \{
-`description`: `string`;
-`embedded?`: \{
-`sampleEvent?`: \{
-`format`: `string`;
-`links`: \{
-`self`: ...;
-\};
-`samplePayload?`: ... \| ...;
-\};
-\};
-`eventCode`: `string`;
-`label`: `string`;
-`links`: \{
-`rel:sampleEvent?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`rel:update?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`self`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-\};
-\}[];
-\};
-`eventDeliveryFormat`: `string`;
-`id`: `string`;
-`instanceId?`: `string`;
-`label`: `string`;
-`links`: \{
-`rel:eventmetadata?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`self`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-\};
-`providerMetadata`: `string`;
-`publisher`: `string`;
-`source`: `string`;
-\}\>
+`Promise`\<`IoEventProviderHalModel`\>
 
 ## See
 

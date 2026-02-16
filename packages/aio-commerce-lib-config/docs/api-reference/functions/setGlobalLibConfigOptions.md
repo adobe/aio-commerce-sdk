@@ -4,7 +4,7 @@
 function setGlobalLibConfigOptions(options: LibConfigOptions): void;
 ```
 
-Defined in: [aio-commerce-lib-config/source/config-manager.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages/aio-commerce-lib-config/source/config-manager.ts#L54)
+Defined in: [aio-commerce-lib-config/source/config-manager.ts:62](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-config/source/config-manager.ts#L62)
 
 Sets global library configuration options that will be used as defaults for all operations of the library.
 
@@ -25,6 +25,12 @@ import { setGlobalLibConfigOptions } from "@adobe/aio-commerce-lib-config";
 
 // Set a global cache timeout of 5 minutes (300000ms)
 setGlobalLibConfigOptions({ cacheTimeout: 300000 });
+
+// Set encryption key programmatically instead of using environment variable
+setGlobalLibConfigOptions({
+  encryptionKey:
+    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+});
 
 // All subsequent calls will use this cache timeout unless overridden
 const schema = await getConfigSchema();

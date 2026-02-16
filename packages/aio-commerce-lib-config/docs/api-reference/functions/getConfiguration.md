@@ -7,7 +7,7 @@ function getConfiguration(
 ): Promise<GetConfigurationResponse>;
 ```
 
-Defined in: [aio-commerce-lib-config/source/config-manager.ts:302](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages/aio-commerce-lib-config/source/config-manager.ts#L302)
+Defined in: [aio-commerce-lib-config/source/config-manager.ts:363](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-config/source/config-manager.ts#L363)
 
 Gets configuration for a scope.
 

@@ -20,7 +20,6 @@
 | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | [defineConfig](functions/defineConfig.md)                                       | Helper to type-safely define the app config.                               |
 | [parseCommerceAppConfig](functions/parseCommerceAppConfig.md)                   | Read the commerce app config file and parse its contents into its schema.  |
-| [readBundledCommerceAppConfig](functions/readBundledCommerceAppConfig.md)       | Read the bundled commerce app config file                                  |
 | [readCommerceAppConfig](functions/readCommerceAppConfig.md)                     | Read the commerce app config file as-is, without validating it.            |
 | [resolveCommerceAppConfig](functions/resolveCommerceAppConfig.md)               | Try to find (up to the nearest package.json file) the app config file.     |
 | [validateCommerceAppConfig](functions/validateCommerceAppConfig.md)             | Validates a complete commerce app configuration object against the schema. |

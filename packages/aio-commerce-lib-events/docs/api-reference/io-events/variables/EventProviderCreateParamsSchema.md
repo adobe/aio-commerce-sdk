@@ -3,25 +3,25 @@
 ```ts
 const EventProviderCreateParamsSchema: ObjectSchema<
   {
-    consumerOrgId: StringSchema<`Expected a string value for property '${string}'`>;
+    consumerOrgId: StringSchema<`Expected a string value for '${string}'`>;
     dataResidencyRegion: OptionalSchema<
       PicklistSchema<readonly ["va6", "irl1"], undefined>,
       undefined
     >;
     description: OptionalSchema<
-      StringSchema<`Expected a string value for property '${string}'`>,
+      StringSchema<`Expected a string value for '${string}'`>,
       undefined
     >;
     docsUrl: OptionalSchema<
-      StringSchema<`Expected a string value for property '${string}'`>,
+      StringSchema<`Expected a string value for '${string}'`>,
       undefined
     >;
     instanceId: OptionalSchema<
-      StringSchema<`Expected a string value for property '${string}'`>,
+      StringSchema<`Expected a string value for '${string}'`>,
       undefined
     >;
-    label: StringSchema<`Expected a string value for property '${string}'`>;
-    projectId: StringSchema<`Expected a string value for property '${string}'`>;
+    label: StringSchema<`Expected a string value for '${string}'`>;
+    projectId: StringSchema<`Expected a string value for '${string}'`>;
     providerType: OptionalSchema<
       PicklistSchema<
         readonly ["dx_commerce_events", "3rd_party_custom_events"],
@@ -29,10 +29,10 @@ const EventProviderCreateParamsSchema: ObjectSchema<
       >,
       undefined
     >;
-    workspaceId: StringSchema<`Expected a string value for property '${string}'`>;
+    workspaceId: StringSchema<`Expected a string value for '${string}'`>;
   },
   undefined
 >;
 ```
 
-Defined in: [io-events/api/event-providers/schema.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/api/event-providers/schema.ts#L48)
+Defined in: [io-events/api/event-providers/schema.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-providers/schema.ts#L48)

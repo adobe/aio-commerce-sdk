@@ -6,7 +6,7 @@ type SuccessResponse<TBody, THeaders> = ResponsePayload<TBody, THeaders> & {
 };
 ```
 
-Defined in: [responses/helpers.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-core/source/responses/helpers.ts#L49)
+Defined in: [responses/helpers.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-core/source/responses/helpers.ts#L49)
 
 Represents a successful response from a runtime action
 
