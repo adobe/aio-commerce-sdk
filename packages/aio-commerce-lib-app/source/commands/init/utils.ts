@@ -13,6 +13,7 @@
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 import { isESM } from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
+import { colorize } from "consola/utils";
 
 import { COMMERCE_APP_CONFIG_FILE } from "#commands/constants";
 
@@ -23,6 +24,7 @@ import type { CommerceAppConfig, CommerceAppConfigDomain } from "#config/index";
 type ScaffoldAppAnswers = {
   appName: string;
   configFile: string;
+  configFormat: "ts" | "js";
   features: Set<CommerceAppConfigDomain>;
 };
 
@@ -32,11 +34,13 @@ export async function promptForCommerceAppConfig() {
     "What format do you want to use for the config file?",
     {
       type: "select",
+      default: "ts",
+      initial: "ts",
+      cancel: "reject",
       options: [
         { label: "TypeScript", value: "ts", hint: "Recommended" },
         { label: "JavaScript", value: "js" },
-      ],
-      default: "ts",
+      ] as const,
     },
   );
 
@@ -44,17 +48,16 @@ export async function promptForCommerceAppConfig() {
     type: "text",
     placeholder: "Application Display Name",
     default: "My Application",
+    cancel: "reject",
   });
 
   const featuresToAdd = await consola.prompt(
-    [
-      "What features do you want to add to your app?",
-      "Space to select/deselect, Enter to submit",
-    ].join("\n"),
+    `What features do you want to add to your app? ${colorize("gray", "Space to select/deselect, Enter to submit")}`,
     {
       type: "multiselect",
       initial: [],
       required: true,
+      cancel: "reject",
 
       options: [
         { label: "Business Configuration", value: "businessConfig" },
@@ -66,20 +69,28 @@ export async function promptForCommerceAppConfig() {
 
   const configFile = `${COMMERCE_APP_CONFIG_FILE}.${configFormat}`;
   const features = new Set<CommerceAppConfigDomain>(
-    featuresToAdd.map((feature) => feature.value),
+    // @ts-expect-error - The return type seems to be incorrect, a string array is returned from `.prompt()` for `multiselect`
+    featuresToAdd as string[],
   );
 
-  return { appName, configFile, features } satisfies ScaffoldAppAnswers;
+  return {
+    appName,
+    configFile,
+    features,
+    configFormat,
+  } satisfies ScaffoldAppAnswers;
 }
 
 /** Create the default commerce app config file content */
 export async function getDefaultCommerceAppConfig(
   cwd: string,
-  { appName, features }: ScaffoldAppAnswers,
+  { appName, configFormat, features }: ScaffoldAppAnswers,
 ) {
   const isEcmaScript = await isESM(cwd);
-  const exportKeyword = isEcmaScript ? "export default" : "module.exports =";
-  const importStatement = isEcmaScript
+  const needsESM = isEcmaScript || configFormat === "ts";
+
+  const exportKeyword = needsESM ? "export default" : "module.exports =";
+  const importStatement = needsESM
     ? 'import { defineConfig } from "@adobe/aio-commerce-lib-app/config";'
     : 'const { defineConfig } = require("@adobe/aio-commerce-lib-app/config");';
 

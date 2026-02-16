@@ -27,6 +27,7 @@ import {
   readYamlFile,
 } from "@aio-commerce-sdk/scripting-utils/yaml";
 import { consola } from "consola";
+import * as prettier from "prettier";
 import { isMap } from "yaml";
 
 import {
@@ -38,7 +39,7 @@ import {
   PACKAGE_JSON_FILE,
 } from "#commands/constants";
 import {
-  resolveCommerceAppConfig,
+  readCommerceAppConfig,
   validateCommerceAppConfig,
 } from "#config/index";
 
@@ -52,18 +53,25 @@ import type { Document, YAMLSeq } from "yaml";
 
 /** Ensure app.commerce.config file exists, allow creating if it doesn't */
 export async function ensureCommerceAppConfig(cwd = process.cwd()) {
-  const configPath = await resolveCommerceAppConfig(cwd);
+  let config: unknown | null = null;
+  try {
+    config = await readCommerceAppConfig(cwd);
+  } catch (_) {
+    // Ignore if not found.
+  }
 
-  if (configPath) {
-    consola.info(`${COMMERCE_APP_CONFIG_FILE} found.`);
-
+  if (config) {
     try {
-      await validateCommerceAppConfig(cwd);
-      consola.success(`${COMMERCE_APP_CONFIG_FILE} is valid. Continuing...`);
+      await validateCommerceAppConfig(config);
+      consola.success(
+        `${COMMERCE_APP_CONFIG_FILE} found and is valid. Continuing...`,
+      );
+
       return true;
     } catch (error) {
-      consola.error(stringifyError(error as Error));
-      return false;
+      throw new Error(`${COMMERCE_APP_CONFIG_FILE} is invalid`, {
+        cause: error,
+      });
     }
   }
 
@@ -72,31 +80,42 @@ export async function ensureCommerceAppConfig(cwd = process.cwd()) {
     `Do you want to create a ${COMMERCE_APP_CONFIG_FILE} file? (y/n)`,
     {
       type: "confirm",
-      default: true,
+      initial: true,
+      default: false,
     },
   );
 
   if (!createConfig) {
-    consola.error("Initialization cancelled.");
-    return false;
+    throw new Error("Initialization cancelled.");
   }
 
+  const answers = await promptForCommerceAppConfig();
   try {
-    const answers = await promptForCommerceAppConfig();
     const configContent = await getDefaultCommerceAppConfig(cwd, answers);
-
     consola.info(`Creating ${answers.configFile}...`);
-    await writeFile(
-      join(await getProjectRootDirectory(cwd), answers.configFile),
-      configContent,
-      "utf-8",
-    );
 
+    const path = join(await getProjectRootDirectory(cwd), answers.configFile);
+    const formattedConfig = await prettier.format(configContent, {
+      semi: true,
+      quoteStyle: "double",
+      arrowParens: "always",
+      bracketSameLine: true,
+      bracketSpacing: true,
+      trailingComma: "all",
+      tabWidth: 2,
+      useTabs: false,
+      printWidth: 80,
+      filepath: path,
+    });
+
+    await writeFile(path, formattedConfig, "utf-8");
     consola.success(`Created ${answers.configFile}`);
+
     return true;
   } catch (error) {
-    consola.error(stringifyError(error as Error));
-    return false;
+    throw new Error(`Failed to create ${answers.configFile}`, {
+      cause: error,
+    });
   }
 }
 

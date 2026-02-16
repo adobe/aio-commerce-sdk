@@ -58,10 +58,7 @@ export const baseConfig = {
   },
 
   nodeProtocol: "strip",
-  minify: {
-    compress: false,
-    mangle: false,
-  },
+  minify: false,
 
   dts: true,
   treeshake: true,

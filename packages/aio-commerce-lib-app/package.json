@@ -99,6 +99,7 @@
     "consola": "^3.4.2",
     "jiti": "^2.6.1",
     "openwhisk": "^3.21.8",
+    "prettier": "^3.8.1",
     "valibot": "^1.1.0",
     "yaml": "^2.8.2"
   },
