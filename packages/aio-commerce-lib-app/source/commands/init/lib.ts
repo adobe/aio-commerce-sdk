@@ -13,15 +13,12 @@
 import { execSync } from "node:child_process";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import util from "node:util";
 
-import { readCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import {
   detectPackageManager,
   getExecCommand,
   getProjectRootDirectory,
-  isESM,
   readPackageJson,
 } from "@aio-commerce-sdk/scripting-utils/project";
 import {
@@ -40,61 +37,67 @@ import {
   INSTALL_YAML_FILE,
   PACKAGE_JSON_FILE,
 } from "#commands/constants";
+import {
+  resolveCommerceAppConfig,
+  validateCommerceAppConfig,
+} from "#config/index";
 
-import { DEFAULT_COMERCE_APP_CONFIG, ENV_VAR_REGEX } from "./constants";
+import {
+  getDefaultCommerceAppConfig,
+  promptForCommerceAppConfig,
+} from "./utils";
 
-import type { CommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
 import type { PackageManager } from "@aio-commerce-sdk/scripting-utils/project";
 import type { Document, YAMLSeq } from "yaml";
 
-/** Ensure app.commerce.config.js exists, create it if it doesn't */
+/** Ensure app.commerce.config file exists, allow creating if it doesn't */
 export async function ensureCommerceAppConfig(cwd = process.cwd()) {
-  let commerceAppConfig: unknown = null;
-  try {
-    commerceAppConfig = await readCommerceAppConfig(cwd);
-  } catch (_) {
-    // Do nothing
-  }
+  const configPath = await resolveCommerceAppConfig(cwd);
 
-  if (commerceAppConfig) {
-    const typedConfig = commerceAppConfig as CommerceAppConfig;
-    const schema = typedConfig.businessConfig?.schema;
-    if (!schema) {
-      consola.warn(
-        "No schema found in app.commerce.config. Please add a `businessConfig.schema` property.",
-      );
+  if (configPath) {
+    consola.info(`${COMMERCE_APP_CONFIG_FILE} found.`);
 
+    try {
+      await validateCommerceAppConfig(cwd);
+      consola.success(`${COMMERCE_APP_CONFIG_FILE} is valid. Continuing...`);
+      return true;
+    } catch (error) {
+      consola.error(stringifyError(error as Error));
       return false;
     }
-
-    consola.success(
-      `${COMMERCE_APP_CONFIG_FILE} already exists. Continuing...`,
-    );
-
-    return true;
   }
 
-  consola.info(`Creating ${COMMERCE_APP_CONFIG_FILE}.ts...`);
-  const isEcmaScript = await isESM(cwd);
-  const exportKeyword = isEcmaScript ? "export default" : "module.exports =";
-
-  const schema = util.inspect(DEFAULT_COMERCE_APP_CONFIG, {
-    depth: null,
-    colors: false,
-  });
-
-  const importStatement = isEcmaScript
-    ? "import { defineConfig } from '@adobe/aio-commerce-lib-app/config';\n"
-    : "const { defineConfig } = require('@adobe/aio-commerce-lib-app/config');\n";
-
-  await writeFile(
-    join(await getProjectRootDirectory(cwd), `${COMMERCE_APP_CONFIG_FILE}.js`),
-    `${importStatement}\n${exportKeyword} defineConfig(${schema})\n`,
-    "utf-8",
+  consola.warn(`${COMMERCE_APP_CONFIG_FILE} not found.`);
+  const createConfig = await consola.prompt(
+    `Do you want to create a ${COMMERCE_APP_CONFIG_FILE} file? (y/n)`,
+    {
+      type: "confirm",
+      default: true,
+    },
   );
 
-  consola.success(`Created ${COMMERCE_APP_CONFIG_FILE}.js`);
-  return true;
+  if (!createConfig) {
+    consola.error("Initialization cancelled.");
+    return false;
+  }
+
+  try {
+    const answers = await promptForCommerceAppConfig();
+    const configContent = await getDefaultCommerceAppConfig(cwd, answers);
+
+    consola.info(`Creating ${answers.configFile}...`);
+    await writeFile(
+      join(await getProjectRootDirectory(cwd), answers.configFile),
+      configContent,
+      "utf-8",
+    );
+
+    consola.success(`Created ${answers.configFile}`);
+    return true;
+  } catch (error) {
+    consola.error(stringifyError(error as Error));
+    return false;
+  }
 }
 
 /** Ensure package.json has the postinstall script */
@@ -206,28 +209,12 @@ export async function ensureAppConfig(cwd = process.cwd()) {
   return true;
 }
 
-/** Extract existing environment variable names from .env content */
-export function extractEnvVars(envContent: string): Set<string> {
-  const existingEnvVars = new Set<string>();
-  const lines = envContent.split("\n");
-
-  for (const line of lines) {
-    const match = line.match(ENV_VAR_REGEX);
-    if (match) {
-      existingEnvVars.add(match[1]);
-    }
-  }
-
-  return existingEnvVars;
-}
-
 /** Install required dependencies */
 export function installDependencies(
   packageManager: PackageManager,
   cwd = process.cwd(),
 ) {
   consola.info(`Installing dependencies with ${packageManager}...`);
-
   const packages = [
     "@adobe/aio-commerce-lib-config",
     "@adobe/aio-commerce-sdk",

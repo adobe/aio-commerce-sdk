@@ -187,13 +187,13 @@ const ExternalEventSchema = v.object({
 });
 
 /** Schema for Commerce event source configuration */
-const CommerceEventSourceSchema = v.object({
+export const CommerceEventSourceSchema = v.object({
   provider: ProviderSchema,
   events: v.array(CommerceEventSchema, "Expected an array of Commerce events"),
 });
 
 /** Schema for external event source configuration */
-const ExternalEventSourceSchema = v.object({
+export const ExternalEventSourceSchema = v.object({
   provider: ProviderSchema,
   events: v.array(ExternalEventSchema, "Expected an array of external events"),
 });

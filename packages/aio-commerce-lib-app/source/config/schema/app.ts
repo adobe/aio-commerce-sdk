@@ -15,10 +15,7 @@
 
 import * as v from "valibot";
 
-import {
-  SchemaBusinessConfig,
-  SchemaBusinessConfigSchema,
-} from "./business-configuration";
+import { SchemaBusinessConfig } from "./business-configuration";
 import { EventingSchema } from "./eventing";
 import { InstallationSchema } from "./installation";
 import { MetadataSchema } from "./metadata";
@@ -26,8 +23,10 @@ import { MetadataSchema } from "./metadata";
 export const CommerceAppConfigSchemas = {
   metadata: MetadataSchema,
   businessConfig: SchemaBusinessConfig,
-  "businessConfig.schema": SchemaBusinessConfigSchema,
+  "businessConfig.schema": SchemaBusinessConfig.entries.schema,
   eventing: EventingSchema,
+  "eventing.commerce": EventingSchema.entries.commerce,
+  "eventing.external": EventingSchema.entries.external,
   installation: InstallationSchema,
 } as const;
 
