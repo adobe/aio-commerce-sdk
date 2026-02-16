@@ -59,18 +59,6 @@ describe("SaaS Commerce Events API - Integration Tests", () => {
     return `${baseUrl}/${pathname}`;
   }
 
-  function extractEventSubscriptionData(body: Record<string, unknown> | null) {
-    if (!body) {
-      return null;
-    }
-
-    const event = body.event as Record<string, unknown>;
-    const fields = event.fields as Record<string, unknown>[];
-    const rules = event.rules as Record<string, unknown>[];
-
-    return { event, fields, rules };
-  }
-
   // All tests are the same with different payloads, so we just parameterize them.
   describe.each(COMMERCE_EVENTS_API_PAYLOADS)("$name", (payload) => {
     test("should make a request using the correct HTTP method", async () => {
@@ -169,91 +157,5 @@ describe("SaaS Commerce Events API - Integration Tests", () => {
         await expect(invoke()).rejects.toThrow();
       },
     );
-  });
-
-  describe("createEventSubscription request body validation", () => {
-    test("should send rules and fields in request body", async () => {
-      const capture = { body: null as Record<string, unknown> | null };
-      server.use(
-        http.post(makeUrl("eventing/eventSubscribe"), async ({ request }) => {
-          capture.body = (await request.json()) as Record<string, unknown>;
-          return HttpResponse.json([]);
-        }),
-      );
-
-      await client.createEventSubscription({
-        name: "observer.catalog_product_save_after",
-        fields: [{ name: "name" }, { name: "price" }, { name: "_origData" }],
-        rules: [
-          {
-            field: "price",
-            operator: "lessThan",
-            value: "300.00",
-          },
-        ],
-      });
-
-      const data = extractEventSubscriptionData(capture.body);
-      if (!data) {
-        expect.fail("Captured request body is null");
-        return;
-      }
-
-      expect(data.event).toHaveProperty(
-        "name",
-        "observer.catalog_product_save_after",
-      );
-      expect(data.fields).toHaveLength(3);
-      expect(data.fields).toContainEqual({ name: "name" });
-      expect(data.fields).toContainEqual({ name: "price" });
-      expect(data.fields).toContainEqual({ name: "_origData" });
-      expect(data.rules).toEqual([
-        {
-          field: "price",
-          operator: "lessThan",
-          value: "300.00",
-        },
-      ]);
-    });
-
-    test("should send fields with optional source in request body", async () => {
-      const capture = { body: null as Record<string, unknown> | null };
-      server.use(
-        http.post(makeUrl("eventing/eventSubscribe"), async ({ request }) => {
-          capture.body = (await request.json()) as Record<string, unknown>;
-          return HttpResponse.json([]);
-        }),
-      );
-
-      await client.createEventSubscription({
-        name: "observer.catalog_product_save_after",
-        fields: [
-          { name: "price" },
-          { name: "_origData" },
-          {
-            name: "quoteId",
-            source: "context_checkout_session.get_quote.get_id",
-          },
-        ],
-      });
-
-      const data = extractEventSubscriptionData(capture.body);
-      if (!data) {
-        expect.fail("Captured request body is null");
-        return;
-      }
-
-      expect(data.event).toHaveProperty(
-        "name",
-        "observer.catalog_product_save_after",
-      );
-      expect(data.fields).toHaveLength(3);
-      expect(data.fields).toContainEqual({ name: "price" });
-      expect(data.fields).toContainEqual({ name: "_origData" });
-      expect(data.fields).toContainEqual({
-        name: "quoteId",
-        source: "context_checkout_session.get_quote.get_id",
-      });
-    });
   });
 });

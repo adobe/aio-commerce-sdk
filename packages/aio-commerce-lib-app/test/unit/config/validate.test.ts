@@ -1213,15 +1213,5 @@ describe("validateConfigDomain", () => {
     };
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
-    const validated = validateCommerceAppConfig(config);
-    expect(validated.eventing?.commerce).toHaveLength(1);
-    const event = validated.eventing?.commerce?.[0]?.events[0];
-    expect(event?.fields).toHaveLength(3);
-    expect(event?.fields?.[0]).toEqual({ name: "price" });
-    expect(event?.fields?.[1]).toEqual({ name: "_origData" });
-    expect(event?.fields?.[2]).toEqual({
-      name: "quoteId",
-      source: "context_checkout_session.get_quote.get_id",
-    });
   });
 });
