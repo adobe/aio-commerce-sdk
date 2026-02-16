@@ -11,8 +11,7 @@
  */
 
 import { writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { isMap } from "node:util/types";
+import { join, relative } from "node:path";
 
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 import { isESM } from "@aio-commerce-sdk/scripting-utils/project";
@@ -23,6 +22,7 @@ import {
 } from "@aio-commerce-sdk/scripting-utils/yaml/helpers";
 import consola from "consola";
 import { colorize } from "consola/utils";
+import { isMap } from "yaml";
 
 import {
   APP_CONFIG_FILE,
@@ -171,8 +171,11 @@ export async function addExtensionPointToAppConfig(
     getExtensionPointFolderPath(extensionPointId),
   );
 
-  const includePath = join(extensionPointFolderPath, "ext.config.yaml");
   let doc: Document;
+  const includePath = relative(
+    rootDirectory,
+    join(extensionPointFolderPath, "ext.config.yaml"),
+  );
 
   try {
     doc = await readYamlFile(appConfigPath);
@@ -197,6 +200,7 @@ export async function addExtensionPointToAppConfig(
   consola.info(
     `Adding extension "${extensionPointId}" to ${APP_CONFIG_FILE}...`,
   );
+
   const extensions = getOrCreateMap(doc, ["extensions"], {
     onBeforeCreate: (pair) => {
       pair.key.spaceBefore = true;
@@ -266,8 +270,9 @@ export async function addExtensionPointToInstallYaml(
   );
 
   const extension = doc.createPair("extensionPointId", extensionPointId);
+  extension.key.spaceBefore = extensions.items.length > 0;
   extension.key.commentBefore = commentBefore;
-  extensions.items.unshift(extension);
+  extensions.items.push(extension);
 
   await writeFile(installYamlPath, doc.toString(), "utf-8");
 }
