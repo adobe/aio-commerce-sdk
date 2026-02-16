@@ -1,5 +1,37 @@
 # @adobe/aio-commerce-lib-app
 
+## 0.2.0
+
+### Minor Changes
+
+- [#246](https://github.com/adobe/aio-commerce-sdk/pull/246) [`b3b41f5`](https://github.com/adobe/aio-commerce-sdk/commit/b3b41f576cf0341bbb4a19bb534bfe35fb562aad) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix `installation` action template to use the new `HttpActionRouter`
+
+- [#252](https://github.com/adobe/aio-commerce-sdk/pull/252) [`f6663ff`](https://github.com/adobe/aio-commerce-sdk/commit/f6663ffd2a508ac0128ef8fc573ed1c10427a836) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add support for configuring Commerce Eventing module during installation
+
+- [#236](https://github.com/adobe/aio-commerce-sdk/pull/236) [`50c5538`](https://github.com/adobe/aio-commerce-sdk/commit/50c553809c7c699026d4952487295f5c25b7d1f0) Thanks [@jnatherley](https://github.com/jnatherley)! - Add support for installing commerce event subscriptions.
+
+- [#221](https://github.com/adobe/aio-commerce-sdk/pull/221) [`24b391f`](https://github.com/adobe/aio-commerce-sdk/commit/24b391f911a64786df0e6ef695d6baaf4c467ea2) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add `eventing` section in configuration schema of `app.commerce.config`
+
+- [#241](https://github.com/adobe/aio-commerce-sdk/pull/241) [`2707605`](https://github.com/adobe/aio-commerce-sdk/commit/2707605b914b7aab3f7700f845bc8e27f48958ca) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Implement installation flow for I/O Providers and Event Metadata.
+
+- [#242](https://github.com/adobe/aio-commerce-sdk/pull/242) [`4a9a407`](https://github.com/adobe/aio-commerce-sdk/commit/4a9a407e8141687e7507ba1f4bc85bfb3e4a144e) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add support for installing event registrations.
+
+- [#251](https://github.com/adobe/aio-commerce-sdk/pull/251) [`9566d2b`](https://github.com/adobe/aio-commerce-sdk/commit/9566d2b7c19c583e090be87c297384d1a49449b5) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Enhance App Metadata Detail for Events:
+  - Add rules to schema
+  - Add source to fieldSchema
+
+### Patch Changes
+
+- [#247](https://github.com/adobe/aio-commerce-sdk/pull/247) [`74eae28`](https://github.com/adobe/aio-commerce-sdk/commit/74eae28a3a3145452cf9051ef6b51c1aa84ece96) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Added support for pre and post install messages in the configuration schema
+
+- [#243](https://github.com/adobe/aio-commerce-sdk/pull/243) [`3fc7bfe`](https://github.com/adobe/aio-commerce-sdk/commit/3fc7bfe523092c10edabc017a0b3cbeb0fbee383) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Added support for custom installation steps
+
+- Updated dependencies [[`4a9a407`](https://github.com/adobe/aio-commerce-sdk/commit/4a9a407e8141687e7507ba1f4bc85bfb3e4a144e), [`2707605`](https://github.com/adobe/aio-commerce-sdk/commit/2707605b914b7aab3f7700f845bc8e27f48958ca), [`50c5538`](https://github.com/adobe/aio-commerce-sdk/commit/50c553809c7c699026d4952487295f5c25b7d1f0), [`f6663ff`](https://github.com/adobe/aio-commerce-sdk/commit/f6663ffd2a508ac0128ef8fc573ed1c10427a836), [`9566d2b`](https://github.com/adobe/aio-commerce-sdk/commit/9566d2b7c19c583e090be87c297384d1a49449b5), [`b3b41f5`](https://github.com/adobe/aio-commerce-sdk/commit/b3b41f576cf0341bbb4a19bb534bfe35fb562aad), [`b3b41f5`](https://github.com/adobe/aio-commerce-sdk/commit/b3b41f576cf0341bbb4a19bb534bfe35fb562aad), [`b7fb4da`](https://github.com/adobe/aio-commerce-sdk/commit/b7fb4da5b8a9f468d4c33a25194dcc0a6e4d16a1)]:
+  - @adobe/aio-commerce-lib-events@0.6.0
+  - @adobe/aio-commerce-lib-core@0.6.1
+  - @adobe/aio-commerce-lib-auth@0.8.1
+  - @adobe/aio-commerce-lib-api@0.6.1
+
 ## 0.1.1
 
 ### Patch Changes
