@@ -6,7 +6,7 @@ type DeleteRegistrationParams = v.InferInput<
 >;
 ```
 
-Defined in: [io-events/api/event-registrations/schema.ts:231](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/schema.ts#L231)
+Defined in: [io-events/api/event-registrations/schema.ts:230](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/schema.ts#L230)
 
 The parameters for deleting a registration.
 

@@ -7,7 +7,7 @@ type CommerceEventSubscriptionField = {
 };
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L16)
+Defined in: [commerce/api/event-subscriptions/types.ts:14](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L14)
 
 Defines the structure of a field in a Commerce event subscription.
 
@@ -19,7 +19,7 @@ Defines the structure of a field in a Commerce event subscription.
 optional converter: string;
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L18)
+Defined in: [commerce/api/event-subscriptions/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L16)
 
 ---
 
@@ -29,4 +29,4 @@ Defined in: [commerce/api/event-subscriptions/types.ts:18](https://github.com/ad
 name: string;
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L17)
+Defined in: [commerce/api/event-subscriptions/types.ts:15](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L15)

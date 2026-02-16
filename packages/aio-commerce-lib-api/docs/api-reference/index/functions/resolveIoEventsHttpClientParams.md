@@ -3,11 +3,11 @@
 ```ts
 function resolveIoEventsHttpClientParams(
   params: Record<string, unknown>,
-  options: ResolveIoEventsHttpClientParamsOptions,
+  options?: ResolveIoEventsHttpClientParamsOptions,
 ): IoEventsHttpClientParams;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/io-events/helpers.ts:82](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/io-events/helpers.ts#L82)
+Defined in: [aio-commerce-lib-api/source/lib/io-events/helpers.ts:82](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/io-events/helpers.ts#L82)
 
 Resolves the [IoEventsHttpClientParams](../type-aliases/IoEventsHttpClientParams.md) from the given App Builder action inputs.
 

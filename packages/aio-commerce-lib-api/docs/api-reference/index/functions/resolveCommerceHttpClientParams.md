@@ -3,11 +3,11 @@
 ```ts
 function resolveCommerceHttpClientParams(
   params: Record<string, unknown>,
-  options: ResolveCommerceHttpClientParamsOptions,
+  options?: ResolveCommerceHttpClientParamsOptions,
 ): CommerceHttpClientParams;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/helpers.ts:236](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/lib/commerce/helpers.ts#L236)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/helpers.ts:236](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/commerce/helpers.ts#L236)
 
 Resolves the [CommerceHttpClientParams](../type-aliases/CommerceHttpClientParams.md) from the given App Builder action inputs.
 

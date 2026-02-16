@@ -2,106 +2,22 @@
 
 ```ts
 function create3rdPartyCustomEventProvider(
-   httpClient: AdobeIoEventsHttpClient,
-   params: {
-  consumerOrgId: string;
-  dataResidencyRegion?: "va6" | "irl1";
-  description?: string;
-  docsUrl?: string;
-  instanceId?: string;
-  label: string;
-  projectId: string;
-  workspaceId: string;
-},
-   fetchOptions?: Options): Promise<{
-  description?: string;
-  docsUrl?: string;
-  embedded?: {
-     eventmetadata: {
-        description: string;
-        embedded?: {
-           sampleEvent?: {
-              format: string;
-              links: {
-                 self: ...;
-              };
-              samplePayload?: ... | ...;
-           };
-        };
-        eventCode: string;
-        label: string;
-        links: {
-           rel:sampleEvent?: {
-              deprecation?: string;
-              href: string;
-              hreflang?: string;
-              name?: string;
-              profile?: string;
-              seen?: string;
-              templated?: boolean;
-              title?: string;
-              type?: string;
-           };
-           rel:update?: {
-              deprecation?: string;
-              href: string;
-              hreflang?: string;
-              name?: string;
-              profile?: string;
-              seen?: string;
-              templated?: boolean;
-              title?: string;
-              type?: string;
-           };
-           self: {
-              deprecation?: string;
-              href: string;
-              hreflang?: string;
-              name?: string;
-              profile?: string;
-              seen?: string;
-              templated?: boolean;
-              title?: string;
-              type?: string;
-           };
-        };
-     }[];
-  };
-  eventDeliveryFormat: string;
-  id: string;
-  instanceId?: string;
-  label: string;
-  links: {
-     rel:eventmetadata?: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-     self: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-  };
-  providerMetadata: string;
-  publisher: string;
-  source: string;
-}>;
+  httpClient: AdobeIoEventsHttpClient,
+  params: {
+    consumerOrgId: string;
+    dataResidencyRegion?: "va6" | "irl1";
+    description?: string;
+    docsUrl?: string;
+    instanceId?: string;
+    label: string;
+    projectId: string;
+    workspaceId: string;
+  },
+  fetchOptions?: Options,
+): Promise<IoEventProviderHalModel>;
 ```
 
-Defined in: [io-events/api/event-providers/shorthands.ts:115](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts#L115)
+Defined in: [io-events/api/event-providers/shorthands.ts:115](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts#L115)
 
 Creates a 3rd Party Custom Events (of type `3rd_party_custom_events`) event provider.
 
@@ -123,92 +39,7 @@ Creates a 3rd Party Custom Events (of type `3rd_party_custom_events`) event prov
 
 ## Returns
 
-`Promise`\<\{
-`description?`: `string`;
-`docsUrl?`: `string`;
-`embedded?`: \{
-`eventmetadata`: \{
-`description`: `string`;
-`embedded?`: \{
-`sampleEvent?`: \{
-`format`: `string`;
-`links`: \{
-`self`: ...;
-\};
-`samplePayload?`: ... \| ...;
-\};
-\};
-`eventCode`: `string`;
-`label`: `string`;
-`links`: \{
-`rel:sampleEvent?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`rel:update?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`self`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-\};
-\}[];
-\};
-`eventDeliveryFormat`: `string`;
-`id`: `string`;
-`instanceId?`: `string`;
-`label`: `string`;
-`links`: \{
-`rel:eventmetadata?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`self`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-\};
-`providerMetadata`: `string`;
-`publisher`: `string`;
-`source`: `string`;
-\}\>
+`Promise`\<`IoEventProviderHalModel`\>
 
 ## See
 

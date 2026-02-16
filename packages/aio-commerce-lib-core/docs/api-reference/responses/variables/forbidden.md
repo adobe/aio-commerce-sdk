@@ -11,7 +11,7 @@ const forbidden: (
 ) => ErrorResponse<BodyRecordWithMessage, HeadersRecord>;
 ```
 
-Defined in: [responses/presets.ts:84](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-core/source/responses/presets.ts#L84)
+Defined in: [responses/presets.ts:100](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-core/source/responses/presets.ts#L100)
 
 Creates an error response with the HTTP status code 403.
 See [buildErrorResponse](../functions/buildErrorResponse.md) for details on the response payload.

@@ -2,74 +2,15 @@
 
 ```ts
 function getAllEventMetadataForProvider(
-   httpClient: AdobeIoEventsHttpClient,
-   params: {
-  providerId: string;
-},
-   fetchOptions?: Options): Promise<{
-  embedded: {
-     description: string;
-     embedded?: {
-        sampleEvent?: {
-           format: string;
-           links: {
-              self: {
-                 deprecation?: ... | ...;
-                 href: string;
-                 hreflang?: ... | ...;
-                 name?: ... | ...;
-                 profile?: ... | ...;
-                 seen?: ... | ...;
-                 templated?: ... | ... | ...;
-                 title?: ... | ...;
-                 type?: ... | ...;
-              };
-           };
-           samplePayload?: string;
-        };
-     };
-     eventCode: string;
-     label: string;
-     links: {
-        rel:sampleEvent?: {
-           deprecation?: string;
-           href: string;
-           hreflang?: string;
-           name?: string;
-           profile?: string;
-           seen?: string;
-           templated?: boolean;
-           title?: string;
-           type?: string;
-        };
-        rel:update?: {
-           deprecation?: string;
-           href: string;
-           hreflang?: string;
-           name?: string;
-           profile?: string;
-           seen?: string;
-           templated?: boolean;
-           title?: string;
-           type?: string;
-        };
-        self: {
-           deprecation?: string;
-           href: string;
-           hreflang?: string;
-           name?: string;
-           profile?: string;
-           seen?: string;
-           templated?: boolean;
-           title?: string;
-           type?: string;
-        };
-     };
-  }[];
-}>;
+  httpClient: AdobeIoEventsHttpClient,
+  params: {
+    providerId: string;
+  },
+  fetchOptions?: Options,
+): Promise<IoEventMetadataManyResponse>;
 ```
 
-Defined in: [io-events/api/event-metadata/endpoints.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/endpoints.ts#L46)
+Defined in: [io-events/api/event-metadata/endpoints.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/endpoints.ts#L45)
 
 Gets all event metadata for a specific provider.
 
@@ -84,67 +25,7 @@ Gets all event metadata for a specific provider.
 
 ## Returns
 
-`Promise`\<\{
-`embedded`: \{
-`description`: `string`;
-`embedded?`: \{
-`sampleEvent?`: \{
-`format`: `string`;
-`links`: \{
-`self`: \{
-`deprecation?`: ... \| ...;
-`href`: `string`;
-`hreflang?`: ... \| ...;
-`name?`: ... \| ...;
-`profile?`: ... \| ...;
-`seen?`: ... \| ...;
-`templated?`: ... \| ... \| ...;
-`title?`: ... \| ...;
-`type?`: ... \| ...;
-\};
-\};
-`samplePayload?`: `string`;
-\};
-\};
-`eventCode`: `string`;
-`label`: `string`;
-`links`: \{
-`rel:sampleEvent?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`rel:update?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`self`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-\};
-\}[];
-\}\>
+`Promise`\<[`IoEventMetadataManyResponse`](../type-aliases/IoEventMetadataManyResponse.md)\>
 
 ## See
 

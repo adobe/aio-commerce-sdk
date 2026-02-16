@@ -3,92 +3,6 @@
 ```ts
 function validateCommerceAppConfig(config: unknown): {
   businessConfig?: {
-    schema: (
-      | {
-          default: string;
-          description?: string;
-          label?: string;
-          name: string;
-          options: {
-            label: string;
-            value: string;
-          }[];
-          selectionMode: "single";
-          type: "list";
-        }
-      | {
-          default: string[];
-          description?: string;
-          label?: string;
-          name: string;
-          options: {
-            label: string;
-            value: string;
-          }[];
-          selectionMode: "multiple";
-          type: "list";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "text";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "password";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "email";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "url";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "tel";
-        }
-    )[];
-  };
-  metadata: {
-    description: string;
-    displayName: string;
-    id: string;
-    version: string;
-  };
-};
-```
-
-Defined in: [config/lib/validate.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L58)
-
-Validates a complete commerce app configuration object against the schema.
-
-## Parameters
-
-| Parameter | Type      | Description                           |
-| --------- | --------- | ------------------------------------- |
-| `config`  | `unknown` | The configuration object to validate. |
-
-## Returns
-
-```ts
-{
-  businessConfig?: {
      schema: (
         | {
         default: string;
@@ -150,183 +64,199 @@ Validates a complete commerce app configuration object against the schema.
         type: "tel";
      })[];
   };
+  eventing?: {
+     commerce?: {
+        events: {
+           description: string;
+           destination?: string;
+           fields: {
+              name: ...;
+              source?: ...;
+           }[];
+           force?: boolean;
+           hipaaAuditRequired?: boolean;
+           label: string;
+           name: string;
+           prioritary?: boolean;
+           rules?: ...[];
+           runtimeActions: string[];
+        }[];
+        provider: {
+           description: string;
+           key?: string;
+           label: string;
+        };
+     }[];
+     external?: {
+        events: {
+           description: string;
+           label: string;
+           name: string;
+           runtimeActions: string[];
+        }[];
+        provider: {
+           description: string;
+           key?: string;
+           label: string;
+        };
+     }[];
+  };
+  installation?: {
+     customInstallationSteps?: {
+        description: string;
+        name: string;
+        script: string;
+     }[];
+     messages?: {
+        postInstallation?: string;
+        preInstallation?: string;
+     };
+  };
   metadata: {
      description: string;
      displayName: string;
      id: string;
      version: string;
   };
-}
-```
-
-The validated and typed configuration output model.
-
-### businessConfig?
-
-```ts
-optional businessConfig: {
-  schema: (
-     | {
-     default: string;
-     description?: string;
-     label?: string;
-     name: string;
-     options: {
-        label: string;
-        value: string;
-     }[];
-     selectionMode: "single";
-     type: "list";
-   }
-     | {
-     default: string[];
-     description?: string;
-     label?: string;
-     name: string;
-     options: {
-        label: string;
-        value: string;
-     }[];
-     selectionMode: "multiple";
-     type: "list";
-   }
-     | {
-     default?: string;
-     description?: string;
-     label?: string;
-     name: string;
-     type: "text";
-   }
-     | {
-     default?: string;
-     description?: string;
-     label?: string;
-     name: string;
-     type: "password";
-   }
-     | {
-     default?: string;
-     description?: string;
-     label?: string;
-     name: string;
-     type: "email";
-   }
-     | {
-     default?: string;
-     description?: string;
-     label?: string;
-     name: string;
-     type: "url";
-   }
-     | {
-     default?: string;
-     description?: string;
-     label?: string;
-     name: string;
-     type: "tel";
-  })[];
+} & {
+[key: string]: unknown;
 };
 ```
 
-#### businessConfig.schema
+Defined in: [config/lib/validate.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L58)
 
-```ts
-schema: (
-  | {
-  default: string;
-  description?: string;
-  label?: string;
-  name: string;
-  options: {
-     label: string;
-     value: string;
-  }[];
-  selectionMode: "single";
-  type: "list";
-}
-  | {
-  default: string[];
-  description?: string;
-  label?: string;
-  name: string;
-  options: {
-     label: string;
-     value: string;
-  }[];
-  selectionMode: "multiple";
-  type: "list";
-}
-  | {
-  default?: string;
-  description?: string;
-  label?: string;
-  name: string;
-  type: "text";
-}
-  | {
-  default?: string;
-  description?: string;
-  label?: string;
-  name: string;
-  type: "password";
-}
-  | {
-  default?: string;
-  description?: string;
-  label?: string;
-  name: string;
-  type: "email";
-}
-  | {
-  default?: string;
-  description?: string;
-  label?: string;
-  name: string;
-  type: "url";
-}
-  | {
-  default?: string;
-  description?: string;
-  label?: string;
-  name: string;
-  type: "tel";
-})[];
-```
+Validates a complete commerce app configuration object against the schema.
 
-### metadata
+## Parameters
 
-```ts
-metadata: {
-  description: string;
-  displayName: string;
-  id: string;
-  version: string;
-} = MetadataSchema;
-```
+| Parameter | Type      | Description                           |
+| --------- | --------- | ------------------------------------- |
+| `config`  | `unknown` | The configuration object to validate. |
 
-#### metadata.description
+## Returns
 
-```ts
-description: string;
-```
+\{
+`businessConfig?`: \{
+`schema`: (
+\| \{
+`default`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`options`: \{
+`label`: `string`;
+`value`: `string`;
+\}[];
+`selectionMode`: `"single"`;
+`type`: `"list"`;
+\}
+\| \{
+`default`: `string`[];
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`options`: \{
+`label`: `string`;
+`value`: `string`;
+\}[];
+`selectionMode`: `"multiple"`;
+`type`: `"list"`;
+\}
+\| \{
+`default?`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`type`: `"text"`;
+\}
+\| \{
+`default?`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`type`: `"password"`;
+\}
+\| \{
+`default?`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`type`: `"email"`;
+\}
+\| \{
+`default?`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`type`: `"url"`;
+\}
+\| \{
+`default?`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`type`: `"tel"`;
+\})[];
+\};
+`eventing?`: \{
+`commerce?`: \{
+`events`: \{
+`description`: `string`;
+`destination?`: `string`;
+`fields`: \{
+`name`: ...;
+`source?`: ...;
+\}[];
+`force?`: `boolean`;
+`hipaaAuditRequired?`: `boolean`;
+`label`: `string`;
+`name`: `string`;
+`prioritary?`: `boolean`;
+`rules?`: ...[];
+`runtimeActions`: `string`[];
+\}[];
+`provider`: \{
+`description`: `string`;
+`key?`: `string`;
+`label`: `string`;
+\};
+\}[];
+`external?`: \{
+`events`: \{
+`description`: `string`;
+`label`: `string`;
+`name`: `string`;
+`runtimeActions`: `string`[];
+\}[];
+`provider`: \{
+`description`: `string`;
+`key?`: `string`;
+`label`: `string`;
+\};
+\}[];
+\};
+`installation?`: \{
+`customInstallationSteps?`: \{
+`description`: `string`;
+`name`: `string`;
+`script`: `string`;
+\}[];
+`messages?`: \{
+`postInstallation?`: `string`;
+`preInstallation?`: `string`;
+\};
+\};
+`metadata`: \{
+`description`: `string`;
+`displayName`: `string`;
+`id`: `string`;
+`version`: `string`;
+\};
+\} & \{
+\[`key`: `string`\]: `unknown`;
+\}
 
-#### metadata.displayName
-
-```ts
-displayName: string;
-```
-
-#### metadata.id
-
-```ts
-id: string;
-```
-
-#### metadata.version
-
-```ts
-version: string;
-```
+The validated and typed configuration output model.
 
 ## Throws
 

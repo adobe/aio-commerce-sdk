@@ -15,17 +15,10 @@ function createEventProvider(
     providerId: string;
   },
   fetchOptions?: Options,
-): Promise<{
-  description?: string;
-  id: string;
-  instanceId?: string;
-  label?: string;
-  providerId: string;
-  workspaceConfiguration?: string;
-}>;
+): Promise<CommerceEventProvider>;
 ```
 
-Defined in: [commerce/api/event-providers/endpoints.ts:100](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts#L100)
+Defined in: [commerce/api/event-providers/endpoints.ts:87](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts#L87)
 
 Creates an event provider in the Commerce instance bound to the given [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md).
 
@@ -44,14 +37,7 @@ Creates an event provider in the Commerce instance bound to the given [AdobeComm
 
 ## Returns
 
-`Promise`\<\{
-`description?`: `string`;
-`id`: `string`;
-`instanceId?`: `string`;
-`label?`: `string`;
-`providerId`: `string`;
-`workspaceConfiguration?`: `string`;
-\}\>
+`Promise`\<[`CommerceEventProvider`](../type-aliases/CommerceEventProvider.md)\>
 
 ## See
 

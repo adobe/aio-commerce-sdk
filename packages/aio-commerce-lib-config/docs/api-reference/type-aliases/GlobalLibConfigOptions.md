@@ -1,11 +1,34 @@
 # `GlobalLibConfigOptions`
 
 ```ts
-type GlobalLibConfigOptions = Required<LibConfigOptions>;
+type GlobalLibConfigOptions = {
+  cacheTimeout: number;
+  encryptionKey?: string | null;
+};
 ```
 
-Defined in: [aio-commerce-lib-config/source/types/index.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages/aio-commerce-lib-config/source/types/index.ts#L26)
+Defined in: [aio-commerce-lib-config/source/types/index.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-config/source/types/index.ts#L28)
 
 **`Internal`**
 
 Global fetch options with all properties required.
+
+## Properties
+
+### cacheTimeout
+
+```ts
+cacheTimeout: number;
+```
+
+Defined in: [aio-commerce-lib-config/source/types/index.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-config/source/types/index.ts#L29)
+
+---
+
+### encryptionKey?
+
+```ts
+optional encryptionKey: string | null;
+```
+
+Defined in: [aio-commerce-lib-config/source/types/index.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-config/source/types/index.ts#L30)

@@ -11,7 +11,7 @@ const notFound: (
 ) => ErrorResponse<BodyRecordWithMessage, HeadersRecord>;
 ```
 
-Defined in: [responses/presets.ts:90](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-core/source/responses/presets.ts#L90)
+Defined in: [responses/presets.ts:106](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-core/source/responses/presets.ts#L106)
 
 Creates an error response with the HTTP status code 404.
 See [buildErrorResponse](../functions/buildErrorResponse.md) for details on the response payload.

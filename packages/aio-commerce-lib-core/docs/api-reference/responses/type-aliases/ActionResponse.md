@@ -1,18 +1,23 @@
-# `ActionResponse\<TBody, THeaders\>`
+# `ActionResponse\<TSuccessBody, TErrorBody, THeaders\>`
 
 ```ts
-type ActionResponse<TBody, THeaders> =
-  | SuccessResponse<TBody, THeaders>
-  | ErrorResponse<TBody, THeaders>;
+type ActionResponse<TSuccessBody, TErrorBody, THeaders> =
+  | SuccessResponse<TSuccessBody, THeaders>
+  | ErrorResponse<TErrorBody, THeaders>;
 ```
 
-Defined in: [responses/helpers.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-core/source/responses/helpers.ts#L61)
+Defined in: [responses/helpers.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-core/source/responses/helpers.ts#L61)
 
 Union type representing either a successful or error response from a runtime action
 
 ## Type Parameters
 
-| Type Parameter                            | Default type            | Description                    |
-| ----------------------------------------- | ----------------------- | ------------------------------ |
-| `TBody` _extends_ `BodyRecordWithMessage` | `BodyRecordWithMessage` | Response/error body properties |
-| `THeaders` _extends_ `HeadersRecord`      | `HeadersRecord`         | Custom response headers        |
+| Type Parameter                                 | Default type            | Description             |
+| ---------------------------------------------- | ----------------------- | ----------------------- |
+| `TSuccessBody` _extends_ `BodyRecord`          | `BodyRecord`            | -                       |
+| `TErrorBody` _extends_ `BodyRecordWithMessage` | `BodyRecordWithMessage` | -                       |
+| `THeaders` _extends_ `HeadersRecord`           | `HeadersRecord`         | Custom response headers |
+
+## Template
+
+Response/error body properties
