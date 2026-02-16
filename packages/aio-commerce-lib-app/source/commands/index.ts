@@ -15,9 +15,9 @@
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import consola from "consola";
 
-import { run as generateActionsCommand } from "#commands/generate/actions/run";
-import { run as generateManifestCommand } from "#commands/generate/manifest/run";
-import { run as initCommand } from "#commands/init/run";
+import { exec as generateActionsCommand } from "#commands/generate/actions/main";
+import { exec as generateManifestCommand } from "#commands/generate/manifest/main";
+import { exec as initCommand } from "#commands/init/main";
 
 const NAMESPACE = "@adobe/aio-commerce-lib-app";
 

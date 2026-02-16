@@ -14,7 +14,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import {
   getProjectRootDirectory,
   makeOutputDirFor,
@@ -25,10 +25,11 @@ import { consola } from "consola";
 import { formatTree } from "consola/utils";
 
 import {
-  EXTENSION_POINT_FOLDER_PATH,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
   GENERATED_ACTIONS_PATH,
+  getExtensionPointFolderPath,
 } from "#commands/constants";
-import { getConfigDomains } from "#config/index";
+import { getConfigDomains, hasCustomInstallationSteps } from "#config/index";
 import { parseCommerceAppConfig } from "#config/lib/parser";
 
 import {
@@ -48,15 +49,26 @@ import type { TemplateAction } from "./config";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const EXTENSION_POINT_FOLDER_PATH = getExtensionPointFolderPath(
+  EXTENSIBILITY_EXTENSION_POINT_ID,
+);
+
+export async function run(appManifest: CommerceAppConfigOutputModel) {
+  const extConfig = await updateExtConfig(appManifest);
+  await generateActionFiles(appManifest, getRuntimeActions(extConfig));
+}
+
 /** Run the generate actions command */
-export async function run() {
+export async function exec() {
   try {
     const appManifest = await loadAppManifest();
-    const extConfig = await updateExtConfig(appManifest);
-
-    await generateActionFiles(appManifest, getRuntimeActions(extConfig));
+    await run(appManifest);
   } catch (error) {
-    consola.error(stringifyError(error));
+    if (error instanceof CommerceSdkValidationError) {
+      consola.error(error.display());
+    }
+
+    consola.error(error);
     process.exit(1);
   }
 }
@@ -166,9 +178,7 @@ export async function generateCustomScriptsTemplate(
   template: string,
   appManifest: CommerceAppConfigOutputModel,
 ) {
-  const customSteps = appManifest.installation?.customInstallationSteps || [];
-
-  if (customSteps.length === 0) {
+  if (!hasCustomInstallationSteps(appManifest)) {
     return null;
   }
 
@@ -183,6 +193,7 @@ export async function generateCustomScriptsTemplate(
   );
 
   // Generate import statements
+  const customSteps = appManifest.installation.customInstallationSteps;
   const importStatements = customSteps
     .map((step: CustomInstallationStep, index: number) => {
       // step.script is relative to project root (e.g., "./scripts/setup.js")

@@ -13,35 +13,46 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 
 import {
   APP_MANIFEST_FILE,
-  EXTENSION_POINT_FOLDER_PATH,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
+  getExtensionPointFolderPath,
 } from "#commands/constants";
 import { parseCommerceAppConfig } from "#config/lib/parser";
 
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+
+export async function run(appConfig: CommerceAppConfigOutputModel) {
+  const contents = JSON.stringify(appConfig, null, 2);
+  const outputDir = await makeOutputDirFor(
+    `${getExtensionPointFolderPath(EXTENSIBILITY_EXTENSION_POINT_ID)}/.generated`,
+  );
+
+  const manifestPath = join(outputDir, APP_MANIFEST_FILE);
+  await writeFile(manifestPath, contents, "utf-8");
+}
+
 /** Run the generate manifest command */
-export async function run() {
+export async function exec() {
   consola.start("Generating app manifest...");
   try {
     consola.info("Reading app config...");
     const config = await parseCommerceAppConfig();
 
     consola.info("Generating app manifest...");
-    const contents = JSON.stringify(config, null, 2);
-    const outputDir = await makeOutputDirFor(
-      `${EXTENSION_POINT_FOLDER_PATH}/.generated`,
-    );
-
-    const manifestPath = join(outputDir, APP_MANIFEST_FILE);
-    await writeFile(manifestPath, contents, "utf-8");
+    await run(config);
 
     consola.success(`Generated ${APP_MANIFEST_FILE}`);
   } catch (error) {
-    consola.error(stringifyError(error));
+    if (error instanceof CommerceSdkValidationError) {
+      consola.error(error.display());
+    }
+
+    consola.error(error);
     process.exit(1);
   }
 }

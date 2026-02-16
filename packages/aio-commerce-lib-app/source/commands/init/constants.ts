@@ -16,40 +16,33 @@ import type {
   CommerceAppConfigSchemas,
 } from "#config/index";
 
-type FeatureDefaults = Partial<{
+type DomainDefaults = Partial<{
   [Key in CommerceAppConfigDomain]: InferOutput<
     (typeof CommerceAppConfigSchemas)[Key]
   >;
 }>;
 
 /** The default values for the features of the commerce app config. */
-export const FEATURE_DEFAULTS = {
+export const DOMAIN_DEFAULTS = {
   businessConfig: {
     schema: [
       {
         type: "list",
-        name: "paymentMethods",
-        label: "Payment Methods",
+        name: "sampleList",
+        label: "Sample List",
         selectionMode: "multiple",
 
-        default: ["credit_card"],
+        default: ["a"],
         options: [
-          { label: "Credit Card", value: "credit_card" },
-          { label: "PayPal", value: "paypal" },
-          { label: "Apple Pay", value: "apple_pay" },
-          { label: "Google Pay", value: "google_pay" },
+          { label: "Option A", value: "a" },
+          { label: "Option B", value: "b" },
         ],
       },
       {
-        type: "list",
-        name: "currency",
-        label: "Currency",
-        selectionMode: "single",
-        default: "USD",
-        options: [
-          { label: "United States Dollar", value: "USD" },
-          { label: "Euro", value: "EUR" },
-        ],
+        type: "text",
+        name: "sampleText",
+        label: "Sample Text",
+        default: "Hello, world!",
       },
     ],
   },
@@ -63,14 +56,12 @@ export const FEATURE_DEFAULTS = {
 
       events: [
         {
-          name: "observer.catalog_product_save_commit_after",
-          fields: [{ name: "sku" }, { name: "price" }],
+          name: "plugin.sample_event",
+          fields: [],
 
-          label: "Catalog Product Save Commit After",
-          description:
-            "Triggered when a product is saved and committed to the database.",
-
-          runtimeActions: ["my-package/handle-commerce-product-save"],
+          label: "Sample Event",
+          description: "Use case description for the event.",
+          runtimeActions: ["my-package/handle-sample-event"],
         },
       ],
     },
@@ -85,14 +76,20 @@ export const FEATURE_DEFAULTS = {
 
       events: [
         {
-          name: "be-observer.catalog_product_create",
-          label: "Catalog Product Create (Backoffice)",
-          description:
-            "Triggered when a product is created in the backoffice system.",
-
-          runtimeActions: ["my-package/handle-external-product-create"],
+          name: "be-observer.sample_event",
+          label: "Sample Event",
+          description: "Use case description for the event.",
+          runtimeActions: ["my-package/handle-sample-event"],
         },
       ],
     },
   ],
-} satisfies FeatureDefaults;
+
+  "installation.customInstallationSteps": [
+    {
+      name: "sample-step",
+      description: "Use case description for the step.",
+      script: "./path/to/script.js",
+    },
+  ],
+} satisfies DomainDefaults;

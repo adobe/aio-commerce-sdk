@@ -20,7 +20,7 @@ import {
 import {
   applyCustomScripts,
   generateCustomScriptsTemplate,
-} from "#commands/generate/actions/run";
+} from "#commands/generate/actions/main";
 import { templates } from "#test/fixtures/commands";
 import {
   configWithCustomInstallationSteps,

@@ -91,14 +91,14 @@ export function buildExtConfig(features: Set<CommerceAppConfigDomain>) {
           license: "Apache-2.0",
           actions: {
             "get-app-config": createActionConfig("get-app-config"),
-          },
+          } as Record<string, ActionDefinition>,
         },
       },
     },
   } satisfies ExtConfig;
 
   const featuresRequiringInstallationAction: CommerceAppConfigDomain[] = [
-    "installation",
+    "installation.customInstallationSteps",
     "eventing.commerce",
     "eventing.external",
   ];
@@ -110,6 +110,14 @@ export function buildExtConfig(features: Set<CommerceAppConfigDomain>) {
       type: "action",
       impl: `${PACKAGE_NAME}/installation`,
     });
+
+    extConfig.runtimeManifest.packages[PACKAGE_NAME].actions.installation =
+      createActionConfig("installation", {
+        inputs: { ...COMMERCE_ACTION_INPUTS, LOG_LEVEL: "$LOG_LEVEL" },
+        limits: {
+          timeout: 600_000,
+        },
+      });
   }
 
   return extConfig;

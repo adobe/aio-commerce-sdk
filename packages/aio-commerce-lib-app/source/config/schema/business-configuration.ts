@@ -242,5 +242,8 @@ export function hasBusinessConfig(
 export function hasBusinessConfigSchema(
   config: CommerceAppConfigOutputModel,
 ): config is AppConfigWithBusinessConfigSchema {
-  return config.businessConfig?.schema !== undefined;
+  return (
+    config.businessConfig?.schema !== undefined &&
+    config.businessConfig.schema.length > 0
+  );
 }

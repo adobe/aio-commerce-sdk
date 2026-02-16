@@ -12,44 +12,40 @@
 
 import { execSync } from "node:child_process";
 import { writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import {
-  detectPackageManager,
-  getExecCommand,
   getProjectRootDirectory,
   readPackageJson,
 } from "@aio-commerce-sdk/scripting-utils/project";
-import {
-  getOrCreateMap,
-  getOrCreateSeq,
-  readYamlFile,
-} from "@aio-commerce-sdk/scripting-utils/yaml";
 import { consola } from "consola";
 import * as prettier from "prettier";
-import { isMap } from "yaml";
 
 import {
-  APP_CONFIG_FILE,
   COMMERCE_APP_CONFIG_FILE,
-  EXTENSION_POINT_FOLDER_PATH,
-  EXTENSION_POINT_ID,
-  INSTALL_YAML_FILE,
+  CONFIGURATION_EXTENSION_POINT_ID,
   PACKAGE_JSON_FILE,
 } from "#commands/constants";
+import { run as generateActionsCommand } from "#commands/generate/actions/main";
+import { run as generateManifestCommand } from "#commands/generate/manifest/main";
 import {
+  getConfigDomains,
+  parseCommerceAppConfig,
   readCommerceAppConfig,
   validateCommerceAppConfig,
 } from "#config/index";
 
 import {
+  addExtensionPointToAppConfig,
+  addExtensionPointToInstallYaml,
   getDefaultCommerceAppConfig,
   promptForCommerceAppConfig,
 } from "./utils";
 
 import type { PackageManager } from "@aio-commerce-sdk/scripting-utils/project";
-import type { Document, YAMLSeq } from "yaml";
+import type { PackageJson } from "type-fest";
+import type { CommerceAppConfigDomain } from "#config/index";
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Ensure app.commerce.config file exists, allow creating if it doesn't */
 export async function ensureCommerceAppConfig(cwd = process.cwd()) {
@@ -62,12 +58,15 @@ export async function ensureCommerceAppConfig(cwd = process.cwd()) {
 
   if (config) {
     try {
-      await validateCommerceAppConfig(config);
+      const validatedConfig = validateCommerceAppConfig(config);
       consola.success(
         `${COMMERCE_APP_CONFIG_FILE} found and is valid. Continuing...`,
       );
 
-      return true;
+      return {
+        config: validatedConfig,
+        domains: getConfigDomains(validatedConfig),
+      };
     } catch (error) {
       throw new Error(`${COMMERCE_APP_CONFIG_FILE} is invalid`, {
         cause: error,
@@ -111,7 +110,8 @@ export async function ensureCommerceAppConfig(cwd = process.cwd()) {
     await writeFile(path, formattedConfig, "utf-8");
     consola.success(`Created ${answers.configFile}`);
 
-    return true;
+    const config = await parseCommerceAppConfig(cwd);
+    return { config, domains: answers.domains };
   } catch (error) {
     throw new Error(`Failed to create ${answers.configFile}`, {
       cause: error,
@@ -120,20 +120,33 @@ export async function ensureCommerceAppConfig(cwd = process.cwd()) {
 }
 
 /** Ensure package.json has the postinstall script */
-export async function ensurePackageJsonScript(
+export async function ensurePackageJson(
   execCommand: string,
   cwd = process.cwd(),
 ) {
-  const postinstallScript = `${execCommand} aio-commerce-lib-config generate all`;
+  const postinstallScript = `${execCommand} aio-commerce-lib-app generate all`;
   const packageJson = await readPackageJson(cwd);
 
   if (!packageJson) {
-    consola.warn(
-      "package.json not found. Please add the postinstall script manually:",
+    consola.warn("package.json not found. Creating one...");
+    const packageJsonContent: PackageJson = {
+      name: "my-commerce-app",
+      version: "1.0.0",
+      private: true,
+
+      scripts: {
+        postinstall: postinstallScript,
+      },
+    };
+
+    await writeFile(
+      join(resolve(cwd), PACKAGE_JSON_FILE),
+      JSON.stringify(packageJsonContent, null, 2),
+      "utf-8",
     );
 
-    consola.log.raw(`   "postinstall": "${postinstallScript}"`);
-    return false;
+    consola.success("Wrote package.json");
+    return packageJsonContent;
   }
 
   packageJson.scripts ??= {};
@@ -146,7 +159,7 @@ export async function ensurePackageJsonScript(
       `postinstall script already configured in ${PACKAGE_JSON_FILE}`,
     );
 
-    return true;
+    return packageJson;
   }
 
   if (packageJson.scripts.postinstall) {
@@ -170,80 +183,54 @@ export async function ensurePackageJsonScript(
   );
 
   consola.success(`Added postinstall script to ${PACKAGE_JSON_FILE}`);
-  return true;
+  return packageJson;
 }
 
 /** Ensure app.config.yaml has the extension reference */
-export async function ensureAppConfig(cwd = process.cwd()) {
+export async function ensureAppConfig(
+  domains: Set<CommerceAppConfigDomain>,
+  cwd = process.cwd(),
+) {
   const rootDirectory = await getProjectRootDirectory(cwd);
-  const appConfigPath = join(rootDirectory, APP_CONFIG_FILE);
-  const includePath = join(EXTENSION_POINT_FOLDER_PATH, "ext.config.yaml");
 
-  let doc: Document;
-
-  try {
-    doc = await readYamlFile(appConfigPath);
-  } catch (error) {
-    const fallbackContent = `extensions:\n  ${EXTENSION_POINT_ID}:\n    $include: "${includePath}"`;
-
-    consola.error(stringifyError(error as Error));
-    consola.log.raw(
-      `Failed to parse ${APP_CONFIG_FILE}. \nPlease add manually: \n\n${fallbackContent}`,
+  if (domains.has("businessConfig.schema")) {
+    await addExtensionPointToAppConfig(
+      CONFIGURATION_EXTENSION_POINT_ID,
+      rootDirectory,
+      " This extension is required for business configuration. Do not remove.",
     );
-
-    return false;
   }
 
-  if (
-    doc.getIn(["extensions", EXTENSION_POINT_ID, "$include"]) === includePath
-  ) {
-    consola.success(`Extension already configured in ${APP_CONFIG_FILE}`);
-    return true;
-  }
-
-  consola.info(`Adding extension to ${APP_CONFIG_FILE}...`);
-  const extensions = getOrCreateMap(doc, ["extensions"], {
-    onBeforeCreate: (pair) => {
-      pair.key.spaceBefore = true;
-    },
-  });
-
-  const commerceConfigExtension = getOrCreateMap(
-    doc,
-    ["extensions", EXTENSION_POINT_ID],
-    {
-      onBeforeCreate: (pair) => {
-        pair.key.spaceBefore = extensions.items.length > 0;
-        pair.key.commentBefore =
-          " This extension is required by `@adobe/aio-commerce-lib-config`.";
-      },
-    },
+  // This is always needed (to get the app config at least)
+  await addExtensionPointToAppConfig(
+    CONFIGURATION_EXTENSION_POINT_ID,
+    rootDirectory,
+    " This extension is required for app management. Do not remove.",
   );
-
-  commerceConfigExtension.set("$include", includePath);
-
-  await writeFile(appConfigPath, doc.toString(), "utf-8");
-  consola.success(`Updated ${APP_CONFIG_FILE}`);
-
-  return true;
 }
 
 /** Install required dependencies */
 export function installDependencies(
   packageManager: PackageManager,
+  domains: Set<CommerceAppConfigDomain>,
   cwd = process.cwd(),
 ) {
   consola.info(`Installing dependencies with ${packageManager}...`);
-  const packages = [
-    "@adobe/aio-commerce-lib-config",
+  const packages: string[] = [
+    "@adobe/aio-commerce-lib-app",
     "@adobe/aio-commerce-sdk",
   ];
 
+  if (domains.has("businessConfig.schema")) {
+    packages.push("@adobe/aio-commerce-lib-config");
+  }
+
+  const packagesToInstall = packages.join(" ");
   const installCommandMap = {
-    pnpm: `pnpm add ${packages.join(" ")}`,
-    yarn: `yarn add ${packages.join(" ")}`,
-    bun: `bun add ${packages.join(" ")}`,
-    npm: `npm install ${packages.join(" ")}`,
+    pnpm: `pnpm add ${packagesToInstall}`,
+    yarn: `yarn add ${packagesToInstall}`,
+    bun: `bun add ${packagesToInstall}`,
+    npm: `npm install ${packagesToInstall}`,
   } as const;
 
   const installCommand = installCommandMap[packageManager];
@@ -254,84 +241,53 @@ export function installDependencies(
     });
 
     consola.success("Dependencies installed successfully");
-    return true;
   } catch (error) {
-    consola.error(stringifyError(error as Error));
-    consola.log.raw(
+    throw new Error(
       `Failed to install dependencies automatically. Please install manually: ${installCommand}`,
+      {
+        cause: error,
+      },
     );
-
-    return false;
   }
 }
 
 /** Run the generation command */
-export async function runGeneration(cwd = process.cwd()) {
-  const packageManager = await detectPackageManager(cwd);
-  const execCommand = getExecCommand(packageManager);
-
+export async function runGeneration(
+  appConfig: CommerceAppConfigOutputModel,
+  execCommand: string,
+) {
   try {
-    // Although we programatically add the postinstall script to package.json, we still need to run the generation
-    // command manually because many package managers block postinstall scripts by default
-    execSync(`${execCommand} aio-commerce-lib-config generate all`, {
-      cwd,
-      stdio: "inherit",
-    });
+    await generateActionsCommand(appConfig);
+    await generateManifestCommand(appConfig);
   } catch (error) {
-    consola.error(stringifyError(error as Error));
-    consola.log.raw(
-      `Failed to run generation command. Please run manually: ${execCommand} aio-commerce-lib-config generate all`,
+    throw new Error(
+      `Failed to run generation command. Please run manually: ${execCommand} aio-commerce-lib-app generate all`,
+      {
+        cause: error,
+      },
     );
-
-    return false;
   }
-
-  return true;
 }
 
 /** Ensure install.yaml has the extension reference */
-export async function ensureInstallYaml(cwd = process.cwd()) {
+export async function ensureInstallYaml(
+  domains: Set<CommerceAppConfigDomain>,
+  cwd = process.cwd(),
+) {
   const rootDirectory = await getProjectRootDirectory(cwd);
-  const installYamlPath = join(rootDirectory, INSTALL_YAML_FILE);
 
-  let doc: Document;
-  let extensions: YAMLSeq;
-
-  try {
-    doc = await readYamlFile(installYamlPath);
-    extensions = getOrCreateSeq(doc, ["extensions"], {
-      onBeforeCreate: (pair) => {
-        pair.key.spaceBefore = true;
-      },
-    });
-  } catch (error) {
-    const fallbackContent = `\nextensions:\n  - extensionPointId: ${EXTENSION_POINT_ID}`;
-    consola.error(
-      `Something went wrong while preparing "${INSTALL_YAML_FILE}": ${error}`,
+  if (domains.has("businessConfig.schema")) {
+    await addExtensionPointToInstallYaml(
+      CONFIGURATION_EXTENSION_POINT_ID,
+      rootDirectory,
+      " This extension is required for business configuration. Do not remove.",
     );
-
-    consola.log.raw(`Please add manually: \n${fallbackContent}\n`);
-    return false;
   }
 
-  // Check if the extension is already configured
-  if (
-    extensions.items.some(
-      (item) =>
-        isMap(item) && item.get("extensionPointId") === EXTENSION_POINT_ID,
-    )
-  ) {
-    consola.success(`Extension already configured in ${INSTALL_YAML_FILE}`);
-    return true;
-  }
-
-  consola.info(`Adding extension to ${INSTALL_YAML_FILE}...`);
-  const extension = doc.createPair("extensionPointId", EXTENSION_POINT_ID);
-  extension.key.commentBefore = ` \`${EXTENSION_POINT_ID}\` is required by \`@adobe/aio-commerce-lib-config\`.`;
-  extensions.items.unshift(extension);
-
-  await writeFile(installYamlPath, doc.toString(), "utf-8");
-  consola.success(`Updated ${INSTALL_YAML_FILE}`);
-
-  return true;
+  // This is always needed (to get the app config at least)
+  await addExtensionPointToInstallYaml(
+    CONFIGURATION_EXTENSION_POINT_ID,
+    rootDirectory,
+    " This extension is required for app management. Do not remove.",
+  );
 }

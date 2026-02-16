@@ -10,7 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { execSync } from "node:child_process";
+
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import {
   detectPackageManager,
   getExecCommand,
@@ -21,57 +23,46 @@ import {
   ensureAppConfig,
   ensureCommerceAppConfig,
   ensureInstallYaml,
-  ensurePackageJsonScript,
+  ensurePackageJson,
   installDependencies,
   runGeneration,
 } from "./lib";
 
-function makeStep<T extends (...args: Parameters<T>) => ReturnType<T>>(
-  name: string,
-  fn: T,
-  ...args: Parameters<T>
-) {
-  return { name, fn: () => fn(...args) };
-}
-
 /** Initialize the project with @adobe/aio-commerce-lib-config */
-export async function run() {
+export async function exec() {
   try {
     consola.start("Initializing app...");
 
     const packageManager = await detectPackageManager();
     const execCommand = getExecCommand(packageManager);
 
-    const steps = [
-      makeStep("ensureCommerceAppConfig", ensureCommerceAppConfig),
-      makeStep("ensurePackageJsonScript", ensurePackageJsonScript, execCommand),
-      makeStep("installDependencies", installDependencies, packageManager),
-      makeStep("runGeneration", runGeneration),
-      makeStep("ensureAppConfig", ensureAppConfig),
-      makeStep("ensureInstallYaml", ensureInstallYaml),
-    ];
+    await ensurePackageJson(execCommand);
+    const { config, domains } = await ensureCommerceAppConfig();
 
-    for (const step of steps) {
-      const { name, fn } = step;
-      const result = await fn();
+    // Sync the package.json with the app config
+    execSync(`npm pkg set name="${config.metadata.id}"`);
+    execSync(`npm pkg set version="${config.metadata.version}"`);
+    execSync(`npm pkg set description="${config.metadata.description}"`);
 
-      if (!result) {
-        consola.error(`Initialization failed at step: ${name}`);
-        process.exit(1);
-      }
+    await runGeneration(config, execCommand);
+    await ensureAppConfig(domains);
+    await ensureInstallYaml(domains);
 
-      // Empty line between steps
-      consola.log.raw("");
-    }
-
+    installDependencies(packageManager, domains);
     consola.success("Initialization complete!");
     consola.box(
-      ["Next steps:", "  - Review and customize app.commerce.config.*"].join(
-        "\n",
-      ),
+      [
+        "Next steps:",
+        "  - Review and customize app.commerce.config.*",
+        "  - Build and deploy your app",
+      ].join("\n"),
     );
   } catch (error) {
-    consola.error(stringifyError(error));
+    if (error instanceof CommerceSdkValidationError) {
+      consola.error(error.display());
+    }
+
+    consola.error(error);
     process.exit(1);
   }
 }

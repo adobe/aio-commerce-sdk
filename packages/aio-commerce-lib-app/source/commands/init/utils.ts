@@ -10,22 +10,37 @@
  * governing permissions and limitations under the License.
  */
 
+import { writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { isMap } from "node:util/types";
+
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 import { isESM } from "@aio-commerce-sdk/scripting-utils/project";
+import {
+  getOrCreateMap,
+  getOrCreateSeq,
+  readYamlFile,
+} from "@aio-commerce-sdk/scripting-utils/yaml/helpers";
 import consola from "consola";
 import { colorize } from "consola/utils";
 
-import { COMMERCE_APP_CONFIG_FILE } from "#commands/constants";
+import {
+  APP_CONFIG_FILE,
+  COMMERCE_APP_CONFIG_FILE,
+  getExtensionPointFolderPath,
+  INSTALL_YAML_FILE,
+} from "#commands/constants";
 
-import { FEATURE_DEFAULTS } from "./constants";
+import { DOMAIN_DEFAULTS } from "./constants";
 
+import type { Document, YAMLSeq } from "yaml";
 import type { CommerceAppConfig, CommerceAppConfigDomain } from "#config/index";
 
 type ScaffoldAppAnswers = {
   appName: string;
   configFile: string;
   configFormat: "ts" | "js";
-  features: Set<CommerceAppConfigDomain>;
+  domains: Set<CommerceAppConfigDomain>;
 };
 
 /** Prompt the user to scaffold a new Commerce App configuration. */
@@ -63,12 +78,16 @@ export async function promptForCommerceAppConfig() {
         { label: "Business Configuration", value: "businessConfig" },
         { label: "Commerce Events", value: "eventing.commerce" },
         { label: "External Events", value: "eventing.external" },
+        {
+          label: "Custom Installation Steps",
+          value: "installation.customInstallationSteps",
+        },
       ] as const,
     },
   );
 
   const configFile = `${COMMERCE_APP_CONFIG_FILE}.${configFormat}`;
-  const features = new Set<CommerceAppConfigDomain>(
+  const domains = new Set<CommerceAppConfigDomain>(
     // @ts-expect-error - The return type seems to be incorrect, a string array is returned from `.prompt()` for `multiselect`
     featuresToAdd as string[],
   );
@@ -76,7 +95,7 @@ export async function promptForCommerceAppConfig() {
   return {
     appName,
     configFile,
-    features,
+    domains,
     configFormat,
   } satisfies ScaffoldAppAnswers;
 }
@@ -84,7 +103,7 @@ export async function promptForCommerceAppConfig() {
 /** Create the default commerce app config file content */
 export async function getDefaultCommerceAppConfig(
   cwd: string,
-  { appName, configFormat, features }: ScaffoldAppAnswers,
+  { appName, configFormat, domains }: ScaffoldAppAnswers,
 ) {
   const isEcmaScript = await isESM(cwd);
   const needsESM = isEcmaScript || configFormat === "ts";
@@ -104,19 +123,26 @@ export async function getDefaultCommerceAppConfig(
     },
   };
 
-  if (features.has("businessConfig")) {
-    defaultConfig.businessConfig = FEATURE_DEFAULTS.businessConfig;
+  if (domains.has("businessConfig")) {
+    defaultConfig.businessConfig = DOMAIN_DEFAULTS.businessConfig;
   }
 
-  if (features.has("eventing.commerce")) {
+  if (domains.has("eventing.commerce")) {
     defaultConfig.eventing = {
-      commerce: FEATURE_DEFAULTS["eventing.commerce"],
+      commerce: DOMAIN_DEFAULTS["eventing.commerce"],
     };
   }
 
-  if (features.has("eventing.external")) {
+  if (domains.has("eventing.external")) {
     defaultConfig.eventing = {
-      external: FEATURE_DEFAULTS["eventing.external"],
+      external: DOMAIN_DEFAULTS["eventing.external"],
+    };
+  }
+
+  if (domains.has("installation.customInstallationSteps")) {
+    defaultConfig.installation = {
+      customInstallationSteps:
+        DOMAIN_DEFAULTS["installation.customInstallationSteps"],
     };
   }
 
@@ -126,4 +152,118 @@ export async function getDefaultCommerceAppConfig(
     "",
     `${exportKeyword} defineConfig(${configContent})`,
   ].join("\n");
+}
+
+/**
+ * Add an extension point to the app config file.
+ * @param extensionPointId - The id of the extension point.
+ * @param rootDirectory - The root directory of the project.
+ * @param commentBefore - The comment to add before the extension point include pair.
+ */
+export async function addExtensionPointToAppConfig(
+  extensionPointId: string,
+  rootDirectory: string,
+  commentBefore: string,
+) {
+  const appConfigPath = join(rootDirectory, APP_CONFIG_FILE);
+  const extensionPointFolderPath = join(
+    rootDirectory,
+    getExtensionPointFolderPath(extensionPointId),
+  );
+
+  const includePath = join(extensionPointFolderPath, "ext.config.yaml");
+  let doc: Document;
+
+  try {
+    doc = await readYamlFile(appConfigPath);
+  } catch (error) {
+    const fallbackContent = `extensions:\n  ${extensionPointId}:\n    $include: "${includePath}"`;
+    throw new Error(
+      `Failed to parse ${APP_CONFIG_FILE}. \nPlease add manually: \n\n${fallbackContent}`,
+      {
+        cause: error,
+      },
+    );
+  }
+
+  if (doc.getIn(["extensions", extensionPointId, "$include"]) === includePath) {
+    consola.success(
+      `Extension "${extensionPointId}" already configured in ${APP_CONFIG_FILE}`,
+    );
+  }
+
+  consola.info(
+    `Adding extension "${extensionPointId}" to ${APP_CONFIG_FILE}...`,
+  );
+  const extensions = getOrCreateMap(doc, ["extensions"], {
+    onBeforeCreate: (pair) => {
+      pair.key.spaceBefore = true;
+    },
+  });
+
+  const extension = getOrCreateMap(doc, ["extensions", extensionPointId], {
+    onBeforeCreate: (pair) => {
+      pair.key.spaceBefore = extensions.items.length > 0;
+      pair.key.commentBefore = commentBefore;
+    },
+  });
+
+  extension.set("$include", includePath);
+  await writeFile(appConfigPath, doc.toString(), "utf-8");
+}
+
+/**
+ * Add an extension point to the install.yaml file.
+ * @param extensionPointId - The id of the extension point.
+ * @param rootDirectory - The root directory of the project.
+ * @param commentBefore - The comment to add before the extension point include pair.
+ */
+export async function addExtensionPointToInstallYaml(
+  extensionPointId: string,
+  rootDirectory: string,
+  commentBefore: string,
+) {
+  const installYamlPath = join(rootDirectory, INSTALL_YAML_FILE);
+
+  let doc: Document;
+  let extensions: YAMLSeq;
+
+  try {
+    doc = await readYamlFile(installYamlPath);
+    extensions = getOrCreateSeq(doc, ["extensions"], {
+      onBeforeCreate: (pair) => {
+        pair.key.spaceBefore = true;
+      },
+    });
+  } catch (error) {
+    const fallbackContent = `\nextensions:\n  - extensionPointId: ${extensionPointId}`;
+    throw new Error(
+      `Failed to parse ${INSTALL_YAML_FILE}. \nPlease add manually: \n\n${fallbackContent}`,
+      {
+        cause: error,
+      },
+    );
+  }
+
+  // Check if the extension is already configured
+  if (
+    extensions.items.some(
+      (item) =>
+        isMap(item) && item.get("extensionPointId") === extensionPointId,
+    )
+  ) {
+    consola.success(
+      `Extension "${extensionPointId}" already configured in ${INSTALL_YAML_FILE}`,
+    );
+  }
+
+  consola.info(
+    `Adding extension "${extensionPointId}" to ${INSTALL_YAML_FILE}...`,
+  );
+
+  const extension = doc.createPair("extensionPointId", extensionPointId);
+  extension.key.commentBefore = commentBefore;
+  extensions.items.unshift(extension);
+
+  await writeFile(installYamlPath, doc.toString(), "utf-8");
 }
