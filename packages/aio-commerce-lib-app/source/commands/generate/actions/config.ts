@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { join } from "node:path";
+
 import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
 
 import type {
@@ -127,14 +129,14 @@ export function buildExtConfig(features: Set<CommerceAppConfigDomain>) {
  * Gets the runtime actions to be generated from the ext.config.yaml configuration.
  * @param extConfig - The ext.config.yaml configuration.
  */
-export function getRuntimeActions(extConfig: ExtConfig) {
+export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
   return Object.entries(
     extConfig.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions ?? {},
   ).map(
     ([name, _]) =>
       ({
         name,
-        templateFile: `${name}.js.template`,
+        templateFile: join(dir, `${name}.js.template`),
       }) satisfies TemplateAction,
   );
 }

@@ -55,7 +55,10 @@ const EXTENSION_POINT_FOLDER_PATH = getExtensionPointFolderPath(
 
 export async function run(appManifest: CommerceAppConfigOutputModel) {
   const extConfig = await updateExtConfig(appManifest);
-  await generateActionFiles(appManifest, getRuntimeActions(extConfig));
+  await generateActionFiles(
+    appManifest,
+    getRuntimeActions(extConfig, "app-management"),
+  );
 }
 
 /** Run the generate actions command */
@@ -107,8 +110,8 @@ async function generateActionFiles(
     join(EXTENSION_POINT_FOLDER_PATH, GENERATED_ACTIONS_PATH),
   );
 
-  const templatesDir = join(__dirname, "generate/actions/templates");
   const outputFiles: string[] = [];
+  const templatesDir = join(__dirname, "generate/actions/templates");
 
   for (const action of actions) {
     const templatePath = join(templatesDir, action.templateFile);
@@ -118,6 +121,7 @@ async function generateActionFiles(
     if (action.name === "installation") {
       const customScriptsTemplatePath = join(
         templatesDir,
+        "app-management",
         "custom-scripts.js.template",
       );
 

@@ -190,6 +190,8 @@ export async function addExtensionPointToAppConfig(
     consola.success(
       `Extension "${extensionPointId}" already configured in ${APP_CONFIG_FILE}`,
     );
+
+    return;
   }
 
   consola.info(
@@ -255,6 +257,8 @@ export async function addExtensionPointToInstallYaml(
     consola.success(
       `Extension "${extensionPointId}" already configured in ${INSTALL_YAML_FILE}`,
     );
+
+    return;
   }
 
   consola.info(

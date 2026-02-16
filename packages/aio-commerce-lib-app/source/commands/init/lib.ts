@@ -24,6 +24,7 @@ import * as prettier from "prettier";
 import {
   COMMERCE_APP_CONFIG_FILE,
   CONFIGURATION_EXTENSION_POINT_ID,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
   PACKAGE_JSON_FILE,
 } from "#commands/constants";
 import { run as generateActionsCommand } from "#commands/generate/actions/main";
@@ -203,7 +204,7 @@ export async function ensureAppConfig(
 
   // This is always needed (to get the app config at least)
   await addExtensionPointToAppConfig(
-    CONFIGURATION_EXTENSION_POINT_ID,
+    EXTENSIBILITY_EXTENSION_POINT_ID,
     rootDirectory,
     " This extension is required for app management. Do not remove.",
   );
@@ -286,7 +287,7 @@ export async function ensureInstallYaml(
 
   // This is always needed (to get the app config at least)
   await addExtensionPointToInstallYaml(
-    CONFIGURATION_EXTENSION_POINT_ID,
+    EXTENSIBILITY_EXTENSION_POINT_ID,
     rootDirectory,
     " This extension is required for app management. Do not remove.",
   );

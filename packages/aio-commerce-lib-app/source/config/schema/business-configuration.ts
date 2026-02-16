@@ -216,7 +216,7 @@ export const SchemaBusinessConfig = v.object({
 
 /** Config type when business config is present. */
 export type AppConfigWithBusinessConfig = CommerceAppConfigOutputModel & {
-  eventing: NonNullable<CommerceAppConfigOutputModel["businessConfig"]>;
+  businessConfig: NonNullable<CommerceAppConfigOutputModel["businessConfig"]>;
 };
 
 /** Config type when business config schema is present. */
