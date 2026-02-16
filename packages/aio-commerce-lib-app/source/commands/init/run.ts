@@ -37,13 +37,13 @@ function makeStep<T extends (...args: Parameters<T>) => ReturnType<T>>(
 /** Initialize the project with @adobe/aio-commerce-lib-config */
 export async function run() {
   try {
-    consola.start("Initializing @adobe/aio-commerce-lib-config...");
+    consola.start("Initializing app...");
 
     const packageManager = await detectPackageManager();
     const execCommand = getExecCommand(packageManager);
 
     const steps = [
-      makeStep("ensureExtensibilityConfig", ensureCommerceAppConfig),
+      makeStep("ensureCommerceAppConfig", ensureCommerceAppConfig),
       makeStep("ensurePackageJsonScript", ensurePackageJsonScript, execCommand),
       makeStep("installDependencies", installDependencies, packageManager),
       makeStep("runGeneration", runGeneration),
@@ -66,7 +66,7 @@ export async function run() {
 
     consola.success("Initialization complete!");
     consola.box(
-      ["Next steps:", "  - Review and customize app.commerce.config.js"].join(
+      ["Next steps:", "  - Review and customize app.commerce.config.*"].join(
         "\n",
       ),
     );

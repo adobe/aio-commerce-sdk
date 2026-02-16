@@ -41,10 +41,7 @@ import {
   PACKAGE_JSON_FILE,
 } from "#commands/constants";
 
-import {
-  DEFAULT_EXTENSIBILITY_CONFIG_SCHEMA,
-  ENV_VAR_REGEX,
-} from "./constants";
+import { DEFAULT_COMERCE_APP_CONFIG, ENV_VAR_REGEX } from "./constants";
 
 import type { CommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
 import type { PackageManager } from "@aio-commerce-sdk/scripting-utils/project";
@@ -77,11 +74,11 @@ export async function ensureCommerceAppConfig(cwd = process.cwd()) {
     return true;
   }
 
-  consola.info(`Creating ${COMMERCE_APP_CONFIG_FILE}.js...`);
+  consola.info(`Creating ${COMMERCE_APP_CONFIG_FILE}.ts...`);
   const isEcmaScript = await isESM(cwd);
   const exportKeyword = isEcmaScript ? "export default" : "module.exports =";
 
-  const schema = util.inspect(DEFAULT_EXTENSIBILITY_CONFIG_SCHEMA, {
+  const schema = util.inspect(DEFAULT_COMERCE_APP_CONFIG, {
     depth: null,
     colors: false,
   });

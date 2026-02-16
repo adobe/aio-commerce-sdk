@@ -13,27 +13,12 @@
 import type { CommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
 
 /** The default app.commerce.config.js schema */
-export const DEFAULT_EXTENSIBILITY_CONFIG_SCHEMA: Partial<CommerceAppConfig> = {
-  businessConfig: {
-    schema: [
-      {
-        name: "exampleList",
-        type: "list",
-        label: "Example List",
-        options: [
-          { label: "Option 1", value: "option1" },
-          { label: "Option 2", value: "option2" },
-        ],
-        selectionMode: "single",
-        default: "option1",
-        description: "This is a description for the example list",
-      },
-      {
-        name: "currency",
-        type: "text",
-        label: "Currency",
-      },
-    ],
+export const DEFAULT_COMERCE_APP_CONFIG: Partial<CommerceAppConfig> = {
+  metadata: {
+    displayName: "My App",
+    description: "My App Description",
+    version: "1.0.0",
+    id: "my-app",
   },
 };
 

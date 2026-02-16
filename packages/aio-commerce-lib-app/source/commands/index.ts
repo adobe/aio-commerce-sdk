@@ -17,6 +17,7 @@ import consola from "consola";
 
 import { run as generateActionsCommand } from "#commands/generate/actions/run";
 import { run as generateManifestCommand } from "#commands/generate/manifest/run";
+import { run as initCommand } from "#commands/init/run";
 
 const NAMESPACE = "@adobe/aio-commerce-lib-app";
 
@@ -27,6 +28,8 @@ const USAGE = `
 Usage: ${NAMESPACE} <command> [target]
 
 Commands:
+  init                 Initialize the project (recommended for first-time setup)
+  
   generate <target>    Generate artifacts
     all                Generate app manifest and runtime actions
     manifest           Generate app manifest only
@@ -35,6 +38,7 @@ Commands:
   help                 Show this help message
 
 Examples:
+  ${NAMESPACE} init
   ${NAMESPACE} generate all
   ${NAMESPACE} generate manifest
   ${NAMESPACE} generate actions
@@ -49,6 +53,7 @@ async function generateAll() {
 
 /** Command handlers registry mapping command names to their subcommand handlers */
 const COMMANDS = {
+  init: initCommand,
   generate: {
     actions: generateActionsCommand,
     manifest: generateManifestCommand,
@@ -106,6 +111,12 @@ async function main() {
       consola.log.raw(USAGE);
 
       process.exit(1);
+    }
+
+    // Handle direct commands (like init) that don't have subcommands
+    if (typeof handlers === "function") {
+      await handlers();
+      return;
     }
 
     // Handle commands with subcommands (like generate)

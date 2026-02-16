@@ -16,7 +16,7 @@ const OUT_DIR = "./dist";
 const ADOBE_LICENSE_BANNER = `
 /**
  * @license
- * 
+ *
  * Copyright 2025 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
@@ -54,12 +54,12 @@ export const baseConfig = {
     banner: ADOBE_LICENSE_BANNER,
     dir: OUT_DIR,
 
-    minifyInternalExports: true,
+    minifyInternalExports: false,
   },
 
   nodeProtocol: "strip",
   minify: {
-    compress: true,
+    compress: false,
     mangle: false,
   },
 

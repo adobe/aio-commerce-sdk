@@ -99,7 +99,8 @@
     "consola": "^3.4.2",
     "jiti": "^2.6.1",
     "openwhisk": "^3.21.8",
-    "valibot": "^1.1.0"
+    "valibot": "^1.1.0",
+    "yaml": "^2.8.2"
   },
   "devDependencies": {
     "@adobe/aio-lib-core-logging": "^3.0.2",
