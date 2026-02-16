@@ -188,11 +188,8 @@ async function generateActionFiles(
     outputFiles.push(` ${relative(process.cwd(), actionPath)}`);
   }
 
-  consola.success(
-    `Generated ${actions.length} action(s) in ${GENERATED_ACTIONS_PATH}`,
-  );
-
-  consola.log.raw(formatTree(outputFiles, { color: "green" }));
+  consola.success(`Generated ${actions.length} action(s)`);
+  consola.log.raw(formatTree(outputFiles));
 }
 
 /**

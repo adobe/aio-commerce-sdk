@@ -75,7 +75,7 @@ export async function promptForCommerceAppConfig() {
       cancel: "reject",
 
       options: [
-        { label: "Business Configuration", value: "businessConfig" },
+        { label: "Business Configuration", value: "businessConfig.schema" },
         { label: "Commerce Events", value: "eventing.commerce" },
         { label: "External Events", value: "eventing.external" },
         {
@@ -123,8 +123,10 @@ export async function getDefaultCommerceAppConfig(
     },
   };
 
-  if (domains.has("businessConfig")) {
-    defaultConfig.businessConfig = DOMAIN_DEFAULTS.businessConfig;
+  if (domains.has("businessConfig.schema")) {
+    defaultConfig.businessConfig = {
+      schema: DOMAIN_DEFAULTS.businessConfig.schema,
+    };
   }
 
   if (domains.has("eventing.commerce")) {
