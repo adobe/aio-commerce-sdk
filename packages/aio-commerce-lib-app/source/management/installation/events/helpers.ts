@@ -440,7 +440,7 @@ async function createCommerceEventSubscription(
   const eventSpec: EventSubscriptionCreateParams = {
     name: eventName,
     parent: event.config.name,
-    fields: event.config.fields.map((field) => ({ name: field })),
+    fields: event.config.fields,
     providerId: provider.id,
     destination: event.config.destination,
     hipaaAuditRequired: event.config.hipaaAuditRequired,

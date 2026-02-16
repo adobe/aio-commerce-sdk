@@ -11,6 +11,10 @@ const EventSubscriptionCreateParamsSchema: ObjectSchema<
       ObjectSchema<
         {
           name: StringSchema<`Expected a string value for property '${string}'`>;
+          source: OptionalSchema<
+            StringSchema<`Expected a string value for property '${string}'`>,
+            undefined
+          >;
         },
         undefined
       >,
@@ -35,6 +39,20 @@ const EventSubscriptionCreateParamsSchema: ObjectSchema<
     >;
     providerId: OptionalSchema<
       StringSchema<`Expected a string value for property '${string}'`>,
+      undefined
+    >;
+    rules: OptionalSchema<
+      ArraySchema<
+        ObjectSchema<
+          {
+            field: StringSchema<`Expected a string value for property '${string}'`>;
+            operator: StringSchema<`Expected a string value for property '${string}'`>;
+            value: StringSchema<`Expected a string value for property '${string}'`>;
+          },
+          undefined
+        >,
+        `Expected an array of objects with 'field', 'operator', and 'value' properties for the property "${string}"`
+      >,
       undefined
     >;
   },
