@@ -131,12 +131,14 @@ export async function getDefaultCommerceAppConfig(
 
   if (domains.has("eventing.commerce")) {
     defaultConfig.eventing = {
+      ...defaultConfig.eventing,
       commerce: DOMAIN_DEFAULTS["eventing.commerce"],
     };
   }
 
   if (domains.has("eventing.external")) {
     defaultConfig.eventing = {
+      ...defaultConfig.eventing,
       external: DOMAIN_DEFAULTS["eventing.external"],
     };
   }
