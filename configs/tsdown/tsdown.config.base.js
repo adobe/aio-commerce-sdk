@@ -54,7 +54,7 @@ export const baseConfig = {
     banner: ADOBE_LICENSE_BANNER,
     dir: OUT_DIR,
 
-    minifyInternalExports: false,
+    minifyInternalExports: true,
   },
 
   nodeProtocol: "strip",
