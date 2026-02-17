@@ -15,6 +15,8 @@ import { writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
 import {
+  detectPackageManager,
+  getExecCommand,
   getProjectRootDirectory,
   readPackageJson,
 } from "@aio-commerce-sdk/scripting-utils/project";
@@ -121,11 +123,7 @@ export async function ensureCommerceAppConfig(cwd = process.cwd()) {
 }
 
 /** Ensure package.json has the postinstall script */
-export async function ensurePackageJson(
-  execCommand: string,
-  cwd = process.cwd(),
-) {
-  const postinstallScript = `${execCommand} aio-commerce-lib-app hooks postinstall`;
+export async function ensurePackageJson(cwd = process.cwd()) {
   const packageJson = await readPackageJson(cwd);
 
   if (!packageJson) {
@@ -136,7 +134,7 @@ export async function ensurePackageJson(
       private: true,
 
       scripts: {
-        postinstall: postinstallScript,
+        postinstall: "npx aio-commerce-lib-app hooks postinstall",
       },
     };
 
@@ -147,9 +145,17 @@ export async function ensurePackageJson(
     );
 
     consola.success("Wrote package.json");
-    return packageJsonContent;
+    return {
+      packageJson: packageJsonContent,
+      packageManager: "npm",
+      execCommand: "npx",
+    } as const;
   }
 
+  const packageManager = await detectPackageManager();
+  const execCommand = getExecCommand(packageManager);
+
+  const postinstallScript = `${execCommand} aio-commerce-lib-app hooks postinstall`;
   packageJson.scripts ??= {};
 
   if (
@@ -160,7 +166,11 @@ export async function ensurePackageJson(
       `postinstall script already configured in ${PACKAGE_JSON_FILE}`,
     );
 
-    return packageJson;
+    return {
+      packageJson,
+      packageManager,
+      execCommand,
+    };
   }
 
   if (packageJson.scripts.postinstall) {
@@ -176,7 +186,11 @@ export async function ensurePackageJson(
   }
 
   consola.success(`Added postinstall script to ${PACKAGE_JSON_FILE}`);
-  return packageJson;
+  return {
+    packageJson,
+    packageManager,
+    execCommand,
+  };
 }
 
 /** Ensure app.config.yaml has the extension reference */

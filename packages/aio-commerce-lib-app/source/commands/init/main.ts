@@ -13,10 +13,6 @@
 import { execSync } from "node:child_process";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import {
-  detectPackageManager,
-  getExecCommand,
-} from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 
 import {
@@ -33,10 +29,7 @@ export async function exec() {
   try {
     consola.start("Initializing app...");
 
-    const packageManager = await detectPackageManager();
-    const execCommand = getExecCommand(packageManager);
-
-    await ensurePackageJson(execCommand);
+    const { execCommand, packageManager } = await ensurePackageJson();
     const { config, domains } = await ensureCommerceAppConfig();
 
     // Sync the package.json with the app config
