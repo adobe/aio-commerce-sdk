@@ -17,6 +17,7 @@ import { join } from "node:path";
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
+import { stringify } from "safe-stable-stringify";
 
 import {
   CONFIG_SCHEMA_FILE_NAME,
@@ -39,7 +40,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   // TODO: Remove validation command from lib-config once we split encryption setup.
   execSync("aio-commerce-lib-config validate schema");
 
-  const contents = JSON.stringify(appConfig.businessConfig.schema, null, 2);
+  const contents = stringify(appConfig.businessConfig.schema, null, 2);
   const outputDir = await makeOutputDirFor(
     `${getExtensionPointFolderPath(CONFIGURATION_EXTENSION_POINT_ID)}/.generated`,
   );

@@ -16,6 +16,7 @@ import { join } from "node:path";
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
+import { stringify } from "safe-stable-stringify";
 
 import {
   APP_MANIFEST_FILE,
@@ -29,7 +30,7 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 export async function run(appConfig: CommerceAppConfigOutputModel) {
   consola.info("Generating app manifest...");
 
-  const contents = JSON.stringify(appConfig, null, 2);
+  const contents = stringify(appConfig, null, 2);
   const outputDir = await makeOutputDirFor(
     `${getExtensionPointFolderPath(EXTENSIBILITY_EXTENSION_POINT_ID)}/.generated`,
   );

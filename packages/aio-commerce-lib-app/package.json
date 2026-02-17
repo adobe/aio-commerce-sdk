@@ -100,6 +100,7 @@
     "jiti": "^2.6.1",
     "openwhisk": "^3.21.8",
     "prettier": "^3.8.1",
+    "safe-stable-stringify": "^2.5.0",
     "valibot": "^1.1.0",
     "yaml": "^2.8.2"
   },
