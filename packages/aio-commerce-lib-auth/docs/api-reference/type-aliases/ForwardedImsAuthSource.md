@@ -6,7 +6,7 @@ type ForwardedImsAuthSource = v.InferOutput<
 >;
 ```
 
-Defined in: [ims-auth/forwarding.ts:65](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-auth/source/lib/ims-auth/forwarding.ts#L65)
+Defined in: [ims-auth/forwarding.ts:65](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-auth/source/lib/ims-auth/forwarding.ts#L65)
 
 Discriminated union for different sources of forwarded IMS auth credentials.
 

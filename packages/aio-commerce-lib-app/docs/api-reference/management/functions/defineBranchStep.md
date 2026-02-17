@@ -6,7 +6,7 @@ function defineBranchStep<TName, TConfig, TStepCtx>(
 ): BranchStep<TName, TConfig, TStepCtx>;
 ```
 
-Defined in: [management/installation/workflow/step.ts:198](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L198)
+Defined in: [management/installation/workflow/step.ts:198](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L198)
 
 Define a branch step (container with children, no runner).
 

@@ -1,6 +1,6 @@
 # `AdobeCommerceHttpClient`
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/http-client.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/commerce/http-client.ts#L48)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/http-client.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/lib/commerce/http-client.ts#L48)
 
 A Ky-based HTTP client used to make requests to the Commerce API.
 
@@ -20,7 +20,7 @@ https://github.com/sindresorhus/ky
 new AdobeCommerceHttpClient(params: CommerceHttpClientParams): AdobeCommerceHttpClient;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/http-client.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/commerce/http-client.ts#L53)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/http-client.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/lib/commerce/http-client.ts#L53)
 
 Creates a new Commerce HTTP client instance.
 
@@ -48,7 +48,7 @@ HttpClientBase<RequiredComerceHttpClientConfig>.constructor
 readonly config: Readonly<RequiredComerceHttpClientConfig>;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L26)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L26)
 
 The configuration used by the HTTP client.
 
@@ -66,7 +66,7 @@ HttpClientBase.config;
 delete: <T>(url: Input, options?: Options) => ResponsePromise<T>;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L31)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L31)
 
 Fetch the given `url` using the option `{method: 'delete'}`.
 
@@ -103,7 +103,7 @@ HttpClientBase.delete;
 get: <T>(url: Input, options?: Options) => ResponsePromise<T>;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L28)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L28)
 
 Fetch the given `url` using the option `{method: 'get'}`.
 
@@ -140,7 +140,7 @@ HttpClientBase.get;
 head: (url: Input, options?: Options) => ResponsePromise;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L33)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L33)
 
 Fetch the given `url` using the option `{method: 'head'}`.
 
@@ -171,7 +171,7 @@ HttpClientBase.head;
 protected httpClient: Readonly<KyInstance>;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L23)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L23)
 
 The actual HTTP client instance.
 
@@ -189,7 +189,7 @@ HttpClientBase.httpClient;
 patch: <T>(url: Input, options?: Options) => ResponsePromise<T>;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L32)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L32)
 
 Fetch the given `url` using the option `{method: 'patch'}`.
 
@@ -226,7 +226,7 @@ HttpClientBase.patch;
 post: <T>(url: Input, options?: Options) => ResponsePromise<T>;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L29)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L29)
 
 Fetch the given `url` using the option `{method: 'post'}`.
 
@@ -263,7 +263,7 @@ HttpClientBase.post;
 put: <T>(url: Input, options?: Options) => ResponsePromise<T>;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L30)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L30)
 
 Fetch the given `url` using the option `{method: 'put'}`.
 
@@ -300,7 +300,7 @@ HttpClientBase.put;
 retry: (options?: ForceRetryOptions) => RetryMarker;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L34)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L34)
 
 Force a retry from an `afterResponse` hook.
 
@@ -454,7 +454,7 @@ HttpClientBase.retry;
 stop: typeof stop;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L35)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L35)
 
 A `Symbol` that can be returned by a `beforeRetry` hook to stop the retry. This will also short circuit the remaining `beforeRetry` hooks.
 
@@ -501,7 +501,7 @@ HttpClientBase.stop;
 extend(options: Options | (parentOptions: Options) => Options): HttpClientBase<Readonly<RequiredComerceHttpClientConfig>>;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L67)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L67)
 
 Extends the current HTTP client instance with the given options.
 
@@ -529,7 +529,7 @@ HttpClientBase.extend;
 protected setHttpClient(httpClient: KyInstance): void;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:51](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L51)
+Defined in: [aio-commerce-lib-api/source/lib/http-client-base.ts:51](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/lib/http-client-base.ts#L51)
 
 Sets the HTTP client instance.
 

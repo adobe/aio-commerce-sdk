@@ -10,7 +10,7 @@ type LeafStep<TName, TConfig, TStepCtx, TOutput> = StepBase<TName, TConfig> & {
 };
 ```
 
-Defined in: [management/installation/workflow/step.ts:72](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L72)
+Defined in: [management/installation/workflow/step.ts:72](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L72)
 
 A leaf step that executes work (no children).
 

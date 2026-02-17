@@ -6,7 +6,7 @@ type EventSubscriptionCreateParams = v.InferInput<
 >;
 ```
 
-Defined in: [commerce/api/event-subscriptions/schema.ts:98](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/schema.ts#L98)
+Defined in: [commerce/api/event-subscriptions/schema.ts:98](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/schema.ts#L98)
 
 The schema of the parameters received by the POST `eventing/eventSubscribe` Commerce API endpoint.
 

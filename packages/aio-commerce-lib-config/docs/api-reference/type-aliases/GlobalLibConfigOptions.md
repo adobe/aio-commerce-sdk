@@ -7,7 +7,7 @@ type GlobalLibConfigOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-config/source/types/index.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-config/source/types/index.ts#L28)
+Defined in: [aio-commerce-lib-config/source/types/index.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/types/index.ts#L28)
 
 **`Internal`**
 
@@ -21,7 +21,7 @@ Global fetch options with all properties required.
 cacheTimeout: number;
 ```
 
-Defined in: [aio-commerce-lib-config/source/types/index.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-config/source/types/index.ts#L29)
+Defined in: [aio-commerce-lib-config/source/types/index.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/types/index.ts#L29)
 
 ---
 
@@ -31,4 +31,4 @@ Defined in: [aio-commerce-lib-config/source/types/index.ts:29](https://github.co
 optional encryptionKey: string | null;
 ```
 
-Defined in: [aio-commerce-lib-config/source/types/index.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-config/source/types/index.ts#L30)
+Defined in: [aio-commerce-lib-config/source/types/index.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/types/index.ts#L30)

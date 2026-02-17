@@ -11,7 +11,7 @@ type InstallationHooks = {
 };
 ```
 
-Defined in: [management/installation/workflow/hooks.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L52)
+Defined in: [management/installation/workflow/hooks.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L52)
 
 Lifecycle hooks for installation execution.
 
@@ -23,7 +23,7 @@ Lifecycle hooks for installation execution.
 optional onInstallationFailure: InstallationHook;
 ```
 
-Defined in: [management/installation/workflow/hooks.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L55)
+Defined in: [management/installation/workflow/hooks.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L55)
 
 ---
 
@@ -33,7 +33,7 @@ Defined in: [management/installation/workflow/hooks.ts:55](https://github.com/ad
 optional onInstallationStart: InstallationHook;
 ```
 
-Defined in: [management/installation/workflow/hooks.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L53)
+Defined in: [management/installation/workflow/hooks.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L53)
 
 ---
 
@@ -43,7 +43,7 @@ Defined in: [management/installation/workflow/hooks.ts:53](https://github.com/ad
 optional onInstallationSuccess: InstallationHook;
 ```
 
-Defined in: [management/installation/workflow/hooks.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L54)
+Defined in: [management/installation/workflow/hooks.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L54)
 
 ---
 
@@ -53,7 +53,7 @@ Defined in: [management/installation/workflow/hooks.ts:54](https://github.com/ad
 optional onStepFailure: HookFunction<StepFailedEvent>;
 ```
 
-Defined in: [management/installation/workflow/hooks.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L59)
+Defined in: [management/installation/workflow/hooks.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L59)
 
 ---
 
@@ -63,7 +63,7 @@ Defined in: [management/installation/workflow/hooks.ts:59](https://github.com/ad
 optional onStepStart: HookFunction<StepStartedEvent>;
 ```
 
-Defined in: [management/installation/workflow/hooks.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L57)
+Defined in: [management/installation/workflow/hooks.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L57)
 
 ---
 
@@ -73,4 +73,4 @@ Defined in: [management/installation/workflow/hooks.ts:57](https://github.com/ad
 optional onStepSuccess: HookFunction<StepSucceededEvent>;
 ```
 
-Defined in: [management/installation/workflow/hooks.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L58)
+Defined in: [management/installation/workflow/hooks.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L58)

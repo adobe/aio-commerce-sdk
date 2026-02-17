@@ -4,7 +4,7 @@
 type KeyExtractor<T> = (data: T) => string;
 ```
 
-Defined in: [storage/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages-private/common-utils/source/storage/types.ts#L47)
+Defined in: [storage/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages-private/common-utils/source/storage/types.ts#L47)
 
 Function to extract a key from data.
 Used when saving data without explicitly providing a key.

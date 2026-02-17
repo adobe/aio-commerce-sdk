@@ -6,7 +6,7 @@ function createStateStore<T>(
 ): Promise<KeyValueStore<T>>;
 ```
 
-Defined in: [storage/state-store.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages-private/common-utils/source/storage/state-store.ts#L48)
+Defined in: [storage/state-store.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages-private/common-utils/source/storage/state-store.ts#L48)
 
 Creates a generic key-value store backed by @adobe/aio-lib-state.
 Provides fast, TTL-based caching for temporary data.

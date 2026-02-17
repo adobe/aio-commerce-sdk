@@ -4,7 +4,7 @@
 function detectPackageManager(cwd?: string): Promise<PackageManager>;
 ```
 
-Defined in: [project.ts:141](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages-private/scripting-utils/source/project.ts#L141)
+Defined in: [project.ts:141](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages-private/scripting-utils/source/project.ts#L141)
 
 Detect the package manager by checking for lock files
 

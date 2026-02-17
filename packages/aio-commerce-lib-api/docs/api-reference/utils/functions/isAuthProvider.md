@@ -34,7 +34,7 @@ function isAuthProvider(
 ): auth is ImsAuthProvider | IntegrationAuthProvider;
 ```
 
-Defined in: [aio-commerce-lib-api/source/utils/auth/hooks.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/utils/auth/hooks.ts#L33)
+Defined in: [aio-commerce-lib-api/source/utils/auth/hooks.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-api/source/utils/auth/hooks.ts#L33)
 
 Type guard to check if the given auth object is an auth provider.
 

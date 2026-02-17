@@ -9,7 +9,7 @@ function getIntegrationAuthProvider(authParams: {
 }): IntegrationAuthProvider;
 ```
 
-Defined in: [integration-auth/provider.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-auth/source/lib/integration-auth/provider.ts#L93)
+Defined in: [integration-auth/provider.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-auth/source/lib/integration-auth/provider.ts#L93)
 
 Creates an [IntegrationAuthProvider](../type-aliases/IntegrationAuthProvider.md) based on the provided configuration.
 
