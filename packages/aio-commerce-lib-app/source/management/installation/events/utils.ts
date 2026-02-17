@@ -175,6 +175,17 @@ export function getRegistrationDescription(
 }
 
 /**
+ * Converts a kebab-case string to Title Case.
+ * @param str - The kebab-case string to convert.
+ */
+export function kebabToTitleCase(str: string) {
+  return str
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+/**
  * Groups events by their runtime actions. Since each event can have multiple
  * runtime actions, this function creates a mapping where each unique runtime
  * action points to all events that target it.
@@ -194,17 +205,6 @@ export function groupEventsByRuntimeActions(
   }
 
   return actionEventsMap;
-}
-
-/**
- * Converts a kebab-case string to Title Case.
- * @param str - The kebab-case string to convert.
- */
-export function kebabToTitleCase(str: string) {
-  return str
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
 }
 
 /*

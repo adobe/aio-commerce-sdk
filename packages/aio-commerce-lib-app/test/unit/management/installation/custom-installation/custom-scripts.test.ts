@@ -16,104 +16,71 @@ import {
   createCustomScriptSteps,
   hasCustomInstallationSteps,
 } from "#management/installation/custom-installation/custom-scripts";
-
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-
-const baseConfig: CommerceAppConfigOutputModel = {
-  metadata: {
-    id: "test-app",
-    displayName: "Test App",
-    description: "Test App",
-    version: "1.0.0",
-  },
-};
+import {
+  configWithCustomInstallationSteps,
+  minimalValidConfig,
+} from "#test/fixtures/config";
 
 describe("hasCustomInstallationSteps", () => {
   test("should return false when config has no installation property", () => {
-    expect(hasCustomInstallationSteps(baseConfig)).toBe(false);
+    expect(hasCustomInstallationSteps(minimalValidConfig)).toBe(false);
   });
 
   test("should return false when config has no customInstallationSteps", () => {
-    const config = { ...baseConfig, installation: {} };
+    const config = { ...minimalValidConfig, installation: {} };
     expect(hasCustomInstallationSteps(config)).toBe(false);
   });
 
   test("should return false when customInstallationSteps is empty array", () => {
     const config = {
-      ...baseConfig,
+      ...minimalValidConfig,
       installation: { customInstallationSteps: [] },
     };
+
     expect(hasCustomInstallationSteps(config)).toBe(false);
   });
 
   test("should return true when customInstallationSteps has items", () => {
-    const config = {
-      ...baseConfig,
-      installation: {
-        customInstallationSteps: [
-          {
-            script: "./scripts/my-script.js",
-            name: "My Script",
-            description: "Test",
-          },
-        ],
-      },
-    };
-    expect(hasCustomInstallationSteps(config)).toBe(true);
+    expect(hasCustomInstallationSteps(configWithCustomInstallationSteps)).toBe(
+      true,
+    );
   });
 });
 
 describe("createCustomScriptSteps", () => {
   test("should return empty array when config has no custom steps", () => {
-    const steps = createCustomScriptSteps(baseConfig);
-
+    const steps = createCustomScriptSteps(minimalValidConfig);
     expect(steps).toEqual([]);
   });
 
   test("should create one leaf step per custom script", () => {
-    const config: CommerceAppConfigOutputModel = {
-      ...baseConfig,
-      installation: {
-        customInstallationSteps: [
-          {
-            script: "./scripts/script1.js",
-            name: "Script 1",
-            description: "First script",
-          },
-          {
-            script: "./scripts/script2.js",
-            name: "Script 2",
-            description: "Second script",
-          },
-          {
-            script: "./scripts/script3.js",
-            name: "Script 3",
-            description: "Third script",
-          },
-        ],
-      },
-    };
-
-    const steps = createCustomScriptSteps(config);
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
 
     if (!steps) {
       throw new Error("Expected steps to be defined");
     }
 
-    expect(steps.length).toBe(3);
+    expect(steps.length).toBe(2);
 
     // Verify each step is a leaf step with correct metadata
     expect(steps[0].type).toBe("leaf");
-    expect(steps[0].name).toBe("Script 1");
-    expect(steps[0].meta.label).toBe("Script 1");
-    expect(steps[0].meta.description).toBe("First script");
+    expect(steps[0].name).toBe("demoSuccess");
+    expect(steps[0].meta.label).toBe("Demo Success");
+    expect(steps[0].meta.description).toBe("Success script");
 
     expect(steps[1].type).toBe("leaf");
-    expect(steps[1].name).toBe("Script 2");
-    expect(steps[1].meta.label).toBe("Script 2");
+    expect(steps[1].name).toBe("demoError");
+    expect(steps[1].meta.label).toBe("Demo Error");
+    expect(steps[1].meta.description).toBe("Error script");
+  });
 
-    expect(steps[2].type).toBe("leaf");
-    expect(steps[2].name).toBe("Script 3");
-    expect(steps[2].meta.label).toBe("Script 3");
+  test("should throw if multiple steps have the same name", () => {
+    // Grab the config and duplicate a step.
+    const config = structuredClone(configWithCustomInstallationSteps);
+    config.installation.customInstallationSteps.push(
+      config.installation.customInstallationSteps[0],
+    );
+
+    expect(() => createCustomScriptSteps(config)).toThrow();
   });
 });

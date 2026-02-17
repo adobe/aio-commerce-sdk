@@ -19,9 +19,11 @@ import {
 import {
   configWithCommerceEventing,
   configWithWebhooks,
+  minimalValidConfig,
+} from "#test/fixtures/config";
+import {
   createMockInstallationContext,
   FAKE_SYSTEM_TIME,
-  minimalValidConfig,
 } from "#test/fixtures/installation";
 
 import type { InstallationHooks } from "#management/installation/workflow/hooks";

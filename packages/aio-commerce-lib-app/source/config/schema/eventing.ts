@@ -16,7 +16,6 @@ import {
   booleanValueSchema,
   nonEmptyStringValueSchema,
   stringValueSchema,
-  titleCaseSchema,
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
@@ -81,7 +80,7 @@ function commerceEventFieldSchema() {
 /** Schema for event provider configuration */
 const ProviderSchema = v.object({
   label: v.pipe(
-    titleCaseSchema("provider label"),
+    nonEmptyStringValueSchema("provider label"),
     v.maxLength(
       MAX_LABEL_LENGTH,
       `The provider label must not be longer than ${MAX_LABEL_LENGTH} characters`,
@@ -108,7 +107,7 @@ const ProviderSchema = v.object({
 /** Schema for base shared properties between event types. */
 const BaseEventSchema = v.object({
   label: v.pipe(
-    titleCaseSchema("event label"),
+    nonEmptyStringValueSchema("event label"),
     v.maxLength(
       MAX_LABEL_LENGTH,
       `The event label must not be longer than ${MAX_LABEL_LENGTH} characters`,

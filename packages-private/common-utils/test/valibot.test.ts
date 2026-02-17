@@ -21,7 +21,6 @@ import {
   booleanValueSchema,
   nonEmptyStringValueSchema,
   stringValueSchema,
-  titleCaseSchema,
 } from "#valibot/schemas";
 import { parseOrThrow } from "#valibot/utils";
 
@@ -325,46 +324,5 @@ describe("alphaNumericOrHyphenSchema", () => {
         expect((error as any).issues[0].message).toContain("uppercase only");
       }
     });
-  });
-});
-
-describe("titleCaseSchema", () => {
-  const schema = titleCaseSchema("testField");
-
-  it.each([
-    { value: "Commerce", description: "single word in Title Case" },
-    { value: "My Provider", description: "multiple words in Title Case" },
-    {
-      value: "Order Events Handler",
-      description: "multiple words with longer names",
-    },
-  ])("should accept $description", ({ value }) => {
-    expect(() => v.parse(schema, value)).not.toThrow();
-  });
-
-  it.each([
-    { value: "my provider", description: "all lowercase" },
-    { value: "MY PROVIDER", description: "all uppercase" },
-    { value: "myProvider", description: "camelCase" },
-    { value: "my Provider", description: "lowercase first word" },
-    { value: "My provider", description: "lowercase subsequent word" },
-    { value: "Provider123", description: "strings with numbers" },
-    { value: "My-Provider", description: "strings with hyphens" },
-    { value: "My_Provider", description: "strings with underscores" },
-    { value: "My@Provider", description: "strings with special characters" },
-    { value: "", description: "empty strings" },
-    { value: "My  Provider", description: "multiple spaces between words" },
-  ])("should reject $description", ({ value }) => {
-    expect(() => v.parse(schema, value)).toThrow();
-  });
-
-  it("should include Title Case info in error message", () => {
-    try {
-      v.parse(schema, "my provider");
-      expect.fail("Should have thrown an error");
-    } catch (error) {
-      expect(error).toHaveProperty("issues");
-      expect((error as any).issues[0].message).toContain("Title Case");
-    }
   });
 });
