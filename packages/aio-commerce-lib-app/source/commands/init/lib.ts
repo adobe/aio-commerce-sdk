@@ -216,23 +216,21 @@ export async function ensureAppConfig(
   );
 }
 
-/** Install required dependencies */
-export function installDependencies(
+/** Install the given dependencies */
+export function runInstall(
   packageManager: PackageManager,
-  domains: Set<CommerceAppConfigDomain>,
+  dependencies: string[],
   cwd = process.cwd(),
 ) {
-  consola.info(`Installing dependencies with ${packageManager}...`);
-  const packages: string[] = [
-    "@adobe/aio-commerce-lib-app",
-    "@adobe/aio-commerce-sdk",
-  ];
+  const dependencyListString = dependencies
+    .map((dependency) => `  - ${dependency}`)
+    .join("\n");
 
-  if (domains.has("businessConfig.schema")) {
-    packages.push("@adobe/aio-commerce-lib-config");
-  }
+  consola.info(
+    `Installing the following dependencies with ${packageManager}:\n${dependencyListString}`,
+  );
 
-  const packagesToInstall = packages.join(" ");
+  const packagesToInstall = dependencies.join(" ");
   const installCommandMap = {
     pnpm: `pnpm add ${packagesToInstall}`,
     yarn: `yarn add ${packagesToInstall}`,
@@ -246,7 +244,6 @@ export function installDependencies(
       cwd,
       stdio: "inherit",
     });
-
     consola.success("Dependencies installed successfully");
   } catch (error) {
     throw new Error(
@@ -256,6 +253,21 @@ export function installDependencies(
       },
     );
   }
+}
+
+/** Install required dependencies */
+export function installDependencies(
+  packageManager: PackageManager,
+  domains: Set<CommerceAppConfigDomain>,
+  cwd = process.cwd(),
+) {
+  const packages: string[] = [];
+
+  if (domains.has("businessConfig.schema")) {
+    packages.push("@adobe/aio-commerce-lib-config");
+  }
+
+  runInstall(packageManager, packages, cwd);
 }
 
 /** Run the generation command */
