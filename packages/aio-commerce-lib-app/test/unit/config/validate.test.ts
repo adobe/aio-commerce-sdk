@@ -569,7 +569,7 @@ describe("validateConfig", () => {
               {
                 name: "plugin.order_placed",
                 label: "Order Placed",
-                fields: ["order_id", "customer_id"],
+                fields: [{ name: "order_id" }, { name: "customer_id" }],
                 runtimeActions: ["my-package/handle-order"],
                 description: "Triggered when an order is placed",
               },
@@ -636,7 +636,7 @@ describe("validateConfig", () => {
               {
                 name: "observer.catalog_update",
                 label: "Catalog Update",
-                fields: ["product_id"],
+                fields: [{ name: "product_id" }],
                 runtimeActions: ["my-package/sync-catalog"],
                 description: "Catalog update event",
               },
@@ -701,7 +701,7 @@ describe("validateConfig", () => {
               {
                 name: "invalid_event", // Missing plugin. or observer. prefix
                 label: "Invalid Event",
-                fields: ["field"],
+                fields: [{ name: "field" }],
                 runtimeActions: ["my-package/action"],
                 description: "Invalid event",
               },
@@ -735,7 +735,7 @@ describe("validateConfig", () => {
               {
                 name: "plugin.my_event",
                 label: "My Event",
-                fields: ["field"],
+                fields: [{ name: "field" }],
                 runtimeActions: ["my-package/action"],
                 description: "Plugin event",
               },
@@ -767,7 +767,7 @@ describe("validateConfig", () => {
               {
                 name: "observer.my_event",
                 label: "My Event",
-                fields: ["field"],
+                fields: [{ name: "field" }],
                 runtimeActions: ["my-package/action"],
                 description: "Observer event",
               },
@@ -928,7 +928,7 @@ describe("validateConfig", () => {
               {
                 name: "plugin.my_event",
                 label: "My Event",
-                fields: ["field"],
+                fields: [{ name: "field" }],
                 runtimeActions: ["my-package/action"],
                 description: "A".repeat(256), // Max is 255
               },
@@ -958,7 +958,7 @@ describe("validateConfig", () => {
             events: [
               {
                 name: "plugin.my_event",
-                fields: ["field"],
+                fields: [{ name: "field" }],
                 runtimeAction: "my-package/action",
                 description: "Event description",
               },
@@ -992,7 +992,7 @@ describe("validateConfig", () => {
               {
                 name: "plugin.my_event",
                 label: "My Event",
-                fields: ["field"],
+                fields: [{ name: "field" }],
                 runtimeActions: ["invalid-action"], // Missing package/ prefix
                 description: "Event description",
               },
@@ -1139,7 +1139,7 @@ describe("validateConfigDomain", () => {
             {
               name: "plugin.my_event",
               label: "My Event",
-              fields: ["field_one", "field_two"],
+              fields: [{ name: "field_one" }, { name: "field_two" }],
               runtimeActions: ["my-package/my-action"],
               description: "My commerce event",
             },
@@ -1184,5 +1184,44 @@ describe("validateConfigDomain", () => {
     expect(() =>
       validateCommerceAppConfigDomain(eventing, "eventing"),
     ).not.toThrow();
+  });
+
+  test("should validate commerce event with fields that have optional source", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              label: "Commerce Provider",
+              description: "Commerce events",
+            },
+            events: [
+              {
+                name: "observer.catalog_update",
+                label: "Catalog Update",
+                fields: [
+                  { name: "price" },
+                  { name: "_origData" },
+                  {
+                    name: "quoteId",
+                    source: "context_checkout_session.get_quote.get_id",
+                  },
+                ],
+                runtimeActions: ["my-package/sync-catalog"],
+                description: "Catalog update event",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 });

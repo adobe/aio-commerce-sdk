@@ -66,7 +66,7 @@ function getConfigSchema(options?: LibConfigOptions): Promise<
 >;
 ```
 
-Defined in: [aio-commerce-lib-config/source/config-manager.ts:263](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages/aio-commerce-lib-config/source/config-manager.ts#L263)
+Defined in: [aio-commerce-lib-config/source/config-manager.ts:324](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-config/source/config-manager.ts#L324)
 
 Gets the configuration schema with lazy initialization and version checking.
 

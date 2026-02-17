@@ -12,16 +12,67 @@
 
 import {
   booleanValueSchema,
+  nonEmptyStringValueSchema,
   stringValueSchema,
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
+/**
+ * Regex for field names according to XSD fieldName pattern.
+ * Field name can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
+ */
+const FIELD_NAME_REGEX = /^([a-zA-Z0-9_\-.[\]]+|\*)$/;
+
+/**
+ * Schema for field names.
+ * Validates that the field name matches the XSD fieldName pattern:
+ * can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
+ */
+function fieldNameSchema(propertyName: string) {
+  return v.pipe(
+    nonEmptyStringValueSchema(propertyName),
+    v.regex(
+      FIELD_NAME_REGEX,
+      'Field name must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), dashes (-), dots (.), and square brackets ([, ]), or be exactly "*"',
+    ),
+  );
+}
+
 function fieldsSchema(propertyName: string) {
   return v.array(
     v.object({
-      name: stringValueSchema(`${propertyName}[i].name`),
+      name: fieldNameSchema(`${propertyName}[i].name`),
+      source: v.optional(stringValueSchema(`${propertyName}[i].source`)),
     }),
     `Expected an array of objects with a 'name' property for the property "${propertyName}"`,
+  );
+}
+
+/**
+ * Schema for rule operator values.
+ * Valid operators for Commerce event filtering rules.
+ */
+const OPERATORS = [
+  "greaterThan",
+  "lessThan",
+  "equal",
+  "regex",
+  "in",
+  "onChange",
+] as const;
+const ruleOperatorSchema = v.union(
+  OPERATORS.map((op) => v.literal(op)),
+  `Operator must be one of: ${OPERATORS.join(", ")}`,
+);
+
+function rulesSchema(propertyName: string) {
+  return v.array(
+    v.object({
+      field: fieldNameSchema(`${propertyName}[i].field`),
+      operator: ruleOperatorSchema,
+      value: stringValueSchema(`${propertyName}[i].value`),
+    }),
+    `Expected an array of objects with 'field', 'operator', and 'value' properties for the property "${propertyName}"`,
   );
 }
 
@@ -31,6 +82,7 @@ export const EventSubscriptionCreateParamsSchema = v.object({
   providerId: v.optional(stringValueSchema("providerId")),
   parent: v.optional(stringValueSchema("parent")),
   fields: fieldsSchema("fields"),
+  rules: v.optional(rulesSchema("rules")),
 
   destination: v.optional(stringValueSchema("destination")),
   hipaaAuditRequired: v.optional(booleanValueSchema("hipaaAuditRequired")),

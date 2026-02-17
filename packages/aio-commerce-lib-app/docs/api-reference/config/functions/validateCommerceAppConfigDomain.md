@@ -1,88 +1,126 @@
 # `validateCommerceAppConfigDomain()`
 
 ```ts
-function validateCommerceAppConfigDomain<T>(
-  config: unknown,
-  domain: T,
-): NonNullable<
-  Get<
-    {
-      businessConfig?: {
-        schema: (
-          | {
-              default: string;
-              description?: string;
-              label?: string;
-              name: string;
-              options: {
-                label: string;
-                value: string;
-              }[];
-              selectionMode: "single";
-              type: "list";
-            }
-          | {
-              default: string[];
-              description?: string;
-              label?: string;
-              name: string;
-              options: {
-                label: string;
-                value: string;
-              }[];
-              selectionMode: "multiple";
-              type: "list";
-            }
-          | {
-              default?: string;
-              description?: string;
-              label?: string;
-              name: string;
-              type: "text";
-            }
-          | {
-              default?: string;
-              description?: string;
-              label?: string;
-              name: string;
-              type: "password";
-            }
-          | {
-              default?: string;
-              description?: string;
-              label?: string;
-              name: string;
-              type: "email";
-            }
-          | {
-              default?: string;
-              description?: string;
-              label?: string;
-              name: string;
-              type: "url";
-            }
-          | {
-              default?: string;
-              description?: string;
-              label?: string;
-              name: string;
-              type: "tel";
-            }
-        )[];
-      };
-      metadata: {
+function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNullable<Get<{
+  businessConfig?: {
+     schema: (
+        | {
+        default: string;
+        description?: string;
+        label?: string;
+        name: string;
+        options: {
+           label: ...;
+           value: ...;
+        }[];
+        selectionMode: "single";
+        type: "list";
+      }
+        | {
+        default: string[];
+        description?: string;
+        label?: string;
+        name: string;
+        options: {
+           label: ...;
+           value: ...;
+        }[];
+        selectionMode: "multiple";
+        type: "list";
+      }
+        | {
+        default?: string;
+        description?: string;
+        label?: string;
+        name: string;
+        type: "text";
+      }
+        | {
+        default?: string;
+        description?: string;
+        label?: string;
+        name: string;
+        type: "password";
+      }
+        | {
+        default?: string;
+        description?: string;
+        label?: string;
+        name: string;
+        type: "email";
+      }
+        | {
+        default?: string;
+        description?: string;
+        label?: string;
+        name: string;
+        type: "url";
+      }
+        | {
+        default?: string;
+        description?: string;
+        label?: string;
+        name: string;
+        type: "tel";
+     })[];
+  };
+  eventing?: {
+     commerce?: {
+        events: {
+           description: ...;
+           destination?: ...;
+           fields: ...;
+           force?: ...;
+           hipaaAuditRequired?: ...;
+           label: ...;
+           name: ...;
+           prioritary?: ...;
+           rules?: ...;
+           runtimeActions: ...;
+        }[];
+        provider: {
+           description: string;
+           key?: ... | ...;
+           label: string;
+        };
+     }[];
+     external?: {
+        events: {
+           description: ...;
+           label: ...;
+           name: ...;
+           runtimeActions: ...;
+        }[];
+        provider: {
+           description: string;
+           key?: ... | ...;
+           label: string;
+        };
+     }[];
+  };
+  installation?: {
+     customInstallationSteps?: {
         description: string;
-        displayName: string;
-        id: string;
-        version: string;
-      };
-    },
-    T
-  >
->;
+        name: string;
+        script: string;
+     }[];
+     messages?: {
+        postInstallation?: string;
+        preInstallation?: string;
+     };
+  };
+  metadata: {
+     description: string;
+     displayName: string;
+     id: string;
+     version: string;
+  };
+} & {
+[key: string]: unknown;
+}, T>>;
 ```
 
-Defined in: [config/lib/validate.ts:114](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L114)
+Defined in: [config/lib/validate.ts:114](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L114)
 
 Validates a specific domain configuration within the commerce app config.
 
@@ -93,9 +131,9 @@ schema for that specific domain.
 
 ## Type Parameters
 
-| Type Parameter                                                                | Description                                                |
-| ----------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `T` _extends_ `"metadata"` \| `"businessConfig"` \| `"businessConfig.schema"` | The type of the domain, constrained to valid domain names. |
+| Type Parameter                                                                                                       | Description                                                |
+| -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `T` _extends_ \| `"metadata"` \| `"businessConfig"` \| `"eventing"` \| `"installation"` \| `"businessConfig.schema"` | The type of the domain, constrained to valid domain names. |
 
 ## Parameters
 
@@ -115,8 +153,8 @@ schema for that specific domain.
 `label?`: `string`;
 `name`: `string`;
 `options`: \{
-`label`: `string`;
-`value`: `string`;
+`label`: ...;
+`value`: ...;
 \}[];
 `selectionMode`: `"single"`;
 `type`: `"list"`;
@@ -127,8 +165,8 @@ schema for that specific domain.
 `label?`: `string`;
 `name`: `string`;
 `options`: \{
-`label`: `string`;
-`value`: `string`;
+`label`: ...;
+`value`: ...;
 \}[];
 `selectionMode`: `"multiple"`;
 `type`: `"list"`;
@@ -169,12 +207,59 @@ schema for that specific domain.
 `type`: `"tel"`;
 \})[];
 \};
+`eventing?`: \{
+`commerce?`: \{
+`events`: \{
+`description`: ...;
+`destination?`: ...;
+`fields`: ...;
+`force?`: ...;
+`hipaaAuditRequired?`: ...;
+`label`: ...;
+`name`: ...;
+`prioritary?`: ...;
+`rules?`: ...;
+`runtimeActions`: ...;
+\}[];
+`provider`: \{
+`description`: `string`;
+`key?`: ... \| ...;
+`label`: `string`;
+\};
+\}[];
+`external?`: \{
+`events`: \{
+`description`: ...;
+`label`: ...;
+`name`: ...;
+`runtimeActions`: ...;
+\}[];
+`provider`: \{
+`description`: `string`;
+`key?`: ... \| ...;
+`label`: `string`;
+\};
+\}[];
+\};
+`installation?`: \{
+`customInstallationSteps?`: \{
+`description`: `string`;
+`name`: `string`;
+`script`: `string`;
+\}[];
+`messages?`: \{
+`postInstallation?`: `string`;
+`preInstallation?`: `string`;
+\};
+\};
 `metadata`: \{
 `description`: `string`;
 `displayName`: `string`;
 `id`: `string`;
 `version`: `string`;
 \};
+\} & \{
+\[`key`: `string`\]: `unknown`;
 \}, `T`\>\>
 
 The validated and typed configuration for the specified domain.

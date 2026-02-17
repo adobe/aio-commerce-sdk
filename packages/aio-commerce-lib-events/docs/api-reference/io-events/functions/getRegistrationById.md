@@ -2,95 +2,18 @@
 
 ```ts
 function getRegistrationById(
-   httpClient: AdobeIoEventsHttpClient,
-   params: {
-  consumerOrgId: string;
-  projectId: string;
-  registrationId: string;
-  workspaceId: string;
-},
-   fetchOptions?: Options): Promise<{
-  clientId: string;
-  createdDate?: string;
-  deliveryType: "webhook" | "webhook_batch" | "journal" | "aws_eventbridge";
-  description?: string;
-  destinationMetadata?: {
-     awsAccountId?: string;
-     awsRegion?: string;
-  };
-  enabled?: boolean;
-  eventsOfInterest: {
-     eventCode: string;
-     providerId: string;
-     providerMetadataId?: string;
-  }[];
-  eventsUrl?: string;
-  id: string;
-  integrationStatus: string;
-  links: {
-     rel:delete?: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-     rel:events?: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-     rel:update?: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-     self: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-  };
-  name: string;
-  parentClientId?: string;
-  registrationId: string;
-  runtimeAction?: string;
-  status: string;
-  subscriberFilters?: {
-     description?: string;
-     id?: string;
-     name: string;
-     subscriberFilter: string;
-  }[];
-  type: string;
-  updatedDate?: string;
-  webhookUrl?: string;
-}>;
+  httpClient: AdobeIoEventsHttpClient,
+  params: {
+    consumerOrgId: string;
+    projectId: string;
+    registrationId: string;
+    workspaceId: string;
+  },
+  fetchOptions?: Options,
+): Promise<IoEventRegistrationHalModel>;
 ```
 
-Defined in: [io-events/api/event-registrations/endpoints.ts:116](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/endpoints.ts#L116)
+Defined in: [io-events/api/event-registrations/endpoints.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/endpoints.ts#L104)
 
 Gets an event registration by ID.
 
@@ -108,85 +31,7 @@ Gets an event registration by ID.
 
 ## Returns
 
-`Promise`\<\{
-`clientId`: `string`;
-`createdDate?`: `string`;
-`deliveryType`: `"webhook"` \| `"webhook_batch"` \| `"journal"` \| `"aws_eventbridge"`;
-`description?`: `string`;
-`destinationMetadata?`: \{
-`awsAccountId?`: `string`;
-`awsRegion?`: `string`;
-\};
-`enabled?`: `boolean`;
-`eventsOfInterest`: \{
-`eventCode`: `string`;
-`providerId`: `string`;
-`providerMetadataId?`: `string`;
-\}[];
-`eventsUrl?`: `string`;
-`id`: `string`;
-`integrationStatus`: `string`;
-`links`: \{
-`rel:delete?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`rel:events?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`rel:update?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`self`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-\};
-`name`: `string`;
-`parentClientId?`: `string`;
-`registrationId`: `string`;
-`runtimeAction?`: `string`;
-`status`: `string`;
-`subscriberFilters?`: \{
-`description?`: `string`;
-`id?`: `string`;
-`name`: `string`;
-`subscriberFilter`: `string`;
-\}[];
-`type`: `string`;
-`updatedDate?`: `string`;
-`webhookUrl?`: `string`;
-\}\>
+`Promise`\<`IoEventRegistrationHalModel`\>
 
 ## See
 

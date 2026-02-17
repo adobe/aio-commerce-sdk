@@ -13,7 +13,7 @@ function buildIntegrationAuthBeforeRequestHook(
 ): (request: KyRequest) => void;
 ```
 
-Defined in: [aio-commerce-lib-api/source/utils/auth/hooks.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-api/source/utils/auth/hooks.ts#L48)
+Defined in: [aio-commerce-lib-api/source/utils/auth/hooks.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-api/source/utils/auth/hooks.ts#L48)
 
 Builds a before request hook for integration authentication.
 

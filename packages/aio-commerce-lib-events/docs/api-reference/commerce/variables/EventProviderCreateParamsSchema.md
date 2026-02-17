@@ -8,13 +8,13 @@ const EventProviderCreateParamsSchema: ObjectSchema<
         [
           SchemaWithPipe<
             readonly [
-              StringSchema<`Expected a string value for property '${string}'`>,
+              StringSchema<`Expected a string value for '${string}'`>,
               EmptyAction<string, undefined>,
             ]
           >,
           SchemaWithPipe<
             readonly [
-              StringSchema<`Expected a string value for property '${string}'`>,
+              StringSchema<`Expected a string value for '${string}'`>,
               ParseJsonAction<
                 string,
                 undefined,
@@ -48,18 +48,18 @@ const EventProviderCreateParamsSchema: ObjectSchema<
       undefined
     >;
     description: OptionalSchema<
-      StringSchema<`Expected a string value for property '${string}'`>,
+      StringSchema<`Expected a string value for '${string}'`>,
       undefined
     >;
-    instanceId: StringSchema<`Expected a string value for property '${string}'`>;
+    instanceId: StringSchema<`Expected a string value for '${string}'`>;
     label: OptionalSchema<
-      StringSchema<`Expected a string value for property '${string}'`>,
+      StringSchema<`Expected a string value for '${string}'`>,
       undefined
     >;
-    providerId: StringSchema<`Expected a string value for property '${string}'`>;
+    providerId: StringSchema<`Expected a string value for '${string}'`>;
   },
   undefined
 >;
 ```
 
-Defined in: [commerce/api/event-providers/schema.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/commerce/api/event-providers/schema.ts#L22)
+Defined in: [commerce/api/event-providers/schema.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/commerce/api/event-providers/schema.ts#L22)

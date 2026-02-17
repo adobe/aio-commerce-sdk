@@ -3,168 +3,124 @@
 ```ts
 function defineConfig(config: {
   businessConfig?: {
-    schema?: (
-      | {
-          default: string;
-          description?: string;
-          label?: string;
-          name: string;
-          options: {
-            label: string;
-            value: string;
-          }[];
-          selectionMode: "single";
-          type: "list";
-        }
-      | {
-          default?: string[];
-          description?: string;
-          label?: string;
-          name: string;
-          options: {
-            label: string;
-            value: string;
-          }[];
-          selectionMode: "multiple";
-          type: "list";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "text";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "password";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "email";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "url";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "tel";
-        }
-    )[];
+     schema?: (
+        | {
+        default: string;
+        description?: string;
+        label?: string;
+        name: string;
+        options: {
+           label: string;
+           value: string;
+        }[];
+        selectionMode: "single";
+        type: "list";
+      }
+        | {
+        default?: string[];
+        description?: string;
+        label?: string;
+        name: string;
+        options: {
+           label: string;
+           value: string;
+        }[];
+        selectionMode: "multiple";
+        type: "list";
+      }
+        | {
+        default?: string;
+        description?: string;
+        label?: string;
+        name: string;
+        type: "text";
+      }
+        | {
+        default?: string;
+        description?: string;
+        label?: string;
+        name: string;
+        type: "password";
+      }
+        | {
+        default?: string;
+        description?: string;
+        label?: string;
+        name: string;
+        type: "email";
+      }
+        | {
+        default?: string;
+        description?: string;
+        label?: string;
+        name: string;
+        type: "url";
+      }
+        | {
+        default?: string;
+        description?: string;
+        label?: string;
+        name: string;
+        type: "tel";
+     })[];
+  };
+  eventing?: {
+     commerce?: {
+        events: {
+           description: string;
+           destination?: string;
+           fields: {
+              name: ...;
+              source?: ...;
+           }[];
+           force?: boolean;
+           hipaaAuditRequired?: boolean;
+           label: string;
+           name: string;
+           prioritary?: boolean;
+           rules?: ...[];
+           runtimeActions: string[];
+        }[];
+        provider: {
+           description: string;
+           key?: string;
+           label: string;
+        };
+     }[];
+     external?: {
+        events: {
+           description: string;
+           label: string;
+           name: string;
+           runtimeActions: string[];
+        }[];
+        provider: {
+           description: string;
+           key?: string;
+           label: string;
+        };
+     }[];
+  };
+  installation?: {
+     customInstallationSteps?: {
+        description: string;
+        name: string;
+        script: string;
+     }[];
+     messages?: {
+        postInstallation?: string;
+        preInstallation?: string;
+     };
   };
   metadata: {
-    description: string;
-    displayName: string;
-    id: string;
-    version: string;
+     description: string;
+     displayName: string;
+     id: string;
+     version: string;
   };
+} & {
+[key: string]: unknown;
 }): {
-  businessConfig?: {
-    schema?: (
-      | {
-          default: string;
-          description?: string;
-          label?: string;
-          name: string;
-          options: {
-            label: string;
-            value: string;
-          }[];
-          selectionMode: "single";
-          type: "list";
-        }
-      | {
-          default?: string[];
-          description?: string;
-          label?: string;
-          name: string;
-          options: {
-            label: string;
-            value: string;
-          }[];
-          selectionMode: "multiple";
-          type: "list";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "text";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "password";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "email";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "url";
-        }
-      | {
-          default?: string;
-          description?: string;
-          label?: string;
-          name: string;
-          type: "tel";
-        }
-    )[];
-  };
-  metadata: {
-    description: string;
-    displayName: string;
-    id: string;
-    version: string;
-  };
-};
-```
-
-Defined in: [config/lib/define.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/748a0bd24e94d53382b57771372a239079940b3a/packages/aio-commerce-lib-app/source/config/lib/define.ts#L29)
-
-Helper to type-safely define the app config.
-
-## Parameters
-
-| Parameter                       | Type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Description               |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| `config`                        | \{ `businessConfig?`: \{ `schema?`: ( \| \{ `default`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `options`: \{ `label`: `string`; `value`: `string`; \}[]; `selectionMode`: `"single"`; `type`: `"list"`; \} \| \{ `default?`: `string`[]; `description?`: `string`; `label?`: `string`; `name`: `string`; `options`: \{ `label`: `string`; `value`: `string`; \}[]; `selectionMode`: `"multiple"`; `type`: `"list"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"text"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"password"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"email"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"url"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"tel"`; \})[]; \}; `metadata`: \{ `description`: `string`; `displayName`: `string`; `id`: `string`; `version`: `string`; \}; \} | The app config to define. |
-| `config.businessConfig?`        | \{ `schema?`: ( \| \{ `default`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `options`: \{ `label`: `string`; `value`: `string`; \}[]; `selectionMode`: `"single"`; `type`: `"list"`; \} \| \{ `default?`: `string`[]; `description?`: `string`; `label?`: `string`; `name`: `string`; `options`: \{ `label`: `string`; `value`: `string`; \}[]; `selectionMode`: `"multiple"`; `type`: `"list"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"text"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"password"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"email"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"url"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"tel"`; \})[]; \}                                                                                                                                     | -                         |
-| `config.businessConfig.schema?` | ( \| \{ `default`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `options`: \{ `label`: `string`; `value`: `string`; \}[]; `selectionMode`: `"single"`; `type`: `"list"`; \} \| \{ `default?`: `string`[]; `description?`: `string`; `label?`: `string`; `name`: `string`; `options`: \{ `label`: `string`; `value`: `string`; \}[]; `selectionMode`: `"multiple"`; `type`: `"list"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"text"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"password"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"email"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"url"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"tel"`; \})[]                                                                                                                                                       | -                         |
-| `config.metadata`               | \{ `description`: `string`; `displayName`: `string`; `id`: `string`; `version`: `string`; \}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | -                         |
-| `config.metadata.description`   | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | -                         |
-| `config.metadata.displayName`   | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | -                         |
-| `config.metadata.id`            | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | -                         |
-| `config.metadata.version`       | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | -                         |
-
-## Returns
-
-```ts
-{
   businessConfig?: {
      schema?: (
         | {
@@ -227,181 +183,197 @@ Helper to type-safely define the app config.
         type: "tel";
      })[];
   };
+  eventing?: {
+     commerce?: {
+        events: {
+           description: string;
+           destination?: string;
+           fields: {
+              name: ...;
+              source?: ...;
+           }[];
+           force?: boolean;
+           hipaaAuditRequired?: boolean;
+           label: string;
+           name: string;
+           prioritary?: boolean;
+           rules?: ...[];
+           runtimeActions: string[];
+        }[];
+        provider: {
+           description: string;
+           key?: string;
+           label: string;
+        };
+     }[];
+     external?: {
+        events: {
+           description: string;
+           label: string;
+           name: string;
+           runtimeActions: string[];
+        }[];
+        provider: {
+           description: string;
+           key?: string;
+           label: string;
+        };
+     }[];
+  };
+  installation?: {
+     customInstallationSteps?: {
+        description: string;
+        name: string;
+        script: string;
+     }[];
+     messages?: {
+        postInstallation?: string;
+        preInstallation?: string;
+     };
+  };
   metadata: {
      description: string;
      displayName: string;
      id: string;
      version: string;
   };
-}
-```
-
-### businessConfig?
-
-```ts
-optional businessConfig: {
-  schema?: (
-     | {
-     default: string;
-     description?: string;
-     label?: string;
-     name: string;
-     options: {
-        label: string;
-        value: string;
-     }[];
-     selectionMode: "single";
-     type: "list";
-   }
-     | {
-     default?: string[];
-     description?: string;
-     label?: string;
-     name: string;
-     options: {
-        label: string;
-        value: string;
-     }[];
-     selectionMode: "multiple";
-     type: "list";
-   }
-     | {
-     default?: string;
-     description?: string;
-     label?: string;
-     name: string;
-     type: "text";
-   }
-     | {
-     default?: string;
-     description?: string;
-     label?: string;
-     name: string;
-     type: "password";
-   }
-     | {
-     default?: string;
-     description?: string;
-     label?: string;
-     name: string;
-     type: "email";
-   }
-     | {
-     default?: string;
-     description?: string;
-     label?: string;
-     name: string;
-     type: "url";
-   }
-     | {
-     default?: string;
-     description?: string;
-     label?: string;
-     name: string;
-     type: "tel";
-  })[];
+} & {
+[key: string]: unknown;
 };
 ```
 
-#### businessConfig.schema?
+Defined in: [config/lib/define.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/config/lib/define.ts#L29)
 
-```ts
-optional schema: (
-  | {
-  default: string;
-  description?: string;
-  label?: string;
-  name: string;
-  options: {
-     label: string;
-     value: string;
-  }[];
-  selectionMode: "single";
-  type: "list";
-}
-  | {
-  default?: string[];
-  description?: string;
-  label?: string;
-  name: string;
-  options: {
-     label: string;
-     value: string;
-  }[];
-  selectionMode: "multiple";
-  type: "list";
-}
-  | {
-  default?: string;
-  description?: string;
-  label?: string;
-  name: string;
-  type: "text";
-}
-  | {
-  default?: string;
-  description?: string;
-  label?: string;
-  name: string;
-  type: "password";
-}
-  | {
-  default?: string;
-  description?: string;
-  label?: string;
-  name: string;
-  type: "email";
-}
-  | {
-  default?: string;
-  description?: string;
-  label?: string;
-  name: string;
-  type: "url";
-}
-  | {
-  default?: string;
-  description?: string;
-  label?: string;
-  name: string;
-  type: "tel";
-})[];
-```
+Helper to type-safely define the app config.
 
-### metadata
+## Parameters
 
-```ts
-metadata: {
-  description: string;
-  displayName: string;
-  id: string;
-  version: string;
-} = MetadataSchema;
-```
+| Parameter | Type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Description               |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `config`  | \{ `businessConfig?`: \{ `schema?`: ( \| \{ `default`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `options`: \{ `label`: `string`; `value`: `string`; \}[]; `selectionMode`: `"single"`; `type`: `"list"`; \} \| \{ `default?`: `string`[]; `description?`: `string`; `label?`: `string`; `name`: `string`; `options`: \{ `label`: `string`; `value`: `string`; \}[]; `selectionMode`: `"multiple"`; `type`: `"list"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"text"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"password"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"email"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"url"`; \} \| \{ `default?`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"tel"`; \})[]; \}; `eventing?`: \{ `commerce?`: \{ `events`: \{ `description`: `string`; `destination?`: `string`; `fields`: \{ `name`: ...; `source?`: ...; \}[]; `force?`: `boolean`; `hipaaAuditRequired?`: `boolean`; `label`: `string`; `name`: `string`; `prioritary?`: `boolean`; `rules?`: ...[]; `runtimeActions`: `string`[]; \}[]; `provider`: \{ `description`: `string`; `key?`: `string`; `label`: `string`; \}; \}[]; `external?`: \{ `events`: \{ `description`: `string`; `label`: `string`; `name`: `string`; `runtimeActions`: `string`[]; \}[]; `provider`: \{ `description`: `string`; `key?`: `string`; `label`: `string`; \}; \}[]; \}; `installation?`: \{ `customInstallationSteps?`: \{ `description`: `string`; `name`: `string`; `script`: `string`; \}[]; `messages?`: \{ `postInstallation?`: `string`; `preInstallation?`: `string`; \}; \}; `metadata`: \{ `description`: `string`; `displayName`: `string`; `id`: `string`; `version`: `string`; \}; \} & \{ \[`key`: `string`\]: `unknown`; \} | The app config to define. |
 
-#### metadata.description
+## Returns
 
-```ts
-description: string;
-```
-
-#### metadata.displayName
-
-```ts
-displayName: string;
-```
-
-#### metadata.id
-
-```ts
-id: string;
-```
-
-#### metadata.version
-
-```ts
-version: string;
-```
+\{
+`businessConfig?`: \{
+`schema?`: (
+\| \{
+`default`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`options`: \{
+`label`: `string`;
+`value`: `string`;
+\}[];
+`selectionMode`: `"single"`;
+`type`: `"list"`;
+\}
+\| \{
+`default?`: `string`[];
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`options`: \{
+`label`: `string`;
+`value`: `string`;
+\}[];
+`selectionMode`: `"multiple"`;
+`type`: `"list"`;
+\}
+\| \{
+`default?`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`type`: `"text"`;
+\}
+\| \{
+`default?`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`type`: `"password"`;
+\}
+\| \{
+`default?`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`type`: `"email"`;
+\}
+\| \{
+`default?`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`type`: `"url"`;
+\}
+\| \{
+`default?`: `string`;
+`description?`: `string`;
+`label?`: `string`;
+`name`: `string`;
+`type`: `"tel"`;
+\})[];
+\};
+`eventing?`: \{
+`commerce?`: \{
+`events`: \{
+`description`: `string`;
+`destination?`: `string`;
+`fields`: \{
+`name`: ...;
+`source?`: ...;
+\}[];
+`force?`: `boolean`;
+`hipaaAuditRequired?`: `boolean`;
+`label`: `string`;
+`name`: `string`;
+`prioritary?`: `boolean`;
+`rules?`: ...[];
+`runtimeActions`: `string`[];
+\}[];
+`provider`: \{
+`description`: `string`;
+`key?`: `string`;
+`label`: `string`;
+\};
+\}[];
+`external?`: \{
+`events`: \{
+`description`: `string`;
+`label`: `string`;
+`name`: `string`;
+`runtimeActions`: `string`[];
+\}[];
+`provider`: \{
+`description`: `string`;
+`key?`: `string`;
+`label`: `string`;
+\};
+\}[];
+\};
+`installation?`: \{
+`customInstallationSteps?`: \{
+`description`: `string`;
+`name`: `string`;
+`script`: `string`;
+\}[];
+`messages?`: \{
+`postInstallation?`: `string`;
+`preInstallation?`: `string`;
+\};
+\};
+`metadata`: \{
+`description`: `string`;
+`displayName`: `string`;
+`id`: `string`;
+`version`: `string`;
+\};
+\} & \{
+\[`key`: `string`\]: `unknown`;
+\}
 
 ## Example
 

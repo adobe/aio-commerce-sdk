@@ -2,222 +2,66 @@
 
 ```ts
 function createRegistration(
-   httpClient: AdobeIoEventsHttpClient,
-   params: {
-  clientId: string;
-  consumerOrgId: string;
-  deliveryType: "webhook" | "webhook_batch" | "journal" | "aws_eventbridge";
-  description?: string;
-  destinationMetadata?: {
-     awsAccountId?: string;
-     awsRegion?: string;
-  };
-  enabled?: boolean;
-  eventsOfInterest: {
-     eventCode: string;
-     providerId: string;
-     providerMetadataId?: string;
-  }[];
-  name: string;
-  projectId: string;
-  runtimeAction?: string;
-  subscriberFilters?: {
-     description?: string;
-     name: string;
-     subscriberFilter: string;
-  }[];
-  webhookUrl?: string;
-  workspaceId: string;
-},
-   fetchOptions?: Options): Promise<{
-  clientId: string;
-  createdDate?: string;
-  deliveryType: "webhook" | "webhook_batch" | "journal" | "aws_eventbridge";
-  description?: string;
-  destinationMetadata?: {
-     awsAccountId?: string;
-     awsRegion?: string;
-  };
-  enabled?: boolean;
-  eventsOfInterest: {
-     eventCode: string;
-     providerId: string;
-     providerMetadataId?: string;
-  }[];
-  eventsUrl?: string;
-  id: string;
-  integrationStatus: string;
-  links: {
-     rel:delete?: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-     rel:events?: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-     rel:update?: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-     self: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-  };
-  name: string;
-  parentClientId?: string;
-  registrationId: string;
-  runtimeAction?: string;
-  status: string;
-  subscriberFilters?: {
-     description?: string;
-     id?: string;
-     name: string;
-     subscriberFilter: string;
-  }[];
-  type: string;
-  updatedDate?: string;
-  webhookUrl?: string;
-}>;
+  httpClient: AdobeIoEventsHttpClient,
+  params: {
+    clientId: string;
+    consumerOrgId: string;
+    deliveryType: "webhook" | "webhook_batch" | "journal" | "aws_eventbridge";
+    description?: string;
+    destinationMetadata?: {
+      awsAccountId?: string;
+      awsRegion?: string;
+    };
+    enabled?: boolean;
+    eventsOfInterest: {
+      eventCode: string;
+      providerId: string;
+    }[];
+    name: string;
+    projectId: string;
+    runtimeAction?: string;
+    subscriberFilters?: {
+      description?: string;
+      name: string;
+      subscriberFilter: string;
+    }[];
+    webhookUrl?: string;
+    workspaceId: string;
+  },
+  fetchOptions?: Options,
+): Promise<IoEventRegistrationHalModel>;
 ```
 
-Defined in: [io-events/api/event-registrations/endpoints.ts:147](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/endpoints.ts#L147)
+Defined in: [io-events/api/event-registrations/endpoints.ts:130](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/endpoints.ts#L130)
 
 Creates an event registration.
 
 ## Parameters
 
-| Parameter                                  | Type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Description                                                                                                                                                                                        |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `httpClient`                               | [`AdobeIoEventsHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeIoEventsHttpClient.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                           | The [AdobeIoEventsHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeIoEventsHttpClient.md) to use to make the request. |
-| `params`                                   | \{ `clientId`: `string`; `consumerOrgId`: `string`; `deliveryType`: `"webhook"` \| `"webhook_batch"` \| `"journal"` \| `"aws_eventbridge"`; `description?`: `string`; `destinationMetadata?`: \{ `awsAccountId?`: `string`; `awsRegion?`: `string`; \}; `enabled?`: `boolean`; `eventsOfInterest`: \{ `eventCode`: `string`; `providerId`: `string`; `providerMetadataId?`: `string`; \}[]; `name`: `string`; `projectId`: `string`; `runtimeAction?`: `string`; `subscriberFilters?`: \{ `description?`: `string`; `name`: `string`; `subscriberFilter`: `string`; \}[]; `webhookUrl?`: `string`; `workspaceId`: `string`; \} | The parameters to create the registration with.                                                                                                                                                    |
-| `params.clientId`                          | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | -                                                                                                                                                                                                  |
-| `params.consumerOrgId?`                    | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | -                                                                                                                                                                                                  |
-| `params.deliveryType?`                     | `"webhook"` \| `"webhook_batch"` \| `"journal"` \| `"aws_eventbridge"`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | -                                                                                                                                                                                                  |
-| `params.description?`                      | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | -                                                                                                                                                                                                  |
-| `params.destinationMetadata?`              | \{ `awsAccountId?`: `string`; `awsRegion?`: `string`; \}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | -                                                                                                                                                                                                  |
-| `params.destinationMetadata.awsAccountId?` | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | -                                                                                                                                                                                                  |
-| `params.destinationMetadata.awsRegion?`    | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | -                                                                                                                                                                                                  |
-| `params.enabled?`                          | `boolean`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | -                                                                                                                                                                                                  |
-| `params.eventsOfInterest?`                 | \{ `eventCode`: `string`; `providerId`: `string`; `providerMetadataId?`: `string`; \}[]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | -                                                                                                                                                                                                  |
-| `params.name?`                             | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | -                                                                                                                                                                                                  |
-| `params.projectId?`                        | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | -                                                                                                                                                                                                  |
-| `params.runtimeAction?`                    | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | -                                                                                                                                                                                                  |
-| `params.subscriberFilters?`                | \{ `description?`: `string`; `name`: `string`; `subscriberFilter`: `string`; \}[]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | -                                                                                                                                                                                                  |
-| `params.webhookUrl?`                       | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | -                                                                                                                                                                                                  |
-| `params.workspaceId?`                      | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | -                                                                                                                                                                                                  |
-| `fetchOptions?`                            | [`Options`](https://github.com/sindresorhus/ky?tab=readme-ov-file#options)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | The [Options](https://github.com/sindresorhus/ky?tab=readme-ov-file#options) to use to make the request.                                                                                           |
+| Parameter                                  | Type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Description                                                                                                                                                                                        |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `httpClient`                               | [`AdobeIoEventsHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeIoEventsHttpClient.md)                                                                                                                                                                                                                                                                                                                                                                                                                          | The [AdobeIoEventsHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeIoEventsHttpClient.md) to use to make the request. |
+| `params`                                   | \{ `clientId`: `string`; `consumerOrgId`: `string`; `deliveryType`: `"webhook"` \| `"webhook_batch"` \| `"journal"` \| `"aws_eventbridge"`; `description?`: `string`; `destinationMetadata?`: \{ `awsAccountId?`: `string`; `awsRegion?`: `string`; \}; `enabled?`: `boolean`; `eventsOfInterest`: \{ `eventCode`: `string`; `providerId`: `string`; \}[]; `name`: `string`; `projectId`: `string`; `runtimeAction?`: `string`; `subscriberFilters?`: \{ `description?`: `string`; `name`: `string`; `subscriberFilter`: `string`; \}[]; `webhookUrl?`: `string`; `workspaceId`: `string`; \} | The parameters to create the registration with.                                                                                                                                                    |
+| `params.clientId`                          | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | -                                                                                                                                                                                                  |
+| `params.consumerOrgId?`                    | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | -                                                                                                                                                                                                  |
+| `params.deliveryType?`                     | `"webhook"` \| `"webhook_batch"` \| `"journal"` \| `"aws_eventbridge"`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | -                                                                                                                                                                                                  |
+| `params.description?`                      | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | -                                                                                                                                                                                                  |
+| `params.destinationMetadata?`              | \{ `awsAccountId?`: `string`; `awsRegion?`: `string`; \}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | -                                                                                                                                                                                                  |
+| `params.destinationMetadata.awsAccountId?` | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | -                                                                                                                                                                                                  |
+| `params.destinationMetadata.awsRegion?`    | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | -                                                                                                                                                                                                  |
+| `params.enabled?`                          | `boolean`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | -                                                                                                                                                                                                  |
+| `params.eventsOfInterest?`                 | \{ `eventCode`: `string`; `providerId`: `string`; \}[]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | -                                                                                                                                                                                                  |
+| `params.name?`                             | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | -                                                                                                                                                                                                  |
+| `params.projectId?`                        | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | -                                                                                                                                                                                                  |
+| `params.runtimeAction?`                    | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | -                                                                                                                                                                                                  |
+| `params.subscriberFilters?`                | \{ `description?`: `string`; `name`: `string`; `subscriberFilter`: `string`; \}[]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | -                                                                                                                                                                                                  |
+| `params.webhookUrl?`                       | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | -                                                                                                                                                                                                  |
+| `params.workspaceId?`                      | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | -                                                                                                                                                                                                  |
+| `fetchOptions?`                            | [`Options`](https://github.com/sindresorhus/ky?tab=readme-ov-file#options)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | The [Options](https://github.com/sindresorhus/ky?tab=readme-ov-file#options) to use to make the request.                                                                                           |
 
 ## Returns
 
-`Promise`\<\{
-`clientId`: `string`;
-`createdDate?`: `string`;
-`deliveryType`: `"webhook"` \| `"webhook_batch"` \| `"journal"` \| `"aws_eventbridge"`;
-`description?`: `string`;
-`destinationMetadata?`: \{
-`awsAccountId?`: `string`;
-`awsRegion?`: `string`;
-\};
-`enabled?`: `boolean`;
-`eventsOfInterest`: \{
-`eventCode`: `string`;
-`providerId`: `string`;
-`providerMetadataId?`: `string`;
-\}[];
-`eventsUrl?`: `string`;
-`id`: `string`;
-`integrationStatus`: `string`;
-`links`: \{
-`rel:delete?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`rel:events?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`rel:update?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`self`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-\};
-`name`: `string`;
-`parentClientId?`: `string`;
-`registrationId`: `string`;
-`runtimeAction?`: `string`;
-`status`: `string`;
-`subscriberFilters?`: \{
-`description?`: `string`;
-`id?`: `string`;
-`name`: `string`;
-`subscriberFilter`: `string`;
-\}[];
-`type`: `string`;
-`updatedDate?`: `string`;
-`webhookUrl?`: `string`;
-\}\>
+`Promise`\<`IoEventRegistrationHalModel`\>
 
 ## See
 

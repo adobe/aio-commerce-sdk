@@ -1,5 +1,22 @@
 # @aio-commerce-sdk/common-utils
 
+## 0.2.0
+
+### Minor Changes
+
+- [#246](https://github.com/adobe/aio-commerce-sdk/pull/246) [`b3b41f5`](https://github.com/adobe/aio-commerce-sdk/commit/b3b41f576cf0341bbb4a19bb534bfe35fb562aad) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Implement `storage` utilities.
+
+- [#245](https://github.com/adobe/aio-commerce-sdk/pull/245) [`b7fb4da`](https://github.com/adobe/aio-commerce-sdk/commit/b7fb4da5b8a9f468d4c33a25194dcc0a6e4d16a1) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove public exports and add `logging` and HTTP runtime action routing utilities.
+
+### Patch Changes
+
+- [#246](https://github.com/adobe/aio-commerce-sdk/pull/246) [`b3b41f5`](https://github.com/adobe/aio-commerce-sdk/commit/b3b41f576cf0341bbb4a19bb534bfe35fb562aad) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix unresolved type issue due to unexported type
+
+- [#241](https://github.com/adobe/aio-commerce-sdk/pull/241) [`2707605`](https://github.com/adobe/aio-commerce-sdk/commit/2707605b914b7aab3f7700f845bc8e27f48958ca) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add additional schema shorthands for title case.
+
+- Updated dependencies [[`b3b41f5`](https://github.com/adobe/aio-commerce-sdk/commit/b3b41f576cf0341bbb4a19bb534bfe35fb562aad), [`b3b41f5`](https://github.com/adobe/aio-commerce-sdk/commit/b3b41f576cf0341bbb4a19bb534bfe35fb562aad), [`b7fb4da`](https://github.com/adobe/aio-commerce-sdk/commit/b7fb4da5b8a9f468d4c33a25194dcc0a6e4d16a1)]:
+  - @adobe/aio-commerce-lib-core@0.6.1
+
 ## 0.1.0
 
 ### Minor Changes

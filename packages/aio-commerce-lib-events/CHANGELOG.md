@@ -1,5 +1,29 @@
 # @adobe/aio-commerce-lib-events
 
+## 0.6.0
+
+### Minor Changes
+
+- [#251](https://github.com/adobe/aio-commerce-sdk/pull/251) [`9566d2b`](https://github.com/adobe/aio-commerce-sdk/commit/9566d2b7c19c583e090be87c297384d1a49449b5) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Enhance App Metadata Detail for Events:
+  - Add rules to endpoint
+  - Add rules to schema
+  - Add source to fieldSchema
+
+### Patch Changes
+
+- [#242](https://github.com/adobe/aio-commerce-sdk/pull/242) [`4a9a407`](https://github.com/adobe/aio-commerce-sdk/commit/4a9a407e8141687e7507ba1f4bc85bfb3e4a144e) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove `providerMetadataId` from the input parameters when creating a registration as it's not a valid field.
+
+- [#241](https://github.com/adobe/aio-commerce-sdk/pull/241) [`2707605`](https://github.com/adobe/aio-commerce-sdk/commit/2707605b914b7aab3f7700f845bc8e27f48958ca) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Export additional types of I/O Events schema.
+
+- [#236](https://github.com/adobe/aio-commerce-sdk/pull/236) [`50c5538`](https://github.com/adobe/aio-commerce-sdk/commit/50c553809c7c699026d4952487295f5c25b7d1f0) Thanks [@jnatherley](https://github.com/jnatherley)! - Fix `instance_id` of `IoEventProvider` should never be optional.
+
+- [#252](https://github.com/adobe/aio-commerce-sdk/pull/252) [`f6663ff`](https://github.com/adobe/aio-commerce-sdk/commit/f6663ffd2a508ac0128ef8fc573ed1c10427a836) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix incorrect type representation of commerce event providers.
+
+- Updated dependencies [[`b3b41f5`](https://github.com/adobe/aio-commerce-sdk/commit/b3b41f576cf0341bbb4a19bb534bfe35fb562aad), [`b3b41f5`](https://github.com/adobe/aio-commerce-sdk/commit/b3b41f576cf0341bbb4a19bb534bfe35fb562aad), [`b7fb4da`](https://github.com/adobe/aio-commerce-sdk/commit/b7fb4da5b8a9f468d4c33a25194dcc0a6e4d16a1)]:
+  - @adobe/aio-commerce-lib-core@0.6.1
+  - @adobe/aio-commerce-lib-auth@0.8.1
+  - @adobe/aio-commerce-lib-api@0.6.1
+
 ## 0.5.1
 
 ### Patch Changes

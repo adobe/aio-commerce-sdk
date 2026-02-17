@@ -193,15 +193,37 @@ eventing: {
       events: [
         {
           name: "plugin.order_placed",
-          fields: ["order_id", "customer_id"],
+          fields: [
+            { name: "order_id" },
+            { name: "customer_id" },
+          ],
           runtimeActions: ["my-package/handle-order"],
           description: "Triggered when an order is placed",
         },
         {
           name: "observer.catalog_update",
-          fields: ["product_id"],
+          fields: [
+            { name: "product_id", source: "catalog" },
+          ],
           runtimeActions: ["my-package/sync-catalog"],
           description: "Triggered when catalog is updated",
+        },
+        {
+          name: "observer.catalog_product_save_after",
+          fields: [
+            { name: "price" },
+            { name: "_origData" },
+            { name: "quoteId" , source: "context_checkout_session.get_quote.get_id" },
+          ],
+          rules: [
+            {
+              field: "price",
+              operator: "lessThan",
+              value: "300.00",
+            },
+          ],
+          runtimeActions: ["my-package/handle-product"],
+          description: "Triggered when a product is saved with price filter",
         },
       ],
     },
@@ -234,7 +256,13 @@ eventing: {
 **Commerce Events:**
 
 - **name**: Must start with `plugin.` or `observer.` followed by lowercase letters and underscores (e.g., `plugin.order_placed`, `observer.catalog_update`)
-- **fields**: Array of field names (lowercase alphanumeric with underscores)
+- **fields**: Array of field objects. Each field object must have:
+  - **name** (required): The field name.
+  - **source** (optional): A string value for the field source (e.g., `"catalog"`, `"order"`)
+- **rules**: Optional array of filtering rules. Each rule must have:
+  - **field**: The field name to filter on
+  - **operator**: The comparison operator. Valid values: `"greaterThan"`, `"lessThan"`, `"equal"`, `"regex"`, `"in"`, `"onChange"`
+  - **value**: The value to compare against
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
 - **description**: Description of the event (max 255 characters)
 

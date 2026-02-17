@@ -2,83 +2,27 @@
 
 ```ts
 function createEventMetadataForProvider(
-   httpClient: AdobeIoEventsHttpClient,
-   params: {
-  consumerOrgId: string;
-  description: string;
-  eventCode: string;
-  label: string;
-  projectId: string;
-  providerId: string;
-  sampleEventTemplate?:   | string
-     | unknown[]
-     | {
-   [key: string]: unknown;
-   };
-  workspaceId: string;
-},
-   fetchOptions?: Options): Promise<{
-  description: string;
-  embedded?: {
-     sampleEvent?: {
-        format: string;
-        links: {
-           self: {
-              deprecation?: string;
-              href: string;
-              hreflang?: string;
-              name?: string;
-              profile?: string;
-              seen?: string;
-              templated?: boolean;
-              title?: string;
-              type?: string;
-           };
+  httpClient: AdobeIoEventsHttpClient,
+  params: {
+    consumerOrgId: string;
+    description: string;
+    eventCode: string;
+    label: string;
+    projectId: string;
+    providerId: string;
+    sampleEventTemplate?:
+      | string
+      | unknown[]
+      | {
+          [key: string]: unknown;
         };
-        samplePayload?: string;
-     };
-  };
-  eventCode: string;
-  label: string;
-  links: {
-     rel:sampleEvent?: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-     rel:update?: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-     self: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-  };
-}>;
+    workspaceId: string;
+  },
+  fetchOptions?: Options,
+): Promise<IoEventMetadataHalModel>;
 ```
 
-Defined in: [io-events/api/event-metadata/endpoints.ts:113](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/endpoints.ts#L113)
+Defined in: [io-events/api/event-metadata/endpoints.ts:100](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/endpoints.ts#L100)
 
 Creates event metadata for a provider.
 
@@ -100,65 +44,7 @@ Creates event metadata for a provider.
 
 ## Returns
 
-`Promise`\<\{
-`description`: `string`;
-`embedded?`: \{
-`sampleEvent?`: \{
-`format`: `string`;
-`links`: \{
-`self`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-\};
-`samplePayload?`: `string`;
-\};
-\};
-`eventCode`: `string`;
-`label`: `string`;
-`links`: \{
-`rel:sampleEvent?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`rel:update?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`self`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-\};
-\}\>
+`Promise`\<`IoEventMetadataHalModel`\>
 
 ## See
 

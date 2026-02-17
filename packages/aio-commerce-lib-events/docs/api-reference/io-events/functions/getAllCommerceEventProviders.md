@@ -2,95 +2,20 @@
 
 ```ts
 function getAllCommerceEventProviders(
-   httpClient: AdobeIoEventsHttpClient,
-   params: {
-  consumerOrgId: string;
-  filterBy?: {
-     instanceId?: string;
-     providerTypes?: ("dx_commerce_events" | "3rd_party_custom_events")[];
-  };
-  withEventMetadata?: boolean;
-},
-   fetchOptions?: Options): Promise<{
-  embedded: {
-     providers: {
-        description?: string;
-        docsUrl?: string;
-        embedded?: {
-           eventmetadata: {
-              description: string;
-              embedded?: {
-                 sampleEvent?: ...;
-              };
-              eventCode: string;
-              label: string;
-              links: {
-                 rel:sampleEvent?: ... | ...;
-                 rel:update?: ... | ...;
-                 self: {
-                    deprecation?: ...;
-                    href: ...;
-                    hreflang?: ...;
-                    name?: ...;
-                    profile?: ...;
-                    seen?: ...;
-                    templated?: ...;
-                    title?: ...;
-                    type?: ...;
-                 };
-              };
-           }[];
-        };
-        eventDeliveryFormat: string;
-        id: string;
-        instanceId?: string;
-        label: string;
-        links: {
-           rel:eventmetadata?: {
-              deprecation?: string;
-              href: string;
-              hreflang?: string;
-              name?: string;
-              profile?: string;
-              seen?: string;
-              templated?: boolean;
-              title?: string;
-              type?: string;
-           };
-           self: {
-              deprecation?: string;
-              href: string;
-              hreflang?: string;
-              name?: string;
-              profile?: string;
-              seen?: string;
-              templated?: boolean;
-              title?: string;
-              type?: string;
-           };
-        };
-        providerMetadata: string;
-        publisher: string;
-        source: string;
-     }[];
-  };
-  links: {
-     self: {
-        deprecation?: string;
-        href: string;
-        hreflang?: string;
-        name?: string;
-        profile?: string;
-        seen?: string;
-        templated?: boolean;
-        title?: string;
-        type?: string;
-     };
-  };
-}>;
+  httpClient: AdobeIoEventsHttpClient,
+  params: {
+    consumerOrgId: string;
+    filterBy?: {
+      instanceId?: string;
+      providerTypes?: ("dx_commerce_events" | "3rd_party_custom_events")[];
+    };
+    withEventMetadata?: boolean;
+  },
+  fetchOptions?: Options,
+): Promise<IoEventProviderManyResponse>;
 ```
 
-Defined in: [io-events/api/event-providers/shorthands.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/384f3fbf71723e5cec7e52e6dc0abda47dee95e6/packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts#L35)
+Defined in: [io-events/api/event-providers/shorthands.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts#L35)
 
 Lists all Commerce (of type `dx_commerce_events`) event providers for the given consumer organization ID.
 
@@ -109,83 +34,7 @@ Lists all Commerce (of type `dx_commerce_events`) event providers for the given 
 
 ## Returns
 
-`Promise`\<\{
-`embedded`: \{
-`providers`: \{
-`description?`: `string`;
-`docsUrl?`: `string`;
-`embedded?`: \{
-`eventmetadata`: \{
-`description`: `string`;
-`embedded?`: \{
-`sampleEvent?`: ...;
-\};
-`eventCode`: `string`;
-`label`: `string`;
-`links`: \{
-`rel:sampleEvent?`: ... \| ...;
-`rel:update?`: ... \| ...;
-`self`: \{
-`deprecation?`: ...;
-`href`: ...;
-`hreflang?`: ...;
-`name?`: ...;
-`profile?`: ...;
-`seen?`: ...;
-`templated?`: ...;
-`title?`: ...;
-`type?`: ...;
-\};
-\};
-\}[];
-\};
-`eventDeliveryFormat`: `string`;
-`id`: `string`;
-`instanceId?`: `string`;
-`label`: `string`;
-`links`: \{
-`rel:eventmetadata?`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-`self`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-\};
-`providerMetadata`: `string`;
-`publisher`: `string`;
-`source`: `string`;
-\}[];
-\};
-`links`: \{
-`self`: \{
-`deprecation?`: `string`;
-`href`: `string`;
-`hreflang?`: `string`;
-`name?`: `string`;
-`profile?`: `string`;
-`seen?`: `string`;
-`templated?`: `boolean`;
-`title?`: `string`;
-`type?`: `string`;
-\};
-\};
-\}\>
+`Promise`\<[`IoEventProviderManyResponse`](../type-aliases/IoEventProviderManyResponse.md)\>
 
 ## See
 
