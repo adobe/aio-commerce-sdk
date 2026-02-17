@@ -37,7 +37,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   }
 
   // TODO: Remove validation command from lib-config once we split encryption setup.
-  execSync("aio-commerce-lib-config schema validate");
+  execSync("aio-commerce-lib-config validate schema");
 
   const contents = JSON.stringify(appConfig.businessConfig.schema, null, 2);
   const outputDir = await makeOutputDirFor(

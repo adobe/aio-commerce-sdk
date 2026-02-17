@@ -168,20 +168,12 @@ export async function ensurePackageJson(
       `${PACKAGE_JSON_FILE} already has a postinstall script. Adding a new one...`,
     );
 
-    packageJson.scripts.postinstall += ` && ${postinstallScript}`;
+    const script = `${packageJson.scripts.postinstall} && ${postinstallScript}`;
+    execSync(`npm pkg set scripts.postinstall="${script}"`);
   } else {
     consola.info(`Adding postinstall script to ${PACKAGE_JSON_FILE}...`);
-    packageJson.scripts = {
-      postinstall: postinstallScript,
-      ...packageJson.scripts,
-    };
+    execSync(`npm pkg set scripts.postinstall="${postinstallScript}"`);
   }
-
-  await writeFile(
-    join(await getProjectRootDirectory(cwd), PACKAGE_JSON_FILE),
-    JSON.stringify(packageJson, null, 2),
-    "utf-8",
-  );
 
   consola.success(`Added postinstall script to ${PACKAGE_JSON_FILE}`);
   return packageJson;

@@ -18,16 +18,20 @@ import { run as generateManifestCommand } from "#commands/generate/manifest/main
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import { loadAppManifest } from "#commands/utils";
 
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+
+async function run(appManifest: CommerceAppConfigOutputModel) {
+  await generateActionsCommand(appManifest);
+  await generateManifestCommand(appManifest);
+  await generateSchemaCommand(appManifest);
+}
+
 /** Runs the postinstall hook */
 export async function exec() {
   consola.debug("Running lib-app postinstall hook");
   try {
-    consola.info("Generating app actions and manifest...");
-
     const appManifest = await loadAppManifest();
-    await generateActionsCommand(appManifest);
-    await generateManifestCommand(appManifest);
-    await generateSchemaCommand(appManifest);
+    await run(appManifest);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());
