@@ -226,25 +226,27 @@ async function createIoEventRegistration(params: CreateRegistrationParams) {
     runtimeAction,
   );
 
+  const payload = {
+    ...appCredentials,
+
+    name,
+    clientId: runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+    description,
+    deliveryType: "webhook",
+    runtimeAction,
+
+    enabled: true,
+    eventsOfInterest: events.map((event) => ({
+      providerId: provider.id,
+      eventCode: getIoEventCode(
+        getNamespacedEvent(metadata, event.name),
+        provider.provider_metadata as EventProviderType,
+      ),
+    })),
+  } as const;
+
   return ioEventsClient
-    .createRegistration({
-      ...appCredentials,
-
-      name,
-      clientId: runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
-      description,
-      deliveryType: "webhook",
-      runtimeAction,
-
-      enabled: true,
-      eventsOfInterest: events.map((event) => ({
-        providerId: provider.id,
-        eventCode: getIoEventCode(
-          getNamespacedEvent(metadata, event.name),
-          provider.provider_metadata as EventProviderType,
-        ),
-      })),
-    })
+    .createRegistration(payload)
     .then((res) => {
       logger.info(
         `Registration "${name}" created for provider "${provider.label}" with ID '${res.id}'`,
