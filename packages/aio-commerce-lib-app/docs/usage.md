@@ -36,7 +36,7 @@ Create an app config file in your project root. The library supports multiple fi
 - `app.commerce.config.mts` - ES Module TypeScript
 - `app.commerce.config.cts` - CommonJS TypeScript
 
-**Example using ESM:**
+##### Example using ESM:
 
 ```javascript
 import { defineConfig } from "@adobe/aio-commerce-lib-app/config";
@@ -67,7 +67,7 @@ export default defineConfig({
 });
 ```
 
-**Example using CommonJS:**
+##### Example using CommonJS:
 
 ```javascript
 const { defineConfig } = require("@adobe/aio-commerce-lib-app/config");
@@ -140,7 +140,7 @@ Application metadata is required and identifies your application:
 }
 ```
 
-**Validation Rules:**
+##### Validation Rules:
 
 - **id**: Must contain only alphanumeric characters and dashes
 - **displayName**: Maximum 50 characters
@@ -253,7 +253,7 @@ eventing: {
 }
 ```
 
-**Commerce Events:**
+##### Commerce Events:
 
 - **name**: Must start with `plugin.` or `observer.` followed by lowercase letters and underscores (e.g., `plugin.order_placed`, `observer.catalog_update`)
 - **fields**: Array of field objects. Each field object must have:
@@ -264,16 +264,15 @@ eventing: {
   - **operator**: The comparison operator. Valid values: `"greaterThan"`, `"lessThan"`, `"equal"`, `"regex"`, `"in"`, `"onChange"`
   - **value**: The value to compare against
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
-- **description**: Description of the event (max 255 characters)
 
-**External Events:**
+##### External Events:
 
 - **name**: Lowercase alphanumeric with underscores
 - **label**: Display name for the event (max 100 characters)
 - **description**: Description of the event (max 255 characters)
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
 
-**Provider Configuration:**
+##### Provider Configuration:
 
 - **label**: Display name for the provider (max 100 characters)
 - **description**: Description of the provider (max 255 characters)
@@ -298,16 +297,19 @@ installation: {
 }
 ```
 
-**Message Fields:**
+###### Message Fields:
 
 - **preInstallation** (optional): Message displayed to users before installation starts (max 1000 characters)
 - **postInstallation** (optional): Message displayed to users after installation completes (max 1000 characters)
 
 Both message fields are optional. You can provide one, both, or neither depending on your needs.
 
-#### Custom Installation Steps
+##### Custom Installation Steps
 
 The `installation.customInstallationSteps` field allows you to define custom scripts that run during the application installation process. These scripts are pre-loaded and executed in the order they are defined.
+
+> [!IMPORTANT]
+> Two custom installation steps cannot have the same name. Step names must be unique.
 
 ```javascript
 installation: {
@@ -330,19 +332,19 @@ installation: {
 }
 ```
 
-**Configuration Fields:**
+###### Configuration Fields:
 
 - **script**: Path to the `.js` script file **relative to your project root**. For example:
   - `"./scripts/setup.js"` - Script in a `scripts` folder at project root
   - `"./src/installation/configure.js"` - Script in a nested directory
   - `"./setup.js"` - Script at project root
 
-  The build process will automatically resolve these paths to the correct relative imports in the generated installation action.
+  The generation process will automatically resolve these paths to the correct relative imports in the generated installation action.
 
 - **name**: Display name for the installation step (max 255 characters)
 - **description**: Description of what the step does (max 255 characters)
 
-**Script Requirements:**
+###### Script Requirements:
 
 Your custom installation scripts must export a default function with the following signature:
 
@@ -369,7 +371,7 @@ export default defineCustomInstallationStep(async (config, context) => {
 });
 ```
 
-**Example: Successful Installation Script**
+##### Example: Successful Installation Script
 
 ```typescript
 // scripts/configure-webhooks.js (at project root)
@@ -399,7 +401,7 @@ export default defineCustomInstallationStep(async (config, context) => {
 });
 ```
 
-**Example: Script with Error Handling**
+##### Example: Script with Error Handling
 
 ```typescript
 // scripts/initialize-database.js (at project root)
@@ -441,7 +443,7 @@ export default defineCustomInstallationStep(async (config, context) => {
 });
 ```
 
-**Important Notes:**
+##### Important Notes:
 
 - Scripts **must** use `export default` to export the main function (named exports like `export { run }` are not supported)
 - Scripts are executed **sequentially** in the order defined in the configuration
@@ -463,7 +465,7 @@ npx @adobe/aio-commerce-lib-app generate manifest
 npx @adobe/aio-commerce-lib-app generate actions
 ```
 
-**Custom Installation Scripts:**
+##### Custom Installation Scripts:
 
 When you run `generate actions`, the CLI automatically:
 
