@@ -13,16 +13,12 @@
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import * as v from "valibot";
 
-import {
-  CommerceAppConfigSchema,
-  CommerceAppConfigSchemas,
-} from "#config/schema/app";
+import { CommerceAppConfigSchema } from "#config/schema/app";
+import { CommerceAppConfigSchemas } from "#config/schema/domains";
 
 import type { Get } from "type-fest";
-import type {
-  CommerceAppConfigDomain,
-  CommerceAppConfigOutputModel,
-} from "#config/schema/app";
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { CommerceAppConfigDomain } from "#config/schema/domains";
 
 const commerceAppConfigDomainsSchema = v.picklist(
   Object.keys(CommerceAppConfigSchemas),

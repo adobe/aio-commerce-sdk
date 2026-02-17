@@ -10,32 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
+import { hasExternalEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
 import { onboardIoEvents } from "./helpers";
 import { EXTERNAL_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
 
-import type { SetRequiredDeep } from "type-fest";
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { EventsExecutionContext } from "./context";
-import type { EventsConfig } from "./utils";
-
-/** Config type when external event sources are present. */
-export type ExternalEventsConfig = SetRequiredDeep<
-  EventsConfig,
-  "eventing.external"
->;
-
-/** Check if config has external event sources. */
-export function hasExternalEvents(
-  config: CommerceAppConfigOutputModel,
-): config is ExternalEventsConfig {
-  return (
-    Array.isArray(config?.eventing?.external) &&
-    config.eventing.external.length > 0
-  );
-}
 
 /** Leaf step for installing external event sources. */
 export const externalEventsStep = defineLeafStep({

@@ -23,7 +23,6 @@ import type {
   IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { ApplicationMetadata } from "#config/index";
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   AppEvent,
   CommerceEvent,
@@ -41,11 +40,6 @@ const PROVIDER_TYPE_TO_LABEL = {
   [COMMERCE_PROVIDER_TYPE]: "Commerce",
   [EXTERNAL_PROVIDER_TYPE]: "External",
 } as const;
-
-/** Config type when eventing is present. */
-export type EventsConfig = CommerceAppConfigOutputModel & {
-  eventing: NonNullable<CommerceAppConfigOutputModel["eventing"]>;
-};
 
 /**
  * Generates a unique instance ID for the given event provider within the context of the provided config.

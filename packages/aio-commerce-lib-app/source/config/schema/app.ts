@@ -10,29 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/style/noExportedImports: We are doing both, importing to use and re-exporting it. */
 /** biome-ignore-all lint/performance/noBarrelFile: We want to have all the schema exports in one file. */
 
 import * as v from "valibot";
 
-import {
-  SchemaBusinessConfig,
-  SchemaBusinessConfigSchema,
-} from "./business-configuration";
+import { SchemaBusinessConfig } from "./business-configuration";
 import { EventingSchema } from "./eventing";
 import { InstallationSchema } from "./installation";
 import { MetadataSchema } from "./metadata";
-
-export const CommerceAppConfigSchemas = {
-  metadata: MetadataSchema,
-  businessConfig: SchemaBusinessConfig,
-  "businessConfig.schema": SchemaBusinessConfigSchema,
-  eventing: EventingSchema,
-  installation: InstallationSchema,
-} as const;
-
-/** Individual validatable domains of the commerce app config. */
-export type CommerceAppConfigDomain = keyof typeof CommerceAppConfigSchemas;
 
 /** The schema used to validate the commerce app config file. */
 export const CommerceAppConfigSchema = v.looseObject({

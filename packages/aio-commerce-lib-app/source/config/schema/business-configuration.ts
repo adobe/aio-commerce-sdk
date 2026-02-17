@@ -12,6 +12,9 @@
 
 import * as v from "valibot";
 
+import type { SetRequiredDeep } from "type-fest";
+import type { CommerceAppConfigOutputModel } from "./app";
+
 /** Base schema for configuration field options with name, optional label, and optional description */
 const BaseOptionSchema = v.object({
   name: v.pipe(
@@ -210,3 +213,37 @@ export type BusinessConfig = {
 export const SchemaBusinessConfig = v.object({
   schema: v.optional(SchemaBusinessConfigSchema, []),
 }) satisfies v.GenericSchema<BusinessConfig>;
+
+/** Config type when business config is present. */
+export type AppConfigWithBusinessConfig = CommerceAppConfigOutputModel & {
+  businessConfig: NonNullable<CommerceAppConfigOutputModel["businessConfig"]>;
+};
+
+/** Config type when business config schema is present. */
+export type AppConfigWithBusinessConfigSchema = SetRequiredDeep<
+  AppConfigWithBusinessConfig,
+  "businessConfig.schema"
+>;
+
+/**
+ * Check if config has business config.
+ * @param config - The configuration to check.
+ */
+export function hasBusinessConfig(
+  config: CommerceAppConfigOutputModel,
+): config is AppConfigWithBusinessConfig {
+  return config.businessConfig !== undefined;
+}
+
+/**
+ * Check if config has business config schema.
+ * @param config - The configuration to check.
+ */
+export function hasBusinessConfigSchema(
+  config: CommerceAppConfigOutputModel,
+): config is AppConfigWithBusinessConfigSchema {
+  return (
+    config.businessConfig?.schema !== undefined &&
+    config.businessConfig.schema.length > 0
+  );
+}

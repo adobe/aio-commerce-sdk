@@ -10,24 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
+import { hasEventing } from "#config/schema/eventing";
 import { defineBranchStep } from "#management/installation/workflow/index";
 
-import { commerceEventsStep, hasCommerceEvents } from "./commerce";
+import { commerceEventsStep } from "./commerce";
 import { createEventsStepContext } from "./context";
-import { externalEventsStep, hasExternalEvents } from "./external";
-
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { EventsConfig } from "./utils";
-
-/** Check if config has any eventing configuration. */
-export function hasEventing(
-  config: CommerceAppConfigOutputModel,
-): config is EventsConfig {
-  return (
-    config.eventing !== undefined &&
-    (hasCommerceEvents(config) || hasExternalEvents(config))
-  );
-}
+import { externalEventsStep } from "./external";
 
 /** Root eventing step that contains commerce and external event sub-steps. */
 export const eventingStep = defineBranchStep({

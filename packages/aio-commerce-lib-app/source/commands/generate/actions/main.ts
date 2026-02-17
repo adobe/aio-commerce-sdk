@@ -14,7 +14,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import {
   getProjectRootDirectory,
   makeOutputDirFor,
@@ -25,71 +25,135 @@ import { consola } from "consola";
 import { formatTree } from "consola/utils";
 
 import {
-  EXTENSION_POINT_FOLDER_PATH,
+  CONFIGURATION_EXTENSION_POINT_ID,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
   GENERATED_ACTIONS_PATH,
+  getExtensionPointFolderPath,
 } from "#commands/constants";
-import { parseCommerceAppConfig } from "#config/lib/parser";
+import { loadAppManifest } from "#commands/utils";
+import {
+  getConfigDomains,
+  hasBusinessConfigSchema,
+  hasCustomInstallationSteps,
+} from "#config/index";
 
 import {
+  buildAppManagementExtConfig,
+  buildBusinessConfigurationExtConfig,
   CUSTOM_IMPORTS_PLACEHOLDER,
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
   CUSTOM_SCRIPTS_MAP_PLACEHOLDER,
-  EXT_CONFIG,
-  RUNTIME_ACTIONS,
-} from "./constants";
+  getRuntimeActions,
+} from "./config";
 
+import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
+import type { TemplateAction } from "./config";
 
 // This will point to the directory where the script is running from.
 // This is the dist/commands directory (as we use a facade to run the commands)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+type ValidExtensionPointId =
+  | typeof EXTENSIBILITY_EXTENSION_POINT_ID
+  | typeof CONFIGURATION_EXTENSION_POINT_ID;
+
+export async function run(appManifest: CommerceAppConfigOutputModel) {
+  const appManagementExtConfig = await updateExtConfig(
+    appManifest,
+    EXTENSIBILITY_EXTENSION_POINT_ID,
+  );
+
+  await generateActionFiles(
+    appManifest,
+    getRuntimeActions(appManagementExtConfig, "app-management"),
+    EXTENSIBILITY_EXTENSION_POINT_ID,
+  );
+
+  // If the app has a business configuration schema, generate the business configuration actions and files
+  if (hasBusinessConfigSchema(appManifest)) {
+    const businessConfigExtConfig = await updateExtConfig(
+      appManifest,
+      CONFIGURATION_EXTENSION_POINT_ID,
+    );
+
+    await generateActionFiles(
+      appManifest,
+      getRuntimeActions(businessConfigExtConfig, "business-configuration"),
+      CONFIGURATION_EXTENSION_POINT_ID,
+    );
+  }
+}
+
 /** Run the generate actions command */
-export async function run() {
+export async function exec() {
   try {
     const appManifest = await loadAppManifest();
-    await generateActionFiles(appManifest);
-    await updateExtConfig();
+    await run(appManifest);
   } catch (error) {
-    consola.error(stringifyError(error));
+    if (error instanceof CommerceSdkValidationError) {
+      consola.error(error.display());
+    }
+
+    consola.error(error);
     process.exit(1);
   }
 }
 
-/** Load the app commerce config */
-async function loadAppManifest() {
-  // If the config file is invalid or missing, we want to fail early before generating any files
-  const appConfig = await parseCommerceAppConfig();
-  consola.debug("Loaded app commerce config");
-
-  return appConfig;
-}
-
 /** Update the ext.config.yaml file */
-async function updateExtConfig() {
-  consola.info("Updating ext.config.yaml...");
+async function updateExtConfig(
+  appConfig: CommerceAppConfigOutputModel,
+  extensionPointId: ValidExtensionPointId,
+) {
+  consola.info(`Updating ext.config.yaml for ${extensionPointId}...`);
+  const extensionPointFolderPath =
+    getExtensionPointFolderPath(extensionPointId);
 
-  const outputDir = await makeOutputDirFor(EXTENSION_POINT_FOLDER_PATH);
+  const outputDir = await makeOutputDirFor(extensionPointFolderPath);
   const extConfigPath = join(outputDir, "ext.config.yaml");
   const extConfigDoc = await readYamlFile(extConfigPath);
 
-  await createOrUpdateExtConfig(extConfigPath, EXT_CONFIG, extConfigDoc);
-  consola.success("Updated ext.config.yaml");
+  let extConfig: ExtConfig;
+  switch (extensionPointId) {
+    case EXTENSIBILITY_EXTENSION_POINT_ID: {
+      extConfig = buildAppManagementExtConfig(getConfigDomains(appConfig));
+      break;
+    }
+
+    case CONFIGURATION_EXTENSION_POINT_ID: {
+      extConfig = buildBusinessConfigurationExtConfig();
+      break;
+    }
+
+    default: {
+      throw new Error(`Unsupported extension point ID: ${extensionPointId}`);
+    }
+  }
+
+  await createOrUpdateExtConfig(extConfigPath, extConfig, extConfigDoc);
+  return extConfig;
 }
 
 /** Generate the action files */
-async function generateActionFiles(appManifest: CommerceAppConfigOutputModel) {
+async function generateActionFiles(
+  appManifest: CommerceAppConfigOutputModel,
+  actions: TemplateAction[],
+  extensionPointId: ValidExtensionPointId,
+) {
   consola.start("Generating runtime actions...");
+  const extensionPointFolderPath =
+    getExtensionPointFolderPath(extensionPointId);
+
   const outputDir = await makeOutputDirFor(
-    join(EXTENSION_POINT_FOLDER_PATH, GENERATED_ACTIONS_PATH),
+    join(extensionPointFolderPath, GENERATED_ACTIONS_PATH),
   );
 
-  const templatesDir = join(__dirname, "generate/actions/templates");
   const outputFiles: string[] = [];
+  const templatesDir = join(__dirname, "generate/actions/templates");
 
-  for (const action of RUNTIME_ACTIONS) {
+  for (const action of actions) {
     const templatePath = join(templatesDir, action.templateFile);
     let template = await readFile(templatePath, "utf-8");
 
@@ -97,6 +161,7 @@ async function generateActionFiles(appManifest: CommerceAppConfigOutputModel) {
     if (action.name === "installation") {
       const customScriptsTemplatePath = join(
         templatesDir,
+        "app-management",
         "custom-scripts.js.template",
       );
 
@@ -114,11 +179,8 @@ async function generateActionFiles(appManifest: CommerceAppConfigOutputModel) {
     outputFiles.push(` ${relative(process.cwd(), actionPath)}`);
   }
 
-  consola.success(
-    `Generated ${RUNTIME_ACTIONS.length} action(s) in ${GENERATED_ACTIONS_PATH}`,
-  );
-
-  consola.log.raw(formatTree(outputFiles, { color: "green" }));
+  consola.success(`Generated ${actions.length} action(s)`);
+  consola.log.raw(formatTree(outputFiles));
 }
 
 /**
@@ -157,9 +219,7 @@ export async function generateCustomScriptsTemplate(
   template: string,
   appManifest: CommerceAppConfigOutputModel,
 ) {
-  const customSteps = appManifest.installation?.customInstallationSteps || [];
-
-  if (customSteps.length === 0) {
+  if (!hasCustomInstallationSteps(appManifest)) {
     return null;
   }
 
@@ -169,11 +229,12 @@ export async function generateCustomScriptsTemplate(
   const projectRoot = await getProjectRootDirectory();
   const installationActionDir = join(
     projectRoot,
-    EXTENSION_POINT_FOLDER_PATH,
+    getExtensionPointFolderPath(EXTENSIBILITY_EXTENSION_POINT_ID),
     GENERATED_ACTIONS_PATH,
   );
 
   // Generate import statements
+  const customSteps = appManifest.installation.customInstallationSteps;
   const importStatements = customSteps
     .map((step: CustomInstallationStep, index: number) => {
       // step.script is relative to project root (e.g., "./scripts/setup.js")

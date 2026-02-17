@@ -19,6 +19,9 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
+import type { SetRequiredDeep } from "type-fest";
+import type { CommerceAppConfigOutputModel } from "./app";
+
 const MAX_DESCRIPTION_LENGTH = 255;
 const MAX_LABEL_LENGTH = 100;
 const MAX_KEY_LENGTH = 50;
@@ -187,13 +190,13 @@ const ExternalEventSchema = v.object({
 });
 
 /** Schema for Commerce event source configuration */
-const CommerceEventSourceSchema = v.object({
+export const CommerceEventSourceSchema = v.object({
   provider: ProviderSchema,
   events: v.array(CommerceEventSchema, "Expected an array of Commerce events"),
 });
 
 /** Schema for external event source configuration */
-const ExternalEventSourceSchema = v.object({
+export const ExternalEventSourceSchema = v.object({
   provider: ProviderSchema,
   events: v.array(ExternalEventSchema, "Expected an array of external events"),
 });
@@ -239,3 +242,56 @@ export type AppEvent = CommerceEvent | ExternalEvent;
 
 /** Event provider configuration */
 export type EventProvider = v.InferInput<typeof ProviderSchema>;
+
+/** Config type when eventing is present. */
+export type EventsConfig = CommerceAppConfigOutputModel & {
+  eventing: NonNullable<CommerceAppConfigOutputModel["eventing"]>;
+};
+
+/** Config type when commerce event sources are present. */
+export type CommerceEventsConfig = SetRequiredDeep<
+  EventsConfig,
+  "eventing.commerce"
+>;
+
+/** Config type when external event sources are present. */
+export type ExternalEventsConfig = SetRequiredDeep<
+  EventsConfig,
+  "eventing.external"
+>;
+
+/**
+ * Check if config has commerce event sources.
+ * @param config - The configuration to check.
+ */
+export function hasCommerceEvents(
+  config: CommerceAppConfigOutputModel,
+): config is CommerceEventsConfig {
+  return (
+    Array.isArray(config?.eventing?.commerce) &&
+    config.eventing.commerce.length > 0
+  );
+}
+
+/**
+ * Check if config has external event sources.
+ * @param config - The configuration to check.
+ */
+export function hasExternalEvents(
+  config: CommerceAppConfigOutputModel,
+): config is ExternalEventsConfig {
+  return (
+    Array.isArray(config?.eventing?.external) &&
+    config.eventing.external.length > 0
+  );
+}
+
+/**
+ * Check if config has any eventing configuration.
+ * @param config - The configuration to check.
+ */
+export function hasEventing(
+  config: CommerceAppConfigOutputModel,
+): config is EventsConfig {
+  return config.eventing !== undefined;
+}

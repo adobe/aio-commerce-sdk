@@ -12,10 +12,8 @@
 
 import { describe, expect, test } from "vitest";
 
-import {
-  createCustomScriptSteps,
-  hasCustomInstallationSteps,
-} from "#management/installation/custom-installation/custom-scripts";
+import { hasCustomInstallationSteps } from "#config/index";
+import { createCustomScriptSteps } from "#management/installation/custom-installation/custom-scripts";
 import {
   configWithCustomInstallationSteps,
   minimalValidConfig,

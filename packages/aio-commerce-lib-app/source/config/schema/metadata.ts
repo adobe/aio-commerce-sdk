@@ -1,6 +1,8 @@
 import { alphaNumericOrHyphenSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
+import type { CommerceAppConfigOutputModel } from "./app";
+
 const MAX_DESCRIPTION_LENGTH = 255;
 const MAX_DISPLAY_NAME_LENGTH = 50;
 
@@ -49,3 +51,12 @@ export const MetadataSchema = v.object({
 
 /** The metadata associated to an Adobe Commerce application. */
 export type ApplicationMetadata = v.InferInput<typeof MetadataSchema>;
+
+/**
+ * Check if config has metadata.
+ * @param config - The configuration to check.
+ */
+export function hasMetadata(config: CommerceAppConfigOutputModel) {
+  // This will likely never be false, but we'll keep the check for completeness
+  return config.metadata !== undefined;
+}

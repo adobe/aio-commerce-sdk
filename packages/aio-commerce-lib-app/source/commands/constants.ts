@@ -22,20 +22,31 @@ export const ACTIONS_FOLDER = `actions/${PACKAGE_NAME}`;
 /** The path to the directory containing the generated actions */
 export const GENERATED_ACTIONS_PATH = `${GENERATED_PATH}/${ACTIONS_FOLDER}`;
 
-/** The name of the extension point id. */
-export const EXTENSION_POINT_ID = "commerce/extensibility/1";
+/** The name of the extension point for extensibility. */
+export const EXTENSIBILITY_EXTENSION_POINT_ID = "commerce/extensibility/1";
 
-/** The folder name of the extension point. */
-export const EXTENSION_POINT_FOLDER_NAME = EXTENSION_POINT_ID.replaceAll(
-  "/",
-  "-",
-);
-
-/** The path to the directory containing the extension point folder */
-export const EXTENSION_POINT_FOLDER_PATH = `src/${EXTENSION_POINT_FOLDER_NAME}`;
+/** The name of the extension point for configuration. */
+export const CONFIGURATION_EXTENSION_POINT_ID = "commerce/configuration/1";
 
 /** The name of the configuration schema file */
 export const APP_MANIFEST_FILE = "app.commerce.manifest.json";
 
+/** The name of the commerce app configuration file */
+export const COMMERCE_APP_CONFIG_FILE = "app.commerce.config";
+
+/** The name of the configuration schema file */
+export const CONFIG_SCHEMA_FILE_NAME = "configuration-schema.json";
+
 /** The name of the project package file */
 export const PACKAGE_JSON_FILE = "package.json";
+
+/** The name of the app configuration file */
+export const APP_CONFIG_FILE = "app.config.yaml";
+
+/** The name of the install configuration file */
+export const INSTALL_YAML_FILE = "install.yaml";
+
+/** Get the path to the extension point folder */
+export function getExtensionPointFolderPath(extensionPointId: string) {
+  return `src/${extensionPointId.replaceAll("/", "-")}`;
+}

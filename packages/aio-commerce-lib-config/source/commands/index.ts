@@ -15,9 +15,6 @@
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import consola from "consola";
 
-import { run as generateActionsCommand } from "#commands/generate/actions/run";
-import { run as generateSchemaCommand } from "#commands/generate/schema/run";
-import { run as initCommand } from "#commands/init/run";
 import { run as validateSchemaCommand } from "#commands/schema/validate/run";
 
 const NAMESPACE = "@adobe/aio-commerce-lib-config";
@@ -29,45 +26,19 @@ const USAGE = `
 Usage: ${NAMESPACE} <command> [target]
 
 Commands:
-  init                 Initialize the project (recommended for first-time setup)
-  
-  generate <target>    Generate artifacts
-    all                Generate configuration schema and runtime actions
-    schema             Generate configuration schema only
-    actions            Generate runtime actions only
-
   validate <target>    Validate configuration
     schema             Validate configuration schema
 
   help                 Show this help message
 
 Examples:
-  ${NAMESPACE} init
-  ${NAMESPACE} generate all
-  ${NAMESPACE} generate schema
-  ${NAMESPACE} generate actions
   ${NAMESPACE} validate schema
 `;
-
-/**
- * Run all generate targets in sequence
- */
-async function generateAll() {
-  await generateSchemaCommand();
-  consola.log.raw("");
-  await generateActionsCommand();
-}
 
 /**
  * Command handlers registry mapping command names to their subcommand handlers
  */
 const COMMANDS = {
-  init: initCommand,
-  generate: {
-    schema: generateSchemaCommand,
-    actions: generateActionsCommand,
-    all: generateAll,
-  },
   validate: {
     schema: validateSchemaCommand,
   },
@@ -123,12 +94,6 @@ async function main() {
       consola.error(`Unknown command: ${command}`);
       consola.log.raw(USAGE);
       process.exit(1);
-    }
-
-    // Handle direct commands (like init) that don't have subcommands
-    if (typeof handlers === "function") {
-      await handlers();
-      return;
     }
 
     // Handle commands with subcommands (like generate, validate)

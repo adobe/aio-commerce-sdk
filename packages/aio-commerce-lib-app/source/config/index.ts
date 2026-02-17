@@ -27,9 +27,30 @@ export {
   validateCommerceAppConfig,
   validateCommerceAppConfigDomain,
 } from "./lib/validate";
+export {
+  hasBusinessConfig,
+  hasBusinessConfigSchema,
+} from "./schema/business-configuration";
+export {
+  CommerceAppConfigSchemas,
+  getConfigDomains,
+  hasConfigDomain,
+} from "./schema/domains";
+export {
+  hasCommerceEvents,
+  hasEventing,
+  hasExternalEvents,
+} from "./schema/eventing";
+export {
+  hasCustomInstallation,
+  hasCustomInstallationSteps,
+} from "./schema/installation";
+export { hasMetadata } from "./schema/metadata";
 
-export type { CommerceAppConfig, CommerceAppConfigDomain } from "./schema/app";
+export type { CommerceAppConfig } from "./schema/app";
 export type {
+  AppConfigWithBusinessConfig,
+  AppConfigWithBusinessConfigSchema,
   BusinessConfig,
   BusinessConfigSchema,
   BusinessConfigSchemaField,
@@ -37,4 +58,6 @@ export type {
   BusinessConfigSchemaValue,
   SchemaBusinessConfig,
 } from "./schema/business-configuration";
+export type { CommerceAppConfigDomain } from "./schema/domains";
+export type * from "./schema/eventing";
 export type { ApplicationMetadata } from "./schema/metadata";

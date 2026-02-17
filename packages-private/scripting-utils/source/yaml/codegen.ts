@@ -12,7 +12,7 @@
 
 import { writeFile } from "node:fs/promises";
 
-import { Document, isMap, YAMLMap, YAMLSeq } from "yaml";
+import { Document, YAMLMap, YAMLSeq } from "yaml";
 
 import { detectPackageManager, getExecCommand } from "#project";
 import { getOrCreateMap, getOrCreateSeq } from "#yaml/helpers";
@@ -116,16 +116,12 @@ function buildOperations(extConfig: Document, operations: Operations) {
     },
   );
 
-  const ourOps = operations.workerProcess ?? [];
-  const missingOps = ourOps.filter(
-    (op) =>
-      workerProcess.items.find(
-        (item) => isMap(item) && item.get("impl") === op.impl,
-      ) === undefined,
-  );
+  // Clear existing items to rebuild from scratch
+  workerProcess.items = [];
 
+  const ourOps = operations.workerProcess ?? [];
   workerProcess.items.push(
-    ...missingOps.map((op) => {
+    ...ourOps.map((op) => {
       const map = new YAMLMap();
       map.set("type", op.type);
       map.set("impl", op.impl);

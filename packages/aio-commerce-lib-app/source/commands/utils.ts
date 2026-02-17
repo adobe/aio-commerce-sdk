@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,23 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-/** Simple representation of a partial app.config.yaml file */
-export type AppConfig = {
-  extensions?: {
-    [extensionKey: string]: {
-      $include?: string;
-      [configKey: string]: unknown;
-    };
-  };
+import consola from "consola";
 
-  [configKey: string]: unknown;
-};
+import { parseCommerceAppConfig } from "#config/index";
 
-/** Simple representation of a partial install.yaml file */
-export type InstallYaml = {
-  extensions: {
-    extensionPointId: string;
-  }[];
+/** Load the app commerce config */
+export async function loadAppManifest() {
+  // If the config file is invalid or missing, we want to fail early before generating any files
+  const appConfig = await parseCommerceAppConfig();
+  consola.debug("Loaded app commerce config");
 
-  [key: string]: unknown;
-};
+  return appConfig;
+}

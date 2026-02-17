@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { hasCommerceEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
 import { onboardCommerceEventing, onboardIoEvents } from "./helpers";
@@ -20,27 +21,8 @@ import {
   makeWorkspaceConfig,
 } from "./utils";
 
-import type { SetRequiredDeep } from "type-fest";
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { EventsExecutionContext } from "./context";
-import type { EventsConfig } from "./utils";
-
-/** Config type when commerce event sources are present. */
-export type CommerceEventsConfig = SetRequiredDeep<
-  EventsConfig,
-  "eventing.commerce"
->;
-
-/** Check if config has commerce event sources. */
-export function hasCommerceEvents(
-  config: CommerceAppConfigOutputModel,
-): config is CommerceEventsConfig {
-  return (
-    Array.isArray(config?.eventing?.commerce) &&
-    config.eventing.commerce.length > 0
-  );
-}
 
 /** Leaf step for installing commerce event sources. */
 export const commerceEventsStep = defineLeafStep({

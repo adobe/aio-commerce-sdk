@@ -13,6 +13,9 @@
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
+import type { SetRequiredDeep } from "type-fest";
+import type { CommerceAppConfigOutputModel } from "./app";
+
 const MAX_DESCRIPTION_LENGTH = 255;
 const MAX_NAME_LENGTH = 255;
 const MAX_MESSAGE_LENGTH = 1000;
@@ -30,7 +33,7 @@ const SCRIPT_PATH_REGEX = /^(?:\.{0,2}\/)*[\w-/]*[\w-]+\.js$/;
 /**
  * Schema for custom installation step configuration
  */
-const CustomInstallationStepSchema = v.object({
+export const CustomInstallationStepSchema = v.object({
   script: v.pipe(
     nonEmptyStringValueSchema("script path"),
     v.regex(
@@ -111,3 +114,36 @@ export type InstallationConfiguration = v.InferInput<typeof InstallationSchema>;
 export type CustomInstallationStep = v.InferInput<
   typeof CustomInstallationStepSchema
 >;
+
+export type InstallationConfig = CommerceAppConfigOutputModel & {
+  installation: NonNullable<CommerceAppConfigOutputModel["installation"]>;
+};
+
+/** Config type when custom installation steps are present. */
+export type ConfigWithInstallationSteps = SetRequiredDeep<
+  InstallationConfig,
+  "installation.customInstallationSteps"
+>;
+
+/**
+ * Check if config has custom installation settings.
+ * @param config - The configuration to check.
+ */
+export function hasCustomInstallation(
+  config: CommerceAppConfigOutputModel,
+): config is InstallationConfig {
+  return config.installation !== undefined;
+}
+
+/**
+ * Check if config has custom installation steps.
+ * @param config - The configuration to check.
+ */
+export function hasCustomInstallationSteps(
+  config: CommerceAppConfigOutputModel,
+): config is ConfigWithInstallationSteps {
+  return (
+    Array.isArray(config?.installation?.customInstallationSteps) &&
+    config.installation.customInstallationSteps.length > 0
+  );
+}
