@@ -1,5 +1,19 @@
 # @adobe/aio-commerce-lib-app
 
+## 0.3.0
+
+### Minor Changes
+
+- [#259](https://github.com/adobe/aio-commerce-sdk/pull/259) [`f05088d`](https://github.com/adobe/aio-commerce-sdk/commit/f05088dfb3392bb8d6c41cdc4216dc40f94ae705) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add new `hooks` and `init` scripts. Make code generation process smart based on application configuration.
+
+### Patch Changes
+
+- [#254](https://github.com/adobe/aio-commerce-sdk/pull/254) [`d437000`](https://github.com/adobe/aio-commerce-sdk/commit/d4370008bafe2540ff654bdab1381beab4be85e1) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Relax casing constraints for display names in schema. Ensure custom steps can't have duplicate names.
+
+- Updated dependencies []:
+  - @adobe/aio-commerce-lib-auth@0.8.1
+  - @adobe/aio-commerce-lib-events@0.6.0
+
 ## 0.2.0
 
 ### Minor Changes

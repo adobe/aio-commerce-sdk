@@ -1,5 +1,16 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.13.0
+
+### Minor Changes
+
+- [#259](https://github.com/adobe/aio-commerce-sdk/pull/259) [`f05088d`](https://github.com/adobe/aio-commerce-sdk/commit/f05088dfb3392bb8d6c41cdc4216dc40f94ae705) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - [BREAKING] Remove all CLI commands except for `validate schema`.
+
+### Patch Changes
+
+- Updated dependencies [[`d437000`](https://github.com/adobe/aio-commerce-sdk/commit/d4370008bafe2540ff654bdab1381beab4be85e1), [`f05088d`](https://github.com/adobe/aio-commerce-sdk/commit/f05088dfb3392bb8d6c41cdc4216dc40f94ae705)]:
+  - @adobe/aio-commerce-lib-app@0.3.0
+
 ## 0.12.0
 
 ### Minor Changes
