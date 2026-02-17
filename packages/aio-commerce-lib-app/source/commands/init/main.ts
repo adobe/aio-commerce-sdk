@@ -22,7 +22,13 @@ import {
   ensurePackageJson,
   installDependencies,
   runGeneration,
+  runInstall,
 } from "./lib";
+
+const REQUIRED_DEPENDENCIES = [
+  "@adobe/aio-commerce-lib-app",
+  "@adobe/aio-commerce-sdk",
+];
 
 /** Initialize the project with @adobe/aio-commerce-lib-config */
 export async function exec() {
@@ -30,7 +36,10 @@ export async function exec() {
     consola.start("Initializing app...");
 
     const { execCommand, packageManager } = await ensurePackageJson();
+    runInstall(packageManager, REQUIRED_DEPENDENCIES);
+
     const { config, domains } = await ensureCommerceAppConfig();
+    installDependencies(packageManager, domains);
 
     // Sync the package.json with the app config
     execSync(`npm pkg set name="${config.metadata.id}"`);
@@ -41,7 +50,6 @@ export async function exec() {
     await ensureAppConfig(domains);
     await ensureInstallYaml(domains);
 
-    installDependencies(packageManager, domains);
     consola.success("Initialization complete!");
     consola.box(
       [
