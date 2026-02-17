@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-app
 
+## 0.3.2
+
+### Patch Changes
+
+- [#262](https://github.com/adobe/aio-commerce-sdk/pull/262) [`7cb9252`](https://github.com/adobe/aio-commerce-sdk/commit/7cb9252736acd34f5490e2dc940b74a7ec40f17c) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Dependencies should be installed early in the init process.
+
 ## 0.3.1
 
 ### Patch Changes
