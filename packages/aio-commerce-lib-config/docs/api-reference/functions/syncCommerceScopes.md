@@ -11,7 +11,7 @@ function syncCommerceScopes(
 }>;
 ```
 
-Defined in: [aio-commerce-lib-config/source/config-manager.ts:213](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-config/source/config-manager.ts#L213)
+Defined in: [aio-commerce-lib-config/source/config-manager.ts:213](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/config-manager.ts#L213)
 
 Syncs Commerce scopes by forcing a fresh fetch from Commerce API and updating the cache.
 

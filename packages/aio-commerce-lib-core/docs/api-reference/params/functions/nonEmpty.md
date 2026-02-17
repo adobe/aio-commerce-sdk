@@ -4,7 +4,7 @@
 function nonEmpty(name: string, value: unknown): boolean;
 ```
 
-Defined in: [params/helpers.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-core/source/params/helpers.ts#L19)
+Defined in: [params/helpers.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-core/source/params/helpers.ts#L19)
 
 Checks if the given runtime action input value is non-empty.
 

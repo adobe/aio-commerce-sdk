@@ -242,7 +242,7 @@ function defineConfig(config: {
 };
 ```
 
-Defined in: [config/lib/define.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/config/lib/define.ts#L29)
+Defined in: [config/lib/define.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/config/lib/define.ts#L29)
 
 Helper to type-safely define the app config.
 

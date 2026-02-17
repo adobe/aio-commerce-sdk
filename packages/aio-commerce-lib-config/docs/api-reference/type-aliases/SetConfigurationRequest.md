@@ -9,7 +9,7 @@ type SetConfigurationRequest = {
 };
 ```
 
-Defined in: [aio-commerce-lib-config/source/types/api.ts:60](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-config/source/types/api.ts#L60)
+Defined in: [aio-commerce-lib-config/source/types/api.ts:60](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/types/api.ts#L60)
 
 Request type for setting configuration values.
 
@@ -25,7 +25,7 @@ config: {
 [];
 ```
 
-Defined in: [aio-commerce-lib-config/source/types/api.ts:62](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-config/source/types/api.ts#L62)
+Defined in: [aio-commerce-lib-config/source/types/api.ts:62](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/types/api.ts#L62)
 
 Array of configuration name-value pairs to set.
 

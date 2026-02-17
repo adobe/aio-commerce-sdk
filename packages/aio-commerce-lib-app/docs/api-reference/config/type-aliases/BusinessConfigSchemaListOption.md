@@ -9,7 +9,7 @@ type BusinessConfigSchemaListOption = Extract<
 >["options"][number];
 ```
 
-Defined in: [config/schema/business-configuration.ts:195](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L195)
+Defined in: [config/schema/business-configuration.ts:198](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L198)
 
 The schema type for an option in a list configuration field.
 Represents a single option that can be selected in a list-type configuration field.

@@ -7,7 +7,7 @@ type ImsAuthHeaders = {
 };
 ```
 
-Defined in: [ims-auth/types.ts:14](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-auth/source/lib/ims-auth/types.ts#L14)
+Defined in: [ims-auth/types.ts:14](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-auth/source/lib/ims-auth/types.ts#L14)
 
 Defines the headers required for IMS authentication.
 
@@ -19,7 +19,7 @@ Defines the headers required for IMS authentication.
 Authorization: string;
 ```
 
-Defined in: [ims-auth/types.ts:15](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-auth/source/lib/ims-auth/types.ts#L15)
+Defined in: [ims-auth/types.ts:15](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-auth/source/lib/ims-auth/types.ts#L15)
 
 ---
 
@@ -29,4 +29,4 @@ Defined in: [ims-auth/types.ts:15](https://github.com/adobe/aio-commerce-sdk/blo
 optional x-api-key: string;
 ```
 
-Defined in: [ims-auth/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-auth/source/lib/ims-auth/types.ts#L16)
+Defined in: [ims-auth/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-auth/source/lib/ims-auth/types.ts#L16)

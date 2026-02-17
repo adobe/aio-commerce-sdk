@@ -1,5 +1,11 @@
 # @aio-commerce-sdk/common-utils
 
+## 0.2.1
+
+### Patch Changes
+
+- [#254](https://github.com/adobe/aio-commerce-sdk/pull/254) [`d437000`](https://github.com/adobe/aio-commerce-sdk/commit/d4370008bafe2540ff654bdab1381beab4be85e1) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove `titleCaseSchema`
+
 ## 0.2.0
 
 ### Minor Changes

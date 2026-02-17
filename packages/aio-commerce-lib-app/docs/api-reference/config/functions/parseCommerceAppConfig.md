@@ -120,7 +120,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
 }>;
 ```
 
-Defined in: [config/lib/parser.ts:135](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L135)
+Defined in: [config/lib/parser.ts:135](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L135)
 
 Read the commerce app config file and parse its contents into its schema.
 

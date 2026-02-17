@@ -9,7 +9,7 @@ type InstallationError<TPayload> = {
 };
 ```
 
-Defined in: [management/installation/workflow/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L30)
+Defined in: [management/installation/workflow/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L30)
 
 A structured error with path to the failing step.
 
@@ -27,7 +27,7 @@ A structured error with path to the failing step.
 key: string;
 ```
 
-Defined in: [management/installation/workflow/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L35)
+Defined in: [management/installation/workflow/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L35)
 
 Error key for easy identification.
 
@@ -39,7 +39,7 @@ Error key for easy identification.
 optional message: string;
 ```
 
-Defined in: [management/installation/workflow/types.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L38)
+Defined in: [management/installation/workflow/types.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L38)
 
 Human-readable error message.
 
@@ -51,7 +51,7 @@ Human-readable error message.
 path: string[];
 ```
 
-Defined in: [management/installation/workflow/types.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L32)
+Defined in: [management/installation/workflow/types.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L32)
 
 Path to the step that failed (e.g., ["eventing", "commerce", "providers"]).
 
@@ -63,6 +63,6 @@ Path to the step that failed (e.g., ["eventing", "commerce", "providers"]).
 optional payload: TPayload;
 ```
 
-Defined in: [management/installation/workflow/types.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L41)
+Defined in: [management/installation/workflow/types.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L41)
 
 Additional error payload.

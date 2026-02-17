@@ -25,7 +25,7 @@ type RouteConfig<TPattern, TParamsSchema, TBodySchema, TQuerySchema, TContext> =
   };
 ```
 
-Defined in: [actions/http/types.ts:186](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages-private/common-utils/source/actions/http/types.ts#L186)
+Defined in: [actions/http/types.ts:186](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages-private/common-utils/source/actions/http/types.ts#L186)
 
 Route configuration with type inference from schemas and context.
 If schemas are provided, they're used for both validation AND type inference.
@@ -49,7 +49,7 @@ Otherwise, types are inferred from the path pattern.
 optional body: TBodySchema;
 ```
 
-Defined in: [actions/http/types.ts:202](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages-private/common-utils/source/actions/http/types.ts#L202)
+Defined in: [actions/http/types.ts:202](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages-private/common-utils/source/actions/http/types.ts#L202)
 
 Optional schema for validating and typing request body
 
@@ -74,7 +74,7 @@ handler: (
 ) => Promisable<ActionResponse>;
 ```
 
-Defined in: [actions/http/types.ts:208](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages-private/common-utils/source/actions/http/types.ts#L208)
+Defined in: [actions/http/types.ts:208](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages-private/common-utils/source/actions/http/types.ts#L208)
 
 Route handler with properly typed request and context
 
@@ -97,7 +97,7 @@ Route handler with properly typed request and context
 optional params: TParamsSchema extends StandardSchemaV1 ? ValidParamsSchema<TPattern, TParamsSchema> : undefined;
 ```
 
-Defined in: [actions/http/types.ts:197](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages-private/common-utils/source/actions/http/types.ts#L197)
+Defined in: [actions/http/types.ts:197](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages-private/common-utils/source/actions/http/types.ts#L197)
 
 Optional schema for validating and typing route parameters.
 If provided, must include all parameters from the path pattern.
@@ -110,6 +110,6 @@ If provided, must include all parameters from the path pattern.
 optional query: TQuerySchema;
 ```
 
-Defined in: [actions/http/types.ts:205](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages-private/common-utils/source/actions/http/types.ts#L205)
+Defined in: [actions/http/types.ts:205](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages-private/common-utils/source/actions/http/types.ts#L205)
 
 Optional schema for validating and typing query parameters

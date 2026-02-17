@@ -6,7 +6,7 @@ type BusinessConfig = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/business-configuration.ts:201](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L201)
+Defined in: [aio-commerce-lib-app/source/config/schema/business-configuration.ts:204](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L204)
 
 The keys of the `businessConfig` settings in the app config file.
 
@@ -18,7 +18,7 @@ The keys of the `businessConfig` settings in the app config file.
 optional schema: any[];
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/business-configuration.ts:206](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L206)
+Defined in: [aio-commerce-lib-app/source/config/schema/business-configuration.ts:209](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L209)
 
 The schema of the app business configuration.
 

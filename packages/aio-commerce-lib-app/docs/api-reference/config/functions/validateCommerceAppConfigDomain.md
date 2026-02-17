@@ -120,7 +120,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
 }, T>>;
 ```
 
-Defined in: [config/lib/validate.ts:114](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L114)
+Defined in: [config/lib/validate.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L110)
 
 Validates a specific domain configuration within the commerce app config.
 
@@ -131,9 +131,9 @@ schema for that specific domain.
 
 ## Type Parameters
 
-| Type Parameter                                                                                                       | Description                                                |
-| -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `T` _extends_ \| `"metadata"` \| `"businessConfig"` \| `"eventing"` \| `"installation"` \| `"businessConfig.schema"` | The type of the domain, constrained to valid domain names. |
+| Type Parameter                                                                                                                                                                                                     | Description                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| `T` _extends_ \| `"metadata"` \| `"businessConfig"` \| `"eventing"` \| `"installation"` \| `"businessConfig.schema"` \| `"eventing.commerce"` \| `"eventing.external"` \| `"installation.customInstallationSteps"` | The type of the domain, constrained to valid domain names. |
 
 ## Parameters
 

@@ -11,7 +11,7 @@ const accepted: (
 ) => SuccessResponse<BodyRecord, HeadersRecord>;
 ```
 
-Defined in: [responses/presets.ts:68](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-core/source/responses/presets.ts#L68)
+Defined in: [responses/presets.ts:68](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-core/source/responses/presets.ts#L68)
 
 Creates a success response with the HTTP status code 202.
 See [buildSuccessResponse](../functions/buildSuccessResponse.md) for details on the response payload.

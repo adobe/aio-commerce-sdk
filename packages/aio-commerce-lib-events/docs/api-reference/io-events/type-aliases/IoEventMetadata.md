@@ -8,7 +8,7 @@ type IoEventMetadata = {
 };
 ```
 
-Defined in: [io-events/api/event-metadata/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L16)
+Defined in: [io-events/api/event-metadata/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L16)
 
 Defines the base fields of an event metadata entity.
 
@@ -20,7 +20,7 @@ Defines the base fields of an event metadata entity.
 description: string;
 ```
 
-Defined in: [io-events/api/event-metadata/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L17)
+Defined in: [io-events/api/event-metadata/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L17)
 
 ---
 
@@ -30,7 +30,7 @@ Defined in: [io-events/api/event-metadata/types.ts:17](https://github.com/adobe/
 event_code: string;
 ```
 
-Defined in: [io-events/api/event-metadata/types.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L19)
+Defined in: [io-events/api/event-metadata/types.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L19)
 
 ---
 
@@ -40,4 +40,4 @@ Defined in: [io-events/api/event-metadata/types.ts:19](https://github.com/adobe/
 label: string;
 ```
 
-Defined in: [io-events/api/event-metadata/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L18)
+Defined in: [io-events/api/event-metadata/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L18)

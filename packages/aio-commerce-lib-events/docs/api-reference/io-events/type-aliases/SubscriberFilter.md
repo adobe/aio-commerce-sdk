@@ -4,6 +4,6 @@
 type SubscriberFilter = v.InferInput<typeof SubscriberFilterSchema>;
 ```
 
-Defined in: [io-events/api/event-registrations/schema.ts:237](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/schema.ts#L237)
+Defined in: [io-events/api/event-registrations/schema.ts:237](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/schema.ts#L237)
 
 The subscriber-defined filter for a registration.

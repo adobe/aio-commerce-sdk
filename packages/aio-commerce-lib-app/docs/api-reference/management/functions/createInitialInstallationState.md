@@ -6,7 +6,7 @@ function createInitialInstallationState(
 ): InProgressInstallationState;
 ```
 
-Defined in: [management/installation/runner.ts:51](https://github.com/adobe/aio-commerce-sdk/blob/24de65f0066c2a72e7dbcf59dd146ea501386562/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L51)
+Defined in: [management/installation/runner.ts:51](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L51)
 
 Creates an initial installation state from the config and step definitions.
 Filters steps based on their `when` conditions and builds a tree structure
