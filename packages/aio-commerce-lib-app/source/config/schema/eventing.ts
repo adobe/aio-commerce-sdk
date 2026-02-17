@@ -15,6 +15,7 @@ import {
   alphaNumericOrUnderscoreSchema,
   booleanValueSchema,
   nonEmptyStringValueSchema,
+  stringValueSchema,
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
