@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-app
 
+## 0.3.1
+
+### Patch Changes
+
+- [#260](https://github.com/adobe/aio-commerce-sdk/pull/260) [`dbfb82f`](https://github.com/adobe/aio-commerce-sdk/commit/dbfb82fe4af72fe760df005506bec9f9927bbafc) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix package json detection/creation on `init` script
+
 ## 0.3.0
 
 ### Minor Changes
