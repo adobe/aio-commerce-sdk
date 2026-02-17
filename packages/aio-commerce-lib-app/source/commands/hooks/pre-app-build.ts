@@ -10,31 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
-
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { syncImsCredentials } from "@aio-commerce-sdk/scripting-utils/env";
-import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
-import { stringify } from "safe-stable-stringify";
 
-import {
-  APP_MANIFEST_FILE,
-  EXTENSIBILITY_EXTENSION_POINT_ID,
-  GENERATED_PATH,
-  getExtensionPointFolderPath,
-} from "#commands/constants";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import { loadAppManifest } from "#commands/utils";
 
 type Extension = "extensibility/1" | "configuration/1";
-
-function hashString(str: string): string {
-  return createHash("sha256").update(str).digest("hex");
-}
 
 /**
  * Runs the pre-app-build hook for the given extension.
@@ -42,31 +26,9 @@ function hashString(str: string): string {
  */
 export async function run(extension: Extension) {
   const appManifest = await loadAppManifest();
-  const projectRootDir = await getProjectRootDirectory();
 
   if (extension === "extensibility/1") {
     await generateManifestCommand(appManifest);
-    const extensionPointFolderPath = getExtensionPointFolderPath(
-      EXTENSIBILITY_EXTENSION_POINT_ID,
-    );
-
-    const manifestPath = join(
-      projectRootDir,
-      extensionPointFolderPath,
-      GENERATED_PATH,
-      APP_MANIFEST_FILE,
-    );
-
-    consola.info("Checking for config and manifest mismatches...");
-    const manifest = await readFile(manifestPath, "utf-8");
-    const generatedManifestHash = hashString(manifest);
-    const currentManifestHash = hashString(stringify(appManifest, null, 2));
-
-    if (generatedManifestHash !== currentManifestHash) {
-      throw new Error(
-        "The current manifest does not match the currently generated manifest. Please run `aio-commerce-lib-app generate all` to regenerate the manifest and actions.",
-      );
-    }
 
     consola.info("Syncing IMS credentials...");
     await syncImsCredentials();
