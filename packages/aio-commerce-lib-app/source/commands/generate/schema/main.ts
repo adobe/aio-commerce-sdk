@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { execSync } from "node:child_process";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -18,26 +19,35 @@ import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 
 import {
-  APP_MANIFEST_FILE,
-  EXTENSIBILITY_EXTENSION_POINT_ID,
+  CONFIG_SCHEMA_FILE_NAME,
+  CONFIGURATION_EXTENSION_POINT_ID,
   getExtensionPointFolderPath,
 } from "#commands/constants";
 import { loadAppManifest } from "#commands/utils";
+import { hasBusinessConfigSchema } from "#config/index";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 export async function run(appConfig: CommerceAppConfigOutputModel) {
-  consola.info("Generating app manifest...");
+  consola.info("Generating configuration schema...");
 
-  const contents = JSON.stringify(appConfig, null, 2);
+  if (!hasBusinessConfigSchema(appConfig)) {
+    consola.warn("Business configuration schema not found");
+    return;
+  }
+
+  // TODO: Remove validation command from lib-config once we split encryption setup.
+  execSync("aio-commerce-lib-config schema validate");
+
+  const contents = JSON.stringify(appConfig.businessConfig.schema, null, 2);
   const outputDir = await makeOutputDirFor(
-    `${getExtensionPointFolderPath(EXTENSIBILITY_EXTENSION_POINT_ID)}/.generated`,
+    `${getExtensionPointFolderPath(CONFIGURATION_EXTENSION_POINT_ID)}/.generated`,
   );
 
-  const manifestPath = join(outputDir, APP_MANIFEST_FILE);
+  const manifestPath = join(outputDir, CONFIG_SCHEMA_FILE_NAME);
   await writeFile(manifestPath, contents, "utf-8");
 
-  consola.success(`Generated ${APP_MANIFEST_FILE}`);
+  consola.success(`Generated ${CONFIG_SCHEMA_FILE_NAME}`);
 }
 
 /** Run the generate manifest command */

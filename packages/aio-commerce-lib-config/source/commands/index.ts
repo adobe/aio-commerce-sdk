@@ -15,7 +15,6 @@
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import consola from "consola";
 
-import { run as generateSchemaCommand } from "#commands/generate/schema/run";
 import { run as validateSchemaCommand } from "#commands/schema/validate/run";
 
 const NAMESPACE = "@adobe/aio-commerce-lib-config";
@@ -27,16 +26,12 @@ const USAGE = `
 Usage: ${NAMESPACE} <command> [target]
 
 Commands:
-  generate <target>    Generate artifacts
-    schema             Generate configuration schema only
-
   validate <target>    Validate configuration
     schema             Validate configuration schema
 
   help                 Show this help message
 
 Examples:
-  ${NAMESPACE} generate schema
   ${NAMESPACE} validate schema
 `;
 
@@ -44,9 +39,6 @@ Examples:
  * Command handlers registry mapping command names to their subcommand handlers
  */
 const COMMANDS = {
-  generate: {
-    schema: generateSchemaCommand,
-  },
   validate: {
     schema: validateSchemaCommand,
   },

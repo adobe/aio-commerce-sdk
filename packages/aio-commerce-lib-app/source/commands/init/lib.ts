@@ -125,7 +125,7 @@ export async function ensurePackageJson(
   execCommand: string,
   cwd = process.cwd(),
 ) {
-  const postinstallScript = `${execCommand} aio-commerce-lib-app generate all`;
+  const postinstallScript = `${execCommand} aio-commerce-lib-app hooks postinstall`;
   const packageJson = await readPackageJson(cwd);
 
   if (!packageJson) {

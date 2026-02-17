@@ -119,7 +119,7 @@ export function buildAppManagementExtConfig(
   const extConfig = {
     hooks: {
       "pre-app-build":
-        "$packageExec aio-commerce-lib-app generate manifest && $packageExec aio-commerce-lib-auth sync-ims-credentials",
+        "EXTENSION=extensibility/1 $packageExec aio-commerce-lib-app hooks pre-app-build",
     },
 
     operations: {
@@ -212,7 +212,8 @@ export function buildBusinessConfigurationExtConfig() {
 
   return {
     hooks: {
-      "pre-app-build": "$packageExec aio-commerce-lib-config generate schema",
+      "pre-app-build":
+        "EXTENSION=configuration/1 $packageExec aio-commerce-lib-app hooks pre-app-build",
     },
 
     operations: {

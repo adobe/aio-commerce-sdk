@@ -17,6 +17,9 @@ import consola from "consola";
 
 import { exec as generateActionsCommand } from "#commands/generate/actions/main";
 import { exec as generateManifestCommand } from "#commands/generate/manifest/main";
+import { exec as generateSchemaCommand } from "#commands/generate/schema/main";
+import { exec as postinstallHookCommand } from "#commands/hooks/postinstall";
+import { exec as preAppBuildHookCommand } from "#commands/hooks/pre-app-build";
 import { exec as initCommand } from "#commands/init/main";
 
 const NAMESPACE = "@adobe/aio-commerce-lib-app";
@@ -32,8 +35,9 @@ Commands:
   
   generate <target>    Generate artifacts
     all                Generate app manifest and runtime actions
-    manifest           Generate app manifest only
     actions            Generate runtime actions only
+    manifest           Generate app manifest only
+    schema             Generate configuration schema only
 
   help                 Show this help message
 
@@ -42,6 +46,7 @@ Examples:
   ${NAMESPACE} generate all
   ${NAMESPACE} generate manifest
   ${NAMESPACE} generate actions
+  ${NAMESPACE} generate schema
 `;
 
 /** Run all generate targets in sequence */
@@ -49,14 +54,25 @@ async function generateAll() {
   await generateActionsCommand();
   consola.log.raw("");
   await generateManifestCommand();
+  consola.log.raw("");
+  await generateSchemaCommand();
 }
 
 /** Command handlers registry mapping command names to their subcommand handlers */
 const COMMANDS = {
   init: initCommand,
+
+  // Hooks are "internal" commands.
+  // Users should not need to run these commands directly.
+  hooks: {
+    "pre-app-build": preAppBuildHookCommand,
+    postinstall: postinstallHookCommand,
+  },
+
   generate: {
     actions: generateActionsCommand,
     manifest: generateManifestCommand,
+    schema: generateSchemaCommand,
     all: generateAll,
   },
 } as const;

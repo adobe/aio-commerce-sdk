@@ -30,12 +30,12 @@ import {
   GENERATED_ACTIONS_PATH,
   getExtensionPointFolderPath,
 } from "#commands/constants";
+import { loadAppManifest } from "#commands/utils";
 import {
   getConfigDomains,
   hasBusinessConfigSchema,
   hasCustomInstallationSteps,
 } from "#config/index";
-import { parseCommerceAppConfig } from "#config/lib/parser";
 
 import {
   buildAppManagementExtConfig,
@@ -100,15 +100,6 @@ export async function exec() {
     consola.error(error);
     process.exit(1);
   }
-}
-
-/** Load the app commerce config */
-async function loadAppManifest() {
-  // If the config file is invalid or missing, we want to fail early before generating any files
-  const appConfig = await parseCommerceAppConfig();
-  consola.debug("Loaded app commerce config");
-
-  return appConfig;
 }
 
 /** Update the ext.config.yaml file */
