@@ -12,7 +12,6 @@
 
 import {
   alphaNumericOrHyphenSchema,
-  alphaNumericOrUnderscoreSchema,
   booleanValueSchema,
   nonEmptyStringValueSchema,
   stringValueSchema,
@@ -186,7 +185,7 @@ const CommerceEventSchema = v.object({
 /** Schema for external event configuration */
 const ExternalEventSchema = v.object({
   ...BaseEventSchema.entries,
-  name: alphaNumericOrUnderscoreSchema("event name", "lowercase"),
+  name: nonEmptyStringValueSchema("event name"),
 });
 
 /** Schema for Commerce event source configuration */
