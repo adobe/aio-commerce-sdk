@@ -2,4 +2,4 @@
 "@adobe/aio-commerce-lib-app": patch
 ---
 
-Support any non-empty string for external event names
+Support word characters, hyphens, underscores, and dots for external event names

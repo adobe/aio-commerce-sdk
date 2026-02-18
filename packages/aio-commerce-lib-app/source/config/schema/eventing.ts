@@ -33,6 +33,13 @@ const MAX_KEY_LENGTH = 50;
 const COMMERCE_EVENT_NAME_REGEX = /^(?:plugin|observer)\.[a-z_]+$/;
 
 /**
+ * Regex for external event names.
+ * Allows word characters (letters, digits, underscore), hyphens, underscores, and dots.
+ * Examples: "external_event", "webhook.received", "my-event_123"
+ */
+const EXTERNAL_EVENT_NAME_REGEX = /^[\w\-_.]+$/;
+
+/**
  * Regex for field names according to XSD fieldName pattern.
  * Field name can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
  */
@@ -49,6 +56,21 @@ function commerceEventNameSchema() {
     v.regex(
       COMMERCE_EVENT_NAME_REGEX,
       'Event name must start with "plugin." or "observer." followed by lowercase letters and underscores only (e.g., "plugin.order_placed")',
+    ),
+  );
+}
+
+/**
+ * Schema for external event names.
+ * Validates that the event name contains only word characters (letters, digits, underscore),
+ * hyphens, underscores, and dots.
+ */
+function externalEventNameSchema() {
+  return v.pipe(
+    nonEmptyStringValueSchema("event name"),
+    v.regex(
+      EXTERNAL_EVENT_NAME_REGEX,
+      'Event name must contain only letters, digits, underscores, hyphens, and dots (e.g., "external_event", "webhook.received", "my-event_123")',
     ),
   );
 }
@@ -185,7 +207,7 @@ const CommerceEventSchema = v.object({
 /** Schema for external event configuration */
 const ExternalEventSchema = v.object({
   ...BaseEventSchema.entries,
-  name: nonEmptyStringValueSchema("event name"),
+  name: externalEventNameSchema(),
 });
 
 /** Schema for Commerce event source configuration */
