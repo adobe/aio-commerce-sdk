@@ -15,6 +15,9 @@ catalogs:
     '@adobe/aio-lib-state':
       specifier: ^5.3.1
       version: 5.3.1
+    consola:
+      specifier: ^3.4.2
+      version: 3.4.2
     valibot:
       specifier: ^1.1.0
       version: 1.2.0
@@ -217,7 +220,7 @@ importers:
         specifier: ^8.0.0
         version: 8.0.0
       consola:
-        specifier: ^3.4.2
+        specifier: 'catalog:'
         version: 3.4.2
       jiti:
         specifier: ^2.6.1
@@ -272,7 +275,7 @@ importers:
         specifier: ^4.1.0
         version: 4.2.0
       consola:
-        specifier: ^3.4.2
+        specifier: 'catalog:'
         version: 3.4.2
       oauth-1.0a:
         specifier: ^2.2.6
@@ -321,7 +324,7 @@ importers:
         specifier: 'catalog:'
         version: 5.3.1
       consola:
-        specifier: ^3.4.2
+        specifier: 'catalog:'
         version: 3.4.2
       uuid:
         specifier: ^13.0.0

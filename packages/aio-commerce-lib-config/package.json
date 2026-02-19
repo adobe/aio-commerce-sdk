@@ -78,7 +78,7 @@
     "@adobe/aio-lib-core-logging": "catalog:",
     "@adobe/aio-lib-files": "catalog:",
     "@adobe/aio-lib-state": "catalog:",
-    "consola": "^3.4.2",
+    "consola": "catalog:",
     "uuid": "^13.0.0",
     "valibot": "catalog:"
   },
