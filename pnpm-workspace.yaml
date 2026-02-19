@@ -8,3 +8,7 @@ onlyBuiltDependencies:
   - core-js-pure
   - esbuild
   - msw
+
+catalog:
+  yaml: ^2.8.1
+  valibot: ^1.1.0

@@ -42,7 +42,7 @@
     "@adobe/aio-lib-state": "^5.3.1",
     "@standard-schema/spec": "^1.1.0",
     "regexparam": "^3.0.0",
-    "valibot": "^1.1.0"
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",

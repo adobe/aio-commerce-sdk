@@ -83,7 +83,7 @@
     "ansis": "^4.1.0",
     "consola": "^3.4.2",
     "oauth-1.0a": "^2.2.6",
-    "valibot": "^1.1.0"
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",

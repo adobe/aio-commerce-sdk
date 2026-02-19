@@ -80,7 +80,7 @@
     "@adobe/aio-lib-state": "^5.0.0",
     "consola": "^3.4.2",
     "uuid": "^13.0.0",
-    "valibot": "^1.1.0"
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
