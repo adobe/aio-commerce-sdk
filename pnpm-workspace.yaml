@@ -12,6 +12,7 @@ onlyBuiltDependencies:
 catalog:
   ansis: ^4.1.0
   consola: ^3.4.2
+  type-fest: ^5.0.0
   yaml: ^2.8.1
   valibot: ^1.1.0
   '@adobe/aio-lib-core-logging': ^3.0.2

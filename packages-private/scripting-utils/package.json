@@ -39,6 +39,7 @@
     "@adobe/aio-lib-core-config": "^5.0.1",
     "@adobe/aio-lib-ims": "^8.1.1",
     "dotenv": "^17.2.3",
+    "type-fest": "catalog:",
     "yaml": "catalog:"
   },
   "devDependencies": {

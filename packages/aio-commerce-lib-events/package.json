@@ -80,6 +80,7 @@
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
+    "type-fest": "catalog:",
     "valibot": "catalog:"
   },
   "devDependencies": {

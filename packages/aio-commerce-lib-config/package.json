@@ -79,6 +79,7 @@
     "@adobe/aio-lib-files": "catalog:",
     "@adobe/aio-lib-state": "catalog:",
     "consola": "catalog:",
+    "type-fest": "catalog:",
     "uuid": "^13.0.0",
     "valibot": "catalog:"
   },

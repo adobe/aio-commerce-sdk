@@ -42,6 +42,7 @@
     "@adobe/aio-lib-state": "catalog:",
     "@standard-schema/spec": "^1.1.0",
     "regexparam": "^3.0.0",
+    "type-fest": "catalog:",
     "valibot": "catalog:"
   },
   "devDependencies": {

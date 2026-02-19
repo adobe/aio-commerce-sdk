@@ -101,6 +101,7 @@
     "openwhisk": "^3.21.8",
     "prettier": "^3.8.1",
     "safe-stable-stringify": "^2.5.0",
+    "type-fest": "catalog:",
     "valibot": "catalog:",
     "yaml": "catalog:"
   },

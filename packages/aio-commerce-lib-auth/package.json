@@ -83,6 +83,7 @@
     "ansis": "catalog:",
     "consola": "catalog:",
     "oauth-1.0a": "^2.2.6",
+    "type-fest": "catalog:",
     "valibot": "catalog:"
   },
   "devDependencies": {

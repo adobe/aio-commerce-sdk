@@ -81,6 +81,7 @@
   "dependencies": {
     "ansis": "catalog:",
     "camelcase": "^8.0.0",
+    "type-fest": "catalog:",
     "valibot": "catalog:"
   },
   "devDependencies": {

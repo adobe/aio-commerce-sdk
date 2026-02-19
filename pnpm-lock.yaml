@@ -21,6 +21,9 @@ catalogs:
     consola:
       specifier: ^3.4.2
       version: 3.4.2
+    type-fest:
+      specifier: ^5.0.0
+      version: 5.4.4
     valibot:
       specifier: ^1.1.0
       version: 1.2.0
@@ -68,9 +71,6 @@ importers:
       turbo:
         specifier: ^2.5.4
         version: 2.8.7
-      type-fest:
-        specifier: ^5.0.0
-        version: 5.4.4
       typedoc:
         specifier: ^0.28.7
         version: 0.28.16(typescript@5.9.3)
@@ -129,6 +129,9 @@ importers:
       regexparam:
         specifier: ^3.0.0
         version: 3.0.0
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.4.4
       valibot:
         specifier: 'catalog:'
         version: 1.2.0(typescript@5.9.3)
@@ -160,6 +163,9 @@ importers:
       dotenv:
         specifier: ^17.2.3
         version: 17.3.1
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.4.4
       yaml:
         specifier: 'catalog:'
         version: 2.8.2
@@ -191,6 +197,9 @@ importers:
       ky:
         specifier: ^1.9.0
         version: 1.14.3
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.4.4
     devDependencies:
       '@aio-commerce-sdk/config-tsdown':
         specifier: workspace:*
@@ -237,6 +246,9 @@ importers:
       safe-stable-stringify:
         specifier: ^2.5.0
         version: 2.5.0
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.4.4
       valibot:
         specifier: 'catalog:'
         version: 1.2.0(typescript@5.9.3)
@@ -283,6 +295,9 @@ importers:
       oauth-1.0a:
         specifier: ^2.2.6
         version: 2.2.6
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.4.4
       valibot:
         specifier: 'catalog:'
         version: 1.2.0(typescript@5.9.3)
@@ -329,6 +344,9 @@ importers:
       consola:
         specifier: 'catalog:'
         version: 3.4.2
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.4.4
       uuid:
         specifier: ^13.0.0
         version: 13.0.0
@@ -360,6 +378,9 @@ importers:
       camelcase:
         specifier: ^8.0.0
         version: 8.0.0
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.4.4
       valibot:
         specifier: 'catalog:'
         version: 1.2.0(typescript@5.9.3)
@@ -388,6 +409,9 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.4.4
       valibot:
         specifier: 'catalog:'
         version: 1.2.0(typescript@5.9.3)
@@ -425,6 +449,9 @@ importers:
       '@adobe/aio-commerce-lib-events':
         specifier: workspace:*
         version: link:../aio-commerce-lib-events
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.4.4
     devDependencies:
       '@aio-commerce-sdk/config-tsdown':
         specifier: workspace:*
