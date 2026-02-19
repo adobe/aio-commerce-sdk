@@ -18,7 +18,7 @@ import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 import * as schemaRepository from "#modules/schema/config-schema-repository";
 import { CONFIG_SCHEMA_PATH } from "#utils/constants";
 
-import { SchemaBusinessConfig } from "./schema";
+import { SchemaBusinessConfig } from "./index";
 
 import type { BusinessConfigSchema, BusinessConfigSchemaField } from "./types";
 

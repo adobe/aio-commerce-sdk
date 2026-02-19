@@ -10,6 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
+import type * as v from "valibot";
+import type { FieldSchema, SchemaBusinessConfigSchema } from "./fields";
+
 /** Context needed for schema operations. */
 export type SchemaContext = {
   /** The namespace for isolating schema data. */
@@ -19,11 +22,32 @@ export type SchemaContext = {
   cacheTimeout: number;
 };
 
-export type {
-  BusinessConfig,
-  BusinessConfigSchema,
+/**
+ * The schema type for a configuration field.
+ *
+ * Represents a single field definition in the configuration schema, which can be
+ * one of various types: list, text, password, email, url, or phone.
+ */
+export type BusinessConfigSchemaField = v.InferInput<typeof FieldSchema>;
+
+/**
+ * The schema type for the business configuration schema.
+ *
+ * Represents an array of configuration field definitions that make up the complete
+ * business configuration schema. Must contain at least one field.
+ */
+export type BusinessConfigSchema = v.InferInput<
+  typeof SchemaBusinessConfigSchema
+>;
+
+/** The schema type for the business configuration schema. */
+export type BusinessConfigSchemaValue = BusinessConfigSchemaField["default"];
+
+/**
+ * The schema type for an option in a list configuration field.
+ * Represents a single option that can be selected in a list-type configuration field.
+ */
+export type BusinessConfigSchemaListOption = Extract<
   BusinessConfigSchemaField,
-  BusinessConfigSchemaListOption,
-  BusinessConfigSchemaValue,
-  SchemaBusinessConfig,
-} from "./schema";
+  { type: "list" }
+>["options"][number];
