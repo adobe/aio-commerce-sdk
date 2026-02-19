@@ -88,27 +88,6 @@ const PasswordSchema = v.object({
   default: v.optional(v.string("Expected a string for the default value")),
 });
 
-/** Schema for a boolean field that accepts true or false values */
-/* const BooleanSchema = v.object({
-  ...BaseOptionSchema.entries,
-  type: v.literal("boolean", "Expected the type to be 'boolean'"),
-  default: v.optional(v.boolean("Expected a boolean for the default value")),
-}); */
-
-/** Schema for a number input field that accepts numeric values */
-/* const NumberSchema = v.object({
-  ...BaseOptionSchema.entries,
-  type: v.literal("number", "Expected the type to be 'number'"),
-  default: v.optional(v.number("Expected a number for the default value")),
-}); */
-
-/** Schema for a date input field that accepts date values */
-/* const DateSchema = v.object({
-  ...BaseOptionSchema.entries,
-  type: v.literal("date", "Expected the type to be 'date'"),
-  default: v.optional(v.date("Expected a date for the default value")),
-});
- */
 /** Schema for an email input field that accepts and validates email addresses */
 const EmailSchema = v.object({
   ...BaseOptionSchema.entries,
@@ -153,9 +132,6 @@ const FieldSchema = v.variant("type", [
   ListSchema,
   TextSchema,
   PasswordSchema,
-  // BooleanSchema,
-  // NumberSchema,
-  // DateSchema,
   EmailSchema,
   UrlSchema,
   PhoneSchema,
