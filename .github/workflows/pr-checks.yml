@@ -63,4 +63,6 @@ jobs:
             echo "Comparing against previous commit"
           fi
 
-          pnpm turbo run typecheck check:ci test build publint --affected -vv
+          pnpm turbo run build -vv
+          pnpm install --frozen-lockfile
+          pnpm turbo run typecheck check:ci test publint --affected -vv
