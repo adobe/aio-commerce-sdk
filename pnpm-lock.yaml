@@ -228,6 +228,9 @@ importers:
       '@adobe/aio-commerce-lib-events':
         specifier: workspace:*
         version: link:../aio-commerce-lib-events
+      '@adobe/aio-lib-core-logging':
+        specifier: 'catalog:'
+        version: 3.0.2
       camelcase:
         specifier: ^8.0.0
         version: 8.0.0
@@ -256,9 +259,6 @@ importers:
         specifier: 'catalog:'
         version: 2.8.2
     devDependencies:
-      '@adobe/aio-lib-core-logging':
-        specifier: 'catalog:'
-        version: 3.0.2
       '@aio-commerce-sdk/common-utils':
         specifier: workspace:*
         version: link:../../packages-private/common-utils
