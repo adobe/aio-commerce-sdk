@@ -80,7 +80,7 @@
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-lib-ims": "^8.1.0",
-    "ansis": "^4.1.0",
+    "ansis": "catalog:",
     "consola": "catalog:",
     "oauth-1.0a": "^2.2.6",
     "valibot": "catalog:"

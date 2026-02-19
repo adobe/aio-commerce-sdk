@@ -15,6 +15,9 @@ catalogs:
     '@adobe/aio-lib-state':
       specifier: ^5.3.1
       version: 5.3.1
+    ansis:
+      specifier: ^4.1.0
+      version: 4.2.0
     consola:
       specifier: ^3.4.2
       version: 3.4.2
@@ -272,7 +275,7 @@ importers:
         specifier: ^8.1.0
         version: 8.1.1
       ansis:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.2.0
       consola:
         specifier: 'catalog:'
@@ -352,7 +355,7 @@ importers:
   packages/aio-commerce-lib-core:
     dependencies:
       ansis:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.2.0
       camelcase:
         specifier: ^8.0.0
@@ -433,7 +436,7 @@ importers:
         specifier: ^1.0.0-alpha.1
         version: 1.0.1
       ansis:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.2.0
     devDependencies:
       '@aio-commerce-sdk/config-typescript':

@@ -79,7 +79,7 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
-    "ansis": "^4.1.0",
+    "ansis": "catalog:",
     "camelcase": "^8.0.0",
     "valibot": "catalog:"
   },

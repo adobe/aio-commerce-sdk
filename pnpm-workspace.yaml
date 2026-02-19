@@ -10,6 +10,7 @@ onlyBuiltDependencies:
   - msw
 
 catalog:
+  ansis: ^4.1.0
   consola: ^3.4.2
   yaml: ^2.8.1
   valibot: ^1.1.0
