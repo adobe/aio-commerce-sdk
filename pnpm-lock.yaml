@@ -6,6 +6,15 @@ settings:
 
 catalogs:
   default:
+    '@adobe/aio-lib-core-logging':
+      specifier: ^3.0.2
+      version: 3.0.2
+    '@adobe/aio-lib-files':
+      specifier: ^4.1.2
+      version: 4.1.2
+    '@adobe/aio-lib-state':
+      specifier: ^5.3.1
+      version: 5.3.1
     valibot:
       specifier: ^1.1.0
       version: 1.2.0
@@ -100,13 +109,13 @@ importers:
         specifier: workspace:*
         version: link:../../packages/aio-commerce-lib-core
       '@adobe/aio-lib-core-logging':
-        specifier: ^3.0.2
+        specifier: 'catalog:'
         version: 3.0.2
       '@adobe/aio-lib-files':
-        specifier: ^4.1.2
+        specifier: 'catalog:'
         version: 4.1.2
       '@adobe/aio-lib-state':
-        specifier: ^5.3.1
+        specifier: 'catalog:'
         version: 5.3.1
       '@standard-schema/spec':
         specifier: ^1.1.0
@@ -230,7 +239,7 @@ importers:
         version: 2.8.2
     devDependencies:
       '@adobe/aio-lib-core-logging':
-        specifier: ^3.0.2
+        specifier: 'catalog:'
         version: 3.0.2
       '@aio-commerce-sdk/common-utils':
         specifier: workspace:*
@@ -303,13 +312,13 @@ importers:
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
       '@adobe/aio-lib-core-logging':
-        specifier: ^3.0.2
+        specifier: 'catalog:'
         version: 3.0.2
       '@adobe/aio-lib-files':
-        specifier: ^4.0.0
+        specifier: 'catalog:'
         version: 4.1.2
       '@adobe/aio-lib-state':
-        specifier: ^5.0.0
+        specifier: 'catalog:'
         version: 5.3.1
       consola:
         specifier: ^3.4.2
