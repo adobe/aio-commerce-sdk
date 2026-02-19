@@ -48,6 +48,8 @@ jobs:
 
         # See: https://turborepo.com/docs/reference/run#--affected
       - name: Run Turbo tasks on affected packages
+        env:
+          PUBLISH: true
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             # For PRs, compare the feature branch against the target branch
