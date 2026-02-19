@@ -12,6 +12,8 @@
 
 import { join } from "node:path";
 
+import { privateDepsExtractionHook } from "./private-deps-extraction-hook.js";
+
 const OUT_DIR = "./dist";
 const ADOBE_LICENSE_BANNER = `
 /**
@@ -62,4 +64,7 @@ export const baseConfig = {
 
   dts: true,
   treeshake: true,
+  hooks(hooks) {
+    hooks.hook("build:before", privateDepsExtractionHook);
+  },
 };
