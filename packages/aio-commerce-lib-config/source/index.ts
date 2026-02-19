@@ -25,6 +25,7 @@ export {
   type SelectorByCodeAndLevel,
   type SelectorByScopeId,
 } from "./config-utils";
+export { SchemaBusinessConfig } from "./modules/schema/schema";
 export * from "./types";
 export {
   generateEncryptionKey,

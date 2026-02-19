@@ -50,7 +50,7 @@ type ImsContext = {
  * @param key - The environment variable key to replace or create
  * @param value - The new value for the environment variable
  */
-function replaceEnvVar(filePath: string, key: string, value: string) {
+export function replaceEnvVar(filePath: string, key: string, value: string) {
   const envPath = path.resolve(filePath);
   const envFile = readFileSync(envPath, "utf8");
   const envLines = envFile.split("\n");

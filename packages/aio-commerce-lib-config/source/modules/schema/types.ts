@@ -25,6 +25,5 @@ export type {
   BusinessConfigSchemaField,
   BusinessConfigSchemaListOption,
   BusinessConfigSchemaValue,
-  CommerceAppConfig,
   SchemaBusinessConfig,
-} from "@adobe/aio-commerce-lib-app/config";
+} from "./schema";
