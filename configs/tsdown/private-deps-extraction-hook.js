@@ -42,7 +42,6 @@ function loadPackagesFromDir(packagesDir) {
 function validatePackageConfiguration(
   buildPackageDependencies,
   noExternal,
-  logger,
   privatePackages,
 ) {
   // Case C: Check if private packages are in dependencies (should be devDependencies)
@@ -52,11 +51,10 @@ function validatePackageConfiguration(
   );
 
   if (withinDependencies.size > 0) {
-    logger.error(
-      "Private packages found in dependencies (should be devDependencies):",
-      Array.from(withinDependencies.keys()),
+    const packages = Array.from(withinDependencies.keys()).join(", ");
+    throw new Error(
+      `Private packages found in dependencies (should be devDependencies): ${packages}`,
     );
-    process.exit(1);
   }
 
   // Case C: Check if private packages are in peerDependencies (should be devDependencies)
@@ -66,11 +64,10 @@ function validatePackageConfiguration(
   );
 
   if (withinPeerDependencies.size > 0) {
-    logger.error(
-      "Private packages found in peerDependencies (should be devDependencies):",
-      Array.from(withinPeerDependencies.keys()),
+    const packages = Array.from(withinPeerDependencies.keys()).join(", ");
+    throw new Error(
+      `Private packages found in peerDependencies (should be devDependencies): ${packages}`,
     );
-    process.exit(1);
   }
 
   // Case A: Check if noExternal packages are missing from devDependencies
@@ -82,11 +79,10 @@ function validatePackageConfiguration(
   );
 
   if (missingFromDevDeps.length > 0) {
-    logger.error(
-      "Private packages in noExternal but missing from devDependencies:",
-      missingFromDevDeps,
+    const packages = missingFromDevDeps.join(", ");
+    throw new Error(
+      `Private packages in noExternal but missing from devDependencies: ${packages}`,
     );
-    process.exit(1);
   }
 }
 
@@ -176,7 +172,6 @@ export async function privateDepsExtractionHook(ctx) {
   validatePackageConfiguration(
     buildPackageDependencies,
     noExternal,
-    logger,
     privatePackages,
   );
 
