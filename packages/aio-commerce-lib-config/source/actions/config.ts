@@ -22,6 +22,7 @@ import {
   getConfigSchema,
   getConfiguration,
   setConfiguration,
+  setGlobalLibConfigOptions,
 } from "../config-manager";
 import { byCode, byCodeAndLevel, byScopeId } from "../config-utils";
 
@@ -58,6 +59,12 @@ router.get("/", {
       return badRequest(message);
     }
 
+    if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
+      setGlobalLibConfigOptions({
+        encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+      });
+    }
+
     let selector: SelectorBy;
 
     if (id) {
@@ -73,9 +80,15 @@ router.get("/", {
       logger.debug(`Retrieving configuration by code: ${code}`);
     }
 
-    const appConfiguration = await getConfiguration(selector, {
-      encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY ?? null,
-    });
+    const appConfiguration = await getConfiguration(selector);
+
+    // Make sure we reset the encryption key to null after the operation is complete.
+    // Otherwise on warm invocations, the key may be kept in memory.
+    if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
+      setGlobalLibConfigOptions({
+        encryptionKey: null,
+      });
+    }
 
     return ok({ body: appConfiguration });
   },
@@ -104,6 +117,12 @@ router.post("/", {
       return badRequest(message);
     }
 
+    if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
+      setGlobalLibConfigOptions({
+        encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+      });
+    }
+
     const payload = {
       config: req.body.config,
     } satisfies SetConfigurationRequest;
@@ -112,9 +131,15 @@ router.post("/", {
       ? byScopeId(id)
       : byCodeAndLevel(code as string, level as string);
 
-    const result = await setConfiguration(payload, selector, {
-      encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY ?? null,
-    });
+    const result = await setConfiguration(payload, selector);
+
+    // Make sure we reset the encryption key to null after the operation is complete.
+    // Otherwise on warm invocations, the key may be kept in memory.
+    if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
+      setGlobalLibConfigOptions({
+        encryptionKey: null,
+      });
+    }
 
     return ok({
       body: { result },

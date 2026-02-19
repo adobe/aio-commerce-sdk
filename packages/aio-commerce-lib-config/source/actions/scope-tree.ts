@@ -157,9 +157,9 @@ router.delete("/commerce", {
     const { logger } = ctx;
 
     logger.debug("Unsyncing commerce scopes...");
-    const result = await unsyncCommerceScopes();
+    const { unsynced } = await unsyncCommerceScopes();
 
-    if (result) {
+    if (unsynced) {
       const message = "Commerce scopes unsynced successfully";
 
       logger.debug(message);

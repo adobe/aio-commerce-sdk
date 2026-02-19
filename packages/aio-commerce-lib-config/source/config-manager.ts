@@ -247,30 +247,27 @@ export async function syncCommerceScopes(
 /**
  * Removes the commerce scope from the persisted scope tree.
  *
- * @returns Promise resolving to a boolean indicating whether the scope was found and removed,
- *   or if it was already not present.
+ * @returns Promise resolving to an object with `unsynced` boolean indicating whether the
+ * scope was found and removed, or `false` if it was already not present.
  *
  * @example
  * ```typescript
  * import { unsyncCommerceScopes } from "@adobe/aio-commerce-lib-config";
  *
- * try {
- *   const result = await unsyncCommerceScopes();
- *
- *   if (result) {
- *     console.log("Commerce scope removed successfully");
- *   }
- * } catch (error) {
- *   console.error("Failed to unsync commerce scopes:", error);
+ * const result = await unsyncCommerceScopes();
+ * if (result.unsynced) {
+ *   console.log("Commerce scope removed successfully");
+ * } else {
+ *   console.log("Commerce scope not found");
  * }
  * ```
  */
-export async function unsyncCommerceScopes(): Promise<boolean> {
+export async function unsyncCommerceScopes() {
   const COMMERCE_SCOPE_CODE = "commerce";
   const scopeTree = await getPersistedScopeTree(DEFAULT_NAMESPACE);
 
   if (!scopeTree.some((scope) => scope.code === COMMERCE_SCOPE_CODE)) {
-    return true;
+    return { unsynced: false };
   }
 
   // Remove 'commerce' scope
@@ -280,8 +277,7 @@ export async function unsyncCommerceScopes(): Promise<boolean> {
 
   // Save updated scope tree
   await saveScopeTree(DEFAULT_NAMESPACE, updatedScopeTree);
-
-  return true;
+  return { unsynced: true };
 }
 
 /**
