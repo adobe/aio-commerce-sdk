@@ -130,10 +130,11 @@ function extractDependencies(
 export async function privateDepsExtractionHook(ctx) {
   const { logger, noExternal, pkg } = ctx.options;
 
-  const publishFlag = process.argv.includes("--publish");
+  const publishFlag =
+    process.env.PUBLISH === "true" || process.argv.includes("--publish");
   if (!publishFlag) {
     logger.info(
-      "--publish flag not set, skipping private dependency extraction hook.",
+      "PUBLISH not enabled, skipping private dependency extraction hook.",
     );
     return;
   }

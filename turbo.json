@@ -1,6 +1,6 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalEnv": ["NODE_ENV", "CI"],
+  "globalEnv": ["NODE_ENV", "CI", "PUBLISH"],
   "tasks": {
     "assist:apply": {
       "dependsOn": ["lint:fix"]
@@ -16,7 +16,8 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**"],
+      "env": ["PUBLISH"]
     },
     "pack": {
       "dependsOn": ["build"],

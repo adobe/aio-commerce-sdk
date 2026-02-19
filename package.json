@@ -19,6 +19,7 @@
     "format:check": "turbo run format:check",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
+    "pack:all": "turbo run pack",
     "test": "turbo test",
     "typecheck": "turbo typecheck",
     "publint": "turbo run publint",
