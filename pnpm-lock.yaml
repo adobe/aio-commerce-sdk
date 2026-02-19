@@ -388,6 +388,9 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
+      valibot:
+        specifier: 'catalog:'
+        version: 1.2.0(typescript@5.9.3)
     devDependencies:
       '@aio-commerce-sdk/common-utils':
         specifier: workspace:*

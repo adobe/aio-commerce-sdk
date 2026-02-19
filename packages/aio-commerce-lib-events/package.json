@@ -79,7 +79,8 @@
   "dependencies": {
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-auth": "workspace:*",
-    "@adobe/aio-commerce-lib-core": "workspace:*"
+    "@adobe/aio-commerce-lib-core": "workspace:*",
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
