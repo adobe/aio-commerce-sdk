@@ -65,63 +65,52 @@ export const baseConfig = {
   dts: true,
   treeshake: true,
   hooks(hooks) {
-    try {
-      hooks.hook("build:before", privateDepsExtractionHook);
+    hooks.hook("build:before", async (ctx) => {
+      try {
+        await privateDepsExtractionHook(ctx);
+      } catch (error) {
+        ctx.options.logger.error(error);
+        throw error;
+      }
+    });
 
-      // Track if we've already installed (build:done runs per format)
-      let hasInstalled = false;
+    // Track if we've already installed (build:done runs per format)
+    let hasInstalled = false;
 
-      // Install dependencies after build if PUBLISH mode is enabled
-      hooks.hook("build:done", async (ctx) => {
-        const { logger } = ctx.options;
-        logger.info(
-          "Build completed, checking if dependency installation is needed...",
-          `${hasInstalled ? "(already installed)" : "(not installed yet)"}`,
-        );
-        if (hasInstalled) {
-          return; // Already installed, skip
-        }
+    // Install dependencies after build if PUBLISH mode is enabled
+    hooks.hook("build:done", async (ctx) => {
+      if (hasInstalled) {
+        return; // Already installed, skip
+      }
 
-        const shouldInstall =
-          process.env.PUBLISH === "true" || process.argv.includes("--publish");
+      const shouldInstall =
+        process.env.PUBLISH === "true" || process.argv.includes("--publish");
 
-        logger.info(
-          "Build completed, checking if dependency installation is needed...",
-          `${shouldInstall ? "(should install)" : "(no yet)"}`,
-        );
+      if (!shouldInstall) {
+        return;
+      }
 
-        if (!shouldInstall) {
-          return;
-        }
+      hasInstalled = true;
+      const { logger } = ctx.options;
+      logger.info("Installing dependencies after build...");
 
-        hasInstalled = true;
-        logger.info("Installing dependencies after build...");
+      const { execSync } = await import("node:child_process");
+      const { dirname } = await import("node:path");
 
-        const { execSync } = await import("node:child_process");
-        const { dirname } = await import("node:path");
+      const packageDir = dirname(ctx.options.pkg.packageJsonPath);
 
-        const packageDir = dirname(ctx.options.pkg.packageJsonPath);
-
-        logger.info("123...");
-
-        try {
-          execSync("pnpm install --no-frozen-lockfile", {
-            cwd: packageDir,
-            stdio: "inherit",
-          });
-          logger.info("✓ Dependencies installed successfully");
-        } catch (error) {
-          logger.error("Failed to install dependencies:", error.message);
-          // Don't fail the build, just warn
-          logger.warn("Build completed but dependency installation failed");
-        }
-      });
-    } catch (error) {
-      // If any error occurs while setting up hooks, log it but don't throw
-      console.error(
-        "Error setting up TSDown hooks. Build will proceed without custom hooks.",
-        error,
-      );
-    }
+      try {
+        execSync("pnpm install --no-frozen-lockfile", {
+          cwd: packageDir,
+          stdio: "inherit",
+        });
+        logger.info("✓ Dependencies installed successfully");
+      } catch (error) {
+        logger.error("Failed to install dependencies:", error.message);
+        // Don't fail the build, just warn
+        logger.warn("Build completed but dependency installation failed");
+        throw error;
+      }
+    });
   },
 };
