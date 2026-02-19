@@ -51,6 +51,16 @@ jobs:
         env:
           PUBLISH: true
         run: |
-          pnpm turbo run build -vv
-          pnpm install --frozen-lockfile
-          pnpm turbo run typecheck check:ci test publint --affected -vv
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # For PRs, compare the feature branch against the target branch
+            export TURBO_SCM_BASE=origin/${{ github.base_ref }}
+            export TURBO_SCM_HEAD=${{ github.event.pull_request.head.sha }}
+            echo "Comparing $TURBO_SCM_HEAD against $TURBO_SCM_BASE"
+          else
+            # For pushes to main, compare against the previous commit
+            export TURBO_SCM_BASE=HEAD^1
+            export TURBO_SCM_HEAD=HEAD
+            echo "Comparing against previous commit"
+          fi
+
+          pnpm turbo run typecheck check:ci test build publint --affected
