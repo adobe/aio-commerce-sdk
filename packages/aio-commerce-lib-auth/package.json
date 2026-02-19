@@ -93,5 +93,6 @@
     "@aio-commerce-sdk/common-utils": "workspace:*",
     "@aio-commerce-sdk/scripting-utils": "workspace:*"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "peerDependencies": {}
 }

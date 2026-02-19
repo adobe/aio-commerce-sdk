@@ -102,15 +102,7 @@
     "prettier": "^3.8.1",
     "safe-stable-stringify": "^2.5.0",
     "valibot": "^1.1.0",
-    "dotenv": "^17.2.3",
-    "regexparam": "^3.0.0",
-    "@adobe/aio-lib-core-config": "^5.0.1",
-    "@adobe/aio-lib-ims": "^8.1.1",
-    "@adobe/aio-lib-core-logging": "^3.0.2",
-    "@adobe/aio-lib-files": "^4.1.2",
-    "@adobe/aio-lib-state": "^5.3.1",
-    "@standard-schema/spec": "^1.1.0",
-    "yaml": "^2.8.2"
+    "yaml": "^2.8.1"
   },
   "devDependencies": {
     "@adobe/aio-lib-core-logging": "^3.0.2",
@@ -121,5 +113,6 @@
     "@aio-commerce-sdk/config-vitest": "workspace:*",
     "@aio-commerce-sdk/scripting-utils": "workspace:*"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "peerDependencies": {}
 }

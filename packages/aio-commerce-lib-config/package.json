@@ -73,16 +73,14 @@
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-api": "workspace:*",
-    "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-app": "workspace:*",
+    "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-lib-core-logging": "^3.0.2",
     "@adobe/aio-lib-files": "^4.0.0",
     "@adobe/aio-lib-state": "^5.0.0",
     "consola": "^3.4.2",
-    "jiti": "^2.6.1",
     "uuid": "^13.0.0",
-    "valibot": "^1.1.0",
-    "yaml": "^2.6.1"
+    "valibot": "^1.1.0"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
@@ -91,5 +89,6 @@
     "@aio-commerce-sdk/config-vitest": "workspace:*",
     "@aio-commerce-sdk/scripting-utils": "workspace:*"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "peerDependencies": {}
 }

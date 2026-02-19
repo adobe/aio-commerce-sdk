@@ -77,10 +77,9 @@
     "test:watch": "vitest --watch --coverage"
   },
   "dependencies": {
-    "@adobe/aio-commerce-lib-auth": "workspace:*",
-    "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-api": "workspace:*",
-    "valibot": "^1.1.0"
+    "@adobe/aio-commerce-lib-auth": "workspace:*",
+    "@adobe/aio-commerce-lib-core": "workspace:*"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
@@ -90,5 +89,6 @@
     "@aio-commerce-sdk/common-utils": "workspace:*",
     "msw": "^2.11.1"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "peerDependencies": {}
 }
