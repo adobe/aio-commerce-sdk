@@ -1,5 +1,17 @@
 // @ts-check
 
+/*
+ * Copyright 2026 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
 // configs/tsdown/plugins/selective-bundle.js
 //
 // Rolldown plugin that:
@@ -7,15 +19,16 @@
 //   2. Externalizes their transitive dependencies
 //   3. Writes .build/package.json with only the tree-shaken transitive deps injected
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
 
 import { PRIVATE_PACKAGES_INFO } from "./constants.js";
 import {
-  collectSurvivingExternals,
+  buildEnrichedPackageJson,
+  buildManifest,
   getBareModuleName,
   isInsideBundledPackage,
   resolveRealPath,
+  writeBuildArtifacts,
 } from "./helpers.js";
 
 /**
@@ -33,28 +46,14 @@ import {
  * @returns {import('rolldown').Plugin}
  */
 export function selectiveBundlePlugin() {
-  const privatePackages = PRIVATE_PACKAGES_INFO;
   const packageRoot = process.cwd();
   const buildDir = resolve(packageRoot, ".build");
+  const externalizedByPlugin = new Set();
 
-  const privatePkgDirs = privatePackages.map((pkg) => pkg.path);
-  const privatePkgNames = new Set(privatePackages.map((pkg) => pkg.name));
-  const allPrivateDeps = new Map();
+  const privatePkgDirs = PRIVATE_PACKAGES_INFO.map((pkg) => pkg.path);
+  const privatePkgNames = new Set(PRIVATE_PACKAGES_INFO.map((pkg) => pkg.name));
 
-  for (const pkg of privatePackages) {
-    for (const [dep, version] of Object.entries(pkg.deps)) {
-      if (!version) {
-        throw new Error(
-          `Missing version for dependency "${dep}" in package "${pkg.name}"`,
-        );
-      }
-
-      allPrivateDeps.set(dep, { source: pkg.name, version });
-    }
-  }
-
-  /** @type {import('rolldown').Plugin} */
-  const plugin = {
+  return {
     name: "rolldown-plugin-selective-bundle-externals",
 
     resolveId(source, importer) {
@@ -62,6 +61,7 @@ export function selectiveBundlePlugin() {
         return null;
       }
 
+      // Internal references — always bundle
       if (
         source.startsWith(".") ||
         source.startsWith("#") ||
@@ -70,65 +70,28 @@ export function selectiveBundlePlugin() {
         return null;
       }
 
+      // Not coming from a private package — not our concern
       const resolved = resolveRealPath(importer);
-
       if (!isInsideBundledPackage(resolved, privatePkgDirs)) {
         return null;
       }
 
+      // Another private package — let the bundler handle it
       const bare = getBareModuleName(source);
       if (privatePkgNames.has(bare)) {
         return null;
       }
 
+      // Third-party dep from inside a private package — externalize
+      externalizedByPlugin.add(bare);
       return { id: source, external: true };
     },
 
     generateBundle(_options, bundle) {
-      const surviving = collectSurvivingExternals(bundle);
+      const manifest = buildManifest(bundle, externalizedByPlugin);
+      const pkg = buildEnrichedPackageJson(packageRoot, manifest);
 
-      const manifest = {};
-      for (const ext of surviving) {
-        const info = allPrivateDeps.get(ext);
-
-        if (info) {
-          manifest[ext] = info;
-        }
-      }
-
-      // Write .build/
-      if (!existsSync(buildDir)) {
-        mkdirSync(buildDir, { recursive: true });
-      }
-
-      writeFileSync(
-        resolve(buildDir, ".transitive-deps.json"),
-        `${JSON.stringify(manifest, null, 2)}\n`,
-      );
-
-      // Enrich package.json with surviving transitive deps
-      const pkg = JSON.parse(
-        readFileSync(resolve(packageRoot, "package.json"), "utf-8"),
-      );
-
-      pkg.dependencies ??= {};
-
-      for (const [name, info] of Object.entries(manifest)) {
-        if (!pkg.dependencies[name]) {
-          pkg.dependencies[name] = info.version;
-        }
-      }
-
-      pkg.dependencies = Object.fromEntries(
-        Object.entries(pkg.dependencies).sort(([a], [b]) => a.localeCompare(b)),
-      );
-
-      writeFileSync(
-        resolve(buildDir, "package.json"),
-        `${JSON.stringify(pkg, null, 2)}\n`,
-      );
+      writeBuildArtifacts(buildDir, manifest, pkg);
     },
   };
-
-  return plugin;
 }

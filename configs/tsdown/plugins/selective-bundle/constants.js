@@ -1,3 +1,15 @@
+/*
+ * Copyright 2026 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
 import { readdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,4 +50,17 @@ export const PRIVATE_PACKAGES_INFO = await Promise.all(
       },
     };
   }),
+);
+
+/**
+ * Flattened lookup of every dependency declared across all private packages.
+ * @type {Map<string, { source: string; version: string }>}
+ */
+export const PRIVATE_DEPS_LOOKUP = new Map(
+  PRIVATE_PACKAGES_INFO.flatMap((pkg) =>
+    Object.entries(pkg.deps).map(([dep, version]) => [
+      dep,
+      { source: pkg.name, version },
+    ]),
+  ),
 );
