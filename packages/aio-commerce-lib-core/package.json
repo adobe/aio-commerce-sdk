@@ -79,7 +79,7 @@
   },
   "dependencies": {
     "ansis": "catalog:",
-    "camelcase": "^8.0.0",
+    "camelcase": "catalog:",
     "type-fest": "catalog:",
     "valibot": "catalog:"
   },

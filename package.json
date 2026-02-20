@@ -37,7 +37,7 @@
     "@vitest/coverage-v8": "^4.0.0",
     "@vitest/ui": "^4.0.0",
     "husky": "^9.1.7",
-    "prettier": "^3.6.2",
+    "prettier": "catalog:",
     "publint": "^0.3.15",
     "tsdown": "^0.20.3",
     "turbo": "^2.5.4",
