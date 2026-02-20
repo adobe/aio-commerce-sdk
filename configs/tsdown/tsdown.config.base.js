@@ -13,7 +13,7 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { privatePackageExternalsPlugin } from "./plugins/private-package-externals.js";
+import { selectiveBundlePlugin } from "#plugins/selective-bundle/plugin.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,7 +23,7 @@ const ADOBE_LICENSE_BANNER = `
 /**
  * @license
  *
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright ${new Date().getFullYear()} Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -35,9 +35,6 @@ const ADOBE_LICENSE_BANNER = `
  */
 `.trimStart();
 
-// Get the monorepo root (two levels up from configs/tsdown)
-const MONOREPO_ROOT = join(__dirname, "../..");
-
 /**
  * Base configuration to extend from for all TSDown configurations.
  * @see https://tsdown.dev/options/config-file
@@ -45,6 +42,8 @@ const MONOREPO_ROOT = join(__dirname, "../..");
  */
 export const baseConfig = {
   entry: [],
+
+  plugins: [selectiveBundlePlugin()],
   format: {
     cjs: {
       outputOptions: {
@@ -71,14 +70,4 @@ export const baseConfig = {
 
   dts: true,
   treeshake: true,
-
-  // Automatically externalize dependencies of private packages
-  // when they are bundled via noExternal
-  plugins: [
-    privatePackageExternalsPlugin({
-      projectRoot: MONOREPO_ROOT,
-      privatePackagePatterns: ["packages-private/*"],
-      verbose: false, // Set to true for debugging
-    }),
-  ],
 };
