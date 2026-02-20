@@ -8,7 +8,7 @@
 //   3. Writes .build/package.json with only the tree-shaken transitive deps injected
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { isAbsolute, relative, resolve } from "node:path";
+import { isAbsolute, resolve } from "node:path";
 
 import { PRIVATE_PACKAGES_INFO } from "./constants.js";
 import {
@@ -39,9 +39,8 @@ export function selectiveBundlePlugin() {
 
   const privatePkgDirs = privatePackages.map((pkg) => pkg.path);
   const privatePkgNames = new Set(privatePackages.map((pkg) => pkg.name));
-
-  /** @type {Map<string, { source: string; version: string }>} */
   const allPrivateDeps = new Map();
+
   for (const pkg of privatePackages) {
     for (const [dep, version] of Object.entries(pkg.deps)) {
       if (!version) {
@@ -56,20 +55,18 @@ export function selectiveBundlePlugin() {
 
   /** @type {import('rolldown').Plugin} */
   const plugin = {
-    name: "selective-bundle-externals",
+    name: "rolldown-plugin-selective-bundle-externals",
 
     resolveId(source, importer) {
       if (!importer) {
         return null;
       }
+
       if (source.startsWith(".") || isAbsolute(source)) {
         return null;
       }
 
       const resolved = resolveRealPath(importer);
-      console.log(
-        `[selective-bundle:debug] resolveId called: "${source}" from "${resolved}"`,
-      );
 
       if (!isInsideBundledPackage(resolved, privatePkgDirs)) {
         return null;
@@ -80,24 +77,16 @@ export function selectiveBundlePlugin() {
         return null;
       }
 
-      console.log(`[selective-bundle:debug] → externalizing "${source}"`);
       return { id: source, external: true };
     },
 
     generateBundle(_options, bundle) {
       const surviving = collectSurvivingExternals(bundle);
-      console.log("[selective-bundle:debug] surviving externals:", [
-        ...surviving,
-      ]);
-      console.log("[selective-bundle:debug] allPrivateDeps keys:", [
-        ...allPrivateDeps.keys(),
-      ]);
 
-      // Intersect surviving externals with known private package deps
-      /** @type {Record<string, { source: string; version: string }>} */
       const manifest = {};
       for (const ext of surviving) {
         const info = allPrivateDeps.get(ext);
+
         if (info) {
           manifest[ext] = info;
         }
@@ -120,11 +109,9 @@ export function selectiveBundlePlugin() {
 
       pkg.dependencies ??= {};
 
-      let injected = 0;
       for (const [name, info] of Object.entries(manifest)) {
         if (!pkg.dependencies[name]) {
           pkg.dependencies[name] = info.version;
-          injected++;
         }
       }
 
@@ -135,11 +122,6 @@ export function selectiveBundlePlugin() {
       writeFileSync(
         resolve(buildDir, "package.json"),
         `${JSON.stringify(pkg, null, 2)}\n`,
-      );
-
-      console.log(
-        `[selective-bundle] ${Object.keys(manifest).length} transitive deps survived tree-shaking` +
-          ` (${injected} injected) → ${relative(packageRoot, buildDir)}/package.json`,
       );
     },
   };
