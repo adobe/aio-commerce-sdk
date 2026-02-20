@@ -93,7 +93,7 @@
   "dependencies": {
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
-    "camelcase": "^8.0.0",
+    "camelcase": "^9.0.0",
     "ky": "^1.9.0"
   },
   "devDependencies": {
