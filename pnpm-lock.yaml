@@ -377,6 +377,9 @@ importers:
       consola:
         specifier: 'catalog:'
         version: 3.4.2
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       type-fest:
         specifier: 'catalog:'
         version: 5.4.4
