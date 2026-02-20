@@ -22,7 +22,7 @@
   "module": "./dist/es/index.mjs",
   "types": "./dist/cjs/index.d.cts",
   "bin": {
-    "@adobe/aio-commerce-lib-config": "./dist/es/commands/index.mjs"
+    "@adobe/aio-commerce-lib-config": "./bin/cli.mjs"
   },
   "publishConfig": {
     "exports": {
@@ -48,6 +48,7 @@
     "#test/*": "./test/*.ts"
   },
   "files": [
+    "bin",
     "dist",
     "package.json",
     "CHANGELOG.md",

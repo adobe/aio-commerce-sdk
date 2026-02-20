@@ -18,7 +18,7 @@
     "directory": "packages/aio-commerce-lib-app"
   },
   "bin": {
-    "@adobe/aio-commerce-lib-app": "./dist/es/commands/index.mjs"
+    "@adobe/aio-commerce-lib-app": "./bin/cli.mjs"
   },
   "publishConfig": {
     "exports": {
@@ -67,6 +67,7 @@
     "#templates/*": "./source/commands/generate/actions/templates/*.template"
   },
   "files": [
+    "bin",
     "dist",
     "package.json",
     "CHANGELOG.md",
