@@ -62,7 +62,11 @@ export function selectiveBundlePlugin() {
         return null;
       }
 
-      if (source.startsWith(".") || isAbsolute(source)) {
+      if (
+        source.startsWith(".") ||
+        source.startsWith("#") ||
+        isAbsolute(source)
+      ) {
         return null;
       }
 
