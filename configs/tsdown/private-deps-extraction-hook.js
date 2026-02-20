@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 function getPackageInfo(privatePackageNames, privatePackagesDir) {
@@ -123,7 +123,7 @@ function extractDependencies(
   }
 }
 
-export async function privateDepsExtractionHook(ctx) {
+export function privateDepsExtractionHook(ctx) {
   const { logger, noExternal, pkg } = ctx.options;
 
   const publishFlag =
@@ -237,12 +237,13 @@ export async function privateDepsExtractionHook(ctx) {
       Array.from(buildPackageDependencies.peerDependencies.entries()).sort(),
     );
 
-    const { writeFileSync } = await import("node:fs");
     writeFileSync(
       pkg.packageJsonPath,
       `${JSON.stringify(pkgJson, null, 2)}\n`,
       "utf-8",
     );
+
+    logger.info(ctx);
 
     logger.info("✓ Successfully merged private package dependencies");
   } else {

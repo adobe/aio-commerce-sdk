@@ -10,7 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import { join } from "node:path";
+import { execSync } from "node:child_process";
+import { dirname, join } from "node:path";
 
 import { privateDepsExtractionHook } from "./private-deps-extraction-hook.js";
 
@@ -65,20 +66,10 @@ export const baseConfig = {
   dts: true,
   treeshake: true,
   hooks(hooks) {
-    hooks.hook("build:before", async (ctx) => {
-      try {
-        await privateDepsExtractionHook(ctx);
-      } catch (error) {
-        ctx.options.logger.error(error);
-        throw error;
-      }
-    });
-
+    hooks.hook("build:prepare", privateDepsExtractionHook);
     // Track if we've already installed (build:done runs per format)
     let hasInstalled = false;
-
-    // Install dependencies after build if PUBLISH mode is enabled
-    hooks.hook("build:done", async (ctx) => {
+    hooks.hook("build:prepare", (ctx) => {
       if (hasInstalled) {
         return; // Already installed, skip
       }
@@ -94,9 +85,6 @@ export const baseConfig = {
       const { logger } = ctx.options;
       logger.info("Installing dependencies after build...");
 
-      const { execSync } = await import("node:child_process");
-      const { dirname } = await import("node:path");
-
       const packageDir = dirname(ctx.options.pkg.packageJsonPath);
 
       try {
@@ -109,7 +97,6 @@ export const baseConfig = {
         logger.error("Failed to install dependencies:", error.message);
         // Don't fail the build, just warn
         logger.warn("Build completed but dependency installation failed");
-        throw error;
       }
     });
   },
