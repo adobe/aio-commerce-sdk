@@ -455,6 +455,9 @@ importers:
       '@aio-commerce-sdk/config-vitest':
         specifier: workspace:*
         version: link:../../configs/vitest
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../scripts
       msw:
         specifier: ^2.11.1
         version: 2.12.10(@types/node@24.10.13)(typescript@5.9.3)
@@ -489,6 +492,12 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+
+  scripts:
+    devDependencies:
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../configs/typescript
 
   turbo/generators:
     dependencies:

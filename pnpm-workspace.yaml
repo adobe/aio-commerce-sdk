@@ -2,6 +2,7 @@ packages:
   - configs/*
   - packages/*
   - packages-private/*
+  - scripts
   - turbo/*
 
 onlyBuiltDependencies:
