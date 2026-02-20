@@ -74,7 +74,9 @@
   ],
   "scripts": {
     "build": "tsdown",
+    "prepack": "cp package.json .build/package.json.orig && cp .build/package.json package.json",
     "pack": "pnpm pack",
+    "postpack": "mv .build/package.json.orig package.json",
     "publint": "publint",
     "docs": "typedoc && prettier --write '**/*.md'",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
@@ -101,16 +103,7 @@
     "openwhisk": "^3.21.8",
     "prettier": "^3.8.1",
     "safe-stable-stringify": "^2.5.0",
-    "valibot": "^1.1.0",
-    "dotenv": "^17.2.3",
-    "regexparam": "^3.0.0",
-    "@adobe/aio-lib-core-config": "^5.0.1",
-    "@adobe/aio-lib-ims": "^8.1.1",
-    "@adobe/aio-lib-core-logging": "^3.0.2",
-    "@adobe/aio-lib-files": "^4.1.2",
-    "@adobe/aio-lib-state": "^5.3.1",
-    "@standard-schema/spec": "^1.1.0",
-    "yaml": "^2.8.2"
+    "valibot": "^1.1.0"
   },
   "devDependencies": {
     "@adobe/aio-lib-core-logging": "^3.0.2",

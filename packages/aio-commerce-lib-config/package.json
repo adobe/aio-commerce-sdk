@@ -55,7 +55,9 @@
   ],
   "scripts": {
     "build": "tsdown",
+    "prepack": "cp package.json .build/package.json.orig && cp .build/package.json package.json",
     "pack": "pnpm pack",
+    "postpack": "mv .build/package.json.orig package.json",
     "publint": "publint",
     "docs": "typedoc && prettier --write '**/*.md'",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
