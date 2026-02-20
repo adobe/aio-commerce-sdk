@@ -85,6 +85,8 @@
   ],
   "scripts": {
     "build": "tsdown",
+    "deps:copy": "../../configs/tsdown/scripts/private-deps-copy.js",
+    "deps:cleanup": "../../configs/tsdown/scripts/private-deps-copy-cleanup.js",
     "pack": "pnpm pack",
     "publint": "publint",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",

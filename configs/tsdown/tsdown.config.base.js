@@ -10,10 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { execSync } from "node:child_process";
-import { dirname, join } from "node:path";
-
-import { privateDepsExtractionHook } from "./private-deps-extraction-hook.js";
+import { join } from "node:path";
 
 const OUT_DIR = "./dist";
 const ADOBE_LICENSE_BANNER = `
@@ -65,39 +62,4 @@ export const baseConfig = {
 
   dts: true,
   treeshake: true,
-  hooks(hooks) {
-    hooks.hook("build:prepare", privateDepsExtractionHook);
-    // Track if we've already installed (build:done runs per format)
-    let hasInstalled = false;
-    hooks.hook("build:prepare", (ctx) => {
-      if (hasInstalled) {
-        return; // Already installed, skip
-      }
-
-      const shouldInstall =
-        process.env.PUBLISH === "true" || process.argv.includes("--publish");
-
-      if (!shouldInstall) {
-        return;
-      }
-
-      hasInstalled = true;
-      const { logger } = ctx.options;
-      logger.info("Installing dependencies after build...");
-
-      const packageDir = dirname(ctx.options.pkg.packageJsonPath);
-
-      try {
-        execSync("pnpm install --no-frozen-lockfile", {
-          cwd: packageDir,
-          stdio: "inherit",
-        });
-        logger.info("✓ Dependencies installed successfully");
-      } catch (error) {
-        logger.error("Failed to install dependencies:", error.message);
-        // Don't fail the build, just warn
-        logger.warn("Build completed but dependency installation failed");
-      }
-    });
-  },
 };
