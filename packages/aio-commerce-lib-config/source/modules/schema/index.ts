@@ -10,6 +10,18 @@
  * governing permissions and limitations under the License.
  */
 
+import * as v from "valibot";
+
+import { SchemaBusinessConfigSchema } from "./fields";
+
 export { getSchema, storeSchema } from "./get-schema";
+
+/** The schema used to validate the the business configuration settings. */
+export const SchemaBusinessConfig = v.object({
+  schema: v.optional(SchemaBusinessConfigSchema, []),
+});
+
+/** Defines the shape of the business configuration settings. */
+export type BusinessConfig = v.InferInput<typeof SchemaBusinessConfig>;
 
 export type * from "./types";

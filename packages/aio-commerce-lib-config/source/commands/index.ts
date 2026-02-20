@@ -15,7 +15,7 @@
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import consola from "consola";
 
-import { run as validateSchemaCommand } from "#commands/schema/validate/run";
+import { exec as encryptionSetupCommand } from "#commands/encryption/setup/main";
 
 const NAMESPACE = "@adobe/aio-commerce-lib-config";
 
@@ -26,8 +26,8 @@ const USAGE = `
 Usage: ${NAMESPACE} <command> [target]
 
 Commands:
-  validate <target>    Validate configuration
-    schema             Validate configuration schema
+  encryption <target>    Encryption related commands
+    setup                Ensure an encryption key is configured
 
   help                 Show this help message
 
@@ -39,8 +39,8 @@ Examples:
  * Command handlers registry mapping command names to their subcommand handlers
  */
 const COMMANDS = {
-  validate: {
-    schema: validateSchemaCommand,
+  encryption: {
+    setup: encryptionSetupCommand,
   },
 } as const;
 
