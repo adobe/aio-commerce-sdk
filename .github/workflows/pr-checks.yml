@@ -63,5 +63,4 @@ jobs:
             echo "Comparing against previous commit"
           fi
 
-          pnpm turbo run typecheck check:ci test publint --affected
-          pnpm turbo run deps:cleanup
+          pnpm turbo run typecheck check:ci test build publint --affected

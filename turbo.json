@@ -1,13 +1,7 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalEnv": ["NODE_ENV", "CI", "PUBLISH"],
+  "globalEnv": ["NODE_ENV", "CI"],
   "tasks": {
-    "deps:copy": {
-      "dependsOn": ["^deps:copy"]
-    },
-    "deps:cleanup": {
-      "cache": false
-    },
     "assist:apply": {
       "dependsOn": ["lint:fix"]
     },
@@ -21,10 +15,10 @@
       "dependsOn": ["assist:apply"]
     },
     "build": {
-      "dependsOn": ["deps:copy", "^build"],
-      "outputs": ["dist/**"],
-      "env": ["PUBLISH"]
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
     },
+
     "pack": {
       "dependsOn": ["build"],
       "cache": false
@@ -50,7 +44,7 @@
       "dependsOn": ["transit"]
     },
     "test": {
-      "dependsOn": ["transit", "build"],
+      "dependsOn": ["transit"],
       "outputs": ["coverage/**"]
     },
     "typecheck": {
