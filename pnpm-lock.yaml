@@ -289,6 +289,9 @@ importers:
       '@aio-commerce-sdk/scripting-utils':
         specifier: workspace:*
         version: link:../../packages-private/scripting-utils
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../scripts
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -335,6 +338,9 @@ importers:
       '@aio-commerce-sdk/scripting-utils':
         specifier: workspace:*
         version: link:../../packages-private/scripting-utils
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../scripts
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -387,6 +393,9 @@ importers:
       '@aio-commerce-sdk/scripting-utils':
         specifier: workspace:*
         version: link:../../packages-private/scripting-utils
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../scripts
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
