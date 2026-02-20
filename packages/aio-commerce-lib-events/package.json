@@ -95,6 +95,5 @@
     "msw": "^2.11.1",
     "typescript": "catalog:"
   },
-  "sideEffects": false,
-  "peerDependencies": {}
+  "sideEffects": false
 }

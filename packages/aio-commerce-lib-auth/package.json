@@ -81,7 +81,7 @@
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "workspace:*",
-    "@adobe/aio-lib-ims": "^8.1.0",
+    "@adobe/aio-lib-ims": "catalog:",
     "ansis": "catalog:",
     "consola": "catalog:",
     "oauth-1.0a": "^2.2.6",
@@ -98,6 +98,5 @@
     "@aio-commerce-sdk/scripts": "workspace:*",
     "typescript": "catalog:"
   },
-  "sideEffects": false,
-  "peerDependencies": {}
+  "sideEffects": false
 }

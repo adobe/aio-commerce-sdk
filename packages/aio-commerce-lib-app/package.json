@@ -118,6 +118,5 @@
     "@aio-commerce-sdk/scripts": "workspace:*",
     "typescript": "catalog:"
   },
-  "sideEffects": false,
-  "peerDependencies": {}
+  "sideEffects": false
 }

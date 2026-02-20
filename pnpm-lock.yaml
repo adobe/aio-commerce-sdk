@@ -12,6 +12,9 @@ catalogs:
     '@adobe/aio-lib-files':
       specifier: ^4.1.2
       version: 4.1.2
+    '@adobe/aio-lib-ims':
+      specifier: ^8.1.1
+      version: 8.1.1
     '@adobe/aio-lib-state':
       specifier: ^5.3.1
       version: 5.3.1
@@ -164,7 +167,7 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1
       '@adobe/aio-lib-ims':
-        specifier: ^8.1.1
+        specifier: 'catalog:'
         version: 8.1.1
       dotenv:
         specifier: ^17.2.3
@@ -302,7 +305,7 @@ importers:
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
       '@adobe/aio-lib-ims':
-        specifier: ^8.1.0
+        specifier: 'catalog:'
         version: 8.1.1
       ansis:
         specifier: 'catalog:'
