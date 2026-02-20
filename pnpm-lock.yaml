@@ -243,6 +243,9 @@ importers:
       '@adobe/aio-commerce-lib-auth':
         specifier: workspace:*
         version: link:../aio-commerce-lib-auth
+      '@adobe/aio-commerce-lib-config':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-config
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
@@ -359,9 +362,6 @@ importers:
       '@adobe/aio-commerce-lib-api':
         specifier: workspace:*
         version: link:../aio-commerce-lib-api
-      '@adobe/aio-commerce-lib-app':
-        specifier: workspace:*
-        version: link:../aio-commerce-lib-app
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
@@ -387,6 +387,9 @@ importers:
         specifier: 'catalog:'
         version: 1.2.0(typescript@5.9.3)
     devDependencies:
+      '@aio-commerce-sdk/common-utils':
+        specifier: workspace:*
+        version: link:../../packages-private/common-utils
       '@aio-commerce-sdk/config-tsdown':
         specifier: workspace:*
         version: link:../../configs/tsdown

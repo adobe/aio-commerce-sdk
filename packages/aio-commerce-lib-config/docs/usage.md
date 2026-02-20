@@ -452,22 +452,7 @@ Each configuration value includes an `origin` field showing where it was resolve
 }
 ```
 
-### Schema Validation
-
-Validate your schema before deployment:
-
-```bash
-npx @adobe/aio-commerce-lib-config validate schema
-```
-
-This command will:
-
-- Check that your `app.commerce.config.js` file exists and is valid
-- Validate the schema structure and field definitions
-- Ensure all required properties are present
-- Report any validation errors with clear, descriptive error messages
-
-The validation provides detailed error messages for each validation failure, making it easy to identify and fix issues in your schema configuration.
+### Field Types
 
 The library supports multiple field types for configuration schemas:
 
@@ -525,7 +510,7 @@ Use phone fields for telephone numbers with format validation. Phone fields supp
 
 **Password Field:**
 
-Use password fields for sensitive credentials like API keys, tokens, and secrets. Password values are automatically encrypted when stored and decrypted when retrieved. The encryption key is automatically generated during schema validation if password fields are detected.
+Use password fields for sensitive credentials like API keys, tokens, and secrets. Password values are automatically encrypted when stored and decrypted when retrieved. An encryption key must be configured in the `.env` file with the name `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY` for these fields to work.
 
 ```javascript
 {
