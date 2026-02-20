@@ -244,6 +244,9 @@ importers:
       '@aio-commerce-sdk/scripting-utils':
         specifier: workspace:*
         version: link:../../packages-private/scripting-utils
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../scripts
 
   packages/aio-commerce-lib-auth:
     dependencies:
@@ -284,6 +287,9 @@ importers:
       '@aio-commerce-sdk/scripting-utils':
         specifier: workspace:*
         version: link:../../packages-private/scripting-utils
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../scripts
 
   packages/aio-commerce-lib-config:
     dependencies:
@@ -336,6 +342,9 @@ importers:
       '@aio-commerce-sdk/scripting-utils':
         specifier: workspace:*
         version: link:../../packages-private/scripting-utils
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../scripts
 
   packages/aio-commerce-lib-core:
     dependencies:

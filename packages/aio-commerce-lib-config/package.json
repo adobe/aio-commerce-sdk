@@ -91,7 +91,8 @@
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "@aio-commerce-sdk/config-vitest": "workspace:*",
-    "@aio-commerce-sdk/scripting-utils": "workspace:*"
+    "@aio-commerce-sdk/scripting-utils": "workspace:*",
+    "@aio-commerce-sdk/scripts": "workspace:*"
   },
   "sideEffects": false
 }

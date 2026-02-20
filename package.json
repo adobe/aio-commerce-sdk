@@ -25,7 +25,7 @@
     "clean:turbo": "pnpx rimraf './**/.turbo' --glob",
     "clean:tgz": "pnpx rimraf './**/*.tgz' --glob",
     "clean:modules": "pnpx rimraf './**/node_modules' --glob",
-    "clean:dist": "pnpx rimraf './**/dist' --glob",
+    "clean:dist": "pnpx rimraf './**/dist' './**/.build' --glob",
     "clean:all": "pnpm clean:turbo && pnpm clean:dist && pnpm clean:modules && pnpm clean:tgz"
   },
   "devDependencies": {
