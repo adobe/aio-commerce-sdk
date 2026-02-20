@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-config
 
+## 0.13.3
+
+### Patch Changes
+
+- [#266](https://github.com/adobe/aio-commerce-sdk/pull/266) [`3398078`](https://github.com/adobe/aio-commerce-sdk/commit/33980787b7874a3615b5946b76af1af36153cf76) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove `schema validate` command and move encryption key generation logic in it to `encryption setup` command
+
 ## 0.13.2
 
 ### Patch Changes
