@@ -1,16 +1,20 @@
 {
-  "name": "@aio-commerce-sdk/config-tsdown",
-  "description": "TSDown configuration for the AIO Commerce SDK",
+  "name": "@aio-commerce-sdk/scripts",
   "type": "module",
-  "version": "1.0.0",
+  "author": "Adobe Inc.",
+  "version": "0.0.0",
   "private": true,
-  "exports": {
-    "./tsdown.config.base": "./tsdown.config.base.js",
-    "./plugins/private-package-externals": "./plugins/private-package-externals.js",
-    "./package.json": "./package.json"
+  "engines": {
+    "node": ">=20 <=24"
   },
+  "license": "Apache-2.0",
+  "description": "Scripts for the AIO Commerce SDK monorepo",
   "imports": {
-    "#plugins/*": "./plugins/*"
+    "#*": "./source/*.ts"
+  },
+  "bin": {
+    "sdk-prepack": "./source/prepack.ts",
+    "sdk-postpack": "./source/postpack.ts"
   },
   "scripts": {
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
@@ -20,10 +24,11 @@
     "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
     "format:check": "biome format --no-errors-on-unmatched",
     "lint": "biome lint --no-errors-on-unmatched",
-    "lint:fix": "biome lint --write --no-errors-on-unmatched"
+    "lint:fix": "biome lint --write --no-errors-on-unmatched",
+    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
   },
   "devDependencies": {
-    "globby": "^16.0.0",
-    "rolldown": "1.0.0-rc.5"
-  }
+    "@aio-commerce-sdk/config-typescript": "workspace:*"
+  },
+  "sideEffects": false
 }

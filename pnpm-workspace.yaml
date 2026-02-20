@@ -2,9 +2,24 @@ packages:
   - configs/*
   - packages/*
   - packages-private/*
+  - scripts
   - turbo/*
 
 onlyBuiltDependencies:
   - core-js-pure
   - esbuild
   - msw
+
+catalog:
+  ansis: ^4.1.0
+  camelcase: ^8.0.0
+  consola: ^3.4.2
+  prettier: ^3.8.1
+  type-fest: ^5.0.0
+  typescript: ^5.9.2
+  yaml: ^2.8.1
+  valibot: ^1.1.0
+  '@adobe/aio-lib-core-logging': ^3.0.2
+  '@adobe/aio-lib-files': ^4.1.2
+  '@adobe/aio-lib-ims': ^8.1.1
+  '@adobe/aio-lib-state': ^5.3.1
