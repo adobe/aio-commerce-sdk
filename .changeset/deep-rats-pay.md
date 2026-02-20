@@ -13,4 +13,4 @@
 "@aio-commerce-sdk/scripts": patch
 ---
 
-Implements a rolldown plugin to fix external bundling of private packages dependencies on build and workspace level package version declarations for consistency.
+Implements a rolldown plugin to correctly externalize transitive dependencies of private packages during build, but keep the source code of those same packages bundled.
