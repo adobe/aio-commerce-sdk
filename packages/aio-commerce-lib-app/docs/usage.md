@@ -267,7 +267,7 @@ eventing: {
 
 ##### External Events:
 
-- **name**: Lowercase alphanumeric with underscores
+- **name**: Word characters (letters, digits, underscore), hyphens, underscores, and dots (e.g., `external_event`, `webhook.received`, `my-event_123`)
 - **label**: Display name for the event (max 100 characters)
 - **description**: Description of the event (max 255 characters)
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
