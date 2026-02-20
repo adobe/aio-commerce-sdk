@@ -96,7 +96,7 @@
     "@adobe/aio-commerce-lib-config": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-events": "workspace:*",
-    "camelcase": "^8.0.0",
+    "camelcase": "^9.0.0",
     "consola": "^3.4.2",
     "jiti": "^2.6.1",
     "openwhisk": "^3.21.8",
