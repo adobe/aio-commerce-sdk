@@ -46,7 +46,8 @@
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@aio-commerce-sdk/config-vitest": "workspace:*"
+    "@aio-commerce-sdk/config-vitest": "workspace:*",
+    "typescript": "catalog:"
   },
   "sideEffects": false
 }

@@ -24,6 +24,9 @@ catalogs:
     type-fest:
       specifier: ^5.0.0
       version: 5.4.4
+    typescript:
+      specifier: ^5.9.2
+      version: 5.9.3
     valibot:
       specifier: ^1.1.0
       version: 1.2.0
@@ -77,9 +80,6 @@ importers:
       typedoc-plugin-markdown:
         specifier: ^4.7.1
         version: 4.10.0(typedoc@0.28.16(typescript@5.9.3))
-      typescript:
-        specifier: ^5.9.2
-        version: 5.9.3
       ultracite:
         specifier: ^7.0.0
         version: 7.1.5
@@ -148,6 +148,9 @@ importers:
       '@aio-commerce-sdk/config-vitest':
         specifier: workspace:*
         version: link:../../configs/vitest
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages-private/scripting-utils:
     dependencies:
@@ -182,6 +185,9 @@ importers:
       '@aio-commerce-sdk/config-vitest':
         specifier: workspace:*
         version: link:../../configs/vitest
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages/aio-commerce-lib-api:
     dependencies:
@@ -213,6 +219,9 @@ importers:
       '@aio-commerce-sdk/config-vitest':
         specifier: workspace:*
         version: link:../../configs/vitest
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages/aio-commerce-lib-app:
     dependencies:
@@ -277,6 +286,9 @@ importers:
       '@aio-commerce-sdk/scripting-utils':
         specifier: workspace:*
         version: link:../../packages-private/scripting-utils
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages/aio-commerce-lib-auth:
     dependencies:
@@ -320,6 +332,9 @@ importers:
       '@aio-commerce-sdk/scripting-utils':
         specifier: workspace:*
         version: link:../../packages-private/scripting-utils
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages/aio-commerce-lib-config:
     dependencies:
@@ -369,6 +384,9 @@ importers:
       '@aio-commerce-sdk/scripting-utils':
         specifier: workspace:*
         version: link:../../packages-private/scripting-utils
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages/aio-commerce-lib-core:
     dependencies:
@@ -397,6 +415,9 @@ importers:
       '@aio-commerce-sdk/config-vitest':
         specifier: workspace:*
         version: link:../../configs/vitest
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages/aio-commerce-lib-events:
     dependencies:
@@ -434,6 +455,9 @@ importers:
       msw:
         specifier: ^2.11.1
         version: 2.12.10(@types/node@24.10.13)(typescript@5.9.3)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages/aio-commerce-sdk:
     dependencies:
@@ -459,6 +483,9 @@ importers:
       '@aio-commerce-sdk/config-typescript':
         specifier: workspace:*
         version: link:../../configs/typescript
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   turbo/generators:
     dependencies:
