@@ -60,7 +60,6 @@
     "README.md"
   ],
   "scripts": {
-    "prepublishOnly": "pnpm run docs",
     "build": "tsdown",
     "prebuild": "../../configs/tsdown/scripts/private-deps-copy.js",
     "postbuild": "../../configs/tsdown/scripts/private-deps-copy-cleanup.js",
