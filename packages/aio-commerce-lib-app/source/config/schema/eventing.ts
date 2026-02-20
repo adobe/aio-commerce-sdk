@@ -24,6 +24,7 @@ import type { CommerceAppConfigOutputModel } from "./app";
 const MAX_DESCRIPTION_LENGTH = 255;
 const MAX_LABEL_LENGTH = 100;
 const MAX_KEY_LENGTH = 50;
+const MAX_EVENT_NAME_LENGTH = 180;
 
 /**
  * Regex for Commerce event names that must start with "plugin." or "observer."
@@ -57,6 +58,10 @@ function commerceEventNameSchema() {
       COMMERCE_EVENT_NAME_REGEX,
       'Event name must start with "plugin." or "observer." followed by lowercase letters and underscores only (e.g., "plugin.order_placed")',
     ),
+    v.maxLength(
+      MAX_EVENT_NAME_LENGTH,
+      `The event name must not be longer than ${MAX_EVENT_NAME_LENGTH} characters`,
+    ),
   );
 }
 
@@ -71,6 +76,10 @@ function externalEventNameSchema() {
     v.regex(
       EXTERNAL_EVENT_NAME_REGEX,
       'Event name must contain only letters, digits, underscores, hyphens, and dots (e.g., "external_event", "webhook.received", "my-event_123")',
+    ),
+    v.maxLength(
+      MAX_EVENT_NAME_LENGTH,
+      `The event name must not be longer than ${MAX_EVENT_NAME_LENGTH} characters`,
     ),
   );
 }
