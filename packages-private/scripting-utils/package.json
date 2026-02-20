@@ -9,7 +9,6 @@
   "license": "Apache-2.0",
   "description": "Utility functions for Adobe Commerce SDK scripts and build tools",
   "scripts": {
-    "build": "tsdown",
     "docs": "typedoc && prettier --write '**/*.md'",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
