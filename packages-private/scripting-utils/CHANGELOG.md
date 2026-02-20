@@ -1,5 +1,11 @@
 # @aio-commerce-sdk/scripting-utils
 
+## 0.2.2
+
+### Patch Changes
+
+- [#266](https://github.com/adobe/aio-commerce-sdk/pull/266) [`3398078`](https://github.com/adobe/aio-commerce-sdk/commit/33980787b7874a3615b5946b76af1af36153cf76) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Export `replaceEnvVar` utility
+
 ## 0.2.1
 
 ### Patch Changes
