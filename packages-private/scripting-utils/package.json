@@ -39,13 +39,15 @@
     "@adobe/aio-lib-core-config": "^5.0.1",
     "@adobe/aio-lib-ims": "^8.1.1",
     "dotenv": "^17.2.3",
-    "yaml": "^2.8.1"
+    "type-fest": "catalog:",
+    "yaml": "catalog:"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@aio-commerce-sdk/config-vitest": "workspace:*"
+    "@aio-commerce-sdk/config-vitest": "workspace:*",
+    "typescript": "catalog:"
   },
   "sideEffects": false
 }

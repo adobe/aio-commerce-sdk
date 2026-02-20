@@ -60,7 +60,6 @@
     "README.md"
   ],
   "scripts": {
-    "prepublishOnly": "pnpm run docs",
     "build": "tsdown",
     "pack": "pnpm pack",
     "publint": "publint",
@@ -79,15 +78,17 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
-    "ansis": "^4.1.0",
+    "ansis": "catalog:",
     "camelcase": "^8.0.0",
-    "valibot": "^1.1.0"
+    "type-fest": "catalog:",
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@aio-commerce-sdk/config-vitest": "workspace:*"
+    "@aio-commerce-sdk/config-vitest": "workspace:*",
+    "typescript": "catalog:"
   },
   "sideEffects": false
 }

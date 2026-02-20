@@ -80,10 +80,11 @@
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-lib-ims": "^8.1.0",
-    "ansis": "^4.1.0",
-    "consola": "^3.4.2",
+    "ansis": "catalog:",
+    "consola": "catalog:",
     "oauth-1.0a": "^2.2.6",
-    "valibot": "^1.1.0"
+    "type-fest": "catalog:",
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
@@ -91,7 +92,9 @@
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "@aio-commerce-sdk/config-vitest": "workspace:*",
     "@aio-commerce-sdk/common-utils": "workspace:*",
-    "@aio-commerce-sdk/scripting-utils": "workspace:*"
+    "@aio-commerce-sdk/scripting-utils": "workspace:*",
+    "typescript": "catalog:"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "peerDependencies": {}
 }

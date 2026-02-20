@@ -10,7 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { privatePackageExternalsPlugin } from "./plugins/private-package-externals.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const OUT_DIR = "./dist";
 const ADOBE_LICENSE_BANNER = `
@@ -28,6 +34,9 @@ const ADOBE_LICENSE_BANNER = `
  * governing permissions and limitations under the License.
  */
 `.trimStart();
+
+// Get the monorepo root (two levels up from configs/tsdown)
+const MONOREPO_ROOT = join(__dirname, "../..");
 
 /**
  * Base configuration to extend from for all TSDown configurations.
@@ -62,4 +71,14 @@ export const baseConfig = {
 
   dts: true,
   treeshake: true,
+
+  // Automatically externalize dependencies of private packages
+  // when they are bundled via noExternal
+  plugins: [
+    privatePackageExternalsPlugin({
+      projectRoot: MONOREPO_ROOT,
+      privatePackagePatterns: ["packages-private/*"],
+      verbose: false, // Set to true for debugging
+    }),
+  ],
 };

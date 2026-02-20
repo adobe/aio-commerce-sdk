@@ -37,18 +37,20 @@
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "workspace:*",
-    "@adobe/aio-lib-core-logging": "^3.0.2",
-    "@adobe/aio-lib-files": "^4.1.2",
-    "@adobe/aio-lib-state": "^5.3.1",
+    "@adobe/aio-lib-core-logging": "catalog:",
+    "@adobe/aio-lib-files": "catalog:",
+    "@adobe/aio-lib-state": "catalog:",
     "@standard-schema/spec": "^1.1.0",
     "regexparam": "^3.0.0",
-    "valibot": "^1.1.0"
+    "type-fest": "catalog:",
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@aio-commerce-sdk/config-vitest": "workspace:*"
+    "@aio-commerce-sdk/config-vitest": "workspace:*",
+    "typescript": "catalog:"
   },
   "sideEffects": false
 }
