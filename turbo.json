@@ -16,7 +16,8 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**"],
+      "env": ["POST_BUILD_CLEANUP"]
     },
 
     "pack": {

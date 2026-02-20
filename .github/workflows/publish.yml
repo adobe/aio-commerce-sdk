@@ -35,6 +35,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run Turbo Build on affected packages
+        env:
+          POST_BUILD_CLEANUP: false
         run: pnpm turbo build --affected
 
       - name: Create Release Pull Request or Publish

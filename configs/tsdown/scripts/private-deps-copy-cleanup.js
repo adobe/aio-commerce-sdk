@@ -3,8 +3,13 @@ import { rename } from "node:fs/promises";
 import { join } from "node:path";
 
 async function main() {
-  const CWD = process.cwd();
   const logger = console;
+  if (process.env.POST_BUILD_CLEANUP === "false") {
+    logger.info("No post build cleanup required");
+    return;
+  }
+
+  const CWD = process.cwd();
 
   const pkgJsonPath = join(CWD, "package.json");
   const origPkgJsonPath = join(CWD, "package.json.orig");
