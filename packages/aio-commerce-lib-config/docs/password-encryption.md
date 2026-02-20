@@ -17,50 +17,30 @@ All encryption uses AES-256-GCM, a secure and industry-standard encryption algor
 
 First, define fields with `type: "password"` in your configuration schema:
 
-```typescript
-import { defineConfig } from "@adobe/aio-commerce-lib-app/config";
-
-export default defineConfig({
-  businessConfig: {
-    schema: [
-      {
-        name: "api_key",
-        type: "password",
-        label: "API Key",
-        description: "Your secret API key",
-      },
-      {
-        name: "database_password",
-        type: "password",
-        label: "Database Password",
-        description: "Password for database connection",
-      },
-    ],
+```json
+[
+  {
+    "name": "api_key",
+    "type": "password",
+    "label": "API Key",
+    "description": "Your secret API key"
   },
-});
+  {
+    "name": "database_password",
+    "type": "password",
+    "label": "Database Password",
+    "description": "Password for database connection"
+  }
+]
 ```
 
-### 2. Validate Your Schema (Automatic Key Generation)
+### 2. Generate an Encryption Key
 
-When you validate your schema, the encryption key is **automatically generated** if your schema contains password fields and encryption is not yet configured:
+Run the following command at the root of your project to generate an encryption key:
 
-```typescript
-import { validateSchema } from "@adobe/aio-commerce-lib-config/commands";
-
-// This will automatically:
-// 1. Check if your schema has password fields
-// 2. Generate an encryption key if needed
-// 3. Add AIO_COMMERCE_CONFIG_ENCRYPTION_KEY to your .env file
-await validateSchema();
+```bash
+npx aio-commerce-lib-config encryption setup
 ```
-
-The validation command will:
-
-- ✅ Automatically generate a secure 256-bit encryption key
-- ✅ Add `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY` to your `.env` file (if it exists)
-- ✅ Set the key in your environment for immediate use
-
-**That's it!** Your encryption is now configured and ready to use.
 
 ### Alternative: Manual Key Generation
 
@@ -238,40 +218,11 @@ await setConfiguration({ config: oldConfig.config }, byScopeId("scope-123"));
 - Use secure secret management services in production (e.g., AWS Secrets Manager, Azure Key Vault)
 - Ensure the encryption key is only available in the app context
 
-### 4. Production Deployment
-
-For production environments, consider:
-
-- Using environment-specific secret management services
-- Rotating keys periodically
-- Monitoring access to encrypted configuration values
-- Implementing audit logging for password field access
-
-## Checking Encryption Status
-
-You can check if encryption is properly configured:
-
-```typescript
-import { isEncryptionConfigured } from "@adobe/aio-commerce-lib-config";
-
-if (isEncryptionConfigured()) {
-  console.log("Password encryption is enabled");
-} else {
-  console.warn("Password encryption is NOT configured");
-}
-```
-
 ## Encryption Requirements
 
 ### Strict Encryption Enforcement
 
-Password encryption is **strictly enforced** at multiple levels:
-
-**At Schema Validation:**
-
-- If your schema contains password fields and `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY` is not configured, schema validation **fails**
-- The validation process attempts to automatically generate and configure the key
-- If automatic setup fails (e.g., no `.env` file exists), validation exits with an error
+Password encryption is **strictly enforced**:
 
 **At Runtime:**
 
@@ -295,16 +246,6 @@ This strict enforcement is a **security feature** to prevent accidentally storin
 - The application continues to function (reading other config values)
 
 ## Troubleshooting
-
-### "Schema validation failed: encryption key could not be configured"
-
-**Cause**: Your schema contains password fields but the encryption key couldn't be automatically configured (usually because no `.env` file exists).
-
-**Solution**:
-
-1. Create a `.env` file in your project root
-2. Run schema validation again, which will automatically generate and add the key
-3. Alternatively, manually generate a key and add it to your environment
 
 ### "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY not found" Warning
 
@@ -331,28 +272,3 @@ AIO_COMMERCE_CONFIG_ENCRYPTION_KEY=your_64_character_hex_key
 1. Verify the correct encryption key is in your `.env` file
 2. If the key was rotated, decrypt with the old key and re-encrypt with the new key
 3. If data is corrupted, reset the password value
-
-## API Reference
-
-### `generateEncryptionKey()`
-
-Generates a new 256-bit encryption key.
-
-**Returns**: A 64-character hexadecimal string
-
-```typescript
-const key = generateEncryptionKey();
-// Returns: "a1b2c3d4e5f6..."
-```
-
-### `isEncryptionConfigured()`
-
-Checks if encryption is properly configured.
-
-**Returns**: `true` if the encryption key is valid, `false` otherwise
-
-```typescript
-if (isEncryptionConfigured()) {
-  // Encryption is enabled
-}
-```

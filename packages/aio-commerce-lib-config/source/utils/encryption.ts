@@ -46,8 +46,9 @@ export function isEncryptionConfigured(): boolean {
  */
 function getEncryptionKey(): Buffer | null {
   const logger = getLogger("@adobe/aio-commerce-lib-config:encryption");
-
-  const key = getGlobalLibConfigOptions().encryptionKey;
+  const key =
+    getGlobalLibConfigOptions().encryptionKey ??
+    process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY;
 
   if (!key) {
     return null;

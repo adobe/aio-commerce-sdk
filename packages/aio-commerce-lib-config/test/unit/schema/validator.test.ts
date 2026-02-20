@@ -10,30 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
-import { existsSync } from "node:fs";
+import { describe, expect, it } from "vitest";
 
-import { describe, expect, it, vi } from "vitest";
-
-import { loadBusinessConfigSchema } from "#commands/schema/validate/lib";
 import { validateBusinessConfigSchema } from "#modules/schema/utils";
 import {
   INVALID_CONFIGURATION,
   VALID_CONFIGURATION,
 } from "#test/fixtures/configuration-schema";
-
-vi.mock("node:fs");
-
-vi.mock("@adobe/aio-commerce-lib-app/config", async () => {
-  const actual = await vi.importActual<
-    typeof import("@adobe/aio-commerce-lib-app/config")
-  >("@adobe/aio-commerce-lib-app/config");
-
-  return {
-    ...actual,
-    readCommerceAppConfig: vi.fn(),
-    resolveCommerceAppConfig: vi.fn(),
-  } satisfies typeof import("@adobe/aio-commerce-lib-app/config");
-});
 
 describe("validator", () => {
   describe("validateSchema()", () => {
@@ -49,59 +32,6 @@ describe("validator", () => {
       expect(() =>
         validateBusinessConfigSchema(INVALID_CONFIGURATION),
       ).toThrow();
-    });
-  });
-
-  describe("loadBusinessConfigSchema()", () => {
-    it("should validate if the file does exist and the content is valid", async () => {
-      const { readCommerceAppConfig, resolveCommerceAppConfig } = await import(
-        "@adobe/aio-commerce-lib-app/config"
-      );
-
-      vi.mocked(resolveCommerceAppConfig).mockResolvedValueOnce(
-        "app.commerce.config.js",
-      );
-      vi.mocked(existsSync).mockReturnValueOnce(true);
-
-      vi.mocked(readCommerceAppConfig).mockResolvedValueOnce({
-        businessConfig: { schema: VALID_CONFIGURATION },
-      });
-
-      await expect(async () => {
-        await loadBusinessConfigSchema();
-      }).not.toThrow();
-    });
-
-    it("should return null if the file does not exist", async () => {
-      const { resolveCommerceAppConfig } = await import(
-        "@adobe/aio-commerce-lib-app/config"
-      );
-
-      vi.mocked(resolveCommerceAppConfig).mockResolvedValueOnce(
-        "app.commerce.config.js",
-      );
-      vi.mocked(existsSync).mockReturnValueOnce(false);
-
-      // Should return gracefully with null
-      const result = await loadBusinessConfigSchema();
-      expect(result).toBeNull();
-    });
-
-    it("should throw if loading the file fails with invalid syntax", async () => {
-      const { readCommerceAppConfig, resolveCommerceAppConfig } = await import(
-        "@adobe/aio-commerce-lib-app/config"
-      );
-
-      vi.mocked(resolveCommerceAppConfig).mockResolvedValueOnce(
-        "app.commerce.config.js",
-      );
-      vi.mocked(existsSync).mockReturnValueOnce(true);
-
-      vi.mocked(readCommerceAppConfig).mockRejectedValueOnce(
-        new Error("Invalid syntax"),
-      );
-
-      await expect(loadBusinessConfigSchema()).rejects.toThrow();
     });
   });
 });
