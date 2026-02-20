@@ -25,10 +25,7 @@
     "format:check": "biome format --no-errors-on-unmatched",
     "lint": "biome lint --no-errors-on-unmatched",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
-    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'",
-    "test": "vitest run --coverage",
-    "test:ui": "vitest --ui --coverage",
-    "test:watch": "vitest --watch --coverage"
+    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-typescript": "workspace:*"
