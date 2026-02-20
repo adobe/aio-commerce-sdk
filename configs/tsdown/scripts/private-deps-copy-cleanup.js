@@ -9,9 +9,15 @@ async function main() {
   const pkgJsonPath = join(CWD, "package.json");
   const origPkgJsonPath = join(CWD, "package.json.orig");
 
-  await rename(origPkgJsonPath, pkgJsonPath);
-
-  logger.info("✓ Successfully cleaned up [deps:copy] artifacts");
+  try {
+    await rename(origPkgJsonPath, pkgJsonPath);
+    logger.info("✓ Successfully cleaned up [deps:copy] artifacts");
+  } catch (err) {
+    logger.error(
+      "✗ Failed to restore original package.json from [deps:copy] artifacts",
+    );
+    logger.error(err);
+  }
 }
 
 await main();

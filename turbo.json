@@ -2,6 +2,12 @@
   "$schema": "https://turborepo.com/schema.json",
   "globalEnv": ["NODE_ENV", "CI", "PUBLISH"],
   "tasks": {
+    "deps:copy": {
+      "dependsOn": ["^deps:copy"]
+    },
+    "deps:cleanup": {
+      "cache": false
+    },
     "assist:apply": {
       "dependsOn": ["lint:fix"]
     },
@@ -15,7 +21,7 @@
       "dependsOn": ["assist:apply"]
     },
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["deps:copy", "^build"],
       "outputs": ["dist/**"],
       "env": ["PUBLISH"]
     },
@@ -44,7 +50,7 @@
       "dependsOn": ["transit"]
     },
     "test": {
-      "dependsOn": ["transit"],
+      "dependsOn": ["transit", "build"],
       "outputs": ["coverage/**"]
     },
     "typecheck": {
