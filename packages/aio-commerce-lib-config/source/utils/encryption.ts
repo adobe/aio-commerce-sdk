@@ -37,7 +37,12 @@ export function generateEncryptionKey(): string {
  * @returns True if encryption key is available and valid, false otherwise.
  */
 export function isEncryptionConfigured(): boolean {
-  return getEncryptionKey() !== null;
+  try {
+    const key = getEncryptionKey();
+    return key !== null;
+  } catch (_error) {
+    return false;
+  }
 }
 
 /**
