@@ -10,6 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  byCode,
+  byCodeAndLevel,
+  byScopeId,
+  getConfiguration,
+  setConfiguration,
+  setGlobalLibConfigOptions,
+} from "@adobe/aio-commerce-lib-config/";
 import { ok } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
@@ -17,18 +25,14 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 import * as v from "valibot";
 
-import {
-  getConfiguration,
-  setConfiguration,
-  setGlobalLibConfigOptions,
-} from "#config-manager";
-import { byCode, byCodeAndLevel, byScopeId } from "#config-utils";
-import { validateBusinessConfigSchema } from "#modules/schema/utils";
+import { validateCommerceAppConfigDomain } from "#config/index";
 
+import type {
+  BusinessConfigSchema,
+  SelectorBy,
+} from "@adobe/aio-commerce-lib-config/";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
-import type { SelectorBy } from "#config-utils";
-import type { BusinessConfigSchema } from "#modules/schema/types";
 
 /** The arguments for the config action factory. */
 type ConfigActionFactoryArgs = {
@@ -181,9 +185,12 @@ router.get("/schema", {
     logger.debug("Validating configuration schema...");
 
     const configSchema = rawParams.configSchema;
-    const validatedSchema = validateBusinessConfigSchema(configSchema);
-    logger.debug("Successfully validated configuration schema");
+    const validatedSchema = validateCommerceAppConfigDomain(
+      configSchema,
+      "businessConfig.schema",
+    );
 
+    logger.debug("Successfully validated configuration schema");
     return ok({
       body: {
         configSchema: validatedSchema,
