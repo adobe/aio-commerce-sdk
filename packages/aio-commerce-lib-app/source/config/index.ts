@@ -19,10 +19,8 @@
 
 export { defineConfig } from "./lib/define";
 export {
-  getBundledCommerceAppConfig,
   parseCommerceAppConfig,
   readCommerceAppConfig,
-  readCommerceAppConfigJson,
   resolveCommerceAppConfig,
 } from "./lib/parser";
 export {
