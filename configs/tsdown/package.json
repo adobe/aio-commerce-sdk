@@ -6,7 +6,6 @@
   "private": true,
   "exports": {
     "./tsdown.config.base": "./tsdown.config.base.js",
-    "./plugins/private-package-externals": "./plugins/private-package-externals.js",
     "./package.json": "./package.json"
   },
   "imports": {
