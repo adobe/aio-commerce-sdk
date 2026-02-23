@@ -16,7 +16,7 @@ import {
   setCustomScopeTree,
   syncCommerceScopes,
   unsyncCommerceScopes,
-} from "@adobe/aio-commerce-lib-config/";
+} from "@adobe/aio-commerce-lib-config";
 import {
   internalServerError,
   nonAuthoritativeInformation,
@@ -29,7 +29,7 @@ import {
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 import * as v from "valibot";
 
-import type { SetCustomScopeTreeRequest } from "@adobe/aio-commerce-lib-config/";
+import type { SetCustomScopeTreeRequest } from "@adobe/aio-commerce-lib-config";
 
 // The router that will hold the scope-tree routes
 const router = new HttpActionRouter().use(logger());

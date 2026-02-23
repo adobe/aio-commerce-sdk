@@ -17,7 +17,7 @@ import {
   getConfiguration,
   setConfiguration,
   setGlobalLibConfigOptions,
-} from "@adobe/aio-commerce-lib-config/";
+} from "@adobe/aio-commerce-lib-config";
 import { ok } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
@@ -30,7 +30,7 @@ import { validateCommerceAppConfigDomain } from "#config/index";
 import type {
   BusinessConfigSchema,
   SelectorBy,
-} from "@adobe/aio-commerce-lib-config/";
+} from "@adobe/aio-commerce-lib-config";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 
