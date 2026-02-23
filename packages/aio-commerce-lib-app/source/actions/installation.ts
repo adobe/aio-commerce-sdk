@@ -319,7 +319,7 @@ router.delete("/", {
   },
 });
 
-/** The route handler for the runtime action. */
+/** Factory to create the route handler for the `installation` action. */
 export const installationRuntimeAction =
   ({ appConfig, customScriptsLoader }: RuntimeActionFactoryArgs) =>
   async (params: RuntimeActionParams) => {

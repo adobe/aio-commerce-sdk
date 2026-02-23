@@ -173,5 +173,5 @@ router.delete("/commerce", {
   },
 });
 
-/** The handler method for the scope-tree action. */
+/** The handler method for the `scope-tree` action. */
 export const scopeTreeRuntimeAction = router.handler();

@@ -55,7 +55,7 @@ router.get("/", {
   },
 });
 
-/** The route handler for the runtime action. */
+/** Factory to create the route handler for the `app-config` action. */
 export const appConfigRuntimeAction =
   ({ appConfig }: RuntimeActionFactoryArgs) =>
   async (params: RuntimeActionParams) => {

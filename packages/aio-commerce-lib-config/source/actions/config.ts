@@ -192,7 +192,7 @@ router.get("/schema", {
   },
 });
 
-/** The handler method for the config action. */
+/** Factory to create the route handler for the `config` action. */
 export const configRuntimeAction =
   ({ configSchema }: ConfigActionFactoryArgs) =>
   async (params: RuntimeActionParams) => {
