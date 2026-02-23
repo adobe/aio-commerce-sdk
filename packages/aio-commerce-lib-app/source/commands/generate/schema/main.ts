@@ -16,7 +16,9 @@ import { dirname, join } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import {
+  detectPackageManager,
   findNearestPackageJson,
+  getExecCommand,
   makeOutputDirFor,
 } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
@@ -41,22 +43,16 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   }
 
   const projectDir = dirname((await findNearestPackageJson()) ?? process.cwd());
-  process.loadEnvFile(join(projectDir, ".env"));
+  const envPath = join(projectDir, ".env");
+  process.loadEnvFile(envPath);
 
   const hasPasswordFields = appConfig.businessConfig.schema.some(
     (field) => field.type === "password",
   );
 
-  const encryptionKeyEnvVar = "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY";
-  const hasEncryptionKey = process.env[encryptionKeyEnvVar] !== undefined;
-
-  if (hasPasswordFields && !hasEncryptionKey) {
-    consola.warn(
-      "Password fields found in schema but encryption key is not set.",
-      "Executing `aio-commerce-lib-config encryption setup` to generate an encryption key...",
-    );
-
-    execSync("aio-commerce-lib-config encryption setup");
+  if (hasPasswordFields) {
+    const packageExec = getExecCommand(await detectPackageManager(projectDir));
+    execSync(`${packageExec} aio-commerce-lib-config encryption validate`);
   }
 
   const contents = stringify(appConfig.businessConfig.schema, null, 2);

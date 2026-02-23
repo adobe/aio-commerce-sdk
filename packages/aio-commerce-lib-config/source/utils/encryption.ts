@@ -45,7 +45,6 @@ export function isEncryptionConfigured(): boolean {
  * @returns The encryption key as a Buffer, or null if not configured.
  */
 function getEncryptionKey(): Buffer | null {
-  const logger = getLogger("@adobe/aio-commerce-lib-config:encryption");
   const key =
     getGlobalLibConfigOptions().encryptionKey ??
     process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY;
@@ -54,22 +53,28 @@ function getEncryptionKey(): Buffer | null {
     return null;
   }
 
+  validateEncryptionKey(key);
+  return Buffer.from(key, "hex");
+}
+
+/**
+ * Validates the encryption key.
+ * @param key - The encryption key to validate.
+ *
+ * @throws {Error} If the encryption key is not a valid hex string or is not the correct length.
+ */
+export function validateEncryptionKey(key: string): void {
   if (!HEX_PATTERN.test(key)) {
-    logger.warn(
-      "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not a valid hex string. Password encryption is disabled.",
-    );
-    return null;
+    throw new Error("The given encryption key is not a valid hex string.");
   }
 
   const keyBuffer = Buffer.from(key, "hex");
-  if (key.length !== KEY_LENGTH_HEX || keyBuffer.length !== KEY_LENGTH_BYTES) {
-    logger.warn(
-      `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY must be ${KEY_LENGTH_HEX} hex characters (${KEY_LENGTH_BYTES} bytes). Password encryption is disabled.`,
-    );
-    return null;
-  }
 
-  return keyBuffer;
+  if (key.length !== KEY_LENGTH_HEX || keyBuffer.length !== KEY_LENGTH_BYTES) {
+    throw new Error(
+      `The given encryption key must be ${KEY_LENGTH_HEX} hex characters (${KEY_LENGTH_BYTES} bytes).`,
+    );
+  }
 }
 
 /**
