@@ -66,15 +66,67 @@ describe("createWebhookSubscriptions", () => {
     expect(result.failures).toHaveLength(0);
   });
 
-  test("passes the webhook payload (entry.webhook) to subscribeWebhook", async () => {
+  test("passes webhook.url directly when it is explicitly set", async () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
     const context = makeContext(subscribeWebhook);
 
-    await createWebhookSubscriptions(configWithWebhooks, context);
+    const explicitUrl = "https://explicit-url.com/hook";
+    const configWithExplicitUrl = {
+      ...configWithWebhooks,
+      webhooks: [
+        {
+          description: "Webhook with explicit url",
+          category: "modification",
+          runtimeAction: "my-package/handle-webhook",
+          webhook: {
+            webhook_method: "plugin.order.api.order_created",
+            webhook_type: "after",
+            batch_name: "default",
+            hook_name: "order-created",
+            method: "POST",
+            url: explicitUrl,
+          },
+        },
+      ],
+    };
 
-    for (const entry of configWithWebhooks.webhooks) {
-      expect(subscribeWebhook).toHaveBeenCalledWith(entry.webhook);
-    }
+    await createWebhookSubscriptions(configWithExplicitUrl, context);
+
+    expect(subscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({ url: explicitUrl }),
+    );
+  });
+
+  test("generates url from runtimeAction when webhook.url is absent", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+    const context = makeContext(subscribeWebhook);
+
+    const configWithoutUrl = {
+      ...configWithWebhooks,
+      webhooks: [
+        {
+          description: "Webhook without url",
+          category: "test",
+          runtimeAction: "my-package/handle-webhook",
+          webhook: {
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "after",
+            batch_name: "batch1",
+            hook_name: "hook1",
+            method: "POST",
+            // url intentionally omitted
+          },
+        },
+      ],
+    };
+
+    await createWebhookSubscriptions(configWithoutUrl, context);
+
+    expect(subscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: expect.stringContaining("my-package/handle-webhook"),
+      }),
+    );
   });
 
   test("collects failures and continues processing remaining webhooks", async () => {

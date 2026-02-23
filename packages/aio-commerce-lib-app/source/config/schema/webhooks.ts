@@ -84,12 +84,20 @@ const WebhookDefinitionSchema = v.object({
 });
 
 /** Schema for a single webhook entry in the array (description, runtimeAction, webhook). */
-const WebhookEntrySchema = v.object({
-  description: nonEmptyStringValueSchema("description"),
-  runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
-  category: nonEmptyStringValueSchema("category"),
-  webhook: WebhookDefinitionSchema,
-});
+const WebhookEntrySchema = v.pipe(
+  v.object({
+    description: nonEmptyStringValueSchema("description"),
+    runtimeAction: v.optional(nonEmptyStringValueSchema("runtimeAction")),
+    category: nonEmptyStringValueSchema("category"),
+    webhook: WebhookDefinitionSchema,
+  }),
+  v.check(
+    (entry) =>
+      entry.runtimeAction !== undefined ||
+      (entry.webhook.url !== undefined && entry.webhook.url.length > 0),
+    "webhook.url is required when runtimeAction is not set",
+  ),
+);
 
 /** Schema for the optional webhooks array (when present, must have at least one item). */
 export const WebhooksSchema = v.optional(

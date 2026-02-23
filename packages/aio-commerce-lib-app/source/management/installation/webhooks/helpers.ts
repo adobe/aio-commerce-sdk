@@ -13,6 +13,7 @@
 import { hasWebhooks } from "#config/schema/webhooks";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { WebhookDefinition } from "#config/schema/webhooks";
 import type { WebhooksExecutionContext } from "./context";
 
 /** Summary of webhook subscription results after a run. */
@@ -50,23 +51,29 @@ export async function createWebhookSubscriptions(
     const { description, runtimeAction, webhook } = entry;
 
     logger.debug(
-      `Subscribing webhook "${description}" (runtimeAction: ${runtimeAction}) — method: ${webhook.webhook_method}`,
+      `Subscribing webhook "${getWebhookName(webhook)}" (runtimeAction: ${runtimeAction ?? "none"})`,
     );
 
     try {
-      const resolvedWebhook = {
-        ...webhook,
-        url: webhook.url ?? generateUrlForRuntimeAction(runtimeAction),
-      };
+      let resolvedUrl = webhook.url;
+      if (!resolvedUrl && runtimeAction) {
+        resolvedUrl = generateUrlForRuntimeAction(runtimeAction);
+      }
+
+      if (!resolvedUrl) {
+        throw new Error(
+          `Webhook "${description}" must have either a URL or a runtime action defined.`,
+        );
+      }
+
+      const resolvedWebhook = { ...webhook, url: resolvedUrl };
 
       await commerceWebhooksClient.subscribeWebhook(resolvedWebhook);
       subscriptionsCreated++;
-      logger.info(
-        `Subscribed webhook: ${webhook.hook_name} (${webhook.webhook_method})`,
-      );
+      logger.info(`Subscribed webhook: ${getWebhookName(webhook)}`);
     } catch (error) {
       logger.error(
-        `Failed to subscribe webhook "${webhook.hook_name}": ${String(error)}`,
+        `Failed to subscribe webhook "${getWebhookName(webhook)}": ${String(error)}`,
       );
       failures.push({ hookName: webhook.hook_name, error });
     }
@@ -90,4 +97,14 @@ function generateUrlForRuntimeAction(runtimeAction: string): string {
     process.env.AIO_RUNTIME_APIHOST ?? "https://adobeioruntime.net";
 
   return `${apiHost}/api/v1/web/${namespace}/${runtimeAction}`;
+}
+
+/**
+ * Generates a name for a webhook based on its method and type.
+ *
+ * @param webhook
+ * @return A string in the format "webhook_method:webhook_type" to identify the webhook.
+ */
+function getWebhookName(webhook: WebhookDefinition): string {
+  return `${webhook.webhook_method}:${webhook.webhook_type}`;
 }
