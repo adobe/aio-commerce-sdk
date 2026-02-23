@@ -17,4 +17,5 @@
  * @packageDocumentation
  */
 
+export { appConfigRuntimeAction } from "./app-config";
 export { installationRuntimeAction } from "./installation";
