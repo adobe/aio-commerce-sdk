@@ -111,16 +111,16 @@ export type Step<
 
 /** Loosely-typed step for use in non type-safe contexts. */
 export interface AnyStep {
-  type: "leaf" | "branch";
-  name: string;
-  meta: StepMeta;
-
-  when?: (config: CommerceAppConfigOutputModel) => boolean;
   children?: AnyStep[];
 
   // biome-ignore-start lint/suspicious/noExplicitAny: We need the flexibility here
   context?: (context: InstallationContext) => any;
+  meta: StepMeta;
+  name: string;
   run?: (config: any, context: any) => unknown | Promise<unknown>;
+  type: "leaf" | "branch";
+
+  when?: (config: CommerceAppConfigOutputModel) => boolean;
   // biome-ignore-end lint/suspicious/noExplicitAny: We no longer need the flexibility
 }
 
