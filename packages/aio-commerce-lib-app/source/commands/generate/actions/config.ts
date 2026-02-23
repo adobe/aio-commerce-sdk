@@ -13,11 +13,14 @@
 import { join } from "node:path";
 
 import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
+import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
+import { getConfigDomains } from "#config/schema/domains";
 
 import type {
   ActionDefinition,
   ExtConfig,
 } from "@aio-commerce-sdk/scripting-utils/yaml";
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CommerceAppConfigDomain } from "#config/schema/domains";
 
 type ActionConfig = {
@@ -103,8 +106,13 @@ export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
  * @param features - The features that are enabled for the app.
  */
 export function buildAppManagementExtConfig(
-  features: Set<CommerceAppConfigDomain>,
+  appConfig: CommerceAppConfigOutputModel,
 ) {
+  const features = getConfigDomains(appConfig);
+  const hasPasswordFieldsInSchema =
+    hasBusinessConfigSchema(appConfig) &&
+    appConfig.businessConfig.schema.some((field) => field.type === "password");
+
   const extConfig = {
     hooks: {
       "pre-app-build":
@@ -149,7 +157,7 @@ export function buildAppManagementExtConfig(
     extConfig.runtimeManifest.packages[PACKAGE_NAME].actions.installation =
       createActionDefinition(
         "installation",
-        {},
+        { requiresEncryptionKey: hasPasswordFieldsInSchema },
         {
           inputs: { ...COMMERCE_ACTION_INPUTS, LOG_LEVEL: "$LOG_LEVEL" },
           limits: {
