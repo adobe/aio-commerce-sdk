@@ -1,5 +1,5 @@
 ---
-"@adobe/aio-commerce-lib-config": minor
+"@adobe/aio-commerce-lib-app": minor
 ---
 
-Introduce `actions` entrypoint with REST-like runtime actions
+Introduce `config` and `scope-tree` runtime actions with REST-like API for business configuration.

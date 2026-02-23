@@ -12,10 +12,13 @@
 
 import { execSync } from "node:child_process";
 import { writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
+import {
+  findNearestPackageJson,
+  makeOutputDirFor,
+} from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 import { stringify } from "safe-stable-stringify";
 
@@ -37,8 +40,24 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
     return;
   }
 
-  // TODO: Remove validation command from lib-config once we split encryption setup.
-  execSync("aio-commerce-lib-config validate schema");
+  const projectDir = dirname((await findNearestPackageJson()) ?? process.cwd());
+  process.loadEnvFile(join(projectDir, ".env"));
+
+  const hasPasswordFields = appConfig.businessConfig.schema.some(
+    (field) => field.type === "password",
+  );
+
+  const encryptionKeyEnvVar = "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY";
+  const hasEncryptionKey = process.env[encryptionKeyEnvVar] !== undefined;
+
+  if (hasPasswordFields && !hasEncryptionKey) {
+    consola.warn(
+      "Password fields found in schema but encryption key is not set.",
+      "Executing `aio-commerce-lib-config encryption setup` to generate an encryption key...",
+    );
+
+    execSync("aio-commerce-lib-config encryption setup");
+  }
 
   const contents = stringify(appConfig.businessConfig.schema, null, 2);
   const outputDir = await makeOutputDirFor(
