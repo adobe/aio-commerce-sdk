@@ -72,7 +72,7 @@ function isSelectorId(
 }
 
 // The router that will hold the config routes
-export const router = new HttpActionRouter<ConfigActionContext>().use(logger());
+const router = new HttpActionRouter<ConfigActionContext>().use(logger());
 
 /** GET / - Retrieve configuration */
 router.get("/", {

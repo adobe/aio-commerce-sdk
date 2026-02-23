@@ -31,7 +31,7 @@ type RuntimeActionFactoryArgs = {
 type RuntimeActionArgs = RuntimeActionParams & RuntimeActionFactoryArgs;
 
 /** The context for the config action. */
-export interface AppConfigActionContext extends BaseContext {
+interface AppConfigActionContext extends BaseContext {
   rawParams: RuntimeActionArgs;
 }
 

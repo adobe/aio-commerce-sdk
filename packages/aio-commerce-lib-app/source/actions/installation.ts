@@ -65,7 +65,7 @@ type RuntimeActionArgs = InstallationContext["params"] &
   RuntimeActionFactoryArgs;
 
 /** The context for the installation action. */
-export interface InstallationActionContext extends BaseContext {
+interface InstallationActionContext extends BaseContext {
   rawParams: RuntimeActionArgs;
 }
 

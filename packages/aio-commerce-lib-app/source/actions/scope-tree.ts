@@ -32,7 +32,7 @@ import * as v from "valibot";
 import type { SetCustomScopeTreeRequest } from "@adobe/aio-commerce-lib-config/";
 
 // The router that will hold the scope-tree routes
-export const router = new HttpActionRouter().use(logger());
+const router = new HttpActionRouter().use(logger());
 
 /** GET / - Get scope tree */
 router.get("/", {
