@@ -12,12 +12,7 @@
 
 import { join } from "node:path";
 
-import {
-  CONFIG_SCHEMA_FILE_NAME,
-  GENERATED_ACTIONS_PATH,
-  GENERATED_PATH,
-  PACKAGE_NAME,
-} from "#commands/constants";
+import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
 
 import type {
   ActionDefinition,
@@ -76,12 +71,6 @@ function createActionDefinition(
       final: true,
     },
   };
-
-  if (config.requiresSchema) {
-    def.include = [
-      [`${GENERATED_PATH}/${CONFIG_SCHEMA_FILE_NAME}`, `${PACKAGE_NAME}/`],
-    ];
-  }
 
   if (config.requiresEncryptionKey) {
     def.inputs = {
@@ -177,36 +166,13 @@ export function buildAppManagementExtConfig(
 export function buildBusinessConfigurationExtConfig() {
   const actions = [
     {
-      name: "get-scope-tree",
-      templateFile: "get-scope-tree.js.template",
-    },
-    {
-      name: "get-config-schema",
-      templateFile: "get-config-schema.js.template",
-      requiresSchema: true,
-    },
-    {
-      name: "get-configuration",
-      templateFile: "get-configuration.js.template",
-      requiresSchema: true,
+      name: "config",
+      templateFile: "config.js.template",
       requiresEncryptionKey: true,
     },
     {
-      name: "set-configuration",
-      templateFile: "set-configuration.js.template",
-      requiresEncryptionKey: true,
-    },
-    {
-      name: "set-custom-scope-tree",
-      templateFile: "set-custom-scope-tree.js.template",
-    },
-    {
-      name: "sync-commerce-scopes",
-      templateFile: "sync-commerce-scopes.js.template",
-    },
-    {
-      name: "unsync-commerce-scopes",
-      templateFile: "unsync-commerce-scopes.js.template",
+      name: "scope-tree",
+      templateFile: "scope-tree.js.template",
     },
   ] satisfies TemplateAction[];
 
