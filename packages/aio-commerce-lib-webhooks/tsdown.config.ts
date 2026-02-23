@@ -10,7 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore lint/performance/noBarrelFile: Re-exports for backwards compatibility with other files in this module. */
-export { hasWebhooks } from "#config/schema/webhooks";
+import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
+import { mergeConfig } from "tsdown";
 
-export type { WebhooksConfig } from "#config/schema/webhooks";
+export default mergeConfig(baseConfig, {
+  entry: ["./source/index.ts"],
+  noExternal: ["@aio-commerce-sdk/common-utils"],
+});

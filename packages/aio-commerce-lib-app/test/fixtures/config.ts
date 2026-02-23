@@ -52,8 +52,16 @@ const externalEventingPart = {
 /** Webhooks configuration part. */
 const webhooksPart = [
   {
-    name: "order.created",
-    url: "https://example.com/webhook",
+    description: "Webhook for order created",
+    runtimeAction: "my-package/handle-webhook",
+    category: "modification",
+    webhook: {
+      webhook_method: "plugin.order.api.order_created",
+      webhook_type: "after",
+      batch_name: "default",
+      hook_name: "order-created",
+      method: "POST",
+    },
   },
 ];
 

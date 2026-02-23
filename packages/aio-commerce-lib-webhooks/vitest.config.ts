@@ -10,7 +10,20 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore lint/performance/noBarrelFile: Re-exports for backwards compatibility with other files in this module. */
-export { hasWebhooks } from "#config/schema/webhooks";
+import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
+import { defineConfig, mergeConfig } from "vitest/config";
 
-export type { WebhooksConfig } from "#config/schema/webhooks";
+const BARREL_FILES = ["./source/index.ts"];
+
+export default mergeConfig(
+  baseConfig,
+  defineConfig({
+    plugins: [],
+    test: {
+      passWithNoTests: true,
+      coverage: {
+        exclude: [...BARREL_FILES, "./source/**/types.ts"],
+      },
+    },
+  }),
+);

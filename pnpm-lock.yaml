@@ -198,6 +198,9 @@ importers:
       '@adobe/aio-commerce-lib-events':
         specifier: workspace:*
         version: link:../aio-commerce-lib-events
+      '@adobe/aio-commerce-lib-webhooks':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-webhooks
       '@adobe/aio-lib-core-config':
         specifier: ^5.0.1
         version: 5.0.1
@@ -407,6 +410,34 @@ importers:
       '@aio-commerce-sdk/config-typedoc':
         specifier: workspace:*
         version: link:../../configs/typedoc
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../../configs/typescript
+      '@aio-commerce-sdk/config-vitest':
+        specifier: workspace:*
+        version: link:../../configs/vitest
+      msw:
+        specifier: ^2.11.1
+        version: 2.12.10(@types/node@24.10.13)(typescript@5.9.3)
+
+  packages/aio-commerce-lib-webhooks:
+    dependencies:
+      '@adobe/aio-commerce-lib-api':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-api
+      '@adobe/aio-commerce-lib-core':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-core
+      '@aio-commerce-sdk/common-utils':
+        specifier: workspace:*
+        version: link:../../packages-private/common-utils
+      valibot:
+        specifier: ^1.1.0
+        version: 1.2.0(typescript@5.9.3)
+    devDependencies:
+      '@aio-commerce-sdk/config-tsdown':
+        specifier: workspace:*
+        version: link:../../configs/tsdown
       '@aio-commerce-sdk/config-typescript':
         specifier: workspace:*
         version: link:../../configs/typescript

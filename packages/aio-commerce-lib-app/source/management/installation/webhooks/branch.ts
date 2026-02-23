@@ -15,10 +15,11 @@ import {
   defineLeafStep,
 } from "#management/installation/workflow/step";
 
+import { createWebhooksStepContext } from "./context";
 import { createWebhookSubscriptions } from "./helpers";
 import { hasWebhooks } from "./utils";
 
-import type { WebhooksExecutionContext } from "./utils";
+import type { WebhooksExecutionContext } from "./context";
 
 const subscriptionsStep = defineLeafStep({
   name: "subscriptions",
@@ -27,12 +28,8 @@ const subscriptionsStep = defineLeafStep({
     description: "Creates webhook subscriptions in Adobe Commerce",
   },
 
-  run: (config, context: WebhooksExecutionContext) => {
-    const { logger } = context;
-    logger.debug(config);
-
-    return createWebhookSubscriptions(context);
-  },
+  run: (config, context: WebhooksExecutionContext) =>
+    createWebhookSubscriptions(config, context),
 });
 
 /** Branch step for setting up Commerce webhooks. */
@@ -44,5 +41,6 @@ export const webhooksStep = defineBranchStep({
   },
 
   when: hasWebhooks,
+  context: createWebhooksStepContext,
   children: [subscriptionsStep],
 });

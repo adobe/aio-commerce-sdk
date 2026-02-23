@@ -10,11 +10,84 @@
  * governing permissions and limitations under the License.
  */
 
-import type { WebhooksExecutionContext } from "./utils";
+import { hasWebhooks } from "#config/schema/webhooks";
 
-export function createWebhookSubscriptions(context: WebhooksExecutionContext) {
-  const { logger } = context;
-  logger.info("Creating webhooks in Commerce");
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { WebhooksExecutionContext } from "./context";
 
-  return { subscriptionsCreated: true };
+/** Summary of webhook subscription results after a run. */
+export type WebhookSubscriptionResult = {
+  subscriptionsCreated: number;
+  failures: Array<{ hookName: string; error: unknown }>;
+};
+
+/**
+ * Subscribes each webhook from the app config to Adobe Commerce.
+ * Processes all webhooks, collecting failures rather than aborting on the first error.
+ *
+ * @param config - The app config (must have a non-empty `webhooks` array).
+ * @param context - The webhooks execution context (provides the Commerce API client and logger).
+ */
+export async function createWebhookSubscriptions(
+  config: CommerceAppConfigOutputModel,
+  context: WebhooksExecutionContext,
+): Promise<WebhookSubscriptionResult> {
+  const { logger, commerceWebhooksClient } = context;
+
+  if (!hasWebhooks(config)) {
+    logger.info("No webhooks configured, skipping subscription step.");
+    return { subscriptionsCreated: 0, failures: [] };
+  }
+
+  logger.info(
+    `Subscribing ${config.webhooks.length} webhook(s) to Commerce...`,
+  );
+
+  let subscriptionsCreated = 0;
+  const failures: WebhookSubscriptionResult["failures"] = [];
+
+  for (const entry of config.webhooks) {
+    const { description, runtimeAction, webhook } = entry;
+
+    logger.debug(
+      `Subscribing webhook "${description}" (runtimeAction: ${runtimeAction}) — method: ${webhook.webhook_method}`,
+    );
+
+    try {
+      const resolvedWebhook = {
+        ...webhook,
+        url: webhook.url ?? generateUrlForRuntimeAction(runtimeAction),
+      };
+
+      await commerceWebhooksClient.subscribeWebhook(resolvedWebhook);
+      subscriptionsCreated++;
+      logger.info(
+        `Subscribed webhook: ${webhook.hook_name} (${webhook.webhook_method})`,
+      );
+    } catch (error) {
+      logger.error(
+        `Failed to subscribe webhook "${webhook.hook_name}": ${String(error)}`,
+      );
+      failures.push({ hookName: webhook.hook_name, error });
+    }
+  }
+
+  logger.info(
+    `Webhook subscriptions complete: ${subscriptionsCreated} created, ${failures.length} failed.`,
+  );
+
+  return { subscriptionsCreated, failures };
+}
+
+/**
+ * Generates a URL for a given runtime action using the AIO Runtime API host and namespace.
+ * @param runtimeAction
+ * @return The generated URL for the runtime action.
+ */
+function generateUrlForRuntimeAction(runtimeAction: string): string {
+  const namespace = process.env.AIO_RUNTIME_NAMESPACE;
+  const apiHost =
+    process.env.AIO_RUNTIME_APIHOST ?? "https://adobeioruntime.net";
+
+  return `${apiHost}/api/v1/web/${namespace}/${runtimeAction}`;
 }
