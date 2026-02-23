@@ -93,44 +93,28 @@ export type ExtractParams<T extends string> = T extends `${infer Before}/*`
  * @template TQuery - Type of query parameters
  */
 export interface RouteRequest<TParams, TBody, TQuery> {
-  /** Route parameters extracted from the URL path */
-  params: TParams;
-
   /** Parsed request body */
   body: TBody;
-
-  /** Query string parameters */
-  query: TQuery;
 
   /** HTTP headers from the request */
   headers: Record<string, string>;
 
   /** HTTP method used for the request */
   method: HttpMethod;
+  /** Route parameters extracted from the URL path */
+  params: TParams;
 
   /** The matched path */
   path: string;
+
+  /** Query string parameters */
+  query: TQuery;
 }
 
 /** Internal compiled route representation used by the router. */
 export interface CompiledRoute {
-  /** HTTP method for this route */
-  method: HttpMethod;
-
-  /** Compiled regex pattern for path matching */
-  pattern: RegExp;
-
-  /** Extracted parameter names from the path */
-  keys: string[];
-
-  /** Optional schema for validating route parameters */
-  params?: StandardSchemaV1;
-
   /** Optional schema for validating request body */
   body?: StandardSchemaV1;
-
-  /** Optional schema for validating query parameters */
-  query?: StandardSchemaV1;
 
   /** Route handler function */
   handler: (
@@ -139,6 +123,20 @@ export interface CompiledRoute {
     // biome-ignore lint/suspicious/noExplicitAny: Internal storage needs to accept any context type
     ctx: any,
   ) => Promisable<ActionResponse>;
+
+  /** Extracted parameter names from the path */
+  keys: string[];
+  /** HTTP method for this route */
+  method: HttpMethod;
+
+  /** Optional schema for validating route parameters */
+  params?: StandardSchemaV1;
+
+  /** Compiled regex pattern for path matching */
+  pattern: RegExp;
+
+  /** Optional schema for validating query parameters */
+  query?: StandardSchemaV1;
 }
 
 /**

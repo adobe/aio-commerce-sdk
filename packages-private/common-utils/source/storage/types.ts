@@ -16,6 +16,13 @@
  */
 export interface KeyValueStore<T> {
   /**
+   * Deletes data by key.
+   *
+   * @param key - The key to delete.
+   * @returns True if the key existed and was deleted.
+   */
+  delete(key: string): Promise<boolean>;
+  /**
    * Retrieves data by key.
    *
    * @param key - The key to retrieve.
@@ -30,14 +37,6 @@ export interface KeyValueStore<T> {
    * @param data - The data to save.
    */
   put(key: string, data: T): Promise<void>;
-
-  /**
-   * Deletes data by key.
-   *
-   * @param key - The key to delete.
-   * @returns True if the key existed and was deleted.
-   */
-  delete(key: string): Promise<boolean>;
 }
 
 /**
