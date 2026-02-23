@@ -115,7 +115,7 @@ export function buildAppManagementExtConfig(
       workerProcess: [
         {
           type: "action",
-          impl: `${PACKAGE_NAME}/get-app-config`,
+          impl: `${PACKAGE_NAME}/app-config`,
         },
       ],
     },
@@ -125,7 +125,7 @@ export function buildAppManagementExtConfig(
         [PACKAGE_NAME]: {
           license: "Apache-2.0",
           actions: {
-            "get-app-config": createActionDefinition("get-app-config"),
+            "app-config": createActionDefinition("app-config"),
           } as Record<string, ActionDefinition>,
         },
       },
