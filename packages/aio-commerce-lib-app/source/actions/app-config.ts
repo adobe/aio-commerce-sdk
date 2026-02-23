@@ -19,6 +19,7 @@ import {
 import { validateCommerceAppConfig } from "#config/lib/validate";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Arguments for the runtime action factory. */
@@ -29,17 +30,22 @@ type RuntimeActionFactoryArgs = {
 /** Params received by all handlers. */
 type RuntimeActionArgs = RuntimeActionParams & RuntimeActionFactoryArgs;
 
+/** The context for the config action. */
+export interface AppConfigActionContext extends BaseContext {
+  rawParams: RuntimeActionArgs;
+}
+
 /** Router for the app config actions. */
-const router = new HttpActionRouter().use(
+const router = new HttpActionRouter<AppConfigActionContext>().use(
   logger({ name: () => "get-app-config" }),
 );
 
 /** GET / - Get app config */
 router.get("/", {
-  handler: async (req, { logger }) => {
+  handler: async (_req, { logger, rawParams }) => {
     logger.debug("Validating app config...");
 
-    const { appConfig } = req.params as RuntimeActionArgs;
+    const { appConfig } = rawParams;
     const config = validateCommerceAppConfig(appConfig);
     logger.debug("Successfully validated the app config");
 

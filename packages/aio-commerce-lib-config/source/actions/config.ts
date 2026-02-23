@@ -10,56 +10,75 @@
  * governing permissions and limitations under the License.
  */
 
-import { badRequest, ok } from "@adobe/aio-commerce-lib-core/responses";
+import { ok } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
   logger,
 } from "@aio-commerce-sdk/common-utils/actions";
-import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 import * as v from "valibot";
 
 import {
-  getConfigSchema,
   getConfiguration,
   setConfiguration,
   setGlobalLibConfigOptions,
-} from "../config-manager";
-import { byCode, byCodeAndLevel, byScopeId } from "../config-utils";
+} from "#config-manager";
+import { byCode, byCodeAndLevel, byScopeId } from "#config-utils";
+import { validateBusinessConfigSchema } from "#modules/schema/utils";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
-import type { SelectorBy } from "../config-utils";
-import type { SetConfigurationRequest } from "../types";
+import type { SelectorBy } from "#config-utils";
+import type { BusinessConfigSchema } from "#modules/schema/types";
 
-export interface ConfigContext extends BaseContext {
-  rawParams: RuntimeActionParams & {
+/** The arguments for the config action factory. */
+type ConfigActionFactoryArgs = {
+  configSchema: BusinessConfigSchema;
+};
+
+/** The parameters for the config action. */
+type ConfigActionParams = RuntimeActionParams &
+  ConfigActionFactoryArgs & {
     AIO_COMMERCE_CONFIG_ENCRYPTION_KEY?: string;
   };
+
+/** The context for the config action. */
+interface ConfigActionContext extends BaseContext {
+  rawParams: ConfigActionParams;
+}
+
+const SelectorIdSchema = v.object({
+  id: v.string(),
+});
+
+const SelectorCodeAndOptionalLevelSchema = v.object({
+  code: v.string(),
+  level: v.optional(v.string()),
+});
+
+/** Checks if the object is a selector by id. */
+function isSelectorId(
+  object: unknown,
+): object is v.InferOutput<typeof SelectorIdSchema> {
+  return (
+    typeof object === "object" &&
+    object !== null &&
+    "id" in object &&
+    typeof object.id === "string"
+  );
 }
 
 // The router that will hold the config routes
-export const router = new HttpActionRouter<ConfigContext>().use(logger());
+export const router = new HttpActionRouter<ConfigActionContext>().use(logger());
 
 /** GET / - Retrieve configuration */
 router.get("/", {
-  query: v.object({
-    id: v.optional(v.string()),
-    code: v.optional(v.string()),
-    level: v.optional(v.string()),
-  }),
-
+  query: v.union([SelectorIdSchema, SelectorCodeAndOptionalLevelSchema]),
   handler: async (req, ctx) => {
-    const { id, code, level } = req.query;
     const { logger, rawParams } = ctx;
-
-    if (!(id || code)) {
-      const message = "Either id or code query param is required";
-
-      logger.warn(`Invalid params: ${message}`);
-      return badRequest(message);
-    }
+    const query = req.query;
 
     if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
+      logger.debug("Setting encryption key...");
       setGlobalLibConfigOptions({
         encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
       });
@@ -67,17 +86,21 @@ router.get("/", {
 
     let selector: SelectorBy;
 
-    if (id) {
+    if (isSelectorId(query)) {
+      const id = query.id;
       selector = byScopeId(id);
       logger.debug(`Retrieving configuration by id: ${id}`);
-    } else if (level) {
-      selector = byCodeAndLevel(code as string, level);
-      logger.debug(
-        `Retrieving configuration by code: ${code}, level: ${level}`,
-      );
     } else {
-      selector = byCode(code as string);
-      logger.debug(`Retrieving configuration by code: ${code}`);
+      const { code, level } = query;
+      if (level) {
+        selector = byCodeAndLevel(code, level);
+        logger.debug(
+          `Retrieving configuration by code: ${code}, level: ${level}`,
+        );
+      } else {
+        selector = byCode(query.code);
+        logger.debug(`Retrieving configuration by code: ${code}`);
+      }
     }
 
     const appConfiguration = await getConfiguration(selector);
@@ -85,6 +108,7 @@ router.get("/", {
     // Make sure we reset the encryption key to null after the operation is complete.
     // Otherwise on warm invocations, the key may be kept in memory.
     if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
+      logger.debug("Resetting encryption key...");
       setGlobalLibConfigOptions({
         encryptionKey: null,
       });
@@ -97,6 +121,11 @@ router.get("/", {
 /** POST / - Set configuration */
 router.post("/", {
   body: v.object({
+    selector: v.union([
+      SelectorIdSchema,
+      v.required(SelectorCodeAndOptionalLevelSchema),
+    ]),
+
     config: v.array(
       v.object({
         name: v.string(),
@@ -106,36 +135,34 @@ router.post("/", {
   }),
 
   handler: async (req, ctx) => {
-    const { id, code, level } = req.query;
     const { logger, rawParams } = ctx;
 
-    if (!(id || (code && level))) {
-      const message =
-        "Either id or both code and level query params are required";
-
-      logger.warn(`Invalid params: ${message}`);
-      return badRequest(message);
-    }
-
     if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
+      logger.debug("Setting encryption key...");
       setGlobalLibConfigOptions({
         encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
       });
     }
 
-    const payload = {
-      config: req.body.config,
-    } satisfies SetConfigurationRequest;
+    const { selector, config } = req.body;
+    let selectorBy: SelectorBy;
 
-    const selector = id
-      ? byScopeId(id)
-      : byCodeAndLevel(code as string, level as string);
+    if (isSelectorId(selector)) {
+      selectorBy = byScopeId(selector.id);
+      logger.debug(`Setting configuration by id: ${selector.id}`);
+    } else {
+      selectorBy = byCodeAndLevel(selector.code, selector.level);
+      logger.debug(
+        `Setting configuration by code: ${selector.code}, level: ${selector.level}`,
+      );
+    }
 
-    const result = await setConfiguration(payload, selector);
+    const result = await setConfiguration({ config }, selectorBy);
 
     // Make sure we reset the encryption key to null after the operation is complete.
     // Otherwise on warm invocations, the key may be kept in memory.
     if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
+      logger.debug("Resetting encryption key...");
       setGlobalLibConfigOptions({
         encryptionKey: null,
       });
@@ -150,22 +177,28 @@ router.post("/", {
 
 /** GET /schema - Retrieve configuration schema */
 router.get("/schema", {
-  handler: async (_req, ctx) => {
-    const { logger } = ctx;
-    logger.debug("Retrieving configuration schema...");
+  handler: (_req, { logger, rawParams }) => {
+    logger.debug("Validating configuration schema...");
 
-    const configSchema = await getConfigSchema();
-    logger.debug(
-      `Successfully retrieved configSchema: ${inspect(configSchema)}`,
-    );
+    const configSchema = rawParams.configSchema;
+    const validatedSchema = validateBusinessConfigSchema(configSchema);
+    logger.debug("Successfully validated configuration schema");
 
     return ok({
       body: {
-        configSchema,
+        configSchema: validatedSchema,
       },
     });
   },
 });
 
 /** The handler method for the config action. */
-export const configRuntimeAction = router.handler();
+export const configRuntimeAction =
+  ({ configSchema }: ConfigActionFactoryArgs) =>
+  async (params: RuntimeActionParams) => {
+    const handler = router.handler();
+    return await handler({
+      ...params,
+      configSchema,
+    });
+  };

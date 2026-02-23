@@ -155,8 +155,8 @@ router.post("/commerce", {
 router.delete("/commerce", {
   handler: async (_req, ctx) => {
     const { logger } = ctx;
-
     logger.debug("Unsyncing commerce scopes...");
+
     const { unsynced } = await unsyncCommerceScopes();
 
     if (unsynced) {
@@ -166,7 +166,10 @@ router.delete("/commerce", {
       return ok(message);
     }
 
-    return ok("No commerce scopes to unsync");
+    const message = "No commerce scopes to unsync";
+    logger.debug(message);
+
+    return ok(message);
   },
 });
 
