@@ -292,6 +292,25 @@ The default configuration should suffice for most use cases, requiring only that
 
 After you have your TSDown configuration ready, you can run the `build` script to build your package, which will generate a `dist/` directory with the built files. Evaluate the output to make sure it's what you expect.
 
+#### Using the Selective Bundle Plugin
+
+The `selectiveBundlePlugin` is a required Rolldown plugin for all public packages that depend on private packages. This plugin bundles private package source while externalizing their transitive dependencies. After tree-shaking, it writes an enriched `package.json` to `.build/` with only the surviving transitive dependencies.
+
+The plugin is already included in the base TSDown configuration provided by `@aio-commerce-sdk/config-tsdown`, so public packages automatically benefit from this functionality without additional setup. However, if you need to configure TSDown manually or understand how it works, here's an example:
+
+```ts
+import { selectiveBundlePlugin } from "@aio-commerce-sdk/config-tsdown/plugins/selective-bundle/plugin.js";
+import { mergeConfig } from "tsdown";
+
+export default mergeConfig(baseConfig, {
+  entry: ["./source/index.ts"],
+  plugins: [selectiveBundlePlugin()],
+});
+```
+
+> [!NOTE]
+> Since the plugin is already part of the base configuration, you typically don't need to add it explicitly unless you're overriding the default plugin configuration.
+
 ### Configuring the exports
 
 Once you have your build files, it's time to configure your `package.json` file to declare the files that your library exports (using the `exports` field). Here's a [really good guide](https://hirok.io/posts/package-json-exports) that elaborates on the topic. If you just want to make it work, copy (and adapt) the package exports from the below reference packages:
