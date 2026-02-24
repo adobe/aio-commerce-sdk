@@ -75,7 +75,7 @@ export async function createWebhookSubscriptions(
       logger.error(
         `Failed to subscribe webhook "${getWebhookName(webhook)}": ${String(error)}`,
       );
-      failures.push({ hookName: webhook.hook_name, error });
+      failures.push({ hookName: getWebhookName(webhook), error });
     }
   }
 
@@ -92,11 +92,14 @@ export async function createWebhookSubscriptions(
  * @return The generated URL for the runtime action.
  */
 function generateUrlForRuntimeAction(runtimeAction: string): string {
-  const namespace = process.env.AIO_RUNTIME_NAMESPACE;
-  const apiHost =
-    process.env.AIO_RUNTIME_APIHOST ?? "https://adobeioruntime.net";
+  const namespace = process.env.__OW_NAMESPACE;
+  const apiHost = process.env.__OW_API_HOST ?? "https://adobeioruntime.net";
 
-  return `${apiHost}/api/v1/web/${namespace}/${runtimeAction}`;
+  if (!namespace) {
+    return `${apiHost}/api/v1/web/${runtimeAction}`;
+  }
+
+  return `https://${namespace}.adobeioruntime.net/api/v1/web/${runtimeAction}`;
 }
 
 /**
