@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { HTTPError } from "@adobe/aio-commerce-lib-api/ky";
+
 import { hasWebhooks } from "#config/schema/webhooks";
 
 import type { WebhookSubscribeParams } from "@adobe/aio-commerce-lib-webhooks";
@@ -78,7 +80,11 @@ export async function createWebhookSubscriptions(
       hook_name: `${idPrefix}${webhook.hook_name}`,
     };
 
-    await commerceWebhooksClient.subscribeWebhook(resolvedWebhook);
+    await subscribeWithEnrichedError(
+      commerceWebhooksClient,
+      resolvedWebhook,
+      webhook,
+    );
     subscribedWebhooks.push(resolvedWebhook);
     logger.info(`Subscribed webhook: ${getWebhookName(webhook)}`);
   }
@@ -91,16 +97,47 @@ export async function createWebhookSubscriptions(
 }
 
 /**
+ * Calls subscribeWebhook and, if it fails with an HTTPError whose response body
+ * contains a string `message`, rethrows as a new Error that includes the webhook
+ * name so callers get a human-readable failure reason.
+ */
+async function subscribeWithEnrichedError(
+  client: WebhooksExecutionContext["commerceWebhooksClient"],
+  resolvedWebhook: WebhookSubscribeParams,
+  originalWebhook: WebhookDefinition,
+): Promise<void> {
+  try {
+    await client.subscribeWebhook(resolvedWebhook);
+  } catch (err) {
+    if (err instanceof HTTPError) {
+      let body: { message?: unknown } | undefined;
+      try {
+        body = await err.response.json<{ message?: unknown }>();
+      } catch {
+        throw err;
+      }
+      if (typeof body?.message === "string") {
+        throw new Error(
+          `Webhook subscription failed for "${getWebhookName(originalWebhook)}": ${body.message}`,
+        );
+      }
+    }
+    throw err;
+  }
+}
+
+/**
  * Generates a URL for a given runtime action using the AIO Runtime API host and namespace.
  * @param runtimeAction
  * @return The generated URL for the runtime action.
  */
 function generateUrlForRuntimeAction(runtimeAction: string): string {
   const namespace = process.env.__OW_NAMESPACE;
-  const apiHost = process.env.__OW_API_HOST ?? "https://adobeioruntime.net";
 
   if (!namespace) {
-    return `${apiHost}/api/v1/web/${runtimeAction}`;
+    throw new Error(
+      `Cannot generate URL for runtime action "${runtimeAction}": namespace environment variable is not set.`,
+    );
   }
 
   return `https://${namespace}.adobeioruntime.net/api/v1/web/${runtimeAction}`;
@@ -116,7 +153,10 @@ function generateUrlForRuntimeAction(runtimeAction: string): string {
  * @return The built prefix string.
  */
 function buildWebhookIdPrefix(appId: string): string {
-  return `${appId.replace(NON_IDENTIFIER_CHAR_REGEX, "_").replace(MULTIPLE_UNDERSCORES_REGEX, "_")}_`;
+  const prefix = appId
+    .replace(NON_IDENTIFIER_CHAR_REGEX, "_")
+    .replace(MULTIPLE_UNDERSCORES_REGEX, "_");
+  return prefix.endsWith("_") ? prefix : `${prefix}_`;
 }
 
 /**

@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { createWebhookSubscriptions } from "#management/installation/webhooks/helpers";
 import { configWithWebhooks, minimalValidConfig } from "#test/fixtures/config";
@@ -34,6 +34,14 @@ function makeContext(
 }
 
 describe("createWebhookSubscriptions", () => {
+  beforeEach(() => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   test("returns empty subscribedWebhooks when no webhooks are configured", async () => {
     const context = makeContext();
     const result = await createWebhookSubscriptions(
@@ -122,8 +130,38 @@ describe("createWebhookSubscriptions", () => {
 
     expect(subscribeWebhook).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: expect.stringContaining("my-package/handle-webhook"),
+        url: "https://test-namespace.adobeioruntime.net/api/v1/web/my-package/handle-webhook",
       }),
+    );
+  });
+
+  test("throws when namespace is not set and runtimeAction has no explicit url", async () => {
+    vi.unstubAllEnvs();
+
+    const context = makeContext();
+
+    const configWithoutUrl = {
+      ...configWithWebhooks,
+      webhooks: [
+        {
+          description: "Webhook without url",
+          category: "test",
+          runtimeAction: "my-package/handle-webhook",
+          webhook: {
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "after",
+            batch_name: "batch1",
+            hook_name: "hook1",
+            method: "POST",
+          },
+        },
+      ],
+    };
+
+    await expect(
+      createWebhookSubscriptions(configWithoutUrl, context),
+    ).rejects.toThrow(
+      'Cannot generate URL for runtime action "my-package/handle-webhook": namespace environment variable is not set.',
     );
   });
 
@@ -198,5 +236,90 @@ describe("createWebhookSubscriptions", () => {
       error,
     );
     expect(subscribeWebhook).toHaveBeenCalledTimes(1);
+  });
+
+  test("throws with response message and webhook name when HTTPError body has a string message", async () => {
+    const { HTTPError } = await import("@adobe/aio-commerce-lib-api/ky");
+
+    const responseBody = { message: "Duplicate webhook registration" };
+    const mockResponse = {
+      json: vi.fn().mockResolvedValue(responseBody),
+    };
+
+    const httpError = new HTTPError(
+      mockResponse as unknown as Response,
+      new Request("https://example.com"),
+      {} as never,
+    );
+
+    const subscribeWebhook = vi.fn().mockRejectedValue(httpError);
+    const context = makeContext(subscribeWebhook);
+
+    const singleWebhookConfig = {
+      ...configWithWebhooks,
+      webhooks: [
+        {
+          description: "Test webhook",
+          runtimeAction: "my-package/handle-webhook",
+          category: "modification",
+          webhook: {
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "after",
+            batch_name: "batch1",
+            hook_name: "hook1",
+            method: "POST",
+            url: "https://example.com/hook",
+          },
+        },
+      ],
+    };
+
+    await expect(
+      createWebhookSubscriptions(singleWebhookConfig, context),
+    ).rejects.toThrow(
+      'Webhook subscription failed for "observer.catalog_product_save_after:after": Duplicate webhook registration',
+    );
+  });
+
+  test("rethrows the original HTTPError when response body has no string message", async () => {
+    const { HTTPError } = await import("@adobe/aio-commerce-lib-api/ky");
+
+    const mockResponse = {
+      json: vi.fn().mockResolvedValue({ code: 422 }),
+    };
+
+    const httpError = new HTTPError(
+      mockResponse as unknown as Response,
+      new Request("https://example.com"),
+      {} as never,
+    );
+
+    const subscribeWebhook = vi.fn().mockRejectedValue(httpError);
+    const context = makeContext(subscribeWebhook);
+
+    await expect(
+      createWebhookSubscriptions(configWithWebhooks, context),
+    ).rejects.toThrow(httpError);
+  });
+
+  test("rethrows the original HTTPError when response body cannot be parsed as JSON", async () => {
+    const { HTTPError } = await import("@adobe/aio-commerce-lib-api/ky");
+
+    const mockResponse = {
+      json: vi.fn().mockRejectedValue(new SyntaxError("Unexpected token")),
+    };
+
+    const httpError = new HTTPError(
+      mockResponse as unknown as Response,
+      new Request("https://example.com"),
+      {} as never,
+    );
+
+    const subscribeWebhook = vi.fn().mockRejectedValue(httpError);
+    const context = makeContext(subscribeWebhook);
+
+    await expect(
+      createWebhookSubscriptions(configWithWebhooks, context),
+    ).rejects.toThrow(httpError);
   });
 });
