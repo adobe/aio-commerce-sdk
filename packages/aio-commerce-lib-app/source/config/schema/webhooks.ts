@@ -46,6 +46,9 @@ const DeveloperConsoleOAuthSchema = v.object({
   environment: nonEmptyStringValueSchema("environment"),
 });
 
+/** batch_name and hook_name must contain only letters, numbers, and underscores. */
+const WEBHOOK_IDENTIFIER_REGEX = /^[a-zA-Z0-9_]+$/;
+
 /** Response category for conflict detection: validation, append, or modification. */
 const RESPONSE_CATEGORIES = ["validation", "append", "modification"] as const;
 const ResponseCategorySchema = v.picklist(
@@ -57,9 +60,21 @@ const ResponseCategorySchema = v.picklist(
 const WebhookDefinitionSchema = v.object({
   webhook_method: nonEmptyStringValueSchema("webhook_method"),
   webhook_type: nonEmptyStringValueSchema("webhook_type"),
-  batch_name: nonEmptyStringValueSchema("batch_name"),
+  batch_name: v.pipe(
+    nonEmptyStringValueSchema("batch_name"),
+    v.regex(
+      WEBHOOK_IDENTIFIER_REGEX,
+      "batch_name must contain only letters, numbers, and underscores",
+    ),
+  ),
   batch_order: v.optional(v.number()),
-  hook_name: nonEmptyStringValueSchema("hook_name"),
+  hook_name: v.pipe(
+    nonEmptyStringValueSchema("hook_name"),
+    v.regex(
+      WEBHOOK_IDENTIFIER_REGEX,
+      "hook_name must contain only letters, numbers, and underscores",
+    ),
+  ),
   url: v.optional(stringValueSchema("url")),
   priority: v.optional(v.number()),
   required: v.optional(booleanValueSchema("required")),

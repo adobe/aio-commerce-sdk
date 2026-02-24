@@ -1285,6 +1285,80 @@ describe("validateConfigDomain", () => {
         "Invalid commerce app config",
       );
     });
+
+    test("should accept batch_name and hook_name with only alphanumeric and underscore characters", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            runtimeAction: "my-package/handle-webhook",
+            webhook: {
+              ...baseWebhookDefinition,
+              batch_name: "my_batch_01",
+              hook_name: "hook_1",
+            },
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    });
+
+    test("should reject batch_name containing invalid characters", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            runtimeAction: "my-package/handle-webhook",
+            webhook: {
+              ...baseWebhookDefinition,
+              batch_name: "invalid-batch",
+            },
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).toThrow(
+        "Invalid commerce app config",
+      );
+    });
+
+    test("should reject hook_name containing invalid characters", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            runtimeAction: "my-package/handle-webhook",
+            webhook: {
+              ...baseWebhookDefinition,
+              hook_name: "invalid hook",
+            },
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).toThrow(
+        "Invalid commerce app config",
+      );
+    });
   });
 
   test("should validate commerce event with fields that have optional source", () => {
