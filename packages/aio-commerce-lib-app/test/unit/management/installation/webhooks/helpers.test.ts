@@ -129,6 +129,45 @@ describe("createWebhookSubscriptions", () => {
     );
   });
 
+  test("prepends sanitized metadata.id prefix to batch_name and hook_name", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+    const context = makeContext(subscribeWebhook);
+
+    const config = {
+      metadata: {
+        id: "my--app.v2",
+        displayName: "My App",
+        description: "d",
+        version: "1.0.0",
+      },
+      webhooks: [
+        {
+          description: "Test webhook",
+          runtimeAction: "my-package/handle-webhook",
+          category: "modification",
+          webhook: {
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "after",
+            batch_name: "products",
+            hook_name: "validate",
+            method: "POST",
+            url: "https://example.com/hook",
+          },
+        },
+      ],
+    };
+
+    await createWebhookSubscriptions(config, context);
+
+    expect(subscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        batch_name: "my_app_v2_products",
+        hook_name: "my_app_v2_validate",
+      }),
+    );
+    // Consecutive underscores from "--" are collapsed to a single one ("my__app" → "my_app")
+  });
+
   test("collects failures and continues processing remaining webhooks", async () => {
     const error = new Error("Commerce API error");
     const subscribeWebhook = vi

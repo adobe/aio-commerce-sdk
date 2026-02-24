@@ -16,6 +16,12 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { WebhookDefinition } from "#config/schema/webhooks";
 import type { WebhooksExecutionContext } from "./context";
 
+/** Matches any character that is not a valid identifier character (letter, digit, or underscore). */
+const NON_IDENTIFIER_CHAR_REGEX = /[^a-zA-Z0-9_]/g;
+
+/** Matches two or more consecutive underscores. */
+const MULTIPLE_UNDERSCORES_REGEX = /_+/g;
+
 /** Summary of webhook subscription results after a run. */
 export type WebhookSubscriptionResult = {
   subscriptionsCreated: number;
@@ -44,6 +50,8 @@ export async function createWebhookSubscriptions(
     `Subscribing ${config.webhooks.length} webhook(s) to Commerce...`,
   );
 
+  const idPrefix = buildWebhookIdPrefix(config.metadata.id);
+
   let subscriptionsCreated = 0;
   const failures: WebhookSubscriptionResult["failures"] = [];
 
@@ -66,7 +74,12 @@ export async function createWebhookSubscriptions(
         );
       }
 
-      const resolvedWebhook = { ...webhook, url: resolvedUrl };
+      const resolvedWebhook = {
+        ...webhook,
+        url: resolvedUrl,
+        batch_name: `${idPrefix}${webhook.batch_name}`,
+        hook_name: `${idPrefix}${webhook.hook_name}`,
+      };
 
       await commerceWebhooksClient.subscribeWebhook(resolvedWebhook);
       subscriptionsCreated++;
@@ -100,6 +113,19 @@ function generateUrlForRuntimeAction(runtimeAction: string): string {
   }
 
   return `https://${namespace}.adobeioruntime.net/api/v1/web/${runtimeAction}`;
+}
+
+/**
+ * Builds a prefix string from the app ID to namespace webhook batch/hook names.
+ * Non-identifier characters are replaced with underscores; consecutive underscores
+ * are collapsed to one; a trailing underscore is appended.
+ *
+ * @example buildWebhookIdPrefix("my--app.v2") // => "my_app_v2_"
+ * @param appId - The app ID to build the prefix from.
+ * @return The built prefix string.
+ */
+function buildWebhookIdPrefix(appId: string): string {
+  return `${appId.replace(NON_IDENTIFIER_CHAR_REGEX, "_").replace(MULTIPLE_UNDERSCORES_REGEX, "_")}_`;
 }
 
 /**
