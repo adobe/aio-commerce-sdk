@@ -108,6 +108,20 @@ router.get("/", {
     }
 
     const appConfiguration = await getConfiguration(selector);
+    appConfiguration.config = appConfiguration.config.map((item) => {
+      const schemaMatch = rawParams.configSchema.find(
+        (field) => field.name === item.name,
+      );
+
+      if (schemaMatch?.type === "password") {
+        return {
+          ...item,
+          value: "*****",
+        };
+      }
+
+      return item;
+    });
 
     // Make sure we reset the encryption key to null after the operation is complete.
     // Otherwise on warm invocations, the key may be kept in memory.
