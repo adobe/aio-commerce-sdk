@@ -12,6 +12,7 @@
 
 import { hasWebhooks } from "#config/schema/webhooks";
 
+import type { WebhookSubscribeParams } from "@adobe/aio-commerce-lib-webhooks";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { WebhookDefinition } from "#config/schema/webhooks";
 import type { WebhooksExecutionContext } from "./context";
@@ -24,13 +25,12 @@ const MULTIPLE_UNDERSCORES_REGEX = /_+/g;
 
 /** Summary of webhook subscription results after a run. */
 export type WebhookSubscriptionResult = {
-  subscriptionsCreated: number;
-  failures: Array<{ hookName: string; error: unknown }>;
+  subscribedWebhooks: WebhookSubscribeParams[];
 };
 
 /**
  * Subscribes each webhook from the app config to Adobe Commerce.
- * Processes all webhooks, collecting failures rather than aborting on the first error.
+ * Throws on the first failure, aborting any remaining subscriptions.
  *
  * @param config - The app config (must have a non-empty `webhooks` array).
  * @param context - The webhooks execution context (provides the Commerce API client and logger).
@@ -43,7 +43,7 @@ export async function createWebhookSubscriptions(
 
   if (!hasWebhooks(config)) {
     logger.info("No webhooks configured, skipping subscription step.");
-    return { subscriptionsCreated: 0, failures: [] };
+    return { subscribedWebhooks: [] };
   }
 
   logger.info(
@@ -51,9 +51,7 @@ export async function createWebhookSubscriptions(
   );
 
   const idPrefix = buildWebhookIdPrefix(config.metadata.id);
-
-  let subscriptionsCreated = 0;
-  const failures: WebhookSubscriptionResult["failures"] = [];
+  const subscribedWebhooks: WebhookSubscribeParams[] = [];
 
   for (const entry of config.webhooks) {
     const { description, runtimeAction, webhook } = entry;
@@ -62,41 +60,34 @@ export async function createWebhookSubscriptions(
       `Subscribing webhook "${getWebhookName(webhook)}" (runtimeAction: ${runtimeAction ?? "none"})`,
     );
 
-    try {
-      let resolvedUrl = webhook.url;
-      if (!resolvedUrl && runtimeAction) {
-        resolvedUrl = generateUrlForRuntimeAction(runtimeAction);
-      }
-
-      if (!resolvedUrl) {
-        throw new Error(
-          `Webhook "${description}" must have either a URL or a runtime action defined.`,
-        );
-      }
-
-      const resolvedWebhook = {
-        ...webhook,
-        url: resolvedUrl,
-        batch_name: `${idPrefix}${webhook.batch_name}`,
-        hook_name: `${idPrefix}${webhook.hook_name}`,
-      };
-
-      await commerceWebhooksClient.subscribeWebhook(resolvedWebhook);
-      subscriptionsCreated++;
-      logger.info(`Subscribed webhook: ${getWebhookName(webhook)}`);
-    } catch (error) {
-      logger.error(
-        `Failed to subscribe webhook "${getWebhookName(webhook)}": ${String(error)}`,
-      );
-      failures.push({ hookName: getWebhookName(webhook), error });
+    let resolvedUrl = webhook.url;
+    if (!resolvedUrl && runtimeAction) {
+      resolvedUrl = generateUrlForRuntimeAction(runtimeAction);
     }
+
+    if (!resolvedUrl) {
+      throw new Error(
+        `Webhook "${description}" must have either a URL or a runtime action defined.`,
+      );
+    }
+
+    const resolvedWebhook = {
+      ...webhook,
+      url: resolvedUrl,
+      batch_name: `${idPrefix}${webhook.batch_name}`,
+      hook_name: `${idPrefix}${webhook.hook_name}`,
+    };
+
+    await commerceWebhooksClient.subscribeWebhook(resolvedWebhook);
+    subscribedWebhooks.push(resolvedWebhook);
+    logger.info(`Subscribed webhook: ${getWebhookName(webhook)}`);
   }
 
   logger.info(
-    `Webhook subscriptions complete: ${subscriptionsCreated} created, ${failures.length} failed.`,
+    `Webhook subscriptions complete: ${subscribedWebhooks.length} subscribed.`,
   );
 
-  return { subscriptionsCreated, failures };
+  return { subscribedWebhooks };
 }
 
 /**

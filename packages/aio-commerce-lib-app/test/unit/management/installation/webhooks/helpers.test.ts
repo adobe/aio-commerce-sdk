@@ -34,21 +34,20 @@ function makeContext(
 }
 
 describe("createWebhookSubscriptions", () => {
-  test("returns zero subscriptions when no webhooks are configured", async () => {
+  test("returns empty subscribedWebhooks when no webhooks are configured", async () => {
     const context = makeContext();
     const result = await createWebhookSubscriptions(
       minimalValidConfig,
       context,
     );
 
-    expect(result.subscriptionsCreated).toBe(0);
-    expect(result.failures).toHaveLength(0);
+    expect(result.subscribedWebhooks).toHaveLength(0);
     expect(
       context.commerceWebhooksClient.subscribeWebhook,
     ).not.toHaveBeenCalled();
   });
 
-  test("calls subscribeWebhook for each entry and returns count", async () => {
+  test("calls subscribeWebhook for each entry and returns subscribed webhooks", async () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
     const context = makeContext(subscribeWebhook);
 
@@ -60,10 +59,9 @@ describe("createWebhookSubscriptions", () => {
     expect(subscribeWebhook).toHaveBeenCalledTimes(
       configWithWebhooks.webhooks.length,
     );
-    expect(result.subscriptionsCreated).toBe(
+    expect(result.subscribedWebhooks).toHaveLength(
       configWithWebhooks.webhooks.length,
     );
-    expect(result.failures).toHaveLength(0);
   });
 
   test("passes webhook.url directly when it is explicitly set", async () => {
@@ -168,7 +166,7 @@ describe("createWebhookSubscriptions", () => {
     // Consecutive underscores from "--" are collapsed to a single one ("my__app" → "my_app")
   });
 
-  test("collects failures and continues processing remaining webhooks", async () => {
+  test("throws on the first subscription failure and does not process remaining webhooks", async () => {
     const error = new Error("Commerce API error");
     const subscribeWebhook = vi
       .fn()
@@ -195,11 +193,10 @@ describe("createWebhookSubscriptions", () => {
     };
 
     const context = makeContext(subscribeWebhook);
-    const result = await createWebhookSubscriptions(config, context);
 
-    expect(subscribeWebhook).toHaveBeenCalledTimes(2);
-    expect(result.subscriptionsCreated).toBe(1);
-    expect(result.failures).toHaveLength(1);
-    expect(result.failures.at(0)?.error).toBe(error);
+    await expect(createWebhookSubscriptions(config, context)).rejects.toThrow(
+      error,
+    );
+    expect(subscribeWebhook).toHaveBeenCalledTimes(1);
   });
 });
