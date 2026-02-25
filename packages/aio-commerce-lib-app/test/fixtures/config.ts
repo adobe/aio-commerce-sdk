@@ -59,7 +59,7 @@ const webhooksPart = [
       webhook_method: "plugin.order.api.order_created",
       webhook_type: "after",
       batch_name: "default",
-      hook_name: "order-created",
+      hook_name: "order_created",
       method: "POST",
     },
   },

@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { hasWebhooks } from "#config/schema/webhooks";
 import {
   defineBranchStep,
   defineLeafStep,
@@ -17,7 +18,6 @@ import {
 
 import { createWebhooksStepContext } from "./context";
 import { createWebhookSubscriptions } from "./helpers";
-import { hasWebhooks } from "./utils";
 
 import type { WebhooksExecutionContext } from "./context";
 

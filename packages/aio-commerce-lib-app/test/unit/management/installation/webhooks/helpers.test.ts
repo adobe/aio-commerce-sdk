@@ -19,9 +19,11 @@ import type { WebhooksExecutionContext } from "#management/installation/webhooks
 
 function makeContext(
   subscribeWebhookFn = vi.fn().mockResolvedValue(null),
+  getWebhookListFn = vi.fn().mockResolvedValue([]),
 ): WebhooksExecutionContext {
   return {
     commerceWebhooksClient: {
+      getWebhookList: getWebhookListFn,
       subscribeWebhook: subscribeWebhookFn,
     },
     logger: {
@@ -88,7 +90,7 @@ describe("createWebhookSubscriptions", () => {
             webhook_method: "plugin.order.api.order_created",
             webhook_type: "after",
             batch_name: "default",
-            hook_name: "order-created",
+            hook_name: "order_created",
             method: "POST",
             url: explicitUrl,
           },
@@ -218,11 +220,12 @@ describe("createWebhookSubscriptions", () => {
         {
           description: "Second webhook",
           runtimeAction: "my-package/second-hook",
+          category: "modification",
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
             webhook_type: "after",
             batch_name: "batch2",
-            hook_name: "second-hook",
+            hook_name: "second_hook",
             url: "https://example.com/second",
             method: "POST",
           },
@@ -321,5 +324,87 @@ describe("createWebhookSubscriptions", () => {
     await expect(
       createWebhookSubscriptions(configWithWebhooks, context),
     ).rejects.toThrow(httpError);
+  });
+
+  test("skips subscribeWebhook call but still includes webhook in result when already subscribed", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+    // configWithWebhooks has metadata.id "test-app-webhooks" → prefix "test_app_webhooks_"
+    // resolved batch_name = "test_app_webhooks_default", hook_name = "test_app_webhooks_order_created"
+    const existingWebhook = {
+      webhook_method: "plugin.order.api.order_created",
+      webhook_type: "after",
+      batch_name: "test_app_webhooks_default",
+      hook_name: "test_app_webhooks_order_created",
+    };
+    const getWebhookList = vi.fn().mockResolvedValue([existingWebhook]);
+    const context = makeContext(subscribeWebhook, getWebhookList);
+
+    const result = await createWebhookSubscriptions(
+      configWithWebhooks,
+      context,
+    );
+
+    expect(subscribeWebhook).not.toHaveBeenCalled();
+    expect(result.subscribedWebhooks).toHaveLength(
+      configWithWebhooks.webhooks.length,
+    );
+  });
+
+  test("subscribes only webhooks not already in the existing list", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+
+    const twoWebhookConfig = {
+      ...configWithWebhooks,
+      webhooks: [
+        {
+          description: "First webhook",
+          runtimeAction: "my-package/handle-webhook",
+          category: "modification",
+          webhook: {
+            webhook_method: "plugin.order.api.order_created",
+            webhook_type: "after",
+            batch_name: "default",
+            hook_name: "order_created",
+            method: "POST",
+            url: "https://example.com/first",
+          },
+        },
+        {
+          description: "Second webhook",
+          runtimeAction: "my-package/handle-webhook",
+          category: "modification",
+          webhook: {
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "after",
+            batch_name: "products",
+            hook_name: "validate",
+            method: "POST",
+            url: "https://example.com/second",
+          },
+        },
+      ],
+    };
+
+    // Only the first webhook is already subscribed (with resolved names)
+    const existingWebhook = {
+      webhook_method: "plugin.order.api.order_created",
+      webhook_type: "after",
+      batch_name: "test_app_webhooks_default",
+      hook_name: "test_app_webhooks_order_created",
+    };
+    const getWebhookList = vi.fn().mockResolvedValue([existingWebhook]);
+    const context = makeContext(subscribeWebhook, getWebhookList);
+
+    const result = await createWebhookSubscriptions(twoWebhookConfig, context);
+
+    expect(subscribeWebhook).toHaveBeenCalledTimes(1);
+    expect(subscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        webhook_method: "observer.catalog_product_save_after",
+        batch_name: "test_app_webhooks_products",
+        hook_name: "test_app_webhooks_validate",
+      }),
+    );
+    expect(result.subscribedWebhooks).toHaveLength(2);
   });
 });

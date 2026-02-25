@@ -14,7 +14,10 @@ import { HTTPError } from "@adobe/aio-commerce-lib-api/ky";
 
 import { hasWebhooks } from "#config/schema/webhooks";
 
-import type { WebhookSubscribeParams } from "@adobe/aio-commerce-lib-webhooks";
+import type {
+  CommerceWebhook,
+  WebhookSubscribeParams,
+} from "@adobe/aio-commerce-lib-webhooks";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { WebhookDefinition } from "#config/schema/webhooks";
 import type { WebhooksExecutionContext } from "./context";
@@ -55,6 +58,8 @@ export async function createWebhookSubscriptions(
   const idPrefix = buildWebhookIdPrefix(config.metadata.id);
   const subscribedWebhooks: WebhookSubscribeParams[] = [];
 
+  const existingWebhooks = await commerceWebhooksClient.getWebhookList();
+
   for (const entry of config.webhooks) {
     const { description, runtimeAction, webhook } = entry;
 
@@ -79,6 +84,14 @@ export async function createWebhookSubscriptions(
       batch_name: `${idPrefix}${webhook.batch_name}`,
       hook_name: `${idPrefix}${webhook.hook_name}`,
     };
+
+    if (isAlreadySubscribed(existingWebhooks, resolvedWebhook)) {
+      logger.info(
+        `Webhook already subscribed, skipping: ${getWebhookName(webhook)}`,
+      );
+      subscribedWebhooks.push(resolvedWebhook);
+      continue;
+    }
 
     await subscribeWithEnrichedError(
       commerceWebhooksClient,
@@ -124,6 +137,23 @@ async function subscribeWithEnrichedError(
     }
     throw err;
   }
+}
+
+/**
+ * Returns true when the candidate webhook is already present in the existing subscription list,
+ * matched by the four-part identity: webhook_method, webhook_type, batch_name, hook_name.
+ */
+function isAlreadySubscribed(
+  existing: CommerceWebhook[],
+  candidate: WebhookSubscribeParams,
+): boolean {
+  return existing.some(
+    (w) =>
+      w.webhook_method === candidate.webhook_method &&
+      w.webhook_type === candidate.webhook_type &&
+      w.batch_name === candidate.batch_name &&
+      w.hook_name === candidate.hook_name,
+  );
 }
 
 /**

@@ -14,4 +14,4 @@
 
 export { webhooksStep } from "./branch";
 
-export type { WebhooksConfig } from "./utils";
+export type { WebhooksConfig } from "#config/schema/webhooks";

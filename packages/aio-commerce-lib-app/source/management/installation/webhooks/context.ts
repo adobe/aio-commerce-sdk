@@ -13,6 +13,7 @@
 import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import {
   createCustomCommerceWebhooksApiClient,
+  getWebhookList,
   subscribeWebhook,
 } from "@adobe/aio-commerce-lib-webhooks";
 
@@ -35,6 +36,7 @@ function createCommerceWebhooksApiClient(params: RuntimeActionParams) {
   commerceClientParams.fetchOptions.timeout = 1000 * 60 * 2; // 2 minutes
 
   return createCustomCommerceWebhooksApiClient(commerceClientParams, {
+    getWebhookList,
     subscribeWebhook,
   });
 }
