@@ -15,7 +15,7 @@ import { HTTPError } from "@adobe/aio-commerce-lib-api/ky";
 import type {
   CommerceWebhook,
   WebhookSubscribeParams,
-} from "@adobe/aio-commerce-lib-webhooks";
+} from "@adobe/aio-commerce-lib-webhooks/api";
 import type {
   WebhookDefinition,
   WebhooksConfig,

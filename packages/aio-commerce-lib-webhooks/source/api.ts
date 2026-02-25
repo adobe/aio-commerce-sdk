@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the package entrypoint. */
+/** biome-ignore-all lint/performance/noBarrelFile: This is the package API entrypoint. */
 
 export {
   getSupportedWebhookList,

@@ -15,7 +15,7 @@ import {
   createCustomCommerceWebhooksApiClient,
   getWebhookList,
   subscribeWebhook,
-} from "@adobe/aio-commerce-lib-webhooks";
+} from "@adobe/aio-commerce-lib-webhooks/api";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type {
