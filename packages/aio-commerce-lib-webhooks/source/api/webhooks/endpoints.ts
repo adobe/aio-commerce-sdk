@@ -67,7 +67,7 @@ export function subscribeWebhook(
       ...fetchOptions,
       json: { webhook: validatedParams },
     })
-    .json();
+    .json<void>();
 }
 
 /**
@@ -93,7 +93,7 @@ export function unsubscribeWebhook(
       ...fetchOptions,
       json: { webhook: validatedParams },
     })
-    .json();
+    .json<void>();
 }
 
 /**
