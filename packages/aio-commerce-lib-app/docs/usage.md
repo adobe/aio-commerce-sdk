@@ -95,8 +95,8 @@ npx @adobe/aio-commerce-lib-app generate all
 
 This will create:
 
-- **Extensibility Manifest** (`src/commerce-extensibility-1/.generated/app.commerce.manifest.json`)
-- **Runtime Action** (`src/commerce-extensibility-1/.generated/actions/get-app-config.js`)
+- **Commerce App Manifest** (`src/commerce-extensibility-1/.generated/app.commerce.manifest.json`)
+- **Runtime Action** (`src/commerce-extensibility-1/.generated/actions/app-config.js`)
 - **Extension Configuration** (`src/commerce-extensibility-1/ext.config.yaml`)
 
 #### 4. Reference the extension in your app configuration
@@ -256,6 +256,8 @@ eventing: {
 ##### Commerce Events:
 
 - **name**: Must start with `plugin.` or `observer.` followed by lowercase letters and underscores (e.g., `plugin.order_placed`, `observer.catalog_update`)
+- **label**: Display name for the event (max 100 characters)
+- **description**: Description of the event (max 255 characters)
 - **fields**: Array of field objects. Each field object must have:
   - **name** (required): The field name.
   - **source** (optional): A string value for the field source (e.g., `"catalog"`, `"order"`)
@@ -263,6 +265,10 @@ eventing: {
   - **field**: The field name to filter on
   - **operator**: The comparison operator. Valid values: `"greaterThan"`, `"lessThan"`, `"equal"`, `"regex"`, `"in"`, `"onChange"`
   - **value**: The value to compare against
+- **destination**: Optional destination for the event. Must be a valid destination name.
+- **hipaaAuditRequired**: Optional boolean value to indicate if the event requires HIPAA audit.
+- **prioritary**: Optional boolean value to indicate if the event is prioritary.
+- **force**: Optional boolean value to indicate if the event should be forced.
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
 
 ##### External Events:
@@ -291,8 +297,8 @@ You can define messages that will be displayed to users before and after the ins
 ```javascript
 installation: {
   messages: {
-    "preInstallation": "This App requires configuration A & B to be completed before clicking Install.",
-    "postInstallation": "Configure your email settings to complete the setup.",
+    preInstallation: "This App requires configuration A & B to be completed before clicking Install.",
+    postInstallation: "Configure your email settings to complete the setup.",
   },
 }
 ```
@@ -356,13 +362,11 @@ import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/manage
  */
 export default defineCustomInstallationStep(async (config, context) => {
   const { logger, params } = context;
-
   logger.info("Installation step started");
 
   // Your installation logic here
 
   logger.info("Installation step completed");
-
   return {
     status: "success",
     message: "Custom installation step completed",
@@ -382,7 +386,6 @@ import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/manage
  */
 export default defineCustomInstallationStep(async (config, context) => {
   const { logger, params } = context;
-
   logger.info("Setting up webhook endpoints...");
 
   // Access typed config properties with autocompletion
@@ -390,7 +393,6 @@ export default defineCustomInstallationStep(async (config, context) => {
 
   // Simulate webhook configuration
   await new Promise((resolve) => setTimeout(resolve, 500));
-
   logger.info("Webhook endpoints configured successfully");
 
   return {
@@ -412,7 +414,6 @@ import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/manage
  */
 export default defineCustomInstallationStep(async (config, context) => {
   const { logger } = context;
-
   logger.info("Initializing database...");
 
   try {
@@ -427,7 +428,6 @@ export default defineCustomInstallationStep(async (config, context) => {
 
     // Simulate database initialization
     await new Promise((resolve) => setTimeout(resolve, 1000));
-
     logger.info("Database initialized successfully");
 
     return {
@@ -501,38 +501,6 @@ try {
 } catch (error) {
   console.error("Configuration error:", error);
   process.exit(1);
-}
-```
-
-#### Reading Bundled Configuration in Runtime Actions
-
-The `readBundledCommerceAppConfig` function is designed for use in runtime actions to read the bundled manifest:
-
-```javascript
-import { readBundledCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
-
-export async function main(params) {
-  try {
-    // Retrieve the bundled app configuration
-    const config = await readBundledCommerceAppConfig();
-
-    // Access metadata for version-based logic
-    if (config.metadata.version >= "2.0.0") {
-      // Handle version 2.0.0 or higher
-    } else {
-      // Handle older versions for backward compatibility
-    }
-
-    return {
-      statusCode: 200,
-      body: config,
-    };
-  } catch (error) {
-    return {
-      statusCode: 500,
-      body: { error: error.message },
-    };
-  }
 }
 ```
 
