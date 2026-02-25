@@ -26,16 +26,6 @@
   },
   "publishConfig": {
     "exports": {
-      ".": {
-        "import": {
-          "types": "./dist/es/api.d.mts",
-          "default": "./dist/es/api.mjs"
-        },
-        "require": {
-          "types": "./dist/cjs/api.d.cts",
-          "default": "./dist/cjs/api.cjs"
-        }
-      },
       "./api": {
         "import": {
           "types": "./dist/es/api.d.mts",
@@ -50,7 +40,6 @@
     }
   },
   "exports": {
-    ".": "./source/api.ts",
     "./api": "./source/api.ts",
     "./package.json": "./package.json"
   },
