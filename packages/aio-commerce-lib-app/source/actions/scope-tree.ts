@@ -101,6 +101,7 @@ router.post("/commerce", {
 
     const { commerceBaseUrl, commerceEnv } = req.body;
     const paramsWithCommerceConfig = {
+      ...ctx.rawParams,
       AIO_COMMERCE_API_BASE_URL: commerceBaseUrl,
       ...(commerceEnv && {
         AIO_COMMERCE_API_FLAVOR: commerceEnv,
