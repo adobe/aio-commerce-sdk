@@ -19,6 +19,7 @@ import {
 import { createWebhooksStepContext } from "./context";
 import { createWebhookSubscriptions } from "./helpers";
 
+import type { WebhooksConfig } from "#config/schema/webhooks";
 import type { WebhooksExecutionContext } from "./context";
 
 const subscriptionsStep = defineLeafStep({
@@ -28,7 +29,7 @@ const subscriptionsStep = defineLeafStep({
     description: "Creates webhook subscriptions in Adobe Commerce",
   },
 
-  run: (config, context: WebhooksExecutionContext) =>
+  run: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
     createWebhookSubscriptions(config, context),
 });
 
