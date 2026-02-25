@@ -81,58 +81,60 @@ router.get("/", {
     const { logger, rawParams } = ctx;
     const query = req.query;
 
-    if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
-      logger.debug("Setting encryption key...");
-      setGlobalLibConfigOptions({
-        encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
-      });
-    }
+    try {
+      if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
+        logger.debug("Setting encryption key...");
+        setGlobalLibConfigOptions({
+          encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+        });
+      }
 
-    let selector: SelectorBy;
+      let selector: SelectorBy;
 
-    if (isSelectorId(query)) {
-      const id = query.id;
-      selector = byScopeId(id);
-      logger.debug(`Retrieving configuration by id: ${id}`);
-    } else {
-      const { code, level } = query;
-      if (level) {
-        selector = byCodeAndLevel(code, level);
-        logger.debug(
-          `Retrieving configuration by code: ${code}, level: ${level}`,
-        );
+      if (isSelectorId(query)) {
+        const id = query.id;
+        selector = byScopeId(id);
+        logger.debug(`Retrieving configuration by id: ${id}`);
       } else {
-        selector = byCode(query.code);
-        logger.debug(`Retrieving configuration by code: ${code}`);
-      }
-    }
-
-    const appConfiguration = await getConfiguration(selector);
-    appConfiguration.config = appConfiguration.config.map((item) => {
-      const schemaMatch = rawParams.configSchema.find(
-        (field) => field.name === item.name,
-      );
-
-      if (schemaMatch?.type === "password") {
-        return {
-          ...item,
-          value: "*****",
-        };
+        const { code, level } = query;
+        if (level) {
+          selector = byCodeAndLevel(code, level);
+          logger.debug(
+            `Retrieving configuration by code: ${code}, level: ${level}`,
+          );
+        } else {
+          selector = byCode(query.code);
+          logger.debug(`Retrieving configuration by code: ${code}`);
+        }
       }
 
-      return item;
-    });
+      const appConfiguration = await getConfiguration(selector);
+      appConfiguration.config = appConfiguration.config.map((item) => {
+        const schemaMatch = rawParams.configSchema.find(
+          (field) => field.name === item.name,
+        );
 
-    // Make sure we reset the encryption key to null after the operation is complete.
-    // Otherwise on warm invocations, the key may be kept in memory.
-    if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
-      logger.debug("Resetting encryption key...");
-      setGlobalLibConfigOptions({
-        encryptionKey: null,
+        if (schemaMatch?.type === "password") {
+          return {
+            ...item,
+            value: "*****",
+          };
+        }
+
+        return item;
       });
-    }
 
-    return ok({ body: appConfiguration });
+      return ok({ body: appConfiguration });
+    } finally {
+      // Make sure we reset the encryption key to null after the operation is complete.
+      // Otherwise on warm invocations, the key may be kept in memory.
+      if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
+        logger.debug("Resetting encryption key...");
+        setGlobalLibConfigOptions({
+          encryptionKey: null,
+        });
+      }
+    }
   },
 });
 
@@ -155,41 +157,42 @@ router.post("/", {
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
 
-    if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
-      logger.debug("Setting encryption key...");
-      setGlobalLibConfigOptions({
-        encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+    try {
+      if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
+        logger.debug("Setting encryption key...");
+        setGlobalLibConfigOptions({
+          encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+        });
+      }
+
+      const { selector, config } = req.body;
+      let selectorBy: SelectorBy;
+
+      if (isSelectorId(selector)) {
+        selectorBy = byScopeId(selector.id);
+        logger.debug(`Setting configuration by id: ${selector.id}`);
+      } else {
+        selectorBy = byCodeAndLevel(selector.code, selector.level);
+        logger.debug(
+          `Setting configuration by code: ${selector.code}, level: ${selector.level}`,
+        );
+      }
+
+      const result = await setConfiguration({ config }, selectorBy);
+      return ok({
+        body: { result },
+        headers: { "Cache-Control": "no-store" },
       });
+    } finally {
+      // Make sure we reset the encryption key to null after the operation is complete.
+      // Otherwise on warm invocations, the key may be kept in memory.
+      if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
+        logger.debug("Resetting encryption key...");
+        setGlobalLibConfigOptions({
+          encryptionKey: null,
+        });
+      }
     }
-
-    const { selector, config } = req.body;
-    let selectorBy: SelectorBy;
-
-    if (isSelectorId(selector)) {
-      selectorBy = byScopeId(selector.id);
-      logger.debug(`Setting configuration by id: ${selector.id}`);
-    } else {
-      selectorBy = byCodeAndLevel(selector.code, selector.level);
-      logger.debug(
-        `Setting configuration by code: ${selector.code}, level: ${selector.level}`,
-      );
-    }
-
-    const result = await setConfiguration({ config }, selectorBy);
-
-    // Make sure we reset the encryption key to null after the operation is complete.
-    // Otherwise on warm invocations, the key may be kept in memory.
-    if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
-      logger.debug("Resetting encryption key...");
-      setGlobalLibConfigOptions({
-        encryptionKey: null,
-      });
-    }
-
-    return ok({
-      body: { result },
-      headers: { "Cache-Control": "no-store" },
-    });
   },
 });
 
