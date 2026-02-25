@@ -23,6 +23,7 @@ import {
   HttpActionRouter,
   logger,
 } from "@aio-commerce-sdk/common-utils/actions";
+import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
 import { validateCommerceAppConfigDomain } from "#config/index";
@@ -51,12 +52,12 @@ interface ConfigActionContext extends BaseContext {
 }
 
 const SelectorIdSchema = v.object({
-  id: v.string(),
+  id: nonEmptyStringValueSchema("selector.id"),
 });
 
 const SelectorCodeAndOptionalLevelSchema = v.object({
-  code: v.string(),
-  level: v.optional(v.string()),
+  code: nonEmptyStringValueSchema("selector.code"),
+  level: v.optional(nonEmptyStringValueSchema("selector.level")),
 });
 
 /** Checks if the object is a selector by id. */
@@ -148,7 +149,7 @@ router.post("/", {
 
     config: v.array(
       v.object({
-        name: v.string(),
+        name: nonEmptyStringValueSchema("config.name"),
         value: v.union([v.string(), v.array(v.string())]),
       }),
     ),

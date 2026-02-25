@@ -27,6 +27,7 @@ import {
   logger,
 } from "@aio-commerce-sdk/common-utils/actions";
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
+import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
 import type { SetCustomScopeTreeRequest } from "@adobe/aio-commerce-lib-config";
@@ -90,8 +91,8 @@ router.post("/", {
 /** POST /commerce - Sync commerce scopes */
 router.post("/commerce", {
   body: v.object({
-    commerceBaseUrl: v.string(),
-    commerceEnv: v.optional(v.string()),
+    commerceBaseUrl: nonEmptyStringValueSchema("commerceBaseUrl"),
+    commerceEnv: v.optional(nonEmptyStringValueSchema("commerceEnv")),
   }),
 
   handler: async (req, ctx) => {
