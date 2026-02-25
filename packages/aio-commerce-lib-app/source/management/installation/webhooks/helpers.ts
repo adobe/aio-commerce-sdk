@@ -73,21 +73,14 @@ export async function createWebhookSubscriptions(
       hook_name: `${idPrefix}${webhook.hook_name}`,
     };
 
-    if (isAlreadySubscribed(existingWebhooks, resolvedWebhook)) {
-      logger.info(
-        `Webhook already subscribed, skipping: ${getWebhookName(webhook)}`,
-      );
-      subscribedWebhooks.push(resolvedWebhook);
-      continue;
-    }
-
-    await subscribeWithEnrichedError(
-      commerceWebhooksClient,
-      resolvedWebhook,
-      webhook,
+    subscribedWebhooks.push(
+      await createOrGetWebhookSubscription(
+        existingWebhooks,
+        commerceWebhooksClient,
+        resolvedWebhook,
+        logger,
+      ),
     );
-    subscribedWebhooks.push(resolvedWebhook);
-    logger.info(`Subscribed webhook: ${getWebhookName(webhook)}`);
   }
 
   logger.info(
@@ -98,17 +91,37 @@ export async function createWebhookSubscriptions(
 }
 
 /**
- * Calls subscribeWebhook and, if it fails with an HTTPError whose response body
- * contains a string `message`, rethrows as a new Error that includes the webhook
- * name so callers get a human-readable failure reason.
+ * Subscribes a single webhook to Commerce, skipping the API call if the webhook
+ * is already subscribed (matched by webhook_method, webhook_type, batch_name, hook_name).
  */
-async function subscribeWithEnrichedError(
+export async function createOrGetWebhookSubscription(
+  existingWebhooks: CommerceWebhook[],
   client: WebhooksExecutionContext["commerceWebhooksClient"],
   resolvedWebhook: WebhookSubscribeParams,
-  originalWebhook: WebhookDefinition,
-): Promise<void> {
+  logger: WebhooksExecutionContext["logger"],
+): Promise<WebhookSubscribeParams> {
+  if (isAlreadySubscribed(existingWebhooks, resolvedWebhook)) {
+    logger.info(
+      `Webhook already subscribed, skipping: ${getWebhookName(resolvedWebhook)}`,
+    );
+    return resolvedWebhook;
+  }
+  const subscribed = await createWebhookSubscription(client, resolvedWebhook);
+  logger.info(`Subscribed webhook: ${getWebhookName(resolvedWebhook)}`);
+  return subscribed;
+}
+
+/**
+ * Subscribes a single webhook to Commerce, enriching the error with the webhook name
+ * if the API responds with a string `message`.
+ */
+export async function createWebhookSubscription(
+  client: WebhooksExecutionContext["commerceWebhooksClient"],
+  resolvedWebhook: WebhookSubscribeParams,
+): Promise<WebhookSubscribeParams> {
   try {
     await client.subscribeWebhook(resolvedWebhook);
+    return resolvedWebhook;
   } catch (err) {
     if (err instanceof HTTPError) {
       let body: { message?: unknown } | undefined;
@@ -119,7 +132,7 @@ async function subscribeWithEnrichedError(
       }
       if (typeof body?.message === "string") {
         throw new Error(
-          `Webhook subscription failed for "${getWebhookName(originalWebhook)}": ${body.message}`,
+          `Webhook subscription failed for "${getWebhookName(resolvedWebhook)}": ${body.message}`,
         );
       }
     }
@@ -183,6 +196,8 @@ function buildWebhookIdPrefix(appId: string): string {
  * @param webhook
  * @return A string in the format "webhook_method:webhook_type" to identify the webhook.
  */
-function getWebhookName(webhook: WebhookDefinition): string {
+function getWebhookName(
+  webhook: WebhookDefinition | WebhookSubscribeParams,
+): string {
   return `${webhook.webhook_method}:${webhook.webhook_type}`;
 }

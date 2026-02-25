@@ -12,7 +12,11 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-import { createWebhookSubscriptions } from "#management/installation/webhooks/helpers";
+import {
+  createOrGetWebhookSubscription,
+  createWebhookSubscription,
+  createWebhookSubscriptions,
+} from "#management/installation/webhooks/helpers";
 import { configWithWebhooks } from "#test/fixtures/config";
 
 import type { WebhooksExecutionContext } from "#management/installation/webhooks/context";
@@ -392,5 +396,147 @@ describe("createWebhookSubscriptions", () => {
       }),
     );
     expect(result.subscribedWebhooks).toHaveLength(2);
+  });
+});
+
+describe("createWebhookSubscription", () => {
+  const resolvedWebhook = {
+    webhook_method: "observer.catalog_product_save_after",
+    webhook_type: "after",
+    batch_name: "my_app_batch",
+    hook_name: "my_app_hook",
+    url: "https://example.com/hook",
+    method: "POST",
+  };
+
+  test("calls subscribeWebhook and returns the resolved webhook", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+    const client = { subscribeWebhook } as never;
+
+    const result = await createWebhookSubscription(client, resolvedWebhook);
+
+    expect(subscribeWebhook).toHaveBeenCalledWith(resolvedWebhook);
+    expect(result).toBe(resolvedWebhook);
+  });
+
+  test("throws enriched error when HTTPError response body has a string message", async () => {
+    const { HTTPError } = await import("@adobe/aio-commerce-lib-api/ky");
+
+    const mockResponse = {
+      json: vi.fn().mockResolvedValue({ message: "Duplicate webhook" }),
+    };
+    const httpError = new HTTPError(
+      mockResponse as unknown as Response,
+      new Request("https://example.com"),
+      {} as never,
+    );
+
+    const client = {
+      subscribeWebhook: vi.fn().mockRejectedValue(httpError),
+    } as never;
+
+    await expect(
+      createWebhookSubscription(client, resolvedWebhook),
+    ).rejects.toThrow(
+      'Webhook subscription failed for "observer.catalog_product_save_after:after": Duplicate webhook',
+    );
+  });
+
+  test("rethrows the original HTTPError when response body has no string message", async () => {
+    const { HTTPError } = await import("@adobe/aio-commerce-lib-api/ky");
+
+    const mockResponse = {
+      json: vi.fn().mockResolvedValue({ code: 422 }),
+    };
+    const httpError = new HTTPError(
+      mockResponse as unknown as Response,
+      new Request("https://example.com"),
+      {} as never,
+    );
+
+    const client = {
+      subscribeWebhook: vi.fn().mockRejectedValue(httpError),
+    } as never;
+
+    await expect(
+      createWebhookSubscription(client, resolvedWebhook),
+    ).rejects.toThrow(httpError);
+  });
+
+  test("rethrows the original HTTPError when response body cannot be parsed as JSON", async () => {
+    const { HTTPError } = await import("@adobe/aio-commerce-lib-api/ky");
+
+    const mockResponse = {
+      json: vi.fn().mockRejectedValue(new SyntaxError("Unexpected token")),
+    };
+    const httpError = new HTTPError(
+      mockResponse as unknown as Response,
+      new Request("https://example.com"),
+      {} as never,
+    );
+
+    const client = {
+      subscribeWebhook: vi.fn().mockRejectedValue(httpError),
+    } as never;
+
+    await expect(
+      createWebhookSubscription(client, resolvedWebhook),
+    ).rejects.toThrow(httpError);
+  });
+});
+
+describe("createOrGetWebhookSubscription", () => {
+  const resolvedWebhook = {
+    webhook_method: "observer.catalog_product_save_after",
+    webhook_type: "after",
+    batch_name: "my_app_batch",
+    hook_name: "my_app_hook",
+    url: "https://example.com/hook",
+    method: "POST",
+  };
+
+  const makeLogger = () => ({
+    info: vi.fn(),
+    debug: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+  });
+
+  test("skips the API call and returns the webhook when already subscribed", async () => {
+    const subscribeWebhook = vi.fn();
+    const client = { subscribeWebhook } as never;
+    const logger = makeLogger();
+
+    const result = await createOrGetWebhookSubscription(
+      [resolvedWebhook],
+      client,
+      resolvedWebhook,
+      logger as never,
+    );
+
+    expect(subscribeWebhook).not.toHaveBeenCalled();
+    expect(result).toBe(resolvedWebhook);
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining("already subscribed"),
+    );
+  });
+
+  test("calls the API and returns the webhook when not yet subscribed", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+    const client = { subscribeWebhook } as never;
+    const logger = makeLogger();
+
+    const result = await createOrGetWebhookSubscription(
+      [],
+      client,
+      resolvedWebhook,
+      logger as never,
+    );
+
+    expect(subscribeWebhook).toHaveBeenCalledWith(resolvedWebhook);
+    expect(result).toBe(resolvedWebhook);
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining("Subscribed webhook"),
+    );
   });
 });
