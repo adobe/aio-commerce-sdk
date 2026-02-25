@@ -85,7 +85,6 @@ describe("createWebhookSubscriptions", () => {
         {
           description: "Webhook with explicit url",
           category: "modification",
-          runtimeAction: "my-package/handle-webhook",
           webhook: {
             webhook_method: "plugin.order.api.order_created",
             webhook_type: "after",

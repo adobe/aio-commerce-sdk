@@ -61,22 +61,15 @@ export async function createWebhookSubscriptions(
   const existingWebhooks = await commerceWebhooksClient.getWebhookList();
 
   for (const entry of config.webhooks) {
-    const { description, runtimeAction, webhook } = entry;
+    const { webhook } = entry;
+    const resolvedUrl =
+      "runtimeAction" in entry
+        ? generateUrlForRuntimeAction(entry.runtimeAction)
+        : entry.webhook.url;
 
     logger.debug(
-      `Subscribing webhook "${getWebhookName(webhook)}" (runtimeAction: ${runtimeAction ?? "none"})`,
+      `Subscribing webhook "${getWebhookName(webhook)}" (runtimeAction: ${"runtimeAction" in entry ? entry.runtimeAction : "none"})`,
     );
-
-    let resolvedUrl = webhook.url;
-    if (!resolvedUrl && runtimeAction) {
-      resolvedUrl = generateUrlForRuntimeAction(runtimeAction);
-    }
-
-    if (!resolvedUrl) {
-      throw new Error(
-        `Webhook "${description}" must have either a URL or a runtime action defined.`,
-      );
-    }
 
     const resolvedWebhook = {
       ...webhook,

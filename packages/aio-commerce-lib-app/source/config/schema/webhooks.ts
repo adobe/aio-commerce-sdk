@@ -57,8 +57,8 @@ const ResponseCategorySchema = v.picklist(
   `response_category must be one of: ${RESPONSE_CATEGORIES.join(", ")}`,
 );
 
-/** Schema for the nested webhook payload (method, url, fields, rules, etc.). */
-const WebhookDefinitionSchema = v.object({
+/** Schema for the nested webhook payload without url — used when runtimeAction resolves the URL at runtime. */
+const WebhookDefinitionBaseSchema = v.object({
   webhook_method: nonEmptyStringValueSchema("webhook_method"),
   webhook_type: nonEmptyStringValueSchema("webhook_type"),
   batch_name: v.pipe(
@@ -74,12 +74,6 @@ const WebhookDefinitionSchema = v.object({
     v.regex(
       WEBHOOK_IDENTIFIER_REGEX,
       "hook_name must contain only letters, numbers, and underscores",
-    ),
-  ),
-  url: v.optional(
-    v.pipe(
-      stringValueSchema("url"),
-      v.url("The url field must be a valid URL"),
     ),
   ),
   priority: v.optional(positiveNumberValueSchema("priority")),
@@ -104,21 +98,35 @@ const WebhookDefinitionSchema = v.object({
   response_category: v.optional(ResponseCategorySchema),
 });
 
-/** Schema for a single webhook entry in the array (description, runtimeAction, webhook). */
-const WebhookEntrySchema = v.pipe(
-  v.object({
-    description: nonEmptyStringValueSchema("description"),
-    runtimeAction: v.optional(nonEmptyStringValueSchema("runtimeAction")),
-    category: nonEmptyStringValueSchema("category"),
-    webhook: WebhookDefinitionSchema,
-  }),
-  v.check(
-    (entry) =>
-      entry.runtimeAction !== undefined ||
-      (entry.webhook.url !== undefined && entry.webhook.url.length > 0),
-    "webhook.url is required when runtimeAction is not set",
+/** Schema for the nested webhook payload with a required url. */
+const WebhookDefinitionWithUrlSchema = v.object({
+  ...WebhookDefinitionBaseSchema.entries,
+  url: v.pipe(
+    stringValueSchema("url"),
+    v.url("The url field must be a valid URL"),
   ),
-);
+});
+
+/** Schema for a webhook entry that resolves its URL from a runtime action. */
+const WebhookEntryWithRuntimeActionSchema = v.object({
+  description: nonEmptyStringValueSchema("description"),
+  category: nonEmptyStringValueSchema("category"),
+  runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
+  webhook: WebhookDefinitionBaseSchema,
+});
+
+/** Schema for a webhook entry that provides an explicit URL. */
+const WebhookEntryWithUrlSchema = v.object({
+  description: nonEmptyStringValueSchema("description"),
+  category: nonEmptyStringValueSchema("category"),
+  webhook: WebhookDefinitionWithUrlSchema,
+});
+
+/** Schema for a single webhook entry — either runtimeAction (no url) or explicit url (no runtimeAction). */
+const WebhookEntrySchema = v.union([
+  WebhookEntryWithRuntimeActionSchema,
+  WebhookEntryWithUrlSchema,
+]);
 
 /** Schema for the optional webhooks array (when present, must have at least one item). */
 export const WebhooksSchema = v.optional(
@@ -145,10 +153,12 @@ export type DeveloperConsoleOAuth = v.InferInput<
   typeof DeveloperConsoleOAuthSchema
 >;
 
-/** Nested webhook payload (webhook_method, url, fields, etc.). */
-export type WebhookDefinition = v.InferInput<typeof WebhookDefinitionSchema>;
+/** Nested webhook payload (webhook_method, fields, etc.) — union of base shape and url-carrying shape. */
+export type WebhookDefinition =
+  | v.InferInput<typeof WebhookDefinitionBaseSchema>
+  | v.InferInput<typeof WebhookDefinitionWithUrlSchema>;
 
-/** Single webhook entry in the array (description, runtimeAction, webhook). */
+/** Single webhook entry — either runtimeAction-based or url-based (mutually exclusive at the type level). */
 export type WebhookEntry = v.InferInput<typeof WebhookEntrySchema>;
 
 /** Webhooks configuration (array of webhook entries). */
