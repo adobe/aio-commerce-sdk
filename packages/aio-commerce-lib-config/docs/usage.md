@@ -8,234 +8,47 @@ The `@adobe/aio-commerce-lib-config` library provides:
 - **Scope Trees**: Support for Adobe Commerce and external system scope hierarchies
 - **Inheritance Model**: Automatic configuration inheritance from parent scopes
 - **Schema Validation**: Validate configuration schemas
-- **App Management Integration**: Auto-generated runtime actions for the App Management UI
 - **Persistent Storage**: Uses `@adobe/aio-lib-state` and `@adobe/aio-lib-files` for caching and storage
 
 ## Reference
 
 See the [API Reference](./api-reference/README.md) for a full list of classes, interfaces, and functions exported by the library.
 
-## Quick Start
-
-The fastest way to get started is using the `init` command:
-
-```bash
-npx @adobe/aio-commerce-lib-config init
-```
-
-This single command will set up everything you need. See [Setup](#setup) below for details.
-
 ## How to use
 
 ### Setup
 
-#### Recommended: Quick Setup with Init Command
-
-The easiest way to get started is using the `init` command, which automates the entire setup process:
-
-```bash
-npx @adobe/aio-commerce-lib-config init
-```
-
-The `init` command will:
-
-- Create `app.commerce.config.js` with a template schema (if it doesn't exist)
-- Add the `postinstall` script to your `package.json`
-- Generate all required artifacts (schema and runtime actions)
-- Update your `app.config.yaml` with the extension reference
-- Create or update your `install.yaml` with the extension point reference
-- Create or update your `.env` file with placeholder environment variables
-- Install required dependencies (`@adobe/aio-commerce-lib-config` and `@adobe/aio-commerce-sdk`)
-
-The command automatically detects your package manager (npm, pnpm, yarn, or bun) by checking for lock files and uses the appropriate commands.
-
-After running `init`, you'll need to:
-
-1. Review and customize `app.commerce.config.js` with your configuration schema
-2. Fill in the required values in your `.env` file
-
-#### Alternative: Manual Setup
-
-If you prefer to set up manually or need more control over the process:
-
-1. Create your configuration schema at `app.commerce.config.js` in the project root:
-
-Define the structure of your application's configuration using a JavaScript module. This example shows how to create different types of configuration fields, such as list and text. Each field definition specifies its type, label, and optional default values.
-
-```javascript
-// Or export default if using ESM
-module.exports = {
-  businessConfig: {
-    schema: [
-      {
-        name: "exampleList",
-        type: "list",
-        label: "Example List",
-        options: [
-          { label: "Option 1", value: "option1" },
-          { label: "Option 2", value: "option2" },
-        ],
-        selectionMode: "single",
-        default: "option1",
-        description: "This is a description for the example list",
-      },
-      {
-        name: "currency",
-        type: "text",
-        label: "Currency",
-      },
-      {
-        name: "paymentMethod",
-        type: "text",
-        label: "Payment Test Method",
-      },
-      {
-        name: "testField",
-        type: "text",
-        label: "Test Field",
-        description: "This is a description for the test field",
-        default: "Test Default Value",
-      },
-    ],
-  },
-};
-```
-
-2. Install the package and add a `postinstall` script:
+Install the package:
 
 ```bash
 npm install @adobe/aio-commerce-lib-config
 ```
 
-Then add a `postinstall` script to your `package.json`:
+### CLI Commands
 
-```json
-{
-  "dependencies": {
-    "@adobe/aio-commerce-lib-config": "^0.8.0"
-  },
-
-  "scripts": {
-    "postinstall": "npx @adobe/aio-commerce-lib-config generate all"
-  }
-}
-```
-
-This script will run automatically every time you install your dependencies. This is done because the generated runtime actions will only change when you install the package for the first time, or a new version of it.
-
-3. Generate the artifacts:
-
-The CLI provides several commands:
-
-- `@adobe/aio-commerce-lib-config init` - Initialize the project (recommended for first-time setup)
-- `@adobe/aio-commerce-lib-config generate all` - Generate all artifacts (schema + runtime actions)
-- `@adobe/aio-commerce-lib-config generate schema` - Generate the configuration schema only
-- `@adobe/aio-commerce-lib-config generate actions` - Generate runtime actions and ext.config.yaml only
-- `@adobe/aio-commerce-lib-config validate schema` - Validate your configuration schema
-
-You can run these commands manually using `npx`:
+The library provides CLI commands to help manage encryption for password fields:
 
 ```bash
-# Generate everything (schema + actions)
-npx @adobe/aio-commerce-lib-config generate all
+# Generate and write an encryption key to your .env file
+npx @adobe/aio-commerce-lib-config encryption setup
 
-# Or generate individually
-npx @adobe/aio-commerce-lib-config generate schema
-npx @adobe/aio-commerce-lib-config generate actions
-
-# Validate schema
-npx @adobe/aio-commerce-lib-config validate schema
+# Validate the configured encryption key
+npx @adobe/aio-commerce-lib-config encryption validate
 ```
 
-4. In your `app.config.yaml` file, reference the generated `ext.config.yaml` file. If you have multiple extension points, add it as a new entry:
+#### `encryption setup`
 
-```yaml
-extensions:
-  commerce/configuration/1:
-    $include: "src/commerce-configuration-1/ext.config.yaml"
-```
+Generates a new AES-256 encryption key and writes it to your `.env` file as `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY`. If a key already exists, it will be overwritten.
 
-5. In your `install.yaml` file, add the extension point reference. If you have multiple extension points, add it as a new entry:
+> [!TIP]
+> Run this command once during initial setup if your configuration schema includes `password` fields. See the [Password Encryption](./password-encryption.md) documentation for full details.
 
-```yaml
-extensions:
-  - extensionPointId: commerce/configuration/1
-```
+#### `encryption validate`
 
-The generated `ext.config.yaml` file includes a `pre-app-build` hook that automatically regenerates the configuration schema before each build. This ensures your schema is always up-to-date. The hook is automatically added and should not be manually edited.
+Validates that `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY` is present in your environment and correctly formatted as a 64-character hex string.
 
-> [!IMPORTANT]
-> The generated runtime actions require the SDK package. Make sure to install it before running your build, otherwise bundling will fail.
->
-> ```bash
-> npm install @adobe/aio-commerce-sdk
-> ```
-
-Upon running the generate commands, this will automatically create:
-
-1. A **configuration schema** at `src/commerce-configuration-1/.generated/configuration-schema.json` - A validated JSON representation of your schema for runtime use
-2. **Six runtime actions** under `src/commerce-configuration-1/.generated/actions/app-management/`:
-
-**Scope Management Actions:**
-
-Scopes define the hierarchical boundaries where configuration values can be set and inherited. For Adobe Commerce, these typically represent websites, stores, and store views. For external systems, you can define custom scope hierarchies that match your application's organizational structure.
-
-- `get-scope-tree` - Retrieve scope hierarchies
-- `sync-commerce-scopes` - Sync scopes from Adobe Commerce
-- `set-custom-scope-tree` - Define custom scope hierarchies
-
-> [!NOTE]
-> The `sync-commerce-scopes` action accepts the following request parameters:
->
-> - **`commerceBaseUrl`** (required) - The base URL of your Commerce instance
-> - **`commerceEnv`** (optional) - Commerce flavor: `"saas"` or `"paas"`. Auto-detected from the URL if not provided.
-
-**Configuration Management Actions:**
-
-- `get-config-schema` - Retrieve configuration schema
-- `get-configuration` - Get configuration values with inheritance
-- `set-configuration` - Save configuration values
-
-The `generate actions` command also creates the `ext.config.yaml` file with the required configuration and environment variable placeholders. It automatically adds a `pre-app-build` hook that regenerates the configuration schema before each build.
-
-> [!IMPORTANT]
-> Don't forget to fill in the necessary values for the Commerce configuration in your `.env` file before deploying your application.
->
-> The generated actions require the following environment variables. Add them to your `.env` file:
->
-> **For SaaS instances:**
->
-> ```bash
-> # Logging level for runtime actions
-> LOG_LEVEL=info
->
-> # Adobe Commerce API configuration
-> AIO_COMMERCE_API_BASE_URL=https://your-commerce-instance.com
->
-> # IMS Authentication (SaaS)
-> AIO_COMMERCE_AUTH_IMS_CLIENT_ID=your-client-id
-> AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS=your-client-secrets
-> AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID=your-technical-account-id
-> AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL=your-technical-account-email
-> AIO_COMMERCE_AUTH_IMS_ORG_ID=your-ims-org-id
-> AIO_COMMERCE_AUTH_IMS_SCOPES=your-ims-scopes
-> ```
->
-> **For PaaS instances:**
->
-> ```bash
-> # Logging level for runtime actions
-> LOG_LEVEL=info
->
-> # Adobe Commerce API configuration
-> AIO_COMMERCE_API_BASE_URL=https://your-commerce-instance.com
->
-> # Integration Authentication (PaaS)
-> AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY=your-consumer-key
-> AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET=your-consumer-secret
-> AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN=your-access-token
-> AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET=your-access-token-secret
-> ```
+> [!TIP]
+> This command is also available for manual verification or use in CI/CD pipelines where the encryption key must be confirmed before a build or deployment.
 
 ### Using the Library
 
@@ -252,6 +65,7 @@ import {
   setConfiguration,
   setCustomScopeTree,
   syncCommerceScopes,
+  unsyncCommerceScopes,
   byScopeId,
   byCode,
   byCodeAndLevel,
@@ -281,6 +95,7 @@ Retrieve and manage scope hierarchies to organize your configuration values. Use
 import {
   getScopeTree,
   syncCommerceScopes,
+  unsyncCommerceScopes,
   setCustomScopeTree,
 } from "@adobe/aio-commerce-lib-config";
 import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-sdk/api";
@@ -329,6 +144,14 @@ await setCustomScopeTree({
     },
   ],
 });
+
+// Remove Commerce scopes from the persisted scope tree
+const { unsynced } = await unsyncCommerceScopes();
+if (unsynced) {
+  console.log("Commerce scopes removed successfully");
+} else {
+  console.log("No Commerce scopes were found to remove");
+}
 ```
 
 ### Managing Configuration

@@ -7,7 +7,9 @@
 
 The `@adobe/aio-commerce-lib-app` library provides:
 
-- **Configuration Management**: Define, validate and read/parse configurations for Adobe Commerce applications
+- **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
+- **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
+- **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
 
 ## Reference
 
@@ -17,17 +19,53 @@ See the [API Reference](./api-reference/README.md) for more details.
 
 ### Setup
 
-Follow these steps to integrate the app library into your Adobe Commerce App Builder application:
+#### Recommended: Quick Setup
 
-#### 1. Install the package
+The fastest way to get started is using the `init` command, which automates the entire setup process:
 
 ```bash
-npm install @adobe/aio-commerce-lib-app
+npx @adobe/aio-commerce-lib-app init
 ```
 
-#### 2. Create your app configuration
+The `init` command will:
 
-Create an app config file in your project root. The library supports multiple file formats:
+- Create `app.commerce.config.*` with a template (prompts you to choose format and features if the file doesn't exist)
+- Install required dependencies (`@adobe/aio-commerce-lib-app`, `@adobe/aio-commerce-sdk`, and `@adobe/aio-commerce-lib-config` when business configuration is enabled)
+- Add the `postinstall` hook to your `package.json`
+- Generate all required artifacts (`commerce/configuration/1` resources are only generated when `businessConfig` is defined in your config)
+- Update your `app.config.yaml` and `install.yaml` with the appropriate extension references, including `commerce/configuration/1` only when applicable
+
+The command automatically detects your package manager (npm, pnpm, yarn, or bun) by checking for lock files and uses the appropriate commands.
+
+After running `init`, you'll need to:
+
+1. Review and customize `app.commerce.config.*` with your app details
+2. Build and deploy your app
+
+#### Alternative: Manual Setup
+
+If you need more control over the process:
+
+1. Install the package and the required SDK peer dependency:
+
+```bash
+npm install @adobe/aio-commerce-lib-app @adobe/aio-commerce-sdk
+```
+
+> [!IMPORTANT]
+> The generated runtime actions require `@adobe/aio-commerce-sdk` at runtime. Make sure it is installed before deploying your application.
+
+Add a `postinstall` hook to your `package.json` to ensure that everything keeps running as expected after each install.
+
+```json
+{
+  "scripts": {
+    "postinstall": "npx aio-commerce-lib-app hooks postinstall"
+  }
+}
+```
+
+2. Create your app configuration file at your project root. The library supports multiple file formats:
 
 - `app.commerce.config.js` - JavaScript (CommonJS or ESM, depending on `type` in `package.json`)
 - `app.commerce.config.ts` - TypeScript
@@ -36,89 +74,86 @@ Create an app config file in your project root. The library supports multiple fi
 - `app.commerce.config.mts` - ES Module TypeScript
 - `app.commerce.config.cts` - CommonJS TypeScript
 
-##### Example using ESM:
+See [Defining Configuration](#defining-configuration) for all available fields and examples.
 
-```javascript
-import { defineConfig } from "@adobe/aio-commerce-lib-app/config";
-
-export default defineConfig({
-  metadata: {
-    id: "my-commerce-app",
-    displayName: "My Commerce App",
-    description: "A custom Adobe Commerce application",
-    version: "1.0.0",
-  },
-  businessConfig: {
-    schema: [
-      {
-        name: "enableSomeFeature",
-        type: "list",
-        label: "Enable Some Feature",
-        description: "Enable or disable a specific feature",
-        selectionMode: "single",
-        options: [
-          { label: "Yes", value: "yes" },
-          { label: "No", value: "no" },
-        ],
-        default: "yes",
-      },
-    ],
-  },
-});
-```
-
-##### Example using CommonJS:
-
-```javascript
-const { defineConfig } = require("@adobe/aio-commerce-lib-app/config");
-
-module.exports = defineConfig({
-  metadata: {
-    id: "my-commerce-app",
-    displayName: "My Commerce App",
-    description: "A custom Adobe Commerce application",
-    version: "1.0.0",
-  },
-  // ... rest of config
-});
-```
-
-The `defineConfig` helper provides type-safe configuration definition with autocompletion support in your IDE.
-
-#### 3. Generate the app artifacts
-
-Run the generate command to create the manifest and runtime action:
+3. Generate all required artifacts:
 
 ```bash
 npx @adobe/aio-commerce-lib-app generate all
 ```
 
-This will create:
+This produces the following files, organized by extension point:
 
-- **Commerce App Manifest** (`src/commerce-extensibility-1/.generated/app.commerce.manifest.json`)
-- **Runtime Action** (`src/commerce-extensibility-1/.generated/actions/app-config.js`)
-- **Extension Configuration** (`src/commerce-extensibility-1/ext.config.yaml`)
+**`commerce/extensibility/1`**: App management:
 
-#### 4. Reference the extension in your app configuration
+- `src/commerce-extensibility-1/.generated/app.commerce.manifest.json`: a validated JSON representation of your app config
+- `src/commerce-extensibility-1/.generated/actions/app-management/app-config.js`: serves the app configuration to the App Management UI
+- `src/commerce-extensibility-1/.generated/actions/app-management/installation.js`: drives the installation flow, including any custom scripts you define
+- `src/commerce-extensibility-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
-In your `app.config.yaml` file, add the extension point reference:
+**`commerce/configuration/1`**: Business configuration (generated when `businessConfig` is defined):
+
+- `src/commerce-configuration-1/.generated/configuration-schema.json`: a validated JSON representation of your schema for runtime use
+- `src/commerce-configuration-1/.generated/actions/business-configuration/config.js`: handles retrieving and updating configuration values across scopes
+- `src/commerce-configuration-1/.generated/actions/business-configuration/scope-tree.js`: handles scope hierarchy management for both Adobe Commerce and custom external scopes
+- `src/commerce-configuration-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
+
+4. In your `app.config.yaml`, reference the generated extension configurations. If you have multiple extension points, add each as a new entry:
 
 ```yaml
 extensions:
   commerce/extensibility/1:
     $include: "src/commerce-extensibility-1/ext.config.yaml"
+  # Only include this if businessConfig is defined in your app.commerce.config.*:
+  commerce/configuration/1:
+    $include: "src/commerce-configuration-1/ext.config.yaml"
 ```
 
-#### 5. Add the extension point to your install configuration
-
-In your `install.yaml` file, add the extension point reference:
+5. In your `install.yaml`, add the extension point references. If you have multiple extension points, add each as a new entry:
 
 ```yaml
 extensions:
   - extensionPointId: commerce/extensibility/1
+  # Only include this if businessConfig is defined in your app.commerce.config.*:
+  - extensionPointId: commerce/configuration/1
 ```
 
-The generated `ext.config.yaml` file includes a `pre-app-build` hook that automatically regenerates the manifest before each build, ensuring your configuration is always up-to-date.
+> [!IMPORTANT]
+> The `pre-app-build` hook keeps your environment variables in sync automatically. If you need to configure them manually (for example in a CI/CD environment), add them to your `.env` file:
+>
+> **For SaaS instances:**
+>
+> ```bash
+> # Logging level for runtime actions
+> LOG_LEVEL=info
+>
+> # Adobe Commerce API configuration
+> AIO_COMMERCE_API_BASE_URL=https://your-commerce-instance.com
+>
+> # IMS Authentication (SaaS)
+> AIO_COMMERCE_AUTH_IMS_CLIENT_ID=your-client-id
+> AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS=your-client-secrets
+> AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID=your-technical-account-id
+> AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL=your-technical-account-email
+> AIO_COMMERCE_AUTH_IMS_ORG_ID=your-ims-org-id
+> AIO_COMMERCE_AUTH_IMS_SCOPES=your-ims-scopes
+> ```
+>
+> **For PaaS instances:**
+>
+> ```bash
+> # Logging level for runtime actions
+> LOG_LEVEL=info
+>
+> # Adobe Commerce API configuration
+> AIO_COMMERCE_API_BASE_URL=https://your-commerce-instance.com
+>
+> # Integration Authentication (PaaS)
+> AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY=your-consumer-key
+> AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET=your-consumer-secret
+> AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN=your-access-token
+> AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET=your-access-token-secret
+> ```
 
 ### Defining Configuration
 
@@ -452,17 +487,19 @@ export default defineCustomInstallationStep(async (config, context) => {
 
 ### CLI Commands
 
-The library provides CLI commands to generate app artifacts:
+The library provides the following CLI commands:
 
 ```bash
-# Generate all artifacts (manifest + runtime actions)
+# Initialize the project (recommended for first-time setup)
+npx @adobe/aio-commerce-lib-app init
+
+# Generate all artifacts (manifest + schema + runtime actions)
 npx @adobe/aio-commerce-lib-app generate all
 
-# Generate app manifest only
+# Or generate individually:
 npx @adobe/aio-commerce-lib-app generate manifest
-
-# Generate runtime actions only
 npx @adobe/aio-commerce-lib-app generate actions
+npx @adobe/aio-commerce-lib-app generate schema
 ```
 
 ##### Custom Installation Scripts:

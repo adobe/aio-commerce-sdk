@@ -36,15 +36,25 @@ First, define fields with `type: "password"` in your configuration schema:
 
 ### 2. Generate an Encryption Key
 
-Run the following command at the root of your project to generate an encryption key:
+Run the following command at the root of your project to generate an encryption key and write it to your `.env` file automatically:
 
 ```bash
-npx aio-commerce-lib-config encryption setup
+npx @adobe/aio-commerce-lib-config encryption setup
 ```
+
+### 3. Validate the Encryption Key
+
+To verify that your key is present and correctly formatted, run:
+
+```bash
+npx @adobe/aio-commerce-lib-config encryption validate
+```
+
+This is useful if you want to provide a custom encryption key for your project, instead of relying on the automatically generated key.
 
 ### Alternative: Manual Key Generation
 
-If you need to generate a key manually (e.g., you don't have a `.env` file yet or need to generate keys for different environments):
+If you need to generate a key manually (e.g., you don't have a `.env` file yet or need to generate keys for different environments), you can use the exported `generateEncryptionKey` utility:
 
 ```typescript
 import { generateEncryptionKey } from "@adobe/aio-commerce-lib-config";
@@ -60,13 +70,22 @@ Then manually add the key to your `.env` file:
 AIO_COMMERCE_CONFIG_ENCRYPTION_KEY=your_generated_64_character_hex_key_here
 ```
 
+You can also validate a key value directly using `validateEncryptionKey`, which throws if the key is missing or incorrectly formatted:
+
+```typescript
+import { validateEncryptionKey } from "@adobe/aio-commerce-lib-config";
+
+// Throws if the key is not valid
+validateEncryptionKey(process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY);
+```
+
 **Important Security Notes:**
 
 - Never commit the `.env` file to version control
 - Keep the encryption key secure and only accessible in the app runtime context
-- The key should be 64 hexadecimal characters (32 bytes for AES-256)
+- The key must be exactly 64 hexadecimal characters (32 bytes for AES-256)
 - Store the key securely in your deployment environment
-- **Encryption is strictly enforced** - operations will fail if the key is not configured (passwords are never stored in plain text)
+- **Encryption is strictly enforced**: operations will fail if the key is not configured (passwords are never stored in plain text)
 
 ## Usage
 
