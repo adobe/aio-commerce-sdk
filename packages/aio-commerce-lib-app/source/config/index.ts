@@ -56,13 +56,4 @@ export type {
 export type { CommerceAppConfigDomain } from "./schema/domains";
 export type * from "./schema/eventing";
 export type { ApplicationMetadata } from "./schema/metadata";
-export type {
-  DeveloperConsoleOAuth,
-  WebhookDefinition,
-  WebhookEntry,
-  WebhookField,
-  WebhookHeader,
-  WebhookRule,
-  WebhooksConfig,
-  WebhooksConfiguration,
-} from "./schema/webhooks";
+export type * from "./schema/webhooks";
