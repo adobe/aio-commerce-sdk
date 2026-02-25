@@ -13,6 +13,7 @@
 import {
   booleanValueSchema,
   nonEmptyStringValueSchema,
+  positiveNumberValueSchema,
   stringValueSchema,
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
@@ -67,7 +68,7 @@ const WebhookDefinitionSchema = v.object({
       "batch_name must contain only letters, numbers, and underscores",
     ),
   ),
-  batch_order: v.optional(v.number()),
+  batch_order: v.optional(positiveNumberValueSchema("batch_order")),
   hook_name: v.pipe(
     nonEmptyStringValueSchema("hook_name"),
     v.regex(
@@ -75,16 +76,21 @@ const WebhookDefinitionSchema = v.object({
       "hook_name must contain only letters, numbers, and underscores",
     ),
   ),
-  url: v.optional(stringValueSchema("url")),
-  priority: v.optional(v.number()),
+  url: v.optional(
+    v.pipe(
+      stringValueSchema("url"),
+      v.url("The url field must be a valid URL"),
+    ),
+  ),
+  priority: v.optional(positiveNumberValueSchema("priority")),
   required: v.optional(booleanValueSchema("required")),
-  soft_timeout: v.optional(v.number()),
-  timeout: v.optional(v.number()),
+  soft_timeout: v.optional(positiveNumberValueSchema("soft_timeout")),
+  timeout: v.optional(positiveNumberValueSchema("timeout")),
   method: nonEmptyStringValueSchema("method"),
   fallback_error_message: v.optional(
     stringValueSchema("fallback_error_message"),
   ),
-  ttl: v.optional(v.number()),
+  ttl: v.optional(positiveNumberValueSchema("ttl")),
   fields: v.optional(
     v.array(WebhookFieldSchema, "Expected an array of webhook field objects"),
   ),
