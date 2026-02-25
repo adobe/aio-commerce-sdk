@@ -2,14 +2,20 @@
   "name": "@adobe/aio-commerce-lib-webhooks",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
   "description": "A library to interact with the Adobe Commerce Webhooks API",
-  "keywords": [],
+  "keywords": [
+    "aio",
+    "commerce",
+    "adobe-commerce",
+    "adobe-commerce-webhooks",
+    "aio-commerce-sdk"
+  ],
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
