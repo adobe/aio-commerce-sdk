@@ -12,14 +12,14 @@
 
 import { HTTPError } from "@adobe/aio-commerce-lib-api/ky";
 
-import { hasWebhooks } from "#config/schema/webhooks";
-
 import type {
   CommerceWebhook,
   WebhookSubscribeParams,
 } from "@adobe/aio-commerce-lib-webhooks";
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { WebhookDefinition } from "#config/schema/webhooks";
+import type {
+  WebhookDefinition,
+  WebhooksConfig,
+} from "#config/schema/webhooks";
 import type { WebhooksExecutionContext } from "./context";
 
 /** Matches any character that is not a valid identifier character (letter, digit, or underscore). */
@@ -41,15 +41,10 @@ export type WebhookSubscriptionResult = {
  * @param context - The webhooks execution context (provides the Commerce API client and logger).
  */
 export async function createWebhookSubscriptions(
-  config: CommerceAppConfigOutputModel,
+  config: WebhooksConfig,
   context: WebhooksExecutionContext,
 ): Promise<WebhookSubscriptionResult> {
   const { logger, commerceWebhooksClient } = context;
-
-  if (!hasWebhooks(config)) {
-    logger.info("No webhooks configured, skipping subscription step.");
-    return { subscribedWebhooks: [] };
-  }
 
   logger.info(
     `Subscribing ${config.webhooks.length} webhook(s) to Commerce...`,

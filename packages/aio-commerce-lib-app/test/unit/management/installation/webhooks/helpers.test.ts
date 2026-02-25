@@ -13,7 +13,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { createWebhookSubscriptions } from "#management/installation/webhooks/helpers";
-import { configWithWebhooks, minimalValidConfig } from "#test/fixtures/config";
+import { configWithWebhooks } from "#test/fixtures/config";
 
 import type { WebhooksExecutionContext } from "#management/installation/webhooks/context";
 
@@ -42,19 +42,6 @@ describe("createWebhookSubscriptions", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
-  });
-
-  test("returns empty subscribedWebhooks when no webhooks are configured", async () => {
-    const context = makeContext();
-    const result = await createWebhookSubscriptions(
-      minimalValidConfig,
-      context,
-    );
-
-    expect(result.subscribedWebhooks).toHaveLength(0);
-    expect(
-      context.commerceWebhooksClient.subscribeWebhook,
-    ).not.toHaveBeenCalled();
   });
 
   test("calls subscribeWebhook for each entry and returns subscribed webhooks", async () => {
