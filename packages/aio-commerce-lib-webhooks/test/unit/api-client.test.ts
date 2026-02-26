@@ -17,7 +17,7 @@ import {
   createCustomCommerceWebhooksApiClient,
   getWebhookList,
   subscribeWebhook,
-} from "../../source/index.js";
+} from "../../source/api.js";
 import {
   TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_PAAS,
   TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_SAAS,
