@@ -1,5 +1,7 @@
+#!/usr/bin/env node
+
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,9 +12,13 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
+try {
+  await import("../dist/es/commands/index.mjs");
+} catch (e) {
+  if (e.code && e.code === "ERR_MODULE_NOT_FOUND") {
+    console.error("CLI was not built!");
+    process.exit(1);
+  }
 
-export default mergeConfig(baseConfig, {
-  entry: ["./source/*.ts"],
-});
+  throw e;
+}

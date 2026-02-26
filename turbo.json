@@ -18,6 +18,7 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
+
     "pack": {
       "dependsOn": ["build"],
       "cache": false

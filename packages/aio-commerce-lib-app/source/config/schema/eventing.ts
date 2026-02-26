@@ -12,7 +12,6 @@
 
 import {
   alphaNumericOrHyphenSchema,
-  alphaNumericOrUnderscoreSchema,
   booleanValueSchema,
   nonEmptyStringValueSchema,
   stringValueSchema,
@@ -25,6 +24,7 @@ import type { CommerceAppConfigOutputModel } from "./app";
 const MAX_DESCRIPTION_LENGTH = 255;
 const MAX_LABEL_LENGTH = 100;
 const MAX_KEY_LENGTH = 50;
+const MAX_EVENT_NAME_LENGTH = 180;
 
 /**
  * Regex for Commerce event names that must start with "plugin." or "observer."
@@ -32,6 +32,13 @@ const MAX_KEY_LENGTH = 50;
  * Examples: "plugin.order_placed", "observer.catalog_update"
  */
 const COMMERCE_EVENT_NAME_REGEX = /^(?:plugin|observer)\.[a-z_]+$/;
+
+/**
+ * Regex for external event names.
+ * Allows word characters (letters, digits, underscore), hyphens, underscores, and dots.
+ * Examples: "external_event", "webhook.received", "my-event_123"
+ */
+const EXTERNAL_EVENT_NAME_REGEX = /^[\w\-_.]+$/;
 
 /**
  * Regex for field names according to XSD fieldName pattern.
@@ -50,6 +57,29 @@ function commerceEventNameSchema() {
     v.regex(
       COMMERCE_EVENT_NAME_REGEX,
       'Event name must start with "plugin." or "observer." followed by lowercase letters and underscores only (e.g., "plugin.order_placed")',
+    ),
+    v.maxLength(
+      MAX_EVENT_NAME_LENGTH,
+      `The event name must not be longer than ${MAX_EVENT_NAME_LENGTH} characters`,
+    ),
+  );
+}
+
+/**
+ * Schema for external event names.
+ * Validates that the event name contains only word characters (letters, digits, underscore),
+ * hyphens, underscores, and dots.
+ */
+function externalEventNameSchema() {
+  return v.pipe(
+    nonEmptyStringValueSchema("event name"),
+    v.regex(
+      EXTERNAL_EVENT_NAME_REGEX,
+      'Event name must contain only letters, digits, underscores, hyphens, and dots (e.g., "external_event", "webhook.received", "my-event_123")',
+    ),
+    v.maxLength(
+      MAX_EVENT_NAME_LENGTH,
+      `The event name must not be longer than ${MAX_EVENT_NAME_LENGTH} characters`,
     ),
   );
 }
@@ -186,7 +216,7 @@ const CommerceEventSchema = v.object({
 /** Schema for external event configuration */
 const ExternalEventSchema = v.object({
   ...BaseEventSchema.entries,
-  name: alphaNumericOrUnderscoreSchema("event name", "lowercase"),
+  name: externalEventNameSchema(),
 });
 
 /** Schema for Commerce event source configuration */

@@ -101,11 +101,13 @@
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-api": "workspace:*",
-    "@adobe/aio-commerce-lib-events": "workspace:*"
+    "@adobe/aio-commerce-lib-events": "workspace:*",
+    "type-fest": "catalog:"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
-    "@aio-commerce-sdk/config-typescript": "workspace:*"
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "typescript": "catalog:"
   },
   "sideEffects": false
 }
