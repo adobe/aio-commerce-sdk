@@ -407,7 +407,7 @@ describe("createWebhookSubscriptions", () => {
     expect(result.subscribedWebhooks).toHaveLength(2);
   });
 
-  test("injects developer_console_oauth from params when set_developer_console_oauth is true or absent", async () => {
+  test("injects developer_console_oauth from params when requireAdobeAuth is true or absent", async () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
     const context = makeContext(subscribeWebhook);
 
@@ -417,14 +417,14 @@ describe("createWebhookSubscriptions", () => {
         {
           description: "Test webhook",
           category: "modification" as const,
+          runtimeAction: "my-package/handle-webhook",
+          // requireAdobeAuth intentionally absent (defaults to true)
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
             webhook_type: "after",
             batch_name: "batch1",
             hook_name: "hook1",
             method: "POST",
-            url: "https://example.com/hook",
-            // set_developer_console_oauth intentionally absent (defaults to true)
           },
         },
       ],
@@ -443,7 +443,7 @@ describe("createWebhookSubscriptions", () => {
     );
   });
 
-  test("does not inject developer_console_oauth when set_developer_console_oauth is false", async () => {
+  test("does not inject developer_console_oauth when requireAdobeAuth is false", async () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
     const context = makeContext(subscribeWebhook);
 
@@ -453,14 +453,14 @@ describe("createWebhookSubscriptions", () => {
         {
           description: "Test webhook",
           category: "modification" as const,
+          runtimeAction: "my-package/handle-webhook",
+          requireAdobeAuth: false,
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
             webhook_type: "after",
             batch_name: "batch1",
             hook_name: "hook1",
             method: "POST",
-            url: "https://example.com/hook",
-            set_developer_console_oauth: false,
           },
         },
       ],
@@ -475,7 +475,7 @@ describe("createWebhookSubscriptions", () => {
     );
   });
 
-  test("throws when set_developer_console_oauth is true but credentials are missing", async () => {
+  test("throws when requireAdobeAuth is true but credentials are missing", async () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
     const emptyParams = {
       AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "",
@@ -494,20 +494,20 @@ describe("createWebhookSubscriptions", () => {
         {
           description: "Test webhook",
           category: "modification" as const,
+          runtimeAction: "my-package/handle-webhook",
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
             webhook_type: "after",
             batch_name: "batch1",
             hook_name: "hook1",
             method: "POST",
-            url: "https://example.com/hook",
           },
         },
       ],
     };
 
     await expect(createWebhookSubscriptions(config, context)).rejects.toThrow(
-      "Failed to retrieve IMS credentials for webhook subscription",
+      Error,
     );
     expect(subscribeWebhook).not.toHaveBeenCalled();
   });

@@ -20,7 +20,6 @@ import type {
   WebhookDefinition,
   WebhooksConfig,
 } from "#config/schema/webhooks";
-import type { InstallationContext } from "#management/index";
 import type { WebhooksExecutionContext } from "./context";
 
 /** Matches any character that is not a valid identifier character (letter, digit, or underscore). */
@@ -157,9 +156,11 @@ type DeveloperConsoleOAuth = {
  * Resolves and validates the IMS credentials required for `developer_console_oauth`.
  * Throws a descriptive error listing every missing field if any credential is empty.
  */
-export function resolveDeveloperConsoleOAuthCredentials(
-  params: InstallationContext["params"],
-): DeveloperConsoleOAuth {
+export function resolveDeveloperConsoleOAuthCredentials(params: {
+  AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
+  AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: string | string[];
+  AIO_COMMERCE_AUTH_IMS_ORG_ID: string;
+}): DeveloperConsoleOAuth {
   const credentials = {
     client_id: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
     client_secret: Array.isArray(params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS)
