@@ -17,7 +17,7 @@ import {
   getWebhookList,
   subscribeWebhook,
   unsubscribeWebhook,
-} from "../../source/api/webhooks/endpoints.js";
+} from "#api/webhooks/endpoints";
 
 import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 
