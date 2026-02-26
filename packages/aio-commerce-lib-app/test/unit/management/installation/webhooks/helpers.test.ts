@@ -16,16 +16,25 @@ import {
   createOrGetWebhookSubscription,
   createWebhookSubscription,
   createWebhookSubscriptions,
+  resolveDeveloperConsoleOAuthCredentials,
 } from "#management/installation/webhooks/helpers";
 import { configWithWebhooks } from "#test/fixtures/config";
 
 import type { WebhooksExecutionContext } from "#management/installation/webhooks/context";
 
+const DEFAULT_PARAMS = {
+  AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+  AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "test-client-secret",
+  AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+};
+
 function makeContext(
   subscribeWebhookFn = vi.fn().mockResolvedValue(null),
   getWebhookListFn = vi.fn().mockResolvedValue([]),
+  params = DEFAULT_PARAMS,
 ): WebhooksExecutionContext {
   return {
+    params,
     commerceWebhooksClient: {
       getWebhookList: getWebhookListFn,
       subscribeWebhook: subscribeWebhookFn,
@@ -397,6 +406,111 @@ describe("createWebhookSubscriptions", () => {
     );
     expect(result.subscribedWebhooks).toHaveLength(2);
   });
+
+  test("injects developer_console_oauth from params when set_developer_console_oauth is true or absent", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+    const context = makeContext(subscribeWebhook);
+
+    const config = {
+      ...configWithWebhooks,
+      webhooks: [
+        {
+          description: "Test webhook",
+          category: "modification",
+          webhook: {
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "after",
+            batch_name: "batch1",
+            hook_name: "hook1",
+            method: "POST",
+            url: "https://example.com/hook",
+            // set_developer_console_oauth intentionally absent (defaults to true)
+          },
+        },
+      ],
+    };
+
+    await createWebhookSubscriptions(config, context);
+
+    expect(subscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        developer_console_oauth: {
+          client_id: DEFAULT_PARAMS.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+          client_secret: DEFAULT_PARAMS.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
+          org_id: DEFAULT_PARAMS.AIO_COMMERCE_AUTH_IMS_ORG_ID,
+        },
+      }),
+    );
+  });
+
+  test("does not inject developer_console_oauth when set_developer_console_oauth is false", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+    const context = makeContext(subscribeWebhook);
+
+    const config = {
+      ...configWithWebhooks,
+      webhooks: [
+        {
+          description: "Test webhook",
+          category: "modification",
+          webhook: {
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "after",
+            batch_name: "batch1",
+            hook_name: "hook1",
+            method: "POST",
+            url: "https://example.com/hook",
+            set_developer_console_oauth: false,
+          },
+        },
+      ],
+    };
+
+    await createWebhookSubscriptions(config, context);
+
+    expect(subscribeWebhook).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        developer_console_oauth: expect.anything(),
+      }),
+    );
+  });
+
+  test("throws when set_developer_console_oauth is true but credentials are missing", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+    const emptyParams = {
+      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "",
+      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "",
+      AIO_COMMERCE_AUTH_IMS_ORG_ID: "",
+    };
+    const context = makeContext(
+      subscribeWebhook,
+      vi.fn().mockResolvedValue([]),
+      emptyParams,
+    );
+
+    const config = {
+      ...configWithWebhooks,
+      webhooks: [
+        {
+          description: "Test webhook",
+          category: "modification" as const,
+          webhook: {
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "after",
+            batch_name: "batch1",
+            hook_name: "hook1",
+            method: "POST",
+            url: "https://example.com/hook",
+          },
+        },
+      ],
+    };
+
+    await expect(createWebhookSubscriptions(config, context)).rejects.toThrow(
+      "Failed to retrieve IMS credentials for webhook subscription",
+    );
+    expect(subscribeWebhook).not.toHaveBeenCalled();
+  });
 });
 
 describe("createWebhookSubscription", () => {
@@ -538,5 +652,48 @@ describe("createOrGetWebhookSubscription", () => {
     expect(logger.info).toHaveBeenCalledWith(
       expect.stringContaining("Subscribed webhook"),
     );
+  });
+});
+
+describe("resolveDeveloperConsoleOAuthCredentials", () => {
+  test("returns credentials object when all values are present (string secret)", () => {
+    const result = resolveDeveloperConsoleOAuthCredentials({
+      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
+      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
+      AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
+    });
+
+    expect(result).toEqual({
+      client_id: "client-id",
+      client_secret: "client-secret",
+      org_id: "org-id",
+    });
+  });
+
+  test("returns credentials object using first element when secrets is an array", () => {
+    const result = resolveDeveloperConsoleOAuthCredentials({
+      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
+      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: [
+        "primary-secret",
+        "secondary-secret",
+      ],
+      AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
+    });
+
+    expect(result).toEqual({
+      client_id: "client-id",
+      client_secret: "primary-secret",
+      org_id: "org-id",
+    });
+  });
+
+  test("throws when one of the fields is empty", () => {
+    expect(() =>
+      resolveDeveloperConsoleOAuthCredentials({
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
+      }),
+    ).toThrow("Failed to retrieve IMS credentials");
   });
 });

@@ -39,22 +39,14 @@ const WebhookHeaderSchema = v.object({
   value: nonEmptyStringValueSchema("header value"),
 });
 
-/** Schema for developer console OAuth configuration. */
-const DeveloperConsoleOAuthSchema = v.object({
-  client_id: nonEmptyStringValueSchema("client_id"),
-  client_secret: nonEmptyStringValueSchema("client_secret"),
-  org_id: nonEmptyStringValueSchema("org_id"),
-  environment: nonEmptyStringValueSchema("environment"),
-});
-
 /** batch_name and hook_name must contain only letters, numbers, and underscores. */
 const WEBHOOK_IDENTIFIER_REGEX = /^[a-zA-Z0-9_]+$/;
 
-/** Response category for conflict detection: validation, append, or modification. */
-const RESPONSE_CATEGORIES = ["validation", "append", "modification"] as const;
-const ResponseCategorySchema = v.picklist(
-  RESPONSE_CATEGORIES,
-  `response_category must be one of: ${RESPONSE_CATEGORIES.join(", ")}`,
+/** Category for conflict detection: validation, append, or modification. */
+const CATEGORIES = ["validation", "append", "modification"] as const;
+const CategorySchema = v.picklist(
+  CATEGORIES,
+  `category must be one of: ${CATEGORIES.join(", ")}`,
 );
 
 /** Schema for the nested webhook payload without url — used when runtimeAction resolves the URL at runtime. */
@@ -94,8 +86,9 @@ const WebhookDefinitionBaseSchema = v.object({
   headers: v.optional(
     v.array(WebhookHeaderSchema, "Expected an array of webhook header objects"),
   ),
-  developer_console_oauth: v.optional(DeveloperConsoleOAuthSchema),
-  response_category: v.optional(ResponseCategorySchema),
+  set_developer_console_oauth: v.optional(
+    booleanValueSchema("set_developer_console_oauth"),
+  ),
 });
 
 /** Schema for the nested webhook payload with a required url. */
@@ -110,7 +103,7 @@ const WebhookDefinitionWithUrlSchema = v.object({
 /** Schema for a webhook entry that resolves its URL from a runtime action. */
 const WebhookEntryWithRuntimeActionSchema = v.object({
   description: nonEmptyStringValueSchema("description"),
-  category: nonEmptyStringValueSchema("category"),
+  category: v.optional(CategorySchema),
   runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
   webhook: WebhookDefinitionBaseSchema,
 });
@@ -118,7 +111,7 @@ const WebhookEntryWithRuntimeActionSchema = v.object({
 /** Schema for a webhook entry that provides an explicit URL. */
 const WebhookEntryWithUrlSchema = v.object({
   description: nonEmptyStringValueSchema("description"),
-  category: nonEmptyStringValueSchema("category"),
+  category: v.optional(CategorySchema),
   webhook: WebhookDefinitionWithUrlSchema,
 });
 
@@ -147,11 +140,6 @@ export type WebhookRule = v.InferInput<typeof WebhookRuleSchema>;
 
 /** Webhook header configuration */
 export type WebhookHeader = v.InferInput<typeof WebhookHeaderSchema>;
-
-/** Developer console OAuth configuration */
-export type DeveloperConsoleOAuth = v.InferInput<
-  typeof DeveloperConsoleOAuthSchema
->;
 
 /** Nested webhook payload (webhook_method, fields, etc.) — union of base shape and url-carrying shape. */
 export type WebhookDefinition =

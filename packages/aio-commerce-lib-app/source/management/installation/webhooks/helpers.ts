@@ -44,7 +44,7 @@ export async function createWebhookSubscriptions(
   config: WebhooksConfig,
   context: WebhooksExecutionContext,
 ): Promise<WebhookSubscriptionResult> {
-  const { logger, commerceWebhooksClient } = context;
+  const { logger, commerceWebhooksClient, params } = context;
 
   logger.info(
     `Subscribing ${config.webhooks.length} webhook(s) to Commerce...`,
@@ -71,6 +71,10 @@ export async function createWebhookSubscriptions(
       url: resolvedUrl,
       batch_name: `${idPrefix}${webhook.batch_name}`,
       hook_name: `${idPrefix}${webhook.hook_name}`,
+      ...(webhook.set_developer_console_oauth !== false && {
+        developer_console_oauth:
+          resolveDeveloperConsoleOAuthCredentials(params),
+      }),
     };
 
     subscribedWebhooks.push(
@@ -138,6 +142,43 @@ export async function createWebhookSubscription(
     }
     throw err;
   }
+}
+
+/** Shape of the developer_console_oauth credential block expected by the Commerce Webhooks API. */
+type DeveloperConsoleOAuth = {
+  client_id: string;
+  client_secret: string;
+  org_id: string;
+};
+
+/**
+ * Resolves and validates the IMS credentials required for `developer_console_oauth`.
+ * Throws a descriptive error listing every missing field if any credential is empty.
+ */
+export function resolveDeveloperConsoleOAuthCredentials(params: {
+  AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
+  AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: string | string[];
+  AIO_COMMERCE_AUTH_IMS_ORG_ID: string;
+}): DeveloperConsoleOAuth {
+  const credentials = {
+    client_id: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+    client_secret: Array.isArray(params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS)
+      ? params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS[0]
+      : params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
+    org_id: params.AIO_COMMERCE_AUTH_IMS_ORG_ID,
+  };
+
+  const hasMissing = (
+    Object.keys(credentials) as (keyof DeveloperConsoleOAuth)[]
+  ).some((key) => !credentials[key]);
+
+  if (hasMissing) {
+    throw new Error(
+      "Failed to retrieve IMS credentials for webhook subscription",
+    );
+  }
+
+  return credentials;
 }
 
 /**

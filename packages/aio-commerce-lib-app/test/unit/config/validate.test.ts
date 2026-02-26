@@ -1197,7 +1197,7 @@ describe("validateConfigDomain", () => {
 
     const baseWebhookEntry = {
       description: "A test webhook",
-      category: "test",
+      category: "append",
     };
 
     test("should accept entry with runtimeAction and no url", () => {
