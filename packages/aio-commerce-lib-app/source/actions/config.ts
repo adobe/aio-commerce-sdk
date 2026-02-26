@@ -11,8 +11,6 @@
  */
 
 import {
-  byCode,
-  byCodeAndLevel,
   byScopeId,
   getConfiguration,
   setConfiguration,
@@ -28,10 +26,7 @@ import * as v from "valibot";
 
 import { validateCommerceAppConfigDomain } from "#config/index";
 
-import type {
-  BusinessConfigSchema,
-  SelectorBy,
-} from "@adobe/aio-commerce-lib-config";
+import type { BusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 
@@ -51,36 +46,24 @@ interface ConfigActionContext extends BaseContext {
   rawParams: ConfigActionParams;
 }
 
-const SelectorIdSchema = v.object({
-  id: nonEmptyStringValueSchema("selector.id"),
-});
-
-const SelectorCodeAndOptionalLevelSchema = v.object({
-  code: nonEmptyStringValueSchema("selector.code"),
-  level: v.optional(nonEmptyStringValueSchema("selector.level")),
-});
-
-/** Checks if the object is a selector by id. */
-function isSelectorId(
-  object: unknown,
-): object is v.InferOutput<typeof SelectorIdSchema> {
-  return (
-    typeof object === "object" &&
-    object !== null &&
-    "id" in object &&
-    typeof object.id === "string"
-  );
-}
-
 // The router that will hold the config routes
 const router = new HttpActionRouter<ConfigActionContext>().use(logger());
 
 /** GET / - Retrieve configuration */
 router.get("/", {
-  query: v.union([SelectorIdSchema, SelectorCodeAndOptionalLevelSchema]),
+  query: v.object({
+    scopeId: nonEmptyStringValueSchema("scopeId"),
+  }),
+
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
-    const query = req.query;
+    const configSchema = rawParams.configSchema;
+
+    logger.debug("Validating configuration schema...");
+    const validatedSchema = validateCommerceAppConfigDomain(
+      configSchema,
+      "businessConfig.schema",
+    );
 
     try {
       if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
@@ -90,26 +73,11 @@ router.get("/", {
         });
       }
 
-      let selector: SelectorBy;
+      const { scopeId } = req.query;
+      logger.debug(`Retrieving configuration with scope id: ${scopeId}`);
+      const appConfiguration = await getConfiguration(byScopeId(scopeId));
 
-      if (isSelectorId(query)) {
-        const id = query.id;
-        selector = byScopeId(id);
-        logger.debug(`Retrieving configuration by id: ${id}`);
-      } else {
-        const { code, level } = query;
-        if (level) {
-          selector = byCodeAndLevel(code, level);
-          logger.debug(
-            `Retrieving configuration by code: ${code}, level: ${level}`,
-          );
-        } else {
-          selector = byCode(query.code);
-          logger.debug(`Retrieving configuration by code: ${code}`);
-        }
-      }
-
-      const appConfiguration = await getConfiguration(selector);
+      logger.debug("Masking password values...");
       appConfiguration.config = appConfiguration.config.map((item) => {
         const schemaMatch = rawParams.configSchema.find(
           (field) => field.name === item.name,
@@ -125,7 +93,9 @@ router.get("/", {
         return item;
       });
 
-      return ok({ body: appConfiguration });
+      return ok({
+        body: { schema: validatedSchema, values: appConfiguration },
+      });
     } finally {
       // Make sure we reset the encryption key to null after the operation is complete.
       // Otherwise on warm invocations, the key may be kept in memory.
@@ -142,11 +112,7 @@ router.get("/", {
 /** POST / - Set configuration */
 router.post("/", {
   body: v.object({
-    selector: v.union([
-      SelectorIdSchema,
-      v.required(SelectorCodeAndOptionalLevelSchema),
-    ]),
-
+    scopeId: nonEmptyStringValueSchema("scopeId"),
     config: v.array(
       v.object({
         name: nonEmptyStringValueSchema("config.name"),
@@ -157,6 +123,13 @@ router.post("/", {
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
+    const configSchema = rawParams.configSchema;
+
+    logger.debug("Validating configuration schema...");
+    const validatedSchema = validateCommerceAppConfigDomain(
+      configSchema,
+      "businessConfig.schema",
+    );
 
     try {
       if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
@@ -166,22 +139,12 @@ router.post("/", {
         });
       }
 
-      const { selector, config } = req.body;
-      let selectorBy: SelectorBy;
+      logger.debug(`Setting configuration with scope id: ${req.body.scopeId}`);
+      const { scopeId, config } = req.body;
+      const result = await setConfiguration({ config }, byScopeId(scopeId));
 
-      if (isSelectorId(selector)) {
-        selectorBy = byScopeId(selector.id);
-        logger.debug(`Setting configuration by id: ${selector.id}`);
-      } else {
-        selectorBy = byCodeAndLevel(selector.code, selector.level);
-        logger.debug(
-          `Setting configuration by code: ${selector.code}, level: ${selector.level}`,
-        );
-      }
-
-      const result = await setConfiguration({ config }, selectorBy);
       return ok({
-        body: { result },
+        body: { schema: validatedSchema, ...result },
         headers: { "Cache-Control": "no-store" },
       });
     } finally {
@@ -194,26 +157,6 @@ router.post("/", {
         });
       }
     }
-  },
-});
-
-/** GET /schema - Retrieve configuration schema */
-router.get("/schema", {
-  handler: (_req, { logger, rawParams }) => {
-    logger.debug("Validating configuration schema...");
-
-    const configSchema = rawParams.configSchema;
-    const validatedSchema = validateCommerceAppConfigDomain(
-      configSchema,
-      "businessConfig.schema",
-    );
-
-    logger.debug("Successfully validated configuration schema");
-    return ok({
-      body: {
-        configSchema: validatedSchema,
-      },
-    });
   },
 });
 
