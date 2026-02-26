@@ -438,6 +438,7 @@ describe("createWebhookSubscriptions", () => {
           client_id: DEFAULT_PARAMS.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
           client_secret: DEFAULT_PARAMS.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
           org_id: DEFAULT_PARAMS.AIO_COMMERCE_AUTH_IMS_ORG_ID,
+          environment: "production",
         },
       }),
     );
@@ -667,6 +668,7 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
       client_id: "client-id",
       client_secret: "client-secret",
       org_id: "org-id",
+      environment: "production",
     });
   });
 
@@ -684,7 +686,62 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
       client_id: "client-id",
       client_secret: "primary-secret",
       org_id: "org-id",
+      environment: "production",
     });
+  });
+
+  test("sets environment to production when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT starts with prod", () => {
+    const result = resolveDeveloperConsoleOAuthCredentials({
+      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
+      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
+      AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
+      AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "prod",
+    });
+
+    expect(result.environment).toBe("production");
+  });
+
+  test("sets environment to production when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT is production", () => {
+    const result = resolveDeveloperConsoleOAuthCredentials({
+      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
+      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
+      AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
+      AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "production",
+    });
+
+    expect(result.environment).toBe("production");
+  });
+
+  test("sets environment to staging when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT does not start with prod", () => {
+    const result = resolveDeveloperConsoleOAuthCredentials({
+      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
+      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
+      AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
+      AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "stage",
+    });
+
+    expect(result.environment).toBe("staging");
+  });
+
+  test("defaults environment to production when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT is absent", () => {
+    const result = resolveDeveloperConsoleOAuthCredentials({
+      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
+      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
+      AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
+    });
+
+    expect(result.environment).toBe("production");
+  });
+
+  test("defaults environment to production when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT is empty", () => {
+    const result = resolveDeveloperConsoleOAuthCredentials({
+      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
+      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
+      AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
+      AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "",
+    });
+
+    expect(result.environment).toBe("production");
   });
 
   test("throws when one of the fields is empty", () => {

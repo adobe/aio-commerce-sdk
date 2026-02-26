@@ -28,6 +28,9 @@ const NON_IDENTIFIER_CHAR_REGEX = /[^a-zA-Z0-9_]/g;
 /** Matches two or more consecutive underscores. */
 const MULTIPLE_UNDERSCORES_REGEX = /_+/g;
 
+const ENVIRONMENT_PRODUCTION = "production";
+const ENVIRONMENT_STAGING = "staging";
+
 /** Summary of webhook subscription results after a run. */
 export type WebhookSubscriptionResult = {
   subscribedWebhooks: WebhookSubscribeParams[];
@@ -150,6 +153,7 @@ type DeveloperConsoleOAuth = {
   client_id: string;
   client_secret: string;
   org_id: string;
+  environment: string;
 };
 
 /**
@@ -160,6 +164,7 @@ export function resolveDeveloperConsoleOAuthCredentials(params: {
   AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
   AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: string | string[];
   AIO_COMMERCE_AUTH_IMS_ORG_ID: string;
+  AIO_COMMERCE_AUTH_IMS_ENVIRONMENT?: string;
 }): DeveloperConsoleOAuth {
   const credentials = {
     client_id: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
@@ -167,6 +172,11 @@ export function resolveDeveloperConsoleOAuthCredentials(params: {
       ? params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS[0]
       : params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
     org_id: params.AIO_COMMERCE_AUTH_IMS_ORG_ID,
+    environment:
+      !params.AIO_COMMERCE_AUTH_IMS_ENVIRONMENT ||
+      params.AIO_COMMERCE_AUTH_IMS_ENVIRONMENT.startsWith("prod")
+        ? ENVIRONMENT_PRODUCTION
+        : ENVIRONMENT_STAGING,
   };
 
   const hasMissing = (
