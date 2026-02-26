@@ -54,7 +54,8 @@ const webhooksPart = [
   {
     description: "Webhook for order created",
     runtimeAction: "my-package/handle-webhook",
-    category: "modification",
+    requireAdobeAuth: true,
+    category: "modification" as const,
     webhook: {
       webhook_method: "plugin.order.api.order_created",
       webhook_type: "after",

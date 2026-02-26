@@ -86,9 +86,6 @@ const WebhookDefinitionBaseSchema = v.object({
   headers: v.optional(
     v.array(WebhookHeaderSchema, "Expected an array of webhook header objects"),
   ),
-  set_developer_console_oauth: v.optional(
-    booleanValueSchema("set_developer_console_oauth"),
-  ),
 });
 
 /** Schema for the nested webhook payload with a required url. */
@@ -105,6 +102,7 @@ const WebhookEntryWithRuntimeActionSchema = v.object({
   description: nonEmptyStringValueSchema("description"),
   category: v.optional(CategorySchema),
   runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
+  requireAdobeAuth: v.optional(booleanValueSchema("requireAdobeAuth")),
   webhook: WebhookDefinitionBaseSchema,
 });
 

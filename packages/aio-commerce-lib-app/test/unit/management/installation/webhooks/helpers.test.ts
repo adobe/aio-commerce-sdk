@@ -84,7 +84,7 @@ describe("createWebhookSubscriptions", () => {
       webhooks: [
         {
           description: "Webhook with explicit url",
-          category: "modification",
+          category: "modification" as const,
           webhook: {
             webhook_method: "plugin.order.api.order_created",
             webhook_type: "after",
@@ -113,7 +113,7 @@ describe("createWebhookSubscriptions", () => {
       webhooks: [
         {
           description: "Webhook without url",
-          category: "test",
+          category: "modification" as const,
           runtimeAction: "my-package/handle-webhook",
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
@@ -146,7 +146,7 @@ describe("createWebhookSubscriptions", () => {
       webhooks: [
         {
           description: "Webhook without url",
-          category: "test",
+          category: "modification" as const,
           runtimeAction: "my-package/handle-webhook",
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
@@ -181,7 +181,7 @@ describe("createWebhookSubscriptions", () => {
         {
           description: "Test webhook",
           runtimeAction: "my-package/handle-webhook",
-          category: "modification",
+          category: "modification" as const,
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
             webhook_type: "after",
@@ -219,7 +219,7 @@ describe("createWebhookSubscriptions", () => {
         {
           description: "Second webhook",
           runtimeAction: "my-package/second-hook",
-          category: "modification",
+          category: "modification" as const,
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
             webhook_type: "after",
@@ -263,7 +263,7 @@ describe("createWebhookSubscriptions", () => {
         {
           description: "Test webhook",
           runtimeAction: "my-package/handle-webhook",
-          category: "modification",
+          category: "modification" as const,
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
             webhook_type: "after",
@@ -358,7 +358,7 @@ describe("createWebhookSubscriptions", () => {
         {
           description: "First webhook",
           runtimeAction: "my-package/handle-webhook",
-          category: "modification",
+          category: "modification" as const,
           webhook: {
             webhook_method: "plugin.order.api.order_created",
             webhook_type: "after",
@@ -371,7 +371,7 @@ describe("createWebhookSubscriptions", () => {
         {
           description: "Second webhook",
           runtimeAction: "my-package/handle-webhook",
-          category: "modification",
+          category: "modification" as const,
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
             webhook_type: "after",
@@ -416,7 +416,7 @@ describe("createWebhookSubscriptions", () => {
       webhooks: [
         {
           description: "Test webhook",
-          category: "modification",
+          category: "modification" as const,
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
             webhook_type: "after",
@@ -452,7 +452,7 @@ describe("createWebhookSubscriptions", () => {
       webhooks: [
         {
           description: "Test webhook",
-          category: "modification",
+          category: "modification" as const,
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
             webhook_type: "after",

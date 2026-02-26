@@ -71,10 +71,11 @@ export async function createWebhookSubscriptions(
       url: resolvedUrl,
       batch_name: `${idPrefix}${webhook.batch_name}`,
       hook_name: `${idPrefix}${webhook.hook_name}`,
-      ...(webhook.set_developer_console_oauth !== false && {
-        developer_console_oauth:
-          resolveDeveloperConsoleOAuthCredentials(params),
-      }),
+      ...("runtimeAction" in entry &&
+        entry.requireAdobeAuth !== false && {
+          developer_console_oauth:
+            resolveDeveloperConsoleOAuthCredentials(params),
+        }),
     };
 
     subscribedWebhooks.push(
