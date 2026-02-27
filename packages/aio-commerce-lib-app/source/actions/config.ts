@@ -26,7 +26,10 @@ import * as v from "valibot";
 
 import { validateCommerceAppConfigDomain } from "#config/index";
 
-import type { BusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
+import type {
+  BusinessConfigSchema,
+  ConfigValue,
+} from "@adobe/aio-commerce-lib-config";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 
@@ -44,6 +47,29 @@ type ConfigActionParams = RuntimeActionParams &
 /** The context for the config action. */
 interface ConfigActionContext extends BaseContext {
   rawParams: ConfigActionParams;
+}
+
+// Placeholder value for password fields.
+const MASKED_PASSWORD_VALUE = "*****";
+
+/**
+ * Filters password fields from the configuration values.
+ * @param schema - The schema to use to filter the values.
+ * @param values - The values to filter.
+ * @returns The filtered values.
+ */
+function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
+  schema: BusinessConfigSchema,
+  values: T[],
+) {
+  return values.map((item) => {
+    const schemaMatch = schema.find((field) => field.name === item.name);
+    if (schemaMatch?.type === "password") {
+      return { ...item, value: MASKED_PASSWORD_VALUE };
+    }
+
+    return item;
+  });
 }
 
 // The router that will hold the config routes
@@ -74,20 +100,10 @@ router.get("/", {
     });
 
     logger.debug("Masking password values...");
-    appConfiguration.config = appConfiguration.config.map((item) => {
-      const schemaMatch = rawParams.configSchema.find(
-        (field) => field.name === item.name,
-      );
-
-      if (schemaMatch?.type === "password") {
-        return {
-          ...item,
-          value: "*****",
-        };
-      }
-
-      return item;
-    });
+    appConfiguration.config = filterPasswordFields(
+      configSchema,
+      appConfiguration.config,
+    );
 
     return ok({
       body: { schema: validatedSchema, values: appConfiguration },
@@ -114,22 +130,20 @@ router.post("/", {
     logger.debug(`Setting configuration with scope id: ${req.body.scopeId}`);
     const { scopeId, config } = req.body;
 
-    const result = await setConfiguration({ config }, byScopeId(scopeId), {
-      encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
-    });
+    // The UI sent it to us as a masked value, which means the user didn't update it.
+    const updatedFields = config.filter(
+      (item) => item.value !== MASKED_PASSWORD_VALUE,
+    );
 
-    result.config = result.config.map((item) => {
-      const schemaMatch = configSchema.find(
-        (field) => field.name === item.name,
-      );
+    const result = await setConfiguration(
+      { config: updatedFields },
+      byScopeId(scopeId),
+      {
+        encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+      },
+    );
 
-      if (schemaMatch?.type === "password") {
-        return { ...item, value: "*****" };
-      }
-
-      return item;
-    });
-
+    result.config = filterPasswordFields(configSchema, result.config);
     return ok({
       body: result,
       headers: { "Cache-Control": "no-store" },
