@@ -380,9 +380,6 @@ importers:
       consola:
         specifier: 'catalog:'
         version: 3.4.2
-      jiti:
-        specifier: ^2.6.1
-        version: 2.6.1
       safe-stable-stringify:
         specifier: 'catalog:'
         version: 2.5.0

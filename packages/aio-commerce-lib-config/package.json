@@ -95,13 +95,5 @@
     "@aio-commerce-sdk/scripts": "workspace:*",
     "typescript": "catalog:"
   },
-  "sideEffects": false,
-  "knip": {
-    "tsdown": {
-      "config": [
-        "tsdown.config.ts",
-        "package.json"
-      ]
-    }
-  }
+  "sideEffects": false
 }
