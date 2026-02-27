@@ -63,6 +63,7 @@ export async function setConfiguration(
   const encryptedEntries = encryptPasswordFields(
     sanitizedEntries,
     passwordFields,
+    context.encryptionKey,
   );
 
   const existingPersisted = await configRepository.loadConfig(scopeCode);
