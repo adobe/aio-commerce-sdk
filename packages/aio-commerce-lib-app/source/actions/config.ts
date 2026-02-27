@@ -15,7 +15,6 @@ import {
   getConfiguration,
   initialize,
   setConfiguration,
-  setGlobalLibConfigOptions,
 } from "@adobe/aio-commerce-lib-config";
 import { ok } from "@adobe/aio-commerce-lib-core/responses";
 import {
@@ -67,47 +66,32 @@ router.get("/", {
     );
 
     initialize({ schema: validatedSchema });
-    try {
-      if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
-        logger.debug("Setting encryption key...");
-        setGlobalLibConfigOptions({
-          encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
-        });
+
+    const { scopeId } = req.query;
+    logger.debug(`Retrieving configuration with scope id: ${scopeId}`);
+    const appConfiguration = await getConfiguration(byScopeId(scopeId), {
+      encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+    });
+
+    logger.debug("Masking password values...");
+    appConfiguration.config = appConfiguration.config.map((item) => {
+      const schemaMatch = rawParams.configSchema.find(
+        (field) => field.name === item.name,
+      );
+
+      if (schemaMatch?.type === "password") {
+        return {
+          ...item,
+          value: "*****",
+        };
       }
 
-      const { scopeId } = req.query;
-      logger.debug(`Retrieving configuration with scope id: ${scopeId}`);
-      const appConfiguration = await getConfiguration(byScopeId(scopeId));
+      return item;
+    });
 
-      logger.debug("Masking password values...");
-      appConfiguration.config = appConfiguration.config.map((item) => {
-        const schemaMatch = rawParams.configSchema.find(
-          (field) => field.name === item.name,
-        );
-
-        if (schemaMatch?.type === "password") {
-          return {
-            ...item,
-            value: "*****",
-          };
-        }
-
-        return item;
-      });
-
-      return ok({
-        body: { schema: validatedSchema, values: appConfiguration },
-      });
-    } finally {
-      // Make sure we reset the encryption key to null after the operation is complete.
-      // Otherwise on warm invocations, the key may be kept in memory.
-      if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
-        logger.debug("Resetting encryption key...");
-        setGlobalLibConfigOptions({
-          encryptionKey: null,
-        });
-      }
-    }
+    return ok({
+      body: { schema: validatedSchema, values: appConfiguration },
+    });
   },
 });
 
@@ -127,44 +111,29 @@ router.post("/", {
     const { logger, rawParams } = ctx;
     const { configSchema } = rawParams;
 
-    try {
-      if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
-        logger.debug("Setting encryption key...");
-        setGlobalLibConfigOptions({
-          encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
-        });
+    logger.debug(`Setting configuration with scope id: ${req.body.scopeId}`);
+    const { scopeId, config } = req.body;
+
+    const result = await setConfiguration({ config }, byScopeId(scopeId), {
+      encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+    });
+
+    result.config = result.config.map((item) => {
+      const schemaMatch = configSchema.find(
+        (field) => field.name === item.name,
+      );
+
+      if (schemaMatch?.type === "password") {
+        return { ...item, value: "*****" };
       }
 
-      logger.debug(`Setting configuration with scope id: ${req.body.scopeId}`);
-      const { scopeId, config } = req.body;
+      return item;
+    });
 
-      const result = await setConfiguration({ config }, byScopeId(scopeId));
-      result.config = result.config.map((item) => {
-        const schemaMatch = configSchema.find(
-          (field) => field.name === item.name,
-        );
-
-        if (schemaMatch?.type === "password") {
-          return { ...item, value: "*****" };
-        }
-
-        return item;
-      });
-
-      return ok({
-        body: result,
-        headers: { "Cache-Control": "no-store" },
-      });
-    } finally {
-      // Make sure we reset the encryption key to null after the operation is complete.
-      // Otherwise on warm invocations, the key may be kept in memory.
-      if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
-        logger.debug("Resetting encryption key...");
-        setGlobalLibConfigOptions({
-          encryptionKey: null,
-        });
-      }
-    }
+    return ok({
+      body: result,
+      headers: { "Cache-Control": "no-store" },
+    });
   },
 });
 
