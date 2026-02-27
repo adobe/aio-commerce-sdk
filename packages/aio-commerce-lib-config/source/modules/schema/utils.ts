@@ -15,11 +15,9 @@ import { createHash } from "node:crypto";
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 import stringify from "safe-stable-stringify";
 
-import * as schemaRepository from "#modules/schema/config-schema-repository";
-
 import { SchemaBusinessConfig } from "./index";
 
-import type { BusinessConfigSchema, BusinessConfigSchemaField } from "./types";
+import type { BusinessConfigSchema } from "./types";
 
 /**
  * Calculates schema version hash from content.
@@ -58,22 +56,10 @@ export function validateBusinessConfigSchema(value: unknown) {
  * @param namespace - The namespace to get the schema from.
  * @returns Set of field names that are of type "password".
  */
-export async function getPasswordFields(
-  namespace: string,
-): Promise<Set<string>> {
-  try {
-    const cachedSchema = await schemaRepository.getCachedSchema(namespace);
-    const schema: BusinessConfigSchemaField[] =
-      cachedSchema || JSON.parse(await schemaRepository.getPersistedSchema());
-
-    const passwordFields = new Set<string>();
-    for (const field of schema) {
-      if (field.type === "password") {
-        passwordFields.add(field.name);
-      }
-    }
-    return passwordFields;
-  } catch (_) {
-    return new Set<string>();
-  }
+export function getPasswordFields(schema: BusinessConfigSchema) {
+  return new Set(
+    schema
+      .filter((field) => field.type === "password")
+      .map((field) => field.name),
+  );
 }
