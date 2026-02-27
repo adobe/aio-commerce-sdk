@@ -11,30 +11,15 @@
  */
 
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
 
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
+import stringify from "safe-stable-stringify";
 
 import * as schemaRepository from "#modules/schema/config-schema-repository";
-import { CONFIG_SCHEMA_PATH } from "#utils/constants";
 
 import { SchemaBusinessConfig } from "./index";
 
 import type { BusinessConfigSchema, BusinessConfigSchemaField } from "./types";
-
-/**
- * Reads bundled schema file from the runtime action.
- *
- * @returns Promise resolving to schema file content as JSON string, or empty array JSON if file not found.
- */
-export async function readBundledSchemaFile(): Promise<string> {
-  try {
-    const configPath = CONFIG_SCHEMA_PATH;
-    return await readFile(configPath, "utf-8");
-  } catch (_error) {
-    return JSON.stringify([]);
-  }
-}
 
 /**
  * Calculates schema version hash from content.
@@ -42,26 +27,14 @@ export async function readBundledSchemaFile(): Promise<string> {
  * @param content - Schema content as string.
  * @returns Schema version hash (first 8 characters of SHA-256 hash).
  */
-export function calculateSchemaVersion(content: string): string {
+export function calculateSchemaVersion(schema: BusinessConfigSchema): string {
+  const content = stringify(schema, null, 2);
   const hashSubstringLength = 8;
+
   return createHash("sha256")
     .update(content)
     .digest("hex")
     .substring(0, hashSubstringLength);
-}
-
-/**
- * Reads bundled schema file and returns both content and calculated version.
- *
- * @returns Promise resolving to object with schema content and version hash.
- */
-export async function readBundledSchemaWithVersion(): Promise<{
-  content: string;
-  version: string;
-}> {
-  const content = await readBundledSchemaFile();
-  const version = calculateSchemaVersion(content);
-  return { content, version };
 }
 
 /**
@@ -77,20 +50,6 @@ export function validateBusinessConfigSchema(value: unknown) {
     SchemaBusinessConfig.entries.schema,
     value,
   ) satisfies BusinessConfigSchema;
-}
-
-/**
- * Validates and parses schema from JSON content.
- *
- * @param content - Schema content as JSON string.
- * @returns Validated schema as array of config schema fields.
- *
- * @throws {SyntaxError} If JSON parsing fails.
- * @throws {CommerceSdkValidationError} If the schema is invalid.
- */
-export function validateSchemaFromContent(content: string) {
-  const rawSchema = JSON.parse(content);
-  return validateBusinessConfigSchema(rawSchema);
 }
 
 /**

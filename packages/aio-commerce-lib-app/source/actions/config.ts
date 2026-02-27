@@ -123,14 +123,6 @@ router.post("/", {
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
-    const configSchema = rawParams.configSchema;
-
-    logger.debug("Validating configuration schema...");
-    const validatedSchema = validateCommerceAppConfigDomain(
-      configSchema,
-      "businessConfig.schema",
-    );
-
     try {
       if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
         logger.debug("Setting encryption key...");
@@ -144,7 +136,7 @@ router.post("/", {
       const result = await setConfiguration({ config }, byScopeId(scopeId));
 
       return ok({
-        body: { schema: validatedSchema, ...result },
+        body: result,
         headers: { "Cache-Control": "no-store" },
       });
     } finally {

@@ -82,6 +82,7 @@
     "consola": "catalog:",
     "type-fest": "catalog:",
     "jiti": "^2.6.1",
+    "safe-stable-stringify": "catalog:",
     "uuid": "^13.0.0",
     "valibot": "catalog:"
   },

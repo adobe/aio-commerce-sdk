@@ -17,7 +17,6 @@ import {
   getConfiguration as getConfigModule,
   setConfiguration as setConfigModule,
 } from "./modules/configuration";
-import { getSchema as getSchemaModule } from "./modules/schema";
 import {
   getPersistedScopeTree,
   getScopeTree as getScopeTreeModule,
@@ -278,52 +277,6 @@ export async function unsyncCommerceScopes() {
   // Save updated scope tree
   await saveScopeTree(DEFAULT_NAMESPACE, updatedScopeTree);
   return { unsynced: true };
-}
-
-/**
- * Gets the configuration schema with lazy initialization and version checking.
- *
- * The schema defines the structure of configuration fields available in your application,
- * including field names, types, default values, and validation rules. The schema is
- * cached and automatically updated when the bundled schema version changes.
- *
- * @param options - Optional library configuration options for cache timeout.
- * @returns Promise resolving to an array of schema field definitions.
- *
- * @example
- * ```typescript
- * import { getConfigSchema } from "@adobe/aio-commerce-lib-config";
- *
- * // Get the configuration schema
- * const schema = await getConfigSchema();
- * schema.forEach((field) => {
- *   console.log(`Field: ${field.name}`);
- *   console.log(`Type: ${field.type}`);
- *   console.log(`Default: ${field.default}`);
- * });
- * ```
- *
- * @example
- * ```typescript
- * import { getConfigSchema } from "@adobe/aio-commerce-lib-config";
- *
- * // Get schema with custom cache timeout
- * const schema = await getConfigSchema({ cacheTimeout: 300000 });
- *
- * // Find a specific field
- * const apiKeyField = schema.find((field) => field.name === "api_key");
- * if (apiKeyField) {
- *   console.log("API Key field found:", apiKeyField);
- * }
- * ```
- */
-export function getConfigSchema(options?: LibConfigOptions) {
-  const context = {
-    namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
-  };
-
-  return getSchemaModule(context);
 }
 
 /**
