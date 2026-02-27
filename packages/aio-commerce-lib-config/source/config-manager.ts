@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { initializeSchema } from "#modules/schema/initialize";
 import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "#utils/constants";
 
 import {
@@ -26,6 +27,7 @@ import {
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { SelectorBy } from "#config-utils";
+import type { BusinessConfigSchema } from "./modules/schema";
 import type { GetScopeTreeResult, ScopeTree } from "./modules/scope-tree";
 import type {
   GlobalLibConfigOptions,
@@ -38,6 +40,22 @@ const globalLibConfigOptions: GlobalLibConfigOptions = {
   cacheTimeout: DEFAULT_CACHE_TIMEOUT,
   encryptionKey: undefined,
 };
+
+type InitializeOptions = {
+  schema?: BusinessConfigSchema;
+};
+
+export function initialize(options: InitializeOptions) {
+  if (options.schema) {
+    return initializeSchema(
+      {
+        namespace: DEFAULT_NAMESPACE,
+        cacheTimeout: globalLibConfigOptions.cacheTimeout,
+      },
+      options.schema,
+    );
+  }
+}
 
 /**
  * Sets global library configuration options that will be used as defaults for all operations of the library.

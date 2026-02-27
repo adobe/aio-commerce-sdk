@@ -13,6 +13,7 @@
 import {
   byScopeId,
   getConfiguration,
+  initialize,
   setConfiguration,
   setGlobalLibConfigOptions,
 } from "@adobe/aio-commerce-lib-config";
@@ -65,6 +66,7 @@ router.get("/", {
       "businessConfig.schema",
     );
 
+    initialize({ schema: validatedSchema });
     try {
       if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
         logger.debug("Setting encryption key...");
