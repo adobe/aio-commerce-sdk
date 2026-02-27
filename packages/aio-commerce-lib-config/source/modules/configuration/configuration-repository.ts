@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import stringify from "safe-stable-stringify";
+
 import { getLogger } from "#utils/logger";
 import { getSharedFiles, getSharedState } from "#utils/repository";
 
@@ -48,7 +50,7 @@ export async function setCachedConfig(scopeCode: string, payload: string) {
   try {
     const state = await getSharedState();
     const key = getConfigStateKey(scopeCode);
-    await state.put(key, JSON.stringify({ data: payload }));
+    await state.put(key, stringify({ data: payload }) as string);
   } catch (error) {
     logger.debug(
       "Failed to cache configuration:",
@@ -101,7 +103,7 @@ export async function saveConfig(scopeCode: string, payload: string) {
  * @param payload - The configuration payload object.
  */
 export async function persistConfig(scopeCode: string, payload: unknown) {
-  const payloadString = JSON.stringify(payload);
+  const payloadString = stringify(payload) as string;
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
   );
@@ -160,11 +162,9 @@ async function loadFromPersistedFiles(scopeCode: string) {
       return null;
     }
 
-    const parsed = JSON.parse(filePayload);
-
     // Try to cache the file data for future reads
     try {
-      await setCachedConfig(scopeCode, JSON.stringify(parsed));
+      await setCachedConfig(scopeCode, filePayload);
     } catch (err) {
       logger.debug("Failed to cache configuration in state", {
         scopeCode,
@@ -172,7 +172,7 @@ async function loadFromPersistedFiles(scopeCode: string) {
       });
     }
 
-    return parsed;
+    return JSON.parse(filePayload);
   } catch (err) {
     if (isNotFoundError(err)) {
       logger.debug(

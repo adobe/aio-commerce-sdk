@@ -341,13 +341,13 @@ describe("unsyncCommerceScopes", () => {
       scopeTreeWithCommerce,
     );
 
-    const result = await unsyncCommerceScopes();
-
-    expect(result).toBe(true);
+    const { unsynced } = await unsyncCommerceScopes();
+    expect(unsynced).toBe(true);
 
     expect(scopeTreeRepository.saveScopeTree).toHaveBeenCalledTimes(1);
     const savedScopeTree = vi.mocked(scopeTreeRepository.saveScopeTree).mock
       .calls[0][1];
+
     expect(savedScopeTree).toEqual([mockScopeTree[0]]);
     expect(savedScopeTree.find((scope) => scope.code === "commerce")).toBe(
       undefined,
@@ -358,13 +358,14 @@ describe("unsyncCommerceScopes", () => {
     const scopeTreeWithoutCommerce: ScopeTree = mockScopeTree.filter(
       (scope) => scope.code !== "commerce",
     );
+
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       scopeTreeWithoutCommerce,
     );
 
-    const result = await unsyncCommerceScopes();
+    const { unsynced } = await unsyncCommerceScopes();
 
-    expect(result).toBe(true);
+    expect(unsynced).toBe(false);
     expect(scopeTreeRepository.saveScopeTree).not.toHaveBeenCalled();
   });
 
