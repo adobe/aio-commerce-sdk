@@ -125,6 +125,8 @@ router.post("/", {
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
+    const { configSchema } = rawParams;
+
     try {
       if (rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
         logger.debug("Setting encryption key...");
@@ -135,7 +137,19 @@ router.post("/", {
 
       logger.debug(`Setting configuration with scope id: ${req.body.scopeId}`);
       const { scopeId, config } = req.body;
+
       const result = await setConfiguration({ config }, byScopeId(scopeId));
+      result.config = result.config.map((item) => {
+        const schemaMatch = configSchema.find(
+          (field) => field.name === item.name,
+        );
+
+        if (schemaMatch?.type === "password") {
+          return { ...item, value: "*****" };
+        }
+
+        return item;
+      });
 
       return ok({
         body: result,
