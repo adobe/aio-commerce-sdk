@@ -33,6 +33,7 @@ import {
   isInProgressState,
   isSucceededState,
   runInstallation,
+  runValidation,
 } from "#management/index";
 import { AppDataSchema } from "#management/installation/schema";
 
@@ -290,6 +291,69 @@ router.post("/execution", {
         },
       });
     }
+
+    return ok({ body: result });
+  },
+});
+
+/**
+ * POST /installation/validation - Pre-installation validation
+ *
+ * Synchronously validates the step tree before installation begins.
+ * Accepts the same request body as POST / (installation start) so the
+ * frontend can reuse the same parameters without any extra mapping.
+ *
+ * Flow:
+ * 1. Build an InstallationContext from the request parameters
+ * 2. Call runValidation() — traverses the step tree and collects issues
+ * 3. Return the structured ValidationResult immediately (no async invoke)
+ */
+router.post("/validation", {
+  body: object({
+    appData: AppDataSchema,
+    commerceBaseUrl: string(),
+    commerceEnv: string(),
+    ioEventsUrl: string(),
+    ioEventsEnv: string(),
+  }),
+
+  handler: async (req, { logger, rawParams }) => {
+    logger.debug("Running pre-installation validation...");
+
+    const executionParams = rawParams as RuntimeActionArgs;
+    const appConfig = executionParams.appConfig;
+
+    if (!appConfig) {
+      return internalServerError(
+        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
+      );
+    }
+
+    const { appData, ...params } = {
+      ...(rawParams as RuntimeActionArgs),
+      appData: req.body.appData,
+      AIO_EVENTS_API_BASE_URL: req.body.ioEventsUrl,
+      AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: req.body.ioEventsEnv,
+      AIO_COMMERCE_API_BASE_URL: req.body.commerceBaseUrl,
+      AIO_COMMERCE_API_FLAVOR: req.body.commerceEnv,
+    };
+
+    const installationContext: InstallationContext = {
+      appData,
+      params,
+      logger,
+      customScripts:
+        executionParams.customScriptsLoader?.(appConfig, logger) ?? {},
+    };
+
+    const result = await runValidation({
+      installationContext,
+      config: appConfig,
+    });
+
+    logger.debug(
+      `Validation complete — valid: ${result.valid}, errors: ${result.summary.errors}, warnings: ${result.summary.warnings}`,
+    );
 
     return ok({ body: result });
   },

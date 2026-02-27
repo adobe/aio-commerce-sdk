@@ -15,6 +15,30 @@ import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AppData } from "../schema";
 
+// ─── Validation Issue Types ───────────────────────────────────────────────────
+// Defined here (not in validation.ts) to avoid circular imports, since step
+// validate handlers need this type and validation.ts imports from step.ts.
+
+/** Severity level of a validation issue. */
+export type ValidationIssueSeverity = "error" | "warning" | "info";
+
+/** A single validation issue reported by a step's validate handler. */
+export type ValidationIssue = {
+  /** Machine-readable code identifying the issue type. */
+  code: string;
+
+  /** Human-readable description of the issue. */
+  message: string;
+
+  /** Severity of the issue. Only "error" severity blocks installation. */
+  severity: ValidationIssueSeverity;
+
+  /** Optional additional context about the issue. */
+  details?: Record<string, unknown>;
+};
+
+// ─── Installation Context ─────────────────────────────────────────────────────
+
 /** Shared context available to all steps during installation. */
 export type InstallationContext = {
   /** The credentials of the app being installed */
@@ -82,6 +106,16 @@ export type LeafStep<
     config: TConfig,
     context: ExecutionContext<TStepCtx>,
   ) => TOutput | Promise<TOutput>;
+
+  /**
+   * Optional pre-installation validation handler.
+   * Called before installation begins to surface issues (errors or warnings).
+   * Returning an empty array means the step has no issues.
+   */
+  validate?: (
+    config: TConfig,
+    context: ExecutionContext<TStepCtx>,
+  ) => ValidationIssue[] | Promise<ValidationIssue[]>;
 };
 
 /** A branch step that contains children (no execution). */
@@ -97,6 +131,16 @@ export type BranchStep<
 
   /** The children steps of this branch. */
   children: AnyStep[];
+
+  /**
+   * Optional pre-installation validation handler for the branch itself.
+   * Called before children are validated. Returning an empty array means
+   * the branch has no issues at this level.
+   */
+  validate?: (
+    config: TConfig,
+    context: ExecutionContext<TStepCtx>,
+  ) => ValidationIssue[] | Promise<ValidationIssue[]>;
 };
 
 /** A step in the installation tree (discriminated union by `type`). */
@@ -119,6 +163,10 @@ export interface AnyStep {
   name: string;
   run?: (config: any, context: any) => unknown | Promise<unknown>;
   type: "leaf" | "branch";
+  validate?: (
+    config: any,
+    context: any,
+  ) => ValidationIssue[] | Promise<ValidationIssue[]>;
 
   when?: (config: CommerceAppConfigOutputModel) => boolean;
   // biome-ignore-end lint/suspicious/noExplicitAny: We no longer need the flexibility
@@ -178,6 +226,7 @@ export function defineLeafStep<
     meta: options.meta,
     when: options.when,
     run: options.run,
+    validate: options.validate,
   };
 }
 
@@ -209,6 +258,7 @@ export function defineBranchStep<
     when: options.when,
     context: options.context,
     children: options.children,
+    validate: options.validate,
   };
 }
 
