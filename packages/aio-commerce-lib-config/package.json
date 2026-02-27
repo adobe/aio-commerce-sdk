@@ -81,7 +81,6 @@
     "@adobe/aio-lib-state": "catalog:",
     "consola": "catalog:",
     "type-fest": "catalog:",
-    "jiti": "^2.6.1",
     "safe-stable-stringify": "catalog:",
     "uuid": "^13.0.0",
     "valibot": "catalog:"
@@ -96,5 +95,13 @@
     "@aio-commerce-sdk/scripts": "workspace:*",
     "typescript": "catalog:"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "knip": {
+    "tsdown": {
+      "config": [
+        "tsdown.config.ts",
+        "package.json"
+      ]
+    }
+  }
 }
