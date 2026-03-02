@@ -52,6 +52,7 @@ const externalEventingPart = {
 /** Webhooks configuration part. */
 const webhooksPart = [
   {
+    label: "Order Created Webhook",
     description: "Webhook for order created",
     runtimeAction: "my-package/handle-webhook",
     requireAdobeAuth: true,
