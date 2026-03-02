@@ -157,7 +157,12 @@ extensions:
 
 ### Defining Configuration
 
-The current app configuration definition (subject to change in the future) consists of two main parts: **metadata** and **businessConfig**.
+The current app configuration definition contains the following sections:
+
+- **metadata**: Application metadata
+- **businessConfig**: Business configuration schema
+- **eventing**: Eventing configuration
+- **installation**: Installation configuration
 
 #### Application Metadata
 
@@ -210,7 +215,7 @@ businessConfig: {
 }
 ```
 
-For detailed information about available field types and their usage, see the [`@adobe/aio-commerce-lib-config` documentation](../../aio-commerce-lib-config/docs/usage.md#schema-validation).
+For detailed information about available field types and their usage, see the [`@adobe/aio-commerce-lib-config` documentation](../../aio-commerce-lib-config/docs/usage.md#field-types).
 
 #### Eventing Configuration
 
@@ -387,7 +392,7 @@ installation: {
 
 ###### Script Requirements:
 
-Your custom installation scripts must export a default function with the following signature:
+Your custom installation scripts must export a default function using the `defineCustomInstallationStep` helper (you can return anything from it):
 
 ```typescript
 import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
