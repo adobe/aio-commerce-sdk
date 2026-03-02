@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { execSync } from "node:child_process";
 import { writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
