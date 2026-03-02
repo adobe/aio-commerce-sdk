@@ -24,32 +24,6 @@ Install the package:
 npm install @adobe/aio-commerce-lib-config
 ```
 
-### CLI Commands
-
-The library provides CLI commands to help manage encryption for password fields:
-
-```bash
-# Generate and write an encryption key to your .env file
-npx @adobe/aio-commerce-lib-config encryption setup
-
-# Validate the configured encryption key
-npx @adobe/aio-commerce-lib-config encryption validate
-```
-
-#### `encryption setup`
-
-Generates a new AES-256 encryption key and writes it to your `.env` file as `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY`. If a key already exists, it will be overwritten.
-
-> [!TIP]
-> Run this command once during initial setup if your configuration schema includes `password` fields. See the [Password Encryption](./password-encryption.md) documentation for full details.
-
-#### `encryption validate`
-
-Validates that `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY` is present in your environment and correctly formatted as a 64-character hex string.
-
-> [!TIP]
-> This command is also available for manual verification or use in CI/CD pipelines where the encryption key must be confirmed before a build or deployment.
-
 ### Using the Library
 
 The library uses a function-based API. Import the functions you need and call them directly. Most functions use sensible defaults, so you typically don't need to pass configuration options unless you need custom behavior.
@@ -69,23 +43,22 @@ import {
   byScopeId,
   byCode,
   byCodeAndLevel,
+  initialize,
 } from "@adobe/aio-commerce-lib-config";
 ```
 
-#### Setting Global Options (Optional)
+### Initialization
 
-If you need to customize defaults for all function calls, you can set global options:
+An optional initialization step is recommended to ensure the library works as expected. Run the following code to initialize the library:
 
 ```typescript
-import { setGlobalLibConfigOptions } from "@adobe/aio-commerce-lib-config";
+import { initialize } from "@adobe/aio-commerce-lib-config";
+import yourSchema from "path/to/config-schema.json" with { type: "json" };
 
-// Set global defaults (optional)
-setGlobalLibConfigOptions({
-  cacheTimeout: 600, // default: 300 seconds (5 minutes)
+await initialize({
+  schema: yourSchema,
 });
 ```
-
-This is useful when you want consistent configuration across your entire application without passing options to each function call.
 
 ### Working with Scope Trees
 
@@ -333,7 +306,7 @@ Use phone fields for telephone numbers with format validation. Phone fields supp
 
 **Password Field:**
 
-Use password fields for sensitive credentials like API keys, tokens, and secrets. Password values are automatically encrypted when stored and decrypted when retrieved. An encryption key must be configured in the `.env` file with the name `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY` for these fields to work.
+Use password fields for sensitive credentials like API keys, tokens, and secrets. Password values are automatically encrypted when stored and decrypted when retrieved. An encryption key must be configured in the `.env` and given as an `input` to all the actions that need to access password fields.
 
 ```javascript
 {
@@ -393,9 +366,35 @@ Multiple selection example:
 > [!NOTE]
 > For `selectionMode: "multiple"`, the `default` value must be an array of strings, even if only one option is selected by default.
 
+## CLI Commands
+
+The library provides CLI commands to help manage encryption for password fields:
+
+```bash
+# Generate and write an encryption key to your .env file
+npx @adobe/aio-commerce-lib-config encryption setup
+
+# Validate the configured encryption key
+npx @adobe/aio-commerce-lib-config encryption validate
+```
+
+### `encryption setup`
+
+Generates a new AES-256 encryption key and writes it to your `.env` file as `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY`. If a key already exists, it will be overwritten.
+
+> [!TIP]
+> Run this command once during initial setup if your configuration schema includes `password` fields. See the [Password Encryption](./password-encryption.md) documentation for full details.
+
+### `encryption validate`
+
+Validates that `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY` is present in your environment and correctly formatted as a 64-character hex string.
+
+> [!TIP]
+> This command is also available for manual verification or use in CI/CD pipelines where the encryption key must be confirmed before a build or deployment.
+
 ## Best Practices
 
-1. **Provide schema defaults** - List fields require a `default`, text fields are optional but recommended
+1. **Provide schema defaults** - List fields require a `default`, for other fields they are optional, but recommended
 2. **Use meaningful scope codes** - Makes it easier to identify scopes (e.g., `us-west-store` not `store1`)
 3. **Validate configuration values** - Don't assume all values are valid in your runtime actions
 4. **Use `getConfigurationByKey`** - Cleaner code when you only need a single value (returns null if key not found)

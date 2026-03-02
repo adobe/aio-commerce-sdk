@@ -91,13 +91,16 @@ validateEncryptionKey(process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY);
 
 ### Setting Password Values
 
-Password values are automatically encrypted when you set them. **Note:** A valid encryption key must be configured, or the operation will throw an error.
+> [!NOTE]
+> A valid encryption key must be configured, or the operation will throw an error.
+
+Password values are automatically encrypted when you set them.
 
 ```typescript
 import { setConfiguration, byScopeId } from "@adobe/aio-commerce-lib-config";
 
 // The password will be encrypted before storage
-// Throws an error if AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not configured
+// You need to make sure to pass in the encryption key to the setConfiguration function
 await setConfiguration(
   {
     config: [
@@ -106,6 +109,9 @@ await setConfiguration(
     ],
   },
   byScopeId("scope-123"),
+  {
+    encryptionKey: "your-encryption-key-here",
+  },
 );
 ```
 
@@ -118,9 +124,12 @@ try {
       config: [{ name: "api_key", value: "my-secret-api-key" }],
     },
     byScopeId("scope-123"),
+    {
+      encryptionKey: "your-encryption-key-here",
+    },
   );
 } catch (error) {
-  // Will throw if AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not configured
+  // Will throw if the encryption key is not given
   console.error("Failed to save configuration:", error.message);
 }
 ```
@@ -133,7 +142,9 @@ Password values are automatically decrypted when you retrieve them:
 import { getConfiguration, byScopeId } from "@adobe/aio-commerce-lib-config";
 
 // The password will be decrypted before being returned
-const config = await getConfiguration(byScopeId("scope-123"));
+const config = await getConfiguration(byScopeId("scope-123"), {
+  encryptionKey: "your-encryption-key-here",
+});
 
 // Use the decrypted password
 const apiKey = config.config.find((c) => c.name === "api_key")?.value;
@@ -149,7 +160,9 @@ import {
 } from "@adobe/aio-commerce-lib-config";
 
 // Get and decrypt a specific password field
-const result = await getConfigurationByKey("api_key", byScopeId("scope-123"));
+const result = await getConfigurationByKey("api_key", byScopeId("scope-123"), {
+  encryptionKey: "your-encryption-key-here",
+});
 
 if (result.config) {
   console.log(result.config.value); // "my-secret-api-key" (decrypted)
@@ -221,14 +234,17 @@ import {
 } from "@adobe/aio-commerce-lib-config";
 
 // 1. Get all configs with old key
-const oldConfig = await getConfiguration(byScopeId("scope-123"));
+const oldConfig = await getConfiguration(byScopeId("scope-123"), {
+  encryptionKey: "your-old-encryption-key-here",
+});
 
 // 2. Generate and set new key
 const newKey = generateEncryptionKey();
-process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY = newKey;
 
 // 3. Re-save configs (will encrypt with new key)
-await setConfiguration({ config: oldConfig.config }, byScopeId("scope-123"));
+await setConfiguration({ config: oldConfig.config }, byScopeId("scope-123"), {
+  encryptionKey: newKey,
+});
 ```
 
 ### 3. Access Control
@@ -245,49 +261,8 @@ Password encryption is **strictly enforced**:
 
 **At Runtime:**
 
-- Setting a password field **requires** a valid encryption key - the operation will throw an error if the key is missing
+- Setting a password field **requires** a valid encryption key, the operation will throw an error if the key is missing
 - Getting encrypted passwords **requires** a valid encryption key to decrypt
 - **No plain text fallback exists** - this ensures passwords are never stored unencrypted
 
 This strict enforcement is a **security feature** to prevent accidentally storing passwords in plain text under any circumstances.
-
-### Runtime Behavior
-
-**When setting passwords:**
-
-- If encryption fails, an error is thrown (most commonly: `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY` not configured)
-- Passwords are **never** stored in plain text
-
-**When getting encrypted passwords (if key is missing, invalid, or decryption fails):**
-
-- The encrypted value is returned as-is (still encrypted, not exposed)
-- An error is logged with details for troubleshooting
-- The application continues to function (reading other config values)
-
-## Troubleshooting
-
-### "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY not found" Warning
-
-**Cause**: The environment variable is not set at runtime.
-
-**Solution**: Ensure the encryption key is in your `.env` file:
-
-```bash
-AIO_COMMERCE_CONFIG_ENCRYPTION_KEY=your_64_character_hex_key
-```
-
-### "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not a valid hex string" Warning
-
-**Cause**: The key format is incorrect.
-
-**Solution**: Generate a new key using `generateEncryptionKey()` and ensure it's a 64-character hexadecimal string.
-
-### "Failed to decrypt password" Error
-
-**Cause**: The encryption key has changed or the data is corrupted.
-
-**Solution**:
-
-1. Verify the correct encryption key is in your `.env` file
-2. If the key was rotated, decrypt with the old key and re-encrypt with the new key
-3. If data is corrupted, reset the password value
