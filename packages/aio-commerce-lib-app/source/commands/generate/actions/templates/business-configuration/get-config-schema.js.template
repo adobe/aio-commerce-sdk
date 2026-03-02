@@ -22,11 +22,98 @@ import {
 } from "@adobe/aio-commerce-sdk/core/responses";
 import AioLogger from "@adobe/aio-lib-core-logging";
 
-// Shorthand to inspect an object.
 const inspect = (obj) => util.inspect(obj, { depth: null });
 
 /**
- * Get the configuration schema.
+ * Resolves optionsSource for a field by calling the specified action.
+ * This allows dynamic dropdowns to work with Adobe's App Management UI.
+ * @param {Object} field - The schema field to process
+ * @param {Object} params - Request parameters including auth headers
+ * @param {Object} logger - Logger instance
+ * @returns {Object} Field with resolved options array
+ */
+async function resolveOptionsSource(field, params, logger) {
+  if (!field.optionsSource) {
+    return field;
+  }
+
+  const { action, url } = field.optionsSource;
+
+  try {
+    let options = [];
+
+    if (action) {
+      const namespace = process.env.__OW_NAMESPACE;
+      const apiHost = process.env.__OW_API_HOST || 'https://adobeioruntime.net';
+      const actionUrl = `${apiHost}/api/v1/web/${namespace}/${action}`;
+
+      logger.debug(`Fetching dynamic options from action: ${actionUrl}`);
+
+      const response = await fetch(actionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': params.__ow_headers?.authorization || '',
+          'x-gw-ims-org-id': params.__ow_headers?.['x-gw-ims-org-id'] || '',
+        },
+        body: JSON.stringify({
+          store_code: params.store_code,
+          store_level: params.store_level,
+          field_name: field.name,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        options = result?.body?.options || result?.options || [];
+        logger.debug(`Resolved ${options.length} options for field: ${field.name}`);
+      } else {
+        logger.warn(`Failed to fetch options for ${field.name}: HTTP ${response.status}`);
+      }
+    } else if (url) {
+      logger.debug(`Fetching dynamic options from URL: ${url}`);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ field_name: field.name }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        options = result?.options || [];
+      }
+    }
+
+    const { optionsSource, ...fieldWithoutSource } = field;
+    return {
+      ...fieldWithoutSource,
+      options: options.length > 0 ? options : [{ label: 'No options available', value: '' }],
+    };
+  } catch (error) {
+    logger.error(`Error resolving optionsSource for ${field.name}: ${error.message}`);
+    const { optionsSource, ...fieldWithoutSource } = field;
+    return {
+      ...fieldWithoutSource,
+      options: [{ label: 'Error loading options', value: '' }],
+    };
+  }
+}
+
+/**
+ * Process schema to resolve all optionsSource fields into static options arrays.
+ * @param {Array} schema - The configuration schema
+ * @param {Object} params - Request parameters
+ * @param {Object} logger - Logger instance
+ * @returns {Array} Schema with all optionsSource fields resolved
+ */
+async function resolveAllOptionsSource(schema, params, logger) {
+  return Promise.all(
+    schema.map(field => resolveOptionsSource(field, params, logger))
+  );
+}
+
+/**
+ * Get the configuration schema with dynamic options resolved.
  * @returns The response object containing the configuration schema.
  */
 export async function main(params) {
@@ -38,13 +125,16 @@ export async function main(params) {
     logger.debug("Retrieving configuration schema...");
     const configSchema = await getConfigSchema();
 
+    logger.debug("Resolving dynamic optionsSource fields...");
+    const resolvedSchema = await resolveAllOptionsSource(configSchema, params, logger);
+
     logger.debug(
-      `Successfully retrieved configSchema: ${inspect(configSchema)}`,
+      `Successfully retrieved configSchema: ${inspect(resolvedSchema)}`,
     );
 
     return ok({
       body: {
-        configSchema,
+        configSchema: resolvedSchema,
       },
     });
   } catch (error) {

@@ -30,6 +30,23 @@ const ListOptionSchema = v.object({
   value: v.string("Expected a string for the option value"),
 });
 
+/**
+ * Schema for dynamic options source configuration.
+ * Allows list fields to fetch options from a runtime action or external URL
+ * instead of requiring static options defined in the schema.
+ */
+const OptionsSourceSchema = v.object({
+  /** The name of the runtime action to invoke for fetching options (e.g., "app-management/get-store-options") */
+  action: v.optional(v.string("Expected a string for the action name")),
+  /** A URL endpoint to fetch options from */
+  url: v.optional(
+    v.pipe(
+      v.string("Expected a string for the options source URL"),
+      v.url("The optionsSource URL must be a valid URL"),
+    ),
+  ),
+});
+
 /** Schema for a list field that allows single selection from a list of options */
 const SingleListSchema = v.object({
   ...BaseOptionSchema.entries,
@@ -39,11 +56,13 @@ const SingleListSchema = v.object({
     "single",
     "Expected the selectionMode to be 'single'",
   ),
-  options: v.array(ListOptionSchema, "Expected an array of list options"),
-  default: v.pipe(
-    v.string("Expected a string for the default value"),
-    v.nonEmpty("The default value must not be empty"),
+  /** Static options array - optional when using optionsSource */
+  options: v.optional(
+    v.array(ListOptionSchema, "Expected an array of list options"),
   ),
+  /** Dynamic options source - alternative to static options */
+  optionsSource: v.optional(OptionsSourceSchema),
+  default: v.optional(v.string("Expected a string for the default value")),
 });
 
 /** Schema for a list field that allows multiple selections from a list of options */
@@ -55,7 +74,12 @@ const MultipleListSchema = v.object({
     "multiple",
     "Expected the selectionMode to be 'multiple'",
   ),
-  options: v.array(ListOptionSchema, "Expected an array of list options"),
+  /** Static options array - optional when using optionsSource */
+  options: v.optional(
+    v.array(ListOptionSchema, "Expected an array of list options"),
+  ),
+  /** Dynamic options source - alternative to static options */
+  optionsSource: v.optional(OptionsSourceSchema),
   default: v.optional(
     v.array(
       v.pipe(
