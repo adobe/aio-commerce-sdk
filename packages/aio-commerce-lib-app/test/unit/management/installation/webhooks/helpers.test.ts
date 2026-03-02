@@ -83,6 +83,7 @@ describe("createWebhookSubscriptions", () => {
       ...configWithWebhooks,
       webhooks: [
         {
+          label: "Explicit URL Webhook",
           description: "Webhook with explicit url",
           category: "modification" as const,
           webhook: {
@@ -112,6 +113,7 @@ describe("createWebhookSubscriptions", () => {
       ...configWithWebhooks,
       webhooks: [
         {
+          label: "Generated URL Webhook",
           description: "Webhook without url",
           category: "modification" as const,
           runtimeAction: "my-package/handle-webhook",
@@ -145,6 +147,7 @@ describe("createWebhookSubscriptions", () => {
       ...configWithWebhooks,
       webhooks: [
         {
+          label: "Generated URL Webhook",
           description: "Webhook without url",
           category: "modification" as const,
           runtimeAction: "my-package/handle-webhook",
@@ -179,6 +182,7 @@ describe("createWebhookSubscriptions", () => {
       },
       webhooks: [
         {
+          label: "Test Webhook",
           description: "Test webhook",
           runtimeAction: "my-package/handle-webhook",
           category: "modification" as const,
@@ -217,6 +221,7 @@ describe("createWebhookSubscriptions", () => {
       webhooks: [
         ...configWithWebhooks.webhooks,
         {
+          label: "Second Webhook",
           description: "Second webhook",
           runtimeAction: "my-package/second-hook",
           category: "modification" as const,
@@ -261,6 +266,7 @@ describe("createWebhookSubscriptions", () => {
       ...configWithWebhooks,
       webhooks: [
         {
+          label: "Test Webhook",
           description: "Test webhook",
           runtimeAction: "my-package/handle-webhook",
           category: "modification" as const,
@@ -356,6 +362,7 @@ describe("createWebhookSubscriptions", () => {
       ...configWithWebhooks,
       webhooks: [
         {
+          label: "First Webhook",
           description: "First webhook",
           runtimeAction: "my-package/handle-webhook",
           category: "modification" as const,
@@ -369,6 +376,7 @@ describe("createWebhookSubscriptions", () => {
           },
         },
         {
+          label: "Second Webhook",
           description: "Second webhook",
           runtimeAction: "my-package/handle-webhook",
           category: "modification" as const,
@@ -415,6 +423,7 @@ describe("createWebhookSubscriptions", () => {
       ...configWithWebhooks,
       webhooks: [
         {
+          label: "Test Webhook",
           description: "Test webhook",
           category: "modification" as const,
           runtimeAction: "my-package/handle-webhook",
@@ -452,6 +461,7 @@ describe("createWebhookSubscriptions", () => {
       ...configWithWebhooks,
       webhooks: [
         {
+          label: "Test Webhook",
           description: "Test webhook",
           category: "modification" as const,
           runtimeAction: "my-package/handle-webhook",
@@ -493,6 +503,7 @@ describe("createWebhookSubscriptions", () => {
       ...configWithWebhooks,
       webhooks: [
         {
+          label: "Test Webhook",
           description: "Test webhook",
           category: "modification" as const,
           runtimeAction: "my-package/handle-webhook",
