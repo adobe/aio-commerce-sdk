@@ -12,23 +12,21 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { setGlobalLibConfigOptions } from "#config-manager";
 import {
   decrypt,
   ENCRYPTED_PREFIX,
   encrypt,
   generateEncryptionKey,
   HEX_PATTERN,
-  isEncryptionConfigured,
   KEY_LENGTH_HEX,
+  validateEncryptionKey,
 } from "#utils/encryption";
 
 describe("encryption utilities", () => {
-  let encryptionKey: string | undefined;
+  let encryptionKey: string;
 
   beforeEach(() => {
     encryptionKey = generateEncryptionKey();
-    setGlobalLibConfigOptions({ encryptionKey });
   });
 
   describe("generateEncryptionKey", () => {
@@ -43,124 +41,72 @@ describe("encryption utilities", () => {
       const key2 = generateEncryptionKey();
       expect(key1).not.toBe(key2);
     });
-  });
 
-  describe("isEncryptionConfigured", () => {
-    it("should return false when AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not set", () => {
-      setGlobalLibConfigOptions({ encryptionKey: null });
-      expect(isEncryptionConfigured()).toBe(false);
-    });
-
-    it("should return false when AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is invalid", () => {
-      setGlobalLibConfigOptions({ encryptionKey: "invalid-key" });
-      expect(isEncryptionConfigured()).toBe(false);
-    });
-
-    it("should return true when AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is valid", () => {
-      expect(isEncryptionConfigured()).toBe(true);
+    it("should generate a valid encryption key", () => {
+      const key = generateEncryptionKey();
+      expect(() => validateEncryptionKey(key)).not.toThrow();
     });
   });
 
   describe("encrypt and decrypt", () => {
     it("should encrypt and decrypt a password correctly", () => {
       const plainText = "my-secret-password";
-      const encrypted = encrypt(plainText);
+      const encrypted = encrypt(plainText, encryptionKey);
 
       expect(encrypted).not.toBe(plainText);
       expect(encrypted.startsWith(ENCRYPTED_PREFIX)).toBe(true);
 
-      const decrypted = decrypt(encrypted);
+      const decrypted = decrypt(encrypted, encryptionKey);
       expect(decrypted).toBe(plainText);
     });
 
     it("should handle empty strings", () => {
       const plainText = "";
-      const encrypted = encrypt(plainText);
-      const decrypted = decrypt(encrypted);
+      const encrypted = encrypt(plainText, encryptionKey);
+      const decrypted = decrypt(encrypted, encryptionKey);
       expect(decrypted).toBe(plainText);
     });
 
     it("should handle special characters", () => {
       const plainText = "p@ssw0rd!#$%^&*()_+-=[]{}|;:',.<>?/~`";
-      const encrypted = encrypt(plainText);
-      const decrypted = decrypt(encrypted);
+      const encrypted = encrypt(plainText, encryptionKey);
+      const decrypted = decrypt(encrypted, encryptionKey);
       expect(decrypted).toBe(plainText);
     });
 
     it("should handle unicode characters", () => {
       const plainText = "密码🔒🔑";
-      const encrypted = encrypt(plainText);
-      const decrypted = decrypt(encrypted);
+      const encrypted = encrypt(plainText, encryptionKey);
+      const decrypted = decrypt(encrypted, encryptionKey);
       expect(decrypted).toBe(plainText);
     });
 
     it("should return different encrypted values for the same input", () => {
       const plainText = "my-secret-password";
-      const encrypted1 = encrypt(plainText);
-      const encrypted2 = encrypt(plainText);
+      const encrypted1 = encrypt(plainText, encryptionKey);
+      const encrypted2 = encrypt(plainText, encryptionKey);
 
       expect(encrypted1).not.toBe(encrypted2);
 
-      expect(decrypt(encrypted1)).toBe(plainText);
-      expect(decrypt(encrypted2)).toBe(plainText);
+      expect(decrypt(encrypted1, encryptionKey)).toBe(plainText);
+      expect(decrypt(encrypted2, encryptionKey)).toBe(plainText);
     });
 
-    it("should return plain text when decrypting non-encrypted values", () => {
+    it("should throw an error when decrypting non-encrypted values", () => {
       const plainText = "not-encrypted";
-      const decrypted = decrypt(plainText);
-      expect(decrypted).toBe(plainText);
-    });
-  });
-
-  describe("encrypt without encryption key", () => {
-    beforeEach(() => {
-      setGlobalLibConfigOptions({ encryptionKey: null });
-    });
-
-    it("should throw an error when encryption key is not configured", () => {
-      const plainText = "my-secret-password";
-      expect(() => encrypt(plainText)).toThrow(
-        "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not configured",
-      );
-    });
-
-    it("should throw exception when encryption key is not configured", () => {
-      setGlobalLibConfigOptions({ encryptionKey: generateEncryptionKey() });
-      const plainText = "my-secret-password";
-      const encrypted = encrypt(plainText);
-
-      setGlobalLibConfigOptions({ encryptionKey: null });
-
-      expect(() => decrypt(encrypted)).toThrow(
-        "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY is not configured. Cannot encrypt password field. Ensure the encryption key is set in your environment variables.",
-      );
-    });
-  });
-
-  describe("decrypt with wrong key", () => {
-    it("should handle decryption with wrong key gracefully", () => {
-      const plainText = "my-secret-password";
-      const encrypted = encrypt(plainText);
-
-      const otherEncryptionKey = generateEncryptionKey();
-      setGlobalLibConfigOptions({ encryptionKey: otherEncryptionKey });
-      const decrypted = decrypt(encrypted);
-
-      expect(decrypted).toBe(encrypted);
+      expect(() => decrypt(plainText, encryptionKey)).toThrow();
     });
   });
 
   describe("decrypt with invalid format", () => {
     it("should handle invalid encrypted format gracefully", () => {
       const invalidEncrypted = "enc:invalid-format";
-      const decrypted = decrypt(invalidEncrypted);
-      expect(decrypted).toBe(invalidEncrypted);
+      expect(() => decrypt(invalidEncrypted, encryptionKey)).toThrow();
     });
 
     it("should handle malformed encrypted data", () => {
       const malformed = "enc:abc:def:ghi";
-      const decrypted = decrypt(malformed);
-      expect(decrypted).toBe(malformed);
+      expect(() => decrypt(malformed, encryptionKey)).toThrow();
     });
   });
 });

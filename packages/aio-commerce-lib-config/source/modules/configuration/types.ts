@@ -51,6 +51,10 @@ export type ConfigValueWithOptionalOrigin = SetOptional<ConfigValue, "origin">;
 export type ConfigContext = {
   /** The namespace for isolating configuration data. */
   namespace: string;
+
   /** Cache timeout in milliseconds. */
   cacheTimeout: number;
+
+  /** Optional encryption key for encrypting/decrypting password fields. */
+  encryptionKey?: string;
 };

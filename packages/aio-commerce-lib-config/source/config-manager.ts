@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { getPersistedSchema } from "#modules/schema/config-schema-repository";
+import { initializeSchema } from "#modules/schema/initialize";
 import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "#utils/constants";
 
 import {
@@ -17,7 +19,6 @@ import {
   getConfiguration as getConfigModule,
   setConfiguration as setConfigModule,
 } from "./modules/configuration";
-import { getSchema as getSchemaModule } from "./modules/schema";
 import {
   getPersistedScopeTree,
   getScopeTree as getScopeTreeModule,
@@ -27,54 +28,43 @@ import {
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { SelectorBy } from "#config-utils";
+import type { BusinessConfigSchema } from "#modules/schema/types";
 import type { GetScopeTreeResult, ScopeTree } from "./modules/scope-tree";
 import type {
-  GlobalLibConfigOptions,
-  LibConfigOptions,
+  ConfigOptions,
+  OperationOptions,
   SetConfigurationRequest,
   SetCustomScopeTreeRequest,
 } from "./types";
 
-const globalLibConfigOptions: GlobalLibConfigOptions = {
-  cacheTimeout: DEFAULT_CACHE_TIMEOUT,
-  encryptionKey: undefined,
+/** Options for initializing the configuration library, so that it works as expected. */
+export type InitializeOptions = {
+  /** Optional schema to use as the source of truth (latest version). If not provided, it will use the stored one (but only if it exists). */
+  schema?: BusinessConfigSchema;
 };
 
 /**
- * Sets global library configuration options that will be used as defaults for all operations of the library.
- * @param options - The library configuration options to set globally.
- * @example
- * ```typescript
- * import { setGlobalLibConfigOptions } from "@adobe/aio-commerce-lib-config";
- *
- * // Set a global cache timeout of 5 minutes (300000ms)
- * setGlobalLibConfigOptions({ cacheTimeout: 300000 });
- *
- * // Set encryption key programmatically instead of using environment variable
- * setGlobalLibConfigOptions({
- *   encryptionKey: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
- * });
- *
- * // All subsequent calls will use this cache timeout unless overridden
- * const schema = await getConfigSchema();
- * ```
+ * Initializes the configuration library so that it works as expected.
+ * @param options - Options for initializing the configuration library.
  */
-export function setGlobalLibConfigOptions(options: LibConfigOptions) {
-  globalLibConfigOptions.cacheTimeout =
-    options.cacheTimeout ?? globalLibConfigOptions.cacheTimeout;
-  globalLibConfigOptions.encryptionKey =
-    options.encryptionKey !== undefined
-      ? options.encryptionKey
-      : globalLibConfigOptions.encryptionKey;
-}
+export async function initialize(options: InitializeOptions) {
+  if (options.schema) {
+    await initializeSchema(
+      {
+        namespace: DEFAULT_NAMESPACE,
+        cacheTimeout: DEFAULT_CACHE_TIMEOUT,
+      },
+      options.schema,
+    );
 
-/**
- * Gets the global encryption key.
- * @returns The encryption key or undefined if not set.
- * @internal
- */
-export function getGlobalLibConfigOptions(): GlobalLibConfigOptions {
-  return globalLibConfigOptions;
+    return;
+  }
+
+  const storedSchema = await getPersistedSchema();
+
+  if (!storedSchema) {
+    throw new Error("Schema has never been set before");
+  }
 }
 
 /** Parameters for getting the scope tree from Commerce API. */
@@ -143,23 +133,23 @@ export type GetCachedScopeTreeParams = {
 // Overload for cached Commerce data
 export async function getScopeTree(
   params?: GetCachedScopeTreeParams,
-  options?: LibConfigOptions,
+  options?: OperationOptions,
 ): Promise<GetScopeTreeResult>;
 
 // Overload for fresh Commerce data
 export async function getScopeTree(
   params: GetFreshScopeTreeParams,
-  options?: LibConfigOptions,
+  options?: OperationOptions,
 ): Promise<GetScopeTreeResult>;
 
 // Implementation
 export async function getScopeTree(
   params?: GetCachedScopeTreeParams | GetFreshScopeTreeParams,
-  options?: LibConfigOptions,
+  options?: OperationOptions,
 ) {
   const context = {
     namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
+    cacheTimeout: options?.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT,
   };
 
   if (params?.refreshData === true) {
@@ -212,7 +202,7 @@ export async function getScopeTree(
  */
 export async function syncCommerceScopes(
   commerceConfig: CommerceHttpClientParams,
-  options?: LibConfigOptions,
+  options?: OperationOptions,
 ) {
   try {
     const result = await getScopeTree(
@@ -247,30 +237,27 @@ export async function syncCommerceScopes(
 /**
  * Removes the commerce scope from the persisted scope tree.
  *
- * @returns Promise resolving to a boolean indicating whether the scope was found and removed,
- *   or if it was already not present.
+ * @returns Promise resolving to an object with `unsynced` boolean indicating whether the
+ * scope was found and removed, or `false` if it was already not present.
  *
  * @example
  * ```typescript
  * import { unsyncCommerceScopes } from "@adobe/aio-commerce-lib-config";
  *
- * try {
- *   const result = await unsyncCommerceScopes();
- *
- *   if (result) {
- *     console.log("Commerce scope removed successfully");
- *   }
- * } catch (error) {
- *   console.error("Failed to unsync commerce scopes:", error);
+ * const result = await unsyncCommerceScopes();
+ * if (result.unsynced) {
+ *   console.log("Commerce scope removed successfully");
+ * } else {
+ *   console.log("Commerce scope not found");
  * }
  * ```
  */
-export async function unsyncCommerceScopes(): Promise<boolean> {
+export async function unsyncCommerceScopes() {
   const COMMERCE_SCOPE_CODE = "commerce";
   const scopeTree = await getPersistedScopeTree(DEFAULT_NAMESPACE);
 
   if (!scopeTree.some((scope) => scope.code === COMMERCE_SCOPE_CODE)) {
-    return true;
+    return { unsynced: false };
   }
 
   // Remove 'commerce' scope
@@ -280,54 +267,7 @@ export async function unsyncCommerceScopes(): Promise<boolean> {
 
   // Save updated scope tree
   await saveScopeTree(DEFAULT_NAMESPACE, updatedScopeTree);
-
-  return true;
-}
-
-/**
- * Gets the configuration schema with lazy initialization and version checking.
- *
- * The schema defines the structure of configuration fields available in your application,
- * including field names, types, default values, and validation rules. The schema is
- * cached and automatically updated when the bundled schema version changes.
- *
- * @param options - Optional library configuration options for cache timeout.
- * @returns Promise resolving to an array of schema field definitions.
- *
- * @example
- * ```typescript
- * import { getConfigSchema } from "@adobe/aio-commerce-lib-config";
- *
- * // Get the configuration schema
- * const schema = await getConfigSchema();
- * schema.forEach((field) => {
- *   console.log(`Field: ${field.name}`);
- *   console.log(`Type: ${field.type}`);
- *   console.log(`Default: ${field.default}`);
- * });
- * ```
- *
- * @example
- * ```typescript
- * import { getConfigSchema } from "@adobe/aio-commerce-lib-config";
- *
- * // Get schema with custom cache timeout
- * const schema = await getConfigSchema({ cacheTimeout: 300000 });
- *
- * // Find a specific field
- * const apiKeyField = schema.find((field) => field.name === "api_key");
- * if (apiKeyField) {
- *   console.log("API Key field found:", apiKeyField);
- * }
- * ```
- */
-export function getConfigSchema(options?: LibConfigOptions) {
-  const context = {
-    namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
-  };
-
-  return getSchemaModule(context);
+  return { unsynced: true };
 }
 
 /**
@@ -362,11 +302,12 @@ export function getConfigSchema(options?: LibConfigOptions) {
  */
 export async function getConfiguration(
   selector: SelectorBy,
-  options?: LibConfigOptions,
+  options?: ConfigOptions,
 ) {
   const context = {
     namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
+    cacheTimeout: options?.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT,
+    encryptionKey: options?.encryptionKey,
   };
 
   if (selector.by._tag === "scopeId") {
@@ -413,11 +354,12 @@ export async function getConfiguration(
 export async function getConfigurationByKey(
   configKey: string,
   selector: SelectorBy,
-  options?: LibConfigOptions,
+  options?: ConfigOptions,
 ) {
   const context = {
     namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
+    cacheTimeout: options?.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT,
+    encryptionKey: options?.encryptionKey,
   };
 
   if (selector.by._tag === "scopeId") {
@@ -482,11 +424,12 @@ export async function getConfigurationByKey(
 export async function setConfiguration(
   request: SetConfigurationRequest,
   selector: SelectorBy,
-  options?: LibConfigOptions,
+  options?: ConfigOptions,
 ) {
   const context = {
     namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
+    cacheTimeout: options?.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT,
+    encryptionKey: options?.encryptionKey,
   };
 
   if (selector.by._tag === "scopeId") {
@@ -571,11 +514,11 @@ export async function setConfiguration(
  */
 export async function setCustomScopeTree(
   request: SetCustomScopeTreeRequest,
-  options?: LibConfigOptions,
+  options?: OperationOptions,
 ) {
   const context = {
     namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
+    cacheTimeout: options?.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT,
   };
 
   return await setCustomScopeTreeModule(context, request);

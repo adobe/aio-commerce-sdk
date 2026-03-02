@@ -11,10 +11,15 @@
  */
 
 import { writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
+import {
+  detectPackageManager,
+  findNearestPackageJson,
+  getExecCommand,
+  makeOutputDirFor,
+} from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 import { stringify } from "safe-stable-stringify";
 
@@ -34,6 +39,19 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   if (!hasBusinessConfigSchema(appConfig)) {
     consola.warn("Business configuration schema not found");
     return;
+  }
+
+  const projectDir = dirname((await findNearestPackageJson()) ?? process.cwd());
+  const envPath = join(projectDir, ".env");
+  process.loadEnvFile(envPath);
+
+  const hasPasswordFields = appConfig.businessConfig.schema.some(
+    (field) => field.type === "password",
+  );
+
+  if (hasPasswordFields) {
+    const packageExec = getExecCommand(await detectPackageManager(projectDir));
+    execSync(`${packageExec} aio-commerce-lib-config encryption validate`);
   }
 
   const contents = stringify(appConfig.businessConfig.schema, null, 2);

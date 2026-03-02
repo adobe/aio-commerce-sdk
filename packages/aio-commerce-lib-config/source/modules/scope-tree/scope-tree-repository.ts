@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { stringify } from "safe-stable-stringify";
+
 import { getLogger } from "#utils/logger";
 import { getSharedFiles, getSharedState } from "#utils/repository";
 import { generateUUID } from "#utils/uuid";
@@ -55,7 +57,7 @@ export async function setCachedScopeTree(
   );
   try {
     const state = await getSharedState();
-    await state.put(`${namespace}:scope-tree`, JSON.stringify({ data }), {
+    await state.put(`${namespace}:scope-tree`, stringify({ data }) as string, {
       ttl: ttlSeconds,
     });
   } catch (error) {
@@ -126,7 +128,7 @@ export async function saveScopeTree(
       lastUpdated: new Date().toISOString(),
       version: "1.0",
     };
-    await files.write(filePath, JSON.stringify(data, null, 2));
+    await files.write(filePath, stringify(data, null, 2) as string);
   } catch (error) {
     logger.debug(
       "Error saving scope tree to files:",

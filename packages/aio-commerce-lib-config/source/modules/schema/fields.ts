@@ -85,7 +85,7 @@ const TextSchema = v.object({
 const PasswordSchema = v.object({
   ...BaseOptionSchema.entries,
   type: v.literal("password", "Expected the type to be 'password'"),
-  default: v.optional(v.string("Expected a string for the default value")),
+  default: v.optional(v.never("Password fields do not have a default value")),
 });
 
 /** Schema for an email input field that accepts and validates email addresses */

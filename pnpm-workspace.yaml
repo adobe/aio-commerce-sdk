@@ -24,3 +24,4 @@ catalog:
   '@adobe/aio-lib-files': ^4.1.2
   '@adobe/aio-lib-ims': ^8.1.1
   '@adobe/aio-lib-state': ^5.3.1
+  safe-stable-stringify: ^2.5.0

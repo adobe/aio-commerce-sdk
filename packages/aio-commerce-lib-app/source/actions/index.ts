@@ -17,4 +17,7 @@
  * @packageDocumentation
  */
 
+export { appConfigRuntimeAction } from "./app-config";
+export { configRuntimeAction } from "./config";
 export { installationRuntimeAction } from "./installation";
+export { scopeTreeRuntimeAction } from "./scope-tree";

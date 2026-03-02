@@ -106,7 +106,7 @@
     "jiti": "^2.6.1",
     "openwhisk": "^3.21.8",
     "prettier": "catalog:",
-    "safe-stable-stringify": "^2.5.0",
+    "safe-stable-stringify": "catalog:",
     "type-fest": "catalog:",
     "valibot": "catalog:",
     "yaml": "catalog:"
