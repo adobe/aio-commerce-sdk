@@ -99,6 +99,7 @@ const WebhookDefinitionWithUrlSchema = v.object({
 
 /** Schema for a webhook entry that resolves its URL from a runtime action. */
 const WebhookEntryWithRuntimeActionSchema = v.object({
+  label: nonEmptyStringValueSchema("label"),
   description: nonEmptyStringValueSchema("description"),
   category: v.optional(CategorySchema),
   runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
@@ -108,6 +109,7 @@ const WebhookEntryWithRuntimeActionSchema = v.object({
 
 /** Schema for a webhook entry that provides an explicit URL. */
 const WebhookEntryWithUrlSchema = v.object({
+  label: nonEmptyStringValueSchema("label"),
   description: nonEmptyStringValueSchema("description"),
   category: v.optional(CategorySchema),
   webhook: WebhookDefinitionWithUrlSchema,
