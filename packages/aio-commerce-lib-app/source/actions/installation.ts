@@ -37,6 +37,7 @@ import {
 import { AppDataSchema } from "#management/installation/schema";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InstallationContext } from "#management/index";
@@ -53,6 +54,7 @@ type CustomScriptsLoader = (
   logger: InstallationContext["logger"],
 ) => Record<string, unknown>;
 
+/** Arguments for the runtime action factory. */
 type RuntimeActionFactoryArgs = {
   appConfig: CommerceAppConfigOutputModel;
   customScriptsLoader?: CustomScriptsLoader;
@@ -61,6 +63,11 @@ type RuntimeActionFactoryArgs = {
 /** Params received by all handlers. */
 type RuntimeActionArgs = InstallationContext["params"] &
   RuntimeActionFactoryArgs;
+
+/** The context for the installation action. */
+interface InstallationActionContext extends BaseContext {
+  rawParams: RuntimeActionArgs;
+}
 
 /** Creates an installation state store using lib-core combined storage. */
 function createInstallationStore() {
@@ -117,7 +124,7 @@ function createInstallationHooks(
  * - GET /installation/execution - Get current execution status
  * - POST /installation/execution - Execute installation (internal, called async)
  */
-const router = new HttpActionRouter().use(
+const router = new HttpActionRouter<InstallationActionContext>().use(
   logger({ name: () => "installation" }),
 );
 
@@ -189,8 +196,7 @@ router.post("/", {
       logger.debug("Previous installation failed, allowing retry");
     }
 
-    const executionParams = rawParams as RuntimeActionArgs;
-    const appConfig = executionParams.appConfig;
+    const appConfig = rawParams.appConfig;
 
     if (!appConfig) {
       return internalServerError(
@@ -238,6 +244,11 @@ router.post("/", {
   },
 });
 
+type ExecutionRouteParams = RuntimeActionArgs & {
+  initialState: InProgressInstallationState;
+  appData: InstallationContext["appData"];
+};
+
 /**
  * POST /installation/execution - Execute installation (internal)
  *
@@ -246,11 +257,7 @@ router.post("/", {
  */
 router.post("/execution", {
   handler: async (_req, { logger, rawParams }) => {
-    const { appData, ...params } = rawParams as RuntimeActionArgs & {
-      initialState: InProgressInstallationState;
-      appData: InstallationContext["appData"];
-    };
-
+    const { appData, ...params } = rawParams as ExecutionRouteParams;
     const { initialState, appConfig } = params;
 
     if (!initialState) {
@@ -312,7 +319,7 @@ router.delete("/", {
   },
 });
 
-/** The route handler for the runtime action. */
+/** Factory to create the route handler for the `installation` action. */
 export const installationRuntimeAction =
   ({ appConfig, customScriptsLoader }: RuntimeActionFactoryArgs) =>
   async (params: RuntimeActionParams) => {

@@ -23,6 +23,8 @@ import {
 } from "./modules/configuration";
 import * as configRepository from "./modules/configuration/configuration-repository";
 import { getSchema as getSchemaModule } from "./modules/schema";
+import { getPersistedSchema } from "./modules/schema/config-schema-repository";
+import { initializeSchema } from "./modules/schema/initialize";
 import {
   getPersistedScopeTree,
   getScopeTree as getScopeTreeModule,
@@ -68,6 +70,34 @@ const globalLibConfigOptions: GlobalLibConfigOptions = {
   auditEnabled: true,
 };
 
+/** Options for initializing the configuration library, so that it works as expected. */
+export type InitializeOptions = {
+  /** Optional schema to use as the source of truth (latest version). */
+  schema?: BusinessConfigSchema;
+};
+
+/**
+ * Initializes the configuration library so that it works as expected.
+ * @param options - Options for initializing the configuration library.
+ */
+export async function initialize(options: InitializeOptions): Promise<void> {
+  if (options.schema) {
+    await initializeSchema(
+      {
+        namespace: DEFAULT_NAMESPACE,
+        cacheTimeout: DEFAULT_CACHE_TIMEOUT,
+      },
+      options.schema,
+    );
+    return;
+  }
+
+  const storedSchema = await getPersistedSchema();
+  if (!storedSchema) {
+    throw new Error("Schema has never been set before");
+  }
+}
+
 /**
  * Sets global library configuration options that will be used as defaults for all operations of the library.
  * @param options - The library configuration options to set globally.
@@ -111,6 +141,10 @@ function resolveConfigContext(options?: LibConfigOptions): ConfigContext {
   return {
     namespace: DEFAULT_NAMESPACE,
     cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
+    encryptionKey:
+      options?.encryptionKey !== undefined
+        ? (options.encryptionKey ?? undefined)
+        : (globalLibConfigOptions.encryptionKey ?? undefined),
     auditEnabled: options?.auditEnabled ?? globalLibConfigOptions.auditEnabled,
   };
 }
@@ -370,12 +404,12 @@ export async function syncCommerceScopes(
  * }
  * ```
  */
-export async function unsyncCommerceScopes(): Promise<boolean> {
+export async function unsyncCommerceScopes(): Promise<{ unsynced: boolean }> {
   const COMMERCE_SCOPE_CODE = "commerce";
   const scopeTree = await getPersistedScopeTree(DEFAULT_NAMESPACE);
 
   if (!scopeTree.some((scope) => scope.code === COMMERCE_SCOPE_CODE)) {
-    return true;
+    return { unsynced: false };
   }
 
   // Remove 'commerce' scope
@@ -386,7 +420,7 @@ export async function unsyncCommerceScopes(): Promise<boolean> {
   // Save updated scope tree
   await saveScopeTree(DEFAULT_NAMESPACE, updatedScopeTree);
 
-  return true;
+  return { unsynced: true };
 }
 
 /**

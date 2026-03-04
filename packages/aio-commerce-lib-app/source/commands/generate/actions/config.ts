@@ -12,21 +12,18 @@
 
 import { join } from "node:path";
 
-import {
-  CONFIG_SCHEMA_FILE_NAME,
-  GENERATED_ACTIONS_PATH,
-  GENERATED_PATH,
-  PACKAGE_NAME,
-} from "#commands/constants";
+import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
+import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
+import { getConfigDomains } from "#config/schema/domains";
 
 import type {
   ActionDefinition,
   ExtConfig,
 } from "@aio-commerce-sdk/scripting-utils/yaml";
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CommerceAppConfigDomain } from "#config/schema/domains";
 
 type ActionConfig = {
-  requiresSchema?: boolean;
   requiresEncryptionKey?: boolean;
   requiresAuditFlag?: boolean;
 };
@@ -78,12 +75,6 @@ function createActionDefinition(
     },
   };
 
-  if (config.requiresSchema) {
-    def.include = [
-      [`${GENERATED_PATH}/${CONFIG_SCHEMA_FILE_NAME}`, `${PACKAGE_NAME}/`],
-    ];
-  }
-
   if (config.requiresEncryptionKey) {
     def.inputs = {
       ...def.inputs,
@@ -125,8 +116,13 @@ export function getRuntimeActions(
  * @param features - The features that are enabled for the app.
  */
 export function buildAppManagementExtConfig(
-  features: Set<CommerceAppConfigDomain>,
+  appConfig: CommerceAppConfigOutputModel,
 ): ExtConfig {
+  const features = getConfigDomains(appConfig);
+  const hasPasswordFieldsInSchema =
+    hasBusinessConfigSchema(appConfig) &&
+    appConfig.businessConfig.schema.some((field) => field.type === "password");
+
   const extConfig = {
     hooks: {
       "pre-app-build":
@@ -137,7 +133,7 @@ export function buildAppManagementExtConfig(
       workerProcess: [
         {
           type: "action",
-          impl: `${PACKAGE_NAME}/get-app-config`,
+          impl: `${PACKAGE_NAME}/app-config`,
         },
       ],
     },
@@ -147,7 +143,7 @@ export function buildAppManagementExtConfig(
         [PACKAGE_NAME]: {
           license: "Apache-2.0",
           actions: {
-            "get-app-config": createActionDefinition("get-app-config"),
+            "app-config": createActionDefinition("app-config"),
           } as Record<string, ActionDefinition>,
         },
       },
@@ -171,7 +167,7 @@ export function buildAppManagementExtConfig(
     extConfig.runtimeManifest.packages[PACKAGE_NAME].actions.installation =
       createActionDefinition(
         "installation",
-        {},
+        { requiresEncryptionKey: hasPasswordFieldsInSchema },
         {
           inputs: { ...COMMERCE_ACTION_INPUTS, LOG_LEVEL: "$LOG_LEVEL" },
           limits: {
@@ -188,18 +184,8 @@ export function buildAppManagementExtConfig(
 export function buildBusinessConfigurationExtConfig(): ExtConfig {
   const actions = [
     {
-      name: "get-scope-tree",
-      templateFile: "get-scope-tree.js.template",
-    },
-    {
-      name: "get-config-schema",
-      templateFile: "get-config-schema.js.template",
-      requiresSchema: true,
-    },
-    {
-      name: "get-configuration",
-      templateFile: "get-configuration.js.template",
-      requiresSchema: true,
+      name: "config",
+      templateFile: "config.js.template",
       requiresEncryptionKey: true,
     },
     {
@@ -219,16 +205,8 @@ export function buildBusinessConfigurationExtConfig(): ExtConfig {
       requiresAuditFlag: true,
     },
     {
-      name: "set-custom-scope-tree",
-      templateFile: "set-custom-scope-tree.js.template",
-    },
-    {
-      name: "sync-commerce-scopes",
-      templateFile: "sync-commerce-scopes.js.template",
-    },
-    {
-      name: "unsync-commerce-scopes",
-      templateFile: "unsync-commerce-scopes.js.template",
+      name: "scope-tree",
+      templateFile: "scope-tree.js.template",
     },
   ] satisfies TemplateAction[];
 

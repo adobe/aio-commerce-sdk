@@ -27,7 +27,10 @@ export {
 } from "./config-utils";
 export { SchemaBusinessConfig } from "./modules/schema";
 export * from "./types";
-export { generateEncryptionKey } from "./utils/encryption";
+export {
+  generateEncryptionKey,
+  validateEncryptionKey,
+} from "./utils/encryption";
 
 export type { ConfigOrigin, ConfigValue } from "./modules/configuration";
 export type {

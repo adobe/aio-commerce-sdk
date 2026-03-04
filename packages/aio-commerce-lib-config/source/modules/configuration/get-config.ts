@@ -15,11 +15,11 @@ import {
   getSchemaDefaults,
   mergeWithSchemaDefaults,
 } from "#config-utils";
-import * as schemaRepository from "#modules/schema/config-schema-repository";
 import { getPasswordFields } from "#modules/schema/utils";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
 import { decrypt } from "#utils/encryption";
 
+import { getSchema } from "../schema";
 import * as configRepository from "./configuration-repository";
 
 import type { GetConfigurationResponse } from "#types/index";
@@ -41,11 +41,14 @@ import type { ConfigContext } from "./types";
  * @throws {Error} If the scope arguments are invalid or the scope is not found.
  */
 export async function getConfiguration(
-  { namespace }: ConfigContext,
+  context: ConfigContext,
   ...args: unknown[]
 ): Promise<GetConfigurationResponse> {
-  // Create repositories for each domain
-  const scopeTree = await scopeTreeRepository.getPersistedScopeTree(namespace);
+  const schema = await getSchema(context);
+  const scopeTree = await scopeTreeRepository.getPersistedScopeTree(
+    context.namespace,
+  );
+
   const { scopeCode, scopeLevel, scopeId, scopePath } = deriveScopeFromArgs(
     args,
     scopeTree,
@@ -53,10 +56,6 @@ export async function getConfiguration(
 
   let configData = await configRepository.loadConfig(scopeCode);
   if (!configData) {
-    const cachedSchema = await schemaRepository.getCachedSchema(namespace);
-    const schema =
-      cachedSchema || JSON.parse(await schemaRepository.getPersistedSchema());
-
     const defaults = getSchemaDefaults(schema);
     configData = {
       scope: { id: scopeId, code: scopeCode, level: scopeLevel },
@@ -74,20 +73,18 @@ export async function getConfiguration(
       scopePath,
 
       loadScopeConfigFn: (code: string) => configRepository.loadConfig(code),
-      getSchemaFn: async () => {
-        const cachedSchema = await schemaRepository.getCachedSchema(namespace);
-        return (
-          cachedSchema ||
-          JSON.parse(await schemaRepository.getPersistedSchema())
-        );
-      },
+      getSchemaFn: async () => Promise.resolve(schema),
     });
   } catch (_e) {
     // Continue with original configData if merging fails
   }
 
-  const passwordFields = await getPasswordFields(namespace);
-  return decryptPasswordFields(configData, passwordFields);
+  const passwordFields = getPasswordFields(schema);
+  return decryptPasswordFields(
+    configData,
+    passwordFields,
+    context.encryptionKey,
+  );
 }
 
 /**
@@ -100,6 +97,7 @@ export async function getConfiguration(
 function decryptPasswordFields(
   configData: GetConfigurationResponse,
   passwordFields: Set<string>,
+  encryptionKey?: string,
 ): GetConfigurationResponse {
   if (!Array.isArray(configData.config)) {
     return configData;
@@ -113,11 +111,16 @@ function decryptPasswordFields(
         typeof entry.value === "string" &&
         entry.value.length > 0
       ) {
+        if (!encryptionKey) {
+          throw new Error("Encryption key has not been given");
+        }
+
         return {
           ...entry,
-          value: decrypt(entry.value),
+          value: decrypt(entry.value, encryptionKey),
         };
       }
+
       return entry;
     }),
   };

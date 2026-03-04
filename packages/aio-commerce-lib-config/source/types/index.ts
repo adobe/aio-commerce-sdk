@@ -13,15 +13,22 @@
 export * from "./api";
 export * from "./commerce";
 
-/** Options for controlling fetch behavior, particularly cache timeout. */
-export type LibConfigOptions = {
+/** Options for controlling operations of the configuration library. */
+export type OperationOptions = {
   /** Optional cache timeout in milliseconds. */
   cacheTimeout?: number;
+};
+
+/** Options for controlling configuration operations. */
+export type ConfigOptions = OperationOptions & {
   /** Optional encryption key for encrypting/decrypting password fields. If not provided, falls back to AIO_COMMERCE_CONFIG_ENCRYPTION_KEY environment variable. */
   encryptionKey?: string | null;
   /** Optional flag to enable config audit/versioning features. Defaults to true. */
   auditEnabled?: boolean;
 };
+
+/** Backward-compatible alias for operation and configuration options. */
+export type LibConfigOptions = ConfigOptions;
 
 /**
  * Global fetch options with all properties required.

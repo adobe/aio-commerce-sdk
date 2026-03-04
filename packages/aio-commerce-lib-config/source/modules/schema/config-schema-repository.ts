@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import stringify from "safe-stable-stringify";
+
 import { getLogger } from "#utils/logger";
 import { getSharedFiles, getSharedState } from "#utils/repository";
 
@@ -54,9 +56,13 @@ export async function setCachedSchema(
   );
   try {
     const state = await getSharedState();
-    await state.put(`${namespace}:config-schema`, JSON.stringify({ data }), {
-      ttl,
-    });
+    await state.put(
+      `${namespace}:config-schema`,
+      stringify({ data }) as string,
+      {
+        ttl,
+      },
+    );
   } catch (error) {
     logger.debug(
       "Failed to cache schema:",
@@ -124,13 +130,39 @@ export async function setSchemaVersion(
   );
   try {
     const state = await getSharedState();
-    await state.put(`${namespace}:schema-version`, JSON.stringify({ version }));
+    await state.put(
+      `${namespace}:schema-version`,
+      stringify({ version }) as string,
+    );
   } catch (error) {
     logger.debug(
       "Failed to set schema version:",
       error instanceof Error ? error.message : String(error),
     );
     // Don't throw - version tracking failure shouldn't break functionality
+  }
+}
+
+/**
+ * Saves schema to files and deletes cached schema.
+ *
+ * @param namespace - Namespace identifier for the schema.
+ * @param schema - Schema to save.
+ * @param version - Schema version hash to store.
+ */
+export async function savePersistedSchema(
+  namespace: string,
+  schema: BusinessConfigSchema,
+  version?: string,
+): Promise<void> {
+  const schemaString = stringify(schema, null, 2);
+  const files = await getSharedFiles();
+  await files.write("config-schema.json", schemaString);
+
+  await deleteCachedSchema(namespace);
+
+  if (version) {
+    await setSchemaVersion(namespace, version);
   }
 }
 
@@ -143,14 +175,4 @@ export async function getPersistedSchema(): Promise<string> {
   const files = await getSharedFiles();
   const buffer: Buffer = await files.read("config-schema.json");
   return buffer.toString();
-}
-
-/**
- * Saves schema to files.
- *
- * @param schema - Schema content as JSON string.
- */
-export async function saveSchema(schema: string): Promise<void> {
-  const files = await getSharedFiles();
-  await files.write("config-schema.json", schema);
 }

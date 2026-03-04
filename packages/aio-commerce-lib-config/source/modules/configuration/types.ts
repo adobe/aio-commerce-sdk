@@ -53,6 +53,8 @@ export type ConfigContext = {
   namespace: string;
   /** Cache timeout in milliseconds. */
   cacheTimeout: number;
+  /** Optional encryption key for encrypting/decrypting password fields. */
+  encryptionKey?: string;
   /** Whether audit/versioning behavior is enabled for this operation. */
   auditEnabled: boolean;
 };

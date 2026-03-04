@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import stringify from "safe-stable-stringify";
+
 import { createVersionRecord } from "#modules/versioning/version-repository";
 import { getLogger } from "#utils/logger";
 import { getSharedFiles, getSharedState } from "#utils/repository";
@@ -66,7 +68,7 @@ export async function setCachedConfig(
   try {
     const state = await getSharedState();
     const key = getConfigStateKey(scopeCode);
-    await state.put(key, JSON.stringify({ data: payload }));
+    await state.put(key, stringify({ data: payload }) ?? "");
   } catch (error) {
     logger.debug(
       "Failed to cache configuration:",
@@ -124,7 +126,7 @@ export async function persistConfig(
   payload: unknown,
   options: PersistConfigOptions = {},
 ): Promise<{ id: string } | null> {
-  const payloadString = JSON.stringify(payload);
+  const payloadString = stringify(payload) ?? "";
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
   );
@@ -203,7 +205,7 @@ async function loadFromPersistedFiles(
 
     // Try to cache the file data for future reads
     try {
-      await setCachedConfig(scopeCode, JSON.stringify(parsed));
+      await setCachedConfig(scopeCode, filePayload);
     } catch (err) {
       logger.debug("Failed to cache configuration in state", {
         scopeCode,
