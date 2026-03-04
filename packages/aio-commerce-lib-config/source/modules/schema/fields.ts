@@ -127,7 +127,14 @@ const PhoneSchema = v.object({
   ),
 });
 
-/** Schema for a configuration field that can be one of various field types (list, text, password, email, url, or phone) */
+/** Schema for a boolean toggle field that accepts true/false values */
+const BooleanSchema = v.object({
+  ...BaseOptionSchema.entries,
+  type: v.literal("boolean", "Expected the type to be 'boolean'"),
+  default: v.optional(v.boolean("Expected a boolean for the default value")),
+});
+
+/** Schema for a configuration field that can be one of various field types (list, text, password, email, url, phone, or boolean) */
 export const FieldSchema = v.variant("type", [
   ListSchema,
   TextSchema,
@@ -135,6 +142,7 @@ export const FieldSchema = v.variant("type", [
   EmailSchema,
   UrlSchema,
   PhoneSchema,
+  BooleanSchema,
 ]);
 
 /** Schema for the schema of the business configuration, which is an array of configuration fields with at least one field required */
