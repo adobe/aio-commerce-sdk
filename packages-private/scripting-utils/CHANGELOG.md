@@ -1,5 +1,16 @@
 # @aio-commerce-sdk/scripting-utils
 
+## 0.2.2
+
+### Patch Changes
+
+- [#267](https://github.com/adobe/aio-commerce-sdk/pull/267) [`8642288`](https://github.com/adobe/aio-commerce-sdk/commit/8642288be4efd44b375d47e7cb75adb038c08334) Thanks [@jnatherley](https://github.com/jnatherley)! - Implements a rolldown plugin to correctly externalize transitive dependencies of private packages during build, but keep the source code of those same packages bundled.
+
+- [#266](https://github.com/adobe/aio-commerce-sdk/pull/266) [`3398078`](https://github.com/adobe/aio-commerce-sdk/commit/33980787b7874a3615b5946b76af1af36153cf76) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Export `replaceEnvVar` utility
+
+- Updated dependencies [[`8642288`](https://github.com/adobe/aio-commerce-sdk/commit/8642288be4efd44b375d47e7cb75adb038c08334)]:
+  - @adobe/aio-commerce-lib-core@0.6.2
+
 ## 0.2.1
 
 ### Patch Changes
