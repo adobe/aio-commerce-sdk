@@ -15,30 +15,25 @@ import { describe, expect, it } from "vitest";
 import { buildBusinessConfigurationExtConfig } from "#commands/generate/actions/config";
 
 describe("buildBusinessConfigurationExtConfig", () => {
-  it("includes versions and restore actions in business configuration manifest", () => {
+  it("includes only REST action names in business configuration manifest", () => {
     const extConfig = buildBusinessConfigurationExtConfig();
     const actions =
       extConfig.runtimeManifest?.packages?.["app-management"]?.actions ?? {};
 
-    expect(actions["get-configuration-versions"]).toBeDefined();
-    expect(actions["restore-configuration-version"]).toBeDefined();
+    expect(actions.config).toBeDefined();
+    expect(actions["scope-tree"]).toBeDefined();
+    expect(actions["set-configuration"]).toBeUndefined();
+    expect(actions["get-configuration-versions"]).toBeUndefined();
+    expect(actions["restore-configuration-version"]).toBeUndefined();
   });
 
-  it("wires the audit feature flag input for set/versions/restore actions", () => {
+  it("wires the audit feature flag input on the config action", () => {
     const extConfig = buildBusinessConfigurationExtConfig();
     const actions =
       extConfig.runtimeManifest?.packages?.["app-management"]?.actions ?? {};
 
-    expect(
-      actions["set-configuration"]?.inputs?.AIO_COMMERCE_CONFIG_AUDIT_ENABLED,
-    ).toBe("$AIO_COMMERCE_CONFIG_AUDIT_ENABLED");
-    expect(
-      actions["get-configuration-versions"]?.inputs
-        ?.AIO_COMMERCE_CONFIG_AUDIT_ENABLED,
-    ).toBe("$AIO_COMMERCE_CONFIG_AUDIT_ENABLED");
-    expect(
-      actions["restore-configuration-version"]?.inputs
-        ?.AIO_COMMERCE_CONFIG_AUDIT_ENABLED,
-    ).toBe("$AIO_COMMERCE_CONFIG_AUDIT_ENABLED");
+    expect(actions.config?.inputs?.AIO_COMMERCE_CONFIG_AUDIT_ENABLED).toBe(
+      "$AIO_COMMERCE_CONFIG_AUDIT_ENABLED",
+    );
   });
 });

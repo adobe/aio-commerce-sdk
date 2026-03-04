@@ -187,21 +187,6 @@ export function buildBusinessConfigurationExtConfig(): ExtConfig {
       name: "config",
       templateFile: "config.js.template",
       requiresEncryptionKey: true,
-    },
-    {
-      name: "set-configuration",
-      templateFile: "set-configuration.js.template",
-      requiresEncryptionKey: true,
-      requiresAuditFlag: true,
-    },
-    {
-      name: "get-configuration-versions",
-      templateFile: "get-configuration-versions.js.template",
-      requiresAuditFlag: true,
-    },
-    {
-      name: "restore-configuration-version",
-      templateFile: "restore-configuration-version.js.template",
       requiresAuditFlag: true,
     },
     {

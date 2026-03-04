@@ -152,18 +152,6 @@ async function generateActionFiles(
   const outputFiles: string[] = [];
   const templatesDir = join(__dirname, "generate/actions/templates");
 
-  if (extensionPointId === CONFIGURATION_EXTENSION_POINT_ID) {
-    const sharedTemplatePath = join(
-      templatesDir,
-      "business-configuration",
-      "audit-enabled.js.template",
-    );
-    const sharedOutputPath = join(outputDir, "audit-enabled.js");
-    const sharedTemplate = await readFile(sharedTemplatePath, "utf-8");
-    await writeFile(sharedOutputPath, sharedTemplate, "utf-8");
-    outputFiles.push(` ${relative(process.cwd(), sharedOutputPath)}`);
-  }
-
   for (const action of actions) {
     const templatePath = join(templatesDir, action.templateFile);
     let template = await readFile(templatePath, "utf-8");
