@@ -42,6 +42,15 @@ export const VALID_CONFIGURATION = [
     type: "text",
     label: "Test Field",
   },
+  {
+    name: "enableFeature",
+    type: "boolean",
+    default: true,
+  },
+  {
+    name: "optionalToggle",
+    type: "boolean",
+  },
 ] satisfies BusinessConfigSchema;
 
 export const INVALID_CONFIGURATION = [
