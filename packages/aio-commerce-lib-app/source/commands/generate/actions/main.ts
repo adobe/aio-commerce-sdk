@@ -32,7 +32,6 @@ import {
 } from "#commands/constants";
 import { loadAppManifest } from "#commands/utils";
 import {
-  getConfigDomains,
   hasBusinessConfigSchema,
   hasCustomInstallationSteps,
 } from "#config/index";
@@ -118,7 +117,7 @@ async function updateExtConfig(
   let extConfig: ExtConfig;
   switch (extensionPointId) {
     case EXTENSIBILITY_EXTENSION_POINT_ID: {
-      extConfig = buildAppManagementExtConfig(getConfigDomains(appConfig));
+      extConfig = buildAppManagementExtConfig(appConfig);
       break;
     }
 

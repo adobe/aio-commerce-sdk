@@ -22,14 +22,14 @@
   },
   "publishConfig": {
     "exports": {
-      "./actions": {
+      "./actions/*": {
         "import": {
-          "types": "./dist/es/actions/index.d.mts",
-          "default": "./dist/es/actions/index.mjs"
+          "types": "./dist/es/actions/*.d.mts",
+          "default": "./dist/es/actions/*.mjs"
         },
         "require": {
-          "types": "./dist/cjs/actions/index.d.cts",
-          "default": "./dist/cjs/actions/index.cjs"
+          "types": "./dist/cjs/actions/*.d.cts",
+          "default": "./dist/cjs/actions/*.cjs"
         }
       },
       "./config": {
@@ -106,7 +106,7 @@
     "jiti": "^2.6.1",
     "openwhisk": "^3.21.8",
     "prettier": "catalog:",
-    "safe-stable-stringify": "^2.5.0",
+    "safe-stable-stringify": "catalog:",
     "type-fest": "catalog:",
     "valibot": "catalog:",
     "yaml": "catalog:"

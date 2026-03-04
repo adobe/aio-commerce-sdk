@@ -11,7 +11,6 @@
  */
 
 import * as schemaRepository from "./config-schema-repository";
-import * as schemaUtils from "./utils";
 
 import type { BusinessConfigSchema, SchemaContext } from "./types";
 
@@ -19,8 +18,7 @@ import type { BusinessConfigSchema, SchemaContext } from "./types";
  * Gets the configuration schema with lazy initialization and version checking.
  *
  * The schema defines the structure of configuration fields available in your application,
- * including field names, types, default values, and validation rules. The schema is
- * cached and automatically updated when the bundled schema version changes.
+ * including field names, types, default values, and validation rules.
  *
  * @param context - Schema context containing namespace and cache timeout.
  * @returns Promise resolving to an array of schema field definitions.
@@ -35,41 +33,10 @@ export async function getSchema(
 
   const storedSchema = await tryGetFromStorage(context);
   if (storedSchema) {
-    return await handleStoredSchemaUpdate(context, storedSchema);
+    return storedSchema;
   }
 
-  return await initializeSchemaFromBundledFile(context);
-}
-
-/**
- * Stores a validated schema in persistent storage and clears the cache.
- *
- * This function persists the schema to lib-files storage and invalidates the cache
- * to ensure fresh data on the next retrieval. Typically used when you need to manually
- * update the schema or after validating a custom schema.
- *
- * @param context - Schema context containing namespace and cache timeout.
- * @param validatedSchema - The validated schema to store.
- *
- * @example
- * ```typescript
- * import { storeSchema } from "./modules/schema";
- * import { validateSchemaFromContent } from "./utils";
- *
- * const context = { namespace: "my-app", cacheTimeout: 300000 };
- *
- * // Validate and store a custom schema
- * const schemaContent = JSON.stringify([...]);
- * const validatedSchema = validateSchemaFromContent(schemaContent);
- * await storeSchema(context, validatedSchema);
- * ```
- */
-export async function storeSchema(
-  context: SchemaContext,
-  validatedSchema: BusinessConfigSchema,
-): Promise<void> {
-  await schemaRepository.saveSchema(JSON.stringify(validatedSchema, null, 2));
-  await schemaRepository.deleteCachedSchema(context.namespace);
+  return [];
 }
 
 /**
@@ -105,130 +72,14 @@ async function tryGetFromStorage(
     const schemaContent = await schemaRepository.getPersistedSchema();
     const schema = JSON.parse(schemaContent);
 
-    await cacheSchema(context, schema);
+    await schemaRepository.setCachedSchema(
+      context.namespace,
+      schema,
+      context.cacheTimeout,
+    );
+
     return schema;
   } catch (_error) {
     return null;
   }
-}
-
-/**
- * Handles version checking and updating for stored schema.
- *
- * @param context - Schema context containing namespace and cache timeout.
- * @param storedSchema - The currently stored schema.
- * @returns Promise resolving to updated schema if version changed, otherwise the stored schema.
- */
-async function handleStoredSchemaUpdate(
-  context: SchemaContext,
-  storedSchema: BusinessConfigSchema,
-): Promise<BusinessConfigSchema> {
-  try {
-    const { content, version: currentVersion } =
-      await schemaUtils.readBundledSchemaWithVersion();
-    const shouldUpdate = await hasVersionChanged(context, currentVersion);
-
-    if (!shouldUpdate) {
-      return storedSchema;
-    }
-
-    return await initializeSchemaFromContent(context, content, currentVersion);
-  } catch (_error) {
-    // If version checking/update fails, return stored schema as fallback
-    return storedSchema;
-  }
-}
-
-/**
- * Initializes schema from bundled file (lazy initialization).
- *
- * @param context - Schema context containing namespace and cache timeout.
- * @returns Promise resolving to validated schema or empty array if initialization fails.
- */
-async function initializeSchemaFromBundledFile(
-  context: SchemaContext,
-): Promise<BusinessConfigSchema> {
-  try {
-    const schemaContent = await schemaUtils.readBundledSchemaFile();
-    const validatedSchema =
-      schemaUtils.validateSchemaFromContent(schemaContent);
-    const currentVersion = schemaUtils.calculateSchemaVersion(schemaContent);
-
-    await storeSchema(context, validatedSchema);
-    await storeSchemaVersion(context, currentVersion);
-
-    return validatedSchema;
-  } catch (_error) {
-    // All options exhausted, return empty schema
-    return [];
-  }
-}
-
-/**
- * Initializes schema from content and version.
- *
- * @param context - Schema context containing namespace and cache timeout.
- * @param content - Schema content as JSON string.
- * @param version - Schema version hash.
- * @returns Promise resolving to validated schema.
- */
-async function initializeSchemaFromContent(
-  context: SchemaContext,
-  content: string,
-  version: string,
-): Promise<BusinessConfigSchema> {
-  const validatedSchema = schemaUtils.validateSchemaFromContent(content);
-
-  await storeSchema(context, validatedSchema);
-  await storeSchemaVersion(context, version);
-
-  return validatedSchema;
-}
-
-/**
- * Checks if schema should be updated by comparing versions.
- *
- * @param context - Schema context containing namespace and cache timeout.
- * @param currentVersion - Current schema version hash.
- * @returns Promise resolving to true if version changed, false otherwise.
- */
-async function hasVersionChanged(
-  context: SchemaContext,
-  currentVersion: string,
-): Promise<boolean> {
-  const storedVersion = await schemaRepository.getSchemaVersion(
-    context.namespace,
-  );
-
-  return currentVersion !== storedVersion;
-}
-
-/**
- * Stores schema version hash.
- *
- * @param context - Schema context containing namespace and cache timeout.
- * @param version - Schema version hash to store.
- */
-async function storeSchemaVersion(
-  context: SchemaContext,
-  version: string,
-): Promise<void> {
-  await schemaRepository.setSchemaVersion(context.namespace, version);
-}
-
-/**
- * Caches schema in lib-state.
- *
- * @param context - Schema context containing namespace and cache timeout.
- * @param schema - Schema to cache.
- */
-async function cacheSchema(
-  context: SchemaContext,
-  schema: BusinessConfigSchema,
-): Promise<void> {
-  await schemaRepository.setCachedSchema(
-    context.namespace,
-    schema,
-    context.cacheTimeout,
-  );
 }

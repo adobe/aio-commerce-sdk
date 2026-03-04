@@ -13,36 +13,44 @@
 import { dirname, join } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { replaceEnvVar } from "@aio-commerce-sdk/scripting-utils/env";
-import { findNearestPackageJson } from "@aio-commerce-sdk/scripting-utils/project";
+import {
+  detectPackageManager,
+  findNearestPackageJson,
+  getExecCommand,
+} from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
 
-import { generateEncryptionKey } from "#utils/encryption";
+import { validateEncryptionKey } from "#utils/encryption";
 
 const ENCRYPTION_KEY_ENV_VAR = "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY";
 
 /** Sets up an encryption key for password field at the given environment file path. */
-export function run(envPath: string) {
+export async function run(envPath: string) {
+  const projectDir = dirname(envPath);
   process.loadEnvFile(envPath);
 
-  if (!process.env[ENCRYPTION_KEY_ENV_VAR]) {
-    consola.info("No encryption key found in .env file. Generating new key...");
-    replaceEnvVar(envPath, ENCRYPTION_KEY_ENV_VAR, generateEncryptionKey());
+  const packageExec = getExecCommand(await detectPackageManager(projectDir));
 
-    consola.success(`Encryption key generated and added to ${envPath}`);
-    return;
+  if (!process.env[ENCRYPTION_KEY_ENV_VAR]) {
+    throw new Error(
+      [
+        `Password fields found in schema, but encryption key is not set in "${envPath}".`,
+        `  Run ${packageExec} aio-commerce-lib-config encryption setup to generate an encryption key.`,
+      ].join("\n"),
+    );
   }
 
-  consola.info("Encryption key already configured in .env file");
+  validateEncryptionKey(process.env[ENCRYPTION_KEY_ENV_VAR]);
+  consola.success("Encryption key is valid");
 }
 
-/** Run the encryption setup command */
+/** Run the encryption validate command */
 export async function exec() {
   try {
     const dir = dirname((await findNearestPackageJson()) ?? process.cwd());
     const envPath = join(dir, ".env");
 
-    run(envPath);
+    await run(envPath);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

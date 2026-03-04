@@ -1196,6 +1196,7 @@ describe("validateConfigDomain", () => {
     };
 
     const baseWebhookEntry = {
+      label: "Test Webhook",
       description: "A test webhook",
       category: "append",
     };
