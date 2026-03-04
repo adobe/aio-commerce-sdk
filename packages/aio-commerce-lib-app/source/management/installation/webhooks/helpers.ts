@@ -25,6 +25,7 @@ import type { WebhooksExecutionContext } from "./context";
 
 /** Identity of a Commerce webhook that conflicts with a modification webhook from this app. */
 export type ConflictingWebhook = {
+  label: string;
   webhook_method: string;
   webhook_type: string;
   batch_name: string;
@@ -52,7 +53,7 @@ export type WebhookSubscriptionResult = {
  * A conflict is: Commerce has a webhook with the same `webhook_method` and `webhook_type`
  * that does NOT belong to this app (i.e. different `batch_name` or `hook_name` after prefix).
  *
- * Returns a `ValidationIssue` with code `WEBHOOK_CONFLICTS` and `details.conflicts` listing
+ * Returns a `ValidationIssue` with code `WEBHOOK_CONFLICTS` and `details.conflictedWebhooks` listing
  * every conflicting Commerce webhook when conflicts are found, or an empty array otherwise.
  *
  * @param config - The app config (must have a non-empty `webhooks` array).
@@ -81,7 +82,7 @@ export async function validateWebhookConflicts(
 
   const existingWebhooks = await commerceWebhooksClient.getWebhookList();
   const idPrefix = buildWebhookIdPrefix(config.metadata.id);
-  const conflicts: ConflictingWebhook[] = [];
+  const conflictedWebhooks: ConflictingWebhook[] = [];
 
   for (const entry of modificationWebhooks) {
     const { webhook } = entry;
@@ -97,7 +98,8 @@ export async function validateWebhookConflicts(
           existing.hook_name === resolvedHook
         )
       ) {
-        conflicts.push({
+        conflictedWebhooks.push({
+          label: entry.label,
           webhook_method: existing.webhook_method,
           webhook_type: existing.webhook_type,
           batch_name: existing.batch_name,
@@ -108,13 +110,13 @@ export async function validateWebhookConflicts(
     }
   }
 
-  if (conflicts.length > 0) {
+  if (conflictedWebhooks.length > 0) {
     return [
       {
         code: "WEBHOOK_CONFLICTS",
-        message: `Webhook conflicts detected: ${conflicts.length} webhook(s) already registered for the same method and type by another app`,
+        message: `Webhook conflicts detected: ${conflictedWebhooks.length} webhook(s) already registered for the same method and type by another app`,
         severity: "warning",
-        details: { conflicts },
+        details: { conflictedWebhooks },
       },
     ];
   }

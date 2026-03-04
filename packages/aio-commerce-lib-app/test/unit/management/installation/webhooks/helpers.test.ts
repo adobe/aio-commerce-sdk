@@ -683,6 +683,7 @@ describe("validateWebhookConflicts", () => {
       ...configWithWebhooks,
       webhooks: [
         {
+          label: "Validation Webhook",
           description: "Validation webhook",
           category: "validation" as const,
           webhook: {
@@ -744,8 +745,9 @@ describe("validateWebhookConflicts", () => {
       code: "WEBHOOK_CONFLICTS",
       severity: "error",
     });
-    expect(issues[0].details?.conflicts).toContainEqual(
+    expect(issues[0].details?.conflictedWebhooks).toContainEqual(
       expect.objectContaining({
+        label: "Order Created Webhook",
         webhook_method: "plugin.order.api.order_created",
         webhook_type: "after",
         batch_name: "other_app_default",
@@ -754,11 +756,12 @@ describe("validateWebhookConflicts", () => {
     );
   });
 
-  test("includes all conflicting Commerce webhooks in details.conflicts", async () => {
+  test("includes all conflicting Commerce webhooks in details.conflictedWebhooks", async () => {
     const config = {
       ...configWithWebhooks,
       webhooks: [
         {
+          label: "Order Created Webhook",
           description: "First modification webhook",
           category: "modification" as const,
           runtimeAction: "my-package/handle-order",
@@ -771,6 +774,7 @@ describe("validateWebhookConflicts", () => {
           },
         },
         {
+          label: "Product Save Webhook",
           description: "Second modification webhook",
           category: "modification" as const,
           runtimeAction: "my-package/handle-product",
@@ -806,17 +810,19 @@ describe("validateWebhookConflicts", () => {
     const issues = await validateWebhookConflicts(config, context);
 
     expect(issues).toHaveLength(1);
-    expect(issues[0].details?.conflicts).toHaveLength(2);
-    expect(issues[0].details?.conflicts).toContainEqual(
+    expect(issues[0].details?.conflictedWebhooks).toHaveLength(2);
+    expect(issues[0].details?.conflictedWebhooks).toContainEqual(
       expect.objectContaining({
+        label: "Order Created Webhook",
         webhook_method: "plugin.order.api.order_created",
         webhook_type: "after",
         batch_name: "other_app_default",
         hook_name: "other_app_order_created",
       }),
     );
-    expect(issues[0].details?.conflicts).toContainEqual(
+    expect(issues[0].details?.conflictedWebhooks).toContainEqual(
       expect.objectContaining({
+        label: "Product Save Webhook",
         webhook_method: "observer.catalog_product_save_after",
         webhook_type: "after",
         batch_name: "another_app_products",
@@ -830,6 +836,7 @@ describe("validateWebhookConflicts", () => {
       ...configWithWebhooks,
       webhooks: [
         {
+          label: "Append Webhook",
           description: "Append webhook",
           category: "append" as const,
           webhook: {
@@ -842,6 +849,7 @@ describe("validateWebhookConflicts", () => {
           },
         },
         {
+          label: "No Category Webhook",
           description: "No category webhook",
           webhook: {
             webhook_method: "plugin.order.api.order_created",
