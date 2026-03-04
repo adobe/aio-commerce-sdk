@@ -1,5 +1,17 @@
 # @adobe/aio-commerce-sdk
 
+## 0.7.4
+
+### Patch Changes
+
+- [#267](https://github.com/adobe/aio-commerce-sdk/pull/267) [`8642288`](https://github.com/adobe/aio-commerce-sdk/commit/8642288be4efd44b375d47e7cb75adb038c08334) Thanks [@jnatherley](https://github.com/jnatherley)! - Implements a rolldown plugin to correctly externalize transitive dependencies of private packages during build, but keep the source code of those same packages bundled.
+
+- Updated dependencies [[`d599ba8`](https://github.com/adobe/aio-commerce-sdk/commit/d599ba8ae30d3139d4ba19d0c63eaf716603f25f), [`8642288`](https://github.com/adobe/aio-commerce-sdk/commit/8642288be4efd44b375d47e7cb75adb038c08334), [`a502120`](https://github.com/adobe/aio-commerce-sdk/commit/a502120d8c16fdc1ed4afc579c5cfd79ec56c8e0)]:
+  - @adobe/aio-commerce-lib-events@0.6.1
+  - @adobe/aio-commerce-lib-auth@0.8.2
+  - @adobe/aio-commerce-lib-core@0.6.2
+  - @adobe/aio-commerce-lib-api@0.6.2
+
 ## 0.7.3
 
 ### Patch Changes
