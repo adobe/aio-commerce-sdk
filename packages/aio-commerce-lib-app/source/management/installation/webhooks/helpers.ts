@@ -20,7 +20,16 @@ import type {
   WebhookDefinition,
   WebhooksConfig,
 } from "#config/schema/webhooks";
+import type { ValidationIssue } from "#management/installation/workflow/step";
 import type { WebhooksExecutionContext } from "./context";
+
+/** Identity of a Commerce webhook that conflicts with a modification webhook from this app. */
+export type ConflictingWebhook = {
+  webhook_method: string;
+  webhook_type: string;
+  batch_name: string;
+  hook_name: string;
+};
 
 /** Matches any character that is not a valid identifier character (letter, digit, or underscore). */
 const NON_IDENTIFIER_CHAR_REGEX = /[^a-zA-Z0-9_]/g;
@@ -35,6 +44,84 @@ const ENVIRONMENT_STAGING = "staging";
 export type WebhookSubscriptionResult = {
   subscribedWebhooks: WebhookSubscribeParams[];
 };
+
+/**
+ * Validates that no modification webhooks in the app config conflict with webhooks
+ * already registered in Commerce by another app.
+ *
+ * A conflict is: Commerce has a webhook with the same `webhook_method` and `webhook_type`
+ * that does NOT belong to this app (i.e. different `batch_name` or `hook_name` after prefix).
+ *
+ * Returns a `ValidationIssue` with code `WEBHOOK_CONFLICTS` and `details.conflicts` listing
+ * every conflicting Commerce webhook when conflicts are found, or an empty array otherwise.
+ *
+ * @param config - The app config (must have a non-empty `webhooks` array).
+ * @param context - The webhooks execution context (provides the Commerce API client and logger).
+ */
+export async function validateWebhookConflicts(
+  config: WebhooksConfig,
+  context: WebhooksExecutionContext,
+): Promise<ValidationIssue[]> {
+  const { logger, commerceWebhooksClient } = context;
+
+  const modificationWebhooks = config.webhooks.filter(
+    (entry) => entry.category === "modification",
+  );
+
+  if (modificationWebhooks.length === 0) {
+    logger.debug(
+      "No modification webhooks to validate, skipping conflict check.",
+    );
+    return [];
+  }
+
+  logger.debug(
+    `Validating ${modificationWebhooks.length} modification webhook(s) for conflicts...`,
+  );
+
+  const existingWebhooks = await commerceWebhooksClient.getWebhookList();
+  const idPrefix = buildWebhookIdPrefix(config.metadata.id);
+  const conflicts: ConflictingWebhook[] = [];
+
+  for (const entry of modificationWebhooks) {
+    const { webhook } = entry;
+    const resolvedBatch = `${idPrefix}${webhook.batch_name}`;
+    const resolvedHook = `${idPrefix}${webhook.hook_name}`;
+
+    for (const existing of existingWebhooks) {
+      if (
+        existing.webhook_method === webhook.webhook_method &&
+        existing.webhook_type === webhook.webhook_type &&
+        !(
+          existing.batch_name === resolvedBatch &&
+          existing.hook_name === resolvedHook
+        )
+      ) {
+        conflicts.push({
+          webhook_method: existing.webhook_method,
+          webhook_type: existing.webhook_type,
+          batch_name: existing.batch_name,
+          hook_name: existing.hook_name,
+        });
+        break;
+      }
+    }
+  }
+
+  if (conflicts.length > 0) {
+    return [
+      {
+        code: "WEBHOOK_CONFLICTS",
+        message: `Webhook conflicts detected: ${conflicts.length} webhook(s) already registered for the same method and type by another app`,
+        severity: "warning",
+        details: { conflicts },
+      },
+    ];
+  }
+
+  logger.info("No webhook conflicts found.");
+  return [];
+}
 
 /**
  * Subscribes each webhook from the app config to Adobe Commerce.

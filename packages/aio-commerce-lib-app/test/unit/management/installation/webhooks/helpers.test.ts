@@ -17,6 +17,7 @@ import {
   createWebhookSubscription,
   createWebhookSubscriptions,
   resolveDeveloperConsoleOAuthCredentials,
+  validateWebhookConflicts,
 } from "#management/installation/webhooks/helpers";
 import { configWithWebhooks } from "#test/fixtures/config";
 
@@ -653,6 +654,209 @@ describe("createOrGetWebhookSubscription", () => {
     expect(logger.info).toHaveBeenCalledWith(
       expect.stringContaining("Subscribed webhook"),
     );
+  });
+});
+
+describe("validateWebhookConflicts", () => {
+  beforeEach(() => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  test("returns [] when config has no modification webhooks", async () => {
+    const context = makeContext();
+    const config = {
+      ...configWithWebhooks,
+      webhooks: [
+        {
+          description: "Validation webhook",
+          category: "validation" as const,
+          webhook: {
+            webhook_method: "plugin.order.api.order_created",
+            webhook_type: "before",
+            batch_name: "default",
+            hook_name: "order_created",
+            method: "POST",
+            url: "https://example.com/hook",
+          },
+        },
+      ],
+    };
+
+    await expect(validateWebhookConflicts(config, context)).resolves.toEqual(
+      [],
+    );
+  });
+
+  test("returns [] when Commerce has no existing webhooks", async () => {
+    const getWebhookList = vi.fn().mockResolvedValue([]);
+    const context = makeContext(vi.fn(), getWebhookList);
+
+    await expect(
+      validateWebhookConflicts(configWithWebhooks, context),
+    ).resolves.toEqual([]);
+  });
+
+  test("returns [] when existing Commerce webhook belongs to this app (same batch_name and hook_name after prefix)", async () => {
+    // configWithWebhooks metadata.id = "test-app-webhooks" → prefix "test_app_webhooks_"
+    const sameAppWebhook = {
+      webhook_method: "plugin.order.api.order_created",
+      webhook_type: "after",
+      batch_name: "test_app_webhooks_default",
+      hook_name: "test_app_webhooks_order_created",
+    };
+    const getWebhookList = vi.fn().mockResolvedValue([sameAppWebhook]);
+    const context = makeContext(vi.fn(), getWebhookList);
+
+    await expect(
+      validateWebhookConflicts(configWithWebhooks, context),
+    ).resolves.toEqual([]);
+  });
+
+  test("returns a ValidationIssue with code WEBHOOK_CONFLICTS when a modification webhook conflicts with another app", async () => {
+    const conflictingWebhook = {
+      webhook_method: "plugin.order.api.order_created",
+      webhook_type: "after",
+      batch_name: "other_app_default",
+      hook_name: "other_app_order_created",
+    };
+    const getWebhookList = vi.fn().mockResolvedValue([conflictingWebhook]);
+    const context = makeContext(vi.fn(), getWebhookList);
+
+    const issues = await validateWebhookConflicts(configWithWebhooks, context);
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatchObject({
+      code: "WEBHOOK_CONFLICTS",
+      severity: "error",
+    });
+    expect(issues[0].details?.conflicts).toContainEqual(
+      expect.objectContaining({
+        webhook_method: "plugin.order.api.order_created",
+        webhook_type: "after",
+        batch_name: "other_app_default",
+        hook_name: "other_app_order_created",
+      }),
+    );
+  });
+
+  test("includes all conflicting Commerce webhooks in details.conflicts", async () => {
+    const config = {
+      ...configWithWebhooks,
+      webhooks: [
+        {
+          description: "First modification webhook",
+          category: "modification" as const,
+          runtimeAction: "my-package/handle-order",
+          webhook: {
+            webhook_method: "plugin.order.api.order_created",
+            webhook_type: "after",
+            batch_name: "default",
+            hook_name: "order_created",
+            method: "POST",
+          },
+        },
+        {
+          description: "Second modification webhook",
+          category: "modification" as const,
+          runtimeAction: "my-package/handle-product",
+          webhook: {
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "after",
+            batch_name: "products",
+            hook_name: "validate",
+            method: "POST",
+          },
+        },
+      ],
+    };
+
+    const conflictForFirst = {
+      webhook_method: "plugin.order.api.order_created",
+      webhook_type: "after",
+      batch_name: "other_app_default",
+      hook_name: "other_app_order_created",
+    };
+    const conflictForSecond = {
+      webhook_method: "observer.catalog_product_save_after",
+      webhook_type: "after",
+      batch_name: "another_app_products",
+      hook_name: "another_app_validate",
+    };
+
+    const getWebhookList = vi
+      .fn()
+      .mockResolvedValue([conflictForFirst, conflictForSecond]);
+    const context = makeContext(vi.fn(), getWebhookList);
+
+    const issues = await validateWebhookConflicts(config, context);
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].details?.conflicts).toHaveLength(2);
+    expect(issues[0].details?.conflicts).toContainEqual(
+      expect.objectContaining({
+        webhook_method: "plugin.order.api.order_created",
+        webhook_type: "after",
+        batch_name: "other_app_default",
+        hook_name: "other_app_order_created",
+      }),
+    );
+    expect(issues[0].details?.conflicts).toContainEqual(
+      expect.objectContaining({
+        webhook_method: "observer.catalog_product_save_after",
+        webhook_type: "after",
+        batch_name: "another_app_products",
+        hook_name: "another_app_validate",
+      }),
+    );
+  });
+
+  test("returns [] for webhooks with category other than modification", async () => {
+    const config = {
+      ...configWithWebhooks,
+      webhooks: [
+        {
+          description: "Append webhook",
+          category: "append" as const,
+          webhook: {
+            webhook_method: "plugin.order.api.order_created",
+            webhook_type: "after",
+            batch_name: "default",
+            hook_name: "order_created",
+            method: "POST",
+            url: "https://example.com/hook",
+          },
+        },
+        {
+          description: "No category webhook",
+          webhook: {
+            webhook_method: "plugin.order.api.order_created",
+            webhook_type: "after",
+            batch_name: "default2",
+            hook_name: "order_created2",
+            method: "POST",
+            url: "https://example.com/hook2",
+          },
+        },
+      ],
+    };
+
+    const conflictingWebhook = {
+      webhook_method: "plugin.order.api.order_created",
+      webhook_type: "after",
+      batch_name: "other_app_batch",
+      hook_name: "other_app_hook",
+    };
+    const getWebhookList = vi.fn().mockResolvedValue([conflictingWebhook]);
+    const context = makeContext(vi.fn(), getWebhookList);
+
+    await expect(validateWebhookConflicts(config, context)).resolves.toEqual(
+      [],
+    );
+    expect(getWebhookList).not.toHaveBeenCalled();
   });
 });
 
