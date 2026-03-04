@@ -7,7 +7,9 @@
 
 The `@adobe/aio-commerce-lib-app` library provides:
 
-- **Configuration Management**: Define, validate and read/parse configurations for Adobe Commerce applications
+- **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
+- **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
+- **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
 
 ## Reference
 
@@ -17,17 +19,53 @@ See the [API Reference](./api-reference/README.md) for more details.
 
 ### Setup
 
-Follow these steps to integrate the app library into your Adobe Commerce App Builder application:
+#### Recommended: Quick Setup
 
-#### 1. Install the package
+The fastest way to get started is using the `init` command, which automates the entire setup process:
 
 ```bash
-npm install @adobe/aio-commerce-lib-app
+npx @adobe/aio-commerce-lib-app init
 ```
 
-#### 2. Create your app configuration
+The `init` command will:
 
-Create an app config file in your project root. The library supports multiple file formats:
+- Create `app.commerce.config.*` with a template (prompts you to choose format and features if the file doesn't exist)
+- Install required dependencies (`@adobe/aio-commerce-lib-app`, `@adobe/aio-commerce-sdk`, and `@adobe/aio-commerce-lib-config` when business configuration is enabled)
+- Add the `postinstall` hook to your `package.json`
+- Generate all required artifacts (`commerce/configuration/1` resources are only generated when `businessConfig` is defined in your config)
+- Update your `app.config.yaml` and `install.yaml` with the appropriate extension references, including `commerce/configuration/1` only when applicable
+
+The command automatically detects your package manager (npm, pnpm, yarn, or bun) by checking for lock files and uses the appropriate commands.
+
+After running `init`, you'll need to:
+
+1. Review and customize `app.commerce.config.*` with your app details
+2. Build and deploy your app
+
+#### Alternative: Manual Setup
+
+If you need more control over the process:
+
+1. Install the package and the required SDK peer dependency:
+
+```bash
+npm install @adobe/aio-commerce-lib-app @adobe/aio-commerce-sdk
+```
+
+> [!IMPORTANT]
+> The generated runtime actions require `@adobe/aio-commerce-sdk` at runtime. Make sure it is installed before deploying your application.
+
+Add a `postinstall` hook to your `package.json` to ensure that everything keeps running as expected after each install.
+
+```json
+{
+  "scripts": {
+    "postinstall": "npx aio-commerce-lib-app hooks postinstall"
+  }
+}
+```
+
+2. Create your app configuration file at your project root. The library supports multiple file formats:
 
 - `app.commerce.config.js` - JavaScript (CommonJS or ESM, depending on `type` in `package.json`)
 - `app.commerce.config.ts` - TypeScript
@@ -36,93 +74,95 @@ Create an app config file in your project root. The library supports multiple fi
 - `app.commerce.config.mts` - ES Module TypeScript
 - `app.commerce.config.cts` - CommonJS TypeScript
 
-##### Example using ESM:
+See [Defining Configuration](#defining-configuration) for all available fields and examples.
 
-```javascript
-import { defineConfig } from "@adobe/aio-commerce-lib-app/config";
-
-export default defineConfig({
-  metadata: {
-    id: "my-commerce-app",
-    displayName: "My Commerce App",
-    description: "A custom Adobe Commerce application",
-    version: "1.0.0",
-  },
-  businessConfig: {
-    schema: [
-      {
-        name: "enableSomeFeature",
-        type: "list",
-        label: "Enable Some Feature",
-        description: "Enable or disable a specific feature",
-        selectionMode: "single",
-        options: [
-          { label: "Yes", value: "yes" },
-          { label: "No", value: "no" },
-        ],
-        default: "yes",
-      },
-    ],
-  },
-});
-```
-
-##### Example using CommonJS:
-
-```javascript
-const { defineConfig } = require("@adobe/aio-commerce-lib-app/config");
-
-module.exports = defineConfig({
-  metadata: {
-    id: "my-commerce-app",
-    displayName: "My Commerce App",
-    description: "A custom Adobe Commerce application",
-    version: "1.0.0",
-  },
-  // ... rest of config
-});
-```
-
-The `defineConfig` helper provides type-safe configuration definition with autocompletion support in your IDE.
-
-#### 3. Generate the app artifacts
-
-Run the generate command to create the manifest and runtime action:
+3. Generate all required artifacts:
 
 ```bash
 npx @adobe/aio-commerce-lib-app generate all
 ```
 
-This will create:
+This produces the following files, organized by extension point:
 
-- **Extensibility Manifest** (`src/commerce-extensibility-1/.generated/app.commerce.manifest.json`)
-- **Runtime Action** (`src/commerce-extensibility-1/.generated/actions/get-app-config.js`)
-- **Extension Configuration** (`src/commerce-extensibility-1/ext.config.yaml`)
+**`commerce/extensibility/1`**: App management:
 
-#### 4. Reference the extension in your app configuration
+- `src/commerce-extensibility-1/.generated/app.commerce.manifest.json`: a validated JSON representation of your app config
+- `src/commerce-extensibility-1/.generated/actions/app-management/app-config.js`: serves the app configuration to the App Management UI
+- `src/commerce-extensibility-1/.generated/actions/app-management/installation.js`: drives the installation flow, including any custom scripts you define
+- `src/commerce-extensibility-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
-In your `app.config.yaml` file, add the extension point reference:
+**`commerce/configuration/1`**: Business configuration (generated when `businessConfig` is defined):
+
+- `src/commerce-configuration-1/.generated/configuration-schema.json`: a validated JSON representation of your schema for runtime use
+- `src/commerce-configuration-1/.generated/actions/business-configuration/config.js`: handles retrieving and updating configuration values across scopes
+- `src/commerce-configuration-1/.generated/actions/business-configuration/scope-tree.js`: handles scope hierarchy management for both Adobe Commerce and custom external scopes
+- `src/commerce-configuration-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
+
+4. In your `app.config.yaml`, reference the generated extension configurations. If you have multiple extension points, add each as a new entry:
 
 ```yaml
 extensions:
   commerce/extensibility/1:
     $include: "src/commerce-extensibility-1/ext.config.yaml"
+  # Only include this if businessConfig is defined in your app.commerce.config.*:
+  commerce/configuration/1:
+    $include: "src/commerce-configuration-1/ext.config.yaml"
 ```
 
-#### 5. Add the extension point to your install configuration
-
-In your `install.yaml` file, add the extension point reference:
+5. In your `install.yaml`, add the extension point references. If you have multiple extension points, add each as a new entry:
 
 ```yaml
 extensions:
   - extensionPointId: commerce/extensibility/1
+  # Only include this if businessConfig is defined in your app.commerce.config.*:
+  - extensionPointId: commerce/configuration/1
 ```
 
-The generated `ext.config.yaml` file includes a `pre-app-build` hook that automatically regenerates the manifest before each build, ensuring your configuration is always up-to-date.
+> [!IMPORTANT]
+> The `pre-app-build` hook keeps your environment variables in sync automatically. If you need to configure them manually (for example in a CI/CD environment), add them to your `.env` file:
+>
+> **For SaaS instances:**
+>
+> ```bash
+> # Logging level for runtime actions
+> LOG_LEVEL=info
+>
+> # Adobe Commerce API configuration
+> AIO_COMMERCE_API_BASE_URL=https://your-commerce-instance.com
+>
+> # IMS Authentication (SaaS)
+> AIO_COMMERCE_AUTH_IMS_CLIENT_ID=your-client-id
+> AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS=your-client-secrets
+> AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID=your-technical-account-id
+> AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL=your-technical-account-email
+> AIO_COMMERCE_AUTH_IMS_ORG_ID=your-ims-org-id
+> AIO_COMMERCE_AUTH_IMS_SCOPES=your-ims-scopes
+> ```
+>
+> **For PaaS instances:**
+>
+> ```bash
+> # Logging level for runtime actions
+> LOG_LEVEL=info
+>
+> # Adobe Commerce API configuration
+> AIO_COMMERCE_API_BASE_URL=https://your-commerce-instance.com
+>
+> # Integration Authentication (PaaS)
+> AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY=your-consumer-key
+> AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET=your-consumer-secret
+> AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN=your-access-token
+> AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET=your-access-token-secret
+> ```
 
 ### Defining Configuration
 
-The current app configuration definition (subject to change in the future) consists of two main parts: **metadata** and **businessConfig**.
+The current app configuration definition contains the following sections:
+
+- **metadata**: Application metadata
+- **businessConfig**: Business configuration schema
+- **eventing**: Eventing configuration
+- **installation**: Installation configuration
 
 #### Application Metadata
 
@@ -175,7 +215,7 @@ businessConfig: {
 }
 ```
 
-For detailed information about available field types and their usage, see the [`@adobe/aio-commerce-lib-config` documentation](../../aio-commerce-lib-config/docs/usage.md#schema-validation).
+For detailed information about available field types and their usage, see the [`@adobe/aio-commerce-lib-config` documentation](../../aio-commerce-lib-config/docs/usage.md#field-types).
 
 #### Eventing Configuration
 
@@ -256,6 +296,8 @@ eventing: {
 ##### Commerce Events:
 
 - **name**: Must start with `plugin.` or `observer.` followed by lowercase letters and underscores (e.g., `plugin.order_placed`, `observer.catalog_update`)
+- **label**: Display name for the event (max 100 characters)
+- **description**: Description of the event (max 255 characters)
 - **fields**: Array of field objects. Each field object must have:
   - **name** (required): The field name.
   - **source** (optional): A string value for the field source (e.g., `"catalog"`, `"order"`)
@@ -263,6 +305,10 @@ eventing: {
   - **field**: The field name to filter on
   - **operator**: The comparison operator. Valid values: `"greaterThan"`, `"lessThan"`, `"equal"`, `"regex"`, `"in"`, `"onChange"`
   - **value**: The value to compare against
+- **destination**: Optional destination for the event. Must be a valid destination name.
+- **hipaaAuditRequired**: Optional boolean value to indicate if the event requires HIPAA audit.
+- **prioritary**: Optional boolean value to indicate if the event is prioritary.
+- **force**: Optional boolean value to indicate if the event should be forced.
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
 
 ##### External Events:
@@ -291,8 +337,8 @@ You can define messages that will be displayed to users before and after the ins
 ```javascript
 installation: {
   messages: {
-    "preInstallation": "This App requires configuration A & B to be completed before clicking Install.",
-    "postInstallation": "Configure your email settings to complete the setup.",
+    preInstallation: "This App requires configuration A & B to be completed before clicking Install.",
+    postInstallation: "Configure your email settings to complete the setup.",
   },
 }
 ```
@@ -346,7 +392,7 @@ installation: {
 
 ###### Script Requirements:
 
-Your custom installation scripts must export a default function with the following signature:
+Your custom installation scripts must export a default function using the `defineCustomInstallationStep` helper (you can return anything from it):
 
 ```typescript
 import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
@@ -356,13 +402,11 @@ import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/manage
  */
 export default defineCustomInstallationStep(async (config, context) => {
   const { logger, params } = context;
-
   logger.info("Installation step started");
 
   // Your installation logic here
 
   logger.info("Installation step completed");
-
   return {
     status: "success",
     message: "Custom installation step completed",
@@ -382,7 +426,6 @@ import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/manage
  */
 export default defineCustomInstallationStep(async (config, context) => {
   const { logger, params } = context;
-
   logger.info("Setting up webhook endpoints...");
 
   // Access typed config properties with autocompletion
@@ -390,7 +433,6 @@ export default defineCustomInstallationStep(async (config, context) => {
 
   // Simulate webhook configuration
   await new Promise((resolve) => setTimeout(resolve, 500));
-
   logger.info("Webhook endpoints configured successfully");
 
   return {
@@ -412,7 +454,6 @@ import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/manage
  */
 export default defineCustomInstallationStep(async (config, context) => {
   const { logger } = context;
-
   logger.info("Initializing database...");
 
   try {
@@ -427,7 +468,6 @@ export default defineCustomInstallationStep(async (config, context) => {
 
     // Simulate database initialization
     await new Promise((resolve) => setTimeout(resolve, 1000));
-
     logger.info("Database initialized successfully");
 
     return {
@@ -452,17 +492,19 @@ export default defineCustomInstallationStep(async (config, context) => {
 
 ### CLI Commands
 
-The library provides CLI commands to generate app artifacts:
+The library provides the following CLI commands:
 
 ```bash
-# Generate all artifacts (manifest + runtime actions)
+# Initialize the project (recommended for first-time setup)
+npx @adobe/aio-commerce-lib-app init
+
+# Generate all artifacts (manifest + schema + runtime actions)
 npx @adobe/aio-commerce-lib-app generate all
 
-# Generate app manifest only
+# Or generate individually:
 npx @adobe/aio-commerce-lib-app generate manifest
-
-# Generate runtime actions only
 npx @adobe/aio-commerce-lib-app generate actions
+npx @adobe/aio-commerce-lib-app generate schema
 ```
 
 ##### Custom Installation Scripts:
@@ -501,38 +543,6 @@ try {
 } catch (error) {
   console.error("Configuration error:", error);
   process.exit(1);
-}
-```
-
-#### Reading Bundled Configuration in Runtime Actions
-
-The `readBundledCommerceAppConfig` function is designed for use in runtime actions to read the bundled manifest:
-
-```javascript
-import { readBundledCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
-
-export async function main(params) {
-  try {
-    // Retrieve the bundled app configuration
-    const config = await readBundledCommerceAppConfig();
-
-    // Access metadata for version-based logic
-    if (config.metadata.version >= "2.0.0") {
-      // Handle version 2.0.0 or higher
-    } else {
-      // Handle older versions for backward compatibility
-    }
-
-    return {
-      statusCode: 200,
-      body: config,
-    };
-  } catch (error) {
-    return {
-      statusCode: 500,
-      body: { error: error.message },
-    };
-  }
 }
 ```
 
