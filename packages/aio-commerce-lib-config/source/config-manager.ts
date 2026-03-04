@@ -129,8 +129,8 @@ export function setGlobalLibConfigOptions(options: LibConfigOptions) {
 }
 
 /**
- * Gets the global encryption key.
- * @returns The encryption key or undefined if not set.
+ * Gets global library configuration defaults.
+ * @returns The current global library configuration options.
  * @internal
  */
 export function getGlobalLibConfigOptions(): GlobalLibConfigOptions {
@@ -386,21 +386,18 @@ export async function syncCommerceScopes(
 /**
  * Removes the commerce scope from the persisted scope tree.
  *
- * @returns Promise resolving to a boolean indicating whether the scope was found and removed,
- *   or if it was already not present.
+ * @returns Promise resolving to an object with `unsynced` indicating whether the scope
+ *   was found and removed.
  *
  * @example
  * ```typescript
  * import { unsyncCommerceScopes } from "@adobe/aio-commerce-lib-config";
  *
- * try {
- *   const result = await unsyncCommerceScopes();
- *
- *   if (result) {
- *     console.log("Commerce scope removed successfully");
- *   }
- * } catch (error) {
- *   console.error("Failed to unsync commerce scopes:", error);
+ * const result = await unsyncCommerceScopes();
+ * if (result.unsynced) {
+ *   console.log("Commerce scope removed successfully");
+ * } else {
+ *   console.log("Commerce scope not found");
  * }
  * ```
  */

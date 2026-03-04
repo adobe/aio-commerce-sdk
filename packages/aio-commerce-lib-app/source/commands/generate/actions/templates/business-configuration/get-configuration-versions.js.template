@@ -76,7 +76,7 @@ export async function main(params) {
       return badRequest({
         body: {
           code: "INVALID_PARAMS",
-          message: "limit and offset must be positive integers",
+          message: "limit and offset must be non-negative integers",
         },
       });
     }

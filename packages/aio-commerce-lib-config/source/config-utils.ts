@@ -178,7 +178,7 @@ export function deriveScopeFromCodeWithOptionalLevel(
 
 /**
  * Derives the scope information from the provided arguments.
- * @param args - The arguments containing either (id), (code), or (code, level).
+ * @param args - The arguments containing either (id) or (code, level).
  * @param tree - The scope tree to search for the node.
  * @returns The derived scope information including code, level, id, and path.
  */
@@ -348,9 +348,10 @@ function mergeConfigEntries(
 async function mergeConfigFromPath(
   merged: Map<string, ConfigValue>,
   scopePath: ScopeNode[],
-  loadScopeConfigFn: (
-    code: string,
-  ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>,
+  loadScopeConfigFn: (code: string) => Promise<{
+    scope: { id: string; code: string; level: string };
+    config: ConfigValue[];
+  } | null>,
 ) {
   for (const node of scopePath) {
     const persisted = await loadScopeConfigFn(node.code);
@@ -372,9 +373,10 @@ async function mergeConfigFromPath(
 async function mergeGlobalConfigIfNeeded(
   merged: Map<string, ConfigValue>,
   scopePath: ScopeNode[],
-  loadScopeConfigFn: (
-    code: string,
-  ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>,
+  loadScopeConfigFn: (code: string) => Promise<{
+    scope: { id: string; code: string; level: string };
+    config: ConfigValue[];
+  } | null>,
 ) {
   const hasGlobal = scopePath.some(
     (node) => node.code === "global" && node.level === "global",
@@ -400,7 +402,10 @@ async function mergeGlobalConfigIfNeeded(
  */
 function mergeCurrentConfigData(
   merged: Map<string, ConfigValue>,
-  configData: { scope: ScopeNode; config: ConfigValue[] },
+  configData: {
+    scope: { id: string; code: string; level: string };
+    config: ConfigValue[];
+  },
   scopeCode: string,
   scopeLevel: string,
 ) {
@@ -442,11 +447,15 @@ function applySchemaDefaults(
 
 /** Parameters for mergeWithSchemaDefaults function */
 type MergeWithSchemaDefaultsParams = {
-  loadScopeConfigFn: (
-    code: string,
-  ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>;
+  loadScopeConfigFn: (code: string) => Promise<{
+    scope: { id: string; code: string; level: string };
+    config: ConfigValue[];
+  } | null>;
   getSchemaFn: () => Promise<BusinessConfigSchema>;
-  configData: { scope: ScopeNode; config: ConfigValue[] };
+  configData: {
+    scope: { id: string; code: string; level: string };
+    config: ConfigValue[];
+  };
   scopeCode: string;
   scopeLevel: string;
   scopePath: ScopeNode[];

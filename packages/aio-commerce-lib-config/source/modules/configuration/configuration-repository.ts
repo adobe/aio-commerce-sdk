@@ -16,6 +16,8 @@ import { createVersionRecord } from "#modules/versioning/version-repository";
 import { getLogger } from "#utils/logger";
 import { getSharedFiles, getSharedState } from "#utils/repository";
 
+import type { ConfigValue } from "./types";
+
 type PersistConfigOptions = {
   auditEnabled?: boolean;
   reason?: "set" | "restore";
@@ -24,8 +26,12 @@ type PersistConfigOptions = {
 };
 
 type PersistedConfigPayload = {
-  scope?: unknown;
-  config?: unknown;
+  scope: {
+    id: string;
+    code: string;
+    level: string;
+  };
+  config: ConfigValue[];
 };
 
 /**

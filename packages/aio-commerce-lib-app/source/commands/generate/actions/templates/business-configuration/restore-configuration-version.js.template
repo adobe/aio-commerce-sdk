@@ -57,7 +57,11 @@ export async function main(params) {
     const code = params.code;
     const level = params.level;
     const versionId = params.versionId;
-    const expectedLatestVersionId = params.expectedLatestVersionId;
+    const expectedLatestVersionId =
+      typeof params.expectedLatestVersionId === "string" &&
+      params.expectedLatestVersionId.trim().length > 0
+        ? params.expectedLatestVersionId
+        : undefined;
 
     if (!(id || (code && level))) {
       return badRequest({

@@ -34,8 +34,26 @@ import AioLogger from "@adobe/aio-lib-core-logging";
 // Shorthand to inspect an object.
 const inspect = (obj) => util.inspect(obj, { depth: null });
 
+function parseBodyFromParams(params) {
+  if (!params || typeof params !== "object") {
+    return {};
+  }
+
+  const rawBody = params.__ow_body;
+  if (typeof rawBody === "string" && rawBody.trim().length > 0) {
+    try {
+      const parsed = JSON.parse(rawBody);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  return rawBody && typeof rawBody === "object" ? rawBody : {};
+}
+
 /**
- * Get the configuration.
+ * Set configuration values and return the updated configuration.
  * @param params - The input parameters.
  * @returns The response object containing the updated configuration values.
  */
@@ -53,15 +71,7 @@ export async function main(params) {
     setGlobalLibConfigOptions({
       auditEnabled: parseAuditEnabled(params.AIO_COMMERCE_CONFIG_AUDIT_ENABLED),
     });
-    let body;
-
-    if (
-      params &&
-      typeof params === "object" &&
-      Object.keys(params).length === 0
-    ) {
-      body = {};
-    }
+    const body = parseBodyFromParams(params);
 
     const id = params.id;
     const code = params.code;
@@ -100,13 +110,21 @@ export async function main(params) {
     }
 
     const payload = { config: candidateConfig };
-    logger.debug(`Setting configuration with payload: ${inspect(payload)}`);
+    logger.debug(
+      `Setting configuration for scope: ${
+        id ? `id=${id}` : `code=${code}, level=${level}`
+      }; entries=${candidateConfig.length}`,
+    );
 
     const result = id
       ? await setConfiguration(payload, byScopeId(id))
       : await setConfiguration(payload, byCodeAndLevel(code, level));
 
-    logger.debug(`Successfully set configuration: ${inspect(result)}`);
+    logger.debug(
+      `Successfully set configuration for scope: ${
+        id ? `id=${id}` : `code=${code}, level=${level}`
+      }`,
+    );
     return ok({
       body: { result },
       headers: {

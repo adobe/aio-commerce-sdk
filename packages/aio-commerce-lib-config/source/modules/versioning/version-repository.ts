@@ -386,7 +386,8 @@ function getConfigNameValueMap(payload: unknown): Map<string, string> {
       "value" in entry &&
       typeof entry.name === "string"
     ) {
-      entries.set(entry.name, JSON.stringify(entry.value));
+      const serializedValue = JSON.stringify(entry.value);
+      entries.set(entry.name, serializedValue ?? "null");
     }
   }
   return entries;
