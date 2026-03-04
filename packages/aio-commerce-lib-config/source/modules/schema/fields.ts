@@ -134,7 +134,7 @@ const BooleanSchema = v.object({
   default: v.optional(v.boolean("Expected a boolean for the default value")),
 });
 
-/** Schema for a configuration field that can be one of various field types (list, text, password, email, url, phone, or boolean) */
+/** Schema for a configuration field that can be one of various field types (list, text, password, email, url, tel, or boolean) */
 export const FieldSchema = v.variant("type", [
   ListSchema,
   TextSchema,
