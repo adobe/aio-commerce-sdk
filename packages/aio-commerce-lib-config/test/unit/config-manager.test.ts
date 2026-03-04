@@ -14,10 +14,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   getConfiguration,
+  getConfigurationVersions,
+  restoreConfigurationVersion,
   setConfiguration,
   unsyncCommerceScopes,
 } from "#config-manager";
-import { byCodeAndLevel, byScopeId } from "#config-utils";
+import { byCode, byCodeAndLevel, byScopeId } from "#config-utils";
 import * as configRepository from "#modules/configuration/configuration-repository";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
@@ -256,6 +258,232 @@ describe("ConfigManager functions", () => {
     expect(
       parsed.config.find((e: ConfigValue) => e.name === "currency")?.value,
     ).toBe("JPY");
+  });
+
+  it("creates a version record by default when setting configuration", async () => {
+    await setConfiguration(
+      { config: [{ name: "currency", value: "USD" }] },
+      byCodeAndLevel("global", "global"),
+    );
+
+    const result = await getConfigurationVersions(
+      byCodeAndLevel("global", "global"),
+    );
+
+    expect(result.versions).toHaveLength(1);
+    expect(result.versions[0].change.added).toEqual(["currency"]);
+    expect(result.versions[0].change.updated).toEqual([]);
+    expect(result.versions[0].change.removed).toEqual([]);
+  });
+
+  it("supports listing versions by code selector without explicit level", async () => {
+    await setConfiguration(
+      { config: [{ name: "currency", value: "USD" }] },
+      byCodeAndLevel("global", "global"),
+    );
+
+    const result = await getConfigurationVersions(byCode("global"));
+
+    expect(result.scope.code).toBe("global");
+    expect(result.versions).toHaveLength(1);
+  });
+
+  it("fails when code selector is ambiguous across multiple levels", async () => {
+    const ambiguousScopeTree: ScopeTree = [
+      {
+        id: "id-global",
+        code: "global",
+        label: "Global",
+        level: "global",
+        is_editable: false,
+        is_final: false,
+        is_removable: false,
+        children: [
+          {
+            id: "id-dup-store",
+            code: "dup",
+            label: "Duplicate Store",
+            level: "store",
+            is_editable: true,
+            is_final: true,
+            is_removable: true,
+          },
+        ],
+      },
+      {
+        id: "id-dup-website",
+        code: "dup",
+        label: "Duplicate Website",
+        level: "website",
+        is_editable: true,
+        is_final: true,
+        is_removable: true,
+      },
+    ];
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      ambiguousScopeTree,
+    );
+
+    await expect(getConfiguration(byCode("dup"))).rejects.toThrow(
+      "AMBIGUOUS_SCOPE_CODE",
+    );
+  });
+
+  it("skips version creation when audit feature is disabled", async () => {
+    await setConfiguration(
+      { config: [{ name: "currency", value: "USD" }] },
+      byCodeAndLevel("global", "global"),
+      { auditEnabled: false },
+    );
+
+    const config = await getConfiguration(byCodeAndLevel("global", "global"));
+    expect(
+      config.config.find((entry) => entry.name === "currency")?.value,
+    ).toBe("USD");
+
+    const versions = await getConfigurationVersions(
+      byCodeAndLevel("global", "global"),
+    );
+    expect(versions.versions).toHaveLength(0);
+
+    await expect(
+      getConfigurationVersions(byCodeAndLevel("global", "global"), undefined, {
+        auditEnabled: false,
+      }),
+    ).rejects.toThrow("AUDIT_DISABLED");
+  });
+
+  it("restores a previous version and creates a new restore version entry", async () => {
+    await setConfiguration(
+      { config: [{ name: "currency", value: "USD" }] },
+      byCodeAndLevel("global", "global"),
+    );
+    await setConfiguration(
+      { config: [{ name: "currency", value: "EUR" }] },
+      byCodeAndLevel("global", "global"),
+    );
+
+    const history = await getConfigurationVersions(
+      byCodeAndLevel("global", "global"),
+    );
+    const targetVersion = history.versions.find((version) =>
+      version.change.added.includes("currency"),
+    );
+
+    expect.assert(targetVersion, "targetVersion should exist");
+
+    await restoreConfigurationVersion(byCodeAndLevel("global", "global"), {
+      versionId: targetVersion.id,
+    });
+
+    const restored = await getConfiguration(byCodeAndLevel("global", "global"));
+    expect(
+      restored.config.find((entry) => entry.name === "currency")?.value,
+    ).toBe("USD");
+
+    const afterRestoreHistory = await getConfigurationVersions(
+      byCodeAndLevel("global", "global"),
+    );
+    expect(afterRestoreHistory.versions).toHaveLength(3);
+  });
+
+  it("throws when restoring an unknown version", async () => {
+    await setConfiguration(
+      { config: [{ name: "currency", value: "USD" }] },
+      byCodeAndLevel("global", "global"),
+    );
+
+    await expect(
+      restoreConfigurationVersion(byCodeAndLevel("global", "global"), {
+        versionId: "missing-version-id",
+      }),
+    ).rejects.toThrow("VERSION_NOT_FOUND");
+  });
+
+  it("fails restore when stored version snapshot has invalid shape", async () => {
+    await setConfiguration(
+      { config: [{ name: "currency", value: "USD" }] },
+      byCodeAndLevel("global", "global"),
+    );
+    const history = await getConfigurationVersions(
+      byCodeAndLevel("global", "global"),
+    );
+    const [version] = history.versions;
+    expect.assert(version, "version should exist");
+
+    const malformedRecord = {
+      id: version.id,
+      timestamp: version.timestamp,
+      scope: version.scope,
+      reason: version.reason,
+      change: version.change,
+      snapshot: { invalid: true },
+    };
+    await mockFilesInstance.write(
+      `scope/global/versions/${version.id}.json`,
+      JSON.stringify(malformedRecord),
+    );
+
+    await expect(
+      restoreConfigurationVersion(byCodeAndLevel("global", "global"), {
+        versionId: version.id,
+      }),
+    ).rejects.toThrow("VERSION_SNAPSHOT_INVALID");
+  });
+
+  it("persists config even when version write fails", async () => {
+    const originalWriteImpl = mockFilesInstance.write.getMockImplementation();
+    mockFilesInstance.write.mockImplementation(async (path, content) => {
+      if (path.includes("/versions/")) {
+        throw new Error("version write failed");
+      }
+
+      if (!originalWriteImpl) {
+        throw new Error("original write implementation missing");
+      }
+      return await originalWriteImpl(path, content);
+    });
+
+    await expect(
+      setConfiguration(
+        { config: [{ name: "currency", value: "USD" }] },
+        byCodeAndLevel("global", "global"),
+      ),
+    ).rejects.toThrow("version write failed");
+
+    const persisted = await configRepository.getPersistedConfig("global");
+    expect.assert(persisted, "persisted config should remain written");
+    const parsed = JSON.parse(persisted);
+    expect(
+      parsed.config.find((entry: ConfigValue) => entry.name === "currency"),
+    ).toBeDefined();
+  });
+
+  it("still records versions when version index writes fail", async () => {
+    const originalWriteImpl = mockFilesInstance.write.getMockImplementation();
+    mockFilesInstance.write.mockImplementation(async (path, content) => {
+      if (path.endsWith("/versions/index.json")) {
+        throw new Error("index write failed");
+      }
+      if (!originalWriteImpl) {
+        throw new Error("original write implementation missing");
+      }
+      return await originalWriteImpl(path, content);
+    });
+
+    await setConfiguration(
+      { config: [{ name: "currency", value: "USD" }] },
+      byCodeAndLevel("global", "global"),
+    );
+    await setConfiguration(
+      { config: [{ name: "currency", value: "EUR" }] },
+      byCodeAndLevel("global", "global"),
+    );
+
+    const result = await getConfigurationVersions(
+      byCodeAndLevel("global", "global"),
+    );
+    expect(result.versions).toHaveLength(2);
   });
 
   it("merges existing and newly set entries without losing prior values", async () => {

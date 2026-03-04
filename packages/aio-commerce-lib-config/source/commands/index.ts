@@ -42,6 +42,11 @@ const COMMANDS = {
   encryption: {
     setup: encryptionSetupCommand,
   },
+  // TODO: Remove `validate schema` once encryption setup is split out of schema generation.
+  // Currently `generate schema` in aio-commerce-lib-app calls this as a combined step.
+  validate: {
+    schema: encryptionSetupCommand,
+  },
 } as const;
 
 /**

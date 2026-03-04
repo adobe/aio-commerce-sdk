@@ -89,6 +89,98 @@ export type SetConfigurationResponse = {
 };
 
 /**
+ * Change summary between two configuration versions.
+ */
+export type ConfigurationVersionChange = {
+  /** Config keys that were added in this version. */
+  added: string[];
+  /** Config keys that were updated in this version. */
+  updated: string[];
+  /** Config keys that were removed in this version. */
+  removed: string[];
+};
+
+/**
+ * Configuration version metadata.
+ */
+export type ConfigurationVersion = {
+  /** Unique version identifier. */
+  id: string;
+  /** ISO timestamp for when this version was created. */
+  timestamp: string;
+  /** Scope information for this version. */
+  scope: {
+    id: string;
+    code: string;
+    level: string;
+  };
+  /** Why this version was created. */
+  reason: "set" | "restore";
+  /** Source version ID if created by restore. */
+  restoredFromVersionId?: string;
+  /** Added/updated/removed key summary for this version. */
+  change: ConfigurationVersionChange;
+};
+
+/**
+ * Request query params for listing configuration versions.
+ */
+export type GetConfigurationVersionsParams = {
+  /** Number of items to return. Defaults to 50. */
+  limit?: number;
+  /** Number of items to skip. Defaults to 0. */
+  offset?: number;
+};
+
+/**
+ * Response type for listing configuration versions.
+ */
+export type GetConfigurationVersionsResponse = {
+  /** Scope information including id, code, and level. */
+  scope: {
+    id: string;
+    code: string;
+    level: string;
+  };
+  /** Version metadata in descending order (newest first). */
+  versions: ConfigurationVersion[];
+  /** Pagination metadata for the current query. */
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+  };
+};
+
+/**
+ * Request body for restoring a configuration version.
+ */
+export type RestoreConfigurationVersionRequest = {
+  /** Version ID to restore from. */
+  versionId: string;
+  /** Optional expected latest version ID for optimistic concurrency control. */
+  expectedLatestVersionId?: string;
+};
+
+/**
+ * Response type for restoring a configuration version.
+ */
+export type RestoreConfigurationVersionResponse = {
+  /** Success message. */
+  message: string;
+  /** ISO timestamp of when restore completed. */
+  timestamp: string;
+  /** Scope information including id, code, and level. */
+  scope: {
+    id: string;
+    code: string;
+    level: string;
+  };
+  /** Version ID created by the restore operation. */
+  restoredVersionId: string;
+};
+
+/**
  * Request type for setting custom scope tree.
  */
 export type SetCustomScopeTreeRequest = {

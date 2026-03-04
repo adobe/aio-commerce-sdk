@@ -53,4 +53,6 @@ export type ConfigContext = {
   namespace: string;
   /** Cache timeout in milliseconds. */
   cacheTimeout: number;
+  /** Whether audit/versioning behavior is enabled for this operation. */
+  auditEnabled: boolean;
 };

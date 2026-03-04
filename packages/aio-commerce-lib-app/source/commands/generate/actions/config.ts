@@ -28,6 +28,7 @@ import type { CommerceAppConfigDomain } from "#config/schema/domains";
 type ActionConfig = {
   requiresSchema?: boolean;
   requiresEncryptionKey?: boolean;
+  requiresAuditFlag?: boolean;
 };
 
 export type TemplateAction = ActionConfig & {
@@ -64,7 +65,7 @@ function createActionDefinition(
   actionName: string,
   config: ActionConfig = {},
   options: Omit<ActionDefinition, "function"> = {},
-) {
+): ActionDefinition {
   const def: ActionDefinition = {
     ...options,
 
@@ -90,6 +91,13 @@ function createActionDefinition(
     };
   }
 
+  if (config.requiresAuditFlag) {
+    def.inputs = {
+      ...def.inputs,
+      AIO_COMMERCE_CONFIG_AUDIT_ENABLED: "$AIO_COMMERCE_CONFIG_AUDIT_ENABLED",
+    };
+  }
+
   return def;
 }
 
@@ -97,7 +105,10 @@ function createActionDefinition(
  * Gets the runtime actions to be generated from the ext.config.yaml configuration.
  * @param extConfig - The ext.config.yaml configuration.
  */
-export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
+export function getRuntimeActions(
+  extConfig: ExtConfig,
+  dir: string,
+): TemplateAction[] {
   return Object.entries(
     extConfig.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions ?? {},
   ).map(
@@ -115,7 +126,7 @@ export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
  */
 export function buildAppManagementExtConfig(
   features: Set<CommerceAppConfigDomain>,
-) {
+): ExtConfig {
   const extConfig = {
     hooks: {
       "pre-app-build":
@@ -174,7 +185,7 @@ export function buildAppManagementExtConfig(
 }
 
 /** Builds the ext.config.yaml configuration for the business configuration extension. */
-export function buildBusinessConfigurationExtConfig() {
+export function buildBusinessConfigurationExtConfig(): ExtConfig {
   const actions = [
     {
       name: "get-scope-tree",
@@ -195,6 +206,17 @@ export function buildBusinessConfigurationExtConfig() {
       name: "set-configuration",
       templateFile: "set-configuration.js.template",
       requiresEncryptionKey: true,
+      requiresAuditFlag: true,
+    },
+    {
+      name: "get-configuration-versions",
+      templateFile: "get-configuration-versions.js.template",
+      requiresAuditFlag: true,
+    },
+    {
+      name: "restore-configuration-version",
+      templateFile: "restore-configuration-version.js.template",
+      requiresAuditFlag: true,
     },
     {
       name: "set-custom-scope-tree",

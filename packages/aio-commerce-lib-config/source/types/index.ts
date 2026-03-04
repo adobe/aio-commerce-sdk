@@ -19,6 +19,8 @@ export type LibConfigOptions = {
   cacheTimeout?: number;
   /** Optional encryption key for encrypting/decrypting password fields. If not provided, falls back to AIO_COMMERCE_CONFIG_ENCRYPTION_KEY environment variable. */
   encryptionKey?: string | null;
+  /** Optional flag to enable config audit/versioning features. Defaults to true. */
+  auditEnabled?: boolean;
 };
 
 /**
@@ -28,4 +30,5 @@ export type LibConfigOptions = {
 export type GlobalLibConfigOptions = {
   cacheTimeout: number;
   encryptionKey?: string | null;
+  auditEnabled: boolean;
 };

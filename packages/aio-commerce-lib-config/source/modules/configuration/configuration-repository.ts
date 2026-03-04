@@ -10,8 +10,21 @@
  * governing permissions and limitations under the License.
  */
 
+import { createVersionRecord } from "#modules/versioning/version-repository";
 import { getLogger } from "#utils/logger";
 import { getSharedFiles, getSharedState } from "#utils/repository";
+
+type PersistConfigOptions = {
+  auditEnabled?: boolean;
+  reason?: "set" | "restore";
+  restoredFromVersionId?: string;
+  expectedLatestVersionId?: string;
+};
+
+type PersistedConfigPayload = {
+  scope?: unknown;
+  config?: unknown;
+};
 
 /**
  * Gets cached configuration payload from state store.
@@ -19,7 +32,9 @@ import { getSharedFiles, getSharedState } from "#utils/repository";
  * @param scopeCode - Scope code identifier.
  * @returns Promise resolving to cached configuration payload or null if not found.
  */
-export async function getCachedConfig(scopeCode: string) {
+export async function getCachedConfig(
+  scopeCode: string,
+): Promise<string | null> {
   try {
     const state = await getSharedState();
     const key = getConfigStateKey(scopeCode);
@@ -41,7 +56,10 @@ export async function getCachedConfig(scopeCode: string) {
  * @param scopeCode - Scope code identifier.
  * @param payload - Configuration payload as JSON string.
  */
-export async function setCachedConfig(scopeCode: string, payload: string) {
+export async function setCachedConfig(
+  scopeCode: string,
+  payload: string,
+): Promise<void> {
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
   );
@@ -64,20 +82,18 @@ export async function setCachedConfig(scopeCode: string, payload: string) {
  * @param scopeCode - Scope code identifier.
  * @returns Promise resolving to configuration payload as string or null if not found.
  */
-export async function getPersistedConfig(scopeCode: string) {
+export async function getPersistedConfig(
+  scopeCode: string,
+): Promise<string | null> {
   try {
     const files = await getSharedFiles();
     const filePath = getConfigFilePath(scopeCode);
-    const filesList = await files.list("scope/");
-    const fileObject = filesList.find((file) => file.name === filePath);
-
-    if (!fileObject) {
-      return null;
-    }
-
     const content = await files.read(filePath);
     return content ? content.toString("utf8") : null;
-  } catch (_) {
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return null;
+    }
     return null;
   }
 }
@@ -88,7 +104,10 @@ export async function getPersistedConfig(scopeCode: string) {
  * @param scopeCode - Scope code identifier.
  * @param payload - Configuration payload as JSON string.
  */
-export async function saveConfig(scopeCode: string, payload: string) {
+export async function saveConfig(
+  scopeCode: string,
+  payload: string,
+): Promise<void> {
   const files = await getSharedFiles();
   const filePath = getConfigFilePath(scopeCode);
   await files.write(filePath, payload);
@@ -100,7 +119,11 @@ export async function saveConfig(scopeCode: string, payload: string) {
  * @param scopeCode - The scope code to persist configuration for.
  * @param payload - The configuration payload object.
  */
-export async function persistConfig(scopeCode: string, payload: unknown) {
+export async function persistConfig(
+  scopeCode: string,
+  payload: unknown,
+  options: PersistConfigOptions = {},
+): Promise<{ id: string } | null> {
   const payloadString = JSON.stringify(payload);
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
@@ -118,6 +141,18 @@ export async function persistConfig(scopeCode: string, payload: unknown) {
       error: e instanceof Error ? e.message : String(e),
     });
   }
+
+  let createdVersionId: string | null = null;
+  if (options.auditEnabled !== false) {
+    const createdVersion = await createVersionRecord(scopeCode, payload, {
+      reason: options.reason ?? "set",
+      restoredFromVersionId: options.restoredFromVersionId,
+      expectedLatestVersionId: options.expectedLatestVersionId,
+    });
+    createdVersionId = createdVersion.id;
+  }
+
+  return createdVersionId ? { id: createdVersionId } : null;
 }
 
 /**
@@ -126,7 +161,9 @@ export async function persistConfig(scopeCode: string, payload: unknown) {
  * @param scopeCode - The scope code to load configuration for.
  * @returns Promise resolving to parsed configuration or null if not found.
  */
-async function loadFromStateCache(scopeCode: string) {
+async function loadFromStateCache(
+  scopeCode: string,
+): Promise<PersistedConfigPayload | null> {
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
   );
@@ -150,7 +187,9 @@ async function loadFromStateCache(scopeCode: string) {
  * @param scopeCode - The scope code to load configuration for.
  * @returns Promise resolving to parsed configuration or null if not found.
  */
-async function loadFromPersistedFiles(scopeCode: string) {
+async function loadFromPersistedFiles(
+  scopeCode: string,
+): Promise<PersistedConfigPayload | null> {
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
   );
@@ -194,7 +233,9 @@ async function loadFromPersistedFiles(scopeCode: string) {
  * @param scopeCode - The scope code to load configuration for.
  * @returns Promise resolving to configuration payload or null if not found.
  */
-export async function loadConfig(scopeCode: string) {
+export async function loadConfig(
+  scopeCode: string,
+): Promise<PersistedConfigPayload | null> {
   const fromState = await loadFromStateCache(scopeCode);
   if (fromState) {
     return fromState;

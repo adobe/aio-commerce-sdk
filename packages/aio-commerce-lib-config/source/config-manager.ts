@@ -10,6 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  deriveScopeFromArgs,
+  deriveScopeFromCodeAndLevel,
+} from "#config-utils";
 import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "#utils/constants";
 
 import {
@@ -17,6 +21,7 @@ import {
   getConfiguration as getConfigModule,
   setConfiguration as setConfigModule,
 } from "./modules/configuration";
+import * as configRepository from "./modules/configuration/configuration-repository";
 import { getSchema as getSchemaModule } from "./modules/schema";
 import {
   getPersistedScopeTree,
@@ -24,20 +29,43 @@ import {
   saveScopeTree,
   setCustomScopeTree as setCustomScopeTreeModule,
 } from "./modules/scope-tree";
+import {
+  getVersionRecord,
+  listVersionRecords,
+} from "./modules/versioning/version-repository";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { SelectorBy } from "#config-utils";
-import type { GetScopeTreeResult, ScopeTree } from "./modules/scope-tree";
 import type {
+  ConfigContext,
+  ConfigValue,
+  ConfigValueWithOptionalOrigin,
+} from "./modules/configuration/types";
+import type { BusinessConfigSchema } from "./modules/schema";
+import type {
+  GetScopeTreeResult,
+  ScopeNode,
+  ScopeTree,
+} from "./modules/scope-tree";
+import type {
+  GetConfigurationByKeyResponse,
+  GetConfigurationResponse,
+  GetConfigurationVersionsParams,
+  GetConfigurationVersionsResponse,
   GlobalLibConfigOptions,
   LibConfigOptions,
+  RestoreConfigurationVersionRequest,
+  RestoreConfigurationVersionResponse,
   SetConfigurationRequest,
+  SetConfigurationResponse,
   SetCustomScopeTreeRequest,
+  SetCustomScopeTreeResponse,
 } from "./types";
 
 const globalLibConfigOptions: GlobalLibConfigOptions = {
   cacheTimeout: DEFAULT_CACHE_TIMEOUT,
   encryptionKey: undefined,
+  auditEnabled: true,
 };
 
 /**
@@ -66,6 +94,8 @@ export function setGlobalLibConfigOptions(options: LibConfigOptions) {
     options.encryptionKey !== undefined
       ? options.encryptionKey
       : globalLibConfigOptions.encryptionKey;
+  globalLibConfigOptions.auditEnabled =
+    options.auditEnabled ?? globalLibConfigOptions.auditEnabled;
 }
 
 /**
@@ -75,6 +105,77 @@ export function setGlobalLibConfigOptions(options: LibConfigOptions) {
  */
 export function getGlobalLibConfigOptions(): GlobalLibConfigOptions {
   return globalLibConfigOptions;
+}
+
+function resolveConfigContext(options?: LibConfigOptions): ConfigContext {
+  return {
+    namespace: DEFAULT_NAMESPACE,
+    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
+    auditEnabled: options?.auditEnabled ?? globalLibConfigOptions.auditEnabled,
+  };
+}
+
+function assertAuditEnabled(auditEnabled: boolean): void {
+  if (!auditEnabled) {
+    throw new Error("AUDIT_DISABLED: audit feature is disabled");
+  }
+}
+
+async function resolveScopeForSelector(selector: SelectorBy): Promise<{
+  scopeCode: string;
+  scopeLevel: string;
+  scopeId: string;
+  scopePath: ScopeNode[];
+}> {
+  const scopeTree = await getPersistedScopeTree(DEFAULT_NAMESPACE);
+  if (selector.by._tag === "scopeId") {
+    return deriveScopeFromArgs([selector.by.scopeId], scopeTree);
+  }
+  if (selector.by._tag === "codeAndLevel") {
+    return deriveScopeFromArgs(
+      [selector.by.code, selector.by.level],
+      scopeTree,
+    );
+  }
+
+  const matches = findScopesByCode(scopeTree, selector.by.code);
+  if (matches.length === 0) {
+    throw new Error(`INVALID_SCOPE: Unknown scope code='${selector.by.code}'`);
+  }
+  if (matches.length > 1) {
+    throw new Error(
+      `AMBIGUOUS_SCOPE_CODE: Multiple scopes found for code='${selector.by.code}', provide level`,
+    );
+  }
+
+  return deriveScopeFromCodeAndLevel(
+    selector.by.code,
+    matches[0].level,
+    scopeTree,
+  );
+}
+
+function findScopesByCode(
+  scopeTree: ScopeTree,
+  scopeCode: string,
+): Array<{ level: string }> {
+  const matches: Array<{ level: string }> = [];
+  const visit = (scope: ScopeTree[number]) => {
+    if (scope.code === scopeCode) {
+      matches.push({ level: scope.level });
+    }
+    if (scope.children) {
+      for (const child of scope.children) {
+        visit(child);
+      }
+    }
+  };
+
+  for (const root of scopeTree) {
+    visit(root);
+  }
+
+  return matches;
 }
 
 /** Parameters for getting the scope tree from Commerce API. */
@@ -156,7 +257,7 @@ export async function getScopeTree(
 export async function getScopeTree(
   params?: GetCachedScopeTreeParams | GetFreshScopeTreeParams,
   options?: LibConfigOptions,
-) {
+): Promise<GetScopeTreeResult> {
   const context = {
     namespace: DEFAULT_NAMESPACE,
     cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
@@ -213,7 +314,11 @@ export async function getScopeTree(
 export async function syncCommerceScopes(
   commerceConfig: CommerceHttpClientParams,
   options?: LibConfigOptions,
-) {
+): Promise<{
+  scopeTree: ScopeTree;
+  synced: boolean;
+  error?: string;
+}> {
   try {
     const result = await getScopeTree(
       {
@@ -321,7 +426,9 @@ export async function unsyncCommerceScopes(): Promise<boolean> {
  * }
  * ```
  */
-export function getConfigSchema(options?: LibConfigOptions) {
+export function getConfigSchema(
+  options?: LibConfigOptions,
+): Promise<BusinessConfigSchema> {
   const context = {
     namespace: DEFAULT_NAMESPACE,
     cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
@@ -363,11 +470,8 @@ export function getConfigSchema(options?: LibConfigOptions) {
 export async function getConfiguration(
   selector: SelectorBy,
   options?: LibConfigOptions,
-) {
-  const context = {
-    namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
-  };
+): Promise<GetConfigurationResponse> {
+  const context = resolveConfigContext(options);
 
   if (selector.by._tag === "scopeId") {
     return await getConfigModule(context, selector.by.scopeId);
@@ -377,7 +481,8 @@ export async function getConfiguration(
     return await getConfigModule(context, selector.by.code, selector.by.level);
   }
 
-  return await getConfigModule(context, selector.by.code);
+  const resolvedScope = await resolveScopeForSelector(selector);
+  return await getConfigModule(context, resolvedScope.scopeId);
 }
 
 /**
@@ -414,11 +519,8 @@ export async function getConfigurationByKey(
   configKey: string,
   selector: SelectorBy,
   options?: LibConfigOptions,
-) {
-  const context = {
-    namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
-  };
+): Promise<GetConfigurationByKeyResponse> {
+  const context = resolveConfigContext(options);
 
   if (selector.by._tag === "scopeId") {
     return await getConfigByKeyModule(context, configKey, selector.by.scopeId);
@@ -433,7 +535,8 @@ export async function getConfigurationByKey(
     );
   }
 
-  return await getConfigByKeyModule(context, configKey, selector.by.code);
+  const resolvedScope = await resolveScopeForSelector(selector);
+  return await getConfigByKeyModule(context, configKey, resolvedScope.scopeId);
 }
 
 /**
@@ -483,11 +586,8 @@ export async function setConfiguration(
   request: SetConfigurationRequest,
   selector: SelectorBy,
   options?: LibConfigOptions,
-) {
-  const context = {
-    namespace: DEFAULT_NAMESPACE,
-    cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,
-  };
+): Promise<SetConfigurationResponse> {
+  const context = resolveConfigContext(options);
 
   if (selector.by._tag === "scopeId") {
     return await setConfigModule(context, request, selector.by.scopeId);
@@ -502,7 +602,107 @@ export async function setConfiguration(
     );
   }
 
-  return await setConfigModule(context, request, selector.by.code);
+  const resolvedScope = await resolveScopeForSelector(selector);
+  return await setConfigModule(context, request, resolvedScope.scopeId);
+}
+
+/**
+ * Lists configuration versions for a scope.
+ */
+export async function getConfigurationVersions(
+  selector: SelectorBy,
+  params?: GetConfigurationVersionsParams,
+  options?: LibConfigOptions,
+): Promise<GetConfigurationVersionsResponse> {
+  const context = resolveConfigContext(options);
+  assertAuditEnabled(context.auditEnabled);
+
+  const resolvedScope = await resolveScopeForSelector(selector);
+  const page = await listVersionRecords(resolvedScope.scopeCode, params);
+  return {
+    scope: {
+      id: resolvedScope.scopeId,
+      code: resolvedScope.scopeCode,
+      level: resolvedScope.scopeLevel,
+    },
+    versions: page.versions,
+    pagination: {
+      total: page.total,
+      limit: page.limit,
+      offset: page.offset,
+    },
+  };
+}
+
+/**
+ * Restores configuration for a scope from a specific historical version.
+ */
+export async function restoreConfigurationVersion(
+  selector: SelectorBy,
+  request: RestoreConfigurationVersionRequest,
+  options?: LibConfigOptions,
+): Promise<RestoreConfigurationVersionResponse> {
+  const context = resolveConfigContext(options);
+  assertAuditEnabled(context.auditEnabled);
+
+  const resolvedScope = await resolveScopeForSelector(selector);
+  const targetVersion = await getVersionRecord(
+    resolvedScope.scopeCode,
+    request.versionId,
+  );
+
+  if (!targetVersion) {
+    throw new Error(`VERSION_NOT_FOUND: ${request.versionId}`);
+  }
+
+  const payload = {
+    scope: {
+      id: resolvedScope.scopeId,
+      code: resolvedScope.scopeCode,
+      level: resolvedScope.scopeLevel,
+    },
+    config: extractConfigSnapshot(targetVersion.snapshot),
+  };
+  const restoredVersion = await configRepository.persistConfig(
+    resolvedScope.scopeCode,
+    payload,
+    {
+      auditEnabled: true,
+      reason: "restore",
+      restoredFromVersionId: request.versionId,
+      expectedLatestVersionId: request.expectedLatestVersionId,
+    },
+  );
+  if (!restoredVersion) {
+    throw new Error("RESTORE_FAILED: could not create restore version");
+  }
+
+  return {
+    message: "Configuration version restored successfully",
+    timestamp: new Date().toISOString(),
+    scope: {
+      id: resolvedScope.scopeId,
+      code: resolvedScope.scopeCode,
+      level: resolvedScope.scopeLevel,
+    },
+    restoredVersionId: restoredVersion.id,
+  };
+}
+
+function extractConfigSnapshot(
+  snapshot: unknown,
+): ConfigValueWithOptionalOrigin[] | ConfigValue[] {
+  if (
+    typeof snapshot !== "object" ||
+    snapshot === null ||
+    !("config" in snapshot) ||
+    !Array.isArray(snapshot.config)
+  ) {
+    throw new Error(
+      "VERSION_SNAPSHOT_INVALID: missing config array in snapshot",
+    );
+  }
+  return snapshot.config as ConfigValueWithOptionalOrigin[] | ConfigValue[];
 }
 
 /**
@@ -572,7 +772,7 @@ export async function setConfiguration(
 export async function setCustomScopeTree(
   request: SetCustomScopeTreeRequest,
   options?: LibConfigOptions,
-) {
+): Promise<SetCustomScopeTreeResponse> {
   const context = {
     namespace: DEFAULT_NAMESPACE,
     cacheTimeout: options?.cacheTimeout ?? globalLibConfigOptions.cacheTimeout,

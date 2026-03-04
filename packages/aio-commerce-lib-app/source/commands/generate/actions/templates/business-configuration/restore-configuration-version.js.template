@@ -1,7 +1,5 @@
-// @ts-check
-
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -20,7 +18,7 @@ import util from "node:util";
 import {
   byCodeAndLevel,
   byScopeId,
-  setConfiguration,
+  restoreConfigurationVersion,
   setGlobalLibConfigOptions,
 } from "@adobe/aio-commerce-lib-config";
 import { parseAuditEnabled } from "./audit-enabled.js";
@@ -31,51 +29,37 @@ import {
 } from "@adobe/aio-commerce-sdk/core/responses";
 import AioLogger from "@adobe/aio-lib-core-logging";
 
-// Shorthand to inspect an object.
 const inspect = (obj) => util.inspect(obj, { depth: null });
 
 /**
- * Get the configuration.
+ * Restore configuration from a version.
  * @param params - The input parameters.
- * @returns The response object containing the updated configuration values.
+ * @returns The response object containing restore details.
  */
 export async function main(params) {
-  const logger = AioLogger("set-configuration", {
+  const logger = AioLogger("restore-configuration-version", {
     level: params.LOG_LEVEL || "info",
   });
 
   try {
-    if (params.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY) {
-      setGlobalLibConfigOptions({
-        encryptionKey: params.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+    const auditEnabled = parseAuditEnabled(params.AIO_COMMERCE_CONFIG_AUDIT_ENABLED);
+    setGlobalLibConfigOptions({ auditEnabled });
+    if (!auditEnabled) {
+      return badRequest({
+        body: {
+          code: "AUDIT_DISABLED",
+          message: "Audit feature is disabled",
+        },
       });
-    }
-    setGlobalLibConfigOptions({
-      auditEnabled: parseAuditEnabled(params.AIO_COMMERCE_CONFIG_AUDIT_ENABLED),
-    });
-    let body;
-
-    if (
-      params &&
-      typeof params === "object" &&
-      Object.keys(params).length === 0
-    ) {
-      body = {};
     }
 
     const id = params.id;
     const code = params.code;
     const level = params.level;
-
-    logger.debug(
-      `Setting configuration with params: ${inspect({ id, code, level })}`,
-    );
+    const versionId = params.versionId;
+    const expectedLatestVersionId = params.expectedLatestVersionId;
 
     if (!(id || (code && level))) {
-      logger.warn(
-        "Invalid params: Either id or both code and level query params are required",
-      );
-
       return badRequest({
         body: {
           code: "INVALID_PARAMS",
@@ -84,45 +68,51 @@ export async function main(params) {
       });
     }
 
-    const candidateConfig = params.config ?? body?.config;
-    if (!(candidateConfig && Array.isArray(candidateConfig))) {
-      logger.warn(
-        "Invalid body: request must include a config array in params.config or body.config",
-      );
-
+    if (!(typeof versionId === "string" && versionId.trim().length > 0)) {
       return badRequest({
         body: {
           code: "INVALID_BODY",
-          message:
-            "request must include a config array in params.config or body.config",
+          message: "versionId is required",
         },
       });
     }
 
-    const payload = { config: candidateConfig };
-    logger.debug(`Setting configuration with payload: ${inspect(payload)}`);
+    const selector = id ? byScopeId(id) : byCodeAndLevel(code, level);
+    const result = await restoreConfigurationVersion(selector, {
+      versionId,
+      expectedLatestVersionId,
+    });
 
-    const result = id
-      ? await setConfiguration(payload, byScopeId(id))
-      : await setConfiguration(payload, byCodeAndLevel(code, level));
-
-    logger.debug(`Successfully set configuration: ${inspect(result)}`);
     return ok({
-      body: { result },
+      body: result,
       headers: {
         "Cache-Control": "no-store",
       },
     });
   } catch (error) {
     logger.error(
-      `Something went wrong while setting configuration: ${inspect(error)}`,
+      `Something went wrong while restoring configuration version: ${inspect(error)}`,
     );
+
+    if (
+      error instanceof Error &&
+      (error.message.includes("AUDIT_DISABLED") ||
+        error.message.includes("VERSION_NOT_FOUND") ||
+        error.message.includes("VERSION_CONFLICT"))
+    ) {
+      return badRequest({
+        body: {
+          code: "INVALID_REQUEST",
+          message: error.message,
+        },
+      });
+    }
 
     return internalServerError({
       body: {
         code: "INTERNAL_ERROR",
-        message: "An internal server error occurred",
         details: error instanceof Error ? error.message : "Unknown error",
+        message: "An internal server error occurred",
       },
     });
   }

@@ -82,7 +82,10 @@ export async function setConfiguration(
     config: mergedScopeConfig,
   };
 
-  await configRepository.persistConfig(scopeCode, payload);
+  await configRepository.persistConfig(scopeCode, payload, {
+    auditEnabled: context.auditEnabled,
+    reason: "set",
+  });
   const responseConfig = sanitizedEntries.map((entry) => ({
     name: entry.name,
     value: entry.value,

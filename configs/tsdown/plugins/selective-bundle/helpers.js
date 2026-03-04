@@ -17,9 +17,99 @@ import {
   realpathSync,
   writeFileSync,
 } from "node:fs";
-import { resolve, sep } from "node:path";
+import { dirname, resolve, sep } from "node:path";
 
 import { PRIVATE_DEPS_LOOKUP } from "./constants.js";
+
+const CATALOG_HEADER_REGEX = /^catalog:\s*$/;
+const LEADING_WHITESPACE_REGEX = /^\s/;
+const COMMENT_LINE_REGEX = /^\s*#/;
+const CATALOG_ENTRY_REGEX = /^\s+(.+?)\s*:\s*(.+)$/;
+
+/**
+ * Walks up the directory tree from `startDir` to find `pnpm-workspace.yaml`.
+ * @param {string} startDir
+ * @returns {string | null}
+ */
+function findWorkspaceYaml(startDir) {
+  let dir = startDir;
+  while (true) {
+    const candidate = resolve(dir, "pnpm-workspace.yaml");
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+    const parent = dirname(dir);
+    if (parent === dir) {
+      return null;
+    }
+    dir = parent;
+  }
+}
+
+/**
+ * Parses the default `catalog:` block from a pnpm-workspace.yaml file.
+ * Does not require an external YAML library — only handles the simple
+ * flat key-value catalog structure used in this repo.
+ *
+ * @param {string} yamlPath
+ * @returns {Record<string, string>}
+ */
+function loadPnpmCatalog(yamlPath) {
+  const catalog = {};
+  const lines = readFileSync(yamlPath, "utf-8").split("\n");
+  let inCatalog = false;
+
+  for (const line of lines) {
+    if (CATALOG_HEADER_REGEX.test(line)) {
+      inCatalog = true;
+      continue;
+    }
+
+    if (inCatalog) {
+      // A non-empty, non-comment line without leading whitespace ends the block
+      if (
+        line.length > 0 &&
+        !LEADING_WHITESPACE_REGEX.test(line) &&
+        !COMMENT_LINE_REGEX.test(line)
+      ) {
+        inCatalog = false;
+        continue;
+      }
+
+      // Parse "  'key': value" or "  key: value"
+      const match = CATALOG_ENTRY_REGEX.exec(line.trimEnd());
+      if (match) {
+        const name = match[1].replace(/^['"]|['"]$/g, "").trim();
+        catalog[name] = match[2].trim();
+      }
+    }
+  }
+
+  return catalog;
+}
+
+/**
+ * Resolves `catalog:` protocol references in a deps object to their
+ * actual semver ranges from the workspace catalog.
+ *
+ * @param {Record<string, string> | undefined} deps
+ * @param {Record<string, string>} catalog
+ * @returns {Record<string, string> | undefined}
+ */
+function resolveCatalogRefs(deps, catalog) {
+  if (!deps) {
+    return deps;
+  }
+
+  return Object.fromEntries(
+    Object.entries(deps).map(([name, version]) => {
+      if (version === "catalog:" || version.startsWith("catalog:")) {
+        return [name, catalog[name] ?? version];
+      }
+      return [name, version];
+    }),
+  );
+}
 
 /**
  * Gets the bare module name from an import source string.
@@ -110,10 +200,23 @@ export function buildEnrichedPackageJson(packageRoot, manifest) {
     readFileSync(resolve(packageRoot, "package.json"), "utf-8"),
   );
 
+  // Resolve catalog: protocol references so the packed tarball contains
+  // plain semver ranges that npm/yarn/bun can understand.
+  const workspaceYamlPath = findWorkspaceYaml(packageRoot);
+  const catalog = workspaceYamlPath ? loadPnpmCatalog(workspaceYamlPath) : {};
+  pkg.dependencies = resolveCatalogRefs(pkg.dependencies, catalog);
+  pkg.peerDependencies = resolveCatalogRefs(pkg.peerDependencies, catalog);
+  pkg.devDependencies = resolveCatalogRefs(pkg.devDependencies, catalog);
+
   pkg.dependencies ??= {};
 
   for (const [name, info] of Object.entries(manifest)) {
-    pkg.dependencies[name] ??= info.version;
+    // Resolve catalog: in transitive deps from private packages before merging
+    const version =
+      info.version === "catalog:" || info.version.startsWith("catalog:")
+        ? (catalog[name] ?? info.version)
+        : info.version;
+    pkg.dependencies[name] ??= version;
   }
 
   pkg.dependencies = Object.fromEntries(

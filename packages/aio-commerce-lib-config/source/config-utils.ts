@@ -170,11 +170,9 @@ export function deriveScopeFromCodeWithOptionalLevel(
     throw new Error("INVALID_ARGS: expected (code: string)");
   }
 
-  if (!isNonEmptyString(level)) {
-    throw new Error("INVALID_ARGS: expected (level: string)");
-  }
-
-  const effectiveLevel = level?.trim() || DEFAULT_CUSTOM_SCOPE_LEVEL;
+  const effectiveLevel = isNonEmptyString(level)
+    ? level.trim()
+    : DEFAULT_CUSTOM_SCOPE_LEVEL;
   return deriveScopeFromCodeAndLevel(code, effectiveLevel, tree);
 }
 
@@ -184,21 +182,22 @@ export function deriveScopeFromCodeWithOptionalLevel(
  * @param tree - The scope tree to search for the node.
  * @returns The derived scope information including code, level, id, and path.
  */
-export function deriveScopeFromArgs(args: unknown[], tree: ScopeTree) {
+export function deriveScopeFromArgs(
+  args: unknown[],
+  tree: ScopeTree,
+): {
+  scopeCode: string;
+  scopeLevel: string;
+  scopeId: string;
+  scopePath: ScopeNode[];
+} {
   if (args.length === 2) {
     return deriveScopeFromCodeAndLevel(args[0], args[1], tree);
   }
   if (args.length === 1) {
-    const arg = args[0];
-    // Try as ID first, then as code with default level
-    try {
-      return deriveScopeFromId(arg, tree);
-    } catch (_error) {
-      // If ID lookup fails, treat as code with default level
-      return deriveScopeFromCodeWithOptionalLevel(arg, undefined, tree);
-    }
+    return deriveScopeFromId(args[0], tree);
   }
-  throw new Error("INVALID_ARGS: expected (id), (code), or (code, level)");
+  throw new Error("INVALID_ARGS: expected (id) or (code, level)");
 }
 
 /**
