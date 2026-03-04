@@ -59,7 +59,7 @@ router.get("/", {
 });
 
 /** POST / - Set custom scope tree */
-router.post("/", {
+router.put("/", {
   body: v.object({
     scopes: v.array(v.any()),
   }),
