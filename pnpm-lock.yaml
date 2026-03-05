@@ -519,9 +519,18 @@ importers:
       '@aio-commerce-sdk/config-vitest':
         specifier: workspace:*
         version: link:../../configs/vitest
+      '@aio-commerce-sdk/scripting-utils':
+        specifier: workspace:*
+        version: link:../../packages-private/scripting-utils
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../scripts
       msw:
         specifier: 'catalog:'
         version: 2.12.10(@types/node@24.11.0)(typescript@5.9.3)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages/aio-commerce-sdk:
     dependencies:
