@@ -23,6 +23,8 @@ type PersistConfigOptions = {
   reason?: "set" | "restore";
   restoredFromVersionId?: string;
   expectedLatestVersionId?: string;
+  /** Password field names to exclude from "updated" in version change (avoids always-marked-changed due to re-encryption). */
+  passwordFieldNames?: Set<string>;
 };
 
 type PersistedConfigPayload = {
@@ -156,6 +158,7 @@ export async function persistConfig(
       reason: options.reason ?? "set",
       restoredFromVersionId: options.restoredFromVersionId,
       expectedLatestVersionId: options.expectedLatestVersionId,
+      passwordFieldNames: options.passwordFieldNames,
     });
     createdVersionId = createdVersion.id;
   }

@@ -33,6 +33,7 @@ import { validateCommerceAppConfigDomain } from "#config/index";
 import type {
   BusinessConfigSchema,
   ConfigValue,
+  SetConfigurationRequest,
 } from "@adobe/aio-commerce-lib-config";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
@@ -187,6 +188,28 @@ function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
   });
 }
 
+/**
+ * Masks password fields in version change entries (before/after).
+ * @param schema - The schema to determine password fields.
+ * @param changes - The change entries to mask.
+ * @returns The same entries with password before/after replaced by masked value.
+ */
+function maskPasswordFieldsInChanges<
+  T extends { name: string; before?: unknown; after?: unknown },
+>(schema: BusinessConfigSchema, changes: T[]): T[] {
+  return changes.map((entry) => {
+    const schemaMatch = schema.find((field) => field.name === entry.name);
+    if (schemaMatch?.type !== "password") {
+      return entry;
+    }
+    return {
+      ...entry,
+      ...(entry.before !== undefined ? { before: MASKED_PASSWORD_VALUE } : {}),
+      ...(entry.after !== undefined ? { after: MASKED_PASSWORD_VALUE } : {}),
+    };
+  });
+}
+
 // The router that will hold the config routes
 const router = new HttpActionRouter<ConfigActionContext>().use(logger());
 
@@ -233,7 +256,12 @@ router.post("/", {
     config: v.array(
       v.object({
         name: nonEmptyStringValueSchema("config.name"),
-        value: v.union([v.string(), v.array(v.string())]),
+        value: v.union([
+          v.string(),
+          v.number(),
+          v.boolean(),
+          v.array(v.string()),
+        ]),
       }),
     ),
   }),
@@ -254,7 +282,9 @@ router.post("/", {
     );
 
     const result = await setConfiguration(
-      { config: updatedFields },
+      {
+        config: updatedFields as SetConfigurationRequest["config"],
+      },
       byScopeId(scopeId),
       {
         encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
@@ -283,6 +313,7 @@ router.get("/versions", {
 
   handler: async (req, ctx) => {
     const { rawParams } = ctx;
+    const { configSchema } = rawParams;
     const auditResult = resolveAuditOrBadRequest(rawParams);
     if (!auditResult.ok) {
       return auditResult.response;
@@ -308,9 +339,28 @@ router.get("/versions", {
         { limit, offset },
         { auditEnabled },
       );
+      const versions = result.versions.map((version) => ({
+        ...version,
+        ...(version.config
+          ? {
+              config: filterPasswordFields(configSchema, version.config),
+            }
+          : {}),
+        ...(version.changes
+          ? {
+              changes: maskPasswordFieldsInChanges(
+                configSchema,
+                version.changes,
+              ),
+            }
+          : {}),
+      }));
 
       return ok({
-        body: result,
+        body: {
+          ...result,
+          versions,
+        },
         headers: { "Cache-Control": "no-store" },
       });
     } catch (error) {
@@ -330,7 +380,7 @@ router.get("/versions", {
   },
 });
 
-/** POST /versions/restore - Restore a configuration version */
+/** POST /versions/restore - Restore configuration from a version */
 router.post("/versions/restore", {
   body: v.object({
     scopeId: v.optional(nonEmptyStringValueSchema("scopeId")),
@@ -341,10 +391,12 @@ router.post("/versions/restore", {
     expectedLatestVersionId: v.optional(
       nonEmptyStringValueSchema("expectedLatestVersionId"),
     ),
+    fields: v.optional(v.array(nonEmptyStringValueSchema("fields[]"))),
   }),
 
   handler: async (req, ctx) => {
     const { rawParams } = ctx;
+    const { configSchema } = rawParams;
     const auditResult = resolveAuditOrBadRequest(rawParams);
     if (!auditResult.ok) {
       return auditResult.response;
@@ -353,42 +405,53 @@ router.post("/versions/restore", {
     const selectorResult = resolveSelectorOrBadRequest(
       req.body,
       false,
-      "Either scopeId/id or both code and level are required for restore",
+      "Either scopeId/id or code+level in body is required",
     );
     if (!selectorResult.ok) {
       return selectorResult.response;
     }
 
-    const { auditEnabled } = auditResult;
     const { selector } = selectorResult;
+    const { versionId, expectedLatestVersionId, fields } = req.body;
+    const { auditEnabled } = auditResult;
 
     try {
       const result = await restoreConfigurationVersion(
         selector,
+        { versionId, expectedLatestVersionId, fields },
         {
-          versionId: req.body.versionId,
-          expectedLatestVersionId: req.body.expectedLatestVersionId,
+          encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+          auditEnabled,
         },
-        { auditEnabled },
       );
+      result.config = filterPasswordFields(configSchema, result.config);
 
       return ok({
         body: result,
         headers: { "Cache-Control": "no-store" },
       });
     } catch (error) {
-      if (
-        error instanceof Error &&
-        (error.message.includes("VERSION_NOT_FOUND") ||
-          error.message.includes("VERSION_CONFLICT"))
-      ) {
+      if (!(error instanceof Error)) {
+        throw error;
+      }
+      if (error.message.startsWith("VERSION_NOT_FOUND:")) {
         return badRequest({
           body: {
-            code: "INVALID_REQUEST",
-            message: error.message,
+            code: "VERSION_NOT_FOUND",
+            message: "Version not found for the selected scope",
           },
         });
       }
+      if (error.message.startsWith("VERSION_CONFLICT:")) {
+        return badRequest({
+          body: {
+            code: "VERSION_CONFLICT",
+            message:
+              "The latest version does not match expectedLatestVersionId",
+          },
+        });
+      }
+
       throw error;
     }
   },

@@ -100,6 +100,27 @@ export type ConfigurationVersionChange = {
   removed: string[];
 };
 
+/** Config snapshot entry stored per version. */
+export type ConfigurationVersionValue = {
+  /** Config field name. */
+  name: string;
+  /** Config field value for this version. */
+  value: BusinessConfigSchemaValue;
+};
+
+/**
+ * Single key change with before/after values (only changed keys).
+ * Added: after only; removed: before only; updated: both.
+ */
+export type VersionChangeEntry = {
+  /** Config field name. */
+  name: string;
+  /** Value before this version (omitted for added keys). */
+  before?: BusinessConfigSchemaValue;
+  /** Value after this version (omitted for removed keys). */
+  after?: BusinessConfigSchemaValue;
+};
+
 /**
  * Configuration version metadata.
  */
@@ -120,6 +141,10 @@ export type ConfigurationVersion = {
   restoredFromVersionId?: string;
   /** Added/updated/removed key summary for this version. */
   change: ConfigurationVersionChange;
+  /** Snapshot values for this version (name/value only). */
+  config?: ConfigurationVersionValue[];
+  /** Only changed keys with before/after values. */
+  changes?: VersionChangeEntry[];
 };
 
 /**
@@ -153,13 +178,15 @@ export type GetConfigurationVersionsResponse = {
 };
 
 /**
- * Request body for restoring a configuration version.
+ * Request type for restoring a configuration version.
  */
 export type RestoreConfigurationVersionRequest = {
-  /** Version ID to restore from. */
+  /** Source version identifier to restore from. */
   versionId: string;
-  /** Optional expected latest version ID for optimistic concurrency control. */
+  /** Optional optimistic concurrency control against latest version id. */
   expectedLatestVersionId?: string;
+  /** Optional subset of fields to restore; defaults to changed keys only. */
+  fields?: string[];
 };
 
 /**
@@ -168,7 +195,7 @@ export type RestoreConfigurationVersionRequest = {
 export type RestoreConfigurationVersionResponse = {
   /** Success message. */
   message: string;
-  /** ISO timestamp of when restore completed. */
+  /** ISO timestamp of when restore was applied. */
   timestamp: string;
   /** Scope information including id, code, and level. */
   scope: {
@@ -176,8 +203,15 @@ export type RestoreConfigurationVersionResponse = {
     code: string;
     level: string;
   };
-  /** Version ID created by the restore operation. */
-  restoredVersionId: string;
+  /** The version id that was used as restore source. */
+  restoredFromVersionId: string;
+  /** Restored values (name/value only). */
+  config: Array<{
+    name: string;
+    value: BusinessConfigSchemaValue;
+  }>;
+  /** Restored keys removed from current scope. */
+  removed: string[];
 };
 
 /**

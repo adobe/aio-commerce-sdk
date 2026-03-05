@@ -14,7 +14,12 @@ import { v7 as uuidv7 } from "uuid";
 
 import { getSharedFiles } from "#utils/repository";
 
-import type { ConfigurationVersion } from "#types/api";
+import type {
+  ConfigurationVersion,
+  ConfigurationVersionChange,
+  ConfigurationVersionValue,
+  VersionChangeEntry,
+} from "#types/api";
 
 const VERSION_FILE_EXTENSION_REGEX = /\.json$/u;
 
@@ -22,6 +27,8 @@ export type CreateVersionRecordOptions = {
   reason: "set" | "restore";
   restoredFromVersionId?: string;
   expectedLatestVersionId?: string;
+  /** Field names of type "password". Excluded from "updated" so they are not always marked changed (encryption produces different ciphertext each time). */
+  passwordFieldNames?: Set<string>;
 };
 
 export type VersionRecord = ConfigurationVersion & {
@@ -53,7 +60,11 @@ export async function createVersionRecord(
     throw new Error("VERSION_CONFLICT: latest version does not match expected");
   }
 
-  const change = computeVersionChange(latest?.snapshot, payload);
+  const change = computeVersionChange(
+    latest?.snapshot,
+    payload,
+    options.passwordFieldNames,
+  );
   const normalizedScope = normalizeScope(payload, scopeCode);
 
   const record: VersionRecord = {
@@ -78,6 +89,7 @@ export async function createVersionRecord(
 
 /**
  * Lists version metadata for a scope with offset/limit paging.
+ * Loads one extra snapshot when there is a next page so "before" values can be computed for the last version on the page.
  */
 export async function listVersionRecords(
   scopeCode: string,
@@ -92,9 +104,20 @@ export async function listVersionRecords(
       readVersionSnapshot(scopeCode, versionId),
     ),
   );
-  const versions = versionCandidates
-    .filter((version): version is VersionRecord => version !== null)
-    .map(toVersionMetadata);
+  const records = versionCandidates.filter(
+    (version): version is VersionRecord => version !== null,
+  );
+
+  const hasNextPage = offset + limit < allVersionIds.length;
+  const nextVersionId = hasNextPage ? allVersionIds[offset + limit] : null;
+  const nextRecord = nextVersionId
+    ? await readVersionSnapshot(scopeCode, nextVersionId)
+    : null;
+
+  const versions = records.map((record, i) => {
+    const previousSnapshot = records[i + 1]?.snapshot ?? nextRecord?.snapshot;
+    return toVersionMetadata(record, previousSnapshot);
+  });
 
   return {
     versions,
@@ -283,9 +306,86 @@ function normalizeScope(
   return { id: scopeCode, code: scopeCode, level: "unknown" };
 }
 
-function toVersionMetadata(record: VersionRecord): ConfigurationVersion {
-  const { snapshot: _snapshot, ...metadata } = record;
-  return metadata;
+function toVersionMetadata(
+  record: VersionRecord,
+  previousSnapshot?: unknown,
+): ConfigurationVersion {
+  const { snapshot, ...metadata } = record;
+  const config = extractVersionConfig(snapshot);
+  const changes = computeVersionDiff(previousSnapshot, snapshot, record.change);
+  return {
+    ...metadata,
+    ...(config.length > 0 ? { config } : {}),
+    ...(changes.length > 0 ? { changes } : {}),
+  };
+}
+
+function extractVersionConfig(snapshot: unknown): ConfigurationVersionValue[] {
+  if (
+    typeof snapshot !== "object" ||
+    snapshot === null ||
+    !("config" in snapshot) ||
+    !Array.isArray(snapshot.config)
+  ) {
+    return [];
+  }
+
+  return snapshot.config
+    .filter(
+      (entry): entry is ConfigurationVersionValue =>
+        typeof entry === "object" &&
+        entry !== null &&
+        "name" in entry &&
+        typeof entry.name === "string" &&
+        "value" in entry,
+    )
+    .map((entry) => ({
+      name: entry.name,
+      value: entry.value,
+    }));
+}
+
+function getConfigValueMap(
+  snapshot: unknown,
+): Map<string, ConfigurationVersionValue["value"]> {
+  const entries = extractVersionConfig(snapshot);
+  const map = new Map<string, ConfigurationVersionValue["value"]>();
+  for (const entry of entries) {
+    map.set(entry.name, entry.value);
+  }
+  return map;
+}
+
+function computeVersionDiff(
+  previousSnapshot: unknown,
+  currentSnapshot: unknown,
+  change: ConfigurationVersionChange,
+): VersionChangeEntry[] {
+  const previousMap = getConfigValueMap(previousSnapshot);
+  const currentMap = getConfigValueMap(currentSnapshot);
+  const result: VersionChangeEntry[] = [];
+
+  for (const name of change.added) {
+    result.push({
+      name,
+      after: currentMap.get(name),
+    });
+  }
+  for (const name of change.updated) {
+    result.push({
+      name,
+      before: previousMap.get(name),
+      after: currentMap.get(name),
+    });
+  }
+  for (const name of change.removed) {
+    result.push({
+      name,
+      before: previousMap.get(name),
+    });
+  }
+
+  return result;
 }
 
 function sanitizeLimit(limit: number | undefined): number {
@@ -344,6 +444,7 @@ function getVersionIdFromPath(path: string): string {
 function computeVersionChange(
   previousPayload: unknown,
   currentPayload: unknown,
+  passwordFieldNames?: Set<string>,
 ): ConfigurationVersion["change"] {
   const previous = getConfigNameValueMap(previousPayload);
   const current = getConfigNameValueMap(currentPayload);
@@ -358,7 +459,8 @@ function computeVersionChange(
       continue;
     }
 
-    if (previous.get(name) !== value) {
+    // Do not mark password fields as updated: encrypted value differs every time even when unchanged.
+    if (previous.get(name) !== value && !passwordFieldNames?.has(name)) {
       updated.push(name);
     }
   }

@@ -21,10 +21,14 @@ import {
   getConfiguration as getConfigModule,
   setConfiguration as setConfigModule,
 } from "./modules/configuration";
-import * as configRepository from "./modules/configuration/configuration-repository";
+import {
+  loadConfig,
+  persistConfig,
+} from "./modules/configuration/configuration-repository";
 import { getSchema as getSchemaModule } from "./modules/schema";
 import { getPersistedSchema } from "./modules/schema/config-schema-repository";
 import { initializeSchema } from "./modules/schema/initialize";
+import { getPasswordFields } from "./modules/schema/utils";
 import {
   getPersistedScopeTree,
   getScopeTree as getScopeTreeModule,
@@ -38,11 +42,7 @@ import {
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { SelectorBy } from "#config-utils";
-import type {
-  ConfigContext,
-  ConfigValue,
-  ConfigValueWithOptionalOrigin,
-} from "./modules/configuration/types";
+import type { ConfigContext, ConfigValue } from "./modules/configuration/types";
 import type { BusinessConfigSchema } from "./modules/schema";
 import type {
   GetScopeTreeResult,
@@ -666,7 +666,11 @@ export async function getConfigurationVersions(
 }
 
 /**
- * Restores configuration for a scope from a specific historical version.
+ * Restores configuration values from a selected version.
+ *
+ * Default behavior restores only keys that changed in the selected version
+ * (`added`, `updated`, `removed`). When `fields` are provided, only those keys
+ * are processed. Removed keys are applied as deletions from current scope.
  */
 export async function restoreConfigurationVersion(
   selector: SelectorBy,
@@ -677,63 +681,104 @@ export async function restoreConfigurationVersion(
   assertAuditEnabled(context.auditEnabled);
 
   const resolvedScope = await resolveScopeForSelector(selector);
-  const targetVersion = await getVersionRecord(
+  const selectedVersion = await getVersionRecord(
     resolvedScope.scopeCode,
     request.versionId,
   );
+  if (!selectedVersion) {
+    throw new Error(
+      `VERSION_NOT_FOUND: id='${request.versionId}' scope='${resolvedScope.scopeCode}'`,
+    );
+  }
+  assertVersionSnapshotHasConfig(selectedVersion.snapshot);
 
-  if (!targetVersion) {
-    throw new Error(`VERSION_NOT_FOUND: ${request.versionId}`);
+  const selectedPayload = toPersistedPayload(
+    selectedVersion.snapshot,
+    resolvedScope.scopeId,
+    resolvedScope.scopeCode,
+    resolvedScope.scopeLevel,
+  );
+  const currentPayload =
+    (await loadConfig(resolvedScope.scopeCode)) ??
+    toPersistedPayload(
+      undefined,
+      resolvedScope.scopeId,
+      resolvedScope.scopeCode,
+      resolvedScope.scopeLevel,
+    );
+
+  const targetKeys = resolveRestoreTargetKeys(selectedVersion.change, request);
+  const removedInSelected = new Set(selectedVersion.change.removed);
+  const selectedByName = new Map(
+    selectedPayload.config.map((entry) => [entry.name, entry]),
+  );
+  const nextByName = new Map(
+    currentPayload.config.map((entry) => [entry.name, entry]),
+  );
+
+  const restoredConfig: RestoreConfigurationVersionResponse["config"] = [];
+  const removed: string[] = [];
+  for (const key of targetKeys) {
+    if (removedInSelected.has(key)) {
+      const didDelete = nextByName.delete(key);
+      if (didDelete) {
+        removed.push(key);
+      }
+      continue;
+    }
+
+    const versionEntry = selectedByName.get(key);
+    if (!versionEntry) {
+      continue;
+    }
+
+    const normalizedEntry: ConfigValue = {
+      name: versionEntry.name,
+      value: versionEntry.value,
+      origin: {
+        code: resolvedScope.scopeCode,
+        level: resolvedScope.scopeLevel,
+      },
+    };
+    nextByName.set(key, normalizedEntry);
+    restoredConfig.push({
+      name: normalizedEntry.name,
+      value: normalizedEntry.value,
+    });
   }
 
-  const payload = {
+  const nextPayload = {
     scope: {
       id: resolvedScope.scopeId,
       code: resolvedScope.scopeCode,
       level: resolvedScope.scopeLevel,
     },
-    config: extractConfigSnapshot(targetVersion.snapshot),
+    config: Array.from(nextByName.values()),
   };
-  const restoredVersion = await configRepository.persistConfig(
-    resolvedScope.scopeCode,
-    payload,
-    {
-      auditEnabled: true,
-      reason: "restore",
-      restoredFromVersionId: request.versionId,
-      expectedLatestVersionId: request.expectedLatestVersionId,
-    },
-  );
-  if (!restoredVersion) {
-    throw new Error("RESTORE_FAILED: could not create restore version");
-  }
+
+  const schema = await getSchemaModule(context);
+  const passwordFieldNames = getPasswordFields(schema);
+
+  await persistConfig(resolvedScope.scopeCode, nextPayload, {
+    auditEnabled: context.auditEnabled,
+    reason: "restore",
+    restoredFromVersionId: selectedVersion.id,
+    expectedLatestVersionId: request.expectedLatestVersionId,
+    passwordFieldNames,
+  });
 
   return {
-    message: "Configuration version restored successfully",
+    message: "Configuration restored successfully",
     timestamp: new Date().toISOString(),
     scope: {
       id: resolvedScope.scopeId,
       code: resolvedScope.scopeCode,
       level: resolvedScope.scopeLevel,
     },
-    restoredVersionId: restoredVersion.id,
+    restoredFromVersionId: selectedVersion.id,
+    config: restoredConfig,
+    removed,
   };
-}
-
-function extractConfigSnapshot(
-  snapshot: unknown,
-): ConfigValueWithOptionalOrigin[] | ConfigValue[] {
-  if (
-    typeof snapshot !== "object" ||
-    snapshot === null ||
-    !("config" in snapshot) ||
-    !Array.isArray(snapshot.config)
-  ) {
-    throw new Error(
-      "VERSION_SNAPSHOT_INVALID: missing config array in snapshot",
-    );
-  }
-  return snapshot.config as ConfigValueWithOptionalOrigin[] | ConfigValue[];
 }
 
 /**
@@ -810,4 +855,99 @@ export async function setCustomScopeTree(
   };
 
   return await setCustomScopeTreeModule(context, request);
+}
+
+function resolveRestoreTargetKeys(
+  change: {
+    added: string[];
+    updated: string[];
+    removed: string[];
+  },
+  request: RestoreConfigurationVersionRequest,
+): string[] {
+  const requestedFields =
+    request.fields
+      ?.map((field) => field.trim())
+      .filter((field) => field.length > 0) ?? [];
+  if (requestedFields.length > 0) {
+    return Array.from(new Set(requestedFields));
+  }
+
+  return Array.from(
+    new Set([...change.added, ...change.updated, ...change.removed]),
+  );
+}
+
+function toPersistedPayload(
+  payload: unknown,
+  scopeId: string,
+  scopeCode: string,
+  scopeLevel: string,
+): {
+  scope: {
+    id: string;
+    code: string;
+    level: string;
+  };
+  config: ConfigValue[];
+} {
+  if (
+    typeof payload !== "object" ||
+    payload === null ||
+    !("config" in payload) ||
+    !Array.isArray(payload.config)
+  ) {
+    return {
+      scope: { id: scopeId, code: scopeCode, level: scopeLevel },
+      config: [],
+    };
+  }
+
+  const normalizedConfig: ConfigValue[] = payload.config
+    .filter(
+      (
+        entry,
+      ): entry is {
+        name: string;
+        value: ConfigValue["value"];
+        origin?: { code?: string; level?: string };
+      } =>
+        typeof entry === "object" &&
+        entry !== null &&
+        "name" in entry &&
+        typeof entry.name === "string" &&
+        "value" in entry,
+    )
+    .map((entry) => ({
+      name: entry.name,
+      value: entry.value,
+      origin: {
+        code:
+          entry.origin?.code && entry.origin.code.trim().length > 0
+            ? entry.origin.code
+            : scopeCode,
+        level:
+          entry.origin?.level && entry.origin.level.trim().length > 0
+            ? entry.origin.level
+            : scopeLevel,
+      },
+    }));
+
+  return {
+    scope: { id: scopeId, code: scopeCode, level: scopeLevel },
+    config: normalizedConfig,
+  };
+}
+
+function assertVersionSnapshotHasConfig(snapshot: unknown): void {
+  if (
+    typeof snapshot !== "object" ||
+    snapshot === null ||
+    !("config" in snapshot) ||
+    !Array.isArray(snapshot.config)
+  ) {
+    throw new Error(
+      "VERSION_SNAPSHOT_INVALID: missing config array in snapshot",
+    );
+  }
 }
