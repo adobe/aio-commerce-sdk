@@ -54,9 +54,12 @@
     "README.md"
   ],
   "scripts": {
-    "publint": "publint",
     "build": "tsdown",
+    "prepack": "sdk-prepack",
     "pack": "pnpm pack",
+    "postpack": "sdk-postpack",
+    "publint": "publint",
+    "docs": "typedoc && prettier --write '**/*.md'",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
