@@ -743,7 +743,7 @@ describe("validateWebhookConflicts", () => {
     expect(issues).toHaveLength(1);
     expect(issues[0]).toMatchObject({
       code: "WEBHOOK_CONFLICTS",
-      severity: "error",
+      severity: "warning",
     });
     expect(issues[0].details?.conflictedWebhooks).toContainEqual(
       expect.objectContaining({
