@@ -11,7 +11,6 @@
  */
 
 import type { SetOptional } from "type-fest";
-import type { BusinessConfigSchemaValue } from "#modules/schema/types";
 
 /**
  * Represents the origin of a configuration value, indicating which scope it came from.
@@ -29,8 +28,8 @@ export type ConfigOrigin = {
 export type ConfigValue = {
   /** The name of the configuration field. */
   name: string;
-  /** The configuration value (string, number, boolean, or undefined). */
-  value: BusinessConfigSchemaValue;
+  /** The configuration value (string only). */
+  value: string;
   /** The origin scope where this value was set or inherited from. */
   origin: ConfigOrigin;
 };
@@ -55,6 +54,4 @@ export type ConfigContext = {
   cacheTimeout: number;
   /** Optional encryption key for encrypting/decrypting password fields. */
   encryptionKey?: string;
-  /** Whether audit/versioning behavior is enabled for this operation. */
-  auditEnabled: boolean;
 };

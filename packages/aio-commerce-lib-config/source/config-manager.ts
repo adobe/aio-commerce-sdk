@@ -67,7 +67,6 @@ import type {
 const globalLibConfigOptions: GlobalLibConfigOptions = {
   cacheTimeout: DEFAULT_CACHE_TIMEOUT,
   encryptionKey: undefined,
-  auditEnabled: true,
 };
 
 /** Options for initializing the configuration library, so that it works as expected. */
@@ -124,8 +123,6 @@ export function setGlobalLibConfigOptions(options: LibConfigOptions) {
     options.encryptionKey !== undefined
       ? options.encryptionKey
       : globalLibConfigOptions.encryptionKey;
-  globalLibConfigOptions.auditEnabled =
-    options.auditEnabled ?? globalLibConfigOptions.auditEnabled;
 }
 
 /**
@@ -145,14 +142,7 @@ function resolveConfigContext(options?: LibConfigOptions): ConfigContext {
       options?.encryptionKey !== undefined
         ? (options.encryptionKey ?? undefined)
         : (globalLibConfigOptions.encryptionKey ?? undefined),
-    auditEnabled: options?.auditEnabled ?? globalLibConfigOptions.auditEnabled,
   };
-}
-
-function assertAuditEnabled(auditEnabled: boolean): void {
-  if (!auditEnabled) {
-    throw new Error("AUDIT_DISABLED: audit feature is disabled");
-  }
 }
 
 async function resolveScopeForSelector(selector: SelectorBy): Promise<{
@@ -643,11 +633,8 @@ export async function setConfiguration(
 export async function getConfigurationVersions(
   selector: SelectorBy,
   params?: GetConfigurationVersionsParams,
-  options?: LibConfigOptions,
+  _options?: LibConfigOptions,
 ): Promise<GetConfigurationVersionsResponse> {
-  const context = resolveConfigContext(options);
-  assertAuditEnabled(context.auditEnabled);
-
   const resolvedScope = await resolveScopeForSelector(selector);
   const page = await listVersionRecords(resolvedScope.scopeCode, params);
   return {
@@ -678,7 +665,6 @@ export async function restoreConfigurationVersion(
   options?: LibConfigOptions,
 ): Promise<RestoreConfigurationVersionResponse> {
   const context = resolveConfigContext(options);
-  assertAuditEnabled(context.auditEnabled);
 
   const resolvedScope = await resolveScopeForSelector(selector);
   const selectedVersion = await getVersionRecord(
@@ -760,7 +746,6 @@ export async function restoreConfigurationVersion(
   const passwordFieldNames = getPasswordFields(schema);
 
   await persistConfig(resolvedScope.scopeCode, nextPayload, {
-    auditEnabled: context.auditEnabled,
     reason: "restore",
     restoredFromVersionId: selectedVersion.id,
     expectedLatestVersionId: request.expectedLatestVersionId,
@@ -920,7 +905,7 @@ function toPersistedPayload(
     )
     .map((entry) => ({
       name: entry.name,
-      value: entry.value,
+      value: normalizeConfigValue(entry.value),
       origin: {
         code:
           entry.origin?.code && entry.origin.code.trim().length > 0
@@ -937,6 +922,16 @@ function toPersistedPayload(
     scope: { id: scopeId, code: scopeCode, level: scopeLevel },
     config: normalizedConfig,
   };
+}
+
+function normalizeConfigValue(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value === null || value === undefined) {
+    return "";
+  }
+  return String(value);
 }
 
 function assertVersionSnapshotHasConfig(snapshot: unknown): void {

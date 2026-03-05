@@ -19,7 +19,6 @@ import { getSharedFiles, getSharedState } from "#utils/repository";
 import type { ConfigValue } from "./types";
 
 type PersistConfigOptions = {
-  auditEnabled?: boolean;
   reason?: "set" | "restore";
   restoredFromVersionId?: string;
   expectedLatestVersionId?: string;
@@ -134,7 +133,8 @@ export async function persistConfig(
   payload: unknown,
   options: PersistConfigOptions = {},
 ): Promise<{ id: string } | null> {
-  const payloadString = stringify(payload) ?? "";
+  const normalizedPayload = normalizePersistedPayload(payload, scopeCode);
+  const payloadString = stringify(normalizedPayload) ?? "";
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
   );
@@ -152,18 +152,102 @@ export async function persistConfig(
     });
   }
 
-  let createdVersionId: string | null = null;
-  if (options.auditEnabled !== false) {
-    const createdVersion = await createVersionRecord(scopeCode, payload, {
+  const createdVersion = await createVersionRecord(
+    scopeCode,
+    normalizedPayload,
+    {
       reason: options.reason ?? "set",
       restoredFromVersionId: options.restoredFromVersionId,
       expectedLatestVersionId: options.expectedLatestVersionId,
       passwordFieldNames: options.passwordFieldNames,
-    });
-    createdVersionId = createdVersion.id;
-  }
+    },
+  );
+  const createdVersionId = createdVersion.id;
 
   return createdVersionId ? { id: createdVersionId } : null;
+}
+
+function normalizePersistedPayload(
+  payload: unknown,
+  scopeCode: string,
+): PersistedConfigPayload {
+  if (
+    typeof payload !== "object" ||
+    payload === null ||
+    !("scope" in payload) ||
+    !("config" in payload) ||
+    typeof payload.scope !== "object" ||
+    payload.scope === null ||
+    !Array.isArray(payload.config)
+  ) {
+    return {
+      scope: { id: scopeCode, code: scopeCode, level: "unknown" },
+      config: [],
+    };
+  }
+
+  const scope = payload.scope as {
+    id?: unknown;
+    code?: unknown;
+    level?: unknown;
+  };
+  const configEntries = payload.config
+    .filter(
+      (
+        entry,
+      ): entry is {
+        name: unknown;
+        value: unknown;
+        origin?: { code?: unknown; level?: unknown };
+      } =>
+        typeof entry === "object" &&
+        entry !== null &&
+        "name" in entry &&
+        "value" in entry,
+    )
+    .map((entry) => {
+      let originCode = scopeCode;
+      if (typeof scope.code === "string") {
+        originCode = scope.code;
+      }
+      if (entry.origin && typeof entry.origin.code === "string") {
+        originCode = entry.origin.code;
+      }
+      let originLevel = "unknown";
+      if (entry.origin && typeof entry.origin.level === "string") {
+        originLevel = entry.origin.level;
+      } else if (typeof scope.level === "string") {
+        originLevel = scope.level;
+      }
+
+      return {
+        name: typeof entry.name === "string" ? entry.name : String(entry.name),
+        value: normalizeConfigValue(entry.value),
+        origin: {
+          code: originCode,
+          level: originLevel,
+        },
+      };
+    });
+
+  return {
+    scope: {
+      id: typeof scope.id === "string" ? scope.id : scopeCode,
+      code: typeof scope.code === "string" ? scope.code : scopeCode,
+      level: typeof scope.level === "string" ? scope.level : "unknown",
+    },
+    config: configEntries,
+  };
+}
+
+function normalizeConfigValue(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value === null || value === undefined) {
+    return "";
+  }
+  return String(value);
 }
 
 /**

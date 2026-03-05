@@ -11,10 +11,7 @@
  */
 
 import type { ConfigValue } from "#modules/configuration/types";
-import type {
-  BusinessConfigSchema,
-  BusinessConfigSchemaValue,
-} from "#modules/schema/types";
+import type { BusinessConfigSchema } from "#modules/schema/types";
 
 export type { GetScopeTreeResult } from "#modules/scope-tree/types";
 
@@ -62,8 +59,8 @@ export type SetConfigurationRequest = {
   config: Array<{
     /** The name of the configuration field. */
     name: string;
-    /** The value to set (string, number, or boolean). */
-    value: BusinessConfigSchemaValue;
+    /** The value to set (string). */
+    value: string;
   }>;
 };
 
@@ -84,7 +81,7 @@ export type SetConfigurationResponse = {
   /** Array of updated configuration values. */
   config: Array<{
     name: string;
-    value: BusinessConfigSchemaValue;
+    value: string;
   }>;
 };
 
@@ -105,7 +102,7 @@ export type ConfigurationVersionValue = {
   /** Config field name. */
   name: string;
   /** Config field value for this version. */
-  value: BusinessConfigSchemaValue;
+  value: string;
 };
 
 /**
@@ -116,9 +113,9 @@ export type VersionChangeEntry = {
   /** Config field name. */
   name: string;
   /** Value before this version (omitted for added keys). */
-  before?: BusinessConfigSchemaValue;
+  before?: string;
   /** Value after this version (omitted for removed keys). */
-  after?: BusinessConfigSchemaValue;
+  after?: string;
 };
 
 /**
@@ -208,7 +205,7 @@ export type RestoreConfigurationVersionResponse = {
   /** Restored values (name/value only). */
   config: Array<{
     name: string;
-    value: BusinessConfigSchemaValue;
+    value: string;
   }>;
   /** Restored keys removed from current scope. */
   removed: string[];

@@ -24,8 +24,8 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CommerceAppConfigDomain } from "#config/schema/domains";
 
 type ActionConfig = {
+  requiresSchema?: boolean;
   requiresEncryptionKey?: boolean;
-  requiresAuditFlag?: boolean;
 };
 
 export type TemplateAction = ActionConfig & {
@@ -62,7 +62,7 @@ function createActionDefinition(
   actionName: string,
   config: ActionConfig = {},
   options: Omit<ActionDefinition, "function"> = {},
-): ActionDefinition {
+) {
   const def: ActionDefinition = {
     ...options,
 
@@ -82,13 +82,6 @@ function createActionDefinition(
     };
   }
 
-  if (config.requiresAuditFlag) {
-    def.inputs = {
-      ...def.inputs,
-      AIO_COMMERCE_CONFIG_AUDIT_ENABLED: "$AIO_COMMERCE_CONFIG_AUDIT_ENABLED",
-    };
-  }
-
   return def;
 }
 
@@ -96,10 +89,7 @@ function createActionDefinition(
  * Gets the runtime actions to be generated from the ext.config.yaml configuration.
  * @param extConfig - The ext.config.yaml configuration.
  */
-export function getRuntimeActions(
-  extConfig: ExtConfig,
-  dir: string,
-): TemplateAction[] {
+export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
   return Object.entries(
     extConfig.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions ?? {},
   ).map(
@@ -117,7 +107,7 @@ export function getRuntimeActions(
  */
 export function buildAppManagementExtConfig(
   appConfig: CommerceAppConfigOutputModel,
-): ExtConfig {
+) {
   const features = getConfigDomains(appConfig);
   const hasPasswordFieldsInSchema =
     hasBusinessConfigSchema(appConfig) &&
@@ -181,13 +171,12 @@ export function buildAppManagementExtConfig(
 }
 
 /** Builds the ext.config.yaml configuration for the business configuration extension. */
-export function buildBusinessConfigurationExtConfig(): ExtConfig {
+export function buildBusinessConfigurationExtConfig() {
   const actions = [
     {
       name: "config",
       templateFile: "config.js.template",
       requiresEncryptionKey: true,
-      requiresAuditFlag: true,
     },
     {
       name: "scope-tree",

@@ -26,14 +26,4 @@ describe("buildBusinessConfigurationExtConfig", () => {
     expect(actions["get-configuration-versions"]).toBeUndefined();
     expect(actions["restore-configuration-version"]).toBeUndefined();
   });
-
-  it("wires the audit feature flag input on the config action", () => {
-    const extConfig = buildBusinessConfigurationExtConfig();
-    const actions =
-      extConfig.runtimeManifest?.packages?.["app-management"]?.actions ?? {};
-
-    expect(actions.config?.inputs?.AIO_COMMERCE_CONFIG_AUDIT_ENABLED).toBe(
-      "$AIO_COMMERCE_CONFIG_AUDIT_ENABLED",
-    );
-  });
 });

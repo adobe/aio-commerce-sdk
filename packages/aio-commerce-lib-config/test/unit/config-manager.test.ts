@@ -304,6 +304,29 @@ describe("ConfigManager functions", () => {
     ]);
   });
 
+  it("normalizes non-string persisted values to strings before versioning", async () => {
+    await configRepository.persistConfig(
+      "global",
+      {
+        scope: { id: "id-global", code: "global", level: "global" },
+        config: [{ name: "retryCount", value: 3 }],
+      },
+      { reason: "set" },
+    );
+
+    const config = await getConfiguration(byCodeAndLevel("global", "global"));
+    expect(
+      config.config.find((entry) => entry.name === "retryCount")?.value,
+    ).toBe("3");
+
+    const versions = await getConfigurationVersions(
+      byCodeAndLevel("global", "global"),
+    );
+    expect(versions.versions[0].config).toEqual([
+      { name: "retryCount", value: "3" },
+    ]);
+  });
+
   it("supports listing versions by code selector without explicit level", async () => {
     await setConfiguration(
       { config: [{ name: "currency", value: "USD" }] },
@@ -355,30 +378,6 @@ describe("ConfigManager functions", () => {
     await expect(getConfiguration(byCode("dup"))).rejects.toThrow(
       "AMBIGUOUS_SCOPE_CODE",
     );
-  });
-
-  it("skips version creation when audit feature is disabled", async () => {
-    await setConfiguration(
-      { config: [{ name: "currency", value: "USD" }] },
-      byCodeAndLevel("global", "global"),
-      { auditEnabled: false },
-    );
-
-    const config = await getConfiguration(byCodeAndLevel("global", "global"));
-    expect(
-      config.config.find((entry) => entry.name === "currency")?.value,
-    ).toBe("USD");
-
-    const versions = await getConfigurationVersions(
-      byCodeAndLevel("global", "global"),
-    );
-    expect(versions.versions).toHaveLength(0);
-
-    await expect(
-      getConfigurationVersions(byCodeAndLevel("global", "global"), undefined, {
-        auditEnabled: false,
-      }),
-    ).rejects.toThrow("AUDIT_DISABLED");
   });
 
   it("persists config even when version write fails", async () => {
@@ -736,13 +735,15 @@ describe("ConfigManager functions", () => {
     expect(response.config).toEqual([{ name: "currency", value: "GBP" }]);
   });
 
-  it("skips entries missing value and strips unknown props as per request contract", async () => {
-    // Test malformed entries are handled at runtime
+  it("accepts only string config values at request boundaries", async () => {
+    // Test malformed/non-string entries are rejected at runtime
     const response = await setConfiguration(
       {
         config: [
           { name: "currency" } as any, // missing value - test runtime handling
           { name: "exampleList", value: "option1" }, // valid
+          { name: "featureFlag", value: true } as any, // boolean should be rejected
+          { name: "retryCount", value: 3 } as any, // number should be rejected
           { value: "orphaned" } as any, // missing name - test runtime handling
         ],
       },

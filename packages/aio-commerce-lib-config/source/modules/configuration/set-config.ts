@@ -84,7 +84,6 @@ export async function setConfiguration(
   };
 
   await configRepository.persistConfig(scopeCode, payload, {
-    auditEnabled: context.auditEnabled,
     reason: "set",
     passwordFieldNames: passwordFields,
   });

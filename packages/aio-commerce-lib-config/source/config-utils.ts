@@ -14,10 +14,7 @@ import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "#utils/constants";
 
 import type { ConfigValue } from "#modules/configuration/index";
 import type { ConfigValueWithOptionalOrigin } from "#modules/configuration/types";
-import type {
-  BusinessConfigSchema,
-  BusinessConfigSchemaValue,
-} from "#modules/schema/index";
+import type { BusinessConfigSchema } from "#modules/schema/index";
 import type { ScopeNode, ScopeTree } from "#modules/scope-tree/index";
 
 /**
@@ -247,19 +244,28 @@ export function sanitizeRequestEntries(
         return false;
       }
 
-      // TODO: This should be done via schema validation.
-      const hasValidValue =
-        ["string", "number", "boolean"].includes(typeof entry.value) ||
-        (Array.isArray(entry.value) &&
-          entry.value.every((item) => typeof item === "string"));
+      const hasValidValue = typeof entry.value === "string";
 
       return entry.name.trim().length > 0 && hasValidValue;
     })
     .map((entry) => ({
       name: String(entry.name).trim(),
-      value: entry.value as BusinessConfigSchemaValue,
+      value: normalizeConfigValue(entry.value),
       origin: entry.origin,
     }));
+}
+
+/**
+ * Normalizes configuration values to a string representation.
+ */
+export function normalizeConfigValue(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value === null || value === undefined) {
+    return "";
+  }
+  return String(value);
 }
 
 /**
@@ -310,7 +316,7 @@ export function getSchemaDefaults(schema: BusinessConfigSchema) {
     .filter((field) => field.default !== undefined)
     .map((field) => ({
       name: field.name,
-      value: field.default as string,
+      value: normalizeConfigValue(field.default),
       origin: { code: "default", level: "system" },
     }));
 
@@ -332,7 +338,7 @@ function mergeConfigEntries(
     if (!merged.has(entry.name)) {
       merged.set(entry.name, {
         name: entry.name,
-        value: entry.value,
+        value: normalizeConfigValue(entry.value),
         origin,
       });
     }
@@ -414,7 +420,7 @@ function mergeCurrentConfigData(
       if (!merged.has(entry.name)) {
         merged.set(entry.name, {
           name: entry.name,
-          value: entry.value,
+          value: normalizeConfigValue(entry.value),
           origin: entry.origin || {
             code: configData.scope?.code || scopeCode,
             level: configData.scope?.level || scopeLevel,
@@ -432,7 +438,7 @@ function mergeCurrentConfigData(
  */
 function applySchemaDefaults(
   merged: Map<string, ConfigValue>,
-  defaultMap: Map<string, BusinessConfigSchemaValue>,
+  defaultMap: Map<string, string>,
 ) {
   for (const [name, def] of defaultMap.entries()) {
     if (!merged.has(name)) {
@@ -482,10 +488,10 @@ export async function mergeWithSchemaDefaults({
   scopePath,
 }: MergeWithSchemaDefaultsParams) {
   const schema = await getSchemaFn();
-  const defaultMap = new Map<string, BusinessConfigSchemaValue>();
+  const defaultMap = new Map<string, string>();
   for (const field of schema) {
     if (field.default !== undefined) {
-      defaultMap.set(field.name, field.default);
+      defaultMap.set(field.name, normalizeConfigValue(field.default));
     }
   }
 

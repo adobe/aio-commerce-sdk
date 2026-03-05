@@ -86,27 +86,6 @@ describe("config runtime action audit routes", () => {
     });
   });
 
-  it("returns AUDIT_DISABLED for GET /versions when audit is disabled", async () => {
-    const main = configRuntimeAction({ configSchema: [] });
-    const response = await main({
-      __ow_method: "get",
-      __ow_path: "/versions",
-      __ow_query: "scopeId=scope-1",
-      AIO_COMMERCE_CONFIG_AUDIT_ENABLED: "false",
-    });
-
-    expect(response.type).toBe("error");
-    if (response.type === "error") {
-      expect(response.error.statusCode).toBe(400);
-      const { body } = response.error;
-      expect(body).toBeDefined();
-      if (body) {
-        expect(body.code).toBe("AUDIT_DISABLED");
-      }
-    }
-    expect(getConfigurationVersions).not.toHaveBeenCalled();
-  });
-
   it("lists versions from GET /versions with code-only selector", async () => {
     getConfigurationVersions.mockResolvedValueOnce({
       scope: { id: "scope-1", code: "store", level: "store_view" },
@@ -147,7 +126,6 @@ describe("config runtime action audit routes", () => {
     expect(getConfigurationVersions).toHaveBeenCalledWith(
       { by: { _tag: "code", code: "store" } },
       { limit: 20, offset: 5 },
-      { auditEnabled: true },
     );
   });
 
@@ -214,7 +192,7 @@ describe("config runtime action audit routes", () => {
     }
   });
 
-  it("passes auditEnabled into POST / setConfiguration options", async () => {
+  it("passes only encryption options into POST / setConfiguration", async () => {
     const main = configRuntimeAction({ configSchema: [] });
     const response = await main({
       __ow_method: "post",
@@ -223,7 +201,6 @@ describe("config runtime action audit routes", () => {
         scopeId: "scope-1",
         config: [{ name: "foo", value: "bar" }],
       }),
-      AIO_COMMERCE_CONFIG_AUDIT_ENABLED: "false",
     });
 
     expect(response.type).toBe("success");
@@ -233,7 +210,6 @@ describe("config runtime action audit routes", () => {
       { by: { _tag: "scopeId", scopeId: "scope-1" } },
       {
         encryptionKey: undefined,
-        auditEnabled: false,
       },
     );
   });
@@ -293,7 +269,7 @@ describe("config runtime action audit routes", () => {
         expectedLatestVersionId: undefined,
         fields: ["apiKey", "featureFlag", "legacyKey"],
       },
-      { encryptionKey: undefined, auditEnabled: true },
+      { encryptionKey: undefined },
     );
   });
 

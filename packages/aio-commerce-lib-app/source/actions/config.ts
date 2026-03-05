@@ -47,7 +47,6 @@ type ConfigActionFactoryArgs = {
 type ConfigActionParams = RuntimeActionParams &
   ConfigActionFactoryArgs & {
     AIO_COMMERCE_CONFIG_ENCRYPTION_KEY?: string;
-    AIO_COMMERCE_CONFIG_AUDIT_ENABLED?: string | boolean;
   };
 
 /** The context for the config action. */
@@ -57,22 +56,6 @@ interface ConfigActionContext extends BaseContext {
 
 // Placeholder value for password fields.
 const MASKED_PASSWORD_VALUE = "*****";
-
-function parseAuditEnabled(value: string | boolean | undefined): boolean {
-  if (typeof value === "boolean") {
-    return value;
-  }
-  if (typeof value === "string") {
-    const normalized = value.trim().toLowerCase();
-    if (normalized === "true") {
-      return true;
-    }
-    if (normalized === "false") {
-      return false;
-    }
-  }
-  return true;
-}
 
 function parseNonNegativeInteger(
   value: string | number | undefined,
@@ -113,31 +96,6 @@ function resolveScopeSelector(
 
 type ScopeSelector = NonNullable<ReturnType<typeof resolveScopeSelector>>;
 type BadRequestResponse = ReturnType<typeof badRequest>;
-
-function auditDisabledResponse() {
-  return badRequest({
-    body: {
-      code: "AUDIT_DISABLED",
-      message: "Audit feature is disabled",
-    },
-  });
-}
-
-function resolveAuditOrBadRequest(rawParams: ConfigActionParams) {
-  const auditEnabled = parseAuditEnabled(
-    rawParams.AIO_COMMERCE_CONFIG_AUDIT_ENABLED,
-  );
-  if (!auditEnabled) {
-    return {
-      ok: false,
-      response: auditDisabledResponse(),
-    } satisfies { ok: false; response: BadRequestResponse };
-  }
-  return {
-    ok: true,
-    auditEnabled,
-  } satisfies { ok: true; auditEnabled: boolean };
-}
 
 function resolveSelectorOrBadRequest(
   input: {
@@ -256,12 +214,7 @@ router.post("/", {
     config: v.array(
       v.object({
         name: nonEmptyStringValueSchema("config.name"),
-        value: v.union([
-          v.string(),
-          v.number(),
-          v.boolean(),
-          v.array(v.string()),
-        ]),
+        value: v.string(),
       }),
     ),
   }),
@@ -269,9 +222,6 @@ router.post("/", {
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
     const { configSchema } = rawParams;
-    const auditEnabled = parseAuditEnabled(
-      rawParams.AIO_COMMERCE_CONFIG_AUDIT_ENABLED,
-    );
 
     logger.debug(`Setting configuration with scope id: ${req.body.scopeId}`);
     const { scopeId, config } = req.body;
@@ -288,7 +238,6 @@ router.post("/", {
       byScopeId(scopeId),
       {
         encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
-        auditEnabled,
       },
     );
 
@@ -314,10 +263,6 @@ router.get("/versions", {
   handler: async (req, ctx) => {
     const { rawParams } = ctx;
     const { configSchema } = rawParams;
-    const auditResult = resolveAuditOrBadRequest(rawParams);
-    if (!auditResult.ok) {
-      return auditResult.response;
-    }
 
     const selectorResult = resolveSelectorOrBadRequest(
       req.query,
@@ -328,17 +273,15 @@ router.get("/versions", {
       return selectorResult.response;
     }
 
-    const { auditEnabled } = auditResult;
     const { selector } = selectorResult;
 
     try {
       const limit = parseNonNegativeInteger(req.query.limit, "limit");
       const offset = parseNonNegativeInteger(req.query.offset, "offset");
-      const result = await getConfigurationVersions(
-        selector,
-        { limit, offset },
-        { auditEnabled },
-      );
+      const result = await getConfigurationVersions(selector, {
+        limit,
+        offset,
+      });
       const versions = result.versions.map((version) => ({
         ...version,
         ...(version.config
@@ -397,10 +340,6 @@ router.post("/versions/restore", {
   handler: async (req, ctx) => {
     const { rawParams } = ctx;
     const { configSchema } = rawParams;
-    const auditResult = resolveAuditOrBadRequest(rawParams);
-    if (!auditResult.ok) {
-      return auditResult.response;
-    }
 
     const selectorResult = resolveSelectorOrBadRequest(
       req.body,
@@ -413,7 +352,6 @@ router.post("/versions/restore", {
 
     const { selector } = selectorResult;
     const { versionId, expectedLatestVersionId, fields } = req.body;
-    const { auditEnabled } = auditResult;
 
     try {
       const result = await restoreConfigurationVersion(
@@ -421,7 +359,6 @@ router.post("/versions/restore", {
         { versionId, expectedLatestVersionId, fields },
         {
           encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
-          auditEnabled,
         },
       );
       result.config = filterPasswordFields(configSchema, result.config);
