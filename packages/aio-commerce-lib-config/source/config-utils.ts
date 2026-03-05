@@ -14,10 +14,7 @@ import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "#utils/constants";
 
 import type { ConfigValue } from "#modules/configuration/index";
 import type { ConfigValueWithOptionalOrigin } from "#modules/configuration/types";
-import type {
-  BusinessConfigSchema,
-  BusinessConfigSchemaValue,
-} from "#modules/schema/index";
+import type { BusinessConfigSchema } from "#modules/schema/index";
 import type { ScopeNode, ScopeTree } from "#modules/scope-tree/index";
 
 /**
@@ -170,35 +167,34 @@ export function deriveScopeFromCodeWithOptionalLevel(
     throw new Error("INVALID_ARGS: expected (code: string)");
   }
 
-  if (!isNonEmptyString(level)) {
-    throw new Error("INVALID_ARGS: expected (level: string)");
-  }
-
-  const effectiveLevel = level?.trim() || DEFAULT_CUSTOM_SCOPE_LEVEL;
+  const effectiveLevel = isNonEmptyString(level)
+    ? level.trim()
+    : DEFAULT_CUSTOM_SCOPE_LEVEL;
   return deriveScopeFromCodeAndLevel(code, effectiveLevel, tree);
 }
 
 /**
  * Derives the scope information from the provided arguments.
- * @param args - The arguments containing either (id), (code), or (code, level).
+ * @param args - The arguments containing either (id) or (code, level).
  * @param tree - The scope tree to search for the node.
  * @returns The derived scope information including code, level, id, and path.
  */
-export function deriveScopeFromArgs(args: unknown[], tree: ScopeTree) {
+export function deriveScopeFromArgs(
+  args: unknown[],
+  tree: ScopeTree,
+): {
+  scopeCode: string;
+  scopeLevel: string;
+  scopeId: string;
+  scopePath: ScopeNode[];
+} {
   if (args.length === 2) {
     return deriveScopeFromCodeAndLevel(args[0], args[1], tree);
   }
   if (args.length === 1) {
-    const arg = args[0];
-    // Try as ID first, then as code with default level
-    try {
-      return deriveScopeFromId(arg, tree);
-    } catch (_error) {
-      // If ID lookup fails, treat as code with default level
-      return deriveScopeFromCodeWithOptionalLevel(arg, undefined, tree);
-    }
+    return deriveScopeFromId(args[0], tree);
   }
-  throw new Error("INVALID_ARGS: expected (id), (code), or (code, level)");
+  throw new Error("INVALID_ARGS: expected (id) or (code, level)");
 }
 
 /**
@@ -248,19 +244,28 @@ export function sanitizeRequestEntries(
         return false;
       }
 
-      // TODO: This should be done via schema validation.
-      const hasValidValue =
-        ["string"].includes(typeof entry.value) ||
-        (Array.isArray(entry.value) &&
-          entry.value.every((item) => typeof item === "string"));
+      const hasValidValue = typeof entry.value === "string";
 
       return entry.name.trim().length > 0 && hasValidValue;
     })
     .map((entry) => ({
       name: String(entry.name).trim(),
-      value: entry.value as BusinessConfigSchemaValue,
+      value: normalizeConfigValue(entry.value),
       origin: entry.origin,
     }));
+}
+
+/**
+ * Normalizes configuration values to a string representation.
+ */
+export function normalizeConfigValue(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value === null || value === undefined) {
+    return "";
+  }
+  return String(value);
 }
 
 /**
@@ -311,7 +316,7 @@ export function getSchemaDefaults(schema: BusinessConfigSchema) {
     .filter((field) => field.default !== undefined)
     .map((field) => ({
       name: field.name,
-      value: field.default as string,
+      value: normalizeConfigValue(field.default),
       origin: { code: "default", level: "system" },
     }));
 
@@ -333,7 +338,7 @@ function mergeConfigEntries(
     if (!merged.has(entry.name)) {
       merged.set(entry.name, {
         name: entry.name,
-        value: entry.value,
+        value: normalizeConfigValue(entry.value),
         origin,
       });
     }
@@ -349,9 +354,10 @@ function mergeConfigEntries(
 async function mergeConfigFromPath(
   merged: Map<string, ConfigValue>,
   scopePath: ScopeNode[],
-  loadScopeConfigFn: (
-    code: string,
-  ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>,
+  loadScopeConfigFn: (code: string) => Promise<{
+    scope: { id: string; code: string; level: string };
+    config: ConfigValue[];
+  } | null>,
 ) {
   for (const node of scopePath) {
     const persisted = await loadScopeConfigFn(node.code);
@@ -373,9 +379,10 @@ async function mergeConfigFromPath(
 async function mergeGlobalConfigIfNeeded(
   merged: Map<string, ConfigValue>,
   scopePath: ScopeNode[],
-  loadScopeConfigFn: (
-    code: string,
-  ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>,
+  loadScopeConfigFn: (code: string) => Promise<{
+    scope: { id: string; code: string; level: string };
+    config: ConfigValue[];
+  } | null>,
 ) {
   const hasGlobal = scopePath.some(
     (node) => node.code === "global" && node.level === "global",
@@ -401,7 +408,10 @@ async function mergeGlobalConfigIfNeeded(
  */
 function mergeCurrentConfigData(
   merged: Map<string, ConfigValue>,
-  configData: { scope: ScopeNode; config: ConfigValue[] },
+  configData: {
+    scope: { id: string; code: string; level: string };
+    config: ConfigValue[];
+  },
   scopeCode: string,
   scopeLevel: string,
 ) {
@@ -410,7 +420,7 @@ function mergeCurrentConfigData(
       if (!merged.has(entry.name)) {
         merged.set(entry.name, {
           name: entry.name,
-          value: entry.value,
+          value: normalizeConfigValue(entry.value),
           origin: entry.origin || {
             code: configData.scope?.code || scopeCode,
             level: configData.scope?.level || scopeLevel,
@@ -428,7 +438,7 @@ function mergeCurrentConfigData(
  */
 function applySchemaDefaults(
   merged: Map<string, ConfigValue>,
-  defaultMap: Map<string, BusinessConfigSchemaValue>,
+  defaultMap: Map<string, string>,
 ) {
   for (const [name, def] of defaultMap.entries()) {
     if (!merged.has(name)) {
@@ -443,11 +453,15 @@ function applySchemaDefaults(
 
 /** Parameters for mergeWithSchemaDefaults function */
 type MergeWithSchemaDefaultsParams = {
-  loadScopeConfigFn: (
-    code: string,
-  ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>;
+  loadScopeConfigFn: (code: string) => Promise<{
+    scope: { id: string; code: string; level: string };
+    config: ConfigValue[];
+  } | null>;
   getSchemaFn: () => Promise<BusinessConfigSchema>;
-  configData: { scope: ScopeNode; config: ConfigValue[] };
+  configData: {
+    scope: { id: string; code: string; level: string };
+    config: ConfigValue[];
+  };
   scopeCode: string;
   scopeLevel: string;
   scopePath: ScopeNode[];
@@ -474,10 +488,10 @@ export async function mergeWithSchemaDefaults({
   scopePath,
 }: MergeWithSchemaDefaultsParams) {
   const schema = await getSchemaFn();
-  const defaultMap = new Map<string, BusinessConfigSchemaValue>();
+  const defaultMap = new Map<string, string>();
   for (const field of schema) {
     if (field.default !== undefined) {
-      defaultMap.set(field.name, field.default);
+      defaultMap.set(field.name, normalizeConfigValue(field.default));
     }
   }
 

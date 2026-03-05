@@ -14,10 +14,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   getConfiguration,
+  getConfigurationVersions,
+  restoreConfigurationVersion,
   setConfiguration,
   unsyncCommerceScopes,
 } from "#config-manager";
-import { byCodeAndLevel, byScopeId } from "#config-utils";
+import { byCode, byCodeAndLevel, byScopeId } from "#config-utils";
 import * as configRepository from "#modules/configuration/configuration-repository";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
@@ -258,6 +260,428 @@ describe("ConfigManager functions", () => {
     ).toBe("JPY");
   });
 
+  it("creates a version record by default when setting configuration", async () => {
+    await setConfiguration(
+      { config: [{ name: "currency", value: "USD" }] },
+      byCodeAndLevel("global", "global"),
+    );
+
+    const result = await getConfigurationVersions(
+      byCodeAndLevel("global", "global"),
+    );
+
+    expect(result.versions).toHaveLength(1);
+    expect(result.versions[0].change.added).toEqual(["currency"]);
+    expect(result.versions[0].change.updated).toEqual([]);
+    expect(result.versions[0].change.removed).toEqual([]);
+    expect(result.versions[0].config).toEqual([
+      { name: "currency", value: "USD" },
+    ]);
+    expect(result.versions[0].changes).toEqual([
+      { name: "currency", after: "USD" },
+    ]);
+  });
+
+  it("includes before/after in changes when a key is updated", async () => {
+    await setConfiguration(
+      { config: [{ name: "currency", value: "USD" }] },
+      byCodeAndLevel("global", "global"),
+    );
+    await setConfiguration(
+      { config: [{ name: "currency", value: "EUR" }] },
+      byCodeAndLevel("global", "global"),
+    );
+
+    const result = await getConfigurationVersions(
+      byCodeAndLevel("global", "global"),
+    );
+
+    expect(result.versions).toHaveLength(2);
+    const latest = result.versions[0];
+    expect(latest.change.updated).toEqual(["currency"]);
+    expect(latest.changes).toEqual([
+      { name: "currency", before: "USD", after: "EUR" },
+    ]);
+  });
+
+  it("normalizes non-string persisted values to strings before versioning", async () => {
+    await configRepository.persistConfig(
+      "global",
+      {
+        scope: { id: "id-global", code: "global", level: "global" },
+        config: [{ name: "retryCount", value: 3 }],
+      },
+      { reason: "set" },
+    );
+
+    const config = await getConfiguration(byCodeAndLevel("global", "global"));
+    expect(
+      config.config.find((entry) => entry.name === "retryCount")?.value,
+    ).toBe("3");
+
+    const versions = await getConfigurationVersions(
+      byCodeAndLevel("global", "global"),
+    );
+    expect(versions.versions[0].config).toEqual([
+      { name: "retryCount", value: "3" },
+    ]);
+  });
+
+  it("supports listing versions by code selector without explicit level", async () => {
+    await setConfiguration(
+      { config: [{ name: "currency", value: "USD" }] },
+      byCodeAndLevel("global", "global"),
+    );
+
+    const result = await getConfigurationVersions(byCode("global"));
+
+    expect(result.scope.code).toBe("global");
+    expect(result.versions).toHaveLength(1);
+  });
+
+  it("fails when code selector is ambiguous across multiple levels", async () => {
+    const ambiguousScopeTree: ScopeTree = [
+      {
+        id: "id-global",
+        code: "global",
+        label: "Global",
+        level: "global",
+        is_editable: false,
+        is_final: false,
+        is_removable: false,
+        children: [
+          {
+            id: "id-dup-store",
+            code: "dup",
+            label: "Duplicate Store",
+            level: "store",
+            is_editable: true,
+            is_final: true,
+            is_removable: true,
+          },
+        ],
+      },
+      {
+        id: "id-dup-website",
+        code: "dup",
+        label: "Duplicate Website",
+        level: "website",
+        is_editable: true,
+        is_final: true,
+        is_removable: true,
+      },
+    ];
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      ambiguousScopeTree,
+    );
+
+    await expect(getConfiguration(byCode("dup"))).rejects.toThrow(
+      "AMBIGUOUS_SCOPE_CODE",
+    );
+  });
+
+  it("persists config even when version write fails", async () => {
+    const originalWriteImpl = mockFilesInstance.write.getMockImplementation();
+    mockFilesInstance.write.mockImplementation(async (path, content) => {
+      if (path.includes("/versions/")) {
+        throw new Error("version write failed");
+      }
+
+      if (!originalWriteImpl) {
+        throw new Error("original write implementation missing");
+      }
+      return await originalWriteImpl(path, content);
+    });
+
+    await expect(
+      setConfiguration(
+        { config: [{ name: "currency", value: "USD" }] },
+        byCodeAndLevel("global", "global"),
+      ),
+    ).rejects.toThrow("version write failed");
+
+    const persisted = await configRepository.getPersistedConfig("global");
+    expect.assert(persisted, "persisted config should remain written");
+    const parsed = JSON.parse(persisted);
+    expect(
+      parsed.config.find((entry: ConfigValue) => entry.name === "currency"),
+    ).toBeDefined();
+  });
+
+  it("still records versions when version index writes fail", async () => {
+    const originalWriteImpl = mockFilesInstance.write.getMockImplementation();
+    mockFilesInstance.write.mockImplementation(async (path, content) => {
+      if (path.endsWith("/versions/index.json")) {
+        throw new Error("index write failed");
+      }
+      if (!originalWriteImpl) {
+        throw new Error("original write implementation missing");
+      }
+      return await originalWriteImpl(path, content);
+    });
+
+    await setConfiguration(
+      { config: [{ name: "currency", value: "USD" }] },
+      byCodeAndLevel("global", "global"),
+    );
+    await setConfiguration(
+      { config: [{ name: "currency", value: "EUR" }] },
+      byCodeAndLevel("global", "global"),
+    );
+
+    const result = await getConfigurationVersions(
+      byCodeAndLevel("global", "global"),
+    );
+    expect(result.versions).toHaveLength(2);
+  });
+
+  it("restores changed keys by default and applies removed keys as deletions", async () => {
+    await configRepository.persistConfig(
+      "global",
+      JSON.parse(
+        buildPayload("id-global", "global", "global", [
+          {
+            name: "currency",
+            value: "USD",
+            origin: { code: "global", level: "global" },
+          },
+          {
+            name: "legacy",
+            value: "legacy-value",
+            origin: { code: "global", level: "global" },
+          },
+        ]),
+      ),
+      { reason: "set" },
+    );
+    await configRepository.persistConfig(
+      "global",
+      JSON.parse(
+        buildPayload("id-global", "global", "global", [
+          {
+            name: "currency",
+            value: "EUR",
+            origin: { code: "global", level: "global" },
+          },
+          {
+            name: "newField",
+            value: "new-value",
+            origin: { code: "global", level: "global" },
+          },
+        ]),
+      ),
+      { reason: "set" },
+    );
+
+    const selectedVersionId = (
+      await getConfigurationVersions(byCodeAndLevel("global", "global"))
+    ).versions[0].id;
+
+    await setConfiguration(
+      {
+        config: [
+          { name: "currency", value: "CAD" },
+          { name: "legacy", value: "revived" },
+        ],
+      },
+      byCodeAndLevel("global", "global"),
+    );
+
+    const restored = await restoreConfigurationVersion(
+      byCodeAndLevel("global", "global"),
+      { versionId: selectedVersionId },
+    );
+    expect(restored.restoredFromVersionId).toBe(selectedVersionId);
+    expect(restored.removed).toEqual(["legacy"]);
+    expect(restored.config).toHaveLength(2);
+    expect(restored.config).toEqual(
+      expect.arrayContaining([
+        { name: "currency", value: "EUR" },
+        { name: "newField", value: "new-value" },
+      ]),
+    );
+
+    const current = await getConfiguration(byCodeAndLevel("global", "global"));
+    expect(
+      current.config.find((entry) => entry.name === "currency")?.value,
+    ).toBe("EUR");
+    expect(
+      current.config.find((entry) => entry.name === "newField")?.value,
+    ).toBe("new-value");
+    expect(current.config.find((entry) => entry.name === "legacy")).toBe(
+      undefined,
+    );
+  });
+
+  it("restores only requested fields when fields[] is provided", async () => {
+    await configRepository.persistConfig(
+      "global",
+      JSON.parse(
+        buildPayload("id-global", "global", "global", [
+          {
+            name: "currency",
+            value: "USD",
+            origin: { code: "global", level: "global" },
+          },
+          {
+            name: "legacy",
+            value: "legacy-value",
+            origin: { code: "global", level: "global" },
+          },
+        ]),
+      ),
+      { reason: "set" },
+    );
+    await configRepository.persistConfig(
+      "global",
+      JSON.parse(
+        buildPayload("id-global", "global", "global", [
+          {
+            name: "currency",
+            value: "EUR",
+            origin: { code: "global", level: "global" },
+          },
+        ]),
+      ),
+      { reason: "set" },
+    );
+
+    const selectedVersionId = (
+      await getConfigurationVersions(byCodeAndLevel("global", "global"))
+    ).versions[0].id;
+    await setConfiguration(
+      {
+        config: [
+          { name: "currency", value: "CAD" },
+          { name: "legacy", value: "revived" },
+        ],
+      },
+      byCodeAndLevel("global", "global"),
+    );
+
+    const restored = await restoreConfigurationVersion(
+      byCodeAndLevel("global", "global"),
+      { versionId: selectedVersionId, fields: ["currency"] },
+    );
+    expect(restored.removed).toEqual([]);
+    expect(restored.config).toEqual([{ name: "currency", value: "EUR" }]);
+
+    const current = await getConfiguration(byCodeAndLevel("global", "global"));
+    expect(
+      current.config.find((entry) => entry.name === "currency")?.value,
+    ).toBe("EUR");
+    expect(current.config.find((entry) => entry.name === "legacy")?.value).toBe(
+      "revived",
+    );
+  });
+
+  it("reports removed keys only when they existed in current scope", async () => {
+    await configRepository.persistConfig(
+      "global",
+      JSON.parse(
+        buildPayload("id-global", "global", "global", [
+          {
+            name: "currency",
+            value: "USD",
+            origin: { code: "global", level: "global" },
+          },
+        ]),
+      ),
+      { reason: "set" },
+    );
+    await configRepository.persistConfig(
+      "global",
+      JSON.parse(
+        buildPayload("id-global", "global", "global", [
+          {
+            name: "currency",
+            value: "EUR",
+            origin: { code: "global", level: "global" },
+          },
+          {
+            name: "featureFlag",
+            value: "on",
+            origin: { code: "global", level: "global" },
+          },
+        ]),
+      ),
+      { reason: "set" },
+    );
+
+    const selectedVersionId = (
+      await getConfigurationVersions(byCodeAndLevel("global", "global"))
+    ).versions[0].id;
+
+    // Current scope does not contain a key that selected version marked as removed.
+    await setConfiguration(
+      { config: [{ name: "currency", value: "CAD" }] },
+      byCodeAndLevel("global", "global"),
+    );
+
+    const restored = await restoreConfigurationVersion(
+      byCodeAndLevel("global", "global"),
+      { versionId: selectedVersionId },
+    );
+
+    expect(restored.removed).toEqual([]);
+  });
+
+  it("throws VERSION_NOT_FOUND when restore source version is missing", async () => {
+    await expect(
+      restoreConfigurationVersion(byCodeAndLevel("global", "global"), {
+        versionId: "missing-version",
+      }),
+    ).rejects.toThrow("VERSION_NOT_FOUND");
+  });
+
+  it("throws VERSION_CONFLICT when expectedLatestVersionId does not match", async () => {
+    await setConfiguration(
+      { config: [{ name: "currency", value: "USD" }] },
+      byCodeAndLevel("global", "global"),
+    );
+    const selectedVersionId = (
+      await getConfigurationVersions(byCodeAndLevel("global", "global"))
+    ).versions[0].id;
+
+    await expect(
+      restoreConfigurationVersion(byCodeAndLevel("global", "global"), {
+        versionId: selectedVersionId,
+        expectedLatestVersionId: "some-other-latest-id",
+      }),
+    ).rejects.toThrow("VERSION_CONFLICT");
+  });
+
+  it("fails restore when selected version snapshot has invalid shape", async () => {
+    await setConfiguration(
+      { config: [{ name: "currency", value: "USD" }] },
+      byCodeAndLevel("global", "global"),
+    );
+    const history = await getConfigurationVersions(
+      byCodeAndLevel("global", "global"),
+    );
+    const [version] = history.versions;
+    expect.assert(version, "version should exist");
+
+    const malformedRecord = {
+      id: version.id,
+      timestamp: version.timestamp,
+      scope: version.scope,
+      reason: version.reason,
+      change: version.change,
+      snapshot: { invalid: true },
+    };
+    await mockFilesInstance.write(
+      `scope/global/versions/${version.id}.json`,
+      JSON.stringify(malformedRecord),
+    );
+
+    await expect(
+      restoreConfigurationVersion(byCodeAndLevel("global", "global"), {
+        versionId: version.id,
+      }),
+    ).rejects.toThrow("VERSION_SNAPSHOT_INVALID");
+  });
+
   it("merges existing and newly set entries without losing prior values", async () => {
     // Set initial config
     await configRepository.saveConfig(
@@ -311,13 +735,15 @@ describe("ConfigManager functions", () => {
     expect(response.config).toEqual([{ name: "currency", value: "GBP" }]);
   });
 
-  it("skips entries missing value and strips unknown props as per request contract", async () => {
-    // Test malformed entries are handled at runtime
+  it("accepts only string config values at request boundaries", async () => {
+    // Test malformed/non-string entries are rejected at runtime
     const response = await setConfiguration(
       {
         config: [
           { name: "currency" } as any, // missing value - test runtime handling
           { name: "exampleList", value: "option1" }, // valid
+          { name: "featureFlag", value: true } as any, // boolean should be rejected
+          { name: "retryCount", value: 3 } as any, // number should be rejected
           { value: "orphaned" } as any, // missing name - test runtime handling
         ],
       },

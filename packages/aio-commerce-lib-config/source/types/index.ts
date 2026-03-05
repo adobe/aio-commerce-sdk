@@ -21,6 +21,18 @@ export type OperationOptions = {
 
 /** Options for controlling configuration operations. */
 export type ConfigOptions = OperationOptions & {
-  /** Optional encryption key for encrypting/decrypting password fields. */
-  encryptionKey?: string;
+  /** Optional encryption key for encrypting/decrypting password fields. If not provided, falls back to AIO_COMMERCE_CONFIG_ENCRYPTION_KEY environment variable. */
+  encryptionKey?: string | null;
+};
+
+/** Backward-compatible alias for operation and configuration options. */
+export type LibConfigOptions = ConfigOptions;
+
+/**
+ * Global fetch options with all properties required.
+ * @internal
+ */
+export type GlobalLibConfigOptions = {
+  cacheTimeout: number;
+  encryptionKey?: string | null;
 };
