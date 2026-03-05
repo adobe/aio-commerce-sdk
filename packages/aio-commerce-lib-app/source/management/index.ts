@@ -22,6 +22,7 @@ export { defineCustomInstallationStep } from "./installation/custom-installation
 export {
   createInitialInstallationState,
   runInstallation,
+  runValidation,
 } from "./installation/runner";
 export {
   isCompletedState,
@@ -34,5 +35,6 @@ export type { CustomInstallationStepHandler } from "./installation/custom-instal
 export type {
   CreateInitialInstallationStateOptions,
   RunInstallationOptions,
+  RunValidationOptions,
 } from "./installation/runner";
 export type * from "./installation/workflow";
