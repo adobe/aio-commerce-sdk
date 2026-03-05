@@ -1186,6 +1186,159 @@ describe("validateConfigDomain", () => {
     ).not.toThrow();
   });
 
+  describe("webhooks domain", () => {
+    const baseWebhookDefinition = {
+      webhook_method: "observer.catalog_product_save_after",
+      webhook_type: "after",
+      batch_name: "my_batch",
+      hook_name: "my_hook",
+      method: "POST",
+    };
+
+    const baseWebhookEntry = {
+      label: "Test Webhook",
+      description: "A test webhook",
+      category: "append",
+    };
+
+    test("should accept entry with runtimeAction and no url", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            runtimeAction: "my-package/handle-webhook",
+            webhook: baseWebhookDefinition,
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    });
+
+    test("should accept entry with url and no runtimeAction", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            webhook: {
+              ...baseWebhookDefinition,
+              url: "https://example.com/hook",
+            },
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    });
+
+    test("should reject entry with neither runtimeAction nor url", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            webhook: baseWebhookDefinition,
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).toThrow(
+        "Invalid commerce app config",
+      );
+    });
+
+    test("should accept batch_name and hook_name with only alphanumeric and underscore characters", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            runtimeAction: "my-package/handle-webhook",
+            webhook: {
+              ...baseWebhookDefinition,
+              batch_name: "my_batch_01",
+              hook_name: "hook_1",
+            },
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    });
+
+    test("should reject batch_name containing invalid characters", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            runtimeAction: "my-package/handle-webhook",
+            webhook: {
+              ...baseWebhookDefinition,
+              batch_name: "invalid-batch",
+            },
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).toThrow(
+        "Invalid commerce app config",
+      );
+    });
+
+    test("should reject hook_name containing invalid characters", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            runtimeAction: "my-package/handle-webhook",
+            webhook: {
+              ...baseWebhookDefinition,
+              hook_name: "invalid hook",
+            },
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).toThrow(
+        "Invalid commerce app config",
+      );
+    });
+  });
+
   test("should validate commerce event with fields that have optional source", () => {
     const config = {
       metadata: {
