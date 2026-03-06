@@ -374,11 +374,8 @@ export async function createCommerceProvider(
 
   return commerceEventsClient
     .createEventProvider({
+      ...provider,
       provider_id: provider.id,
-      instance_id: provider.instance_id,
-      label: provider.label,
-      description: provider.description,
-      workspace_configuration: provider.workspace_configuration,
     })
     .then((res) => {
       logger.info(
@@ -492,12 +489,7 @@ async function createOrGetCommerceEventSubscription(
       `Subscription for event "${event.config.name}" already exists, skipping creation.`,
     );
 
-    return {
-      name: existing.name,
-      parent: existing.parent,
-      fields: existing.fields,
-      provider_id: existing.provider_id,
-return existing;
+    return existing;
   }
 
   return createCommerceEventSubscription(params);
