@@ -12,7 +12,7 @@
 
 import { vi } from "vitest";
 
-import type { AsyncFunctionArguments } from "github-script";
+import type { AsyncFunctionArguments } from "#ci/release/types";
 
 /** The registry URL for internally released packages. */
 export const INTERNAL_REGISTRY_URL =

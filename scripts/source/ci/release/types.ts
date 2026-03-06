@@ -47,3 +47,26 @@ export type SlackPayload = {
     };
   }>;
 };
+
+/**
+ * Type definitions for GitHub Actions script context.
+ *
+ * These types are based on inputs given by the `@actions/github-script` package.
+ * @see https://github.com/actions/github-script
+ */
+export interface AsyncFunctionArguments {
+  /** GitHub Actions core utilities */
+  core: {
+    /** Mark the action as failed with an error message */
+    setFailed(message: string | Error): void;
+
+    /** Set an output parameter */
+    setOutput(name: string, value: unknown): void;
+  };
+
+  /** Execution utilities for running commands */
+  exec: {
+    /** Execute a command */
+    exec(commandLine: string, args?: string[]): Promise<number>;
+  };
+}

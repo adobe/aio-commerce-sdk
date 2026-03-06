@@ -12,9 +12,9 @@
 
 import { parseReleaseChannel, runGitHubScript } from "./utils";
 
-import type { AsyncFunctionArguments } from "github-script";
 import type {
   AnnounceEnvironment,
+  AsyncFunctionArguments,
   PublishedPackage,
   ReleaseChannel,
   SlackPayload,

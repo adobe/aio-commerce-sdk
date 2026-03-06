@@ -10,8 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type { AsyncFunctionArguments } from "github-script";
-import type { ReleaseChannel } from "./types";
+import type { AsyncFunctionArguments, ReleaseChannel } from "./types";
 
 /** Runs the given action in a safe way and returns the result. */
 export function runGitHubScript<T>(

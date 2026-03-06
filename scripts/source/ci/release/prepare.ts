@@ -16,8 +16,7 @@ import { fileURLToPath } from "node:url";
 
 import { parseReleaseChannel, runGitHubScript } from "./utils";
 
-import type { AsyncFunctionArguments } from "github-script";
-import type { Environment } from "./types";
+import type { AsyncFunctionArguments, Environment } from "./types";
 
 // Find where the Changesets configuration and state files are located, relative to the current file.
 const CURRENT_DIR = dirname(fileURLToPath(import.meta.url));
