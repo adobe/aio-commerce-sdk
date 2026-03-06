@@ -6,6 +6,7 @@ packages:
   - turbo/*
 
 onlyBuiltDependencies:
+  - "@actions/github-script"
   - core-js-pure
   - esbuild
   - msw
