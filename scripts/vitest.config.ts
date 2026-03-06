@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -13,15 +13,9 @@
 import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
 import { defineConfig, mergeConfig } from "vitest/config";
 
-const BARREL_FILES = ["./source/yaml/index.ts"];
 export default mergeConfig(
   baseConfig,
   defineConfig({
     // Write your Vitest configuration here.
-    test: {
-      coverage: {
-        exclude: [...BARREL_FILES],
-      },
-    },
   }),
 );

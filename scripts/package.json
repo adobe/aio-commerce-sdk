@@ -10,7 +10,8 @@
   "license": "Apache-2.0",
   "description": "Scripts for the AIO Commerce SDK monorepo",
   "imports": {
-    "#*": "./source/*.ts"
+    "#*": "./source/*.ts",
+    "#test/*": "./test/*.ts"
   },
   "bin": {
     "sdk-prepack": "./source/prepack.ts",
@@ -25,10 +26,16 @@
     "format:check": "biome format --no-errors-on-unmatched",
     "lint": "biome lint --no-errors-on-unmatched",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest --coverage",
+    "test:ui": "vitest --ui --coverage",
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
   },
   "devDependencies": {
-    "@aio-commerce-sdk/config-typescript": "workspace:*"
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "@aio-commerce-sdk/config-vitest": "workspace:*",
+    "@aio-commerce-sdk/scripting-utils": "workspace:*",
+    "@types/github-script": "github:actions/github-script#v8.0.0"
   },
   "sideEffects": false
 }
