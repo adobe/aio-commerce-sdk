@@ -4,7 +4,7 @@
 function getEventProviderById(
   httpClient: AdobeCommerceHttpClient,
   params: {
-    provider_id: string;
+    providerId: string;
   },
   fetchOptions?: Options,
 ): Promise<CommerceEventProvider>;
@@ -16,12 +16,12 @@ Gets the info of the event provider with the given ID of the Commerce instance b
 
 ## Parameters
 
-| Parameter            | Type                                                                                                                                                                 | Description                                                                                                                                                                                        |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `httpClient`         | [`AdobeCommerceHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md) | The [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md) to use to make the request. |
-| `params`             | \{ `provider_id`: `string`; \}                                                                                                                                       | The parameters to get the event provider by.                                                                                                                                                       |
-| `params.provider_id` | `string`                                                                                                                                                             | -                                                                                                                                                                                                  |
-| `fetchOptions?`      | [`Options`](https://github.com/sindresorhus/ky?tab=readme-ov-file#options)                                                                                           | The [Options](https://github.com/sindresorhus/ky?tab=readme-ov-file#options) to use to make the request.                                                                                           |
+| Parameter           | Type                                                                                                                                                                 | Description                                                                                                                                                                                        |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `httpClient`        | [`AdobeCommerceHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md) | The [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md) to use to make the request. |
+| `params`            | \{ `providerId`: `string`; \}                                                                                                                                        | The parameters to get the event provider by.                                                                                                                                                       |
+| `params.providerId` | `string`                                                                                                                                                             | -                                                                                                                                                                                                  |
+| `fetchOptions?`     | [`Options`](https://github.com/sindresorhus/ky?tab=readme-ov-file#options)                                                                                           | The [Options](https://github.com/sindresorhus/ky?tab=readme-ov-file#options) to use to make the request.                                                                                           |
 
 ## Returns
 

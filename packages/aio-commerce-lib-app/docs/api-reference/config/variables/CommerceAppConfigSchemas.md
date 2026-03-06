@@ -165,10 +165,10 @@ const CommerceAppConfigSchemas: {
            destination: OptionalSchema<..., ...>;
            fields: ArraySchema<..., ...>;
            force: OptionalSchema<..., ...>;
-           hipaa_audit_required: OptionalSchema<..., ...>;
+           hipaaAuditRequired: OptionalSchema<..., ...>;
            label: SchemaWithPipe<...>;
            name: SchemaWithPipe<...>;
-           priority: OptionalSchema<..., ...>;
+           prioritary: OptionalSchema<..., ...>;
            rules: OptionalSchema<..., ...>;
            runtimeActions: ArraySchema<..., ...>;
         }, undefined>, "Expected an array of Commerce events">;
@@ -201,10 +201,10 @@ const CommerceAppConfigSchemas: {
            source: OptionalSchema<..., ...>;
         }, undefined>, "Expected an array of event field objects with a 'name' property">;
         force: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
-        hipaa_audit_required: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
+        hipaaAuditRequired: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
         label: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, MaxLengthAction<string, 100, "The event label must not be longer than 100 characters">]>;
         name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, RegexAction<string, "Event name must start with \"plugin.\" or \"observer.\" followed by lowercase letters and underscores only (e.g., \"plugin.order_placed\")">]>;
-        priority: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
+        prioritary: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
         rules: OptionalSchema<ArraySchema<ObjectSchema<{
            field: ...;
            operator: ...;
@@ -444,10 +444,10 @@ readonly eventing: ObjectSchema<{
         destination: OptionalSchema<..., ...>;
         fields: ArraySchema<..., ...>;
         force: OptionalSchema<..., ...>;
-        hipaa_audit_required: OptionalSchema<..., ...>;
+        hipaaAuditRequired: OptionalSchema<..., ...>;
         label: SchemaWithPipe<...>;
         name: SchemaWithPipe<...>;
-        priority: OptionalSchema<..., ...>;
+        prioritary: OptionalSchema<..., ...>;
         rules: OptionalSchema<..., ...>;
         runtimeActions: ArraySchema<..., ...>;
      }, undefined>, "Expected an array of Commerce events">;
@@ -485,10 +485,10 @@ readonly eventing.commerce: ArraySchema<ObjectSchema<{
         source: OptionalSchema<..., ...>;
      }, undefined>, "Expected an array of event field objects with a 'name' property">;
      force: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
-     hipaa_audit_required: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
+     hipaaAuditRequired: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
      label: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, MaxLengthAction<string, 100, "The event label must not be longer than 100 characters">]>;
      name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, RegexAction<string, "Event name must start with \"plugin.\" or \"observer.\" followed by lowercase letters and underscores only (e.g., \"plugin.order_placed\")">]>;
-     priority: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
+     prioritary: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
      rules: OptionalSchema<ArraySchema<ObjectSchema<{
         field: ...;
         operator: ...;

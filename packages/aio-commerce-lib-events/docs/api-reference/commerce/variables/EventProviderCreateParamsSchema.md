@@ -3,7 +3,7 @@
 ```ts
 const EventProviderCreateParamsSchema: ObjectSchema<
   {
-    workspace_configuration: OptionalSchema<
+    associatedWorkspaceConfiguration: OptionalSchema<
       UnionSchema<
         [
           SchemaWithPipe<
@@ -51,12 +51,12 @@ const EventProviderCreateParamsSchema: ObjectSchema<
       StringSchema<`Expected a string value for '${string}'`>,
       undefined
     >;
-    instance_id: StringSchema<`Expected a string value for '${string}'`>;
+    instanceId: StringSchema<`Expected a string value for '${string}'`>;
     label: OptionalSchema<
       StringSchema<`Expected a string value for '${string}'`>,
       undefined
     >;
-    provider_id: StringSchema<`Expected a string value for '${string}'`>;
+    providerId: StringSchema<`Expected a string value for '${string}'`>;
   },
   undefined
 >;

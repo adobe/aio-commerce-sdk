@@ -4,11 +4,11 @@
 function createCommerceEventsApiClient(params: CommerceHttpClientParams): ApiClientRecord<AdobeCommerceHttpClient, {
   updateEventingConfiguration: (httpClient: AdobeCommerceHttpClient, params: {
      enabled?: boolean;
-     environment_id?: string;
-     instance_id?: string;
-     merchant_id?: string;
-     provider_id?: string;
-     workspace_configuration?:   | string
+     environmentId?: string;
+     instanceId?: string;
+     merchantId?: string;
+     providerId?: string;
+     workspaceConfiguration?:   | string
         | {
       [key: string]: unknown;
       };
@@ -36,11 +36,11 @@ Creates a new API client for the Commerce Events API client.
 `ApiClientRecord`\<[`AdobeCommerceHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md), \{
 `updateEventingConfiguration`: (`httpClient`: [`AdobeCommerceHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md), `params`: \{
 `enabled?`: `boolean`;
-`environment_id?`: `string`;
-`instance_id?`: `string`;
-`merchant_id?`: `string`;
-`provider_id?`: `string`;
-`workspace_configuration?`: \| `string`
+`environmentId?`: `string`;
+`instanceId?`: `string`;
+`merchantId?`: `string`;
+`providerId?`: `string`;
+`workspaceConfiguration?`: \| `string`
 \| \{
 \[`key`: `string`\]: `unknown`;
 \};

@@ -71,10 +71,10 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
            destination?: ... | ...;
            fields: ...[];
            force?: ... | ... | ...;
-           hipaa_audit_required?: ... | ... | ...;
+           hipaaAuditRequired?: ... | ... | ...;
            label: string;
            name: string;
-           priority?: ... | ... | ...;
+           prioritary?: ... | ... | ...;
            rules?: ... | ...;
            runtimeActions: ...[];
         }[];
@@ -205,10 +205,10 @@ The config file must export a default export with the configuration object.
 `destination?`: ... \| ...;
 `fields`: ...[];
 `force?`: ... \| ... \| ...;
-`hipaa_audit_required?`: ... \| ... \| ...;
+`hipaaAuditRequired?`: ... \| ... \| ...;
 `label`: `string`;
 `name`: `string`;
-`priority?`: ... \| ... \| ...;
+`prioritary?`: ... \| ... \| ...;
 `rules?`: ... \| ...;
 `runtimeActions`: ...[];
 \}[];

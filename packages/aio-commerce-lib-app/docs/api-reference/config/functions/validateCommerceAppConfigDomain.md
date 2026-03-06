@@ -71,10 +71,10 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
            destination?: ...;
            fields: ...;
            force?: ...;
-           hipaa_audit_required?: ...;
+           hipaaAuditRequired?: ...;
            label: ...;
            name: ...;
-           priority?: ...;
+           prioritary?: ...;
            rules?: ...;
            runtimeActions: ...;
         }[];
@@ -214,10 +214,10 @@ schema for that specific domain.
 `destination?`: ...;
 `fields`: ...;
 `force?`: ...;
-`hipaa_audit_required?`: ...;
+`hipaaAuditRequired?`: ...;
 `label`: ...;
 `name`: ...;
-`priority?`: ...;
+`prioritary?`: ...;
 `rules?`: ...;
 `runtimeActions`: ...;
 \}[];
