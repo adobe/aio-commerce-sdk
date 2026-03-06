@@ -12,7 +12,7 @@ const EventSubscriptionCreateParamsSchema: ObjectSchema<{
   name: StringSchema<`Expected a string value for '${string}'`>;
   parent: OptionalSchema<StringSchema<`Expected a string value for '${string}'`>, undefined>;
   priority: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
-  providerId: OptionalSchema<StringSchema<`Expected a string value for '${string}'`>, undefined>;
+  provider_id: OptionalSchema<StringSchema<`Expected a string value for '${string}'`>, undefined>;
   rules: OptionalSchema<ArraySchema<ObjectSchema<{
      field: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<...>, NonEmptyAction<..., ...>]>, RegexAction<string, "Field name must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), dashes (-), dots (.), and square brackets ([, ]), or be exactly \"*\"">]>;
      operator: UnionSchema<LiteralSchema<"regex" | "greaterThan" | "lessThan" | "equal" | "in" | "onChange", undefined>[], `Operator must be one of: ${string}`>;

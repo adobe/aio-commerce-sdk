@@ -315,7 +315,7 @@ async function configureCommerceEventing(
   };
 
   if (existingData.isDefaultWorkspaceConfigurationEmpty) {
-    if (!config.workspaceConfiguration) {
+    if (!config.workspace_configuration) {
       const message =
         "Workspace configuration is required to enable Commerce Eventing when there is not an existing one.";
 
@@ -328,7 +328,7 @@ async function configureCommerceEventing(
     );
 
     // Remove the workspace configuration to avoid overriding it
-    const { workspaceConfiguration, ...rest } = updateParams;
+    const { workspace_configuration, ...rest } = updateParams;
     updateParams = rest;
   }
 
@@ -374,11 +374,11 @@ export async function createCommerceProvider(
 
   return commerceEventsClient
     .createEventProvider({
-      providerId: provider.id,
-      instanceId: provider.instance_id,
+      provider_id: provider.id,
+      instance_id: provider.instance_id,
       label: provider.label,
       description: provider.description,
-      associatedWorkspaceConfiguration: provider.workspaceConfiguration,
+      workspace_configuration: provider.workspace_configuration,
     })
     .then((res) => {
       logger.info(
@@ -443,7 +443,7 @@ async function createCommerceEventSubscription(
     name: eventName,
     parent: event.config.name,
     fields: event.config.fields,
-    providerId: provider.id,
+    provider_id: provider.id,
     destination: event.config.destination,
     hipaa_audit_required: event.config.hipaa_audit_required,
     priority: event.config.priority,
@@ -496,7 +496,7 @@ async function createOrGetCommerceEventSubscription(
       name: existing.name,
       parent: existing.parent,
       fields: existing.fields,
-      providerId: existing.provider_id,
+      provider_id: existing.provider_id,
     };
   }
 
@@ -611,7 +611,7 @@ export async function onboardCommerceEventing(
     {
       context,
       config: {
-        workspaceConfiguration,
+        workspace_configuration: workspaceConfiguration,
       },
     },
     existingData,
@@ -625,7 +625,7 @@ export async function onboardCommerceEventing(
         instance_id: instanceId,
         label: provider.label,
         description: provider.description,
-        workspaceConfiguration,
+        workspace_configuration: workspaceConfiguration,
       },
     },
     existingData.providers,

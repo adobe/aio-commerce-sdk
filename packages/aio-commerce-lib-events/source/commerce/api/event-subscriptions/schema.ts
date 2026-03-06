@@ -79,7 +79,7 @@ function rulesSchema(propertyName: string) {
 export const EventSubscriptionCreateParamsSchema = v.object({
   name: stringValueSchema("name"),
 
-  providerId: v.optional(stringValueSchema("providerId")),
+  provider_id: v.optional(stringValueSchema("provider_id")),
   parent: v.optional(stringValueSchema("parent")),
   fields: fieldsSchema("fields"),
   rules: v.optional(rulesSchema("rules")),

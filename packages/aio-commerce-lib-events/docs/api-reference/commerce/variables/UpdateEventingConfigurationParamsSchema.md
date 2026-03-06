@@ -5,7 +5,7 @@ const UpdateEventingConfigurationParamsSchema: Omit<
   ObjectSchema<
     {
       enabled: BooleanSchema<`Expected a boolean value for '${string}'`>;
-      environmentId: SchemaWithPipe<
+      environment_id: SchemaWithPipe<
         readonly [
           StringSchema<`Expected a string value for '${string}'`>,
           RegexAction<
@@ -14,7 +14,7 @@ const UpdateEventingConfigurationParamsSchema: Omit<
           >,
         ]
       >;
-      instanceId: SchemaWithPipe<
+      instance_id: SchemaWithPipe<
         readonly [
           StringSchema<`Expected a string value for '${string}'`>,
           RegexAction<
@@ -23,7 +23,7 @@ const UpdateEventingConfigurationParamsSchema: Omit<
           >,
         ]
       >;
-      merchantId: SchemaWithPipe<
+      merchant_id: SchemaWithPipe<
         readonly [
           StringSchema<`Expected a string value for '${string}'`>,
           RegexAction<
@@ -32,7 +32,7 @@ const UpdateEventingConfigurationParamsSchema: Omit<
           >,
         ]
       >;
-      providerId: SchemaWithPipe<
+      provider_id: SchemaWithPipe<
         readonly [
           StringSchema<`Expected a string value for '${string}'`>,
           RegexAction<
@@ -41,7 +41,7 @@ const UpdateEventingConfigurationParamsSchema: Omit<
           >,
         ]
       >;
-      workspaceConfiguration: UnionSchema<
+      workspace_configuration: UnionSchema<
         [
           SchemaWithPipe<
             readonly [

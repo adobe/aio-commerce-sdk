@@ -3,7 +3,7 @@
 ```ts
 const EventProviderGetByIdParamsSchema: ObjectSchema<
   {
-    providerId: StringSchema<`Expected a string value for '${string}'`>;
+    provider_id: StringSchema<`Expected a string value for '${string}'`>;
   },
   undefined
 >;

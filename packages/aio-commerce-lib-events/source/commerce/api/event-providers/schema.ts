@@ -16,17 +16,17 @@ import * as v from "valibot";
 import { workspaceConfigurationSchema } from "#commerce/lib/schema";
 
 export const EventProviderGetByIdParamsSchema = v.object({
-  providerId: stringValueSchema("providerId"),
+  provider_id: stringValueSchema("provider_id"),
 });
 
 export const EventProviderCreateParamsSchema = v.object({
-  providerId: stringValueSchema("providerId"),
-  instanceId: stringValueSchema("instanceId"),
+  provider_id: stringValueSchema("provider_id"),
+  instance_id: stringValueSchema("instance_id"),
 
   label: v.optional(stringValueSchema("label")),
   description: v.optional(stringValueSchema("description")),
-  associatedWorkspaceConfiguration: v.optional(
-    workspaceConfigurationSchema("associatedWorkspaceConfiguration"),
+  workspace_configuration: v.optional(
+    workspaceConfigurationSchema("workspace_configuration"),
   ),
 });
 
