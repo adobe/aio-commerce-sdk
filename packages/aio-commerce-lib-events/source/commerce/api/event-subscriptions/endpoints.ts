@@ -69,7 +69,7 @@ export async function createEventSubscription(
           fields: event.fields,
           rules: event.rules,
           destination: event.destination,
-          hipaa_audit_required: event.hipaaAuditRequired,
+          hipaa_audit_required: event.hipaa_audit_required,
           priority: event.priority,
           provider_id: event.providerId,
         },

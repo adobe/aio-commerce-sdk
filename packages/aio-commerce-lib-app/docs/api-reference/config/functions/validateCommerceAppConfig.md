@@ -74,10 +74,10 @@ function validateCommerceAppConfig(config: unknown): {
               source?: ...;
            }[];
            force?: boolean;
-           hipaaAuditRequired?: boolean;
+           hipaa_audit_required?: boolean;
            label: string;
            name: string;
-           prioritary?: boolean;
+           priority?: boolean;
            rules?: ...[];
            runtimeActions: string[];
         }[];
@@ -208,10 +208,10 @@ Validates a complete commerce app configuration object against the schema.
 `source?`: ...;
 \}[];
 `force?`: `boolean`;
-`hipaaAuditRequired?`: `boolean`;
+`hipaa_audit_required?`: `boolean`;
 `label`: `string`;
 `name`: `string`;
-`prioritary?`: `boolean`;
+`priority?`: `boolean`;
 `rules?`: ...[];
 `runtimeActions`: `string`[];
 \}[];

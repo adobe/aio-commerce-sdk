@@ -8,10 +8,10 @@ const EventingSchema: ObjectSchema<{
         destination: OptionalSchema<SchemaWithPipe<...>, undefined>;
         fields: ArraySchema<ObjectSchema<..., ...>, "Expected an array of event field objects with a 'name' property">;
         force: OptionalSchema<BooleanSchema<...>, undefined>;
-        hipaaAuditRequired: OptionalSchema<BooleanSchema<...>, undefined>;
+        hipaa_audit_required: OptionalSchema<BooleanSchema<...>, undefined>;
         label: SchemaWithPipe<readonly [..., ...]>;
         name: SchemaWithPipe<readonly [..., ...]>;
-        prioritary: OptionalSchema<BooleanSchema<...>, undefined>;
+        priority: OptionalSchema<BooleanSchema<...>, undefined>;
         rules: OptionalSchema<ArraySchema<..., ...>, undefined>;
         runtimeActions: ArraySchema<SchemaWithPipe<...>, "Expected an array of runtime actions in the format <package>/<action>">;
      }, undefined>, "Expected an array of Commerce events">;

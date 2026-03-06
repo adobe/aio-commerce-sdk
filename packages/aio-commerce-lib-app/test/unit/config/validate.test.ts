@@ -584,6 +584,47 @@ describe("validateConfig", () => {
     expect(validated.eventing?.commerce).toHaveLength(1);
   });
 
+  test("should preserve optional commerce event fields in validated output", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              label: "Commerce Events Provider",
+              description: "Provides commerce events",
+            },
+            events: [
+              {
+                name: "plugin.order_placed",
+                label: "Order Placed",
+                description: "Triggered when an order is placed",
+                fields: [{ name: "order_id" }],
+                runtimeActions: ["my-package/handle-order"],
+                hipaa_audit_required: true,
+                destination: "my-destination",
+                force: true,
+                priority: false,
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const validated = validateCommerceAppConfig(config);
+    const event = validated.eventing?.commerce?.[0]?.events?.[0];
+    expect(event?.hipaa_audit_required).toBe(true);
+    expect(event?.destination).toBe("my-destination");
+    expect(event?.force).toBe(true);
+    expect(event?.priority).toBe(false);
+  });
+
   test("should validate config with eventing - external type", () => {
     const config = {
       metadata: {

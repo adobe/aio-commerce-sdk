@@ -445,7 +445,7 @@ async function createCommerceEventSubscription(
     fields: event.config.fields,
     providerId: provider.id,
     destination: event.config.destination,
-    hipaaAuditRequired: event.config.hipaaAuditRequired,
+    hipaa_audit_required: event.config.hipaa_audit_required,
     priority: event.config.priority,
     force: event.config.force,
   };

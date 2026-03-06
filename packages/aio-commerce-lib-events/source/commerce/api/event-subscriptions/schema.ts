@@ -85,7 +85,7 @@ export const EventSubscriptionCreateParamsSchema = v.object({
   rules: v.optional(rulesSchema("rules")),
 
   destination: v.optional(stringValueSchema("destination")),
-  hipaaAuditRequired: v.optional(booleanValueSchema("hipaaAuditRequired")),
+  hipaa_audit_required: v.optional(booleanValueSchema("hipaa_audit_required")),
   priority: v.optional(booleanValueSchema("priority")),
 
   force: v.optional(booleanValueSchema("force")),
