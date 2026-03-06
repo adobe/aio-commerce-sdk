@@ -121,7 +121,7 @@ function formatMarkdownAnnouncement(
   });
 
   const channelLabel =
-    channel === "internal" ? "internal (Artifactory)" : "public (npm)";
+    channel === "internal" ? "internal (Artifactory)" : "public (NPM)";
 
   let announcement = `:rocket: New ${channelLabel} packages for <${REPOSITORY_URL}|Adobe Commerce SDK for App Builder>\n\n`;
 
