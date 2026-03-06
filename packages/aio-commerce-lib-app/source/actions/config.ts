@@ -112,7 +112,7 @@ router.get("/", {
 });
 
 /** POST / - Set configuration */
-router.post("/", {
+router.put("/", {
   body: v.object({
     scopeId: nonEmptyStringValueSchema("scopeId"),
     config: v.array(
