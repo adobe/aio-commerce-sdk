@@ -497,7 +497,7 @@ async function createOrGetCommerceEventSubscription(
       parent: existing.parent,
       fields: existing.fields,
       provider_id: existing.provider_id,
-    };
+return existing;
   }
 
   return createCommerceEventSubscription(params);
