@@ -208,7 +208,7 @@ const CommerceEventSchema = v.object({
   ),
 
   destination: v.optional(nonEmptyStringValueSchema("destination")),
-  hipaaAuditRequired: v.optional(booleanValueSchema("hipaaAuditRequired")),
+  hipaa_audit_required: v.optional(booleanValueSchema("hipaa_audit_required")),
   priority: v.optional(booleanValueSchema("priority")),
   force: v.optional(booleanValueSchema("force")),
 });
