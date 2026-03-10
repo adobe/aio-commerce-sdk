@@ -1,8 +1,5 @@
 # `@adobe/aio-commerce-sdk`
 
-> [!WARNING]
-> This package is a work in progress and is not yet ready for use yet. You may be able to install it, but if you do, expect breaking changes.
-
 Meta-package that re-exports Adobe Commerce SDK libraries for Adobe App Builder applications.
 
 This package serves as a convenient entry point for accessing commonly used Adobe Commerce libraries in App Builder projects, similar to how [`@adobe/aio-sdk`](https://github.com/adobe/aio-sdk) works for general App Builder development.
@@ -10,7 +7,7 @@ This package serves as a convenient entry point for accessing commonly used Adob
 ## Installation
 
 ```shell
-pnpm install @adobe/aio-commerce-sdk
+npm install @adobe/aio-commerce-sdk
 ```
 
 ## Overview

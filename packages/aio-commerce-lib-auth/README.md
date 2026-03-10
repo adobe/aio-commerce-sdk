@@ -1,8 +1,5 @@
 # `@adobe/aio-commerce-lib-auth`
 
-> [!WARNING]
-> This package is a work in progress and is not yet ready for use yet. You may be able to install it, but if you do, expect breaking changes.
-
 Authentication utilities for Adobe Commerce apps deployed in Adobe App Builder.
 
 This library provides a unified interface for authentication in Adobe Commerce App Builder applications, supporting multiple authentication mechanisms required for different integration scenarios.
@@ -10,7 +7,7 @@ This library provides a unified interface for authentication in Adobe Commerce A
 ## Installation
 
 ```shell
-pnpm install @adobe/aio-commerce-lib-auth
+npm install @adobe/aio-commerce-lib-auth
 ```
 
 ## Usage

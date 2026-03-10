@@ -1,14 +1,11 @@
 # `@adobe/aio-commerce-lib-events`
 
-> [!WARNING]
-> This package is a work in progress and is not yet ready for use yet. You may be able to install it, but if you do, expect breaking changes.
-
 This package provides an interface to interact with the Adobe I/O and Commerce Eventing APIs.
 
 ## Installation
 
 ```shell
-pnpm install @adobe/aio-commerce-lib-events
+npm install @adobe/aio-commerce-lib-events
 ```
 
 ## Usage

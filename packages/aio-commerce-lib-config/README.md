@@ -1,8 +1,5 @@
 # `@adobe/aio-commerce-lib-config`
 
-> [!WARNING]
-> This package is still under development and is not yet ready for use. You might be able to install it, but you may encounter breaking changes.
-
 Configuration management library for Adobe Commerce and external systems with hierarchical scopes and inheritance.
 
 This library provides a comprehensive solution for managing business configuration across Adobe Commerce and other external systems. It handles configuration schemas, hierarchical scope trees, and configuration values with built-in support for inheritance, caching, and integration with the App Management UI.

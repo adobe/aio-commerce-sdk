@@ -9,7 +9,19 @@
   },
   "license": "Apache-2.0",
   "description": "A library to interact with the Adobe I/O and Commerce Eventing APIs",
-  "keywords": [],
+  "keywords": [
+    "aio",
+    "adobe-io",
+    "commerce",
+    "adobe-commerce",
+    "adobe-commerce-sdk",
+    "aio-commerce-sdk",
+    "aio-commerce-lib-events",
+    "events",
+    "adobe-io-events",
+    "commerce-eventing",
+    "app-builder"
+  ],
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
