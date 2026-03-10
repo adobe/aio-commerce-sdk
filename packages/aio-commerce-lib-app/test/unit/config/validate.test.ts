@@ -23,6 +23,47 @@ import {
 
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_DESCRIPTION_LENGTH = 255;
+const DEFAULT_TEST_METADATA = {
+  id: "test-app",
+  displayName: "Test App",
+  description: "A test application",
+  version: "1.0.0",
+};
+
+function createCommerceEventConfig(
+  name: string,
+  overrides?: Partial<{
+    label: string;
+    description: string;
+    runtimeActions: string[];
+    fields: Array<{ name: string }>;
+  }>,
+) {
+  return {
+    metadata: DEFAULT_TEST_METADATA,
+    eventing: {
+      commerce: [
+        {
+          provider: {
+            label: "Commerce Provider",
+            description: "Commerce events",
+          },
+          events: [
+            {
+              name,
+              label: overrides?.label ?? "My Event",
+              fields: overrides?.fields ?? [{ name: "field" }],
+              runtimeActions: overrides?.runtimeActions ?? [
+                "my-package/action",
+              ],
+              description: overrides?.description ?? "Plugin event",
+            },
+          ],
+        },
+      ],
+    },
+  };
+}
 
 describe("validateConfig", () => {
   test("should validate a complete valid config", () => {
@@ -727,33 +768,11 @@ describe("validateConfig", () => {
   });
 
   test("should throw when commerce event name does not have required prefix", () => {
-    const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
-      eventing: {
-        commerce: [
-          {
-            provider: {
-              label: "Commerce Provider",
-              description: "Commerce events",
-            },
-            events: [
-              {
-                name: "invalid_event", // Missing plugin. or observer. prefix
-                label: "Invalid Event",
-                fields: [{ name: "field" }],
-                runtimeActions: ["my-package/action"],
-                description: "Invalid event",
-              },
-            ],
-          },
-        ],
-      },
-    };
+    const config = createCommerceEventConfig("invalid_event", {
+      // Missing plugin. or observer. prefix
+      label: "Invalid Event",
+      description: "Invalid event",
+    });
 
     expect(() => validateCommerceAppConfig(config)).toThrow(
       "Invalid commerce app config",
@@ -761,65 +780,23 @@ describe("validateConfig", () => {
   });
 
   test("should accept commerce event with plugin prefix", () => {
-    const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
-      eventing: {
-        commerce: [
-          {
-            provider: {
-              label: "Commerce Provider",
-              description: "Commerce events",
-            },
-            events: [
-              {
-                name: "plugin.my_event",
-                label: "My Event",
-                fields: [{ name: "field" }],
-                runtimeActions: ["my-package/action"],
-                description: "Plugin event",
-              },
-            ],
-          },
-        ],
-      },
-    };
+    const config = createCommerceEventConfig("plugin.my_event");
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+  });
+
+  test("should accept commerce event with dot-separated plugin name", () => {
+    const config = createCommerceEventConfig(
+      "plugin.sales.api.order_management.place",
+    );
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
   test("should accept commerce event with observer prefix", () => {
-    const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
-      eventing: {
-        commerce: [
-          {
-            provider: {
-              label: "Commerce Provider",
-              description: "Commerce events",
-            },
-            events: [
-              {
-                name: "observer.my_event",
-                label: "My Event",
-                fields: [{ name: "field" }],
-                runtimeActions: ["my-package/action"],
-                description: "Observer event",
-              },
-            ],
-          },
-        ],
-      },
-    };
+    const config = createCommerceEventConfig("observer.my_event", {
+      description: "Observer event",
+    });
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
