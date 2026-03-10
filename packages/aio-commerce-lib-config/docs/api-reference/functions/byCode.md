@@ -4,7 +4,7 @@
 function byCode(code: string): SelectorByCode;
 ```
 
-Defined in: [aio-commerce-lib-config/source/config-utils.ts:608](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/config-utils.ts#L608)
+Defined in: [config-utils.ts:608](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/config-utils.ts#L608)
 
 Creates a scope selector that identifies a scope by its code only.
 

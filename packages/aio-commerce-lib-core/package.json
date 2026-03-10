@@ -2,13 +2,13 @@
   "name": "@adobe/aio-commerce-lib-core",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.6.1",
+  "version": "1.0.0",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
-  "description": "Core utilities for AIO Commerce SDK Libraries",
+  "description": "Core utilities for Adobe Commerce SDK libraries",
   "keywords": [
     "aio",
     "adobe-io",
@@ -17,7 +17,7 @@
     "adobe-commerce-sdk",
     "aio-commerce-sdk",
     "aio-commerce-lib-core",
-    "aio-commerce-sdk-lib-core"
+    "app-builder"
   ],
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"

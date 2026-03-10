@@ -4,11 +4,11 @@
 function setConfiguration(
   request: SetConfigurationRequest,
   selector: SelectorBy,
-  options?: LibConfigOptions,
+  options?: ConfigOptions,
 ): Promise<SetConfigurationResponse>;
 ```
 
-Defined in: [aio-commerce-lib-config/source/config-manager.ts:482](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/config-manager.ts#L482)
+Defined in: [config-manager.ts:424](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/config-manager.ts#L424)
 
 Sets configuration values for a scope.
 
@@ -22,7 +22,7 @@ Configuration values are inherited from parent scopes unless explicitly overridd
 | ---------- | ----------------------------------------------------------------------- | -------------------------------------------------------------- |
 | `request`  | [`SetConfigurationRequest`](../type-aliases/SetConfigurationRequest.md) | Configuration set request containing the config values to set. |
 | `selector` | [`SelectorBy`](../type-aliases/SelectorBy.md)                           | Scope selector specifying how to identify the scope.           |
-| `options?` | [`LibConfigOptions`](../type-aliases/LibConfigOptions.md)               | Optional library configuration options for cache timeout.      |
+| `options?` | [`ConfigOptions`](../type-aliases/ConfigOptions.md)                     | Optional library configuration options for cache timeout.      |
 
 ## Returns
 

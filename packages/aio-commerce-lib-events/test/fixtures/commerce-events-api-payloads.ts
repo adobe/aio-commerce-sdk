@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type { Options } from "@adobe/aio-commerce-lib-api/ky";
+import type { Options } from "ky";
 import type { createCommerceEventsApiClient } from "#commerce/index";
 
 type CommerceEventsApiClient = ReturnType<typeof createCommerceEventsApiClient>;
@@ -35,7 +35,7 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.getEventProviderById(
         {
-          providerId: "provider-1",
+          provider_id: "provider-1",
         },
         fetchOptions,
       );
@@ -51,11 +51,11 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.createEventProvider(
         {
-          providerId: "provider-1",
-          instanceId: "instance-1",
+          provider_id: "provider-1",
+          instance_id: "instance-1",
           label: "Provider 1",
           description: "Provider 1 description",
-          associatedWorkspaceConfiguration: {},
+          workspace_configuration: {},
         },
         fetchOptions,
       );
@@ -83,7 +83,7 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
       return client.createEventSubscription(
         {
           name: "subscription-1",
-          providerId: "provider-1",
+          provider_id: "provider-1",
           fields: [{ name: "field-1" }],
         },
         fetchOptions,

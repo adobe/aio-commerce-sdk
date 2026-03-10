@@ -2,7 +2,7 @@
   "name": "@aio-commerce-sdk/config-tsdown",
   "description": "TSDown configuration for the AIO Commerce SDK",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "exports": {
     "./tsdown.config.base": "./tsdown.config.base.js",

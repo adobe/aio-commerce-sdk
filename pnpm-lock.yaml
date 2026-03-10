@@ -27,6 +27,9 @@ catalogs:
     consola:
       specifier: ^3.4.2
       version: 3.4.2
+    ky:
+      specifier: ^1.9.0
+      version: 1.14.3
     prettier:
       specifier: ^3.8.1
       version: 3.8.1
@@ -219,7 +222,7 @@ importers:
         specifier: 'catalog:'
         version: 8.0.0
       ky:
-        specifier: ^1.9.0
+        specifier: 'catalog:'
         version: 1.14.3
       type-fest:
         specifier: 'catalog:'
@@ -463,6 +466,9 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
+      ky:
+        specifier: 'catalog:'
+        version: 1.14.3
       type-fest:
         specifier: 'catalog:'
         version: 5.4.4

@@ -159,7 +159,7 @@ const BaseEventSchema = v.object({
     v.pipe(
       nonEmptyStringValueSchema("runtime action"),
       v.regex(
-        /^[a-z0-9-]+\/[a-z0-9-]+$/,
+        /^[a-z0-9-]+\/[a-z0-9-]+$/i,
         'Runtime action must be in the format "<package>/<action>" (e.g., "my-package/my-action")',
       ),
     ),
@@ -208,7 +208,7 @@ const CommerceEventSchema = v.object({
   ),
 
   destination: v.optional(nonEmptyStringValueSchema("destination")),
-  hipaaAuditRequired: v.optional(booleanValueSchema("hipaaAuditRequired")),
+  hipaa_audit_required: v.optional(booleanValueSchema("hipaa_audit_required")),
   priority: v.optional(booleanValueSchema("priority")),
   force: v.optional(booleanValueSchema("force")),
 });

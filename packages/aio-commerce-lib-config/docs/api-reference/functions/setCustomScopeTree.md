@@ -3,11 +3,11 @@
 ```ts
 function setCustomScopeTree(
   request: SetCustomScopeTreeRequest,
-  options?: LibConfigOptions,
+  options?: OperationOptions,
 ): Promise<SetCustomScopeTreeResponse>;
 ```
 
-Defined in: [aio-commerce-lib-config/source/config-manager.ts:572](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/config-manager.ts#L572)
+Defined in: [config-manager.ts:515](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/config-manager.ts#L515)
 
 Sets the custom scope tree, replacing all existing custom scopes with the provided ones.
 
@@ -20,7 +20,7 @@ custom scopes, preserving system scopes (global and commerce).
 | Parameter  | Type                                                                        | Description                                               |
 | ---------- | --------------------------------------------------------------------------- | --------------------------------------------------------- |
 | `request`  | [`SetCustomScopeTreeRequest`](../type-aliases/SetCustomScopeTreeRequest.md) | Custom scope tree request containing the scopes to set.   |
-| `options?` | [`LibConfigOptions`](../type-aliases/LibConfigOptions.md)                   | Optional library configuration options for cache timeout. |
+| `options?` | [`OperationOptions`](../type-aliases/OperationOptions.md)                   | Optional library configuration options for cache timeout. |
 
 ## Returns
 

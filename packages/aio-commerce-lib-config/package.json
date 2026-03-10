@@ -2,14 +2,25 @@
   "name": "@adobe/aio-commerce-lib-config",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.13.2",
+  "version": "1.0.0",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
   "description": "Configuration management utilities for Adobe Commerce apps deployed in Adobe App Builder",
-  "keywords": [],
+  "keywords": [
+    "aio",
+    "adobe-io",
+    "commerce",
+    "adobe-commerce",
+    "adobe-commerce-sdk",
+    "aio-commerce-sdk",
+    "aio-commerce-lib-config",
+    "configuration",
+    "config-management",
+    "app-builder"
+  ],
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },

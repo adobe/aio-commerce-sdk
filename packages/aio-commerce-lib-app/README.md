@@ -1,15 +1,12 @@
 # `@adobe/aio-commerce-lib-app`
 
-> [!WARNING]
-> This package is still under development and is not yet ready for use. You might be able to install it, but you may encounter breaking changes.
-
 App configuration management library for Adobe Commerce applications.
 
 This library provides tools for defining, validating, and managing configurations for Adobe Commerce applications. It defines the configuration schema, provides validation, and supports multiple configuration file formats with built-in TypeScript support.
 
 ## Installation
 
-```bash
+```shell
 npm install @adobe/aio-commerce-lib-app
 ```
 

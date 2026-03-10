@@ -1,6 +1,6 @@
 # HTTP Action Router Guide
 
-The `@adobe/aio-commerce-lib-core/actions` module provides a type-safe HTTP router for Adobe I/O Runtime actions, with built-in schema validation, path parameter extraction, and middleware support.
+The `@aio-commerce-sdk/common-utils/actions` module provides a type-safe HTTP router for Adobe I/O Runtime actions, with built-in schema validation, path parameter extraction, and middleware support.
 
 ## Overview
 
@@ -16,7 +16,7 @@ The HTTP Action Router simplifies these common patterns with a fluent, Express-l
 ## Basic Usage
 
 ```typescript
-import { HttpActionRouter } from "@adobe/aio-commerce-lib-core/actions";
+import { HttpActionRouter } from "@aio-commerce-sdk/common-utils/actions";
 import { ok, notFound } from "@adobe/aio-commerce-lib-core/responses";
 
 const router = new HttpActionRouter();
@@ -169,7 +169,10 @@ router.get("/example", {
 Use `.use()` to register context builders (middleware) that run before route handlers:
 
 ```typescript
-import { HttpActionRouter, logger } from "@adobe/aio-commerce-lib-core/actions";
+import {
+  HttpActionRouter,
+  logger,
+} from "@aio-commerce-sdk/common-utils/actions";
 
 const router = new HttpActionRouter()
   .use(logger({ level: "debug" }))
@@ -193,7 +196,10 @@ router.get("/me", {
 The `logger` middleware adds an `@adobe/aio-lib-core-logging` instance to the context:
 
 ```typescript
-import { HttpActionRouter, logger } from "@adobe/aio-commerce-lib-core/actions";
+import {
+  HttpActionRouter,
+  logger,
+} from "@aio-commerce-sdk/common-utils/actions";
 
 const router = new HttpActionRouter().use(
   logger({
@@ -218,7 +224,7 @@ router.get("/test", {
 Create your own middleware by returning an object with context properties:
 
 ```typescript
-import { HttpActionRouter } from "@adobe/aio-commerce-lib-core/actions";
+import { HttpActionRouter } from "@aio-commerce-sdk/common-utils/actions";
 
 interface AuthContext {
   user: { id: string; role: string };
@@ -270,7 +276,7 @@ Use `defineRoute` to define route handlers in separate files while maintaining t
 
 ```typescript
 // routes/users.ts
-import { defineRoute } from "@adobe/aio-commerce-lib-core/actions";
+import { defineRoute } from "@aio-commerce-sdk/common-utils/actions";
 import { ok } from "@adobe/aio-commerce-lib-core/responses";
 import { router } from "../router";
 
@@ -282,7 +288,10 @@ export const getUser = defineRoute(router, {
 });
 
 // router.ts
-import { HttpActionRouter, logger } from "@adobe/aio-commerce-lib-core/actions";
+import {
+  HttpActionRouter,
+  logger,
+} from "@aio-commerce-sdk/common-utils/actions";
 import { getUser } from "./routes/users";
 
 export const router = new HttpActionRouter().use(logger());

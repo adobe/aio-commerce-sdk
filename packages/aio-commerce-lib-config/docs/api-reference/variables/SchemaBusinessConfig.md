@@ -1,7 +1,7 @@
 # `SchemaBusinessConfig`
 
 ```ts
-type SchemaBusinessConfig = ObjectSchema<{
+const SchemaBusinessConfig: ObjectSchema<{
   schema: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<"type", [VariantSchema<"selectionMode", [ObjectSchema<..., ...>, ObjectSchema<..., ...>], undefined>, ObjectSchema<{
      default: OptionalSchema<..., ...>;
      description: OptionalSchema<..., ...>;
@@ -47,7 +47,7 @@ type SchemaBusinessConfig = ObjectSchema<{
      type: "text";
    }
      | {
-     default?: string;
+     default?: undefined;
      description?: string;
      label?: string;
      name: string;
@@ -77,6 +77,6 @@ type SchemaBusinessConfig = ObjectSchema<{
 }, undefined>;
 ```
 
-Defined in: [config/schema/business-configuration.ts:213](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L213)
+Defined in: [modules/schema/index.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/modules/schema/index.ts#L20)
 
-The schema used to validate the `businessConfig` settings in the app config file.
+The schema used to validate the the business configuration settings.

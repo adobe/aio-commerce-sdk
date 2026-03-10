@@ -1,5 +1,24 @@
 # @adobe/aio-commerce-lib-events
 
+## 1.0.0
+
+### Major Changes
+
+- [#294](https://github.com/adobe/aio-commerce-sdk/pull/294) [`6d5b16a`](https://github.com/adobe/aio-commerce-sdk/commit/6d5b16a7659ab0d83b251921ac478ff7faf0d4e5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - General Availability (GA) release of the Adobe Commerce SDK and all libraries.
+
+- [#287](https://github.com/adobe/aio-commerce-sdk/pull/287) [`fc16aae`](https://github.com/adobe/aio-commerce-sdk/commit/fc16aaec9b459b58e368379bc3127c3e0d698c6a) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Changed case format from camelCase to snake_case for Commerce eventing API
+
+### Patch Changes
+
+- [#274](https://github.com/adobe/aio-commerce-sdk/pull/274) [`d599ba8`](https://github.com/adobe/aio-commerce-sdk/commit/d599ba8ae30d3139d4ba19d0c63eaf716603f25f) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix typo: `prioritary` should be `priority`
+
+- [#267](https://github.com/adobe/aio-commerce-sdk/pull/267) [`8642288`](https://github.com/adobe/aio-commerce-sdk/commit/8642288be4efd44b375d47e7cb75adb038c08334) Thanks [@jnatherley](https://github.com/jnatherley)! - Implements a rolldown plugin to correctly externalize transitive dependencies of private packages during build, but keep the source code of those same packages bundled.
+
+- Updated dependencies [[`8642288`](https://github.com/adobe/aio-commerce-sdk/commit/8642288be4efd44b375d47e7cb75adb038c08334), [`6d5b16a`](https://github.com/adobe/aio-commerce-sdk/commit/6d5b16a7659ab0d83b251921ac478ff7faf0d4e5), [`a502120`](https://github.com/adobe/aio-commerce-sdk/commit/a502120d8c16fdc1ed4afc579c5cfd79ec56c8e0), [`6d5b16a`](https://github.com/adobe/aio-commerce-sdk/commit/6d5b16a7659ab0d83b251921ac478ff7faf0d4e5)]:
+  - @adobe/aio-commerce-lib-auth@1.0.0
+  - @adobe/aio-commerce-lib-core@1.0.0
+  - @adobe/aio-commerce-lib-api@1.0.0
+
 ## 0.6.0
 
 ### Minor Changes

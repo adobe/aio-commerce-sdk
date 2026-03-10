@@ -2,29 +2,23 @@
 
 ## Type Aliases
 
-| Type Alias                                                                             | Description                                                                                                                                      |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [AppConfigWithBusinessConfig](type-aliases/AppConfigWithBusinessConfig.md)             | Config type when business config is present.                                                                                                     |
-| [AppConfigWithBusinessConfigSchema](type-aliases/AppConfigWithBusinessConfigSchema.md) | Config type when business config schema is present.                                                                                              |
-| [AppEvent](type-aliases/AppEvent.md)                                                   | Union type of all supported event configurations                                                                                                 |
-| [ApplicationMetadata](type-aliases/ApplicationMetadata.md)                             | The metadata associated to an Adobe Commerce application.                                                                                        |
-| [BusinessConfig](type-aliases/BusinessConfig.md)                                       | The keys of the `businessConfig` settings in the app config file.                                                                                |
-| [BusinessConfigSchema](type-aliases/BusinessConfigSchema.md)                           | The schema type for the business configuration schema.                                                                                           |
-| [BusinessConfigSchemaField](type-aliases/BusinessConfigSchemaField.md)                 | The schema type for a configuration field.                                                                                                       |
-| [BusinessConfigSchemaListOption](type-aliases/BusinessConfigSchemaListOption.md)       | The schema type for an option in a list configuration field. Represents a single option that can be selected in a list-type configuration field. |
-| [BusinessConfigSchemaValue](type-aliases/BusinessConfigSchemaValue.md)                 | The schema type for the business configuration schema.                                                                                           |
-| [CommerceAppConfig](type-aliases/CommerceAppConfig.md)                                 | The input shape of the commerce app config schema.                                                                                               |
-| [CommerceAppConfigDomain](type-aliases/CommerceAppConfigDomain.md)                     | Individual validatable domains of the commerce app config.                                                                                       |
-| [CommerceEvent](type-aliases/CommerceEvent.md)                                         | Commerce event configuration                                                                                                                     |
-| [CommerceEventsConfig](type-aliases/CommerceEventsConfig.md)                           | Config type when commerce event sources are present.                                                                                             |
-| [CommerceEventSource](type-aliases/CommerceEventSource.md)                             | Commerce event source configuration                                                                                                              |
-| [EventingConfiguration](type-aliases/EventingConfiguration.md)                         | The eventing configuration for an Adobe Commerce application                                                                                     |
-| [EventProvider](type-aliases/EventProvider.md)                                         | Event provider configuration                                                                                                                     |
-| [EventsConfig](type-aliases/EventsConfig.md)                                           | Config type when eventing is present.                                                                                                            |
-| [ExternalEvent](type-aliases/ExternalEvent.md)                                         | External event configuration                                                                                                                     |
-| [ExternalEventsConfig](type-aliases/ExternalEventsConfig.md)                           | Config type when external event sources are present.                                                                                             |
-| [ExternalEventSource](type-aliases/ExternalEventSource.md)                             | External event source configuration                                                                                                              |
-| [SchemaBusinessConfig](type-aliases/SchemaBusinessConfig.md)                           | The schema used to validate the `businessConfig` settings in the app config file.                                                                |
+| Type Alias                                                                             | Description                                                  |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| [AppConfigWithBusinessConfig](type-aliases/AppConfigWithBusinessConfig.md)             | Config type when business config is present.                 |
+| [AppConfigWithBusinessConfigSchema](type-aliases/AppConfigWithBusinessConfigSchema.md) | Config type when business config schema is present.          |
+| [AppEvent](type-aliases/AppEvent.md)                                                   | Union type of all supported event configurations             |
+| [ApplicationMetadata](type-aliases/ApplicationMetadata.md)                             | The metadata associated to an Adobe Commerce application.    |
+| [CommerceAppConfig](type-aliases/CommerceAppConfig.md)                                 | The input shape of the commerce app config schema.           |
+| [CommerceAppConfigDomain](type-aliases/CommerceAppConfigDomain.md)                     | Individual validatable domains of the commerce app config.   |
+| [CommerceEvent](type-aliases/CommerceEvent.md)                                         | Commerce event configuration                                 |
+| [CommerceEventsConfig](type-aliases/CommerceEventsConfig.md)                           | Config type when commerce event sources are present.         |
+| [CommerceEventSource](type-aliases/CommerceEventSource.md)                             | Commerce event source configuration                          |
+| [EventingConfiguration](type-aliases/EventingConfiguration.md)                         | The eventing configuration for an Adobe Commerce application |
+| [EventProvider](type-aliases/EventProvider.md)                                         | Event provider configuration                                 |
+| [EventsConfig](type-aliases/EventsConfig.md)                                           | Config type when eventing is present.                        |
+| [ExternalEvent](type-aliases/ExternalEvent.md)                                         | External event configuration                                 |
+| [ExternalEventsConfig](type-aliases/ExternalEventsConfig.md)                           | Config type when external event sources are present.         |
+| [ExternalEventSource](type-aliases/ExternalEventSource.md)                             | External event source configuration                          |
 
 ## Variables
 

@@ -3,11 +3,11 @@
 ```ts
 function getConfiguration(
   selector: SelectorBy,
-  options?: LibConfigOptions,
+  options?: ConfigOptions,
 ): Promise<GetConfigurationResponse>;
 ```
 
-Defined in: [aio-commerce-lib-config/source/config-manager.ts:363](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/config-manager.ts#L363)
+Defined in: [config-manager.ts:303](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/config-manager.ts#L303)
 
 Gets configuration for a scope.
 
@@ -17,10 +17,10 @@ merged according to the scope hierarchy.
 
 ## Parameters
 
-| Parameter  | Type                                                      | Description                                               |
-| ---------- | --------------------------------------------------------- | --------------------------------------------------------- |
-| `selector` | [`SelectorBy`](../type-aliases/SelectorBy.md)             | Scope selector specifying how to identify the scope.      |
-| `options?` | [`LibConfigOptions`](../type-aliases/LibConfigOptions.md) | Optional library configuration options for cache timeout. |
+| Parameter  | Type                                                | Description                                               |
+| ---------- | --------------------------------------------------- | --------------------------------------------------------- |
+| `selector` | [`SelectorBy`](../type-aliases/SelectorBy.md)       | Scope selector specifying how to identify the scope.      |
+| `options?` | [`ConfigOptions`](../type-aliases/ConfigOptions.md) | Optional library configuration options for cache timeout. |
 
 ## Returns
 
