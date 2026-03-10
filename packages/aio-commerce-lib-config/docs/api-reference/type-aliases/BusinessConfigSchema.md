@@ -4,7 +4,7 @@
 type BusinessConfigSchema = v.InferInput<typeof SchemaBusinessConfigSchema>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/business-configuration.ts:187](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L187)
+Defined in: [modules/schema/types.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/modules/schema/types.ts#L39)
 
 The schema type for the business configuration schema.
 
