@@ -40,7 +40,7 @@
     "husky": "^9.1.7",
     "prettier": "catalog:",
     "publint": "^0.3.15",
-    "tsdown": "^0.20.3",
+    "tsdown": "^0.21.0",
     "turbo": "^2.5.4",
     "typedoc": "^0.28.7",
     "typedoc-plugin-markdown": "^4.7.1",
