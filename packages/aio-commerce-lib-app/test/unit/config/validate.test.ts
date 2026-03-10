@@ -1017,7 +1017,14 @@ describe("validateConfig", () => {
     );
   });
 
-  test("should allow any casing in commerce event runtimeAction as long as it matches package/action format", () => {
+  test("should allow any casing in any event runtimeActions as long as it matches package/action format", () => {
+    const runtimeActions = [
+      "My-Package/My-Action",
+      "the-package/the-action",
+      "my-Package/mY-AcTiOn",
+      "THE-PACKAGE/THE-ACTION",
+    ]; // Mixed case, but valid format
+
     const config = {
       ...minimalValidConfig,
       eventing: {
@@ -1033,12 +1040,24 @@ describe("validateConfig", () => {
                 label: "My Event",
                 fields: [{ name: "field" }],
                 description: "Event description",
-                runtimeActions: [
-                  "My-Package/My-Action",
-                  "the-package/the-action",
-                  "my-Package/mY-AcTiOn",
-                  "THE-PACKAGE/THE-ACTION",
-                ], // Mixed case, but valid format
+                runtimeActions,
+              },
+            ],
+          },
+        ],
+
+        external: [
+          {
+            provider: {
+              label: "External Provider",
+              description: "External events",
+            },
+            events: [
+              {
+                name: "external_event",
+                label: "External Event",
+                description: "An external event",
+                runtimeActions,
               },
             ],
           },
