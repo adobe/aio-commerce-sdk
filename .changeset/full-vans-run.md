@@ -1,5 +1,5 @@
 ---
-"@adobe/aio-commerce-lib-config": minor
+"@adobe/aio-commerce-lib-config": major
 ---
 
-[BREAKING]: Remove `setGlobalLibConfigOptions`, now options are passed per-operation only. Introduce `initialize` as a safeguard for the library to work as expected.
+Remove `setGlobalLibConfigOptions`, now options are passed per-operation only. Introduce `initialize` as a safeguard for the library to work as expected.

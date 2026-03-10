@@ -19,7 +19,7 @@ import {
 } from "./schema";
 
 import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
-import type { HTTPError, Options } from "@adobe/aio-commerce-lib-api/ky";
+import type { HTTPError, Options } from "ky";
 import type {
   EventProviderCreateParams,
   EventProviderGetByIdParams,

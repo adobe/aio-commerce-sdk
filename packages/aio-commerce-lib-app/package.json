@@ -9,6 +9,17 @@
   },
   "license": "Apache-2.0",
   "description": "App configuration management library for Adobe Commerce applications",
+  "keywords": [
+    "aio",
+    "adobe-io",
+    "commerce",
+    "adobe-commerce",
+    "adobe-commerce-sdk",
+    "aio-commerce-sdk",
+    "aio-commerce-lib-app",
+    "configuration",
+    "app-builder"
+  ],
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },

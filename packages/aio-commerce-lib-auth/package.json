@@ -14,7 +14,12 @@
     "adobe-io",
     "commerce",
     "adobe-commerce",
-    "adobe-ims"
+    "adobe-commerce-sdk",
+    "aio-commerce-sdk",
+    "aio-commerce-lib-auth",
+    "authentication",
+    "adobe-ims",
+    "app-builder"
   ],
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"

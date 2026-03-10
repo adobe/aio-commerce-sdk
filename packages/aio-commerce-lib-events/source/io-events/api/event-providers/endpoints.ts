@@ -21,8 +21,8 @@ import {
 } from "./schema";
 
 import type { AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api";
-import type { HTTPError, Options } from "@adobe/aio-commerce-lib-api/ky";
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import type { HTTPError, Options } from "ky";
 import type {
   EventProviderCreateParams,
   EventProviderGetByIdParams,
