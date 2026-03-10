@@ -7,7 +7,7 @@ function createCustomCommerceEventsApiClient<TFunctions>(
 ): ApiClientRecord<AdobeCommerceHttpClient, TFunctions>;
 ```
 
-Defined in: [commerce/lib/api-client.ts:56](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-events/source/commerce/lib/api-client.ts#L56)
+Defined in: [commerce/lib/api-client.ts:56](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-events/source/commerce/lib/api-client.ts#L56)
 
 Creates a customized Commerce Events API client.
 

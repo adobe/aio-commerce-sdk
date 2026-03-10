@@ -10,10 +10,10 @@ const CommerceEventSourceSchema: ObjectSchema<{
         source: OptionalSchema<StringSchema<`Expected a string value for '${(...)}'`>, undefined>;
      }, undefined>, "Expected an array of event field objects with a 'name' property">;
      force: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
-     hipaaAuditRequired: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
+     hipaa_audit_required: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
      label: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${(...)}'`>, NonEmptyAction<string, `The value of "${(...)}" must not be empty`>]>, MaxLengthAction<string, 100, "The event label must not be longer than 100 characters">]>;
-     name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${(...)}'`>, NonEmptyAction<string, `The value of "${(...)}" must not be empty`>]>, RegexAction<string, "Event name must start with \"plugin.\" or \"observer.\" followed by lowercase letters and underscores only (e.g., \"plugin.order_placed\")">]>;
-     prioritary: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
+     name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${(...)}'`>, NonEmptyAction<string, `The value of "${(...)}" must not be empty`>]>, RegexAction<string, "Event name must start with \"plugin.\" or \"observer.\" followed by lowercase letters and underscores only (e.g., \"plugin.order_placed\")">, MaxLengthAction<string, 180, "The event name must not be longer than 180 characters">]>;
+     priority: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
      rules: OptionalSchema<ArraySchema<ObjectSchema<{
         field: SchemaWithPipe<readonly [..., ...]>;
         operator: UnionSchema<...[], `Operator must be one of: ${(...)}`>;
@@ -29,6 +29,6 @@ const CommerceEventSourceSchema: ObjectSchema<{
 }, undefined>;
 ```
 
-Defined in: [config/schema/eventing.ts:193](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/config/schema/eventing.ts#L193)
+Defined in: [aio-commerce-lib-app/source/config/schema/eventing.ts:223](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-app/source/config/schema/eventing.ts#L223)
 
 Schema for Commerce event source configuration

@@ -7,7 +7,7 @@ function getAllEventProviders(
 ): Promise<CommerceEventProviderManyResponse>;
 ```
 
-Defined in: [commerce/api/event-providers/endpoints.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts#L41)
+Defined in: [commerce/api/event-providers/endpoints.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts#L41)
 
 Lists all event providers of the Commerce instance bound to the given [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md).
 
