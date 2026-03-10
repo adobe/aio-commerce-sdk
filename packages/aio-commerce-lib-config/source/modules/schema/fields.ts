@@ -12,6 +12,9 @@
 
 import * as v from "valibot";
 
+const DEFAULT_STRING_VALUE = "" as const;
+const DEFAULT_MULTIPLE_LIST_VALUE = [] as const;
+
 /** Base schema for configuration field options with name, optional label, and optional description */
 const BaseOptionSchema = v.object({
   name: v.pipe(
@@ -64,7 +67,7 @@ const MultipleListSchema = v.object({
       ),
       "Expected an array of default values",
     ),
-    [],
+    DEFAULT_MULTIPLE_LIST_VALUE,
   ),
 });
 
@@ -78,14 +81,20 @@ const ListSchema = v.variant("selectionMode", [
 const TextSchema = v.object({
   ...BaseOptionSchema.entries,
   type: v.literal("text", "Expected the type to be 'text'"),
-  default: v.optional(v.string("Expected a string for the default value")),
+  default: v.optional(
+    v.string("Expected a string for the default value"),
+    DEFAULT_STRING_VALUE,
+  ),
 });
 
 /** Schema for a password input field that accepts string values (typically masked in UI) */
 const PasswordSchema = v.object({
   ...BaseOptionSchema.entries,
   type: v.literal("password", "Expected the type to be 'password'"),
-  default: v.optional(v.never("Password fields do not have a default value")),
+  default: v.optional(
+    v.never("Password fields do not have a default value"),
+    DEFAULT_STRING_VALUE as never,
+  ),
 });
 
 /** Schema for an email input field that accepts and validates email addresses */
@@ -97,6 +106,7 @@ const EmailSchema = v.object({
       v.string("Expected a string for the default email value"),
       v.email("The email must be a valid email address"),
     ),
+    DEFAULT_STRING_VALUE,
   ),
 });
 
@@ -109,6 +119,7 @@ const UrlSchema = v.object({
       v.string("Expected a string for the default URL value"),
       v.url("The URL must be a valid URL"),
     ),
+    DEFAULT_STRING_VALUE,
   ),
 });
 
@@ -124,6 +135,7 @@ const PhoneSchema = v.object({
         "The phone number must contain only numbers and/or country codes",
       ),
     ),
+    DEFAULT_STRING_VALUE,
   ),
 });
 
