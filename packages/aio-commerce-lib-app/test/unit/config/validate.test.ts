@@ -16,7 +16,10 @@ import {
   validateCommerceAppConfig,
   validateCommerceAppConfigDomain,
 } from "#config/lib/validate";
-import { configWithCustomInstallationSteps } from "#test/fixtures/config";
+import {
+  configWithCustomInstallationSteps,
+  minimalValidConfig,
+} from "#test/fixtures/config";
 
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_DESCRIPTION_LENGTH = 255;
@@ -1012,6 +1015,57 @@ describe("validateConfig", () => {
     expect(() => validateCommerceAppConfig(config)).toThrow(
       "Invalid commerce app config",
     );
+  });
+
+  test("should allow any casing in any event runtimeActions as long as it matches package/action format", () => {
+    const runtimeActions = [
+      "My-Package/My-Action",
+      "the-package/the-action",
+      "my-Package/mY-AcTiOn",
+      "THE-PACKAGE/THE-ACTION",
+    ]; // Mixed case, but valid format
+
+    const config = {
+      ...minimalValidConfig,
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              label: "Commerce Provider",
+              description: "Commerce events",
+            },
+            events: [
+              {
+                name: "plugin.my_event",
+                label: "My Event",
+                fields: [{ name: "field" }],
+                description: "Event description",
+                runtimeActions,
+              },
+            ],
+          },
+        ],
+
+        external: [
+          {
+            provider: {
+              label: "External Provider",
+              description: "External events",
+            },
+            events: [
+              {
+                name: "external_event",
+                label: "External Event",
+                description: "An external event",
+                runtimeActions,
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
   test("should throw when commerce event runtimeAction is not in package/action format", () => {
