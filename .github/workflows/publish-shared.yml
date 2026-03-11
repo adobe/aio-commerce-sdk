@@ -61,7 +61,7 @@ jobs:
           script: |
             // Scripts are resolved relative to the root of the repository
             const { default: execPrepare } = await import('${{ github.workspace }}/scripts/source/ci/release/prepare.ts');
-            await execPrepare(core, exec);    
+            await execPrepare(core, exec);
 
       - name: Create Release Pull Request or Publish
         id: changesets
