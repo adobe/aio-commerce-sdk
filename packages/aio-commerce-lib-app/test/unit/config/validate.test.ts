@@ -20,50 +20,10 @@ import {
   configWithCustomInstallationSteps,
   minimalValidConfig,
 } from "#test/fixtures/config";
+import { createCommerceEventConfig } from "#test/fixtures/eventing";
 
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_DESCRIPTION_LENGTH = 255;
-const DEFAULT_TEST_METADATA = {
-  id: "test-app",
-  displayName: "Test App",
-  description: "A test application",
-  version: "1.0.0",
-};
-
-function createCommerceEventConfig(
-  name: string,
-  overrides?: Partial<{
-    label: string;
-    description: string;
-    runtimeActions: string[];
-    fields: Array<{ name: string }>;
-  }>,
-) {
-  return {
-    metadata: DEFAULT_TEST_METADATA,
-    eventing: {
-      commerce: [
-        {
-          provider: {
-            label: "Commerce Provider",
-            description: "Commerce events",
-          },
-          events: [
-            {
-              name,
-              label: overrides?.label ?? "My Event",
-              fields: overrides?.fields ?? [{ name: "field" }],
-              runtimeActions: overrides?.runtimeActions ?? [
-                "my-package/action",
-              ],
-              description: overrides?.description ?? "Plugin event",
-            },
-          ],
-        },
-      ],
-    },
-  };
-}
 
 describe("validateConfig", () => {
   test("should validate a complete valid config", () => {
