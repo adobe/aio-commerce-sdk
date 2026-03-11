@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
@@ -71,6 +72,8 @@ describe("release/prepare.ts", () => {
           releaseChannel: "internal",
         });
 
+        vi.stubEnv("HOME", tempDir);
+
         const core = createCoreMock();
         const exec = createExecMock();
         exec.exec.mockResolvedValue(0);
@@ -85,9 +88,17 @@ describe("release/prepare.ts", () => {
           [INTERNAL_REGISTRY_URL],
         );
 
-        expect(exec.exec).toHaveBeenNthCalledWith(2, "npm config set", [
-          `//artifactory.example.com/artifactory/api/npm/npm-internal/:_authToken=${INTERNAL_AUTH_TOKEN}`,
+        expect(exec.exec).toHaveBeenNthCalledWith(2, "pnpm whoami", [
+          "--userconfig",
+          `${tempDir}/.npmrc`,
+          "--registry",
+          INTERNAL_REGISTRY_URL,
         ]);
+
+        const npmrc = readFileSync(join(tempDir, ".npmrc"), "utf8");
+        expect(npmrc).toContain(
+          `//artifactory.example.com/artifactory/api/npm/npm-internal/:_authToken=${INTERNAL_AUTH_TOKEN}`,
+        );
 
         expect(core.exportVariable).toHaveBeenCalledWith(
           "npm_config_registry",
@@ -112,6 +123,8 @@ describe("release/prepare.ts", () => {
           releaseChannel: "public",
         });
 
+        vi.stubEnv("HOME", tempDir);
+
         const core = createCoreMock();
         const exec = createExecMock();
         exec.exec.mockResolvedValue(0);
@@ -119,15 +132,15 @@ describe("release/prepare.ts", () => {
         await prepare(asCore(core), asExec(exec));
 
         expect(core.setFailed).not.toHaveBeenCalled();
-        expect(exec.exec).toHaveBeenCalledTimes(2);
-        expect(exec.exec).toHaveBeenNthCalledWith(
-          1,
-          "npm config set registry",
-          [PUBLIC_REGISTRY_URL],
-        );
-        expect(exec.exec).toHaveBeenNthCalledWith(2, "npm config set", [
-          `//registry.npmjs.org/:_authToken=${PUBLIC_AUTH_TOKEN}`,
+        expect(exec.exec).toHaveBeenCalledOnce();
+        expect(exec.exec).toHaveBeenCalledWith("npm config set registry", [
+          PUBLIC_REGISTRY_URL,
         ]);
+
+        const npmrc = readFileSync(join(tempDir, ".npmrc"), "utf8");
+        expect(npmrc).toContain(
+          `//registry.npmjs.org/:_authToken=${PUBLIC_AUTH_TOKEN}`,
+        );
 
         expect(core.exportVariable).toHaveBeenCalledWith(
           "npm_config_registry",
@@ -152,6 +165,8 @@ describe("release/prepare.ts", () => {
           registryUrl: INTERNAL_REGISTRY_URL,
           releaseChannel: "internal",
         });
+
+        vi.stubEnv("HOME", tempDir);
 
         const core = createCoreMock();
         const exec = createExecMock();
@@ -385,14 +400,89 @@ describe("release/prepare.ts", () => {
           releaseChannel: "internal",
         });
 
+        vi.stubEnv("HOME", tempDir);
+
         const core = createCoreMock();
         const exec = createExecMock();
         exec.exec.mockResolvedValue(0);
 
         await prepare(asCore(core), asExec(exec));
-        expect(exec.exec).toHaveBeenNthCalledWith(2, "npm config set", [
+
+        const npmrc = readFileSync(join(tempDir, ".npmrc"), "utf8");
+        expect(npmrc).toContain(
           `//artifactory.example.com/artifactory/api/npm/npm-internal/:_authToken=${INTERNAL_AUTH_TOKEN}`,
+        );
+
+        expect(exec.exec).toHaveBeenNthCalledWith(2, "pnpm whoami", [
+          "--userconfig",
+          `${tempDir}/.npmrc`,
+          "--registry",
+          registryUrl,
         ]);
+      },
+    );
+  });
+
+  test("logs a warning when the registry auth check fails with an Error", async () => {
+    await withTempFiles(
+      {
+        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
+        ".changeset/pre.json": PRE_JSON,
+      },
+      async (tempDir) => {
+        stubPrepareEnv({
+          baseBranch: MAIN_BRANCH,
+          changesetConfigPath: join(tempDir, ".changeset/config.json"),
+          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
+          registryAuthToken: INTERNAL_AUTH_TOKEN,
+          registryUrl: INTERNAL_REGISTRY_URL,
+          releaseChannel: "internal",
+        });
+
+        vi.stubEnv("HOME", tempDir);
+
+        const core = createCoreMock();
+        const exec = createExecMock();
+        exec.exec
+          .mockResolvedValueOnce(0) // npm config set registry
+          .mockRejectedValueOnce(new Error("ENEEDAUTH")); // pnpm whoami
+
+        await prepare(asCore(core), asExec(exec));
+
+        expect(core.warning).toHaveBeenCalledWith(
+          expect.stringContaining("ENEEDAUTH"),
+        );
+      },
+    );
+  });
+
+  test("logs a warning when the registry auth check fails with a non-Error value", async () => {
+    await withTempFiles(
+      {
+        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
+        ".changeset/pre.json": PRE_JSON,
+      },
+      async (tempDir) => {
+        stubPrepareEnv({
+          baseBranch: MAIN_BRANCH,
+          changesetConfigPath: join(tempDir, ".changeset/config.json"),
+          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
+          registryAuthToken: INTERNAL_AUTH_TOKEN,
+          registryUrl: INTERNAL_REGISTRY_URL,
+          releaseChannel: "internal",
+        });
+
+        vi.stubEnv("HOME", tempDir);
+
+        const core = createCoreMock();
+        const exec = createExecMock();
+        exec.exec.mockResolvedValueOnce(0).mockRejectedValueOnce("auth failed");
+
+        await prepare(asCore(core), asExec(exec));
+
+        expect(core.warning).toHaveBeenCalledWith(
+          expect.stringContaining("auth failed"),
+        );
       },
     );
   });

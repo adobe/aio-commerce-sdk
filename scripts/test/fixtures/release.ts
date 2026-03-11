@@ -75,6 +75,7 @@ export function createCoreMock() {
     setFailed: vi.fn<AsyncFunctionArguments["core"]["setFailed"]>(),
     setOutput: vi.fn<AsyncFunctionArguments["core"]["setOutput"]>(),
     exportVariable: vi.fn<AsyncFunctionArguments["core"]["exportVariable"]>(),
+    warning: vi.fn<AsyncFunctionArguments["core"]["warning"]>(),
   };
 }
 

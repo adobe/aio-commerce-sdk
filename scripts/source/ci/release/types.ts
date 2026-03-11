@@ -65,6 +65,9 @@ export interface AsyncFunctionArguments {
 
     /** Export a variable to subsequent workflow steps */
     exportVariable(name: string, val: unknown): void;
+
+    /** Log a warning message */
+    warning(message: string | Error): void;
   };
 
   /** Execution utilities for running commands */
