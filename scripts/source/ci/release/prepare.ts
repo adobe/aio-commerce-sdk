@@ -150,19 +150,14 @@ async function configureRegistryAuth(
     );
   }
 
-  await exec.exec("npm config set registry", [data.registryUrl]);
-
-  // Write the auth token directly to ~/.npmrc, mirroring how actions/setup-node does it.
-  // npm config set is unreliable for //-prefixed registry auth keys across npm versions.
   appendFileSync(
-    `${process.env.HOME}/.npmrc`,
-    `\n//${normalizeRegistryPath(data.registryUrl)}/:_authToken=${data.registryAuthToken}\n`,
+    `${process.env.GITHUB_WORKSPACE}/.npmrc`,
+    [
+      "",
+      `@adobe:registry=${data.registryUrl}`,
+      `//${normalizeRegistryPath(data.registryUrl)}/:_authToken=${data.registryAuthToken}`,
+    ].join("\n"),
   );
-
-  // Export the registry URL via the npm_config_registry env var so subsequent workflow steps inherit it.
-  // npm treats any env var prefixed with npm_config_ as a config option, taking precedence over .npmrc files.
-  // @see https://docs.npmjs.com/cli/using-npm/config#environment-variables
-  core.exportVariable("npm_config_registry", data.registryUrl);
 
   if (data.releaseChannel === "internal") {
     // Diagnostic: log the authenticated user to confirm auth is working before publish.
@@ -170,7 +165,7 @@ async function configureRegistryAuth(
     try {
       await exec.exec("pnpm whoami", [
         "--userconfig",
-        `${process.env.HOME}/.npmrc`,
+        `${process.env.GITHUB_WORKSPACE}/.npmrc`,
         "--registry",
         data.registryUrl,
       ]);

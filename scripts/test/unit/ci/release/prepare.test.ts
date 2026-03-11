@@ -72,7 +72,7 @@ describe("release/prepare.ts", () => {
           releaseChannel: "internal",
         });
 
-        vi.stubEnv("HOME", tempDir);
+        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
         const core = createCoreMock();
         const exec = createExecMock();
@@ -81,14 +81,8 @@ describe("release/prepare.ts", () => {
         await prepare(asCore(core), asExec(exec));
 
         expect(core.setFailed).not.toHaveBeenCalled();
-        expect(exec.exec).toHaveBeenCalledTimes(2);
-        expect(exec.exec).toHaveBeenNthCalledWith(
-          1,
-          "npm config set registry",
-          [INTERNAL_REGISTRY_URL],
-        );
-
-        expect(exec.exec).toHaveBeenNthCalledWith(2, "pnpm whoami", [
+        expect(exec.exec).toHaveBeenCalledOnce();
+        expect(exec.exec).toHaveBeenCalledWith("pnpm whoami", [
           "--userconfig",
           `${tempDir}/.npmrc`,
           "--registry",
@@ -98,11 +92,6 @@ describe("release/prepare.ts", () => {
         const npmrc = readFileSync(join(tempDir, ".npmrc"), "utf8");
         expect(npmrc).toContain(
           `//artifactory.example.com/artifactory/api/npm/npm-internal/:_authToken=${INTERNAL_AUTH_TOKEN}`,
-        );
-
-        expect(core.exportVariable).toHaveBeenCalledWith(
-          "npm_config_registry",
-          INTERNAL_REGISTRY_URL,
         );
       },
     );
@@ -123,7 +112,7 @@ describe("release/prepare.ts", () => {
           releaseChannel: "public",
         });
 
-        vi.stubEnv("HOME", tempDir);
+        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
         const core = createCoreMock();
         const exec = createExecMock();
@@ -132,19 +121,11 @@ describe("release/prepare.ts", () => {
         await prepare(asCore(core), asExec(exec));
 
         expect(core.setFailed).not.toHaveBeenCalled();
-        expect(exec.exec).toHaveBeenCalledOnce();
-        expect(exec.exec).toHaveBeenCalledWith("npm config set registry", [
-          PUBLIC_REGISTRY_URL,
-        ]);
+        expect(exec.exec).not.toHaveBeenCalled();
 
         const npmrc = readFileSync(join(tempDir, ".npmrc"), "utf8");
         expect(npmrc).toContain(
           `//registry.npmjs.org/:_authToken=${PUBLIC_AUTH_TOKEN}`,
-        );
-
-        expect(core.exportVariable).toHaveBeenCalledWith(
-          "npm_config_registry",
-          PUBLIC_REGISTRY_URL,
         );
       },
     );
@@ -166,18 +147,13 @@ describe("release/prepare.ts", () => {
           releaseChannel: "internal",
         });
 
-        vi.stubEnv("HOME", tempDir);
+        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
         const core = createCoreMock();
         const exec = createExecMock();
         exec.exec.mockResolvedValue(0);
 
         await prepare(asCore(core), asExec(exec));
-
-        expect(core.exportVariable).toHaveBeenCalledExactlyOnceWith(
-          "npm_config_registry",
-          INTERNAL_REGISTRY_URL,
-        );
       },
     );
   });
@@ -400,7 +376,7 @@ describe("release/prepare.ts", () => {
           releaseChannel: "internal",
         });
 
-        vi.stubEnv("HOME", tempDir);
+        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
         const core = createCoreMock();
         const exec = createExecMock();
@@ -413,7 +389,7 @@ describe("release/prepare.ts", () => {
           `//artifactory.example.com/artifactory/api/npm/npm-internal/:_authToken=${INTERNAL_AUTH_TOKEN}`,
         );
 
-        expect(exec.exec).toHaveBeenNthCalledWith(2, "pnpm whoami", [
+        expect(exec.exec).toHaveBeenCalledWith("pnpm whoami", [
           "--userconfig",
           `${tempDir}/.npmrc`,
           "--registry",
@@ -439,13 +415,11 @@ describe("release/prepare.ts", () => {
           releaseChannel: "internal",
         });
 
-        vi.stubEnv("HOME", tempDir);
+        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
         const core = createCoreMock();
         const exec = createExecMock();
-        exec.exec
-          .mockResolvedValueOnce(0) // npm config set registry
-          .mockRejectedValueOnce(new Error("ENEEDAUTH")); // pnpm whoami
+        exec.exec.mockRejectedValueOnce(new Error("ENEEDAUTH")); // pnpm whoami
 
         await prepare(asCore(core), asExec(exec));
 
@@ -472,11 +446,11 @@ describe("release/prepare.ts", () => {
           releaseChannel: "internal",
         });
 
-        vi.stubEnv("HOME", tempDir);
+        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
         const core = createCoreMock();
         const exec = createExecMock();
-        exec.exec.mockResolvedValueOnce(0).mockRejectedValueOnce("auth failed");
+        exec.exec.mockRejectedValueOnce("auth failed");
 
         await prepare(asCore(core), asExec(exec));
 
