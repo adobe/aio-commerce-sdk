@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.0.1-beta.1
+
+### Patch Changes
+
+- [#295](https://github.com/adobe/aio-commerce-sdk/pull/295) [`933dc20`](https://github.com/adobe/aio-commerce-sdk/commit/933dc203d3afdb04576b85a4748392d5afe3d41b) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Fix commerce event name validation so that it can also accept multiple dot-separated segments.
+
 ## 1.0.1-beta.0
 
 ### Patch Changes

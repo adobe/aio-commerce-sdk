@@ -19,6 +19,7 @@
     "@aio-commerce-sdk/generators": "1.0.1"
   },
   "changesets": [
+    "loud-worms-press",
     "sharp-crabs-relate",
     "spicy-hornets-crash",
     "tricky-mammals-try"
