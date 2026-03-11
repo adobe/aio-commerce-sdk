@@ -88,6 +88,11 @@ describe("release/prepare.ts", () => {
         expect(exec.exec).toHaveBeenNthCalledWith(2, "npm config set", [
           `//artifactory.example.com/artifactory/api/npm/npm-internal/:_authToken=${INTERNAL_AUTH_TOKEN}`,
         ]);
+
+        expect(core.exportVariable).toHaveBeenCalledWith(
+          "npm_config_registry",
+          INTERNAL_REGISTRY_URL,
+        );
       },
     );
   });
@@ -123,6 +128,43 @@ describe("release/prepare.ts", () => {
         expect(exec.exec).toHaveBeenNthCalledWith(2, "npm config set", [
           `//registry.npmjs.org/:_authToken=${PUBLIC_AUTH_TOKEN}`,
         ]);
+
+        expect(core.exportVariable).toHaveBeenCalledWith(
+          "npm_config_registry",
+          PUBLIC_REGISTRY_URL,
+        );
+      },
+    );
+  });
+
+  test("exports npm_config_registry so changesets reads the correct registry from env", async () => {
+    await withTempFiles(
+      {
+        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
+        ".changeset/pre.json": PRE_JSON,
+      },
+      async (tempDir) => {
+        stubPrepareEnv({
+          baseBranch: MAIN_BRANCH,
+          changesetConfigPath: join(tempDir, ".changeset/config.json"),
+          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
+          registryAuthToken: INTERNAL_AUTH_TOKEN,
+          registryUrl: INTERNAL_REGISTRY_URL,
+          releaseChannel: "internal",
+        });
+
+        const core = createCoreMock();
+        const exec = createExecMock();
+        exec.exec.mockResolvedValue(0);
+
+        await prepare(asCore(core), asExec(exec));
+
+        // changesets' getCorrectRegistry() reads process.env.npm_config_registry, not ~/.npmrc.
+        // Without this export, it falls back to registry.npmjs.org and publish fails with ENEEDAUTH.
+        expect(core.exportVariable).toHaveBeenCalledExactlyOnceWith(
+          "npm_config_registry",
+          INTERNAL_REGISTRY_URL,
+        );
       },
     );
   });
