@@ -74,6 +74,7 @@ async function prepare(
   await configureRegistryAuth(core, exec, {
     registryUrl,
     registryAuthToken,
+    releaseChannel,
   });
 }
 
@@ -140,6 +141,7 @@ async function configureRegistryAuth(
   data: {
     registryUrl: string;
     registryAuthToken: string;
+    releaseChannel: string;
   },
 ) {
   if (!(data.registryUrl && data.registryAuthToken)) {
@@ -161,4 +163,21 @@ async function configureRegistryAuth(
   // npm treats any env var prefixed with npm_config_ as a config option, taking precedence over .npmrc files.
   // @see https://docs.npmjs.com/cli/using-npm/config#environment-variables
   core.exportVariable("npm_config_registry", data.registryUrl);
+
+  if (data.releaseChannel === "internal") {
+    // Diagnostic: log the authenticated user to confirm auth is working before publish.
+    // Failure is intentionally swallowed — auth errors surface more clearly during publish.
+    try {
+      await exec.exec("pnpm whoami", [
+        "--userconfig",
+        "~/.npmrc",
+        "--registry",
+        data.registryUrl,
+      ]);
+    } catch (error) {
+      core.warning(
+        `Registry auth check failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
 }

@@ -81,8 +81,17 @@ describe("release/prepare.ts", () => {
         await prepare(asCore(core), asExec(exec));
 
         expect(core.setFailed).not.toHaveBeenCalled();
-        expect(exec.exec).toHaveBeenCalledOnce();
-        expect(exec.exec).toHaveBeenCalledWith("npm config set registry", [
+        expect(exec.exec).toHaveBeenCalledTimes(2);
+        expect(exec.exec).toHaveBeenNthCalledWith(
+          1,
+          "npm config set registry",
+          [INTERNAL_REGISTRY_URL],
+        );
+
+        expect(exec.exec).toHaveBeenNthCalledWith(2, "pnpm whoami", [
+          "--userconfig",
+          "~/.npmrc",
+          "--registry",
           INTERNAL_REGISTRY_URL,
         ]);
 
@@ -156,6 +165,8 @@ describe("release/prepare.ts", () => {
           registryUrl: INTERNAL_REGISTRY_URL,
           releaseChannel: "internal",
         });
+
+        vi.stubEnv("HOME", tempDir);
 
         const core = createCoreMock();
         const exec = createExecMock();
@@ -400,6 +411,77 @@ describe("release/prepare.ts", () => {
         const npmrc = readFileSync(join(tempDir, ".npmrc"), "utf8");
         expect(npmrc).toContain(
           `//artifactory.example.com/artifactory/api/npm/npm-internal/:_authToken=${INTERNAL_AUTH_TOKEN}`,
+        );
+
+        expect(exec.exec).toHaveBeenNthCalledWith(2, "pnpm whoami", [
+          "--userconfig",
+          "~/.npmrc",
+          "--registry",
+          registryUrl,
+        ]);
+      },
+    );
+  });
+
+  test("logs a warning when the registry auth check fails with an Error", async () => {
+    await withTempFiles(
+      {
+        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
+        ".changeset/pre.json": PRE_JSON,
+      },
+      async (tempDir) => {
+        stubPrepareEnv({
+          baseBranch: MAIN_BRANCH,
+          changesetConfigPath: join(tempDir, ".changeset/config.json"),
+          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
+          registryAuthToken: INTERNAL_AUTH_TOKEN,
+          registryUrl: INTERNAL_REGISTRY_URL,
+          releaseChannel: "internal",
+        });
+
+        vi.stubEnv("HOME", tempDir);
+
+        const core = createCoreMock();
+        const exec = createExecMock();
+        exec.exec
+          .mockResolvedValueOnce(0) // npm config set registry
+          .mockRejectedValueOnce(new Error("ENEEDAUTH")); // pnpm whoami
+
+        await prepare(asCore(core), asExec(exec));
+
+        expect(core.warning).toHaveBeenCalledWith(
+          expect.stringContaining("ENEEDAUTH"),
+        );
+      },
+    );
+  });
+
+  test("logs a warning when the registry auth check fails with a non-Error value", async () => {
+    await withTempFiles(
+      {
+        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
+        ".changeset/pre.json": PRE_JSON,
+      },
+      async (tempDir) => {
+        stubPrepareEnv({
+          baseBranch: MAIN_BRANCH,
+          changesetConfigPath: join(tempDir, ".changeset/config.json"),
+          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
+          registryAuthToken: INTERNAL_AUTH_TOKEN,
+          registryUrl: INTERNAL_REGISTRY_URL,
+          releaseChannel: "internal",
+        });
+
+        vi.stubEnv("HOME", tempDir);
+
+        const core = createCoreMock();
+        const exec = createExecMock();
+        exec.exec.mockResolvedValueOnce(0).mockRejectedValueOnce("auth failed");
+
+        await prepare(asCore(core), asExec(exec));
+
+        expect(core.warning).toHaveBeenCalledWith(
+          expect.stringContaining("auth failed"),
         );
       },
     );
