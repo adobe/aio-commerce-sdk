@@ -62,6 +62,9 @@ export interface AsyncFunctionArguments {
 
     /** Set an output parameter */
     setOutput(name: string, value: unknown): void;
+
+    /** Export a variable to subsequent workflow steps */
+    exportVariable(name: string, val: unknown): void;
   };
 
   /** Execution utilities for running commands */

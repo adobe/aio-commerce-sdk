@@ -36,11 +36,14 @@ export default async function main(
   core: AsyncFunctionArguments["core"],
   exec: AsyncFunctionArguments["exec"],
 ) {
-  return await runGitHubScript(core, () => prepare(exec));
+  return await runGitHubScript(core, async () => await prepare(core, exec));
 }
 
 /** Prepares the release by configuring the registry authentication and ensuring the Changesets is in the correct mode. */
-async function prepare(exec: AsyncFunctionArguments["exec"]) {
+async function prepare(
+  core: AsyncFunctionArguments["core"],
+  exec: AsyncFunctionArguments["exec"],
+) {
   const {
     BASE_BRANCH: baseBranch,
     CHANGESET_CONFIG_PATH: configPath = DEFAULT_CONFIG_PATH,
@@ -68,7 +71,7 @@ async function prepare(exec: AsyncFunctionArguments["exec"]) {
     ensurePublicExitMode(preStatePath);
   }
 
-  await configureRegistryAuth(exec, {
+  await configureRegistryAuth(core, exec, {
     registryUrl,
     registryAuthToken,
   });
@@ -132,6 +135,7 @@ function normalizeRegistryPath(registryUrl: string) {
 
 /** Configures NPM authentication for the internal Artifactory registry */
 async function configureRegistryAuth(
+  core: AsyncFunctionArguments["core"],
   exec: AsyncFunctionArguments["exec"],
   data: {
     registryUrl: string;
@@ -148,4 +152,9 @@ async function configureRegistryAuth(
   await exec.exec("npm config set", [
     `//${normalizeRegistryPath(data.registryUrl)}/:_authToken=${data.registryAuthToken}`,
   ]);
+
+  // Export the registry URL via the npm_config_registry env var so subsequent workflow steps inherit it.
+  // npm treats any env var prefixed with npm_config_ as a config option, taking precedence over .npmrc files.
+  // @see https://docs.npmjs.com/cli/using-npm/config#environment-variables
+  core.exportVariable("npm_config_registry", data.registryUrl);
 }
