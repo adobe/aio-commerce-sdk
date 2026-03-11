@@ -92,8 +92,11 @@ const PasswordSchema = v.object({
   ...BaseOptionSchema.entries,
   type: v.literal("password", "Expected the type to be 'password'"),
   default: v.optional(
-    v.never("Password fields do not have a default value"),
-    DEFAULT_STRING_VALUE as never,
+    v.literal(
+      DEFAULT_STRING_VALUE,
+      "Password fields do not have a default value",
+    ),
+    DEFAULT_STRING_VALUE,
   ),
 });
 
@@ -102,10 +105,13 @@ const EmailSchema = v.object({
   ...BaseOptionSchema.entries,
   type: v.literal("email", "Expected the type to be 'email'"),
   default: v.optional(
-    v.pipe(
-      v.string("Expected a string for the default email value"),
-      v.email("The email must be a valid email address"),
-    ),
+    v.union([
+      v.literal(DEFAULT_STRING_VALUE),
+      v.pipe(
+        v.string("Expected a string for the default email value"),
+        v.email("The email must be a valid email address"),
+      ),
+    ]),
     DEFAULT_STRING_VALUE,
   ),
 });
@@ -115,10 +121,13 @@ const UrlSchema = v.object({
   ...BaseOptionSchema.entries,
   type: v.literal("url", "Expected the type to be 'url'"),
   default: v.optional(
-    v.pipe(
-      v.string("Expected a string for the default URL value"),
-      v.url("The URL must be a valid URL"),
-    ),
+    v.union([
+      v.literal(DEFAULT_STRING_VALUE),
+      v.pipe(
+        v.string("Expected a string for the default URL value"),
+        v.url("The URL must be a valid URL"),
+      ),
+    ]),
     DEFAULT_STRING_VALUE,
   ),
 });
@@ -128,13 +137,16 @@ const PhoneSchema = v.object({
   ...BaseOptionSchema.entries,
   type: v.literal("tel", "Expected the type to be 'tel'"),
   default: v.optional(
-    v.pipe(
-      v.string("Expected a string for the default phone number value"),
-      v.regex(
-        /^\+?[0-9\s\-()]+$/,
-        "The phone number must contain only numbers and/or country codes",
+    v.union([
+      v.literal(DEFAULT_STRING_VALUE),
+      v.pipe(
+        v.string("Expected a string for the default phone number value"),
+        v.regex(
+          /^\+?[0-9\s\-()]+$/,
+          "The phone number must contain only numbers and/or country codes",
+        ),
       ),
-    ),
+    ]),
     DEFAULT_STRING_VALUE,
   ),
 });
