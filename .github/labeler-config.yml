@@ -36,6 +36,10 @@
   - changed-files:
       - any-glob-to-any-file: "packages-private/common-utils/**"
 
+"scripts":
+  - changed-files:
+      - any-glob-to-any-file: "scripts/**"
+
 "generator":
   - changed-files:
       - any-glob-to-any-file: "turbo/generators/**"
