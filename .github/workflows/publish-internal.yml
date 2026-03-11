@@ -10,6 +10,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 jobs:
   release:
     name: Release Internal
+    if: github.repository == 'adobe/aio-commerce-sdk'
     uses: ./.github/workflows/publish-shared.yml
     permissions:
       contents: write

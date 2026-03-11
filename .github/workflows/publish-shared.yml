@@ -60,7 +60,7 @@ jobs:
         with:
           script: |
             // Scripts are resolved relative to the root of the repository
-            import execPrepare from "./scripts/source/ci/release/prepare.ts";
+            const { default: execPrepare } = await import('${{ github.workspace }}/scripts/source/ci/release/prepare.ts');
             await execPrepare(core, exec);
 
       - name: Create Release Pull Request or Publish
@@ -85,7 +85,7 @@ jobs:
         with:
           script: |
             // Scripts are resolved relative to the root of the repository
-            import execAnnouncement from "./scripts/source/ci/release/announce.ts";
+            const { default: execAnnouncement } = await import('${{ github.workspace }}/scripts/source/ci/release/announce.ts');
             await execAnnouncement(core);
 
       - name: Notify on Slack
