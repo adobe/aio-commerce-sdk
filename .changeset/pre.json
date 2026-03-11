@@ -1,0 +1,22 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "@aio-commerce-sdk/config-tsdown": "1.0.1",
+    "@aio-commerce-sdk/config-typedoc": "1.0.0",
+    "@aio-commerce-sdk/config-typescript": "1.0.0",
+    "@aio-commerce-sdk/config-vitest": "1.0.0",
+    "@aio-commerce-sdk/common-utils": "0.2.2",
+    "@aio-commerce-sdk/scripting-utils": "0.2.2",
+    "@adobe/aio-commerce-lib-api": "1.0.0",
+    "@adobe/aio-commerce-lib-app": "1.0.0",
+    "@adobe/aio-commerce-lib-auth": "1.0.0",
+    "@adobe/aio-commerce-lib-config": "1.0.0",
+    "@adobe/aio-commerce-lib-core": "1.0.0",
+    "@adobe/aio-commerce-lib-events": "1.0.0",
+    "@adobe/aio-commerce-sdk": "1.0.0",
+    "@aio-commerce-sdk/scripts": "0.0.1",
+    "@aio-commerce-sdk/generators": "1.0.1"
+  },
+  "changesets": []
+}

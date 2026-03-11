@@ -1,5 +1,3 @@
-#! /usr/bin/env node
-
 /*
  * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -12,12 +10,35 @@
  * governing permissions and limitations under the License.
  */
 
-import { existsSync, renameSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
-export default function main() {
-  if (existsSync(".build/package.json.orig")) {
-    renameSync(".build/package.json.orig", "package.json");
-  }
+export const ORIGINAL_PACKAGE_JSON = JSON.stringify(
+  {
+    name: "@adobe/test-package",
+    description: "original",
+  },
+  null,
+  2,
+);
+
+export const BUILD_PACKAGE_JSON = JSON.stringify(
+  {
+    name: "@adobe/test-package",
+    description: "build",
+  },
+  null,
+  2,
+);
+
+export const EXISTING_BACKUP_PACKAGE_JSON = JSON.stringify(
+  {
+    name: "@adobe/test-package",
+    description: "existing-backup",
+  },
+  null,
+  2,
+);
+
+export function readTextFile(path: string) {
+  return readFileSync(path, "utf8");
 }
-
-main();

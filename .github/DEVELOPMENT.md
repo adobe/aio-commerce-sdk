@@ -439,19 +439,54 @@ After that, a new file is generated in the `.changeset` folder at the repository
 > [!NOTE]
 > A Changesets bot is configured to warn on PRs that modify packages but don't include a changeset file. If you know your PR doesn't require a version bump at all (e.g. internal changes), ignore the warning.
 
-#### Bumping package versions
+#### Branch channels and releases
 
-Version management is automated by the tool. Once your PR is merged to `main`, the following happens:
+This repository uses two release channels:
 
-1. A GitHub Action detects pending changesets
-2. It creates (or updates) a `[CI] Release Packages` PR that consolidates all pending version bumps
-   1. You'll see it bumps the `version` fields in all the affected packages
-   2. This PR accumulates changes from multiple merged PRs until you're ready to release
+- `main` is the internal integration channel
+  - Uses prerelease mode (`beta`) and publishes to Artifactory.
+- `release` is the public channel
+  - Uses stable semver and publishes to npm.
 
-#### Publishing the package
+Both channels keep the same Changesets "double PR" workflow:
 
-When you decide to release (publish to NPM) the packages, **merge the** `[CI] Release Packages` **PR**.
+1. You merge feature PRs with changesets into the channel branch.
+2. CI creates/updates a `[CI] Release Packages` PR for that branch.
+3. Merging that release PR performs the publish for that branch's registry.
 
-- Package versions updates are merged to `main`
-- Changelogs are generated from the changeset descriptions
-- The release workflow builds and publishes the updated packages to npm
+#### Internal prerelease flow (`main`)
+
+Once your feature PR is merged to `main`:
+
+1. CI ensures prerelease mode is active (`changeset pre enter beta` when needed).
+2. Changesets creates/updates `[CI] Release Packages` PR on `main`.
+3. Merging the release PR publishes prerelease versions to Artifactory.
+
+Typical patch-only prerelease train from stable `1.2.4` looks like:
+
+- `1.2.5-beta.0`
+- `1.2.5-beta.1`
+- `1.2.5-beta.2`
+
+This is expected: `beta.N` are candidates for the same upcoming stable target.
+
+#### Public stable flow (`release`)
+
+When promoting internal changes:
+
+1. Open a PR from `main` into `release`.
+2. After merge, CI exits prerelease mode when needed (`changeset pre exit`).
+3. Changesets creates/updates `[CI] Release Packages` PR on `release`.
+4. Merge that release PR to publish stable versions to npm.
+
+If the current prerelease train was `1.2.5-beta.N`, the resulting stable release is `1.2.5`.
+
+#### Hotfixes
+
+Urgent public fixes can be applied directly on `release` (patch changeset only), then:
+
+1. Publish through the `release` branch release PR flow.
+2. Forward-merge `release` back into `main` so channels remain aligned.
+
+> [!IMPORTANT]
+> Forward-merges from `release` to `main` may carry prerelease state changes. If prerelease mode is no longer active on `main` after the merge, re-enter it with `pnpm changeset pre enter beta`.
