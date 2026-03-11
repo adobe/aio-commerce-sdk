@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -74,6 +74,7 @@ async function prepare(
   await configureRegistryAuth(core, exec, {
     registryUrl,
     registryAuthToken,
+    releaseChannel,
   });
 }
 
@@ -140,6 +141,7 @@ async function configureRegistryAuth(
   data: {
     registryUrl: string;
     registryAuthToken: string;
+    releaseChannel: string;
   },
 ) {
   if (!(data.registryUrl && data.registryAuthToken)) {
@@ -149,12 +151,33 @@ async function configureRegistryAuth(
   }
 
   await exec.exec("npm config set registry", [data.registryUrl]);
-  await exec.exec("npm config set", [
-    `//${normalizeRegistryPath(data.registryUrl)}/:_authToken=${data.registryAuthToken}`,
-  ]);
+
+  // Write the auth token directly to ~/.npmrc, mirroring how actions/setup-node does it.
+  // npm config set is unreliable for //-prefixed registry auth keys across npm versions.
+  appendFileSync(
+    `${process.env.HOME}/.npmrc`,
+    `\n//${normalizeRegistryPath(data.registryUrl)}/:_authToken=${data.registryAuthToken}\n`,
+  );
 
   // Export the registry URL via the npm_config_registry env var so subsequent workflow steps inherit it.
   // npm treats any env var prefixed with npm_config_ as a config option, taking precedence over .npmrc files.
   // @see https://docs.npmjs.com/cli/using-npm/config#environment-variables
   core.exportVariable("npm_config_registry", data.registryUrl);
+
+  if (data.releaseChannel === "internal") {
+    // Diagnostic: log the authenticated user to confirm auth is working before publish.
+    // Failure is intentionally swallowed — auth errors surface more clearly during publish.
+    try {
+      await exec.exec("pnpm whoami", [
+        "--userconfig",
+        "~/.npmrc",
+        "--registry",
+        data.registryUrl,
+      ]);
+    } catch (error) {
+      core.warning(
+        `Registry auth check failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
 }
