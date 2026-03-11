@@ -14,6 +14,10 @@
 
 import { existsSync, renameSync } from "node:fs";
 
-if (existsSync(".build/package.json.orig")) {
-  renameSync(".build/package.json.orig", "package.json");
+export default function main() {
+  if (existsSync(".build/package.json.orig")) {
+    renameSync(".build/package.json.orig", "package.json");
+  }
 }
+
+main();

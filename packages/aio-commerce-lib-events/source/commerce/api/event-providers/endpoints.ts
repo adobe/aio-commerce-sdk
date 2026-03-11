@@ -19,7 +19,7 @@ import {
 } from "./schema";
 
 import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
-import type { HTTPError, Options } from "@adobe/aio-commerce-lib-api/ky";
+import type { HTTPError, Options } from "ky";
 import type {
   EventProviderCreateParams,
   EventProviderGetByIdParams,
@@ -69,7 +69,7 @@ export async function getEventProviderById(
   );
 
   return httpClient
-    .get(`eventing/eventProvider/${validatedParams.providerId}`, fetchOptions)
+    .get(`eventing/eventProvider/${validatedParams.provider_id}`, fetchOptions)
     .json<CommerceEventProviderOneResponse>();
 }
 
@@ -89,21 +89,12 @@ export async function createEventProvider(
   params: EventProviderCreateParams,
   fetchOptions?: Options,
 ) {
-  const validatedParams = parseOrThrow(EventProviderCreateParamsSchema, params);
+  const eventProvider = parseOrThrow(EventProviderCreateParamsSchema, params);
 
   return httpClient
     .post("eventing/eventProvider", {
       ...fetchOptions,
-      json: {
-        eventProvider: {
-          provider_id: validatedParams.providerId,
-          instance_id: validatedParams.instanceId,
-          label: validatedParams.label,
-          description: validatedParams.description,
-          workspace_configuration:
-            validatedParams.associatedWorkspaceConfiguration,
-        },
-      },
+      json: { eventProvider },
     })
     .json<CommerceEventProviderOneResponse>();
 }

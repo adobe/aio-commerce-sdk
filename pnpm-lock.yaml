@@ -30,6 +30,9 @@ catalogs:
     msw:
       specifier: ^2.11.1
       version: 2.12.10
+    ky:
+      specifier: ^1.9.0
+      version: 1.14.3
     prettier:
       specifier: ^3.8.1
       version: 3.8.1
@@ -95,6 +98,9 @@ importers:
       typedoc-plugin-markdown:
         specifier: ^4.7.1
         version: 4.10.0(typedoc@0.28.17(typescript@5.9.3))
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
       ultracite:
         specifier: ^7.0.0
         version: 7.2.4
@@ -219,7 +225,7 @@ importers:
         specifier: 'catalog:'
         version: 8.0.0
       ky:
-        specifier: ^1.9.0
+        specifier: 'catalog:'
         version: 1.14.3
       type-fest:
         specifier: 'catalog:'
@@ -466,6 +472,9 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
+      ky:
+        specifier: 'catalog:'
+        version: 1.14.3
       type-fest:
         specifier: 'catalog:'
         version: 5.4.4
@@ -565,6 +574,12 @@ importers:
       '@aio-commerce-sdk/config-typescript':
         specifier: workspace:*
         version: link:../configs/typescript
+      '@aio-commerce-sdk/config-vitest':
+        specifier: workspace:*
+        version: link:../configs/vitest
+      '@aio-commerce-sdk/scripting-utils':
+        specifier: workspace:*
+        version: link:../packages-private/scripting-utils
 
   turbo/generators:
     dependencies:

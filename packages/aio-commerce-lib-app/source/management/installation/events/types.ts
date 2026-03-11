@@ -86,7 +86,7 @@ export type CreateCommerceProviderParams = {
   provider: Pick<
     IoEventProvider,
     "label" | "description" | "instance_id" | "id"
-  > & { workspaceConfiguration: string };
+  > & { workspace_configuration: string };
 };
 
 /** The parameters needed to create event subscriptions in Commerce. */

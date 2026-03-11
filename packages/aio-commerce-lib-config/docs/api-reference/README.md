@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-config`: `v0.13.0`
+# `@adobe/aio-commerce-lib-config`: `v1.0.0`
 
 This module exports configuration management utilities for the AIO Commerce SDK.
 
@@ -6,12 +6,13 @@ This module exports configuration management utilities for the AIO Commerce SDK.
 
 | Type Alias                                                                       | Description                                                                                                                                      |
 | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [BusinessConfig](type-aliases/BusinessConfig.md)                                 | The keys of the `businessConfig` settings in the app config file.                                                                                |
+| [BusinessConfig](type-aliases/BusinessConfig.md)                                 | Defines the shape of the business configuration settings.                                                                                        |
 | [BusinessConfigSchema](type-aliases/BusinessConfigSchema.md)                     | The schema type for the business configuration schema.                                                                                           |
 | [BusinessConfigSchemaField](type-aliases/BusinessConfigSchemaField.md)           | The schema type for a configuration field.                                                                                                       |
 | [BusinessConfigSchemaListOption](type-aliases/BusinessConfigSchemaListOption.md) | The schema type for an option in a list configuration field. Represents a single option that can be selected in a list-type configuration field. |
 | [BusinessConfigSchemaValue](type-aliases/BusinessConfigSchemaValue.md)           | The schema type for the business configuration schema.                                                                                           |
 | [CommerceScopeData](type-aliases/CommerceScopeData.md)                           | Commerce API response data containing websites, store groups, and store views.                                                                   |
+| [ConfigOptions](type-aliases/ConfigOptions.md)                                   | Options for controlling configuration operations.                                                                                                |
 | [ConfigOrigin](type-aliases/ConfigOrigin.md)                                     | Represents the origin of a configuration value, indicating which scope it came from.                                                             |
 | [ConfigValue](type-aliases/ConfigValue.md)                                       | Represents a configuration value with its origin information.                                                                                    |
 | [CustomScopeInput](type-aliases/CustomScopeInput.md)                             | Input type for a custom scope definition.                                                                                                        |
@@ -22,8 +23,8 @@ This module exports configuration management utilities for the AIO Commerce SDK.
 | [GetConfigurationResponse](type-aliases/GetConfigurationResponse.md)             | Response type for getting configuration for a scope.                                                                                             |
 | [GetFreshScopeTreeParams](type-aliases/GetFreshScopeTreeParams.md)               | Parameters for getting the scope tree from Commerce API.                                                                                         |
 | [GetScopeTreeResult](type-aliases/GetScopeTreeResult.md)                         | Result from getting the scope tree.                                                                                                              |
-| [GlobalLibConfigOptions](type-aliases/GlobalLibConfigOptions.md)                 | Global fetch options with all properties required.                                                                                               |
-| [LibConfigOptions](type-aliases/LibConfigOptions.md)                             | Options for controlling fetch behavior, particularly cache timeout.                                                                              |
+| [InitializeOptions](type-aliases/InitializeOptions.md)                           | Options for initializing the configuration library, so that it works as expected.                                                                |
+| [OperationOptions](type-aliases/OperationOptions.md)                             | Options for controlling operations of the configuration library.                                                                                 |
 | [ScopeNode](type-aliases/ScopeNode.md)                                           | Represents a single node in the scope tree hierarchy.                                                                                            |
 | [ScopeTree](type-aliases/ScopeTree.md)                                           | Represents the complete scope tree as an array of root scope nodes.                                                                              |
 | [SelectorBy](type-aliases/SelectorBy.md)                                         | Discriminated union type for selecting a scope by different methods.                                                                             |
@@ -38,22 +39,26 @@ This module exports configuration management utilities for the AIO Commerce SDK.
 | [StoreView](type-aliases/StoreView.md)                                           | Represents a store view in Adobe Commerce.                                                                                                       |
 | [Website](type-aliases/Website.md)                                               | Represents a website in Adobe Commerce.                                                                                                          |
 
+## Variables
+
+| Variable                                                  | Description                                                          |
+| --------------------------------------------------------- | -------------------------------------------------------------------- |
+| [SchemaBusinessConfig](variables/SchemaBusinessConfig.md) | The schema used to validate the the business configuration settings. |
+
 ## Functions
 
-| Function                                                            | Description                                                                                                |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| [byCode](functions/byCode.md)                                       | Creates a scope selector that identifies a scope by its code only.                                         |
-| [byCodeAndLevel](functions/byCodeAndLevel.md)                       | Creates a scope selector that identifies a scope by its code and level.                                    |
-| [byScopeId](functions/byScopeId.md)                                 | Creates a scope selector that identifies a scope by its unique ID.                                         |
-| [generateEncryptionKey](functions/generateEncryptionKey.md)         | Generates a new encryption key suitable for AIO_COMMERCE_CONFIG_ENCRYPTION_KEY.                            |
-| [getConfigSchema](functions/getConfigSchema.md)                     | Gets the configuration schema with lazy initialization and version checking.                               |
-| [getConfiguration](functions/getConfiguration.md)                   | Gets configuration for a scope.                                                                            |
-| [getConfigurationByKey](functions/getConfigurationByKey.md)         | Gets a specific configuration value by key for a scope.                                                    |
-| [getGlobalLibConfigOptions](functions/getGlobalLibConfigOptions.md) | Gets the global encryption key.                                                                            |
-| [getScopeTree](functions/getScopeTree.md)                           | Gets the scope tree from cache or Commerce API.                                                            |
-| [isEncryptionConfigured](functions/isEncryptionConfigured.md)       | Checks if encryption is properly configured.                                                               |
-| [setConfiguration](functions/setConfiguration.md)                   | Sets configuration values for a scope.                                                                     |
-| [setCustomScopeTree](functions/setCustomScopeTree.md)               | Sets the custom scope tree, replacing all existing custom scopes with the provided ones.                   |
-| [setGlobalLibConfigOptions](functions/setGlobalLibConfigOptions.md) | Sets global library configuration options that will be used as defaults for all operations of the library. |
-| [syncCommerceScopes](functions/syncCommerceScopes.md)               | Syncs Commerce scopes by forcing a fresh fetch from Commerce API and updating the cache.                   |
-| [unsyncCommerceScopes](functions/unsyncCommerceScopes.md)           | Removes the commerce scope from the persisted scope tree.                                                  |
+| Function                                                    | Description                                                                              |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| [byCode](functions/byCode.md)                               | Creates a scope selector that identifies a scope by its code only.                       |
+| [byCodeAndLevel](functions/byCodeAndLevel.md)               | Creates a scope selector that identifies a scope by its code and level.                  |
+| [byScopeId](functions/byScopeId.md)                         | Creates a scope selector that identifies a scope by its unique ID.                       |
+| [generateEncryptionKey](functions/generateEncryptionKey.md) | Generates a new encryption key suitable for AIO_COMMERCE_CONFIG_ENCRYPTION_KEY.          |
+| [getConfiguration](functions/getConfiguration.md)           | Gets configuration for a scope.                                                          |
+| [getConfigurationByKey](functions/getConfigurationByKey.md) | Gets a specific configuration value by key for a scope.                                  |
+| [getScopeTree](functions/getScopeTree.md)                   | Gets the scope tree from cache or Commerce API.                                          |
+| [initialize](functions/initialize.md)                       | Initializes the configuration library so that it works as expected.                      |
+| [setConfiguration](functions/setConfiguration.md)           | Sets configuration values for a scope.                                                   |
+| [setCustomScopeTree](functions/setCustomScopeTree.md)       | Sets the custom scope tree, replacing all existing custom scopes with the provided ones. |
+| [syncCommerceScopes](functions/syncCommerceScopes.md)       | Syncs Commerce scopes by forcing a fresh fetch from Commerce API and updating the cache. |
+| [unsyncCommerceScopes](functions/unsyncCommerceScopes.md)   | Removes the commerce scope from the persisted scope tree.                                |
+| [validateEncryptionKey](functions/validateEncryptionKey.md) | Validates the encryption key.                                                            |

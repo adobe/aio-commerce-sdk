@@ -3,7 +3,7 @@
 ```ts
 function syncCommerceScopes(
   commerceConfig: CommerceHttpClientParams,
-  options?: LibConfigOptions,
+  options?: OperationOptions,
 ): Promise<{
   error?: string;
   scopeTree: ScopeTree;
@@ -11,7 +11,7 @@ function syncCommerceScopes(
 }>;
 ```
 
-Defined in: [aio-commerce-lib-config/source/config-manager.ts:213](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/config-manager.ts#L213)
+Defined in: [config-manager.ts:203](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/config-manager.ts#L203)
 
 Syncs Commerce scopes by forcing a fresh fetch from Commerce API and updating the cache.
 
@@ -24,7 +24,7 @@ both the cache and persistent storage.
 | Parameter        | Type                                                                                                                                                                        | Description                                                    |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | `commerceConfig` | [`CommerceHttpClientParams`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/type-aliases/CommerceHttpClientParams.md) | The Commerce HTTP client configuration required for API calls. |
-| `options?`       | [`LibConfigOptions`](../type-aliases/LibConfigOptions.md)                                                                                                                   | Optional library configuration options for cache timeout.      |
+| `options?`       | [`OperationOptions`](../type-aliases/OperationOptions.md)                                                                                                                   | Optional library configuration options for cache timeout.      |
 
 ## Returns
 

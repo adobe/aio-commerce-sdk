@@ -49,3 +49,21 @@ export async function withTempFiles<T>(
     }
   }
 }
+
+/**
+ * Change the current working directory and execute a callback with the temporary directory path
+ * @param tempDir - Temporary directory path
+ * @param callback - Callback to execute with the temporary directory path
+ */
+export async function withChdir<T>(
+  tempDir: string,
+  callback: () => Promise<T> | T,
+) {
+  const originalCwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    return await callback();
+  } finally {
+    process.chdir(originalCwd);
+  }
+}

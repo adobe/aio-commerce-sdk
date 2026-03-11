@@ -9,7 +9,7 @@ type CombinedStoreOptions<T> = {
 };
 ```
 
-Defined in: [storage/types.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages-private/common-utils/source/storage/types.ts#L76)
+Defined in: [storage/types.ts:75](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages-private/common-utils/source/storage/types.ts#L75)
 
 Options for creating a combined store.
 
@@ -27,7 +27,7 @@ Options for creating a combined store.
 optional cache: StateStoreOptions;
 ```
 
-Defined in: [storage/types.ts:78](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages-private/common-utils/source/storage/types.ts#L78)
+Defined in: [storage/types.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages-private/common-utils/source/storage/types.ts#L77)
 
 Options for the cache (lib-state) store.
 
@@ -41,7 +41,7 @@ optional persistent: FilesStoreOptions & {
 };
 ```
 
-Defined in: [storage/types.ts:81](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages-private/common-utils/source/storage/types.ts#L81)
+Defined in: [storage/types.ts:80](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages-private/common-utils/source/storage/types.ts#L80)
 
 Options for the persistent (lib-files) store.
 

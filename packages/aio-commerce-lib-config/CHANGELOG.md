@@ -1,5 +1,35 @@
 # @adobe/aio-commerce-lib-config
 
+## 1.0.1-beta.0
+
+### Patch Changes
+
+- [#297](https://github.com/adobe/aio-commerce-sdk/pull/297) [`0e99a06`](https://github.com/adobe/aio-commerce-sdk/commit/0e99a0645d284f4d05dd1859ccad4d958268d576) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Ensure all properties in business config schema have default values
+
+## 1.0.0
+
+### Major Changes
+
+- [#271](https://github.com/adobe/aio-commerce-sdk/pull/271) [`0170e73`](https://github.com/adobe/aio-commerce-sdk/commit/0170e7340d28367a6f001c9b2ff7e1ec0874a49b) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove `setGlobalLibConfigOptions`, now options are passed per-operation only. Introduce `initialize` as a safeguard for the library to work as expected.
+
+- [#294](https://github.com/adobe/aio-commerce-sdk/pull/294) [`6d5b16a`](https://github.com/adobe/aio-commerce-sdk/commit/6d5b16a7659ab0d83b251921ac478ff7faf0d4e5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - General Availability (GA) release of the Adobe Commerce SDK and all libraries.
+
+- [#271](https://github.com/adobe/aio-commerce-sdk/pull/271) [`0170e73`](https://github.com/adobe/aio-commerce-sdk/commit/0170e7340d28367a6f001c9b2ff7e1ec0874a49b) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Make `unsyncCommerceScopes` return an object with `unsynced` property.
+
+- [#266](https://github.com/adobe/aio-commerce-sdk/pull/266) [`3398078`](https://github.com/adobe/aio-commerce-sdk/commit/33980787b7874a3615b5946b76af1af36153cf76) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove `schema validate` command and move encryption key generation logic in it to `encryption setup` command
+
+### Patch Changes
+
+- [#267](https://github.com/adobe/aio-commerce-sdk/pull/267) [`8642288`](https://github.com/adobe/aio-commerce-sdk/commit/8642288be4efd44b375d47e7cb75adb038c08334) Thanks [@jnatherley](https://github.com/jnatherley)! - Implements a rolldown plugin to correctly externalize transitive dependencies of private packages during build, but keep the source code of those same packages bundled.
+
+- [#271](https://github.com/adobe/aio-commerce-sdk/pull/271) [`0170e73`](https://github.com/adobe/aio-commerce-sdk/commit/0170e7340d28367a6f001c9b2ff7e1ec0874a49b) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Export `validateEncryptionKey` helper
+
+- [#269](https://github.com/adobe/aio-commerce-sdk/pull/269) [`a502120`](https://github.com/adobe/aio-commerce-sdk/commit/a502120d8c16fdc1ed4afc579c5cfd79ec56c8e0) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Use a safe CLI wrapper to ensure binaries can always be linked
+
+- Updated dependencies [[`8642288`](https://github.com/adobe/aio-commerce-sdk/commit/8642288be4efd44b375d47e7cb75adb038c08334), [`6d5b16a`](https://github.com/adobe/aio-commerce-sdk/commit/6d5b16a7659ab0d83b251921ac478ff7faf0d4e5), [`6d5b16a`](https://github.com/adobe/aio-commerce-sdk/commit/6d5b16a7659ab0d83b251921ac478ff7faf0d4e5)]:
+  - @adobe/aio-commerce-lib-core@1.0.0
+  - @adobe/aio-commerce-lib-api@1.0.0
+
 ## 0.13.2
 
 ### Patch Changes

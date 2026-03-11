@@ -44,6 +44,7 @@
     "turbo": "^2.5.4",
     "typedoc": "^0.28.7",
     "typedoc-plugin-markdown": "^4.7.1",
+    "typescript": "catalog:",
     "ultracite": "^7.0.0",
     "vitest": "^4.0.0"
   },

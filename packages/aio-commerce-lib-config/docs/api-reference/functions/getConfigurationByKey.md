@@ -4,7 +4,7 @@
 function getConfigurationByKey(
   configKey: string,
   selector: SelectorBy,
-  options?: LibConfigOptions,
+  options?: ConfigOptions,
 ): Promise<{
   config: ConfigValue | null;
   scope: {
@@ -15,7 +15,7 @@ function getConfigurationByKey(
 }>;
 ```
 
-Defined in: [aio-commerce-lib-config/source/config-manager.ts:413](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/config-manager.ts#L413)
+Defined in: [config-manager.ts:354](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/config-manager.ts#L354)
 
 Gets a specific configuration value by key for a scope.
 
@@ -24,11 +24,11 @@ when you only need one configuration field rather than the entire configuration 
 
 ## Parameters
 
-| Parameter   | Type                                                      | Description                                               |
-| ----------- | --------------------------------------------------------- | --------------------------------------------------------- |
-| `configKey` | `string`                                                  | The name of the configuration field to retrieve.          |
-| `selector`  | [`SelectorBy`](../type-aliases/SelectorBy.md)             | Scope selector specifying how to identify the scope.      |
-| `options?`  | [`LibConfigOptions`](../type-aliases/LibConfigOptions.md) | Optional library configuration options for cache timeout. |
+| Parameter   | Type                                                | Description                                               |
+| ----------- | --------------------------------------------------- | --------------------------------------------------------- |
+| `configKey` | `string`                                            | The name of the configuration field to retrieve.          |
+| `selector`  | [`SelectorBy`](../type-aliases/SelectorBy.md)       | Scope selector specifying how to identify the scope.      |
+| `options?`  | [`ConfigOptions`](../type-aliases/ConfigOptions.md) | Optional library configuration options for cache timeout. |
 
 ## Returns
 

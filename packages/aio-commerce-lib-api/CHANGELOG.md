@@ -1,5 +1,21 @@
 # @adobe/aio-commerce-lib-api
 
+## 1.0.0
+
+### Major Changes
+
+- [#294](https://github.com/adobe/aio-commerce-sdk/pull/294) [`6d5b16a`](https://github.com/adobe/aio-commerce-sdk/commit/6d5b16a7659ab0d83b251921ac478ff7faf0d4e5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - General Availability (GA) release of the Adobe Commerce SDK and all libraries.
+
+- [#294](https://github.com/adobe/aio-commerce-sdk/pull/294) [`6d5b16a`](https://github.com/adobe/aio-commerce-sdk/commit/6d5b16a7659ab0d83b251921ac478ff7faf0d4e5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove `/ky` entrypoint and bundled dependency
+
+### Patch Changes
+
+- [#267](https://github.com/adobe/aio-commerce-sdk/pull/267) [`8642288`](https://github.com/adobe/aio-commerce-sdk/commit/8642288be4efd44b375d47e7cb75adb038c08334) Thanks [@jnatherley](https://github.com/jnatherley)! - Implements a rolldown plugin to correctly externalize transitive dependencies of private packages during build, but keep the source code of those same packages bundled.
+
+- Updated dependencies [[`8642288`](https://github.com/adobe/aio-commerce-sdk/commit/8642288be4efd44b375d47e7cb75adb038c08334), [`6d5b16a`](https://github.com/adobe/aio-commerce-sdk/commit/6d5b16a7659ab0d83b251921ac478ff7faf0d4e5), [`a502120`](https://github.com/adobe/aio-commerce-sdk/commit/a502120d8c16fdc1ed4afc579c5cfd79ec56c8e0)]:
+  - @adobe/aio-commerce-lib-auth@1.0.0
+  - @adobe/aio-commerce-lib-core@1.0.0
+
 ## 0.6.1
 
 ### Patch Changes

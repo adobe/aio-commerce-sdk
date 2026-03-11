@@ -5,7 +5,7 @@ const UpdateEventingConfigurationParamsSchema: Omit<
   ObjectSchema<
     {
       enabled: BooleanSchema<`Expected a boolean value for '${string}'`>;
-      environmentId: SchemaWithPipe<
+      environment_id: SchemaWithPipe<
         readonly [
           StringSchema<`Expected a string value for '${string}'`>,
           RegexAction<
@@ -14,7 +14,7 @@ const UpdateEventingConfigurationParamsSchema: Omit<
           >,
         ]
       >;
-      instanceId: SchemaWithPipe<
+      instance_id: SchemaWithPipe<
         readonly [
           StringSchema<`Expected a string value for '${string}'`>,
           RegexAction<
@@ -23,7 +23,7 @@ const UpdateEventingConfigurationParamsSchema: Omit<
           >,
         ]
       >;
-      merchantId: SchemaWithPipe<
+      merchant_id: SchemaWithPipe<
         readonly [
           StringSchema<`Expected a string value for '${string}'`>,
           RegexAction<
@@ -32,7 +32,7 @@ const UpdateEventingConfigurationParamsSchema: Omit<
           >,
         ]
       >;
-      providerId: SchemaWithPipe<
+      provider_id: SchemaWithPipe<
         readonly [
           StringSchema<`Expected a string value for '${string}'`>,
           RegexAction<
@@ -41,7 +41,7 @@ const UpdateEventingConfigurationParamsSchema: Omit<
           >,
         ]
       >;
-      workspaceConfiguration: UnionSchema<
+      workspace_configuration: UnionSchema<
         [
           SchemaWithPipe<
             readonly [
@@ -89,6 +89,6 @@ const UpdateEventingConfigurationParamsSchema: Omit<
 > & {};
 ```
 
-Defined in: [commerce/api/eventing-configuration/schema.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-events/source/commerce/api/eventing-configuration/schema.ts#L23)
+Defined in: [commerce/api/eventing-configuration/schema.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-events/source/commerce/api/eventing-configuration/schema.ts#L23)
 
 The schema of the parameters received by the `updateConfiguration` Commerce Eventing API endpoint.
