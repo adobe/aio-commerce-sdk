@@ -90,7 +90,7 @@ describe("release/prepare.ts", () => {
 
         expect(exec.exec).toHaveBeenNthCalledWith(2, "pnpm whoami", [
           "--userconfig",
-          "~/.npmrc",
+          `${tempDir}/.npmrc`,
           "--registry",
           INTERNAL_REGISTRY_URL,
         ]);
@@ -415,7 +415,7 @@ describe("release/prepare.ts", () => {
 
         expect(exec.exec).toHaveBeenNthCalledWith(2, "pnpm whoami", [
           "--userconfig",
-          "~/.npmrc",
+          `${tempDir}/.npmrc`,
           "--registry",
           registryUrl,
         ]);
