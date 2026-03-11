@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-config
 
+## 1.0.1-beta.0
+
+### Patch Changes
+
+- [#297](https://github.com/adobe/aio-commerce-sdk/pull/297) [`0e99a06`](https://github.com/adobe/aio-commerce-sdk/commit/0e99a0645d284f4d05dd1859ccad4d958268d576) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Ensure all properties in business config schema have default values
+
 ## 1.0.0
 
 ### Major Changes
