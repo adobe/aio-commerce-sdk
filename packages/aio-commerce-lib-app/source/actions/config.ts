@@ -118,7 +118,7 @@ router.put("/", {
     config: v.array(
       v.object({
         name: nonEmptyStringValueSchema("config.name"),
-        value: v.union([v.string(), v.array(v.string())]),
+        value: v.union([v.boolean(), v.string(), v.array(v.string())]),
       }),
     ),
   }),
