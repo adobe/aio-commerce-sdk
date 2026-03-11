@@ -71,6 +71,7 @@ jobs:
           publish: pnpm changeset publish
           commit: "ci: release packages"
           title: "[CI] Release Packages"
+          createGithubReleases: ${{ inputs.channel == 'stable' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
