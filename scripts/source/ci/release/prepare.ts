@@ -14,9 +14,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { parseReleaseChannel, runGitHubScript } from "./utils";
+import { parseReleaseChannel, runGitHubScript } from "./utils.ts";
 
-import type { AsyncFunctionArguments, Environment } from "./types";
+import type { AsyncFunctionArguments, Environment } from "./types.ts";
 
 // Find where the Changesets configuration and state files are located, relative to the current file.
 const CURRENT_DIR = dirname(fileURLToPath(import.meta.url));
