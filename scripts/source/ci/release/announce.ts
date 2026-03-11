@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { parseReleaseChannel, runGitHubScript } from "./utils";
+import { parseReleaseChannel, runGitHubScript } from "./utils.ts";
 
 import type {
   AnnounceEnvironment,
@@ -18,7 +18,7 @@ import type {
   PublishedPackage,
   ReleaseChannel,
   SlackPayload,
-} from "./types";
+} from "./types.ts";
 
 const REPOSITORY = "adobe/aio-commerce-sdk";
 const REPOSITORY_URL = `https://github.com/${REPOSITORY}`;
