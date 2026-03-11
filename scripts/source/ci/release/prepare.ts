@@ -170,7 +170,7 @@ async function configureRegistryAuth(
     try {
       await exec.exec("pnpm whoami", [
         "--userconfig",
-        "~/.npmrc",
+        `${process.env.HOME}/.npmrc`,
         "--registry",
         data.registryUrl,
       ]);
