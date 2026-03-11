@@ -22,10 +22,27 @@ jobs:
   publish:
     name: Publish Preview Packages
     if: |
-      (github.event_name == 'workflow_dispatch') ||
-      (github.event.issue.pull_request && contains(github.event.comment.body, '/publish-preview'))
+      github.repository == 'adobe/aio-commerce-sdk' &&
+      (
+        (github.event_name == 'workflow_dispatch') ||
+        (github.event.issue.pull_request && contains(github.event.comment.body, '/publish-preview'))
+      )
     runs-on: ubuntu-latest
     steps:
+      - name: Check actor permission
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.actor,
+            });
+            
+            if (data.permission !== 'admin') {
+              core.setFailed(`@${context.actor} does not have admin permission on this repository (actual: ${data.permission}).`);
+            }
+
       - name: Get PR number
         id: pr
         run: |
