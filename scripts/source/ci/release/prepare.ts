@@ -153,8 +153,8 @@ async function configureRegistryAuth(
     `//${normalizeRegistryPath(data.registryUrl)}/:_authToken=${data.registryAuthToken}`,
   ]);
 
-  // Export the registry URL as an env var so subsequent workflow steps inherit it.
-  // changesets reads process.env.npm_config_registry (not ~/.npmrc) to determine
-  // which registry to publish to; without this it defaults to registry.npmjs.org.
+  // Export the registry URL via the npm_config_registry env var so subsequent workflow steps inherit it.
+  // npm treats any env var prefixed with npm_config_ as a config option, taking precedence over .npmrc files.
+  // @see https://docs.npmjs.com/cli/using-npm/config#environment-variables
   core.exportVariable("npm_config_registry", data.registryUrl);
 }

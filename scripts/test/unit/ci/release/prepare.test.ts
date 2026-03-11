@@ -159,8 +159,6 @@ describe("release/prepare.ts", () => {
 
         await prepare(asCore(core), asExec(exec));
 
-        // changesets' getCorrectRegistry() reads process.env.npm_config_registry, not ~/.npmrc.
-        // Without this export, it falls back to registry.npmjs.org and publish fails with ENEEDAUTH.
         expect(core.exportVariable).toHaveBeenCalledExactlyOnceWith(
           "npm_config_registry",
           INTERNAL_REGISTRY_URL,
