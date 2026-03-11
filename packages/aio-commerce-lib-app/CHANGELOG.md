@@ -1,5 +1,14 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.0.1-beta.0
+
+### Patch Changes
+
+- Updated dependencies [[`0e99a06`](https://github.com/adobe/aio-commerce-sdk/commit/0e99a0645d284f4d05dd1859ccad4d958268d576)]:
+  - @adobe/aio-commerce-lib-config@1.0.1-beta.0
+  - @adobe/aio-commerce-lib-auth@1.0.0
+  - @adobe/aio-commerce-lib-events@1.0.0
+
 ## 1.0.0
 
 ### Major Changes
