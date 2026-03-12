@@ -100,10 +100,7 @@ export async function validateWebhookConflicts(
       ) {
         conflictedWebhooks.push({
           label: entry.label,
-          webhook_method: existing.webhook_method,
-          webhook_type: existing.webhook_type,
-          batch_name: existing.batch_name,
-          hook_name: existing.hook_name,
+          ...existing,
         });
         break;
       }

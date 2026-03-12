@@ -15,7 +15,6 @@ import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AppData } from "../schema";
 
-// ─── Validation Issue Types ───────────────────────────────────────────────────
 // Defined here (not in validation.ts) to avoid circular imports, since step
 // validate handlers need this type and validation.ts imports from step.ts.
 
@@ -36,8 +35,6 @@ export type ValidationIssue = {
   /** Optional additional context about the issue. */
   details?: Record<string, unknown>;
 };
-
-// ─── Installation Context ─────────────────────────────────────────────────────
 
 /** Shared context available to all steps during installation. */
 export type InstallationContext = {
