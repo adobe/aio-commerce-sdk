@@ -94,15 +94,15 @@ const WebhookDefinitionWithUrlSchema = v.object({
   url: v.pipe(
     stringValueSchema("webhook URL"),
     v.url(
-      'The "url" field must be a valid absolute URL (e.g., "https://example.com/webhook")',
+      "The 'url' field must be a valid absolute URL (e.g., 'https://example.com/webhook')",
     ),
   ),
 });
 
 /** Schema for a webhook entry that resolves its URL from a runtime action. */
 const WebhookEntryWithRuntimeActionSchema = v.object({
-  label: nonEmptyStringValueSchema("webhook entry label"),
-  description: nonEmptyStringValueSchema("webhook entry description"),
+  label: nonEmptyStringValueSchema("webhook label"),
+  description: nonEmptyStringValueSchema("webhook description"),
   category: v.optional(CategorySchema),
   runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
   requireAdobeAuth: v.optional(booleanValueSchema("requireAdobeAuth")),
@@ -111,8 +111,8 @@ const WebhookEntryWithRuntimeActionSchema = v.object({
 
 /** Schema for a webhook entry that provides an explicit URL. */
 const WebhookEntryWithUrlSchema = v.object({
-  label: nonEmptyStringValueSchema("webhook entry label"),
-  description: nonEmptyStringValueSchema("webhook entry description"),
+  label: nonEmptyStringValueSchema("webhook label"),
+  description: nonEmptyStringValueSchema("webhook description"),
   category: v.optional(CategorySchema),
   webhook: WebhookDefinitionWithUrlSchema,
 });
