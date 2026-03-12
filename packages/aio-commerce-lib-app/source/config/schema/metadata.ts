@@ -44,7 +44,7 @@ export const MetadataSchema = v.object({
     nonEmptyString("version"),
     v.regex(
       SEMVER_REGEX,
-      "The version must follow semantic versioning (semver) format",
+      "The version must follow semantic versioning (semver) format: Major.Minor.Patch (e.g., '1.0.0', '2.3.1')",
     ),
   ),
 });
