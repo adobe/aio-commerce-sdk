@@ -19,6 +19,7 @@ import { getPasswordFields } from "#modules/schema/utils";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
 import { encrypt } from "#utils/encryption";
 
+import { getSchema } from "../schema";
 import * as configRepository from "./configuration-repository";
 
 import type {
@@ -26,7 +27,6 @@ import type {
   SetConfigurationResponse,
 } from "#types/index";
 import type { ConfigContext, ConfigValueWithOptionalOrigin } from "./types";
-// loadScopeConfig and persistConfiguration are now repository methods
 
 /**
  * Sets configuration values for a scope identified by code and level or id.
@@ -48,6 +48,7 @@ export async function setConfiguration(
   request: SetConfigurationRequest,
   ...args: unknown[]
 ): Promise<SetConfigurationResponse> {
+  const schema = await getSchema(context);
   const scopeTree = await scopeTreeRepository.getPersistedScopeTree(
     context.namespace,
   );
@@ -58,11 +59,11 @@ export async function setConfiguration(
   );
 
   const sanitizedEntries = sanitizeRequestEntries(request?.config);
-
-  const passwordFields = await getPasswordFields(context.namespace);
+  const passwordFields = getPasswordFields(schema);
   const encryptedEntries = encryptPasswordFields(
     sanitizedEntries,
     passwordFields,
+    context.encryptionKey,
   );
 
   const existingPersisted = await configRepository.loadConfig(scopeCode);
@@ -106,6 +107,7 @@ export async function setConfiguration(
 function encryptPasswordFields(
   entries: ConfigValueWithOptionalOrigin[],
   passwordFields: Set<string>,
+  encryptionKey?: string,
 ): ConfigValueWithOptionalOrigin[] {
   return entries.map((entry) => {
     if (
@@ -113,11 +115,16 @@ function encryptPasswordFields(
       typeof entry.value === "string" &&
       entry.value.length > 0
     ) {
+      if (!encryptionKey) {
+        throw new Error("Encryption key has not been given");
+      }
+
       return {
         ...entry,
-        value: encrypt(entry.value),
+        value: encrypt(entry.value, encryptionKey),
       };
     }
+
     return entry;
   });
 }

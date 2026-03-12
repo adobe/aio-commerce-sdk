@@ -1,32 +1,33 @@
 # `unsyncCommerceScopes()`
 
 ```ts
-function unsyncCommerceScopes(): Promise<boolean>;
+function unsyncCommerceScopes(): Promise<{
+  unsynced: boolean;
+}>;
 ```
 
-Defined in: [aio-commerce-lib-config/source/config-manager.ts:268](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/config-manager.ts#L268)
+Defined in: [config-manager.ts:255](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/config-manager.ts#L255)
 
 Removes the commerce scope from the persisted scope tree.
 
 ## Returns
 
-`Promise`\<`boolean`\>
+`Promise`\<\{
+`unsynced`: `boolean`;
+\}\>
 
-Promise resolving to a boolean indicating whether the scope was found and removed,
-or if it was already not present.
+Promise resolving to an object with `unsynced` boolean indicating whether the
+scope was found and removed, or `false` if it was already not present.
 
 ## Example
 
 ```typescript
 import { unsyncCommerceScopes } from "@adobe/aio-commerce-lib-config";
 
-try {
-  const result = await unsyncCommerceScopes();
-
-  if (result) {
-    console.log("Commerce scope removed successfully");
-  }
-} catch (error) {
-  console.error("Failed to unsync commerce scopes:", error);
+const result = await unsyncCommerceScopes();
+if (result.unsynced) {
+  console.log("Commerce scope removed successfully");
+} else {
+  console.log("Commerce scope not found");
 }
 ```

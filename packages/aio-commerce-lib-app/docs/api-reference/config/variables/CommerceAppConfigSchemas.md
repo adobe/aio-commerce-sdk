@@ -42,7 +42,7 @@ const CommerceAppConfigSchemas: {
         type: "text";
       }
         | {
-        default?: ... | ...;
+        default?: undefined;
         description?: ... | ...;
         label?: ... | ...;
         name: string;
@@ -93,7 +93,7 @@ const CommerceAppConfigSchemas: {
      name: SchemaWithPipe<readonly [StringSchema<...>, NonEmptyAction<..., ...>]>;
      type: LiteralSchema<"text", "Expected the type to be 'text'">;
    }, undefined>, ObjectSchema<{
-     default: OptionalSchema<StringSchema<"Expected a string for the default value">, undefined>;
+     default: OptionalSchema<NeverSchema<"Password fields do not have a default value">, undefined>;
      description: OptionalSchema<StringSchema<"Expected a string for the field description">, undefined>;
      label: OptionalSchema<StringSchema<"Expected a string for the field label">, undefined>;
      name: SchemaWithPipe<readonly [StringSchema<...>, NonEmptyAction<..., ...>]>;
@@ -131,7 +131,7 @@ const CommerceAppConfigSchemas: {
      type: "text";
    }
      | {
-     default?: string;
+     default?: undefined;
      description?: string;
      label?: string;
      name: string;
@@ -165,10 +165,10 @@ const CommerceAppConfigSchemas: {
            destination: OptionalSchema<..., ...>;
            fields: ArraySchema<..., ...>;
            force: OptionalSchema<..., ...>;
-           hipaaAuditRequired: OptionalSchema<..., ...>;
+           hipaa_audit_required: OptionalSchema<..., ...>;
            label: SchemaWithPipe<...>;
            name: SchemaWithPipe<...>;
-           prioritary: OptionalSchema<..., ...>;
+           priority: OptionalSchema<..., ...>;
            rules: OptionalSchema<..., ...>;
            runtimeActions: ArraySchema<..., ...>;
         }, undefined>, "Expected an array of Commerce events">;
@@ -201,10 +201,10 @@ const CommerceAppConfigSchemas: {
            source: OptionalSchema<..., ...>;
         }, undefined>, "Expected an array of event field objects with a 'name' property">;
         force: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
-        hipaaAuditRequired: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
+        hipaa_audit_required: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
         label: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, MaxLengthAction<string, 100, "The event label must not be longer than 100 characters">]>;
-        name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, RegexAction<string, "Event name must start with \"plugin.\" or \"observer.\" followed by lowercase letters and underscores only (e.g., \"plugin.order_placed\")">]>;
-        prioritary: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
+        name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, RegexAction<string, "Event name must start with \"plugin.\" or \"observer.\" followed by lowercase letters and underscores only (e.g., \"plugin.order_placed\")">, MaxLengthAction<string, 180, "The event name must not be longer than 180 characters">]>;
+        priority: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
         rules: OptionalSchema<ArraySchema<ObjectSchema<{
            field: ...;
            operator: ...;
@@ -222,7 +222,7 @@ const CommerceAppConfigSchemas: {
      events: ArraySchema<ObjectSchema<{
         description: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, MaxLengthAction<string, 255, "The event description must not be longer than 255 characters">]>;
         label: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, MaxLengthAction<string, 100, "The event label must not be longer than 100 characters">]>;
-        name: SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${(...)}'`>, RegexAction<string, `Only alphanumeric characters and underscores are allowed in string value of "${(...)}"${(...)}`>]>;
+        name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, RegexAction<string, "Event name must contain only letters, digits, underscores, hyphens, and dots (e.g., \"external_event\", \"webhook.received\", \"my-event_123\")">, MaxLengthAction<string, 180, "The event name must not be longer than 180 characters">]>;
         runtimeActions: ArraySchema<SchemaWithPipe<readonly [SchemaWithPipe<...>, RegexAction<..., ...>]>, "Expected an array of runtime actions in the format <package>/<action>">;
      }, undefined>, "Expected an array of external events">;
      provider: ObjectSchema<{
@@ -262,7 +262,7 @@ const CommerceAppConfigSchemas: {
 };
 ```
 
-Defined in: [config/schema/domains.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/config/schema/domains.ts#L35)
+Defined in: [aio-commerce-lib-app/source/config/schema/domains.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-app/source/config/schema/domains.ts#L35)
 
 The individual validatable domains of the app config.
 
@@ -311,7 +311,7 @@ readonly businessConfig: ObjectSchema<{
      type: "text";
    }
      | {
-     default?: ... | ...;
+     default?: undefined;
      description?: ... | ...;
      label?: ... | ...;
      name: string;
@@ -367,7 +367,7 @@ readonly businessConfig.schema: SchemaWithPipe<readonly [ArraySchema<VariantSche
   name: SchemaWithPipe<readonly [StringSchema<...>, NonEmptyAction<..., ...>]>;
   type: LiteralSchema<"text", "Expected the type to be 'text'">;
 }, undefined>, ObjectSchema<{
-  default: OptionalSchema<StringSchema<"Expected a string for the default value">, undefined>;
+  default: OptionalSchema<NeverSchema<"Password fields do not have a default value">, undefined>;
   description: OptionalSchema<StringSchema<"Expected a string for the field description">, undefined>;
   label: OptionalSchema<StringSchema<"Expected a string for the field label">, undefined>;
   name: SchemaWithPipe<readonly [StringSchema<...>, NonEmptyAction<..., ...>]>;
@@ -405,7 +405,7 @@ readonly businessConfig.schema: SchemaWithPipe<readonly [ArraySchema<VariantSche
   type: "text";
 }
   | {
-  default?: string;
+  default?: undefined;
   description?: string;
   label?: string;
   name: string;
@@ -444,10 +444,10 @@ readonly eventing: ObjectSchema<{
         destination: OptionalSchema<..., ...>;
         fields: ArraySchema<..., ...>;
         force: OptionalSchema<..., ...>;
-        hipaaAuditRequired: OptionalSchema<..., ...>;
+        hipaa_audit_required: OptionalSchema<..., ...>;
         label: SchemaWithPipe<...>;
         name: SchemaWithPipe<...>;
-        prioritary: OptionalSchema<..., ...>;
+        priority: OptionalSchema<..., ...>;
         rules: OptionalSchema<..., ...>;
         runtimeActions: ArraySchema<..., ...>;
      }, undefined>, "Expected an array of Commerce events">;
@@ -485,10 +485,10 @@ readonly eventing.commerce: ArraySchema<ObjectSchema<{
         source: OptionalSchema<..., ...>;
      }, undefined>, "Expected an array of event field objects with a 'name' property">;
      force: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
-     hipaaAuditRequired: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
+     hipaa_audit_required: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
      label: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, MaxLengthAction<string, 100, "The event label must not be longer than 100 characters">]>;
-     name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, RegexAction<string, "Event name must start with \"plugin.\" or \"observer.\" followed by lowercase letters and underscores only (e.g., \"plugin.order_placed\")">]>;
-     prioritary: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
+     name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, RegexAction<string, "Event name must start with \"plugin.\" or \"observer.\" followed by lowercase letters and underscores only (e.g., \"plugin.order_placed\")">, MaxLengthAction<string, 180, "The event name must not be longer than 180 characters">]>;
+     priority: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
      rules: OptionalSchema<ArraySchema<ObjectSchema<{
         field: ...;
         operator: ...;
@@ -511,7 +511,7 @@ readonly eventing.external: ArraySchema<ObjectSchema<{
   events: ArraySchema<ObjectSchema<{
      description: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, MaxLengthAction<string, 255, "The event description must not be longer than 255 characters">]>;
      label: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, MaxLengthAction<string, 100, "The event label must not be longer than 100 characters">]>;
-     name: SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${(...)}'`>, RegexAction<string, `Only alphanumeric characters and underscores are allowed in string value of "${(...)}"${(...)}`>]>;
+     name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, RegexAction<string, "Event name must contain only letters, digits, underscores, hyphens, and dots (e.g., \"external_event\", \"webhook.received\", \"my-event_123\")">, MaxLengthAction<string, 180, "The event name must not be longer than 180 characters">]>;
      runtimeActions: ArraySchema<SchemaWithPipe<readonly [SchemaWithPipe<...>, RegexAction<..., ...>]>, "Expected an array of runtime actions in the format <package>/<action>">;
   }, undefined>, "Expected an array of external events">;
   provider: ObjectSchema<{

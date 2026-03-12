@@ -2,13 +2,24 @@
   "name": "@adobe/aio-commerce-lib-app",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.3.2",
+  "version": "1.0.1-beta.1",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
   "description": "App configuration management library for Adobe Commerce applications",
+  "keywords": [
+    "aio",
+    "adobe-io",
+    "commerce",
+    "adobe-commerce",
+    "adobe-commerce-sdk",
+    "aio-commerce-sdk",
+    "aio-commerce-lib-app",
+    "configuration",
+    "app-builder"
+  ],
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
@@ -22,14 +33,14 @@
   },
   "publishConfig": {
     "exports": {
-      "./actions": {
+      "./actions/*": {
         "import": {
-          "types": "./dist/es/actions/index.d.mts",
-          "default": "./dist/es/actions/index.mjs"
+          "types": "./dist/es/actions/*.d.mts",
+          "default": "./dist/es/actions/*.mjs"
         },
         "require": {
-          "types": "./dist/cjs/actions/index.d.cts",
-          "default": "./dist/cjs/actions/index.cjs"
+          "types": "./dist/cjs/actions/*.d.cts",
+          "default": "./dist/cjs/actions/*.cjs"
         }
       },
       "./config": {
@@ -99,13 +110,15 @@
     "@adobe/aio-commerce-lib-config": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-events": "workspace:*",
+    "@adobe/aio-commerce-lib-webhooks": "workspace:*",
     "@adobe/aio-lib-core-logging": "catalog:",
     "camelcase": "catalog:",
     "consola": "catalog:",
+    "ky": "catalog:",
     "jiti": "^2.6.1",
     "openwhisk": "^3.21.8",
     "prettier": "catalog:",
-    "safe-stable-stringify": "^2.5.0",
+    "safe-stable-stringify": "catalog:",
     "type-fest": "catalog:",
     "valibot": "catalog:",
     "yaml": "catalog:"

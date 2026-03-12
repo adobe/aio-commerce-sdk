@@ -16,6 +16,7 @@ import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import consola from "consola";
 
 import { exec as encryptionSetupCommand } from "#commands/encryption/setup/main";
+import { exec as encryptionValidateCommand } from "#commands/encryption/validate/main";
 
 const NAMESPACE = "@adobe/aio-commerce-lib-config";
 
@@ -28,6 +29,7 @@ Usage: ${NAMESPACE} <command> [target]
 Commands:
   encryption <target>    Encryption related commands
     setup                Ensure an encryption key is configured
+    validate             Validate the encryption key
 
   help                 Show this help message
 
@@ -41,6 +43,7 @@ Examples:
 const COMMANDS = {
   encryption: {
     setup: encryptionSetupCommand,
+    validate: encryptionValidateCommand,
   },
 } as const;
 

@@ -1,4 +1,4 @@
-# `@aio-commerce-sdk/common-utils`: `v0.2.1`
+# `@aio-commerce-sdk/common-utils`: `v0.2.2`
 
 ## Modules
 

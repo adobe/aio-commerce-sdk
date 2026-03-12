@@ -5,11 +5,11 @@
 ```ts
 function getScopeTree(
   params?: GetCachedScopeTreeParams,
-  options?: LibConfigOptions,
+  options?: OperationOptions,
 ): Promise<GetScopeTreeResult>;
 ```
 
-Defined in: [aio-commerce-lib-config/source/config-manager.ts:144](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/config-manager.ts#L144)
+Defined in: [config-manager.ts:134](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/config-manager.ts#L134)
 
 Gets the scope tree from cache or Commerce API.
 
@@ -22,7 +22,7 @@ and custom scopes that may have been defined.
 | Parameter  | Type                                                                      | Description                                                                    |
 | ---------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | `params?`  | [`GetCachedScopeTreeParams`](../type-aliases/GetCachedScopeTreeParams.md) | Configuration options. If `refreshData` is true, `commerceConfig` is required. |
-| `options?` | [`LibConfigOptions`](../type-aliases/LibConfigOptions.md)                 | Optional library configuration options for cache timeout.                      |
+| `options?` | [`OperationOptions`](../type-aliases/OperationOptions.md)                 | Optional library configuration options for cache timeout.                      |
 
 ### Returns
 
@@ -74,11 +74,11 @@ const result = await getScopeTree(undefined, { cacheTimeout: 600000 });
 ```ts
 function getScopeTree(
   params: GetFreshScopeTreeParams,
-  options?: LibConfigOptions,
+  options?: OperationOptions,
 ): Promise<GetScopeTreeResult>;
 ```
 
-Defined in: [aio-commerce-lib-config/source/config-manager.ts:150](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/config-manager.ts#L150)
+Defined in: [config-manager.ts:140](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/config-manager.ts#L140)
 
 Gets the scope tree from cache or Commerce API.
 
@@ -91,7 +91,7 @@ and custom scopes that may have been defined.
 | Parameter  | Type                                                                    | Description                                                                    |
 | ---------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | `params`   | [`GetFreshScopeTreeParams`](../type-aliases/GetFreshScopeTreeParams.md) | Configuration options. If `refreshData` is true, `commerceConfig` is required. |
-| `options?` | [`LibConfigOptions`](../type-aliases/LibConfigOptions.md)               | Optional library configuration options for cache timeout.                      |
+| `options?` | [`OperationOptions`](../type-aliases/OperationOptions.md)               | Optional library configuration options for cache timeout.                      |
 
 ### Returns
 
