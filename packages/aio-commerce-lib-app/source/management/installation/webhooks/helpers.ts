@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { HTTPError } from "@adobe/aio-commerce-lib-api/ky";
+import { HTTPError } from "ky";
 
 import type {
   CommerceWebhook,

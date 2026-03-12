@@ -2,20 +2,21 @@
   "name": "@adobe/aio-commerce-sdk",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.7.3",
+  "version": "1.0.0",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
-  "description": "Utilities for Adobe Commerce apps deployed in Adobe App Builder.",
+  "description": "Meta-package re-exporting Adobe Commerce SDK libraries for Adobe App Builder applications.",
   "keywords": [
     "aio",
     "adobe-io",
     "commerce",
     "adobe-commerce",
     "adobe-commerce-sdk",
-    "aio-commerce-sdk"
+    "aio-commerce-sdk",
+    "app-builder"
   ],
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"

@@ -2,14 +2,25 @@
   "name": "@adobe/aio-commerce-lib-api",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.6.1",
+  "version": "1.0.0",
   "private": false,
   "engines": {
     "node": ">=20 <=24"
   },
   "license": "Apache-2.0",
   "description": "A set of utilities to build HTTP/API clients for I/O Events and Adobe Commerce",
-  "keywords": [],
+  "keywords": [
+    "aio",
+    "adobe-io",
+    "commerce",
+    "adobe-commerce",
+    "adobe-commerce-sdk",
+    "aio-commerce-sdk",
+    "aio-commerce-lib-api",
+    "http-client",
+    "api-client",
+    "app-builder"
+  ],
   "bugs": {
     "url": "https://github.com/adobe/aio-commerce-sdk/issues"
   },
@@ -33,16 +44,6 @@
           "default": "./dist/cjs/index.cjs"
         }
       },
-      "./ky": {
-        "import": {
-          "types": "./dist/es/ky.d.mts",
-          "default": "./dist/es/ky.mjs"
-        },
-        "require": {
-          "types": "./dist/cjs/ky.d.cts",
-          "default": "./dist/cjs/ky.cjs"
-        }
-      },
       "./utils": {
         "import": {
           "types": "./dist/es/utils/index.d.mts",
@@ -58,7 +59,6 @@
   },
   "exports": {
     ".": "./source/index.ts",
-    "./ky": "./source/ky.ts",
     "./utils": "./source/utils/index.ts",
     "./package.json": "./package.json"
   },
@@ -94,7 +94,7 @@
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "camelcase": "catalog:",
-    "ky": "^1.9.0",
+    "ky": "catalog:",
     "type-fest": "catalog:"
   },
   "devDependencies": {

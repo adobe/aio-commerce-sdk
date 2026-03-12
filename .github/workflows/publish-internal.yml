@@ -1,0 +1,28 @@
+name: Publish Internal
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release Internal
+    if: github.repository == 'adobe/aio-commerce-sdk'
+    uses: ./.github/workflows/publish-shared.yml
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+      id-token: write
+    with:
+      channel: internal
+      base_branch: main
+    secrets:
+      REGISTRY_PACKAGE_BASE_URL: ${{ secrets.ARTIFACTORY_PACKAGE_BASE_URL }}
+      REGISTRY_URL: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
+      REGISTRY_AUTH_TOKEN: ${{ secrets.ARTIFACTORY_API_TOKEN }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

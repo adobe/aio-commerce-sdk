@@ -15,8 +15,8 @@ import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 import { EventSubscriptionCreateParamsSchema } from "./schema";
 
 import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
-import type { HTTPError, Options } from "@adobe/aio-commerce-lib-api/ky";
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import type { HTTPError, Options } from "ky";
 import type { EventSubscriptionCreateParams } from "./schema";
 import type { CommerceEventSubscriptionManyResponse } from "./types";
 
@@ -63,16 +63,7 @@ export async function createEventSubscription(
       ...fetchOptions,
       json: {
         force,
-        event: {
-          name: event.name,
-          parent: event.parent,
-          fields: event.fields,
-          rules: event.rules,
-          destination: event.destination,
-          hipaa_audit_required: event.hipaaAuditRequired,
-          priority: event.priority,
-          provider_id: event.providerId,
-        },
+        event,
       },
     })
     .json()

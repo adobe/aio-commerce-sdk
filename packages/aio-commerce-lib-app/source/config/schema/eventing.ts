@@ -28,10 +28,12 @@ const MAX_EVENT_NAME_LENGTH = 180;
 
 /**
  * Regex for Commerce event names that must start with "plugin." or "observer."
- * followed by lowercase letters and underscores only.
- * Examples: "plugin.order_placed", "observer.catalog_update"
+ * followed by one or more dot-separated lowercase segments containing letters
+ * and underscores only.
+ * Examples: "observer.order_placed", "plugin.sales.api.order_management.place"
  */
-const COMMERCE_EVENT_NAME_REGEX = /^(?:plugin|observer)\.[a-z_]+$/;
+const COMMERCE_EVENT_NAME_REGEX =
+  /^(?:plugin|observer)\.[a-z_]+(?:\.[a-z_]+)*$/;
 
 /**
  * Regex for external event names.
@@ -49,14 +51,15 @@ const FIELD_NAME_REGEX = /^([a-zA-Z0-9_\-.[\]]+|\*)$/;
 /**
  * Schema for Commerce event names.
  * Validates that the event name starts with "plugin." or "observer."
- * followed by lowercase letters and underscores only.
+ * followed by one or more dot-separated lowercase segments containing letters
+ * and underscores only.
  */
 function commerceEventNameSchema() {
   return v.pipe(
     nonEmptyStringValueSchema("event name"),
     v.regex(
       COMMERCE_EVENT_NAME_REGEX,
-      'Event name must start with "plugin." or "observer." followed by lowercase letters and underscores only (e.g., "plugin.order_placed")',
+      'Event name must start with "plugin." or "observer." followed by one or more dot-separated lowercase segments containing letters and underscores only (e.g., "observer.order_placed", "plugin.sales.api.order_management.place")',
     ),
     v.maxLength(
       MAX_EVENT_NAME_LENGTH,
@@ -159,7 +162,7 @@ const BaseEventSchema = v.object({
     v.pipe(
       nonEmptyStringValueSchema("runtime action"),
       v.regex(
-        /^[a-z0-9-]+\/[a-z0-9-]+$/,
+        /^[a-z0-9-]+\/[a-z0-9-]+$/i,
         'Runtime action must be in the format "<package>/<action>" (e.g., "my-package/my-action")',
       ),
     ),
@@ -208,7 +211,7 @@ const CommerceEventSchema = v.object({
   ),
 
   destination: v.optional(nonEmptyStringValueSchema("destination")),
-  hipaaAuditRequired: v.optional(booleanValueSchema("hipaaAuditRequired")),
+  hipaa_audit_required: v.optional(booleanValueSchema("hipaa_audit_required")),
   priority: v.optional(booleanValueSchema("priority")),
   force: v.optional(booleanValueSchema("force")),
 });

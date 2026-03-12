@@ -14,10 +14,14 @@
 
 import { cpSync, existsSync } from "node:fs";
 
-if (
-  !existsSync(".build/package.json.orig") &&
-  existsSync(".build/package.json")
-) {
-  cpSync("package.json", ".build/package.json.orig");
-  cpSync(".build/package.json", "package.json");
+export default function main() {
+  if (
+    !existsSync(".build/package.json.orig") &&
+    existsSync(".build/package.json")
+  ) {
+    cpSync("package.json", ".build/package.json.orig");
+    cpSync(".build/package.json", "package.json");
+  }
 }
+
+main();

@@ -3,7 +3,17 @@
 ```ts
 const EventProviderCreateParamsSchema: ObjectSchema<
   {
-    associatedWorkspaceConfiguration: OptionalSchema<
+    description: OptionalSchema<
+      StringSchema<`Expected a string value for '${string}'`>,
+      undefined
+    >;
+    instance_id: StringSchema<`Expected a string value for '${string}'`>;
+    label: OptionalSchema<
+      StringSchema<`Expected a string value for '${string}'`>,
+      undefined
+    >;
+    provider_id: StringSchema<`Expected a string value for '${string}'`>;
+    workspace_configuration: OptionalSchema<
       UnionSchema<
         [
           SchemaWithPipe<
@@ -47,19 +57,9 @@ const EventProviderCreateParamsSchema: ObjectSchema<
       >,
       undefined
     >;
-    description: OptionalSchema<
-      StringSchema<`Expected a string value for '${string}'`>,
-      undefined
-    >;
-    instanceId: StringSchema<`Expected a string value for '${string}'`>;
-    label: OptionalSchema<
-      StringSchema<`Expected a string value for '${string}'`>,
-      undefined
-    >;
-    providerId: StringSchema<`Expected a string value for '${string}'`>;
   },
   undefined
 >;
 ```
 
-Defined in: [commerce/api/event-providers/schema.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-events/source/commerce/api/event-providers/schema.ts#L22)
+Defined in: [commerce/api/event-providers/schema.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-events/source/commerce/api/event-providers/schema.ts#L22)

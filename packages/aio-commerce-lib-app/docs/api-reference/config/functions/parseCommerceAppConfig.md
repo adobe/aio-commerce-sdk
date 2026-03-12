@@ -36,7 +36,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
         type: "text";
       }
         | {
-        default?: string;
+        default?: undefined;
         description?: string;
         label?: string;
         name: string;
@@ -71,10 +71,10 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
            destination?: ... | ...;
            fields: ...[];
            force?: ... | ... | ...;
-           hipaaAuditRequired?: ... | ... | ...;
+           hipaa_audit_required?: ... | ... | ...;
            label: string;
            name: string;
-           prioritary?: ... | ... | ...;
+           priority?: ... | ... | ...;
            rules?: ... | ...;
            runtimeActions: ...[];
         }[];
@@ -120,7 +120,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
 }>;
 ```
 
-Defined in: [config/lib/parser.ts:135](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L135)
+Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:135](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L135)
 
 Read the commerce app config file and parse its contents into its schema.
 
@@ -170,7 +170,7 @@ The config file must export a default export with the configuration object.
 `type`: `"text"`;
 \}
 \| \{
-`default?`: `string`;
+`default?`: `undefined`;
 `description?`: `string`;
 `label?`: `string`;
 `name`: `string`;
@@ -205,10 +205,10 @@ The config file must export a default export with the configuration object.
 `destination?`: ... \| ...;
 `fields`: ...[];
 `force?`: ... \| ... \| ...;
-`hipaaAuditRequired?`: ... \| ... \| ...;
+`hipaa_audit_required?`: ... \| ... \| ...;
 `label`: `string`;
 `name`: `string`;
-`prioritary?`: ... \| ... \| ...;
+`priority?`: ... \| ... \| ...;
 `rules?`: ... \| ...;
 `runtimeActions`: ...[];
 \}[];
