@@ -10,8 +10,20 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the webhooks module */
+import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
+import { defineConfig, mergeConfig } from "vitest/config";
 
-export { webhooksStep } from "./branch";
+const BARREL_FILES = ["./source/index.ts"];
 
-export type { WebhooksConfig } from "#config/schema/webhooks";
+export default mergeConfig(
+  baseConfig,
+  defineConfig({
+    plugins: [],
+    test: {
+      passWithNoTests: true,
+      coverage: {
+        exclude: [...BARREL_FILES, "./source/**/types.ts"],
+      },
+    },
+  }),
+);

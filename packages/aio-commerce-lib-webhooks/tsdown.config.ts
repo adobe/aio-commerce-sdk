@@ -10,8 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the webhooks module */
+import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
+import { mergeConfig } from "tsdown";
 
-export { webhooksStep } from "./branch";
-
-export type { WebhooksConfig } from "#config/schema/webhooks";
+export default mergeConfig(baseConfig, {
+  entry: ["./source/api.ts"],
+});

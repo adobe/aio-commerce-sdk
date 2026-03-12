@@ -18,6 +18,7 @@ import { SchemaBusinessConfig } from "./business-configuration";
 import { EventingSchema } from "./eventing";
 import { InstallationSchema } from "./installation";
 import { MetadataSchema } from "./metadata";
+import { WebhooksSchema } from "./webhooks";
 
 /** The schema used to validate the commerce app config file. */
 export const CommerceAppConfigSchema = v.looseObject({
@@ -26,6 +27,7 @@ export const CommerceAppConfigSchema = v.looseObject({
   businessConfig: v.optional(SchemaBusinessConfig),
   eventing: v.optional(EventingSchema),
   installation: v.optional(InstallationSchema),
+  webhooks: v.optional(WebhooksSchema),
 });
 
 /** The input shape of the commerce app config schema. */
