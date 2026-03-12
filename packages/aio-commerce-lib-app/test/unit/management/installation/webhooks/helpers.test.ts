@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { HTTPError } from "ky";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -246,8 +247,6 @@ describe("createWebhookSubscriptions", () => {
   });
 
   test("throws with response message and webhook name when HTTPError body has a string message", async () => {
-    const { HTTPError } = await import("@adobe/aio-commerce-lib-api/ky");
-
     const responseBody = { message: "Duplicate webhook registration" };
     const mockResponse = {
       json: vi.fn().mockResolvedValue(responseBody),
@@ -290,8 +289,6 @@ describe("createWebhookSubscriptions", () => {
   });
 
   test("rethrows the original HTTPError when response body has no string message", async () => {
-    const { HTTPError } = await import("@adobe/aio-commerce-lib-api/ky");
-
     const mockResponse = {
       json: vi.fn().mockResolvedValue({ code: 422 }),
     };
@@ -311,8 +308,6 @@ describe("createWebhookSubscriptions", () => {
   });
 
   test("rethrows the original HTTPError when response body cannot be parsed as JSON", async () => {
-    const { HTTPError } = await import("@adobe/aio-commerce-lib-api/ky");
-
     const mockResponse = {
       json: vi.fn().mockRejectedValue(new SyntaxError("Unexpected token")),
     };
@@ -546,8 +541,6 @@ describe("createWebhookSubscription", () => {
   });
 
   test("throws enriched error when HTTPError response body has a string message", async () => {
-    const { HTTPError } = await import("@adobe/aio-commerce-lib-api/ky");
-
     const mockResponse = {
       json: vi.fn().mockResolvedValue({ message: "Duplicate webhook" }),
     };
@@ -569,8 +562,6 @@ describe("createWebhookSubscription", () => {
   });
 
   test("rethrows the original HTTPError when response body has no string message", async () => {
-    const { HTTPError } = await import("@adobe/aio-commerce-lib-api/ky");
-
     const mockResponse = {
       json: vi.fn().mockResolvedValue({ code: 422 }),
     };
@@ -590,8 +581,6 @@ describe("createWebhookSubscription", () => {
   });
 
   test("rethrows the original HTTPError when response body cannot be parsed as JSON", async () => {
-    const { HTTPError } = await import("@adobe/aio-commerce-lib-api/ky");
-
     const mockResponse = {
       json: vi.fn().mockRejectedValue(new SyntaxError("Unexpected token")),
     };

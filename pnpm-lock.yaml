@@ -279,6 +279,9 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      ky:
+        specifier: 'catalog:'
+        version: 1.14.3
       openwhisk:
         specifier: ^3.21.8
         version: 3.21.8
