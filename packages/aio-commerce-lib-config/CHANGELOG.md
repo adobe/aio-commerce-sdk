@@ -1,6 +1,6 @@
 # @adobe/aio-commerce-lib-config
 
-## 1.0.1-beta.0
+## 1.0.1
 
 ### Patch Changes
 
