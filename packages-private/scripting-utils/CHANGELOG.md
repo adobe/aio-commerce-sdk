@@ -1,6 +1,6 @@
 # @aio-commerce-sdk/scripting-utils
 
-## 0.3.0-beta.0
+## 0.3.0
 
 ### Minor Changes
 
