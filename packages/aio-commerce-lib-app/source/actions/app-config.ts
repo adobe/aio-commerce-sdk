@@ -37,7 +37,7 @@ interface AppConfigActionContext extends BaseContext {
 
 /** Router for the app config actions. */
 const router = new HttpActionRouter<AppConfigActionContext>().use(
-  logger({ name: () => "get-app-config" }),
+  logger({ name: () => "app-config" }),
 );
 
 /** GET / - Get app config */
