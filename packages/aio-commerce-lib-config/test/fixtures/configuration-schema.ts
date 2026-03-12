@@ -42,6 +42,50 @@ export const VALID_CONFIGURATION = [
     type: "text",
     label: "Test Field",
   },
+  {
+    name: "url",
+    type: "url",
+    label: "URL Field",
+  },
+  {
+    name: "email",
+    type: "email",
+    label: "Email Field",
+  },
+  {
+    name: "password",
+    type: "password",
+    label: "Password Field",
+  },
+  {
+    name: "telephone",
+    type: "tel",
+    label: "Telephone Field",
+  },
+  {
+    name: "url",
+    type: "url",
+    label: "URL Field",
+    default: "https://example.com",
+  },
+  {
+    name: "email",
+    type: "email",
+    label: "Email Field",
+    default: "example@example.com",
+  },
+  {
+    name: "password",
+    type: "password",
+    label: "Password Field",
+    default: "",
+  },
+  {
+    name: "telephone",
+    type: "tel",
+    label: "Telephone Field",
+    default: "+1234567890",
+  },
 ] satisfies BusinessConfigSchema;
 
 export const INVALID_CONFIGURATION = [
@@ -63,3 +107,46 @@ export const INVALID_CONFIGURATION = [
     label: "Test Field",
   },
 ];
+
+export const VALID_CONFIGURATION_WITHOUT_DEFAULTS = [
+  {
+    name: "exampleList",
+    type: "list",
+    options: [{ label: "Option 1", value: "option1" }],
+    selectionMode: "single",
+
+    // `list` is the only one always requiring a default because we can't set one programmatically
+    default: "option1",
+  },
+  {
+    name: "exampleList",
+    type: "list",
+    options: [{ label: "Option 1", value: "option1" }],
+    selectionMode: "multiple",
+  },
+  {
+    name: "text",
+    type: "text",
+    label: "Text",
+  },
+  {
+    name: "email",
+    type: "email",
+    label: "Email",
+  },
+  {
+    name: "telephone",
+    type: "tel",
+    label: "Telephone",
+  },
+  {
+    type: "url",
+    name: "url",
+    label: "URL",
+  },
+  {
+    name: "password",
+    type: "password",
+    label: "Password",
+  },
+] satisfies BusinessConfigSchema;

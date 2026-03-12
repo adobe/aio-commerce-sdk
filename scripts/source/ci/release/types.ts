@@ -62,6 +62,9 @@ export interface AsyncFunctionArguments {
 
     /** Set an output parameter */
     setOutput(name: string, value: unknown): void;
+
+    /** Log a warning message */
+    warning(message: string | Error): void;
   };
 
   /** Execution utilities for running commands */

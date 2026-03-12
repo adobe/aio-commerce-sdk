@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -36,11 +36,14 @@ export default async function main(
   core: AsyncFunctionArguments["core"],
   exec: AsyncFunctionArguments["exec"],
 ) {
-  return await runGitHubScript(core, () => prepare(exec));
+  return await runGitHubScript(core, async () => await prepare(core, exec));
 }
 
 /** Prepares the release by configuring the registry authentication and ensuring the Changesets is in the correct mode. */
-async function prepare(exec: AsyncFunctionArguments["exec"]) {
+async function prepare(
+  core: AsyncFunctionArguments["core"],
+  exec: AsyncFunctionArguments["exec"],
+) {
   const {
     BASE_BRANCH: baseBranch,
     CHANGESET_CONFIG_PATH: configPath = DEFAULT_CONFIG_PATH,
@@ -68,9 +71,10 @@ async function prepare(exec: AsyncFunctionArguments["exec"]) {
     ensurePublicExitMode(preStatePath);
   }
 
-  await configureRegistryAuth(exec, {
+  await configureRegistryAuth(core, exec, {
     registryUrl,
     registryAuthToken,
+    releaseChannel,
   });
 }
 
@@ -132,10 +136,12 @@ function normalizeRegistryPath(registryUrl: string) {
 
 /** Configures NPM authentication for the internal Artifactory registry */
 async function configureRegistryAuth(
+  core: AsyncFunctionArguments["core"],
   exec: AsyncFunctionArguments["exec"],
   data: {
     registryUrl: string;
     registryAuthToken: string;
+    releaseChannel: string;
   },
 ) {
   if (!(data.registryUrl && data.registryAuthToken)) {
@@ -144,8 +150,29 @@ async function configureRegistryAuth(
     );
   }
 
-  await exec.exec("npm config set registry", [data.registryUrl]);
-  await exec.exec("npm config set", [
-    `//${normalizeRegistryPath(data.registryUrl)}/:_authToken=${data.registryAuthToken}`,
-  ]);
+  appendFileSync(
+    `${process.env.GITHUB_WORKSPACE}/.npmrc`,
+    [
+      "",
+      `@adobe:registry=${data.registryUrl}`,
+      `//${normalizeRegistryPath(data.registryUrl)}/:_authToken=${data.registryAuthToken}`,
+    ].join("\n"),
+  );
+
+  if (data.releaseChannel === "internal") {
+    // Diagnostic: log the authenticated user to confirm auth is working before publish.
+    // Failure is intentionally swallowed — auth errors surface more clearly during publish.
+    try {
+      await exec.exec("pnpm whoami", [
+        "--userconfig",
+        `${process.env.GITHUB_WORKSPACE}/.npmrc`,
+        "--registry",
+        data.registryUrl,
+      ]);
+    } catch (error) {
+      core.warning(
+        `Registry auth check failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
 }

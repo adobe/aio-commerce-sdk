@@ -10,17 +10,18 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { validateBusinessConfigSchema } from "#modules/schema/utils";
 import {
   INVALID_CONFIGURATION,
   VALID_CONFIGURATION,
+  VALID_CONFIGURATION_WITHOUT_DEFAULTS,
 } from "#test/fixtures/configuration-schema";
 
 describe("validator", () => {
-  describe("validateSchema()", () => {
-    it("should not throw with valid schema", () => {
+  describe("validateBusinessConfigSchema", () => {
+    test("should not throw with valid schema", () => {
       expect(() => {
         const result = validateBusinessConfigSchema(VALID_CONFIGURATION);
         expect(Array.isArray(result)).toBe(true);
@@ -28,10 +29,24 @@ describe("validator", () => {
       }).not.toThrow();
     });
 
-    it("should throw with invalid schema", () => {
+    test("should throw with invalid schema", () => {
       expect(() =>
         validateBusinessConfigSchema(INVALID_CONFIGURATION),
       ).toThrow();
+    });
+
+    test("should generate default values for properties that don't have it", () => {
+      expect(() => {
+        const result = validateBusinessConfigSchema(
+          VALID_CONFIGURATION_WITHOUT_DEFAULTS,
+        );
+
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBeGreaterThan(0);
+        expect(result.map((field) => field.default)).toHaveLength(
+          VALID_CONFIGURATION_WITHOUT_DEFAULTS.length,
+        );
+      }).not.toThrow();
     });
   });
 });

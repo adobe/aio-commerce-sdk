@@ -1,5 +1,5 @@
 {
-  "mode": "pre",
+  "mode": "exit",
   "tag": "beta",
   "initialVersions": {
     "@aio-commerce-sdk/config-tsdown": "1.0.1",
@@ -18,5 +18,10 @@
     "@aio-commerce-sdk/scripts": "0.0.1",
     "@aio-commerce-sdk/generators": "1.0.1"
   },
-  "changesets": []
+  "changesets": [
+    "loud-worms-press",
+    "sharp-crabs-relate",
+    "spicy-hornets-crash",
+    "tricky-mammals-try"
+  ]
 }
