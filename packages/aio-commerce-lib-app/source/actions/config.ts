@@ -11,12 +11,16 @@
  */
 
 import {
+  byCode,
+  byCodeAndLevel,
   byScopeId,
   getConfiguration,
+  getConfigurationVersions,
   initialize,
+  restoreConfigurationVersion,
   setConfiguration,
 } from "@adobe/aio-commerce-lib-config";
-import { ok } from "@adobe/aio-commerce-lib-core/responses";
+import { badRequest, ok } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
   logger,
@@ -29,6 +33,7 @@ import { validateCommerceAppConfigDomain } from "#config/index";
 import type {
   BusinessConfigSchema,
   ConfigValue,
+  SetConfigurationRequest,
 } from "@adobe/aio-commerce-lib-config";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
@@ -52,6 +57,75 @@ interface ConfigActionContext extends BaseContext {
 // Placeholder value for password fields.
 const MASKED_PASSWORD_VALUE = "*****";
 
+function parseNonNegativeInteger(
+  value: string | number | undefined,
+  name: "limit" | "offset",
+): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error(`INVALID_PARAMS: ${name} must be a non-negative integer`);
+  }
+  return parsed;
+}
+
+function resolveScopeSelector(
+  input: {
+    scopeId?: string;
+    id?: string;
+    code?: string;
+    level?: string;
+  },
+  allowCodeOnly: boolean,
+) {
+  const scopeId = input.scopeId ?? input.id;
+  if (scopeId) {
+    return byScopeId(scopeId);
+  }
+  if (input.code && input.level) {
+    return byCodeAndLevel(input.code, input.level);
+  }
+  if (allowCodeOnly && input.code) {
+    return byCode(input.code);
+  }
+  return null;
+}
+
+type ScopeSelector = NonNullable<ReturnType<typeof resolveScopeSelector>>;
+type BadRequestResponse = ReturnType<typeof badRequest>;
+
+function resolveSelectorOrBadRequest(
+  input: {
+    scopeId?: string;
+    id?: string;
+    code?: string;
+    level?: string;
+  },
+  allowCodeOnly: boolean,
+  invalidSelectorMessage: string,
+) {
+  const selector = resolveScopeSelector(input, allowCodeOnly);
+  if (!selector) {
+    return {
+      ok: false,
+      response: badRequest({
+        body: {
+          code: "INVALID_PARAMS",
+          message: invalidSelectorMessage,
+        },
+      }),
+    } satisfies { ok: false; response: BadRequestResponse };
+  }
+
+  return {
+    ok: true,
+    selector,
+  } satisfies { ok: true; selector: ScopeSelector };
+}
+
 /**
  * Filters password fields from the configuration values.
  * @param schema - The schema to use to filter the values.
@@ -69,6 +143,28 @@ function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
     }
 
     return item;
+  });
+}
+
+/**
+ * Masks password fields in version change entries (before/after).
+ * @param schema - The schema to determine password fields.
+ * @param changes - The change entries to mask.
+ * @returns The same entries with password before/after replaced by masked value.
+ */
+function maskPasswordFieldsInChanges<
+  T extends { name: string; before?: unknown; after?: unknown },
+>(schema: BusinessConfigSchema, changes: T[]): T[] {
+  return changes.map((entry) => {
+    const schemaMatch = schema.find((field) => field.name === entry.name);
+    if (schemaMatch?.type !== "password") {
+      return entry;
+    }
+    return {
+      ...entry,
+      ...(entry.before !== undefined ? { before: MASKED_PASSWORD_VALUE } : {}),
+      ...(entry.after !== undefined ? { after: MASKED_PASSWORD_VALUE } : {}),
+    };
   });
 }
 
@@ -118,7 +214,7 @@ router.put("/", {
     config: v.array(
       v.object({
         name: nonEmptyStringValueSchema("config.name"),
-        value: v.union([v.string(), v.array(v.string())]),
+        value: v.string(),
       }),
     ),
   }),
@@ -136,7 +232,9 @@ router.put("/", {
     );
 
     const result = await setConfiguration(
-      { config: updatedFields },
+      {
+        config: updatedFields as SetConfigurationRequest["config"],
+      },
       byScopeId(scopeId),
       {
         encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
@@ -148,6 +246,151 @@ router.put("/", {
       body: result,
       headers: { "Cache-Control": "no-store" },
     });
+  },
+});
+
+/** GET /versions - List configuration versions */
+router.get("/versions", {
+  query: v.object({
+    scopeId: v.optional(nonEmptyStringValueSchema("scopeId")),
+    id: v.optional(nonEmptyStringValueSchema("id")),
+    code: v.optional(nonEmptyStringValueSchema("code")),
+    level: v.optional(nonEmptyStringValueSchema("level")),
+    limit: v.optional(v.union([v.string(), v.number()])),
+    offset: v.optional(v.union([v.string(), v.number()])),
+  }),
+
+  handler: async (req, ctx) => {
+    const { rawParams } = ctx;
+    const { configSchema } = rawParams;
+
+    const selectorResult = resolveSelectorOrBadRequest(
+      req.query,
+      true,
+      "Either scopeId/id or code query param is required",
+    );
+    if (!selectorResult.ok) {
+      return selectorResult.response;
+    }
+
+    const { selector } = selectorResult;
+
+    try {
+      const limit = parseNonNegativeInteger(req.query.limit, "limit");
+      const offset = parseNonNegativeInteger(req.query.offset, "offset");
+      const result = await getConfigurationVersions(selector, {
+        limit,
+        offset,
+      });
+      const versions = result.versions.map((version) => ({
+        ...version,
+        ...(version.config
+          ? {
+              config: filterPasswordFields(configSchema, version.config),
+            }
+          : {}),
+        ...(version.changes
+          ? {
+              changes: maskPasswordFieldsInChanges(
+                configSchema,
+                version.changes,
+              ),
+            }
+          : {}),
+      }));
+
+      return ok({
+        body: {
+          ...result,
+          versions,
+        },
+        headers: { "Cache-Control": "no-store" },
+      });
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.startsWith("INVALID_PARAMS:")
+      ) {
+        return badRequest({
+          body: {
+            code: "INVALID_PARAMS",
+            message: "limit and offset must be non-negative integers",
+          },
+        });
+      }
+      throw error;
+    }
+  },
+});
+
+/** POST /versions/restore - Restore configuration from a version */
+router.post("/versions/restore", {
+  body: v.object({
+    scopeId: v.optional(nonEmptyStringValueSchema("scopeId")),
+    id: v.optional(nonEmptyStringValueSchema("id")),
+    code: v.optional(nonEmptyStringValueSchema("code")),
+    level: v.optional(nonEmptyStringValueSchema("level")),
+    versionId: nonEmptyStringValueSchema("versionId"),
+    expectedLatestVersionId: v.optional(
+      nonEmptyStringValueSchema("expectedLatestVersionId"),
+    ),
+    fields: v.optional(v.array(nonEmptyStringValueSchema("fields[]"))),
+  }),
+
+  handler: async (req, ctx) => {
+    const { rawParams } = ctx;
+    const { configSchema } = rawParams;
+
+    const selectorResult = resolveSelectorOrBadRequest(
+      req.body,
+      false,
+      "Either scopeId/id or code+level in body is required",
+    );
+    if (!selectorResult.ok) {
+      return selectorResult.response;
+    }
+
+    const { selector } = selectorResult;
+    const { versionId, expectedLatestVersionId, fields } = req.body;
+
+    try {
+      const result = await restoreConfigurationVersion(
+        selector,
+        { versionId, expectedLatestVersionId, fields },
+        {
+          encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+        },
+      );
+      result.config = filterPasswordFields(configSchema, result.config);
+
+      return ok({
+        body: result,
+        headers: { "Cache-Control": "no-store" },
+      });
+    } catch (error) {
+      if (!(error instanceof Error)) {
+        throw error;
+      }
+      if (error.message.startsWith("VERSION_NOT_FOUND:")) {
+        return badRequest({
+          body: {
+            code: "VERSION_NOT_FOUND",
+            message: "Version not found for the selected scope",
+          },
+        });
+      }
+      if (error.message.startsWith("VERSION_CONFLICT:")) {
+        return badRequest({
+          body: {
+            code: "VERSION_CONFLICT",
+            message:
+              "The latest version does not match expectedLatestVersionId",
+          },
+        });
+      }
+
+      throw error;
+    }
   },
 });
 

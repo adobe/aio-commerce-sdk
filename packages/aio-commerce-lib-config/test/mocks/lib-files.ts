@@ -32,9 +32,18 @@ export function createMockLibFiles() {
         return matchingFiles;
       });
 
-      public read = vi.fn(async (path: string) =>
-        Buffer.from(this.files.get(path) || "{}"),
-      );
+      public read = vi.fn(async (path: string) => {
+        const value = this.files.get(path);
+        if (value === undefined) {
+          const error = new Error(
+            `ENOENT: no such file or directory, open '${path}'`,
+          );
+          // Keep parity with filesystem-style errors used in production checks.
+          (error as Error & { code: string }).code = "ENOENT";
+          throw error;
+        }
+        return Buffer.from(value);
+      });
 
       public write = vi.fn(
         async (
