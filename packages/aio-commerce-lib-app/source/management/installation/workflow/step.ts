@@ -68,6 +68,17 @@ export type ExecutionContext<
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
 > = InstallationContext & TStepCtx;
 
+/**
+ * A narrowed context available to step `validate` handlers.
+ * Excludes `customScripts` — those only apply during installation `run`, not pre-flight validation.
+ */
+export type ValidationContext = Omit<InstallationContext, "customScripts">;
+
+/** The context passed to step `validate` handlers (base validation context merged with step-level context). */
+export type ValidationExecutionContext<
+  TStepCtx extends Record<string, unknown> = Record<string, unknown>,
+> = ValidationContext & TStepCtx;
+
 /** Metadata for a step (used for UI display). */
 export type StepMeta = {
   label: string;
@@ -111,7 +122,7 @@ export type LeafStep<
    */
   validate?: (
     config: TConfig,
-    context: ExecutionContext<TStepCtx>,
+    context: ValidationExecutionContext<TStepCtx>,
   ) => ValidationIssue[] | Promise<ValidationIssue[]>;
 };
 
@@ -136,7 +147,7 @@ export type BranchStep<
    */
   validate?: (
     config: TConfig,
-    context: ExecutionContext<TStepCtx>,
+    context: ValidationExecutionContext<TStepCtx>,
   ) => ValidationIssue[] | Promise<ValidationIssue[]>;
 };
 

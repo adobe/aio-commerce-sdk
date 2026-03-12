@@ -50,6 +50,8 @@ export type {
   Step,
   StepContextFactory,
   StepMeta,
+  ValidationContext,
+  ValidationExecutionContext,
   ValidationIssue,
   ValidationIssueSeverity,
 } from "./step";

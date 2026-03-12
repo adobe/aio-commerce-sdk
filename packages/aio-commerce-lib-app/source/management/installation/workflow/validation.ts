@@ -16,8 +16,8 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   AnyStep,
   BranchStep,
-  InstallationContext,
   StepMeta,
+  ValidationContext,
   ValidationIssue,
 } from "./step";
 
@@ -73,8 +73,8 @@ export type ValidateStepTreeOptions = {
   /** The root branch step to validate. */
   rootStep: BranchStep;
 
-  /** Shared installation context (params, logger, etc.). */
-  installationContext: InstallationContext;
+  /** Validation context (params, logger, appData). */
+  validationContext: ValidationContext;
 
   /** The app configuration used to determine applicable steps. */
   config: CommerceAppConfigOutputModel;
@@ -91,9 +91,9 @@ export type ValidateStepTreeOptions = {
 export async function validateStepTree(
   options: ValidateStepTreeOptions,
 ): Promise<ValidationResult> {
-  const { rootStep, installationContext, config } = options;
+  const { rootStep, validationContext, config } = options;
 
-  const result = await validateStep(rootStep, config, installationContext, []);
+  const result = await validateStep(rootStep, config, validationContext, []);
   const summary = aggregateSummary(result);
 
   return {
@@ -107,7 +107,7 @@ export async function validateStepTree(
 async function validateStep(
   step: AnyStep,
   config: CommerceAppConfigOutputModel,
-  context: InstallationContext & Record<string, unknown>,
+  context: ValidationContext & Record<string, unknown>,
   parentPath: string[],
 ): Promise<StepValidationResult> {
   const path = [...parentPath, step.name];
@@ -135,9 +135,9 @@ async function validateStep(
 /** Resolves the child context for a branch step, reporting errors as issues. */
 async function resolveBranchContext(
   step: BranchStep,
-  context: InstallationContext & Record<string, unknown>,
+  context: ValidationContext & Record<string, unknown>,
 ): Promise<{
-  childContext: InstallationContext & Record<string, unknown>;
+  childContext: ValidationContext & Record<string, unknown>;
   issues: ValidationIssue[];
 }> {
   if (!step.context) {
@@ -165,7 +165,7 @@ async function resolveBranchContext(
 async function runStepValidation(
   step: AnyStep,
   config: CommerceAppConfigOutputModel,
-  context: InstallationContext & Record<string, unknown>,
+  context: ValidationContext & Record<string, unknown>,
 ): Promise<ValidationIssue[]> {
   if (!step.validate) {
     return [];

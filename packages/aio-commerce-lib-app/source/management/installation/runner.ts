@@ -21,6 +21,7 @@ import type {
   InstallationContext,
   InstallationHooks,
   SucceededInstallationState,
+  ValidationContext,
 } from "./workflow";
 import type { ValidationResult } from "./workflow/validation";
 
@@ -78,8 +79,8 @@ export function runInstallation(
 
 /** Options for running pre-installation validation. */
 export type RunValidationOptions = {
-  /** Shared installation context (params, logger, etc.). */
-  installationContext: InstallationContext;
+  /** Validation context (params, logger, appData — no customScripts). */
+  validationContext: ValidationContext;
 
   /** The app configuration. */
   config: CommerceAppConfigOutputModel;
@@ -96,7 +97,7 @@ export type RunValidationOptions = {
 export function runValidation(
   options: RunValidationOptions,
 ): Promise<ValidationResult> {
-  const { installationContext, config } = options;
+  const { validationContext, config } = options;
   const rootStep = createRootInstallationStep(config);
-  return validateStepTree({ rootStep, installationContext, config });
+  return validateStepTree({ rootStep, validationContext, config });
 }

@@ -40,7 +40,7 @@ describe("validateStepTree — result structure", () => {
 
     const { result } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -61,7 +61,7 @@ describe("validateStepTree — result structure", () => {
 
     const { result } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -78,7 +78,7 @@ describe("validateStepTree — valid flag", () => {
 
     const { valid } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -97,7 +97,7 @@ describe("validateStepTree — valid flag", () => {
 
     const { valid } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -116,7 +116,7 @@ describe("validateStepTree — valid flag", () => {
 
     const { valid } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -136,7 +136,7 @@ describe("validateStepTree — valid flag", () => {
 
     const { valid } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -155,7 +155,7 @@ describe("validateStepTree — runStepValidation", () => {
 
     const { result } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -178,7 +178,7 @@ describe("validateStepTree — runStepValidation", () => {
 
     const { result } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -204,7 +204,7 @@ describe("validateStepTree — runStepValidation", () => {
 
     const { result } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -231,7 +231,7 @@ describe("validateStepTree — runStepValidation", () => {
 
     const { result } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -256,7 +256,7 @@ describe("validateStepTree — resolveBranchContext", () => {
 
     await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -285,7 +285,7 @@ describe("validateStepTree — resolveBranchContext", () => {
 
     await validateStepTree({
       rootStep: branch,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -313,7 +313,7 @@ describe("validateStepTree — resolveBranchContext", () => {
 
     const { result } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -343,7 +343,7 @@ describe("validateStepTree — resolveBranchContext", () => {
 
     const { result } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -373,7 +373,7 @@ describe("validateStepTree — resolveBranchContext", () => {
 
     await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -400,7 +400,7 @@ describe("validateStepTree — when condition", () => {
 
     const { result } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -420,7 +420,7 @@ describe("validateStepTree — when condition", () => {
 
     const { result } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -437,7 +437,7 @@ describe("validateStepTree — when condition", () => {
 
     const { result } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -463,7 +463,7 @@ describe("validateStepTree — when condition", () => {
 
     const { result } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -476,7 +476,7 @@ describe("validateStepTree — summary aggregation", () => {
   test("summary has zero counts when there are no issues", async () => {
     const { summary } = await validateStepTree({
       rootStep: makeRoot(),
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -496,7 +496,7 @@ describe("validateStepTree — summary aggregation", () => {
 
     const { summary } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -517,7 +517,7 @@ describe("validateStepTree — summary aggregation", () => {
 
     const { summary } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -539,7 +539,7 @@ describe("validateStepTree — summary aggregation", () => {
 
     const { summary } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -572,7 +572,7 @@ describe("validateStepTree — summary aggregation", () => {
 
     const { summary } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 
@@ -599,7 +599,7 @@ describe("validateStepTree — summary aggregation", () => {
 
     const { summary, result } = await validateStepTree({
       rootStep,
-      installationContext: context,
+      validationContext: context,
       config: minimalValidConfig,
     });
 

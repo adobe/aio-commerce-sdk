@@ -41,7 +41,7 @@ import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { InstallationContext } from "#management/index";
+import type { InstallationContext, ValidationContext } from "#management/index";
 import type {
   InProgressInstallationState,
   InstallationState,
@@ -314,7 +314,7 @@ router.post("/execution", {
  * frontend can reuse the same parameters without any extra mapping.
  *
  * Flow:
- * 1. Build an InstallationContext from the request parameters
+ * 1. Build a ValidationContext from the request parameters
  * 2. Call runValidation() — traverses the step tree and collects issues
  * 3. Return the structured ValidationResult immediately (no async invoke)
  */
@@ -324,8 +324,7 @@ router.post("/validation", {
   handler: async (req, { logger, rawParams }) => {
     logger.debug("Running pre-installation validation...");
 
-    const executionParams = rawParams as RuntimeActionArgs;
-    const appConfig = executionParams.appConfig;
+    const appConfig = rawParams.appConfig;
 
     if (!appConfig) {
       return internalServerError(
@@ -342,16 +341,14 @@ router.post("/validation", {
       AIO_COMMERCE_API_FLAVOR: req.body.commerceEnv,
     };
 
-    const installationContext: InstallationContext = {
+    const validationContext: ValidationContext = {
       appData,
       params,
       logger,
-      customScripts:
-        executionParams.customScriptsLoader?.(appConfig, logger) ?? {},
     };
 
     const result = await runValidation({
-      installationContext,
+      validationContext,
       config: appConfig,
     });
 
