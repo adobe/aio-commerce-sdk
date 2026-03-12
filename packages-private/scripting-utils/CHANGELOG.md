@@ -1,5 +1,11 @@
 # @aio-commerce-sdk/scripting-utils
 
+## 0.3.0
+
+### Minor Changes
+
+- [#289](https://github.com/adobe/aio-commerce-sdk/pull/289) [`866cf56`](https://github.com/adobe/aio-commerce-sdk/commit/866cf563f2e857015063b05c27ac561f862a265b) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Introduce `withChdir` scripting utility
+
 ## 0.3.0-beta.0
 
 ### Minor Changes
