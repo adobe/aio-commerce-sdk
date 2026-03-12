@@ -118,43 +118,6 @@ extensions:
   - extensionPointId: commerce/configuration/1
 ```
 
-> [!IMPORTANT]
-> The `pre-app-build` hook keeps your environment variables in sync automatically. If you need to configure them manually (for example in a CI/CD environment), add them to your `.env` file:
->
-> **For SaaS instances:**
->
-> ```bash
-> # Logging level for runtime actions
-> LOG_LEVEL=info
->
-> # Adobe Commerce API configuration
-> AIO_COMMERCE_API_BASE_URL=https://your-commerce-instance.com
->
-> # IMS Authentication (SaaS)
-> AIO_COMMERCE_AUTH_IMS_CLIENT_ID=your-client-id
-> AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS=your-client-secrets
-> AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID=your-technical-account-id
-> AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL=your-technical-account-email
-> AIO_COMMERCE_AUTH_IMS_ORG_ID=your-ims-org-id
-> AIO_COMMERCE_AUTH_IMS_SCOPES=your-ims-scopes
-> ```
->
-> **For PaaS instances:**
->
-> ```bash
-> # Logging level for runtime actions
-> LOG_LEVEL=info
->
-> # Adobe Commerce API configuration
-> AIO_COMMERCE_API_BASE_URL=https://your-commerce-instance.com
->
-> # Integration Authentication (PaaS)
-> AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY=your-consumer-key
-> AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET=your-consumer-secret
-> AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN=your-access-token
-> AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET=your-access-token-secret
-> ```
-
 ### Defining Configuration
 
 The current app configuration definition contains the following sections:
