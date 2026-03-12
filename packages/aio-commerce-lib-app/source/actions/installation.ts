@@ -70,6 +70,15 @@ interface InstallationActionContext extends BaseContext {
   rawParams: RuntimeActionArgs;
 }
 
+/** Request body schema shared by POST / and POST /validation. */
+const InstallationRequestBodySchema = object({
+  appData: AppDataSchema,
+  commerceBaseUrl: string(),
+  commerceEnv: string(),
+  ioEventsUrl: string(),
+  ioEventsEnv: string(),
+});
+
 /** Creates an installation state store using lib-core combined storage. */
 function createInstallationStore() {
   return createCombinedStore<InstallationState>({
@@ -164,13 +173,7 @@ router.get("/", {
  * 3. If not found or failed: create plan, invoke execution async, return 202 Accepted
  */
 router.post("/", {
-  body: object({
-    appData: AppDataSchema,
-    commerceBaseUrl: string(),
-    commerceEnv: string(),
-    ioEventsUrl: string(),
-    ioEventsEnv: string(),
-  }),
+  body: InstallationRequestBodySchema,
 
   handler: async (req, { logger, rawParams }) => {
     logger.debug("Starting installation...");
@@ -316,13 +319,7 @@ router.post("/execution", {
  * 3. Return the structured ValidationResult immediately (no async invoke)
  */
 router.post("/validation", {
-  body: object({
-    appData: AppDataSchema,
-    commerceBaseUrl: string(),
-    commerceEnv: string(),
-    ioEventsUrl: string(),
-    ioEventsEnv: string(),
-  }),
+  body: InstallationRequestBodySchema,
 
   handler: async (req, { logger, rawParams }) => {
     logger.debug("Running pre-installation validation...");
