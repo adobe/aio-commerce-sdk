@@ -1,10 +1,9 @@
-# `@adobe/aio-commerce-lib-app`: `v0.3.0`
+# `@adobe/aio-commerce-lib-app`: `v1.0.0`
 
 ## Modules
 
 | Module                             | Description |
 | ---------------------------------- | ----------- |
-| [actions](actions/README.md)       | -           |
 | [commands](commands/README.md)     | -           |
 | [config](config/README.md)         | -           |
 | [management](management/README.md) | -           |

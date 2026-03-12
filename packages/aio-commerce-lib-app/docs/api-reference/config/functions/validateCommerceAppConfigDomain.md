@@ -36,7 +36,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
         type: "text";
       }
         | {
-        default?: string;
+        default?: undefined;
         description?: string;
         label?: string;
         name: string;
@@ -71,10 +71,10 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
            destination?: ...;
            fields: ...;
            force?: ...;
-           hipaaAuditRequired?: ...;
+           hipaa_audit_required?: ...;
            label: ...;
            name: ...;
-           prioritary?: ...;
+           priority?: ...;
            rules?: ...;
            runtimeActions: ...;
         }[];
@@ -120,7 +120,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
 }, T>>;
 ```
 
-Defined in: [config/lib/validate.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L110)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L110)
 
 Validates a specific domain configuration within the commerce app config.
 
@@ -179,7 +179,7 @@ schema for that specific domain.
 `type`: `"text"`;
 \}
 \| \{
-`default?`: `string`;
+`default?`: `undefined`;
 `description?`: `string`;
 `label?`: `string`;
 `name`: `string`;
@@ -214,10 +214,10 @@ schema for that specific domain.
 `destination?`: ...;
 `fields`: ...;
 `force?`: ...;
-`hipaaAuditRequired?`: ...;
+`hipaa_audit_required?`: ...;
 `label`: ...;
 `name`: ...;
-`prioritary?`: ...;
+`priority?`: ...;
 `rules?`: ...;
 `runtimeActions`: ...;
 \}[];

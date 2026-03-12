@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   labeler:
+    if: github.repository == 'adobe/aio-commerce-sdk'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

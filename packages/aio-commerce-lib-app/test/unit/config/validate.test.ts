@@ -16,7 +16,11 @@ import {
   validateCommerceAppConfig,
   validateCommerceAppConfigDomain,
 } from "#config/lib/validate";
-import { configWithCustomInstallationSteps } from "#test/fixtures/config";
+import {
+  configWithCustomInstallationSteps,
+  minimalValidConfig,
+} from "#test/fixtures/config";
+import { createCommerceEventConfig } from "#test/fixtures/eventing";
 
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_DESCRIPTION_LENGTH = 255;
@@ -584,6 +588,47 @@ describe("validateConfig", () => {
     expect(validated.eventing?.commerce).toHaveLength(1);
   });
 
+  test("should preserve optional commerce event fields in validated output", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              label: "Commerce Events Provider",
+              description: "Provides commerce events",
+            },
+            events: [
+              {
+                name: "plugin.order_placed",
+                label: "Order Placed",
+                description: "Triggered when an order is placed",
+                fields: [{ name: "order_id" }],
+                runtimeActions: ["my-package/handle-order"],
+                hipaa_audit_required: true,
+                destination: "my-destination",
+                force: true,
+                priority: false,
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const validated = validateCommerceAppConfig(config);
+    const event = validated.eventing?.commerce?.[0]?.events?.[0];
+    expect(event?.hipaa_audit_required).toBe(true);
+    expect(event?.destination).toBe("my-destination");
+    expect(event?.force).toBe(true);
+    expect(event?.priority).toBe(false);
+  });
+
   test("should validate config with eventing - external type", () => {
     const config = {
       metadata: {
@@ -683,33 +728,11 @@ describe("validateConfig", () => {
   });
 
   test("should throw when commerce event name does not have required prefix", () => {
-    const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
-      eventing: {
-        commerce: [
-          {
-            provider: {
-              label: "Commerce Provider",
-              description: "Commerce events",
-            },
-            events: [
-              {
-                name: "invalid_event", // Missing plugin. or observer. prefix
-                label: "Invalid Event",
-                fields: [{ name: "field" }],
-                runtimeActions: ["my-package/action"],
-                description: "Invalid event",
-              },
-            ],
-          },
-        ],
-      },
-    };
+    const config = createCommerceEventConfig("invalid_event", {
+      // Missing plugin. or observer. prefix
+      label: "Invalid Event",
+      description: "Invalid event",
+    });
 
     expect(() => validateCommerceAppConfig(config)).toThrow(
       "Invalid commerce app config",
@@ -717,65 +740,23 @@ describe("validateConfig", () => {
   });
 
   test("should accept commerce event with plugin prefix", () => {
-    const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
-      eventing: {
-        commerce: [
-          {
-            provider: {
-              label: "Commerce Provider",
-              description: "Commerce events",
-            },
-            events: [
-              {
-                name: "plugin.my_event",
-                label: "My Event",
-                fields: [{ name: "field" }],
-                runtimeActions: ["my-package/action"],
-                description: "Plugin event",
-              },
-            ],
-          },
-        ],
-      },
-    };
+    const config = createCommerceEventConfig("plugin.my_event");
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+  });
+
+  test("should accept commerce event with dot-separated plugin name", () => {
+    const config = createCommerceEventConfig(
+      "plugin.sales.api.order_management.place",
+    );
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
   test("should accept commerce event with observer prefix", () => {
-    const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
-      eventing: {
-        commerce: [
-          {
-            provider: {
-              label: "Commerce Provider",
-              description: "Commerce events",
-            },
-            events: [
-              {
-                name: "observer.my_event",
-                label: "My Event",
-                fields: [{ name: "field" }],
-                runtimeActions: ["my-package/action"],
-                description: "Observer event",
-              },
-            ],
-          },
-        ],
-      },
-    };
+    const config = createCommerceEventConfig("observer.my_event", {
+      description: "Observer event",
+    });
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
@@ -971,6 +952,57 @@ describe("validateConfig", () => {
     expect(() => validateCommerceAppConfig(config)).toThrow(
       "Invalid commerce app config",
     );
+  });
+
+  test("should allow any casing in any event runtimeActions as long as it matches package/action format", () => {
+    const runtimeActions = [
+      "My-Package/My-Action",
+      "the-package/the-action",
+      "my-Package/mY-AcTiOn",
+      "THE-PACKAGE/THE-ACTION",
+    ]; // Mixed case, but valid format
+
+    const config = {
+      ...minimalValidConfig,
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              label: "Commerce Provider",
+              description: "Commerce events",
+            },
+            events: [
+              {
+                name: "plugin.my_event",
+                label: "My Event",
+                fields: [{ name: "field" }],
+                description: "Event description",
+                runtimeActions,
+              },
+            ],
+          },
+        ],
+
+        external: [
+          {
+            provider: {
+              label: "External Provider",
+              description: "External events",
+            },
+            events: [
+              {
+                name: "external_event",
+                label: "External Event",
+                description: "An external event",
+                runtimeActions,
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
   test("should throw when commerce event runtimeAction is not in package/action format", () => {
@@ -1184,6 +1216,159 @@ describe("validateConfigDomain", () => {
     expect(() =>
       validateCommerceAppConfigDomain(eventing, "eventing"),
     ).not.toThrow();
+  });
+
+  describe("webhooks domain", () => {
+    const baseWebhookDefinition = {
+      webhook_method: "observer.catalog_product_save_after",
+      webhook_type: "after",
+      batch_name: "my_batch",
+      hook_name: "my_hook",
+      method: "POST",
+    };
+
+    const baseWebhookEntry = {
+      label: "Test Webhook",
+      description: "A test webhook",
+      category: "append",
+    };
+
+    test("should accept entry with runtimeAction and no url", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            runtimeAction: "my-package/handle-webhook",
+            webhook: baseWebhookDefinition,
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    });
+
+    test("should accept entry with url and no runtimeAction", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            webhook: {
+              ...baseWebhookDefinition,
+              url: "https://example.com/hook",
+            },
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    });
+
+    test("should reject entry with neither runtimeAction nor url", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            webhook: baseWebhookDefinition,
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).toThrow(
+        "Invalid commerce app config",
+      );
+    });
+
+    test("should accept batch_name and hook_name with only alphanumeric and underscore characters", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            runtimeAction: "my-package/handle-webhook",
+            webhook: {
+              ...baseWebhookDefinition,
+              batch_name: "my_batch_01",
+              hook_name: "hook_1",
+            },
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    });
+
+    test("should reject batch_name containing invalid characters", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            runtimeAction: "my-package/handle-webhook",
+            webhook: {
+              ...baseWebhookDefinition,
+              batch_name: "invalid-batch",
+            },
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).toThrow(
+        "Invalid commerce app config",
+      );
+    });
+
+    test("should reject hook_name containing invalid characters", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            runtimeAction: "my-package/handle-webhook",
+            webhook: {
+              ...baseWebhookDefinition,
+              hook_name: "invalid hook",
+            },
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).toThrow(
+        "Invalid commerce app config",
+      );
+    });
   });
 
   test("should validate commerce event with fields that have optional source", () => {

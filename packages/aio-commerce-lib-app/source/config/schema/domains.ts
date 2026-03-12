@@ -28,6 +28,7 @@ import {
   InstallationSchema,
 } from "./installation";
 import { hasMetadata, MetadataSchema } from "./metadata";
+import { hasWebhooks, WebhooksSchema } from "./webhooks";
 
 import type { CommerceAppConfigOutputModel } from "./app";
 
@@ -37,6 +38,7 @@ export const CommerceAppConfigSchemas = {
   businessConfig: SchemaBusinessConfig,
   eventing: EventingSchema,
   installation: InstallationSchema,
+  webhooks: WebhooksSchema,
 
   "businessConfig.schema": v.unwrap(SchemaBusinessConfig.entries.schema),
   "eventing.commerce": v.unwrap(EventingSchema.entries.commerce),
@@ -64,6 +66,7 @@ export function getConfigDomains(
     businessConfig: hasBusinessConfig(config),
     eventing: withCommerceEvents || withExternalEvents,
     installation: hasCustomInstallation(config),
+    webhooks: hasWebhooks(config),
 
     "businessConfig.schema": hasBusinessConfigSchema(config),
     "eventing.commerce": withCommerceEvents,

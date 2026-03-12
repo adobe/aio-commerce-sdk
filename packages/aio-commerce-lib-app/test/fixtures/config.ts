@@ -52,8 +52,18 @@ const externalEventingPart = {
 /** Webhooks configuration part. */
 const webhooksPart = [
   {
-    name: "order.created",
-    url: "https://example.com/webhook",
+    label: "Order Created Webhook",
+    description: "Webhook for order created",
+    runtimeAction: "my-package/handle-webhook",
+    requireAdobeAuth: true,
+    category: "modification" as const,
+    webhook: {
+      webhook_method: "plugin.order.api.order_created",
+      webhook_type: "after",
+      batch_name: "default",
+      hook_name: "order_created",
+      method: "POST",
+    },
   },
 ];
 

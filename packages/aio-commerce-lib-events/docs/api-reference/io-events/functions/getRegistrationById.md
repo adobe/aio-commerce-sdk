@@ -13,7 +13,7 @@ function getRegistrationById(
 ): Promise<IoEventRegistrationHalModel>;
 ```
 
-Defined in: [io-events/api/event-registrations/endpoints.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/endpoints.ts#L104)
+Defined in: [io-events/api/event-registrations/endpoints.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/endpoints.ts#L104)
 
 Gets an event registration by ID.
 

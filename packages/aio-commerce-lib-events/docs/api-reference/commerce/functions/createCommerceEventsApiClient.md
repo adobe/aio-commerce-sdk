@@ -4,11 +4,11 @@
 function createCommerceEventsApiClient(params: CommerceHttpClientParams): ApiClientRecord<AdobeCommerceHttpClient, {
   updateEventingConfiguration: (httpClient: AdobeCommerceHttpClient, params: {
      enabled?: boolean;
-     environmentId?: string;
-     instanceId?: string;
-     merchantId?: string;
-     providerId?: string;
-     workspaceConfiguration?:   | string
+     environment_id?: string;
+     instance_id?: string;
+     merchant_id?: string;
+     provider_id?: string;
+     workspace_configuration?:   | string
         | {
       [key: string]: unknown;
       };
@@ -21,7 +21,7 @@ function createCommerceEventsApiClient(params: CommerceHttpClientParams): ApiCli
 }>;
 ```
 
-Defined in: [commerce/lib/api-client.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-events/source/commerce/lib/api-client.ts#L31)
+Defined in: [commerce/lib/api-client.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-events/source/commerce/lib/api-client.ts#L31)
 
 Creates a new API client for the Commerce Events API client.
 
@@ -36,11 +36,11 @@ Creates a new API client for the Commerce Events API client.
 `ApiClientRecord`\<[`AdobeCommerceHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md), \{
 `updateEventingConfiguration`: (`httpClient`: [`AdobeCommerceHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md), `params`: \{
 `enabled?`: `boolean`;
-`environmentId?`: `string`;
-`instanceId?`: `string`;
-`merchantId?`: `string`;
-`providerId?`: `string`;
-`workspaceConfiguration?`: \| `string`
+`environment_id?`: `string`;
+`instance_id?`: `string`;
+`merchant_id?`: `string`;
+`provider_id?`: `string`;
+`workspace_configuration?`: \| `string`
 \| \{
 \[`key`: `string`\]: `unknown`;
 \};

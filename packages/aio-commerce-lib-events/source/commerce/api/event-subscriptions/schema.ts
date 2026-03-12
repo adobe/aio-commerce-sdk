@@ -79,13 +79,13 @@ function rulesSchema(propertyName: string) {
 export const EventSubscriptionCreateParamsSchema = v.object({
   name: stringValueSchema("name"),
 
-  providerId: v.optional(stringValueSchema("providerId")),
+  provider_id: v.optional(stringValueSchema("provider_id")),
   parent: v.optional(stringValueSchema("parent")),
   fields: fieldsSchema("fields"),
   rules: v.optional(rulesSchema("rules")),
 
   destination: v.optional(stringValueSchema("destination")),
-  hipaaAuditRequired: v.optional(booleanValueSchema("hipaaAuditRequired")),
+  hipaa_audit_required: v.optional(booleanValueSchema("hipaa_audit_required")),
   priority: v.optional(booleanValueSchema("priority")),
 
   force: v.optional(booleanValueSchema("force")),

@@ -17,7 +17,7 @@ function create3rdPartyCustomEventProvider(
 ): Promise<IoEventProviderHalModel>;
 ```
 
-Defined in: [io-events/api/event-providers/shorthands.ts:115](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts#L115)
+Defined in: [io-events/api/event-providers/shorthands.ts:115](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts#L115)
 
 Creates a 3rd Party Custom Events (of type `3rd_party_custom_events`) event provider.
 

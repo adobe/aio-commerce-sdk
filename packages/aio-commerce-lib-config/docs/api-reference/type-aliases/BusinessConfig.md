@@ -1,29 +1,9 @@
 # `BusinessConfig`
 
 ```ts
-type BusinessConfig = {
-  schema?: any[];
-};
+type BusinessConfig = v.InferInput<typeof SchemaBusinessConfig>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/business-configuration.ts:204](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L204)
+Defined in: [modules/schema/index.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/modules/schema/index.ts#L25)
 
-The keys of the `businessConfig` settings in the app config file.
-
-## Properties
-
-### schema?
-
-```ts
-optional schema: any[];
-```
-
-Defined in: [aio-commerce-lib-app/source/config/schema/business-configuration.ts:209](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L209)
-
-The schema of the app business configuration.
-
-#### Default
-
-```ts
-[];
-```
+Defines the shape of the business configuration settings.

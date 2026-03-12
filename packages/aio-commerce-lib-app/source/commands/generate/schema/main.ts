@@ -52,7 +52,15 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
 
   if (hasPasswordFields) {
     const packageExec = getExecCommand(await detectPackageManager(projectDir));
-    execSync(`${packageExec} aio-commerce-lib-config encryption validate`);
+    const hasEncryptionKey =
+      "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY" in process.env &&
+      String(process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY).trim().length > 0;
+
+    if (hasEncryptionKey) {
+      execSync(`${packageExec} aio-commerce-lib-config encryption validate`);
+    } else {
+      execSync(`${packageExec} aio-commerce-lib-config encryption setup`);
+    }
   }
 
   const contents = stringify(appConfig.businessConfig.schema, null, 2);

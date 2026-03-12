@@ -33,6 +33,25 @@ const ALPHANUMERIC_OR_HYPHEN_REGEX = {
 };
 
 /**
+ * A schema for a number value.
+ * @param name The name of the field this schema refers to.
+ */
+export function numberValueSchema(name: string) {
+  return v.number(`Expected a number value for '${name}'`);
+}
+
+/**
+ * A schema for a positive number value (including zero).
+ * @param name The name of the field this schema refers to.
+ */
+export function positiveNumberValueSchema(name: string) {
+  return v.pipe(
+    numberValueSchema(name),
+    v.minValue(0, `The value of ${name} must be a non-negative number`),
+  );
+}
+
+/**
  * A schema for a string value.
  * @param name The name of the field this schema refers to.
  */

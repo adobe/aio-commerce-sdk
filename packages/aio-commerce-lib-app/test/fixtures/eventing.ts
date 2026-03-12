@@ -2,6 +2,48 @@ import { vi } from "vitest";
 
 import { createMockInstallationContext } from "./installation";
 
+export const DEFAULT_TEST_METADATA = {
+  id: "test-app",
+  displayName: "Test App",
+  description: "A test application",
+  version: "1.0.0",
+} as const;
+
+export function createCommerceEventConfig(
+  name: string,
+  overrides?: Partial<{
+    label: string;
+    description: string;
+    runtimeActions: string[];
+    fields: Array<{ name: string }>;
+  }>,
+) {
+  return {
+    metadata: DEFAULT_TEST_METADATA,
+    eventing: {
+      commerce: [
+        {
+          provider: {
+            label: "Commerce Provider",
+            description: "Commerce events",
+          },
+          events: [
+            {
+              name,
+              label: overrides?.label ?? "My Event",
+              fields: overrides?.fields ?? [{ name: "field" }],
+              runtimeActions: overrides?.runtimeActions ?? [
+                "my-package/action",
+              ],
+              description: overrides?.description ?? "Plugin event",
+            },
+          ],
+        },
+      ],
+    },
+  };
+}
+
 import type {
   CustomAdobeIoEventsApiClient,
   CustomCommerceEventsApiClient,

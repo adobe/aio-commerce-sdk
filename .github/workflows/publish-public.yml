@@ -1,0 +1,28 @@
+name: Publish Public
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - release
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release Public
+    if: github.repository == 'adobe/aio-commerce-sdk'
+    uses: ./.github/workflows/publish-shared.yml
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+      id-token: write
+    with:
+      channel: public
+      base_branch: release
+    secrets:
+      REGISTRY_AUTH_TOKEN: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
+      REGISTRY_PACKAGE_BASE_URL: "https://npmx.dev/package"
+      REGISTRY_URL: "https://registry.npmjs.org"
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

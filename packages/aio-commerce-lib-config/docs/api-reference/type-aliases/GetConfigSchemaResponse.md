@@ -6,7 +6,7 @@ type GetConfigSchemaResponse = {
 };
 ```
 
-Defined in: [aio-commerce-lib-config/source/types/api.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/types/api.ts#L24)
+Defined in: [types/api.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/types/api.ts#L24)
 
 Response type for getting the configuration schema.
 
@@ -18,6 +18,6 @@ Response type for getting the configuration schema.
 configSchema: any[];
 ```
 
-Defined in: [aio-commerce-lib-config/source/types/api.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/bee3eb8c11aa154d3874c063d578f589fe268ddf/packages/aio-commerce-lib-config/source/types/api.ts#L26)
+Defined in: [types/api.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/types/api.ts#L26)
 
 Array of configuration schema field definitions.
