@@ -13,7 +13,7 @@ onlyBuiltDependencies:
 
 catalog:
   ansis: ^4.1.0
-  camelcase: ^8.0.0
+  camelcase: ^9.0.0
   consola: ^3.4.2
   prettier: ^3.8.1
   ky: ^1.9.0
