@@ -9,20 +9,51 @@ on:
       base_branch:
         required: true
         type: string
+      ref:
+        required: false
+        type: string
+        default: ""
+      snapshot_tag:
+        required: false
+        type: string
+        default: ""
+      skip_github_releases:
+        required: false
+        type: boolean
+        default: false
+
+    outputs:
+      published:
+        description: Whether packages were published
+        value: ${{ jobs.release.outputs.published }}
+      publishedPackages:
+        description: JSON array of published packages
+        value: ${{ jobs.release.outputs.publishedPackages }}
+      commentBody:
+        description: Markdown comment body with published packages
+        value: ${{ jobs.release.outputs.commentBody }}
+      SLACK_WEBHOOK_PAYLOAD:
+        description: Slack webhook payload for release announcement
+        value: ${{ jobs.release.outputs.SLACK_WEBHOOK_PAYLOAD }}
 
     secrets:
       REGISTRY_URL:
         required: true
       SLACK_WEBHOOK_URL:
-        required: true
+        required: false
       REGISTRY_PACKAGE_BASE_URL:
-        required: true
+        required: false
       REGISTRY_AUTH_TOKEN:
         required: true
 jobs:
   release:
     name: Version or Release
     runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.snapshot.outputs.published || steps.changesets.outputs.published }}
+      publishedPackages: ${{ steps.snapshot.outputs.publishedPackages || steps.changesets.outputs.publishedPackages }}
+      commentBody: ${{ steps.snapshot.outputs.commentBody }}
+      SLACK_WEBHOOK_PAYLOAD: ${{ steps.announcement.outputs.SLACK_WEBHOOK_PAYLOAD }}
     permissions:
       contents: write
       pull-requests: write
@@ -32,6 +63,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.ref || '' }}
 
       # pnpm version will be read from packageManager field in package.json
       - name: Setup pnpm
@@ -68,6 +101,10 @@ jobs:
         id: snapshot
         if: inputs.channel == 'internal'
         uses: actions/github-script@v8.0.0
+        env:
+          SNAPSHOT_TAG: ${{ inputs.snapshot_tag || '' }}
+          SKIP_GITHUB_RELEASES: ${{ inputs.skip_github_releases }}
+          REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
         with:
           script: |
             const { default: execSnapshot } = await import('${{ github.workspace }}/scripts/source/ci/release/snapshot.ts');
@@ -87,9 +124,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
-      # --- Slack notification (both channels) ---
+      # --- Slack announcement (generated here, sent by caller workflows) ---
       - name: Generate Slack Announcement
         id: announcement
+        continue-on-error: true
         if: |
           (inputs.channel == 'internal' && steps.snapshot.outputs.published == 'true') ||
           (inputs.channel == 'public' && steps.changesets.outputs.published == 'true')
@@ -100,19 +138,8 @@ jobs:
           RELEASE_CHANNEL: ${{ inputs.channel }}
         with:
           script: |
-            // Scripts are resolved relative to the root of the repository
             const { default: execAnnouncement } = await import('${{ github.workspace }}/scripts/source/ci/release/announce.ts');
             await execAnnouncement(core);
-
-      - name: Notify on Slack
-        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
-        if: |
-          (inputs.channel == 'internal' && steps.snapshot.outputs.published == 'true') ||
-          (inputs.channel == 'public' && steps.changesets.outputs.published == 'true')
-        with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          webhook-type: incoming-webhook
-          payload: ${{ steps.announcement.outputs.SLACK_WEBHOOK_PAYLOAD }}
 
       # --- Auto back-sync: Create PR from release → main after public publish ---
       - name: Create back-sync PR

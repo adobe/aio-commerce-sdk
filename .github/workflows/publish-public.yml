@@ -25,4 +25,16 @@ jobs:
       REGISTRY_AUTH_TOKEN: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
       REGISTRY_PACKAGE_BASE_URL: "https://npmx.dev/package"
       REGISTRY_URL: "https://registry.npmjs.org"
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  notify:
+    name: Notify Slack
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack notification
+        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v2
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: ${{ needs.release.outputs.SLACK_WEBHOOK_PAYLOAD }}

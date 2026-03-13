@@ -17,7 +17,7 @@ import { runGitHubScript } from "./utils.ts";
 
 import type { AsyncFunctionArguments, PublishedPackage } from "./types.ts";
 
-const SNAPSHOT_TAG = "beta";
+const DEFAULT_SNAPSHOT_TAG = "beta";
 const STATUS_OUTPUT_FILE = "changeset-status.json";
 
 /** Structured output from `changeset status --output`. */
@@ -60,6 +60,10 @@ async function snapshot(
   github: AsyncFunctionArguments["github"],
   context: AsyncFunctionArguments["context"],
 ) {
+  const snapshotTag = process.env.SNAPSHOT_TAG || DEFAULT_SNAPSHOT_TAG;
+  const skipGitHubReleases =
+    process.env.SKIP_GITHUB_RELEASES?.toLowerCase() === "true";
+
   // 1. Get structured release plan via the changeset CLI.
   const statusFile = join(
     process.env.GITHUB_WORKSPACE ?? process.cwd(),
@@ -84,7 +88,7 @@ async function snapshot(
   const workspacePackages = await getWorkspacePackages(exec);
 
   // 3. Apply snapshot versions (modifies package.json files in-place, not committed).
-  await exec.exec("pnpm changeset version", ["--snapshot", SNAPSHOT_TAG]);
+  await exec.exec("pnpm changeset version", ["--snapshot", snapshotTag]);
 
   // 4. Read actual snapshot versions for packages the release plan says will change.
   const publishedPackages = getSnapshotVersions(releasePlan, workspacePackages);
@@ -96,40 +100,51 @@ async function snapshot(
   }
 
   // 5. Publish snapshot packages to registry.
-  await exec.exec("pnpm changeset publish", ["--tag", SNAPSHOT_TAG]);
+  await exec.exec("pnpm changeset publish", ["--tag", snapshotTag]);
 
   // 6. Create per-package GitHub pre-releases with changelog-based release notes.
-  for (const pkg of publishedPackages) {
-    const workspace = workspacePackages.get(pkg.name);
-    if (!workspace) {
-      continue;
-    }
+  if (!skipGitHubReleases) {
+    for (const pkg of publishedPackages) {
+      const workspace = workspacePackages.get(pkg.name);
+      if (!workspace) {
+        continue;
+      }
 
-    const changelog = readChangelogSection(workspace.path, pkg.version);
-    const body = formatPreReleaseBody(changelog, pkg);
-    const tag = `${pkg.name}@${pkg.version}`;
+      const changelog = readChangelogSection(workspace.path, pkg.version);
+      const body = formatPreReleaseBody(changelog, pkg);
+      const tag = `${pkg.name}@${pkg.version}`;
 
-    try {
-      await github.rest.repos.createRelease({
-        body,
-        name: tag,
-        owner: context.repo.owner,
-        prerelease: true,
-        repo: context.repo.repo,
-        tag_name: tag,
-        target_commitish: context.sha,
-      });
-      core.info(`Created GitHub pre-release: ${tag}`);
-    } catch (error) {
-      core.warning(
-        `Failed to create pre-release for ${pkg.name}: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      try {
+        await github.rest.repos.createRelease({
+          body,
+          name: tag,
+          owner: context.repo.owner,
+          prerelease: true,
+          repo: context.repo.repo,
+          tag_name: tag,
+          target_commitish: context.sha,
+        });
+        core.info(`Created GitHub pre-release: ${tag}`);
+      } catch (error) {
+        core.warning(
+          `Failed to create pre-release for ${pkg.name}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
     }
   }
 
   // 7. Set outputs matching the changesets/action contract.
   core.setOutput("published", "true");
   core.setOutput("publishedPackages", JSON.stringify(publishedPackages));
+
+  // 8. Build a markdown comment body for PR notifications.
+  const registryUrl = process.env.REGISTRY_URL;
+  if (registryUrl) {
+    core.setOutput(
+      "commentBody",
+      formatCommentBody(publishedPackages, registryUrl),
+    );
+  }
 
   core.info(
     `Published ${publishedPackages.length} snapshot package(s): ${publishedPackages.map((p) => `${p.name}@${p.version}`).join(", ")}`,
@@ -210,6 +225,30 @@ function readChangelogSection(
   } catch {
     return null;
   }
+}
+
+/** Formats a PR comment body with published packages and install commands. */
+function formatCommentBody(
+  packages: PublishedPackage[],
+  registryUrl: string,
+): string {
+  const rows = packages.map((p) => `| \`${p.name}\` | \`${p.version}\` |`);
+  const installLines = packages.map(
+    (p) => `npm install ${p.name}@${p.version} --registry ${registryUrl}`,
+  );
+
+  return [
+    "### 📦 Snapshot packages published",
+    "",
+    "| Package | Version |",
+    "| ------- | ------- |",
+    ...rows,
+    "",
+    "**Install:**",
+    "```sh",
+    ...installLines,
+    "```",
+  ].join("\n");
 }
 
 /** Formats the body for a GitHub pre-release, with a notice and changelog content. */
