@@ -16,7 +16,14 @@
     "@adobe/aio-commerce-lib-events": "1.0.0",
     "@adobe/aio-commerce-sdk": "1.0.0",
     "@aio-commerce-sdk/scripts": "0.1.0",
-    "@aio-commerce-sdk/generators": "1.0.1"
+    "@aio-commerce-sdk/generators": "1.0.1",
+    "@adobe/aio-commerce-lib-webhooks": "0.0.0"
   },
-  "changesets": []
+  "changesets": [
+    "clever-times-joke",
+    "heavy-cameras-crash",
+    "lovely-lizards-film",
+    "slow-cloths-repeat",
+    "social-mugs-bathe"
+  ]
 }

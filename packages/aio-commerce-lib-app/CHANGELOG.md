@@ -1,5 +1,23 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.1.0-beta.0
+
+### Minor Changes
+
+- [#273](https://github.com/adobe/aio-commerce-sdk/pull/273) [`660cf05`](https://github.com/adobe/aio-commerce-sdk/commit/660cf058d2439de82b3e22376c3d494b2a83045f) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Added the functionality to define and install webhooks in the installation flow of the app.
+
+- [#285](https://github.com/adobe/aio-commerce-sdk/pull/285) [`cda7712`](https://github.com/adobe/aio-commerce-sdk/commit/cda7712ac74b3bd9700aaa243a8b67d3a3d74d91) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Added a new endpoint /installation/validation to perform validation before the app is installed. Added webhook-specific validation for possible conflicts.
+
+### Patch Changes
+
+- [#310](https://github.com/adobe/aio-commerce-sdk/pull/310) [`8f6ad9d`](https://github.com/adobe/aio-commerce-sdk/commit/8f6ad9ddcaae0f0a5a116bcbbefaae49f97697eb) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Improved validation error messages across schema files.
+
+- Updated dependencies [[`660cf05`](https://github.com/adobe/aio-commerce-sdk/commit/660cf058d2439de82b3e22376c3d494b2a83045f)]:
+  - @adobe/aio-commerce-lib-webhooks@0.1.0-beta.0
+  - @adobe/aio-commerce-lib-auth@1.0.0
+  - @adobe/aio-commerce-lib-config@1.0.1
+  - @adobe/aio-commerce-lib-events@1.0.0
+
 ## 1.0.1
 
 ### Patch Changes
