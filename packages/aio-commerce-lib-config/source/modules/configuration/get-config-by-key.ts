@@ -10,7 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { getConfiguration } from "./get-config";
+import { decrypt } from "#utils/encryption";
+
+import { fetchRawConfiguration } from "./get-config";
 
 import type { GetConfigurationByKeyResponse } from "#types/index";
 import type { ConfigContext } from "./types";
@@ -28,18 +30,38 @@ import type { ConfigContext } from "./types";
  * @returns Promise resolving to configuration response with scope information and single config value (or null if not found).
  *
  * @throws {Error} If the scope arguments are invalid or the scope is not found.
+ * @throws {Error} If the requested key is a password field and no encryption key is provided.
  */
 export async function getConfigurationByKey(
   context: ConfigContext,
   configKey: string,
   ...args: unknown[]
 ) {
-  const fullConfig = await getConfiguration(context, ...args);
-  const configValue =
-    fullConfig.config.find((item) => item.name === configKey) || null;
+  const { configData, passwordFields } = await fetchRawConfiguration(
+    context,
+    ...args,
+  );
+
+  let configValue =
+    configData.config.find((item) => item.name === configKey) || null;
+
+  if (
+    configValue &&
+    passwordFields.has(configKey) &&
+    typeof configValue.value === "string" &&
+    configValue.value.length > 0
+  ) {
+    if (!context.encryptionKey) {
+      throw new Error("Encryption key has not been given");
+    }
+    configValue = {
+      ...configValue,
+      value: decrypt(configValue.value, context.encryptionKey),
+    };
+  }
 
   return {
-    scope: fullConfig.scope,
+    scope: configData.scope,
     config: configValue,
   } satisfies GetConfigurationByKeyResponse;
 }
