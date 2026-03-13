@@ -15,11 +15,8 @@ export type ReleaseChannel = "internal" | "public";
 
 /** Environment variables for the release prepare script. */
 export type Environment = {
-  BASE_BRANCH: string;
-  CHANGESET_CONFIG_PATH?: string;
   REGISTRY_AUTH_TOKEN: string;
   REGISTRY_URL: string;
-  REGISTRY_PACKAGE_BASE_URL: string;
   RELEASE_CHANNEL: ReleaseChannel;
 };
 

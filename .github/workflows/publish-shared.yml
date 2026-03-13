@@ -6,9 +6,6 @@ on:
       channel:
         required: true
         type: string
-      base_branch:
-        required: true
-        type: string
       ref:
         required: false
         type: string
@@ -39,8 +36,6 @@ on:
     secrets:
       REGISTRY_URL:
         required: true
-      SLACK_WEBHOOK_URL:
-        required: false
       REGISTRY_PACKAGE_BASE_URL:
         required: false
       REGISTRY_AUTH_TOKEN:
@@ -86,7 +81,6 @@ jobs:
         uses: actions/github-script@v8.0.0
         id: prepare
         env:
-          BASE_BRANCH: ${{ inputs.base_branch }}
           REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
           REGISTRY_AUTH_TOKEN: ${{ secrets.REGISTRY_AUTH_TOKEN }}
           RELEASE_CHANNEL: ${{ inputs.channel }}
@@ -140,10 +134,3 @@ jobs:
           script: |
             const { default: execAnnouncement } = await import('${{ github.workspace }}/scripts/source/ci/release/announce.ts');
             await execAnnouncement(core);
-
-      # --- Auto back-sync: Create PR from release → main after public publish ---
-      - name: Create back-sync PR
-        if: inputs.channel == 'public' && steps.changesets.outputs.published == 'true'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: ./.github/scripts/back-sync.sh

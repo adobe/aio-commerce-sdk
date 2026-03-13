@@ -20,7 +20,6 @@ jobs:
       id-token: write
     with:
       channel: public
-      base_branch: release
     secrets:
       REGISTRY_AUTH_TOKEN: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
       REGISTRY_PACKAGE_BASE_URL: "https://npmx.dev/package"
@@ -38,3 +37,20 @@ jobs:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: ${{ needs.release.outputs.SLACK_WEBHOOK_PAYLOAD }}
+
+  back-sync:
+    name: Back-sync to main
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create back-sync PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./.github/scripts/back-sync.sh

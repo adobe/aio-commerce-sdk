@@ -10,20 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { appendFileSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { appendFileSync } from "node:fs";
 
 import { parseReleaseChannel, runGitHubScript } from "./utils.ts";
 
 import type { AsyncFunctionArguments, Environment } from "./types.ts";
-
-// Find where the Changesets configuration file is located, relative to the current file.
-const CURRENT_DIR = dirname(fileURLToPath(import.meta.url));
-const DEFAULT_CONFIG_PATH = resolve(
-  CURRENT_DIR,
-  "../../../../.changeset/config.json",
-);
 
 export default async function main(
   core: AsyncFunctionArguments["core"],
@@ -38,28 +29,12 @@ async function prepare(
   exec: AsyncFunctionArguments["exec"],
 ) {
   const {
-    BASE_BRANCH: baseBranch,
-    CHANGESET_CONFIG_PATH: configPath = DEFAULT_CONFIG_PATH,
     REGISTRY_URL: registryUrl,
     REGISTRY_AUTH_TOKEN: registryAuthToken,
     RELEASE_CHANNEL: releaseChannelValue,
   } = process.env as Environment;
 
   const releaseChannel = parseReleaseChannel(releaseChannelValue);
-
-  // Validate the base branch matches the Changesets config for public releases.
-  // Internal (snapshot) releases don't need this validation since they don't use changesets/action.
-  if (releaseChannel === "public") {
-    const config = JSON.parse(readFileSync(configPath, "utf8")) as {
-      baseBranch?: string;
-    };
-
-    if (!config.baseBranch || config.baseBranch !== baseBranch) {
-      throw new Error(
-        `Expected base branch "${baseBranch}" but found "${config.baseBranch ?? ""}".`,
-      );
-    }
-  }
 
   await configureRegistryAuth(core, exec, {
     registryUrl,

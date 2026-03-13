@@ -77,7 +77,6 @@ jobs:
       id-token: write
     with:
       channel: internal
-      base_branch: main
       ref: ${{ needs.prepare.outputs.head_sha }}
       snapshot_tag: alpha
       skip_github_releases: true
