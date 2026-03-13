@@ -35,7 +35,6 @@ export type TemplateAction = ActionConfig & {
 
 /** The list of Commerce variables that are required for the runtime actions */
 export const COMMERCE_VARIABLES = [
-  "AIO_COMMERCE_API_BASE_URL",
   "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
   "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
   "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID",
