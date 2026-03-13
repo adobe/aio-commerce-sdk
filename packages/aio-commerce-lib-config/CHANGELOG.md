@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-config
 
+## 1.0.2
+
+### Patch Changes
+
+- [#317](https://github.com/adobe/aio-commerce-sdk/pull/317) [`452dc94`](https://github.com/adobe/aio-commerce-sdk/commit/452dc940a6f9ea48b63260dfb80830b7bee0ec79) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix a bug where `getConfigurationByKey` always required an `encryptionKey` even when querying fields that are not of type `password`.
+
 ## 1.0.1
 
 ### Patch Changes
