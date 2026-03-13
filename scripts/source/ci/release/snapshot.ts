@@ -64,13 +64,19 @@ async function snapshot(
   const skipGitHubReleases =
     process.env.SKIP_GITHUB_RELEASES?.toLowerCase() === "true";
 
-  // 1. Get structured release plan via the changeset CLI.
+  // Ensure baseBranch exists as a local ref (CI only has origin/release).
+  try {
+    await exec.exec("git", ["branch", "release", "origin/release"]);
+  } catch {
+    // Branch already exists locally or remote ref not found — either way, continue.
+  }
+
   const statusFile = join(
     process.env.GITHUB_WORKSPACE ?? process.cwd(),
     STATUS_OUTPUT_FILE,
   );
-  await exec.exec("pnpm changeset status", ["--output", statusFile]);
 
+  await exec.exec("pnpm changeset status", ["--output", statusFile]);
   const releasePlan = JSON.parse(
     readFileSync(statusFile, "utf8"),
   ) as ChangesetStatus;
@@ -84,13 +90,9 @@ async function snapshot(
 
   core.info(`Found ${releasePlan.changesets.length} pending changeset(s).`);
 
-  // 2. Resolve workspace package paths (needed for reading package.json and CHANGELOG.md).
   const workspacePackages = await getWorkspacePackages(exec);
-
-  // 3. Apply snapshot versions (modifies package.json files in-place, not committed).
   await exec.exec("pnpm changeset version", ["--snapshot", snapshotTag]);
 
-  // 4. Read actual snapshot versions for packages the release plan says will change.
   const publishedPackages = getSnapshotVersions(releasePlan, workspacePackages);
   if (publishedPackages.length === 0) {
     core.info("No packages were versioned. Skipping publish.");
@@ -99,10 +101,8 @@ async function snapshot(
     return;
   }
 
-  // 5. Publish snapshot packages to registry.
   await exec.exec("pnpm changeset publish", ["--tag", snapshotTag]);
 
-  // 6. Create per-package GitHub pre-releases with changelog-based release notes.
   if (!skipGitHubReleases) {
     for (const pkg of publishedPackages) {
       const workspace = workspacePackages.get(pkg.name);
@@ -133,11 +133,9 @@ async function snapshot(
     }
   }
 
-  // 7. Set outputs matching the changesets/action contract.
   core.setOutput("published", "true");
   core.setOutput("publishedPackages", JSON.stringify(publishedPackages));
 
-  // 8. Build a markdown comment body for PR notifications.
   const registryUrl = process.env.REGISTRY_URL;
   if (registryUrl) {
     core.setOutput(
