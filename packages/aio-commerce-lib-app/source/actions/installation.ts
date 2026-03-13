@@ -33,6 +33,7 @@ import {
   isInProgressState,
   isSucceededState,
   runInstallation,
+  runValidation,
 } from "#management/index";
 import { AppDataSchema } from "#management/installation/schema";
 
@@ -40,7 +41,7 @@ import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { InstallationContext } from "#management/index";
+import type { InstallationContext, ValidationContext } from "#management/index";
 import type {
   InProgressInstallationState,
   InstallationState,
@@ -68,6 +69,15 @@ type RuntimeActionArgs = InstallationContext["params"] &
 interface InstallationActionContext extends BaseContext {
   rawParams: RuntimeActionArgs;
 }
+
+/** Request body schema shared by POST / and POST /validation. */
+const InstallationRequestBodySchema = object({
+  appData: AppDataSchema,
+  commerceBaseUrl: string(),
+  commerceEnv: string(),
+  ioEventsUrl: string(),
+  ioEventsEnv: string(),
+});
 
 /** Creates an installation state store using lib-core combined storage. */
 function createInstallationStore() {
@@ -163,13 +173,7 @@ router.get("/", {
  * 3. If not found or failed: create plan, invoke execution async, return 202 Accepted
  */
 router.post("/", {
-  body: object({
-    appData: AppDataSchema,
-    commerceBaseUrl: string(),
-    commerceEnv: string(),
-    ioEventsUrl: string(),
-    ioEventsEnv: string(),
-  }),
+  body: InstallationRequestBodySchema,
 
   handler: async (req, { logger, rawParams }) => {
     logger.debug("Starting installation...");
@@ -297,6 +301,60 @@ router.post("/execution", {
         },
       });
     }
+
+    return ok({ body: result });
+  },
+});
+
+/**
+ * POST /installation/validation - Pre-installation validation
+ *
+ * Synchronously validates the step tree before installation begins.
+ * Accepts the same request body as POST / (installation start) so the
+ * frontend can reuse the same parameters without any extra mapping.
+ *
+ * Flow:
+ * 1. Build a ValidationContext from the request parameters
+ * 2. Call runValidation() — traverses the step tree and collects issues
+ * 3. Return the structured ValidationResult immediately (no async invoke)
+ */
+router.post("/validation", {
+  body: InstallationRequestBodySchema,
+
+  handler: async (req, { logger, rawParams }) => {
+    logger.debug("Running pre-installation validation...");
+
+    const appConfig = rawParams.appConfig;
+
+    if (!appConfig) {
+      return internalServerError(
+        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
+      );
+    }
+
+    const { appData, ...params } = {
+      ...(rawParams as RuntimeActionArgs),
+      appData: req.body.appData,
+      AIO_EVENTS_API_BASE_URL: req.body.ioEventsUrl,
+      AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: req.body.ioEventsEnv,
+      AIO_COMMERCE_API_BASE_URL: req.body.commerceBaseUrl,
+      AIO_COMMERCE_API_FLAVOR: req.body.commerceEnv,
+    };
+
+    const validationContext: ValidationContext = {
+      appData,
+      params,
+      logger,
+    };
+
+    const result = await runValidation({
+      validationContext,
+      config: appConfig,
+    });
+
+    logger.debug(
+      `Validation complete — valid: ${result.valid}, errors: ${result.summary.errors}, warnings: ${result.summary.warnings}`,
+    );
 
     return ok({ body: result });
   },

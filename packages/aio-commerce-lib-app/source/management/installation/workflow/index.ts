@@ -25,6 +25,7 @@ export {
   isInProgressState,
   isSucceededState,
 } from "./types";
+export { validateStepTree } from "./validation";
 
 export type {
   InstallationHooks,
@@ -49,6 +50,10 @@ export type {
   Step,
   StepContextFactory,
   StepMeta,
+  ValidationContext,
+  ValidationExecutionContext,
+  ValidationIssue,
+  ValidationIssueSeverity,
 } from "./step";
 export type {
   ExecutionStatus,
@@ -61,3 +66,9 @@ export type {
   StepStatus,
   SucceededInstallationState,
 } from "./types";
+export type {
+  StepValidationResult,
+  ValidateStepTreeOptions,
+  ValidationResult,
+  ValidationSummary,
+} from "./validation";
