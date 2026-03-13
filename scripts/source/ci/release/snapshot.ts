@@ -40,6 +40,7 @@ interface ChangesetStatus {
 interface WorkspacePackage {
   name: string;
   path: string;
+  private?: boolean;
 }
 
 export default async function main(
@@ -181,7 +182,7 @@ function getSnapshotVersions(
     }
 
     const workspace = workspacePackages.get(release.name);
-    if (!workspace) {
+    if (!workspace || workspace.private) {
       continue;
     }
 
