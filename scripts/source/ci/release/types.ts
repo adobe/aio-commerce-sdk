@@ -17,7 +17,6 @@ export type ReleaseChannel = "internal" | "public";
 export type Environment = {
   BASE_BRANCH: string;
   CHANGESET_CONFIG_PATH?: string;
-  CHANGESET_PRE_STATE_PATH?: string;
   REGISTRY_AUTH_TOKEN: string;
   REGISTRY_URL: string;
   REGISTRY_PACKAGE_BASE_URL: string;
@@ -51,25 +50,12 @@ export type SlackPayload = {
 /**
  * Type definitions for GitHub Actions script context.
  *
- * These types are based on inputs given by the `@actions/github-script` package.
+ * These types match the arguments injected by `actions/github-script`.
  * @see https://github.com/actions/github-script
  */
 export interface AsyncFunctionArguments {
-  /** GitHub Actions core utilities */
-  core: {
-    /** Mark the action as failed with an error message */
-    setFailed(message: string | Error): void;
-
-    /** Set an output parameter */
-    setOutput(name: string, value: unknown): void;
-
-    /** Log a warning message */
-    warning(message: string | Error): void;
-  };
-
-  /** Execution utilities for running commands */
-  exec: {
-    /** Execute a command */
-    exec(commandLine: string, args?: string[]): Promise<number>;
-  };
+  context: typeof import("@actions/github").context;
+  core: typeof import("@actions/core");
+  exec: typeof import("@actions/exec");
+  github: ReturnType<typeof import("@actions/github").getOctokit>;
 }

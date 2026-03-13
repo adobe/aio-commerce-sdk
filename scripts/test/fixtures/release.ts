@@ -50,18 +50,6 @@ export function createChangesetConfigJson(values: { baseBranch: string }) {
   return JSON.stringify({ baseBranch: values.baseBranch ?? MAIN_BRANCH });
 }
 
-export function createChangesetPreJson(values: { preMode: string }) {
-  return JSON.stringify({ mode: values.preMode ?? "pre" });
-}
-
-export const PRE_JSON = createChangesetPreJson({
-  preMode: "pre",
-});
-
-export const PRE_JSON_EXIT = createChangesetPreJson({
-  preMode: "exit",
-});
-
 export const CONFIG_JSON_MAIN_BRANCH = createChangesetConfigJson({
   baseBranch: MAIN_BRANCH,
 });
@@ -72,6 +60,7 @@ export const CONFIG_JSON_RELEASE_BRANCH = createChangesetConfigJson({
 
 export function createCoreMock() {
   return {
+    info: vi.fn<AsyncFunctionArguments["core"]["info"]>(),
     setFailed: vi.fn<AsyncFunctionArguments["core"]["setFailed"]>(),
     setOutput: vi.fn<AsyncFunctionArguments["core"]["setOutput"]>(),
     warning: vi.fn<AsyncFunctionArguments["core"]["warning"]>(),
@@ -81,6 +70,7 @@ export function createCoreMock() {
 export function createExecMock() {
   return {
     exec: vi.fn<AsyncFunctionArguments["exec"]["exec"]>(),
+    getExecOutput: vi.fn<AsyncFunctionArguments["exec"]["getExecOutput"]>(),
   };
 }
 

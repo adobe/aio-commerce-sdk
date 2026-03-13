@@ -27,8 +27,6 @@ import {
   INTERNAL_AUTH_TOKEN,
   INTERNAL_REGISTRY_URL,
   MAIN_BRANCH,
-  PRE_JSON,
-  PRE_JSON_EXIT,
   PUBLIC_AUTH_TOKEN,
   PUBLIC_REGISTRY_URL,
   RELEASE_BRANCH,
@@ -37,14 +35,12 @@ import {
 function stubPrepareEnv(values: {
   baseBranch: string;
   changesetConfigPath?: string;
-  changesetPreStatePath?: string;
   registryAuthToken: string;
   registryUrl: string;
   releaseChannel: string;
 }) {
   vi.stubEnv("BASE_BRANCH", values.baseBranch);
   vi.stubEnv("CHANGESET_CONFIG_PATH", values.changesetConfigPath ?? "");
-  vi.stubEnv("CHANGESET_PRE_STATE_PATH", values.changesetPreStatePath ?? "");
   vi.stubEnv("REGISTRY_AUTH_TOKEN", values.registryAuthToken);
   vi.stubEnv("REGISTRY_URL", values.registryUrl);
   vi.stubEnv("RELEASE_CHANNEL", values.releaseChannel);
@@ -60,13 +56,11 @@ describe("release/prepare.ts", () => {
     await withTempFiles(
       {
         ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
       },
       async (tempDir) => {
         stubPrepareEnv({
           baseBranch: MAIN_BRANCH,
           changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
           registryAuthToken: INTERNAL_AUTH_TOKEN,
           registryUrl: INTERNAL_REGISTRY_URL,
           releaseChannel: "internal",
@@ -97,7 +91,7 @@ describe("release/prepare.ts", () => {
     );
   });
 
-  test("configures registry auth for a public release when changesets is not in pre mode", async () => {
+  test("configures registry auth for a public release", async () => {
     await withTempFiles(
       {
         ".changeset/config.json": CONFIG_JSON_RELEASE_BRANCH,
@@ -106,7 +100,6 @@ describe("release/prepare.ts", () => {
         stubPrepareEnv({
           baseBranch: RELEASE_BRANCH,
           changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
           registryAuthToken: PUBLIC_AUTH_TOKEN,
           registryUrl: PUBLIC_REGISTRY_URL,
           releaseChannel: "public",
@@ -131,17 +124,15 @@ describe("release/prepare.ts", () => {
     );
   });
 
-  test("exports npm_config_registry so changesets reads the correct registry from env", async () => {
+  test("skips base branch validation for internal releases", async () => {
     await withTempFiles(
       {
-        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
+        ".changeset/config.json": CONFIG_JSON_RELEASE_BRANCH,
       },
       async (tempDir) => {
         stubPrepareEnv({
           baseBranch: MAIN_BRANCH,
           changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
           registryAuthToken: INTERNAL_AUTH_TOKEN,
           registryUrl: INTERNAL_REGISTRY_URL,
           releaseChannel: "internal",
@@ -153,7 +144,10 @@ describe("release/prepare.ts", () => {
         const exec = createExecMock();
         exec.exec.mockResolvedValue(0);
 
+        // Should NOT throw even though baseBranch doesn't match config
         await prepare(asCore(core), asExec(exec));
+
+        expect(core.setFailed).not.toHaveBeenCalled();
       },
     );
   });
@@ -162,13 +156,11 @@ describe("release/prepare.ts", () => {
     await withTempFiles(
       {
         ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
       },
       async (tempDir) => {
         stubPrepareEnv({
           baseBranch: MAIN_BRANCH,
           changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
           registryAuthToken: INTERNAL_AUTH_TOKEN,
           registryUrl: "https://example.com/",
           releaseChannel: "beta",
@@ -183,116 +175,15 @@ describe("release/prepare.ts", () => {
     );
   });
 
-  test("fails when the configured base branch does not match", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_RELEASE_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: "https://example.com/",
-          releaseChannel: "internal",
-        });
-
-        const core = createCoreMock();
-        const exec = createExecMock();
-
-        await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
-        expect(exec.exec).not.toHaveBeenCalled();
-      },
-    );
-  });
-
-  test("fails when the changeset config does not declare a base branch", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": "{}",
-        ".changeset/pre.json": PRE_JSON,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: INTERNAL_REGISTRY_URL,
-          releaseChannel: "internal",
-        });
-
-        const core = createCoreMock();
-        const exec = createExecMock();
-
-        await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
-        expect(exec.exec).not.toHaveBeenCalled();
-      },
-    );
-  });
-
-  test("fails when an internal release is not in pre-release mode", async () => {
+  test("fails when the configured base branch does not match for public releases", async () => {
     await withTempFiles(
       {
         ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: "https://example.com/",
-          releaseChannel: "internal",
-        });
-
-        const core = createCoreMock();
-        const exec = createExecMock();
-
-        await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
-        expect(exec.exec).not.toHaveBeenCalled();
-      },
-    );
-  });
-
-  test("fails when the pre-release state file exists without a mode", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": "{}",
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: INTERNAL_REGISTRY_URL,
-          releaseChannel: "internal",
-        });
-
-        const core = createCoreMock();
-        const exec = createExecMock();
-
-        await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
-        expect(exec.exec).not.toHaveBeenCalled();
-      },
-    );
-  });
-
-  test("fails when a public release is still in pre-release mode", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_RELEASE_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
       },
       async (tempDir) => {
         stubPrepareEnv({
           baseBranch: RELEASE_BRANCH,
           changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
           registryAuthToken: PUBLIC_AUTH_TOKEN,
           registryUrl: PUBLIC_REGISTRY_URL,
           releaseChannel: "public",
@@ -307,20 +198,18 @@ describe("release/prepare.ts", () => {
     );
   });
 
-  test("fails when an internal release is in a non-pre changeset mode", async () => {
+  test("fails when the changeset config does not declare a base branch for public releases", async () => {
     await withTempFiles(
       {
-        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON_EXIT,
+        ".changeset/config.json": "{}",
       },
       async (tempDir) => {
         stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
+          baseBranch: RELEASE_BRANCH,
           changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: INTERNAL_REGISTRY_URL,
-          releaseChannel: "internal",
+          registryAuthToken: PUBLIC_AUTH_TOKEN,
+          registryUrl: PUBLIC_REGISTRY_URL,
+          releaseChannel: "public",
         });
 
         const core = createCoreMock();
@@ -336,13 +225,11 @@ describe("release/prepare.ts", () => {
     await withTempFiles(
       {
         ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
       },
       async (tempDir) => {
         stubPrepareEnv({
           baseBranch: MAIN_BRANCH,
           changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
           registryAuthToken: "",
           registryUrl: "",
           releaseChannel: "internal",
@@ -364,13 +251,11 @@ describe("release/prepare.ts", () => {
     await withTempFiles(
       {
         ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
       },
       async (tempDir) => {
         stubPrepareEnv({
           baseBranch: MAIN_BRANCH,
           changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
           registryAuthToken: INTERNAL_AUTH_TOKEN,
           registryUrl,
           releaseChannel: "internal",
@@ -403,13 +288,11 @@ describe("release/prepare.ts", () => {
     await withTempFiles(
       {
         ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
       },
       async (tempDir) => {
         stubPrepareEnv({
           baseBranch: MAIN_BRANCH,
           changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
           registryAuthToken: INTERNAL_AUTH_TOKEN,
           registryUrl: INTERNAL_REGISTRY_URL,
           releaseChannel: "internal",
@@ -434,13 +317,11 @@ describe("release/prepare.ts", () => {
     await withTempFiles(
       {
         ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
       },
       async (tempDir) => {
         stubPrepareEnv({
           baseBranch: MAIN_BRANCH,
           changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
           registryAuthToken: INTERNAL_AUTH_TOKEN,
           registryUrl: INTERNAL_REGISTRY_URL,
           releaseChannel: "internal",
