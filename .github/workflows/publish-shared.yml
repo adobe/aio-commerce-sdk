@@ -76,7 +76,7 @@ jobs:
         run: pnpm turbo build --affected
 
       - name: Prepare release context
-        uses: actions/github-script@v8.0.0
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         id: prepare
         env:
           REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
@@ -92,7 +92,7 @@ jobs:
       - name: Snapshot Version and Publish
         id: snapshot
         if: inputs.channel == 'internal'
-        uses: actions/github-script@v8.0.0
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         env:
           SNAPSHOT_TAG: ${{ inputs.snapshot_tag || '' }}
           SKIP_GITHUB_RELEASES: ${{ inputs.skip_github_releases }}
@@ -123,7 +123,7 @@ jobs:
         if: |
           (inputs.channel == 'internal' && steps.snapshot.outputs.published == 'true') ||
           (inputs.channel == 'public' && steps.changesets.outputs.published == 'true')
-        uses: actions/github-script@v8.0.0
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         env:
           PUBLISHED_PACKAGES: ${{ inputs.channel == 'internal' && steps.snapshot.outputs.publishedPackages || steps.changesets.outputs.publishedPackages }}
           REGISTRY_PACKAGE_BASE_URL: ${{ secrets.REGISTRY_PACKAGE_BASE_URL }}
