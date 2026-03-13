@@ -20,31 +20,19 @@ import prepare from "#ci/release/prepare";
 import {
   asCore,
   asExec,
-  CONFIG_JSON_MAIN_BRANCH,
-  CONFIG_JSON_RELEASE_BRANCH,
   createCoreMock,
   createExecMock,
   INTERNAL_AUTH_TOKEN,
   INTERNAL_REGISTRY_URL,
-  MAIN_BRANCH,
-  PRE_JSON,
-  PRE_JSON_EXIT,
   PUBLIC_AUTH_TOKEN,
   PUBLIC_REGISTRY_URL,
-  RELEASE_BRANCH,
 } from "#test/fixtures/release";
 
 function stubPrepareEnv(values: {
-  baseBranch: string;
-  changesetConfigPath?: string;
-  changesetPreStatePath?: string;
   registryAuthToken: string;
   registryUrl: string;
   releaseChannel: string;
 }) {
-  vi.stubEnv("BASE_BRANCH", values.baseBranch);
-  vi.stubEnv("CHANGESET_CONFIG_PATH", values.changesetConfigPath ?? "");
-  vi.stubEnv("CHANGESET_PRE_STATE_PATH", values.changesetPreStatePath ?? "");
   vi.stubEnv("REGISTRY_AUTH_TOKEN", values.registryAuthToken);
   vi.stubEnv("REGISTRY_URL", values.registryUrl);
   vi.stubEnv("RELEASE_CHANNEL", values.releaseChannel);
@@ -57,407 +45,165 @@ afterEach(() => {
 
 describe("release/prepare.ts", () => {
   test("configures registry auth for an internal release", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: INTERNAL_REGISTRY_URL,
-          releaseChannel: "internal",
-        });
+    await withTempFiles({}, async (tempDir) => {
+      stubPrepareEnv({
+        registryAuthToken: INTERNAL_AUTH_TOKEN,
+        registryUrl: INTERNAL_REGISTRY_URL,
+        releaseChannel: "internal",
+      });
 
-        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+      vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
-        const core = createCoreMock();
-        const exec = createExecMock();
-        exec.exec.mockResolvedValue(0);
+      const core = createCoreMock();
+      const exec = createExecMock();
+      exec.exec.mockResolvedValue(0);
 
-        await prepare(asCore(core), asExec(exec));
+      await prepare(asCore(core), asExec(exec));
 
-        expect(core.setFailed).not.toHaveBeenCalled();
-        expect(exec.exec).toHaveBeenCalledOnce();
-        expect(exec.exec).toHaveBeenCalledWith("pnpm whoami", [
-          "--userconfig",
-          `${tempDir}/.npmrc`,
-          "--registry",
-          INTERNAL_REGISTRY_URL,
-        ]);
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(exec.exec).toHaveBeenCalledOnce();
+      expect(exec.exec).toHaveBeenCalledWith("pnpm whoami", [
+        "--userconfig",
+        `${tempDir}/.npmrc`,
+        "--registry",
+        INTERNAL_REGISTRY_URL,
+      ]);
 
-        const npmrc = readFileSync(join(tempDir, ".npmrc"), "utf8");
-        expect(npmrc).toContain(
-          `//artifactory.example.com/artifactory/api/npm/npm-internal/:_authToken=${INTERNAL_AUTH_TOKEN}`,
-        );
-      },
-    );
+      const npmrc = readFileSync(join(tempDir, ".npmrc"), "utf8");
+      expect(npmrc).toContain(
+        `//artifactory.example.com/artifactory/api/npm/npm-internal/:_authToken=${INTERNAL_AUTH_TOKEN}`,
+      );
+    });
   });
 
-  test("configures registry auth for a public release when changesets is not in pre mode", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_RELEASE_BRANCH,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: RELEASE_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: PUBLIC_AUTH_TOKEN,
-          registryUrl: PUBLIC_REGISTRY_URL,
-          releaseChannel: "public",
-        });
+  test("configures registry auth for a public release", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      stubPrepareEnv({
+        registryAuthToken: PUBLIC_AUTH_TOKEN,
+        registryUrl: PUBLIC_REGISTRY_URL,
+        releaseChannel: "public",
+      });
 
-        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+      vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
-        const core = createCoreMock();
-        const exec = createExecMock();
-        exec.exec.mockResolvedValue(0);
+      const core = createCoreMock();
+      const exec = createExecMock();
+      exec.exec.mockResolvedValue(0);
 
-        await prepare(asCore(core), asExec(exec));
+      await prepare(asCore(core), asExec(exec));
 
-        expect(core.setFailed).not.toHaveBeenCalled();
-        expect(exec.exec).not.toHaveBeenCalled();
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(exec.exec).not.toHaveBeenCalled();
 
-        const npmrc = readFileSync(join(tempDir, ".npmrc"), "utf8");
-        expect(npmrc).toContain(
-          `//registry.npmjs.org/:_authToken=${PUBLIC_AUTH_TOKEN}`,
-        );
-      },
-    );
-  });
-
-  test("exports npm_config_registry so changesets reads the correct registry from env", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: INTERNAL_REGISTRY_URL,
-          releaseChannel: "internal",
-        });
-
-        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
-
-        const core = createCoreMock();
-        const exec = createExecMock();
-        exec.exec.mockResolvedValue(0);
-
-        await prepare(asCore(core), asExec(exec));
-      },
-    );
+      const npmrc = readFileSync(join(tempDir, ".npmrc"), "utf8");
+      expect(npmrc).toContain(
+        `//registry.npmjs.org/:_authToken=${PUBLIC_AUTH_TOKEN}`,
+      );
+    });
   });
 
   test("fails when the release channel is invalid", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: "https://example.com/",
-          releaseChannel: "beta",
-        });
+    stubPrepareEnv({
+      registryAuthToken: INTERNAL_AUTH_TOKEN,
+      registryUrl: "https://example.com/",
+      releaseChannel: "beta",
+    });
 
-        const core = createCoreMock();
-        const exec = createExecMock();
+    const core = createCoreMock();
+    const exec = createExecMock();
 
-        await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
-        expect(exec.exec).not.toHaveBeenCalled();
-      },
-    );
-  });
-
-  test("fails when the configured base branch does not match", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_RELEASE_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: "https://example.com/",
-          releaseChannel: "internal",
-        });
-
-        const core = createCoreMock();
-        const exec = createExecMock();
-
-        await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
-        expect(exec.exec).not.toHaveBeenCalled();
-      },
-    );
-  });
-
-  test("fails when the changeset config does not declare a base branch", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": "{}",
-        ".changeset/pre.json": PRE_JSON,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: INTERNAL_REGISTRY_URL,
-          releaseChannel: "internal",
-        });
-
-        const core = createCoreMock();
-        const exec = createExecMock();
-
-        await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
-        expect(exec.exec).not.toHaveBeenCalled();
-      },
-    );
-  });
-
-  test("fails when an internal release is not in pre-release mode", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: "https://example.com/",
-          releaseChannel: "internal",
-        });
-
-        const core = createCoreMock();
-        const exec = createExecMock();
-
-        await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
-        expect(exec.exec).not.toHaveBeenCalled();
-      },
-    );
-  });
-
-  test("fails when the pre-release state file exists without a mode", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": "{}",
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: INTERNAL_REGISTRY_URL,
-          releaseChannel: "internal",
-        });
-
-        const core = createCoreMock();
-        const exec = createExecMock();
-
-        await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
-        expect(exec.exec).not.toHaveBeenCalled();
-      },
-    );
-  });
-
-  test("fails when a public release is still in pre-release mode", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_RELEASE_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: RELEASE_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: PUBLIC_AUTH_TOKEN,
-          registryUrl: PUBLIC_REGISTRY_URL,
-          releaseChannel: "public",
-        });
-
-        const core = createCoreMock();
-        const exec = createExecMock();
-
-        await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
-        expect(exec.exec).not.toHaveBeenCalled();
-      },
-    );
-  });
-
-  test("fails when an internal release is in a non-pre changeset mode", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON_EXIT,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: INTERNAL_REGISTRY_URL,
-          releaseChannel: "internal",
-        });
-
-        const core = createCoreMock();
-        const exec = createExecMock();
-
-        await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
-        expect(exec.exec).not.toHaveBeenCalled();
-      },
-    );
+    await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
+    expect(exec.exec).not.toHaveBeenCalled();
   });
 
   test("fails when registry authentication values are missing", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: "",
-          registryUrl: "",
-          releaseChannel: "internal",
-        });
+    stubPrepareEnv({
+      registryAuthToken: "",
+      registryUrl: "",
+      releaseChannel: "internal",
+    });
 
-        const core = createCoreMock();
-        const exec = createExecMock();
+    const core = createCoreMock();
+    const exec = createExecMock();
 
-        await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
-        expect(exec.exec).not.toHaveBeenCalled();
-      },
-    );
+    await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
+    expect(exec.exec).not.toHaveBeenCalled();
   });
 
   test("configures registry auth for an internal registry URL without a trailing slash", async () => {
     const registryUrl =
       "https://artifactory.example.com/artifactory/api/npm/npm-internal";
 
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl,
-          releaseChannel: "internal",
-        });
+    await withTempFiles({}, async (tempDir) => {
+      stubPrepareEnv({
+        registryAuthToken: INTERNAL_AUTH_TOKEN,
+        registryUrl,
+        releaseChannel: "internal",
+      });
 
-        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+      vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
-        const core = createCoreMock();
-        const exec = createExecMock();
-        exec.exec.mockResolvedValue(0);
+      const core = createCoreMock();
+      const exec = createExecMock();
+      exec.exec.mockResolvedValue(0);
 
-        await prepare(asCore(core), asExec(exec));
+      await prepare(asCore(core), asExec(exec));
 
-        const npmrc = readFileSync(join(tempDir, ".npmrc"), "utf8");
-        expect(npmrc).toContain(
-          `//artifactory.example.com/artifactory/api/npm/npm-internal/:_authToken=${INTERNAL_AUTH_TOKEN}`,
-        );
+      const npmrc = readFileSync(join(tempDir, ".npmrc"), "utf8");
+      expect(npmrc).toContain(
+        `//artifactory.example.com/artifactory/api/npm/npm-internal/:_authToken=${INTERNAL_AUTH_TOKEN}`,
+      );
 
-        expect(exec.exec).toHaveBeenCalledWith("pnpm whoami", [
-          "--userconfig",
-          `${tempDir}/.npmrc`,
-          "--registry",
-          registryUrl,
-        ]);
-      },
-    );
+      expect(exec.exec).toHaveBeenCalledWith("pnpm whoami", [
+        "--userconfig",
+        `${tempDir}/.npmrc`,
+        "--registry",
+        registryUrl,
+      ]);
+    });
   });
 
   test("logs a warning when the registry auth check fails with an Error", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: INTERNAL_REGISTRY_URL,
-          releaseChannel: "internal",
-        });
+    await withTempFiles({}, async (tempDir) => {
+      stubPrepareEnv({
+        registryAuthToken: INTERNAL_AUTH_TOKEN,
+        registryUrl: INTERNAL_REGISTRY_URL,
+        releaseChannel: "internal",
+      });
 
-        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+      vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
-        const core = createCoreMock();
-        const exec = createExecMock();
-        exec.exec.mockRejectedValueOnce(new Error("ENEEDAUTH")); // pnpm whoami
+      const core = createCoreMock();
+      const exec = createExecMock();
+      exec.exec.mockRejectedValueOnce(new Error("ENEEDAUTH")); // pnpm whoami
 
-        await prepare(asCore(core), asExec(exec));
+      await prepare(asCore(core), asExec(exec));
 
-        expect(core.warning).toHaveBeenCalledWith(
-          expect.stringContaining("ENEEDAUTH"),
-        );
-      },
-    );
+      expect(core.warning).toHaveBeenCalledWith(
+        expect.stringContaining("ENEEDAUTH"),
+      );
+    });
   });
 
   test("logs a warning when the registry auth check fails with a non-Error value", async () => {
-    await withTempFiles(
-      {
-        ".changeset/config.json": CONFIG_JSON_MAIN_BRANCH,
-        ".changeset/pre.json": PRE_JSON,
-      },
-      async (tempDir) => {
-        stubPrepareEnv({
-          baseBranch: MAIN_BRANCH,
-          changesetConfigPath: join(tempDir, ".changeset/config.json"),
-          changesetPreStatePath: join(tempDir, ".changeset/pre.json"),
-          registryAuthToken: INTERNAL_AUTH_TOKEN,
-          registryUrl: INTERNAL_REGISTRY_URL,
-          releaseChannel: "internal",
-        });
+    await withTempFiles({}, async (tempDir) => {
+      stubPrepareEnv({
+        registryAuthToken: INTERNAL_AUTH_TOKEN,
+        registryUrl: INTERNAL_REGISTRY_URL,
+        releaseChannel: "internal",
+      });
 
-        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+      vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
-        const core = createCoreMock();
-        const exec = createExecMock();
-        exec.exec.mockRejectedValueOnce("auth failed");
+      const core = createCoreMock();
+      const exec = createExecMock();
+      exec.exec.mockRejectedValueOnce("auth failed");
 
-        await prepare(asCore(core), asExec(exec));
+      await prepare(asCore(core), asExec(exec));
 
-        expect(core.warning).toHaveBeenCalledWith(
-          expect.stringContaining("auth failed"),
-        );
-      },
-    );
+      expect(core.warning).toHaveBeenCalledWith(
+        expect.stringContaining("auth failed"),
+      );
+    });
   });
 });

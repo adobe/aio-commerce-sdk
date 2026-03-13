@@ -1,0 +1,29 @@
+name: Promote to Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: "Commit SHA on main to promote (leave empty for latest)"
+        required: false
+        type: string
+
+jobs:
+  promote:
+    name: Create Promotion PR
+    if: github.repository == 'adobe/aio-commerce-sdk'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Create promotion PR
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./.github/scripts/promote.sh "${{ inputs.commit_sha }}"

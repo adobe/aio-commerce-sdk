@@ -26,7 +26,7 @@ const REPOSITORY_URL = `https://github.com/${REPOSITORY}`;
 export default function main(core: AsyncFunctionArguments["core"]) {
   return runGitHubScript(core, () => {
     const webhookBody = announce();
-    core.setOutput("SLACK_WEBHOOK_PAYLOAD", JSON.stringify(webhookBody));
+    core.setOutput("slackWebhookPayload", JSON.stringify(webhookBody));
 
     return webhookBody;
   });
@@ -130,7 +130,7 @@ function formatMarkdownAnnouncement(
     const pkgReleaseUrl = `${REPOSITORY_URL}/releases/tag/${pkgRelease}`;
     const packageUrl = joinPackageUrl(packageBaseUrl, pkg.name);
 
-    announcement += `\u2007• \`${pkgRelease}\`: Read the <${pkgReleaseUrl}|release notes⇗>. See package <${packageUrl}|details⇗>.\n`;
+    announcement += `\u2007• \`${pkgRelease}\`: Read the <${pkgReleaseUrl}|release notes⇗>. See <${packageUrl}|package details⇗>.\n`;
   }
 
   return announcement.trimEnd();

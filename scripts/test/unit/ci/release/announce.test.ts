@@ -56,7 +56,7 @@ describe("release/announce.ts", () => {
     expect(core.setFailed).not.toHaveBeenCalled();
     expect(core.setOutput).toHaveBeenCalledTimes(1);
     expect(core.setOutput).toHaveBeenCalledWith(
-      "SLACK_WEBHOOK_PAYLOAD",
+      "slackWebhookPayload",
       expect.any(String),
     );
     expect(serializedPayload).toBe(JSON.stringify(payload));

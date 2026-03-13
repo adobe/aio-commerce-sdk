@@ -26,8 +26,6 @@ export const PUBLIC_REGISTRY_URL = "https://registry.npmjs.org";
 export const PUBLIC_PACKAGE_BASE_URL = "https://npmx.dev/package";
 export const INTERNAL_AUTH_TOKEN = "token-123";
 export const PUBLIC_AUTH_TOKEN = "token-public";
-export const MAIN_BRANCH = "main";
-export const RELEASE_BRANCH = "release";
 
 export const CORE_PACKAGE_JSON = JSON.stringify([
   { name: "@adobe/aio-commerce-lib-core", version: "1.2.3" },
@@ -46,32 +44,9 @@ export const THREE_PACKAGES_JSON = JSON.stringify([
 ]);
 export const INVALID_PACKAGES_JSON = "{not-valid-json}";
 
-export function createChangesetConfigJson(values: { baseBranch: string }) {
-  return JSON.stringify({ baseBranch: values.baseBranch ?? MAIN_BRANCH });
-}
-
-export function createChangesetPreJson(values: { preMode: string }) {
-  return JSON.stringify({ mode: values.preMode ?? "pre" });
-}
-
-export const PRE_JSON = createChangesetPreJson({
-  preMode: "pre",
-});
-
-export const PRE_JSON_EXIT = createChangesetPreJson({
-  preMode: "exit",
-});
-
-export const CONFIG_JSON_MAIN_BRANCH = createChangesetConfigJson({
-  baseBranch: MAIN_BRANCH,
-});
-
-export const CONFIG_JSON_RELEASE_BRANCH = createChangesetConfigJson({
-  baseBranch: RELEASE_BRANCH,
-});
-
 export function createCoreMock() {
   return {
+    info: vi.fn<AsyncFunctionArguments["core"]["info"]>(),
     setFailed: vi.fn<AsyncFunctionArguments["core"]["setFailed"]>(),
     setOutput: vi.fn<AsyncFunctionArguments["core"]["setOutput"]>(),
     warning: vi.fn<AsyncFunctionArguments["core"]["warning"]>(),
@@ -81,6 +56,7 @@ export function createCoreMock() {
 export function createExecMock() {
   return {
     exec: vi.fn<AsyncFunctionArguments["exec"]["exec"]>(),
+    getExecOutput: vi.fn<AsyncFunctionArguments["exec"]["getExecOutput"]>(),
   };
 }
 

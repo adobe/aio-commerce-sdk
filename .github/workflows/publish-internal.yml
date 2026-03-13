@@ -20,7 +20,6 @@ jobs:
       id-token: write
     with:
       channel: internal
-      base_branch: main
     secrets:
       REGISTRY_PACKAGE_BASE_URL: ${{ secrets.ARTIFACTORY_PACKAGE_BASE_URL }}
       REGISTRY_URL: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}

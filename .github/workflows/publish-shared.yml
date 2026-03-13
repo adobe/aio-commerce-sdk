@@ -6,23 +6,47 @@ on:
       channel:
         required: true
         type: string
-      base_branch:
-        required: true
+      ref:
+        required: false
         type: string
+        default: ""
+      snapshot_tag:
+        required: false
+        type: string
+        default: ""
+      skip_github_releases:
+        required: false
+        type: boolean
+        default: false
+
+    outputs:
+      published:
+        description: Whether packages were published
+        value: ${{ jobs.release.outputs.published }}
+      publishedPackages:
+        description: JSON array of published packages
+        value: ${{ jobs.release.outputs.publishedPackages }}
+      commentBody:
+        description: Markdown comment body with published packages
+        value: ${{ jobs.release.outputs.commentBody }}
 
     secrets:
       REGISTRY_URL:
         required: true
-      SLACK_WEBHOOK_URL:
-        required: true
       REGISTRY_PACKAGE_BASE_URL:
-        required: true
+        required: false
       REGISTRY_AUTH_TOKEN:
         required: true
+      SLACK_WEBHOOK_URL:
+        required: false
 jobs:
   release:
     name: Version or Release
     runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.snapshot.outputs.published || steps.changesets.outputs.published }}
+      publishedPackages: ${{ steps.snapshot.outputs.publishedPackages || steps.changesets.outputs.publishedPackages }}
+      commentBody: ${{ steps.snapshot.outputs.commentBody }}
     permissions:
       contents: write
       pull-requests: write
@@ -32,6 +56,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.ref || '' }}
 
       # pnpm version will be read from packageManager field in package.json
       - name: Setup pnpm
@@ -53,7 +79,6 @@ jobs:
         uses: actions/github-script@v8.0.0
         id: prepare
         env:
-          BASE_BRANCH: ${{ inputs.base_branch }}
           REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
           REGISTRY_AUTH_TOKEN: ${{ secrets.REGISTRY_AUTH_TOKEN }}
           RELEASE_CHANNEL: ${{ inputs.channel }}
@@ -63,36 +88,55 @@ jobs:
             const { default: execPrepare } = await import('${{ github.workspace }}/scripts/source/ci/release/prepare.ts');
             await execPrepare(core, exec);
 
+      # --- Internal: Snapshot version + publish (no version PR, no changelog commits) ---
+      - name: Snapshot Version and Publish
+        id: snapshot
+        if: inputs.channel == 'internal'
+        uses: actions/github-script@v8.0.0
+        env:
+          SNAPSHOT_TAG: ${{ inputs.snapshot_tag || '' }}
+          SKIP_GITHUB_RELEASES: ${{ inputs.skip_github_releases }}
+          REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
+        with:
+          script: |
+            const { default: execSnapshot } = await import('${{ github.workspace }}/scripts/source/ci/release/snapshot.ts');
+            await execSnapshot(core, exec, github, context);
+
+      # --- Public: Standard changesets flow (version PR → merge → publish) ---
       - name: Create Release Pull Request or Publish
         id: changesets
+        if: inputs.channel == 'public'
         uses: changesets/action@6a0a831ff30acef54f2c6aa1cbbc1096b066edaf # v1.7.0
         with:
           version: pnpm changeset version
           publish: pnpm changeset publish
           commit: "ci: release packages"
           title: "[CI] Release Packages"
-          createGithubReleases: ${{ inputs.channel == 'public' }}
+          createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
+      # --- Slack announcement (generated here, sent by caller workflows) ---
       - name: Generate Slack Announcement
         id: announcement
-        if: steps.changesets.outputs.published == 'true'
+        continue-on-error: true
+        if: |
+          (inputs.channel == 'internal' && steps.snapshot.outputs.published == 'true') ||
+          (inputs.channel == 'public' && steps.changesets.outputs.published == 'true')
         uses: actions/github-script@v8.0.0
         env:
-          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
+          PUBLISHED_PACKAGES: ${{ inputs.channel == 'internal' && steps.snapshot.outputs.publishedPackages || steps.changesets.outputs.publishedPackages }}
           REGISTRY_PACKAGE_BASE_URL: ${{ secrets.REGISTRY_PACKAGE_BASE_URL }}
           RELEASE_CHANNEL: ${{ inputs.channel }}
         with:
           script: |
-            // Scripts are resolved relative to the root of the repository
             const { default: execAnnouncement } = await import('${{ github.workspace }}/scripts/source/ci/release/announce.ts');
             await execAnnouncement(core);
 
       - name: Notify on Slack
-        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
-        if: steps.changesets.outputs.published == 'true'
+        if: steps.announcement.outcome == 'success'
+        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v2
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
-          payload: ${{ steps.announcement.outputs.SLACK_WEBHOOK_PAYLOAD }}
+          payload: ${{ steps.announcement.outputs.slackWebhookPayload }}
