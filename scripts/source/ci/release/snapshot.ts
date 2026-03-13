@@ -40,7 +40,6 @@ interface ChangesetStatus {
 interface WorkspacePackage {
   name: string;
   path: string;
-  version: string;
 }
 
 export default async function main(
@@ -81,11 +80,14 @@ async function snapshot(
 
   core.info(`Found ${releasePlan.changesets.length} pending changeset(s).`);
 
+  // 2. Resolve workspace package paths (needed for reading package.json and CHANGELOG.md).
   const workspacePackages = await getWorkspacePackages(exec);
+
+  // 3. Apply snapshot versions (modifies package.json files in-place, not committed).
   await exec.exec("pnpm changeset version", ["--snapshot", SNAPSHOT_TAG]);
 
-  // 4. Detect which packages got new snapshot versions by comparing with originals.
-  const publishedPackages = detectVersionChanges(workspacePackages);
+  // 4. Read actual snapshot versions for packages the release plan says will change.
+  const publishedPackages = getSnapshotVersions(releasePlan, workspacePackages);
   if (publishedPackages.length === 0) {
     core.info("No packages were versioned. Skipping publish.");
     core.setOutput("published", "false");
@@ -96,32 +98,33 @@ async function snapshot(
   // 5. Publish snapshot packages to registry.
   await exec.exec("pnpm changeset publish", ["--tag", SNAPSHOT_TAG]);
 
-  // 6. Create a consolidated GitHub pre-release with release notes.
-  const releaseNotes = formatReleaseNotes(releasePlan, publishedPackages);
-  const now = new Date();
-  const dateStr = now.toISOString().split("T")[0].replace(/-/g, "");
-  const timeStr = now
-    .toISOString()
-    .split("T")[1]
-    .replace(/[:.]/g, "")
-    .slice(0, 6);
-  const tagName = `${SNAPSHOT_TAG}-${dateStr}T${timeStr}`;
+  // 6. Create per-package GitHub pre-releases with changelog-based release notes.
+  for (const pkg of publishedPackages) {
+    const workspace = workspacePackages.get(pkg.name);
+    if (!workspace) {
+      continue;
+    }
 
-  try {
-    await github.rest.repos.createRelease({
-      body: releaseNotes,
-      name: `Beta Snapshot (${now.toISOString().split("T")[0]})`,
-      owner: context.repo.owner,
-      prerelease: true,
-      repo: context.repo.repo,
-      tag_name: tagName,
-      target_commitish: context.sha,
-    });
-    core.info(`Created GitHub pre-release: ${tagName}`);
-  } catch (error) {
-    core.warning(
-      `Failed to create GitHub pre-release: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    const changelog = readChangelogSection(workspace.path, pkg.version);
+    const body = formatPreReleaseBody(changelog, pkg);
+    const tag = `${pkg.name}@${pkg.version}`;
+
+    try {
+      await github.rest.repos.createRelease({
+        body,
+        name: tag,
+        owner: context.repo.owner,
+        prerelease: true,
+        repo: context.repo.repo,
+        tag_name: tag,
+        target_commitish: context.sha,
+      });
+      core.info(`Created GitHub pre-release: ${tag}`);
+    } catch (error) {
+      core.warning(
+        `Failed to create pre-release for ${pkg.name}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   // 7. Set outputs matching the changesets/action contract.
@@ -146,68 +149,80 @@ async function getWorkspacePackages(
 
   const packages = JSON.parse(stdout) as WorkspacePackage[];
   return new Map(
-    packages.filter((p) => p.name && p.path).map((p) => [p.name, p]),
+    packages
+      .filter((p): p is WorkspacePackage => Boolean(p.name && p.path))
+      .map((p) => [p.name, p]),
   );
 }
 
-/** Compares package.json versions after snapshot versioning to detect which packages changed. */
-function detectVersionChanges(
-  originalPackages: Map<string, WorkspacePackage>,
+/** Reads actual snapshot versions from package.json for packages the release plan says will change. */
+function getSnapshotVersions(
+  releasePlan: ChangesetStatus,
+  workspacePackages: Map<string, WorkspacePackage>,
 ): PublishedPackage[] {
-  const changed: PublishedPackage[] = [];
+  const packages: PublishedPackage[] = [];
 
-  for (const [name, original] of originalPackages) {
-    const pkgJsonPath = join(original.path, "package.json");
+  for (const release of releasePlan.releases) {
+    if (release.type === "none") {
+      continue;
+    }
+
+    const workspace = workspacePackages.get(release.name);
+    if (!workspace) {
+      continue;
+    }
 
     try {
-      const pkgJson = JSON.parse(readFileSync(pkgJsonPath, "utf8")) as {
-        private?: boolean;
-        version: string;
-      };
+      const pkgJson = JSON.parse(
+        readFileSync(join(workspace.path, "package.json"), "utf8"),
+      ) as { version: string };
 
-      if (pkgJson.private) {
-        continue;
-      }
-
-      if (pkgJson.version !== original.version) {
-        changed.push({ name, version: pkgJson.version });
-      }
+      packages.push({ name: release.name, version: pkgJson.version });
     } catch {
       // Skip packages whose package.json can't be read.
     }
   }
 
-  return changed;
+  return packages;
 }
 
-/** Formats release notes from the changeset status output and published packages. */
-function formatReleaseNotes(
-  status: ChangesetStatus,
-  publishedPackages: PublishedPackage[],
-): string {
-  const lines: string[] = [];
+/** Reads the changelog section for a specific version from a package's CHANGELOG.md. */
+function readChangelogSection(
+  packagePath: string,
+  version: string,
+): string | null {
+  try {
+    const content = readFileSync(join(packagePath, "CHANGELOG.md"), "utf8");
+    const versionHeading = `## ${version}`;
+    const startIndex = content.indexOf(versionHeading);
+    if (startIndex === -1) {
+      return null;
+    }
 
-  lines.push(
+    const sectionStart = startIndex + versionHeading.length;
+    const nextHeading = content.indexOf("\n## ", sectionStart);
+    const section =
+      nextHeading === -1
+        ? content.slice(sectionStart)
+        : content.slice(sectionStart, nextHeading);
+
+    return section.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Formats the body for a GitHub pre-release, with a notice and changelog content. */
+function formatPreReleaseBody(
+  changelog: string | null,
+  pkg: PublishedPackage,
+): string {
+  const lines = [
     "> [!IMPORTANT]",
     "> Internal release only. This version is not publicly available.",
     "",
-  );
+    changelog ?? `Snapshot release of \`${pkg.name}@${pkg.version}\`.`,
+  ];
 
-  lines.push("## Published Packages\n");
-  for (const pkg of publishedPackages) {
-    lines.push(`- \`${pkg.name}@${pkg.version}\``);
-  }
-
-  lines.push("\n## Changes\n");
-  for (const changeset of status.changesets) {
-    const packageList = changeset.releases
-      .map((r) => `\`${r.name}\` (${r.type})`)
-      .join(", ");
-
-    lines.push(`### ${packageList}\n`);
-    lines.push(changeset.summary);
-    lines.push("");
-  }
-
-  return lines.join("\n").trimEnd();
+  return lines.join("\n");
 }

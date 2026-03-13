@@ -130,7 +130,7 @@ function formatMarkdownAnnouncement(
     const pkgReleaseUrl = `${REPOSITORY_URL}/releases/tag/${pkgRelease}`;
     const packageUrl = joinPackageUrl(packageBaseUrl, pkg.name);
 
-    announcement += `\u2007• \`${pkgRelease}\`: Read the <${pkgReleaseUrl}|release notes⇗>. See package <${packageUrl}|details⇗>.\n`;
+    announcement += `\u2007• \`${pkgRelease}\`: Read the <${pkgReleaseUrl}|release notes⇗>. See <${packageUrl}|package details⇗>.\n`;
   }
 
   return announcement.trimEnd();
