@@ -12,6 +12,7 @@
 
 import { createRootInstallationStep } from "./root";
 import { createInitialState, executeWorkflow } from "./workflow";
+import { validateStepTree } from "./workflow/validation";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
@@ -20,7 +21,9 @@ import type {
   InstallationContext,
   InstallationHooks,
   SucceededInstallationState,
+  ValidationContext,
 } from "./workflow";
+import type { ValidationResult } from "./workflow/validation";
 
 /** Options for creating an initial installation state. */
 export type CreateInitialInstallationStateOptions = {
@@ -72,4 +75,29 @@ export function runInstallation(
     initialState,
     hooks,
   });
+}
+
+/** Options for running pre-installation validation. */
+export type RunValidationOptions = {
+  /** Validation context (params, logger, appData — no customScripts). */
+  validationContext: ValidationContext;
+
+  /** The app configuration. */
+  config: CommerceAppConfigOutputModel;
+};
+
+/**
+ * Runs pre-installation validation over the full step tree.
+ *
+ * Traverses the same step hierarchy used during installation but only calls
+ * each step's optional `validate` handler rather than executing side effects.
+ * Always resolves (never throws). Returns a structured result with per-step
+ * issues and an aggregated summary.
+ */
+export function runValidation(
+  options: RunValidationOptions,
+): Promise<ValidationResult> {
+  const { validationContext, config } = options;
+  const rootStep = createRootInstallationStep(config);
+  return validateStepTree({ rootStep, validationContext, config });
 }

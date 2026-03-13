@@ -46,7 +46,7 @@ const WEBHOOK_IDENTIFIER_REGEX = /^[a-zA-Z0-9_]+$/;
 const CATEGORIES = ["validation", "append", "modification"] as const;
 const CategorySchema = v.picklist(
   CATEGORIES,
-  `category must be one of: ${CATEGORIES.join(", ")}`,
+  `Webhook category must be one of: ${CATEGORIES.join(", ")}`,
 );
 
 /** Schema for the nested webhook payload without url — used when runtimeAction resolves the URL at runtime. */
@@ -72,7 +72,7 @@ const WebhookDefinitionBaseSchema = v.object({
   required: v.optional(booleanValueSchema("required")),
   soft_timeout: v.optional(positiveNumberValueSchema("soft_timeout")),
   timeout: v.optional(positiveNumberValueSchema("timeout")),
-  method: nonEmptyStringValueSchema("method"),
+  method: nonEmptyStringValueSchema("HTTP method"),
   fallback_error_message: v.optional(
     stringValueSchema("fallback_error_message"),
   ),
@@ -92,15 +92,17 @@ const WebhookDefinitionBaseSchema = v.object({
 const WebhookDefinitionWithUrlSchema = v.object({
   ...WebhookDefinitionBaseSchema.entries,
   url: v.pipe(
-    stringValueSchema("url"),
-    v.url("The url field must be a valid URL"),
+    stringValueSchema("webhook URL"),
+    v.url(
+      "The 'url' field must be a valid absolute URL (e.g., 'https://example.com/webhook')",
+    ),
   ),
 });
 
 /** Schema for a webhook entry that resolves its URL from a runtime action. */
 const WebhookEntryWithRuntimeActionSchema = v.object({
-  label: nonEmptyStringValueSchema("label"),
-  description: nonEmptyStringValueSchema("description"),
+  label: nonEmptyStringValueSchema("webhook label"),
+  description: nonEmptyStringValueSchema("webhook description"),
   category: v.optional(CategorySchema),
   runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
   requireAdobeAuth: v.optional(booleanValueSchema("requireAdobeAuth")),
@@ -109,17 +111,17 @@ const WebhookEntryWithRuntimeActionSchema = v.object({
 
 /** Schema for a webhook entry that provides an explicit URL. */
 const WebhookEntryWithUrlSchema = v.object({
-  label: nonEmptyStringValueSchema("label"),
-  description: nonEmptyStringValueSchema("description"),
+  label: nonEmptyStringValueSchema("webhook label"),
+  description: nonEmptyStringValueSchema("webhook description"),
   category: v.optional(CategorySchema),
   webhook: WebhookDefinitionWithUrlSchema,
 });
 
 /** Schema for a single webhook entry — either runtimeAction (no url) or explicit url (no runtimeAction). */
-const WebhookEntrySchema = v.union([
-  WebhookEntryWithRuntimeActionSchema,
-  WebhookEntryWithUrlSchema,
-]);
+const WebhookEntrySchema = v.union(
+  [WebhookEntryWithRuntimeActionSchema, WebhookEntryWithUrlSchema],
+  "Each webhook entry must define either a 'runtimeAction' (to resolve the URL from a runtime action) or an explicit 'url' inside the 'webhook' object, but not both",
+);
 
 /** Schema for the optional webhooks array (when present, must have at least one item). */
 export const WebhooksSchema = v.optional(

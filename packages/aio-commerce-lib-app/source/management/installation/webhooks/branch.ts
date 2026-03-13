@@ -17,7 +17,10 @@ import {
 } from "#management/installation/workflow/step";
 
 import { createWebhooksStepContext } from "./context";
-import { createWebhookSubscriptions } from "./helpers";
+import {
+  createWebhookSubscriptions,
+  validateWebhookConflicts,
+} from "./helpers";
 
 import type { WebhooksConfig } from "#config/schema/webhooks";
 import type { WebhooksExecutionContext } from "./context";
@@ -28,6 +31,9 @@ const subscriptionsStep = defineLeafStep({
     label: "Create Subscriptions",
     description: "Creates webhook subscriptions in Adobe Commerce",
   },
+
+  validate: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
+    validateWebhookConflicts(config, context),
 
   run: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
     createWebhookSubscriptions(config, context),
