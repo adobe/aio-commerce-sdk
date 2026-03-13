@@ -29,9 +29,6 @@ on:
       commentBody:
         description: Markdown comment body with published packages
         value: ${{ jobs.release.outputs.commentBody }}
-      SLACK_WEBHOOK_PAYLOAD:
-        description: Slack webhook payload for release announcement
-        value: ${{ jobs.release.outputs.SLACK_WEBHOOK_PAYLOAD }}
 
     secrets:
       REGISTRY_URL:
@@ -40,6 +37,8 @@ on:
         required: false
       REGISTRY_AUTH_TOKEN:
         required: true
+      SLACK_WEBHOOK_URL:
+        required: false
 jobs:
   release:
     name: Version or Release
@@ -48,7 +47,6 @@ jobs:
       published: ${{ steps.snapshot.outputs.published || steps.changesets.outputs.published }}
       publishedPackages: ${{ steps.snapshot.outputs.publishedPackages || steps.changesets.outputs.publishedPackages }}
       commentBody: ${{ steps.snapshot.outputs.commentBody }}
-      SLACK_WEBHOOK_PAYLOAD: ${{ steps.announcement.outputs.SLACK_WEBHOOK_PAYLOAD }}
     permissions:
       contents: write
       pull-requests: write
@@ -134,3 +132,11 @@ jobs:
           script: |
             const { default: execAnnouncement } = await import('${{ github.workspace }}/scripts/source/ci/release/announce.ts');
             await execAnnouncement(core);
+
+      - name: Notify on Slack
+        if: steps.announcement.outcome == 'success'
+        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v2
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: ${{ steps.announcement.outputs.slackWebhookPayload }}

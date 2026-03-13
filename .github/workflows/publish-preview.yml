@@ -41,6 +41,7 @@ jobs:
               repo: context.repo.repo,
               username: context.actor,
             });
+
             if (data.permission !== 'admin') {
               core.setFailed(`@${context.actor} does not have admin permission on this repository (actual: ${data.permission}).`);
             }
@@ -64,6 +65,7 @@ jobs:
               repo: context.repo.repo,
               pull_number: ${{ steps.pr.outputs.number }}
             });
+            
             core.setOutput('head_sha', pr.data.head.sha);
 
   release:

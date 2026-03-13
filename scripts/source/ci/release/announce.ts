@@ -26,7 +26,7 @@ const REPOSITORY_URL = `https://github.com/${REPOSITORY}`;
 export default function main(core: AsyncFunctionArguments["core"]) {
   return runGitHubScript(core, () => {
     const webhookBody = announce();
-    core.setOutput("SLACK_WEBHOOK_PAYLOAD", JSON.stringify(webhookBody));
+    core.setOutput("slackWebhookPayload", JSON.stringify(webhookBody));
 
     return webhookBody;
   });
