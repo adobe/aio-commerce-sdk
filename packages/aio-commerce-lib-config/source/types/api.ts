@@ -11,10 +11,7 @@
  */
 
 import type { ConfigValue } from "#modules/configuration/types";
-import type {
-  BusinessConfigSchema,
-  BusinessConfigSchemaValue,
-} from "#modules/schema/types";
+import type { BusinessConfigSchema } from "#modules/schema/types";
 
 export type { GetScopeTreeResult } from "#modules/scope-tree/types";
 
@@ -62,8 +59,8 @@ export type SetConfigurationRequest = {
   config: Array<{
     /** The name of the configuration field. */
     name: string;
-    /** The value to set (string, number, or boolean). */
-    value: BusinessConfigSchemaValue;
+    /** The value to set (string). */
+    value: string;
   }>;
 };
 
@@ -84,8 +81,134 @@ export type SetConfigurationResponse = {
   /** Array of updated configuration values. */
   config: Array<{
     name: string;
-    value: BusinessConfigSchemaValue;
+    value: string;
   }>;
+};
+
+/**
+ * Change summary between two configuration versions.
+ */
+export type ConfigurationVersionChange = {
+  /** Config keys that were added in this version. */
+  added: string[];
+  /** Config keys that were updated in this version. */
+  updated: string[];
+  /** Config keys that were removed in this version. */
+  removed: string[];
+};
+
+/** Config snapshot entry stored per version. */
+export type ConfigurationVersionValue = {
+  /** Config field name. */
+  name: string;
+  /** Config field value for this version. */
+  value: string;
+};
+
+/**
+ * Single key change with before/after values (only changed keys).
+ * Added: after only; removed: before only; updated: both.
+ */
+export type VersionChangeEntry = {
+  /** Config field name. */
+  name: string;
+  /** Value before this version (omitted for added keys). */
+  before?: string;
+  /** Value after this version (omitted for removed keys). */
+  after?: string;
+};
+
+/**
+ * Configuration version metadata.
+ */
+export type ConfigurationVersion = {
+  /** Unique version identifier. */
+  id: string;
+  /** ISO timestamp for when this version was created. */
+  timestamp: string;
+  /** Scope information for this version. */
+  scope: {
+    id: string;
+    code: string;
+    level: string;
+  };
+  /** Why this version was created. */
+  reason: "set" | "restore";
+  /** Source version ID if created by restore. */
+  restoredFromVersionId?: string;
+  /** Added/updated/removed key summary for this version. */
+  change: ConfigurationVersionChange;
+  /** Snapshot values for this version (name/value only). */
+  config?: ConfigurationVersionValue[];
+  /** Only changed keys with before/after values. */
+  changes?: VersionChangeEntry[];
+};
+
+/**
+ * Request query params for listing configuration versions.
+ */
+export type GetConfigurationVersionsParams = {
+  /** Number of items to return. Defaults to 50. */
+  limit?: number;
+  /** Number of items to skip. Defaults to 0. */
+  offset?: number;
+};
+
+/**
+ * Response type for listing configuration versions.
+ */
+export type GetConfigurationVersionsResponse = {
+  /** Scope information including id, code, and level. */
+  scope: {
+    id: string;
+    code: string;
+    level: string;
+  };
+  /** Version metadata in descending order (newest first). */
+  versions: ConfigurationVersion[];
+  /** Pagination metadata for the current query. */
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+  };
+};
+
+/**
+ * Request type for restoring a configuration version.
+ */
+export type RestoreConfigurationVersionRequest = {
+  /** Source version identifier to restore from. */
+  versionId: string;
+  /** Optional optimistic concurrency control against latest version id. */
+  expectedLatestVersionId?: string;
+  /** Optional subset of fields to restore; defaults to changed keys only. */
+  fields?: string[];
+};
+
+/**
+ * Response type for restoring a configuration version.
+ */
+export type RestoreConfigurationVersionResponse = {
+  /** Success message. */
+  message: string;
+  /** ISO timestamp of when restore was applied. */
+  timestamp: string;
+  /** Scope information including id, code, and level. */
+  scope: {
+    id: string;
+    code: string;
+    level: string;
+  };
+  /** The version id that was used as restore source. */
+  restoredFromVersionId: string;
+  /** Restored values (name/value only). */
+  config: Array<{
+    name: string;
+    value: string;
+  }>;
+  /** Restored keys removed from current scope. */
+  removed: string[];
 };
 
 /**

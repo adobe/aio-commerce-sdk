@@ -33,7 +33,7 @@ export async function getConfigurationByKey(
   context: ConfigContext,
   configKey: string,
   ...args: unknown[]
-) {
+): Promise<GetConfigurationByKeyResponse> {
   const fullConfig = await getConfiguration(context, ...args);
   const configValue =
     fullConfig.config.find((item) => item.name === configKey) || null;
