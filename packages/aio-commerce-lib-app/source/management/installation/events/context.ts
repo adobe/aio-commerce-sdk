@@ -29,13 +29,11 @@ import {
   createRegistration,
   getAllEventProviders,
   getAllRegistrations,
+  updateRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
-import type {
-  ExecutionContext,
-  InstallationContext,
-} from "#management/installation/workflow/index";
+import type { InstallationContext } from "#management/installation/workflow/index";
 
 /**
  * Create a custom Commerce API Client with only the operations we need for optimal package size.
@@ -78,6 +76,7 @@ function createIoEventsApiClient(params: RuntimeActionParams) {
     createRegistration,
     getAllEventProviders,
     getAllRegistrations,
+    updateRegistration,
   });
 }
 
@@ -116,4 +115,4 @@ export function createEventsStepContext(installation: InstallationContext) {
 export type EventsStepContext = ReturnType<typeof createEventsStepContext>;
 
 /** The execution context for event leaf steps. */
-export type EventsExecutionContext = ExecutionContext<EventsStepContext>;
+export type EventsExecutionContext = InstallationContext & EventsStepContext;

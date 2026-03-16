@@ -377,3 +377,17 @@ export async function getCommerceEventingExistingData(
 export type ExistingCommerceEventingData = Awaited<
   ReturnType<typeof getCommerceEventingExistingData>
 >;
+
+export function intoEventsOfInterest(
+  events: AppEventWithoutRuntimeActions[],
+  provider: IoEventProvider,
+  metadata: ApplicationMetadata,
+) {
+  return events.map((event) => ({
+    providerId: provider.id,
+    eventCode: getIoEventCode(
+      getNamespacedEvent(metadata, event.name),
+      provider.provider_metadata as EventProviderType,
+    ),
+  }));
+}
