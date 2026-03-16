@@ -65,13 +65,6 @@ async function snapshot(
   const skipGitHubReleases =
     process.env.SKIP_GITHUB_RELEASES?.toLowerCase() === "true";
 
-  // Ensure baseBranch exists as a local ref (CI only has origin/release).
-  try {
-    await exec.exec("git", ["branch", "release", "origin/release"]);
-  } catch {
-    // Branch already exists locally or remote ref not found — either way, continue.
-  }
-
   const statusFile = join(
     process.env.GITHUB_WORKSPACE ?? process.cwd(),
     STATUS_OUTPUT_FILE,
@@ -92,7 +85,6 @@ async function snapshot(
   core.info(`Found ${releasePlan.changesets.length} pending changeset(s).`);
 
   const workspacePackages = await getWorkspacePackages(exec);
-  await exec.exec("pnpm changeset version", ["--snapshot", snapshotTag]);
 
   const publishedPackages = getSnapshotVersions(releasePlan, workspacePackages);
   if (publishedPackages.length === 0) {

@@ -18,6 +18,10 @@ on:
         required: false
         type: boolean
         default: false
+      notify_slack:
+        required: false
+        type: boolean
+        default: true
 
     outputs:
       published:
@@ -56,9 +60,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          ref: ${{ inputs.ref || '' }}
-          fetch-depth: 0
 
       # pnpm version will be read from packageManager field in package.json
       - name: Setup pnpm
@@ -72,6 +73,18 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Internal: version before build so .build/package.json gets snapshot versions
+      - name: Fetch release branch
+        if: inputs.channel == 'internal'
+        run: git branch release origin/release || true
+
+      - name: Apply snapshot versions
+        if: inputs.channel == 'internal'
+        run: pnpm changeset version --snapshot "${SNAPSHOT_TAG:-beta}"
+        env:
+          SNAPSHOT_TAG: ${{ inputs.snapshot_tag }}
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Build packages
         run: pnpm turbo build
@@ -89,8 +102,8 @@ jobs:
             const { default: execPrepare } = await import('${{ github.workspace }}/scripts/source/ci/release/prepare.ts');
             await execPrepare(core, exec);
 
-      # --- Internal: Snapshot version + publish (no version PR, no changelog commits) ---
-      - name: Snapshot Version and Publish
+      # --- Internal: Publish snapshot packages and create GitHub pre-releases ---
+      - name: Publish snapshot packages
         id: snapshot
         if: inputs.channel == 'internal'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
@@ -121,10 +134,10 @@ jobs:
       # --- Slack announcement (generated here, sent by caller workflows) ---
       - name: Generate Slack Announcement
         id: announcement
-        continue-on-error: true
         if: |
-          (inputs.channel == 'internal' && steps.snapshot.outputs.published == 'true') ||
-          (inputs.channel == 'public' && steps.changesets.outputs.published == 'true')
+          inputs.notify_slack &&
+          ((inputs.channel == 'internal' && steps.snapshot.outputs.published == 'true') ||
+          (inputs.channel == 'public' && steps.changesets.outputs.published == 'true'))
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         env:
           PUBLISHED_PACKAGES: ${{ inputs.channel == 'internal' && steps.snapshot.outputs.publishedPackages || steps.changesets.outputs.publishedPackages }}
@@ -136,7 +149,7 @@ jobs:
             await execAnnouncement(core);
 
       - name: Notify on Slack
-        if: steps.announcement.outcome == 'success'
+        if: inputs.notify_slack && steps.announcement.outcome == 'success'
         uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v2
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
