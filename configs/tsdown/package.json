@@ -23,6 +23,6 @@
   },
   "devDependencies": {
     "globby": "^16.0.0",
-    "rolldown": "1.0.0-rc.6"
+    "rolldown": "1.0.0-rc.9"
   }
 }
