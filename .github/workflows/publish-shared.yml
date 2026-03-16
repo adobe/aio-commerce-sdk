@@ -56,9 +56,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          ref: ${{ inputs.ref || '' }}
-          fetch-depth: 0
 
       # pnpm version will be read from packageManager field in package.json
       - name: Setup pnpm
@@ -72,6 +69,18 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Internal: version before build so .build/package.json gets snapshot versions
+      - name: Fetch release branch
+        if: inputs.channel == 'internal'
+        run: git branch release origin/release || true
+
+      - name: Apply snapshot versions
+        if: inputs.channel == 'internal'
+        run: pnpm changeset version --snapshot "${SNAPSHOT_TAG:-beta}"
+        env:
+          SNAPSHOT_TAG: ${{ inputs.snapshot_tag }}
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Build packages
         run: pnpm turbo build
@@ -89,8 +98,8 @@ jobs:
             const { default: execPrepare } = await import('${{ github.workspace }}/scripts/source/ci/release/prepare.ts');
             await execPrepare(core, exec);
 
-      # --- Internal: Snapshot version + publish (no version PR, no changelog commits) ---
-      - name: Snapshot Version and Publish
+      # --- Internal: Publish snapshot packages and create GitHub pre-releases ---
+      - name: Publish snapshot packages
         id: snapshot
         if: inputs.channel == 'internal'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
