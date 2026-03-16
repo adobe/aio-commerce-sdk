@@ -92,8 +92,8 @@ async function snapshot(
   core.info(`Found ${releasePlan.changesets.length} pending changeset(s).`);
 
   const workspacePackages = await getWorkspacePackages(exec);
-
   const publishedPackages = getSnapshotVersions(releasePlan, workspacePackages);
+
   if (publishedPackages.length === 0) {
     core.info("No packages were versioned. Skipping publish.");
     core.setOutput("published", "false");
@@ -101,7 +101,12 @@ async function snapshot(
     return;
   }
 
-  await exec.exec("pnpm changeset publish", ["--tag", snapshotTag]);
+  const publishArgs = ["--tag", snapshotTag];
+  if (snapshotTag === "alpha") {
+    publishArgs.push("--no-git-tag");
+  }
+
+  await exec.exec("pnpm changeset publish", publishArgs);
 
   if (!skipGitHubReleases) {
     for (const pkg of publishedPackages) {
@@ -135,14 +140,6 @@ async function snapshot(
 
   core.setOutput("published", "true");
   core.setOutput("publishedPackages", JSON.stringify(publishedPackages));
-
-  const registryUrl = process.env.REGISTRY_URL;
-  if (registryUrl) {
-    core.setOutput(
-      "commentBody",
-      formatCommentBody(publishedPackages, registryUrl),
-    );
-  }
 
   core.info(
     `Published ${publishedPackages.length} snapshot package(s): ${publishedPackages.map((p) => `${p.name}@${p.version}`).join(", ")}`,
@@ -223,30 +220,6 @@ function readChangelogSection(
   } catch {
     return null;
   }
-}
-
-/** Formats a PR comment body with published packages and install commands. */
-function formatCommentBody(
-  packages: PublishedPackage[],
-  registryUrl: string,
-): string {
-  const rows = packages.map((p) => `| \`${p.name}\` | \`${p.version}\` |`);
-  const installLines = packages.map(
-    (p) => `npm install ${p.name}@${p.version} --registry ${registryUrl}`,
-  );
-
-  return [
-    "### 📦 Snapshot packages published",
-    "",
-    "| Package | Version |",
-    "| ------- | ------- |",
-    ...rows,
-    "",
-    "**Install:**",
-    "```sh",
-    ...installLines,
-    "```",
-  ].join("\n");
 }
 
 /** Formats the body for a GitHub pre-release, with a notice and changelog content. */

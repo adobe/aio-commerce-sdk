@@ -39,8 +39,9 @@ async function prepare(
   } = process.env as Environment;
 
   const releaseChannel = parseReleaseChannel(releaseChannelValue);
+  const publishOnly = process.env.PUBLISH_ONLY === "true";
 
-  if (releaseChannel === "internal") {
+  if (releaseChannel === "internal" && !publishOnly) {
     await prepareSnapshot(core, exec);
   }
 
