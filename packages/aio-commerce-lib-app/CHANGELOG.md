@@ -1,5 +1,14 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.0.2
+
+### Patch Changes
+
+- [#318](https://github.com/adobe/aio-commerce-sdk/pull/318) [`dac677f`](https://github.com/adobe/aio-commerce-sdk/commit/dac677f2ebb7841f78a11919af8f145de57024bf) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix an issue where a not-needed input causes installation errors.
+
+- Updated dependencies [[`452dc94`](https://github.com/adobe/aio-commerce-sdk/commit/452dc940a6f9ea48b63260dfb80830b7bee0ec79)]:
+  - @adobe/aio-commerce-lib-config@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes
