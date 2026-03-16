@@ -30,9 +30,6 @@ on:
       publishedPackages:
         description: JSON array of published packages
         value: ${{ jobs.release.outputs.publishedPackages }}
-      commentBody:
-        description: Markdown comment body with published packages
-        value: ${{ jobs.release.outputs.commentBody }}
 
     secrets:
       REGISTRY_URL:
@@ -50,7 +47,6 @@ jobs:
     outputs:
       published: ${{ steps.snapshot.outputs.published || steps.changesets.outputs.published }}
       publishedPackages: ${{ steps.snapshot.outputs.publishedPackages || steps.changesets.outputs.publishedPackages }}
-      commentBody: ${{ steps.snapshot.outputs.commentBody }}
     permissions:
       contents: write
       pull-requests: write
@@ -60,6 +56,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.ref }}
 
       # pnpm version will be read from packageManager field in package.json
       - name: Setup pnpm

@@ -1,10 +1,13 @@
 name: Publish Internal
 
 on:
+  push:
+    branches:
+      - release
   workflow_dispatch:
     inputs:
       notify_slack:
-        description: Send Slack notification after publish
+        description: Notify in Slack
         type: boolean
         default: true
 
