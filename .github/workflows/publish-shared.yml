@@ -77,7 +77,7 @@ jobs:
       # Internal: version before build so .build/package.json gets snapshot versions
       - name: Fetch release branch
         if: inputs.channel == 'internal'
-        run: git branch release origin/release || true
+        run: git fetch origin release && git branch release origin/release || true
 
       - name: Apply snapshot versions
         if: inputs.channel == 'internal'
