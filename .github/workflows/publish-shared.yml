@@ -74,21 +74,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Internal: version before build so .build/package.json gets snapshot versions
-      - name: Fetch release branch
-        if: inputs.channel == 'internal'
-        run: git fetch origin release && git branch release origin/release || true
-
-      - name: Apply snapshot versions
-        if: inputs.channel == 'internal'
-        run: pnpm changeset version --snapshot "${SNAPSHOT_TAG:-beta}"
-        env:
-          SNAPSHOT_TAG: ${{ inputs.snapshot_tag }}
-          GITHUB_TOKEN: ${{ github.token }}
-
-      - name: Build packages
-        run: pnpm turbo build
-
       - name: Prepare release context
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         id: prepare
@@ -96,11 +81,15 @@ jobs:
           REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
           REGISTRY_AUTH_TOKEN: ${{ secrets.REGISTRY_AUTH_TOKEN }}
           RELEASE_CHANNEL: ${{ inputs.channel }}
+          SNAPSHOT_TAG: ${{ inputs.snapshot_tag }}
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           script: |
-            // Scripts are resolved relative to the root of the repository
             const { default: execPrepare } = await import('${{ github.workspace }}/scripts/source/ci/release/prepare.ts');
             await execPrepare(core, exec);
+
+      - name: Build packages
+        run: pnpm turbo build
 
       # --- Internal: Publish snapshot packages and create GitHub pre-releases ---
       - name: Publish snapshot packages

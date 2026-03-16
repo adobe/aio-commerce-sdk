@@ -61,7 +61,32 @@ describe("release/prepare.ts", () => {
       await prepare(asCore(core), asExec(exec));
 
       expect(core.setFailed).not.toHaveBeenCalled();
-      expect(exec.exec).toHaveBeenCalledOnce();
+
+      // Snapshot preparation: fetch release branch, changeset status, changeset version
+      expect(exec.exec).toHaveBeenCalledWith("git", [
+        "fetch",
+        "origin",
+        "release",
+      ]);
+      expect(exec.exec).toHaveBeenCalledWith("git", [
+        "branch",
+        "release",
+        "origin/release",
+      ]);
+      expect(exec.exec).toHaveBeenCalledWith("pnpm", [
+        "changeset",
+        "status",
+        "--output",
+        join(tempDir, "changeset-status.json"),
+      ]);
+      expect(exec.exec).toHaveBeenCalledWith("pnpm", [
+        "changeset",
+        "version",
+        "--snapshot",
+        "beta",
+      ]);
+
+      // Registry auth check
       expect(exec.exec).toHaveBeenCalledWith("pnpm whoami", [
         "--userconfig",
         `${tempDir}/.npmrc`,
@@ -117,17 +142,23 @@ describe("release/prepare.ts", () => {
   });
 
   test("fails when registry authentication values are missing", async () => {
-    stubPrepareEnv({
-      registryAuthToken: "",
-      registryUrl: "",
-      releaseChannel: "internal",
+    await withTempFiles({}, async (tempDir) => {
+      stubPrepareEnv({
+        registryAuthToken: "",
+        registryUrl: "",
+        releaseChannel: "internal",
+      });
+
+      vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+
+      const core = createCoreMock();
+      const exec = createExecMock();
+      exec.exec.mockResolvedValue(0); // snapshot prep calls succeed
+
+      await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow(
+        "Missing required values for registry authentication configuration.",
+      );
     });
-
-    const core = createCoreMock();
-    const exec = createExecMock();
-
-    await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
-    expect(exec.exec).not.toHaveBeenCalled();
   });
 
   test("configures registry auth for an internal registry URL without a trailing slash", async () => {
@@ -160,6 +191,14 @@ describe("release/prepare.ts", () => {
         "--registry",
         registryUrl,
       ]);
+
+      // Also verifies snapshot preparation ran
+      expect(exec.exec).toHaveBeenCalledWith("pnpm", [
+        "changeset",
+        "version",
+        "--snapshot",
+        "beta",
+      ]);
     });
   });
 
@@ -175,7 +214,12 @@ describe("release/prepare.ts", () => {
 
       const core = createCoreMock();
       const exec = createExecMock();
-      exec.exec.mockRejectedValueOnce(new Error("ENEEDAUTH")); // pnpm whoami
+      exec.exec
+        .mockResolvedValueOnce(0) // git fetch
+        .mockResolvedValueOnce(0) // git branch
+        .mockResolvedValueOnce(0) // changeset status
+        .mockResolvedValueOnce(0) // changeset version
+        .mockRejectedValueOnce(new Error("ENEEDAUTH")); // pnpm whoami
 
       await prepare(asCore(core), asExec(exec));
 
@@ -197,12 +241,93 @@ describe("release/prepare.ts", () => {
 
       const core = createCoreMock();
       const exec = createExecMock();
-      exec.exec.mockRejectedValueOnce("auth failed");
+      exec.exec
+        .mockResolvedValueOnce(0) // git fetch
+        .mockResolvedValueOnce(0) // git branch
+        .mockResolvedValueOnce(0) // changeset status
+        .mockResolvedValueOnce(0) // changeset version
+        .mockRejectedValueOnce("auth failed"); // pnpm whoami
 
       await prepare(asCore(core), asExec(exec));
 
       expect(core.warning).toHaveBeenCalledWith(
         expect.stringContaining("auth failed"),
+      );
+    });
+  });
+
+  test("warns but continues when release branch fetch fails", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      stubPrepareEnv({
+        registryAuthToken: INTERNAL_AUTH_TOKEN,
+        registryUrl: INTERNAL_REGISTRY_URL,
+        releaseChannel: "internal",
+      });
+
+      vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+
+      const core = createCoreMock();
+      const exec = createExecMock();
+      exec.exec
+        .mockRejectedValueOnce(new Error("fatal: not a valid ref")) // git fetch fails
+        .mockResolvedValueOnce(0) // changeset status (still attempted)
+        .mockResolvedValueOnce(0) // changeset version
+        .mockResolvedValueOnce(0); // pnpm whoami
+
+      await prepare(asCore(core), asExec(exec));
+
+      expect(core.warning).toHaveBeenCalledWith(
+        expect.stringContaining("Could not fetch release branch"),
+      );
+    });
+  });
+
+  test("uses custom snapshot tag from SNAPSHOT_TAG env var", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      stubPrepareEnv({
+        registryAuthToken: INTERNAL_AUTH_TOKEN,
+        registryUrl: INTERNAL_REGISTRY_URL,
+        releaseChannel: "internal",
+      });
+
+      vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+      vi.stubEnv("SNAPSHOT_TAG", "alpha");
+
+      const core = createCoreMock();
+      const exec = createExecMock();
+      exec.exec.mockResolvedValue(0);
+
+      await prepare(asCore(core), asExec(exec));
+
+      expect(exec.exec).toHaveBeenCalledWith("pnpm", [
+        "changeset",
+        "version",
+        "--snapshot",
+        "alpha",
+      ]);
+    });
+  });
+
+  test("skips snapshot preparation for public releases", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      stubPrepareEnv({
+        registryAuthToken: PUBLIC_AUTH_TOKEN,
+        registryUrl: PUBLIC_REGISTRY_URL,
+        releaseChannel: "public",
+      });
+
+      vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+
+      const core = createCoreMock();
+      const exec = createExecMock();
+
+      await prepare(asCore(core), asExec(exec));
+
+      // No git or changeset commands should run for public releases
+      expect(exec.exec).not.toHaveBeenCalledWith("git", expect.anything());
+      expect(exec.exec).not.toHaveBeenCalledWith(
+        "pnpm",
+        expect.arrayContaining(["changeset"]),
       );
     });
   });

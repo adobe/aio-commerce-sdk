@@ -11,10 +11,14 @@
  */
 
 import { appendFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { parseReleaseChannel, runGitHubScript } from "./utils.ts";
 
 import type { AsyncFunctionArguments, Environment } from "./types.ts";
+
+const DEFAULT_SNAPSHOT_TAG = "beta";
+const STATUS_OUTPUT_FILE = "changeset-status.json";
 
 export default async function main(
   core: AsyncFunctionArguments["core"],
@@ -36,11 +40,47 @@ async function prepare(
 
   const releaseChannel = parseReleaseChannel(releaseChannelValue);
 
+  if (releaseChannel === "internal") {
+    await prepareSnapshot(core, exec);
+  }
+
   await configureRegistryAuth(core, exec, {
     registryUrl,
     registryAuthToken,
     releaseChannel,
   });
+}
+
+/**
+ * Prepares the snapshot release by fetching the release branch (needed for
+ * changeset status comparison), generating the changeset status file, and
+ * applying snapshot versions. This must run before the build step so that
+ * .build/package.json files get the snapshot versions.
+ */
+async function prepareSnapshot(
+  core: AsyncFunctionArguments["core"],
+  exec: AsyncFunctionArguments["exec"],
+) {
+  const snapshotTag = process.env.SNAPSHOT_TAG || DEFAULT_SNAPSHOT_TAG;
+  const workspaceRoot = process.env.GITHUB_WORKSPACE ?? process.cwd();
+  const statusFile = join(workspaceRoot, STATUS_OUTPUT_FILE);
+
+  // Fetch the release branch so changeset can compare HEAD against baseBranch.
+  // The shallow checkout only has the current ref; the release branch is needed
+  try {
+    await exec.exec("git", ["fetch", "origin", "release"]);
+    await exec.exec("git", ["branch", "release", "origin/release"]);
+  } catch {
+    core.warning(
+      "Could not fetch release branch. Changeset status may fail if baseBranch is not available.",
+    );
+  }
+
+  await exec.exec("pnpm", ["changeset", "status", "--output", statusFile]);
+  core.info(`Changeset status written to ${statusFile}`);
+
+  await exec.exec("pnpm", ["changeset", "version", "--snapshot", snapshotTag]);
+  core.info(`Snapshot versions applied with tag "${snapshotTag}".`);
 }
 
 /** Normalizes the registry path by removing the protocol and trailing slashes. */
