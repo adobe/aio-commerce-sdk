@@ -1,9 +1,6 @@
 name: Publish Internal
 
 on:
-  push:
-    branches:
-      - release
   workflow_dispatch:
     inputs:
       notify_slack:

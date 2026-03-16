@@ -27,6 +27,24 @@ jobs:
       REGISTRY_URL: "https://registry.npmjs.org"
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
+  mirror:
+    name: Mirror to Artifactory
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    uses: ./.github/workflows/publish-shared.yml
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+      id-token: write
+    with:
+      channel: internal
+      publish_only: true
+      notify_slack: false
+    secrets:
+      REGISTRY_URL: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
+      REGISTRY_AUTH_TOKEN: ${{ secrets.ARTIFACTORY_API_TOKEN }}
+
   back-sync:
     name: Back-sync to main
     needs: release

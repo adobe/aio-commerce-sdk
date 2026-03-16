@@ -152,7 +152,7 @@ jobs:
               'npm install @adobe/aio-commerce-sdk@alpha',
               '```',
               '',
-              'But note that the tag will always point to the latest snapshot, so it may not be the same version as listed above.',
+              'But note that the tag will always point to the latest `alpha` snapshot, so it may not be the same version as listed above.',
             ].join('\n');
 
             await github.rest.issues.createComment({
