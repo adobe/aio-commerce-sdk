@@ -18,6 +18,7 @@ export type Environment = {
   REGISTRY_AUTH_TOKEN: string;
   REGISTRY_URL: string;
   RELEASE_CHANNEL: ReleaseChannel;
+  SNAPSHOT_TAG?: string;
 };
 
 /** Environment variables for the release announcement script. */
