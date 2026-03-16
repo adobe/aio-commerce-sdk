@@ -26,24 +26,17 @@ import type { GetConfigurationResponse } from "#types/index";
 import type { ConfigContext } from "./types";
 
 /**
- * Gets configuration for a scope identified by code and level or id.
+ * Fetches and merges configuration for a scope without decrypting password fields.
  *
- * This function retrieves all configuration values for a specific scope, including
- * inherited values from parent scopes and schema defaults. The configuration is
- * merged according to the scope hierarchy, with values from more specific scopes
- * taking precedence over parent scopes. Password-type fields are automatically
- * decrypted before being returned.
- *
- * @param context - Configuration context containing namespace and cache timeout.
- * @param args - Scope identifier: either `(id: string)` or `(code: string, level: string)`.
- * @returns Promise resolving to configuration response with scope information and config values.
- *
- * @throws {Error} If the scope arguments are invalid or the scope is not found.
+ * @internal
  */
-export async function getConfiguration(
+export async function fetchRawConfiguration(
   context: ConfigContext,
   ...args: unknown[]
-): Promise<GetConfigurationResponse> {
+): Promise<{
+  configData: GetConfigurationResponse;
+  passwordFields: Set<string>;
+}> {
   const schema = await getSchema(context);
   const scopeTree = await scopeTreeRepository.getPersistedScopeTree(
     context.namespace,
@@ -79,7 +72,32 @@ export async function getConfiguration(
     // Continue with original configData if merging fails
   }
 
-  const passwordFields = getPasswordFields(schema);
+  return { configData, passwordFields: getPasswordFields(schema) };
+}
+
+/**
+ * Gets configuration for a scope identified by code and level or id.
+ *
+ * This function retrieves all configuration values for a specific scope, including
+ * inherited values from parent scopes and schema defaults. The configuration is
+ * merged according to the scope hierarchy, with values from more specific scopes
+ * taking precedence over parent scopes. Password-type fields are automatically
+ * decrypted before being returned.
+ *
+ * @param context - Configuration context containing namespace and cache timeout.
+ * @param args - Scope identifier: either `(id: string)` or `(code: string, level: string)`.
+ * @returns Promise resolving to configuration response with scope information and config values.
+ *
+ * @throws {Error} If the scope arguments are invalid or the scope is not found.
+ */
+export async function getConfiguration(
+  context: ConfigContext,
+  ...args: unknown[]
+): Promise<GetConfigurationResponse> {
+  const { configData, passwordFields } = await fetchRawConfiguration(
+    context,
+    ...args,
+  );
   return decryptPasswordFields(
     configData,
     passwordFields,
