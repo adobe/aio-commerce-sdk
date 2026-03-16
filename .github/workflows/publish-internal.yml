@@ -2,6 +2,11 @@ name: Publish Internal
 
 on:
   workflow_dispatch:
+    inputs:
+      notify_slack:
+        description: Send Slack notification after publish
+        type: boolean
+        default: true
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -17,6 +22,7 @@ jobs:
       id-token: write
     with:
       channel: internal
+      notify_slack: ${{ inputs.notify_slack }}
     secrets:
       REGISTRY_PACKAGE_BASE_URL: ${{ secrets.ARTIFACTORY_PACKAGE_BASE_URL }}
       REGISTRY_URL: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}

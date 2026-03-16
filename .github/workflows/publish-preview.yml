@@ -58,7 +58,7 @@ jobs:
             echo "number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
           fi
 
-      - name: Get PR head SHA
+      - name: Get PR details
         id: pr_details
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         env:
@@ -72,6 +72,25 @@ jobs:
             });
 
             core.setOutput('head_sha', pr.data.head.sha);
+            core.setOutput('base_ref', pr.data.base.ref);
+
+      - name: Checkout PR head
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ steps.pr_details.outputs.head_sha }}
+
+      - name: Verify PR contains new changesets
+        env:
+          BASE_REF: ${{ steps.pr_details.outputs.base_ref }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch origin "$BASE_REF" --depth=1
+          NEW_CHANGESETS=$(git diff --name-only --diff-filter=A "origin/$BASE_REF" HEAD -- '.changeset/' | grep '\.md$' | grep -v 'README.md' || true)
+          if [ -z "$NEW_CHANGESETS" ]; then
+            gh pr comment "$PR_NUMBER" --body "No new changesets found in this PR. Run \`pnpm changeset add\` before requesting a snapshot."
+            exit 1
+          fi
 
   release:
     name: Publish Preview Packages
@@ -87,6 +106,7 @@ jobs:
       ref: ${{ needs.prepare.outputs.head_sha }}
       snapshot_tag: alpha
       skip_github_releases: true
+      notify_slack: false
     secrets:
       REGISTRY_URL: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
       REGISTRY_AUTH_TOKEN: ${{ secrets.ARTIFACTORY_API_TOKEN }}

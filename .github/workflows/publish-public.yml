@@ -20,6 +20,7 @@ jobs:
       id-token: write
     with:
       channel: public
+      notify_slack: true
     secrets:
       REGISTRY_AUTH_TOKEN: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
       REGISTRY_PACKAGE_BASE_URL: "https://npmx.dev/package"
