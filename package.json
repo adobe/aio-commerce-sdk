@@ -1,7 +1,7 @@
 {
   "name": "aio-commerce-sdk",
   "private": true,
-  "packageManager": "pnpm@10.30.3",
+  "packageManager": "pnpm@10.32.1",
   "engines": {
     "node": ">=20 <=24",
     "pnpm": ">=10"
@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.4",
-    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.29.5",
     "@turbo/gen": "^2.5.4",
     "@types/node": "^24.0.4",
