@@ -62,16 +62,12 @@ describe("release/prepare.ts", () => {
 
       expect(core.setFailed).not.toHaveBeenCalled();
 
-      // Snapshot preparation: fetch release branch, changeset status, changeset version
+      // Snapshot preparation: unshallow, fetch release branch, changeset status, changeset version
+      expect(exec.exec).toHaveBeenCalledWith("git", ["fetch", "--unshallow"]);
       expect(exec.exec).toHaveBeenCalledWith("git", [
         "fetch",
         "origin",
-        "release",
-      ]);
-      expect(exec.exec).toHaveBeenCalledWith("git", [
-        "branch",
-        "release",
-        "origin/release",
+        "release:release",
       ]);
       expect(exec.exec).toHaveBeenCalledWith("pnpm", [
         "changeset",
@@ -215,8 +211,8 @@ describe("release/prepare.ts", () => {
       const core = createCoreMock();
       const exec = createExecMock();
       exec.exec
-        .mockResolvedValueOnce(0) // git fetch
-        .mockResolvedValueOnce(0) // git branch
+        .mockResolvedValueOnce(0) // git fetch --unshallow
+        .mockResolvedValueOnce(0) // git fetch origin release:release
         .mockResolvedValueOnce(0) // changeset status
         .mockResolvedValueOnce(0) // changeset version
         .mockRejectedValueOnce(new Error("ENEEDAUTH")); // pnpm whoami
@@ -242,8 +238,8 @@ describe("release/prepare.ts", () => {
       const core = createCoreMock();
       const exec = createExecMock();
       exec.exec
-        .mockResolvedValueOnce(0) // git fetch
-        .mockResolvedValueOnce(0) // git branch
+        .mockResolvedValueOnce(0) // git fetch --unshallow
+        .mockResolvedValueOnce(0) // git fetch origin release:release
         .mockResolvedValueOnce(0) // changeset status
         .mockResolvedValueOnce(0) // changeset version
         .mockRejectedValueOnce("auth failed"); // pnpm whoami
@@ -269,7 +265,9 @@ describe("release/prepare.ts", () => {
       const core = createCoreMock();
       const exec = createExecMock();
       exec.exec
-        .mockRejectedValueOnce(new Error("fatal: not a valid ref")) // git fetch fails
+        .mockRejectedValueOnce(
+          new Error("fatal: --unshallow on a complete repository"),
+        ) // git fetch --unshallow fails
         .mockResolvedValueOnce(0) // changeset status (still attempted)
         .mockResolvedValueOnce(0) // changeset version
         .mockResolvedValueOnce(0); // pnpm whoami

@@ -65,11 +65,11 @@ async function prepareSnapshot(
   const workspaceRoot = process.env.GITHUB_WORKSPACE ?? process.cwd();
   const statusFile = join(workspaceRoot, STATUS_OUTPUT_FILE);
 
-  // Fetch the release branch so changeset can compare HEAD against baseBranch.
-  // The shallow checkout only has the current ref; the release branch is needed
+  // Unshallow the clone and fetch the release branch so changeset status can
+  // find where HEAD diverged from baseBranch via git merge-base.
   try {
-    await exec.exec("git", ["fetch", "origin", "release"]);
-    await exec.exec("git", ["branch", "release", "origin/release"]);
+    await exec.exec("git", ["fetch", "--unshallow"]);
+    await exec.exec("git", ["fetch", "origin", "release:release"]);
   } catch {
     core.warning(
       "Could not fetch release branch. Changeset status may fail if baseBranch is not available.",
