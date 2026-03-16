@@ -97,6 +97,9 @@ describe("events installation module", () => {
           createRegistration: vi
             .fn()
             .mockResolvedValue({ id: "registration-123" }),
+          updateRegistration: vi
+            .fn()
+            .mockResolvedValue({ id: "registration-123" }),
         },
         commerceEventsClient: {
           getAllEventProviders: vi.fn().mockResolvedValue([]),
@@ -165,6 +168,9 @@ describe("events installation module", () => {
             .fn()
             .mockResolvedValue({ event_code: "test-event-code" }),
           createRegistration: vi
+            .fn()
+            .mockResolvedValue({ id: "registration-456" }),
+          updateRegistration: vi
             .fn()
             .mockResolvedValue({ id: "registration-456" }),
         },
