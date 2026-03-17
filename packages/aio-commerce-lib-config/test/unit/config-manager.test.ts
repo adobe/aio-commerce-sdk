@@ -12,11 +12,13 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import * as commerceApi from "#api/commerce";
 import {
   getConfiguration,
   getScopeTree,
   initialize,
   setConfiguration,
+  syncCommerceScopes,
   unsyncCommerceScopes,
 } from "#config-manager";
 import { byCodeAndLevel, byScopeId } from "#config-utils";
@@ -27,6 +29,7 @@ import { mockScopeTree } from "#test/fixtures/scope-tree";
 import { createMockLibFiles } from "#test/mocks/lib-files";
 import { createMockLibState } from "#test/mocks/lib-state";
 
+import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { BusinessConfigSchema, ConfigValue } from "#index";
 import type { ScopeTree } from "#modules/scope-tree/types";
 
@@ -48,6 +51,16 @@ vi.mock("#modules/scope-tree/scope-tree-repository", () => ({
   getPersistedScopeTree: vi.fn(() => Promise.resolve(mockScopeTree)),
   setCachedScopeTree: vi.fn(() => Promise.resolve()),
   saveScopeTree: vi.fn(() => Promise.resolve()),
+}));
+
+vi.mock("#api/commerce", () => ({
+  getAllScopeData: vi.fn(() =>
+    Promise.resolve({
+      websites: [],
+      storeGroups: [],
+      storeViews: [],
+    }),
+  ),
 }));
 
 vi.mock("#modules/schema/config-schema-repository", () => {
@@ -411,20 +424,22 @@ describe("initialize", () => {
     );
   });
 
-  it("should not throw when stored schema exists and no schema provided", () => {
+  it("should not throw when stored schema exists and no schema provided", async () => {
     vi.mocked(schemaRepository.getPersistedSchema).mockResolvedValue(
       JSON.stringify([
         { name: "existing", type: "text", default: "" },
       ] satisfies BusinessConfigSchema),
     );
 
-    expect(initialize({})).resolves.not.toThrow();
+    await expect(initialize({})).resolves.not.toThrow();
   });
 
-  it("should throw error when no schema provided and no stored schema exists", () => {
+  it("should throw error when no schema provided and no stored schema exists", async () => {
     vi.mocked(schemaRepository.getPersistedSchema).mockResolvedValue("");
 
-    expect(initialize({})).rejects.toThrow("Schema has never been set before");
+    await expect(initialize({})).rejects.toThrow(
+      "Schema has never been set before",
+    );
   });
 
   it("should not save schema if version matches existing schema", async () => {
@@ -487,6 +502,121 @@ describe("getScopeTree", () => {
       "aio-commerce-config",
       mockScopeTree,
       600_000,
+    );
+  });
+});
+
+describe("syncCommerceScopes", () => {
+  const commerceConfig: CommerceHttpClientParams = {
+    config: {
+      baseUrl: "https://test.commerce.com",
+      flavor: "saas",
+    },
+    auth: {
+      clientId: "test-client-id",
+      clientSecrets: ["test-client-secret"],
+      technicalAccountId: "test-technical-account-id",
+      technicalAccountEmail: "test-technical-account-email",
+      imsOrgId: "test-ims-org-id",
+      environment: "prod",
+    },
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should sync commerce scopes successfully with fresh data", async () => {
+    vi.mocked(commerceApi.getAllScopeData).mockResolvedValue({
+      websites: [],
+      storeGroups: [],
+      storeViews: [],
+    });
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await syncCommerceScopes(commerceConfig);
+
+    expect(result.synced).toBe(true);
+    expect(result.scopeTree).toBeDefined();
+    expect(result.error).toBeUndefined();
+    expect(scopeTreeRepository.saveScopeTree).toHaveBeenCalled();
+    expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalled();
+  });
+
+  it("should return synced=false when API fails and uses fallback cached data", async () => {
+    const apiError = new Error("Commerce API error");
+    vi.mocked(commerceApi.getAllScopeData).mockRejectedValue(apiError);
+    vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await syncCommerceScopes(commerceConfig);
+
+    expect(result.synced).toBe(false);
+    expect(result.scopeTree).toEqual(mockScopeTree);
+    expect(result.error).toBeDefined();
+  });
+
+  it("should include error when fallback persisted data is used", async () => {
+    const apiError = new Error("Commerce API error");
+    vi.mocked(commerceApi.getAllScopeData).mockRejectedValue(apiError);
+    vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(null);
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await syncCommerceScopes(commerceConfig);
+
+    expect(result.scopeTree).toEqual(mockScopeTree);
+    expect(result.synced).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  it("should throw error when sync fails completely", async () => {
+    const error = new Error("Network failure");
+    vi.mocked(commerceApi.getAllScopeData).mockRejectedValue(error);
+    vi.mocked(scopeTreeRepository.getCachedScopeTree).mockRejectedValue(error);
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockRejectedValue(
+      error,
+    );
+
+    await expect(syncCommerceScopes(commerceConfig)).rejects.toThrow(
+      "Failed to sync Commerce scopes: Network failure",
+    );
+  });
+
+  it("should use custom cache timeout when provided", async () => {
+    vi.mocked(commerceApi.getAllScopeData).mockResolvedValue({
+      websites: [],
+      storeGroups: [],
+      storeViews: [],
+    });
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    await syncCommerceScopes(commerceConfig, { cacheTimeout: 600_000 });
+
+    expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalledWith(
+      "aio-commerce-config",
+      expect.any(Array),
+      600_000,
+    );
+  });
+
+  it("should handle unknown error types", async () => {
+    vi.mocked(commerceApi.getAllScopeData).mockRejectedValue("String error");
+    vi.mocked(scopeTreeRepository.getCachedScopeTree).mockRejectedValue(
+      "String error",
+    );
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockRejectedValue(
+      "String error",
+    );
+
+    await expect(syncCommerceScopes(commerceConfig)).rejects.toThrow(
+      "Failed to sync Commerce scopes: Unknown error",
     );
   });
 });
