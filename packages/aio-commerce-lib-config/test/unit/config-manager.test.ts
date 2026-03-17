@@ -14,6 +14,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   getConfiguration,
+  getScopeTree,
   initialize,
   setConfiguration,
   unsyncCommerceScopes,
@@ -439,5 +440,53 @@ describe("initialize", () => {
 
     // Should not save if versions match
     expect(schemaRepository.savePersistedSchema).not.toHaveBeenCalled();
+  });
+});
+
+describe("getScopeTree", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should return cached scope tree when no params provided", async () => {
+    vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await getScopeTree();
+
+    expect(result.scopeTree).toEqual(mockScopeTree);
+    expect(result.isCachedData).toBe(true);
+    expect(scopeTreeRepository.getCachedScopeTree).toHaveBeenCalledWith(
+      "aio-commerce-config",
+    );
+  });
+
+  it("should fallback to persisted tree when cache is empty", async () => {
+    vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(null);
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await getScopeTree();
+
+    expect(result.scopeTree).toEqual(mockScopeTree);
+    expect(result.isCachedData).toBe(true);
+    expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalled();
+  });
+
+  it("should use custom cache timeout when provided", async () => {
+    vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(null);
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    await getScopeTree(undefined, { cacheTimeout: 600_000 });
+
+    expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalledWith(
+      "aio-commerce-config",
+      mockScopeTree,
+      600_000,
+    );
   });
 });
