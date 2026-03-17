@@ -256,15 +256,19 @@ type DeveloperConsoleOAuth = {
 export function resolveDeveloperConsoleOAuthCredentials(
   params: Record<string, unknown>,
 ): DeveloperConsoleOAuth {
-  const { clientId, clientSecrets, imsOrgId, environment } =
-    resolveImsAuthParams(params);
+  const { AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: imsEnvironment, ...imsParams } =
+    params;
+
+  const { clientId, clientSecrets, imsOrgId } = resolveImsAuthParams(imsParams);
 
   return {
     client_id: clientId,
     client_secret: clientSecrets[0],
     org_id: imsOrgId,
     environment:
-      environment !== "stage" ? ENVIRONMENT_PRODUCTION : ENVIRONMENT_STAGING,
+      !imsEnvironment || String(imsEnvironment).startsWith("prod")
+        ? ENVIRONMENT_PRODUCTION
+        : ENVIRONMENT_STAGING,
   };
 }
 
