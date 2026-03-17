@@ -10,25 +10,28 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
-import { defineConfig, mergeConfig } from "vitest/config";
+/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the webhook operations entrypoint */
 
-const BARREL_FILES = [
-  "./source/index.ts",
-  "./source/api.ts",
-  "./source/operations/index.ts",
-  "./source/responses/index.ts",
-];
+// Export webhook operation builders
+export {
+  buildAddOperation,
+  buildExceptionOperation,
+  buildRemoveOperation,
+  buildReplaceOperation,
+  buildSuccessOperation,
+} from "./helpers";
+// Export webhook operation presets
+export * from "./presets";
 
-export default mergeConfig(
-  baseConfig,
-  defineConfig({
-    plugins: [],
-    test: {
-      passWithNoTests: true,
-      coverage: {
-        exclude: [...BARREL_FILES, "./source/**/types.ts"],
-      },
-    },
-  }),
-);
+// Export webhook operation types
+export type {
+  AddOperation,
+  ExceptionOperation,
+  RemoveOperation,
+  ReplaceOperation,
+  SuccessOperation,
+  WebhookOperation,
+  WebhookOperationResponse,
+  WebhookResponse,
+  WebhookResponseBase,
+} from "./helpers";
