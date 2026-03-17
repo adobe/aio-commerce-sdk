@@ -156,7 +156,7 @@ function parseKeyValueParameters(
 
     // Regex guarantees: key is always present (\w+), and value is always defined
     // (either quotedValue from "([^"]*)" or unquotedValue from ([^,\s]+))
-    const value = quotedValue !== undefined ? quotedValue : unquotedValue;
+    const value = quotedValue === undefined ? unquotedValue : quotedValue;
     params[key] = value;
 
     match = paramPattern.exec(parametersString);
