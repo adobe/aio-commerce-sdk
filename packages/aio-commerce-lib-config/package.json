@@ -5,7 +5,7 @@
   "version": "1.0.2",
   "private": false,
   "engines": {
-    "node": ">=20 <=24"
+    "node": ">=22 <=26"
   },
   "license": "Apache-2.0",
   "description": "Configuration management utilities for Adobe Commerce apps deployed in Adobe App Builder",

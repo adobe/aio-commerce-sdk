@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         # Previous LTS (Maintenance), Current LTS, Latest stable
-        node-version: [20, 22, 24]
+        node-version: [22, 24, 26]
 
     steps:
       - name: Checkout code
