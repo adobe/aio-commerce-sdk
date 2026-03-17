@@ -14,17 +14,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   getConfiguration,
+  initialize,
   setConfiguration,
   unsyncCommerceScopes,
 } from "#config-manager";
 import { byCodeAndLevel, byScopeId } from "#config-utils";
 import * as configRepository from "#modules/configuration/configuration-repository";
+import * as schemaRepository from "#modules/schema/config-schema-repository";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
 import { createMockLibFiles } from "#test/mocks/lib-files";
 import { createMockLibState } from "#test/mocks/lib-state";
 
-import type { ConfigValue } from "#index";
+import type { BusinessConfigSchema, ConfigValue } from "#index";
 import type { ScopeTree } from "#modules/scope-tree/types";
 
 const MockState = createMockLibState();
@@ -69,7 +71,7 @@ vi.mock("#modules/schema/config-schema-repository", () => {
     setCachedSchema: vi.fn(() => Promise.resolve()),
     deleteCachedSchema: vi.fn(() => Promise.resolve()),
     getPersistedSchema: vi.fn(() => Promise.resolve(mockSchema)),
-    saveSchema: vi.fn(() => Promise.resolve()),
+    savePersistedSchema: vi.fn(() => Promise.resolve()),
     getSchemaVersion: vi.fn(() => Promise.resolve(null)),
     setSchemaVersion: vi.fn(() => Promise.resolve()),
   };
@@ -380,5 +382,62 @@ describe("unsyncCommerceScopes", () => {
     );
 
     expect(scopeTreeRepository.saveScopeTree).not.toHaveBeenCalled();
+  });
+});
+
+describe("initialize", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should initialize schema when schema is provided", async () => {
+    const testSchema = [
+      {
+        name: "testField",
+        type: "text",
+        label: "Test Field",
+        default: "test",
+      },
+    ] satisfies BusinessConfigSchema;
+
+    await initialize({ schema: testSchema });
+
+    expect(schemaRepository.savePersistedSchema).toHaveBeenCalledTimes(1);
+    expect(schemaRepository.savePersistedSchema).toHaveBeenCalledWith(
+      "aio-commerce-config",
+      testSchema,
+      expect.any(String),
+    );
+  });
+
+  it("should not throw when stored schema exists and no schema provided", () => {
+    vi.mocked(schemaRepository.getPersistedSchema).mockResolvedValue(
+      JSON.stringify([
+        { name: "existing", type: "text", default: "" },
+      ] satisfies BusinessConfigSchema),
+    );
+
+    expect(initialize({})).resolves.not.toThrow();
+  });
+
+  it("should throw error when no schema provided and no stored schema exists", () => {
+    vi.mocked(schemaRepository.getPersistedSchema).mockResolvedValue("");
+
+    expect(initialize({})).rejects.toThrow("Schema has never been set before");
+  });
+
+  it("should not save schema if version matches existing schema", async () => {
+    const existingSchema = [
+      { name: "field1", type: "text", default: "" },
+    ] satisfies BusinessConfigSchema;
+
+    vi.mocked(schemaRepository.getPersistedSchema).mockResolvedValue(
+      JSON.stringify(existingSchema),
+    );
+
+    await initialize({ schema: existingSchema });
+
+    // Should not save if versions match
+    expect(schemaRepository.savePersistedSchema).not.toHaveBeenCalled();
   });
 });
