@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { HTTPError } from "ky";
 
 import type {
@@ -244,38 +245,28 @@ type DeveloperConsoleOAuth = {
 
 /**
  * Resolves and validates the IMS credentials required for `developer_console_oauth`.
- * Throws a descriptive error listing every missing field if any credential is empty.
+ *
+ * Delegates parsing and validation to `resolveImsAuthParams` from `aio-commerce-lib-auth`,
+ * which correctly handles `AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS` whether it arrives as a
+ * real array or as a JSON-stringified array string.
  */
-export function resolveDeveloperConsoleOAuthCredentials(params: {
-  AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
-  AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: string | string[];
-  AIO_COMMERCE_AUTH_IMS_ORG_ID: string;
-  AIO_COMMERCE_AUTH_IMS_ENVIRONMENT?: string;
-}): DeveloperConsoleOAuth {
-  const credentials = {
-    client_id: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
-    client_secret: Array.isArray(params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS)
-      ? params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS[0]
-      : params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
-    org_id: params.AIO_COMMERCE_AUTH_IMS_ORG_ID,
+export function resolveDeveloperConsoleOAuthCredentials(
+  params: Record<string, unknown>,
+): DeveloperConsoleOAuth {
+  const { AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: imsEnvironment, ...imsParams } =
+    params;
+
+  const { clientId, clientSecrets, imsOrgId } = resolveImsAuthParams(imsParams);
+
+  return {
+    client_id: clientId,
+    client_secret: clientSecrets[0],
+    org_id: imsOrgId,
     environment:
-      !params.AIO_COMMERCE_AUTH_IMS_ENVIRONMENT ||
-      params.AIO_COMMERCE_AUTH_IMS_ENVIRONMENT.startsWith("prod")
+      !imsEnvironment || String(imsEnvironment).startsWith("prod")
         ? ENVIRONMENT_PRODUCTION
         : ENVIRONMENT_STAGING,
   };
-
-  const hasMissing = (
-    Object.keys(credentials) as (keyof DeveloperConsoleOAuth)[]
-  ).some((key) => !credentials[key]);
-
-  if (hasMissing) {
-    throw new Error(
-      "Failed to retrieve IMS credentials for webhook subscription",
-    );
-  }
-
-  return credentials;
 }
 
 /**

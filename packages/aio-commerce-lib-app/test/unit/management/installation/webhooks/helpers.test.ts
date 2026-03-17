@@ -28,6 +28,9 @@ const DEFAULT_PARAMS = {
   AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
   AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "test-client-secret",
   AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test@example.com",
+  AIO_COMMERCE_AUTH_IMS_SCOPES: "AdobeID",
 };
 
 function makeContext(
@@ -441,7 +444,8 @@ describe("createWebhookSubscriptions", () => {
       expect.objectContaining({
         developer_console_oauth: {
           client_id: DEFAULT_PARAMS.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
-          client_secret: DEFAULT_PARAMS.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
+          client_secret:
+            DEFAULT_PARAMS.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS as string,
           org_id: DEFAULT_PARAMS.AIO_COMMERCE_AUTH_IMS_ORG_ID,
           environment: "production",
         },
@@ -488,6 +492,9 @@ describe("createWebhookSubscriptions", () => {
       AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "",
       AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "",
       AIO_COMMERCE_AUTH_IMS_ORG_ID: "",
+      AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "",
+      AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "",
+      AIO_COMMERCE_AUTH_IMS_SCOPES: "",
     };
     const context = makeContext(
       subscribeWebhook,
@@ -868,13 +875,19 @@ describe("validateWebhookConflicts", () => {
   });
 });
 
+/** Minimal valid IMS params shared across resolveDeveloperConsoleOAuthCredentials tests. */
+const BASE_IMS_PARAMS = {
+  AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
+  AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
+  AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
+  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "tech-account-id",
+  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test@example.com",
+  AIO_COMMERCE_AUTH_IMS_SCOPES: "AdobeID",
+};
+
 describe("resolveDeveloperConsoleOAuthCredentials", () => {
   test("returns credentials object when all values are present (string secret)", () => {
-    const result = resolveDeveloperConsoleOAuthCredentials({
-      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
-      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
-      AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
-    });
+    const result = resolveDeveloperConsoleOAuthCredentials(BASE_IMS_PARAMS);
 
     expect(result).toEqual({
       client_id: "client-id",
@@ -884,14 +897,28 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
     });
   });
 
-  test("returns credentials object using first element when secrets is an array", () => {
+  test("returns credentials object using first element when secrets is a real array", () => {
     const result = resolveDeveloperConsoleOAuthCredentials({
-      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
+      ...BASE_IMS_PARAMS,
       AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: [
         "primary-secret",
         "secondary-secret",
       ],
-      AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
+    });
+
+    expect(result).toEqual({
+      client_id: "client-id",
+      client_secret: "primary-secret",
+      org_id: "org-id",
+      environment: "production",
+    });
+  });
+
+  test("returns credentials using first element when secrets is a JSON-stringified array", () => {
+    const result = resolveDeveloperConsoleOAuthCredentials({
+      ...BASE_IMS_PARAMS,
+      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS:
+        '["primary-secret","secondary-secret"]',
     });
 
     expect(result).toEqual({
@@ -904,9 +931,7 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
 
   test("sets environment to production when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT starts with prod", () => {
     const result = resolveDeveloperConsoleOAuthCredentials({
-      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
-      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
-      AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
+      ...BASE_IMS_PARAMS,
       AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "prod",
     });
 
@@ -915,9 +940,7 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
 
   test("sets environment to production when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT is production", () => {
     const result = resolveDeveloperConsoleOAuthCredentials({
-      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
-      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
-      AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
+      ...BASE_IMS_PARAMS,
       AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "production",
     });
 
@@ -926,9 +949,7 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
 
   test("sets environment to staging when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT does not start with prod", () => {
     const result = resolveDeveloperConsoleOAuthCredentials({
-      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
-      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
-      AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
+      ...BASE_IMS_PARAMS,
       AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "stage",
     });
 
@@ -936,33 +957,26 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
   });
 
   test("defaults environment to production when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT is absent", () => {
-    const result = resolveDeveloperConsoleOAuthCredentials({
-      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
-      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
-      AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
-    });
+    const result = resolveDeveloperConsoleOAuthCredentials(BASE_IMS_PARAMS);
 
     expect(result.environment).toBe("production");
   });
 
   test("defaults environment to production when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT is empty", () => {
     const result = resolveDeveloperConsoleOAuthCredentials({
-      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
-      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
-      AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
+      ...BASE_IMS_PARAMS,
       AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "",
     });
 
     expect(result.environment).toBe("production");
   });
 
-  test("throws when one of the fields is empty", () => {
+  test("throws when one of the IMS credential fields is empty", () => {
     expect(() =>
       resolveDeveloperConsoleOAuthCredentials({
+        ...BASE_IMS_PARAMS,
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "",
-        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
-        AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
       }),
-    ).toThrow("Failed to retrieve IMS credentials");
+    ).toThrow(Error);
   });
 });
