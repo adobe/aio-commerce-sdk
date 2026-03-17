@@ -987,7 +987,7 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
     });
   });
 
-  test("sets environment to production when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT starts with prod", () => {
+  test("sets environment to production when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT is prod", () => {
     const result = resolveDeveloperConsoleOAuthCredentials({
       ...BASE_IMS_PARAMS,
       AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "prod",
@@ -996,16 +996,7 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
     expect(result.environment).toBe("production");
   });
 
-  test("sets environment to production when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT is production", () => {
-    const result = resolveDeveloperConsoleOAuthCredentials({
-      ...BASE_IMS_PARAMS,
-      AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "production",
-    });
-
-    expect(result.environment).toBe("production");
-  });
-
-  test("sets environment to staging when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT does not start with prod", () => {
+  test("sets environment to staging when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT is stage", () => {
     const result = resolveDeveloperConsoleOAuthCredentials({
       ...BASE_IMS_PARAMS,
       AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "stage",
@@ -1020,13 +1011,13 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
     expect(result.environment).toBe("production");
   });
 
-  test("defaults environment to production when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT is empty", () => {
-    const result = resolveDeveloperConsoleOAuthCredentials({
-      ...BASE_IMS_PARAMS,
-      AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "",
-    });
-
-    expect(result.environment).toBe("production");
+  test("throws when AIO_COMMERCE_AUTH_IMS_ENVIRONMENT is an unrecognised value", () => {
+    expect(() =>
+      resolveDeveloperConsoleOAuthCredentials({
+        ...BASE_IMS_PARAMS,
+        AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "production",
+      }),
+    ).toThrow(Error);
   });
 
   test("throws when one of the IMS credential fields is empty", () => {
