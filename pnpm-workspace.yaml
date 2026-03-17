@@ -5,25 +5,25 @@ packages:
   - scripts
   - turbo/*
 
+catalog:
+  '@adobe/aio-lib-core-logging': ^3.0.2
+  '@adobe/aio-lib-files': ^4.1.2
+  '@adobe/aio-lib-ims': ^8.1.1
+  '@adobe/aio-lib-state': ^5.3.1
+  ansis: ^4.1.0
+  camelcase: ^8.0.0
+  consola: ^3.4.2
+  ky: ^1.9.0
+  msw: ^2.11.1
+  prettier: ^3.8.1
+  safe-stable-stringify: ^2.5.0
+  type-fest: ^5.0.0
+  typescript: ^5.9.3
+  valibot: ^1.1.0
+  yaml: ^2.8.1
+
 onlyBuiltDependencies:
   - "@actions/github-script"
   - core-js-pure
   - esbuild
   - msw
-
-catalog:
-  ansis: ^4.1.0
-  camelcase: ^8.0.0
-  consola: ^3.4.2
-  prettier: ^3.8.1
-  ky: ^1.9.0
-  type-fest: ^5.0.0
-  typescript: ^5.9.2
-  yaml: ^2.8.1
-  valibot: ^1.1.0
-  msw: ^2.11.1
-  '@adobe/aio-lib-core-logging': ^3.0.2
-  '@adobe/aio-lib-files': ^4.1.2
-  '@adobe/aio-lib-ims': ^8.1.1
-  '@adobe/aio-lib-state': ^5.3.1
-  safe-stable-stringify: ^2.5.0
