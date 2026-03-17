@@ -18,6 +18,7 @@ import {
   getScopeTree,
   initialize,
   setConfiguration,
+  setCustomScopeTree,
   syncCommerceScopes,
   unsyncCommerceScopes,
 } from "#config-manager";
@@ -618,5 +619,185 @@ describe("syncCommerceScopes", () => {
     await expect(syncCommerceScopes(commerceConfig)).rejects.toThrow(
       "Failed to sync Commerce scopes: Unknown error",
     );
+  });
+});
+
+describe("setCustomScopeTree", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should set custom scopes successfully", async () => {
+    const customScopes = [
+      {
+        code: "region_us",
+        label: "US Region",
+        level: "custom",
+        is_editable: true,
+        is_final: false,
+        children: [
+          {
+            code: "region_us_west",
+            label: "US West",
+            level: "custom",
+            is_editable: true,
+            is_final: true,
+          },
+        ],
+      },
+    ];
+
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await setCustomScopeTree({ scopes: customScopes });
+
+    expect(result.message).toBe("Custom scope tree updated successfully");
+    expect(result.scopes).toHaveLength(1);
+    expect(result.scopes[0].code).toBe("region_us");
+    expect(result.scopes[0].children).toHaveLength(1);
+    expect(scopeTreeRepository.saveScopeTree).toHaveBeenCalled();
+    expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalledWith(
+      "aio-commerce-config",
+      expect.any(Array),
+      0,
+    );
+  });
+
+  it("should preserve existing IDs when updating scopes with same code and level", async () => {
+    const existingCustomScopes: ScopeTree = [
+      ...mockScopeTree,
+      {
+        id: "existing-custom-id",
+        code: "region_eu",
+        label: "Old EU Region",
+        level: "custom",
+        is_editable: true,
+        is_final: false,
+        is_removable: true,
+      },
+    ];
+
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      existingCustomScopes,
+    );
+
+    const result = await setCustomScopeTree({
+      scopes: [
+        {
+          code: "region_eu",
+          label: "European Region",
+          level: "custom",
+          is_editable: true,
+          is_final: false,
+        },
+      ],
+    });
+
+    expect(result.scopes[0].id).toBe("existing-custom-id");
+    expect(result.scopes[0].label).toBe("European Region");
+  });
+
+  it("should generate new IDs for new scopes", async () => {
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await setCustomScopeTree({
+      scopes: [
+        {
+          code: "new_region",
+          label: "New Region",
+          level: "custom",
+          is_editable: true,
+          is_final: true,
+        },
+      ],
+    });
+
+    expect(result.scopes[0].id).toBeDefined();
+  });
+
+  it("should preserve global and commerce scopes", async () => {
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    await setCustomScopeTree({
+      scopes: [
+        {
+          code: "custom_scope",
+          label: "Custom Scope",
+          level: "custom",
+          is_editable: true,
+          is_final: true,
+        },
+      ],
+    });
+
+    const savedTree = vi.mocked(scopeTreeRepository.saveScopeTree).mock
+      .calls[0][1];
+
+    expect(savedTree.find((s) => s.code === "global")).toBeDefined();
+    expect(savedTree.find((s) => s.code === "commerce")).toBeDefined();
+  });
+
+  it("should use custom cache timeout when provided", async () => {
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    await setCustomScopeTree(
+      {
+        scopes: [
+          {
+            code: "region",
+            label: "Region",
+            level: "custom",
+            is_editable: true,
+            is_final: true,
+          },
+        ],
+      },
+      { cacheTimeout: 600_000 },
+    );
+
+    expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalledWith(
+      "aio-commerce-config",
+      expect.any(Array),
+      0,
+    );
+  });
+
+  it("should handle empty scopes array", async () => {
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await setCustomScopeTree({ scopes: [] });
+
+    expect(result.message).toBe("Custom scope tree updated successfully");
+    expect(result.scopes).toHaveLength(0);
+
+    const savedTree = vi.mocked(scopeTreeRepository.saveScopeTree).mock
+      .calls[0][1];
+    expect(savedTree).toHaveLength(2); // Only global and commerce
+  });
+
+  it("should throw error when validation fails", async () => {
+    await expect(
+      setCustomScopeTree({
+        scopes: [
+          {
+            code: "global", // Reserved code
+            label: "Invalid",
+            level: "custom",
+            is_editable: true,
+            is_final: true,
+          },
+        ],
+      }),
+    ).rejects.toThrow();
   });
 });
