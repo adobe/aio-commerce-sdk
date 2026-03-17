@@ -662,6 +662,64 @@ describe("createOrGetWebhookSubscription", () => {
       expect.stringContaining("Subscribed webhook"),
     );
   });
+
+  test("treats plugin.magento.X and plugin.X as the same method when checking existing subscriptions", async () => {
+    const subscribeWebhook = vi.fn();
+    const client = { subscribeWebhook } as never;
+    const logger = makeLogger();
+
+    const candidateWithMagento = {
+      ...resolvedWebhook,
+      webhook_method:
+        "plugin.magento.out_of_process_shipping_methods.api.get_rates",
+    };
+    const existingWithoutMagento = {
+      ...resolvedWebhook,
+      webhook_method: "plugin.out_of_process_shipping_methods.api.get_rates",
+    };
+
+    const result = await createOrGetWebhookSubscription(
+      [existingWithoutMagento],
+      client,
+      candidateWithMagento,
+      logger as never,
+    );
+
+    expect(subscribeWebhook).not.toHaveBeenCalled();
+    expect(result).toBe(candidateWithMagento);
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining("already subscribed"),
+    );
+  });
+
+  test("treats plugin.X and plugin.magento.X as the same method when checking existing subscriptions", async () => {
+    const subscribeWebhook = vi.fn();
+    const client = { subscribeWebhook } as never;
+    const logger = makeLogger();
+
+    const candidateWithoutMagento = {
+      ...resolvedWebhook,
+      webhook_method: "plugin.out_of_process_shipping_methods.api.get_rates",
+    };
+    const existingWithMagento = {
+      ...resolvedWebhook,
+      webhook_method:
+        "plugin.magento.out_of_process_shipping_methods.api.get_rates",
+    };
+
+    const result = await createOrGetWebhookSubscription(
+      [existingWithMagento],
+      client,
+      candidateWithoutMagento,
+      logger as never,
+    );
+
+    expect(subscribeWebhook).not.toHaveBeenCalled();
+    expect(result).toBe(candidateWithoutMagento);
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining("already subscribed"),
+    );
+  });
 });
 
 describe("validateWebhookConflicts", () => {

@@ -39,6 +39,9 @@ const NON_IDENTIFIER_CHAR_REGEX = /[^a-zA-Z0-9_]/g;
 /** Matches two or more consecutive underscores. */
 const MULTIPLE_UNDERSCORES_REGEX = /_+/g;
 
+/** Matches the `.magento` segment in plugin webhook method names (e.g. `plugin.magento.foo`). */
+const PLUGIN_MAGENTO_REGEX = /^plugin\.magento\./;
+
 const ENVIRONMENT_PRODUCTION = "production";
 const ENVIRONMENT_STAGING = "staging";
 
@@ -272,18 +275,35 @@ export function resolveDeveloperConsoleOAuthCredentials(
 /**
  * Returns true when the candidate webhook is already present in the existing subscription list,
  * matched by the four-part identity: webhook_method, webhook_type, batch_name, hook_name.
+ *
+ * `webhook_method` is normalised before comparison to handle the case where Commerce strips the
+ * `.magento` segment from plugin webhook methods on storage
+ * (e.g. `plugin.magento.foo` and `plugin.foo` are treated as the same method).
  */
 function isAlreadySubscribed(
   existing: CommerceWebhook[],
   candidate: WebhookSubscribeParams,
 ): boolean {
+  const normalizedCandidate = normalizeWebhookMethod(candidate.webhook_method);
   return existing.some(
     (w) =>
-      w.webhook_method === candidate.webhook_method &&
+      normalizeWebhookMethod(w.webhook_method) === normalizedCandidate &&
       w.webhook_type === candidate.webhook_type &&
       w.batch_name === candidate.batch_name &&
       w.hook_name === candidate.hook_name,
   );
+}
+
+/**
+ * Normalises a webhook method name by removing the `.magento` segment that Commerce
+ * may drop when persisting plugin webhook methods.
+ *
+ * @example
+ * normalizeWebhookMethod("plugin.magento.foo.bar") // → "plugin.foo.bar"
+ * normalizeWebhookMethod("plugin.foo.bar")         // → "plugin.foo.bar" (unchanged)
+ */
+function normalizeWebhookMethod(method: string): string {
+  return method.replace(PLUGIN_MAGENTO_REGEX, "plugin.");
 }
 
 /**
