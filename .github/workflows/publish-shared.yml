@@ -22,6 +22,11 @@ on:
         required: false
         type: boolean
         default: true
+      publish_only:
+        required: false
+        type: boolean
+        default: false
+        description: "Skip snapshot versioning and publish current package versions as-is"
 
     outputs:
       published:
@@ -30,9 +35,6 @@ on:
       publishedPackages:
         description: JSON array of published packages
         value: ${{ jobs.release.outputs.publishedPackages }}
-      commentBody:
-        description: Markdown comment body with published packages
-        value: ${{ jobs.release.outputs.commentBody }}
 
     secrets:
       REGISTRY_URL:
@@ -48,9 +50,8 @@ jobs:
     name: Version or Release
     runs-on: ubuntu-latest
     outputs:
-      published: ${{ steps.snapshot.outputs.published || steps.changesets.outputs.published }}
+      published: ${{ steps.mirror.outputs.published || steps.snapshot.outputs.published || steps.changesets.outputs.published }}
       publishedPackages: ${{ steps.snapshot.outputs.publishedPackages || steps.changesets.outputs.publishedPackages }}
-      commentBody: ${{ steps.snapshot.outputs.commentBody }}
     permissions:
       contents: write
       pull-requests: write
@@ -60,13 +61,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.ref }}
 
       # pnpm version will be read from packageManager field in package.json
       - name: Setup pnpm
-        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: lts/*
           cache: "pnpm"
@@ -82,6 +85,7 @@ jobs:
           REGISTRY_AUTH_TOKEN: ${{ secrets.REGISTRY_AUTH_TOKEN }}
           RELEASE_CHANNEL: ${{ inputs.channel }}
           SNAPSHOT_TAG: ${{ inputs.snapshot_tag }}
+          PUBLISH_ONLY: ${{ inputs.publish_only }}
           GITHUB_TOKEN: ${{ github.token }}
         with:
           script: |
@@ -91,10 +95,18 @@ jobs:
       - name: Build packages
         run: pnpm turbo build
 
+      # --- Internal (mirror): Publish current versions as-is, no snapshot versioning ---
+      - name: Mirror packages to registry
+        id: mirror
+        if: inputs.publish_only
+        run: |
+          pnpm changeset publish --no-git-tag
+          echo "published=true" >> $GITHUB_OUTPUT
+
       # --- Internal: Publish snapshot packages and create GitHub pre-releases ---
       - name: Publish snapshot packages
         id: snapshot
-        if: inputs.channel == 'internal'
+        if: inputs.channel == 'internal' && !inputs.publish_only
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -119,6 +131,7 @@ jobs:
           createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          NPM_TOKEN: ${{ secrets.REGISTRY_AUTH_TOKEN }}
 
       # --- Slack announcement (generated here, sent by caller workflows) ---
       - name: Generate Slack Announcement

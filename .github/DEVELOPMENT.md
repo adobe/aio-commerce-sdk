@@ -444,49 +444,42 @@ After that, a new file is generated in the `.changeset` folder at the repository
 This repository uses two release channels:
 
 - `main` is the internal integration channel
-  - Uses prerelease mode (`beta`) and publishes to Artifactory.
+  - Uses snapshot releases (`beta` tag) and publishes to Artifactory. Nothing is committed, changeset files stay in `.changeset/` until promotion.
 - `release` is the public channel
-  - Uses stable semver and publishes to npm.
+  - Uses stable semver and publishes to NPM via the standard changesets flow.
 
-Both channels keep the same Changesets "double PR" workflow:
-
-1. You merge feature PRs with changesets into the channel branch.
-2. CI creates/updates a `[CI] Release Packages` PR for that branch.
-3. Merging that release PR performs the publish for that branch's registry.
-
-#### Internal prerelease flow (`main`)
+#### Internal snapshot flow (`main`)
 
 Once your feature PR is merged to `main`:
 
-1. CI ensures prerelease mode is active (`changeset pre enter beta` when needed).
-2. Changesets creates/updates `[CI] Release Packages` PR on `main`.
-3. Merging the release PR publishes prerelease versions to Artifactory.
+1. CI runs `changeset version --snapshot beta` and `changeset publish --tag beta`.
+2. Packages are published to Artifactory with ephemeral snapshot versions (e.g., `1.2.5-beta-20260313T120000`).
+3. Nothing is committed. Changeset files stay in `.changeset/` until promotion to `release`.
+4. A GitHub pre-release is created with release notes assembled from the pending changesets.
 
-Typical patch-only prerelease train from stable `1.2.4` looks like:
-
-- `1.2.5-beta.0`
-- `1.2.5-beta.1`
-- `1.2.5-beta.2`
-
-This is expected: `beta.N` are candidates for the same upcoming stable target.
+You can also request a snapshot from any open PR by commenting `/snapshot`. This publishes an `alpha` snapshot of your PR's changes to Artifactory without affecting `main`.
 
 #### Public stable flow (`release`)
 
-When promoting internal changes:
+> [!IMPORTANT]
+> Both the promotion PR and the back-sync PR **must be merged via a merge commit** (not squash or rebase). This preserves commit SHAs across both branches so that git's merge-base tracking correctly identifies what is already on each branch. Squashing or rebasing creates new SHAs, causing git to treat already-merged commits as new changes and producing conflicts on subsequent syncs.
 
-1. Open a PR from `main` into `release`.
-2. After merge, CI exits prerelease mode when needed (`changeset pre exit`).
-3. Changesets creates/updates `[CI] Release Packages` PR on `release`.
-4. Merge that release PR to publish stable versions to npm.
+When ready to publish to npm, use the **Promote to Release** workflow dispatch (`promote.yml`):
 
-If the current prerelease train was `1.2.5-beta.N`, the resulting stable release is `1.2.5`.
+1. Trigger it from GitHub Actions, optionally specifying a commit SHA on `main` to promote (defaults to latest).
+2. The workflow creates a branch from that commit and opens a PR into `release`. No config changes needed — changeset files come along unconsumed.
+3. After merging the promotion PR, Changesets creates/updates a `[CI] Release Packages` PR on `release`.
+4. Merging that release PR publishes stable versions to npm, writes changelogs, and automatically opens a back-sync PR from `release` → `main`.
+
+If there were snapshot versions like `1.2.5-beta-20260313T120000` on Artifactory, the resulting stable release is `1.2.5`.
+
+#### Back-sync
+
+After a public release, a back-sync PR from `release` → `main` is created automatically. Merging it brings version bumps, updated changelogs, and consumed changeset files back to `main`.
 
 #### Hotfixes
 
 Urgent public fixes can be applied directly on `release` (patch changeset only), then:
 
 1. Publish through the `release` branch release PR flow.
-2. Forward-merge `release` back into `main` so channels remain aligned.
-
-> [!IMPORTANT]
-> Forward-merges from `release` to `main` may carry prerelease state changes. If prerelease mode is no longer active on `main` after the merge, re-enter it with `pnpm changeset pre enter beta`.
+2. Merge the auto-created back-sync PR to keep `main` aligned.
