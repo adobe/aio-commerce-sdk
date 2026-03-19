@@ -526,11 +526,6 @@ describe("syncCommerceScopes", () => {
   });
 
   it("should sync commerce scopes successfully with fresh data", async () => {
-    vi.mocked(commerceApi.getAllScopeData).mockResolvedValue({
-      websites: [],
-      storeGroups: [],
-      storeViews: [],
-    });
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       mockScopeTree,
     );
