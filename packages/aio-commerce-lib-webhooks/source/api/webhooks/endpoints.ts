@@ -18,6 +18,7 @@ import {
 } from "./schema";
 
 import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
+import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import type { HTTPError, Options } from "ky";
 import type {
   WebhookSubscribeParams,
