@@ -23,9 +23,11 @@ export function createMockLibState() {
         const value = this.state.get(key) || null;
         return { value };
       });
-      public put = vi.fn(async (key: string, value: string) => {
-        this.state.set(key, value);
-      });
+      public put = vi.fn(
+        async (key: string, value: string, _options?: { ttl?: number }) => {
+          this.state.set(key, value);
+        },
+      );
       public delete = vi.fn(async (key: string) => {
         this.state.delete(key);
       });

@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 
 import {
   decrypt,
@@ -30,26 +30,26 @@ describe("encryption utilities", () => {
   });
 
   describe("generateEncryptionKey", () => {
-    it("should generate a 64-character hex string", () => {
+    test("should generate a 64-character hex string", () => {
       const key = generateEncryptionKey();
       expect(key).toHaveLength(KEY_LENGTH_HEX);
       expect(key).toMatch(HEX_PATTERN);
     });
 
-    it("should generate unique keys", () => {
+    test("should generate unique keys", () => {
       const key1 = generateEncryptionKey();
       const key2 = generateEncryptionKey();
       expect(key1).not.toBe(key2);
     });
 
-    it("should generate a valid encryption key", () => {
+    test("should generate a valid encryption key", () => {
       const key = generateEncryptionKey();
       expect(() => validateEncryptionKey(key)).not.toThrow();
     });
   });
 
   describe("encrypt and decrypt", () => {
-    it("should encrypt and decrypt a password correctly", () => {
+    test("should encrypt and decrypt a password correctly", () => {
       const plainText = "my-secret-password";
       const encrypted = encrypt(plainText, encryptionKey);
 
@@ -60,28 +60,28 @@ describe("encryption utilities", () => {
       expect(decrypted).toBe(plainText);
     });
 
-    it("should handle empty strings", () => {
+    test("should handle empty strings", () => {
       const plainText = "";
       const encrypted = encrypt(plainText, encryptionKey);
       const decrypted = decrypt(encrypted, encryptionKey);
       expect(decrypted).toBe(plainText);
     });
 
-    it("should handle special characters", () => {
+    test("should handle special characters", () => {
       const plainText = "p@ssw0rd!#$%^&*()_+-=[]{}|;:',.<>?/~`";
       const encrypted = encrypt(plainText, encryptionKey);
       const decrypted = decrypt(encrypted, encryptionKey);
       expect(decrypted).toBe(plainText);
     });
 
-    it("should handle unicode characters", () => {
+    test("should handle unicode characters", () => {
       const plainText = "密码🔒🔑";
       const encrypted = encrypt(plainText, encryptionKey);
       const decrypted = decrypt(encrypted, encryptionKey);
       expect(decrypted).toBe(plainText);
     });
 
-    it("should return different encrypted values for the same input", () => {
+    test("should return different encrypted values for the same input", () => {
       const plainText = "my-secret-password";
       const encrypted1 = encrypt(plainText, encryptionKey);
       const encrypted2 = encrypt(plainText, encryptionKey);
@@ -92,19 +92,19 @@ describe("encryption utilities", () => {
       expect(decrypt(encrypted2, encryptionKey)).toBe(plainText);
     });
 
-    it("should throw an error when decrypting non-encrypted values", () => {
+    test("should throw an error when decrypting non-encrypted values", () => {
       const plainText = "not-encrypted";
       expect(() => decrypt(plainText, encryptionKey)).toThrow();
     });
   });
 
   describe("decrypt with invalid format", () => {
-    it("should handle invalid encrypted format gracefully", () => {
+    test("should handle invalid encrypted format gracefully", () => {
       const invalidEncrypted = "enc:invalid-format";
       expect(() => decrypt(invalidEncrypted, encryptionKey)).toThrow();
     });
 
-    it("should handle malformed encrypted data", () => {
+    test("should handle malformed encrypted data", () => {
       const malformed = "enc:abc:def:ghi";
       expect(() => decrypt(malformed, encryptionKey)).toThrow();
     });

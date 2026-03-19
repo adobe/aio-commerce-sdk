@@ -10,21 +10,28 @@
  * governing permissions and limitations under the License.
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
+import * as commerceApi from "#api/commerce";
 import {
   getConfiguration,
+  getScopeTree,
+  initialize,
   setConfiguration,
+  setCustomScopeTree,
+  syncCommerceScopes,
   unsyncCommerceScopes,
 } from "#config-manager";
 import { byCodeAndLevel, byScopeId } from "#config-utils";
 import * as configRepository from "#modules/configuration/configuration-repository";
+import * as schemaRepository from "#modules/schema/config-schema-repository";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
 import { createMockLibFiles } from "#test/mocks/lib-files";
 import { createMockLibState } from "#test/mocks/lib-state";
 
-import type { ConfigValue } from "#index";
+import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
+import type { BusinessConfigSchema, ConfigValue } from "#index";
 import type { ScopeTree } from "#modules/scope-tree/types";
 
 const MockState = createMockLibState();
@@ -44,7 +51,18 @@ vi.mock("#modules/scope-tree/scope-tree-repository", () => ({
   getCachedScopeTree: vi.fn(() => Promise.resolve(null)),
   getPersistedScopeTree: vi.fn(() => Promise.resolve(mockScopeTree)),
   setCachedScopeTree: vi.fn(() => Promise.resolve()),
+  deleteCachedScopeTree: vi.fn(() => Promise.resolve()),
   saveScopeTree: vi.fn(() => Promise.resolve()),
+}));
+
+vi.mock("#api/commerce", () => ({
+  getAllScopeData: vi.fn(() =>
+    Promise.resolve({
+      websites: [],
+      storeGroups: [],
+      storeViews: [],
+    }),
+  ),
 }));
 
 vi.mock("#modules/schema/config-schema-repository", () => {
@@ -69,7 +87,7 @@ vi.mock("#modules/schema/config-schema-repository", () => {
     setCachedSchema: vi.fn(() => Promise.resolve()),
     deleteCachedSchema: vi.fn(() => Promise.resolve()),
     getPersistedSchema: vi.fn(() => Promise.resolve(mockSchema)),
-    saveSchema: vi.fn(() => Promise.resolve()),
+    savePersistedSchema: vi.fn(() => Promise.resolve()),
     getSchemaVersion: vi.fn(() => Promise.resolve(null)),
     setSchemaVersion: vi.fn(() => Promise.resolve()),
   };
@@ -102,14 +120,14 @@ describe("ConfigManager functions", () => {
     vi.clearAllMocks();
   });
 
-  it("returns defaults when no persisted config", async () => {
+  test("returns defaults when no persisted config", async () => {
     const result = await getConfiguration(byCodeAndLevel("global", "global"));
     expect(result.scope.code).toBe("global");
     expect(Array.isArray(result.config)).toBe(true);
     expect(result.config.length).toBeGreaterThan(0);
   });
 
-  it("reads from state when present", async () => {
+  test("reads from state when present", async () => {
     await configRepository.setCachedConfig(
       "global",
       buildPayload("id1", "global", "global", [
@@ -125,7 +143,7 @@ describe("ConfigManager functions", () => {
     expect(result.config.find((e) => e.name === "currency")?.value).toBe("€");
   });
 
-  it("falls back to files and caches to state", async () => {
+  test("falls back to files and caches to state", async () => {
     await configRepository.saveConfig(
       "global",
       buildPayload("id2", "global", "global", [
@@ -150,7 +168,7 @@ describe("ConfigManager functions", () => {
     ).toBe("£");
   });
 
-  it("merges inherited values from parent scopes", async () => {
+  test("merges inherited values from parent scopes", async () => {
     // Set up global scope config (top-level parent)
     await configRepository.saveConfig(
       "global",
@@ -214,7 +232,7 @@ describe("ConfigManager functions", () => {
     ).toEqual({ code: "default", level: "store_view" });
   });
 
-  it("resolves scope by code+level to id and fetches same via id", async () => {
+  test("resolves scope by code+level to id and fetches same via id", async () => {
     // Use the correct ID from mock scope tree: 'base'/'website' has id 'idw'
     await configRepository.saveConfig(
       "base",
@@ -238,7 +256,7 @@ describe("ConfigManager functions", () => {
     expect(resultByCodeLevel.scope.level).toBe("website");
   });
 
-  it("sets configuration and persists to files/state", async () => {
+  test("sets configuration and persists to files/state", async () => {
     const response = await setConfiguration(
       { config: [{ name: "currency", value: "JPY" }] },
       byCodeAndLevel("global", "global"),
@@ -258,7 +276,7 @@ describe("ConfigManager functions", () => {
     ).toBe("JPY");
   });
 
-  it("merges existing and newly set entries without losing prior values", async () => {
+  test("merges existing and newly set entries without losing prior values", async () => {
     // Set initial config
     await configRepository.saveConfig(
       "global",
@@ -292,7 +310,7 @@ describe("ConfigManager functions", () => {
     ).toBe("option1");
   });
 
-  it("ignores extra properties in setConfiguration request entries", async () => {
+  test("ignores extra properties in setConfiguration request entries", async () => {
     // Test that extra properties are stripped at runtime
     const response = await setConfiguration(
       {
@@ -311,7 +329,7 @@ describe("ConfigManager functions", () => {
     expect(response.config).toEqual([{ name: "currency", value: "GBP" }]);
   });
 
-  it("skips entries missing value and strips unknown props as per request contract", async () => {
+  test("skips entries missing value and strips unknown props as per request contract", async () => {
     // Test malformed entries are handled at runtime
     const response = await setConfiguration(
       {
@@ -335,7 +353,7 @@ describe("unsyncCommerceScopes", () => {
     vi.clearAllMocks();
   });
 
-  it("returns Ok when commerce scope exists and is removed", async () => {
+  test("returns Ok when commerce scope exists and is removed", async () => {
     const scopeTreeWithCommerce: ScopeTree = [...mockScopeTree];
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       scopeTreeWithCommerce,
@@ -354,7 +372,7 @@ describe("unsyncCommerceScopes", () => {
     );
   });
 
-  it("returns NotFound when commerce scope does not exist", async () => {
+  test("returns NotFound when commerce scope does not exist", async () => {
     const scopeTreeWithoutCommerce: ScopeTree = mockScopeTree.filter(
       (scope) => scope.code !== "commerce",
     );
@@ -369,7 +387,7 @@ describe("unsyncCommerceScopes", () => {
     expect(scopeTreeRepository.saveScopeTree).not.toHaveBeenCalled();
   });
 
-  it("when error is thrown", async () => {
+  test("when error is thrown", async () => {
     const error = new Error("Failed to access persistent storage");
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockRejectedValue(
       error,
@@ -380,5 +398,395 @@ describe("unsyncCommerceScopes", () => {
     );
 
     expect(scopeTreeRepository.saveScopeTree).not.toHaveBeenCalled();
+  });
+});
+
+describe("initialize", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("should initialize schema when schema is provided", async () => {
+    const testSchema = [
+      {
+        name: "testField",
+        type: "text",
+        label: "Test Field",
+        default: "test",
+      },
+    ] satisfies BusinessConfigSchema;
+
+    await initialize({ schema: testSchema });
+
+    expect(schemaRepository.savePersistedSchema).toHaveBeenCalledTimes(1);
+    expect(schemaRepository.savePersistedSchema).toHaveBeenCalledWith(
+      expect.any(String),
+      testSchema,
+      expect.any(String),
+    );
+  });
+
+  test("should not throw when stored schema exists and no schema provided", async () => {
+    vi.mocked(schemaRepository.getPersistedSchema).mockResolvedValue(
+      JSON.stringify([
+        { name: "existing", type: "text", default: "" },
+      ] satisfies BusinessConfigSchema),
+    );
+
+    await expect(initialize({})).resolves.not.toThrow();
+  });
+
+  test("should throw error when no schema provided and no stored schema exists", async () => {
+    vi.mocked(schemaRepository.getPersistedSchema).mockResolvedValue("");
+
+    await expect(initialize({})).rejects.toThrow();
+  });
+
+  test("should not save schema if version matches existing schema", async () => {
+    const existingSchema = [
+      { name: "field1", type: "text", default: "" },
+    ] satisfies BusinessConfigSchema;
+
+    vi.mocked(schemaRepository.getPersistedSchema).mockResolvedValue(
+      JSON.stringify(existingSchema),
+    );
+
+    await initialize({ schema: existingSchema });
+
+    // Should not save if versions match
+    expect(schemaRepository.savePersistedSchema).not.toHaveBeenCalled();
+  });
+});
+
+describe("getScopeTree", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("should return cached scope tree when no params provided", async () => {
+    vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await getScopeTree();
+
+    expect(result.scopeTree).toEqual(mockScopeTree);
+    expect(result.isCachedData).toBe(true);
+    expect(scopeTreeRepository.getCachedScopeTree).toHaveBeenCalledWith(
+      expect.any(String),
+    );
+  });
+
+  test("should fallback to persisted tree when cache is empty", async () => {
+    vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(null);
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await getScopeTree();
+
+    expect(result.scopeTree).toEqual(mockScopeTree);
+    expect(result.isCachedData).toBe(true);
+    expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalled();
+  });
+
+  test("should use custom cache timeout when provided", async () => {
+    vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(null);
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    await getScopeTree(undefined, { cacheTimeout: 600_000 });
+
+    expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalledWith(
+      expect.any(String),
+      mockScopeTree,
+      600_000,
+    );
+  });
+});
+
+describe("syncCommerceScopes", () => {
+  const commerceConfig: CommerceHttpClientParams = {
+    config: {
+      baseUrl: "https://test.commerce.com",
+      flavor: "saas",
+    },
+    auth: {
+      clientId: "test-client-id",
+      clientSecrets: ["test-client-secret"],
+      technicalAccountId: "test-technical-account-id",
+      technicalAccountEmail: "test-technical-account-email",
+      imsOrgId: "test-ims-org-id",
+      environment: "prod",
+    },
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("should sync commerce scopes successfully with fresh data", async () => {
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await syncCommerceScopes(commerceConfig);
+
+    expect(result.synced).toBe(true);
+    expect(result.scopeTree).toBeDefined();
+    expect(result.error).toBeUndefined();
+    expect(commerceApi.getAllScopeData).toHaveBeenCalled();
+    expect(scopeTreeRepository.saveScopeTree).toHaveBeenCalled();
+    expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalled();
+  });
+
+  test("should return synced=false when API fails and uses fallback cached data", async () => {
+    const apiError = new Error("Commerce API error");
+    vi.mocked(commerceApi.getAllScopeData).mockRejectedValue(apiError);
+    vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await syncCommerceScopes(commerceConfig);
+
+    expect(result.synced).toBe(false);
+    expect(result.scopeTree).toEqual(mockScopeTree);
+    expect(result.error).toBeDefined();
+  });
+
+  test("should include error when fallback persisted data is used", async () => {
+    const apiError = new Error("Commerce API error");
+    vi.mocked(commerceApi.getAllScopeData).mockRejectedValue(apiError);
+    vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(null);
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await syncCommerceScopes(commerceConfig);
+
+    expect(result.scopeTree).toEqual(mockScopeTree);
+    expect(result.synced).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  test("should throw error when sync fails completely", async () => {
+    const error = new Error("Network failure");
+    vi.mocked(commerceApi.getAllScopeData).mockRejectedValue(error);
+    vi.mocked(scopeTreeRepository.getCachedScopeTree).mockRejectedValue(error);
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockRejectedValue(
+      error,
+    );
+
+    await expect(syncCommerceScopes(commerceConfig)).rejects.toThrow();
+  });
+
+  test("should use custom cache timeout when provided", async () => {
+    vi.mocked(commerceApi.getAllScopeData).mockResolvedValue({
+      websites: [],
+      storeGroups: [],
+      storeViews: [],
+    });
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    await syncCommerceScopes(commerceConfig, { cacheTimeout: 600_000 });
+
+    expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(Array),
+      600_000,
+    );
+  });
+
+  test("should handle unknown error types", async () => {
+    vi.mocked(commerceApi.getAllScopeData).mockRejectedValue("String error");
+    vi.mocked(scopeTreeRepository.getCachedScopeTree).mockRejectedValue(
+      "String error",
+    );
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockRejectedValue(
+      "String error",
+    );
+
+    await expect(syncCommerceScopes(commerceConfig)).rejects.toThrow();
+  });
+});
+
+describe("setCustomScopeTree", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("should set custom scopes successfully", async () => {
+    const customScopes = [
+      {
+        code: "region_us",
+        label: "US Region",
+        level: "custom",
+        is_editable: true,
+        is_final: false,
+        children: [
+          {
+            code: "region_us_west",
+            label: "US West",
+            level: "custom",
+            is_editable: true,
+            is_final: true,
+          },
+        ],
+      },
+    ];
+
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await setCustomScopeTree({ scopes: customScopes });
+
+    expect(result.message).toBeDefined();
+    expect(result.scopes).toHaveLength(1);
+    expect(result.scopes[0].code).toBe("region_us");
+    expect(result.scopes[0].children).toHaveLength(1);
+    expect(scopeTreeRepository.saveScopeTree).toHaveBeenCalled();
+    expect(scopeTreeRepository.deleteCachedScopeTree).toHaveBeenCalledWith(
+      expect.any(String),
+    );
+  });
+
+  test("should preserve existing IDs when updating scopes with same code and level", async () => {
+    const existingCustomScopes: ScopeTree = [
+      ...mockScopeTree,
+      {
+        id: "existing-custom-id",
+        code: "region_eu",
+        label: "Old EU Region",
+        level: "custom",
+        is_editable: true,
+        is_final: false,
+        is_removable: true,
+      },
+    ];
+
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      existingCustomScopes,
+    );
+
+    const result = await setCustomScopeTree({
+      scopes: [
+        {
+          code: "region_eu",
+          label: "European Region",
+          level: "custom",
+          is_editable: true,
+          is_final: false,
+        },
+      ],
+    });
+
+    expect(result.scopes[0].id).toBe("existing-custom-id");
+    expect(result.scopes[0].label).toBe("European Region");
+  });
+
+  test("should generate new IDs for new scopes", async () => {
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await setCustomScopeTree({
+      scopes: [
+        {
+          code: "new_region",
+          label: "New Region",
+          level: "custom",
+          is_editable: true,
+          is_final: true,
+        },
+      ],
+    });
+
+    expect(result.scopes[0].id).toBeDefined();
+  });
+
+  test("should preserve global and commerce scopes", async () => {
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    await setCustomScopeTree({
+      scopes: [
+        {
+          code: "custom_scope",
+          label: "Custom Scope",
+          level: "custom",
+          is_editable: true,
+          is_final: true,
+        },
+      ],
+    });
+
+    const savedTree = vi.mocked(scopeTreeRepository.saveScopeTree).mock
+      .calls[0][1];
+
+    expect(savedTree.find((s) => s.code === "global")).toBeDefined();
+    expect(savedTree.find((s) => s.code === "commerce")).toBeDefined();
+  });
+
+  test("should invalidate cache when custom scopes are updated", async () => {
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    await setCustomScopeTree({
+      scopes: [
+        {
+          code: "region",
+          label: "Region",
+          level: "custom",
+          is_editable: true,
+          is_final: true,
+        },
+      ],
+    });
+
+    // Cache should be deleted to ensure fresh data on next getScopeTree call
+    expect(scopeTreeRepository.deleteCachedScopeTree).toHaveBeenCalledWith(
+      expect.any(String),
+    );
+    // Should not set cache with the updated tree
+    expect(scopeTreeRepository.setCachedScopeTree).not.toHaveBeenCalled();
+  });
+
+  test("should handle empty scopes array", async () => {
+    vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
+      mockScopeTree,
+    );
+
+    const result = await setCustomScopeTree({ scopes: [] });
+
+    expect(result.message).toBe("Custom scope tree updated successfully");
+    expect(result.scopes).toHaveLength(0);
+
+    const savedTree = vi.mocked(scopeTreeRepository.saveScopeTree).mock
+      .calls[0][1];
+    expect(savedTree).toHaveLength(2); // Only global and commerce
+    expect(savedTree[0].code).toBe("global");
+    expect(savedTree[1].code).toBe("commerce");
+  });
+
+  test("should throw error when validation fails", async () => {
+    await expect(
+      setCustomScopeTree({
+        scopes: [
+          {
+            code: "global", // Reserved code
+            label: "Invalid",
+            level: "custom",
+            is_editable: true,
+            is_final: true,
+          },
+        ],
+      }),
+    ).rejects.toThrow();
   });
 });
