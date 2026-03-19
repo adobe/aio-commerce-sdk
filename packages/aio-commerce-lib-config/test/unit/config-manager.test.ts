@@ -770,6 +770,8 @@ describe("setCustomScopeTree", () => {
     const savedTree = vi.mocked(scopeTreeRepository.saveScopeTree).mock
       .calls[0][1];
     expect(savedTree).toHaveLength(2); // Only global and commerce
+    expect(savedTree[0].code).toBe("global");
+    expect(savedTree[1].code).toBe("commerce");
   });
 
   it("should throw error when validation fails", async () => {
