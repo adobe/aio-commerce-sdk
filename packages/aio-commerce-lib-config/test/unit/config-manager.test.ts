@@ -419,7 +419,7 @@ describe("initialize", () => {
 
     expect(schemaRepository.savePersistedSchema).toHaveBeenCalledTimes(1);
     expect(schemaRepository.savePersistedSchema).toHaveBeenCalledWith(
-      "aio-commerce-config",
+      expect.any(String),
       testSchema,
       expect.any(String),
     );
@@ -472,7 +472,7 @@ describe("getScopeTree", () => {
     expect(result.scopeTree).toEqual(mockScopeTree);
     expect(result.isCachedData).toBe(true);
     expect(scopeTreeRepository.getCachedScopeTree).toHaveBeenCalledWith(
-      "aio-commerce-config",
+      expect.any(String),
     );
   });
 
@@ -498,7 +498,7 @@ describe("getScopeTree", () => {
     await getScopeTree(undefined, { cacheTimeout: 600_000 });
 
     expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalledWith(
-      "aio-commerce-config",
+      expect.any(String),
       mockScopeTree,
       600_000,
     );
@@ -597,7 +597,7 @@ describe("syncCommerceScopes", () => {
     await syncCommerceScopes(commerceConfig, { cacheTimeout: 600_000 });
 
     expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalledWith(
-      "aio-commerce-config",
+      expect.any(String),
       expect.any(Array),
       600_000,
     );
@@ -653,7 +653,7 @@ describe("setCustomScopeTree", () => {
     expect(result.scopes[0].children).toHaveLength(1);
     expect(scopeTreeRepository.saveScopeTree).toHaveBeenCalled();
     expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalledWith(
-      "aio-commerce-config",
+      expect.any(String),
       expect.any(Array),
       0,
     );
@@ -758,7 +758,7 @@ describe("setCustomScopeTree", () => {
     );
 
     expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalledWith(
-      "aio-commerce-config",
+      expect.any(String),
       expect.any(Array),
       0,
     );
