@@ -18,7 +18,6 @@ jobs:
       # We want to run checks on all versions, even if some fail.
       fail-fast: false
       matrix:
-        # Previous LTS (Maintenance), Current LTS, Latest stable
         node-version: [20, 22, 24]
 
     steps:
@@ -30,8 +29,7 @@ jobs:
 
       - name: Fetch target branch for PR
         if: github.event_name == 'pull_request'
-        run: |
-          git fetch origin ${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+        run: git fetch origin ${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
 
       # pnpm version will be read from packageManager field in package.json
       - name: Setup pnpm
@@ -43,11 +41,21 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
 
+      - name: Turborepo cache
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-node${{ matrix.node-version }}-turbo-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-node${{ matrix.node-version }}-turbo-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
         # See: https://turborepo.com/docs/reference/run#--affected
       - name: Run Turbo tasks on affected packages
+        env:
+          NODE_VERSION: ${{ matrix.node-version }}
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             # For PRs, compare the feature branch against the target branch
