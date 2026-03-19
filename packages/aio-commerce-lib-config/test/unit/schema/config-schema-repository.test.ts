@@ -96,10 +96,9 @@ describe("config-schema-repository", () => {
       const cached = await mockStateInstance.get(
         "test-namespace:config-schema",
       );
-      expect(cached.value).toBeDefined();
+      expect.assert.isNotNull(cached.value);
 
-      // biome-ignore lint/style/noNonNullAssertion: we just checked it's defined
-      const parsed = JSON.parse(cached.value!);
+      const parsed = JSON.parse(cached.value);
       expect(parsed.data).toEqual(schema);
     });
 
