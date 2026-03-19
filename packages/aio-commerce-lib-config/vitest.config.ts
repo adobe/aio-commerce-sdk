@@ -13,6 +13,15 @@
 import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
 import { defineConfig, mergeConfig } from "vitest/config";
 
+const BARREL_FILES = [
+  "./source/index.ts",
+  "./source/commands/index.ts",
+  "./source/modules/configuration/index.ts",
+  "./source/modules/schema/index.ts",
+  "./source/modules/scope-tree/index.ts",
+  "./source/types/index.ts",
+];
+
 export default mergeConfig(
   baseConfig,
   defineConfig({
@@ -20,13 +29,8 @@ export default mergeConfig(
     test: {
       passWithNoTests: true,
       coverage: {
-        // Temporarily lower thresholds for newly integrated package
-        thresholds: {
-          statements: 30,
-          branches: 30, // Lowered from 70% to allow initial integration
-          functions: 35,
-          lines: 30,
-        },
+        // Exclude barrel files from coverage
+        exclude: [...BARREL_FILES, "./source/**/types.ts"],
       },
     },
   }),
