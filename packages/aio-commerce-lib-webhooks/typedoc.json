@@ -15,12 +15,15 @@
 
   "externalSymbolLinkMappings": {
     "@adobe/aio-commerce-lib-api": {
-      "AdobeCommerceHttpClient": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md",
-      "AdobeIoEventsHttpClient": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeIoEventsHttpClient.md"
+      "AdobeCommerceHttpClient": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/index/classes/AdobeCommerceHttpClient.md",
+      "AdobeIoEventsHttpClient": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/index/classes/AdobeIoEventsHttpClient.md",
+      "ApiClient": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/index/classes/ApiClient.md",
+      "ApiFunction": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/index/type-aliases/ApiFunction.md",
+      "CommerceHttpClientParams": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/index/type-aliases/CommerceHttpClientParams.md"
     },
 
     "@adobe/aio-commerce-lib-core": {
-      "CommerceSdkValidationError": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-core/docs/api-reference/classes/CommerceSdkValidationError.md"
+      "CommerceSdkValidationError": "https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-core/docs/api-reference/error/classes/CommerceSdkValidationError.md"
     },
 
     "ky": {
