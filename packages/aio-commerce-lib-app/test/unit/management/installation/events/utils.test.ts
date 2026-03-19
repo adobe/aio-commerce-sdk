@@ -20,30 +20,11 @@ import {
   getIoEventCode,
   getNamespacedEvent,
 } from "#management/installation/events/utils";
-
-import type { ApplicationMetadata } from "#config/index";
-import type { EventProvider } from "#config/schema/eventing";
-
-const mockMetadata = (id: string): ApplicationMetadata => ({
-  id,
-  displayName: "Test App",
-  description: "A test application",
-  version: "1.0.0",
-});
-
-const mockProvider = (label: string, key?: string): EventProvider => ({
-  label,
-  description: "A test provider",
-  ...(key !== undefined && { key }),
-});
-
-const mockCommerceEvent = (name: string) => ({
-  name,
-  label: "Order Placed",
-  description: "desc",
-  fields: [] as [],
-  runtimeActions: [] as [],
-});
+import {
+  createMockCommerceEvent,
+  createMockMetadata,
+  createMockProvider,
+} from "#test/fixtures/eventing";
 
 /** Shared cases for testing id/name lowercase normalization: [description, id, name, expected]. */
 const nameNormalizationCases = [
@@ -78,41 +59,41 @@ describe("generateInstanceId", () => {
     [
       "should produce a lowercase instance ID from metadata id and provider key",
       "MyApp-Test",
-      mockProvider("Some Label", "my-provider"),
+      createMockProvider("Some Label", "my-provider"),
       "myapp-test-my-provider",
     ],
     [
       "should slugify and lowercase the provider label when key is absent",
       "MyApp-MyApp",
-      mockProvider("Order Notifier"),
+      createMockProvider("Order Notifier"),
       "myapp-myapp-order-notifier",
     ],
     [
       "should lowercase an already-lowercase metadata id",
       "my-app",
-      mockProvider("label", "key"),
+      createMockProvider("label", "key"),
       "my-app-key",
     ],
     [
       "should normalize mixed-case metadata id to lowercase",
       "MyMixedApp",
-      mockProvider("Commerce Provider", "commerce"),
+      createMockProvider("Commerce Provider", "commerce"),
       "mymixedapp-commerce",
     ],
   ] as const)("%s", (_desc, id, provider, expected) => {
-    expect(generateInstanceId(mockMetadata(id), provider)).toBe(expected);
+    expect(generateInstanceId(createMockMetadata(id), provider)).toBe(expected);
   });
 });
 
 describe("getNamespacedEvent", () => {
   test.each(nameNormalizationCases)("%s", (_desc, id, name, expected) => {
-    expect(getNamespacedEvent(mockMetadata(id), name)).toBe(expected);
+    expect(getNamespacedEvent(createMockMetadata(id), name)).toBe(expected);
   });
 });
 
 describe("getEventName", () => {
   test.each(nameNormalizationCases)("%s", (_desc, id, name, expected) => {
-    expect(getEventName(id, mockCommerceEvent(name))).toBe(expected);
+    expect(getEventName(id, createMockCommerceEvent(name))).toBe(expected);
   });
 });
 
@@ -130,7 +111,7 @@ describe("getIoEventCode", () => {
   });
 
   test("should produce a fully lowercase event code when combined with a normalized namespaced event", () => {
-    const metadata = mockMetadata("MyApp");
+    const metadata = createMockMetadata("MyApp");
     const namespacedEvent = getNamespacedEvent(
       metadata,
       "Observer.OrderPlaced",
