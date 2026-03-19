@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { getConfigurationByKey } from "#config-manager";
 import { byCodeAndLevel } from "#config-utils";
@@ -89,7 +89,7 @@ describe("getConfigurationByKey", () => {
     vi.clearAllMocks();
   });
 
-  it("returns the correct value for a non-password key", async () => {
+  test("returns the correct value for a non-password key", async () => {
     await configRepository.saveConfig(
       "global",
       buildPayload("id-global", "global", "global", [
@@ -112,7 +112,7 @@ describe("getConfigurationByKey", () => {
     expect(result.config?.value).toBe("USD");
   });
 
-  it("returns null config when key does not exist in schema", async () => {
+  test("returns null config when key does not exist in schema", async () => {
     const result = await getConfigurationByKey(
       "nonExistentKey",
       byCodeAndLevel("global", "global"),
@@ -121,7 +121,7 @@ describe("getConfigurationByKey", () => {
     expect(result.config).toBeNull();
   });
 
-  it("does NOT require an encryption key when requesting a non-password field, even if password fields exist", async () => {
+  test("does NOT require an encryption key when requesting a non-password field, even if password fields exist", async () => {
     const encryptionKey = generateEncryptionKey();
     await configRepository.saveConfig(
       "global",
@@ -147,7 +147,7 @@ describe("getConfigurationByKey", () => {
     });
   });
 
-  it("decrypts the value when requesting a password field with an encryption key", async () => {
+  test("decrypts the value when requesting a password field with an encryption key", async () => {
     const encryptionKey = generateEncryptionKey();
     const plainText = "super-secret-password";
 
@@ -171,7 +171,7 @@ describe("getConfigurationByKey", () => {
     expect(result.config?.value).toBe(plainText);
   });
 
-  it("throws when requesting a password field that has a value but no encryption key is provided", async () => {
+  test("throws when requesting a password field that has a value but no encryption key is provided", async () => {
     const encryptionKey = generateEncryptionKey();
     await configRepository.saveConfig(
       "global",
@@ -189,7 +189,7 @@ describe("getConfigurationByKey", () => {
     ).rejects.toThrow("Encryption key has not been given");
   });
 
-  it("returns null config for a password field with an empty value without requiring encryption key", async () => {
+  test("returns null config for a password field with an empty value without requiring encryption key", async () => {
     await configRepository.saveConfig(
       "global",
       buildPayload("id-global", "global", "global", [
@@ -210,7 +210,7 @@ describe("getConfigurationByKey", () => {
     expect(result.config?.value).toBe("");
   });
 
-  it("returns scope information alongside the config value", async () => {
+  test("returns scope information alongside the config value", async () => {
     await configRepository.saveConfig(
       "global",
       buildPayload("id-global", "global", "global", [

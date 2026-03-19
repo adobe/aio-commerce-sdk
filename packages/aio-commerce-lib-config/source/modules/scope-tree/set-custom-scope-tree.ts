@@ -101,11 +101,7 @@ export async function setCustomScopeTree(
   );
 
   // Clear cache to ensure fresh data on next get-scope-tree call
-  await scopeTreeRepository.setCachedScopeTree(
-    context.namespace,
-    updatedCompleteTree,
-    0,
-  );
+  await scopeTreeRepository.deleteCachedScopeTree(context.namespace);
 
   return {
     message: "Custom scope tree updated successfully",
