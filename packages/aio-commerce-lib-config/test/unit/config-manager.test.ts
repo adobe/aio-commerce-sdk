@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import * as commerceApi from "#api/commerce";
 import {
@@ -120,14 +120,14 @@ describe("ConfigManager functions", () => {
     vi.clearAllMocks();
   });
 
-  it("returns defaults when no persisted config", async () => {
+  test("returns defaults when no persisted config", async () => {
     const result = await getConfiguration(byCodeAndLevel("global", "global"));
     expect(result.scope.code).toBe("global");
     expect(Array.isArray(result.config)).toBe(true);
     expect(result.config.length).toBeGreaterThan(0);
   });
 
-  it("reads from state when present", async () => {
+  test("reads from state when present", async () => {
     await configRepository.setCachedConfig(
       "global",
       buildPayload("id1", "global", "global", [
@@ -143,7 +143,7 @@ describe("ConfigManager functions", () => {
     expect(result.config.find((e) => e.name === "currency")?.value).toBe("€");
   });
 
-  it("falls back to files and caches to state", async () => {
+  test("falls back to files and caches to state", async () => {
     await configRepository.saveConfig(
       "global",
       buildPayload("id2", "global", "global", [
@@ -168,7 +168,7 @@ describe("ConfigManager functions", () => {
     ).toBe("£");
   });
 
-  it("merges inherited values from parent scopes", async () => {
+  test("merges inherited values from parent scopes", async () => {
     // Set up global scope config (top-level parent)
     await configRepository.saveConfig(
       "global",
@@ -232,7 +232,7 @@ describe("ConfigManager functions", () => {
     ).toEqual({ code: "default", level: "store_view" });
   });
 
-  it("resolves scope by code+level to id and fetches same via id", async () => {
+  test("resolves scope by code+level to id and fetches same via id", async () => {
     // Use the correct ID from mock scope tree: 'base'/'website' has id 'idw'
     await configRepository.saveConfig(
       "base",
@@ -256,7 +256,7 @@ describe("ConfigManager functions", () => {
     expect(resultByCodeLevel.scope.level).toBe("website");
   });
 
-  it("sets configuration and persists to files/state", async () => {
+  test("sets configuration and persists to files/state", async () => {
     const response = await setConfiguration(
       { config: [{ name: "currency", value: "JPY" }] },
       byCodeAndLevel("global", "global"),
@@ -276,7 +276,7 @@ describe("ConfigManager functions", () => {
     ).toBe("JPY");
   });
 
-  it("merges existing and newly set entries without losing prior values", async () => {
+  test("merges existing and newly set entries without losing prior values", async () => {
     // Set initial config
     await configRepository.saveConfig(
       "global",
@@ -310,7 +310,7 @@ describe("ConfigManager functions", () => {
     ).toBe("option1");
   });
 
-  it("ignores extra properties in setConfiguration request entries", async () => {
+  test("ignores extra properties in setConfiguration request entries", async () => {
     // Test that extra properties are stripped at runtime
     const response = await setConfiguration(
       {
@@ -329,7 +329,7 @@ describe("ConfigManager functions", () => {
     expect(response.config).toEqual([{ name: "currency", value: "GBP" }]);
   });
 
-  it("skips entries missing value and strips unknown props as per request contract", async () => {
+  test("skips entries missing value and strips unknown props as per request contract", async () => {
     // Test malformed entries are handled at runtime
     const response = await setConfiguration(
       {
@@ -353,7 +353,7 @@ describe("unsyncCommerceScopes", () => {
     vi.clearAllMocks();
   });
 
-  it("returns Ok when commerce scope exists and is removed", async () => {
+  test("returns Ok when commerce scope exists and is removed", async () => {
     const scopeTreeWithCommerce: ScopeTree = [...mockScopeTree];
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       scopeTreeWithCommerce,
@@ -372,7 +372,7 @@ describe("unsyncCommerceScopes", () => {
     );
   });
 
-  it("returns NotFound when commerce scope does not exist", async () => {
+  test("returns NotFound when commerce scope does not exist", async () => {
     const scopeTreeWithoutCommerce: ScopeTree = mockScopeTree.filter(
       (scope) => scope.code !== "commerce",
     );
@@ -387,7 +387,7 @@ describe("unsyncCommerceScopes", () => {
     expect(scopeTreeRepository.saveScopeTree).not.toHaveBeenCalled();
   });
 
-  it("when error is thrown", async () => {
+  test("when error is thrown", async () => {
     const error = new Error("Failed to access persistent storage");
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockRejectedValue(
       error,
@@ -406,7 +406,7 @@ describe("initialize", () => {
     vi.clearAllMocks();
   });
 
-  it("should initialize schema when schema is provided", async () => {
+  test("should initialize schema when schema is provided", async () => {
     const testSchema = [
       {
         name: "testField",
@@ -426,7 +426,7 @@ describe("initialize", () => {
     );
   });
 
-  it("should not throw when stored schema exists and no schema provided", async () => {
+  test("should not throw when stored schema exists and no schema provided", async () => {
     vi.mocked(schemaRepository.getPersistedSchema).mockResolvedValue(
       JSON.stringify([
         { name: "existing", type: "text", default: "" },
@@ -436,13 +436,13 @@ describe("initialize", () => {
     await expect(initialize({})).resolves.not.toThrow();
   });
 
-  it("should throw error when no schema provided and no stored schema exists", async () => {
+  test("should throw error when no schema provided and no stored schema exists", async () => {
     vi.mocked(schemaRepository.getPersistedSchema).mockResolvedValue("");
 
     await expect(initialize({})).rejects.toThrow();
   });
 
-  it("should not save schema if version matches existing schema", async () => {
+  test("should not save schema if version matches existing schema", async () => {
     const existingSchema = [
       { name: "field1", type: "text", default: "" },
     ] satisfies BusinessConfigSchema;
@@ -463,7 +463,7 @@ describe("getScopeTree", () => {
     vi.clearAllMocks();
   });
 
-  it("should return cached scope tree when no params provided", async () => {
+  test("should return cached scope tree when no params provided", async () => {
     vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(
       mockScopeTree,
     );
@@ -477,7 +477,7 @@ describe("getScopeTree", () => {
     );
   });
 
-  it("should fallback to persisted tree when cache is empty", async () => {
+  test("should fallback to persisted tree when cache is empty", async () => {
     vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(null);
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       mockScopeTree,
@@ -490,7 +490,7 @@ describe("getScopeTree", () => {
     expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalled();
   });
 
-  it("should use custom cache timeout when provided", async () => {
+  test("should use custom cache timeout when provided", async () => {
     vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(null);
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       mockScopeTree,
@@ -526,7 +526,7 @@ describe("syncCommerceScopes", () => {
     vi.clearAllMocks();
   });
 
-  it("should sync commerce scopes successfully with fresh data", async () => {
+  test("should sync commerce scopes successfully with fresh data", async () => {
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       mockScopeTree,
     );
@@ -541,7 +541,7 @@ describe("syncCommerceScopes", () => {
     expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalled();
   });
 
-  it("should return synced=false when API fails and uses fallback cached data", async () => {
+  test("should return synced=false when API fails and uses fallback cached data", async () => {
     const apiError = new Error("Commerce API error");
     vi.mocked(commerceApi.getAllScopeData).mockRejectedValue(apiError);
     vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(
@@ -555,7 +555,7 @@ describe("syncCommerceScopes", () => {
     expect(result.error).toBeDefined();
   });
 
-  it("should include error when fallback persisted data is used", async () => {
+  test("should include error when fallback persisted data is used", async () => {
     const apiError = new Error("Commerce API error");
     vi.mocked(commerceApi.getAllScopeData).mockRejectedValue(apiError);
     vi.mocked(scopeTreeRepository.getCachedScopeTree).mockResolvedValue(null);
@@ -570,7 +570,7 @@ describe("syncCommerceScopes", () => {
     expect(result.error).toBeDefined();
   });
 
-  it("should throw error when sync fails completely", async () => {
+  test("should throw error when sync fails completely", async () => {
     const error = new Error("Network failure");
     vi.mocked(commerceApi.getAllScopeData).mockRejectedValue(error);
     vi.mocked(scopeTreeRepository.getCachedScopeTree).mockRejectedValue(error);
@@ -581,7 +581,7 @@ describe("syncCommerceScopes", () => {
     await expect(syncCommerceScopes(commerceConfig)).rejects.toThrow();
   });
 
-  it("should use custom cache timeout when provided", async () => {
+  test("should use custom cache timeout when provided", async () => {
     vi.mocked(commerceApi.getAllScopeData).mockResolvedValue({
       websites: [],
       storeGroups: [],
@@ -600,7 +600,7 @@ describe("syncCommerceScopes", () => {
     );
   });
 
-  it("should handle unknown error types", async () => {
+  test("should handle unknown error types", async () => {
     vi.mocked(commerceApi.getAllScopeData).mockRejectedValue("String error");
     vi.mocked(scopeTreeRepository.getCachedScopeTree).mockRejectedValue(
       "String error",
@@ -618,7 +618,7 @@ describe("setCustomScopeTree", () => {
     vi.clearAllMocks();
   });
 
-  it("should set custom scopes successfully", async () => {
+  test("should set custom scopes successfully", async () => {
     const customScopes = [
       {
         code: "region_us",
@@ -654,7 +654,7 @@ describe("setCustomScopeTree", () => {
     );
   });
 
-  it("should preserve existing IDs when updating scopes with same code and level", async () => {
+  test("should preserve existing IDs when updating scopes with same code and level", async () => {
     const existingCustomScopes: ScopeTree = [
       ...mockScopeTree,
       {
@@ -688,7 +688,7 @@ describe("setCustomScopeTree", () => {
     expect(result.scopes[0].label).toBe("European Region");
   });
 
-  it("should generate new IDs for new scopes", async () => {
+  test("should generate new IDs for new scopes", async () => {
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       mockScopeTree,
     );
@@ -708,7 +708,7 @@ describe("setCustomScopeTree", () => {
     expect(result.scopes[0].id).toBeDefined();
   });
 
-  it("should preserve global and commerce scopes", async () => {
+  test("should preserve global and commerce scopes", async () => {
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       mockScopeTree,
     );
@@ -732,7 +732,7 @@ describe("setCustomScopeTree", () => {
     expect(savedTree.find((s) => s.code === "commerce")).toBeDefined();
   });
 
-  it("should invalidate cache when custom scopes are updated", async () => {
+  test("should invalidate cache when custom scopes are updated", async () => {
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       mockScopeTree,
     );
@@ -757,7 +757,7 @@ describe("setCustomScopeTree", () => {
     expect(scopeTreeRepository.setCachedScopeTree).not.toHaveBeenCalled();
   });
 
-  it("should handle empty scopes array", async () => {
+  test("should handle empty scopes array", async () => {
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       mockScopeTree,
     );
@@ -774,7 +774,7 @@ describe("setCustomScopeTree", () => {
     expect(savedTree[1].code).toBe("commerce");
   });
 
-  it("should throw error when validation fails", async () => {
+  test("should throw error when validation fails", async () => {
     await expect(
       setCustomScopeTree({
         scopes: [

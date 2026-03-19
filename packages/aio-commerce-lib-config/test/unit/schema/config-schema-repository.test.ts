@@ -1,5 +1,5 @@
 import stringify from "safe-stable-stringify";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   deleteCachedSchema,
@@ -36,7 +36,7 @@ describe("config-schema-repository", () => {
   });
 
   describe("getCachedSchema", () => {
-    it("should return cached schema when present", async () => {
+    test("should return cached schema when present", async () => {
       const schema = VALID_CONFIGURATION;
 
       await mockStateInstance.put(
@@ -49,13 +49,13 @@ describe("config-schema-repository", () => {
       expect(result).toEqual(schema);
     });
 
-    it("should return null when cache is empty", async () => {
+    test("should return null when cache is empty", async () => {
       const result = await getCachedSchema("test-namespace");
 
       expect(result).toBeNull();
     });
 
-    it("should return null when cache value is invalid", async () => {
+    test("should return null when cache value is invalid", async () => {
       await mockStateInstance.put(
         "test-namespace:config-schema",
         "invalid-json",
@@ -66,7 +66,7 @@ describe("config-schema-repository", () => {
       expect(result).toBeNull();
     });
 
-    it("should return null when data property is missing", async () => {
+    test("should return null when data property is missing", async () => {
       await mockStateInstance.put(
         "test-namespace:config-schema",
         JSON.stringify({ other: "value" }),
@@ -79,7 +79,7 @@ describe("config-schema-repository", () => {
   });
 
   describe("setCachedSchema", () => {
-    it("should cache schema with TTL", async () => {
+    test("should cache schema with TTL", async () => {
       const schema = VALID_CONFIGURATION;
       const ttl = 300_000;
 
@@ -102,7 +102,7 @@ describe("config-schema-repository", () => {
       expect(parsed.data).toEqual(schema);
     });
 
-    it("should not throw when caching fails", async () => {
+    test("should not throw when caching fails", async () => {
       const schema = VALID_CONFIGURATION_WITHOUT_DEFAULTS;
 
       vi.spyOn(mockStateInstance, "put").mockRejectedValue(
@@ -116,7 +116,7 @@ describe("config-schema-repository", () => {
   });
 
   describe("deleteCachedSchema", () => {
-    it("should delete cached schema", async () => {
+    test("should delete cached schema", async () => {
       await mockStateInstance.put(
         "test-namespace:config-schema",
         JSON.stringify({ data: [] }),
@@ -130,7 +130,7 @@ describe("config-schema-repository", () => {
       expect(cached?.value).toBeNull();
     });
 
-    it("should not throw when deletion fails", async () => {
+    test("should not throw when deletion fails", async () => {
       vi.spyOn(mockStateInstance, "delete").mockRejectedValue(
         new Error("Delete error"),
       );
@@ -140,7 +140,7 @@ describe("config-schema-repository", () => {
   });
 
   describe("getSchemaVersion", () => {
-    it("should return schema version when present", async () => {
+    test("should return schema version when present", async () => {
       const version = "abc123def456";
 
       await mockStateInstance.put(
@@ -153,13 +153,13 @@ describe("config-schema-repository", () => {
       expect(result).toBe(version);
     });
 
-    it("should return null when version is not set", async () => {
+    test("should return null when version is not set", async () => {
       const result = await getSchemaVersion("test-namespace");
 
       expect(result).toBeNull();
     });
 
-    it("should return null when version data is invalid", async () => {
+    test("should return null when version data is invalid", async () => {
       await mockStateInstance.put(
         "test-namespace:schema-version",
         "invalid-json",
@@ -170,7 +170,7 @@ describe("config-schema-repository", () => {
       expect(result).toBeNull();
     });
 
-    it("should return null when version property is missing", async () => {
+    test("should return null when version property is missing", async () => {
       await mockStateInstance.put(
         "test-namespace:schema-version",
         JSON.stringify({ other: "value" }),
@@ -183,7 +183,7 @@ describe("config-schema-repository", () => {
   });
 
   describe("setSchemaVersion", () => {
-    it("should set schema version", async () => {
+    test("should set schema version", async () => {
       const version = "xyz789abc123";
 
       await setSchemaVersion("test-namespace", version);
@@ -198,7 +198,7 @@ describe("config-schema-repository", () => {
       expect(parsed.version).toBe(version);
     });
 
-    it("should not throw when setting version fails", async () => {
+    test("should not throw when setting version fails", async () => {
       vi.spyOn(mockStateInstance, "put").mockRejectedValue(
         new Error("State error"),
       );
@@ -210,7 +210,7 @@ describe("config-schema-repository", () => {
   });
 
   describe("savePersistedSchema", () => {
-    it("should save schema to files", async () => {
+    test("should save schema to files", async () => {
       const schema = VALID_CONFIGURATION;
 
       await savePersistedSchema("test-namespace", schema);
@@ -221,7 +221,7 @@ describe("config-schema-repository", () => {
       expect(parsed).toEqual(schema);
     });
 
-    it("should delete cached schema after saving", async () => {
+    test("should delete cached schema after saving", async () => {
       const schema = VALID_CONFIGURATION_WITHOUT_DEFAULTS;
 
       await mockStateInstance.put(
@@ -237,7 +237,7 @@ describe("config-schema-repository", () => {
       expect(cached?.value).toBeNull();
     });
 
-    it("should set schema version when provided", async () => {
+    test("should set schema version when provided", async () => {
       const schema = VALID_CONFIGURATION;
       const version = "version-hash-123";
 
@@ -247,7 +247,7 @@ describe("config-schema-repository", () => {
       expect(storedVersion).toBe(version);
     });
 
-    it("should not set version when not provided", async () => {
+    test("should not set version when not provided", async () => {
       const schema = VALID_CONFIGURATION_WITHOUT_DEFAULTS;
 
       await savePersistedSchema("test-namespace", schema);
@@ -258,7 +258,7 @@ describe("config-schema-repository", () => {
   });
 
   describe("getPersistedSchema", () => {
-    it("should read persisted schema from files", async () => {
+    test("should read persisted schema from files", async () => {
       const schema = VALID_CONFIGURATION;
 
       await mockFilesInstance.write(
@@ -271,7 +271,7 @@ describe("config-schema-repository", () => {
       expect(result).toBe(JSON.stringify(schema, null, 2));
     });
 
-    it("should throw when file does not exist", async () => {
+    test("should throw when file does not exist", async () => {
       vi.spyOn(mockFilesInstance, "read").mockRejectedValue(
         new Error("File not found"),
       );
