@@ -42,6 +42,7 @@ type ConfigActionFactoryArgs = {
 type ConfigActionParams = RuntimeActionParams &
   ConfigActionFactoryArgs & {
     AIO_COMMERCE_CONFIG_ENCRYPTION_KEY?: string;
+    __ow_headers?: Record<string, string>;
   };
 
 /** The context for the config action. */
@@ -51,6 +52,82 @@ interface ConfigActionContext extends BaseContext {
 
 // Placeholder value for password fields.
 const MASKED_PASSWORD_VALUE = "*****";
+
+/**
+ * Resolves optionsSource for a field by calling the specified action or URL.
+ * This allows dynamic dropdowns to work with Adobe's App Management UI.
+ */
+async function resolveOptionsSource(
+  field: BusinessConfigSchema[number],
+  params: ConfigActionParams,
+): Promise<BusinessConfigSchema[number]> {
+  if (!("optionsSource" in field && field.optionsSource)) {
+    return field;
+  }
+
+  const { action, url } = field.optionsSource;
+
+  try {
+    let options: Array<{ label: string; value: string }> = [];
+
+    if (action) {
+      const namespace = process.env.__OW_NAMESPACE;
+      const apiHost = process.env.__OW_API_HOST;
+      const actionUrl = `${apiHost}/api/v1/web/${namespace}/${action}`;
+
+      const response = await fetch(actionUrl, {
+        headers: {
+          Authorization: params.__ow_headers?.authorization || "",
+          "x-gw-ims-org-id": params.__ow_headers?.["x-gw-ims-org-id"] || "",
+        },
+      });
+
+      if (response.ok) {
+        const result = (await response.json()) as {
+          body?: { options?: Array<{ label: string; value: string }> };
+          options?: Array<{ label: string; value: string }>;
+        };
+        options = result?.body?.options || result?.options || [];
+      }
+    } else if (url) {
+      const response = await fetch(url);
+
+      if (response.ok) {
+        const result = (await response.json()) as {
+          options?: Array<{ label: string; value: string }>;
+        };
+        options = result?.options || [];
+      }
+    }
+
+    const { optionsSource, ...fieldWithoutSource } = field;
+    return {
+      ...fieldWithoutSource,
+      options:
+        options.length > 0
+          ? options
+          : [{ label: "No options available", value: "" }],
+    } as BusinessConfigSchema[number];
+  } catch {
+    const { optionsSource, ...fieldWithoutSource } = field;
+    return {
+      ...fieldWithoutSource,
+      options: [{ label: "Error loading options", value: "" }],
+    } as BusinessConfigSchema[number];
+  }
+}
+
+/**
+ * Process schema to resolve all optionsSource fields into static options arrays.
+ */
+async function resolveAllOptionsSource(
+  schema: BusinessConfigSchema,
+  params: ConfigActionParams,
+): Promise<BusinessConfigSchema> {
+  return Promise.all(
+    schema.map((field) => resolveOptionsSource(field, params)),
+  ) as Promise<BusinessConfigSchema>;
+}
 
 /**
  * Filters password fields from the configuration values.
@@ -93,6 +170,11 @@ router.get("/", {
 
     initialize({ schema: validatedSchema });
 
+    const resolvedSchema = await resolveAllOptionsSource(
+      validatedSchema,
+      rawParams,
+    );
+
     const { scopeId } = req.query;
     logger.debug(`Retrieving configuration with scope id: ${scopeId}`);
     const appConfiguration = await getConfiguration(byScopeId(scopeId), {
@@ -106,7 +188,7 @@ router.get("/", {
     );
 
     return ok({
-      body: { schema: validatedSchema, values: appConfiguration },
+      body: { schema: resolvedSchema, values: appConfiguration },
     });
   },
 });
