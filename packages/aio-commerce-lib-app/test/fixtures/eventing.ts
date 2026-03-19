@@ -3,7 +3,7 @@ import { vi } from "vitest";
 import { createMockInstallationContext } from "./installation";
 
 import type { ApplicationMetadata } from "#config/index";
-import type { CommerceEvent, EventProvider } from "#config/schema/eventing";
+import type { EventProvider } from "#config/schema/eventing";
 
 export const DEFAULT_TEST_METADATA = {
   id: "test-app",
@@ -23,21 +23,6 @@ export function createMockProvider(label: string, key?: string): EventProvider {
     label,
     description: "A test provider",
     ...(key !== undefined && { key }),
-  };
-}
-
-/** Creates a mock {@link CommerceEvent} with the given name. */
-export function createMockCommerceEvent(
-  name: string,
-  overrides?: Partial<CommerceEvent>,
-): CommerceEvent {
-  return {
-    name,
-    label: "Order Placed",
-    description: "A test event",
-    fields: [],
-    runtimeActions: [],
-    ...overrides,
   };
 }
 

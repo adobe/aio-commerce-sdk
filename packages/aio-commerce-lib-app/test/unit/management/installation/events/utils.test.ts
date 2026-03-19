@@ -16,12 +16,10 @@ import {
   COMMERCE_PROVIDER_TYPE,
   EXTERNAL_PROVIDER_TYPE,
   generateInstanceId,
-  getEventName,
   getIoEventCode,
   getNamespacedEvent,
 } from "#management/installation/events/utils";
 import {
-  createMockCommerceEvent,
   createMockMetadata,
   createMockProvider,
 } from "#test/fixtures/eventing";
@@ -88,12 +86,6 @@ describe("generateInstanceId", () => {
 describe("getNamespacedEvent", () => {
   test.each(nameNormalizationCases)("%s", (_desc, id, name, expected) => {
     expect(getNamespacedEvent(createMockMetadata(id), name)).toBe(expected);
-  });
-});
-
-describe("getEventName", () => {
-  test.each(nameNormalizationCases)("%s", (_desc, id, name, expected) => {
-    expect(getEventName(id, createMockCommerceEvent(name))).toBe(expected);
   });
 });
 
