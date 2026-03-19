@@ -9,10 +9,12 @@ import {
   setCachedSchema,
   setSchemaVersion,
 } from "#modules/schema/config-schema-repository";
+import {
+  VALID_CONFIGURATION,
+  VALID_CONFIGURATION_WITHOUT_DEFAULTS,
+} from "#test/fixtures/configuration-schema";
 import { createMockLibFiles } from "#test/mocks/lib-files";
 import { createMockLibState } from "#test/mocks/lib-state";
-
-import type { BusinessConfigSchema } from "#modules/schema/types";
 
 const MockState = createMockLibState();
 const MockFiles = createMockLibFiles();
@@ -34,14 +36,7 @@ describe("config-schema-repository", () => {
 
   describe("getCachedSchema", () => {
     it("should return cached schema when present", async () => {
-      const schema: BusinessConfigSchema = [
-        {
-          name: "testField",
-          type: "text",
-          label: "Test Field",
-          default: "",
-        },
-      ];
+      const schema = VALID_CONFIGURATION;
 
       await mockStateInstance.put(
         "test-namespace:config-schema",
@@ -84,14 +79,7 @@ describe("config-schema-repository", () => {
 
   describe("setCachedSchema", () => {
     it("should cache schema with TTL", async () => {
-      const schema: BusinessConfigSchema = [
-        {
-          name: "currency",
-          type: "text",
-          label: "Currency",
-          default: "USD",
-        },
-      ];
+      const schema = VALID_CONFIGURATION;
 
       await setCachedSchema("test-namespace", schema, 300_000);
 
@@ -106,13 +94,7 @@ describe("config-schema-repository", () => {
     });
 
     it("should not throw when caching fails", async () => {
-      const schema: BusinessConfigSchema = [
-        {
-          name: "field",
-          type: "text",
-          default: "",
-        },
-      ];
+      const schema = VALID_CONFIGURATION_WITHOUT_DEFAULTS;
 
       vi.spyOn(mockStateInstance, "put").mockRejectedValue(
         new Error("State error"),
@@ -220,14 +202,7 @@ describe("config-schema-repository", () => {
 
   describe("savePersistedSchema", () => {
     it("should save schema to files", async () => {
-      const schema: BusinessConfigSchema = [
-        {
-          name: "apiKey",
-          type: "text",
-          label: "API Key",
-          default: "",
-        },
-      ];
+      const schema = VALID_CONFIGURATION;
 
       await savePersistedSchema("test-namespace", schema);
 
@@ -238,13 +213,7 @@ describe("config-schema-repository", () => {
     });
 
     it("should delete cached schema after saving", async () => {
-      const schema: BusinessConfigSchema = [
-        {
-          name: "field",
-          type: "text",
-          default: "",
-        },
-      ];
+      const schema = VALID_CONFIGURATION_WITHOUT_DEFAULTS;
 
       await mockStateInstance.put(
         "test-namespace:config-schema",
@@ -260,13 +229,7 @@ describe("config-schema-repository", () => {
     });
 
     it("should set schema version when provided", async () => {
-      const schema: BusinessConfigSchema = [
-        {
-          name: "field",
-          type: "text",
-          default: "",
-        },
-      ];
+      const schema = VALID_CONFIGURATION;
       const version = "version-hash-123";
 
       await savePersistedSchema("test-namespace", schema, version);
@@ -276,13 +239,7 @@ describe("config-schema-repository", () => {
     });
 
     it("should not set version when not provided", async () => {
-      const schema: BusinessConfigSchema = [
-        {
-          name: "field",
-          type: "text",
-          default: "",
-        },
-      ];
+      const schema = VALID_CONFIGURATION_WITHOUT_DEFAULTS;
 
       await savePersistedSchema("test-namespace", schema);
 
@@ -291,13 +248,7 @@ describe("config-schema-repository", () => {
     });
 
     it("should format schema with proper indentation", async () => {
-      const schema: BusinessConfigSchema = [
-        {
-          name: "field",
-          type: "text",
-          default: "",
-        },
-      ];
+      const schema = VALID_CONFIGURATION;
 
       await savePersistedSchema("test-namespace", schema);
 
@@ -311,14 +262,7 @@ describe("config-schema-repository", () => {
 
   describe("getPersistedSchema", () => {
     it("should read persisted schema from files", async () => {
-      const schema: BusinessConfigSchema = [
-        {
-          name: "testField",
-          type: "email",
-          label: "Email",
-          default: "",
-        },
-      ];
+      const schema = VALID_CONFIGURATION;
 
       await mockFilesInstance.write(
         "config-schema.json",
