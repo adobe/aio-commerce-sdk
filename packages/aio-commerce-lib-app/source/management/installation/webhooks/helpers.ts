@@ -329,8 +329,11 @@ function generateUrlForRuntimeAction(runtimeAction: string): string {
  * are collapsed to one; a trailing underscore is appended. The result is lowercased
  * to ensure consistent matching regardless of input casing.
  *
- * @example buildWebhookIdPrefix("my--app.v2") // => "my_app_v2_"
- * @example buildWebhookIdPrefix("MyApp") // => "myapp_"
+ * @example
+ * ```typescript
+ * buildWebhookIdPrefix("my--app.v2") // => "my_app_v2_"
+ * buildWebhookIdPrefix("MyApp") // => "myapp_"
+ * ```
  * @param appId - The app ID to build the prefix from.
  * @return The built prefix string.
  */
