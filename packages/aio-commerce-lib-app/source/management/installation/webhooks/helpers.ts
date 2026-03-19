@@ -326,14 +326,17 @@ function generateUrlForRuntimeAction(runtimeAction: string): string {
 /**
  * Builds a prefix string from the app ID to namespace webhook batch/hook names.
  * Non-identifier characters are replaced with underscores; consecutive underscores
- * are collapsed to one; a trailing underscore is appended.
+ * are collapsed to one; a trailing underscore is appended. The result is lowercased
+ * to ensure consistent matching regardless of input casing.
  *
  * @example buildWebhookIdPrefix("my--app.v2") // => "my_app_v2_"
+ * @example buildWebhookIdPrefix("MyApp") // => "myapp_"
  * @param appId - The app ID to build the prefix from.
  * @return The built prefix string.
  */
-function buildWebhookIdPrefix(appId: string): string {
+export function buildWebhookIdPrefix(appId: string): string {
   const prefix = appId
+    .toLowerCase()
     .replace(NON_IDENTIFIER_CHAR_REGEX, "_")
     .replace(MULTIPLE_UNDERSCORES_REGEX, "_");
   return prefix.endsWith("_") ? prefix : `${prefix}_`;

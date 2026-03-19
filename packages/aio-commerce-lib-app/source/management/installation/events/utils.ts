@@ -51,7 +51,7 @@ export function generateInstanceId(
   provider: EventProvider,
 ) {
   const slugLabel = provider.label.toLowerCase().replace(/\s+/g, "-");
-  return `${metadata.id}-${provider.key ?? slugLabel}`;
+  return `${metadata.id}-${provider.key ?? slugLabel}`.toLowerCase();
 }
 
 /**
@@ -107,7 +107,7 @@ export function getNamespacedEvent(
   metadata: ApplicationMetadata,
   name: string,
 ) {
-  return `${metadata.id}.${name}`;
+  return `${metadata.id}.${name}`.toLowerCase();
 }
 
 /**
@@ -116,7 +116,7 @@ export function getNamespacedEvent(
  * @param event - The Commerce event
  */
 export function getEventName(appId: string, event: CommerceEvent) {
-  return `${appId}.${event.name}`;
+  return `${appId}.${event.name}`.toLowerCase();
 }
 
 /**
