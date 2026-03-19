@@ -70,6 +70,27 @@ export async function setCachedScopeTree(
 }
 
 /**
+ * Deletes cached scope tree from state store.
+ *
+ * @param namespace - Namespace identifier for the scope tree.
+ */
+export async function deleteCachedScopeTree(namespace: string): Promise<void> {
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:scope-tree-repository",
+  );
+  try {
+    const state = await getSharedState();
+    await state.delete(`${namespace}:scope-tree`);
+  } catch (error) {
+    logger.debug(
+      "Failed to delete cached scope tree:",
+      error instanceof Error ? error.message : String(error),
+    );
+    // Don't throw - cache deletion failure shouldn't break functionality
+  }
+}
+
+/**
  * Gets persisted scope tree from files.
  *
  * @param namespace - Namespace identifier for the scope tree.

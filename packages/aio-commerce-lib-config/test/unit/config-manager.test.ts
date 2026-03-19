@@ -51,6 +51,7 @@ vi.mock("#modules/scope-tree/scope-tree-repository", () => ({
   getCachedScopeTree: vi.fn(() => Promise.resolve(null)),
   getPersistedScopeTree: vi.fn(() => Promise.resolve(mockScopeTree)),
   setCachedScopeTree: vi.fn(() => Promise.resolve()),
+  deleteCachedScopeTree: vi.fn(() => Promise.resolve()),
   saveScopeTree: vi.fn(() => Promise.resolve()),
 }));
 
@@ -648,10 +649,8 @@ describe("setCustomScopeTree", () => {
     expect(result.scopes[0].code).toBe("region_us");
     expect(result.scopes[0].children).toHaveLength(1);
     expect(scopeTreeRepository.saveScopeTree).toHaveBeenCalled();
-    expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalledWith(
+    expect(scopeTreeRepository.deleteCachedScopeTree).toHaveBeenCalledWith(
       expect.any(String),
-      expect.any(Array),
-      0,
     );
   });
 
@@ -733,31 +732,29 @@ describe("setCustomScopeTree", () => {
     expect(savedTree.find((s) => s.code === "commerce")).toBeDefined();
   });
 
-  it("should use custom cache timeout when provided", async () => {
+  it("should invalidate cache when custom scopes are updated", async () => {
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       mockScopeTree,
     );
 
-    await setCustomScopeTree(
-      {
-        scopes: [
-          {
-            code: "region",
-            label: "Region",
-            level: "custom",
-            is_editable: true,
-            is_final: true,
-          },
-        ],
-      },
-      { cacheTimeout: 600_000 },
-    );
+    await setCustomScopeTree({
+      scopes: [
+        {
+          code: "region",
+          label: "Region",
+          level: "custom",
+          is_editable: true,
+          is_final: true,
+        },
+      ],
+    });
 
-    expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalledWith(
+    // Cache should be deleted to ensure fresh data on next getScopeTree call
+    expect(scopeTreeRepository.deleteCachedScopeTree).toHaveBeenCalledWith(
       expect.any(String),
-      expect.any(Array),
-      0,
     );
+    // Should not set cache with the updated tree
+    expect(scopeTreeRepository.setCachedScopeTree).not.toHaveBeenCalled();
   });
 
   it("should handle empty scopes array", async () => {
