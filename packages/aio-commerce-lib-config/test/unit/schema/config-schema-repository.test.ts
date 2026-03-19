@@ -1,3 +1,4 @@
+import stringify from "safe-stable-stringify";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -80,9 +81,18 @@ describe("config-schema-repository", () => {
   describe("setCachedSchema", () => {
     it("should cache schema with TTL", async () => {
       const schema = VALID_CONFIGURATION;
+      const ttl = 300_000;
 
-      await setCachedSchema("test-namespace", schema, 300_000);
+      await setCachedSchema("test-namespace", schema, ttl);
 
+      // Verify the schema was cached with the correct TTL
+      expect(mockStateInstance.put).toHaveBeenCalledWith(
+        "test-namespace:config-schema",
+        stringify({ data: schema }),
+        { ttl },
+      );
+
+      // Verify the cached data is correct
       const cached = await mockStateInstance.get(
         "test-namespace:config-schema",
       );
