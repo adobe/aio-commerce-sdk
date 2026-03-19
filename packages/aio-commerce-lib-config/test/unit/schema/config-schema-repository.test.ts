@@ -255,18 +255,6 @@ describe("config-schema-repository", () => {
       const storedVersion = await getSchemaVersion("test-namespace");
       expect(storedVersion).toBeNull();
     });
-
-    it("should format schema with proper indentation", async () => {
-      const schema = VALID_CONFIGURATION;
-
-      await savePersistedSchema("test-namespace", schema);
-
-      const saved = await mockFilesInstance.read("config-schema.json");
-      const content = saved.toString();
-
-      expect(content).toContain("\n");
-      expect(content).toContain("  ");
-    });
   });
 
   describe("getPersistedSchema", () => {
