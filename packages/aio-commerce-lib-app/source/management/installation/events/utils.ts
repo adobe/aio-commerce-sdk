@@ -39,15 +39,21 @@ const PROVIDER_TYPE_TO_LABEL = {
 
 /**
  * Generates a unique instance ID for the given event provider within the context of the provided config.
+ * Appends the Adobe I/O workspace ID last (`{appId}-{providerKeyOrSlug}-{workspaceId}`) so the same app
+ * installed against different Commerce instances (same org, different workspaces) does not collide on
+ * I/O Events provider instance_id.
+ *
  * @param metadata - The metadata of the application
  * @param provider - The event provider for which to generate the instance ID
+ * @param workspaceId - Adobe I/O Developer Console workspace ID for this deployment
  */
 export function generateInstanceId(
   metadata: ApplicationMetadata,
   provider: EventProvider,
+  workspaceId: string,
 ) {
   const slugLabel = provider.label.toLowerCase().replace(/\s+/g, "-");
-  return `${metadata.id}-${provider.key ?? slugLabel}`.toLowerCase();
+  return `${metadata.id}-${provider.key ?? slugLabel}-${workspaceId}`.toLowerCase();
 }
 
 /**
@@ -76,7 +82,6 @@ export function findExistingProviderMetadata(
 }
 
 /**
-<<<<<<< HEAD
  * Find existing event registrations by client ID and name.
  * @param allRegistrations - The list of all existing event registrations.
  * @param clientId - The client ID of the workspace where the registration was created.
