@@ -25,5 +25,14 @@
   "commitMessagePrefix": "RENOVATE: ",
 
   "labels": ["dependencies"],
-  "postUpdateOptions": ["pnpmDedupe"]
+  "postUpdateOptions": ["pnpmDedupe"],
+  "packageRules": [
+    {
+      "description": "Update tsdown and rolldown",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["tsdown", "rolldown"],
+      "groupName": "tsdown + rolldown",
+      "groupSlug": "tsdown-rolldown"
+    }
+  ]
 }
