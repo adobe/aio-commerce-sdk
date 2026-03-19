@@ -540,6 +540,7 @@ describe("syncCommerceScopes", () => {
     expect(result.synced).toBe(true);
     expect(result.scopeTree).toBeDefined();
     expect(result.error).toBeUndefined();
+    expect(commerceApi.getAllScopeData).toHaveBeenCalled();
     expect(scopeTreeRepository.saveScopeTree).toHaveBeenCalled();
     expect(scopeTreeRepository.setCachedScopeTree).toHaveBeenCalled();
   });
