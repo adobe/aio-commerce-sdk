@@ -2,12 +2,29 @@ import { vi } from "vitest";
 
 import { createMockInstallationContext } from "./installation";
 
+import type { ApplicationMetadata } from "#config/index";
+import type { EventProvider } from "#config/schema/eventing";
+
 export const DEFAULT_TEST_METADATA = {
   id: "test-app",
   displayName: "Test App",
   description: "A test application",
   version: "1.0.0",
 } as const;
+
+/** Creates a mock {@link ApplicationMetadata} with the given ID. */
+export function createMockMetadata(id: string): ApplicationMetadata {
+  return { ...DEFAULT_TEST_METADATA, id };
+}
+
+/** Creates a mock {@link EventProvider} with the given label and optional key. */
+export function createMockProvider(label: string, key?: string): EventProvider {
+  return {
+    label,
+    description: "A test provider",
+    ...(key !== undefined && { key }),
+  };
+}
 
 export function createCommerceEventConfig(
   name: string,
