@@ -15,7 +15,7 @@
       "dependsOn": ["assist:apply"]
     },
     "code:fix": {
-      "dependsOn": ["format", "format:markdown"]
+      "dependsOn": ["transit"]
     },
     "build": {
       "dependsOn": ["^build"],
