@@ -38,7 +38,7 @@ It's important to understand the distinction between these two concepts:
 
 - **Action Responses** (`ok()`, `badRequest()`, etc.): These create the full HTTP response wrapper with status codes, headers, and body.
 
-This package provides **webhook-optimized versions** of `ok()` and `created()` that automatically wrap operations in the response body, giving you a cleaner API:
+This package provides **webhook-optimized version** of `ok()` that automatically wrap operations in the response body, giving you a cleaner API:
 
 **Example:**
 
