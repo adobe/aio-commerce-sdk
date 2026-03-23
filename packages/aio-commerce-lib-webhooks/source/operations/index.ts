@@ -30,8 +30,6 @@ export type {
   RemoveOperation,
   ReplaceOperation,
   SuccessOperation,
-  WebhookOperation,
   WebhookOperationResponse,
   WebhookResponse,
-  WebhookResponseBase,
 } from "./helpers";

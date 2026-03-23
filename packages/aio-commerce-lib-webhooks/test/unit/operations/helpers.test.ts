@@ -126,6 +126,25 @@ describe("operations/helpers", () => {
       });
     });
 
+    it("should infer type from value parameter", () => {
+      // Type inference test - TypeScript should infer the type
+      const result = buildAddOperation("result", { amount: 5, code: "test" });
+
+      expect(result.value).toEqual({ amount: 5, code: "test" });
+      // TypeScript should know that result.value has amount and code properties
+    });
+
+    it("should work with explicit type parameter", () => {
+      // Explicit type parameter test
+      type ShippingMethod = { amount: string; carrier_code: string };
+      const result = buildAddOperation<ShippingMethod>("result", {
+        amount: "5",
+        carrier_code: "custom",
+      });
+
+      expect(result.value).toEqual({ amount: "5", carrier_code: "custom" });
+    });
+
     it("should handle array values", () => {
       const result = buildAddOperation("result/items", [1, 2, 3]);
 
@@ -185,6 +204,28 @@ describe("operations/helpers", () => {
         value: { sku: "ABC123", price: 99.99 },
         instance: "Magento\\Catalog\\Api\\Data\\ProductInterface",
       });
+    });
+
+    it("should infer type from value parameter", () => {
+      // Type inference test - TypeScript should infer the type
+      const result = buildReplaceOperation("result/price", {
+        amount: 99.99,
+        currency: "USD",
+      });
+
+      expect(result.value).toEqual({ amount: 99.99, currency: "USD" });
+      // TypeScript should know that result.value has amount and currency properties
+    });
+
+    it("should work with explicit type parameter", () => {
+      // Explicit type parameter test
+      type PriceUpdate = { amount: number; currency: string };
+      const result = buildReplaceOperation<PriceUpdate>("result/price", {
+        amount: 99.99,
+        currency: "USD",
+      });
+
+      expect(result.value).toEqual({ amount: 99.99, currency: "USD" });
     });
 
     it("should handle complex nested paths", () => {

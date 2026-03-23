@@ -33,13 +33,14 @@ export type ExceptionOperation = {
 /**
  * Add operation response
  * Causes Commerce to add the provided value to the provided path in the triggered event arguments.
+ * @template TValue - The type of the value to be added (defaults to unknown)
  */
-export type AddOperation = {
+export type AddOperation<TValue = unknown> = {
   op: "add";
   /** Specifies the path at which the value should be added to the triggered event arguments. */
   path: string;
   /** Specifies the value to be added. This can be a single value or in an array format. */
-  value: unknown;
+  value: TValue;
   /** Specifies the DataObject class name to create, based on the value and added to the provided path. */
   instance?: string;
 };
@@ -47,13 +48,14 @@ export type AddOperation = {
 /**
  * Replace operation response
  * Causes Commerce to replace a value in triggered event arguments for the provided path.
+ * @template TValue - The type of the replacement value (defaults to unknown)
  */
-export type ReplaceOperation = {
+export type ReplaceOperation<TValue = unknown> = {
   op: "replace";
   /** Specifies the path at which the value should be replaced with the provided value. */
   path: string;
   /** Specifies the replacement value. This can be a single value or in an array format. */
-  value: unknown;
+  value: TValue;
   /** Specifies the DataObject class name to create, based on the value and added to the provided path. */
   instance?: string;
 };
@@ -74,8 +76,8 @@ export type RemoveOperation = {
 export type WebhookOperationResponse =
   | SuccessOperation
   | ExceptionOperation
-  | AddOperation
-  | ReplaceOperation
+  | AddOperation<unknown>
+  | ReplaceOperation<unknown>
   | RemoveOperation;
 
 /**
@@ -138,6 +140,7 @@ export function buildExceptionOperation(payload?: {
  * Creates an add operation response
  * Causes Commerce to add the provided value to the provided path in the triggered event arguments.
  *
+ * @template TValue - The type of the value to be added
  * @param path - Path at which the value should be added
  * @param value - Value to be added
  * @param instance - Optional DataObject class name
@@ -146,18 +149,26 @@ export function buildExceptionOperation(payload?: {
  *
  * @example
  * ```typescript
+ * // Without type parameter (inferred from value)
  * const response = buildAddOperation(
  *   "result",
  *   { data: { amount: "5", carrier_code: "newshipmethod" } },
  *   "Magento\\Quote\\Api\\Data\\ShippingMethodInterface"
  * );
+ *
+ * // With explicit type parameter for better type safety
+ * type ShippingMethod = { amount: string; carrier_code: string };
+ * const typedResponse = buildAddOperation<ShippingMethod>(
+ *   "result",
+ *   { amount: "5", carrier_code: "newshipmethod" }
+ * );
  * ```
  */
-export function buildAddOperation(
+export function buildAddOperation<TValue = unknown>(
   path: string,
-  value: unknown,
+  value: TValue,
   instance?: string,
-): AddOperation {
+): AddOperation<TValue> {
   return {
     op: "add",
     path,
@@ -170,6 +181,7 @@ export function buildAddOperation(
  * Creates a replace operation response
  * Causes Commerce to replace a value in triggered event arguments for the provided path.
  *
+ * @template TValue - The type of the replacement value
  * @param path - Path at which the value should be replaced
  * @param value - Replacement value
  * @param instance - Optional DataObject class name
@@ -178,17 +190,25 @@ export function buildAddOperation(
  *
  * @example
  * ```typescript
+ * // Without type parameter (inferred from value)
  * const response = buildReplaceOperation(
  *   "result/shipping_methods/shipping_method_one/amount",
  *   6
  * );
+ *
+ * // With explicit type parameter for better type safety
+ * type PriceUpdate = { amount: number; currency: string };
+ * const typedResponse = buildReplaceOperation<PriceUpdate>(
+ *   "result/price",
+ *   { amount: 99.99, currency: "USD" }
+ * );
  * ```
  */
-export function buildReplaceOperation(
+export function buildReplaceOperation<TValue = unknown>(
   path: string,
-  value: unknown,
+  value: TValue,
   instance?: string,
-): ReplaceOperation {
+): ReplaceOperation<TValue> {
   return {
     op: "replace",
     path,

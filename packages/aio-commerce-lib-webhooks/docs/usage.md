@@ -161,6 +161,53 @@ export async function addCustomShipping(params) {
 // }
 ```
 
+#### Type Safety with Generics
+
+The `addOperation` function supports generic type parameters for better type safety:
+
+```typescript
+import { addOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
+import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
+
+// Define your data structure
+type ShippingMethodData = {
+  data: {
+    amount: string;
+    carrier_code: string;
+    carrier_title: string;
+    method_code: string;
+    method_title: string;
+  };
+};
+
+export async function addCustomShipping(params) {
+  const { cart, shippingAddress } = params;
+
+  const customRate = await calculateShippingRate(cart, shippingAddress);
+
+  // TypeScript will enforce the structure matches ShippingMethodData
+  return ok(
+    addOperation<ShippingMethodData>(
+      "result",
+      {
+        data: {
+          amount: customRate.toString(),
+          carrier_code: "custom_express",
+          carrier_title: "Express Shipping",
+          method_code: "express",
+          method_title: "2-Day Express Delivery",
+        },
+      },
+      "Magento\\Quote\\Api\\Data\\ShippingMethodInterface",
+    ),
+  );
+}
+
+// Type inference also works - TypeScript infers the type from the value
+const operation = addOperation("result", { amount: 5, code: "test" });
+// TypeScript knows operation.value has amount and code properties
+```
+
 ### Replace Operation
 
 Modify existing values in the event arguments:
@@ -202,6 +249,44 @@ export async function applyVipDiscount(params) {
 //     value: 7.5
 //   }
 // }
+```
+
+#### Type Safety with Generics
+
+The `replaceOperation` function also supports generic type parameters:
+
+```typescript
+import { replaceOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
+import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
+
+// Define your price structure
+type PriceData = {
+  amount: number;
+  currency: string;
+  discount?: number;
+};
+
+export async function updatePrice(params) {
+  const { product } = params;
+
+  const newPrice = await calculatePrice(product);
+
+  // TypeScript will enforce the structure matches PriceData
+  return ok(
+    replaceOperation<PriceData>("result/price", {
+      amount: newPrice,
+      currency: "USD",
+      discount: 10,
+    }),
+  );
+}
+
+// Type inference works here too
+const operation = replaceOperation("result/config", {
+  enabled: true,
+  timeout: 30,
+});
+// TypeScript knows operation.value has enabled and timeout properties
 ```
 
 ### Remove Operation
