@@ -42,6 +42,6 @@ import type { WebhookOperationResponse } from "./operations/types";
 export function ok(
   operations: WebhookOperationResponse | WebhookOperationResponse[],
 ): SuccessResponse {
-  // biome-ignore lint/suspicious/noExplicitAny: body does not support array type
-  return coreOk({ body: operations as any });
+  // @ts-expect-error - The core library's `ok` function body does not support array type
+  return coreOk({ body: operations });
 }
