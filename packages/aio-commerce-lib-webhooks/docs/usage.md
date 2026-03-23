@@ -129,6 +129,7 @@ console.log(supportedWebhooks);
 You can also use the API functions directly without creating a client:
 
 ```typescript
+import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 import {
   getWebhookList,
   subscribeWebhook,
@@ -136,8 +137,8 @@ import {
   getSupportedWebhookList,
 } from "@adobe/aio-commerce-lib-webhooks/api";
 
-// Pass HTTP client params directly
-const webhooks = await getWebhookList({
+// Create an HTTP client
+const httpClient = new AdobeCommerceHttpClient({
   config: {
     baseUrl: "https://my-commerce-instance.com",
     flavor: "paas",
@@ -145,6 +146,25 @@ const webhooks = await getWebhookList({
   auth: {
     /* auth params */
   },
+});
+
+// Use the standalone functions
+const webhooks = await getWebhookList(httpClient);
+const supportedWebhooks = await getSupportedWebhookList(httpClient);
+
+await subscribeWebhook(httpClient, {
+  webhook_method: "observer.catalog_product_save_after",
+  webhook_type: "after",
+  batch_name: "my_batch",
+  hook_name: "my_hook",
+  url: "https://my-app.com/webhook",
+});
+
+await unsubscribeWebhook(httpClient, {
+  webhook_method: "observer.catalog_product_save_after",
+  webhook_type: "after",
+  batch_name: "my_batch",
+  hook_name: "my_hook",
 });
 ```
 
