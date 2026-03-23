@@ -53,12 +53,9 @@ export function generateInstanceId(
   provider: EventProvider,
   workspaceId: string,
 ) {
-  const metadataSegment = metadata.id.slice(
-    0,
-    METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID,
-  );
+  const appId = metadata.id.slice(0, METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID);
   const slugLabel = provider.label.toLowerCase().replace(/\s+/g, "-");
-  return `${metadataSegment}-${provider.key ?? slugLabel}-${workspaceId}`.toLowerCase();
+  return `${appId}-${provider.key ?? slugLabel}-${workspaceId}`.toLowerCase();
 }
 
 /**
