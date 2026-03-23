@@ -20,51 +20,34 @@ import { createMockLibFiles } from "#test/mocks/lib-files";
 import { createMockLibState } from "#test/mocks/lib-state";
 import { encrypt, generateEncryptionKey } from "#utils/encryption";
 
+import type { BusinessConfigSchema } from "#index";
+
 const MockState = createMockLibState();
 const MockFiles = createMockLibFiles();
 
 let mockStateInstance = new MockState();
 let mockFilesInstance = new MockFiles();
 
+// Only the external I/O boundary is mocked — aio-lib-state and aio-lib-files
 vi.mock("#utils/repository", () => ({
   getSharedState: vi.fn(async () => mockStateInstance),
   getSharedFiles: vi.fn(async () => mockFilesInstance),
 }));
 
-vi.mock("#modules/scope-tree/scope-tree-repository", () => ({
-  getCachedScopeTree: vi.fn(() => Promise.resolve(null)),
-  getPersistedScopeTree: vi.fn(() => Promise.resolve(mockScopeTree)),
-  setCachedScopeTree: vi.fn(() => Promise.resolve()),
-  saveScopeTree: vi.fn(() => Promise.resolve()),
-}));
-
-// Schema with both a plain text field and a password field
-vi.mock("#modules/schema/config-schema-repository", () => {
-  const mockSchema = JSON.stringify([
-    {
-      name: "currency",
-      type: "text",
-      label: "Currency",
-      default: "",
-    },
-    {
-      name: "apiPassword",
-      type: "password",
-      label: "API Password",
-      default: "",
-    },
-  ]);
-
-  return {
-    getCachedSchema: vi.fn(() => Promise.resolve(null)),
-    setCachedSchema: vi.fn(() => Promise.resolve()),
-    deleteCachedSchema: vi.fn(() => Promise.resolve()),
-    getPersistedSchema: vi.fn(() => Promise.resolve(mockSchema)),
-    saveSchema: vi.fn(() => Promise.resolve()),
-    getSchemaVersion: vi.fn(() => Promise.resolve(null)),
-    setSchemaVersion: vi.fn(() => Promise.resolve()),
-  };
-});
+const integrationSchema = [
+  {
+    name: "currency",
+    type: "text",
+    label: "Currency",
+    default: "",
+  },
+  {
+    name: "apiPassword",
+    type: "password",
+    label: "API Password",
+    default: "",
+  },
+] satisfies BusinessConfigSchema;
 
 function buildPayload(
   id: string,
@@ -83,9 +66,26 @@ function buildPayload(
 }
 
 describe("getConfigurationByKey", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     mockStateInstance = new MockState();
     mockFilesInstance = new MockFiles();
+
+    // Seed external storage with the scope tree and schema so all internal
+    // repositories can read them without being mocked
+    await mockFilesInstance.write(
+      "aio-commerce-config/scope-tree.json",
+      JSON.stringify({
+        scopes: mockScopeTree,
+        lastUpdated: new Date().toISOString(),
+        version: "1.0",
+      }),
+    );
+    await mockFilesInstance.write(
+      "config-schema.json",
+      JSON.stringify(integrationSchema),
+    );
+
+    // Clear spy call history after seeding so tests start with a clean slate
     vi.clearAllMocks();
   });
 
@@ -107,9 +107,10 @@ describe("getConfigurationByKey", () => {
     );
 
     expect(result.scope.code).toBe("global");
-    expect(result.config).not.toBeNull();
-    expect(result.config?.name).toBe("currency");
-    expect(result.config?.value).toBe("USD");
+
+    expect.assert.isNotNull(result.config);
+    expect(result.config.name).toBe("currency");
+    expect(result.config.value).toBe("USD");
   });
 
   test("returns null config when key does not exist in schema", async () => {
