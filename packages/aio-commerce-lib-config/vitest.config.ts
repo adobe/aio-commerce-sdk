@@ -22,15 +22,18 @@ const BARREL_FILES = [
   "./source/types/index.ts",
 ];
 
+const UNTESTABLE_FILES = [
+  // repository.ts only wires up aio-lib-state/files singletons, covered indirectly by integration tests.
+  "./source/utils/repository.ts",
+];
+
 export default mergeConfig(
   baseConfig,
   defineConfig({
-    plugins: [],
     test: {
       passWithNoTests: true,
       coverage: {
-        // Exclude barrel files from coverage
-        exclude: [...BARREL_FILES, "./source/**/types.ts"],
+        exclude: [...BARREL_FILES, ...UNTESTABLE_FILES, "./source/**/types.ts"],
       },
     },
   }),
