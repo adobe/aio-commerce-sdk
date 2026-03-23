@@ -11,24 +11,6 @@
  */
 
 /**
- * Webhook operation types supported by Adobe Commerce
- * @see https://developer.adobe.com/commerce/extensibility/webhooks/responses/
- */
-export type WebhookOperation =
-  | "success"
-  | "exception"
-  | "add"
-  | "replace"
-  | "remove";
-
-/**
- * Base webhook response structure
- */
-export type WebhookResponseBase = {
-  op: WebhookOperation;
-};
-
-/**
  * Success operation response
  * The process that triggered the original event continues without any changes.
  */
