@@ -11,6 +11,7 @@
  */
 
 import {
+  alphaNumericOrHyphenSchema,
   booleanValueSchema,
   nonEmptyStringValueSchema,
   stringValueSchema,
@@ -22,6 +23,7 @@ import type { CommerceAppConfigOutputModel } from "./app";
 
 const MAX_DESCRIPTION_LENGTH = 255;
 const MAX_LABEL_LENGTH = 100;
+const MAX_KEY_LENGTH = 50;
 const MAX_EVENT_NAME_LENGTH = 180;
 
 /**
@@ -125,6 +127,15 @@ const ProviderSchema = v.object({
     v.maxLength(
       MAX_DESCRIPTION_LENGTH,
       `The provider description must not be longer than ${MAX_DESCRIPTION_LENGTH} characters`,
+    ),
+  ),
+  key: v.optional(
+    v.pipe(
+      alphaNumericOrHyphenSchema("provider key"),
+      v.maxLength(
+        MAX_KEY_LENGTH,
+        `The provider key must not be longer than ${MAX_KEY_LENGTH} characters`,
+      ),
     ),
   ),
 });
