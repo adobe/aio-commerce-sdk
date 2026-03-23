@@ -66,6 +66,16 @@
         "default": "./dist/cjs/core/*.cjs"
       }
     },
+    "./webhooks/*": {
+      "import": {
+        "types": "./dist/es/webhooks/*.d.mts",
+        "default": "./dist/es/webhooks/*.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/webhooks/*.d.cts",
+        "default": "./dist/cjs/webhooks/*.cjs"
+      }
+    },
     "./*": {
       "import": {
         "types": "./dist/es/*.d.mts",
@@ -104,6 +114,7 @@
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-events": "workspace:*",
+    "@adobe/aio-commerce-lib-webhooks": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {
