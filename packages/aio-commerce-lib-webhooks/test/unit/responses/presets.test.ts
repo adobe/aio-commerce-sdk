@@ -50,6 +50,24 @@ describe("responses/presets", () => {
       });
     });
 
+    it("should create a 200 OK response with exception operation and class", () => {
+      const operation = exceptionOperation(
+        "Payment validation failed",
+        "Magento\\Payment\\Exception\\PaymentException",
+      );
+      const result = ok(operation);
+
+      expect(result).toEqual({
+        type: "success",
+        statusCode: 200,
+        body: {
+          op: "exception",
+          message: "Payment validation failed",
+          class: "Magento\\Payment\\Exception\\PaymentException",
+        },
+      });
+    });
+
     it("should create a 200 OK response with add operation", () => {
       const operation = addOperation("result", { data: "test" });
       const result = ok(operation);
@@ -76,6 +94,27 @@ describe("responses/presets", () => {
           op: "replace",
           path: "result/price",
           value: 99.99,
+        },
+      });
+    });
+
+    it("should create a 200 OK response with replace operation and instance", () => {
+      const operation = replaceOperation(
+        "result/product",
+        { sku: "ABC123", name: "Updated Product" },
+        "Magento\\Catalog\\Api\\Data\\ProductInterface",
+      );
+
+      const result = ok(operation);
+
+      expect(result).toEqual({
+        type: "success",
+        statusCode: 200,
+        body: {
+          op: "replace",
+          path: "result/product",
+          value: { sku: "ABC123", name: "Updated Product" },
+          instance: "Magento\\Catalog\\Api\\Data\\ProductInterface",
         },
       });
     });
