@@ -12,14 +12,6 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the webhook operations entrypoint */
 
-// Export webhook operation builders
-export {
-  buildAddOperation,
-  buildExceptionOperation,
-  buildRemoveOperation,
-  buildReplaceOperation,
-  buildSuccessOperation,
-} from "./helpers";
 // Export webhook operation presets
 export * from "./presets";
 
@@ -31,5 +23,4 @@ export type {
   ReplaceOperation,
   SuccessOperation,
   WebhookOperationResponse,
-  WebhookResponse,
-} from "./helpers";
+} from "./types";

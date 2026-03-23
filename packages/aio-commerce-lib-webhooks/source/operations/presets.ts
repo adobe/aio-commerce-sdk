@@ -10,38 +10,28 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  buildAddOperation,
-  buildExceptionOperation,
-  buildRemoveOperation,
-  buildReplaceOperation,
-  buildSuccessOperation,
-} from "./helpers";
-
 import type {
   AddOperation,
   ExceptionOperation,
   RemoveOperation,
   ReplaceOperation,
   SuccessOperation,
-} from "./helpers";
+} from "./types";
 
 /**
  * Creates a success operation response
  * The process that triggered the original event continues without any changes.
- * See {@link buildSuccessOperation} for details.
  *
  * @example
  * ```typescript
  * return successOperation();
  * ```
  */
-export const successOperation = (): SuccessOperation => buildSuccessOperation();
+export const successOperation = (): SuccessOperation => ({ op: "success" });
 
 /**
  * Creates an exception operation response with a message
  * Causes Commerce to terminate the process that triggered the original event.
- * See {@link buildExceptionOperation} for details.
  *
  * @param message - Exception message
  * @param exceptionClass - Optional exception class name
@@ -59,17 +49,19 @@ export const successOperation = (): SuccessOperation => buildSuccessOperation();
 export const exceptionOperation = (
   message: string,
   exceptionClass?: string,
-): ExceptionOperation =>
-  buildExceptionOperation({
-    message,
+): ExceptionOperation => {
+  return {
+    op: "exception",
+    ...(message && { message }),
     ...(exceptionClass && { class: exceptionClass }),
-  });
+  };
+};
 
 /**
  * Creates an add operation response
  * Causes Commerce to add the provided value to the provided path in the triggered event arguments.
- * See {@link buildAddOperation} for details.
  *
+ * @template TValue - The type of the value to be added
  * @param path - Path at which the value should be added
  * @param value - Value to be added
  * @param instance - Optional DataObject class name
@@ -83,17 +75,22 @@ export const exceptionOperation = (
  * );
  * ```
  */
-export const addOperation = (
+export const addOperation = <TValue = unknown>(
   path: string,
-  value: unknown,
+  value: TValue,
   instance?: string,
-): AddOperation => buildAddOperation(path, value, instance);
+): AddOperation<TValue> => ({
+  op: "add",
+  path,
+  value,
+  ...(instance && { instance }),
+});
 
 /**
  * Creates a replace operation response
  * Causes Commerce to replace a value in triggered event arguments for the provided path.
- * See {@link buildReplaceOperation} for details.
  *
+ * @template TValue - The type of the replacement value
  * @param path - Path at which the value should be replaced
  * @param value - Replacement value
  * @param instance - Optional DataObject class name
@@ -103,16 +100,20 @@ export const addOperation = (
  * return replaceOperation("result/shipping_methods/shipping_method_one/amount", 6);
  * ```
  */
-export const replaceOperation = (
+export const replaceOperation = <TValue = unknown>(
   path: string,
-  value: unknown,
+  value: TValue,
   instance?: string,
-): ReplaceOperation => buildReplaceOperation(path, value, instance);
+): ReplaceOperation<TValue> => ({
+  op: "replace",
+  path,
+  value,
+  ...(instance && { instance }),
+});
 
 /**
  * Creates a remove operation response
  * Causes Commerce to remove a value or node in triggered event arguments by the provided path.
- * See {@link buildRemoveOperation} for details.
  *
  * @param path - Path at which the value should be removed
  *
@@ -121,5 +122,7 @@ export const replaceOperation = (
  * return removeOperation("result/key2");
  * ```
  */
-export const removeOperation = (path: string): RemoveOperation =>
-  buildRemoveOperation(path);
+export const removeOperation = (path: string): RemoveOperation => ({
+  op: "remove",
+  path,
+});

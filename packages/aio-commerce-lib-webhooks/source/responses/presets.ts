@@ -10,10 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  buildSuccessResponse,
-  HTTP_OK,
-} from "@adobe/aio-commerce-lib-core/responses";
+import { ok as coreOk } from "@adobe/aio-commerce-lib-core/responses";
 
 import type { SuccessResponse } from "@adobe/aio-commerce-lib-core/responses";
 import type { WebhookOperationResponse } from "#operations/index";
@@ -45,8 +42,6 @@ import type { WebhookOperationResponse } from "#operations/index";
 export function ok(
   operations: WebhookOperationResponse | WebhookOperationResponse[],
 ): SuccessResponse {
-  return buildSuccessResponse(HTTP_OK, {
-    // biome-ignore lint/suspicious/noExplicitAny: body does not support array type
-    body: operations as any,
-  });
+  // biome-ignore lint/suspicious/noExplicitAny: body does not support array type
+  return coreOk({ body: operations as any });
 }
