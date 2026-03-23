@@ -19,7 +19,7 @@ import {
   removeOperation,
   replaceOperation,
   successOperation,
-} from "../../../source/responses/index.js";
+} from "#responses/index";
 
 describe("responses/presets", () => {
   describe("ok (200)", () => {
