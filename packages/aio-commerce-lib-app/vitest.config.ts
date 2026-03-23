@@ -36,13 +36,6 @@ export default mergeConfig(
       coverage: {
         // Exclude barrel files and placeholder implementations
         exclude: [...BARREL_FILES, ...PLACEHOLDER_FILES],
-        thresholds: {
-          // Temporarily reduce thresholds as tests will come in a separate PR
-          lines: 35,
-          statements: 35,
-          functions: 35,
-          branches: 35,
-        },
       },
     },
   }),
