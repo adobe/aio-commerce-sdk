@@ -72,10 +72,12 @@ export type RemoveOperation = {
 
 /**
  * Union type representing any webhook operation response
+ *
+ * @template TValue - The type of the value for operations that carry a value (defaults to unknown)
  */
-export type WebhookOperationResponse =
+export type WebhookOperationResponse<TValue = unknown> =
   | SuccessOperation
   | ExceptionOperation
-  | AddOperation<unknown>
-  | ReplaceOperation<unknown>
+  | AddOperation<TValue>
+  | ReplaceOperation<TValue>
   | RemoveOperation;

@@ -22,6 +22,7 @@ import type { WebhookOperationResponse } from "./operations/types";
  * This function shadows the core library's ok() to provide a cleaner API for webhook actions.
  * Instead of `ok({ body: operation })`, you can simply use `ok(operation)`.
  *
+ * @template TValue - The type of the value for add/replace operations (defaults to unknown)
  * @param operations - Single webhook operation or array of operations
  * @returns Success response with operations in body
  *
@@ -39,8 +40,8 @@ import type { WebhookOperationResponse } from "./operations/types";
  * ]);
  * ```
  */
-export function ok(
-  operations: WebhookOperationResponse | WebhookOperationResponse[],
+export function ok<TValue = unknown>(
+  operations: WebhookOperationResponse<TValue> | WebhookOperationResponse[],
 ): SuccessResponse {
   // @ts-expect-error - The core library's `ok` function body does not support array type
   return coreOk({ body: operations });
