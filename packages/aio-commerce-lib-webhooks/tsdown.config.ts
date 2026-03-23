@@ -15,7 +15,7 @@ import { mergeConfig } from "tsdown";
 
 export default mergeConfig(baseConfig, {
   entry: [
-    "./source/api.ts",
+    "./source/api/index.ts",
     "./source/operations/index.ts",
     "./source/responses/index.ts",
   ],

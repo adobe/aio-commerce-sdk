@@ -14,8 +14,7 @@ import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
 import { defineConfig, mergeConfig } from "vitest/config";
 
 const BARREL_FILES = [
-  "./source/index.ts",
-  "./source/api.ts",
+  "./source/api/index.ts",
   "./source/operations/index.ts",
   "./source/responses/index.ts",
 ];

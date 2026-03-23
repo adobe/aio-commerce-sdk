@@ -28,12 +28,12 @@
     "exports": {
       "./api": {
         "import": {
-          "types": "./dist/es/api.d.mts",
-          "default": "./dist/es/api.mjs"
+          "types": "./dist/es/api/index.d.mts",
+          "default": "./dist/es/api/index.mjs"
         },
         "require": {
-          "types": "./dist/cjs/api.d.cts",
-          "default": "./dist/cjs/api.cjs"
+          "types": "./dist/cjs/api/index.d.cts",
+          "default": "./dist/cjs/api/index.cjs"
         }
       },
       "./operations": {
@@ -60,7 +60,7 @@
     }
   },
   "exports": {
-    "./api": "./source/api.ts",
+    "./api": "./source/api/index.ts",
     "./operations": "./source/operations/index.ts",
     "./responses": "./source/responses/index.ts",
     "./package.json": "./package.json"

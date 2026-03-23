@@ -17,11 +17,11 @@ import {
   createCustomCommerceWebhooksApiClient,
   getWebhookList,
   subscribeWebhook,
-} from "../../source/api.js";
+} from "#api/index";
 import {
   TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_PAAS,
   TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_SAAS,
-} from "../fixtures/http-client-params.js";
+} from "#test/fixtures/http-client-params";
 
 describe("Commerce Webhooks API client", () => {
   describe("createCommerceWebhooksApiClient", () => {
