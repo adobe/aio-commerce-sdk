@@ -22,7 +22,7 @@ import {
   validateEncryptionKey,
 } from "#utils/encryption";
 
-describe("encryption utilities", () => {
+describe("utils/encryption", () => {
   let encryptionKey: string;
 
   beforeEach(() => {

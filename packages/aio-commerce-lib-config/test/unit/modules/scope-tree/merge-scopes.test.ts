@@ -34,7 +34,7 @@ vi.mock("uuid", () => ({
   ),
 }));
 
-describe("ScopeTreeUtils - Actual Merge Logic", () => {
+describe("scope-tree/merge-scopes", () => {
   let mockCommerceFreshData: CommerceScopeData;
   let mockExistingTree: ScopeTree;
   let mockExistingTreeWithCommerceScopes: ScopeTree;

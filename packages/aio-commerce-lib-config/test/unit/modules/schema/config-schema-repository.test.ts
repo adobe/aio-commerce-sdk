@@ -28,7 +28,7 @@ vi.mock("#utils/repository", () => ({
   getSharedFiles: vi.fn(async () => mockFilesInstance),
 }));
 
-describe("config-schema-repository", () => {
+describe("schema/config-schema-repository", () => {
   beforeEach(() => {
     mockStateInstance = new MockState();
     mockFilesInstance = new MockFiles();

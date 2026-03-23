@@ -72,7 +72,7 @@ function buildPayload(
   });
 }
 
-describe("ConfigManager functions", () => {
+describe("config-manager", () => {
   beforeEach(async () => {
     mockStateInstance = new MockState();
     mockFilesInstance = new MockFiles();
