@@ -18,7 +18,7 @@ import {
   removeOperation,
   replaceOperation,
   successOperation,
-} from "#operations/index";
+} from "../../../../source/responses/operations/index.js";
 
 describe("operations/presets", () => {
   describe("successOperation", () => {

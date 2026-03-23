@@ -27,8 +27,7 @@ npm install @adobe/aio-commerce-lib-webhooks
 This package uses **dedicated subpackage entries** for better tree-shaking and clearer API separation:
 
 - **`@adobe/aio-commerce-lib-webhooks/api`** - Webhooks API client for managing webhook subscriptions
-- **`@adobe/aio-commerce-lib-webhooks/operations`** - Webhook operation builders and presets
-- **`@adobe/aio-commerce-lib-webhooks/responses`** - Webhook-optimized HTTP response helpers
+- **`@adobe/aio-commerce-lib-webhooks/responses`** - Webhook operations and HTTP response helpers
 
 ## Webhooks API Client
 
@@ -151,7 +150,7 @@ const webhooks = await getWebhookList({
 
 ## Webhook Operations and Responses
 
-The `/operations` and `/responses` exports provide tools for building webhook handler responses.
+The `/responses` export provides tools for building webhook handler responses, including both webhook operations and HTTP response wrappers.
 
 ### Understanding the Concepts
 
@@ -171,8 +170,10 @@ The `/operations` and `/responses` exports provide tools for building webhook ha
 **Example:**
 
 ```typescript
-import { successOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
-import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
+import {
+  successOperation,
+  ok,
+} from "@adobe/aio-commerce-lib-webhooks/responses";
 
 // Create an operation
 const operation = successOperation();
@@ -197,8 +198,10 @@ Adobe Commerce webhooks expect:
 Allows the Commerce process to continue unchanged.
 
 ```typescript
-import { successOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
-import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
+import {
+  successOperation,
+  ok,
+} from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function handleWebhook(params) {
   // Your validation logic here...
@@ -211,8 +214,11 @@ export async function handleWebhook(params) {
 Blocks the Commerce process with an error message.
 
 ```typescript
-import { exceptionOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
-import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
+import {
+  exceptionOperation,
+  successOperation,
+  ok,
+} from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function validateStock(params) {
   const { product } = params;
@@ -248,8 +254,7 @@ Adds new data to the event arguments.
 **Basic usage:**
 
 ```typescript
-import { addOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
-import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
+import { addOperation, ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function addCustomShipping(params) {
   const customRate = await calculateShippingRate(params);
@@ -310,8 +315,11 @@ Modifies existing values in the event arguments.
 **Basic usage:**
 
 ```typescript
-import { replaceOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
-import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
+import {
+  replaceOperation,
+  successOperation,
+  ok,
+} from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function applyVipDiscount(params) {
   const isVip = await checkVipStatus(params.customer.id);
@@ -358,8 +366,11 @@ const operation = replaceOperation("result/config", { enabled: true });
 Removes data from the event arguments.
 
 ```typescript
-import { removeOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
-import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
+import {
+  removeOperation,
+  successOperation,
+  ok,
+} from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function restrictPaymentMethods(params) {
   // Remove cash on delivery for international orders
@@ -378,8 +389,7 @@ You can return multiple operations in a single response. Operations are executed
 **Example - Add multiple shipping options:**
 
 ```typescript
-import { addOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
-import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
+import { addOperation, ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function addMultipleShippingOptions(params) {
   const expressRate = await calculateExpressRate(params.shippingAddress);
@@ -423,8 +433,8 @@ import {
   addOperation,
   replaceOperation,
   removeOperation,
-} from "@adobe/aio-commerce-lib-webhooks/operations";
-import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
+  ok,
+} from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function customizeCheckout(params) {
   return ok([

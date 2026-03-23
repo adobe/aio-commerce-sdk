@@ -15,11 +15,11 @@ import { describe, expect, it } from "vitest";
 import {
   addOperation,
   exceptionOperation,
+  ok,
   removeOperation,
   replaceOperation,
   successOperation,
-} from "#operations/index";
-import { ok } from "#responses/index";
+} from "../../../source/responses/index.js";
 
 describe("responses/presets", () => {
   describe("ok (200)", () => {

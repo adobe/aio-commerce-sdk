@@ -36,16 +36,6 @@
           "default": "./dist/cjs/api/index.cjs"
         }
       },
-      "./operations": {
-        "import": {
-          "types": "./dist/es/operations/index.d.mts",
-          "default": "./dist/es/operations/index.mjs"
-        },
-        "require": {
-          "types": "./dist/cjs/operations/index.d.cts",
-          "default": "./dist/cjs/operations/index.cjs"
-        }
-      },
       "./responses": {
         "import": {
           "types": "./dist/es/responses/index.d.mts",
@@ -61,7 +51,6 @@
   },
   "exports": {
     "./api": "./source/api/index.ts",
-    "./operations": "./source/operations/index.ts",
     "./responses": "./source/responses/index.ts",
     "./package.json": "./package.json"
   },

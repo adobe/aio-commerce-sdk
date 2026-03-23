@@ -12,5 +12,7 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the webhook responses entrypoint */
 
-// Export webhook-optimized response presets
+// Export all webhook operations (presets + types)
+export * from "./operations/index";
+// Export HTTP response wrappers
 export * from "./presets";

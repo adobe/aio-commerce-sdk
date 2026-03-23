@@ -13,7 +13,7 @@
 import { ok as coreOk } from "@adobe/aio-commerce-lib-core/responses";
 
 import type { SuccessResponse } from "@adobe/aio-commerce-lib-core/responses";
-import type { WebhookOperationResponse } from "#operations/index";
+import type { WebhookOperationResponse } from "./operations/types";
 
 /**
  * Creates an HTTP 200 OK response with webhook operation(s)

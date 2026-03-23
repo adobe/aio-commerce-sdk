@@ -15,8 +15,8 @@ import { defineConfig, mergeConfig } from "vitest/config";
 
 const BARREL_FILES = [
   "./source/api/index.ts",
-  "./source/operations/index.ts",
   "./source/responses/index.ts",
+  "./source/responses/operations/index.ts",
 ];
 
 export default mergeConfig(
