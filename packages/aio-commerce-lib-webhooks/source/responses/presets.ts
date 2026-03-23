@@ -27,7 +27,7 @@ import type { WebhookOperationResponse } from "#operations/index";
  *
  * @example
  * ```typescript
- * import { ok, successOperation } from "@adobe/aio-commerce-lib-webhooks";
+ * import { ok, successOperation } from "@adobe/aio-commerce-lib-webhooks/responses";
  *
  * // Single operation
  * return ok(successOperation());
