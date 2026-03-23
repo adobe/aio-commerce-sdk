@@ -23,11 +23,7 @@ import type {
   IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { ApplicationMetadata } from "#config/index";
-import type {
-  AppEvent,
-  CommerceEvent,
-  EventProvider,
-} from "#config/schema/eventing";
+import type { AppEvent, EventProvider } from "#config/schema/eventing";
 import type { EventsExecutionContext } from "./context";
 import type { AppEventWithoutRuntimeActions } from "./types";
 
@@ -51,7 +47,7 @@ export function generateInstanceId(
   provider: EventProvider,
 ) {
   const slugLabel = provider.label.toLowerCase().replace(/\s+/g, "-");
-  return `${metadata.id}-${provider.key ?? slugLabel}`;
+  return `${metadata.id}-${provider.key ?? slugLabel}`.toLowerCase();
 }
 
 /**
@@ -107,16 +103,7 @@ export function getNamespacedEvent(
   metadata: ApplicationMetadata,
   name: string,
 ) {
-  return `${metadata.id}.${name}`;
-}
-
-/**
- * Creates a fully qualified event name for Adobe Commerce events.
- * @param appId - The application ID
- * @param event - The Commerce event
- */
-export function getEventName(appId: string, event: CommerceEvent) {
-  return `${appId}.${event.name}`;
+  return `${metadata.id}.${name}`.toLowerCase();
 }
 
 /**

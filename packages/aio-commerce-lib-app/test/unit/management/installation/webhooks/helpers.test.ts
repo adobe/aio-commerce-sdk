@@ -14,6 +14,7 @@ import { HTTPError } from "ky";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
+  buildWebhookIdPrefix,
   createOrGetWebhookSubscription,
   createWebhookSubscription,
   createWebhookSubscriptions,
@@ -1036,5 +1037,34 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "",
       }),
     ).toThrow(Error);
+  });
+});
+
+describe("buildWebhookIdPrefix", () => {
+  test.each([
+    [
+      "should append a trailing underscore to a clean lowercase id",
+      "my-app",
+      "my_app_",
+    ],
+    ["should lowercase an uppercase id", "MyApp", "myapp_"],
+    ["should lowercase a mixed-case id", "MyMixedApp", "mymixedapp_"],
+    [
+      "should replace non-identifier characters with underscores",
+      "my--app.v2",
+      "my_app_v2_",
+    ],
+    [
+      "should lowercase and replace non-identifier characters",
+      "My--App.V2",
+      "my_app_v2_",
+    ],
+    [
+      "should preserve a trailing underscore without doubling it",
+      "my-app-",
+      "my_app_",
+    ],
+  ] as const)("%s", (_desc, appId, expected) => {
+    expect(buildWebhookIdPrefix(appId)).toBe(expected);
   });
 });
