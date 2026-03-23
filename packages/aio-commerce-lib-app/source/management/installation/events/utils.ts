@@ -23,7 +23,7 @@ import type {
   IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { ApplicationMetadata } from "#config/index";
-import type { AppEvent, EventProvider } from "#config/schema/eventing";
+import type { AppEvent } from "#config/schema/eventing";
 import type { EventsExecutionContext } from "./context";
 import type { AppEventWithoutRuntimeActions } from "./types";
 
@@ -37,23 +37,25 @@ const PROVIDER_TYPE_TO_LABEL = {
   [EXTERNAL_PROVIDER_TYPE]: "External",
 } as const;
 
+/** Max characters taken from `metadata.id` in the I/O Events provider `instance_id`. */
+const METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID = 200;
+
 /**
- * Generates a unique instance ID for the given event provider within the context of the provided config.
- * Appends the Adobe I/O workspace ID last (`{appId}-{providerKeyOrSlug}-{workspaceId}`) so the same app
- * installed against different Commerce instances (same org, different workspaces) does not collide on
- * I/O Events provider instance_id.
+ * Generates a unique instance ID for I/O Events for this app deployment.
+ * Uses `{metadata.id (first 200 chars)}-{workspaceId}` (lowercased).
  *
  * @param metadata - The metadata of the application
- * @param provider - The event provider for which to generate the instance ID
  * @param workspaceId - Adobe I/O Developer Console workspace ID for this deployment
  */
 export function generateInstanceId(
   metadata: ApplicationMetadata,
-  provider: EventProvider,
   workspaceId: string,
 ) {
-  const slugLabel = provider.label.toLowerCase().replace(/\s+/g, "-");
-  return `${metadata.id}-${provider.key ?? slugLabel}-${workspaceId}`.toLowerCase();
+  const metadataSegment = metadata.id.slice(
+    0,
+    METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID,
+  );
+  return `${metadataSegment}-${workspaceId}`.toLowerCase();
 }
 
 /**

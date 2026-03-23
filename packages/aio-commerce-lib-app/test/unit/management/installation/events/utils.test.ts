@@ -19,10 +19,7 @@ import {
   getIoEventCode,
   getNamespacedEvent,
 } from "#management/installation/events/utils";
-import {
-  createMockMetadata,
-  createMockProvider,
-} from "#test/fixtures/eventing";
+import { createMockMetadata } from "#test/fixtures/eventing";
 
 /** Shared cases for testing id/name lowercase normalization: [description, id, name, expected]. */
 const nameNormalizationCases = [
@@ -57,40 +54,38 @@ const TEST_WORKSPACE_ID = "4567890123456789";
 describe("generateInstanceId", () => {
   test.each([
     [
-      "should produce a lowercase instance ID from metadata id, provider key, and workspace id",
+      "should produce a lowercase instance ID from metadata id and workspace id",
       "MyApp-Test",
-      createMockProvider("Some Label", "my-provider"),
-      `myapp-test-my-provider-${TEST_WORKSPACE_ID}`,
-    ],
-    [
-      "should slugify and lowercase the provider label when key is absent",
-      "MyApp-MyApp",
-      createMockProvider("Order Notifier"),
-      `myapp-myapp-order-notifier-${TEST_WORKSPACE_ID}`,
+      `myapp-test-${TEST_WORKSPACE_ID}`,
     ],
     [
       "should lowercase an already-lowercase metadata id",
       "my-app",
-      createMockProvider("label", "key"),
-      `my-app-key-${TEST_WORKSPACE_ID}`,
+      `my-app-${TEST_WORKSPACE_ID}`,
     ],
     [
       "should normalize mixed-case metadata id to lowercase",
       "MyMixedApp",
-      createMockProvider("Commerce Provider", "commerce"),
-      `mymixedapp-commerce-${TEST_WORKSPACE_ID}`,
+      `mymixedapp-${TEST_WORKSPACE_ID}`,
     ],
-  ] as const)("%s", (_desc, id, provider, expected) => {
-    expect(
-      generateInstanceId(createMockMetadata(id), provider, TEST_WORKSPACE_ID),
-    ).toBe(expected);
+  ] as const)("%s", (_desc, id, expected) => {
+    expect(generateInstanceId(createMockMetadata(id), TEST_WORKSPACE_ID)).toBe(
+      expected,
+    );
   });
 
-  test("should produce different instance IDs for the same app and provider when workspace differs", () => {
+  test("should truncate metadata id to 200 characters before the workspace suffix", () => {
+    const longId = "a".repeat(250);
+    const expectedPrefix = "a".repeat(200);
+    expect(
+      generateInstanceId(createMockMetadata(longId), TEST_WORKSPACE_ID),
+    ).toBe(`${expectedPrefix}-${TEST_WORKSPACE_ID}`);
+  });
+
+  test("should produce different instance IDs for the same app when workspace differs", () => {
     const metadata = createMockMetadata("my-app");
-    const provider = createMockProvider("x", "same-key");
-    expect(generateInstanceId(metadata, provider, "workspace-a")).not.toBe(
-      generateInstanceId(metadata, provider, "workspace-b"),
+    expect(generateInstanceId(metadata, "workspace-a")).not.toBe(
+      generateInstanceId(metadata, "workspace-b"),
     );
   });
 });

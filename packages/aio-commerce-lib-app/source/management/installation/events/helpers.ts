@@ -509,11 +509,7 @@ export async function onboardIoEvents<EventType extends AppEvent>(
   const { providersWithMetadata, registrations } = existingData;
   const { context, metadata, provider, providerType, events } = params;
 
-  const instanceId = generateInstanceId(
-    metadata,
-    provider,
-    context.appData.workspaceId,
-  );
+  const instanceId = generateInstanceId(metadata, context.appData.workspaceId);
   const providerData = await createOrGetIoEventProvider(
     {
       context,
