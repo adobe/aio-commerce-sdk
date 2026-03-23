@@ -26,6 +26,8 @@ The SDK currently includes:
 
 - **[@adobe/aio-commerce-lib-events](https://github.com/adobe/aio-commerce-sdk/tree/main/packages/aio-commerce-lib-events)**: Event management utilities to interact with the Adobe I/O and Commerce Eventing APIs.
 
+- **[@adobe/aio-commerce-lib-webhooks](https://github.com/adobe/aio-commerce-sdk/tree/main/packages/aio-commerce-lib-webhooks)**: Webhook management utilities to interact with the Adobe Commerce Webhooks API.
+
 ## Usage
 
 Import directly from a specific library sub-path:
@@ -43,6 +45,10 @@ import {
   createCommerceEventsApiClient,
   updateEventingConfiguration,
 } from "@adobe/aio-commerce-sdk/events/commerce"; // <-- This is like @adobe/aio-commerce-lib-events/commerce
+import {
+  createCommerceWebhooksApiClient,
+  subscribeWebhook,
+} from "@adobe/aio-commerce-sdk/webhooks/api"; // <-- This is like @adobe/aio-commerce-lib-webhooks/api
 
 // Validate and create IMS auth provider
 assertImsAuthParams(params);
@@ -82,6 +88,21 @@ const commerceEventsClient = createCommerceEventsApiClient(
 await commerceEventsClient.updateEventingConfiguration(
   updateEventingConfigurationParams,
 );
+
+// Create a webhooks API client
+const commerceWebhooksClient = createCommerceWebhooksApiClient(
+  commerceHttpClientConfig,
+);
+
+// Subscribe to a webhook
+await commerceWebhooksClient.subscribeWebhook({
+  webhook_method: "plugin.order.api.order_created",
+  webhook_type: "after",
+  batch_name: "default",
+  hook_name: "order_created",
+  url: "https://example.com/webhook",
+  method: "POST",
+});
 ```
 
 ## Benefits

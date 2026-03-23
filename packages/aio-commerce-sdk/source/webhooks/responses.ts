@@ -10,9 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
+/** biome-ignore-all lint/performance/noBarrelFile: Public API for the webhooks/responses entrypoint */
 
-export default mergeConfig(baseConfig, {
-  entry: ["./source/api/index.ts", "./source/responses/index.ts"],
-});
+export * from "@adobe/aio-commerce-lib-webhooks/responses";

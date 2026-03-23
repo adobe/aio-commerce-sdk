@@ -14,6 +14,9 @@
     "format:markdown": {
       "dependsOn": ["assist:apply"]
     },
+    "code:fix": {
+      "dependsOn": ["transit"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]

@@ -564,6 +564,9 @@ importers:
       '@adobe/aio-commerce-lib-events':
         specifier: workspace:*
         version: link:../aio-commerce-lib-events
+      '@adobe/aio-commerce-lib-webhooks':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-webhooks
       type-fest:
         specifier: 'catalog:'
         version: 5.4.4

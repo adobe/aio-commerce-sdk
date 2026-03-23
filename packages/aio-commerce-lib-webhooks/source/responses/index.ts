@@ -10,9 +10,19 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
+/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the webhook responses entrypoint */
 
-export default mergeConfig(baseConfig, {
-  entry: ["./source/api/index.ts", "./source/responses/index.ts"],
-});
+// Export all webhook operations
+export * from "./operations/presets";
+// Export HTTP response wrappers
+export * from "./presets";
+
+// Export webhook operation types
+export type {
+  AddOperation,
+  ExceptionOperation,
+  RemoveOperation,
+  ReplaceOperation,
+  SuccessOperation,
+  WebhookOperationResponse,
+} from "./operations/types";
