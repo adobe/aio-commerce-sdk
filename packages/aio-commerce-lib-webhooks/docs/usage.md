@@ -5,15 +5,16 @@
 
 ## Overview
 
-This package provides utilities for building Adobe Commerce webhook responses:
+This package provides comprehensive tools for working with Adobe Commerce webhooks:
 
+- **Webhooks API Client**: Programmatically manage webhook subscriptions (list, subscribe, unsubscribe)
 - **Webhook Operations**: Create webhook operation responses (success, exception, add, replace, remove)
 - **Action Response Integration**: Seamlessly combine webhook operations with HTTP action responses
-- **Type Safety**: Full TypeScript support with discriminated union types
+- **Type Safety**: Full TypeScript support with discriminated union types and generics
 - **Preset Functions**: Convenient helpers for common use cases
 - **Builder Functions**: Flexible builders for advanced scenarios
 
-For complete details on Adobe Commerce webhooks, see the [official documentation](https://developer.adobe.com/commerce/extensibility/webhooks/responses/).
+For complete details on Adobe Commerce webhooks, see the [official documentation](https://developer.adobe.com/commerce/extensibility/webhooks/).
 
 ## Installation
 
@@ -25,86 +26,199 @@ npm install @adobe/aio-commerce-lib-webhooks
 
 This package uses **dedicated subpackage entries** for better tree-shaking and clearer API separation:
 
+- **`@adobe/aio-commerce-lib-webhooks/api`** - Webhooks API client for managing webhook subscriptions
 - **`@adobe/aio-commerce-lib-webhooks/operations`** - Webhook operation builders and presets
 - **`@adobe/aio-commerce-lib-webhooks/responses`** - Webhook-optimized HTTP response helpers
 
-## Basic Concepts
+## Webhooks API Client
 
-### Webhook Operations vs Action Responses
+The `/api` export provides a client for managing webhook subscriptions in Adobe Commerce. This allows you to programmatically list, subscribe, and unsubscribe webhooks.
 
-It's important to understand the distinction between these two concepts:
+### Creating a Client
 
-- **Webhook Operations** (`successOperation()`, `exceptionOperation()`, etc.): These create the operation objects that tell Adobe Commerce what to do with the event data. They go in the response **body**.
+```typescript
+import { createCommerceWebhooksApiClient } from "@adobe/aio-commerce-lib-webhooks/api";
 
-- **Action Responses** (`ok()`, `badRequest()`, etc.): These create the full HTTP response wrapper with status codes, headers, and body.
+const client = createCommerceWebhooksApiClient({
+  config: {
+    baseUrl: "https://my-commerce-instance.com",
+    flavor: "paas", // or "saas"
+  },
+  auth: {
+    /* IMS or Integration auth params */
+  },
+});
+```
 
-This package provides **webhook-optimized version** of `ok()` that automatically wrap operations in the response body, giving you a cleaner API:
+### Listing Webhooks
+
+Get a list of all subscribed webhooks:
+
+```typescript
+const webhooks = await client.getWebhookList();
+
+console.log(webhooks);
+// [
+//   {
+//     webhook_id: "123",
+//     webhook_method: "observer.catalog_product_save_after",
+//     webhook_type: "after",
+//     batch_name: "my_batch",
+//     hook_name: "my_hook",
+//     url: "https://my-app.com/webhook",
+//     ...
+//   }
+// ]
+```
+
+### Subscribing to a Webhook
+
+Subscribe to a new webhook event:
+
+```typescript
+await client.subscribeWebhook({
+  webhook_method: "observer.catalog_product_save_after",
+  webhook_type: "after",
+  batch_name: "my_batch",
+  hook_name: "my_hook",
+  url: "https://my-app.com/webhook",
+  headers: [
+    {
+      name: "Authorization",
+      value: "Bearer token123",
+    },
+  ],
+  fields: [
+    {
+      name: "product_id",
+      value: "entity_id",
+    },
+  ],
+});
+```
+
+### Unsubscribing from a Webhook
+
+Remove a webhook subscription:
+
+```typescript
+await client.unsubscribeWebhook({
+  webhook_id: "123",
+});
+```
+
+### Getting Supported Webhooks
+
+Get a list of all available webhook methods that Commerce supports:
+
+```typescript
+const supportedWebhooks = await client.getSupportedWebhookList();
+
+console.log(supportedWebhooks);
+// [
+//   {
+//     method: "observer.catalog_product_save_after",
+//     description: "Triggered after a product is saved",
+//     ...
+//   },
+//   ...
+// ]
+```
+
+### Using Standalone Functions
+
+You can also use the API functions directly without creating a client:
+
+```typescript
+import {
+  getWebhookList,
+  subscribeWebhook,
+  unsubscribeWebhook,
+  getSupportedWebhookList,
+} from "@adobe/aio-commerce-lib-webhooks/api";
+
+// Pass HTTP client params directly
+const webhooks = await getWebhookList({
+  config: {
+    baseUrl: "https://my-commerce-instance.com",
+    flavor: "paas",
+  },
+  auth: {
+    /* auth params */
+  },
+});
+```
+
+## Webhook Operations and Responses
+
+The `/operations` and `/responses` exports provide tools for building webhook handler responses.
+
+### Understanding the Concepts
+
+**Webhook Operations** tell Adobe Commerce what to do with the event data:
+
+- `successOperation()` - Allow the process to continue unchanged
+- `exceptionOperation()` - Block the process with an error message
+- `addOperation()` - Add new data to the event
+- `replaceOperation()` - Modify existing data in the event
+- `removeOperation()` - Remove data from the event
+
+**Action Responses** wrap operations in HTTP responses:
+
+- `ok()` - Returns HTTP 200 with the operation(s) in the body
+- Other status codes (4xx/5xx) indicate system/validation failures
 
 **Example:**
 
 ```typescript
-import {
-  successOperation,
-  addOperation,
-  removeOperation,
-} from "@adobe/aio-commerce-lib-webhooks/operations";
+import { successOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
 import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
-// Webhook operation (body content)
+// Create an operation
 const operation = successOperation();
 // Returns: { op: "success" }
 
-// Webhook-optimized response - clean and simple!
+// Wrap it in an HTTP response
 return ok(operation);
 // Returns: { type: "success", statusCode: 200, body: { op: "success" } }
-
-// Also works with arrays of operations
-return ok([addOperation("result", data), removeOperation("result/old_field")]);
 ```
 
 ### Response Structure
 
 Adobe Commerce webhooks expect:
 
-- **HTTP 200** with webhook operations = webhook succeeded, operations tell Commerce what to do
+- **HTTP 200** with operations = webhook succeeded, operations tell Commerce what to do
 - **HTTP 4xx/5xx** = system/validation failures (not business logic blocks)
 
-## Quick Start
+### Operation Types
 
-### Success Operation
+#### 1. Success Operation
 
-Use when the webhook should allow the process to continue unchanged:
+Allows the Commerce process to continue unchanged.
 
 ```typescript
 import { successOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
 import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
-export async function main(params) {
+export async function handleWebhook(params) {
   // Your validation logic here...
-
-  // Allow process to continue
   return ok(successOperation());
 }
 ```
 
-### Exception Operation
+#### 2. Exception Operation
 
-Use when you need to block the Commerce process with an error:
+Blocks the Commerce process with an error message.
 
 ```typescript
-import {
-  successOperation,
-  exceptionOperation,
-} from "@adobe/aio-commerce-lib-webhooks/operations";
+import { exceptionOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
 import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function validateStock(params) {
   const { product } = params;
-
   const stock = await checkInventory(product.sku);
 
   if (stock < product.quantity) {
-    // Block the process with an exception
     return ok(
       exceptionOperation(
         "The product cannot be added to the cart because it is out of stock",
@@ -116,21 +230,30 @@ export async function validateStock(params) {
 }
 ```
 
-### Add Operation
+**With exception class:**
 
-Add new data to the event arguments:
+```typescript
+return ok(
+  exceptionOperation(
+    "Insufficient inventory",
+    "Magento\\Framework\\Exception\\LocalizedException",
+  ),
+);
+```
+
+#### 3. Add Operation
+
+Adds new data to the event arguments.
+
+**Basic usage:**
 
 ```typescript
 import { addOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
 import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function addCustomShipping(params) {
-  const { cart, shippingAddress } = params;
+  const customRate = await calculateShippingRate(params);
 
-  // Calculate custom shipping rate
-  const customRate = await calculateShippingRate(cart, shippingAddress);
-
-  // Add a new shipping method
   return ok(
     addOperation(
       "result",
@@ -147,29 +270,11 @@ export async function addCustomShipping(params) {
     ),
   );
 }
-
-// Response:
-// {
-//   type: "success",
-//   statusCode: 200,
-//   body: {
-//     op: "add",
-//     path: "result",
-//     value: { data: { amount: "15.99", ... } },
-//     instance: "Magento\\Quote\\Api\\Data\\ShippingMethodInterface"
-//   }
-// }
 ```
 
-#### Type Safety with Generics
-
-The `addOperation` function supports generic type parameters for better type safety:
+**With type safety (generics):**
 
 ```typescript
-import { addOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
-import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
-
-// Define your data structure
 type ShippingMethodData = {
   data: {
     amount: string;
@@ -180,54 +285,39 @@ type ShippingMethodData = {
   };
 };
 
-export async function addCustomShipping(params) {
-  const { cart, shippingAddress } = params;
+// TypeScript enforces the structure
+return ok(
+  addOperation<ShippingMethodData>("result", {
+    data: {
+      amount: "15.99",
+      carrier_code: "custom_express",
+      carrier_title: "Express Shipping",
+      method_code: "express",
+      method_title: "2-Day Express",
+    },
+  }),
+);
 
-  const customRate = await calculateShippingRate(cart, shippingAddress);
-
-  // TypeScript will enforce the structure matches ShippingMethodData
-  return ok(
-    addOperation<ShippingMethodData>(
-      "result",
-      {
-        data: {
-          amount: customRate.toString(),
-          carrier_code: "custom_express",
-          carrier_title: "Express Shipping",
-          method_code: "express",
-          method_title: "2-Day Express Delivery",
-        },
-      },
-      "Magento\\Quote\\Api\\Data\\ShippingMethodInterface",
-    ),
-  );
-}
-
-// Type inference also works - TypeScript infers the type from the value
+// Type inference also works automatically
 const operation = addOperation("result", { amount: 5, code: "test" });
 // TypeScript knows operation.value has amount and code properties
 ```
 
-### Replace Operation
+#### 4. Replace Operation
 
-Modify existing values in the event arguments:
+Modifies existing values in the event arguments.
+
+**Basic usage:**
 
 ```typescript
-import {
-  replaceOperation,
-  successOperation,
-} from "@adobe/aio-commerce-lib-webhooks/operations";
+import { replaceOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
 import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function applyVipDiscount(params) {
-  const { customer, cart } = params;
-
-  const isVip = await checkVipStatus(customer.id);
+  const isVip = await checkVipStatus(params.customer.id);
 
   if (isVip) {
-    // Replace shipping amount with discounted rate
-    const discountedAmount = cart.shipping_amount * 0.5;
-
+    const discountedAmount = params.cart.shipping_amount * 0.5;
     return ok(
       replaceOperation(
         "result/shipping_methods/flatrate/amount",
@@ -238,73 +328,42 @@ export async function applyVipDiscount(params) {
 
   return ok(successOperation());
 }
-
-// Response for VIP customer:
-// {
-//   type: "success",
-//   statusCode: 200,
-//   body: {
-//     op: "replace",
-//     path: "result/shipping_methods/flatrate/amount",
-//     value: 7.5
-//   }
-// }
 ```
 
-#### Type Safety with Generics
-
-The `replaceOperation` function also supports generic type parameters:
+**With type safety (generics):**
 
 ```typescript
-import { replaceOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
-import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
-
-// Define your price structure
 type PriceData = {
   amount: number;
   currency: string;
   discount?: number;
 };
 
-export async function updatePrice(params) {
-  const { product } = params;
+// TypeScript enforces the structure
+return ok(
+  replaceOperation<PriceData>("result/price", {
+    amount: 99.99,
+    currency: "USD",
+    discount: 10,
+  }),
+);
 
-  const newPrice = await calculatePrice(product);
-
-  // TypeScript will enforce the structure matches PriceData
-  return ok(
-    replaceOperation<PriceData>("result/price", {
-      amount: newPrice,
-      currency: "USD",
-      discount: 10,
-    }),
-  );
-}
-
-// Type inference works here too
-const operation = replaceOperation("result/config", {
-  enabled: true,
-  timeout: 30,
-});
-// TypeScript knows operation.value has enabled and timeout properties
+// Type inference works automatically
+const operation = replaceOperation("result/config", { enabled: true });
+// TypeScript knows operation.value has enabled property
 ```
 
-### Remove Operation
+#### 5. Remove Operation
 
-Remove data from the event arguments:
+Removes data from the event arguments.
 
 ```typescript
-import {
-  removeOperation,
-  successOperation,
-} from "@adobe/aio-commerce-lib-webhooks/operations";
+import { removeOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
 import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function restrictPaymentMethods(params) {
-  const { shippingAddress } = params;
-
   // Remove cash on delivery for international orders
-  if (shippingAddress.country !== "US") {
+  if (params.shippingAddress.country !== "US") {
     return ok(removeOperation("result/payment_methods/cashondelivery"));
   }
 
@@ -312,26 +371,20 @@ export async function restrictPaymentMethods(params) {
 }
 ```
 
-## Array of Operations
+### Multiple Operations
 
-You can return multiple operations in a single webhook response. Operations are executed in the order they appear in the array.
+You can return multiple operations in a single response. Operations are executed in the order they appear.
 
-### Multiple Add Operations
-
-Add several items at once:
+**Example - Add multiple shipping options:**
 
 ```typescript
 import { addOperation } from "@adobe/aio-commerce-lib-webhooks/operations";
 import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
 
 export async function addMultipleShippingOptions(params) {
-  const { cart, shippingAddress } = params;
+  const expressRate = await calculateExpressRate(params.shippingAddress);
+  const overnightRate = await calculateOvernightRate(params.shippingAddress);
 
-  // Calculate multiple shipping rates
-  const expressRate = await calculateExpressRate(shippingAddress);
-  const overnightRate = await calculateOvernightRate(shippingAddress);
-
-  // Return array of add operations - clean and simple!
   return ok([
     addOperation(
       "result",
@@ -361,16 +414,30 @@ export async function addMultipleShippingOptions(params) {
     ),
   ]);
 }
+```
 
-// Response:
-// {
-//   type: "success",
-//   statusCode: 200,
-//   body: [
-//     { op: "add", path: "result", value: {...}, instance: "..." },
-//     { op: "add", path: "result", value: {...}, instance: "..." }
-//   ]
-// }
+**Example - Mix different operation types:**
+
+```typescript
+import {
+  addOperation,
+  replaceOperation,
+  removeOperation,
+} from "@adobe/aio-commerce-lib-webhooks/operations";
+import { ok } from "@adobe/aio-commerce-lib-webhooks/responses";
+
+export async function customizeCheckout(params) {
+  return ok([
+    // Add a custom shipping method
+    addOperation("result/shipping_methods", {
+      /* ... */
+    }),
+    // Update the shipping amount
+    replaceOperation("result/shipping_methods/flatrate/amount", 5.99),
+    // Remove an unwanted payment method
+    removeOperation("result/payment_methods/cashondelivery"),
+  ]);
+}
 ```
 
 ## Reference
