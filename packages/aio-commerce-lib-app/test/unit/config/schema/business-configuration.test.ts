@@ -90,7 +90,8 @@ describe("business-configuration schema helpers", () => {
     test("should return false when businessConfig.schema is undefined", () => {
       const config: CommerceAppConfigOutputModel = {
         ...minimalValidConfig,
-        businessConfig: {} as any,
+        // @ts-expect-error Invalid type for testing purposes
+        businessConfig: {},
       };
 
       expect(hasBusinessConfigSchema(config)).toBe(false);

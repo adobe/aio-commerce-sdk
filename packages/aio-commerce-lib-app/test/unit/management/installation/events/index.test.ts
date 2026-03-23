@@ -42,11 +42,9 @@ describe("events installation module", () => {
     test("should only run if eventing is defined", () => {
       expect(eventingStep.when).toBeDefined();
 
-      // Should return true when eventing is defined
       expect(eventingStep.when?.(configWithCommerceEventing)).toBe(true);
       expect(eventingStep.when?.(configWithExternalEventing)).toBe(true);
 
-      // Should return false when eventing is not defined
       expect(eventingStep.when?.(minimalValidConfig)).toBe(false);
     });
 
@@ -70,20 +68,19 @@ describe("events installation module", () => {
     test("should only run if eventing.commerce is defined", () => {
       expect(commerceEventsStep.when).toBeDefined();
 
-      // Should return true when commerce eventing is defined
       expect(commerceEventsStep.when?.(configWithCommerceEventing)).toBe(true);
 
-      // Should return false when commerce eventing is not defined
       expect(commerceEventsStep.when?.(configWithExternalEventing)).toBe(false);
       expect(commerceEventsStep.when?.(minimalValidConfig)).toBe(false);
     });
 
     test("should create entities", async () => {
       const mockContext = createMockEventingInstallationContext({
+        // @ts-expect-error Invalid type for testing purposes
         params: {
           AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com",
           AIO_COMMERCE_API_FLAVOR: "saas",
-        } as any,
+        },
         ioEventsClient: {
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: { providers: [] },
@@ -124,7 +121,6 @@ describe("events installation module", () => {
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBeGreaterThan(0);
 
-      // Verify that the API clients were called
       expect(
         mockContext.ioEventsClient.getAllEventProviders,
       ).toHaveBeenCalled();
@@ -147,10 +143,8 @@ describe("events installation module", () => {
     test("should only run if eventing.external is defined", () => {
       expect(externalEventsStep.when).toBeDefined();
 
-      // Should return true when external eventing is defined
       expect(externalEventsStep.when?.(configWithExternalEventing)).toBe(true);
 
-      // Should return false when external eventing is not defined
       expect(externalEventsStep.when?.(configWithCommerceEventing)).toBe(false);
       expect(externalEventsStep.when?.(minimalValidConfig)).toBe(false);
     });
@@ -185,7 +179,6 @@ describe("events installation module", () => {
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBeGreaterThan(0);
 
-      // Verify that the API client was called
       expect(
         mockContext.ioEventsClient.getAllEventProviders,
       ).toHaveBeenCalled();
@@ -197,14 +190,11 @@ describe("events installation module", () => {
       const mockContext = createMockEventingInstallationContext();
       const context = createEventsStepContext(mockContext);
 
-      // Verify the context has the ioEventsClient property
       expect(context).toHaveProperty("ioEventsClient");
 
-      // Access the client multiple times
       const client1 = context.ioEventsClient;
       const client2 = context.ioEventsClient;
 
-      // Verify the client is defined and has expected methods
       expect(client1).toBeDefined();
       expect(client1).toHaveProperty("createEventProvider");
       expect(client1).toHaveProperty("createEventMetadataForProvider");
@@ -212,7 +202,6 @@ describe("events installation module", () => {
       expect(client1).toHaveProperty("getAllEventProviders");
       expect(client1).toHaveProperty("getAllRegistrations");
 
-      // Verify lazy initialization returns the same instance (memoization)
       expect(client1).toBe(client2);
     });
 
@@ -227,14 +216,11 @@ describe("events installation module", () => {
       });
       const context = createEventsStepContext(mockContext);
 
-      // Verify the context has the commerceEventsClient property
       expect(context).toHaveProperty("commerceEventsClient");
 
-      // Access the client multiple times
       const client1 = context.commerceEventsClient;
       const client2 = context.commerceEventsClient;
 
-      // Verify the client is defined and has expected methods
       expect(client1).toBeDefined();
       expect(client1).toHaveProperty("createEventProvider");
       expect(client1).toHaveProperty("getAllEventProviders");
@@ -242,7 +228,6 @@ describe("events installation module", () => {
       expect(client1).toHaveProperty("getAllEventSubscriptions");
       expect(client1).toHaveProperty("updateEventingConfiguration");
 
-      // Verify lazy initialization returns the same instance (memoization)
       expect(client1).toBe(client2);
     });
   });

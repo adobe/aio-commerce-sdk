@@ -84,9 +84,7 @@ describe("webhooks installation module", () => {
         getWebhookList,
       );
 
-      if (!subscriptionsStep.run) {
-        throw new Error("subscriptionsStep.run is not defined");
-      }
+      expect.assert.isDefined(subscriptionsStep.run);
 
       const result = (await subscriptionsStep.run(
         configWithWebhooks,
