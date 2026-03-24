@@ -7,7 +7,7 @@ type LeafStepOptions<TName, TConfig, TStepCtx, TOutput> = Omit<
 >;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:138](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L138)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:194](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L194)
 
 Options for defining a leaf step.
 

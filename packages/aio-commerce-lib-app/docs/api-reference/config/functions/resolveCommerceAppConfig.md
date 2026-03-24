@@ -4,7 +4,7 @@
 function resolveCommerceAppConfig(cwd?: string): Promise<string | null>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L52)
+Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L52)
 
 Try to find (up to the nearest package.json file) the app config file.
 

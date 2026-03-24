@@ -40,35 +40,35 @@ const SchemaBusinessConfig: ObjectSchema<{
      type: "list";
    }
      | {
-     default?: string;
+     default: string;
      description?: string;
      label?: string;
      name: string;
      type: "text";
    }
      | {
-     default?: undefined;
+     default: "";
      description?: string;
      label?: string;
      name: string;
      type: "password";
    }
      | {
-     default?: string;
+     default: string;
      description?: string;
      label?: string;
      name: string;
      type: "email";
    }
      | {
-     default?: string;
+     default: string;
      description?: string;
      label?: string;
      name: string;
      type: "url";
    }
      | {
-     default?: string;
+     default: string;
      description?: string;
      label?: string;
      name: string;
@@ -77,6 +77,6 @@ const SchemaBusinessConfig: ObjectSchema<{
 }, undefined>;
 ```
 
-Defined in: [modules/schema/index.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/modules/schema/index.ts#L20)
+Defined in: [modules/schema/index.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/modules/schema/index.ts#L20)
 
 The schema used to validate the the business configuration settings.

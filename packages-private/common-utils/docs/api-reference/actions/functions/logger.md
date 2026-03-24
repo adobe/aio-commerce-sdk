@@ -6,7 +6,7 @@ function logger(
 ): ContextBuilder<BaseContext, LoggerContext>;
 ```
 
-Defined in: [actions/http/middleware/logger.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages-private/common-utils/source/actions/http/middleware/logger.ts#L43)
+Defined in: [actions/http/middleware/logger.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages-private/common-utils/source/actions/http/middleware/logger.ts#L43)
 
 Creates a logger middleware that adds logging capabilities to the context.
 
