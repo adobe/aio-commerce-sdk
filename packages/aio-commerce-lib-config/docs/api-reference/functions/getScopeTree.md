@@ -9,7 +9,7 @@ function getScopeTree(
 ): Promise<GetScopeTreeResult>;
 ```
 
-Defined in: [config-manager.ts:134](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/config-manager.ts#L134)
+Defined in: [config-manager.ts:134](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/config-manager.ts#L134)
 
 Gets the scope tree from cache or Commerce API.
 
@@ -78,7 +78,7 @@ function getScopeTree(
 ): Promise<GetScopeTreeResult>;
 ```
 
-Defined in: [config-manager.ts:140](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/config-manager.ts#L140)
+Defined in: [config-manager.ts:140](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/config-manager.ts#L140)
 
 Gets the scope tree from cache or Commerce API.
 

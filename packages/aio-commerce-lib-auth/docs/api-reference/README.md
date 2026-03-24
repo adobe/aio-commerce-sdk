@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-auth`: `v1.0.0`
+# `@adobe/aio-commerce-lib-auth`: `v1.0.1`
 
 ## Type Aliases
 
@@ -25,3 +25,4 @@
 | [isImsAuthProvider](functions/isImsAuthProvider.md)                     | Type guard to check if a value is an ImsAuthProvider instance.                                                                                                                            |
 | [isIntegrationAuthProvider](functions/isIntegrationAuthProvider.md)     | Type guard to check if a value is an IntegrationAuthProvider instance.                                                                                                                    |
 | [resolveAuthParams](functions/resolveAuthParams.md)                     | Automatically detects and resolves authentication parameters from App Builder action inputs. Attempts to resolve IMS authentication first, then falls back to Integration authentication. |
+| [resolveImsAuthParams](functions/resolveImsAuthParams.md)               | Resolves an [ImsAuthParams](type-aliases/ImsAuthParams.md) from the given App Builder action inputs.                                                                                      |

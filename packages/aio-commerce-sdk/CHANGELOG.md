@@ -1,5 +1,19 @@
 # @adobe/aio-commerce-sdk
 
+## 1.1.0
+
+### Minor Changes
+
+- [#355](https://github.com/adobe/aio-commerce-sdk/pull/355) [`b9b45f2`](https://github.com/adobe/aio-commerce-sdk/commit/b9b45f2a7220ef796331a457b22b0c736f3881b9) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Added webhooks library re-exports to the SDK package. Users can now import webhooks functionality via `@adobe/aio-commerce-sdk/webhooks/api` and `@adobe/aio-commerce-sdk/webhooks/responses`.
+
+### Patch Changes
+
+- Updated dependencies [[`660cf05`](https://github.com/adobe/aio-commerce-sdk/commit/660cf058d2439de82b3e22376c3d494b2a83045f), [`cb9c11d`](https://github.com/adobe/aio-commerce-sdk/commit/cb9c11dfd243d3034763374fe5416645015b46a9), [`4883afa`](https://github.com/adobe/aio-commerce-sdk/commit/4883afaec90451cd7daf280f0def83ea45a3c87c)]:
+  - @adobe/aio-commerce-lib-webhooks@0.1.0
+  - @adobe/aio-commerce-lib-auth@1.0.1
+  - @adobe/aio-commerce-lib-api@1.0.1
+  - @adobe/aio-commerce-lib-events@1.0.1
+
 ## 1.0.0
 
 ### Major Changes

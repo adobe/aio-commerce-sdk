@@ -29,35 +29,35 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
         type: "list";
       }
         | {
-        default?: string;
+        default: string;
         description?: string;
         label?: string;
         name: string;
         type: "text";
       }
         | {
-        default?: undefined;
+        default: "";
         description?: string;
         label?: string;
         name: string;
         type: "password";
       }
         | {
-        default?: string;
+        default: string;
         description?: string;
         label?: string;
         name: string;
         type: "email";
       }
         | {
-        default?: string;
+        default: string;
         description?: string;
         label?: string;
         name: string;
         type: "url";
       }
         | {
-        default?: string;
+        default: string;
         description?: string;
         label?: string;
         name: string;
@@ -115,12 +115,80 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
      id: string;
      version: string;
   };
+  webhooks?: (
+     | {
+     category?: "validation" | "append" | "modification";
+     description: string;
+     label: string;
+     requireAdobeAuth?: boolean;
+     runtimeAction: string;
+     webhook: {
+        batch_name: string;
+        batch_order?: number;
+        fallback_error_message?: string;
+        fields?: {
+           name: ...;
+           source?: ...;
+        }[];
+        headers?: {
+           name: ...;
+           value: ...;
+        }[];
+        hook_name: string;
+        method: string;
+        priority?: number;
+        required?: boolean;
+        rules?: {
+           field: ...;
+           operator: ...;
+           value: ...;
+        }[];
+        soft_timeout?: number;
+        timeout?: number;
+        ttl?: number;
+        webhook_method: string;
+        webhook_type: string;
+     };
+   }
+     | {
+     category?: "validation" | "append" | "modification";
+     description: string;
+     label: string;
+     webhook: {
+        batch_name: string;
+        batch_order?: number;
+        fallback_error_message?: string;
+        fields?: {
+           name: ...;
+           source?: ...;
+        }[];
+        headers?: {
+           name: ...;
+           value: ...;
+        }[];
+        hook_name: string;
+        method: string;
+        priority?: number;
+        required?: boolean;
+        rules?: {
+           field: ...;
+           operator: ...;
+           value: ...;
+        }[];
+        soft_timeout?: number;
+        timeout?: number;
+        ttl?: number;
+        url: string;
+        webhook_method: string;
+        webhook_type: string;
+     };
+  })[];
 } & {
 [key: string]: unknown;
 }>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:135](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L135)
+Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:135](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L135)
 
 Read the commerce app config file and parse its contents into its schema.
 
@@ -163,35 +231,35 @@ The config file must export a default export with the configuration object.
 `type`: `"list"`;
 \}
 \| \{
-`default?`: `string`;
+`default`: `string`;
 `description?`: `string`;
 `label?`: `string`;
 `name`: `string`;
 `type`: `"text"`;
 \}
 \| \{
-`default?`: `undefined`;
+`default`: `""`;
 `description?`: `string`;
 `label?`: `string`;
 `name`: `string`;
 `type`: `"password"`;
 \}
 \| \{
-`default?`: `string`;
+`default`: `string`;
 `description?`: `string`;
 `label?`: `string`;
 `name`: `string`;
 `type`: `"email"`;
 \}
 \| \{
-`default?`: `string`;
+`default`: `string`;
 `description?`: `string`;
 `label?`: `string`;
 `name`: `string`;
 `type`: `"url"`;
 \}
 \| \{
-`default?`: `string`;
+`default`: `string`;
 `description?`: `string`;
 `label?`: `string`;
 `name`: `string`;
@@ -249,6 +317,74 @@ The config file must export a default export with the configuration object.
 `id`: `string`;
 `version`: `string`;
 \};
+`webhooks?`: (
+\| \{
+`category?`: `"validation"` \| `"append"` \| `"modification"`;
+`description`: `string`;
+`label`: `string`;
+`requireAdobeAuth?`: `boolean`;
+`runtimeAction`: `string`;
+`webhook`: \{
+`batch_name`: `string`;
+`batch_order?`: `number`;
+`fallback_error_message?`: `string`;
+`fields?`: \{
+`name`: ...;
+`source?`: ...;
+\}[];
+`headers?`: \{
+`name`: ...;
+`value`: ...;
+\}[];
+`hook_name`: `string`;
+`method`: `string`;
+`priority?`: `number`;
+`required?`: `boolean`;
+`rules?`: \{
+`field`: ...;
+`operator`: ...;
+`value`: ...;
+\}[];
+`soft_timeout?`: `number`;
+`timeout?`: `number`;
+`ttl?`: `number`;
+`webhook_method`: `string`;
+`webhook_type`: `string`;
+\};
+\}
+\| \{
+`category?`: `"validation"` \| `"append"` \| `"modification"`;
+`description`: `string`;
+`label`: `string`;
+`webhook`: \{
+`batch_name`: `string`;
+`batch_order?`: `number`;
+`fallback_error_message?`: `string`;
+`fields?`: \{
+`name`: ...;
+`source?`: ...;
+\}[];
+`headers?`: \{
+`name`: ...;
+`value`: ...;
+\}[];
+`hook_name`: `string`;
+`method`: `string`;
+`priority?`: `number`;
+`required?`: `boolean`;
+`rules?`: \{
+`field`: ...;
+`operator`: ...;
+`value`: ...;
+\}[];
+`soft_timeout?`: `number`;
+`timeout?`: `number`;
+`ttl?`: `number`;
+`url`: `string`;
+`webhook_method`: `string`;
+`webhook_type`: `string`;
+\};
+\})[];
 \} & \{
 \[`key`: `string`\]: `unknown`;
 \}\>

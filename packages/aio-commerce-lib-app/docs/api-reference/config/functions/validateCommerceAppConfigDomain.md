@@ -29,35 +29,35 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
         type: "list";
       }
         | {
-        default?: string;
+        default: string;
         description?: string;
         label?: string;
         name: string;
         type: "text";
       }
         | {
-        default?: undefined;
+        default: "";
         description?: string;
         label?: string;
         name: string;
         type: "password";
       }
         | {
-        default?: string;
+        default: string;
         description?: string;
         label?: string;
         name: string;
         type: "email";
       }
         | {
-        default?: string;
+        default: string;
         description?: string;
         label?: string;
         name: string;
         type: "url";
       }
         | {
-        default?: string;
+        default: string;
         description?: string;
         label?: string;
         name: string;
@@ -115,12 +115,60 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
      id: string;
      version: string;
   };
+  webhooks?: (
+     | {
+     category?: "validation" | "append" | "modification";
+     description: string;
+     label: string;
+     requireAdobeAuth?: boolean;
+     runtimeAction: string;
+     webhook: {
+        batch_name: string;
+        batch_order?: number;
+        fallback_error_message?: string;
+        fields?: ...[];
+        headers?: ...[];
+        hook_name: string;
+        method: string;
+        priority?: number;
+        required?: boolean;
+        rules?: ...[];
+        soft_timeout?: number;
+        timeout?: number;
+        ttl?: number;
+        webhook_method: string;
+        webhook_type: string;
+     };
+   }
+     | {
+     category?: "validation" | "append" | "modification";
+     description: string;
+     label: string;
+     webhook: {
+        batch_name: string;
+        batch_order?: number;
+        fallback_error_message?: string;
+        fields?: ...[];
+        headers?: ...[];
+        hook_name: string;
+        method: string;
+        priority?: number;
+        required?: boolean;
+        rules?: ...[];
+        soft_timeout?: number;
+        timeout?: number;
+        ttl?: number;
+        url: string;
+        webhook_method: string;
+        webhook_type: string;
+     };
+  })[];
 } & {
 [key: string]: unknown;
 }, T>>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L110)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L110)
 
 Validates a specific domain configuration within the commerce app config.
 
@@ -131,9 +179,9 @@ schema for that specific domain.
 
 ## Type Parameters
 
-| Type Parameter                                                                                                                                                                                                     | Description                                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| `T` _extends_ \| `"metadata"` \| `"businessConfig"` \| `"eventing"` \| `"installation"` \| `"businessConfig.schema"` \| `"eventing.commerce"` \| `"eventing.external"` \| `"installation.customInstallationSteps"` | The type of the domain, constrained to valid domain names. |
+| Type Parameter                                                                                                                                                                                                                     | Description                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `T` _extends_ \| `"metadata"` \| `"businessConfig"` \| `"eventing"` \| `"installation"` \| `"webhooks"` \| `"businessConfig.schema"` \| `"eventing.commerce"` \| `"eventing.external"` \| `"installation.customInstallationSteps"` | The type of the domain, constrained to valid domain names. |
 
 ## Parameters
 
@@ -172,35 +220,35 @@ schema for that specific domain.
 `type`: `"list"`;
 \}
 \| \{
-`default?`: `string`;
+`default`: `string`;
 `description?`: `string`;
 `label?`: `string`;
 `name`: `string`;
 `type`: `"text"`;
 \}
 \| \{
-`default?`: `undefined`;
+`default`: `""`;
 `description?`: `string`;
 `label?`: `string`;
 `name`: `string`;
 `type`: `"password"`;
 \}
 \| \{
-`default?`: `string`;
+`default`: `string`;
 `description?`: `string`;
 `label?`: `string`;
 `name`: `string`;
 `type`: `"email"`;
 \}
 \| \{
-`default?`: `string`;
+`default`: `string`;
 `description?`: `string`;
 `label?`: `string`;
 `name`: `string`;
 `type`: `"url"`;
 \}
 \| \{
-`default?`: `string`;
+`default`: `string`;
 `description?`: `string`;
 `label?`: `string`;
 `name`: `string`;
@@ -258,6 +306,54 @@ schema for that specific domain.
 `id`: `string`;
 `version`: `string`;
 \};
+`webhooks?`: (
+\| \{
+`category?`: `"validation"` \| `"append"` \| `"modification"`;
+`description`: `string`;
+`label`: `string`;
+`requireAdobeAuth?`: `boolean`;
+`runtimeAction`: `string`;
+`webhook`: \{
+`batch_name`: `string`;
+`batch_order?`: `number`;
+`fallback_error_message?`: `string`;
+`fields?`: ...[];
+`headers?`: ...[];
+`hook_name`: `string`;
+`method`: `string`;
+`priority?`: `number`;
+`required?`: `boolean`;
+`rules?`: ...[];
+`soft_timeout?`: `number`;
+`timeout?`: `number`;
+`ttl?`: `number`;
+`webhook_method`: `string`;
+`webhook_type`: `string`;
+\};
+\}
+\| \{
+`category?`: `"validation"` \| `"append"` \| `"modification"`;
+`description`: `string`;
+`label`: `string`;
+`webhook`: \{
+`batch_name`: `string`;
+`batch_order?`: `number`;
+`fallback_error_message?`: `string`;
+`fields?`: ...[];
+`headers?`: ...[];
+`hook_name`: `string`;
+`method`: `string`;
+`priority?`: `number`;
+`required?`: `boolean`;
+`rules?`: ...[];
+`soft_timeout?`: `number`;
+`timeout?`: `number`;
+`ttl?`: `number`;
+`url`: `string`;
+`webhook_method`: `string`;
+`webhook_type`: `string`;
+\};
+\})[];
 \} & \{
 \[`key`: `string`\]: `unknown`;
 \}, `T`\>\>

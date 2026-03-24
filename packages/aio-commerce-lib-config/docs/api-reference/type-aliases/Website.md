@@ -10,7 +10,7 @@ type Website = {
 };
 ```
 
-Defined in: [types/commerce.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/types/commerce.ts#L31)
+Defined in: [types/commerce.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/types/commerce.ts#L31)
 
 Represents a website in Adobe Commerce.
 
@@ -22,7 +22,7 @@ Represents a website in Adobe Commerce.
 code: string;
 ```
 
-Defined in: [types/commerce.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/types/commerce.ts#L37)
+Defined in: [types/commerce.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/types/commerce.ts#L37)
 
 Unique code identifier for the website.
 
@@ -34,7 +34,7 @@ Unique code identifier for the website.
 default_group_id: number;
 ```
 
-Defined in: [types/commerce.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/types/commerce.ts#L39)
+Defined in: [types/commerce.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/types/commerce.ts#L39)
 
 ID of the default store group for this website.
 
@@ -46,7 +46,7 @@ ID of the default store group for this website.
 optional extension_attributes: Record<string, unknown>;
 ```
 
-Defined in: [types/commerce.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/types/commerce.ts#L41)
+Defined in: [types/commerce.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/types/commerce.ts#L41)
 
 Optional extension attributes for additional data.
 
@@ -58,7 +58,7 @@ Optional extension attributes for additional data.
 id: number;
 ```
 
-Defined in: [types/commerce.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/types/commerce.ts#L33)
+Defined in: [types/commerce.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/types/commerce.ts#L33)
 
 Unique identifier for the website.
 
@@ -70,6 +70,6 @@ Unique identifier for the website.
 name: string;
 ```
 
-Defined in: [types/commerce.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/types/commerce.ts#L35)
+Defined in: [types/commerce.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/types/commerce.ts#L35)
 
 Display name of the website.
