@@ -15,6 +15,7 @@
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
+    "code:fix": "pnpm run lint:fix && pnpm run assist:apply && pnpm run format && pnpm run format:markdown",
     "format": "biome format --write --no-errors-on-unmatched",
     "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
     "format:check": "biome format --no-errors-on-unmatched",
@@ -23,6 +24,6 @@
   },
   "devDependencies": {
     "globby": "^16.0.0",
-    "rolldown": "1.0.0-rc.6"
+    "rolldown": "1.0.0-rc.9"
   }
 }

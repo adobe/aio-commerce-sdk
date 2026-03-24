@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import { hasCustomInstallationSteps } from "#config/index";
 import { createCustomScriptSteps } from "#management/installation/custom-installation/custom-scripts";
@@ -18,6 +18,9 @@ import {
   configWithCustomInstallationSteps,
   minimalValidConfig,
 } from "#test/fixtures/config";
+import { createMockInstallationContext } from "#test/fixtures/installation";
+
+import type { LeafStep } from "#management/installation/workflow/step";
 
 describe("hasCustomInstallationSteps", () => {
   test("should return false when config has no installation property", () => {
@@ -54,10 +57,6 @@ describe("createCustomScriptSteps", () => {
   test("should create one leaf step per custom script", () => {
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
 
-    if (!steps) {
-      throw new Error("Expected steps to be defined");
-    }
-
     expect(steps.length).toBe(2);
 
     // Verify each step is a leaf step with correct metadata
@@ -80,5 +79,132 @@ describe("createCustomScriptSteps", () => {
     );
 
     expect(() => createCustomScriptSteps(config)).toThrow();
+  });
+
+  test("should convert step names to camelCase", () => {
+    const config = {
+      ...minimalValidConfig,
+      installation: {
+        customInstallationSteps: [
+          {
+            script: "./my-script.js",
+            name: "My Custom Step",
+            description: "A test step",
+          },
+        ],
+      },
+    };
+
+    const steps = createCustomScriptSteps(config);
+    expect(steps).toHaveLength(1);
+    expect(steps?.[0].name).toBe("myCustomStep");
+  });
+});
+
+describe("createCustomScriptStep - run function", () => {
+  test("should execute script successfully and return result", async () => {
+    const mockScriptResult = { status: "success", data: "test-data" };
+    const mockScript = vi.fn().mockResolvedValue(mockScriptResult);
+
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": { default: mockScript },
+    };
+
+    const result = await step.run(
+      configWithCustomInstallationSteps,
+      mockContext,
+    );
+
+    expect(mockScript).toHaveBeenCalledWith(
+      configWithCustomInstallationSteps,
+      mockContext,
+    );
+    expect(result).toEqual({
+      script: "./demo-success.js",
+      data: mockScriptResult,
+    });
+  });
+
+  test("should throw error when customScripts are not defined", async () => {
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {};
+
+    await expect(
+      step.run(configWithCustomInstallationSteps, mockContext),
+    ).rejects.toThrow();
+  });
+
+  test("should throw error when script module has no default export", async () => {
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": { notDefault: vi.fn() }, // No default export
+    };
+
+    await expect(
+      step.run(configWithCustomInstallationSteps, mockContext),
+    ).rejects.toThrow();
+  });
+
+  test("should propagate errors thrown by the script", async () => {
+    const mockScript = vi
+      .fn()
+      .mockRejectedValue(new Error("Script execution failed"));
+
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": { default: mockScript },
+    };
+
+    await expect(
+      step.run(configWithCustomInstallationSteps, mockContext),
+    ).rejects.toThrow("Script execution failed");
+  });
+
+  test("should execute multiple scripts independently", async () => {
+    const mockScript1 = vi.fn().mockResolvedValue({ step: 1 });
+    const mockScript2 = vi.fn().mockResolvedValue({ step: 2 });
+
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step1 = steps?.[0] as LeafStep;
+    const step2 = steps?.[1] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": { default: mockScript1 },
+      "./demo-error.js": { default: mockScript2 },
+    };
+
+    const result1 = await step1.run(
+      configWithCustomInstallationSteps,
+      mockContext,
+    );
+    const result2 = await step2.run(
+      configWithCustomInstallationSteps,
+      mockContext,
+    );
+
+    expect(result1).toEqual({
+      script: "./demo-success.js",
+      data: { step: 1 },
+    });
+    expect(result2).toEqual({
+      script: "./demo-error.js",
+      data: { step: 2 },
+    });
+    expect(mockScript1).toHaveBeenCalledTimes(1);
+    expect(mockScript2).toHaveBeenCalledTimes(1);
   });
 });

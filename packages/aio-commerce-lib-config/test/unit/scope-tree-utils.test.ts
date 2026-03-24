@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   buildUpdatedScopeTree,
@@ -167,7 +167,7 @@ describe("ScopeTreeUtils - Actual Merge Logic", () => {
   });
 
   describe("mergeCommerceScopes", () => {
-    it("should create new commerce scopes when none exist", () => {
+    test("should create new commerce scopes when none exist", () => {
       const result = mergeCommerceScopes(
         mockCommerceFreshData,
         mockExistingTree,
@@ -187,7 +187,7 @@ describe("ScopeTreeUtils - Actual Merge Logic", () => {
       expect(result[0].children?.[0].children).toHaveLength(1); // One store view
     });
 
-    it("should preserve existing UUIDs when merging with existing commerce scopes", () => {
+    test("should preserve existing UUIDs when merging with existing commerce scopes", () => {
       const result = mergeCommerceScopes(
         mockCommerceFreshData,
         mockExistingTreeWithCommerceScopes,
@@ -220,7 +220,7 @@ describe("ScopeTreeUtils - Actual Merge Logic", () => {
       expect(secondWebsite.id).toMatch(NEW_UUID_REGEX);
     });
 
-    it("should build correct hierarchical structure", () => {
+    test("should build correct hierarchical structure", () => {
       const result = mergeCommerceScopes(
         mockCommerceFreshData,
         mockExistingTree,
@@ -253,7 +253,7 @@ describe("ScopeTreeUtils - Actual Merge Logic", () => {
   });
 
   describe("buildUpdatedScopeTree", () => {
-    it("should merge updated commerce scopes with existing tree structure", () => {
+    test("should merge updated commerce scopes with existing tree structure", () => {
       const updatedCommerceScopes: ScopeNode[] = [
         {
           id: "website-uuid-1",
@@ -284,7 +284,7 @@ describe("ScopeTreeUtils - Actual Merge Logic", () => {
       expect(commerceNode?.children).toEqual(updatedCommerceScopes);
     });
 
-    it("should preserve custom systems like akeneo when updating commerce", () => {
+    test("should preserve custom systems like akeneo when updating commerce", () => {
       const existingTreeWithCustom: ScopeTree = [
         ...mockExistingTree,
         {

@@ -1,7 +1,7 @@
 {
   "name": "aio-commerce-sdk",
   "private": true,
-  "packageManager": "pnpm@10.30.3",
+  "packageManager": "pnpm@10.32.1",
   "engines": {
     "node": ">=20 <=24",
     "pnpm": ">=10"
@@ -16,6 +16,7 @@
     "assist:apply": "turbo run assist:apply",
     "build": "turbo run build",
     "check:ci": "turbo run check:ci",
+    "code:fix": "turbo run code:fix",
     "docs": "turbo run docs",
     "format": "turbo run format",
     "format:markdown": "turbo run format:markdown",
@@ -30,23 +31,24 @@
     "typecheck": "turbo typecheck"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.4",
-    "@changesets/changelog-github": "^0.5.1",
-    "@changesets/cli": "^2.29.5",
-    "@turbo/gen": "^2.5.4",
-    "@types/node": "^24.0.4",
-    "@vitest/coverage-v8": "^4.0.0",
-    "@vitest/ui": "^4.0.0",
+    "@biomejs/biome": "2.4.7",
+    "@changesets/changelog-github": "^0.6.0",
+    "@changesets/cli": "^2.30.0",
+    "@turbo/gen": "^2.8.17",
+    "@types/node": "^24.12.0",
+    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/ui": "^4.1.0",
     "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "catalog:",
-    "publint": "^0.3.15",
-    "tsdown": "^0.20.3",
-    "turbo": "^2.5.4",
-    "typedoc": "^0.28.7",
-    "typedoc-plugin-markdown": "^4.7.1",
+    "publint": "^0.3.18",
+    "tsdown": "^0.21.4",
+    "turbo": "^2.8.17",
+    "typedoc": "^0.28.17",
+    "typedoc-plugin-markdown": "^4.10.0",
     "typescript": "catalog:",
-    "ultracite": "^7.0.0",
-    "vitest": "^4.0.0"
+    "ultracite": "^7.3.2",
+    "vitest": "^4.1.0"
   },
   "lint-staged": {
     "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [

@@ -13,28 +13,8 @@ pnpm add @adobe/aio-commerce-lib-webhooks
 
 ## Usage
 
-```typescript
-import { createCommerceWebhooksApiClient } from "@adobe/aio-commerce-lib-webhooks";
+See the [Usage Guide](./docs/usage.md) for more information.
 
-const client = createCommerceWebhooksApiClient({
-  config: {
-    baseUrl: "https://my-commerce-instance.com",
-    flavor: "paas",
-  },
-  auth: {
-    /* IMS or Integration auth params */
-  },
-});
+## Contributing
 
-// List subscribed webhooks
-const webhooks = await client.getWebhookList();
-
-// Subscribe a webhook
-await client.subscribeWebhook({
-  webhook_method: "observer.catalog_product_save_after",
-  webhook_type: "after",
-  batch_name: "my_batch",
-  hook_name: "my_hook",
-  url: "https://my-app.com/webhook",
-});
-```
+This package is part of the Adobe Commerce SDK monorepo. See the [Contributing Guide](https://github.com/adobe/aio-commerce-sdk/blob/main/.github/CONTRIBUTING.md) and [Development Guide](https://github.com/adobe/aio-commerce-sdk/blob/main/.github/DEVELOPMENT.md) for development setup and guidelines.

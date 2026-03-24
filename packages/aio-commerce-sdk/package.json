@@ -66,6 +66,16 @@
         "default": "./dist/cjs/core/*.cjs"
       }
     },
+    "./webhooks/*": {
+      "import": {
+        "types": "./dist/es/webhooks/*.d.mts",
+        "default": "./dist/es/webhooks/*.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/webhooks/*.d.cts",
+        "default": "./dist/cjs/webhooks/*.cjs"
+      }
+    },
     "./*": {
       "import": {
         "types": "./dist/es/*.d.mts",
@@ -91,6 +101,7 @@
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
+    "code:fix": "pnpm run lint:fix && pnpm run assist:apply && pnpm run format && pnpm run format:markdown",
     "format": "biome format --write --no-errors-on-unmatched",
     "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
     "format:check": "biome format --no-errors-on-unmatched",
@@ -103,6 +114,7 @@
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-events": "workspace:*",
+    "@adobe/aio-commerce-lib-webhooks": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {

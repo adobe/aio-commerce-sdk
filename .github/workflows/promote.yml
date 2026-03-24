@@ -25,5 +25,6 @@ jobs:
 
       - name: Create promotion PR
         env:
+          COMMIT_SHA: ${{ inputs.commit_sha }}
           GITHUB_TOKEN: ${{ github.token }}
-        run: ./.github/scripts/promote.sh "${{ inputs.commit_sha }}"
+        run: ./.github/scripts/promote.sh "$COMMIT_SHA"

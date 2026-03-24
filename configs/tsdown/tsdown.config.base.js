@@ -55,11 +55,12 @@ export const baseConfig = {
 
   publint: true,
   outputOptions: {
-    banner: ADOBE_LICENSE_BANNER,
     dir: OUT_DIR,
-
     minifyInternalExports: true,
   },
+
+  failOnWarn: "ci-only",
+  banner: ADOBE_LICENSE_BANNER,
 
   nodeProtocol: "strip",
   minify: false,

@@ -18,7 +18,6 @@ jobs:
       # We want to run checks on all versions, even if some fail.
       fail-fast: false
       matrix:
-        # Previous LTS (Maintenance), Current LTS, Latest stable
         node-version: [20, 22, 24]
 
     steps:
@@ -30,24 +29,33 @@ jobs:
 
       - name: Fetch target branch for PR
         if: github.event_name == 'pull_request'
-        run: |
-          git fetch origin ${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+        run: git fetch origin ${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
 
       # pnpm version will be read from packageManager field in package.json
       - name: Setup pnpm
-        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
+
+      - name: Turborepo cache
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-node${{ matrix.node-version }}-turbo-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-node${{ matrix.node-version }}-turbo-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
         # See: https://turborepo.com/docs/reference/run#--affected
       - name: Run Turbo tasks on affected packages
+        env:
+          NODE_VERSION: ${{ matrix.node-version }}
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             # For PRs, compare the feature branch against the target branch

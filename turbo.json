@@ -1,6 +1,6 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalEnv": ["NODE_ENV", "CI"],
+  "globalEnv": ["NODE_ENV", "CI", "NODE_VERSION"],
   "tasks": {
     "assist:apply": {
       "dependsOn": ["lint:fix"]
@@ -13,6 +13,9 @@
     },
     "format:markdown": {
       "dependsOn": ["assist:apply"]
+    },
+    "code:fix": {
+      "dependsOn": ["transit"]
     },
     "build": {
       "dependsOn": ["^build"],

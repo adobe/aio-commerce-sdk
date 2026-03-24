@@ -96,7 +96,7 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
  */
 export function createCustomScriptSteps(
   config: CommerceAppConfigOutputModel,
-): AnyStep[] | undefined {
+): AnyStep[] {
   if (!hasCustomInstallationSteps(config)) {
     return [];
   }

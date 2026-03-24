@@ -13,20 +13,21 @@
 /** biome-ignore-all lint/performance/noBarrelFile: This is the package API entrypoint. */
 
 export {
+  createCommerceWebhooksApiClient,
+  createCustomCommerceWebhooksApiClient,
+} from "../lib/api-client";
+export {
   getSupportedWebhookList,
   getWebhookList,
   subscribeWebhook,
   unsubscribeWebhook,
-} from "./api/webhooks/endpoints";
-export {
-  createCommerceWebhooksApiClient,
-  createCustomCommerceWebhooksApiClient,
-} from "./lib/api-client";
+} from "./webhooks/endpoints";
 
+export type { CommerceWebhooksApiClient } from "../lib/api-client";
 export type {
   WebhookSubscribeParams,
   WebhookUnsubscribeParams,
-} from "./api/webhooks/schema";
+} from "./webhooks/schema";
 export type {
   CommerceSupportedWebhook,
   CommerceSupportedWebhookManyResponse,
@@ -36,5 +37,4 @@ export type {
   CommerceWebhookHeader,
   CommerceWebhookManyResponse,
   CommerceWebhookRule,
-} from "./api/webhooks/types";
-export type { CommerceWebhooksApiClient } from "./lib/api-client";
+} from "./webhooks/types";

@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { HTTPError } from "ky";
 
 import type {
@@ -37,6 +38,9 @@ const NON_IDENTIFIER_CHAR_REGEX = /[^a-zA-Z0-9_]/g;
 
 /** Matches two or more consecutive underscores. */
 const MULTIPLE_UNDERSCORES_REGEX = /_+/g;
+
+/** Matches the `.magento` segment in plugin webhook method names (e.g. `plugin.magento.foo`). */
+const PLUGIN_MAGENTO_REGEX = /^plugin\.magento\./;
 
 const ENVIRONMENT_PRODUCTION = "production";
 const ENVIRONMENT_STAGING = "staging";
@@ -244,55 +248,62 @@ type DeveloperConsoleOAuth = {
 
 /**
  * Resolves and validates the IMS credentials required for `developer_console_oauth`.
- * Throws a descriptive error listing every missing field if any credential is empty.
+ *
+ * Delegates parsing and validation to `resolveImsAuthParams` from `aio-commerce-lib-auth`,
+ * which correctly handles `AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS` whether it arrives as a
+ * real array or as a JSON-stringified array string.
  */
-export function resolveDeveloperConsoleOAuthCredentials(params: {
-  AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
-  AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: string | string[];
-  AIO_COMMERCE_AUTH_IMS_ORG_ID: string;
-  AIO_COMMERCE_AUTH_IMS_ENVIRONMENT?: string;
-}): DeveloperConsoleOAuth {
-  const credentials = {
-    client_id: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
-    client_secret: Array.isArray(params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS)
-      ? params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS[0]
-      : params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
-    org_id: params.AIO_COMMERCE_AUTH_IMS_ORG_ID,
+export function resolveDeveloperConsoleOAuthCredentials(
+  params: Record<string, unknown>,
+): DeveloperConsoleOAuth {
+  const { AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: imsEnvironment, ...imsParams } =
+    params;
+
+  const { clientId, clientSecrets, imsOrgId } = resolveImsAuthParams(imsParams);
+
+  return {
+    client_id: clientId,
+    client_secret: clientSecrets[0],
+    org_id: imsOrgId,
     environment:
-      !params.AIO_COMMERCE_AUTH_IMS_ENVIRONMENT ||
-      params.AIO_COMMERCE_AUTH_IMS_ENVIRONMENT.startsWith("prod")
+      !imsEnvironment || String(imsEnvironment).startsWith("prod")
         ? ENVIRONMENT_PRODUCTION
         : ENVIRONMENT_STAGING,
   };
-
-  const hasMissing = (
-    Object.keys(credentials) as (keyof DeveloperConsoleOAuth)[]
-  ).some((key) => !credentials[key]);
-
-  if (hasMissing) {
-    throw new Error(
-      "Failed to retrieve IMS credentials for webhook subscription",
-    );
-  }
-
-  return credentials;
 }
 
 /**
  * Returns true when the candidate webhook is already present in the existing subscription list,
  * matched by the four-part identity: webhook_method, webhook_type, batch_name, hook_name.
+ *
+ * `webhook_method` is normalised before comparison to handle the case where Commerce strips the
+ * `.magento` segment from plugin webhook methods on storage
+ * (e.g. `plugin.magento.foo` and `plugin.foo` are treated as the same method).
  */
 function isAlreadySubscribed(
   existing: CommerceWebhook[],
   candidate: WebhookSubscribeParams,
 ): boolean {
+  const normalizedCandidate = normalizeWebhookMethod(candidate.webhook_method);
   return existing.some(
     (w) =>
-      w.webhook_method === candidate.webhook_method &&
+      normalizeWebhookMethod(w.webhook_method) === normalizedCandidate &&
       w.webhook_type === candidate.webhook_type &&
       w.batch_name === candidate.batch_name &&
       w.hook_name === candidate.hook_name,
   );
+}
+
+/**
+ * Normalises a webhook method name by removing the `.magento` segment that Commerce
+ * may drop when persisting plugin webhook methods.
+ *
+ * @example
+ * normalizeWebhookMethod("plugin.magento.foo.bar") // → "plugin.foo.bar"
+ * normalizeWebhookMethod("plugin.foo.bar")         // → "plugin.foo.bar" (unchanged)
+ */
+function normalizeWebhookMethod(method: string): string {
+  return method.replace(PLUGIN_MAGENTO_REGEX, "plugin.");
 }
 
 /**
@@ -315,14 +326,20 @@ function generateUrlForRuntimeAction(runtimeAction: string): string {
 /**
  * Builds a prefix string from the app ID to namespace webhook batch/hook names.
  * Non-identifier characters are replaced with underscores; consecutive underscores
- * are collapsed to one; a trailing underscore is appended.
+ * are collapsed to one; a trailing underscore is appended. The result is lowercased
+ * to ensure consistent matching regardless of input casing.
  *
- * @example buildWebhookIdPrefix("my--app.v2") // => "my_app_v2_"
+ * @example
+ * ```typescript
+ * buildWebhookIdPrefix("my--app.v2") // => "my_app_v2_"
+ * buildWebhookIdPrefix("MyApp") // => "myapp_"
+ * ```
  * @param appId - The app ID to build the prefix from.
  * @return The built prefix string.
  */
-function buildWebhookIdPrefix(appId: string): string {
+export function buildWebhookIdPrefix(appId: string): string {
   const prefix = appId
+    .toLowerCase()
     .replace(NON_IDENTIFIER_CHAR_REGEX, "_")
     .replace(MULTIPLE_UNDERSCORES_REGEX, "_");
   return prefix.endsWith("_") ? prefix : `${prefix}_`;
