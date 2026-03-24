@@ -12,6 +12,6 @@ const DeleteRegistrationParamsSchema: ObjectSchema<
 >;
 ```
 
-Defined in: [io-events/api/event-registrations/schema.ts:181](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/schema.ts#L181)
+Defined in: [io-events/api/event-registrations/schema.ts:181](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/schema.ts#L181)
 
 Schema for deleting a registration.

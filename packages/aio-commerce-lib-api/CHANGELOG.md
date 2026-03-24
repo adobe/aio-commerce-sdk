@@ -1,5 +1,12 @@
 # @adobe/aio-commerce-lib-api
 
+## 1.0.1
+
+### Patch Changes
+
+- Updated dependencies [[`4883afa`](https://github.com/adobe/aio-commerce-sdk/commit/4883afaec90451cd7daf280f0def83ea45a3c87c)]:
+  - @adobe/aio-commerce-lib-auth@1.0.1
+
 ## 1.0.0
 
 ### Major Changes

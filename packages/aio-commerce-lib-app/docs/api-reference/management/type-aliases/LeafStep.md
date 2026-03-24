@@ -7,10 +7,14 @@ type LeafStep<TName, TConfig, TStepCtx, TOutput> = StepBase<TName, TConfig> & {
     context: ExecutionContext<TStepCtx>,
   ) => TOutput | Promise<TOutput>;
   type: "leaf";
+  validate?: (
+    config: TConfig,
+    context: ValidationExecutionContext<TStepCtx>,
+  ) => ValidationIssue[] | Promise<ValidationIssue[]>;
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:72](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L72)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L104)
 
 A leaf step that executes work (no children).
 
@@ -41,6 +45,30 @@ The execution handler for the step.
 ```ts
 type: "leaf";
 ```
+
+### validate()?
+
+```ts
+optional validate: (config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
+  | ValidationIssue[]
+| Promise<ValidationIssue[]>;
+```
+
+Optional pre-installation validation handler.
+Called before installation begins to surface issues (errors or warnings).
+Returning an empty array means the step has no issues.
+
+#### Parameters
+
+| Parameter | Type                                                                        |
+| --------- | --------------------------------------------------------------------------- |
+| `config`  | `TConfig`                                                                   |
+| `context` | [`ValidationExecutionContext`](ValidationExecutionContext.md)\<`TStepCtx`\> |
+
+#### Returns
+
+\| [`ValidationIssue`](ValidationIssue.md)[]
+\| `Promise`\<[`ValidationIssue`](ValidationIssue.md)[]\>
 
 ## Type Parameters
 

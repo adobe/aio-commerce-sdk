@@ -21,7 +21,7 @@ function createCommerceEventsApiClient(params: CommerceHttpClientParams): ApiCli
 }>;
 ```
 
-Defined in: [commerce/lib/api-client.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-events/source/commerce/lib/api-client.ts#L31)
+Defined in: [commerce/lib/api-client.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-events/source/commerce/lib/api-client.ts#L31)
 
 Creates a new API client for the Commerce Events API client.
 

@@ -12,7 +12,7 @@ type InferStepOutput<TStep> =
     : never;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:216](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L216)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:274](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L274)
 
 Infer the output type from a leaf step.
 

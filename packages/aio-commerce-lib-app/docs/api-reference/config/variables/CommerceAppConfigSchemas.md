@@ -35,35 +35,35 @@ const CommerceAppConfigSchemas: {
         type: "list";
       }
         | {
-        default?: ... | ...;
+        default: string;
         description?: ... | ...;
         label?: ... | ...;
         name: string;
         type: "text";
       }
         | {
-        default?: undefined;
+        default: "";
         description?: ... | ...;
         label?: ... | ...;
         name: string;
         type: "password";
       }
         | {
-        default?: ... | ...;
+        default: string;
         description?: ... | ...;
         label?: ... | ...;
         name: string;
         type: "email";
       }
         | {
-        default?: ... | ...;
+        default: string;
         description?: ... | ...;
         label?: ... | ...;
         name: string;
         type: "url";
       }
         | {
-        default?: ... | ...;
+        default: string;
         description?: ... | ...;
         label?: ... | ...;
         name: string;
@@ -87,13 +87,13 @@ const CommerceAppConfigSchemas: {
      selectionMode: LiteralSchema<..., ...>;
      type: LiteralSchema<..., ...>;
    }, undefined>], undefined>, ObjectSchema<{
-     default: OptionalSchema<StringSchema<"Expected a string for the default value">, undefined>;
+     default: OptionalSchema<StringSchema<"Expected a string for the default value">, "">;
      description: OptionalSchema<StringSchema<"Expected a string for the field description">, undefined>;
      label: OptionalSchema<StringSchema<"Expected a string for the field label">, undefined>;
      name: SchemaWithPipe<readonly [StringSchema<...>, NonEmptyAction<..., ...>]>;
      type: LiteralSchema<"text", "Expected the type to be 'text'">;
    }, undefined>, ObjectSchema<{
-     default: OptionalSchema<NeverSchema<"Password fields do not have a default value">, undefined>;
+     default: OptionalSchema<LiteralSchema<"", "Password fields do not have a default value">, "">;
      description: OptionalSchema<StringSchema<"Expected a string for the field description">, undefined>;
      label: OptionalSchema<StringSchema<"Expected a string for the field label">, undefined>;
      name: SchemaWithPipe<readonly [StringSchema<...>, NonEmptyAction<..., ...>]>;
@@ -124,35 +124,35 @@ const CommerceAppConfigSchemas: {
      type: "list";
    }
      | {
-     default?: string;
+     default: string;
      description?: string;
      label?: string;
      name: string;
      type: "text";
    }
      | {
-     default?: undefined;
+     default: "";
      description?: string;
      label?: string;
      name: string;
      type: "password";
    }
      | {
-     default?: string;
+     default: string;
      description?: string;
      label?: string;
      name: string;
      type: "email";
    }
      | {
-     default?: string;
+     default: string;
      description?: string;
      label?: string;
      name: string;
      type: "url";
    }
      | {
-     default?: string;
+     default: string;
      description?: string;
      label?: string;
      name: string;
@@ -203,7 +203,7 @@ const CommerceAppConfigSchemas: {
         force: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
         hipaa_audit_required: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
         label: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, MaxLengthAction<string, 100, "The event label must not be longer than 100 characters">]>;
-        name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, RegexAction<string, "Event name must start with \"plugin.\" or \"observer.\" followed by lowercase letters and underscores only (e.g., \"plugin.order_placed\")">, MaxLengthAction<string, 180, "The event name must not be longer than 180 characters">]>;
+        name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, RegexAction<string, "Event name must start with \"plugin.\" or \"observer.\" followed by one or more dot-separated lowercase segments containing letters and underscores only (e.g., \"observer.order_placed\", \"plugin.sales.api.order_management.place\")">, MaxLengthAction<string, 180, "The event name must not be longer than 180 characters">]>;
         priority: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
         rules: OptionalSchema<ArraySchema<ObjectSchema<{
            field: ...;
@@ -257,12 +257,105 @@ const CommerceAppConfigSchemas: {
      description: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, MaxLengthAction<string, 255, "The metadata description must not be longer than 255 characters">]>;
      displayName: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, MaxLengthAction<string, 50, "The application display name must not be longer than 50 characters">]>;
      id: SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, RegexAction<string, `Only alphanumeric characters and hyphens are allowed in string value of "${string}"${string}`>]>;
-     version: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, RegexAction<string, "The version must follow semantic versioning (semver) format">]>;
+     version: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, RegexAction<string, "The version must follow semantic versioning (semver) format: Major.Minor.Patch (e.g., '1.0.0', '2.3.1')">]>;
   }, undefined>;
+  webhooks: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionSchema<[ObjectSchema<{
+     category: OptionalSchema<PicklistSchema<..., ...>, undefined>;
+     description: SchemaWithPipe<readonly [..., ...]>;
+     label: SchemaWithPipe<readonly [..., ...]>;
+     requireAdobeAuth: OptionalSchema<BooleanSchema<...>, undefined>;
+     runtimeAction: SchemaWithPipe<readonly [..., ...]>;
+     webhook: ObjectSchema<{
+        batch_name: ...;
+        batch_order: ...;
+        fallback_error_message: ...;
+        fields: ...;
+        headers: ...;
+        hook_name: ...;
+        method: ...;
+        priority: ...;
+        required: ...;
+        rules: ...;
+        soft_timeout: ...;
+        timeout: ...;
+        ttl: ...;
+        webhook_method: ...;
+        webhook_type: ...;
+     }, undefined>;
+   }, undefined>, ObjectSchema<{
+     category: OptionalSchema<PicklistSchema<..., ...>, undefined>;
+     description: SchemaWithPipe<readonly [..., ...]>;
+     label: SchemaWithPipe<readonly [..., ...]>;
+     webhook: ObjectSchema<{
+        batch_name: ...;
+        batch_order: ...;
+        fallback_error_message: ...;
+        fields: ...;
+        headers: ...;
+        hook_name: ...;
+        method: ...;
+        priority: ...;
+        required: ...;
+        rules: ...;
+        soft_timeout: ...;
+        timeout: ...;
+        ttl: ...;
+        url: ...;
+        webhook_method: ...;
+        webhook_type: ...;
+     }, undefined>;
+   }, undefined>], "Each webhook entry must define either a 'runtimeAction' (to resolve the URL from a runtime action) or an explicit 'url' inside the 'webhook' object, but not both">, "Expected an array of webhook entries">, MinLengthAction<(
+     | {
+     category?: "validation" | "append" | "modification";
+     description: string;
+     label: string;
+     requireAdobeAuth?: boolean;
+     runtimeAction: string;
+     webhook: {
+        batch_name: string;
+        batch_order?: number;
+        fallback_error_message?: string;
+        fields?: ...[];
+        headers?: ...[];
+        hook_name: string;
+        method: string;
+        priority?: number;
+        required?: boolean;
+        rules?: ...[];
+        soft_timeout?: number;
+        timeout?: number;
+        ttl?: number;
+        webhook_method: string;
+        webhook_type: string;
+     };
+   }
+     | {
+     category?: "validation" | "append" | "modification";
+     description: string;
+     label: string;
+     webhook: {
+        batch_name: string;
+        batch_order?: number;
+        fallback_error_message?: string;
+        fields?: ...[];
+        headers?: ...[];
+        hook_name: string;
+        method: string;
+        priority?: number;
+        required?: boolean;
+        rules?: ...[];
+        soft_timeout?: number;
+        timeout?: number;
+        ttl?: number;
+        url: string;
+        webhook_method: string;
+        webhook_type: string;
+     };
+  })[], 1, "webhooks array must contain at least one webhook when present">]>, undefined>;
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/domains.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-app/source/config/schema/domains.ts#L35)
+Defined in: [aio-commerce-lib-app/source/config/schema/domains.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/config/schema/domains.ts#L36)
 
 The individual validatable domains of the app config.
 
@@ -304,35 +397,35 @@ readonly businessConfig: ObjectSchema<{
      type: "list";
    }
      | {
-     default?: ... | ...;
+     default: string;
      description?: ... | ...;
      label?: ... | ...;
      name: string;
      type: "text";
    }
      | {
-     default?: undefined;
+     default: "";
      description?: ... | ...;
      label?: ... | ...;
      name: string;
      type: "password";
    }
      | {
-     default?: ... | ...;
+     default: string;
      description?: ... | ...;
      label?: ... | ...;
      name: string;
      type: "email";
    }
      | {
-     default?: ... | ...;
+     default: string;
      description?: ... | ...;
      label?: ... | ...;
      name: string;
      type: "url";
    }
      | {
-     default?: ... | ...;
+     default: string;
      description?: ... | ...;
      label?: ... | ...;
      name: string;
@@ -361,13 +454,13 @@ readonly businessConfig.schema: SchemaWithPipe<readonly [ArraySchema<VariantSche
   selectionMode: LiteralSchema<..., ...>;
   type: LiteralSchema<..., ...>;
 }, undefined>], undefined>, ObjectSchema<{
-  default: OptionalSchema<StringSchema<"Expected a string for the default value">, undefined>;
+  default: OptionalSchema<StringSchema<"Expected a string for the default value">, "">;
   description: OptionalSchema<StringSchema<"Expected a string for the field description">, undefined>;
   label: OptionalSchema<StringSchema<"Expected a string for the field label">, undefined>;
   name: SchemaWithPipe<readonly [StringSchema<...>, NonEmptyAction<..., ...>]>;
   type: LiteralSchema<"text", "Expected the type to be 'text'">;
 }, undefined>, ObjectSchema<{
-  default: OptionalSchema<NeverSchema<"Password fields do not have a default value">, undefined>;
+  default: OptionalSchema<LiteralSchema<"", "Password fields do not have a default value">, "">;
   description: OptionalSchema<StringSchema<"Expected a string for the field description">, undefined>;
   label: OptionalSchema<StringSchema<"Expected a string for the field label">, undefined>;
   name: SchemaWithPipe<readonly [StringSchema<...>, NonEmptyAction<..., ...>]>;
@@ -398,35 +491,35 @@ readonly businessConfig.schema: SchemaWithPipe<readonly [ArraySchema<VariantSche
   type: "list";
 }
   | {
-  default?: string;
+  default: string;
   description?: string;
   label?: string;
   name: string;
   type: "text";
 }
   | {
-  default?: undefined;
+  default: "";
   description?: string;
   label?: string;
   name: string;
   type: "password";
 }
   | {
-  default?: string;
+  default: string;
   description?: string;
   label?: string;
   name: string;
   type: "email";
 }
   | {
-  default?: string;
+  default: string;
   description?: string;
   label?: string;
   name: string;
   type: "url";
 }
   | {
-  default?: string;
+  default: string;
   description?: string;
   label?: string;
   name: string;
@@ -487,7 +580,7 @@ readonly eventing.commerce: ArraySchema<ObjectSchema<{
      force: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
      hipaa_audit_required: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
      label: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, MaxLengthAction<string, 100, "The event label must not be longer than 100 characters">]>;
-     name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, RegexAction<string, "Event name must start with \"plugin.\" or \"observer.\" followed by lowercase letters and underscores only (e.g., \"plugin.order_placed\")">, MaxLengthAction<string, 180, "The event name must not be longer than 180 characters">]>;
+     name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, RegexAction<string, "Event name must start with \"plugin.\" or \"observer.\" followed by one or more dot-separated lowercase segments containing letters and underscores only (e.g., \"observer.order_placed\", \"plugin.sales.api.order_management.place\")">, MaxLengthAction<string, 180, "The event name must not be longer than 180 characters">]>;
      priority: OptionalSchema<BooleanSchema<`Expected a boolean value for '${string}'`>, undefined>;
      rules: OptionalSchema<ArraySchema<ObjectSchema<{
         field: ...;
@@ -561,6 +654,104 @@ readonly metadata: ObjectSchema<{
   description: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, MaxLengthAction<string, 255, "The metadata description must not be longer than 255 characters">]>;
   displayName: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, MaxLengthAction<string, 50, "The application display name must not be longer than 50 characters">]>;
   id: SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, RegexAction<string, `Only alphanumeric characters and hyphens are allowed in string value of "${string}"${string}`>]>;
-  version: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, RegexAction<string, "The version must follow semantic versioning (semver) format">]>;
+  version: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, RegexAction<string, "The version must follow semantic versioning (semver) format: Major.Minor.Patch (e.g., '1.0.0', '2.3.1')">]>;
 }, undefined> = MetadataSchema;
+```
+
+### webhooks
+
+```ts
+readonly webhooks: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionSchema<[ObjectSchema<{
+  category: OptionalSchema<PicklistSchema<..., ...>, undefined>;
+  description: SchemaWithPipe<readonly [..., ...]>;
+  label: SchemaWithPipe<readonly [..., ...]>;
+  requireAdobeAuth: OptionalSchema<BooleanSchema<...>, undefined>;
+  runtimeAction: SchemaWithPipe<readonly [..., ...]>;
+  webhook: ObjectSchema<{
+     batch_name: ...;
+     batch_order: ...;
+     fallback_error_message: ...;
+     fields: ...;
+     headers: ...;
+     hook_name: ...;
+     method: ...;
+     priority: ...;
+     required: ...;
+     rules: ...;
+     soft_timeout: ...;
+     timeout: ...;
+     ttl: ...;
+     webhook_method: ...;
+     webhook_type: ...;
+  }, undefined>;
+}, undefined>, ObjectSchema<{
+  category: OptionalSchema<PicklistSchema<..., ...>, undefined>;
+  description: SchemaWithPipe<readonly [..., ...]>;
+  label: SchemaWithPipe<readonly [..., ...]>;
+  webhook: ObjectSchema<{
+     batch_name: ...;
+     batch_order: ...;
+     fallback_error_message: ...;
+     fields: ...;
+     headers: ...;
+     hook_name: ...;
+     method: ...;
+     priority: ...;
+     required: ...;
+     rules: ...;
+     soft_timeout: ...;
+     timeout: ...;
+     ttl: ...;
+     url: ...;
+     webhook_method: ...;
+     webhook_type: ...;
+  }, undefined>;
+}, undefined>], "Each webhook entry must define either a 'runtimeAction' (to resolve the URL from a runtime action) or an explicit 'url' inside the 'webhook' object, but not both">, "Expected an array of webhook entries">, MinLengthAction<(
+  | {
+  category?: "validation" | "append" | "modification";
+  description: string;
+  label: string;
+  requireAdobeAuth?: boolean;
+  runtimeAction: string;
+  webhook: {
+     batch_name: string;
+     batch_order?: number;
+     fallback_error_message?: string;
+     fields?: ...[];
+     headers?: ...[];
+     hook_name: string;
+     method: string;
+     priority?: number;
+     required?: boolean;
+     rules?: ...[];
+     soft_timeout?: number;
+     timeout?: number;
+     ttl?: number;
+     webhook_method: string;
+     webhook_type: string;
+  };
+}
+  | {
+  category?: "validation" | "append" | "modification";
+  description: string;
+  label: string;
+  webhook: {
+     batch_name: string;
+     batch_order?: number;
+     fallback_error_message?: string;
+     fields?: ...[];
+     headers?: ...[];
+     hook_name: string;
+     method: string;
+     priority?: number;
+     required?: boolean;
+     rules?: ...[];
+     soft_timeout?: number;
+     timeout?: number;
+     ttl?: number;
+     url: string;
+     webhook_method: string;
+     webhook_type: string;
+  };
+})[], 1, "webhooks array must contain at least one webhook when present">]>, undefined> = WebhooksSchema;
 ```

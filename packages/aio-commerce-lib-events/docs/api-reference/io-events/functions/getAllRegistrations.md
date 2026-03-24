@@ -12,7 +12,7 @@ function getAllRegistrations(
 ): Promise<IoEventRegistrationManyResponse>;
 ```
 
-Defined in: [io-events/api/event-registrations/endpoints.ts:78](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/endpoints.ts#L78)
+Defined in: [io-events/api/event-registrations/endpoints.ts:78](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/endpoints.ts#L78)
 
 Gets all event registrations for a workspace.
 
