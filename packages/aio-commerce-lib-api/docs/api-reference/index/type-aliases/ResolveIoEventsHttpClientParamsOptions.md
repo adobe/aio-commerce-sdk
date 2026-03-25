@@ -6,7 +6,7 @@ type ResolveIoEventsHttpClientParamsOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/io-events/types.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-api/source/lib/io-events/types.ts#L41)
+Defined in: [aio-commerce-lib-api/source/lib/io-events/types.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-api/source/lib/io-events/types.ts#L41)
 
 Custom options to be taken into account when resolving I/O Events HTTP client parameters.
 
@@ -18,7 +18,7 @@ Custom options to be taken into account when resolving I/O Events HTTP client pa
 optional tryForwardAuthProvider: boolean;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/io-events/types.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-api/source/lib/io-events/types.ts#L46)
+Defined in: [aio-commerce-lib-api/source/lib/io-events/types.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-api/source/lib/io-events/types.ts#L46)
 
 Whether to attempt to forward the IMS auth provider from a pre-existing token or an auth header.
 

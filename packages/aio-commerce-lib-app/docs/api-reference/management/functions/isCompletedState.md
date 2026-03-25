@@ -6,7 +6,7 @@ function isCompletedState(
 ): state is SucceededInstallationState | FailedInstallationState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:147](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L147)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:147](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L147)
 
 Type guard for completed installation state (succeeded or failed).
 

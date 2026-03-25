@@ -1,5 +1,11 @@
 # @aio-commerce-sdk/common-utils
 
+## 0.2.3
+
+### Patch Changes
+
+- [#273](https://github.com/adobe/aio-commerce-sdk/pull/273) [`660cf05`](https://github.com/adobe/aio-commerce-sdk/commit/660cf058d2439de82b3e22376c3d494b2a83045f) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Added new validators for fields with number types
+
 ## 0.2.2
 
 ### Patch Changes

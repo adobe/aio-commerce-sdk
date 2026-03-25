@@ -4,7 +4,7 @@
 function readCommerceAppConfig(cwd?: string): Promise<unknown>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L85)
+Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L85)
 
 Read the commerce app config file as-is, without validating it.
 

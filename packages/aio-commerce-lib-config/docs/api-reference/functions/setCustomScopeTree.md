@@ -7,7 +7,7 @@ function setCustomScopeTree(
 ): Promise<SetCustomScopeTreeResponse>;
 ```
 
-Defined in: [config-manager.ts:515](https://github.com/adobe/aio-commerce-sdk/blob/82d6951bafaec21f350f6bee78a78511d9934072/packages/aio-commerce-lib-config/source/config-manager.ts#L515)
+Defined in: [config-manager.ts:515](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/config-manager.ts#L515)
 
 Sets the custom scope tree, replacing all existing custom scopes with the provided ones.
 
