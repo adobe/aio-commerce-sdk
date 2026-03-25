@@ -12,7 +12,7 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the events module */
 
-export { eventingStep } from "./branch";
+export { eventingStep, offboardEventingStep } from "./branch";
 export { commerceEventsStep } from "./commerce";
 export { externalEventsStep } from "./external";
 

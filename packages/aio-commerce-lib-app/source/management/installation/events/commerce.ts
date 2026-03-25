@@ -24,6 +24,22 @@ import {
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { EventsExecutionContext } from "./context";
 
+export const offboardCommerceEventsStep = defineLeafStep({
+  name: "commerce",
+  meta: {
+    label: "Configure Commerce Events",
+    description: "Sets up I/O Events for Adobe Commerce event sources",
+  },
+
+  when: hasCommerceEvents,
+  run: async (_config, context: EventsExecutionContext) => {
+    const { logger } = context;
+    logger.debug("Offboard commerce events step - implementation in CEXT-5934");
+    // Implementation will be added when CEXT-5934 is merged
+    return [];
+  },
+});
+
 /** Leaf step for installing commerce event sources. */
 export const commerceEventsStep = defineLeafStep({
   name: "commerce",
@@ -98,6 +114,10 @@ export const commerceEventsStep = defineLeafStep({
     return stepData;
   },
 });
+
+export type OffboardCommerceEventsStepData = InferStepOutput<
+  typeof offboardCommerceEventsStep
+>;
 
 /** The output data of the Commerce Eventing step (auto-inferred). */
 export type CommerceEventsStepData = InferStepOutput<typeof commerceEventsStep>;

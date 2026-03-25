@@ -11,7 +11,7 @@
  */
 
 import { createCustomInstallationStep } from "./custom-installation";
-import { eventingStep } from "./events";
+import { eventingStep, offboardEventingStep } from "./events";
 import { webhooksStep } from "./webhooks";
 import { defineBranchStep } from "./workflow";
 
@@ -40,5 +40,21 @@ export function createRootInstallationStep(
       description: "App installation workflow",
     },
     children: createDefaultChildSteps(config),
+  });
+}
+
+/**
+ * Creates a root uninstallation step with dynamic children based on the config.
+ */
+export function createOffboardRootInstallationStep(
+  _config: CommerceAppConfigOutputModel,
+): BranchStep {
+  return defineBranchStep({
+    name: "uninstallation",
+    meta: {
+      label: "Uninstallation",
+      description: "App uninstallation workflow",
+    },
+    children: [offboardEventingStep],
   });
 }

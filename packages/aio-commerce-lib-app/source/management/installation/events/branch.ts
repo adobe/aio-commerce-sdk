@@ -13,7 +13,7 @@
 import { hasEventing } from "#config/schema/eventing";
 import { defineBranchStep } from "#management/installation/workflow/index";
 
-import { commerceEventsStep } from "./commerce";
+import { commerceEventsStep, offboardCommerceEventsStep } from "./commerce";
 import { createEventsStepContext } from "./context";
 import { externalEventsStep } from "./external";
 
@@ -29,4 +29,17 @@ export const eventingStep = defineBranchStep({
   when: hasEventing,
   context: createEventsStepContext,
   children: [commerceEventsStep, externalEventsStep],
+});
+
+export const offboardEventingStep = defineBranchStep({
+  name: "eventing",
+  meta: {
+    label: "Offboard Eventing",
+    description:
+      "Offboarding of the I/O Events and the Commerce events required by the application",
+  },
+
+  when: hasEventing,
+  context: createEventsStepContext,
+  children: [offboardCommerceEventsStep],
 });

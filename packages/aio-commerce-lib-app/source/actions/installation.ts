@@ -28,6 +28,7 @@ import { object, string } from "valibot";
 
 import {
   createInitialInstallationState,
+  executeOffboardingWorkflow,
   isCompletedState,
   isFailedState,
   isInProgressState,
@@ -361,15 +362,131 @@ router.post("/validation", {
 });
 
 /**
+ * POST /uninstall - Run offboarding workflow to clean up resources
+ *
+ * This endpoint runs the offboarding workflow to delete all resources
+ * that were created during installation.
+ *
+ * Flow:
+ * 1. Get current installation state
+ * 2. If succeeded: run offboarding workflow to delete resources
+ * 3. Clear installation state from storage
+ * 4. Return result
+ */
+router.post("/uninstall", {
+  body: InstallationRequestBodySchema,
+
+  handler: async (req, { logger, rawParams }) => {
+    logger.debug("Starting uninstallation workflow...");
+
+    const store = await createInstallationStore();
+    const existingState = await store.get(getStorageKey());
+
+    if (!existingState) {
+      logger.debug("No installation state found");
+      return badRequest("No installation found to uninstall");
+    }
+
+    if (isInProgressState(existingState)) {
+      logger.debug("Installation is in progress, cannot uninstall");
+      return conflict(
+        "Installation is currently in progress. Wait for it to complete before uninstalling.",
+      );
+    }
+
+    if (!isSucceededState(existingState)) {
+      logger.debug("Installation did not succeed, nothing to uninstall");
+      return badRequest(
+        "Installation did not complete successfully. Use DELETE / to clear the state.",
+      );
+    }
+
+    const appConfig = rawParams.appConfig;
+    if (!appConfig) {
+      return internalServerError(
+        "Could not find or parse the app.commerce.manifest.json file",
+      );
+    }
+
+    logger.debug("Running offboarding workflow...");
+
+    const { appData, ...params } = {
+      ...(rawParams as RuntimeActionArgs),
+      appData: req.body.appData,
+      AIO_EVENTS_API_BASE_URL: req.body.ioEventsUrl,
+      AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: req.body.ioEventsEnv,
+      AIO_COMMERCE_API_BASE_URL: req.body.commerceBaseUrl,
+      AIO_COMMERCE_API_FLAVOR: req.body.commerceEnv,
+    };
+
+    const installationContext: InstallationContext = {
+      appData,
+      params,
+      logger,
+      customScripts: params.customScriptsLoader?.(appConfig, logger) || {},
+    };
+
+    const result = await executeOffboardingWorkflow({
+      installationContext,
+      config: appConfig,
+    });
+
+    logger.debug(`Offboarding completed: ${result.status}`);
+
+    // Clear installation state after offboarding
+    await store.delete(getStorageKey());
+    logger.debug("Installation state cleared after offboarding");
+
+    if (isFailedState(result)) {
+      return internalServerError({
+        body: {
+          message: "Offboarding failed",
+          error: result.error,
+          state: result,
+        },
+      });
+    }
+
+    return ok({
+      body: {
+        message: "Uninstallation completed successfully",
+        state: result,
+      },
+    });
+  },
+});
+
+/**
  * DELETE / - Clear installation state
  *
- * This endpoint allows clearing the installation state.
+ * This endpoint clears the installation state from storage without running
+ * the offboarding workflow. Use POST /uninstall to properly clean up resources.
+ *
+ * Flow:
+ * 1. Check if installation is in progress
+ * 2. Clear installation state from storage
+ * 3. Return 204 No Content
  */
 router.delete("/", {
   handler: async (_req, { logger }) => {
     logger.debug("Clearing installation state...");
 
     const store = await createInstallationStore();
+    const existingState = await store.get(getStorageKey());
+
+    if (!existingState) {
+      logger.debug("No installation state found");
+      return noContent();
+    }
+
+    if (isInProgressState(existingState)) {
+      logger.debug("Installation is in progress, cannot clear");
+      return conflict(
+        "Installation is currently in progress. Wait for it to complete before clearing state.",
+      );
+    }
+
+    // Clear installation state
     await store.delete(getStorageKey());
     logger.debug("Installation state cleared");
 

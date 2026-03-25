@@ -21,6 +21,7 @@ export { defineCustomInstallationStep } from "./installation/custom-installation
 // Export installation-specific functions
 export {
   createInitialInstallationState,
+  executeOffboardingWorkflow,
   runInstallation,
   runValidation,
 } from "./installation/runner";
@@ -34,6 +35,7 @@ export {
 export type { CustomInstallationStepHandler } from "./installation/custom-installation";
 export type {
   CreateInitialInstallationStateOptions,
+  ExecuteOffboardingWorkflowOptions,
   RunInstallationOptions,
   RunValidationOptions,
 } from "./installation/runner";
