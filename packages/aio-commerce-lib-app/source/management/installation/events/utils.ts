@@ -381,7 +381,6 @@ export type ExistingCommerceEventingData = Awaited<
  * @param events - The app events to transform
  * @param provider - The I/O Events provider containing the provider ID and metadata type
  * @param metadata - The application metadata used to namespace event names (e.g., `com.adobe.commerce.{metadata.id}.{event.name}`)
- * @returns Array of objects with `providerId` and `eventCode` properties for I/O Events registration
  */
 export function intoEventsOfInterest(
   events: AppEventWithoutRuntimeActions[],
