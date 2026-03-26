@@ -70,12 +70,6 @@ export async function getPersistedConfig(scopeCode: string) {
   try {
     const files = await getSharedFiles();
     const filePath = getConfigFilePath(scopeCode);
-    const filesList = await files.list("scope/");
-    const fileObject = filesList.find((file) => file.name === filePath);
-
-    if (!fileObject) {
-      return null;
-    }
 
     const content = await files.read(filePath);
     return content ? content.toString("utf8") : null;

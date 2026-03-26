@@ -32,9 +32,19 @@ export function createMockLibFiles() {
         return matchingFiles;
       });
 
-      public read = vi.fn(async (path: string) =>
-        Buffer.from(this.files.get(path) || "{}"),
-      );
+      public read = vi.fn(async (path: string) => {
+        const content = this.files.get(path);
+        if (!content) {
+          const error = new Error(`File not found: ${path}`) as Error & {
+            code: string;
+            statusCode: number;
+          };
+          error.code = "ENOENT";
+          error.statusCode = 404;
+          throw error;
+        }
+        return Buffer.from(content);
+      });
 
       public write = vi.fn(
         async (
