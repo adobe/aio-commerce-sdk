@@ -15,6 +15,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getConfigurationByKey } from "#config-manager";
 import { byCode, byCodeAndLevel, byScopeId } from "#config-utils";
 import * as configRepository from "#modules/configuration/configuration-repository";
+import { setGlobalSchema } from "#modules/schema/config-schema-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
 import { createMockLibFiles } from "#test/mocks/lib-files";
 import { createMockLibState } from "#test/mocks/lib-state";
@@ -32,6 +33,13 @@ let mockFilesInstance = new MockFiles();
 vi.mock("#utils/repository", () => ({
   getSharedState: vi.fn(async () => mockStateInstance),
   getSharedFiles: vi.fn(async () => mockFilesInstance),
+}));
+
+vi.mock("#modules/scope-tree/scope-tree-repository", () => ({
+  getCachedScopeTree: vi.fn(() => Promise.resolve(null)),
+  getPersistedScopeTree: vi.fn(() => Promise.resolve(mockScopeTree)),
+  setCachedScopeTree: vi.fn(() => Promise.resolve()),
+  saveScopeTree: vi.fn(() => Promise.resolve()),
 }));
 
 const integrationSchema = [
@@ -87,6 +95,35 @@ describe("getConfigurationByKey", () => {
 
     // Clear spy call history after seeding so tests start with a clean slate
     vi.clearAllMocks();
+
+    // Set up schema with both a plain text field and a password field
+    const schema = [
+      {
+        name: "currency",
+        type: "text",
+        label: "Currency",
+        default: "",
+      },
+      {
+        name: "apiPassword",
+        type: "password",
+        label: "API Password",
+        default: "",
+      },
+    ] satisfies BusinessConfigSchema;
+
+    setGlobalSchema(schema);
+  });
+
+  test("throws error when schema not initialized", async () => {
+    // Clear the schema to simulate not calling initialize
+    setGlobalSchema(null as unknown as BusinessConfigSchema);
+
+    await expect(
+      getConfigurationByKey("currency", byCodeAndLevel("global", "global")),
+    ).rejects.toThrow(
+      "Schema not initialized. Call `initialize({ schema })` before using configuration functions.",
+    );
   });
 
   test("returns the correct value for a non-password key", async () => {
