@@ -1,272 +1,71 @@
-import stringify from "safe-stable-stringify";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 
 import {
-  deleteCachedSchema,
-  getCachedSchema,
-  getPersistedSchema,
-  getSchemaVersion,
-  savePersistedSchema,
-  setCachedSchema,
-  setSchemaVersion,
+  getGlobalSchema,
+  setGlobalSchema,
 } from "#modules/schema/config-schema-repository";
-import {
-  VALID_CONFIGURATION,
-  VALID_CONFIGURATION_WITHOUT_DEFAULTS,
-} from "#test/fixtures/configuration-schema";
-import { createMockLibFiles } from "#test/mocks/lib-files";
-import { createMockLibState } from "#test/mocks/lib-state";
+import { VALID_CONFIGURATION } from "#test/fixtures/configuration-schema";
 
-const MockState = createMockLibState();
-const MockFiles = createMockLibFiles();
-
-let mockStateInstance = new MockState();
-let mockFilesInstance = new MockFiles();
-
-vi.mock("#utils/repository", () => ({
-  getSharedState: vi.fn(async () => mockStateInstance),
-  getSharedFiles: vi.fn(async () => mockFilesInstance),
-}));
+import type { BusinessConfigSchema } from "#modules/schema/types";
 
 describe("schema/config-schema-repository", () => {
   beforeEach(() => {
-    mockStateInstance = new MockState();
-    mockFilesInstance = new MockFiles();
-    vi.clearAllMocks();
+    // Reset global schema before each test
+    setGlobalSchema(null as unknown as BusinessConfigSchema);
   });
 
-  describe("getCachedSchema", () => {
-    test("should return cached schema when present", async () => {
+  describe("setGlobalSchema", () => {
+    test("should set global schema", () => {
       const schema = VALID_CONFIGURATION;
 
-      await mockStateInstance.put(
-        "test-namespace:config-schema",
-        JSON.stringify({ data: schema }),
-      );
+      setGlobalSchema(schema);
 
-      const result = await getCachedSchema("test-namespace");
+      const result = getGlobalSchema();
       expect(result).toEqual(schema);
     });
 
-    test("should return null when cache is empty", async () => {
-      const result = await getCachedSchema("test-namespace");
-      expect(result).toBeNull();
-    });
+    test("should overwrite existing schema", () => {
+      const schema1 = VALID_CONFIGURATION;
+      const schema2 = [
+        {
+          name: "newField",
+          type: "text",
+          label: "New Field",
+          default: "new",
+        },
+      ] satisfies BusinessConfigSchema;
 
-    test("should return null when cache value is invalid", async () => {
-      await mockStateInstance.put(
-        "test-namespace:config-schema",
-        "invalid-json",
-      );
+      setGlobalSchema(schema1);
+      setGlobalSchema(schema2);
 
-      const result = await getCachedSchema("test-namespace");
-      expect(result).toBeNull();
-    });
-
-    test("should return null when data property is missing", async () => {
-      await mockStateInstance.put(
-        "test-namespace:config-schema",
-        JSON.stringify({ other: "value" }),
-      );
-
-      const result = await getCachedSchema("test-namespace");
-      expect(result).toBeNull();
+      const result = getGlobalSchema();
+      expect(result).toEqual(schema2);
+      expect(result).not.toEqual(schema1);
     });
   });
 
-  describe("setCachedSchema", () => {
-    test("should cache schema with TTL", async () => {
+  describe("getGlobalSchema", () => {
+    test("should return null when no schema is set", () => {
+      const result = getGlobalSchema();
+      expect(result).toBeNull();
+    });
+
+    test("should return the schema that was set", () => {
       const schema = VALID_CONFIGURATION;
-      const ttl = 300_000;
 
-      await setCachedSchema("test-namespace", schema, ttl);
+      setGlobalSchema(schema);
 
-      // Verify the schema was cached with the correct TTL
-      expect(mockStateInstance.put).toHaveBeenCalledWith(
-        "test-namespace:config-schema",
-        stringify({ data: schema }),
-        { ttl },
-      );
-
-      // Verify the cached data is correct
-      const cached = await mockStateInstance.get(
-        "test-namespace:config-schema",
-      );
-
-      expect.assert.isNotNull(cached.value);
-
-      const parsed = JSON.parse(cached.value);
-      expect(parsed.data).toEqual(schema);
+      const result = getGlobalSchema();
+      expect(result).toEqual(schema);
     });
 
-    test("should not throw when caching fails", async () => {
-      const schema = VALID_CONFIGURATION_WITHOUT_DEFAULTS;
-
-      vi.spyOn(mockStateInstance, "put").mockRejectedValue(
-        new Error("State error"),
-      );
-
-      await expect(
-        setCachedSchema("test-namespace", schema, 300_000),
-      ).resolves.not.toThrow();
-    });
-  });
-
-  describe("deleteCachedSchema", () => {
-    test("should delete cached schema", async () => {
-      await mockStateInstance.put(
-        "test-namespace:config-schema",
-        JSON.stringify({ data: [] }),
-      );
-
-      await deleteCachedSchema("test-namespace");
-
-      const cached = await mockStateInstance.get(
-        "test-namespace:config-schema",
-      );
-      expect(cached?.value).toBeNull();
-    });
-
-    test("should not throw when deletion fails", async () => {
-      vi.spyOn(mockStateInstance, "delete").mockRejectedValue(
-        new Error("Delete error"),
-      );
-
-      await expect(deleteCachedSchema("test-namespace")).resolves.not.toThrow();
-    });
-  });
-
-  describe("getSchemaVersion", () => {
-    test("should return schema version when present", async () => {
-      const version = "abc123def456";
-
-      await mockStateInstance.put(
-        "test-namespace:schema-version",
-        JSON.stringify({ version }),
-      );
-
-      const result = await getSchemaVersion("test-namespace");
-
-      expect(result).toBe(version);
-    });
-
-    test("should return null when version is not set", async () => {
-      const result = await getSchemaVersion("test-namespace");
-
-      expect(result).toBeNull();
-    });
-
-    test("should return null when version data is invalid", async () => {
-      await mockStateInstance.put(
-        "test-namespace:schema-version",
-        "invalid-json",
-      );
-
-      const result = await getSchemaVersion("test-namespace");
-
-      expect(result).toBeNull();
-    });
-
-    test("should return null when version property is missing", async () => {
-      await mockStateInstance.put(
-        "test-namespace:schema-version",
-        JSON.stringify({ other: "value" }),
-      );
-
-      const result = await getSchemaVersion("test-namespace");
-
-      expect(result).toBeNull();
-    });
-  });
-
-  describe("setSchemaVersion", () => {
-    test("should set schema version", async () => {
-      const version = "xyz789abc123";
-      await setSchemaVersion("test-namespace", version);
-
-      const stored = await mockStateInstance.get(
-        "test-namespace:schema-version",
-      );
-
-      expect.assert(stored.value);
-
-      const parsed = JSON.parse(stored.value);
-      expect(parsed.version).toBe(version);
-    });
-
-    test("should not throw when setting version fails", async () => {
-      vi.spyOn(mockStateInstance, "put").mockRejectedValue(
-        new Error("State error"),
-      );
-
-      await expect(
-        setSchemaVersion("test-namespace", "version123"),
-      ).resolves.not.toThrow();
-    });
-  });
-
-  describe("savePersistedSchema", () => {
-    test("should save schema to files", async () => {
+    test("should return the same reference that was set", () => {
       const schema = VALID_CONFIGURATION;
-      await savePersistedSchema("test-namespace", schema);
 
-      const saved = await mockFilesInstance.read("config-schema.json");
-      const parsed = JSON.parse(saved.toString());
+      setGlobalSchema(schema);
 
-      expect(parsed).toEqual(schema);
-    });
-
-    test("should delete cached schema after saving", async () => {
-      const schema = VALID_CONFIGURATION_WITHOUT_DEFAULTS;
-      await mockStateInstance.put(
-        "test-namespace:config-schema",
-        JSON.stringify({ data: schema }),
-      );
-
-      await savePersistedSchema("test-namespace", schema);
-      const cached = await mockStateInstance.get(
-        "test-namespace:config-schema",
-      );
-
-      expect(cached?.value).toBeNull();
-    });
-
-    test("should set schema version when provided", async () => {
-      const schema = VALID_CONFIGURATION;
-      const version = "version-hash-123";
-      await savePersistedSchema("test-namespace", schema, version);
-
-      const storedVersion = await getSchemaVersion("test-namespace");
-      expect(storedVersion).toBe(version);
-    });
-
-    test("should not set version when not provided", async () => {
-      const schema = VALID_CONFIGURATION_WITHOUT_DEFAULTS;
-      await savePersistedSchema("test-namespace", schema);
-
-      const storedVersion = await getSchemaVersion("test-namespace");
-      expect(storedVersion).toBeNull();
-    });
-  });
-
-  describe("getPersistedSchema", () => {
-    test("should read persisted schema from files", async () => {
-      const schema = VALID_CONFIGURATION;
-      await mockFilesInstance.write(
-        "config-schema.json",
-        JSON.stringify(schema, null, 2),
-      );
-
-      const result = await getPersistedSchema();
-      expect(result).toBe(JSON.stringify(schema, null, 2));
-    });
-
-    test("should throw when file does not exist", async () => {
-      vi.spyOn(mockFilesInstance, "read").mockRejectedValue(
-        new Error("File not found"),
-      );
-
-      await expect(getPersistedSchema()).rejects.toThrow();
+      const result = getGlobalSchema();
+      expect(result).toBe(schema); // Same reference
     });
   });
 });

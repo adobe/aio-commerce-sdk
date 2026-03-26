@@ -10,8 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { getPersistedSchema } from "#modules/schema/config-schema-repository";
-import { initializeSchema } from "#modules/schema/initialize";
+import {
+  getGlobalSchema,
+  setGlobalSchema,
+} from "#modules/schema/config-schema-repository";
 import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "#utils/constants";
 
 import {
@@ -45,25 +47,18 @@ export type InitializeOptions = {
 
 /**
  * Initializes the configuration library so that it works as expected.
+ * The schema is stored in global memory. If a schema is provided, it will be set.
+ * If no schema is provided, initialization will succeed only if a schema was previously set globally.
  * @param options - Options for initializing the configuration library.
  */
 export async function initialize(options: InitializeOptions) {
   if (options.schema) {
-    await initializeSchema(
-      {
-        namespace: DEFAULT_NAMESPACE,
-        cacheTimeout: DEFAULT_CACHE_TIMEOUT,
-      },
-      options.schema,
-    );
-
+    setGlobalSchema(options.schema);
     return;
   }
 
-  const storedSchema = await getPersistedSchema();
-
-  if (!storedSchema) {
-    throw new Error("Schema has never been set before");
+  if (!getGlobalSchema()) {
+    throw new Error("Schema must be provided during initialization");
   }
 }
 
