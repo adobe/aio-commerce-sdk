@@ -13,7 +13,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { getConfigurationByKey } from "#config-manager";
-import { byCodeAndLevel } from "#config-utils";
+import { byCode, byCodeAndLevel, byScopeId } from "#config-utils";
 import * as configRepository from "#modules/configuration/configuration-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
 import { createMockLibFiles } from "#test/mocks/lib-files";
@@ -209,6 +209,48 @@ describe("getConfigurationByKey", () => {
     );
 
     expect(result.config?.value).toBe("");
+  });
+
+  test("resolves scope using byCode selector", async () => {
+    await configRepository.saveConfig(
+      "base_region",
+      buildPayload("id-base-region", "base_region", "base", [
+        {
+          name: "currency",
+          value: "CHF",
+          origin: { code: "base_region", level: "base" },
+        },
+      ]),
+    );
+
+    const result = await getConfigurationByKey(
+      "currency",
+      byCode("base_region"),
+    );
+
+    expect(result.scope.code).toBe("base_region");
+    expect(result.config?.value).toBe("CHF");
+  });
+
+  test("resolves scope using byScopeId selector", async () => {
+    await configRepository.saveConfig(
+      "global",
+      buildPayload("id-global", "global", "global", [
+        {
+          name: "currency",
+          value: "SGD",
+          origin: { code: "global", level: "global" },
+        },
+      ]),
+    );
+
+    const result = await getConfigurationByKey(
+      "currency",
+      byScopeId("id-global"),
+    );
+
+    expect(result.scope.id).toBe("id-global");
+    expect(result.config?.value).toBe("SGD");
   });
 
   test("returns scope information alongside the config value", async () => {

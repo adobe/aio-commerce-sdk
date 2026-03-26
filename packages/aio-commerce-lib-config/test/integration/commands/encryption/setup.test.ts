@@ -22,8 +22,6 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { exec, run } from "#commands/encryption/setup/main";
 import { KEY_LENGTH_HEX, validateEncryptionKey } from "#utils/encryption";
 
-vi.mock("consola");
-
 const ENCRYPTION_KEY_ENV_VAR = "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY";
 
 describe("commands/encryption/setup", () => {

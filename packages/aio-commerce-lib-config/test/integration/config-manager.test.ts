@@ -12,8 +12,13 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { getConfiguration, setConfiguration } from "#config-manager";
-import { byCodeAndLevel, byScopeId } from "#config-utils";
+import {
+  getConfiguration,
+  getScopeTree,
+  setConfiguration,
+  setCustomScopeTree,
+} from "#config-manager";
+import { byCode, byCodeAndLevel, byScopeId } from "#config-utils";
 import * as configRepository from "#modules/configuration/configuration-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
 import { createMockLibFiles } from "#test/mocks/lib-files";
@@ -52,6 +57,12 @@ const integrationSchema = [
     name: "currency",
     type: "text",
     label: "Currency",
+    default: "",
+  },
+  {
+    name: "apiPassword",
+    type: "password",
+    label: "API Password",
     default: "",
   },
 ] satisfies BusinessConfigSchema;
@@ -287,7 +298,7 @@ describe("config-manager", () => {
   });
 
   test("ignores extra properties in setConfiguration request entries", async () => {
-    const response = await setConfiguration(
+    await setConfiguration(
       {
         config: [
           {
@@ -301,23 +312,103 @@ describe("config-manager", () => {
       byCodeAndLevel("global", "global"),
     );
 
-    expect(response.config).toEqual([{ name: "currency", value: "GBP" }]);
+    const result = await getConfiguration(byCodeAndLevel("global", "global"));
+    const saved = result.config.find((e) => e.name === "currency");
+
+    expect(saved?.value).toBe("GBP");
+    expect(saved).not.toHaveProperty("extraProp");
+  });
+
+  test("resolves scope by code only using byCode selector", async () => {
+    await configRepository.saveConfig(
+      "base_region",
+      buildPayload("id-base-region", "base_region", "base", [
+        {
+          name: "currency",
+          value: "AUD",
+          origin: { code: "base_region", level: "base" },
+        },
+      ]),
+    );
+
+    const result = await getConfiguration(byCode("base_region"));
+    expect(result.scope.code).toBe("base_region");
+    expect(result.config.find((e) => e.name === "currency")?.value).toBe("AUD");
+  });
+
+  test("sets configuration using byCode selector", async () => {
+    await setConfiguration(
+      { config: [{ name: "currency", value: "NZD" }] },
+      byCode("base_region"),
+    );
+
+    const result = await getConfiguration(byCode("base_region"));
+    expect(result.scope.code).toBe("base_region");
+    expect(result.config.find((e) => e.name === "currency")?.value).toBe("NZD");
+  });
+
+  test("sets configuration using byScopeId selector", async () => {
+    await setConfiguration(
+      { config: [{ name: "currency", value: "SEK" }] },
+      byScopeId("id-global"),
+    );
+
+    const result = await getConfiguration(byScopeId("id-global"));
+    expect(result.scope.id).toBe("id-global");
+    expect(result.config.find((e) => e.name === "currency")?.value).toBe("SEK");
+  });
+
+  test("throws when setting a password field without an encryption key", async () => {
+    await expect(
+      setConfiguration(
+        { config: [{ name: "apiPassword", value: "secret" }] },
+        byCodeAndLevel("global", "global"),
+      ),
+    ).rejects.toThrow("Encryption key has not been given");
   });
 
   test("skips entries missing value and strips unknown props as per request contract", async () => {
-    const response = await setConfiguration(
+    await setConfiguration(
       {
         config: [
-          { name: "currency" } as any,
           { name: "exampleList", value: "option1" },
-          { value: "orphaned" } as any,
+
+          // @ts-expect-error testing resilience to missing value prop
+          { name: "currency" },
+
+          // @ts-expect-error testing resilience to missing name prop
+          { value: "orphaned" },
         ],
       },
       byCodeAndLevel("global", "global"),
     );
 
-    expect(response.config).toEqual([
-      { name: "exampleList", value: "option1" },
-    ]);
+    const result = await getConfiguration(byCodeAndLevel("global", "global"));
+    expect(result.config.find((e) => e.name === "exampleList")?.value).toBe(
+      "option1",
+    );
+
+    expect(result.config.find((e) => e.name === "currency")?.value).toBe("");
+  });
+});
+
+describe("setCustomScopeTree", () => {
+  test("persists caller-provided id without replacing it with a generated one", async () => {
+    await setCustomScopeTree({
+      scopes: [
+        {
+          id: "my-explicit-id",
+          code: "region_apac",
+          label: "APAC Region",
+          level: "custom",
+          is_editable: true,
+          is_final: true,
+        },
+      ],
+    });
+
+    const { scopeTree } = await getScopeTree();
+    const saved = scopeTree.find((s) => s.code === "region_apac");
+    expect(saved?.id).toBe("my-explicit-id");
   });
 });

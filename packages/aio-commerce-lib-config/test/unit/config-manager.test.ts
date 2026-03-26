@@ -28,11 +28,6 @@ import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { BusinessConfigSchema } from "#index";
 import type { ScopeTree } from "#modules/scope-tree/types";
 
-vi.mock("#utils/repository", () => ({
-  getSharedState: vi.fn(async () => ({})),
-  getSharedFiles: vi.fn(async () => ({})),
-}));
-
 vi.mock("#modules/scope-tree/scope-tree-repository", () => ({
   getCachedScopeTree: vi.fn(() => Promise.resolve(null)),
   getPersistedScopeTree: vi.fn(() => Promise.resolve(mockScopeTree)),
@@ -84,7 +79,7 @@ describe("unsyncCommerceScopes", () => {
     vi.clearAllMocks();
   });
 
-  test("returns Ok when commerce scope exists and is removed", async () => {
+  test("returns { unsynced: true } when commerce scope exists and is removed", async () => {
     const scopeTreeWithCommerce: ScopeTree = [...mockScopeTree];
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       scopeTreeWithCommerce,
@@ -97,13 +92,16 @@ describe("unsyncCommerceScopes", () => {
     const savedScopeTree = vi.mocked(scopeTreeRepository.saveScopeTree).mock
       .calls[0][1];
 
-    expect(savedScopeTree).toEqual([mockScopeTree[0]]);
+    expect(savedScopeTree).toEqual(
+      mockScopeTree.filter((scope) => scope.code !== "commerce"),
+    );
+
     expect(savedScopeTree.find((scope) => scope.code === "commerce")).toBe(
       undefined,
     );
   });
 
-  test("returns NotFound when commerce scope does not exist", async () => {
+  test("returns { unsynced: false } when commerce scope does not exist", async () => {
     const scopeTreeWithoutCommerce: ScopeTree = mockScopeTree.filter(
       (scope) => scope.code !== "commerce",
     );
@@ -118,7 +116,7 @@ describe("unsyncCommerceScopes", () => {
     expect(scopeTreeRepository.saveScopeTree).not.toHaveBeenCalled();
   });
 
-  test("when error is thrown", async () => {
+  test("error is thrown when persistent storage access fails", async () => {
     const error = new Error("Failed to access persistent storage");
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockRejectedValue(
       error,
@@ -503,6 +501,46 @@ describe("setCustomScopeTree", () => {
     expect(savedTree).toHaveLength(2); // Only global and commerce
     expect(savedTree[0].code).toBe("global");
     expect(savedTree[1].code).toBe("commerce");
+  });
+
+  test("should throw when two scopes share the same code and level", async () => {
+    await expect(
+      setCustomScopeTree({
+        scopes: [
+          {
+            code: "region",
+            label: "Region A",
+            level: "custom",
+            is_editable: true,
+            is_final: true,
+          },
+          {
+            code: "region",
+            label: "Region B",
+            level: "custom",
+            is_editable: true,
+            is_final: true,
+          },
+        ],
+      }),
+    ).rejects.toThrow();
+  });
+
+  test("should throw when scope has an id that is blank after trimming", async () => {
+    await expect(
+      setCustomScopeTree({
+        scopes: [
+          {
+            id: "   ",
+            code: "region",
+            label: "Region",
+            level: "custom",
+            is_editable: true,
+            is_final: true,
+          },
+        ],
+      }),
+    ).rejects.toThrow();
   });
 
   test("should throw error when validation fails", async () => {

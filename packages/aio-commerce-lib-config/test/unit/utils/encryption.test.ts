@@ -46,6 +46,11 @@ describe("utils/encryption", () => {
       const key = generateEncryptionKey();
       expect(() => validateEncryptionKey(key)).not.toThrow();
     });
+
+    test("should throw when key is valid hex but wrong length", () => {
+      const shortKey = "deadbeef".repeat(4); // 32 hex chars, needs 64
+      expect(() => validateEncryptionKey(shortKey)).toThrow();
+    });
   });
 
   describe("encrypt and decrypt", () => {
