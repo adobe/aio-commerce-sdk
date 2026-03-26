@@ -106,16 +106,10 @@ router.get("/", {
       appConfiguration.config,
     );
 
-    const body = { schema: validatedSchema, values: appConfiguration };
-    const bodyString = JSON.stringify(body);
-    const responseEtag = `"${Buffer.from(bodyString).toString("base64")}"`;
-
     return ok({
       body: { schema: validatedSchema, values: appConfiguration },
       headers: {
         "Cache-Control": `max-age=${DEFAULT_CACHE_TTL_SECONDS}`,
-        Vary: "Etag",
-        Etag: responseEtag,
       },
     });
   },
