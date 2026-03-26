@@ -11,7 +11,7 @@ catalog:
   '@adobe/aio-lib-ims': ^8.1.1
   '@adobe/aio-lib-state': ^5.3.1
   ansis: ^4.1.0
-  camelcase: ^8.0.0
+  camelcase: ^9.0.0
   consola: ^3.4.2
   ky: ^1.9.0
   msw: ^2.11.1
