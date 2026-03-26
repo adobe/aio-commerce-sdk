@@ -57,12 +57,7 @@ export type CreateRegistrationParams = {
 };
 
 /** Parameters needed to update event registrations in Adobe I/O Events. */
-export type UpdateRegistrationParams = {
-  context: EventsExecutionContext;
-  metadata: ApplicationMetadata;
-  events: AppEventWithoutRuntimeActions[];
-  provider: IoEventProvider;
-  runtimeAction: string;
+export type UpdateRegistrationParams = CreateRegistrationParams & {
   registration: IoEventRegistration;
 };
 
