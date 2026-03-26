@@ -37,17 +37,25 @@ const PROVIDER_TYPE_TO_LABEL = {
   [EXTERNAL_PROVIDER_TYPE]: "External",
 } as const;
 
+/** Max characters taken from `metadata.id` in the I/O Events provider `instance_id`. */
+const METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID = 100;
+
 /**
- * Generates a unique instance ID for the given event provider within the context of the provided config.
+ * Generates a unique instance ID for I/O Events for this app deployment.
+ * Uses `{metadata.id (first 100 chars)}-{providerKeyOrSlug}-{workspaceId}` (lowercased).
+ *
  * @param metadata - The metadata of the application
- * @param provider - The event provider for which to generate the instance ID
+ * @param provider - The event provider (optional `key`, else label is slugified)
+ * @param workspaceId - Adobe I/O Developer Console workspace ID for this deployment
  */
 export function generateInstanceId(
   metadata: ApplicationMetadata,
   provider: EventProvider,
+  workspaceId: string,
 ) {
+  const appId = metadata.id.slice(0, METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID);
   const slugLabel = provider.label.toLowerCase().replace(/\s+/g, "-");
-  return `${metadata.id}-${provider.key ?? slugLabel}`.toLowerCase();
+  return `${appId}-${provider.key ?? slugLabel}-${workspaceId}`.toLowerCase();
 }
 
 /**
@@ -76,7 +84,6 @@ export function findExistingProviderMetadata(
 }
 
 /**
-<<<<<<< HEAD
  * Find existing event registrations by client ID and name.
  * @param allRegistrations - The list of all existing event registrations.
  * @param clientId - The client ID of the workspace where the registration was created.

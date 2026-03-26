@@ -52,34 +52,59 @@ const nameNormalizationCases = [
   ],
 ] as const;
 
+const TEST_WORKSPACE_ID = "4567890123456789";
+
 describe("generateInstanceId", () => {
   test.each([
     [
-      "should produce a lowercase instance ID from metadata id and provider key",
+      "should produce a lowercase instance ID from metadata id, provider key, and workspace id",
       "MyApp-Test",
       createMockProvider("Some Label", "my-provider"),
-      "myapp-test-my-provider",
+      `myapp-test-my-provider-${TEST_WORKSPACE_ID}`,
     ],
     [
       "should slugify and lowercase the provider label when key is absent",
       "MyApp-MyApp",
       createMockProvider("Order Notifier"),
-      "myapp-myapp-order-notifier",
+      `myapp-myapp-order-notifier-${TEST_WORKSPACE_ID}`,
     ],
     [
       "should lowercase an already-lowercase metadata id",
       "my-app",
       createMockProvider("label", "key"),
-      "my-app-key",
+      `my-app-key-${TEST_WORKSPACE_ID}`,
     ],
     [
       "should normalize mixed-case metadata id to lowercase",
       "MyMixedApp",
       createMockProvider("Commerce Provider", "commerce"),
-      "mymixedapp-commerce",
+      `mymixedapp-commerce-${TEST_WORKSPACE_ID}`,
     ],
   ] as const)("%s", (_desc, id, provider, expected) => {
-    expect(generateInstanceId(createMockMetadata(id), provider)).toBe(expected);
+    expect(
+      generateInstanceId(createMockMetadata(id), provider, TEST_WORKSPACE_ID),
+    ).toBe(expected);
+  });
+
+  test("should truncate metadata id to 100 characters before the provider segment", () => {
+    const longId = "a".repeat(250);
+    const expectedPrefix = "a".repeat(100);
+    const provider = createMockProvider("x", "p");
+    expect(
+      generateInstanceId(
+        createMockMetadata(longId),
+        provider,
+        TEST_WORKSPACE_ID,
+      ),
+    ).toBe(`${expectedPrefix}-p-${TEST_WORKSPACE_ID}`);
+  });
+
+  test("should produce different instance IDs for the same app and provider when workspace differs", () => {
+    const metadata = createMockMetadata("my-app");
+    const provider = createMockProvider("x", "same-key");
+    expect(generateInstanceId(metadata, provider, "workspace-a")).not.toBe(
+      generateInstanceId(metadata, provider, "workspace-b"),
+    );
   });
 });
 
