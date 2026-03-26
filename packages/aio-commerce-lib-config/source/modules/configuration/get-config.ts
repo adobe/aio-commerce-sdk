@@ -15,7 +15,7 @@ import {
   getSchemaDefaults,
   mergeWithSchemaDefaults,
 } from "#config-utils";
-import { getGlobalSchema } from "#modules/schema/config-schema-repository";
+import { requireGlobalSchema } from "#modules/schema/config-schema-repository";
 import { getPasswordFields } from "#modules/schema/utils";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
 import { decrypt } from "#utils/encryption";
@@ -37,7 +37,7 @@ export async function fetchRawConfiguration(
   configData: GetConfigurationResponse;
   passwordFields: Set<string>;
 }> {
-  const schema = getGlobalSchema() ?? [];
+  const schema = requireGlobalSchema();
   const scopeTree = await scopeTreeRepository.getPersistedScopeTree(
     context.namespace,
   );

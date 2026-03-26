@@ -11,7 +11,7 @@
  */
 
 import {
-  getGlobalSchema,
+  requireGlobalSchema,
   setGlobalSchema,
 } from "#modules/schema/config-schema-repository";
 import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "#utils/constants";
@@ -51,15 +51,13 @@ export type InitializeOptions = {
  * If no schema is provided, initialization will succeed only if a schema was previously set globally.
  * @param options - Options for initializing the configuration library.
  */
-export async function initialize(options: InitializeOptions) {
+export function initialize(options: InitializeOptions) {
   if (options.schema) {
     setGlobalSchema(options.schema);
     return;
   }
 
-  if (!getGlobalSchema()) {
-    throw new Error("Schema must be provided during initialization");
-  }
+  requireGlobalSchema();
 }
 
 /** Parameters for getting the scope tree from Commerce API. */

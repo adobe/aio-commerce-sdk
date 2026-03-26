@@ -15,7 +15,7 @@ import {
   mergeScopes,
   sanitizeRequestEntries,
 } from "#config-utils";
-import { getGlobalSchema } from "#modules/schema/config-schema-repository";
+import { requireGlobalSchema } from "#modules/schema/config-schema-repository";
 import { getPasswordFields } from "#modules/schema/utils";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
 import { encrypt } from "#utils/encryption";
@@ -48,7 +48,7 @@ export async function setConfiguration(
   request: SetConfigurationRequest,
   ...args: unknown[]
 ): Promise<SetConfigurationResponse> {
-  const schema = getGlobalSchema() ?? [];
+  const schema = requireGlobalSchema();
   const scopeTree = await scopeTreeRepository.getPersistedScopeTree(
     context.namespace,
   );

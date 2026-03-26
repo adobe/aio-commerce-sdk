@@ -115,6 +115,17 @@ describe("getConfigurationByKey", () => {
     setGlobalSchema(schema);
   });
 
+  test("throws error when schema not initialized", async () => {
+    // Clear the schema to simulate not calling initialize
+    setGlobalSchema(null as unknown as BusinessConfigSchema);
+
+    await expect(
+      getConfigurationByKey("currency", byCodeAndLevel("global", "global")),
+    ).rejects.toThrow(
+      "Schema not initialized. Call `initialize({ schema })` before using configuration functions.",
+    );
+  });
+
   test("returns the correct value for a non-password key", async () => {
     await configRepository.saveConfig(
       "global",

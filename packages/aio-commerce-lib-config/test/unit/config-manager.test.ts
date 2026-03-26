@@ -97,6 +97,15 @@ describe("ConfigManager functions", () => {
     setGlobalSchema(defaultSchema);
   });
 
+  test("throws error when schema not initialized", async () => {
+    // Clear the schema to simulate not calling initialize
+    setGlobalSchema(null as unknown as BusinessConfigSchema);
+
+    await expect(
+      getConfiguration(byCodeAndLevel("global", "global")),
+    ).rejects.toThrow();
+  });
+
   test("returns defaults when no persisted config", async () => {
     const result = await getConfiguration(byCodeAndLevel("global", "global"));
     expect(result.scope.code).toBe("global");
@@ -231,6 +240,18 @@ describe("ConfigManager functions", () => {
     expect(resultByCodeLevel.scope.id).toBe("idw");
     expect(resultByCodeLevel.scope.code).toBe("base");
     expect(resultByCodeLevel.scope.level).toBe("website");
+  });
+
+  test("throws error when setting configuration without schema initialized", async () => {
+    // Clear the schema to simulate not calling initialize
+    setGlobalSchema(null as unknown as BusinessConfigSchema);
+
+    await expect(
+      setConfiguration(
+        { config: [{ name: "currency", value: "JPY" }] },
+        byCodeAndLevel("global", "global"),
+      ),
+    ).rejects.toThrow();
   });
 
   test("sets configuration and persists to files/state", async () => {
@@ -389,7 +410,7 @@ describe("initialize", () => {
     setGlobalSchema(null as unknown as BusinessConfigSchema);
   });
 
-  test("should set global schema when schema is provided", async () => {
+  test("should set global schema when schema is provided", () => {
     const testSchema = [
       {
         name: "testField",
@@ -399,19 +420,17 @@ describe("initialize", () => {
       },
     ] satisfies BusinessConfigSchema;
 
-    await initialize({ schema: testSchema });
+    initialize({ schema: testSchema });
 
     const storedSchema = getGlobalSchema();
     expect(storedSchema).toEqual(testSchema);
   });
 
-  test("should throw error when no schema provided and no global schema exists", async () => {
-    await expect(initialize({})).rejects.toThrow(
-      "Schema must be provided during initialization",
-    );
+  test("should throw error when no schema provided and no global schema exists", () => {
+    expect(() => initialize({})).toThrow();
   });
 
-  test("should succeed when no schema provided but global schema already exists", async () => {
+  test("should succeed when no schema provided but global schema already exists", () => {
     const existingSchema = [
       {
         name: "existingField",
@@ -422,13 +441,13 @@ describe("initialize", () => {
     ] satisfies BusinessConfigSchema;
 
     // First initialize with schema
-    await initialize({ schema: existingSchema });
+    initialize({ schema: existingSchema });
 
     // Verify schema was set
     expect(getGlobalSchema()).toEqual(existingSchema);
 
     // Second initialize without schema should succeed
-    await expect(initialize({})).resolves.not.toThrow();
+    expect(() => initialize({})).not.toThrow();
 
     // Schema should still be the same
     expect(getGlobalSchema()).toEqual(existingSchema);

@@ -32,3 +32,21 @@ export function setGlobalSchema(schema: BusinessConfigSchema): void {
 export function getGlobalSchema(): BusinessConfigSchema | null {
   return __globalSchema;
 }
+
+/**
+ * Gets the global schema from memory and throws an error if not initialized.
+ *
+ * @returns The schema stored in memory.
+ * @throws Error if schema has not been initialized.
+ */
+export function requireGlobalSchema(): BusinessConfigSchema {
+  const schema = __globalSchema;
+
+  if (!schema) {
+    throw new Error(
+      "Schema not initialized. Call `initialize({ schema })` before using configuration functions.",
+    );
+  }
+
+  return schema;
+}
