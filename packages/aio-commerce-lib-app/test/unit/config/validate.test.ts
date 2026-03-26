@@ -22,6 +22,7 @@ import {
 } from "#test/fixtures/config";
 import { createCommerceEventConfig } from "#test/fixtures/eventing";
 
+const MAX_ID_LENGTH = 100;
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_DESCRIPTION_LENGTH = 255;
 
@@ -131,6 +132,34 @@ describe("validateConfig", () => {
     };
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
+  });
+
+  test("should accept metadata.id at exactly 100 characters", () => {
+    const config = {
+      metadata: {
+        id: "a".repeat(MAX_ID_LENGTH),
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+  });
+
+  test("should throw when metadata.id exceeds 100 characters", () => {
+    const config = {
+      metadata: {
+        id: "a".repeat(MAX_ID_LENGTH + 1),
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow(
+      "Invalid commerce app config",
+    );
   });
 
   test("should throw when displayName exceeds 50 characters", () => {
