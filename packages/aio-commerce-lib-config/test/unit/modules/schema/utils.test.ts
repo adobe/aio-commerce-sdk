@@ -19,7 +19,7 @@ import {
   VALID_CONFIGURATION_WITHOUT_DEFAULTS,
 } from "#test/fixtures/configuration-schema";
 
-describe("validator", () => {
+describe("schema/utils", () => {
   describe("validateBusinessConfigSchema", () => {
     test("should not throw with valid schema", () => {
       expect(() => {

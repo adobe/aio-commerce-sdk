@@ -22,7 +22,7 @@ import {
   validateEncryptionKey,
 } from "#utils/encryption";
 
-describe("encryption utilities", () => {
+describe("utils/encryption", () => {
   let encryptionKey: string;
 
   beforeEach(() => {
@@ -45,6 +45,11 @@ describe("encryption utilities", () => {
     test("should generate a valid encryption key", () => {
       const key = generateEncryptionKey();
       expect(() => validateEncryptionKey(key)).not.toThrow();
+    });
+
+    test("should throw when key is valid hex but wrong length", () => {
+      const shortKey = "deadbeef".repeat(4); // 32 hex chars, needs 64
+      expect(() => validateEncryptionKey(shortKey)).toThrow();
     });
   });
 

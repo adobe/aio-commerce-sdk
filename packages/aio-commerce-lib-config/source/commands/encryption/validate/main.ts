@@ -12,7 +12,6 @@
 
 import { dirname, join } from "node:path";
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import {
   detectPackageManager,
   findNearestPackageJson,
@@ -47,17 +46,13 @@ export async function run(envPath: string) {
 /** Run the encryption validate command */
 export async function exec() {
   try {
-    const dir = dirname((await findNearestPackageJson()) ?? process.cwd());
+    const packageJson = await findNearestPackageJson();
+    const dir = packageJson ? dirname(packageJson) : process.cwd();
     const envPath = join(dir, ".env");
 
     await run(envPath);
   } catch (error) {
-    if (error instanceof CommerceSdkValidationError) {
-      consola.error(error.display());
-    } else {
-      consola.error(error);
-    }
-
+    consola.error(error);
     process.exit(1);
   }
 }
