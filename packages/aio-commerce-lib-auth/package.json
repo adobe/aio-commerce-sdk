@@ -103,7 +103,6 @@
     "@aio-commerce-sdk/common-utils": "workspace:*",
     "@aio-commerce-sdk/scripting-utils": "workspace:*",
     "@aio-commerce-sdk/scripts": "workspace:*",
-    "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:"
   },
   "sideEffects": false

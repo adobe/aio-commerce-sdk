@@ -120,7 +120,6 @@
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:"
   },
   "sideEffects": false
