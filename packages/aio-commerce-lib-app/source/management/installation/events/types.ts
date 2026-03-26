@@ -47,7 +47,7 @@ export type CreateIoProviderEventsMetadataParams = {
 /** Event data with runtime actions omitted.  */
 export type AppEventWithoutRuntimeActions = Omit<AppEvent, "runtimeActions">;
 
-/** Parameters needed to create event event registrations in Adobe I/O Events. */
+/** Parameters needed to create event registrations in Adobe I/O Events. */
 export type CreateRegistrationParams = {
   context: EventsExecutionContext;
   metadata: ApplicationMetadata;
@@ -56,7 +56,7 @@ export type CreateRegistrationParams = {
   runtimeAction: string;
 };
 
-/** Parameters needed to create event event registrations in Adobe I/O Events. */
+/** Parameters needed to update event registrations in Adobe I/O Events. */
 export type UpdateRegistrationParams = {
   context: EventsExecutionContext;
   metadata: ApplicationMetadata;
