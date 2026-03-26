@@ -14,8 +14,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import * as commerceApi from "#api/commerce";
 import {
+  getConfiguration,
   getScopeTree,
   initialize,
+  setConfiguration,
   setCustomScopeTree,
   syncCommerceScopes,
   unsyncCommerceScopes,
@@ -28,10 +30,24 @@ import {
 } from "#modules/schema/config-schema-repository";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
+import { createMockLibFiles } from "#test/mocks/lib-files";
+import { createMockLibState } from "#test/mocks/lib-state";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
-import type { BusinessConfigSchema } from "#index";
+import type { BusinessConfigSchema, ConfigValue } from "#index";
 import type { ScopeTree } from "#modules/scope-tree/types";
+
+const MockState = createMockLibState();
+const MockFiles = createMockLibFiles();
+
+let mockStateInstance = new MockState();
+let mockFilesInstance = new MockFiles();
+
+// Only the external I/O boundary is mocked — aio-lib-state and aio-lib-files
+vi.mock("#utils/repository", () => ({
+  getSharedState: vi.fn(async () => mockStateInstance),
+  getSharedFiles: vi.fn(async () => mockFilesInstance),
+}));
 
 vi.mock("#modules/scope-tree/scope-tree-repository", () => ({
   getCachedScopeTree: vi.fn(() => Promise.resolve(null)),
@@ -344,7 +360,6 @@ describe("ConfigManager functions", () => {
       { name: "exampleList", value: "option1" },
     ]);
   });
->>>>>>> fd0b2fe (CEXT-6004: use global state for config schema)
 });
 
 describe("unsyncCommerceScopes", () => {
