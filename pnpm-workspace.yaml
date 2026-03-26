@@ -10,6 +10,7 @@ catalog:
   '@adobe/aio-lib-files': ^4.1.2
   '@adobe/aio-lib-ims': ^8.1.1
   '@adobe/aio-lib-state': ^5.3.1
+  '@types/node': ^24.12.0
   ansis: ^4.1.0
   camelcase: ^8.0.0
   consola: ^3.4.2
@@ -18,7 +19,7 @@ catalog:
   prettier: ^3.8.1
   safe-stable-stringify: ^2.5.0
   type-fest: ^5.0.0
-  typescript: ^5.9.3
+  '@typescript/native-preview': 7.0.0-dev.20260326.1
   valibot: ^1.1.0
   yaml: ^2.8.1
 

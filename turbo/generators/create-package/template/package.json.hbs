@@ -72,7 +72,7 @@
     "format:check": "biome format --no-errors-on-unmatched",
     "lint": "biome lint --no-errors-on-unmatched",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
-    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"{{#if willContainTests}},
+    "typecheck": "tsgo --noEmit && echo '✅ No type errors found.'"{{#if willContainTests}},
     "test": "vitest run",
     "test:watch": "vitest --watch"
     {{/if}}

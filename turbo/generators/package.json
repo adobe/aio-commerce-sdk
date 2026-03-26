@@ -15,7 +15,7 @@
     "format:check": "biome format --no-errors-on-unmatched",
     "lint": "biome lint --no-errors-on-unmatched",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
-    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
+    "typecheck": "tsgo --noEmit && echo '✅ No type errors found.'"
   },
   "dependencies": {
     "@clack/prompts": "^1.0.0-alpha.1",
