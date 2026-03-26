@@ -75,15 +75,6 @@ export type OnboardIoEventsParams<EventType extends AppEvent> = {
   providerType: EventProviderType;
 };
 
-/** Parameters needed to onboard all the entities of Adobe I/O Events. */
-export type OffboardIoEventsParams<EventType extends AppEvent> = {
-  context: EventsExecutionContext;
-  metadata: ApplicationMetadata;
-  provider: EventProvider;
-  events: EventType[];
-  providerType: EventProviderType;
-};
-
 /** The returned data of an onboarded Adobe I/O event provider. */
 export type ProviderDataFromIo<EventType extends AppEvent> = Awaited<
   ReturnType<typeof onboardIoEvents<EventType>>
