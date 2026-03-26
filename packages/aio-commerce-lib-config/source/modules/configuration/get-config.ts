@@ -17,7 +17,6 @@ import {
 } from "#config-utils";
 import { getPasswordFields } from "#modules/schema/utils";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
-import { decrypt } from "#utils/encryption";
 
 import { getSchema } from "../schema";
 import * as configRepository from "./configuration-repository";
@@ -135,7 +134,7 @@ function decryptPasswordFields(
 
         return {
           ...entry,
-          value: decrypt(entry.value, encryptionKey),
+          value: "",
         };
       }
 

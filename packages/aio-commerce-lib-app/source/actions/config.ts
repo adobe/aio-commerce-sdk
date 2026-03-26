@@ -74,7 +74,7 @@ function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
 
 // The router that will hold the config routes
 const router = new HttpActionRouter<ConfigActionContext>().use(logger());
-const DEFAULT_CACHE_TTL_SECONDS = 10 * 60;
+const DEFAULT_CACHE_TTL_SECONDS = 2 * 60;
 
 /** GET / - Retrieve configuration */
 router.get("/", {
