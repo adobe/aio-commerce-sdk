@@ -91,7 +91,8 @@ export function createMockIoEventsClient(
     createRegistration: vi.fn(overrides?.createRegistration),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllRegistrations: vi.fn(overrides?.getAllRegistrations),
-  } satisfies Partial<CustomAdobeIoEventsApiClient>;
+    updateRegistration: vi.fn(overrides?.updateRegistration),
+  } satisfies CustomAdobeIoEventsApiClient;
 }
 
 /** Creates a mock {@link EventsExecutionContext} for testing. */

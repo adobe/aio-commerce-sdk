@@ -24,6 +24,7 @@ import {
   getRegistrationDescription,
   getRegistrationName,
   groupEventsByRuntimeActions,
+  intoEventsOfInterest,
 } from "./utils";
 
 import type {
@@ -33,7 +34,6 @@ import type {
   UpdateEventingConfigurationParams,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
-  EventProviderType,
   IoEventMetadata,
   IoEventProvider,
   IoEventRegistration,
@@ -48,6 +48,7 @@ import type {
   CreateRegistrationParams,
   OnboardCommerceEventingParams,
   OnboardIoEventsParams,
+  UpdateRegistrationParams,
 } from "./types";
 import type {
   ExistingCommerceEventingData,
@@ -203,17 +204,65 @@ async function createOrGetIoProviderEventMetadata(
 }
 
 /**
+ * Updates an event registration bound to the given provider ID for a set of events targeting the given runtime action.
+ * @param params - The parameters necessary to create the registration.
+ */
+async function updateIoEventRegistration(params: UpdateRegistrationParams) {
+  const { context, events, provider, runtimeAction, metadata, registration } =
+    params;
+  const { appData, ioEventsClient, logger, params: runtimeParams } = context;
+
+  logger.info(
+    `Updating registration(s) to runtime action "${runtimeAction}" for ${events.length} event(s) with provider "${provider.label}" (instance ID: ${provider.instance_id}))`,
+  );
+
+  const { registration_id: registrationId } = registration;
+  const name = getRegistrationName(provider, runtimeAction);
+  const description = getRegistrationDescription(
+    provider,
+    events,
+    runtimeAction,
+  );
+
+  const payload = {
+    consumerOrgId: appData.consumerOrgId,
+    projectId: appData.projectId,
+    workspaceId: appData.workspaceId,
+    clientId: runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+    name,
+    description,
+    runtimeAction,
+    registrationId,
+    deliveryType: "webhook" as const,
+    enabled: true,
+    eventsOfInterest: intoEventsOfInterest(events, provider, metadata),
+  };
+
+  return ioEventsClient
+    .updateRegistration(payload)
+    .then((res) => {
+      logger.info(
+        `Registration "${name}" updated for provider "${provider.label}" with ID '${res.id}'`,
+      );
+
+      return res;
+    })
+    .catch((error) => {
+      logger.error(
+        `Failed to update registration "${name}" for provider "${provider.label}": ${stringifyError(error)}`,
+      );
+
+      throw error;
+    });
+}
+
+/**
  * Creates an event registration bound to the given provider ID for a set of events targeting the given runtime action.
  * @param params - The parameters necessary to create the registration.
  */
 async function createIoEventRegistration(params: CreateRegistrationParams) {
   const { context, events, provider, runtimeAction, metadata } = params;
   const { appData, ioEventsClient, logger, params: runtimeParams } = context;
-  const appCredentials = {
-    consumerOrgId: appData.consumerOrgId,
-    projectId: appData.projectId,
-    workspaceId: appData.workspaceId,
-  };
 
   logger.info(
     `Creating registration(s) to runtime action "${runtimeAction}" for ${events.length} event(s) with provider "${provider.label}" (instance ID: ${provider.instance_id}))`,
@@ -227,23 +276,17 @@ async function createIoEventRegistration(params: CreateRegistrationParams) {
   );
 
   const payload = {
-    ...appCredentials,
-
-    name,
+    consumerOrgId: appData.consumerOrgId,
+    projectId: appData.projectId,
+    workspaceId: appData.workspaceId,
     clientId: runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+    name,
     description,
-    deliveryType: "webhook",
     runtimeAction,
-
+    deliveryType: "webhook" as const,
     enabled: true,
-    eventsOfInterest: events.map((event) => ({
-      providerId: provider.id,
-      eventCode: getIoEventCode(
-        getNamespacedEvent(metadata, event.name),
-        provider.provider_metadata as EventProviderType,
-      ),
-    })),
-  } as const;
+    eventsOfInterest: intoEventsOfInterest(events, provider, metadata),
+  };
 
   return ioEventsClient
     .createRegistration(payload)
@@ -266,7 +309,7 @@ async function createIoEventRegistration(params: CreateRegistrationParams) {
 /**
  * Creates or retrieves an existing I/O Events registration.
  * @param params - Parameters needed to create or get the registration.
- * @param existingData - Existing I/O Events data.
+ * @param registrations - Existing I/O Events data.
  */
 async function createOrGetIoEventRegistration(
   params: CreateRegistrationParams,
@@ -285,10 +328,13 @@ async function createOrGetIoEventRegistration(
 
   if (existing) {
     logger.info(
-      `Registration "${name}" already exists for provider "${provider.label}" with ID '${existing.id}', skipping creation.`,
+      `Registration "${name}" already exists for provider "${provider.label}" with ID '${existing.id}', will attempt to update this registration.`,
     );
 
-    return existing;
+    return updateIoEventRegistration({
+      ...params,
+      registration: existing,
+    });
   }
 
   return createIoEventRegistration(params);

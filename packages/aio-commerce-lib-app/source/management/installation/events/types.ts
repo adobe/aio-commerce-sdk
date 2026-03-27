@@ -14,6 +14,7 @@ import type { UpdateEventingConfigurationParams } from "@adobe/aio-commerce-lib-
 import type {
   EventProviderType,
   IoEventProvider,
+  IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { ArrayElement } from "type-fest";
 import type {
@@ -46,13 +47,18 @@ export type CreateIoProviderEventsMetadataParams = {
 /** Event data with runtime actions omitted.  */
 export type AppEventWithoutRuntimeActions = Omit<AppEvent, "runtimeActions">;
 
-/** Parameters needed to create event event registrations in Adobe I/O Events. */
+/** Parameters needed to create event registrations in Adobe I/O Events. */
 export type CreateRegistrationParams = {
   context: EventsExecutionContext;
   metadata: ApplicationMetadata;
   events: AppEventWithoutRuntimeActions[];
   provider: IoEventProvider;
   runtimeAction: string;
+};
+
+/** Parameters needed to update event registrations in Adobe I/O Events. */
+export type UpdateRegistrationParams = CreateRegistrationParams & {
+  registration: IoEventRegistration;
 };
 
 /** Parameters needed to onboard all the entities of Adobe I/O Events. */
