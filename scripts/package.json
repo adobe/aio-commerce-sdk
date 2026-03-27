@@ -30,7 +30,7 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest --coverage",
     "test:ui": "vitest --ui --coverage",
-    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
+    "typecheck": "tsgo --noEmit && echo '✅ No type errors found.'"
   },
   "devDependencies": {
     "@actions/core": "^3.0.0",
