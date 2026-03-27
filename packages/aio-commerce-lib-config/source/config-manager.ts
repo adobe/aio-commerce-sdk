@@ -57,13 +57,13 @@ export type InitializeOptions = {
  * @param options - Options for initializing the configuration library.
  */
 export function initialize(options: InitializeOptions) {
+  if (options.libStateOptions) {
+    setGlobalStateOptions(options.libStateOptions);
+  }
+
   if (options.schema) {
     setGlobalSchema(options.schema);
     return;
-  }
-
-  if (options.libStateOptions) {
-    setGlobalStateOptions(options.libStateOptions);
   }
 
   requireGlobalSchema();
