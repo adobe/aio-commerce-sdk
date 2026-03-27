@@ -20,6 +20,7 @@ import {
 } from "#config-manager";
 import { byCode, byCodeAndLevel, byScopeId } from "#config-utils";
 import * as configRepository from "#modules/configuration/configuration-repository";
+import { setGlobalSchema } from "#modules/schema/config-schema-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
 import { createMockLibFiles } from "#test/mocks/lib-files";
 import { createMockLibState } from "#test/mocks/lib-state";
@@ -102,6 +103,9 @@ describe("config-manager", () => {
       "config-schema.json",
       JSON.stringify(integrationSchema),
     );
+
+    // Initialize global schema for the tests
+    setGlobalSchema(integrationSchema);
 
     // Clear spy call history after seeding so tests start with a clean slate
     vi.clearAllMocks();
