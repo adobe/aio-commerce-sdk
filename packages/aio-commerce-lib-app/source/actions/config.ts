@@ -13,6 +13,7 @@
 import {
   byScopeId,
   getConfiguration,
+  getConfigurationByKey,
   initialize,
   setConfiguration,
 } from "@adobe/aio-commerce-lib-config";
@@ -107,6 +108,41 @@ router.get("/", {
 
     return ok({
       body: { schema: validatedSchema, values: appConfiguration },
+    });
+  },
+});
+
+/** GET /:configKey - Retrieve configuration by key */
+router.get("/:configKey", {
+  query: v.object({
+    scopeId: nonEmptyStringValueSchema("scopeId"),
+  }),
+
+  handler: async (req, ctx) => {
+    const { logger, rawParams } = ctx;
+    const configSchema = rawParams.configSchema;
+
+    logger.debug("Validating configuration schema...");
+    const validatedSchema = validateCommerceAppConfigDomain(
+      configSchema,
+      "businessConfig.schema",
+    );
+
+    initialize({ schema: validatedSchema });
+
+    const { scopeId } = req.query;
+    const { configKey } = req.params;
+
+    logger.debug(
+      `Retrieving configuration key "${configKey}" with scope id: ${scopeId}`,
+    );
+    const result = await getConfigurationByKey(configKey, byScopeId(scopeId), {
+      encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+    });
+
+    return ok({
+      body: result,
+      headers: { "Cache-Control": "max-age=60" },
     });
   },
 });
