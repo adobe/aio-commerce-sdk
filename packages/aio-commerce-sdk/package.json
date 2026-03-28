@@ -5,7 +5,7 @@
   "version": "1.1.0",
   "private": false,
   "engines": {
-    "node": ">=20 <=24"
+    "node": ">=22 <=26"
   },
   "license": "Apache-2.0",
   "description": "Meta-package re-exporting Adobe Commerce SDK libraries for Adobe App Builder applications.",
