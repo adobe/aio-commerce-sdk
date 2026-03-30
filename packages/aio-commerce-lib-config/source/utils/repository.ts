@@ -19,12 +19,12 @@ import type { AdobeState } from "@adobe/aio-lib-state";
 /** Defines the options for initializing the Adobe State library. */
 export type LibStateOptions = {
   /**
-   * The region where `aio-lib-state` should operate.
-   * The default value `auto` will automatically select the optimal region.
+   * The region where `aio-lib-state` should operate. By default, the most optimal region is
+   * automatically determined based on where the runtime action is running.
    *
-   * @default "auto"
+   * @see https://developer.adobe.com/app-builder/docs/guides/app_builder_guides/storage/application-state#state
    */
-  region?: "auto" | "amer" | "emea" | "apac" | "aus";
+  region?: "amer" | "emea" | "apac" | "aus";
 };
 
 // Shared instances - single source of truth for all repositories
