@@ -104,7 +104,11 @@ export function createMockIoEventsClient(
       .mockImplementation(
         overrides?.deleteEventProvider ?? (() => Promise.resolve()),
       ),
-    deleteRegistration: vi.fn(overrides?.deleteRegistration),
+    deleteRegistration: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteRegistration ?? (() => Promise.resolve()),
+      ),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllRegistrations: vi.fn(overrides?.getAllRegistrations),
   } satisfies Partial<CustomAdobeIoEventsApiClient>;

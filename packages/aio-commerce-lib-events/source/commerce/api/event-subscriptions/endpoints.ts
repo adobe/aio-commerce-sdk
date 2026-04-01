@@ -102,7 +102,6 @@ export async function deleteEventSubscription(
 
   return httpClient
     .post(`eventing/eventUnsubscribe/${validatedParams.name}`, fetchOptions)
-    .json()
     .then((_res) => {
       // We set this `then` to make the response type `void`
     });

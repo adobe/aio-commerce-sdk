@@ -67,13 +67,10 @@ describe("createInitialInstallationState", () => {
     const state = createInitialInstallationState({
       config: configWithWebhooks,
     });
-    const _webhooksStep = state.step.children.find(
-      (c) => c.name === "webhooks",
-    );
+    const webhooksStep = state.step.children.find((c) => c.name === "webhooks");
 
-    // TODO: Undo this when webhooks is implemented
-    // expect(webhooksStep).toBeDefined();
-    // expect(webhooksStep?.meta.label).toBe("Webhooks");
+    expect(webhooksStep).toBeDefined();
+    expect(webhooksStep?.meta.label).toBe("Webhooks");
   });
 
   test("should exclude eventing step when config has no eventing", () => {
@@ -194,13 +191,10 @@ describe("createInitialUninstallationState", () => {
     const state = createInitialUninstallationState({
       config: configWithWebhooks,
     });
-    const _webhooksStep = state.step.children.find(
-      (c) => c.name === "webhooks",
-    );
+    const webhooksStep = state.step.children.find((c) => c.name === "webhooks");
 
-    // TODO: Undo this when webhooks is implemented
-    // expect(webhooksStep).toBeDefined();
-    // expect(webhooksStep?.meta.label).toBe("Webhooks");
+    expect(webhooksStep).toBeDefined();
+    expect(webhooksStep?.meta.label).toBe("Webhooks");
   });
 
   test("should exclude eventing step when config has no eventing", () => {
