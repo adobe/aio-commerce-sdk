@@ -91,10 +91,22 @@ export const EventSubscriptionCreateParamsSchema = v.object({
   force: v.optional(booleanValueSchema("force")),
 });
 
+export const EventSubscriptionDeleteParamsSchema = v.object({
+  name: stringValueSchema("name"),
+});
+
 /**
  * The schema of the parameters received by the POST `eventing/eventSubscribe` Commerce API endpoint.
  * @see https://developer.adobe.com/commerce/extensibility/events/api/#subscribe-to-events
  */
 export type EventSubscriptionCreateParams = v.InferInput<
   typeof EventSubscriptionCreateParamsSchema
+>;
+
+/**
+ * The schema of the parameters received by the POST `eventing/eventUnsubscribe/:name` Commerce API endpoint.
+ * @see https://developer.adobe.com/commerce/extensibility/events/api/#unsubscribe-from-events
+ */
+export type EventSubscriptionDeleteParams = v.InferInput<
+  typeof EventSubscriptionDeleteParamsSchema
 >;

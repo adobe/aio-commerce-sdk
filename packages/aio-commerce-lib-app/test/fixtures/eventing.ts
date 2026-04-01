@@ -75,6 +75,11 @@ export function createMockCommerceEventsClient(
     createEventProvider: vi.fn(overrides?.createEventProvider),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     createEventSubscription: vi.fn(overrides?.createEventSubscription),
+    deleteEventSubscription: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteEventSubscription ?? (() => Promise.resolve()),
+      ),
     getAllEventSubscriptions: vi.fn(overrides?.getAllEventSubscriptions),
     updateEventingConfiguration: vi.fn(overrides?.updateEventingConfiguration),
   } satisfies CustomCommerceEventsApiClient;
@@ -89,6 +94,16 @@ export function createMockIoEventsClient(
     ),
     createEventProvider: vi.fn(overrides?.createEventProvider),
     createRegistration: vi.fn(overrides?.createRegistration),
+    deleteEventMetadataForProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteEventMetadataForProvider ?? (() => Promise.resolve()),
+      ),
+    deleteEventProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteEventProvider ?? (() => Promise.resolve()),
+      ),
     deleteRegistration: vi.fn(overrides?.deleteRegistration),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllRegistrations: vi.fn(overrides?.getAllRegistrations),

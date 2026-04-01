@@ -24,15 +24,17 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 import openwhisk from "openwhisk";
-import { object, string } from "valibot";
+import { object, safeParse, string } from "valibot";
 
 import {
   createInitialInstallationState,
+  createInitialUninstallationState,
   isCompletedState,
   isFailedState,
   isInProgressState,
   isSucceededState,
   runInstallation,
+  runUninstallation,
   runValidation,
 } from "#management/index";
 import { AppDataSchema } from "#management/installation/schema";
@@ -361,14 +363,61 @@ router.post("/validation", {
 });
 
 /**
- * DELETE / - Clear installation state
+ * DELETE / - Run uninstallation workflow and clear installation state
  *
- * This endpoint allows clearing the installation state.
+ * Accepts the same request body as POST / so App Management can pass the
+ * same installation params (appData, service URLs). When a body is provided,
+ * the uninstallation step workflow is executed before clearing state.
+ * If no body is sent the state is cleared without running steps.
  */
 router.delete("/", {
-  handler: async (_req, { logger }) => {
-    logger.debug("Clearing installation state...");
+  handler: async (req, { logger, rawParams }) => {
+    const appConfig = rawParams.appConfig;
+    const bodyResult = safeParse(InstallationRequestBodySchema, req.body);
 
+    if (bodyResult.success && appConfig) {
+      logger.debug("Running uninstallation workflow...");
+
+      const { appData, ...bodyParams } = bodyResult.output;
+      const params = {
+        ...rawParams,
+        appData,
+        AIO_EVENTS_API_BASE_URL: bodyParams.ioEventsUrl,
+        AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: bodyParams.ioEventsEnv,
+        AIO_COMMERCE_API_BASE_URL: bodyParams.commerceBaseUrl,
+        AIO_COMMERCE_API_FLAVOR: bodyParams.commerceEnv,
+      };
+
+      const installationContext: InstallationContext = {
+        appData,
+        params,
+        logger,
+        customScripts: rawParams.customScriptsLoader?.(appConfig, logger) || {},
+      };
+
+      const initialState = createInitialUninstallationState({
+        config: appConfig,
+      });
+      const result = await runUninstallation({
+        installationContext,
+        config: appConfig,
+        initialState,
+      });
+
+      logger.debug(`Uninstallation completed: ${result.status}`);
+
+      if (isFailedState(result)) {
+        return internalServerError({
+          body: {
+            message: "Uninstallation failed",
+            error: result.error,
+            state: result,
+          },
+        });
+      }
+    }
+
+    logger.debug("Clearing installation state...");
     const store = await createInstallationStore();
     await store.delete(getStorageKey());
     logger.debug("Installation state cleared");

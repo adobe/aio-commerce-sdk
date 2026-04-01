@@ -12,12 +12,18 @@
 
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
-import { EventSubscriptionCreateParamsSchema } from "./schema";
+import {
+  EventSubscriptionCreateParamsSchema,
+  EventSubscriptionDeleteParamsSchema,
+} from "./schema";
 
 import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import type { HTTPError, Options } from "ky";
-import type { EventSubscriptionCreateParams } from "./schema";
+import type {
+  EventSubscriptionCreateParams,
+  EventSubscriptionDeleteParams,
+} from "./schema";
 import type { CommerceEventSubscriptionManyResponse } from "./types";
 
 /**
@@ -69,6 +75,35 @@ export async function createEventSubscription(
     .json()
     .then((_res) => {
       // The response is always `[]` which is basically `void`
+      // We set this `then` to make the response type `void`
+    });
+}
+
+/**
+ * Unsubscribes from an event in the Commerce instance bound to the given {@link AdobeCommerceHttpClient}.
+ * @see https://developer.adobe.com/commerce/extensibility/events/api/#unsubscribe-from-events
+ *
+ * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
+ * @param params - The parameters to delete the event subscription with.
+ * @param fetchOptions - The {@link Options} to use to make the request.
+ *
+ * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
+ * @throws An {@link HTTPError} If the status code is not 2XX.
+ */
+export async function deleteEventSubscription(
+  httpClient: AdobeCommerceHttpClient,
+  params: EventSubscriptionDeleteParams,
+  fetchOptions?: Options,
+): Promise<void> {
+  const validatedParams = parseOrThrow(
+    EventSubscriptionDeleteParamsSchema,
+    params,
+  );
+
+  return httpClient
+    .post(`eventing/eventUnsubscribe/${validatedParams.name}`, fetchOptions)
+    .json()
+    .then((_res) => {
       // We set this `then` to make the response type `void`
     });
 }

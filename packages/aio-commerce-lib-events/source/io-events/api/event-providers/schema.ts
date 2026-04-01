@@ -75,10 +75,25 @@ export type EventProviderGetByIdParams = v.InferInput<
   typeof EventProviderGetByIdParamsSchema
 >;
 
+export const EventProviderDeleteParamsSchema = v.object({
+  consumerOrgId: stringValueSchema("consumerOrgId"),
+  projectId: stringValueSchema("projectId"),
+  workspaceId: stringValueSchema("workspaceId"),
+  providerId: stringValueSchema("providerId"),
+});
+
 /**
  * The schema of the parameters received by the POST `providers` Adobe I/O Events API endpoint.
  * @see https://developer.adobe.com/events/docs/api#operation/createProvider
  */
 export type EventProviderCreateParams = v.InferInput<
   typeof EventProviderCreateParamsSchema
+>;
+
+/**
+ * The schema of the parameters received by the DELETE `providers/:id` Adobe I/O Events API endpoint.
+ * @see https://developer.adobe.com/events/docs/api#operation/deleteProvider
+ */
+export type EventProviderDeleteParams = v.InferInput<
+  typeof EventProviderDeleteParamsSchema
 >;

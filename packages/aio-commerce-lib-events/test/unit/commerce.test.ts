@@ -34,6 +34,7 @@ describe("Commerce Events API", () => {
       expect(client).toHaveProperty("createEventProvider");
       expect(client).toHaveProperty("getAllEventSubscriptions");
       expect(client).toHaveProperty("createEventSubscription");
+      expect(client).toHaveProperty("deleteEventSubscription");
       expect(client).toHaveProperty("updateEventingConfiguration");
     });
   });
