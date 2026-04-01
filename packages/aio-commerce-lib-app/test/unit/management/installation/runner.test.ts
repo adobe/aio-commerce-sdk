@@ -10,147 +10,215 @@
  * governing permissions and limitations under the License.
  */
 
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import {
-  createInitialInstallationState,
-  runInstallation,
-} from "#management/installation/runner";
-import {
-  configWithCommerceEventing,
-  configWithWebhooks,
-  minimalValidConfig,
-} from "#test/fixtures/config";
-import {
-  createMockInstallationContext,
-  FAKE_SYSTEM_TIME,
-} from "#test/fixtures/installation";
-
-import type { InstallationHooks } from "#management/installation/workflow/hooks";
+import { minimalValidConfig } from "#test/fixtures/config";
+import { createMockInstallationContext } from "#test/fixtures/installation";
 
 describe("createInitialInstallationState", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(FAKE_SYSTEM_TIME));
+    vi.resetModules();
+    vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+  test("creates the root step and delegates state creation to the workflow", async () => {
+    const rootStep = {
+      type: "branch",
+      name: "installation",
+      meta: { label: "Installation" },
+      children: [],
+    };
 
-  test("should create initial state from config with default steps", () => {
-    const state = createInitialInstallationState({
-      config: minimalValidConfig,
-    });
+    const initialState = {
+      id: "installation-id",
+      startedAt: "2026-01-30T10:00:00.000Z",
+      status: "in-progress",
+      step: {
+        id: "step-id",
+        name: "installation",
+        path: ["installation"],
+        meta: { label: "Installation" },
+        status: "pending",
+        children: [],
+      },
+      data: null,
+    };
 
-    expect(state.status).toBe("in-progress");
-    expect(state.step.name).toBe("installation");
-    expect(state.step.meta).toEqual({
-      label: "Installation",
-      description: "App installation workflow",
-    });
-  });
+    const createRootInstallationStep = vi.fn().mockReturnValue(rootStep);
+    const createInitialState = vi.fn().mockReturnValue(initialState);
 
-  test("should include eventing step when config has eventing", () => {
-    const state = createInitialInstallationState({
-      config: configWithCommerceEventing,
-    });
+    vi.doMock("#management/installation/root", () => ({
+      createRootInstallationStep,
+    }));
+    vi.doMock("#management/installation/workflow", () => ({
+      createInitialState,
+      executeWorkflow: vi.fn(),
+    }));
+    vi.doMock("#management/installation/workflow/runner", () => ({
+      createInitialState,
+      executeWorkflow: vi.fn(),
+    }));
+    vi.doMock("#management/installation/workflow/validation", () => ({
+      validateStepTree: vi.fn(),
+    }));
 
-    const eventingStep = state.step.children.find((c) => c.name === "eventing");
-    expect(eventingStep).toBeDefined();
-    expect(eventingStep?.meta.label).toBe("Eventing");
-  });
-
-  test("should include webhooks step when config has webhooks", () => {
-    const state = createInitialInstallationState({
-      config: configWithWebhooks,
-    });
-    const _webhooksStep = state.step.children.find(
-      (c) => c.name === "webhooks",
+    const { createInitialInstallationState } = await import(
+      "#management/installation/runner"
     );
 
-    // TODO: Undo this when webhooks is implemented
-    // expect(webhooksStep).toBeDefined();
-    // expect(webhooksStep?.meta.label).toBe("Webhooks");
-  });
-
-  test("should exclude eventing step when config has no eventing", () => {
-    const state = createInitialInstallationState({
+    const result = createInitialInstallationState({
       config: minimalValidConfig,
     });
 
-    const eventingStep = state.step.children.find((c) => c.name === "eventing");
-    expect(eventingStep).toBeUndefined();
-  });
-
-  test("should exclude webhooks step when config has no webhooks", () => {
-    const state = createInitialInstallationState({
+    expect(createRootInstallationStep).toHaveBeenCalledWith(minimalValidConfig);
+    expect(createInitialState).toHaveBeenCalledWith({
+      rootStep,
       config: minimalValidConfig,
     });
-
-    const webhooksStep = state.step.children.find((c) => c.name === "webhooks");
-    expect(webhooksStep).toBeUndefined();
-  });
-
-  test("should return state with unique id and pending status", () => {
-    const state = createInitialInstallationState({
-      config: minimalValidConfig,
-    });
-
-    expect(state.id).toBeDefined();
-    expect(typeof state.id).toBe("string");
-    expect(state.id.length).toBeGreaterThan(0);
-    expect(state.status).toBe("in-progress");
+    expect(result).toBe(initialState);
   });
 });
 
 describe("runInstallation", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(FAKE_SYSTEM_TIME));
+    vi.resetModules();
+    vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  test("should return succeeded state when all steps complete", async () => {
-    const initialState = createInitialInstallationState({
-      config: minimalValidConfig,
-    });
-
-    const result = await runInstallation({
-      installationContext: createMockInstallationContext(),
-      config: minimalValidConfig,
-      initialState,
-    });
-
-    expect(result.status).toBe("succeeded");
-    expect(result.id).toBe(initialState.id);
-  });
-
-  test("should pass hooks to the workflow executor", async () => {
-    const hooks: InstallationHooks = {
+  test("creates the root step and delegates execution to the workflow", async () => {
+    const rootStep = {
+      type: "branch",
+      name: "installation",
+      meta: { label: "Installation" },
+      children: [],
+    };
+    const installationContext = createMockInstallationContext();
+    const initialState = {
+      id: "installation-id",
+      startedAt: "2026-01-30T10:00:00.000Z",
+      status: "in-progress",
+      step: {
+        id: "step-id",
+        name: "installation",
+        path: ["installation"],
+        meta: { label: "Installation" },
+        status: "pending",
+        children: [],
+      },
+      data: null,
+    };
+    const hooks = {
       onInstallationStart: vi.fn(),
-      onInstallationSuccess: vi.fn(),
-      onStepStart: vi.fn(),
-      onStepSuccess: vi.fn(),
+    };
+    const workflowResult = {
+      id: "installation-id",
+      startedAt: "2026-01-30T10:00:00.000Z",
+      completedAt: "2026-01-30T10:05:00.000Z",
+      status: "succeeded",
+      step: initialState.step,
+      data: null,
     };
 
-    const initialState = createInitialInstallationState({
+    const createRootInstallationStep = vi.fn().mockReturnValue(rootStep);
+    const executeWorkflow = vi.fn().mockResolvedValue(workflowResult);
+
+    vi.doMock("#management/installation/root", () => ({
+      createRootInstallationStep,
+    }));
+    vi.doMock("#management/installation/workflow", () => ({
+      createInitialState: vi.fn(),
+      executeWorkflow,
+    }));
+    vi.doMock("#management/installation/workflow/runner", () => ({
+      createInitialState: vi.fn(),
+      executeWorkflow,
+    }));
+    vi.doMock("#management/installation/workflow/validation", () => ({
+      validateStepTree: vi.fn(),
+    }));
+
+    const { runInstallation } = await import("#management/installation/runner");
+
+    const result = await runInstallation({
       config: minimalValidConfig,
+      installationContext,
+      initialState: initialState as never,
+      hooks,
     });
 
-    await runInstallation({
-      installationContext: createMockInstallationContext(),
+    expect(createRootInstallationStep).toHaveBeenCalledWith(minimalValidConfig);
+    expect(executeWorkflow).toHaveBeenCalledWith({
+      rootStep,
+      installationContext,
       config: minimalValidConfig,
       initialState,
       hooks,
     });
+    expect(result).toBe(workflowResult);
+  });
+});
 
-    expect(hooks.onInstallationStart).toHaveBeenCalledTimes(1);
-    expect(hooks.onInstallationSuccess).toHaveBeenCalledTimes(1);
-    expect(hooks.onStepStart).toHaveBeenCalled();
-    expect(hooks.onStepSuccess).toHaveBeenCalled();
+describe("runValidation", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+  });
+
+  test("creates the root step and delegates validation to the workflow validator", async () => {
+    const rootStep = {
+      type: "branch",
+      name: "installation",
+      meta: { label: "Installation" },
+      children: [],
+    };
+    const validationContext = createMockInstallationContext();
+    const validationResult = {
+      valid: true,
+      result: {
+        name: "installation",
+        path: ["installation"],
+        meta: { label: "Installation" },
+        issues: [],
+        children: [],
+      },
+      summary: {
+        errors: 0,
+        warnings: 0,
+        totalIssues: 0,
+      },
+    };
+
+    const createRootInstallationStep = vi.fn().mockReturnValue(rootStep);
+    const validateStepTree = vi.fn().mockResolvedValue(validationResult);
+
+    vi.doMock("#management/installation/root", () => ({
+      createRootInstallationStep,
+    }));
+    vi.doMock("#management/installation/workflow", () => ({
+      createInitialState: vi.fn(),
+      executeWorkflow: vi.fn(),
+    }));
+    vi.doMock("#management/installation/workflow/runner", () => ({
+      createInitialState: vi.fn(),
+      executeWorkflow: vi.fn(),
+    }));
+    vi.doMock("#management/installation/workflow/validation", () => ({
+      validateStepTree,
+    }));
+
+    const { runValidation } = await import("#management/installation/runner");
+
+    const result = await runValidation({
+      config: minimalValidConfig,
+      validationContext,
+    });
+
+    expect(createRootInstallationStep).toHaveBeenCalledWith(minimalValidConfig);
+    expect(validateStepTree).toHaveBeenCalledWith({
+      rootStep,
+      validationContext,
+      config: minimalValidConfig,
+    });
+    expect(result).toBe(validationResult);
   });
 });

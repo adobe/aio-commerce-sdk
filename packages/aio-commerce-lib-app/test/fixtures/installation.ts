@@ -26,6 +26,10 @@ import type {
 export const FAKE_SYSTEM_TIME = "2026-01-30T10:00:00.000Z";
 export const FAKE_COMPLETED_TIME = "2026-01-30T10:05:00.000Z";
 
+/** Matches any RFC-4122 UUID string. */
+export const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
 /** Creates a mock AioLogger with all methods as vi.fn(). */
 export function createMockLogger(): ReturnType<typeof AioLogger> {
   return {
@@ -34,6 +38,17 @@ export function createMockLogger(): ReturnType<typeof AioLogger> {
     warn: vi.fn(),
     error: vi.fn(),
   } as unknown as ReturnType<typeof AioLogger>;
+}
+
+/**
+ * Builds an InstallationContext with a pre-populated customScripts map.
+ * Use this when testing steps that load and execute custom installation scripts.
+ */
+export function createMockInstallationContextWithScripts(
+  customScripts: Record<string, unknown> = {},
+): InstallationContext {
+  // createMockInstallationContext does not forward customScripts, so spread it in.
+  return { ...createMockInstallationContext(), customScripts };
 }
 
 /** Creates a mock InstallationContext with params and logger. */

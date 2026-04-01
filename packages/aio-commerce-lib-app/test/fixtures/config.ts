@@ -109,6 +109,20 @@ export const configWithEventingAndWebhooks = {
   webhooks: webhooksPart,
 } satisfies CommerceAppConfigOutputModel;
 
+/** Config fixture with a single custom installation script — for focused workflow tests. */
+export const configWithOneScript = {
+  metadata: { ...mockMetadata, id: "test-one-script" },
+  installation: {
+    customInstallationSteps: [
+      {
+        script: "./my-script.js",
+        name: "My Script",
+        description: "A test script",
+      },
+    ],
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 /** Config fixture with custom installation steps. */
 export const configWithCustomInstallationSteps = {
   metadata: { ...mockMetadata, id: "test-app-with-custom-installation-steps" },
