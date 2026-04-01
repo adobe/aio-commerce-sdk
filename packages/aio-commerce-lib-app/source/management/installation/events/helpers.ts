@@ -38,7 +38,9 @@ import type {
   IoEventProvider,
   IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
-import type { AppEvent } from "#config/schema/eventing";
+import type { AppEvent, EventProvider } from "#config/schema/eventing";
+import type { ApplicationMetadata } from "#config/schema/metadata";
+import type { EventsExecutionContext } from "./context";
 import type {
   ConfigureCommerceEventingParams,
   CreateCommerceEventSubscriptionParams,
@@ -644,4 +646,91 @@ export async function onboardCommerceEventing(
     commerceProvider: commerceProviderData,
     subscriptions,
   };
+}
+
+/**
+ * Offboards a single event source from I/O Events by deleting the registrations
+ * that were created for the given provider. The I/O Events provider and its event
+ * metadata are intentionally left in place because they may be shared with other
+ * workspaces or apps.
+ *
+ * This is the reverse of {@link onboardIoEvents} and is called during uninstall.
+ * All deletion errors are caught and logged so that uninstall remains best-effort.
+ *
+ * @param params - Configuration identifying the provider to offboard.
+ * @param existingData - Current I/O Events data (providers and registrations).
+ */
+export async function offboardIoEvents(
+  params: {
+    context: EventsExecutionContext;
+    metadata: ApplicationMetadata;
+    provider: EventProvider;
+  },
+  existingData: ExistingIoEventsData,
+) {
+  const { context, metadata, provider } = params;
+  const { ioEventsClient, appData, logger } = context;
+  const appCredentials = {
+    consumerOrgId: appData.consumerOrgId,
+    projectId: appData.projectId,
+    workspaceId: appData.workspaceId,
+  };
+
+  const instanceId = generateInstanceId(
+    metadata,
+    provider,
+    appData.workspaceId,
+  );
+  const { registrations } = existingData;
+
+  // Find all registrations that belong to this provider's instance.
+  // Registrations names are deterministic (built from provider label + runtime action).
+  const providerData = existingData.providersWithMetadata.find(
+    (p) => p.instance_id === instanceId,
+  );
+
+  if (!providerData) {
+    logger.info(
+      `No I/O Events provider found with instance ID "${instanceId}", skipping registration deletion.`,
+    );
+    return;
+  }
+
+  // Find registrations that reference events from this provider.
+  const providerRegistrations = registrations.filter((reg) =>
+    reg.events_of_interest?.some((e) => e.provider_id === providerData.id),
+  );
+
+  if (providerRegistrations.length === 0) {
+    logger.info(
+      `No I/O Events registrations found for provider "${provider.label}" (instance ID: "${instanceId}"), nothing to delete.`,
+    );
+    return;
+  }
+
+  logger.info(
+    `Deleting ${providerRegistrations.length} I/O Events registration(s) for provider "${provider.label}" (instance ID: "${instanceId}")...`,
+  );
+
+  for (const registration of providerRegistrations) {
+    logger.info(
+      `Deleting registration "${registration.name}" (ID: ${registration.id})...`,
+    );
+
+    await ioEventsClient
+      .deleteRegistration({
+        ...appCredentials,
+        registrationId: registration.id,
+      })
+      .then(() => {
+        logger.info(
+          `Deleted registration "${registration.name}" (ID: ${registration.id}).`,
+        );
+      })
+      .catch((error) => {
+        logger.warn(
+          `Failed to delete registration "${registration.name}" (ID: ${registration.id}): ${stringifyError(error)}. Continuing uninstall.`,
+        );
+      });
+  }
 }

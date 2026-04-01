@@ -27,6 +27,7 @@ import {
   createEventMetadataForProvider,
   createEventProvider,
   createRegistration,
+  deleteRegistration,
   getAllEventProviders,
   getAllRegistrations,
 } from "@adobe/aio-commerce-lib-events/io-events";
@@ -76,6 +77,7 @@ function createIoEventsApiClient(params: RuntimeActionParams) {
     createEventProvider,
     createEventMetadataForProvider,
     createRegistration,
+    deleteRegistration,
     getAllEventProviders,
     getAllRegistrations,
   });

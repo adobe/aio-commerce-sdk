@@ -19,6 +19,7 @@ import {
 import { createWebhooksStepContext } from "./context";
 import {
   createWebhookSubscriptions,
+  deleteWebhookSubscriptions,
   validateWebhookConflicts,
 } from "./helpers";
 
@@ -37,6 +38,13 @@ const subscriptionsStep = defineLeafStep({
 
   run: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
     createWebhookSubscriptions(config, context),
+
+  uninstall: async (
+    config: WebhooksConfig,
+    context: WebhooksExecutionContext,
+  ) => {
+    await deleteWebhookSubscriptions(config, context);
+  },
 });
 
 /** Branch step for setting up Commerce webhooks. */

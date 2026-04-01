@@ -124,6 +124,16 @@ export type LeafStep<
     config: TConfig,
     context: ValidationExecutionContext<TStepCtx>,
   ) => ValidationIssue[] | Promise<ValidationIssue[]>;
+
+  /**
+   * Optional uninstall handler for the step.
+   * Called during uninstallation to reverse the work done by `run`.
+   * If absent, the step is silently skipped during uninstallation.
+   */
+  uninstall?: (
+    config: TConfig,
+    context: ExecutionContext<TStepCtx>,
+  ) => void | Promise<void>;
 };
 
 /** A branch step that contains children (no execution). */
@@ -171,6 +181,9 @@ export interface AnyStep {
   name: string;
   run?: (config: any, context: any) => unknown | Promise<unknown>;
   type: "leaf" | "branch";
+
+  uninstall?: (config: any, context: any) => void | Promise<void>;
+
   validate?: (
     config: any,
     context: any,
@@ -235,6 +248,7 @@ export function defineLeafStep<
     when: options.when,
     run: options.run,
     validate: options.validate,
+    uninstall: options.uninstall,
   };
 }
 

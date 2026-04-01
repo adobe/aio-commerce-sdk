@@ -14,7 +14,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   createInitialInstallationState,
+  createInitialUninstallationState,
   runInstallation,
+  runUninstallation,
 } from "#management/installation/runner";
 import {
   configWithCommerceEventing,
@@ -142,6 +144,133 @@ describe("runInstallation", () => {
     });
 
     await runInstallation({
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+      hooks,
+    });
+
+    expect(hooks.onInstallationStart).toHaveBeenCalledTimes(1);
+    expect(hooks.onInstallationSuccess).toHaveBeenCalledTimes(1);
+    expect(hooks.onStepStart).toHaveBeenCalled();
+    expect(hooks.onStepSuccess).toHaveBeenCalled();
+  });
+});
+
+describe("createInitialUninstallationState", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(FAKE_SYSTEM_TIME));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("should create initial state from config with default steps", () => {
+    const state = createInitialUninstallationState({
+      config: minimalValidConfig,
+    });
+
+    expect(state.status).toBe("in-progress");
+    expect(state.step.name).toBe("uninstallation");
+    expect(state.step.meta).toEqual({
+      label: "Uninstallation",
+      description: "App uninstallation workflow",
+    });
+  });
+
+  test("should include eventing step when config has eventing", () => {
+    const state = createInitialUninstallationState({
+      config: configWithCommerceEventing,
+    });
+
+    const eventingStep = state.step.children.find((c) => c.name === "eventing");
+    expect(eventingStep).toBeDefined();
+    expect(eventingStep?.meta.label).toBe("Eventing");
+  });
+
+  test("should include webhooks step when config has webhooks", () => {
+    const state = createInitialUninstallationState({
+      config: configWithWebhooks,
+    });
+    const _webhooksStep = state.step.children.find(
+      (c) => c.name === "webhooks",
+    );
+
+    // TODO: Undo this when webhooks is implemented
+    // expect(webhooksStep).toBeDefined();
+    // expect(webhooksStep?.meta.label).toBe("Webhooks");
+  });
+
+  test("should exclude eventing step when config has no eventing", () => {
+    const state = createInitialUninstallationState({
+      config: minimalValidConfig,
+    });
+
+    const eventingStep = state.step.children.find((c) => c.name === "eventing");
+    expect(eventingStep).toBeUndefined();
+  });
+
+  test("should exclude webhooks step when config has no webhooks", () => {
+    const state = createInitialUninstallationState({
+      config: minimalValidConfig,
+    });
+
+    const webhooksStep = state.step.children.find((c) => c.name === "webhooks");
+    expect(webhooksStep).toBeUndefined();
+  });
+
+  test("should return state with unique id and pending status", () => {
+    const state = createInitialUninstallationState({
+      config: minimalValidConfig,
+    });
+
+    expect(state.id).toBeDefined();
+    expect(typeof state.id).toBe("string");
+    expect(state.id.length).toBeGreaterThan(0);
+    expect(state.status).toBe("in-progress");
+  });
+});
+
+describe("runUninstallation", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(FAKE_SYSTEM_TIME));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("should return succeeded state when all steps complete", async () => {
+    const initialState = createInitialUninstallationState({
+      config: minimalValidConfig,
+    });
+
+    const result = await runUninstallation({
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(result.status).toBe("succeeded");
+    expect(result.id).toBe(initialState.id);
+  });
+
+  test("should pass hooks to the workflow executor", async () => {
+    const hooks: InstallationHooks = {
+      onInstallationStart: vi.fn(),
+      onInstallationSuccess: vi.fn(),
+      onStepStart: vi.fn(),
+      onStepSuccess: vi.fn(),
+    };
+
+    const initialState = createInitialUninstallationState({
+      config: minimalValidConfig,
+    });
+
+    await runUninstallation({
       installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
       initialState,

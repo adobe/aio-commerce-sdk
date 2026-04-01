@@ -13,7 +13,10 @@
 import { describe, expect, test } from "vitest";
 
 import { eventingStep } from "#management/installation/events/branch";
-import { createRootInstallationStep } from "#management/installation/root";
+import {
+  createRootInstallationStep,
+  createRootUninstallationStep,
+} from "#management/installation/root";
 import { webhooksStep } from "#management/installation/webhooks/branch";
 import {
   configWithCustomInstallationSteps,
@@ -35,6 +38,54 @@ describe("createRootInstallationStep", () => {
 
   test("should create custom installation step with dynamic children when config has custom steps", () => {
     const result = createRootInstallationStep(
+      configWithCustomInstallationSteps,
+    );
+
+    expect(result.children.length).toBe(3);
+    const customInstallationStep = result.children[2];
+    expect(customInstallationStep.name).toBe("customInstallationSteps");
+    expect(customInstallationStep.type).toBe("branch");
+
+    // The custom installation step should have children (script steps directly)
+    if (
+      customInstallationStep.type === "branch" &&
+      customInstallationStep.children
+    ) {
+      expect(customInstallationStep.children.length).toBe(2);
+      expect(customInstallationStep.children[0].name).toBe("demoSuccess");
+      expect(customInstallationStep.children[0].meta.label).toBe(
+        "Demo Success",
+      );
+
+      expect(customInstallationStep.children[0].type).toBe("leaf");
+    }
+  });
+});
+
+describe("createRootUninstallationStep", () => {
+  test("should create uninstallation step with default children", () => {
+    const result = createRootUninstallationStep(minimalValidConfig);
+
+    expect(result.type).toBe("branch");
+    expect(result.name).toBe("uninstallation");
+
+    expect(result.children.length).toBe(3);
+    expect(result.children[0]).toBe(eventingStep);
+    expect(result.children[1]).toBe(webhooksStep);
+    expect(result.children[2].name).toBe("customInstallationSteps");
+  });
+
+  test("should have correct meta label for uninstallation", () => {
+    const result = createRootUninstallationStep(minimalValidConfig);
+
+    expect(result.meta).toEqual({
+      label: "Uninstallation",
+      description: "App uninstallation workflow",
+    });
+  });
+
+  test("should create custom uninstallation step with dynamic children when config has custom steps", () => {
+    const result = createRootUninstallationStep(
       configWithCustomInstallationSteps,
     );
 

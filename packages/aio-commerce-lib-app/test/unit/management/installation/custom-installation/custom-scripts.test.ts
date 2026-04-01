@@ -208,3 +208,123 @@ describe("createCustomScriptStep - run function", () => {
     expect(mockScript2).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("createCustomScriptStep - uninstall function", () => {
+  test("should call uninstall function when script exports it", async () => {
+    const mockUninstall = vi.fn().mockResolvedValue(undefined);
+    const mockRun = vi.fn().mockResolvedValue({ status: "success" });
+
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": {
+        default: mockRun,
+        uninstall: mockUninstall,
+      },
+    };
+
+    await step.uninstall?.(configWithCustomInstallationSteps, mockContext);
+
+    expect(mockUninstall).toHaveBeenCalledWith(
+      configWithCustomInstallationSteps,
+      mockContext,
+    );
+  });
+
+  test("should skip uninstall gracefully when script does not export uninstall", async () => {
+    const mockRun = vi.fn().mockResolvedValue({ status: "success" });
+
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": { default: mockRun }, // No uninstall export
+    };
+
+    // Should not throw and should complete successfully
+    await expect(
+      step.uninstall?.(configWithCustomInstallationSteps, mockContext),
+    ).resolves.toBeUndefined();
+  });
+
+  test("should throw error when script module not found during uninstall", async () => {
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {}; // Empty scripts
+
+    await expect(
+      step.uninstall?.(configWithCustomInstallationSteps, mockContext),
+    ).rejects.toThrow();
+  });
+
+  test("should handle uninstall function that throws an error", async () => {
+    const mockUninstall = vi
+      .fn()
+      .mockRejectedValue(new Error("Uninstall failed"));
+
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": {
+        default: vi.fn(),
+        uninstall: mockUninstall,
+      },
+    };
+
+    await expect(
+      step.uninstall?.(configWithCustomInstallationSteps, mockContext),
+    ).rejects.toThrow("Uninstall failed");
+  });
+
+  test("should call uninstall on multiple scripts independently", async () => {
+    const mockUninstall1 = vi.fn().mockResolvedValue(undefined);
+    const mockUninstall2 = vi.fn().mockResolvedValue(undefined);
+
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step1 = steps?.[0] as LeafStep;
+    const step2 = steps?.[1] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": {
+        default: vi.fn(),
+        uninstall: mockUninstall1,
+      },
+      "./demo-error.js": {
+        default: vi.fn(),
+        uninstall: mockUninstall2,
+      },
+    };
+
+    await step1.uninstall?.(configWithCustomInstallationSteps, mockContext);
+    await step2.uninstall?.(configWithCustomInstallationSteps, mockContext);
+
+    expect(mockUninstall1).toHaveBeenCalledTimes(1);
+    expect(mockUninstall2).toHaveBeenCalledTimes(1);
+  });
+
+  test("should skip uninstall when uninstall is not a function", async () => {
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": {
+        default: vi.fn(),
+        uninstall: "not a function", // Not a function
+      },
+    };
+
+    // Should not throw and should complete successfully
+    await expect(
+      step.uninstall?.(configWithCustomInstallationSteps, mockContext),
+    ).resolves.toBeUndefined();
+  });
+});

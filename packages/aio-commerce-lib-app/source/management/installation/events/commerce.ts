@@ -13,7 +13,11 @@
 import { hasCommerceEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
-import { onboardCommerceEventing, onboardIoEvents } from "./helpers";
+import {
+  offboardIoEvents,
+  onboardCommerceEventing,
+  onboardIoEvents,
+} from "./helpers";
 import {
   COMMERCE_PROVIDER_TYPE,
   getCommerceEventingExistingData,
@@ -96,6 +100,26 @@ export const commerceEventsStep = defineLeafStep({
 
     logger.debug("Completed Commerce Events installation step.");
     return stepData;
+  },
+
+  uninstall: async (config, context: EventsExecutionContext) => {
+    const { logger } = context;
+    logger.debug("Starting uninstall of Commerce Events with config:", config);
+
+    logger.info(
+      "Commerce Eventing configuration and provider offboarding (de-registration) is not yet supported by the Commerce Eventing API and has been skipped.",
+    );
+
+    const existingIoEventsData = await getIoEventsExistingData(context);
+
+    for (const { provider } of config.eventing.commerce) {
+      await offboardIoEvents(
+        { context, metadata: config.metadata, provider },
+        existingIoEventsData,
+      );
+    }
+
+    logger.debug("Completed Commerce Events uninstall step.");
   },
 });
 

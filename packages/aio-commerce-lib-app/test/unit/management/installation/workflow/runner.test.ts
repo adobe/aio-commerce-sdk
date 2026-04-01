@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   createInitialState,
+  executeUninstallWorkflow,
   executeWorkflow,
 } from "#management/installation/workflow/runner";
 import {
@@ -853,5 +854,285 @@ describe("executeWorkflow", () => {
         },
       },
     });
+  });
+});
+
+describe("executeUninstallWorkflow", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(FAKE_SYSTEM_TIME));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("should call uninstall handler on steps that have one", async () => {
+    const uninstallFn = vi.fn();
+    const leafStep = defineLeafStep({
+      name: "step1",
+      meta: { label: "Step 1" },
+      run: vi.fn(),
+      uninstall: uninstallFn,
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { label: "Root" },
+      children: [leafStep],
+    });
+
+    const installationContext = createMockInstallationContext();
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    const result = await executeUninstallWorkflow({
+      rootStep,
+      installationContext,
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(result.status).toBe("succeeded");
+    expect(uninstallFn).toHaveBeenCalledTimes(1);
+    expect(uninstallFn).toHaveBeenCalledWith(
+      minimalValidConfig,
+      expect.objectContaining({
+        params: installationContext.params,
+        logger: installationContext.logger,
+      }),
+    );
+  });
+
+  test("should silently skip steps that do not have an uninstall handler", async () => {
+    const runFn = vi.fn().mockReturnValue("result");
+    const leafStep = defineLeafStep({
+      name: "step1",
+      meta: { label: "Step 1" },
+      run: runFn,
+      // no uninstall handler
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { label: "Root" },
+      children: [leafStep],
+    });
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    const result = await executeUninstallWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    // Step should succeed even without an uninstall handler
+    expect(result.status).toBe("succeeded");
+    // The run function should NOT be called during uninstall
+    expect(runFn).not.toHaveBeenCalled();
+  });
+
+  test("should return failed state when an uninstall handler throws", async () => {
+    const leafStep = defineLeafStep({
+      name: "step1",
+      meta: { label: "Step 1" },
+      run: vi.fn(),
+      uninstall: () => {
+        throw new Error("Uninstall failed");
+      },
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { label: "Root" },
+      children: [leafStep],
+    });
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    const result = await executeUninstallWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(result.status).toBe("failed");
+    if (result.status === "failed") {
+      expect(result.error).toBeDefined();
+      expect(result.error.message).toBe("Uninstall failed");
+    }
+  });
+
+  test("should call lifecycle hooks the same way as executeWorkflow", async () => {
+    const leafStep = defineLeafStep({
+      name: "step1",
+      meta: { label: "Step 1" },
+      run: vi.fn(),
+      uninstall: vi.fn(),
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { label: "Root" },
+      children: [leafStep],
+    });
+
+    const hooks: InstallationHooks = {
+      onInstallationStart: vi.fn(),
+      onInstallationSuccess: vi.fn(),
+      onStepStart: vi.fn(),
+      onStepSuccess: vi.fn(),
+    };
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    await executeUninstallWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+      hooks,
+    });
+
+    expect(hooks.onInstallationStart).toHaveBeenCalledTimes(1);
+    expect(hooks.onInstallationSuccess).toHaveBeenCalledTimes(1);
+    // Called for root and step1
+    expect(hooks.onStepStart).toHaveBeenCalledTimes(2);
+    expect(hooks.onStepSuccess).toHaveBeenCalledTimes(2);
+  });
+
+  test("should not store step results in data during uninstall", async () => {
+    const leafStep = defineLeafStep({
+      name: "step1",
+      meta: { label: "Step 1" },
+      run: vi.fn().mockReturnValue({ key: "value" }),
+      uninstall: vi.fn(),
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { label: "Root" },
+      children: [leafStep],
+    });
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    const result = await executeUninstallWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    // No step results stored during uninstall (uninstall returns void, not keyed data)
+    expect(result.status).toBe("succeeded");
+    // data may be initialized to an empty object, but no step results are nested in it
+    expect(result.data).not.toHaveProperty("root.step1");
+  });
+
+  test("should call onInstallationFailure hook when uninstall handler throws", async () => {
+    const leafStep = defineLeafStep({
+      name: "step1",
+      meta: { label: "Step 1" },
+      run: vi.fn(),
+      uninstall: () => {
+        throw new Error("Uninstall error");
+      },
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { label: "Root" },
+      children: [leafStep],
+    });
+
+    const hooks: InstallationHooks = {
+      onInstallationFailure: vi.fn(),
+    };
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    await executeUninstallWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+      hooks,
+    });
+
+    expect(hooks.onInstallationFailure).toHaveBeenCalledTimes(1);
+    expect(hooks.onInstallationFailure).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "failed",
+        id: initialState.id,
+        error: expect.objectContaining({
+          message: "Uninstall error",
+        }),
+      }),
+    );
+  });
+
+  test("should handle mixed scenario — some steps have uninstall, some do not", async () => {
+    const uninstallFn = vi.fn();
+    const runFn2 = vi.fn().mockReturnValue("result2");
+
+    const step1 = defineLeafStep({
+      name: "step1",
+      meta: { label: "Step 1" },
+      run: vi.fn(),
+      uninstall: uninstallFn,
+    });
+
+    const step2 = defineLeafStep({
+      name: "step2",
+      meta: { label: "Step 2" },
+      run: runFn2,
+      // no uninstall handler
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { label: "Root" },
+      children: [step1, step2],
+    });
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    const result = await executeUninstallWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    // step1's uninstall should be called
+    expect(uninstallFn).toHaveBeenCalledTimes(1);
+    // step2 should be silently skipped, run should not be called
+    expect(runFn2).not.toHaveBeenCalled();
+    // Overall workflow result should be succeeded
+    expect(result.status).toBe("succeeded");
   });
 });

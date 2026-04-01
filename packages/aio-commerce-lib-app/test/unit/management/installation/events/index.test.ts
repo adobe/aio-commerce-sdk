@@ -97,6 +97,7 @@ describe("events installation module", () => {
           createRegistration: vi
             .fn()
             .mockResolvedValue({ id: "registration-123" }),
+          deleteRegistration: vi.fn().mockResolvedValue(undefined),
         },
         commerceEventsClient: {
           getAllEventProviders: vi.fn().mockResolvedValue([]),
@@ -167,6 +168,7 @@ describe("events installation module", () => {
           createRegistration: vi
             .fn()
             .mockResolvedValue({ id: "registration-456" }),
+          deleteRegistration: vi.fn().mockResolvedValue(undefined),
         },
       });
 
@@ -182,6 +184,329 @@ describe("events installation module", () => {
       expect(
         mockContext.ioEventsClient.getAllEventProviders,
       ).toHaveBeenCalled();
+    });
+  });
+
+  describe("commerceEventsStep uninstall handler", () => {
+    test("should have an uninstall handler defined", () => {
+      expect(commerceEventsStep.uninstall).toBeDefined();
+    });
+
+    test("should delete I/O Events registrations for each commerce provider", async () => {
+      const instanceId =
+        "test-app-commerce-events-commerce-events-provider-test-workspace-id";
+      const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
+
+      const mockContext = createMockEventingInstallationContext({
+        ioEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue({
+            _embedded: {
+              providers: [
+                {
+                  id: "io-provider-123",
+                  instance_id: instanceId,
+                  _embedded: { eventmetadata: [] },
+                },
+              ],
+            },
+          }),
+          getAllRegistrations: vi.fn().mockResolvedValue({
+            _embedded: {
+              registrations: [
+                {
+                  id: "reg-1",
+                  name: "Commerce Event Registration: Action (My Package)",
+                  client_id: "test-client-id",
+                  events_of_interest: [
+                    {
+                      provider_id: "io-provider-123",
+                      event_code: "test.event",
+                    },
+                  ],
+                  status: "VERIFIED",
+                  type: "APP_REGISTRATION",
+                  integration_status: "VERIFIED",
+                  registration_id: "reg-1",
+                  delivery_type: "webhook",
+                },
+              ],
+            },
+          }),
+          deleteRegistration: mockDeleteRegistration,
+        },
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
+      });
+
+      await commerceEventsStep.uninstall?.(
+        configWithCommerceEventing,
+        mockContext,
+      );
+
+      expect(
+        mockContext.ioEventsClient.getAllEventProviders,
+      ).toHaveBeenCalled();
+      expect(mockContext.ioEventsClient.getAllRegistrations).toHaveBeenCalled();
+      expect(mockDeleteRegistration).toHaveBeenCalledWith(
+        expect.objectContaining({ registrationId: "reg-1" }),
+      );
+    });
+
+    test("should skip deletion when no provider found for instance ID", async () => {
+      const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
+
+      const mockContext = createMockEventingInstallationContext({
+        ioEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue({
+            _embedded: { providers: [] },
+          }),
+          getAllRegistrations: vi.fn().mockResolvedValue({
+            _embedded: { registrations: [] },
+          }),
+          deleteRegistration: mockDeleteRegistration,
+        },
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
+      });
+
+      await commerceEventsStep.uninstall?.(
+        configWithCommerceEventing,
+        mockContext,
+      );
+
+      expect(mockDeleteRegistration).not.toHaveBeenCalled();
+    });
+
+    test("should not throw when deleteRegistration fails (best-effort)", async () => {
+      const instanceId =
+        "test-app-commerce-events-commerce-events-provider-test-workspace-id";
+
+      const mockContext = createMockEventingInstallationContext({
+        ioEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue({
+            _embedded: {
+              providers: [
+                {
+                  id: "io-provider-123",
+                  instance_id: instanceId,
+                  _embedded: { eventmetadata: [] },
+                },
+              ],
+            },
+          }),
+          getAllRegistrations: vi.fn().mockResolvedValue({
+            _embedded: {
+              registrations: [
+                {
+                  id: "reg-1",
+                  name: "Commerce Event Registration",
+                  client_id: "test-client-id",
+                  events_of_interest: [
+                    {
+                      provider_id: "io-provider-123",
+                      event_code: "test.event",
+                    },
+                  ],
+                  status: "VERIFIED",
+                  type: "APP_REGISTRATION",
+                  integration_status: "VERIFIED",
+                  registration_id: "reg-1",
+                  delivery_type: "webhook",
+                },
+              ],
+            },
+          }),
+          deleteRegistration: vi.fn().mockRejectedValue(new Error("API error")),
+        },
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
+      });
+
+      // Should not throw
+      await expect(
+        commerceEventsStep.uninstall?.(configWithCommerceEventing, mockContext),
+      ).resolves.toBeUndefined();
+    });
+
+    test("should handle provider with zero registrations gracefully", async () => {
+      const instanceId =
+        "test-app-commerce-events-commerce-events-provider-test-workspace-id";
+      const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
+
+      const mockContext = createMockEventingInstallationContext({
+        ioEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue({
+            _embedded: {
+              providers: [
+                {
+                  id: "io-provider-123",
+                  instance_id: instanceId,
+                  _embedded: { eventmetadata: [] },
+                },
+              ],
+            },
+          }),
+          getAllRegistrations: vi.fn().mockResolvedValue({
+            _embedded: {
+              registrations: [],
+            },
+          }),
+          deleteRegistration: mockDeleteRegistration,
+        },
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
+      });
+
+      await commerceEventsStep.uninstall?.(
+        configWithCommerceEventing,
+        mockContext,
+      );
+
+      expect(mockDeleteRegistration).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("externalEventsStep uninstall handler", () => {
+    test("should have an uninstall handler defined", () => {
+      expect(externalEventsStep.uninstall).toBeDefined();
+    });
+
+    test("should delete I/O Events registrations for each external provider", async () => {
+      const instanceId =
+        "test-app-external-events-external-events-provider-test-workspace-id";
+      const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
+
+      const mockContext = createMockEventingInstallationContext({
+        ioEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue({
+            _embedded: {
+              providers: [
+                {
+                  id: "io-provider-456",
+                  instance_id: instanceId,
+                  _embedded: { eventmetadata: [] },
+                },
+              ],
+            },
+          }),
+          getAllRegistrations: vi.fn().mockResolvedValue({
+            _embedded: {
+              registrations: [
+                {
+                  id: "reg-2",
+                  name: "External Event Registration",
+                  client_id: "test-client-id",
+                  events_of_interest: [
+                    {
+                      provider_id: "io-provider-456",
+                      event_code: "test.event",
+                    },
+                  ],
+                  status: "VERIFIED",
+                  type: "APP_REGISTRATION",
+                  integration_status: "VERIFIED",
+                  registration_id: "reg-2",
+                  delivery_type: "webhook",
+                },
+              ],
+            },
+          }),
+          deleteRegistration: mockDeleteRegistration,
+        },
+      });
+
+      await externalEventsStep.uninstall?.(
+        configWithExternalEventing,
+        mockContext,
+      );
+
+      expect(
+        mockContext.ioEventsClient.getAllEventProviders,
+      ).toHaveBeenCalled();
+      expect(mockContext.ioEventsClient.getAllRegistrations).toHaveBeenCalled();
+      expect(mockDeleteRegistration).toHaveBeenCalledWith(
+        expect.objectContaining({ registrationId: "reg-2" }),
+      );
+    });
+
+    test("should skip deletion when no provider found for instance ID", async () => {
+      const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
+
+      const mockContext = createMockEventingInstallationContext({
+        ioEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue({
+            _embedded: { providers: [] },
+          }),
+          getAllRegistrations: vi.fn().mockResolvedValue({
+            _embedded: { registrations: [] },
+          }),
+          deleteRegistration: mockDeleteRegistration,
+        },
+      });
+
+      await externalEventsStep.uninstall?.(
+        configWithExternalEventing,
+        mockContext,
+      );
+
+      expect(mockDeleteRegistration).not.toHaveBeenCalled();
+    });
+
+    test("should not throw when deleteRegistration fails (best-effort)", async () => {
+      const instanceId =
+        "test-app-external-events-external-events-provider-test-workspace-id";
+
+      const mockContext = createMockEventingInstallationContext({
+        ioEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue({
+            _embedded: {
+              providers: [
+                {
+                  id: "io-provider-456",
+                  instance_id: instanceId,
+                  _embedded: { eventmetadata: [] },
+                },
+              ],
+            },
+          }),
+          getAllRegistrations: vi.fn().mockResolvedValue({
+            _embedded: {
+              registrations: [
+                {
+                  id: "reg-2",
+                  name: "External Event Registration",
+                  client_id: "test-client-id",
+                  events_of_interest: [
+                    {
+                      provider_id: "io-provider-456",
+                      event_code: "test.event",
+                    },
+                  ],
+                  status: "VERIFIED",
+                  type: "APP_REGISTRATION",
+                  integration_status: "VERIFIED",
+                  registration_id: "reg-2",
+                  delivery_type: "webhook",
+                },
+              ],
+            },
+          }),
+          deleteRegistration: vi.fn().mockRejectedValue(new Error("API error")),
+        },
+      });
+
+      // Should not throw
+      await expect(
+        externalEventsStep.uninstall?.(configWithExternalEventing, mockContext),
+      ).resolves.toBeUndefined();
     });
   });
 

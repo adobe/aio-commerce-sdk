@@ -13,7 +13,7 @@
 import { hasExternalEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
-import { onboardIoEvents } from "./helpers";
+import { offboardIoEvents, onboardIoEvents } from "./helpers";
 import { EXTERNAL_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
 
 import type { InferStepOutput } from "#management/installation/workflow/step";
@@ -67,6 +67,22 @@ export const externalEventsStep = defineLeafStep({
 
     logger.debug("Completed External Events installation step.");
     return stepData;
+  },
+
+  uninstall: async (config, context: EventsExecutionContext) => {
+    const { logger } = context;
+    logger.debug("Starting uninstall of External Events with config:", config);
+
+    const existingIoEventsData = await getIoEventsExistingData(context);
+
+    for (const { provider } of config.eventing.external) {
+      await offboardIoEvents(
+        { context, metadata: config.metadata, provider },
+        existingIoEventsData,
+      );
+    }
+
+    logger.debug("Completed External Events uninstall step.");
   },
 });
 

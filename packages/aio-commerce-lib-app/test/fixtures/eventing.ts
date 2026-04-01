@@ -89,17 +89,27 @@ export function createMockIoEventsClient(
     ),
     createEventProvider: vi.fn(overrides?.createEventProvider),
     createRegistration: vi.fn(overrides?.createRegistration),
+    deleteRegistration: vi.fn(overrides?.deleteRegistration),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllRegistrations: vi.fn(overrides?.getAllRegistrations),
   } satisfies Partial<CustomAdobeIoEventsApiClient>;
 }
+
+/** Options for creating a mock {@link EventsExecutionContext}. */
+export type MockEventingInstallationContextOptions = Omit<
+  Partial<EventsExecutionContext>,
+  "ioEventsClient" | "commerceEventsClient"
+> & {
+  ioEventsClient?: Partial<CustomAdobeIoEventsApiClient>;
+  commerceEventsClient?: Partial<CustomCommerceEventsApiClient>;
+};
 
 /** Creates a mock {@link EventsExecutionContext} for testing. */
 export function createMockEventingInstallationContext({
   commerceEventsClient,
   ioEventsClient,
   ...installationOverrides
-}: Partial<EventsExecutionContext> = {}): EventsExecutionContext {
+}: MockEventingInstallationContextOptions = {}): EventsExecutionContext {
   const mockInstallationContext = createMockInstallationContext(
     installationOverrides,
   );
