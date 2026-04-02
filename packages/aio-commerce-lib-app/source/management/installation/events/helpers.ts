@@ -306,12 +306,12 @@ async function configureCommerceEventing(
 ) {
   const { context, config } = params;
   const { commerceEventsClient, logger } = context;
+  const { isDefaultProviderConfigured, isDefaultWorkspaceConfigurationEmpty } =
+    existingData;
+
   logger.info("Starting configuration of the Commerce Eventing Module");
 
-  if (
-    existingData.isDefaultProviderConfigured &&
-    !existingData.isDefaultWorkspaceConfigurationEmpty
-  ) {
+  if (isDefaultProviderConfigured && !isDefaultWorkspaceConfigurationEmpty) {
     logger.info(
       "Commerce Eventing Module is already configured, skipping configuration step.",
     );
@@ -322,7 +322,7 @@ async function configureCommerceEventing(
   const { workspace_configuration, ...configWithoutWorkspace } = config;
   let updateParams: UpdateEventingConfigurationParams = { enabled: true };
 
-  if (existingData.isDefaultWorkspaceConfigurationEmpty) {
+  if (isDefaultWorkspaceConfigurationEmpty) {
     if (!workspace_configuration) {
       const message =
         "Workspace configuration is required to enable Commerce Eventing when there is not an existing one.";
@@ -338,7 +338,7 @@ async function configureCommerceEventing(
     );
   }
 
-  if (!existingData.isDefaultProviderConfigured) {
+  if (!isDefaultProviderConfigured) {
     logger.info(
       "Default provider not configured, it will be created with the provided configuration.",
     );
@@ -350,10 +350,7 @@ async function configureCommerceEventing(
   }
 
   return commerceEventsClient
-    .updateEventingConfiguration({
-      ...config,
-      enabled: true,
-    })
+    .updateEventingConfiguration(updateParams)
     .then((success) => {
       if (success) {
         logger.info("Commerce Eventing Module configured successfully.");
