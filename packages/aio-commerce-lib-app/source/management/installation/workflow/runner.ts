@@ -64,6 +64,9 @@ export type ExecuteWorkflowOptions = {
   hooks?: InstallationHooks;
 };
 
+/** Execution mode: "run" for installation, "uninstall" for uninstallation. */
+type ExecutionMode = "run" | "uninstall";
+
 /** Context for step execution containing all necessary dependencies. */
 type StepExecutionContext = {
   installationContext: InstallationContext;
@@ -74,6 +77,7 @@ type StepExecutionContext = {
   data: Record<string, unknown> | null;
   error: InstallationError | null;
   hooks?: InstallationHooks;
+  mode: ExecutionMode;
 };
 
 /**
@@ -101,6 +105,26 @@ export function createInitialState(
 export async function executeWorkflow(
   options: ExecuteWorkflowOptions,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
+  return executeWorkflowWithMode(options, "run");
+}
+
+/**
+ * Executes an uninstall workflow from an initial state. Returns the final state (never throws).
+ * Steps with an `uninstall` handler get it called; steps without are silently skipped.
+ */
+export async function executeUninstallWorkflow(
+  options: ExecuteWorkflowOptions,
+): Promise<SucceededInstallationState | FailedInstallationState> {
+  return executeWorkflowWithMode(options, "uninstall");
+}
+
+/**
+ * Internal implementation shared by executeWorkflow and executeUninstallWorkflow.
+ */
+async function executeWorkflowWithMode(
+  options: ExecuteWorkflowOptions,
+  mode: ExecutionMode,
+): Promise<SucceededInstallationState | FailedInstallationState> {
   const { rootStep, installationContext, config, initialState, hooks } =
     options;
 
@@ -115,6 +139,7 @@ export async function executeWorkflow(
     data: null,
     error: null,
     hooks,
+    mode,
   };
 
   await callHook(hooks, "onInstallationStart", snapshot(context));
@@ -270,7 +295,7 @@ async function executeBranchStep(
   }
 }
 
-/** Executes a leaf step and stores its result. */
+/** Executes a leaf step and stores its result, or runs uninstall if in uninstall mode. */
 async function executeLeafStep(
   step: LeafStep,
   stepStatus: StepStatus,
@@ -278,6 +303,15 @@ async function executeLeafStep(
   context: StepExecutionContext,
 ): Promise<void> {
   const executionContext = { ...context.installationContext, ...inherited };
+
+  if (context.mode === "uninstall") {
+    // Silently skip steps that don't have an uninstall handler
+    if (step.uninstall) {
+      await step.uninstall(context.config, executionContext);
+    }
+    return;
+  }
+
   const result = await step.run(context.config, executionContext);
 
   context.data ??= {};

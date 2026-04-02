@@ -18,6 +18,7 @@ import {
   createOrGetWebhookSubscription,
   createWebhookSubscription,
   createWebhookSubscriptions,
+  deleteWebhookSubscriptions,
   resolveDeveloperConsoleOAuthCredentials,
   validateWebhookConflicts,
 } from "#management/installation/webhooks/helpers";
@@ -38,12 +39,14 @@ function makeContext(
   subscribeWebhookFn = vi.fn().mockResolvedValue(null),
   getWebhookListFn = vi.fn().mockResolvedValue([]),
   params = DEFAULT_PARAMS,
+  unsubscribeWebhookFn = vi.fn().mockResolvedValue(null),
 ): WebhooksExecutionContext {
   return {
     params,
     commerceWebhooksClient: {
       getWebhookList: getWebhookListFn,
       subscribeWebhook: subscribeWebhookFn,
+      unsubscribeWebhook: unsubscribeWebhookFn,
     },
     logger: {
       info: vi.fn(),
@@ -1037,6 +1040,178 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "",
       }),
     ).toThrow(Error);
+  });
+});
+
+describe("deleteWebhookSubscriptions", () => {
+  test("calls unsubscribeWebhook for each configured webhook that exists in the list", async () => {
+    const unsubscribeWebhook = vi.fn().mockResolvedValue(null);
+    // configWithWebhooks metadata.id = "test-app-webhooks" → prefix "test_app_webhooks_"
+    // The first (and only) webhook has batch_name "default" and hook_name "order_created"
+    const existingWebhook = {
+      webhook_method: "plugin.order.api.order_created",
+      webhook_type: "after",
+      batch_name: "test_app_webhooks_default",
+      hook_name: "test_app_webhooks_order_created",
+    };
+    const getWebhookList = vi.fn().mockResolvedValue([existingWebhook]);
+    const context = makeContext(
+      vi.fn(),
+      getWebhookList,
+      DEFAULT_PARAMS,
+      unsubscribeWebhook,
+    );
+
+    const result = await deleteWebhookSubscriptions(
+      configWithWebhooks,
+      context,
+    );
+
+    expect(unsubscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        webhook_method: "plugin.order.api.order_created",
+        webhook_type: "after",
+        batch_name: "test_app_webhooks_default",
+        hook_name: "test_app_webhooks_order_created",
+      }),
+    );
+    expect(result.unsubscribedWebhooks).toHaveLength(1);
+  });
+
+  test("skips silently if a webhook is not found in the list (idempotent)", async () => {
+    const unsubscribeWebhook = vi.fn().mockResolvedValue(null);
+    const getWebhookList = vi.fn().mockResolvedValue([]);
+    const context = makeContext(
+      vi.fn(),
+      getWebhookList,
+      DEFAULT_PARAMS,
+      unsubscribeWebhook,
+    );
+
+    const result = await deleteWebhookSubscriptions(
+      configWithWebhooks,
+      context,
+    );
+
+    expect(unsubscribeWebhook).not.toHaveBeenCalled();
+    expect(result.unsubscribedWebhooks).toHaveLength(0);
+  });
+
+  test("returns only the webhooks that were actually unsubscribed", async () => {
+    const unsubscribeWebhook = vi.fn().mockResolvedValue(null);
+
+    const twoWebhookConfig = {
+      ...configWithWebhooks,
+      webhooks: [
+        {
+          label: "First Webhook",
+          description: "First webhook",
+          runtimeAction: "my-package/handle-first",
+          category: "modification" as const,
+          webhook: {
+            webhook_method: "plugin.order.api.order_created",
+            webhook_type: "after",
+            batch_name: "default",
+            hook_name: "order_created",
+            method: "POST",
+            url: "https://example.com/first",
+          },
+        },
+        {
+          label: "Second Webhook",
+          description: "Second webhook",
+          runtimeAction: "my-package/handle-second",
+          category: "modification" as const,
+          webhook: {
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "after",
+            batch_name: "products",
+            hook_name: "validate",
+            method: "POST",
+            url: "https://example.com/second",
+          },
+        },
+      ],
+    };
+
+    // Only the first webhook exists in Commerce
+    const existingWebhook = {
+      webhook_method: "plugin.order.api.order_created",
+      webhook_type: "after",
+      batch_name: "test_app_webhooks_default",
+      hook_name: "test_app_webhooks_order_created",
+    };
+    const getWebhookList = vi.fn().mockResolvedValue([existingWebhook]);
+    const context = makeContext(
+      vi.fn(),
+      getWebhookList,
+      DEFAULT_PARAMS,
+      unsubscribeWebhook,
+    );
+
+    const result = await deleteWebhookSubscriptions(twoWebhookConfig, context);
+
+    expect(unsubscribeWebhook).toHaveBeenCalledTimes(1);
+    expect(unsubscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        webhook_method: "plugin.order.api.order_created",
+        batch_name: "test_app_webhooks_default",
+        hook_name: "test_app_webhooks_order_created",
+      }),
+    );
+    expect(result.unsubscribedWebhooks).toHaveLength(1);
+  });
+
+  test("prepends sanitized metadata.id prefix to batch_name and hook_name", async () => {
+    const unsubscribeWebhook = vi.fn().mockResolvedValue(null);
+
+    const config = {
+      metadata: {
+        id: "my--app.v2",
+        displayName: "My App",
+        description: "d",
+        version: "1.0.0",
+      },
+      webhooks: [
+        {
+          label: "Test Webhook",
+          description: "Test webhook",
+          runtimeAction: "my-package/handle-webhook",
+          category: "modification" as const,
+          webhook: {
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "after",
+            batch_name: "products",
+            hook_name: "validate",
+            method: "POST",
+            url: "https://example.com/hook",
+          },
+        },
+      ],
+    };
+
+    const existingWebhook = {
+      webhook_method: "observer.catalog_product_save_after",
+      webhook_type: "after",
+      batch_name: "my_app_v2_products",
+      hook_name: "my_app_v2_validate",
+    };
+    const getWebhookList = vi.fn().mockResolvedValue([existingWebhook]);
+    const context = makeContext(
+      vi.fn(),
+      getWebhookList,
+      DEFAULT_PARAMS,
+      unsubscribeWebhook,
+    );
+
+    await deleteWebhookSubscriptions(config, context);
+
+    expect(unsubscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        batch_name: "my_app_v2_products",
+        hook_name: "my_app_v2_validate",
+      }),
+    );
   });
 });
 

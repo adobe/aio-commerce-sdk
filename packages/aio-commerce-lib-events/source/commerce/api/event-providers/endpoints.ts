@@ -15,6 +15,7 @@ import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import {
   EventProviderCreateParamsSchema,
+  EventProviderDeleteParamsSchema,
   EventProviderGetByIdParamsSchema,
 } from "./schema";
 
@@ -22,6 +23,7 @@ import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 import type { HTTPError, Options } from "ky";
 import type {
   EventProviderCreateParams,
+  EventProviderDeleteParams,
   EventProviderGetByIdParams,
 } from "./schema";
 import type {
@@ -97,4 +99,33 @@ export async function createEventProvider(
       json: { eventProvider },
     })
     .json<CommerceEventProviderOneResponse>();
+}
+
+/**
+ * Deletes the event provider with the given ID from the Commerce instance.
+ * All event subscriptions that use this provider must be deleted first.
+ * @see https://developer.adobe.com/commerce/extensibility/events/api/#delete-event-provider
+ *
+ * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
+ * @param params - The parameters to delete the event provider with.
+ * @param fetchOptions - The {@link Options} to use to make the request.
+ *
+ * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
+ * @throws An {@link HTTPError} If the status code is not 2XX.
+ */
+export async function deleteEventProvider(
+  httpClient: AdobeCommerceHttpClient,
+  params: EventProviderDeleteParams,
+  fetchOptions?: Options,
+): Promise<void> {
+  const validatedParams = parseOrThrow(EventProviderDeleteParamsSchema, params);
+
+  return httpClient
+    .delete(
+      `eventing/eventProvider/${validatedParams.provider_id}`,
+      fetchOptions,
+    )
+    .then((_res) => {
+      // We set this `then` to make the response type `void`
+    });
 }

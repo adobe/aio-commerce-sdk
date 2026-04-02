@@ -87,6 +87,40 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
         data: scriptResult,
       };
     },
+
+    uninstall: async (
+      config: ConfigWithInstallationSteps,
+      context: ExecutionContext,
+    ): Promise<void> => {
+      const { logger } = context;
+      const customScripts = context.customScripts || {};
+
+      logger.debug(`Uninstalling custom script: ${name}`);
+
+      const scriptModule = customScripts[script];
+
+      if (!scriptModule) {
+        throw new Error(
+          `Script ${script} not found in customScripts context. Make sure the script is defined in the configuration and the action was generated with custom scripts support.`,
+        );
+      }
+
+      // Check if uninstall function exists
+      if (
+        typeof scriptModule !== "object" ||
+        !("uninstall" in scriptModule) ||
+        typeof scriptModule.uninstall !== "function"
+      ) {
+        logger.debug(
+          `Script ${script} does not export an uninstall function, skipping uninstall.`,
+        );
+        return;
+      }
+
+      const uninstallFunction = scriptModule.uninstall;
+      await uninstallFunction(config, context);
+      logger.info(`Successfully uninstalled script: ${name}`);
+    },
   });
 }
 

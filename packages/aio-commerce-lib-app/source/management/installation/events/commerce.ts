@@ -13,7 +13,12 @@
 import { hasCommerceEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
-import { onboardCommerceEventing, onboardIoEvents } from "./helpers";
+import {
+  offboardCommerceEventing,
+  offboardIoEvents,
+  onboardCommerceEventing,
+  onboardIoEvents,
+} from "./helpers";
 import {
   COMMERCE_PROVIDER_TYPE,
   getCommerceEventingExistingData,
@@ -96,6 +101,29 @@ export const commerceEventsStep = defineLeafStep({
 
     logger.debug("Completed Commerce Events installation step.");
     return stepData;
+  },
+
+  uninstall: async (config, context: EventsExecutionContext) => {
+    const { logger } = context;
+    logger.debug("Starting uninstall of Commerce Events with config:", config);
+
+    const existingIoEventsData = await getIoEventsExistingData(context);
+    const commerceEventingExistingData =
+      await getCommerceEventingExistingData(context);
+
+    for (const { provider, events } of config.eventing.commerce) {
+      await offboardCommerceEventing(
+        { context, metadata: config.metadata, provider, events },
+        commerceEventingExistingData,
+      );
+
+      await offboardIoEvents(
+        { context, metadata: config.metadata, provider },
+        existingIoEventsData,
+      );
+    }
+
+    logger.debug("Completed Commerce Events uninstall step.");
   },
 });
 

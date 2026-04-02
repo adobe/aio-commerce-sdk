@@ -20,6 +20,7 @@ import type { WebhooksExecutionContext } from "#management/installation/webhooks
 export function createMockWebhooksContext(
   subscribeWebhookFn = vi.fn().mockResolvedValue(null),
   getWebhookListFn = vi.fn().mockResolvedValue([]),
+  unsubscribeWebhookFn = vi.fn().mockResolvedValue(null),
 ): WebhooksExecutionContext {
   const mockInstallation = createMockInstallationContext({
     params: {
@@ -36,6 +37,7 @@ export function createMockWebhooksContext(
     commerceWebhooksClient: {
       getWebhookList: getWebhookListFn,
       subscribeWebhook: subscribeWebhookFn,
+      unsubscribeWebhook: unsubscribeWebhookFn,
     },
   } as unknown as WebhooksExecutionContext;
 }

@@ -12,7 +12,11 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the workflow module */
 
-export { createInitialState, executeWorkflow } from "./runner";
+export {
+  createInitialState,
+  executeUninstallWorkflow,
+  executeWorkflow,
+} from "./runner";
 export {
   defineBranchStep,
   defineLeafStep,

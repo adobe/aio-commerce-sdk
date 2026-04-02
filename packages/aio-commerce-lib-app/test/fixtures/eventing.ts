@@ -75,6 +75,16 @@ export function createMockCommerceEventsClient(
     createEventProvider: vi.fn(overrides?.createEventProvider),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     createEventSubscription: vi.fn(overrides?.createEventSubscription),
+    deleteEventProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteEventProvider ?? (() => Promise.resolve()),
+      ),
+    deleteEventSubscription: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteEventSubscription ?? (() => Promise.resolve()),
+      ),
     getAllEventSubscriptions: vi.fn(overrides?.getAllEventSubscriptions),
     updateEventingConfiguration: vi.fn(overrides?.updateEventingConfiguration),
   } satisfies CustomCommerceEventsApiClient;
@@ -89,17 +99,41 @@ export function createMockIoEventsClient(
     ),
     createEventProvider: vi.fn(overrides?.createEventProvider),
     createRegistration: vi.fn(overrides?.createRegistration),
+    deleteEventMetadataForProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteEventMetadataForProvider ?? (() => Promise.resolve()),
+      ),
+    deleteEventProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteEventProvider ?? (() => Promise.resolve()),
+      ),
+    deleteRegistration: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteRegistration ?? (() => Promise.resolve()),
+      ),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllRegistrations: vi.fn(overrides?.getAllRegistrations),
   } satisfies Partial<CustomAdobeIoEventsApiClient>;
 }
+
+/** Options for creating a mock {@link EventsExecutionContext}. */
+export type MockEventingInstallationContextOptions = Omit<
+  Partial<EventsExecutionContext>,
+  "ioEventsClient" | "commerceEventsClient"
+> & {
+  ioEventsClient?: Partial<CustomAdobeIoEventsApiClient>;
+  commerceEventsClient?: Partial<CustomCommerceEventsApiClient>;
+};
 
 /** Creates a mock {@link EventsExecutionContext} for testing. */
 export function createMockEventingInstallationContext({
   commerceEventsClient,
   ioEventsClient,
   ...installationOverrides
-}: Partial<EventsExecutionContext> = {}): EventsExecutionContext {
+}: MockEventingInstallationContextOptions = {}): EventsExecutionContext {
   const mockInstallationContext = createMockInstallationContext(
     installationOverrides,
   );

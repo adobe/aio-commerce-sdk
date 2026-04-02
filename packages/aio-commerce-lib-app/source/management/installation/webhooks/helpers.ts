@@ -16,6 +16,7 @@ import { HTTPError } from "ky";
 import type {
   CommerceWebhook,
   WebhookSubscribeParams,
+  WebhookUnsubscribeParams,
 } from "@adobe/aio-commerce-lib-webhooks/api";
 import type {
   WebhookDefinition,
@@ -48,6 +49,11 @@ const ENVIRONMENT_STAGING = "staging";
 /** Summary of webhook subscription results after a run. */
 export type WebhookSubscriptionResult = {
   subscribedWebhooks: WebhookSubscribeParams[];
+};
+
+/** Summary of webhook unsubscription results after a run. */
+export type WebhookUnsubscriptionResult = {
+  unsubscribedWebhooks: WebhookUnsubscribeParams[];
 };
 
 /**
@@ -189,6 +195,59 @@ export async function createWebhookSubscriptions(
 }
 
 /**
+ * Unsubscribes each webhook from the app config in Adobe Commerce.
+ * If a webhook is not found in the existing list, it is silently skipped (idempotent).
+ *
+ * @param config - The app config (must have a non-empty `webhooks` array).
+ * @param context - The webhooks execution context (provides the Commerce API client and logger).
+ */
+export async function deleteWebhookSubscriptions(
+  config: WebhooksConfig,
+  context: WebhooksExecutionContext,
+): Promise<WebhookUnsubscriptionResult> {
+  const { logger, commerceWebhooksClient } = context;
+
+  logger.info(
+    `Unsubscribing ${config.webhooks.length} webhook(s) from Commerce...`,
+  );
+
+  const idPrefix = buildWebhookIdPrefix(config.metadata.id);
+  const unsubscribedWebhooks: WebhookUnsubscribeParams[] = [];
+
+  const existingWebhooks = await commerceWebhooksClient.getWebhookList();
+
+  for (const entry of config.webhooks) {
+    const { webhook } = entry;
+    const resolvedBatch = `${idPrefix}${webhook.batch_name}`;
+    const resolvedHook = `${idPrefix}${webhook.hook_name}`;
+
+    const params: WebhookUnsubscribeParams = {
+      webhook_method: webhook.webhook_method,
+      webhook_type: webhook.webhook_type,
+      batch_name: resolvedBatch,
+      hook_name: resolvedHook,
+    };
+
+    if (!isFoundInList(existingWebhooks, params)) {
+      logger.debug(
+        `Webhook not found, skipping unsubscribe: ${getWebhookName(webhook)}`,
+      );
+      continue;
+    }
+
+    await deleteWebhookSubscription(commerceWebhooksClient, webhook, params);
+    logger.info(`Unsubscribed webhook: ${getWebhookName(webhook)}`);
+    unsubscribedWebhooks.push(params);
+  }
+
+  logger.info(
+    `Webhook unsubscriptions complete: ${unsubscribedWebhooks.length} unsubscribed.`,
+  );
+
+  return { unsubscribedWebhooks };
+}
+
+/**
  * Subscribes a single webhook to Commerce, skipping the API call if the webhook
  * is already subscribed (matched by webhook_method, webhook_type, batch_name, hook_name).
  */
@@ -231,6 +290,35 @@ export async function createWebhookSubscription(
       if (typeof body?.message === "string") {
         throw new Error(
           `Webhook subscription failed for "${getWebhookName(resolvedWebhook)}": ${body.message}`,
+        );
+      }
+    }
+    throw err;
+  }
+}
+
+/**
+ * Unsubscribes a single webhook from Commerce, enriching the error with the webhook name
+ * if the API responds with a string `message`.
+ */
+async function deleteWebhookSubscription(
+  client: WebhooksExecutionContext["commerceWebhooksClient"],
+  resolvedWebhook: WebhookDefinition,
+  params: WebhookUnsubscribeParams,
+): Promise<void> {
+  try {
+    await client.unsubscribeWebhook(params);
+  } catch (err) {
+    if (err instanceof HTTPError) {
+      let body: { message?: unknown } | undefined;
+      try {
+        body = await err.response.json<{ message?: unknown }>();
+      } catch {
+        throw err;
+      }
+      if (typeof body?.message === "string") {
+        throw new Error(
+          `Webhook unsubscription failed for "${getWebhookName(resolvedWebhook)}": ${body.message}`,
         );
       }
     }
@@ -283,6 +371,24 @@ export function resolveDeveloperConsoleOAuthCredentials(
 function isAlreadySubscribed(
   existing: CommerceWebhook[],
   candidate: WebhookSubscribeParams,
+): boolean {
+  const normalizedCandidate = normalizeWebhookMethod(candidate.webhook_method);
+  return existing.some(
+    (w) =>
+      normalizeWebhookMethod(w.webhook_method) === normalizedCandidate &&
+      w.webhook_type === candidate.webhook_type &&
+      w.batch_name === candidate.batch_name &&
+      w.hook_name === candidate.hook_name,
+  );
+}
+
+/**
+ * Returns true when a webhook with the given identity exists in the existing list.
+ * Uses the same four-part identity and `webhook_method` normalisation as `isAlreadySubscribed`.
+ */
+function isFoundInList(
+  existing: CommerceWebhook[],
+  candidate: WebhookUnsubscribeParams,
 ): boolean {
   const normalizedCandidate = normalizeWebhookMethod(candidate.webhook_method);
   return existing.some(
