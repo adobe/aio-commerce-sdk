@@ -314,15 +314,7 @@ async function configureCommerceEventing(
     enabled: true,
   };
 
-  if (existingData.isDefaultWorkspaceConfigurationEmpty) {
-    if (!config.workspace_configuration) {
-      const message =
-        "Workspace configuration is required to enable Commerce Eventing when there is not an existing one.";
-
-      logger.error(message);
-      throw new Error(message);
-    }
-
+  if (!existingData.isDefaultWorkspaceConfigurationEmpty) {
     logger.info(
       "Default provider workspace configuration already present, it will not be overriden",
     );
@@ -330,12 +322,15 @@ async function configureCommerceEventing(
     // Remove the workspace configuration to avoid overriding it
     const { workspace_configuration, ...rest } = updateParams;
     updateParams = rest;
+  } else if (!config.workspace_configuration) {
+    const message =
+      "Workspace configuration is required to enable Commerce Eventing when there is not an existing one.";
+
+    logger.error(message);
+    throw new Error(message);
   }
 
-  logger.info(
-    "Updating Commerce Eventing configuration with provided workspace configuration.",
-  );
-
+  logger.info("Updating Commerce Eventing configuration...");
   return commerceEventsClient
     .updateEventingConfiguration(updateParams)
     .then((success) => {
