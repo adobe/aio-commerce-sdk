@@ -2,4 +2,4 @@
 "@adobe/aio-commerce-lib-app": patch
 ---
 
-Fix a bug where the global eventing workspace configuration was being overridden even when it was already present.
+Only configure the Commerce Eventing Module when it doesn't have a default provider or a workspace configuration.
