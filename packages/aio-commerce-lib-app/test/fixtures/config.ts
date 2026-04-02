@@ -1,3 +1,4 @@
+import type { ApplicationMetadata } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Base metadata for test configs. */
@@ -141,3 +142,49 @@ export const configWithCustomInstallationSteps = {
     ],
   },
 } satisfies CommerceAppConfigOutputModel;
+
+export function createMockMetadata(
+  id: string,
+  overrides: Partial<ApplicationMetadata> = {},
+): ApplicationMetadata {
+  return {
+    ...mockMetadata,
+    id,
+    ...overrides,
+  };
+}
+
+export function createCommerceEventConfig(
+  name: string,
+  overrides?: Partial<{
+    label: string;
+    description: string;
+    runtimeActions: string[];
+    fields: Array<{ name: string }>;
+  }>,
+) {
+  return {
+    metadata: minimalValidConfig.metadata,
+    eventing: {
+      commerce: [
+        {
+          provider: {
+            label: "Commerce Provider",
+            description: "Commerce events",
+          },
+          events: [
+            {
+              name,
+              label: overrides?.label ?? "My Event",
+              fields: overrides?.fields ?? [{ name: "field" }],
+              runtimeActions: overrides?.runtimeActions ?? [
+                "my-package/action",
+              ],
+              description: overrides?.description ?? "Plugin event",
+            },
+          ],
+        },
+      ],
+    },
+  };
+}

@@ -375,9 +375,7 @@ async function configureCommerceEventing(
  * Creates an event provider in Commerce for a given {@link IoEventProvider}.
  * @param params - The parameters necessary to create the Commerce provider.
  */
-export async function createCommerceProvider(
-  params: CreateCommerceProviderParams,
-) {
+async function createCommerceProvider(params: CreateCommerceProviderParams) {
   const { context, provider } = params;
   const { commerceEventsClient, logger } = context;
 
@@ -411,7 +409,7 @@ export async function createCommerceProvider(
  * @param params - Parameters needed to create or get the Commerce provider.
  * @param existingData - Existing Commerce providers.
  */
-export async function createOrGetCommerceProvider(
+async function createOrGetCommerceProvider(
   params: CreateCommerceProviderParams,
   existingProviders: CommerceEventProvider[],
 ) {

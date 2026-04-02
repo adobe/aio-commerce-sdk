@@ -185,6 +185,38 @@ describe("executeWorkflow", () => {
     expect(result.id).toBe(initialState.id);
   });
 
+  test("should fall back to INSTALLATION_FAILED when a success hook throws after execution completes", async () => {
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { label: "Root" },
+      children: [],
+    });
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    const result = await executeWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+      hooks: {
+        onInstallationSuccess: () => {
+          throw new Error("hook failed");
+        },
+      },
+    });
+
+    expect(result.status).toBe("failed");
+    if (result.status === "failed") {
+      expect(result.error.key).toBe("INSTALLATION_FAILED");
+      expect(result.error.path).toEqual([]);
+      expect(result.error.message).toBe("hook failed");
+    }
+  });
+
   test("should return failed state when a step throws an error", async () => {
     const failingStep = defineLeafStep({
       name: "failing",
@@ -745,6 +777,64 @@ describe("executeWorkflow", () => {
       innerValue: "from-inner",
       shared: "inner-override", // Inner overrides outer
     });
+  });
+
+  test("should return a failed state when the initial state references a child step missing from the definition", async () => {
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { label: "Root" },
+      children: [],
+    });
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    initialState.step.children.push({
+      id: "missing-child-id",
+      name: "missing-child",
+      path: ["root", "missing-child"],
+      meta: { label: "Missing Child" },
+      status: "pending",
+      children: [],
+    });
+
+    const result = await executeWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(result.status).toBe("failed");
+    if (result.status === "failed") {
+      expect(result.error.message).toBe('Step "missing-child" not found');
+    }
+  });
+
+  test("should tolerate a malformed step object that is neither branch nor leaf", async () => {
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { label: "Root" },
+      children: [],
+    });
+    Reflect.set(rootStep, "type", "unknown");
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    const result = await executeWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(result.status).toBe("succeeded");
+    expect(result.step.status).toBe("succeeded");
   });
 
   test("should accumulate results from multiple leaf steps in data", async () => {

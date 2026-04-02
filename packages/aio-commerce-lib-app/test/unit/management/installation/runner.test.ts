@@ -13,7 +13,43 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { minimalValidConfig } from "#test/fixtures/config";
-import { createMockInstallationContext } from "#test/fixtures/installation";
+import {
+  createMockBranchStep,
+  createMockInstallationContext,
+  createMockInstallationInProgressState,
+  createMockInstallationSucceededState,
+  createMockStepValidationResult,
+  createMockValidationResult,
+} from "#test/fixtures/installation";
+
+function mockRunnerDependencies({
+  createRootInstallationStep = vi.fn(),
+  createInitialState = vi.fn(),
+  executeWorkflow = vi.fn(),
+  validateStepTree = vi.fn(),
+} = {}) {
+  vi.doMock("#management/installation/root", () => ({
+    createRootInstallationStep,
+  }));
+  vi.doMock("#management/installation/workflow", () => ({
+    createInitialState,
+    executeWorkflow,
+  }));
+  vi.doMock("#management/installation/workflow/runner", () => ({
+    createInitialState,
+    executeWorkflow,
+  }));
+  vi.doMock("#management/installation/workflow/validation", () => ({
+    validateStepTree,
+  }));
+
+  return {
+    createRootInstallationStep,
+    createInitialState,
+    executeWorkflow,
+    validateStepTree,
+  };
+}
 
 describe("createInitialInstallationState", () => {
   beforeEach(() => {
@@ -22,45 +58,13 @@ describe("createInitialInstallationState", () => {
   });
 
   test("creates the root step and delegates state creation to the workflow", async () => {
-    const rootStep = {
-      type: "branch",
-      name: "installation",
-      meta: { label: "Installation" },
-      children: [],
-    };
-
-    const initialState = {
-      id: "installation-id",
-      startedAt: "2026-01-30T10:00:00.000Z",
-      status: "in-progress",
-      step: {
-        id: "step-id",
-        name: "installation",
-        path: ["installation"],
-        meta: { label: "Installation" },
-        status: "pending",
-        children: [],
-      },
-      data: null,
-    };
-
-    const createRootInstallationStep = vi.fn().mockReturnValue(rootStep);
-    const createInitialState = vi.fn().mockReturnValue(initialState);
-
-    vi.doMock("#management/installation/root", () => ({
-      createRootInstallationStep,
-    }));
-    vi.doMock("#management/installation/workflow", () => ({
-      createInitialState,
-      executeWorkflow: vi.fn(),
-    }));
-    vi.doMock("#management/installation/workflow/runner", () => ({
-      createInitialState,
-      executeWorkflow: vi.fn(),
-    }));
-    vi.doMock("#management/installation/workflow/validation", () => ({
-      validateStepTree: vi.fn(),
-    }));
+    const rootStep = createMockBranchStep();
+    const initialState = createMockInstallationInProgressState();
+    const { createRootInstallationStep, createInitialState } =
+      mockRunnerDependencies({
+        createRootInstallationStep: vi.fn().mockReturnValue(rootStep),
+        createInitialState: vi.fn().mockReturnValue(initialState),
+      });
 
     const { createInitialInstallationState } = await import(
       "#management/installation/runner"
@@ -75,6 +79,7 @@ describe("createInitialInstallationState", () => {
       rootStep,
       config: minimalValidConfig,
     });
+
     expect(result).toBe(initialState);
   });
 });
@@ -86,63 +91,28 @@ describe("runInstallation", () => {
   });
 
   test("creates the root step and delegates execution to the workflow", async () => {
-    const rootStep = {
-      type: "branch",
-      name: "installation",
-      meta: { label: "Installation" },
-      children: [],
-    };
+    const rootStep = createMockBranchStep();
     const installationContext = createMockInstallationContext();
-    const initialState = {
-      id: "installation-id",
-      startedAt: "2026-01-30T10:00:00.000Z",
-      status: "in-progress",
-      step: {
-        id: "step-id",
-        name: "installation",
-        path: ["installation"],
-        meta: { label: "Installation" },
-        status: "pending",
-        children: [],
-      },
-      data: null,
-    };
+    const initialState = createMockInstallationInProgressState();
     const hooks = {
       onInstallationStart: vi.fn(),
     };
-    const workflowResult = {
-      id: "installation-id",
-      startedAt: "2026-01-30T10:00:00.000Z",
-      completedAt: "2026-01-30T10:05:00.000Z",
-      status: "succeeded",
+
+    const workflowResult = createMockInstallationSucceededState({
       step: initialState.step,
-      data: null,
-    };
+    });
 
-    const createRootInstallationStep = vi.fn().mockReturnValue(rootStep);
-    const executeWorkflow = vi.fn().mockResolvedValue(workflowResult);
-
-    vi.doMock("#management/installation/root", () => ({
-      createRootInstallationStep,
-    }));
-    vi.doMock("#management/installation/workflow", () => ({
-      createInitialState: vi.fn(),
-      executeWorkflow,
-    }));
-    vi.doMock("#management/installation/workflow/runner", () => ({
-      createInitialState: vi.fn(),
-      executeWorkflow,
-    }));
-    vi.doMock("#management/installation/workflow/validation", () => ({
-      validateStepTree: vi.fn(),
-    }));
+    const { createRootInstallationStep, executeWorkflow } =
+      mockRunnerDependencies({
+        createRootInstallationStep: vi.fn().mockReturnValue(rootStep),
+        executeWorkflow: vi.fn().mockResolvedValue(workflowResult),
+      });
 
     const { runInstallation } = await import("#management/installation/runner");
-
     const result = await runInstallation({
       config: minimalValidConfig,
       installationContext,
-      initialState: initialState as never,
+      initialState,
       hooks,
     });
 
@@ -154,6 +124,7 @@ describe("runInstallation", () => {
       initialState,
       hooks,
     });
+
     expect(result).toBe(workflowResult);
   });
 });
@@ -165,49 +136,25 @@ describe("runValidation", () => {
   });
 
   test("creates the root step and delegates validation to the workflow validator", async () => {
-    const rootStep = {
-      type: "branch",
-      name: "installation",
-      meta: { label: "Installation" },
-      children: [],
-    };
+    const rootStep = createMockBranchStep();
     const validationContext = createMockInstallationContext();
-    const validationResult = {
-      valid: true,
-      result: {
+    const validationResult = createMockValidationResult({
+      result: createMockStepValidationResult({
         name: "installation",
         path: ["installation"],
         meta: { label: "Installation" },
         issues: [],
         children: [],
-      },
-      summary: {
-        errors: 0,
-        warnings: 0,
-        totalIssues: 0,
-      },
-    };
+      }),
+    });
 
-    const createRootInstallationStep = vi.fn().mockReturnValue(rootStep);
-    const validateStepTree = vi.fn().mockResolvedValue(validationResult);
-
-    vi.doMock("#management/installation/root", () => ({
-      createRootInstallationStep,
-    }));
-    vi.doMock("#management/installation/workflow", () => ({
-      createInitialState: vi.fn(),
-      executeWorkflow: vi.fn(),
-    }));
-    vi.doMock("#management/installation/workflow/runner", () => ({
-      createInitialState: vi.fn(),
-      executeWorkflow: vi.fn(),
-    }));
-    vi.doMock("#management/installation/workflow/validation", () => ({
-      validateStepTree,
-    }));
+    const { createRootInstallationStep, validateStepTree } =
+      mockRunnerDependencies({
+        createRootInstallationStep: vi.fn().mockReturnValue(rootStep),
+        validateStepTree: vi.fn().mockResolvedValue(validationResult),
+      });
 
     const { runValidation } = await import("#management/installation/runner");
-
     const result = await runValidation({
       config: minimalValidConfig,
       validationContext,
@@ -219,6 +166,7 @@ describe("runValidation", () => {
       validationContext,
       config: minimalValidConfig,
     });
+
     expect(result).toBe(validationResult);
   });
 });

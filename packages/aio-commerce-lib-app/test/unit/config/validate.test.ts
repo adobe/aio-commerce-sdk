@@ -18,9 +18,9 @@ import {
 } from "#config/lib/validate";
 import {
   configWithCustomInstallationSteps,
+  createCommerceEventConfig,
   minimalValidConfig,
 } from "#test/fixtures/config";
-import { createCommerceEventConfig } from "#test/fixtures/eventing";
 
 const MAX_ID_LENGTH = 100;
 const MAX_DISPLAY_NAME_LENGTH = 50;

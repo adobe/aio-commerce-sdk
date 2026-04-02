@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { webhooksStep } from "#management/installation/webhooks/branch";
 import { createWebhooksStepContext } from "#management/installation/webhooks/context";
+import * as webhookHelpers from "#management/installation/webhooks/helpers";
 import {
   isBranchStep,
   isLeafStep,
@@ -21,8 +22,6 @@ import {
 import { configWithWebhooks, minimalValidConfig } from "#test/fixtures/config";
 import { createMockInstallationContext } from "#test/fixtures/installation";
 import { createMockWebhooksContext } from "#test/fixtures/webhooks";
-
-import type { WebhookSubscriptionResult } from "#management/installation/webhooks/helpers";
 
 describe("webhooks installation module", () => {
   beforeEach(() => {
@@ -44,13 +43,9 @@ describe("webhooks installation module", () => {
     });
 
     test("should only run if webhooks is defined", () => {
-      expect(webhooksStep.when).toBeDefined();
-
-      // Should return true when webhooks is defined
-      expect(webhooksStep.when?.(configWithWebhooks)).toBe(true);
-
-      // Should return false when webhooks is not defined
-      expect(webhooksStep.when?.(minimalValidConfig)).toBe(false);
+      expect.assert(webhooksStep.when);
+      expect(webhooksStep.when(configWithWebhooks)).toBe(true);
+      expect(webhooksStep.when(minimalValidConfig)).toBe(false);
     });
 
     test("should have subscriptions leaf step", () => {
@@ -85,11 +80,10 @@ describe("webhooks installation module", () => {
       );
 
       expect.assert.isDefined(subscriptionsStep.run);
-
-      const result = (await subscriptionsStep.run(
+      const result = await subscriptionsStep.run(
         configWithWebhooks,
         mockContext,
-      )) as WebhookSubscriptionResult;
+      );
 
       expect(result).toBeDefined();
       expect(result).toHaveProperty("subscribedWebhooks");
@@ -99,6 +93,33 @@ describe("webhooks installation module", () => {
       // Verify that the API clients were called
       expect(getWebhookList).toHaveBeenCalled();
       expect(subscribeWebhook).toHaveBeenCalled();
+    });
+
+    test("should delegate validation to the webhook validation helper", async () => {
+      const mockContext = createMockWebhooksContext();
+      const expectedIssues = [
+        {
+          code: "WEBHOOK_CONFLICTS",
+          message: "Webhook conflict",
+          severity: "warning" as const,
+        },
+      ];
+
+      const validateWebhookConflicts = vi
+        .spyOn(webhookHelpers, "validateWebhookConflicts")
+        .mockResolvedValue(expectedIssues);
+
+      expect.assert.isDefined(subscriptionsStep.validate);
+      const issues = await subscriptionsStep.validate(
+        configWithWebhooks,
+        mockContext,
+      );
+
+      expect(issues).toBe(expectedIssues);
+      expect(validateWebhookConflicts).toHaveBeenCalledWith(
+        configWithWebhooks,
+        mockContext,
+      );
     });
   });
 
