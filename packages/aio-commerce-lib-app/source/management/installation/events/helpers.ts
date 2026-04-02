@@ -306,16 +306,24 @@ async function configureCommerceEventing(
 ) {
   const { context, config } = params;
   const { commerceEventsClient, logger } = context;
+  const { isDefaultProviderConfigured, isDefaultWorkspaceConfigurationEmpty } =
+    existingData;
+
   logger.info("Starting configuration of the Commerce Eventing Module");
 
-  // Always ensure eventing is enabled
-  let updateParams: UpdateEventingConfigurationParams = {
-    ...config,
-    enabled: true,
-  };
+  if (isDefaultProviderConfigured && !isDefaultWorkspaceConfigurationEmpty) {
+    logger.info(
+      "Commerce Eventing Module is already configured, skipping configuration step.",
+    );
 
-  if (existingData.isDefaultWorkspaceConfigurationEmpty) {
-    if (!config.workspace_configuration) {
+    return;
+  }
+
+  const { workspace_configuration, ...configWithoutWorkspace } = config;
+  let updateParams: UpdateEventingConfigurationParams = { enabled: true };
+
+  if (isDefaultWorkspaceConfigurationEmpty) {
+    if (!workspace_configuration) {
       const message =
         "Workspace configuration is required to enable Commerce Eventing when there is not an existing one.";
 
@@ -323,18 +331,23 @@ async function configureCommerceEventing(
       throw new Error(message);
     }
 
+    // Not configured, add to payload.
+    updateParams.workspace_configuration = workspace_configuration;
     logger.info(
-      "Default provider workspace configuration already present, it will not be overriden",
+      "Adding workspace configuration to Commerce Eventing configuration as it has not been set up yet.",
     );
-
-    // Remove the workspace configuration to avoid overriding it
-    const { workspace_configuration, ...rest } = updateParams;
-    updateParams = rest;
   }
 
-  logger.info(
-    "Updating Commerce Eventing configuration with provided workspace configuration.",
-  );
+  if (!isDefaultProviderConfigured) {
+    logger.info(
+      "Default provider not configured, it will be created with the provided configuration.",
+    );
+
+    updateParams = {
+      ...updateParams,
+      ...configWithoutWorkspace,
+    };
+  }
 
   return commerceEventsClient
     .updateEventingConfiguration(updateParams)
