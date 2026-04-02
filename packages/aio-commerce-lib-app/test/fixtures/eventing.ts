@@ -75,6 +75,11 @@ export function createMockCommerceEventsClient(
     createEventProvider: vi.fn(overrides?.createEventProvider),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     createEventSubscription: vi.fn(overrides?.createEventSubscription),
+    deleteEventProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteEventProvider ?? (() => Promise.resolve()),
+      ),
     deleteEventSubscription: vi
       .fn()
       .mockImplementation(

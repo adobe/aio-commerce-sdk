@@ -790,16 +790,17 @@ export async function offboardIoEvents(
 }
 
 /**
- * Offboards Commerce eventing for a single provider by unsubscribing all event
- * subscriptions that were created for the given provider during installation.
+ * Offboards Commerce eventing for a single provider. Performs the following steps in order:
+ * 1. Unsubscribes all event subscriptions that were created for the given provider.
+ * 2. Deletes the Commerce-side event provider itself.
  *
- * Subscriptions are matched by their namespaced name, which is deterministic and
- * built the same way as during {@link onboardCommerceEventing}. Subscriptions not
- * found in Commerce are silently skipped. All errors are caught and logged so that
- * uninstall remains best-effort.
+ * Subscriptions are matched by their namespaced name, which is deterministic and built the
+ * same way as during {@link onboardCommerceEventing}. The provider is matched by its
+ * `instance_id`. Missing subscriptions or providers are silently skipped. All errors are
+ * caught and logged so that uninstall remains best-effort.
  *
  * @param params - Configuration identifying the provider and its events to offboard.
- * @param existingSubscriptions - Current Commerce event subscriptions indexed by name.
+ * @param existingData - Current Commerce eventing data (providers and subscriptions).
  */
 export async function offboardCommerceEventing(
   params: {
@@ -808,10 +809,10 @@ export async function offboardCommerceEventing(
     provider: EventProvider;
     events: AppEvent[];
   },
-  existingSubscriptions: Map<string, CommerceEventSubscription>,
+  existingData: ExistingCommerceEventingData,
 ) {
   const { context, metadata, provider, events } = params;
-  const { commerceEventsClient, logger } = context;
+  const { appData, commerceEventsClient, logger } = context;
 
   logger.info(
     `Unsubscribing Commerce event subscriptions for provider "${provider.label}"...`,
@@ -820,7 +821,7 @@ export async function offboardCommerceEventing(
   for (const event of events) {
     const eventName = getNamespacedEvent(metadata, event.name);
 
-    if (!existingSubscriptions.has(eventName)) {
+    if (!existingData.subscriptions.has(eventName)) {
       logger.info(
         `No Commerce subscription found for event "${event.name}" (namespaced: "${eventName}"), skipping.`,
       );
@@ -844,4 +845,38 @@ export async function offboardCommerceEventing(
         );
       });
   }
+
+  // Delete the Commerce-side event provider itself (subscriptions must be removed first).
+  const instanceId = generateInstanceId(
+    metadata,
+    provider,
+    appData.workspaceId,
+  );
+  const commerceProvider = existingData.providers.find(
+    (p) => p.instance_id === instanceId,
+  );
+
+  if (!commerceProvider) {
+    logger.info(
+      `No Commerce event provider found with instance ID "${instanceId}", skipping provider deletion.`,
+    );
+    return;
+  }
+
+  logger.info(
+    `Deleting Commerce event provider "${provider.label}" (provider_id: ${commerceProvider.provider_id})...`,
+  );
+
+  await commerceEventsClient
+    .deleteEventProvider({ provider_id: commerceProvider.provider_id })
+    .then(() => {
+      logger.info(
+        `Deleted Commerce event provider "${provider.label}" (provider_id: ${commerceProvider.provider_id}).`,
+      );
+    })
+    .catch((error) => {
+      logger.warn(
+        `Failed to delete Commerce event provider "${provider.label}" (provider_id: ${commerceProvider.provider_id}): ${stringifyError(error)}. Continuing uninstall.`,
+      );
+    });
 }

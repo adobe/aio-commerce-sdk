@@ -114,7 +114,7 @@ export const commerceEventsStep = defineLeafStep({
     for (const { provider, events } of config.eventing.commerce) {
       await offboardCommerceEventing(
         { context, metadata: config.metadata, provider, events },
-        commerceEventingExistingData.subscriptions,
+        commerceEventingExistingData,
       );
 
       await offboardIoEvents(
