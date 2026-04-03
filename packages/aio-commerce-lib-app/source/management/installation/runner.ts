@@ -10,7 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { createRootInstallationStep } from "./root";
+import {
+  createOffboardRootInstallationStep,
+  createRootInstallationStep,
+} from "./root";
 import { createInitialState, executeWorkflow } from "./workflow";
 import { validateStepTree } from "./workflow/validation";
 
@@ -100,4 +103,83 @@ export function runValidation(
   const { validationContext, config } = options;
   const rootStep = createRootInstallationStep(config);
   return validateStepTree({ rootStep, validationContext, config });
+}
+
+/** Options for creating an initial installation state. */
+export type CreateInitialUninstallationStateOptions = {
+  /** The app configuration used to determine applicable steps. */
+  config: CommerceAppConfigOutputModel;
+};
+
+/** Options for running an uninstallation. */
+export type RunUninstallationOptions = {
+  /** Shared installation context (params, logger, etc.). */
+  installationContext: InstallationContext;
+
+  /** The app configuration. */
+  config: CommerceAppConfigOutputModel;
+
+  /** The initial installation state (with all steps pending). */
+  initialState: InProgressInstallationState;
+};
+
+/**
+ * Creates an initial uninstallation state from the config and step definitions.
+ * Filters steps based on their `when` conditions and builds a tree structure
+ * with all steps set to "pending".
+ */
+export function createInitialUninstallationState(
+  options: CreateInitialUninstallationStateOptions,
+): InProgressInstallationState {
+  const { config } = options;
+  const rootStep = createOffboardRootInstallationStep(config);
+
+  return createInitialState({ rootStep, config });
+}
+
+/**
+ * Runs the full uninstallation workflow. Returns the final state (never throws).
+ */
+export function runUninstallation(options: RunUninstallationOptions) {
+  const { installationContext, config, initialState } = options;
+  const rootStep = createOffboardRootInstallationStep(config);
+  return executeWorkflow({
+    rootStep,
+    installationContext,
+    config,
+    initialState,
+  });
+}
+
+/** Options for executing an offboarding workflow. */
+export type ExecuteOffboardingWorkflowOptions = {
+  /** Shared installation context (params, logger, etc.). */
+  installationContext: InstallationContext;
+
+  /** The app configuration. */
+  config: CommerceAppConfigOutputModel;
+};
+
+/**
+ * Executes offboarding workflow.
+ * Queries existing resources and deletes them.
+ */
+export function executeOffboardingWorkflow(
+  options: ExecuteOffboardingWorkflowOptions,
+): Promise<SucceededInstallationState | FailedInstallationState> {
+  const { installationContext, config } = options;
+
+  // Create offboard step tree
+  const rootStep = createOffboardRootInstallationStep(config);
+
+  // Create initial state for offboarding
+  const initialState = createInitialState({ rootStep, config });
+
+  // Execute workflow
+  return executeWorkflow({
+    rootStep,
+    installationContext,
+    config,
+    initialState,
+  });
 }

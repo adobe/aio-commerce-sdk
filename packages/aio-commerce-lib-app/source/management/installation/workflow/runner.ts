@@ -30,11 +30,9 @@ import type {
   LeafStep,
 } from "./step";
 import type {
-  FailedInstallationState,
   InProgressInstallationState,
   InstallationError,
   StepStatus,
-  SucceededInstallationState,
 } from "./types";
 
 /** Options for creating an initial installation state. */
@@ -98,9 +96,7 @@ export function createInitialState(
 /**
  * Executes a workflow from an initial state. Returns the final state (never throws).
  */
-export async function executeWorkflow(
-  options: ExecuteWorkflowOptions,
-): Promise<SucceededInstallationState | FailedInstallationState> {
+export async function executeWorkflow(options: ExecuteWorkflowOptions) {
   const { rootStep, installationContext, config, initialState, hooks } =
     options;
 
