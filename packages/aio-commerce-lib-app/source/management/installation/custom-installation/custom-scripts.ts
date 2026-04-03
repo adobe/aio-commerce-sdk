@@ -67,15 +67,26 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
       // Only support default export
       if (typeof scriptModule !== "object" || !("default" in scriptModule)) {
         throw new Error(
-          `Script ${script} must export a default function. Use defineCustomInstallationStep helper.`,
+          `Script ${script} must export a default function or object. Use defineCustomInstallationStep helper.`,
         );
       }
 
-      const runFunction = scriptModule.default;
+      const defaultExport = scriptModule.default;
+      let runFunction: unknown = null;
+
+      if (typeof defaultExport === "function") {
+        runFunction = defaultExport;
+      } else if (
+        typeof defaultExport === "object" &&
+        defaultExport !== null &&
+        typeof (defaultExport as Record<string, unknown>).install === "function"
+      ) {
+        runFunction = (defaultExport as Record<string, unknown>).install;
+      }
 
       if (typeof runFunction !== "function") {
         throw new Error(
-          `Script ${script} default export must be a function, got ${typeof runFunction}`,
+          `Script ${script} default export must be a function or an object with an install method. Use defineCustomInstallationStep helper.`,
         );
       }
 
@@ -105,19 +116,22 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
         );
       }
 
-      // Check if uninstall function exists
-      if (
-        typeof scriptModule !== "object" ||
-        !("uninstall" in scriptModule) ||
-        typeof scriptModule.uninstall !== "function"
-      ) {
+      const defaultExport = scriptModule.default;
+      const uninstallFunction =
+        typeof defaultExport === "object" &&
+        defaultExport !== null &&
+        typeof (defaultExport as Record<string, unknown>).uninstall ===
+          "function"
+          ? (defaultExport as Record<string, unknown>).uninstall
+          : null;
+
+      if (typeof uninstallFunction !== "function") {
         logger.debug(
           `Script ${script} does not export an uninstall function, skipping uninstall.`,
         );
         return;
       }
 
-      const uninstallFunction = scriptModule.uninstall;
       await uninstallFunction(config, context);
       logger.info(`Successfully uninstalled script: ${name}`);
     },

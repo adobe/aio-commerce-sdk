@@ -209,10 +209,53 @@ describe("createCustomScriptStep - run function", () => {
   });
 });
 
+describe("createCustomScriptStep - run function (object form)", () => {
+  test("should execute install handler from object form and return result", async () => {
+    const mockInstallResult = { status: "success", data: "object-form" };
+    const mockInstall = vi.fn().mockResolvedValue(mockInstallResult);
+
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": { default: { install: mockInstall } },
+    };
+
+    const result = await step.run(
+      configWithCustomInstallationSteps,
+      mockContext,
+    );
+
+    expect(mockInstall).toHaveBeenCalledWith(
+      configWithCustomInstallationSteps,
+      mockContext,
+    );
+    expect(result).toEqual({
+      script: "./demo-success.js",
+      data: mockInstallResult,
+    });
+  });
+
+  test("should throw when object form has no install method", async () => {
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": { default: { uninstall: vi.fn() } }, // missing install
+    };
+
+    await expect(
+      step.run(configWithCustomInstallationSteps, mockContext),
+    ).rejects.toThrow();
+  });
+});
+
 describe("createCustomScriptStep - uninstall function", () => {
   test("should call uninstall function when script exports it", async () => {
     const mockUninstall = vi.fn().mockResolvedValue(undefined);
-    const mockRun = vi.fn().mockResolvedValue({ status: "success" });
+    const mockInstall = vi.fn().mockResolvedValue({ status: "success" });
 
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
     const step = steps?.[0] as LeafStep;
@@ -220,8 +263,7 @@ describe("createCustomScriptStep - uninstall function", () => {
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
       "./demo-success.js": {
-        default: mockRun,
-        uninstall: mockUninstall,
+        default: { install: mockInstall, uninstall: mockUninstall },
       },
     };
 
@@ -273,8 +315,7 @@ describe("createCustomScriptStep - uninstall function", () => {
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
       "./demo-success.js": {
-        default: vi.fn(),
-        uninstall: mockUninstall,
+        default: { install: vi.fn(), uninstall: mockUninstall },
       },
     };
 
@@ -294,12 +335,10 @@ describe("createCustomScriptStep - uninstall function", () => {
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
       "./demo-success.js": {
-        default: vi.fn(),
-        uninstall: mockUninstall1,
+        default: { install: vi.fn(), uninstall: mockUninstall1 },
       },
       "./demo-error.js": {
-        default: vi.fn(),
-        uninstall: mockUninstall2,
+        default: { install: vi.fn(), uninstall: mockUninstall2 },
       },
     };
 
@@ -308,23 +347,5 @@ describe("createCustomScriptStep - uninstall function", () => {
 
     expect(mockUninstall1).toHaveBeenCalledTimes(1);
     expect(mockUninstall2).toHaveBeenCalledTimes(1);
-  });
-
-  test("should skip uninstall when uninstall is not a function", async () => {
-    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
-
-    const mockContext = createMockInstallationContext();
-    mockContext.customScripts = {
-      "./demo-success.js": {
-        default: vi.fn(),
-        uninstall: "not a function", // Not a function
-      },
-    };
-
-    // Should not throw and should complete successfully
-    await expect(
-      step.uninstall?.(configWithCustomInstallationSteps, mockContext),
-    ).resolves.toBeUndefined();
   });
 });

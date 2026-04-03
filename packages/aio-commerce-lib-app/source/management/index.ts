@@ -33,7 +33,10 @@ export {
   isSucceededState,
 } from "./installation/workflow";
 
-export type { CustomInstallationStepHandler } from "./installation/custom-installation";
+export type {
+  CustomInstallationStepDefinition,
+  CustomInstallationStepHandler,
+} from "./installation/custom-installation";
 export type {
   CreateInitialInstallationStateOptions,
   CreateInitialUninstallationStateOptions,

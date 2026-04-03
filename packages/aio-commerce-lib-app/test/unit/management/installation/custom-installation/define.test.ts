@@ -10,15 +10,18 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import { defineCustomInstallationStep } from "#management/installation/custom-installation/define";
 import { minimalValidConfig } from "#test/fixtures/config";
 import { createMockInstallationContext } from "#test/fixtures/installation";
 
-import type { CustomInstallationStepHandler } from "#management/installation/custom-installation/define";
+import type {
+  CustomInstallationStepDefinition,
+  CustomInstallationStepHandler,
+} from "#management/installation/custom-installation/define";
 
-describe("defineCustomInstallationStep", () => {
+describe("defineCustomInstallationStep - function form (legacy)", () => {
   test("should preserve handler functionality", () => {
     const handler: CustomInstallationStepHandler<string> = (config, _) => {
       return `Hello ${config.metadata.displayName}`;
@@ -34,6 +37,7 @@ describe("defineCustomInstallationStep", () => {
 
     expect(result).toBe(`Hello ${minimalValidConfig.metadata.displayName}`);
   });
+
   test("should preserve error throwing behavior", () => {
     const handler: CustomInstallationStepHandler = () => {
       throw new Error("Custom installation error");
@@ -44,5 +48,75 @@ describe("defineCustomInstallationStep", () => {
     expect(() =>
       wrappedHandler(minimalValidConfig, createMockInstallationContext()),
     ).toThrow("Custom installation error");
+  });
+});
+
+describe("defineCustomInstallationStep - object form", () => {
+  test("should return the same definition object", () => {
+    const definition: CustomInstallationStepDefinition<string> = {
+      install: (config) => `Hello ${config.metadata.displayName}`,
+      uninstall: vi.fn(),
+    };
+
+    const result = defineCustomInstallationStep(definition);
+    expect(result).toBe(definition);
+  });
+
+  test("should preserve install handler functionality", () => {
+    const definition: CustomInstallationStepDefinition<string> = {
+      install: (config) => `Hello ${config.metadata.displayName}`,
+    };
+
+    const result = defineCustomInstallationStep(definition);
+    const installResult = result.install(
+      minimalValidConfig,
+      createMockInstallationContext(),
+    );
+
+    expect(installResult).toBe(
+      `Hello ${minimalValidConfig.metadata.displayName}`,
+    );
+  });
+
+  test("should preserve uninstall handler functionality", async () => {
+    const mockUninstall = vi.fn().mockResolvedValue(undefined);
+    const definition: CustomInstallationStepDefinition = {
+      install: vi.fn(),
+      uninstall: mockUninstall,
+    };
+
+    const result = defineCustomInstallationStep(definition);
+    await result.uninstall?.(
+      minimalValidConfig,
+      createMockInstallationContext(),
+    );
+
+    expect(mockUninstall).toHaveBeenCalledWith(
+      minimalValidConfig,
+      expect.any(Object),
+    );
+  });
+
+  test("should allow omitting uninstall handler", () => {
+    const definition: CustomInstallationStepDefinition = {
+      install: vi.fn(),
+    };
+
+    const result = defineCustomInstallationStep(definition);
+    expect(result.uninstall).toBeUndefined();
+  });
+
+  test("should preserve error throwing from install handler", () => {
+    const definition: CustomInstallationStepDefinition = {
+      install: () => {
+        throw new Error("Install error");
+      },
+    };
+
+    const result = defineCustomInstallationStep(definition);
+
+    expect(() =>
+      result.install(minimalValidConfig, createMockInstallationContext()),
+    ).toThrow("Install error");
   });
 });

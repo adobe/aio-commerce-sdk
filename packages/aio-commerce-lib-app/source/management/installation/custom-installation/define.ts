@@ -26,35 +26,63 @@ export type CustomInstallationStepHandler<TResult = unknown> = (
 ) => TResult | Promise<TResult>;
 
 /**
+ * Object form for defining a custom installation step with both install and uninstall handlers.
+ *
+ * @template TResult - The return type of the install handler
+ */
+export type CustomInstallationStepDefinition<TResult = unknown> = {
+  /** The installation handler, called when the app is installed. */
+  install: CustomInstallationStepHandler<TResult>;
+
+  /** The optional uninstall handler, called when the app is uninstalled. */
+  uninstall?: CustomInstallationStepHandler<void>;
+};
+
+/**
  * Define a custom installation step with type-safe parameters.
  *
  * This helper provides type safety and IDE autocompletion for custom installation scripts.
- * The handler function receives properly typed `config` and `context` parameters.
+ * Accepts either a plain function (install only) or an object with `install` and optional
+ * `uninstall` handlers.
  *
- * @param handler - The installation step handler function
- * @returns The same handler function (for use as default export)
- *
- * @example
+ * @example Plain function (install only):
  * ```typescript
  * import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
  *
  * export default defineCustomInstallationStep(async (config, context) => {
  *   const { logger, params } = context;
- *
  *   logger.info(`Setting up ${config.metadata.displayName}...`);
+ *   return { status: "success" };
+ * });
+ * ```
  *
- *   // Your installation logic here
- *   // TypeScript will provide autocompletion for config and context
+ * @example Object form with install and uninstall:
+ * ```typescript
+ * import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
  *
- *   return {
- *     status: "success",
- *     message: "Setup completed",
- *   };
+ * export default defineCustomInstallationStep({
+ *   install: async (config, context) => {
+ *     context.logger.info(`Registering ${config.metadata.displayName}...`);
+ *     return { status: "success" };
+ *   },
+ *   uninstall: async (config, context) => {
+ *     context.logger.info(`Removing ${config.metadata.displayName}...`);
+ *   },
  * });
  * ```
  */
 export function defineCustomInstallationStep<TResult = unknown>(
   handler: CustomInstallationStepHandler<TResult>,
-): CustomInstallationStepHandler<TResult> {
-  return handler;
+): CustomInstallationStepHandler<TResult>;
+export function defineCustomInstallationStep<TResult = unknown>(
+  definition: CustomInstallationStepDefinition<TResult>,
+): CustomInstallationStepDefinition<TResult>;
+export function defineCustomInstallationStep<TResult = unknown>(
+  handlerOrDefinition:
+    | CustomInstallationStepHandler<TResult>
+    | CustomInstallationStepDefinition<TResult>,
+):
+  | CustomInstallationStepHandler<TResult>
+  | CustomInstallationStepDefinition<TResult> {
+  return handlerOrDefinition;
 }
