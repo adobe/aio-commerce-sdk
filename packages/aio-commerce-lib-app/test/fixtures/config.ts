@@ -7,7 +7,19 @@ export const mockMetadata = {
   displayName: "Test App",
   description: "A test application",
   version: "1.0.0",
-};
+} satisfies ApplicationMetadata;
+
+/** Business configuration part */
+const businessConfigPart = {
+  schema: [
+    {
+      name: "testField",
+      label: "Test Field",
+      type: "text",
+      default: "default value",
+    },
+  ],
+} satisfies CommerceAppConfigOutputModel["businessConfig"];
 
 /** Commerce eventing configuration part. */
 const commerceEventingPart = {
@@ -28,7 +40,7 @@ const commerceEventingPart = {
       ],
     },
   ],
-};
+} satisfies CommerceAppConfigOutputModel["eventing"];
 
 /** External eventing configuration part. */
 const externalEventingPart = {
@@ -48,7 +60,7 @@ const externalEventingPart = {
       ],
     },
   ],
-};
+} satisfies CommerceAppConfigOutputModel["eventing"];
 
 /** Webhooks configuration part. */
 const webhooksPart = [
@@ -66,11 +78,32 @@ const webhooksPart = [
       method: "POST",
     },
   },
-];
+] satisfies CommerceAppConfigOutputModel["webhooks"];
+
+const installationPart = {
+  messages: {
+    preInstallation: "Preparing to install",
+    postInstallation: "Installation complete",
+  },
+
+  customInstallationSteps: [
+    {
+      script: "./my-script.js",
+      name: "My Script",
+      description: "A test script",
+    },
+  ],
+} satisfies CommerceAppConfigOutputModel["installation"];
 
 /** Minimal valid config with only required metadata fields. */
 export const minimalValidConfig = {
   metadata: mockMetadata,
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with business configuration. */
+export const configWithBusinessConfig = {
+  metadata: { ...mockMetadata, id: "test-app-business-config" },
+  businessConfig: businessConfigPart,
 } satisfies CommerceAppConfigOutputModel;
 
 /** Config fixture with eventing.commerce configured. */
@@ -113,15 +146,7 @@ export const configWithEventingAndWebhooks = {
 /** Config fixture with a single custom installation script — for focused workflow tests. */
 export const configWithOneScript = {
   metadata: { ...mockMetadata, id: "test-one-script" },
-  installation: {
-    customInstallationSteps: [
-      {
-        script: "./my-script.js",
-        name: "My Script",
-        description: "A test script",
-      },
-    ],
-  },
+  installation: installationPart,
 } satisfies CommerceAppConfigOutputModel;
 
 /** Config fixture with custom installation steps. */
@@ -141,6 +166,19 @@ export const configWithCustomInstallationSteps = {
       },
     ],
   },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Full config fixture with all parts configured. */
+export const fullConfig = {
+  metadata: { ...mockMetadata, id: "full-config-app" },
+  businessConfig: businessConfigPart,
+  eventing: {
+    ...commerceEventingPart,
+    ...externalEventingPart,
+  },
+
+  webhooks: webhooksPart,
+  installation: installationPart,
 } satisfies CommerceAppConfigOutputModel;
 
 export function createMockMetadata(

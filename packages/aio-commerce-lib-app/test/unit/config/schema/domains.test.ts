@@ -14,19 +14,21 @@ import { describe, expect, test } from "vitest";
 
 import { getConfigDomains, hasConfigDomain } from "#config/schema/domains";
 import {
+  configWithBusinessConfig,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
   configWithEventingAndWebhooks,
   configWithExternalEventing,
   configWithFullEventing,
   configWithWebhooks,
+  fullConfig,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-describe("domains schema helpers", () => {
-  describe("getConfigDomains", () => {
+describe.concurrent("domains schema helpers", () => {
+  describe.concurrent("getConfigDomains", () => {
     test("should return only metadata domain for minimal config", () => {
       const domains = getConfigDomains(minimalValidConfig);
 
@@ -90,6 +92,7 @@ describe("domains schema helpers", () => {
       const config: CommerceAppConfigOutputModel = {
         ...minimalValidConfig,
         businessConfig: {
+          ...configWithBusinessConfig.businessConfig,
           schema: [],
         },
       };
@@ -102,21 +105,7 @@ describe("domains schema helpers", () => {
     });
 
     test("should include businessConfig.schema domain when schema is non-empty", () => {
-      const config: CommerceAppConfigOutputModel = {
-        ...minimalValidConfig,
-        businessConfig: {
-          schema: [
-            {
-              name: "test-field",
-              label: "Test Field",
-              type: "text",
-              default: "",
-            },
-          ],
-        },
-      };
-
-      const domains = getConfigDomains(config);
+      const domains = getConfigDomains(configWithBusinessConfig);
 
       expect(domains.has("metadata")).toBe(true);
       expect(domains.has("businessConfig")).toBe(true);
@@ -124,37 +113,61 @@ describe("domains schema helpers", () => {
     });
   });
 
-  describe("hasConfigDomain", () => {
-    test("should return true when domain is present", () => {
-      expect(hasConfigDomain(minimalValidConfig, "metadata")).toBe(true);
-      expect(hasConfigDomain(configWithWebhooks, "webhooks")).toBe(true);
-      expect(hasConfigDomain(configWithCommerceEventing, "eventing")).toBe(
-        true,
-      );
-      expect(
-        hasConfigDomain(configWithCommerceEventing, "eventing.commerce"),
-      ).toBe(true);
+  describe.concurrent("hasConfigDomain", () => {
+    test.concurrent.each([
+      { config: minimalValidConfig, domain: "metadata" },
+      { config: configWithBusinessConfig, domain: "businessConfig" },
+      { config: configWithBusinessConfig, domain: "businessConfig.schema" },
+      { config: configWithCommerceEventing, domain: "eventing" },
+      { config: configWithWebhooks, domain: "webhooks" },
+      { config: configWithCommerceEventing, domain: "eventing" },
+      { config: configWithCommerceEventing, domain: "eventing.commerce" },
+      { config: configWithExternalEventing, domain: "eventing" },
+      { config: configWithExternalEventing, domain: "eventing.external" },
+      { config: configWithEventingAndWebhooks, domain: "webhooks" },
+      { config: configWithEventingAndWebhooks, domain: "eventing.commerce" },
+      { config: configWithEventingAndWebhooks, domain: "eventing.external" },
+      { config: configWithCustomInstallationSteps, domain: "installation" },
+      {
+        config: configWithCustomInstallationSteps,
+        domain: "installation.customInstallationSteps",
+      },
+    ] as const)('should return true for domain "$domain" when config with "$domain" domain is present', ({
+      config,
+      domain,
+    }) => {
+      expect(hasConfigDomain(config, domain)).toBe(true);
     });
 
-    test("should return false when domain is not present", () => {
-      expect(hasConfigDomain(minimalValidConfig, "webhooks")).toBe(false);
-      expect(hasConfigDomain(minimalValidConfig, "eventing")).toBe(false);
-      expect(
-        hasConfigDomain(configWithCommerceEventing, "eventing.external"),
-      ).toBe(false);
-      expect(
-        hasConfigDomain(configWithExternalEventing, "eventing.commerce"),
-      ).toBe(false);
+    test.concurrent.each([
+      { config: {}, domain: "metadata" },
+      { config: minimalValidConfig, domain: "businessConfig" },
+      { config: minimalValidConfig, domain: "businessConfig.schema" },
+      { config: minimalValidConfig, domain: "eventing" },
+      { config: minimalValidConfig, domain: "webhooks" },
+      { config: minimalValidConfig, domain: "installation" },
+      { config: configWithCommerceEventing, domain: "eventing.external" },
+      { config: configWithExternalEventing, domain: "eventing.commerce" },
+    ] as const)('should return false for domain "$domain" when config with "$domain" domain is not present', ({
+      config,
+      domain,
+    }) => {
+      // @ts-expect-error - There might be invalid configs (e.g. missing metadata)
+      expect(hasConfigDomain(config, domain)).toBe(false);
     });
 
-    test("should work with all domain types", () => {
-      const fullConfig = configWithEventingAndWebhooks;
-
-      expect(hasConfigDomain(fullConfig, "metadata")).toBe(true);
-      expect(hasConfigDomain(fullConfig, "eventing")).toBe(true);
-      expect(hasConfigDomain(fullConfig, "webhooks")).toBe(true);
-      expect(hasConfigDomain(fullConfig, "eventing.commerce")).toBe(true);
-      expect(hasConfigDomain(fullConfig, "eventing.external")).toBe(true);
+    test.concurrent.each([
+      { config: fullConfig, domain: "metadata" },
+      { config: fullConfig, domain: "businessConfig" },
+      { config: fullConfig, domain: "businessConfig.schema" },
+      { config: fullConfig, domain: "eventing" },
+      { config: fullConfig, domain: "eventing.commerce" },
+      { config: fullConfig, domain: "eventing.external" },
+      { config: fullConfig, domain: "webhooks" },
+      { config: fullConfig, domain: "installation" },
+      { config: fullConfig, domain: "installation.customInstallationSteps" },
+    ] as const)("should work with all domain types", ({ config, domain }) => {
+      expect(hasConfigDomain(config, domain)).toBe(true);
     });
   });
 });
