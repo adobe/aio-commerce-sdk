@@ -350,6 +350,56 @@ describe("existing data normalization", () => {
     });
   });
 
+  test("getCommerceEventingExistingData reports no default provider when all providers have an id", async () => {
+    const existingProvider = createMockCommerceEventProvider({
+      id: "provider-1",
+      provider_id: "provider-1",
+      label: "Existing Provider",
+    });
+
+    const context = createMockEventingInstallationContext({
+      commerceEventsClient: createMockCommerceEventsClient({
+        getAllEventSubscriptions: vi.fn(async () => []),
+        getAllEventProviders: vi.fn(async () => [existingProvider]),
+      }),
+    });
+
+    await expect(
+      getCommerceEventingExistingData(context),
+    ).resolves.toStrictEqual({
+      isDefaultWorkspaceConfigurationEmpty: true,
+      isDefaultProviderConfigured: false,
+      providers: [existingProvider],
+      subscriptions: new Map(),
+    });
+  });
+
+  test("getCommerceEventingExistingData detects configured workspace when default provider has a non-empty configuration", async () => {
+    const { id: _, ...defaultProvider } = createMockCommerceEventProvider({
+      id: "default-provider",
+      provider_id: "default-provider-id",
+      instance_id: "default-instance-id",
+      label: "Default Provider",
+      workspace_configuration: '{"project":{}}',
+    });
+
+    const context = createMockEventingInstallationContext({
+      commerceEventsClient: createMockCommerceEventsClient({
+        getAllEventSubscriptions: vi.fn(async () => []),
+        getAllEventProviders: vi.fn(async () => [defaultProvider]),
+      }),
+    });
+
+    await expect(
+      getCommerceEventingExistingData(context),
+    ).resolves.toStrictEqual({
+      isDefaultWorkspaceConfigurationEmpty: false,
+      isDefaultProviderConfigured: true,
+      providers: [defaultProvider],
+      subscriptions: new Map(),
+    });
+  });
+
   test("getCommerceEventingExistingData detects empty default workspace configuration and provider and maps subscriptions by name", async () => {
     const { id: _, ...defaultProvider } = createMockCommerceEventProvider({
       id: "default-provider",

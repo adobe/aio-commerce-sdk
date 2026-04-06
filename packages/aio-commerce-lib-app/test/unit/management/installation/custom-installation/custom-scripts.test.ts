@@ -176,6 +176,18 @@ describe("createCustomScriptStep - run function", () => {
     ).rejects.toThrow();
   });
 
+  test("should throw error when customScripts is undefined on context", async () => {
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = undefined;
+
+    await expect(
+      step.run(configWithCustomInstallationSteps, mockContext),
+    ).rejects.toThrow();
+  });
+
   test("should throw error when script module has no default export", async () => {
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
     const step = steps?.[0] as LeafStep;
