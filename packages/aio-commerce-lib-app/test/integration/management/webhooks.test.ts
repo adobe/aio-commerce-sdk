@@ -51,7 +51,6 @@ function findValidationNodeByPath(
 }
 
 setupApiTestLifecycle();
-
 afterEach(() => {
   vi.unstubAllEnvs();
 });
@@ -70,6 +69,7 @@ describe("webhooks installation integration", () => {
       http.get(`${COMMERCE_BASE_URL}/webhooks/list`, () =>
         HttpResponse.json([]),
       ),
+
       http.post(
         `${COMMERCE_BASE_URL}/webhooks/subscribe`,
         async ({ request }) => {
@@ -77,6 +77,7 @@ describe("webhooks installation integration", () => {
             string,
             unknown
           >;
+
           return HttpResponse.json({});
         },
       ),
@@ -89,10 +90,7 @@ describe("webhooks installation integration", () => {
       initialState,
     });
 
-    if (!isSucceededState(result)) {
-      throw new Error("Expected webhook installation to succeed.");
-    }
-
+    expect.assert(isSucceededState(result));
     expect(capture.subscribeBody).toEqual({
       webhook: expect.objectContaining({
         batch_name: "test_app_webhooks_default",

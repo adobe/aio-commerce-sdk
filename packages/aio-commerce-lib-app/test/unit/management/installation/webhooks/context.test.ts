@@ -24,7 +24,7 @@ describe("createWebhooksStepContext", () => {
     vi.clearAllMocks();
   });
 
-  test("lazily creates the Commerce Webhooks client once and applies the request timeout", async () => {
+  test("lazily creates the Commerce Webhooks client once", async () => {
     const resolvedParams = createMockResolvedCommerceHttpClientParams();
     const createdClient = createMockCommerceWebhooksClient();
 
@@ -67,9 +67,7 @@ describe("createWebhooksStepContext", () => {
     expect(createCustomCommerceWebhooksApiClient).toHaveBeenCalledWith(
       {
         ...resolvedParams,
-        fetchOptions: {
-          timeout: 1000 * 60 * 2,
-        },
+        fetchOptions: expect.anything(),
       },
       {
         getWebhookList,

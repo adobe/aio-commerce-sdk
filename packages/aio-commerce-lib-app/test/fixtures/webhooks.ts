@@ -27,7 +27,9 @@ import type { WebhookDefinition, WebhookEntry } from "#config/schema/webhooks";
 import type { WebhooksExecutionContext } from "#management/installation/webhooks/context";
 
 export function createMockWebhookDefinition(
-  overrides: Partial<WebhookDefinition> = {},
+  overrides: Partial<WebhookDefinition> = {
+    method: "POST",
+  },
 ): WebhookDefinition {
   return {
     ...configWithWebhooks.webhooks[0].webhook,
@@ -51,10 +53,11 @@ type UrlWebhookEntryOverrides = Omit<Partial<UrlWebhookEntry>, "webhook"> & {
 };
 
 export function createMockRuntimeWebhookEntry(
-  overrides: RuntimeWebhookEntryOverrides = {},
+  overrides: RuntimeWebhookEntryOverrides = {
+    category: "modification",
+  },
 ): RuntimeWebhookEntry {
   const defaultEntry = configWithWebhooks.webhooks[0] as RuntimeWebhookEntry;
-
   return {
     ...defaultEntry,
     ...overrides,
@@ -66,7 +69,9 @@ export function createMockRuntimeWebhookEntry(
 }
 
 export function createMockUrlWebhookEntry(
-  overrides: UrlWebhookEntryOverrides = {},
+  overrides: UrlWebhookEntryOverrides = {
+    category: "modification",
+  },
 ): UrlWebhookEntry {
   const { webhook: _ignoredWebhookOverride, ...entryOverrides } = overrides;
   const webhookOverrides = overrides.webhook ?? {};
