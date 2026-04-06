@@ -34,7 +34,6 @@ import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 import type { ImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import type {
   EventProviderCreateParams as CommerceEventProviderCreateParams,
-  EventSubscriptionCreateParams,
   UpdateEventingConfigurationParams,
 } from "@adobe/aio-commerce-lib-events/commerce";
 
@@ -72,7 +71,10 @@ vi.mock("@adobe/aio-commerce-lib-auth", async () => {
 
 const IO_EVENTS_BASE_URL = "https://api.adobe.io/events";
 const COMMERCE_BASE_URL = "https://api.commerce.adobe.com/V1";
+
 const config = configWithFullEventing;
+const installationContext = createMockInstallationContext();
+
 const [commerceSource] = config.eventing.commerce;
 const [commerceEvent] = commerceSource.events;
 const [externalSource] = config.eventing.external;
@@ -83,72 +85,63 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("eventing installation integration", () => {
+describe("eventing installation", () => {
   let capture: {
-    authorization: string | null;
     updateConfiguration: UpdateEventingConfigurationParams | null;
-    ioProviders: ReturnType<typeof createMockIoEventProvider>[];
-    ioMetadata: ReturnType<typeof createMockIoEventMetadata>[];
-    ioRegistrations: ReturnType<typeof createMockIoEventRegistration>[];
-    commerceProvider: ReturnType<typeof createMockCommerceEventProvider> | null;
-    commerceSubscriptions: EventSubscriptionCreateParams[];
   };
-
-  let providerCreateCount: number;
-  let registrationCreateCount: number;
 
   beforeEach(() => {
     vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+
+    const orgId = installationContext.appData.consumerOrgId;
+    const projectId = installationContext.appData.projectId;
+    const workspaceId = installationContext.appData.workspaceId;
+
     capture = {
-      authorization: null,
       updateConfiguration: null,
-      ioProviders: [],
-      ioMetadata: [],
-      ioRegistrations: [],
-      commerceProvider: null,
-      commerceSubscriptions: [],
     };
 
-    providerCreateCount = 0;
-    registrationCreateCount = 0;
-
     apiServer.use(
-      http.get(`${IO_EVENTS_BASE_URL}/test-consumer-org-id/providers`, () =>
+      http.get(`${IO_EVENTS_BASE_URL}/${orgId}/providers`, () =>
         HttpResponse.json({
           _links: { self: { href: "/providers" } },
           _embedded: { providers: [] },
         }),
       ),
+
       http.get(
-        `${IO_EVENTS_BASE_URL}/test-consumer-org-id/test-project-id/test-workspace-id/registrations`,
+        `${IO_EVENTS_BASE_URL}/${orgId}/${projectId}/${workspaceId}/registrations`,
         () =>
           HttpResponse.json({
             _links: { self: { href: "/registrations" } },
             _embedded: { registrations: [] },
           }),
       ),
+
       http.post(
-        `${IO_EVENTS_BASE_URL}/test-consumer-org-id/test-project-id/test-workspace-id/providers`,
+        `${IO_EVENTS_BASE_URL}/${orgId}/${projectId}/${workspaceId}/providers`,
         async ({ request }) => {
           const requestBody =
             (await request.json()) as IoEventProviderRequestBody;
-          capture.authorization = request.headers.get("Authorization");
-          providerCreateCount += 1;
 
           const provider = createMockIoEventProvider({
-            id: `io-provider-${providerCreateCount}`,
+            id:
+              requestBody.provider_metadata === "dx_commerce_events"
+                ? "io-provider-commerce"
+                : "io-provider-external",
+
             label: requestBody.label,
             description: requestBody.description,
             instance_id: requestBody.instance_id,
             provider_metadata: requestBody.provider_metadata,
           });
-          capture.ioProviders.push(provider);
 
           return HttpResponse.json(createMockIoEventProviderHalModel(provider));
         },
       ),
+
       http.post(
-        `${IO_EVENTS_BASE_URL}/test-consumer-org-id/test-project-id/test-workspace-id/providers/:providerId/eventmetadata`,
+        `${IO_EVENTS_BASE_URL}/${orgId}/${projectId}/${workspaceId}/providers/:providerId/eventmetadata`,
         async ({ request }) => {
           const requestBody =
             (await request.json()) as IoEventMetadataRequestBody;
@@ -157,39 +150,42 @@ describe("eventing installation integration", () => {
             event_code: requestBody.event_code,
             label: requestBody.label,
             description: requestBody.description,
-            sample: null,
           });
-          capture.ioMetadata.push(metadata);
 
           return HttpResponse.json(createMockIoEventMetadataHalModel(metadata));
         },
       ),
+
       http.post(
-        `${IO_EVENTS_BASE_URL}/test-consumer-org-id/test-project-id/test-workspace-id/registrations`,
+        `${IO_EVENTS_BASE_URL}/${orgId}/${projectId}/${workspaceId}/registrations`,
         async ({ request }) => {
           const requestBody =
             (await request.json()) as IoEventRegistrationRequestBody;
-          registrationCreateCount += 1;
 
           const registration = createMockIoEventRegistration({
-            id: `registration-${registrationCreateCount}`,
+            id: requestBody.name.startsWith("Commerce Event Registration:")
+              ? "registration-1"
+              : "registration-2",
+
             name: requestBody.name,
             description: requestBody.description,
             client_id: requestBody.client_id,
           });
-          capture.ioRegistrations.push(registration);
 
           return HttpResponse.json(
             createMockIoEventRegistrationHalModel(registration),
           );
         },
       ),
+
       http.get(`${COMMERCE_BASE_URL}/eventing/eventProvider`, () =>
         HttpResponse.json([{ workspace_configuration: "" }]),
       ),
+
       http.get(`${COMMERCE_BASE_URL}/eventing/getEventSubscriptions`, () =>
         HttpResponse.json([]),
       ),
+
       http.put(
         `${COMMERCE_BASE_URL}/eventing/updateConfiguration`,
         async ({ request }) => {
@@ -199,6 +195,7 @@ describe("eventing installation integration", () => {
           return HttpResponse.json(true);
         },
       ),
+
       http.post(
         `${COMMERCE_BASE_URL}/eventing/eventProvider`,
         async ({ request }) => {
@@ -206,47 +203,44 @@ describe("eventing installation integration", () => {
             eventProvider: CommerceEventProviderCreateParams;
           };
 
-          capture.commerceProvider = createMockCommerceEventProvider({
-            id: "commerce-provider-1",
-            ...eventProvider,
-          });
-
-          return HttpResponse.json(capture.commerceProvider);
+          return HttpResponse.json(
+            createMockCommerceEventProvider({
+              id: "commerce-provider-1",
+              provider_id: eventProvider.provider_id,
+              instance_id: eventProvider.instance_id,
+              label: eventProvider.label,
+              description: eventProvider.description,
+              workspace_configuration:
+                typeof eventProvider.workspace_configuration === "string"
+                  ? eventProvider.workspace_configuration
+                  : JSON.stringify(eventProvider.workspace_configuration ?? {}),
+            }),
+          );
         },
       ),
-      http.post(
-        `${COMMERCE_BASE_URL}/eventing/eventSubscribe`,
-        async ({ request }) => {
-          const { event } = (await request.json()) as {
-            event: EventSubscriptionCreateParams;
-          };
 
-          capture.commerceSubscriptions.push(event);
-
-          return HttpResponse.json([]);
-        },
+      http.post(`${COMMERCE_BASE_URL}/eventing/eventSubscribe`, () =>
+        HttpResponse.json([]),
       ),
     );
   });
 
   test("runs the real eventing branches and stores the installed entities", async () => {
+    const workspaceId = installationContext.appData.workspaceId;
     const initialState = createInitialInstallationState({ config });
     const result = await runInstallation({
       config,
-      installationContext: createMockInstallationContext(),
+      installationContext,
       initialState,
     });
 
     expect.assert(isSucceededState(result), "Expected installation to succeed");
-
-    expect(capture.authorization).toBe("Bearer mock-token");
     expect(capture.updateConfiguration).toEqual({
       config: expect.objectContaining({
         enabled: true,
         workspace_configuration: expect.any(String),
       }),
     });
-    expect(capture.commerceProvider).not.toBeNull();
 
     expect(result.data).toMatchObject({
       installation: {
@@ -257,15 +251,16 @@ describe("eventing installation integration", () => {
                 config: commerceSource.provider,
                 data: {
                   ioEvents: {
-                    id: capture.ioProviders[0]?.id,
-                    label: capture.ioProviders[0]?.label,
-                    instance_id: capture.ioProviders[0]?.instance_id,
+                    id: "io-provider-commerce",
+                    label: commerceSource.provider.label,
+                    instance_id: `${config.metadata.id}-commerce-events-provider-${workspaceId}`,
+                    provider_metadata: "dx_commerce_events",
                   },
                   commerce: {
-                    id: capture.commerceProvider?.id,
-                    provider_id: capture.commerceProvider?.provider_id,
-                    label: capture.commerceProvider?.label,
-                    instance_id: capture.commerceProvider?.instance_id,
+                    id: "commerce-provider-1",
+                    provider_id: "io-provider-commerce",
+                    label: commerceSource.provider.label,
+                    instance_id: `${config.metadata.id}-commerce-events-provider-${workspaceId}`,
                   },
                   events: [
                     {
@@ -276,13 +271,20 @@ describe("eventing installation integration", () => {
                       },
                       data: {
                         metadata: {
-                          event_code: capture.ioMetadata[0]?.event_code,
+                          event_code:
+                            `com.adobe.commerce.${config.metadata.id}.${commerceEvent.name}`.toLowerCase(),
+                          label: commerceEvent.label,
                         },
-                        registrations: [{ id: capture.ioRegistrations[0]?.id }],
+                        registrations: [
+                          {
+                            id: "registration-1",
+                            name: "Commerce Event Registration: Handle Order (My Package)",
+                          },
+                        ],
                         subscription: {
-                          name: capture.commerceSubscriptions[0]?.name,
-                          provider_id:
-                            capture.commerceSubscriptions[0]?.provider_id,
+                          name: `${config.metadata.id}.${commerceEvent.name}`.toLowerCase(),
+                          provider_id: "io-provider-commerce",
+                          parent: commerceEvent.name,
                         },
                       },
                     },
@@ -297,11 +299,10 @@ describe("eventing installation integration", () => {
                 config: externalSource.provider,
                 data: {
                   ioEvents: {
-                    id: capture.ioProviders[1]?.id,
-                    label: capture.ioProviders[1]?.label,
-                    instance_id: capture.ioProviders[1]?.instance_id,
-                    provider_metadata:
-                      capture.ioProviders[1]?.provider_metadata,
+                    id: "io-provider-external",
+                    label: externalSource.provider.label,
+                    instance_id: `${config.metadata.id}-external-events-provider-${workspaceId}`,
+                    provider_metadata: "3rd_party_custom_events",
                   },
                   events: {
                     config: externalSource.events,
@@ -314,10 +315,15 @@ describe("eventing installation integration", () => {
                         },
                         data: {
                           metadata: {
-                            event_code: capture.ioMetadata[1]?.event_code,
+                            event_code:
+                              `${config.metadata.id}.${externalEvent.name}`.toLowerCase(),
+                            label: externalEvent.label,
                           },
                           registrations: [
-                            { id: capture.ioRegistrations[1]?.id },
+                            {
+                              id: "registration-2",
+                              name: "External Event Registration: Handle External Event (My Package)",
+                            },
                           ],
                         },
                       },

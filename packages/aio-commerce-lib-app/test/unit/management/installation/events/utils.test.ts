@@ -350,7 +350,7 @@ describe("existing data normalization", () => {
     });
   });
 
-  test("getCommerceEventingExistingData detects empty default workspace configuration and maps subscriptions by name", async () => {
+  test("getCommerceEventingExistingData detects empty default workspace configuration and provider and maps subscriptions by name", async () => {
     const { id: _, ...defaultProvider } = createMockCommerceEventProvider({
       id: "default-provider",
       provider_id: "default-provider-id",
@@ -384,6 +384,7 @@ describe("existing data normalization", () => {
       getCommerceEventingExistingData(context),
     ).resolves.toStrictEqual({
       isDefaultWorkspaceConfigurationEmpty: true,
+      isDefaultProviderConfigured: true,
       providers: [defaultProvider, existingProvider],
       subscriptions: new Map([[subscription.name, subscription]]),
     });

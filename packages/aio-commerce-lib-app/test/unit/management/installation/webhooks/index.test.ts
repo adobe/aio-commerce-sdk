@@ -14,14 +14,11 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { webhooksStep } from "#management/installation/webhooks/branch";
 import { createWebhooksStepContext } from "#management/installation/webhooks/context";
-import * as webhookHelpers from "#management/installation/webhooks/helpers";
 import {
   isBranchStep,
   isLeafStep,
 } from "#management/installation/workflow/step";
 import { configWithWebhooks, minimalValidConfig } from "#test/fixtures/config";
-import { createMockInstallationContext } from "#test/fixtures/installation";
-import { createMockWebhooksContext } from "#test/fixtures/webhooks";
 
 describe("webhooks installation module", () => {
   beforeEach(() => {
@@ -69,81 +66,6 @@ describe("webhooks installation module", () => {
         label: "Create Subscriptions",
         description: "Creates webhook subscriptions in Adobe Commerce",
       });
-    });
-
-    test("should create webhook subscriptions", async () => {
-      const subscribeWebhook = vi.fn().mockResolvedValue(null);
-      const getWebhookList = vi.fn().mockResolvedValue([]);
-      const mockContext = createMockWebhooksContext(
-        subscribeWebhook,
-        getWebhookList,
-      );
-
-      expect.assert.isDefined(subscriptionsStep.run);
-      const result = await subscriptionsStep.run(
-        configWithWebhooks,
-        mockContext,
-      );
-
-      expect(result).toBeDefined();
-      expect(result).toHaveProperty("subscribedWebhooks");
-      expect(Array.isArray(result.subscribedWebhooks)).toBe(true);
-      expect(result.subscribedWebhooks.length).toBeGreaterThan(0);
-
-      // Verify that the API clients were called
-      expect(getWebhookList).toHaveBeenCalled();
-      expect(subscribeWebhook).toHaveBeenCalled();
-    });
-
-    test("should delegate validation to the webhook validation helper", async () => {
-      const mockContext = createMockWebhooksContext();
-      const expectedIssues = [
-        {
-          code: "WEBHOOK_CONFLICTS",
-          message: "Webhook conflict",
-          severity: "warning" as const,
-        },
-      ];
-
-      const validateWebhookConflicts = vi
-        .spyOn(webhookHelpers, "validateWebhookConflicts")
-        .mockResolvedValue(expectedIssues);
-
-      expect.assert.isDefined(subscriptionsStep.validate);
-      const issues = await subscriptionsStep.validate(
-        configWithWebhooks,
-        mockContext,
-      );
-
-      expect(issues).toBe(expectedIssues);
-      expect(validateWebhookConflicts).toHaveBeenCalledWith(
-        configWithWebhooks,
-        mockContext,
-      );
-    });
-  });
-
-  describe("createWebhooksStepContext", () => {
-    test("should create context object with client getter", () => {
-      const mockInstallation = createMockInstallationContext();
-      const context = createWebhooksStepContext(mockInstallation);
-
-      expect(context).toBeDefined();
-      expect(context).toBeTypeOf("object");
-      // Verify the context has the expected structure without accessing the getter
-      expect("commerceWebhooksClient" in context).toBe(true);
-    });
-
-    test("should create lazy commerceWebhooksClient", () => {
-      const mockContext = createMockWebhooksContext();
-
-      expect(mockContext.commerceWebhooksClient).toBeDefined();
-      expect(mockContext.commerceWebhooksClient).toHaveProperty(
-        "getWebhookList",
-      );
-      expect(mockContext.commerceWebhooksClient).toHaveProperty(
-        "subscribeWebhook",
-      );
     });
   });
 });

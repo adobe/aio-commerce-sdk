@@ -255,6 +255,7 @@ export function createMockExistingCommerceEventingData(
   overrides?: Partial<ExistingCommerceEventingData>,
 ): ExistingCommerceEventingData {
   return {
+    isDefaultProviderConfigured: false,
     isDefaultWorkspaceConfigurationEmpty: false,
     providers: [],
     subscriptions: new Map(),

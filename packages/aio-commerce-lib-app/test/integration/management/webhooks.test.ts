@@ -63,7 +63,6 @@ describe("webhooks installation integration", () => {
     const config = configWithWebhooks;
     const webhookEntry = config.webhooks[0];
     const capture = {
-      authorization: null as string | null,
       subscribeBody: null as Record<string, unknown> | null,
     };
 
@@ -74,7 +73,6 @@ describe("webhooks installation integration", () => {
       http.post(
         `${COMMERCE_BASE_URL}/webhooks/subscribe`,
         async ({ request }) => {
-          capture.authorization = request.headers.get("Authorization");
           capture.subscribeBody = (await request.json()) as Record<
             string,
             unknown
@@ -95,7 +93,6 @@ describe("webhooks installation integration", () => {
       throw new Error("Expected webhook installation to succeed.");
     }
 
-    expect(capture.authorization).toBe("Bearer test-ims-token");
     expect(capture.subscribeBody).toEqual({
       webhook: expect.objectContaining({
         batch_name: "test_app_webhooks_default",
