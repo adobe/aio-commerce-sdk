@@ -134,7 +134,7 @@ export function getRegistrationName(
   runtimeAction: string,
 ) {
   const providerType = provider.provider_metadata as EventProviderType;
-  const providerLabel = PROVIDER_TYPE_TO_LABEL[providerType] ?? "Unknown";
+  const providerLabel = PROVIDER_TYPE_TO_LABEL[providerType];
 
   // As per the schema, runtimeAction is always in the format "package-name/action-name".
   const [packageName, actionName] = runtimeAction
