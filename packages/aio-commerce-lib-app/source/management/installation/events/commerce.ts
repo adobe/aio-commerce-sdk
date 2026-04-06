@@ -36,6 +36,10 @@ export const commerceEventsStep = defineLeafStep({
     label: "Configure Commerce Events",
     description: "Sets up I/O Events for Adobe Commerce event sources",
   },
+  uninstallMeta: {
+    label: "Remove Commerce Events",
+    description: "Removes I/O Events for Adobe Commerce event sources",
+  },
 
   when: hasCommerceEvents,
   run: async (config, context: EventsExecutionContext) => {

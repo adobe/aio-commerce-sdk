@@ -146,6 +146,60 @@ describe("createInitialState", () => {
     expect(state.step.children[0].name).toBe("leaf");
     expect(state.step.children[0].children).toEqual([]);
   });
+
+  test("should use uninstallMeta for steps when mode is 'uninstall'", () => {
+    const childStep = defineLeafStep({
+      name: "child",
+      meta: { label: "Install Child", description: "Installs something" },
+      uninstallMeta: {
+        label: "Uninstall Child",
+        description: "Removes something",
+      },
+      run: vi.fn(),
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { label: "Installation" },
+      uninstallMeta: { label: "Uninstallation" },
+      children: [childStep],
+    });
+
+    const state = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+      mode: "uninstall",
+    });
+
+    expect(state.step.meta).toEqual({ label: "Uninstallation" });
+    expect(state.step.children[0].meta).toEqual({
+      label: "Uninstall Child",
+      description: "Removes something",
+    });
+  });
+
+  test("should fall back to meta when uninstallMeta is absent and mode is 'uninstall'", () => {
+    const childStep = defineLeafStep({
+      name: "child",
+      meta: { label: "Install Child" },
+      run: vi.fn(),
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { label: "Installation" },
+      children: [childStep],
+    });
+
+    const state = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+      mode: "uninstall",
+    });
+
+    expect(state.step.meta).toEqual({ label: "Installation" });
+    expect(state.step.children[0].meta).toEqual({ label: "Install Child" });
+  });
 });
 
 describe("executeWorkflow", () => {

@@ -44,6 +44,9 @@ export type CreateInitialStateOptions = {
 
   /** The app configuration used to determine applicable steps. */
   config: CommerceAppConfigOutputModel;
+
+  /** The execution mode. When "uninstall", steps use `uninstallMeta` if defined. */
+  mode?: ExecutionMode;
 };
 
 /** Options for executing a workflow. */
@@ -89,12 +92,12 @@ type StepExecutionContext = {
 export function createInitialState(
   options: CreateInitialStateOptions,
 ): InProgressInstallationState {
-  const { rootStep, config } = options;
+  const { rootStep, config, mode } = options;
   return {
     id: crypto.randomUUID(),
     startedAt: nowIsoString(),
     status: "in-progress",
-    step: buildInitialStepStatus(rootStep, config, []),
+    step: buildInitialStepStatus(rootStep, config, [], mode),
     data: null,
   };
 }
@@ -182,6 +185,7 @@ function buildInitialStepStatus(
   step: AnyStep,
   config: CommerceAppConfigOutputModel,
   parentPath: string[],
+  mode?: ExecutionMode,
 ): StepStatus {
   const path = [...parentPath, step.name];
   const children: StepStatus[] = [];
@@ -193,7 +197,7 @@ function buildInitialStepStatus(
         continue;
       }
 
-      children.push(buildInitialStepStatus(child, config, path));
+      children.push(buildInitialStepStatus(child, config, path, mode));
     }
   }
 
@@ -201,7 +205,10 @@ function buildInitialStepStatus(
     id: crypto.randomUUID(),
     name: step.name,
     path,
-    meta: step.meta,
+    meta:
+      mode === "uninstall" && step.uninstallMeta
+        ? step.uninstallMeta
+        : step.meta,
     status: "pending" as const,
     children,
   };

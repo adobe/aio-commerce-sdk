@@ -32,6 +32,10 @@ const subscriptionsStep = defineLeafStep({
     label: "Create Subscriptions",
     description: "Creates webhook subscriptions in Adobe Commerce",
   },
+  uninstallMeta: {
+    label: "Delete Subscriptions",
+    description: "Deletes webhook subscriptions from Adobe Commerce",
+  },
 
   validate: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
     validateWebhookConflicts(config, context),
@@ -53,6 +57,10 @@ export const webhooksStep = defineBranchStep({
   meta: {
     label: "Webhooks",
     description: "Sets up Commerce webhooks",
+  },
+  uninstallMeta: {
+    label: "Webhooks",
+    description: "Removes Commerce webhooks",
   },
 
   when: hasWebhooks,

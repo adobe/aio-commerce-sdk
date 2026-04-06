@@ -25,6 +25,11 @@ const customInstallationStepBase = defineBranchStep({
     description:
       "Executes custom installation scripts defined in the application configuration",
   },
+  uninstallMeta: {
+    label: "Custom Uninstallation Steps",
+    description:
+      "Executes custom uninstallation scripts defined in the application configuration",
+  },
 
   when: hasCustomInstallationSteps,
   children: [],

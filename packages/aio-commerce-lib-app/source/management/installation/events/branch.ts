@@ -25,6 +25,11 @@ export const eventingStep = defineBranchStep({
     description:
       "Sets up the I/O Events and the Commerce events required by the application",
   },
+  uninstallMeta: {
+    label: "Eventing",
+    description:
+      "Removes the I/O Events and Commerce events configured by the application",
+  },
 
   when: hasEventing,
   context: createEventsStepContext,

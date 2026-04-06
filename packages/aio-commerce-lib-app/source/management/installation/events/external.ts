@@ -26,6 +26,10 @@ export const externalEventsStep = defineLeafStep({
     label: "Configure External Events",
     description: "Sets up I/O Events for external event sources",
   },
+  uninstallMeta: {
+    label: "Remove External Events",
+    description: "Removes I/O Events for external event sources",
+  },
 
   when: hasExternalEvents,
   run: async (config, context: EventsExecutionContext) => {

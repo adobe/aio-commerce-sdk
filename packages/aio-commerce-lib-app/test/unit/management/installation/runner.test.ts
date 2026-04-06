@@ -225,6 +225,20 @@ describe("createInitialUninstallationState", () => {
     expect(state.id.length).toBeGreaterThan(0);
     expect(state.status).toBe("in-progress");
   });
+
+  test("should use uninstall-specific descriptions for eventing and webhooks steps", () => {
+    const state = createInitialUninstallationState({
+      config: { ...configWithCommerceEventing, ...configWithWebhooks },
+    });
+
+    const eventingStep = state.step.children.find((c) => c.name === "eventing");
+    expect(eventingStep?.meta.description).toBe(
+      "Removes the I/O Events and Commerce events configured by the application",
+    );
+
+    const webhooksStep = state.step.children.find((c) => c.name === "webhooks");
+    expect(webhooksStep?.meta.description).toBe("Removes Commerce webhooks");
+  });
 });
 
 describe("runUninstallation", () => {

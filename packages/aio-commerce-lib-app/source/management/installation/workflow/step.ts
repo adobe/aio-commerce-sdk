@@ -96,6 +96,9 @@ export type StepBase<
   /** Metadata associated with the step. */
   meta: StepMeta;
 
+  /** Optional metadata override used during uninstallation. Falls back to `meta` if absent. */
+  uninstallMeta?: StepMeta;
+
   /** Whether the step should be taken into consideration. */
   when?: (config: CommerceAppConfigOutputModel) => config is TConfig;
 };
@@ -183,6 +186,7 @@ export interface AnyStep {
   type: "leaf" | "branch";
 
   uninstall?: (config: any, context: any) => void | Promise<void>;
+  uninstallMeta?: StepMeta;
 
   validate?: (
     config: any,
@@ -245,6 +249,7 @@ export function defineLeafStep<
     type: "leaf",
     name: options.name,
     meta: options.meta,
+    uninstallMeta: options.uninstallMeta,
     when: options.when,
     run: options.run,
     validate: options.validate,
@@ -277,6 +282,7 @@ export function defineBranchStep<
     type: "branch",
     name: options.name,
     meta: options.meta,
+    uninstallMeta: options.uninstallMeta,
     when: options.when,
     context: options.context,
     children: options.children,

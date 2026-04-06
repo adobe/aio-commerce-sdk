@@ -110,7 +110,7 @@ export function createInitialUninstallationState(
 ): InProgressInstallationState {
   const { config } = options;
   const rootStep = createRootUninstallationStep(config);
-  return createInitialState({ rootStep, config });
+  return createInitialState({ rootStep, config, mode: "uninstall" });
 }
 
 /**

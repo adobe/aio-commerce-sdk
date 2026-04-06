@@ -81,15 +81,33 @@ const InstallationRequestBodySchema = object({
   ioEventsEnv: string(),
 });
 
-/** Creates an installation state store using lib-core combined storage. */
-function createInstallationStore() {
+type WorkflowRequestBody = {
+  appData: InstallationContext["appData"];
+  commerceBaseUrl: string;
+  commerceEnv: string;
+  ioEventsUrl: string;
+  ioEventsEnv: string;
+};
+
+/** Creates a workflow state store with the given prefix. */
+function createWorkflowStore(prefix: string) {
   return createCombinedStore<InstallationState>({
-    cache: { keyPrefix: "installation" },
+    cache: { keyPrefix: prefix },
     persistent: {
-      dirPrefix: "installation",
+      dirPrefix: prefix,
       shouldPersist: isCompletedState,
     },
   });
+}
+
+/** Creates the installation state store. */
+function createInstallationStore() {
+  return createWorkflowStore("installation");
+}
+
+/** Creates the uninstallation state store. */
+function createUninstallationStore() {
+  return createWorkflowStore("uninstallation");
 }
 
 /** Returns the storage key used to store the current installation ID. */
@@ -97,6 +115,63 @@ function getStorageKey() {
   // For simplicity, we use a single key to store the current installation state.
   // In the future we might use the installation ID.
   return "current";
+}
+
+/**
+ * Merges rawParams with body fields, overriding API URLs.
+ * Shared by POST /, POST /execution, DELETE /, DELETE /execution.
+ */
+function buildWorkflowParams(
+  body: WorkflowRequestBody,
+  rawParams: RuntimeActionArgs,
+) {
+  return {
+    ...rawParams,
+    appData: body.appData,
+    AIO_EVENTS_API_BASE_URL: body.ioEventsUrl,
+    AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: body.ioEventsEnv,
+    AIO_COMMERCE_API_BASE_URL: body.commerceBaseUrl,
+    AIO_COMMERCE_API_FLAVOR: body.commerceEnv,
+  };
+}
+
+type ExecutionRouteParams = RuntimeActionArgs & {
+  initialState: InProgressInstallationState;
+  appData: InstallationContext["appData"];
+};
+
+/**
+ * Builds an InstallationContext from merged workflow params.
+ * Shared by POST /execution and DELETE /execution.
+ */
+function buildInstallationContext(
+  params: ExecutionRouteParams,
+  appConfig: CommerceAppConfigOutputModel,
+  logFn: InstallationContext["logger"],
+): InstallationContext {
+  return {
+    appData: params.appData,
+    params,
+    logger: logFn,
+    customScripts: params.customScriptsLoader?.(appConfig, logFn) ?? {},
+  };
+}
+
+/**
+ * Reads state from a store and returns 200 with body or 204.
+ * Shared by GET / and GET /uninstall.
+ */
+async function readStateFromStore(
+  store: KeyValueStore<InstallationState>,
+  logFn: (msg: string) => void,
+) {
+  const state = await store.get(getStorageKey());
+  if (state) {
+    logFn(`Found state: ${state.status}`);
+    return ok({ body: state });
+  }
+  logFn("No state found");
+  return noContent();
 }
 
 /**
@@ -153,16 +228,7 @@ router.get("/", {
     logger.debug("Getting installation execution status...");
 
     const store = await createInstallationStore();
-    const state = await store.get(getStorageKey());
-
-    if (state) {
-      logger.debug(`Found execution: ${state.status}`);
-      return ok({ body: state });
-    }
-
-    // No execution found - return 204 No Content
-    logger.debug("No execution found");
-    return noContent();
+    return readStateFromStore(store, (msg) => logger.debug(msg));
   },
 });
 
@@ -216,19 +282,15 @@ router.post("/", {
     await store.put(getStorageKey(), initialState);
     const ow = openwhisk();
 
+    const mergedParams = buildWorkflowParams(req.body, rawParams);
+
     const activation = await ow.actions.invoke({
       name: DEFAULT_ACTION_NAME,
       blocking: false,
       result: false,
 
       params: {
-        ...rawParams,
-
-        appData: req.body.appData,
-        AIO_EVENTS_API_BASE_URL: req.body.ioEventsUrl,
-        AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: req.body.ioEventsEnv,
-        AIO_COMMERCE_API_BASE_URL: req.body.commerceBaseUrl,
-        AIO_COMMERCE_API_FLAVOR: req.body.commerceEnv,
+        ...mergedParams,
 
         initialState,
         appConfig,
@@ -250,11 +312,6 @@ router.post("/", {
   },
 });
 
-type ExecutionRouteParams = RuntimeActionArgs & {
-  initialState: InProgressInstallationState;
-  appData: InstallationContext["appData"];
-};
-
 /**
  * POST /installation/execution - Execute installation (internal)
  *
@@ -263,7 +320,7 @@ type ExecutionRouteParams = RuntimeActionArgs & {
  */
 router.post("/execution", {
   handler: async (_req, { logger, rawParams }) => {
-    const { appData, ...params } = rawParams as ExecutionRouteParams;
+    const params = rawParams as ExecutionRouteParams;
     const { initialState, appConfig } = params;
 
     if (!initialState) {
@@ -276,12 +333,11 @@ router.post("/execution", {
 
     const store = await createInstallationStore();
     const hooks = createInstallationHooks(store, (msg) => logger.debug(msg));
-    const installationContext: InstallationContext = {
-      appData,
+    const installationContext = buildInstallationContext(
       params,
+      appConfig,
       logger,
-      customScripts: params.customScriptsLoader?.(appConfig, logger) || {},
-    };
+    );
 
     logger.debug(`Executing installation: ${initialState.id}`);
     const result = await runInstallation({
@@ -334,14 +390,10 @@ router.post("/validation", {
       );
     }
 
-    const { appData, ...params } = {
-      ...(rawParams as RuntimeActionArgs),
-      appData: req.body.appData,
-      AIO_EVENTS_API_BASE_URL: req.body.ioEventsUrl,
-      AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: req.body.ioEventsEnv,
-      AIO_COMMERCE_API_BASE_URL: req.body.commerceBaseUrl,
-      AIO_COMMERCE_API_FLAVOR: req.body.commerceEnv,
-    };
+    const { appData, ...params } = buildWorkflowParams(
+      req.body,
+      rawParams as RuntimeActionArgs,
+    );
 
     const validationContext: ValidationContext = {
       appData,
@@ -363,66 +415,150 @@ router.post("/validation", {
 });
 
 /**
- * DELETE / - Run uninstallation workflow and clear installation state
+ * GET /uninstall - Get current uninstallation status
  *
- * Accepts the same request body as POST / so App Management can pass the
- * same installation params (appData, service URLs). When a body is provided,
- * the uninstallation step workflow is executed before clearing state.
- * If no body is sent the state is cleared without running steps.
+ * Returns 200 with state if an uninstallation has been started, 204 otherwise.
+ */
+router.get("/uninstall", {
+  handler: async (_req, { logger }) => {
+    logger.debug("Getting uninstallation execution status...");
+    const store = await createUninstallationStore();
+    return readStateFromStore(store, (msg) => logger.debug(msg));
+  },
+});
+
+/**
+ * DELETE / - Start uninstallation (async)
+ *
+ * Flow:
+ * 1. Check uninstallation store for existing state
+ * 2. If in-progress: return 409 Conflict
+ * 3. Create initial uninstall state, save to store
+ * 4. Invoke DELETE /execution async via openwhisk
+ * 5. Return 202 Accepted with initial state
  */
 router.delete("/", {
   handler: async (req, { logger, rawParams }) => {
+    logger.debug("Starting async uninstallation...");
+
     const appConfig = rawParams.appConfig;
-    const bodyResult = safeParse(InstallationRequestBodySchema, req.body);
 
-    if (bodyResult.success && appConfig) {
-      logger.debug("Running uninstallation workflow...");
-
-      const { appData, ...bodyParams } = bodyResult.output;
-      const params = {
-        ...rawParams,
-        appData,
-        AIO_EVENTS_API_BASE_URL: bodyParams.ioEventsUrl,
-        AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: bodyParams.ioEventsEnv,
-        AIO_COMMERCE_API_BASE_URL: bodyParams.commerceBaseUrl,
-        AIO_COMMERCE_API_FLAVOR: bodyParams.commerceEnv,
-      };
-
-      const installationContext: InstallationContext = {
-        appData,
-        params,
-        logger,
-        customScripts: rawParams.customScriptsLoader?.(appConfig, logger) || {},
-      };
-
-      const initialState = createInitialUninstallationState({
-        config: appConfig,
-      });
-      const result = await runUninstallation({
-        installationContext,
-        config: appConfig,
-        initialState,
-      });
-
-      logger.debug(`Uninstallation completed: ${result.status}`);
-
-      if (isFailedState(result)) {
-        return internalServerError({
-          body: {
-            message: "Uninstallation failed",
-            error: result.error,
-            state: result,
-          },
-        });
-      }
+    if (!appConfig) {
+      return internalServerError(
+        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
+      );
     }
 
-    logger.debug("Clearing installation state...");
-    const store = await createInstallationStore();
-    await store.delete(getStorageKey());
-    logger.debug("Installation state cleared");
+    const bodyResult = safeParse(InstallationRequestBodySchema, req.body);
+    if (!bodyResult.success) {
+      return badRequest("Invalid request body");
+    }
+    const body = bodyResult.output;
 
-    return noContent();
+    const store = await createUninstallationStore();
+    const existingState = await store.get(getStorageKey());
+
+    if (existingState && isInProgressState(existingState)) {
+      logger.debug(
+        `Uninstallation already in progress: ${existingState.status}`,
+      );
+      return conflict(
+        "Uninstallation is already in progress. Wait for it to complete.",
+      );
+    }
+
+    const initialState = createInitialUninstallationState({
+      config: appConfig,
+    });
+    logger.debug(`Created initial uninstall state: ${initialState.id}`);
+    await store.put(getStorageKey(), initialState);
+
+    const workflowParams = buildWorkflowParams(body, rawParams);
+    const ow = openwhisk();
+    const activation = await ow.actions.invoke({
+      name: DEFAULT_ACTION_NAME,
+      blocking: false,
+      result: false,
+      params: {
+        ...workflowParams,
+        initialState,
+        appConfig,
+        __ow_path: "/execution",
+        __ow_method: "delete",
+      },
+    });
+
+    logger.debug(`Async uninstallation started: ${activation.activationId}`);
+    return accepted({
+      body: {
+        message: "Uninstallation started",
+        activationId: activation.activationId,
+        ...initialState,
+      },
+    });
+  },
+});
+
+/**
+ * DELETE /execution - Execute uninstallation (internal, called async by DELETE /)
+ *
+ * Flow:
+ * 1. Build InstallationContext from params
+ * 2. Run uninstallation workflow with hooks (hooks persist state per step)
+ * 3. Save final state to uninstallation store
+ * 4. Return 200 on success, 500 on failure
+ */
+router.delete("/execution", {
+  handler: async (_req, { logger, rawParams }) => {
+    const params = rawParams as ExecutionRouteParams;
+    const { initialState, appConfig } = params;
+
+    if (!initialState) {
+      return badRequest("initialState is required for execution");
+    }
+
+    if (!appConfig) {
+      return badRequest("appConfig is required for execution");
+    }
+
+    const store = await createUninstallationStore();
+    const hooks = createInstallationHooks(store, (msg) => logger.debug(msg));
+    const installationContext = buildInstallationContext(
+      params,
+      appConfig,
+      logger,
+    );
+
+    logger.debug(`Executing uninstallation: ${initialState.id}`);
+    const result = await runUninstallation({
+      installationContext,
+      config: appConfig,
+      initialState,
+      hooks,
+    });
+
+    await store.put(getStorageKey(), result);
+    logger.debug(`Uninstallation completed: ${result.status}`);
+
+    if (isSucceededState(result)) {
+      const installationStore = await createInstallationStore();
+      await installationStore.delete(getStorageKey());
+      logger.debug(
+        "Cleared installation state after successful uninstallation",
+      );
+    }
+
+    if (isFailedState(result)) {
+      return internalServerError({
+        body: {
+          message: "Uninstallation failed",
+          error: result.error,
+          state: result,
+        },
+      });
+    }
+
+    return ok({ body: result });
   },
 });
 
