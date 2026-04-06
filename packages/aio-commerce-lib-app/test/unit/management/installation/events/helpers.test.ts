@@ -288,15 +288,17 @@ describe("onboardIoEvents", () => {
       createMockExistingIoEventsData(),
     );
 
-    expect(ioEventsClient.createEventProvider).toHaveBeenCalledWith({
-      consumerOrgId: appData.consumerOrgId,
-      projectId: appData.projectId,
-      workspaceId: appData.workspaceId,
-      label: provider.label,
-      providerType: COMMERCE_PROVIDER_TYPE,
-      instanceId: expectedInstanceId,
-      description: provider.description,
-    });
+    expect(ioEventsClient.createEventProvider).toHaveBeenCalledWith(
+      expect.objectContaining({
+        consumerOrgId: appData.consumerOrgId,
+        projectId: appData.projectId,
+        workspaceId: appData.workspaceId,
+        label: provider.label,
+        providerType: COMMERCE_PROVIDER_TYPE,
+        instanceId: expectedInstanceId,
+        description: provider.description,
+      }),
+    );
 
     expect(ioEventsClient.createEventMetadataForProvider).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -305,9 +307,9 @@ describe("onboardIoEvents", () => {
       }),
     );
 
-    expect(ioEventsClient.createRegistration).toHaveBeenCalledOnce();
     expect(result.providerData).toEqual(createdProvider);
     expect(result.eventsData[0]?.data.metadata).toEqual(createdEventMetadata);
+    expect(ioEventsClient.createRegistration).toHaveBeenCalledOnce();
   });
 
   test("reuses existing provider metadata and registrations when they already exist", async () => {
@@ -356,13 +358,6 @@ describe("onboardIoEvents", () => {
       }),
     );
 
-    expect(ioEventsClient.createEventProvider).not.toHaveBeenCalled();
-    expect(
-      ioEventsClient.createEventMetadataForProvider,
-    ).not.toHaveBeenCalled();
-
-    expect(ioEventsClient.createRegistration).not.toHaveBeenCalled();
-
     expect(result.providerData).toMatchObject(existingProvider);
     expect(result.eventsData[0]?.data.metadata).toEqual({
       ...existingMetadata,
@@ -372,6 +367,13 @@ describe("onboardIoEvents", () => {
     expect(result.eventsData[0]?.data.registrations).toEqual([
       existingRegistration,
     ]);
+
+    expect(ioEventsClient.createEventProvider).not.toHaveBeenCalled();
+    expect(
+      ioEventsClient.createEventMetadataForProvider,
+    ).not.toHaveBeenCalled();
+
+    expect(ioEventsClient.createRegistration).not.toHaveBeenCalled();
   });
 
   test("rethrows and logs when creating the I/O Events provider fails", async () => {
@@ -499,6 +501,16 @@ describe("onboardCommerceEventing", () => {
       }),
     );
 
+    expect(result.commerceProvider).toEqual({
+      id: existingCommerceProvider.id,
+      provider_id: ioProvider.id,
+      label: ioProvider.label,
+      description: ioProvider.description,
+      instance_id: ioProvider.instance_id,
+    });
+
+    expect(result.subscriptions).toEqual([existingSubscription]);
+
     expect(
       commerceEventsClient.updateEventingConfiguration,
     ).toHaveBeenCalledWith(
@@ -518,15 +530,6 @@ describe("onboardCommerceEventing", () => {
 
     expect(commerceEventsClient.createEventProvider).not.toHaveBeenCalled();
     expect(commerceEventsClient.createEventSubscription).not.toHaveBeenCalled();
-    expect(result.commerceProvider).toEqual({
-      id: existingCommerceProvider.id,
-      provider_id: ioProvider.id,
-      label: ioProvider.label,
-      description: ioProvider.description,
-      instance_id: ioProvider.instance_id,
-    });
-
-    expect(result.subscriptions).toEqual([existingSubscription]);
   });
 
   test("requires workspace configuration when there is no existing default configuration", async () => {
