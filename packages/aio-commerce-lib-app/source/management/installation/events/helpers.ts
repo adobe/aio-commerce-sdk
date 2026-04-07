@@ -296,11 +296,10 @@ async function createOrGetIoEventRegistration(
 
 /**
  * Ensures Commerce Eventing is configured with the given configuration, updating it if it already exists.
- * @param eventsClient
- * @param params
- * @param existingData
+ * @param params - The parameters necessary to configure Commerce Eventing.
+ * @param existingData - Existing Commerce Eventing data.
  */
-async function configureCommerceEventing(
+export async function configureCommerceEventing(
   params: ConfigureCommerceEventingParams,
   existingData: ExistingCommerceEventingData,
 ) {
@@ -527,6 +526,7 @@ export async function onboardIoEvents<EventType extends AppEvent>(
     provider,
     context.appData.workspaceId,
   );
+
   const providerData = await createOrGetIoEventProvider(
     {
       context,
@@ -614,17 +614,6 @@ export async function onboardCommerceEventing(
 
   const instanceId = provider.instance_id;
   const subscriptions: Partial<CommerceEventSubscription>[] = [];
-
-  // The eventing module must be configured before creating the other entities.
-  await configureCommerceEventing(
-    {
-      context,
-      config: {
-        workspace_configuration: workspaceConfiguration,
-      },
-    },
-    existingData,
-  );
 
   const commerceProvider = await createOrGetCommerceProvider(
     {
