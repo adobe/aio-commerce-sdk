@@ -14,6 +14,7 @@
 
 import * as v from "valibot";
 
+import { AdminUiSdkSchema } from "./admin-ui-sdk";
 import { SchemaBusinessConfig } from "./business-configuration";
 import { EventingSchema } from "./eventing";
 import { InstallationSchema } from "./installation";
@@ -26,6 +27,7 @@ export const CommerceAppConfigSchema = v.looseObject({
   metadata: MetadataSchema,
   businessConfig: v.optional(SchemaBusinessConfig),
   eventing: v.optional(EventingSchema),
+  adminUiSdk: v.optional(AdminUiSdkSchema),
   installation: v.optional(InstallationSchema),
   webhooks: v.optional(WebhooksSchema),
 });
