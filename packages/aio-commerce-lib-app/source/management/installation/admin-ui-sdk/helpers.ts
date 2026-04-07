@@ -42,7 +42,7 @@ export async function registerExtension(
           extensionName: process.env.__OW_NAMESPACE,
           extensionTitle: appData.projectTitle,
           extensionUrl: `https://${process.env.__OW_NAMESPACE}.adobeio-static.net/index.html`,
-          workspaceName: appData.workspaceName,
+          extensionWorkspace: appData.workspaceName,
         },
       },
     })

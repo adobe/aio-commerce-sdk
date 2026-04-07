@@ -12,6 +12,9 @@
 
 import * as v from "valibot";
 
+import type { AdminUiSdkConfig } from "#management/installation/admin-ui-sdk/utils";
+import type { CommerceAppConfigOutputModel } from "./app";
+
 /**
  * Schema for the Admin UI SDK registration parameters.
  *
@@ -40,3 +43,13 @@ export const AdminUiSdkSchema = v.object({
 
 /** The Admin UI SDK configuration for an Adobe Commerce application. */
 export type AdminUiSdkConfiguration = v.InferInput<typeof AdminUiSdkSchema>;
+
+/** Check if config has Admin UI SDK registration configuration. */
+export function hasAdminUiSdk(
+  config: CommerceAppConfigOutputModel,
+): config is AdminUiSdkConfig {
+  return (
+    config.adminUiSdk !== undefined &&
+    config.adminUiSdk.registration !== undefined
+  );
+}

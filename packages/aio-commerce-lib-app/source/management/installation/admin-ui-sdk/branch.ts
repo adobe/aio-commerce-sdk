@@ -10,13 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
+import { hasAdminUiSdk } from "#config/schema/admin-ui-sdk";
 import {
   defineBranchStep,
   defineLeafStep,
 } from "#management/installation/workflow/step";
 
 import { registerExtension } from "./helpers";
-import { createAdminUiSdkStepContext, hasAdminUiSdk } from "./utils";
+import { createAdminUiSdkStepContext } from "./utils";
 
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { AdminUiSdkConfig, AdminUiSdkExecutionContext } from "./utils";

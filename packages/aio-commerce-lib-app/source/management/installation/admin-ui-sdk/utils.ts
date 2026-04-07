@@ -27,13 +27,6 @@ export type AdminUiSdkConfig = CommerceAppConfigOutputModel & {
   adminUiSdk: NonNullable<CommerceAppConfigOutputModel["adminUiSdk"]>;
 };
 
-/** Check if config has Admin UI SDK registration configuration. */
-export function hasAdminUiSdk(
-  config: CommerceAppConfigOutputModel,
-): config is AdminUiSdkConfig {
-  return config.adminUiSdk?.registration !== undefined;
-}
-
 /** Context shared across Admin UI SDK steps. */
 export interface AdminUiSdkStepContext extends Record<string, unknown> {
   get commerceClient(): AdobeCommerceHttpClient;
@@ -53,7 +46,9 @@ export const createAdminUiSdkStepContext: StepContextFactory<
   return {
     get commerceClient() {
       if (commerceClient === null) {
-        const clientParams = resolveCommerceHttpClientParams(params);
+        const clientParams = resolveCommerceHttpClientParams(params, {
+          tryForwardAuthProvider: true,
+        });
         commerceClient = new AdobeCommerceHttpClient(clientParams);
       }
 
