@@ -21,6 +21,7 @@ export default mergeConfig(
   defineConfig({
     plugins: [],
     test: {
+      setupFiles: ["./test/setup.ts"],
       coverage: {
         // Exclude barrel files and template files
         exclude: [...BARREL_FILES, ...TEMPLATE_FILES],
