@@ -22,10 +22,7 @@ const BARREL_FILES = [
   "./source/types/index.ts",
 ];
 
-const UNTESTABLE_FILES = [
-  // repository.ts only wires up aio-lib-state/files singletons, covered indirectly by integration tests.
-  "./source/utils/repository.ts",
-];
+const UNTESTABLE_FILES: string[] = [];
 
 export default mergeConfig(
   baseConfig,
