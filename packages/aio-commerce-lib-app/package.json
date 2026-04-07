@@ -132,6 +132,7 @@
     "@aio-commerce-sdk/config-vitest": "workspace:*",
     "@aio-commerce-sdk/scripting-utils": "workspace:*",
     "@aio-commerce-sdk/scripts": "workspace:*",
+    "msw": "catalog:",
     "typescript": "catalog:"
   },
   "sideEffects": false

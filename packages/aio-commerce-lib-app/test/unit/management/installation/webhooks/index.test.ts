@@ -19,10 +19,6 @@ import {
   isLeafStep,
 } from "#management/installation/workflow/step";
 import { configWithWebhooks, minimalValidConfig } from "#test/fixtures/config";
-import { createMockInstallationContext } from "#test/fixtures/installation";
-import { createMockWebhooksContext } from "#test/fixtures/webhooks";
-
-import type { WebhookSubscriptionResult } from "#management/installation/webhooks/helpers";
 
 describe("webhooks installation module", () => {
   beforeEach(() => {
@@ -44,13 +40,9 @@ describe("webhooks installation module", () => {
     });
 
     test("should only run if webhooks is defined", () => {
-      expect(webhooksStep.when).toBeDefined();
-
-      // Should return true when webhooks is defined
-      expect(webhooksStep.when?.(configWithWebhooks)).toBe(true);
-
-      // Should return false when webhooks is not defined
-      expect(webhooksStep.when?.(minimalValidConfig)).toBe(false);
+      expect.assert(webhooksStep.when);
+      expect(webhooksStep.when(configWithWebhooks)).toBe(true);
+      expect(webhooksStep.when(minimalValidConfig)).toBe(false);
     });
 
     test("should have subscriptions leaf step", () => {
@@ -74,55 +66,6 @@ describe("webhooks installation module", () => {
         label: "Create Subscriptions",
         description: "Creates webhook subscriptions in Adobe Commerce",
       });
-    });
-
-    test("should create webhook subscriptions", async () => {
-      const subscribeWebhook = vi.fn().mockResolvedValue(null);
-      const getWebhookList = vi.fn().mockResolvedValue([]);
-      const mockContext = createMockWebhooksContext(
-        subscribeWebhook,
-        getWebhookList,
-      );
-
-      expect.assert.isDefined(subscriptionsStep.run);
-
-      const result = (await subscriptionsStep.run(
-        configWithWebhooks,
-        mockContext,
-      )) as WebhookSubscriptionResult;
-
-      expect(result).toBeDefined();
-      expect(result).toHaveProperty("subscribedWebhooks");
-      expect(Array.isArray(result.subscribedWebhooks)).toBe(true);
-      expect(result.subscribedWebhooks.length).toBeGreaterThan(0);
-
-      // Verify that the API clients were called
-      expect(getWebhookList).toHaveBeenCalled();
-      expect(subscribeWebhook).toHaveBeenCalled();
-    });
-  });
-
-  describe("createWebhooksStepContext", () => {
-    test("should create context object with client getter", () => {
-      const mockInstallation = createMockInstallationContext();
-      const context = createWebhooksStepContext(mockInstallation);
-
-      expect(context).toBeDefined();
-      expect(context).toBeTypeOf("object");
-      // Verify the context has the expected structure without accessing the getter
-      expect("commerceWebhooksClient" in context).toBe(true);
-    });
-
-    test("should create lazy commerceWebhooksClient", () => {
-      const mockContext = createMockWebhooksContext();
-
-      expect(mockContext.commerceWebhooksClient).toBeDefined();
-      expect(mockContext.commerceWebhooksClient).toHaveProperty(
-        "getWebhookList",
-      );
-      expect(mockContext.commerceWebhooksClient).toHaveProperty(
-        "subscribeWebhook",
-      );
     });
   });
 });
