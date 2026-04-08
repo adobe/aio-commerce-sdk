@@ -10,6 +10,12 @@ export const EMPTY_PROJECT = makeProjectFiles(null);
 /** The minimum set of files needed for our commands to work with a valid config. */
 export const MINIMAL_PROJECT = makeProjectFiles(minimalValidConfig);
 
+/** The minimum set of files needed for our commands to work with an invalid config. */
+export const INVALID_PROJECT = makeProjectFiles({
+  // @ts-expect-error - On purpose, reusable invalid config for testing.
+  metadata: { id: "invalid" },
+});
+
 /**
  * Creates temp file entries for a project with a config file.
  *

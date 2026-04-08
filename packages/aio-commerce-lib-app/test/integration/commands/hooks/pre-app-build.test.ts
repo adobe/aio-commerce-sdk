@@ -18,25 +18,31 @@ import {
   withChdir,
   withTempFiles,
 } from "@aio-commerce-sdk/scripting-utils/filesystem";
-import { stringify } from "safe-stable-stringify";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
   APP_MANIFEST_FILE,
+  CONFIG_SCHEMA_FILE_NAME,
+  CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   getExtensionPointFolderPath,
 } from "#commands/constants";
 import { exec, run } from "#commands/hooks/pre-app-build";
-import { minimalValidConfig } from "#test/fixtures/config";
+import {
+  configWithBusinessConfig,
+  minimalValidConfig,
+} from "#test/fixtures/config";
+import {
+  EMPTY_PROJECT,
+  INVALID_PROJECT,
+  MINIMAL_PROJECT,
+  makeProjectFiles,
+} from "#test/fixtures/project";
 
 // syncImsCredentials is the external boundary — reads AIO CLI credentials
 vi.mock("@aio-commerce-sdk/scripting-utils/env", () => ({
   syncImsCredentials: vi.fn(),
 }));
-
-function makeConfigFile(config: object) {
-  return `module.exports = ${stringify(config)}`;
-}
 
 describe("commands/hooks/pre-app-build", () => {
   afterEach(() => {
@@ -46,44 +52,55 @@ describe("commands/hooks/pre-app-build", () => {
 
   describe("run", () => {
     test("generates manifest for extensibility/1", async () => {
-      await withTempFiles(
-        {
-          "package.json": "{}",
-          "app.commerce.config.js": makeConfigFile(minimalValidConfig),
-        },
-        async (tempDir) => {
-          await withChdir(tempDir, () => run("extensibility/1"));
+      await withTempFiles(MINIMAL_PROJECT, async (tempDir) => {
+        await withChdir(tempDir, () => run("extensibility/1"));
 
-          const manifestPath = join(
+        const manifestPath = join(
+          tempDir,
+          getExtensionPointFolderPath(EXTENSIBILITY_EXTENSION_POINT_ID),
+          ".generated",
+          APP_MANIFEST_FILE,
+        );
+
+        expect(existsSync(manifestPath)).toBe(true);
+
+        const parsed = JSON.parse(await readFile(manifestPath, "utf-8"));
+        expect(parsed).toEqual(minimalValidConfig);
+      });
+    });
+
+    test("generates schema for configuration/1", async () => {
+      await withTempFiles(
+        makeProjectFiles(configWithBusinessConfig),
+        async (tempDir) => {
+          await withChdir(tempDir, () => run("configuration/1"));
+
+          const schemaPath = join(
             tempDir,
-            getExtensionPointFolderPath(EXTENSIBILITY_EXTENSION_POINT_ID),
+            getExtensionPointFolderPath(CONFIGURATION_EXTENSION_POINT_ID),
             ".generated",
-            APP_MANIFEST_FILE,
+            CONFIG_SCHEMA_FILE_NAME,
           );
 
-          expect(existsSync(manifestPath)).toBe(true);
+          expect(existsSync(schemaPath)).toBe(true);
 
-          const parsed = JSON.parse(await readFile(manifestPath, "utf-8"));
-          expect(parsed.metadata).toEqual(minimalValidConfig.metadata);
+          const parsed = JSON.parse(await readFile(schemaPath, "utf-8"));
+          expect(parsed).toEqual(
+            configWithBusinessConfig.businessConfig.schema,
+          );
         },
       );
     });
 
     test("throws for unsupported extension", async () => {
-      await withTempFiles(
-        {
-          "package.json": "{}",
-          "app.commerce.config.js": makeConfigFile(minimalValidConfig),
-        },
-        async (tempDir) => {
-          await withChdir(tempDir, () =>
-            expect(
-              // @ts-expect-error Testing with invalid extension value
-              run("unknown/1"),
-            ).rejects.toThrow("Unsupported extension"),
-          );
-        },
-      );
+      await withTempFiles(MINIMAL_PROJECT, async (tempDir) => {
+        await withChdir(tempDir, () =>
+          expect(
+            // @ts-expect-error Testing with invalid extension value
+            run("unknown/1"),
+          ).rejects.toThrow("Unsupported extension"),
+        );
+      });
     });
   });
 
@@ -97,25 +114,40 @@ describe("commands/hooks/pre-app-build", () => {
     });
 
     test("exits with 1 when EXTENSION env var is not set", async () => {
-      await withTempFiles({ "package.json": "{}" }, async (tempDir) => {
+      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
         await withChdir(tempDir, () => exec());
         expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });
 
-    test("runs successfully when EXTENSION is set", async () => {
+    test("runs successfully for extensibility/1", async () => {
       vi.stubEnv("EXTENSION", "extensibility/1");
 
+      await withTempFiles(MINIMAL_PROJECT, async (tempDir) => {
+        await withChdir(tempDir, () => exec());
+        expect(exitSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    test("runs successfully for configuration/1", async () => {
+      vi.stubEnv("EXTENSION", "configuration/1");
+
       await withTempFiles(
-        {
-          "package.json": "{}",
-          "app.commerce.config.js": makeConfigFile(minimalValidConfig),
-        },
+        makeProjectFiles(configWithBusinessConfig),
         async (tempDir) => {
           await withChdir(tempDir, () => exec());
           expect(exitSpy).not.toHaveBeenCalled();
         },
       );
+    });
+
+    test("exits with 1 when config file is invalid", async () => {
+      vi.stubEnv("EXTENSION", "extensibility/1");
+
+      await withTempFiles(INVALID_PROJECT, async (tempDir) => {
+        await withChdir(tempDir, () => exec());
+        expect(exitSpy).toHaveBeenCalledWith(1);
+      });
     });
   });
 });

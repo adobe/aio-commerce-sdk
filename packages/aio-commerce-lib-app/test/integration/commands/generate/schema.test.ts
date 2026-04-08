@@ -33,6 +33,7 @@ import {
 import {
   EMPTY_PROJECT,
   envObject,
+  INVALID_PROJECT,
   makeProjectFiles,
 } from "#test/fixtures/project";
 
@@ -218,14 +219,10 @@ describe("commands/generate/schema", () => {
     });
 
     test("exits with 1 when config file is invalid", async () => {
-      await withTempFiles(
-        // @ts-expect-error Testing invalid config
-        makeProjectFiles({}),
-        async (tempDir) => {
-          await withChdir(tempDir, () => exec());
-          expect(exitSpy).toHaveBeenCalledWith(1);
-        },
-      );
+      await withTempFiles(INVALID_PROJECT, async (tempDir) => {
+        await withChdir(tempDir, () => exec());
+        expect(exitSpy).toHaveBeenCalledWith(1);
+      });
     });
   });
 });

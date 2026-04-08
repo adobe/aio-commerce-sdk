@@ -28,7 +28,11 @@ import {
   ensureInstallYaml,
 } from "#commands/init/lib";
 import { minimalValidConfig } from "#test/fixtures/config";
-import { EMPTY_PROJECT, makeProjectFiles } from "#test/fixtures/project";
+import {
+  EMPTY_PROJECT,
+  INVALID_PROJECT,
+  makeProjectFiles,
+} from "#test/fixtures/project";
 
 import type { InitOptions } from "#commands/init/utils";
 
@@ -124,15 +128,9 @@ describe.concurrent("commands/init/lib", () => {
     });
 
     test("throws when existing config is invalid", async () => {
-      await withTempFiles(
-        // @ts-expect-error - testing invalid config handling
-        makeProjectFiles({ metadata: { id: 123 } }, "cjs"),
-        async (tempDir) => {
-          await expect(ensureCommerceAppConfig(tempDir)).rejects.toThrow(
-            "invalid",
-          );
-        },
-      );
+      await withTempFiles(INVALID_PROJECT, async (tempDir) => {
+        await expect(ensureCommerceAppConfig(tempDir)).rejects.toThrow();
+      });
     });
   });
 

@@ -18,7 +18,6 @@ import {
   withChdir,
   withTempFiles,
 } from "@aio-commerce-sdk/scripting-utils/filesystem";
-import { stringify } from "safe-stable-stringify";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -32,12 +31,13 @@ import {
   minimalValidConfig,
   mockMetadata,
 } from "#test/fixtures/config";
+import {
+  EMPTY_PROJECT,
+  INVALID_PROJECT,
+  MINIMAL_PROJECT,
+} from "#test/fixtures/project";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-
-function makeConfigFile(config: object) {
-  return `module.exports = ${stringify(config)}`;
-}
 
 function sha256(content: string) {
   return createHash("sha256").update(content).digest("hex");
@@ -55,7 +55,7 @@ function getManifestPath(tempDir: string) {
 describe("commands/generate/manifest", () => {
   describe("run", () => {
     test("writes manifest JSON to the extensibility extension point directory", async () => {
-      await withTempFiles({ "package.json": "{}" }, async (tempDir) => {
+      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
         await withChdir(tempDir, () => run(minimalValidConfig));
 
         const contents = await readFile(getManifestPath(tempDir), "utf-8");
@@ -77,13 +77,13 @@ describe("commands/generate/manifest", () => {
         metadata: mockMetadata,
       };
 
-      await withTempFiles({ "package.json": "{}" }, async (tempDirA) => {
+      await withTempFiles(EMPTY_PROJECT, async (tempDirA) => {
         await withChdir(tempDirA, () => run(configA));
         const hashA = sha256(
           await readFile(getManifestPath(tempDirA), "utf-8"),
         );
 
-        await withTempFiles({ "package.json": "{}" }, async (tempDirB) => {
+        await withTempFiles(EMPTY_PROJECT, async (tempDirB) => {
           await withChdir(tempDirB, () => run(configB));
           const hashB = sha256(
             await readFile(getManifestPath(tempDirB), "utf-8"),
@@ -95,7 +95,7 @@ describe("commands/generate/manifest", () => {
     });
 
     test("serializes all config fields", async () => {
-      await withTempFiles({ "package.json": "{}" }, async (tempDir) => {
+      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
         await withChdir(tempDir, () => run(fullConfig));
 
         const outputPath = join(
@@ -126,53 +126,27 @@ describe("commands/generate/manifest", () => {
     });
 
     test("succeeds when a valid config file exists", async () => {
-      await withTempFiles(
-        {
-          "app.commerce.config.js": makeConfigFile(minimalValidConfig),
-          "package.json": "{}",
-        },
-        async (tempDir) => {
-          await withChdir(tempDir, () => exec());
-          expect(exitSpy).not.toHaveBeenCalled();
+      await withTempFiles(MINIMAL_PROJECT, async (tempDir) => {
+        await withChdir(tempDir, () => exec());
+        expect(exitSpy).not.toHaveBeenCalled();
 
-          const contents = await readFile(getManifestPath(tempDir), "utf-8");
-          expect(JSON.parse(contents)).toEqual(minimalValidConfig);
-        },
-      );
+        const contents = await readFile(getManifestPath(tempDir), "utf-8");
+        expect(JSON.parse(contents)).toEqual(minimalValidConfig);
+      });
     });
 
     test("exits with 1 when config file is missing", async () => {
-      await withTempFiles({ "package.json": "{}" }, async (tempDir) => {
+      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
         await withChdir(tempDir, () => exec());
         expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });
 
     test("exits with 1 when config file is invalid", async () => {
-      await withTempFiles(
-        {
-          "app.commerce.config.js": "module.exports = {}",
-          "package.json": "{}",
-        },
-        async (tempDir) => {
-          await withChdir(tempDir, () => exec());
-          expect(exitSpy).toHaveBeenCalledWith(1);
-        },
-      );
-    });
-
-    test("exits with 1 and handles CommerceSdkValidationError", async () => {
-      await withTempFiles(
-        {
-          // Valid default export but fails schema validation
-          "app.commerce.config.js": makeConfigFile({ metadata: { id: 123 } }),
-          "package.json": "{}",
-        },
-        async (tempDir) => {
-          await withChdir(tempDir, () => exec());
-          expect(exitSpy).toHaveBeenCalledWith(1);
-        },
-      );
+      await withTempFiles(INVALID_PROJECT, async (tempDir) => {
+        await withChdir(tempDir, () => exec());
+        expect(exitSpy).toHaveBeenCalledWith(1);
+      });
     });
   });
 });

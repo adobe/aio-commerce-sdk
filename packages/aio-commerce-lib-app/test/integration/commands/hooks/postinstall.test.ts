@@ -17,6 +17,7 @@ import {
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { exec } from "#commands/hooks/postinstall";
+import { EMPTY_PROJECT, INVALID_PROJECT } from "#test/fixtures/project";
 
 describe("commands/hooks/postinstall", () => {
   describe("exec", () => {
@@ -30,23 +31,17 @@ describe("commands/hooks/postinstall", () => {
     });
 
     test("exits with 1 when config file is missing", async () => {
-      await withTempFiles({ "package.json": "{}" }, async (tempDir) => {
+      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
         await withChdir(tempDir, () => exec());
         expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });
 
-    test("exits with 1 when config file is invalid", async () => {
-      await withTempFiles(
-        {
-          "package.json": "{}",
-          "app.commerce.config.js": "module.exports = {}",
-        },
-        async (tempDir) => {
-          await withChdir(tempDir, () => exec());
-          expect(exitSpy).toHaveBeenCalledWith(1);
-        },
-      );
+    test("exits with 1 when config file fails validation", async () => {
+      await withTempFiles(INVALID_PROJECT, async (tempDir) => {
+        await withChdir(tempDir, () => exec());
+        expect(exitSpy).toHaveBeenCalledWith(1);
+      });
     });
   });
 });
