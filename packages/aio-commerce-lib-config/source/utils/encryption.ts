@@ -74,7 +74,7 @@ export function encrypt(plainText: string, encryptionKey: string): string {
     const authTag = cipher.getAuthTag().toString("hex");
     return `${ENCRYPTED_PREFIX}${iv.toString("hex")}:${authTag}:${encrypted}`;
   } catch (error) {
-    throw new Error("Failed to encrypt password", {
+    throw new Error("Failed to encrypt value", {
       cause: error,
     });
   }
@@ -91,14 +91,21 @@ export function encrypt(plainText: string, encryptionKey: string): string {
  */
 export function decrypt(encryptedText: string, encryptionKey: string): string {
   validateEncryptionKey(encryptionKey);
-  try {
-    const parts = encryptedText.slice(ENCRYPTED_PREFIX.length).split(":");
-    if (parts.length !== ENCRYPTED_PARTS_COUNT) {
-      throw new Error(
-        "Invalid encrypted value format. Expected 'enc:IV:AUTH_TAG:DATA' format.",
-      );
-    }
 
+  if (!encryptedText?.startsWith(ENCRYPTED_PREFIX)) {
+    throw new Error(
+      `Invalid encrypted value. Expected value to start with '${ENCRYPTED_PREFIX}'.`,
+    );
+  }
+
+  const parts = encryptedText.slice(ENCRYPTED_PREFIX.length).split(":");
+  if (parts.length !== ENCRYPTED_PARTS_COUNT) {
+    throw new Error(
+      "Invalid encrypted value format. Expected 'enc:IV:AUTH_TAG:DATA' format.",
+    );
+  }
+
+  try {
     const [ivHex, authTagHex, encryptedData] = parts;
     const iv = Buffer.from(ivHex, "hex");
     const authTag = Buffer.from(authTagHex, "hex");
@@ -116,7 +123,7 @@ export function decrypt(encryptedText: string, encryptionKey: string): string {
 
     return decrypted;
   } catch (error) {
-    throw new Error("Failed to decrypt password", {
+    throw new Error("Failed to decrypt value", {
       cause: error,
     });
   }
