@@ -47,7 +47,7 @@ const DEFAULT_PARAMS = DEFAULT_INSTALLATION_PARAMS;
 function makeContext(
   subscribeWebhookFn = vi.fn().mockResolvedValue(null),
   getWebhookListFn = vi.fn().mockResolvedValue([]),
-  params = DEFAULT_PARAMS,
+  params: Partial<WebhooksExecutionContext["params"]> = DEFAULT_PARAMS,
   unsubscribeWebhookFn = vi.fn().mockResolvedValue(null),
 ): WebhooksExecutionContext {
   return createMockWebhooksContext(

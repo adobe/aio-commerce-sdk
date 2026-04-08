@@ -200,8 +200,10 @@ export function createMockIoEventsClient(
 /** Options for creating a mock {@link EventsExecutionContext}. */
 export type MockEventingInstallationContextOptions = Omit<
   Partial<EventsExecutionContext>,
-  "ioEventsClient" | "commerceEventsClient"
+  "appData" | "params" | "ioEventsClient" | "commerceEventsClient"
 > & {
+  appData?: Partial<EventsExecutionContext["appData"]>;
+  params?: Partial<EventsExecutionContext["params"]>;
   ioEventsClient?: Partial<CustomAdobeIoEventsApiClient>;
   commerceEventsClient?: Partial<CustomCommerceEventsApiClient>;
 };

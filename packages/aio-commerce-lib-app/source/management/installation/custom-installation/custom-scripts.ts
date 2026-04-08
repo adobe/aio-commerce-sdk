@@ -116,7 +116,7 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
         );
       }
 
-      const defaultExport = scriptModule.default;
+      const defaultExport = (scriptModule as Record<string, unknown>).default;
       const uninstallFunction =
         typeof defaultExport === "object" &&
         defaultExport !== null &&

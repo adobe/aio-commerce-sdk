@@ -134,12 +134,14 @@ export function createMockExistingCommerceWebhook(
 export function createMockCommerceWebhooksClient({
   subscribeWebhook = vi.fn().mockResolvedValue(null),
   getWebhookList = vi.fn().mockResolvedValue([]),
+  unsubscribeWebhook = vi.fn().mockResolvedValue(null),
 }: Partial<
   WebhooksExecutionContext["commerceWebhooksClient"]
 > = {}): WebhooksExecutionContext["commerceWebhooksClient"] {
   return {
     getWebhookList,
     subscribeWebhook,
+    unsubscribeWebhook,
   };
 }
 
