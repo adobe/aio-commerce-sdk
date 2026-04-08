@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { adminUiSdkStep } from "./admin-ui-sdk";
 import { createCustomInstallationStep } from "./custom-installation";
 import { eventingStep } from "./events";
 import { webhooksStep } from "./webhooks";
@@ -24,7 +25,12 @@ import type { AnyStep, BranchStep } from "./workflow";
 function createDefaultChildSteps(
   config: CommerceAppConfigOutputModel,
 ): AnyStep[] {
-  return [eventingStep, webhooksStep, createCustomInstallationStep(config)];
+  return [
+    eventingStep,
+    webhooksStep,
+    adminUiSdkStep,
+    createCustomInstallationStep(config),
+  ];
 }
 
 /**
