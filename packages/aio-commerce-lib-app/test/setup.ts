@@ -10,7 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
+import { createJiti } from "jiti";
 import { vi } from "vitest";
 
 // Mock logging utilities to avoid noisy tests
 vi.mock("consola");
+
+// Pre-warm jiti runtime so the first test that imports a config file doesn't pay the cold-start cost.
+createJiti(import.meta.url);
