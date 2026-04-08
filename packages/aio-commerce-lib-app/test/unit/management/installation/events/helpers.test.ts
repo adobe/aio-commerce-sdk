@@ -13,6 +13,7 @@
 import { describe, expect, test, vi } from "vitest";
 
 import {
+  offboardIoEvents,
   onboardCommerceEventing,
   onboardIoEvents,
 } from "#management/installation/events/helpers";
@@ -782,5 +783,127 @@ describe("onboardCommerceEventing", () => {
     ).rejects.toThrow();
 
     expect(logger.error).toHaveBeenCalledWith(expect.any(String));
+  });
+});
+
+describe("offboardIoEvents", () => {
+  test("deletes registrations matched by name and client_id when events_of_interest is empty", async () => {
+    const context = createDefaultEventingContext();
+    const metadata = createDefaultMetadata();
+    const provider = createDefaultProvider();
+    const event = createDefaultCommerceEvent();
+
+    const instanceId = generateInstanceId(
+      metadata,
+      provider,
+      context.appData.workspaceId,
+    );
+    const ioProvider = createMockIoEventProvider({
+      id: "io-provider-1",
+      instance_id: instanceId,
+      provider_metadata: COMMERCE_PROVIDER_TYPE,
+      label: provider.label,
+    });
+
+    const registrationName = getRegistrationName(
+      ioProvider,
+      event.runtimeActions[0],
+    );
+    const registration = createMockIoEventRegistration({
+      registration_id: "test-registration-uuid",
+      name: registrationName,
+      client_id: context.params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+      events_of_interest: [],
+    });
+
+    await offboardIoEvents(
+      { context, metadata, provider, events: [event] },
+      createMockExistingIoEventsData({
+        providersWithMetadata: [{ ...ioProvider, metadata: [] }],
+        registrations: [registration],
+      }),
+    );
+
+    expect(context.ioEventsClient.deleteRegistration).toHaveBeenCalled();
+  });
+
+  test("calls deleteRegistration with registration_id not id", async () => {
+    const context = createDefaultEventingContext();
+    const metadata = createDefaultMetadata();
+    const provider = createDefaultProvider();
+    const event = createDefaultCommerceEvent();
+
+    const instanceId = generateInstanceId(
+      metadata,
+      provider,
+      context.appData.workspaceId,
+    );
+    const ioProvider = createMockIoEventProvider({
+      id: "io-provider-1",
+      instance_id: instanceId,
+      provider_metadata: COMMERCE_PROVIDER_TYPE,
+      label: provider.label,
+    });
+
+    const registrationName = getRegistrationName(
+      ioProvider,
+      event.runtimeActions[0],
+    );
+    const registration = createMockIoEventRegistration({
+      id: "616664",
+      registration_id: "correct-uuid-for-api",
+      name: registrationName,
+      client_id: context.params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+      events_of_interest: [],
+    });
+
+    await offboardIoEvents(
+      { context, metadata, provider, events: [event] },
+      createMockExistingIoEventsData({
+        providersWithMetadata: [{ ...ioProvider, metadata: [] }],
+        registrations: [registration],
+      }),
+    );
+
+    expect(context.ioEventsClient.deleteRegistration).toHaveBeenCalledWith(
+      expect.objectContaining({
+        registrationId: "correct-uuid-for-api",
+      }),
+    );
+  });
+
+  test("skips registrations that do not match the current client_id or name", async () => {
+    const context = createDefaultEventingContext();
+    const metadata = createDefaultMetadata();
+    const provider = createDefaultProvider();
+    const event = createDefaultCommerceEvent();
+
+    const instanceId = generateInstanceId(
+      metadata,
+      provider,
+      context.appData.workspaceId,
+    );
+    const ioProvider = createMockIoEventProvider({
+      id: "io-provider-1",
+      instance_id: instanceId,
+      provider_metadata: COMMERCE_PROVIDER_TYPE,
+    });
+
+    const foreignRegistration = createMockIoEventRegistration({
+      registration_id: "foreign-uuid",
+      name: getRegistrationName(ioProvider, event.runtimeActions[0]),
+      client_id: "other-client-id",
+      events_of_interest: [],
+    });
+
+    await offboardIoEvents(
+      { context, metadata, provider, events: [event] },
+      createMockExistingIoEventsData({
+        providersWithMetadata: [{ ...ioProvider, metadata: [] }],
+        registrations: [foreignRegistration],
+      }),
+    );
+
+    expect(context.ioEventsClient.deleteRegistration).not.toHaveBeenCalled();
   });
 });

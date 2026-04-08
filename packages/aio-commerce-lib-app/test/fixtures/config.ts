@@ -118,6 +118,16 @@ export const configWithExternalEventing = {
   eventing: externalEventingPart,
 } satisfies CommerceAppConfigOutputModel;
 
+/** Config fixture with Admin UI SDK configured. */
+export const configWithAdminUiSdk = {
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-sdk" },
+  adminUiSdk: {
+    registration: {
+      menuItems: [{ id: "test-menu-item", title: "Test Menu Item" }],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 /** Config fixture with webhooks configured. */
 export const configWithWebhooks = {
   metadata: { ...mockMetadata, id: "test-app-webhooks" },

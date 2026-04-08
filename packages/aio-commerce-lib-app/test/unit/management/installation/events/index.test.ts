@@ -203,6 +203,7 @@ describe("events installation module", () => {
                 {
                   id: "io-provider-123",
                   instance_id: instanceId,
+                  provider_metadata: "dx_commerce_events",
                   _embedded: { eventmetadata: [] },
                 },
               ],
@@ -212,15 +213,10 @@ describe("events installation module", () => {
             _embedded: {
               registrations: [
                 {
-                  id: "reg-1",
-                  name: "Commerce Event Registration: Action (My Package)",
+                  id: "616664",
+                  name: "Commerce Event Registration: Handle Order (My Package)",
                   client_id: "test-client-id",
-                  events_of_interest: [
-                    {
-                      provider_id: "io-provider-123",
-                      event_code: "test.event",
-                    },
-                  ],
+                  events_of_interest: [],
                   status: "VERIFIED",
                   type: "APP_REGISTRATION",
                   integration_status: "VERIFIED",
@@ -733,6 +729,7 @@ describe("events installation module", () => {
                 {
                   id: "io-provider-456",
                   instance_id: instanceId,
+                  provider_metadata: "3rd_party_custom_events",
                   _embedded: { eventmetadata: [] },
                 },
               ],
@@ -742,15 +739,10 @@ describe("events installation module", () => {
             _embedded: {
               registrations: [
                 {
-                  id: "reg-2",
-                  name: "External Event Registration",
+                  id: "616664",
+                  name: "External Event Registration: Handle External Event (My Package)",
                   client_id: "test-client-id",
-                  events_of_interest: [
-                    {
-                      provider_id: "io-provider-456",
-                      event_code: "test.event",
-                    },
-                  ],
+                  events_of_interest: [],
                   status: "VERIFIED",
                   type: "APP_REGISTRATION",
                   integration_status: "VERIFIED",

@@ -122,7 +122,7 @@ export const commerceEventsStep = defineLeafStep({
       );
 
       await offboardIoEvents(
-        { context, metadata: config.metadata, provider },
+        { context, metadata: config.metadata, provider, events },
         existingIoEventsData,
       );
     }

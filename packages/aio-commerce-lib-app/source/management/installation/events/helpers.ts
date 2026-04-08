@@ -678,11 +678,12 @@ export async function offboardIoEvents(
     context: EventsExecutionContext;
     metadata: ApplicationMetadata;
     provider: EventProvider;
+    events: AppEvent[];
   },
   existingData: ExistingIoEventsData,
 ) {
-  const { context, metadata, provider } = params;
-  const { ioEventsClient, appData, logger } = context;
+  const { context, metadata, provider, events } = params;
+  const { ioEventsClient, appData, logger, params: runtimeParams } = context;
   const appCredentials = {
     consumerOrgId: appData.consumerOrgId,
     projectId: appData.projectId,
@@ -707,9 +708,18 @@ export async function offboardIoEvents(
     return;
   }
 
-  // Step 1: Delete registrations that reference events from this provider.
-  const providerRegistrations = registrations.filter((reg) =>
-    reg.events_of_interest?.some((e) => e.provider_id === providerData.id),
+  // Step 1: Delete registrations matched by deterministic name + client_id.
+  // The getAllRegistrations list endpoint does not populate events_of_interest,
+  // so we reconstruct the expected names the same way as during installation.
+  const actionEventsMap = groupEventsByRuntimeActions(events);
+  const clientId = runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID;
+  const registrationNames = new Set(
+    Array.from(actionEventsMap.keys()).map((runtimeAction) =>
+      getRegistrationName(providerData, runtimeAction),
+    ),
+  );
+  const providerRegistrations = registrations.filter(
+    (reg) => reg.client_id === clientId && registrationNames.has(reg.name),
   );
 
   if (providerRegistrations.length === 0) {
@@ -729,7 +739,7 @@ export async function offboardIoEvents(
       await ioEventsClient
         .deleteRegistration({
           ...appCredentials,
-          registrationId: registration.id,
+          registrationId: registration.registration_id,
         })
         .then(() => {
           logger.info(

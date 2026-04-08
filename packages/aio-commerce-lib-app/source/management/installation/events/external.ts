@@ -79,9 +79,9 @@ export const externalEventsStep = defineLeafStep({
 
     const existingIoEventsData = await getIoEventsExistingData(context);
 
-    for (const { provider } of config.eventing.external) {
+    for (const { provider, events } of config.eventing.external) {
       await offboardIoEvents(
-        { context, metadata: config.metadata, provider },
+        { context, metadata: config.metadata, provider, events },
         existingIoEventsData,
       );
     }
