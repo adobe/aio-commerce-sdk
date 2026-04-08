@@ -75,7 +75,6 @@ describe("events installation module", () => {
 
     test("should create entities", async () => {
       const mockContext = createMockEventingInstallationContext({
-        // @ts-expect-error Invalid type for testing purposes
         params: {
           AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com",
           AIO_COMMERCE_API_FLAVOR: "saas",
