@@ -16,12 +16,8 @@ import type { AdminUiSdkConfig } from "#management/installation/admin-ui-sdk/uti
 import type { CommerceAppConfigOutputModel } from "./app";
 
 /**
- * Schema for the Admin UI SDK registration parameters.
- *
- * `extensionName` and `extensionTitle` are intentionally omitted here —
- * they are derived at installation time from `metadata.id` and
- * `metadata.displayName` respectively, which are already present in the
- * manifest.
+ * Schema for the Admin UI SDK registration parameters (for the `adminUiSdk.registration` config section).
+ * See https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/ for more details.
  */
 const AdminUiSdkRegistrationSchema = v.object({
   menuItems: v.array(

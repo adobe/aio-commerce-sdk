@@ -20,17 +20,10 @@ export type RegisterExtensionResponse = {
 /**
  * Registers the extension with Commerce via POST /V1/adminuisdk/extension.
  *
- * `extensionName` and `extensionTitle` are derived from `metadata.id` and
- * `metadata.displayName` respectively so they don't need to be duplicated
- * inside the `adminUiSdk` config section.
- *
- * @param config - The validated app config containing the Admin UI SDK settings.
  * @param context - The execution context providing the Commerce HTTP client and logger.
- * @returns The response from the Commerce API containing the registered extension ID.
+ * @returns The response from the Commerce API.
  */
-export async function registerExtension(
-  context: AdminUiSdkExecutionContext,
-): Promise<RegisterExtensionResponse> {
+export async function registerExtension(context: AdminUiSdkExecutionContext) {
   const { commerceClient, appData, logger } = context;
 
   logger.info(`Registering Admin UI SDK extension: ${appData.projectName}`);
