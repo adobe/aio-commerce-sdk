@@ -17,7 +17,7 @@ import type { CommerceAppConfigOutputModel } from "./app";
 
 /**
  * Schema for the Admin UI SDK registration parameters (for the `adminUiSdk.registration` config section).
- * See https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/ for more details.
+ * @see https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/ for more details.
  */
 const AdminUiSdkRegistrationSchema = v.object({
   menuItems: v.array(
