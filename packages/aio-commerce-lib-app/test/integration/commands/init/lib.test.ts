@@ -37,7 +37,7 @@ import {
 import type { InitOptions } from "#commands/init/utils";
 
 describe("commands/init/lib", () => {
-  describe.concurrent("ensureCommerceAppConfig", () => {
+  describe("ensureCommerceAppConfig", () => {
     test("returns existing valid CJS config without creating a new one", async () => {
       await withTempFiles(
         makeProjectFiles(minimalValidConfig, "cjs"),
@@ -134,7 +134,7 @@ describe("commands/init/lib", () => {
     });
   });
 
-  describe.concurrent("ensureAppConfig", () => {
+  describe("ensureAppConfig", () => {
     test("creates app.config.yaml with extensibility extension point", async () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
@@ -188,7 +188,7 @@ describe("commands/init/lib", () => {
     });
   });
 
-  describe.concurrent("ensureInstallYaml", () => {
+  describe("ensureInstallYaml", () => {
     test("creates install.yaml with extensibility extension point", async () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
