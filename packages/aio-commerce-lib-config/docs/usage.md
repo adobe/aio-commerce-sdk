@@ -49,9 +49,10 @@ import {
 
 ### Initialization
 
-**⚠️ Required:** You must initialize the library with your configuration schema before using any configuration functions. Calling configuration functions without initialization will throw an error.
+> [!WARNING]
+> You must initialize the library with your configuration schema before using any configuration functions. Calling configuration functions without initialization will throw an error.
 
-The schema is stored in memory only and must be provided on each application startup. The schema is not persisted to disk.
+The schema is stored in memory only (not persisted) and must be provided on each application startup.
 
 ```typescript
 import { initialize } from "@adobe/aio-commerce-lib-config";
@@ -66,13 +67,34 @@ await initialize({
 const config = await getConfiguration(byCodeAndLevel("global", "global"));
 ```
 
-**What happens without initialization:**
-
-Configuration functions like `getConfiguration()` and `getConfigurationByKey()` will throw an error:
+When you don't initialize the library with at least your `schema`, configuration functions like `getConfiguration()` and `getConfigurationByKey()` will throw an error:
 
 ```
 Error: Schema not initialized. Call `initialize({ schema })` before using configuration functions.
 ```
+
+#### Configuring the State Region
+
+By default, the library automatically selects the optimal `aio-lib-state` region based on the OpenWhisk region (`__OW_REGION`) where your action is running. You can override this with `libStateOptions.region`:
+
+```typescript
+await initialize({
+  schema: yourSchema,
+  libStateOptions: {
+    region: "emea", // "amer" | "emea" | "apac" | "aus"
+  },
+});
+```
+
+If `libStateOptions` is omitted (or `region` is not set), the region is automatically resolved from `process.env.__OW_REGION` using the following mapping:
+
+| `__OW_REGION`    | Resolved region |
+| ---------------- | --------------- |
+| `us-east-1`      | `amer`          |
+| `eu-west-1`      | `emea`          |
+| `ap-northeast-1` | `apac`          |
+| `ap-southeast-2` | `aus`           |
+| unset / unknown  | `amer`          |
 
 ### Working with Scope Trees
 

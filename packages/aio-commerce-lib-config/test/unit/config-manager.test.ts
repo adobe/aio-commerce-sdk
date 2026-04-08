@@ -32,6 +32,7 @@ import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository"
 import { mockScopeTree } from "#test/fixtures/scope-tree";
 import { createMockLibFiles } from "#test/mocks/lib-files";
 import { createMockLibState } from "#test/mocks/lib-state";
+import * as repository from "#utils/repository";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { BusinessConfigSchema, ConfigValue } from "#index";
@@ -47,6 +48,7 @@ let mockFilesInstance = new MockFiles();
 vi.mock("#utils/repository", () => ({
   getSharedState: vi.fn(async () => mockStateInstance),
   getSharedFiles: vi.fn(async () => mockFilesInstance),
+  setGlobalStateOptions: vi.fn(),
 }));
 
 vi.mock("#modules/scope-tree/scope-tree-repository", () => ({
@@ -443,6 +445,28 @@ describe("initialize", () => {
 
   test("should throw error when no schema provided and no global schema exists", () => {
     expect(() => initialize({})).toThrow();
+  });
+
+  test("should call setGlobalStateOptions when libStateOptions is provided", () => {
+    const testSchema = [
+      { name: "field", type: "text", label: "Field", default: "" },
+    ] satisfies BusinessConfigSchema;
+
+    initialize({ schema: testSchema, libStateOptions: { region: "emea" } });
+
+    expect(repository.setGlobalStateOptions).toHaveBeenCalledWith({
+      region: "emea",
+    });
+  });
+
+  test("should not call setGlobalStateOptions when libStateOptions is omitted", () => {
+    const testSchema = [
+      { name: "field", type: "text", label: "Field", default: "" },
+    ] satisfies BusinessConfigSchema;
+
+    initialize({ schema: testSchema });
+
+    expect(repository.setGlobalStateOptions).not.toHaveBeenCalled();
   });
 
   test("should succeed when no schema provided but global schema already exists", () => {

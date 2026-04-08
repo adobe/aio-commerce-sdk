@@ -16,9 +16,45 @@ import { init as initState } from "@adobe/aio-lib-state";
 import type { Files } from "@adobe/aio-lib-files";
 import type { AdobeState } from "@adobe/aio-lib-state";
 
+/** Defines the options for initializing the Adobe State library. */
+export type LibStateOptions = {
+  /**
+   * The region where `aio-lib-state` should operate. By default, the most optimal region is
+   * automatically determined based on where the runtime action is running.
+   *
+   * @see https://developer.adobe.com/app-builder/docs/guides/app_builder_guides/storage/application-state#state
+   */
+  region?: "amer" | "emea" | "apac" | "aus";
+};
+
 // Shared instances - single source of truth for all repositories
 let __sharedState: AdobeState | null = null;
 let __sharedFiles: Files | null = null;
+
+let __globalStateOptions: LibStateOptions | null = null;
+
+function getOptimalRegion(owRegion: string | undefined) {
+  // See: https://developer.adobe.com/app-builder/docs/guides/runtime_guides/reference_docs/multiple-regions
+  const regionMapping: Record<string, string> = {
+    "us-east-1": "amer",
+    "eu-west-1": "emea",
+    "ap-northeast-1": "apac",
+    "ap-southeast-2": "aus",
+  };
+
+  const defaultRegion = "us-east-1";
+  return owRegion && regionMapping[owRegion]
+    ? regionMapping[owRegion]
+    : regionMapping[defaultRegion];
+}
+
+/**
+ * Set global state options for the library. This should be called before any repository functions to ensure the options are applied.
+ * @param options - The options to configure the Adobe State library.
+ */
+export function setGlobalStateOptions(options: LibStateOptions) {
+  __globalStateOptions = options;
+}
 
 /**
  * Get the shared state instance (lazy initialization)
@@ -26,8 +62,15 @@ let __sharedFiles: Files | null = null;
  */
 export async function getSharedState(): Promise<AdobeState> {
   if (!__sharedState) {
-    __sharedState = await initState();
+    const initRegion = __globalStateOptions?.region ?? "auto";
+    const region =
+      initRegion === "auto"
+        ? getOptimalRegion(process.env.__OW_REGION)
+        : initRegion;
+
+    __sharedState = await initState({ region });
   }
+
   return __sharedState;
 }
 
