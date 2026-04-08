@@ -40,12 +40,11 @@ describe("events installation module", () => {
     });
 
     test("should only run if eventing is defined", () => {
-      expect(eventingStep.when).toBeDefined();
+      expect.assert(eventingStep.when);
 
-      expect(eventingStep.when?.(configWithCommerceEventing)).toBe(true);
-      expect(eventingStep.when?.(configWithExternalEventing)).toBe(true);
-
-      expect(eventingStep.when?.(minimalValidConfig)).toBe(false);
+      expect(eventingStep.when(configWithCommerceEventing)).toBe(true);
+      expect(eventingStep.when(configWithExternalEventing)).toBe(true);
+      expect(eventingStep.when(minimalValidConfig)).toBe(false);
     });
 
     test("should have commerce and external leaf steps", () => {
@@ -66,7 +65,7 @@ describe("events installation module", () => {
     });
 
     test("should only run if eventing.commerce is defined", () => {
-      expect(commerceEventsStep.when).toBeDefined();
+      expect.assert(commerceEventsStep.when);
 
       expect(commerceEventsStep.when?.(configWithCommerceEventing)).toBe(true);
 
@@ -142,7 +141,7 @@ describe("events installation module", () => {
     });
 
     test("should only run if eventing.external is defined", () => {
-      expect(externalEventsStep.when).toBeDefined();
+      expect.assert(externalEventsStep.when);
 
       expect(externalEventsStep.when?.(configWithExternalEventing)).toBe(true);
 
@@ -928,16 +927,8 @@ describe("events installation module", () => {
     });
 
     test("should create lazy commerceEventsClient", () => {
-      const mockContext = createMockEventingInstallationContext({
-        params: {
-          AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com",
-          AIO_COMMERCE_API_FLAVOR: "saas",
-          AIO_COMMERCE_AUTH_IMS_TOKEN: "test-ims-token",
-          AIO_COMMERCE_AUTH_IMS_API_KEY: "test-api-key",
-        } as any,
-      });
+      const mockContext = createMockEventingInstallationContext();
       const context = createEventsStepContext(mockContext);
-
       expect(context).toHaveProperty("commerceEventsClient");
 
       const client1 = context.commerceEventsClient;

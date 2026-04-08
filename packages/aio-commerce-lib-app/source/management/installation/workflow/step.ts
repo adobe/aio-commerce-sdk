@@ -144,6 +144,7 @@ export type BranchStep<
   TName extends string = string,
   TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
+  TChildren extends AnyStep[] = AnyStep[],
 > = StepBase<TName, TConfig> & {
   type: "branch";
 
@@ -151,7 +152,7 @@ export type BranchStep<
   context?: StepContextFactory<TStepCtx>;
 
   /** The children steps of this branch. */
-  children: AnyStep[];
+  children: TChildren;
 
   /**
    * Optional pre-installation validation handler for the branch itself.
@@ -220,7 +221,8 @@ export type BranchStepOptions<
   TName extends string,
   TConfig extends CommerceAppConfigOutputModel,
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
-> = Omit<BranchStep<TName, TConfig, TStepCtx>, "type">;
+  TChildren extends AnyStep[] = AnyStep[],
+> = Omit<BranchStep<TName, TConfig, TStepCtx, TChildren>, "type">;
 
 /**
  * Define a leaf step (executable, no children).
@@ -242,9 +244,7 @@ export function defineLeafStep<
   TConfig extends CommerceAppConfigOutputModel,
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
   TOutput = unknown,
->(
-  options: LeafStepOptions<TName, TConfig, TStepCtx, TOutput>,
-): LeafStep<TName, TConfig, TStepCtx, TOutput> {
+>(options: LeafStepOptions<TName, TConfig, TStepCtx, TOutput>) {
   return {
     type: "leaf",
     name: options.name,
@@ -254,7 +254,7 @@ export function defineLeafStep<
     run: options.run,
     validate: options.validate,
     uninstall: options.uninstall,
-  };
+  } satisfies LeafStep<TName, TConfig, TStepCtx, TOutput>;
 }
 
 /**
@@ -275,9 +275,8 @@ export function defineBranchStep<
   TName extends string,
   TConfig extends CommerceAppConfigOutputModel,
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
->(
-  options: BranchStepOptions<TName, TConfig, TStepCtx>,
-): BranchStep<TName, TConfig, TStepCtx> {
+  const TChildren extends AnyStep[] = AnyStep[],
+>(options: BranchStepOptions<TName, TConfig, TStepCtx, TChildren>) {
   return {
     type: "branch",
     name: options.name,
@@ -287,7 +286,7 @@ export function defineBranchStep<
     context: options.context,
     children: options.children,
     validate: options.validate,
-  };
+  } satisfies BranchStep<TName, TConfig, TStepCtx, TChildren>;
 }
 
 /** Infer the output type from a leaf step. */

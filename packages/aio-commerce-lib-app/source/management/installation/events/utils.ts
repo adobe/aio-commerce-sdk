@@ -134,7 +134,7 @@ export function getRegistrationName(
   runtimeAction: string,
 ) {
   const providerType = provider.provider_metadata as EventProviderType;
-  const providerLabel = PROVIDER_TYPE_TO_LABEL[providerType] ?? "Unknown";
+  const providerLabel = PROVIDER_TYPE_TO_LABEL[providerType];
 
   // As per the schema, runtimeAction is always in the format "package-name/action-name".
   const [packageName, actionName] = runtimeAction
@@ -348,13 +348,15 @@ export async function getCommerceEventingExistingData(
   const existingSubscriptions =
     await commerceEventsClient.getAllEventSubscriptions();
 
+  const defaultProvider =
+    existingProviders.find((provider) => !("id" in provider)) ?? null;
+
   // The eventing module workspace configuration is empty if the default provider
   // (the one without an ID), has a falsy or whitespace-only workspace_configuration.
-  const isDefaultWorkspaceConfigurationEmpty = existingProviders.some(
-    (provider) =>
-      // biome-ignore lint/complexity/useSimplifiedLogicExpression: It's more readable this way
-      !("id" in provider) && !provider.workspace_configuration?.trim(),
-  );
+  const isDefaultProviderConfigured = defaultProvider !== null;
+  const isDefaultWorkspaceConfigurationEmpty = isDefaultProviderConfigured
+    ? !defaultProvider.workspace_configuration?.trim()
+    : true;
 
   const subscriptions = new Map(
     existingSubscriptions.map((subscription) => [
@@ -364,6 +366,7 @@ export async function getCommerceEventingExistingData(
   );
 
   return {
+    isDefaultProviderConfigured,
     isDefaultWorkspaceConfigurationEmpty,
     providers: existingProviders,
     subscriptions,

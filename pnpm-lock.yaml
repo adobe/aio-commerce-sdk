@@ -325,6 +325,9 @@ importers:
       '@aio-commerce-sdk/scripts':
         specifier: workspace:*
         version: link:../../scripts
+      msw:
+        specifier: 'catalog:'
+        version: 2.12.13(@types/node@24.12.0)(typescript@5.9.3)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

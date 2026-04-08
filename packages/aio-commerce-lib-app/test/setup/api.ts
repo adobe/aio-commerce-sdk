@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,21 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
-import { defineConfig, mergeConfig } from "vitest/config";
+import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll } from "vitest";
 
-const TEMPLATE_FILES = ["./source/commands/generate/actions/templates/**"];
-const BARREL_FILES = ["./source/**/index.ts"];
+export const apiServer = setupServer();
 
-export default mergeConfig(
-  baseConfig,
-  defineConfig({
-    plugins: [],
-    test: {
-      coverage: {
-        // Exclude barrel files and template files
-        exclude: [...BARREL_FILES, ...TEMPLATE_FILES],
-      },
-    },
-  }),
-);
+/** Registers the standard MSW lifecycle for API integration tests. */
+export function setupApiTestLifecycle() {
+  beforeAll(() => apiServer.listen({ onUnhandledRequest: "error" }));
+  afterAll(() => apiServer.close());
+  afterEach(() => apiServer.resetHandlers());
+}
