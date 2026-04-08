@@ -104,6 +104,19 @@ describe("utils/encryption", () => {
   });
 
   describe("decrypt with invalid format", () => {
+    test("should throw when value does not start with encrypted prefix", () => {
+      const invalidEncrypted = "not-encrypted";
+      expect(() => decrypt(invalidEncrypted, encryptionKey)).toThrow(
+        "Invalid encrypted value. Expected value to start with 'enc:'.",
+      );
+    });
+
+    test("should throw when value is empty", () => {
+      expect(() => decrypt("", encryptionKey)).toThrow(
+        "Invalid encrypted value. Expected value to start with 'enc:'.",
+      );
+    });
+
     test("should handle invalid encrypted format gracefully", () => {
       const invalidEncrypted = "enc:invalid-format";
       expect(() => decrypt(invalidEncrypted, encryptionKey)).toThrow();
