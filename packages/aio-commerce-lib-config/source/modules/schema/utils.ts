@@ -32,7 +32,7 @@ export function calculateSchemaVersion(schema: BusinessConfigSchema): string {
   return createHash("sha256")
     .update(content)
     .digest("hex")
-    .substring(0, hashSubstringLength);
+    .slice(0, hashSubstringLength);
 }
 
 /**
