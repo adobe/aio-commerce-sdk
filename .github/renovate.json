@@ -12,7 +12,6 @@
     "security:minimumReleaseAgeNpm",
     ":automergeDisabled",
     ":ignoreUnstable",
-    ":maintainLockFilesWeekly",
     ":prConcurrentLimitNone",
     ":preserveSemverRanges",
     ":rebaseStalePrs",
@@ -33,6 +32,13 @@
       "matchPackageNames": ["tsdown", "rolldown"],
       "groupName": "tsdown + rolldown",
       "groupSlug": "tsdown-rolldown"
+    },
+    {
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-non-major",
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "schedule": ["on Monday"]
     }
   ]
 }
