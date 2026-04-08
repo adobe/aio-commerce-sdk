@@ -708,9 +708,8 @@ export async function offboardIoEvents(
     return;
   }
 
-  // Step 1: Delete registrations matched by deterministic name + client_id.
   // The getAllRegistrations list endpoint does not populate events_of_interest,
-  // so we reconstruct the expected names the same way as during installation.
+  // so we reconstruct the expected registration names the same way as during installation.
   const actionEventsMap = groupEventsByRuntimeActions(events);
   const clientId = runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID;
   const registrationNames = new Set(
@@ -736,25 +735,23 @@ export async function offboardIoEvents(
         `Deleting registration "${registration.name}" (ID: ${registration.id})...`,
       );
 
-      await ioEventsClient
-        .deleteRegistration({
+      try {
+        await ioEventsClient.deleteRegistration({
           ...appCredentials,
           registrationId: registration.registration_id,
-        })
-        .then(() => {
-          logger.info(
-            `Deleted registration "${registration.name}" (ID: ${registration.id}).`,
-          );
-        })
-        .catch((error) => {
-          logger.warn(
-            `Failed to delete registration "${registration.name}" (ID: ${registration.id}): ${stringifyError(error)}. Continuing uninstall.`,
-          );
         });
+        logger.info(
+          `Deleted registration "${registration.name}" (ID: ${registration.id}).`,
+        );
+      } catch (error) {
+        logger.warn(
+          `Failed to delete registration "${registration.name}" (ID: ${registration.id}): ${stringifyError(error)}. Continuing uninstall.`,
+        );
+      }
     }
   }
 
-  // Step 2: Delete all event metadata entries on the provider.
+  // Delete all event metadata entries on the provider.
   const eventMetadataList = providerData.metadata ?? [];
 
   if (eventMetadataList.length === 0) {
@@ -771,45 +768,41 @@ export async function offboardIoEvents(
         `Deleting event metadata "${metadata.event_code}" from provider "${providerData.id}"...`,
       );
 
-      await ioEventsClient
-        .deleteEventMetadataForProvider({
+      try {
+        await ioEventsClient.deleteEventMetadataForProvider({
           ...appCredentials,
           providerId: providerData.id,
           eventCode: metadata.event_code,
-        })
-        .then(() => {
-          logger.info(
-            `Deleted event metadata "${metadata.event_code}" from provider "${providerData.id}".`,
-          );
-        })
-        .catch((error) => {
-          logger.warn(
-            `Failed to delete event metadata "${metadata.event_code}" from provider "${providerData.id}": ${stringifyError(error)}. Continuing uninstall.`,
-          );
         });
+        logger.info(
+          `Deleted event metadata "${metadata.event_code}" from provider "${providerData.id}".`,
+        );
+      } catch (error) {
+        logger.warn(
+          `Failed to delete event metadata "${metadata.event_code}" from provider "${providerData.id}": ${stringifyError(error)}. Continuing uninstall.`,
+        );
+      }
     }
   }
 
-  // Step 3: Delete the provider itself.
+  // Delete the provider itself.
   logger.info(
     `Deleting I/O Events provider "${provider.label}" (ID: ${providerData.id})...`,
   );
 
-  await ioEventsClient
-    .deleteEventProvider({
+  try {
+    await ioEventsClient.deleteEventProvider({
       ...appCredentials,
       providerId: providerData.id,
-    })
-    .then(() => {
-      logger.info(
-        `Deleted I/O Events provider "${provider.label}" (ID: ${providerData.id}).`,
-      );
-    })
-    .catch((error) => {
-      logger.warn(
-        `Failed to delete I/O Events provider "${provider.label}" (ID: ${providerData.id}): ${stringifyError(error)}. Continuing uninstall.`,
-      );
     });
+    logger.info(
+      `Deleted I/O Events provider "${provider.label}" (ID: ${providerData.id}).`,
+    );
+  } catch (error) {
+    logger.warn(
+      `Failed to delete I/O Events provider "${provider.label}" (ID: ${providerData.id}): ${stringifyError(error)}. Continuing uninstall.`,
+    );
+  }
 }
 
 /**
@@ -855,18 +848,16 @@ export async function offboardCommerceEventing(
       `Unsubscribing Commerce event subscription for "${event.name}" (namespaced: "${eventName}")...`,
     );
 
-    await commerceEventsClient
-      .deleteEventSubscription({ name: eventName })
-      .then(() => {
-        logger.info(
-          `Unsubscribed Commerce event subscription for "${eventName}".`,
-        );
-      })
-      .catch((error) => {
-        logger.warn(
-          `Failed to unsubscribe Commerce event subscription for "${eventName}": ${stringifyError(error)}. Continuing uninstall.`,
-        );
-      });
+    try {
+      await commerceEventsClient.deleteEventSubscription({ name: eventName });
+      logger.info(
+        `Unsubscribed Commerce event subscription for "${eventName}".`,
+      );
+    } catch (error) {
+      logger.warn(
+        `Failed to unsubscribe Commerce event subscription for "${eventName}": ${stringifyError(error)}. Continuing uninstall.`,
+      );
+    }
   }
 
   // Delete the Commerce-side event provider itself (subscriptions must be removed first).
@@ -890,16 +881,16 @@ export async function offboardCommerceEventing(
     `Deleting Commerce event provider "${provider.label}" (provider_id: ${commerceProvider.provider_id})...`,
   );
 
-  await commerceEventsClient
-    .deleteEventProvider({ provider_id: commerceProvider.provider_id })
-    .then(() => {
-      logger.info(
-        `Deleted Commerce event provider "${provider.label}" (provider_id: ${commerceProvider.provider_id}).`,
-      );
-    })
-    .catch((error) => {
-      logger.warn(
-        `Failed to delete Commerce event provider "${provider.label}" (provider_id: ${commerceProvider.provider_id}): ${stringifyError(error)}. Continuing uninstall.`,
-      );
+  try {
+    await commerceEventsClient.deleteEventProvider({
+      provider_id: commerceProvider.provider_id,
     });
+    logger.info(
+      `Deleted Commerce event provider "${provider.label}" (provider_id: ${commerceProvider.provider_id}).`,
+    );
+  } catch (error) {
+    logger.warn(
+      `Failed to delete Commerce event provider "${provider.label}" (provider_id: ${commerceProvider.provider_id}): ${stringifyError(error)}. Continuing uninstall.`,
+    );
+  }
 }

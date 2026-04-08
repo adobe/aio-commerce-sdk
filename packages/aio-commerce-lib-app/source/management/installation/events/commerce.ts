@@ -111,9 +111,11 @@ export const commerceEventsStep = defineLeafStep({
     const { logger } = context;
     logger.debug("Starting uninstall of Commerce Events with config:", config);
 
-    const existingIoEventsData = await getIoEventsExistingData(context);
-    const commerceEventingExistingData =
-      await getCommerceEventingExistingData(context);
+    const [existingIoEventsData, commerceEventingExistingData] =
+      await Promise.all([
+        getIoEventsExistingData(context),
+        getCommerceEventingExistingData(context),
+      ]);
 
     for (const { provider, events } of config.eventing.commerce) {
       await offboardCommerceEventing(
