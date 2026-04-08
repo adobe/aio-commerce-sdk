@@ -10,16 +10,75 @@
  * governing permissions and limitations under the License.
  */
 
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+
 import {
   withChdir,
   withTempFiles,
 } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
-import { exec } from "#commands/hooks/postinstall";
-import { EMPTY_PROJECT, INVALID_PROJECT } from "#test/fixtures/project";
+import {
+  APP_MANIFEST_FILE,
+  CONFIG_SCHEMA_FILE_NAME,
+  CONFIGURATION_EXTENSION_POINT_ID,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
+  GENERATED_ACTIONS_PATH,
+  getExtensionPointFolderPath,
+} from "#commands/constants";
+import { exec, run } from "#commands/hooks/postinstall";
+import { makeTemplateFiles } from "#test/fixtures/commands";
+import { configWithBusinessConfig } from "#test/fixtures/config";
+import {
+  BUSINESS_CONFIG_PROJECT,
+  EMPTY_PROJECT,
+  INVALID_PROJECT,
+} from "#test/fixtures/project";
 
 describe("commands/hooks/postinstall", () => {
+  describe("run", () => {
+    test("generates actions, manifest, and schema", async () => {
+      await withTempFiles(
+        { ...BUSINESS_CONFIG_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await withChdir(tempDir, () =>
+            run(configWithBusinessConfig, tempDir),
+          );
+
+          const extensibilityDir = join(
+            tempDir,
+            getExtensionPointFolderPath(EXTENSIBILITY_EXTENSION_POINT_ID),
+          );
+
+          const configurationDir = join(
+            tempDir,
+            getExtensionPointFolderPath(CONFIGURATION_EXTENSION_POINT_ID),
+          );
+
+          const actionsDir = join(extensibilityDir, GENERATED_ACTIONS_PATH);
+          expect(existsSync(join(actionsDir, "app-config.js"))).toBe(true);
+
+          const manifestPath = join(
+            extensibilityDir,
+            ".generated",
+            APP_MANIFEST_FILE,
+          );
+
+          expect(existsSync(manifestPath)).toBe(true);
+
+          const configSchemaPath = join(
+            configurationDir,
+            ".generated",
+            CONFIG_SCHEMA_FILE_NAME,
+          );
+
+          expect(existsSync(configSchemaPath)).toBe(true);
+        },
+      );
+    });
+  });
+
   describe("exec", () => {
     const exitSpy = vi
       .spyOn(process, "exit")
@@ -28,6 +87,13 @@ describe("commands/hooks/postinstall", () => {
     afterEach(() => {
       vi.clearAllMocks();
       exitSpy.mockClear();
+    });
+
+    test("succeeds when a valid config file exists", async () => {
+      await withTempFiles(BUSINESS_CONFIG_PROJECT, async (tempDir) => {
+        await withChdir(tempDir, () => exec());
+        expect(exitSpy).not.toHaveBeenCalled();
+      });
     });
 
     test("exits with 1 when config file is missing", async () => {

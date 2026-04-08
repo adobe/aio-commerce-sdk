@@ -1,6 +1,6 @@
 import { inspect } from "node:util";
 
-import { minimalValidConfig } from "./config";
+import { configWithBusinessConfig, minimalValidConfig } from "./config";
 
 import type { CommerceAppConfig } from "#config/schema/app";
 
@@ -9,6 +9,11 @@ export const EMPTY_PROJECT = makeProjectFiles(null);
 
 /** The minimum set of files needed for our commands to work with a valid config. */
 export const MINIMAL_PROJECT = makeProjectFiles(minimalValidConfig);
+
+/** Project with business configuration schema for testing full generation flows. */
+export const BUSINESS_CONFIG_PROJECT = makeProjectFiles(
+  configWithBusinessConfig,
+);
 
 /** The minimum set of files needed for our commands to work with an invalid config. */
 export const INVALID_PROJECT = makeProjectFiles({
