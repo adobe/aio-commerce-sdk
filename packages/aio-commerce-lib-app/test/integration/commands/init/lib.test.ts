@@ -36,7 +36,7 @@ import {
 
 import type { InitOptions } from "#commands/init/utils";
 
-describe.concurrent("commands/init/lib", () => {
+describe("commands/init/lib", () => {
   describe.concurrent("ensureCommerceAppConfig", () => {
     test("returns existing valid CJS config without creating a new one", async () => {
       await withTempFiles(
