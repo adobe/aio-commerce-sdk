@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import { eventingStep } from "#management/installation/events/branch";
 import { commerceEventsStep } from "#management/installation/events/commerce";
@@ -67,9 +67,67 @@ describe("events installation module", () => {
     test("should only run if eventing.commerce is defined", () => {
       expect.assert(commerceEventsStep.when);
 
-      expect(commerceEventsStep.when(configWithCommerceEventing)).toBe(true);
-      expect(commerceEventsStep.when(configWithExternalEventing)).toBe(false);
-      expect(commerceEventsStep.when(minimalValidConfig)).toBe(false);
+      expect(commerceEventsStep.when?.(configWithCommerceEventing)).toBe(true);
+
+      expect(commerceEventsStep.when?.(configWithExternalEventing)).toBe(false);
+      expect(commerceEventsStep.when?.(minimalValidConfig)).toBe(false);
+    });
+
+    test("should create entities", async () => {
+      const mockContext = createMockEventingInstallationContext({
+        params: {
+          AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com",
+          AIO_COMMERCE_API_FLAVOR: "saas",
+        },
+        ioEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue({
+            _embedded: { providers: [] },
+          }),
+          getAllRegistrations: vi.fn().mockResolvedValue({
+            _embedded: { registrations: [] },
+          }),
+          createEventProvider: vi
+            .fn()
+            .mockResolvedValue({ id: "provider-123" }),
+          createEventMetadataForProvider: vi
+            .fn()
+            .mockResolvedValue({ event_code: "test-event-code" }),
+          createRegistration: vi
+            .fn()
+            .mockResolvedValue({ id: "registration-123" }),
+          updateRegistration: vi
+            .fn()
+            .mockResolvedValue({ id: "registration-123" }),
+        },
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+          updateEventingConfiguration: vi.fn().mockResolvedValue({}),
+          createEventProvider: vi
+            .fn()
+            .mockResolvedValue({ id: "commerce-provider-123" }),
+          createEventSubscription: vi.fn().mockResolvedValue({
+            name: "test-subscription",
+            enabled: true,
+          }),
+        },
+      });
+
+      const result = await commerceEventsStep.run(
+        configWithCommerceEventing,
+        mockContext,
+      );
+
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+
+      expect(
+        mockContext.ioEventsClient.getAllEventProviders,
+      ).toHaveBeenCalled();
+      expect(
+        mockContext.commerceEventsClient.getAllEventProviders,
+      ).toHaveBeenCalled();
     });
   });
 
@@ -86,9 +144,48 @@ describe("events installation module", () => {
     test("should only run if eventing.external is defined", () => {
       expect.assert(externalEventsStep.when);
 
-      expect(externalEventsStep.when(configWithExternalEventing)).toBe(true);
-      expect(externalEventsStep.when(configWithCommerceEventing)).toBe(false);
-      expect(externalEventsStep.when(minimalValidConfig)).toBe(false);
+      expect(externalEventsStep.when?.(configWithExternalEventing)).toBe(true);
+
+      expect(externalEventsStep.when?.(configWithCommerceEventing)).toBe(false);
+      expect(externalEventsStep.when?.(minimalValidConfig)).toBe(false);
+    });
+
+    test("should create entities", async () => {
+      const mockContext = createMockEventingInstallationContext({
+        ioEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue({
+            _embedded: { providers: [] },
+          }),
+          getAllRegistrations: vi.fn().mockResolvedValue({
+            _embedded: { registrations: [] },
+          }),
+          createEventProvider: vi
+            .fn()
+            .mockResolvedValue({ id: "provider-456" }),
+          createEventMetadataForProvider: vi
+            .fn()
+            .mockResolvedValue({ event_code: "test-event-code" }),
+          createRegistration: vi
+            .fn()
+            .mockResolvedValue({ id: "registration-456" }),
+          updateRegistration: vi
+            .fn()
+            .mockResolvedValue({ id: "registration-456" }),
+        },
+      });
+
+      const result = await externalEventsStep.run(
+        configWithExternalEventing,
+        mockContext,
+      );
+
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+
+      expect(
+        mockContext.ioEventsClient.getAllEventProviders,
+      ).toHaveBeenCalled();
     });
   });
 
