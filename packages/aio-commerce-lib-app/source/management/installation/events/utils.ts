@@ -255,6 +255,19 @@ export function getCommerceEventingConfigurationUpdateParams(
 }
 
 /**
+ * Sanitizes a Commerce Eventing identifier.
+ * Preserves underscores, converts spaces to underscores, lowercases, and strips the rest.
+ *
+ * @param value - The raw identifier value to normalize.
+ */
+export function sanitizeEventingIdentifier(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
+}
+
+/**
  * Creates a partially filled workspace configuration object based on the app credentials and parameters.
  * This configuration is used when creating an event provider in Commerce.
  *

@@ -23,6 +23,7 @@ import {
   getCommerceEventingExistingData,
   getIoEventsExistingData,
   makeWorkspaceConfig,
+  sanitizeEventingIdentifier,
 } from "./utils";
 
 import type { CommerceEventsConfig } from "#config/schema/eventing";
@@ -84,8 +85,10 @@ async function createCommerceEvents(
           context,
           config: {
             enabled: true,
-            merchant_id: context.appData.orgName,
-            environment_id: context.appData.projectName,
+            merchant_id: sanitizeEventingIdentifier(context.appData.orgName),
+            environment_id: sanitizeEventingIdentifier(
+              context.appData.projectName,
+            ),
             instance_id: providerData.instance_id,
             workspace_configuration: workspaceConfiguration,
           },

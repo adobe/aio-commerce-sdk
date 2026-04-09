@@ -22,6 +22,7 @@ import {
   getIoEventsExistingData,
   getNamespacedEvent,
   makeWorkspaceConfig,
+  sanitizeEventingIdentifier,
 } from "#management/installation/events/utils";
 import { createMockMetadata } from "#test/fixtures/config";
 import {
@@ -227,6 +228,12 @@ describe("workspace configuration", () => {
     };
 
     expect(() => makeWorkspaceConfig(context)).toThrow();
+  });
+});
+
+describe("sanitizeEventingIdentifier", () => {
+  test("preserves underscores, converts spaces to underscores, lowercases, and strips the rest", () => {
+    expect(sanitizeEventingIdentifier("Test_Org! #42")).toBe("test_org_42");
   });
 });
 

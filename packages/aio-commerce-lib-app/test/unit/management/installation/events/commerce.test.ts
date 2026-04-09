@@ -53,7 +53,12 @@ describe("commerceEventsStep leaf step", () => {
   test("should configure Commerce Eventing only once when multiple commerce sources are installed", async () => {
     vi.stubEnv("__OW_NAMESPACE", "test-namespace");
 
-    const context = createMockEventingInstallationContext();
+    const context = createMockEventingInstallationContext({
+      appData: {
+        orgName: "Test Org! #42",
+        projectName: "Test Project! #7",
+      },
+    });
     const { ioEventsClient, commerceEventsClient } = context;
 
     const configWithTwoCommerceSources =
@@ -179,6 +184,8 @@ describe("commerceEventsStep leaf step", () => {
       expect.objectContaining({
         instance_id: "test-app-commerce-events-provider-test-workspace-id",
         enabled: true,
+        merchant_id: "test_org_42",
+        environment_id: "test_project_7",
         workspace_configuration: expect.any(String),
       }),
     );
