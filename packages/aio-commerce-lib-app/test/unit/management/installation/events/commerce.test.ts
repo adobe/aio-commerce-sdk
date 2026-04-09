@@ -21,18 +21,13 @@ import {
   minimalValidConfig,
 } from "#test/fixtures/config";
 import {
-  createMockCommerceEventProvider,
   createMockEventingInstallationContext,
-  createMockIoEventMetadataHalModel,
-  createMockIoEventProviderHalModel,
-  createMockIoEventRegistrationHalModel,
+  createMockExistingCommerceEventingData,
+  createMockExistingIoEventsData,
+  createMockWorkspaceConfiguration,
 } from "#test/fixtures/eventing";
 
 describe("commerceEventsStep leaf step", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
   test("should be a leaf step with name and meta", () => {
     expect(isLeafStep(commerceEventsStep)).toBe(true);
     expect(commerceEventsStep.name).toBe("commerce");
@@ -49,150 +44,131 @@ describe("commerceEventsStep leaf step", () => {
     expect(commerceEventsStep.when(configWithExternalEventing)).toBe(false);
     expect(commerceEventsStep.when(minimalValidConfig)).toBe(false);
   });
+});
+
+describe("commerceEventsStep orchestration", () => {
+  async function importCommerceStepWithMocks() {
+    vi.resetModules();
+
+    const helperMocks = {
+      configureCommerceEventing: vi.fn(),
+      onboardCommerceEventing: vi.fn(),
+      onboardIoEvents: vi.fn(),
+    };
+
+    const utilsMocks = {
+      getCommerceEventingExistingData: vi.fn(),
+      getIoEventsExistingData: vi.fn(),
+      makeWorkspaceConfig: vi.fn(),
+    };
+
+    vi.doMock("#management/installation/events/helpers", async () => {
+      const actual = await vi.importActual<
+        typeof import("#management/installation/events/helpers")
+      >("#management/installation/events/helpers");
+
+      return {
+        ...actual,
+        ...helperMocks,
+      };
+    });
+
+    vi.doMock("#management/installation/events/utils", async () => {
+      const actual = await vi.importActual<
+        typeof import("#management/installation/events/utils")
+      >("#management/installation/events/utils");
+
+      return {
+        ...actual,
+        ...utilsMocks,
+      };
+    });
+
+    const commerceModule = await import(
+      "#management/installation/events/commerce"
+    );
+
+    return {
+      commerceEventsStep: commerceModule.commerceEventsStep,
+      helperMocks,
+      utilsMocks,
+    };
+  }
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.clearAllMocks();
+    vi.resetModules();
+    vi.doUnmock("#management/installation/events/helpers");
+    vi.doUnmock("#management/installation/events/utils");
+  });
 
   test("should configure Commerce Eventing only once when multiple commerce sources are installed", async () => {
     vi.stubEnv("__OW_NAMESPACE", "test-namespace");
-
     const context = createMockEventingInstallationContext({
       appData: {
         orgName: "Test Org! #42",
         projectName: "Test Project! #7",
       },
     });
-    const { ioEventsClient, commerceEventsClient } = context;
 
-    const configWithTwoCommerceSources =
-      createConfigWithTwoCommerceEventingSources();
+    const { commerceEventsStep, helperMocks, utilsMocks } =
+      await importCommerceStepWithMocks();
 
-    vi.mocked(ioEventsClient.getAllEventProviders).mockResolvedValue({
-      _links: { self: { href: "/providers" } },
-      _embedded: { providers: [] },
-    });
-    vi.mocked(ioEventsClient.getAllRegistrations).mockResolvedValue({
-      _links: { self: { href: "/registrations" } },
-      _embedded: { registrations: [] },
-    });
-    vi.mocked(commerceEventsClient.getAllEventProviders).mockResolvedValue([]);
-    vi.mocked(commerceEventsClient.getAllEventSubscriptions).mockResolvedValue(
-      [],
+    utilsMocks.makeWorkspaceConfig.mockReturnValue(
+      createMockWorkspaceConfiguration(),
+    );
+    utilsMocks.getIoEventsExistingData.mockResolvedValue(
+      createMockExistingIoEventsData(),
+    );
+    utilsMocks.getCommerceEventingExistingData.mockResolvedValue(
+      createMockExistingCommerceEventingData(),
     );
 
-    vi.mocked(ioEventsClient.createEventProvider)
-      .mockResolvedValueOnce(
-        createMockIoEventProviderHalModel({
-          id: "io-provider-commerce-1",
-          label:
-            configWithTwoCommerceSources.eventing.commerce[0].provider.label,
-          description:
-            configWithTwoCommerceSources.eventing.commerce[0].provider
-              .description,
+    helperMocks.onboardIoEvents
+      .mockResolvedValueOnce({
+        eventsData: [],
+        providerData: {
           instance_id: "test-app-commerce-events-provider-test-workspace-id",
-          provider_metadata: "dx_commerce_events",
-        }),
-      )
-      .mockResolvedValueOnce(
-        createMockIoEventProviderHalModel({
-          id: "io-provider-commerce-2",
-          label:
-            configWithTwoCommerceSources.eventing.commerce[1].provider.label,
-          description:
-            configWithTwoCommerceSources.eventing.commerce[1].provider
-              .description,
+        },
+      })
+      .mockResolvedValueOnce({
+        eventsData: [],
+        providerData: {
           instance_id:
             "test-app-second-commerce-events-provider-test-workspace-id",
-          provider_metadata: "dx_commerce_events",
-        }),
-      );
+        },
+      });
 
-    vi.mocked(ioEventsClient.createEventMetadataForProvider)
-      .mockResolvedValueOnce(
-        createMockIoEventMetadataHalModel({
-          label: "Order Placed",
-          event_code:
-            "com.adobe.commerce.test-app-commerce-events.plugin.order_placed",
-        }),
-      )
-      .mockResolvedValueOnce(
-        createMockIoEventMetadataHalModel({
-          label: "Order Cancelled",
-          event_code:
-            "com.adobe.commerce.test-app-commerce-events.plugin.order_cancelled",
-        }),
-      );
-
-    vi.mocked(ioEventsClient.createRegistration)
-      .mockResolvedValueOnce(
-        createMockIoEventRegistrationHalModel({
-          id: "registration-1",
-          name: "Commerce Event Registration: Handle Order (My Package)",
-        }),
-      )
-      .mockResolvedValueOnce(
-        createMockIoEventRegistrationHalModel({
-          id: "registration-2",
-          name: "Commerce Event Registration: Handle Order Cancelled (My Package)",
-        }),
-      );
-
-    vi.mocked(
-      commerceEventsClient.updateEventingConfiguration,
-    ).mockResolvedValue(true);
-
-    vi.mocked(commerceEventsClient.createEventProvider)
-      .mockResolvedValueOnce(
-        createMockCommerceEventProvider({
-          id: "commerce-provider-1",
-          provider_id: "io-provider-commerce-1",
-          label:
-            configWithTwoCommerceSources.eventing.commerce[0].provider.label,
-          description:
-            configWithTwoCommerceSources.eventing.commerce[0].provider
-              .description,
-          instance_id: "test-app-commerce-events-provider-test-workspace-id",
-        }),
-      )
-      .mockResolvedValueOnce(
-        createMockCommerceEventProvider({
-          id: "commerce-provider-2",
-          provider_id: "io-provider-commerce-2",
-          label:
-            configWithTwoCommerceSources.eventing.commerce[1].provider.label,
-          description:
-            configWithTwoCommerceSources.eventing.commerce[1].provider
-              .description,
-          instance_id:
-            "test-app-second-commerce-events-provider-test-workspace-id",
-        }),
-      );
-
-    vi.mocked(commerceEventsClient.createEventSubscription).mockResolvedValue(
-      undefined,
-    );
+    helperMocks.configureCommerceEventing.mockResolvedValue(undefined);
+    helperMocks.onboardCommerceEventing.mockResolvedValue({
+      commerceProvider: {},
+      subscriptions: [],
+    });
 
     const result = await commerceEventsStep.run(
-      configWithTwoCommerceSources,
+      createConfigWithTwoCommerceEventingSources(),
       context,
     );
 
     expect(result).toHaveLength(2);
-    expect(
-      commerceEventsClient.updateEventingConfiguration,
-    ).toHaveBeenCalledTimes(1);
-    expect(
-      commerceEventsClient.updateEventingConfiguration,
-    ).toHaveBeenCalledWith(
-      expect.objectContaining({
-        instance_id: "test-app-commerce-events-provider-test-workspace-id",
-        enabled: true,
-        merchant_id: "test_org_42",
-        environment_id: "test_project_7",
-        workspace_configuration: expect.any(String),
-      }),
+
+    expect(helperMocks.onboardIoEvents).toHaveBeenCalledTimes(2);
+    expect(helperMocks.configureCommerceEventing).toHaveBeenCalledTimes(1);
+    expect(helperMocks.configureCommerceEventing).toHaveBeenCalledWith(
+      {
+        context,
+        config: {
+          enabled: true,
+          merchant_id: "test_org_42",
+          environment_id: "test_project_7",
+          instance_id: "test-app-commerce-events-provider-test-workspace-id",
+          workspace_configuration: expect.any(String),
+        },
+      },
+      createMockExistingCommerceEventingData(),
     );
-    expect(ioEventsClient.createEventProvider).toHaveBeenCalledTimes(2);
-    expect(commerceEventsClient.createEventProvider).toHaveBeenCalledTimes(2);
-    expect(commerceEventsClient.createEventSubscription).toHaveBeenCalledTimes(
-      2,
-    );
+
+    expect(helperMocks.onboardCommerceEventing).toHaveBeenCalledTimes(2);
   });
 });
