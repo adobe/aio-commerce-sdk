@@ -1066,6 +1066,52 @@ describe("deleteWebhookSubscriptions", () => {
       }),
     );
   });
+
+  test("should log a warning and continue when unsubscribe throws", async () => {
+    const resolvedBatch = "test_app_webhooks_batch";
+    const resolvedHook = "test_app_webhooks_hook";
+    const existingWebhook = createMockExistingCommerceWebhook({
+      webhook_method: "observer.catalog_product_save_after",
+      webhook_type: "before",
+      batch_name: resolvedBatch,
+      hook_name: resolvedHook,
+    });
+
+    const unsubscribeError = new Error("Commerce API unavailable");
+    const unsubscribeWebhookFn = vi.fn().mockRejectedValue(unsubscribeError);
+    const getWebhookListFn = vi.fn().mockResolvedValue([existingWebhook]);
+    const ctx = makeContext(
+      vi.fn(),
+      getWebhookListFn,
+      DEFAULT_PARAMS,
+      unsubscribeWebhookFn,
+    );
+
+    const config = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          webhook: {
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "before",
+            batch_name: "batch",
+            hook_name: "hook",
+          },
+        }),
+      ],
+    });
+
+    // Should NOT throw, and should return empty unsubscribed list
+    const result = await deleteWebhookSubscriptions(config, ctx);
+    expect(result.unsubscribedWebhooks).toHaveLength(0);
+    expect(ctx.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Failed to unsubscribe webhook "observer.catalog_product_save_after:before"',
+      ),
+    );
+    expect(ctx.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Commerce API unavailable"),
+    );
+  });
 });
 
 describe("buildWebhookIdPrefix", () => {

@@ -86,9 +86,10 @@ describe("events installation module", () => {
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-          createEventProvider: vi
-            .fn()
-            .mockResolvedValue({ id: "provider-123" }),
+          createEventProvider: vi.fn().mockResolvedValue({
+            id: "provider-123",
+            provider_metadata: "dx_commerce_events",
+          }),
           createEventMetadataForProvider: vi
             .fn()
             .mockResolvedValue({ event_code: "test-event-code" }),
@@ -157,9 +158,10 @@ describe("events installation module", () => {
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-          createEventProvider: vi
-            .fn()
-            .mockResolvedValue({ id: "provider-456" }),
+          createEventProvider: vi.fn().mockResolvedValue({
+            id: "provider-456",
+            provider_metadata: "3rd_party_custom_events",
+          }),
           createEventMetadataForProvider: vi
             .fn()
             .mockResolvedValue({ event_code: "test-event-code" }),
@@ -287,6 +289,7 @@ describe("events installation module", () => {
                 {
                   id: "io-provider-123",
                   instance_id: instanceId,
+                  provider_metadata: "dx_commerce_events",
                   _embedded: { eventmetadata: [] },
                 },
               ],
@@ -341,6 +344,7 @@ describe("events installation module", () => {
                 {
                   id: "io-provider-123",
                   instance_id: instanceId,
+                  provider_metadata: "dx_commerce_events",
                   _embedded: { eventmetadata: [] },
                 },
               ],
@@ -589,6 +593,7 @@ describe("events installation module", () => {
                 {
                   id: "io-provider-123",
                   instance_id: instanceId,
+                  provider_metadata: "dx_commerce_events",
                   _embedded: {
                     eventmetadata: [
                       {
@@ -643,6 +648,7 @@ describe("events installation module", () => {
                 {
                   id: "io-provider-123",
                   instance_id: instanceId,
+                  provider_metadata: "dx_commerce_events",
                   _embedded: {
                     eventmetadata: [
                       {
@@ -687,6 +693,7 @@ describe("events installation module", () => {
                 {
                   id: "io-provider-123",
                   instance_id: instanceId,
+                  provider_metadata: "dx_commerce_events",
                   _embedded: { eventmetadata: [] },
                 },
               ],
@@ -805,6 +812,7 @@ describe("events installation module", () => {
                 {
                   id: "io-provider-456",
                   instance_id: instanceId,
+                  provider_metadata: "3rd_party_custom_events",
                   _embedded: { eventmetadata: [] },
                 },
               ],
@@ -858,6 +866,7 @@ describe("events installation module", () => {
                 {
                   id: "io-provider-456",
                   instance_id: instanceId,
+                  provider_metadata: "3rd_party_custom_events",
                   _embedded: {
                     eventmetadata: [
                       {

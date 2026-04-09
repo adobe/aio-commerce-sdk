@@ -38,9 +38,7 @@ import type {
   IoEventProvider,
   IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
-import type { AppEvent, EventProvider } from "#config/schema/eventing";
-import type { ApplicationMetadata } from "#config/schema/metadata";
-import type { EventsExecutionContext } from "./context";
+import type { AppEvent } from "#config/schema/eventing";
 import type {
   ConfigureCommerceEventingParams,
   CreateCommerceEventSubscriptionParams,
@@ -48,6 +46,7 @@ import type {
   CreateIoProviderEventsMetadataParams,
   CreateIoProviderParams,
   CreateRegistrationParams,
+  OffboardEventsParams,
   OnboardCommerceEventingParams,
   OnboardIoEventsParams,
 } from "./types";
@@ -674,12 +673,7 @@ export async function onboardCommerceEventing(
  * @param existingData - Current I/O Events data (providers and registrations).
  */
 export async function offboardIoEvents(
-  params: {
-    context: EventsExecutionContext;
-    metadata: ApplicationMetadata;
-    provider: EventProvider;
-    events: AppEvent[];
-  },
+  params: OffboardEventsParams,
   existingData: ExistingIoEventsData,
 ) {
   const { context, metadata, provider, events } = params;
@@ -819,12 +813,7 @@ export async function offboardIoEvents(
  * @param existingData - Current Commerce eventing data (providers and subscriptions).
  */
 export async function offboardCommerceEventing(
-  params: {
-    context: EventsExecutionContext;
-    metadata: ApplicationMetadata;
-    provider: EventProvider;
-    events: AppEvent[];
-  },
+  params: OffboardEventsParams,
   existingData: ExistingCommerceEventingData,
 ) {
   const { context, metadata, provider, events } = params;
