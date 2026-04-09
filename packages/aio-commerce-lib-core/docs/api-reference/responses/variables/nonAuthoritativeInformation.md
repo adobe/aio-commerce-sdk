@@ -11,7 +11,7 @@ const nonAuthoritativeInformation: (
 ) => SuccessResponse<BodyRecord, HeadersRecord>;
 ```
 
-Defined in: [responses/presets.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-core/source/responses/presets.ts#L74)
+Defined in: [responses/presets.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-core/source/responses/presets.ts#L74)
 
 Creates a success response with the HTTP status code 203.
 See [buildSuccessResponse](../functions/buildSuccessResponse.md) for details on the response payload.

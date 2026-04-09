@@ -1,6 +1,6 @@
 # `KeyValueStore\<T\>`
 
-Defined in: [storage/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages-private/common-utils/source/storage/types.ts#L17)
+Defined in: [storage/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages-private/common-utils/source/storage/types.ts#L17)
 
 Generic key-value store interface.
 
@@ -18,7 +18,7 @@ Generic key-value store interface.
 delete(key: string): Promise<boolean>;
 ```
 
-Defined in: [storage/types.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages-private/common-utils/source/storage/types.ts#L24)
+Defined in: [storage/types.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages-private/common-utils/source/storage/types.ts#L24)
 
 Deletes data by key.
 
@@ -42,7 +42,7 @@ True if the key existed and was deleted.
 get(key: string): Promise<T | null>;
 ```
 
-Defined in: [storage/types.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages-private/common-utils/source/storage/types.ts#L31)
+Defined in: [storage/types.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages-private/common-utils/source/storage/types.ts#L31)
 
 Retrieves data by key.
 
@@ -66,7 +66,7 @@ The data or null if not found.
 put(key: string, data: T): Promise<void>;
 ```
 
-Defined in: [storage/types.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages-private/common-utils/source/storage/types.ts#L39)
+Defined in: [storage/types.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages-private/common-utils/source/storage/types.ts#L39)
 
 Saves data with the given key.
 
