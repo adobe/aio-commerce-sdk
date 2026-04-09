@@ -363,34 +363,13 @@ router.post("/validation", {
 /**
  * DELETE / - Clear installation state
  *
- * This endpoint clears the installation state from storage without running
- * the offboarding workflow. Use POST /uninstall to properly clean up resources.
- *
- * Flow:
- * 1. Check if installation is in progress
- * 2. Clear installation state from storage
- * 3. Return 204 No Content
+ * This endpoint allows clearing the installation state.
  */
 router.delete("/", {
   handler: async (_req, { logger }) => {
     logger.debug("Clearing installation state...");
 
     const store = await createInstallationStore();
-    const existingState = await store.get(getStorageKey());
-
-    if (!existingState) {
-      logger.debug("No installation state found");
-      return noContent();
-    }
-
-    if (isInProgressState(existingState)) {
-      logger.debug("Installation is in progress, cannot clear");
-      return conflict(
-        "Installation is currently in progress. Wait for it to complete before clearing state.",
-      );
-    }
-
-    // Clear installation state
     await store.delete(getStorageKey());
     logger.debug("Installation state cleared");
 

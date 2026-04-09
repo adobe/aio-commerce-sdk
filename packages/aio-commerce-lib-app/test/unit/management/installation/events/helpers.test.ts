@@ -10,369 +10,777 @@
  * governing permissions and limitations under the License.
  */
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
-import { onboardIoEvents } from "#management/installation/events/helpers";
 import {
+  onboardCommerceEventing,
+  onboardIoEvents,
+} from "#management/installation/events/helpers";
+import {
+  COMMERCE_PROVIDER_TYPE,
+  generateInstanceId,
+  getIoEventCode,
+  getNamespacedEvent,
+  getRegistrationName,
+} from "#management/installation/events/utils";
+import {
+  createCommerceEventConfig,
+  createMockMetadata,
+} from "#test/fixtures/config";
+import {
+  createMockCommerceEventProvider,
+  createMockCommerceEventSubscription,
+  createMockEventingInstallationContext,
+  createMockExistingCommerceEventingData,
+  createMockExistingIoEventsData,
   createMockIoEventMetadata,
+  createMockIoEventMetadataHalModel,
   createMockIoEventProvider,
+  createMockIoEventProviderHalModel,
   createMockIoEventRegistration,
-  DEFAULT_PROVIDER_ID,
-} from "#test/fixtures/installation/io-events";
+  createMockIoEventRegistrationHalModel,
+  createMockProvider,
+  createMockWorkspaceConfiguration,
+} from "#test/fixtures/eventing";
 
-import type { CommerceEvent } from "#config/schema/eventing";
+import type { EventProvider } from "#config/schema/eventing";
 import type { EventsExecutionContext } from "#management/installation/events/context";
-import type { OnboardIoEventsParams } from "#management/installation/events/types";
-import type { ExistingIoEventsData } from "#management/installation/events/utils";
+import type {
+  EventsDataFromIo,
+  OnboardCommerceEventingParams,
+  OnboardIoEventsParams,
+} from "#management/installation/events/types";
 
-const SAMPLE_METADATA = {
-  id: "app-management-debug-test-add-events",
-  displayName: "App Management Debug Unassociate",
-  description: "This is a Debug for Commerce app management",
-  version: "1.0.1",
-};
+type MockCommerceEvent = ReturnType<
+  typeof createCommerceEventConfig
+>["eventing"]["commerce"][number]["events"][number];
 
-const SAMPLE_PROVIDER = {
-  label: "My Commerce Provider",
-  description: "My Commerce Provider",
-  key: "my-commerce-provider",
-};
+const DEFAULT_METADATA_ID = "test-app";
+const DEFAULT_PROVIDER_LABEL = "Commerce Provider";
+const DEFAULT_PROVIDER_KEY = "commerce";
+const DEFAULT_EVENT_NAME = "observer.order_placed";
+const DEFAULT_IO_EVENT_CODE = "code-1";
+const DEFAULT_WORKSPACE_CONFIGURATION = JSON.stringify(
+  createMockWorkspaceConfiguration(),
+);
 
-const SAMPLE_EVENTS: CommerceEvent[] = [
-  {
-    name: "observer.catalog_product_save_commit_after",
-    label: "Catalog Product Save Commit After",
-    description: "Catalog Product Save Commit After Event",
-    fields: [{ name: "name" }, { name: "price" }],
-    runtimeActions: ["my-package/handle-event"],
-    priority: true,
-  },
-  {
-    name: "observer.catalog_product_delete_commit_after",
-    label: "Catalog Product Delete Commit After",
-    description: "Catalog Product Delete Commit After Event",
-    fields: [{ name: "name" }, { name: "price" }],
-    runtimeActions: ["my-package/handle-event"],
-    priority: true,
-  },
-];
+function createDefaultEventingContext() {
+  return createMockEventingInstallationContext();
+}
 
-function makeContext(): EventsExecutionContext {
+function createDefaultMetadata() {
+  return createMockMetadata(DEFAULT_METADATA_ID);
+}
+
+function createDefaultProvider() {
+  return createMockProvider(DEFAULT_PROVIDER_LABEL, DEFAULT_PROVIDER_KEY);
+}
+
+function createDefaultCommerceEvent() {
+  return createCommerceEventConfig(DEFAULT_EVENT_NAME).eventing.commerce[0]
+    .events[0];
+}
+
+function createIoProvider(
+  overrides: Partial<ReturnType<typeof createMockIoEventProvider>> = {},
+) {
+  const defaultProvider = createDefaultProvider();
+
+  return createMockIoEventProvider({
+    label: defaultProvider.label,
+    description: defaultProvider.description,
+    provider_metadata: COMMERCE_PROVIDER_TYPE,
+    ...overrides,
+  });
+}
+
+function createIoProviderDefaults(
+  context: EventsExecutionContext,
+  metadata?: ReturnType<typeof createMockMetadata>,
+  provider?: EventProvider,
+) {
+  const resolvedMetadata = metadata ?? createDefaultMetadata();
+  const resolvedProvider = provider ?? createDefaultProvider();
+
   return {
-    appData: {
-      consumerOrgId: "test-org-123",
-      projectId: "test-project-456",
-      workspaceId: "test-workspace-123",
-      orgName: "Test Org",
-      projectName: "Test Project",
-      projectTitle: "Test Project Title",
-      workspaceName: "Test Workspace",
-      workspaceTitle: "Test Workspace Title",
+    label: resolvedProvider.label,
+    description: resolvedProvider.description,
+    instance_id: generateInstanceId(
+      resolvedMetadata,
+      resolvedProvider,
+      context.appData.workspaceId,
+    ),
+    provider_metadata: COMMERCE_PROVIDER_TYPE,
+  };
+}
+
+function createCreatedIoProvider(
+  context: EventsExecutionContext,
+  metadata?: ReturnType<typeof createMockMetadata>,
+  provider?: EventProvider,
+  overrides: Partial<ReturnType<typeof createMockIoEventProviderHalModel>> = {},
+) {
+  return {
+    ...createIoProviderDefaults(context, metadata, provider),
+    ...overrides,
+  };
+}
+
+function createExistingIoProvider(
+  context: EventsExecutionContext,
+  metadata?: ReturnType<typeof createMockMetadata>,
+  provider?: EventProvider,
+  overrides: Partial<ReturnType<typeof createMockIoEventProvider>> = {},
+) {
+  return createIoProvider({
+    ...createIoProviderDefaults(context, metadata, provider),
+    ...overrides,
+  });
+}
+
+function createIoOnboardingScenario({
+  context,
+  metadata,
+  provider,
+  event,
+}: {
+  context?: EventsExecutionContext;
+  metadata?: ReturnType<typeof createMockMetadata>;
+  provider?: EventProvider;
+  event?: MockCommerceEvent;
+} = {}) {
+  const resolvedContext = context ?? createDefaultEventingContext();
+  const resolvedMetadata = metadata ?? createDefaultMetadata();
+  const resolvedProvider = provider ?? createDefaultProvider();
+  const resolvedEvent = event ?? createDefaultCommerceEvent();
+
+  const input = {
+    context: resolvedContext,
+    metadata: resolvedMetadata,
+    provider: resolvedProvider,
+    events: [resolvedEvent],
+    providerType: COMMERCE_PROVIDER_TYPE,
+  } satisfies OnboardIoEventsParams<MockCommerceEvent>;
+
+  return {
+    context: resolvedContext,
+    metadata: resolvedMetadata,
+    provider: resolvedProvider,
+    event: resolvedEvent,
+    input,
+  };
+}
+
+function createIoEventResult(
+  event: MockCommerceEvent,
+  overrides: Partial<{
+    metadata: ReturnType<typeof createMockIoEventMetadata>;
+    registrations: ReturnType<typeof createMockIoEventRegistration>[];
+  }> = {},
+) {
+  return {
+    config: {
+      ...event,
+      providerType: COMMERCE_PROVIDER_TYPE,
     },
-    params: {
-      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id-9876543210",
-      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "test-secret",
-      AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+    data: {
+      metadata:
+        overrides.metadata ??
+        createMockIoEventMetadata({ event_code: DEFAULT_IO_EVENT_CODE }),
+      registrations: overrides.registrations ?? [],
     },
-    ioEventsClient: {
-      createEventProvider: vi.fn(),
-      createEventMetadataForProvider: vi.fn(),
-      createRegistration: vi.fn(),
-      deleteRegistration: vi.fn(),
-      updateRegistration: vi.fn(),
+  } satisfies EventsDataFromIo<MockCommerceEvent>[number];
+}
+
+function createCommerceOnboardingScenario({
+  context,
+  metadata,
+  provider,
+  event,
+  workspaceConfiguration,
+}: {
+  context?: EventsExecutionContext;
+  metadata?: ReturnType<typeof createMockMetadata>;
+  provider?: EventProvider;
+  event?: MockCommerceEvent;
+  workspaceConfiguration?: string;
+} = {}) {
+  const resolvedContext = context ?? createDefaultEventingContext();
+  const resolvedMetadata = metadata ?? createDefaultMetadata();
+  const resolvedProvider = provider ?? createDefaultProvider();
+  const resolvedEvent = event ?? createDefaultCommerceEvent();
+  const resolvedWorkspaceConfiguration =
+    workspaceConfiguration ?? DEFAULT_WORKSPACE_CONFIGURATION;
+
+  const ioProvider = createExistingIoProvider(
+    resolvedContext,
+    resolvedMetadata,
+    resolvedProvider,
+    {
+      id: "io-provider-1",
     },
-    commerceEventsClient: {} as never,
-    logger: {
-      info: vi.fn(),
-      debug: vi.fn(),
-      error: vi.fn(),
-      warn: vi.fn(),
-    },
-  } as unknown as EventsExecutionContext;
+  );
+  const ioData = {
+    provider: ioProvider,
+    workspaceConfiguration: resolvedWorkspaceConfiguration,
+    events: [createIoEventResult(resolvedEvent)],
+  } satisfies OnboardCommerceEventingParams["ioData"];
+
+  return {
+    context: resolvedContext,
+    metadata: resolvedMetadata,
+    provider: resolvedProvider,
+    event: resolvedEvent,
+    ioProvider,
+    ioData,
+  };
 }
 
 describe("onboardIoEvents", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  test("creates missing I/O Events provider, metadata, and registration with app credentials", async () => {
+    const { metadata, provider, context, event, input } =
+      createIoOnboardingScenario();
 
-  test("creates provider, metadata, and registration when nothing exists", async () => {
-    const context = makeContext();
-    const eventCode1 =
-      "com.adobe.commerce.app-management-debug-test-add-events.observer.catalog_product_save_commit_after";
-    const eventCode2 =
-      "com.adobe.commerce.app-management-debug-test-add-events.observer.catalog_product_delete_commit_after";
-
-    const provider = createMockIoEventProvider();
-    const metadata1 = createMockIoEventMetadata(eventCode1);
-    const metadata2 = createMockIoEventMetadata(eventCode2);
-    const registration = createMockIoEventRegistration({
-      events_of_interest: [
-        {
-          event_code: eventCode1,
-          provider_id: DEFAULT_PROVIDER_ID,
-        },
-        {
-          event_code: eventCode2,
-          provider_id: DEFAULT_PROVIDER_ID,
-        },
-      ],
-    });
-
-    vi.mocked(context.ioEventsClient.createEventProvider).mockResolvedValue(
+    const { appData, ioEventsClient, params } = context;
+    const expectedInstanceId = generateInstanceId(
+      metadata,
       provider,
-    );
-    vi.mocked(context.ioEventsClient.createEventMetadataForProvider)
-      .mockResolvedValueOnce(metadata1)
-      .mockResolvedValueOnce(metadata2);
-    vi.mocked(context.ioEventsClient.createRegistration).mockResolvedValue(
-      registration,
+      appData.workspaceId,
     );
 
-    const params: OnboardIoEventsParams<CommerceEvent> = {
-      context,
-      metadata: SAMPLE_METADATA,
-      provider: SAMPLE_PROVIDER,
-      events: SAMPLE_EVENTS,
-      providerType: "dx_commerce_events",
-    };
+    const expectedEventCode = getIoEventCode(
+      getNamespacedEvent(metadata, event.name),
+      COMMERCE_PROVIDER_TYPE,
+    );
 
-    const existingData: ExistingIoEventsData = {
-      providersWithMetadata: [],
-      registrations: [],
-    };
-
-    const result = await onboardIoEvents(params, existingData);
-
-    // Verify provider was created once with correct instanceId pattern
-    expect(context.ioEventsClient.createEventProvider).toHaveBeenCalledOnce();
-    expect(context.ioEventsClient.createEventProvider).toHaveBeenCalledWith(
-      expect.objectContaining({
-        instanceId:
-          "app-management-debug-test-add-events-my-commerce-provider-test-workspace-123",
-        label: "My Commerce Provider",
-        providerType: "dx_commerce_events",
+    const createdProvider = createMockIoEventProviderHalModel(
+      createCreatedIoProvider(context, metadata, provider, {
+        id: "io-provider-1",
+        instance_id: expectedInstanceId,
       }),
     );
 
-    // Verify metadata was created twice (once for each event)
-    expect(
-      context.ioEventsClient.createEventMetadataForProvider,
-    ).toHaveBeenCalledTimes(2);
+    const createdEventMetadata = createMockIoEventMetadataHalModel({
+      event_code: expectedEventCode,
+      label: event.label,
+    });
 
-    // Verify registration was created once (both events share same runtime action)
-    expect(context.ioEventsClient.createRegistration).toHaveBeenCalledOnce();
-    const registrationCall = vi.mocked(
-      context.ioEventsClient.createRegistration,
-    ).mock.calls[0][0];
-    expect(registrationCall.eventsOfInterest).toHaveLength(2);
-    expect(registrationCall.eventsOfInterest).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ eventCode: eventCode1 }),
-        expect.objectContaining({ eventCode: eventCode2 }),
-      ]),
+    const createdRegistration = createMockIoEventRegistrationHalModel({
+      id: "registration-1",
+      client_id: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+      name: getRegistrationName(createdProvider, event.runtimeActions[0]),
+    });
+
+    vi.mocked(ioEventsClient.createEventProvider).mockResolvedValue(
+      createdProvider,
     );
 
-    // Verify updateRegistration was NOT called
-    expect(context.ioEventsClient.updateRegistration).not.toHaveBeenCalled();
+    vi.mocked(ioEventsClient.createEventMetadataForProvider).mockResolvedValue(
+      createdEventMetadata,
+    );
 
-    // Verify result structure
-    expect(result.providerData).toEqual(provider);
-    expect(result.eventsData).toHaveLength(2);
-    expect(result.eventsData[0].data.metadata).toEqual(metadata1);
-    expect(result.eventsData[0].data.registrations).toEqual([registration]);
-    expect(result.eventsData[1].data.metadata).toEqual(metadata2);
-    expect(result.eventsData[1].data.registrations).toEqual([registration]);
+    vi.mocked(ioEventsClient.createRegistration).mockResolvedValue(
+      createdRegistration,
+    );
+
+    const result = await onboardIoEvents(
+      input,
+      createMockExistingIoEventsData(),
+    );
+
+    expect(ioEventsClient.createEventProvider).toHaveBeenCalledWith(
+      expect.objectContaining({
+        consumerOrgId: appData.consumerOrgId,
+        projectId: appData.projectId,
+        workspaceId: appData.workspaceId,
+        label: provider.label,
+        providerType: COMMERCE_PROVIDER_TYPE,
+        instanceId: expectedInstanceId,
+        description: provider.description,
+      }),
+    );
+
+    expect(ioEventsClient.createEventMetadataForProvider).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerId: createdProvider.id,
+        eventCode: expectedEventCode,
+      }),
+    );
+
+    expect(result.providerData).toEqual(createdProvider);
+    expect(result.eventsData[0]?.data.metadata).toEqual(createdEventMetadata);
+    expect(ioEventsClient.createRegistration).toHaveBeenCalledOnce();
   });
 
-  test("gets provider and metadata, updates existing registration with missing event", async () => {
-    const context = makeContext();
-    const eventCode1 =
-      "com.adobe.commerce.app-management-debug-test-add-events.observer.catalog_product_save_commit_after";
-    const eventCode2 =
-      "com.adobe.commerce.app-management-debug-test-add-events.observer.catalog_product_delete_commit_after";
+  test("reuses existing provider metadata and registrations when they already exist", async () => {
+    const { context, metadata, provider, event, input } =
+      createIoOnboardingScenario({
+        event: createCommerceEventConfig("observer.order_placed", {
+          runtimeActions: ["pkg/order-created"],
+        }).eventing.commerce[0].events[0],
+      });
 
-    const provider = createMockIoEventProvider();
-    const metadata1 = createMockIoEventMetadata(eventCode1);
-    const metadata2 = createMockIoEventMetadata(eventCode2);
+    const { ioEventsClient } = context;
+    const existingProvider = createExistingIoProvider(
+      context,
+      metadata,
+      provider,
+      {
+        id: "existing-provider",
+      },
+    );
 
-    // Existing registration has only one event
+    const existingMetadata = createMockIoEventMetadata({
+      label: event.label,
+      description: "My Event",
+      event_code: getIoEventCode(
+        getNamespacedEvent(metadata, event.name),
+        COMMERCE_PROVIDER_TYPE,
+      ),
+    });
+
     const existingRegistration = createMockIoEventRegistration({
-      events_of_interest: [
-        {
-          event_code: eventCode1,
-          provider_id: DEFAULT_PROVIDER_ID,
-        },
-      ],
+      id: "registration-existing",
+      client_id: context.params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+      name: getRegistrationName(existingProvider, event.runtimeActions[0]),
     });
 
-    // Updated registration will have both events
-    const updatedRegistration = createMockIoEventRegistration({
-      events_of_interest: [
-        {
-          event_code: eventCode1,
-          provider_id: DEFAULT_PROVIDER_ID,
-        },
-        {
-          event_code: eventCode2,
-          provider_id: DEFAULT_PROVIDER_ID,
-        },
-      ],
-    });
-
-    vi.mocked(context.ioEventsClient.updateRegistration).mockResolvedValue(
-      updatedRegistration,
+    const result = await onboardIoEvents(
+      input,
+      createMockExistingIoEventsData({
+        providersWithMetadata: [
+          {
+            ...existingProvider,
+            metadata: [{ ...existingMetadata, sample: null }],
+          },
+        ],
+        registrations: [existingRegistration],
+      }),
     );
 
-    const params: OnboardIoEventsParams<CommerceEvent> = {
-      context,
-      metadata: SAMPLE_METADATA,
-      provider: SAMPLE_PROVIDER,
-      events: SAMPLE_EVENTS,
-      providerType: "dx_commerce_events",
-    };
+    expect(result.providerData).toMatchObject(existingProvider);
+    expect(result.eventsData[0]?.data.metadata).toEqual({
+      ...existingMetadata,
+      sample: null,
+    });
 
-    const existingData: ExistingIoEventsData = {
-      providersWithMetadata: [
-        {
-          ...provider,
-          metadata: [
-            { ...metadata1, sample: null },
-            { ...metadata2, sample: null },
-          ],
-        },
-      ],
-      registrations: [existingRegistration],
-    };
+    expect(result.eventsData[0]?.data.registrations).toEqual([
+      existingRegistration,
+    ]);
 
-    const result = await onboardIoEvents(params, existingData);
-
-    // Verify provider was NOT created (reused existing)
-    expect(context.ioEventsClient.createEventProvider).not.toHaveBeenCalled();
-
-    // Verify metadata was NOT created (both already exist)
+    expect(ioEventsClient.createEventProvider).not.toHaveBeenCalled();
     expect(
-      context.ioEventsClient.createEventMetadataForProvider,
+      ioEventsClient.createEventMetadataForProvider,
     ).not.toHaveBeenCalled();
 
-    // Verify registration was NOT created
-    expect(context.ioEventsClient.createRegistration).not.toHaveBeenCalled();
-
-    // Verify updateRegistration WAS called once
-    expect(context.ioEventsClient.updateRegistration).toHaveBeenCalledOnce();
-    const updateCall = vi.mocked(context.ioEventsClient.updateRegistration).mock
-      .calls[0][0];
-    expect(updateCall.registrationId).toBe(
-      existingRegistration.registration_id,
-    );
-    expect(updateCall.eventsOfInterest).toHaveLength(2);
-    expect(updateCall.eventsOfInterest).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ eventCode: eventCode1 }),
-        expect.objectContaining({ eventCode: eventCode2 }),
-      ]),
-    );
-
-    // Verify result uses updated registration
-    expect(result.eventsData[0].data.registrations).toEqual([
-      updatedRegistration,
-    ]);
-    expect(result.eventsData[1].data.registrations).toEqual([
-      updatedRegistration,
-    ]);
+    expect(ioEventsClient.createRegistration).not.toHaveBeenCalled();
   });
 
-  test("gets provider and metadata, creates registration when none exists", async () => {
-    const context = makeContext();
-    const eventCode1 =
-      "com.adobe.commerce.app-management-debug-test-add-events.observer.catalog_product_save_commit_after";
-    const eventCode2 =
-      "com.adobe.commerce.app-management-debug-test-add-events.observer.catalog_product_delete_commit_after";
+  test("rethrows and logs when creating the I/O Events provider fails", async () => {
+    const { context, input } = createIoOnboardingScenario();
+    const { ioEventsClient, logger } = context;
 
-    const provider = createMockIoEventProvider();
-    const metadata1 = createMockIoEventMetadata(eventCode1);
-    const metadata2 = createMockIoEventMetadata(eventCode2);
-    const registration = createMockIoEventRegistration({
-      events_of_interest: [
-        {
-          event_code: eventCode1,
-          provider_id: DEFAULT_PROVIDER_ID,
-        },
-        {
-          event_code: eventCode2,
-          provider_id: DEFAULT_PROVIDER_ID,
-        },
-      ],
-    });
-
-    vi.mocked(context.ioEventsClient.createRegistration).mockResolvedValue(
-      registration,
+    vi.mocked(ioEventsClient.createEventProvider).mockRejectedValue(
+      new Error("provider creation failed"),
     );
 
-    const params: OnboardIoEventsParams<CommerceEvent> = {
-      context,
-      metadata: SAMPLE_METADATA,
-      provider: SAMPLE_PROVIDER,
-      events: SAMPLE_EVENTS,
-      providerType: "dx_commerce_events",
-    };
+    await expect(
+      onboardIoEvents(input, createMockExistingIoEventsData()),
+    ).rejects.toThrow("provider creation failed");
 
-    const existingData: ExistingIoEventsData = {
-      providersWithMetadata: [
-        {
-          ...provider,
-          metadata: [
-            { ...metadata1, sample: null },
-            { ...metadata2, sample: null },
-          ],
-        },
-      ],
-      registrations: [],
-    };
+    expect(logger.error).toHaveBeenCalledWith(expect.any(String));
+  });
 
-    const result = await onboardIoEvents(params, existingData);
+  test("rethrows and logs when creating event metadata fails", async () => {
+    const { context, metadata, provider, input } = createIoOnboardingScenario();
+    const { ioEventsClient, params, logger } = context;
+    const createdProvider = createMockIoEventProviderHalModel(
+      createCreatedIoProvider(context, metadata, provider, {
+        id: "io-provider-1",
+      }),
+    );
 
-    // Verify provider was NOT created
-    expect(context.ioEventsClient.createEventProvider).not.toHaveBeenCalled();
+    vi.mocked(ioEventsClient.createEventProvider).mockResolvedValue(
+      createdProvider,
+    );
 
-    // Verify metadata was NOT created
+    vi.mocked(ioEventsClient.createEventMetadataForProvider).mockRejectedValue(
+      new Error("metadata creation failed"),
+    );
+
+    vi.mocked(ioEventsClient.createRegistration).mockResolvedValue(
+      createMockIoEventRegistrationHalModel({
+        id: "registration-1",
+        client_id: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+        name: "registration-name",
+      }),
+    );
+
+    await expect(
+      onboardIoEvents(input, createMockExistingIoEventsData()),
+    ).rejects.toThrow("metadata creation failed");
+
+    expect(logger.error).toHaveBeenCalledWith(expect.any(String));
+  });
+
+  test("rethrows and logs when creating a registration fails", async () => {
+    const { context, metadata, provider, event, input } =
+      createIoOnboardingScenario();
+
+    const { ioEventsClient, logger } = context;
+    const createdProvider = createMockIoEventProviderHalModel(
+      createCreatedIoProvider(context, metadata, provider, {
+        id: "io-provider-1",
+      }),
+    );
+
+    vi.mocked(ioEventsClient.createEventProvider).mockResolvedValue(
+      createdProvider,
+    );
+
+    vi.mocked(ioEventsClient.createEventMetadataForProvider).mockResolvedValue(
+      createMockIoEventMetadataHalModel({
+        label: event.label,
+        event_code: getIoEventCode(
+          getNamespacedEvent(metadata, event.name),
+          COMMERCE_PROVIDER_TYPE,
+        ),
+      }),
+    );
+
+    vi.mocked(ioEventsClient.createRegistration).mockRejectedValue(
+      new Error("registration creation failed"),
+    );
+
+    await expect(
+      onboardIoEvents(input, createMockExistingIoEventsData()),
+    ).rejects.toThrow("registration creation failed");
+
+    expect(logger.error).toHaveBeenCalledWith(expect.any(String));
+  });
+});
+
+describe("onboardCommerceEventing", () => {
+  test("reuses existing Commerce provider and subscriptions without creating duplicates", async () => {
+    const { context, metadata, provider, event, ioProvider, ioData } =
+      createCommerceOnboardingScenario();
+
+    const { commerceEventsClient } = context;
+    const existingCommerceProvider = createMockCommerceEventProvider({
+      provider_id: ioProvider.id,
+      label: ioProvider.label,
+      description: ioProvider.description,
+      instance_id: ioProvider.instance_id,
+      workspace_configuration: JSON.stringify(
+        createMockWorkspaceConfiguration(),
+      ),
+    });
+
+    const existingSubscription = createMockCommerceEventSubscription({
+      name: getNamespacedEvent(metadata, event.name),
+      provider_id: existingCommerceProvider.id,
+    });
+
+    vi.mocked(
+      commerceEventsClient.updateEventingConfiguration,
+    ).mockResolvedValue(true);
+
+    const result = await onboardCommerceEventing(
+      {
+        context,
+        metadata,
+        provider,
+        ioData,
+      },
+      createMockExistingCommerceEventingData({
+        isDefaultWorkspaceConfigurationEmpty: false,
+        providers: [existingCommerceProvider],
+        subscriptions: new Map([
+          [existingSubscription.name, existingSubscription],
+        ]),
+      }),
+    );
+
+    expect(result.commerceProvider).toEqual({
+      id: existingCommerceProvider.id,
+      provider_id: ioProvider.id,
+      label: ioProvider.label,
+      description: ioProvider.description,
+      instance_id: ioProvider.instance_id,
+    });
+
+    expect(result.subscriptions).toEqual([existingSubscription]);
+
     expect(
-      context.ioEventsClient.createEventMetadataForProvider,
-    ).not.toHaveBeenCalled();
-
-    // Verify registration WAS created once with both events
-    expect(context.ioEventsClient.createRegistration).toHaveBeenCalledOnce();
-    const createCall = vi.mocked(context.ioEventsClient.createRegistration).mock
-      .calls[0][0];
-    expect(createCall.eventsOfInterest).toHaveLength(2);
-    expect(createCall.eventsOfInterest).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ eventCode: eventCode1 }),
-        expect.objectContaining({ eventCode: eventCode2 }),
-      ]),
+      commerceEventsClient.updateEventingConfiguration,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        // We should always ensure enabled is set to true.
+        enabled: true,
+      }),
     );
 
-    // Verify updateRegistration was NOT called
-    expect(context.ioEventsClient.updateRegistration).not.toHaveBeenCalled();
+    expect(
+      commerceEventsClient.updateEventingConfiguration,
+    ).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspace_configuration: expect.any(String),
+      }),
+    );
 
-    // Verify result structure
-    expect(result.providerData).toEqual({
-      ...provider,
-      metadata: [
-        { ...metadata1, sample: null },
-        { ...metadata2, sample: null },
-      ],
+    expect(commerceEventsClient.createEventProvider).not.toHaveBeenCalled();
+    expect(commerceEventsClient.createEventSubscription).not.toHaveBeenCalled();
+  });
+
+  test("skips configuration when provider is configured and workspace exists", async () => {
+    const { context, metadata, provider, event, ioProvider, ioData } =
+      createCommerceOnboardingScenario();
+
+    const { commerceEventsClient } = context;
+    const existingCommerceProvider = createMockCommerceEventProvider({
+      provider_id: ioProvider.id,
+      label: ioProvider.label,
+      description: ioProvider.description,
+      instance_id: ioProvider.instance_id,
+      workspace_configuration: JSON.stringify(
+        createMockWorkspaceConfiguration(),
+      ),
     });
-    expect(result.eventsData).toHaveLength(2);
-    expect(result.eventsData[0].data.metadata).toEqual({
-      ...metadata1,
-      sample: null,
+
+    const existingSubscription = createMockCommerceEventSubscription({
+      name: getNamespacedEvent(metadata, event.name),
+      provider_id: existingCommerceProvider.id,
     });
-    expect(result.eventsData[0].data.registrations).toEqual([registration]);
-    expect(result.eventsData[1].data.metadata).toEqual({
-      ...metadata2,
-      sample: null,
+
+    const result = await onboardCommerceEventing(
+      {
+        context,
+        metadata,
+        provider,
+        ioData,
+      },
+      createMockExistingCommerceEventingData({
+        isDefaultProviderConfigured: true,
+        isDefaultWorkspaceConfigurationEmpty: false,
+        providers: [existingCommerceProvider],
+        subscriptions: new Map([
+          [existingSubscription.name, existingSubscription],
+        ]),
+      }),
+    );
+
+    expect(result.commerceProvider).toBeDefined();
+    expect(result.subscriptions).toEqual([existingSubscription]);
+    expect(
+      commerceEventsClient.updateEventingConfiguration,
+    ).not.toHaveBeenCalled();
+  });
+
+  test("sends only workspace configuration when provider is configured but workspace is empty", async () => {
+    const { context, metadata, provider, ioProvider, ioData } =
+      createCommerceOnboardingScenario();
+
+    const existingCommerceProvider = createMockCommerceEventProvider({
+      provider_id: ioProvider.id,
+      label: ioProvider.label,
+      description: ioProvider.description,
+      instance_id: ioProvider.instance_id,
     });
-    expect(result.eventsData[1].data.registrations).toEqual([registration]);
+
+    vi.mocked(
+      context.commerceEventsClient.updateEventingConfiguration,
+    ).mockResolvedValue(true);
+
+    vi.mocked(
+      context.commerceEventsClient.createEventSubscription,
+    ).mockResolvedValue(undefined);
+
+    await onboardCommerceEventing(
+      {
+        context,
+        metadata,
+        provider,
+        ioData,
+      },
+      createMockExistingCommerceEventingData({
+        isDefaultProviderConfigured: true,
+        isDefaultWorkspaceConfigurationEmpty: true,
+        providers: [existingCommerceProvider],
+      }),
+    );
+
+    expect(
+      context.commerceEventsClient.updateEventingConfiguration,
+    ).toHaveBeenCalledWith({
+      workspace_configuration: expect.any(String),
+      enabled: true,
+    });
+  });
+
+  test("requires workspace configuration when there is no existing default configuration", async () => {
+    const { context, metadata, provider, ioData } =
+      createCommerceOnboardingScenario({
+        workspaceConfiguration: "",
+      });
+
+    await expect(
+      onboardCommerceEventing(
+        {
+          context,
+          metadata,
+          provider,
+          ioData: {
+            ...ioData,
+            events: [],
+          },
+        },
+        createMockExistingCommerceEventingData({
+          isDefaultWorkspaceConfigurationEmpty: true,
+        }),
+      ),
+    ).rejects.toThrow();
+
+    expect(
+      context.commerceEventsClient.updateEventingConfiguration,
+    ).not.toHaveBeenCalled();
+  });
+
+  test("updates workspace configuration when the default is not configured yet", async () => {
+    const { context, metadata, provider, ioProvider, ioData } =
+      createCommerceOnboardingScenario();
+
+    const existingCommerceProvider = createMockCommerceEventProvider({
+      provider_id: ioProvider.id,
+      label: ioProvider.label,
+      description: ioProvider.description,
+      instance_id: ioProvider.instance_id,
+    });
+
+    vi.mocked(
+      context.commerceEventsClient.updateEventingConfiguration,
+    ).mockResolvedValue(true);
+
+    vi.mocked(
+      context.commerceEventsClient.createEventSubscription,
+    ).mockResolvedValue(undefined);
+
+    await onboardCommerceEventing(
+      {
+        context,
+        metadata,
+        provider,
+        ioData,
+      },
+      createMockExistingCommerceEventingData({
+        isDefaultWorkspaceConfigurationEmpty: true,
+        providers: [existingCommerceProvider],
+      }),
+    );
+
+    expect(
+      context.commerceEventsClient.updateEventingConfiguration,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspace_configuration: expect.any(String),
+        enabled: true,
+      }),
+    );
+  });
+
+  test("rethrows and logs when creating a Commerce provider fails", async () => {
+    const { context, metadata, provider, ioData } =
+      createCommerceOnboardingScenario();
+
+    const { logger } = context;
+    vi.mocked(
+      context.commerceEventsClient.updateEventingConfiguration,
+    ).mockResolvedValue(true);
+
+    vi.mocked(
+      context.commerceEventsClient.createEventProvider,
+    ).mockRejectedValue(new Error("provider creation failed"));
+
+    await expect(
+      onboardCommerceEventing(
+        {
+          context,
+          metadata,
+          provider,
+          ioData,
+        },
+        createMockExistingCommerceEventingData({
+          isDefaultWorkspaceConfigurationEmpty: false,
+          providers: [],
+        }),
+      ),
+    ).rejects.toThrow("provider creation failed");
+
+    expect(logger.error).toHaveBeenCalledWith(expect.any(String));
+  });
+
+  test("rethrows and logs when creating a Commerce subscription fails", async () => {
+    const { context, metadata, provider, ioProvider, ioData } =
+      createCommerceOnboardingScenario();
+
+    const { logger } = context;
+    const existingCommerceProvider = createMockCommerceEventProvider({
+      provider_id: ioProvider.id,
+      label: ioProvider.label,
+      description: ioProvider.description,
+      instance_id: ioProvider.instance_id,
+      workspace_configuration: '{"project":{}}',
+    });
+
+    vi.mocked(
+      context.commerceEventsClient.updateEventingConfiguration,
+    ).mockResolvedValue(true);
+
+    vi.mocked(
+      context.commerceEventsClient.createEventSubscription,
+    ).mockRejectedValue(new Error("subscription creation failed"));
+
+    await expect(
+      onboardCommerceEventing(
+        {
+          context,
+          metadata,
+          provider,
+          ioData,
+        },
+        createMockExistingCommerceEventingData({
+          isDefaultWorkspaceConfigurationEmpty: false,
+          providers: [existingCommerceProvider],
+        }),
+      ),
+    ).rejects.toThrow("subscription creation failed");
+
+    expect(logger.error).toHaveBeenCalledWith(expect.any(String));
+  });
+
+  test("rethrows and logs when updating Commerce Eventing configuration returns an unsuccessful response", async () => {
+    const { context, metadata, provider, ioData } =
+      createCommerceOnboardingScenario();
+
+    const { logger } = context;
+    vi.mocked(
+      context.commerceEventsClient.updateEventingConfiguration,
+    ).mockResolvedValue(false);
+
+    await expect(
+      onboardCommerceEventing(
+        {
+          context,
+          metadata,
+          provider,
+          ioData: {
+            ...ioData,
+            events: [],
+          },
+        },
+        createMockExistingCommerceEventingData(),
+      ),
+    ).rejects.toThrow();
+
+    expect(logger.error).toHaveBeenCalledWith(expect.any(String));
   });
 });
