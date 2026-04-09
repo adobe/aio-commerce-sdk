@@ -24,7 +24,7 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 import openwhisk from "openwhisk";
-import { object, safeParse, string } from "valibot";
+import { object, string } from "valibot";
 
 import {
   createInitialInstallationState,
@@ -119,7 +119,7 @@ function getStorageKey() {
 
 /**
  * Merges rawParams with body fields, overriding API URLs.
- * Shared by POST /, POST /execution, DELETE /, DELETE /execution.
+ * Shared by POST /, POST /execution, POST /uninstallation, POST /uninstallation/execution.
  */
 function buildWorkflowParams(
   body: WorkflowRequestBody,
@@ -142,7 +142,7 @@ type ExecutionRouteParams = RuntimeActionArgs & {
 
 /**
  * Builds an InstallationContext from merged workflow params.
- * Shared by POST /execution and DELETE /execution.
+ * Shared by POST /execution and POST /uninstallation/execution.
  */
 function buildInstallationContext(
   params: ExecutionRouteParams,
@@ -159,7 +159,7 @@ function buildInstallationContext(
 
 /**
  * Reads state from a store and returns 200 with body or 204.
- * Shared by GET / and GET /uninstall.
+ * Shared by GET / and GET /uninstallation.
  */
 async function readStateFromStore(
   store: KeyValueStore<InstallationState>,
@@ -207,9 +207,15 @@ function createInstallationHooks(
  * Installation action router.
  *
  * Routes:
- * - POST /installation - Start installation (creates plan, invokes execution async)
- * - GET /installation/execution - Get current execution status
- * - POST /installation/execution - Execute installation (internal, called async)
+ * - GET /installation             - Get current installation status
+ * - POST /installation            - Start installation (creates plan, invokes execution async)
+ * - POST /installation/execution  - Execute installation (internal, called async)
+ * - POST /installation/validation - Pre-installation validation
+ * - DELETE /installation          - Clear installation state only (no offboarding)
+ * - POST /installation/uninstallation           - Start uninstallation (async)
+ * - GET /installation/uninstallation            - Get current uninstallation status
+ * - POST /installation/uninstallation/execution - Execute uninstallation (internal, called async)
+ * - DELETE /installation/uninstallation         - Clear uninstallation state only (no offboarding)
  */
 const router = new HttpActionRouter<InstallationActionContext>().use(
   logger({ name: () => "installation" }),
@@ -415,11 +421,11 @@ router.post("/validation", {
 });
 
 /**
- * GET /uninstall - Get current uninstallation status
+ * GET /uninstallation - Get current uninstallation status
  *
  * Returns 200 with state if an uninstallation has been started, 204 otherwise.
  */
-router.get("/uninstall", {
+router.get("/uninstallation", {
   handler: async (_req, { logger }) => {
     logger.debug("Getting uninstallation execution status...");
     const store = await createUninstallationStore();
@@ -428,16 +434,34 @@ router.get("/uninstall", {
 });
 
 /**
- * DELETE / - Start uninstallation (async)
+ * DELETE / - Clear installation state
+ *
+ * Removes the stored installation state without triggering any offboarding.
+ * Use POST /uninstallation to run the full uninstallation workflow.
+ */
+router.delete("/", {
+  handler: async (_req, { logger }) => {
+    logger.debug("Clearing installation state...");
+    const store = await createInstallationStore();
+    await store.delete(getStorageKey());
+    logger.debug("Installation state cleared");
+    return noContent();
+  },
+});
+
+/**
+ * POST /uninstallation - Start uninstallation (async)
  *
  * Flow:
  * 1. Check uninstallation store for existing state
  * 2. If in-progress: return 409 Conflict
  * 3. Create initial uninstall state, save to store
- * 4. Invoke DELETE /execution async via openwhisk
+ * 4. Invoke POST /uninstallation/execution async via openwhisk
  * 5. Return 202 Accepted with initial state
  */
-router.delete("/", {
+router.post("/uninstallation", {
+  body: InstallationRequestBodySchema,
+
   handler: async (req, { logger, rawParams }) => {
     logger.debug("Starting async uninstallation...");
 
@@ -448,12 +472,6 @@ router.delete("/", {
         "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
       );
     }
-
-    const bodyResult = safeParse(InstallationRequestBodySchema, req.body);
-    if (!bodyResult.success) {
-      return badRequest("Invalid request body");
-    }
-    const body = bodyResult.output;
 
     const store = await createUninstallationStore();
     const existingState = await store.get(getStorageKey());
@@ -473,7 +491,7 @@ router.delete("/", {
     logger.debug(`Created initial uninstall state: ${initialState.id}`);
     await store.put(getStorageKey(), initialState);
 
-    const workflowParams = buildWorkflowParams(body, rawParams);
+    const workflowParams = buildWorkflowParams(req.body, rawParams);
     const ow = openwhisk();
     const activation = await ow.actions.invoke({
       name: DEFAULT_ACTION_NAME,
@@ -483,8 +501,8 @@ router.delete("/", {
         ...workflowParams,
         initialState,
         appConfig,
-        __ow_path: "/execution",
-        __ow_method: "delete",
+        __ow_path: "/uninstallation/execution",
+        __ow_method: "post",
       },
     });
 
@@ -500,15 +518,16 @@ router.delete("/", {
 });
 
 /**
- * DELETE /execution - Execute uninstallation (internal, called async by DELETE /)
+ * POST /uninstallation/execution - Execute uninstallation (internal, called async by POST /uninstallation)
  *
  * Flow:
  * 1. Build InstallationContext from params
  * 2. Run uninstallation workflow with hooks (hooks persist state per step)
  * 3. Save final state to uninstallation store
- * 4. Return 200 on success, 500 on failure
+ * 4. On success, clear installation store
+ * 5. Return 200 on success, 500 on failure
  */
-router.delete("/execution", {
+router.post("/uninstallation/execution", {
   handler: async (_req, { logger, rawParams }) => {
     const params = rawParams as ExecutionRouteParams;
     const { initialState, appConfig } = params;
@@ -559,6 +578,21 @@ router.delete("/execution", {
     }
 
     return ok({ body: result });
+  },
+});
+
+/**
+ * DELETE /uninstallation - Clear uninstallation state
+ *
+ * Removes the stored uninstallation state without triggering any offboarding.
+ */
+router.delete("/uninstallation", {
+  handler: async (_req, { logger }) => {
+    logger.debug("Clearing uninstallation state...");
+    const store = await createUninstallationStore();
+    await store.delete(getStorageKey());
+    logger.debug("Uninstallation state cleared");
+    return noContent();
   },
 });
 
