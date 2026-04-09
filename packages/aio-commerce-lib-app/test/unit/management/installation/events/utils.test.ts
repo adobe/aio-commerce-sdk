@@ -16,6 +16,7 @@ import {
   COMMERCE_PROVIDER_TYPE,
   EXTERNAL_PROVIDER_TYPE,
   generateInstanceId,
+  getCommerceEventingConfigurationUpdateParams,
   getCommerceEventingExistingData,
   getIoEventCode,
   getIoEventsExistingData,
@@ -28,11 +29,13 @@ import {
   createMockCommerceEventSubscription,
   createMockCommerceEventsClient,
   createMockEventingInstallationContext,
+  createMockExistingCommerceEventingData,
   createMockIoEventMetadataHalModel,
   createMockIoEventProviderHalModel,
   createMockIoEventRegistrationHalModel,
   createMockIoEventsClient,
   createMockProvider,
+  createMockUpdateEventingConfigurationParams,
 } from "#test/fixtures/eventing";
 
 import type {
@@ -224,6 +227,63 @@ describe("workspace configuration", () => {
     };
 
     expect(() => makeWorkspaceConfig(context)).toThrow();
+  });
+});
+
+describe("getCommerceEventingConfigurationUpdateParams", () => {
+  test("returns null when the default provider and workspace are already configured", () => {
+    expect(
+      getCommerceEventingConfigurationUpdateParams(
+        createMockUpdateEventingConfigurationParams(),
+        createMockExistingCommerceEventingData({
+          isDefaultProviderConfigured: true,
+          isDefaultWorkspaceConfigurationEmpty: false,
+        }),
+      ),
+    ).toBeNull();
+  });
+
+  test("returns only enabled and workspace configuration when the provider exists but workspace is empty", () => {
+    const initialParams = createMockUpdateEventingConfigurationParams();
+    expect(
+      getCommerceEventingConfigurationUpdateParams(
+        initialParams,
+        createMockExistingCommerceEventingData({
+          isDefaultProviderConfigured: true,
+          isDefaultWorkspaceConfigurationEmpty: true,
+        }),
+      ),
+    ).toEqual({
+      enabled: true,
+      workspace_configuration: initialParams.workspace_configuration,
+    });
+  });
+
+  test("returns the full default-provider payload when the default provider is not configured", () => {
+    const initialParams = createMockUpdateEventingConfigurationParams();
+    expect(
+      getCommerceEventingConfigurationUpdateParams(
+        initialParams,
+        createMockExistingCommerceEventingData({
+          isDefaultProviderConfigured: false,
+          isDefaultWorkspaceConfigurationEmpty: true,
+        }),
+      ),
+    ).toEqual(initialParams);
+  });
+
+  test("throws when workspace configuration is required but missing", () => {
+    expect(() =>
+      getCommerceEventingConfigurationUpdateParams(
+        {
+          enabled: true,
+        },
+        createMockExistingCommerceEventingData({
+          isDefaultProviderConfigured: true,
+          isDefaultWorkspaceConfigurationEmpty: true,
+        }),
+      ),
+    ).toThrow();
   });
 });
 

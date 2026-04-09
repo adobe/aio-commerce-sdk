@@ -15,6 +15,7 @@ import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
 import type {
   CommerceEventProvider,
   CommerceEventSubscription,
+  UpdateEventingConfigurationParams,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   EventProviderType,
@@ -205,6 +206,52 @@ export function findExistingSubscription(
   eventName: string,
 ) {
   return allSubscriptions.get(eventName) ?? null;
+}
+
+/**
+ * Builds the payload to send to Commerce when configuring Eventing.
+ * Returns `null` when no update call is needed.
+ *
+ * @param initialParams - Initial Commerce Eventing configuration parameters.
+ * @param existingData - Existing Commerce Eventing state from the API.
+ * @param logger - Logger used to report the branch that was chosen.
+ */
+export function getCommerceEventingConfigurationUpdateParams(
+  initialParams: UpdateEventingConfigurationParams,
+  existingData: Pick<
+    ExistingCommerceEventingData,
+    "isDefaultProviderConfigured" | "isDefaultWorkspaceConfigurationEmpty"
+  >,
+) {
+  const { isDefaultProviderConfigured, isDefaultWorkspaceConfigurationEmpty } =
+    existingData;
+
+  if (isDefaultProviderConfigured && !isDefaultWorkspaceConfigurationEmpty) {
+    return null;
+  }
+
+  const { workspace_configuration, ...configWithoutWorkspace } = initialParams;
+  let updateParams: UpdateEventingConfigurationParams = { enabled: true };
+
+  if (isDefaultWorkspaceConfigurationEmpty) {
+    if (!workspace_configuration) {
+      const message =
+        "Workspace configuration is required to enable Commerce Eventing when there is not an existing one.";
+
+      throw new Error(message);
+    }
+
+    updateParams.workspace_configuration = workspace_configuration;
+  }
+
+  if (!isDefaultProviderConfigured) {
+    updateParams = {
+      ...updateParams,
+      ...configWithoutWorkspace,
+    };
+  }
+
+  return updateParams;
 }
 
 /**

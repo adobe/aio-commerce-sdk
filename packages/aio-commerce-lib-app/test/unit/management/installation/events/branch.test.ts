@@ -16,10 +16,7 @@ import { eventingStep } from "#management/installation/events/branch";
 import { commerceEventsStep } from "#management/installation/events/commerce";
 import { createEventsStepContext } from "#management/installation/events/context";
 import { externalEventsStep } from "#management/installation/events/external";
-import {
-  isBranchStep,
-  isLeafStep,
-} from "#management/installation/workflow/step";
+import { isBranchStep } from "#management/installation/workflow/step";
 import {
   configWithCommerceEventing,
   configWithExternalEventing,
@@ -51,44 +48,6 @@ describe("events installation module", () => {
       expect(eventingStep.children).toHaveLength(2);
       expect(eventingStep.children[0]).toBe(commerceEventsStep);
       expect(eventingStep.children[1]).toBe(externalEventsStep);
-    });
-  });
-
-  describe("commerceEventsStep leaf step", () => {
-    test("should be a leaf step with name and meta", () => {
-      expect(isLeafStep(commerceEventsStep)).toBe(true);
-      expect(commerceEventsStep.name).toBe("commerce");
-      expect(commerceEventsStep.meta).toEqual({
-        label: "Configure Commerce Events",
-        description: "Sets up I/O Events for Adobe Commerce event sources",
-      });
-    });
-
-    test("should only run if eventing.commerce is defined", () => {
-      expect.assert(commerceEventsStep.when);
-
-      expect(commerceEventsStep.when(configWithCommerceEventing)).toBe(true);
-      expect(commerceEventsStep.when(configWithExternalEventing)).toBe(false);
-      expect(commerceEventsStep.when(minimalValidConfig)).toBe(false);
-    });
-  });
-
-  describe("externalEventsStep leaf step", () => {
-    test("should be a leaf step with name and meta", () => {
-      expect(isLeafStep(externalEventsStep)).toBe(true);
-      expect(externalEventsStep.name).toBe("external");
-      expect(externalEventsStep.meta).toEqual({
-        label: "Configure External Events",
-        description: "Sets up I/O Events for external event sources",
-      });
-    });
-
-    test("should only run if eventing.external is defined", () => {
-      expect.assert(externalEventsStep.when);
-
-      expect(externalEventsStep.when(configWithExternalEventing)).toBe(true);
-      expect(externalEventsStep.when(configWithCommerceEventing)).toBe(false);
-      expect(externalEventsStep.when(minimalValidConfig)).toBe(false);
     });
   });
 

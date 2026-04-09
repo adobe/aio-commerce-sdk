@@ -19,6 +19,7 @@ import {
   findExistingRegistrations,
   findExistingSubscription,
   generateInstanceId,
+  getCommerceEventingConfigurationUpdateParams,
   getIoEventCode,
   getNamespacedEvent,
   getRegistrationDescription,
@@ -30,7 +31,6 @@ import type {
   CommerceEventProvider,
   CommerceEventSubscription,
   EventSubscriptionCreateParams,
-  UpdateEventingConfigurationParams,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   EventProviderType,
@@ -305,12 +305,14 @@ export async function configureCommerceEventing(
 ) {
   const { context, config } = params;
   const { commerceEventsClient, logger } = context;
-  const { isDefaultProviderConfigured, isDefaultWorkspaceConfigurationEmpty } =
-    existingData;
 
   logger.info("Starting configuration of the Commerce Eventing Module");
+  const updateParams = getCommerceEventingConfigurationUpdateParams(
+    config,
+    existingData,
+  );
 
-  if (isDefaultProviderConfigured && !isDefaultWorkspaceConfigurationEmpty) {
+  if (updateParams === null) {
     logger.info(
       "Commerce Eventing Module is already configured, skipping configuration step.",
     );
@@ -318,35 +320,9 @@ export async function configureCommerceEventing(
     return;
   }
 
-  const { workspace_configuration, ...configWithoutWorkspace } = config;
-  let updateParams: UpdateEventingConfigurationParams = { enabled: true };
-
-  if (isDefaultWorkspaceConfigurationEmpty) {
-    if (!workspace_configuration) {
-      const message =
-        "Workspace configuration is required to enable Commerce Eventing when there is not an existing one.";
-
-      logger.error(message);
-      throw new Error(message);
-    }
-
-    // Not configured, add to payload.
-    updateParams.workspace_configuration = workspace_configuration;
-    logger.info(
-      "Adding workspace configuration to Commerce Eventing configuration as it has not been set up yet.",
-    );
-  }
-
-  if (!isDefaultProviderConfigured) {
-    logger.info(
-      "Default provider not configured, it will be created with the provided configuration.",
-    );
-
-    updateParams = {
-      ...updateParams,
-      ...configWithoutWorkspace,
-    };
-  }
+  logger.info(
+    `Updating Commerce Eventing Module configuration with the following data: [${Object.keys(updateParams).join(", ")}]`,
+  );
 
   return commerceEventsClient
     .updateEventingConfiguration(updateParams)
