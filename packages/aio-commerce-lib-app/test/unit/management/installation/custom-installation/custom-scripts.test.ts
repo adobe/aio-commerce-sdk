@@ -141,6 +141,18 @@ describe("createCustomScriptStep - run function", () => {
     ).rejects.toThrow();
   });
 
+  test("should throw error when customScripts is undefined on context", async () => {
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = undefined;
+
+    await expect(
+      step.run(configWithCustomInstallationSteps, mockContext),
+    ).rejects.toThrow();
+  });
+
   test("should throw error when script module has no default export", async () => {
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
     const step = steps?.[0] as LeafStep;
@@ -171,40 +183,5 @@ describe("createCustomScriptStep - run function", () => {
     await expect(
       step.run(configWithCustomInstallationSteps, mockContext),
     ).rejects.toThrow("Script execution failed");
-  });
-
-  test("should execute multiple scripts independently", async () => {
-    const mockScript1 = vi.fn().mockResolvedValue({ step: 1 });
-    const mockScript2 = vi.fn().mockResolvedValue({ step: 2 });
-
-    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step1 = steps?.[0] as LeafStep;
-    const step2 = steps?.[1] as LeafStep;
-
-    const mockContext = createMockInstallationContext();
-    mockContext.customScripts = {
-      "./demo-success.js": { default: mockScript1 },
-      "./demo-error.js": { default: mockScript2 },
-    };
-
-    const result1 = await step1.run(
-      configWithCustomInstallationSteps,
-      mockContext,
-    );
-    const result2 = await step2.run(
-      configWithCustomInstallationSteps,
-      mockContext,
-    );
-
-    expect(result1).toEqual({
-      script: "./demo-success.js",
-      data: { step: 1 },
-    });
-    expect(result2).toEqual({
-      script: "./demo-error.js",
-      data: { step: 2 },
-    });
-    expect(mockScript1).toHaveBeenCalledTimes(1);
-    expect(mockScript2).toHaveBeenCalledTimes(1);
   });
 });

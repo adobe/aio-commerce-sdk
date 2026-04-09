@@ -24,11 +24,15 @@ import {
 } from "#config-manager";
 import { byCodeAndLevel, byScopeId } from "#config-utils";
 import * as configRepository from "#modules/configuration/configuration-repository";
-import * as schemaRepository from "#modules/schema/config-schema-repository";
+import {
+  getGlobalSchema,
+  setGlobalSchema,
+} from "#modules/schema/config-schema-repository";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
 import { createMockLibFiles } from "#test/mocks/lib-files";
 import { createMockLibState } from "#test/mocks/lib-state";
+import * as repository from "#utils/repository";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { BusinessConfigSchema, ConfigValue } from "#index";
@@ -37,14 +41,14 @@ import type { ScopeTree } from "#modules/scope-tree/types";
 const MockState = createMockLibState();
 const MockFiles = createMockLibFiles();
 
-// Module-level variables that will be reassigned in beforeEach
 let mockStateInstance = new MockState();
 let mockFilesInstance = new MockFiles();
 
-// Mock the shared repository utilities
+// Only the external I/O boundary is mocked — aio-lib-state and aio-lib-files
 vi.mock("#utils/repository", () => ({
   getSharedState: vi.fn(async () => mockStateInstance),
   getSharedFiles: vi.fn(async () => mockFilesInstance),
+  setGlobalStateOptions: vi.fn(),
 }));
 
 vi.mock("#modules/scope-tree/scope-tree-repository", () => ({
@@ -64,34 +68,6 @@ vi.mock("#api/commerce", () => ({
     }),
   ),
 }));
-
-vi.mock("#modules/schema/config-schema-repository", () => {
-  const mockSchema = JSON.stringify([
-    {
-      name: "exampleList",
-      type: "list",
-      selectionMode: "single",
-      options: [{ label: "Option 1", value: "option1" }],
-      default: "option1",
-    },
-    {
-      name: "currency",
-      type: "text",
-      label: "Currency",
-      default: "",
-    },
-  ]);
-
-  return {
-    getCachedSchema: vi.fn(() => Promise.resolve(null)),
-    setCachedSchema: vi.fn(() => Promise.resolve()),
-    deleteCachedSchema: vi.fn(() => Promise.resolve()),
-    getPersistedSchema: vi.fn(() => Promise.resolve(mockSchema)),
-    savePersistedSchema: vi.fn(() => Promise.resolve()),
-    getSchemaVersion: vi.fn(() => Promise.resolve(null)),
-    setSchemaVersion: vi.fn(() => Promise.resolve()),
-  };
-});
 
 function buildPayload(
   id: string,
@@ -118,6 +94,34 @@ describe("ConfigManager functions", () => {
 
     // Reset all mocks
     vi.clearAllMocks();
+
+    // Set up a default schema for tests
+    const defaultSchema = [
+      {
+        name: "exampleList",
+        type: "list",
+        selectionMode: "single",
+        options: [{ label: "Option 1", value: "option1" }],
+        default: "option1",
+      },
+      {
+        name: "currency",
+        type: "text",
+        label: "Currency",
+        default: "",
+      },
+    ] satisfies BusinessConfigSchema;
+
+    setGlobalSchema(defaultSchema);
+  });
+
+  test("throws error when schema not initialized", async () => {
+    // Clear the schema to simulate not calling initialize
+    setGlobalSchema(null as unknown as BusinessConfigSchema);
+
+    await expect(
+      getConfiguration(byCodeAndLevel("global", "global")),
+    ).rejects.toThrow();
   });
 
   test("returns defaults when no persisted config", async () => {
@@ -256,6 +260,18 @@ describe("ConfigManager functions", () => {
     expect(resultByCodeLevel.scope.level).toBe("website");
   });
 
+  test("throws error when setting configuration without schema initialized", async () => {
+    // Clear the schema to simulate not calling initialize
+    setGlobalSchema(null as unknown as BusinessConfigSchema);
+
+    await expect(
+      setConfiguration(
+        { config: [{ name: "currency", value: "JPY" }] },
+        byCodeAndLevel("global", "global"),
+      ),
+    ).rejects.toThrow();
+  });
+
   test("sets configuration and persists to files/state", async () => {
     const response = await setConfiguration(
       { config: [{ name: "currency", value: "JPY" }] },
@@ -353,7 +369,7 @@ describe("unsyncCommerceScopes", () => {
     vi.clearAllMocks();
   });
 
-  test("returns Ok when commerce scope exists and is removed", async () => {
+  test("returns { unsynced: true } when commerce scope exists and is removed", async () => {
     const scopeTreeWithCommerce: ScopeTree = [...mockScopeTree];
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       scopeTreeWithCommerce,
@@ -366,13 +382,16 @@ describe("unsyncCommerceScopes", () => {
     const savedScopeTree = vi.mocked(scopeTreeRepository.saveScopeTree).mock
       .calls[0][1];
 
-    expect(savedScopeTree).toEqual([mockScopeTree[0]]);
+    expect(savedScopeTree).toEqual(
+      mockScopeTree.filter((scope) => scope.code !== "commerce"),
+    );
+
     expect(savedScopeTree.find((scope) => scope.code === "commerce")).toBe(
       undefined,
     );
   });
 
-  test("returns NotFound when commerce scope does not exist", async () => {
+  test("returns { unsynced: false } when commerce scope does not exist", async () => {
     const scopeTreeWithoutCommerce: ScopeTree = mockScopeTree.filter(
       (scope) => scope.code !== "commerce",
     );
@@ -387,7 +406,7 @@ describe("unsyncCommerceScopes", () => {
     expect(scopeTreeRepository.saveScopeTree).not.toHaveBeenCalled();
   });
 
-  test("when error is thrown", async () => {
+  test("error is thrown when persistent storage access fails", async () => {
     const error = new Error("Failed to access persistent storage");
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockRejectedValue(
       error,
@@ -404,9 +423,11 @@ describe("unsyncCommerceScopes", () => {
 describe("initialize", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset global schema before each test
+    setGlobalSchema(null as unknown as BusinessConfigSchema);
   });
 
-  test("should initialize schema when schema is provided", async () => {
+  test("should set global schema when schema is provided", () => {
     const testSchema = [
       {
         name: "testField",
@@ -416,45 +437,59 @@ describe("initialize", () => {
       },
     ] satisfies BusinessConfigSchema;
 
-    await initialize({ schema: testSchema });
+    initialize({ schema: testSchema });
 
-    expect(schemaRepository.savePersistedSchema).toHaveBeenCalledTimes(1);
-    expect(schemaRepository.savePersistedSchema).toHaveBeenCalledWith(
-      expect.any(String),
-      testSchema,
-      expect.any(String),
-    );
+    const storedSchema = getGlobalSchema();
+    expect(storedSchema).toEqual(testSchema);
   });
 
-  test("should not throw when stored schema exists and no schema provided", async () => {
-    vi.mocked(schemaRepository.getPersistedSchema).mockResolvedValue(
-      JSON.stringify([
-        { name: "existing", type: "text", default: "" },
-      ] satisfies BusinessConfigSchema),
-    );
-
-    await expect(initialize({})).resolves.not.toThrow();
+  test("should throw error when no schema provided and no global schema exists", () => {
+    expect(() => initialize({})).toThrow();
   });
 
-  test("should throw error when no schema provided and no stored schema exists", async () => {
-    vi.mocked(schemaRepository.getPersistedSchema).mockResolvedValue("");
-
-    await expect(initialize({})).rejects.toThrow();
-  });
-
-  test("should not save schema if version matches existing schema", async () => {
-    const existingSchema = [
-      { name: "field1", type: "text", default: "" },
+  test("should call setGlobalStateOptions when libStateOptions is provided", () => {
+    const testSchema = [
+      { name: "field", type: "text", label: "Field", default: "" },
     ] satisfies BusinessConfigSchema;
 
-    vi.mocked(schemaRepository.getPersistedSchema).mockResolvedValue(
-      JSON.stringify(existingSchema),
-    );
+    initialize({ schema: testSchema, libStateOptions: { region: "emea" } });
 
-    await initialize({ schema: existingSchema });
+    expect(repository.setGlobalStateOptions).toHaveBeenCalledWith({
+      region: "emea",
+    });
+  });
 
-    // Should not save if versions match
-    expect(schemaRepository.savePersistedSchema).not.toHaveBeenCalled();
+  test("should not call setGlobalStateOptions when libStateOptions is omitted", () => {
+    const testSchema = [
+      { name: "field", type: "text", label: "Field", default: "" },
+    ] satisfies BusinessConfigSchema;
+
+    initialize({ schema: testSchema });
+
+    expect(repository.setGlobalStateOptions).not.toHaveBeenCalled();
+  });
+
+  test("should succeed when no schema provided but global schema already exists", () => {
+    const existingSchema = [
+      {
+        name: "existingField",
+        type: "text",
+        label: "Existing Field",
+        default: "existing",
+      },
+    ] satisfies BusinessConfigSchema;
+
+    // First initialize with schema
+    initialize({ schema: existingSchema });
+
+    // Verify schema was set
+    expect(getGlobalSchema()).toEqual(existingSchema);
+
+    // Second initialize without schema should succeed
+    expect(() => initialize({})).not.toThrow();
+
+    // Schema should still be the same
+    expect(getGlobalSchema()).toEqual(existingSchema);
   });
 });
 
@@ -772,6 +807,46 @@ describe("setCustomScopeTree", () => {
     expect(savedTree).toHaveLength(2); // Only global and commerce
     expect(savedTree[0].code).toBe("global");
     expect(savedTree[1].code).toBe("commerce");
+  });
+
+  test("should throw when two scopes share the same code and level", async () => {
+    await expect(
+      setCustomScopeTree({
+        scopes: [
+          {
+            code: "region",
+            label: "Region A",
+            level: "custom",
+            is_editable: true,
+            is_final: true,
+          },
+          {
+            code: "region",
+            label: "Region B",
+            level: "custom",
+            is_editable: true,
+            is_final: true,
+          },
+        ],
+      }),
+    ).rejects.toThrow();
+  });
+
+  test("should throw when scope has an id that is blank after trimming", async () => {
+    await expect(
+      setCustomScopeTree({
+        scopes: [
+          {
+            id: "   ",
+            code: "region",
+            label: "Region",
+            level: "custom",
+            is_editable: true,
+            is_final: true,
+          },
+        ],
+      }),
+    ).rejects.toThrow();
   });
 
   test("should throw error when validation fails", async () => {

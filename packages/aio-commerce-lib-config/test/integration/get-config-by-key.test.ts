@@ -13,12 +13,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { getConfigurationByKey } from "#config-manager";
-import { byCodeAndLevel } from "#config-utils";
+import { byCode, byCodeAndLevel, byScopeId } from "#config-utils";
 import * as configRepository from "#modules/configuration/configuration-repository";
+import { setGlobalSchema } from "#modules/schema/config-schema-repository";
 import { mockScopeTree } from "#test/fixtures/scope-tree";
 import { createMockLibFiles } from "#test/mocks/lib-files";
 import { createMockLibState } from "#test/mocks/lib-state";
 import { encrypt, generateEncryptionKey } from "#utils/encryption";
+
+import type { BusinessConfigSchema } from "#index";
 
 const MockState = createMockLibState();
 const MockFiles = createMockLibFiles();
@@ -26,6 +29,7 @@ const MockFiles = createMockLibFiles();
 let mockStateInstance = new MockState();
 let mockFilesInstance = new MockFiles();
 
+// Only the external I/O boundary is mocked — aio-lib-state and aio-lib-files
 vi.mock("#utils/repository", () => ({
   getSharedState: vi.fn(async () => mockStateInstance),
   getSharedFiles: vi.fn(async () => mockFilesInstance),
@@ -38,33 +42,20 @@ vi.mock("#modules/scope-tree/scope-tree-repository", () => ({
   saveScopeTree: vi.fn(() => Promise.resolve()),
 }));
 
-// Schema with both a plain text field and a password field
-vi.mock("#modules/schema/config-schema-repository", () => {
-  const mockSchema = JSON.stringify([
-    {
-      name: "currency",
-      type: "text",
-      label: "Currency",
-      default: "",
-    },
-    {
-      name: "apiPassword",
-      type: "password",
-      label: "API Password",
-      default: "",
-    },
-  ]);
-
-  return {
-    getCachedSchema: vi.fn(() => Promise.resolve(null)),
-    setCachedSchema: vi.fn(() => Promise.resolve()),
-    deleteCachedSchema: vi.fn(() => Promise.resolve()),
-    getPersistedSchema: vi.fn(() => Promise.resolve(mockSchema)),
-    saveSchema: vi.fn(() => Promise.resolve()),
-    getSchemaVersion: vi.fn(() => Promise.resolve(null)),
-    setSchemaVersion: vi.fn(() => Promise.resolve()),
-  };
-});
+const integrationSchema = [
+  {
+    name: "currency",
+    type: "text",
+    label: "Currency",
+    default: "",
+  },
+  {
+    name: "apiPassword",
+    type: "password",
+    label: "API Password",
+    default: "",
+  },
+] satisfies BusinessConfigSchema;
 
 function buildPayload(
   id: string,
@@ -83,10 +74,56 @@ function buildPayload(
 }
 
 describe("getConfigurationByKey", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     mockStateInstance = new MockState();
     mockFilesInstance = new MockFiles();
+
+    // Seed external storage with the scope tree and schema so all internal
+    // repositories can read them without being mocked
+    await mockFilesInstance.write(
+      "aio-commerce-config/scope-tree.json",
+      JSON.stringify({
+        scopes: mockScopeTree,
+        lastUpdated: new Date().toISOString(),
+        version: "1.0",
+      }),
+    );
+    await mockFilesInstance.write(
+      "config-schema.json",
+      JSON.stringify(integrationSchema),
+    );
+
+    // Clear spy call history after seeding so tests start with a clean slate
     vi.clearAllMocks();
+
+    // Set up schema with both a plain text field and a password field
+    const schema = [
+      {
+        name: "currency",
+        type: "text",
+        label: "Currency",
+        default: "",
+      },
+      {
+        name: "apiPassword",
+        type: "password",
+        label: "API Password",
+        default: "",
+      },
+    ] satisfies BusinessConfigSchema;
+
+    setGlobalSchema(schema);
+  });
+
+  test("throws error when schema not initialized", async () => {
+    // Clear the schema to simulate not calling initialize
+    setGlobalSchema(null as unknown as BusinessConfigSchema);
+
+    await expect(
+      getConfigurationByKey("currency", byCodeAndLevel("global", "global")),
+    ).rejects.toThrow(
+      "Schema not initialized. Call `initialize({ schema })` before using configuration functions.",
+    );
   });
 
   test("returns the correct value for a non-password key", async () => {
@@ -107,9 +144,10 @@ describe("getConfigurationByKey", () => {
     );
 
     expect(result.scope.code).toBe("global");
-    expect(result.config).not.toBeNull();
-    expect(result.config?.name).toBe("currency");
-    expect(result.config?.value).toBe("USD");
+
+    expect.assert.isNotNull(result.config);
+    expect(result.config.name).toBe("currency");
+    expect(result.config.value).toBe("USD");
   });
 
   test("returns null config when key does not exist in schema", async () => {
@@ -208,6 +246,48 @@ describe("getConfigurationByKey", () => {
     );
 
     expect(result.config?.value).toBe("");
+  });
+
+  test("resolves scope using byCode selector", async () => {
+    await configRepository.saveConfig(
+      "base_region",
+      buildPayload("id-base-region", "base_region", "base", [
+        {
+          name: "currency",
+          value: "CHF",
+          origin: { code: "base_region", level: "base" },
+        },
+      ]),
+    );
+
+    const result = await getConfigurationByKey(
+      "currency",
+      byCode("base_region"),
+    );
+
+    expect(result.scope.code).toBe("base_region");
+    expect(result.config?.value).toBe("CHF");
+  });
+
+  test("resolves scope using byScopeId selector", async () => {
+    await configRepository.saveConfig(
+      "global",
+      buildPayload("id-global", "global", "global", [
+        {
+          name: "currency",
+          value: "SGD",
+          origin: { code: "global", level: "global" },
+        },
+      ]),
+    );
+
+    const result = await getConfigurationByKey(
+      "currency",
+      byScopeId("id-global"),
+    );
+
+    expect(result.scope.id).toBe("id-global");
+    expect(result.config?.value).toBe("SGD");
   });
 
   test("returns scope information alongside the config value", async () => {

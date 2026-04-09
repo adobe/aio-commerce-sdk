@@ -30,11 +30,11 @@ const NEW_UUID_REGEX = /^new-uuid-/;
 vi.mock("uuid", () => ({
   v4: vi.fn(
     () =>
-      `new-uuid-${Math.random().toString(BASE_36).substr(UUID_SUBSTRING_START, UUID_SUBSTRING_LENGTH)}`,
+      `new-uuid-${Math.random().toString(BASE_36).slice(UUID_SUBSTRING_START, UUID_SUBSTRING_LENGTH)}`,
   ),
 }));
 
-describe("ScopeTreeUtils - Actual Merge Logic", () => {
+describe("scope-tree/merge-scopes", () => {
   let mockCommerceFreshData: CommerceScopeData;
   let mockExistingTree: ScopeTree;
   let mockExistingTreeWithCommerceScopes: ScopeTree;

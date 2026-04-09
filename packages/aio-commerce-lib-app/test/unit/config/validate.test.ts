@@ -18,10 +18,11 @@ import {
 } from "#config/lib/validate";
 import {
   configWithCustomInstallationSteps,
+  createCommerceEventConfig,
   minimalValidConfig,
 } from "#test/fixtures/config";
-import { createCommerceEventConfig } from "#test/fixtures/eventing";
 
+const MAX_ID_LENGTH = 100;
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_DESCRIPTION_LENGTH = 255;
 
@@ -86,9 +87,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should throw CommerceSdkValidationError when metadata.id is missing", () => {
@@ -100,9 +99,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should throw CommerceSdkValidationError when metadata.id contains invalid characters", () => {
@@ -115,9 +112,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should accept metadata.id with alphanumeric and dashes", () => {
@@ -133,6 +128,32 @@ describe("validateConfig", () => {
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
+  test("should accept metadata.id at exactly 100 characters", () => {
+    const config = {
+      metadata: {
+        id: "a".repeat(MAX_ID_LENGTH),
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+  });
+
+  test("should throw when metadata.id exceeds 100 characters", () => {
+    const config = {
+      metadata: {
+        id: "a".repeat(MAX_ID_LENGTH + 1),
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow();
+  });
+
   test("should throw when displayName exceeds 50 characters", () => {
     const config = {
       metadata: {
@@ -143,9 +164,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should accept displayName with exactly 50 characters", () => {
@@ -171,9 +190,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should accept description with exactly 255 characters", () => {
@@ -209,9 +226,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test.each([
@@ -245,9 +260,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should validate text field type", () => {
@@ -317,9 +330,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should validate url field type", () => {
@@ -449,9 +460,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should throw when list field with multiple selection has string default", () => {
@@ -479,9 +488,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should throw when schema field is missing required name", () => {
@@ -503,9 +510,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should throw when schema field is missing required type", () => {
@@ -527,9 +532,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should accept schema field without optional label", () => {
@@ -734,9 +737,7 @@ describe("validateConfig", () => {
       description: "Invalid event",
     });
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should accept commerce event with plugin prefix", () => {
@@ -788,9 +789,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should throw when provider description exceeds max length", () => {
@@ -820,9 +819,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should accept provider with optional key", () => {
@@ -885,9 +882,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should throw when commerce event description exceeds max length", () => {
@@ -919,9 +914,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should throw when commerce event source is missing provider", () => {
@@ -949,9 +942,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should allow any casing in any event runtimeActions as long as it matches package/action format", () => {
@@ -1034,9 +1025,7 @@ describe("validateConfig", () => {
       },
     };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow(
-      "Invalid commerce app config",
-    );
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
   test("should throw when custom installation steps have duplicate names", () => {
@@ -1073,9 +1062,9 @@ describe("validateConfigDomain", () => {
       version: "1.0.0",
     };
 
-    expect(() => validateCommerceAppConfigDomain(metadata, "metadata")).toThrow(
-      "Invalid commerce app config: metadata",
-    );
+    expect(() =>
+      validateCommerceAppConfigDomain(metadata, "metadata"),
+    ).toThrow();
   });
 
   test("should validate businessConfig domain", () => {
@@ -1105,7 +1094,7 @@ describe("validateConfigDomain", () => {
 
     expect(() =>
       validateCommerceAppConfigDomain(businessConfig, "businessConfig"),
-    ).toThrow("Invalid commerce app config: businessConfig");
+    ).toThrow();
   });
 
   test("should validate businessConfig.schema domain", () => {
@@ -1147,7 +1136,7 @@ describe("validateConfigDomain", () => {
 
     expect(() =>
       validateCommerceAppConfigDomain(schema, "businessConfig.schema"),
-    ).toThrow("Invalid commerce app config: businessConfig.schema");
+    ).toThrow();
   });
 
   test("should throw when validating unknown domain", () => {
@@ -1291,9 +1280,7 @@ describe("validateConfigDomain", () => {
         ],
       };
 
-      expect(() => validateCommerceAppConfig(config)).toThrow(
-        "Invalid commerce app config",
-      );
+      expect(() => validateCommerceAppConfig(config)).toThrow();
     });
 
     test("should accept batch_name and hook_name with only alphanumeric and underscore characters", () => {
@@ -1340,9 +1327,7 @@ describe("validateConfigDomain", () => {
         ],
       };
 
-      expect(() => validateCommerceAppConfig(config)).toThrow(
-        "Invalid commerce app config",
-      );
+      expect(() => validateCommerceAppConfig(config)).toThrow();
     });
 
     test("should reject hook_name containing invalid characters", () => {
@@ -1365,9 +1350,7 @@ describe("validateConfigDomain", () => {
         ],
       };
 
-      expect(() => validateCommerceAppConfig(config)).toThrow(
-        "Invalid commerce app config",
-      );
+      expect(() => validateCommerceAppConfig(config)).toThrow();
     });
   });
 

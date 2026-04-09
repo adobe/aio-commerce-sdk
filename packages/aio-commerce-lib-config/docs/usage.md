@@ -7,8 +7,8 @@ The `@adobe/aio-commerce-lib-config` library provides:
 - **Configuration Management**: Read and write configuration values across hierarchical scopes
 - **Scope Trees**: Support for Adobe Commerce and external system scope hierarchies
 - **Inheritance Model**: Automatic configuration inheritance from parent scopes
-- **Schema Validation**: Validate configuration schemas
-- **Persistent Storage**: Uses `@adobe/aio-lib-state` and `@adobe/aio-lib-files` for caching and storage
+- **Schema Validation**: Validate configuration schemas with in-memory schema storage
+- **Persistent Storage**: Uses `@adobe/aio-lib-state` and `@adobe/aio-lib-files` for configuration data caching and storage
 
 ## Reference
 
@@ -49,16 +49,52 @@ import {
 
 ### Initialization
 
-An optional initialization step is recommended to ensure the library works as expected. Run the following code to initialize the library:
+> [!WARNING]
+> You must initialize the library with your configuration schema before using any configuration functions. Calling configuration functions without initialization will throw an error.
+
+The schema is stored in memory only (not persisted) and must be provided on each application startup.
 
 ```typescript
 import { initialize } from "@adobe/aio-commerce-lib-config";
 import yourSchema from "path/to/config-schema.json" with { type: "json" };
 
+// Required: Initialize with your schema
 await initialize({
   schema: yourSchema,
 });
+
+// Now you can use configuration functions
+const config = await getConfiguration(byCodeAndLevel("global", "global"));
 ```
+
+When you don't initialize the library with at least your `schema`, configuration functions like `getConfiguration()` and `getConfigurationByKey()` will throw an error:
+
+```
+Error: Schema not initialized. Call `initialize({ schema })` before using configuration functions.
+```
+
+#### Configuring the State Region
+
+By default, the library automatically selects the optimal `aio-lib-state` region based on the OpenWhisk region (`__OW_REGION`) where your action is running. You can override this with `libStateOptions.region`:
+
+```typescript
+await initialize({
+  schema: yourSchema,
+  libStateOptions: {
+    region: "emea", // "amer" | "emea" | "apac" | "aus"
+  },
+});
+```
+
+If `libStateOptions` is omitted (or `region` is not set), the region is automatically resolved from `process.env.__OW_REGION` using the following mapping:
+
+| `__OW_REGION`    | Resolved region |
+| ---------------- | --------------- |
+| `us-east-1`      | `amer`          |
+| `eu-west-1`      | `emea`          |
+| `ap-northeast-1` | `apac`          |
+| `ap-southeast-2` | `aus`           |
+| unset / unknown  | `amer`          |
 
 ### Working with Scope Trees
 
@@ -184,12 +220,16 @@ This example demonstrates a typical use case: retrieving scope-specific configur
 ```javascript
 // actions/process-order/index.js
 import {
+  initialize,
   getConfigurationByKey,
   byCodeAndLevel,
 } from "@adobe/aio-commerce-lib-config";
+import schema from "./config-schema.json" with { type: "json" };
 
 async function main(params) {
   try {
+    await initialize({ schema });
+
     // Get configuration for the current scope
     const storeCode = params.store_code || "default";
     const storeLevel = params.store_level || "store_view";

@@ -170,11 +170,13 @@ export function deriveScopeFromCodeWithOptionalLevel(
     throw new Error("INVALID_ARGS: expected (code: string)");
   }
 
-  if (!isNonEmptyString(level)) {
+  if (level !== undefined && !isNonEmptyString(level)) {
     throw new Error("INVALID_ARGS: expected (level: string)");
   }
 
-  const effectiveLevel = level?.trim() || DEFAULT_CUSTOM_SCOPE_LEVEL;
+  const effectiveLevel = isNonEmptyString(level)
+    ? level.trim()
+    : DEFAULT_CUSTOM_SCOPE_LEVEL;
   return deriveScopeFromCodeAndLevel(code, effectiveLevel, tree);
 }
 

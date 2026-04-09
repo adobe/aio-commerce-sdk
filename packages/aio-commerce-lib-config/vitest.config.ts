@@ -22,15 +22,16 @@ const BARREL_FILES = [
   "./source/types/index.ts",
 ];
 
+const UNTESTABLE_FILES: string[] = [];
+
 export default mergeConfig(
   baseConfig,
   defineConfig({
-    plugins: [],
     test: {
+      setupFiles: ["./test/setup.ts"],
       passWithNoTests: true,
       coverage: {
-        // Exclude barrel files from coverage
-        exclude: [...BARREL_FILES, "./source/**/types.ts"],
+        exclude: [...BARREL_FILES, ...UNTESTABLE_FILES, "./source/**/types.ts"],
       },
     },
   }),

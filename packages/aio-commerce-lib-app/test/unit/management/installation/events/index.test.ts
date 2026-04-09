@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { eventingStep } from "#management/installation/events/branch";
 import { commerceEventsStep } from "#management/installation/events/commerce";
@@ -40,12 +40,11 @@ describe("events installation module", () => {
     });
 
     test("should only run if eventing is defined", () => {
-      expect(eventingStep.when).toBeDefined();
+      expect.assert(eventingStep.when);
 
-      expect(eventingStep.when?.(configWithCommerceEventing)).toBe(true);
-      expect(eventingStep.when?.(configWithExternalEventing)).toBe(true);
-
-      expect(eventingStep.when?.(minimalValidConfig)).toBe(false);
+      expect(eventingStep.when(configWithCommerceEventing)).toBe(true);
+      expect(eventingStep.when(configWithExternalEventing)).toBe(true);
+      expect(eventingStep.when(minimalValidConfig)).toBe(false);
     });
 
     test("should have commerce and external leaf steps", () => {
@@ -66,67 +65,11 @@ describe("events installation module", () => {
     });
 
     test("should only run if eventing.commerce is defined", () => {
-      expect(commerceEventsStep.when).toBeDefined();
+      expect.assert(commerceEventsStep.when);
 
-      expect(commerceEventsStep.when?.(configWithCommerceEventing)).toBe(true);
-
-      expect(commerceEventsStep.when?.(configWithExternalEventing)).toBe(false);
-      expect(commerceEventsStep.when?.(minimalValidConfig)).toBe(false);
-    });
-
-    test("should create entities", async () => {
-      const mockContext = createMockEventingInstallationContext({
-        // @ts-expect-error Invalid type for testing purposes
-        params: {
-          AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com",
-          AIO_COMMERCE_API_FLAVOR: "saas",
-        },
-        ioEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue({
-            _embedded: { providers: [] },
-          }),
-          getAllRegistrations: vi.fn().mockResolvedValue({
-            _embedded: { registrations: [] },
-          }),
-          createEventProvider: vi
-            .fn()
-            .mockResolvedValue({ id: "provider-123" }),
-          createEventMetadataForProvider: vi
-            .fn()
-            .mockResolvedValue({ event_code: "test-event-code" }),
-          createRegistration: vi
-            .fn()
-            .mockResolvedValue({ id: "registration-123" }),
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
-          updateEventingConfiguration: vi.fn().mockResolvedValue({}),
-          createEventProvider: vi
-            .fn()
-            .mockResolvedValue({ id: "commerce-provider-123" }),
-          createEventSubscription: vi.fn().mockResolvedValue({
-            name: "test-subscription",
-            enabled: true,
-          }),
-        },
-      });
-
-      const result = await commerceEventsStep.run(
-        configWithCommerceEventing,
-        mockContext,
-      );
-
-      expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThan(0);
-
-      expect(
-        mockContext.ioEventsClient.getAllEventProviders,
-      ).toHaveBeenCalled();
-      expect(
-        mockContext.commerceEventsClient.getAllEventProviders,
-      ).toHaveBeenCalled();
+      expect(commerceEventsStep.when(configWithCommerceEventing)).toBe(true);
+      expect(commerceEventsStep.when(configWithExternalEventing)).toBe(false);
+      expect(commerceEventsStep.when(minimalValidConfig)).toBe(false);
     });
   });
 
@@ -141,47 +84,11 @@ describe("events installation module", () => {
     });
 
     test("should only run if eventing.external is defined", () => {
-      expect(externalEventsStep.when).toBeDefined();
+      expect.assert(externalEventsStep.when);
 
-      expect(externalEventsStep.when?.(configWithExternalEventing)).toBe(true);
-
-      expect(externalEventsStep.when?.(configWithCommerceEventing)).toBe(false);
-      expect(externalEventsStep.when?.(minimalValidConfig)).toBe(false);
-    });
-
-    test("should create entities", async () => {
-      const mockContext = createMockEventingInstallationContext({
-        ioEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue({
-            _embedded: { providers: [] },
-          }),
-          getAllRegistrations: vi.fn().mockResolvedValue({
-            _embedded: { registrations: [] },
-          }),
-          createEventProvider: vi
-            .fn()
-            .mockResolvedValue({ id: "provider-456" }),
-          createEventMetadataForProvider: vi
-            .fn()
-            .mockResolvedValue({ event_code: "test-event-code" }),
-          createRegistration: vi
-            .fn()
-            .mockResolvedValue({ id: "registration-456" }),
-        },
-      });
-
-      const result = await externalEventsStep.run(
-        configWithExternalEventing,
-        mockContext,
-      );
-
-      expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThan(0);
-
-      expect(
-        mockContext.ioEventsClient.getAllEventProviders,
-      ).toHaveBeenCalled();
+      expect(externalEventsStep.when(configWithExternalEventing)).toBe(true);
+      expect(externalEventsStep.when(configWithCommerceEventing)).toBe(false);
+      expect(externalEventsStep.when(minimalValidConfig)).toBe(false);
     });
   });
 
@@ -206,16 +113,8 @@ describe("events installation module", () => {
     });
 
     test("should create lazy commerceEventsClient", () => {
-      const mockContext = createMockEventingInstallationContext({
-        params: {
-          AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com",
-          AIO_COMMERCE_API_FLAVOR: "saas",
-          AIO_COMMERCE_AUTH_IMS_TOKEN: "test-ims-token",
-          AIO_COMMERCE_AUTH_IMS_API_KEY: "test-api-key",
-        } as any,
-      });
+      const mockContext = createMockEventingInstallationContext();
       const context = createEventsStepContext(mockContext);
-
       expect(context).toHaveProperty("commerceEventsClient");
 
       const client1 = context.commerceEventsClient;

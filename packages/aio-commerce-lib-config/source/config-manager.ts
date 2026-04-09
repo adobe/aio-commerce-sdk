@@ -10,9 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-import { getPersistedSchema } from "#modules/schema/config-schema-repository";
-import { initializeSchema } from "#modules/schema/initialize";
+import {
+  requireGlobalSchema,
+  setGlobalSchema,
+} from "#modules/schema/config-schema-repository";
 import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "#utils/constants";
+import { setGlobalStateOptions } from "#utils/repository";
 
 import {
   getConfigurationByKey as getConfigByKeyModule,
@@ -29,6 +32,7 @@ import {
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { SelectorBy } from "#config-utils";
 import type { BusinessConfigSchema } from "#modules/schema/types";
+import type { LibStateOptions } from "#utils/repository";
 import type { GetScopeTreeResult, ScopeTree } from "./modules/scope-tree";
 import type {
   ConfigOptions,
@@ -41,30 +45,28 @@ import type {
 export type InitializeOptions = {
   /** Optional schema to use as the source of truth (latest version). If not provided, it will use the stored one (but only if it exists). */
   schema?: BusinessConfigSchema;
+
+  /** The options for initializing the Adobe State library (used for caching). */
+  libStateOptions?: LibStateOptions;
 };
 
 /**
  * Initializes the configuration library so that it works as expected.
+ * The schema is stored in global memory. If a schema is provided, it will be set.
+ * If no schema is provided, initialization will succeed only if a schema was previously set globally.
  * @param options - Options for initializing the configuration library.
  */
-export async function initialize(options: InitializeOptions) {
-  if (options.schema) {
-    await initializeSchema(
-      {
-        namespace: DEFAULT_NAMESPACE,
-        cacheTimeout: DEFAULT_CACHE_TIMEOUT,
-      },
-      options.schema,
-    );
+export function initialize(options: InitializeOptions) {
+  if (options.libStateOptions) {
+    setGlobalStateOptions(options.libStateOptions);
+  }
 
+  if (options.schema) {
+    setGlobalSchema(options.schema);
     return;
   }
 
-  const storedSchema = await getPersistedSchema();
-
-  if (!storedSchema) {
-    throw new Error("Schema has never been set before");
-  }
+  requireGlobalSchema();
 }
 
 /** Parameters for getting the scope tree from Commerce API. */

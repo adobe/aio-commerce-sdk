@@ -21,37 +21,64 @@ import {
   resolveDeveloperConsoleOAuthCredentials,
   validateWebhookConflicts,
 } from "#management/installation/webhooks/helpers";
-import { configWithWebhooks } from "#test/fixtures/config";
+import { createMockMetadata } from "#test/fixtures/config";
+import {
+  createMockInstallationParams,
+  createMockLogger,
+  DEFAULT_INSTALLATION_IMS_PARAMS,
+} from "#test/fixtures/installation";
+import {
+  createMockCommerceWebhooksClient,
+  createMockExistingCommerceWebhook,
+  createMockResolvedWebhook,
+  createMockRuntimeWebhookEntry,
+  createMockUrlWebhookEntry,
+  createMockWebhooksConfig,
+  createMockWebhooksContext,
+} from "#test/fixtures/webhooks";
 
+import type { HTTPError as KyHTTPError } from "ky";
 import type { WebhooksExecutionContext } from "#management/installation/webhooks/context";
-
-const DEFAULT_PARAMS = {
-  AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
-  AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "test-client-secret",
-  AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
-  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test@example.com",
-  AIO_COMMERCE_AUTH_IMS_SCOPES: "AdobeID",
-};
 
 function makeContext(
   subscribeWebhookFn = vi.fn().mockResolvedValue(null),
   getWebhookListFn = vi.fn().mockResolvedValue([]),
-  params = DEFAULT_PARAMS,
+  params: Partial<WebhooksExecutionContext["params"]> = {},
 ): WebhooksExecutionContext {
-  return {
+  return createMockWebhooksContext(
+    subscribeWebhookFn,
+    getWebhookListFn,
     params,
-    commerceWebhooksClient: {
-      getWebhookList: getWebhookListFn,
-      subscribeWebhook: subscribeWebhookFn,
+  );
+}
+
+function createHttpError(response: Response): KyHTTPError {
+  const error = Object.assign(
+    new Error(`Request failed with status code ${response.status}`),
+    {
+      response,
+      request: new Request("https://example.com"),
+      options: {},
     },
-    logger: {
-      info: vi.fn(),
-      debug: vi.fn(),
-      error: vi.fn(),
-      warn: vi.fn(),
-    },
-  } as unknown as WebhooksExecutionContext;
+  );
+  Object.setPrototypeOf(error, HTTPError.prototype);
+  return error as KyHTTPError;
+}
+
+function makeWebhookClient(
+  subscribeWebhook = vi.fn().mockResolvedValue(null),
+): WebhooksExecutionContext["commerceWebhooksClient"] {
+  return createMockCommerceWebhooksClient({
+    subscribeWebhook,
+  });
+}
+
+function makeWebhookLogger(): WebhooksExecutionContext["logger"] {
+  return createMockLogger();
+}
+
+function createDefaultWebhooksConfig() {
+  return createMockWebhooksConfig();
 }
 
 describe("createWebhookSubscriptions", () => {
@@ -66,18 +93,12 @@ describe("createWebhookSubscriptions", () => {
   test("calls subscribeWebhook for each entry and returns subscribed webhooks", async () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
     const context = makeContext(subscribeWebhook);
+    const config = createDefaultWebhooksConfig();
 
-    const result = await createWebhookSubscriptions(
-      configWithWebhooks,
-      context,
-    );
+    const result = await createWebhookSubscriptions(config, context);
 
-    expect(subscribeWebhook).toHaveBeenCalledTimes(
-      configWithWebhooks.webhooks.length,
-    );
-    expect(result.subscribedWebhooks).toHaveLength(
-      configWithWebhooks.webhooks.length,
-    );
+    expect(subscribeWebhook).toHaveBeenCalledTimes(config.webhooks.length);
+    expect(result.subscribedWebhooks).toHaveLength(config.webhooks.length);
   });
 
   test("passes webhook.url directly when it is explicitly set", async () => {
@@ -85,24 +106,20 @@ describe("createWebhookSubscriptions", () => {
     const context = makeContext(subscribeWebhook);
 
     const explicitUrl = "https://explicit-url.com/hook";
-    const configWithExplicitUrl = {
-      ...configWithWebhooks,
+    const configWithExplicitUrl = createMockWebhooksConfig({
       webhooks: [
-        {
+        createMockUrlWebhookEntry({
           label: "Explicit URL Webhook",
           description: "Webhook with explicit url",
-          category: "modification" as const,
           webhook: {
             webhook_method: "plugin.order.api.order_created",
-            webhook_type: "after",
             batch_name: "default",
             hook_name: "order_created",
-            method: "POST",
             url: explicitUrl,
           },
-        },
+        }),
       ],
-    };
+    });
 
     await createWebhookSubscriptions(configWithExplicitUrl, context);
 
@@ -115,25 +132,19 @@ describe("createWebhookSubscriptions", () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
     const context = makeContext(subscribeWebhook);
 
-    const configWithoutUrl = {
-      ...configWithWebhooks,
+    const configWithoutUrl = createMockWebhooksConfig({
       webhooks: [
-        {
+        createMockRuntimeWebhookEntry({
           label: "Generated URL Webhook",
           description: "Webhook without url",
-          category: "modification" as const,
           runtimeAction: "my-package/handle-webhook",
           webhook: {
-            webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "after",
             batch_name: "batch1",
             hook_name: "hook1",
-            method: "POST",
-            // url intentionally omitted
           },
-        },
+        }),
       ],
-    };
+    });
 
     await createWebhookSubscriptions(configWithoutUrl, context);
 
@@ -149,24 +160,19 @@ describe("createWebhookSubscriptions", () => {
 
     const context = makeContext();
 
-    const configWithoutUrl = {
-      ...configWithWebhooks,
+    const configWithoutUrl = createMockWebhooksConfig({
       webhooks: [
-        {
+        createMockRuntimeWebhookEntry({
           label: "Generated URL Webhook",
           description: "Webhook without url",
-          category: "modification" as const,
           runtimeAction: "my-package/handle-webhook",
           webhook: {
-            webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "after",
             batch_name: "batch1",
             hook_name: "hook1",
-            method: "POST",
           },
-        },
+        }),
       ],
-    };
+    });
 
     await expect(
       createWebhookSubscriptions(configWithoutUrl, context),
@@ -179,30 +185,21 @@ describe("createWebhookSubscriptions", () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
     const context = makeContext(subscribeWebhook);
 
-    const config = {
-      metadata: {
+    const config = createMockWebhooksConfig({
+      metadata: createMockMetadata("test-app-webhooks", {
         id: "my--app.v2",
         displayName: "My App",
         description: "d",
-        version: "1.0.0",
-      },
+      }),
       webhooks: [
-        {
-          label: "Test Webhook",
-          description: "Test webhook",
-          runtimeAction: "my-package/handle-webhook",
-          category: "modification" as const,
+        createMockRuntimeWebhookEntry({
           webhook: {
-            webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "after",
             batch_name: "products",
             hook_name: "validate",
-            method: "POST",
-            url: "https://example.com/hook",
           },
-        },
+        }),
       ],
-    };
+    });
 
     await createWebhookSubscriptions(config, context);
 
@@ -222,26 +219,21 @@ describe("createWebhookSubscriptions", () => {
       .mockRejectedValueOnce(error)
       .mockResolvedValue(null);
 
-    const config = {
-      ...configWithWebhooks,
+    const config = createMockWebhooksConfig({
       webhooks: [
-        ...configWithWebhooks.webhooks,
-        {
+        ...createDefaultWebhooksConfig().webhooks,
+        createMockRuntimeWebhookEntry({
           label: "Second Webhook",
           description: "Second webhook",
           runtimeAction: "my-package/second-hook",
-          category: "modification" as const,
           webhook: {
-            webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "after",
             batch_name: "batch2",
             hook_name: "second_hook",
             url: "https://example.com/second",
-            method: "POST",
           },
-        },
+        }),
       ],
-    };
+    });
 
     const context = makeContext(subscribeWebhook);
 
@@ -253,38 +245,23 @@ describe("createWebhookSubscriptions", () => {
 
   test("throws with response message and webhook name when HTTPError body has a string message", async () => {
     const responseBody = { message: "Duplicate webhook registration" };
-    const mockResponse = {
-      json: vi.fn().mockResolvedValue(responseBody),
-    };
-
-    const httpError = new HTTPError(
-      mockResponse as unknown as Response,
-      new Request("https://example.com"),
-      {} as never,
-    );
+    const httpError = createHttpError(Response.json(responseBody));
 
     const subscribeWebhook = vi.fn().mockRejectedValue(httpError);
     const context = makeContext(subscribeWebhook);
 
-    const singleWebhookConfig = {
-      ...configWithWebhooks,
+    const singleWebhookConfig = createMockWebhooksConfig({
       webhooks: [
-        {
-          label: "Test Webhook",
-          description: "Test webhook",
-          runtimeAction: "my-package/handle-webhook",
-          category: "modification" as const,
+        createMockRuntimeWebhookEntry({
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "after",
             batch_name: "batch1",
             hook_name: "hook1",
-            method: "POST",
             url: "https://example.com/hook",
           },
-        },
+        }),
       ],
-    };
+    });
 
     await expect(
       createWebhookSubscriptions(singleWebhookConfig, context),
@@ -294,40 +271,24 @@ describe("createWebhookSubscriptions", () => {
   });
 
   test("rethrows the original HTTPError when response body has no string message", async () => {
-    const mockResponse = {
-      json: vi.fn().mockResolvedValue({ code: 422 }),
-    };
-
-    const httpError = new HTTPError(
-      mockResponse as unknown as Response,
-      new Request("https://example.com"),
-      {} as never,
-    );
+    const httpError = createHttpError(Response.json({ code: 422 }));
 
     const subscribeWebhook = vi.fn().mockRejectedValue(httpError);
     const context = makeContext(subscribeWebhook);
 
     await expect(
-      createWebhookSubscriptions(configWithWebhooks, context),
+      createWebhookSubscriptions(createDefaultWebhooksConfig(), context),
     ).rejects.toThrow(httpError);
   });
 
   test("rethrows the original HTTPError when response body cannot be parsed as JSON", async () => {
-    const mockResponse = {
-      json: vi.fn().mockRejectedValue(new SyntaxError("Unexpected token")),
-    };
-
-    const httpError = new HTTPError(
-      mockResponse as unknown as Response,
-      new Request("https://example.com"),
-      {} as never,
-    );
+    const httpError = createHttpError(new Response("{"));
 
     const subscribeWebhook = vi.fn().mockRejectedValue(httpError);
     const context = makeContext(subscribeWebhook);
 
     await expect(
-      createWebhookSubscriptions(configWithWebhooks, context),
+      createWebhookSubscriptions(createDefaultWebhooksConfig(), context),
     ).rejects.toThrow(httpError);
   });
 
@@ -335,70 +296,51 @@ describe("createWebhookSubscriptions", () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
     // configWithWebhooks has metadata.id "test-app-webhooks" → prefix "test_app_webhooks_"
     // resolved batch_name = "test_app_webhooks_default", hook_name = "test_app_webhooks_order_created"
-    const existingWebhook = {
-      webhook_method: "plugin.order.api.order_created",
-      webhook_type: "after",
-      batch_name: "test_app_webhooks_default",
-      hook_name: "test_app_webhooks_order_created",
-    };
+    const existingWebhook = createMockExistingCommerceWebhook();
     const getWebhookList = vi.fn().mockResolvedValue([existingWebhook]);
     const context = makeContext(subscribeWebhook, getWebhookList);
 
     const result = await createWebhookSubscriptions(
-      configWithWebhooks,
+      createDefaultWebhooksConfig(),
       context,
     );
 
     expect(subscribeWebhook).not.toHaveBeenCalled();
     expect(result.subscribedWebhooks).toHaveLength(
-      configWithWebhooks.webhooks.length,
+      createDefaultWebhooksConfig().webhooks.length,
     );
   });
 
   test("subscribes only webhooks not already in the existing list", async () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
 
-    const twoWebhookConfig = {
-      ...configWithWebhooks,
+    const twoWebhookConfig = createMockWebhooksConfig({
       webhooks: [
-        {
+        createMockRuntimeWebhookEntry({
           label: "First Webhook",
           description: "First webhook",
-          runtimeAction: "my-package/handle-webhook",
-          category: "modification" as const,
           webhook: {
             webhook_method: "plugin.order.api.order_created",
-            webhook_type: "after",
             batch_name: "default",
             hook_name: "order_created",
-            method: "POST",
             url: "https://example.com/first",
           },
-        },
-        {
+        }),
+        createMockRuntimeWebhookEntry({
           label: "Second Webhook",
           description: "Second webhook",
-          runtimeAction: "my-package/handle-webhook",
-          category: "modification" as const,
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "after",
             batch_name: "products",
             hook_name: "validate",
-            method: "POST",
             url: "https://example.com/second",
           },
-        },
+        }),
       ],
-    };
+    });
 
     // Only the first webhook is already subscribed (with resolved names)
-    const existingWebhook = {
-      webhook_method: "plugin.order.api.order_created",
-      webhook_type: "after",
-      batch_name: "test_app_webhooks_default",
-      hook_name: "test_app_webhooks_order_created",
-    };
+    const existingWebhook = createMockExistingCommerceWebhook();
     const getWebhookList = vi.fn().mockResolvedValue([existingWebhook]);
     const context = makeContext(subscribeWebhook, getWebhookList);
 
@@ -419,35 +361,30 @@ describe("createWebhookSubscriptions", () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
     const context = makeContext(subscribeWebhook);
 
-    const config = {
-      ...configWithWebhooks,
+    const config = createMockWebhooksConfig({
       webhooks: [
-        {
-          label: "Test Webhook",
-          description: "Test webhook",
-          category: "modification" as const,
-          runtimeAction: "my-package/handle-webhook",
-          // requireAdobeAuth intentionally absent (defaults to true)
+        createMockRuntimeWebhookEntry({
           webhook: {
-            webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "after",
             batch_name: "batch1",
             hook_name: "hook1",
-            method: "POST",
           },
-        },
+        }),
       ],
-    };
+    });
 
     await createWebhookSubscriptions(config, context);
 
     expect(subscribeWebhook).toHaveBeenCalledWith(
       expect.objectContaining({
         developer_console_oauth: {
-          client_id: DEFAULT_PARAMS.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+          client_id:
+            DEFAULT_INSTALLATION_IMS_PARAMS.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+
           client_secret:
-            DEFAULT_PARAMS.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS as string,
-          org_id: DEFAULT_PARAMS.AIO_COMMERCE_AUTH_IMS_ORG_ID,
+            DEFAULT_INSTALLATION_IMS_PARAMS
+              .AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS[0],
+
+          org_id: DEFAULT_INSTALLATION_IMS_PARAMS.AIO_COMMERCE_AUTH_IMS_ORG_ID,
           environment: "production",
         },
       }),
@@ -458,28 +395,19 @@ describe("createWebhookSubscriptions", () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
     const context = makeContext(subscribeWebhook);
 
-    const config = {
-      ...configWithWebhooks,
+    const config = createMockWebhooksConfig({
       webhooks: [
-        {
-          label: "Test Webhook",
-          description: "Test webhook",
-          category: "modification" as const,
-          runtimeAction: "my-package/handle-webhook",
+        createMockRuntimeWebhookEntry({
           requireAdobeAuth: false,
           webhook: {
-            webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "after",
             batch_name: "batch1",
             hook_name: "hook1",
-            method: "POST",
           },
-        },
+        }),
       ],
-    };
+    });
 
     await createWebhookSubscriptions(config, context);
-
     expect(subscribeWebhook).toHaveBeenCalledWith(
       expect.not.objectContaining({
         developer_console_oauth: expect.anything(),
@@ -489,60 +417,43 @@ describe("createWebhookSubscriptions", () => {
 
   test("throws when requireAdobeAuth is true but credentials are missing", async () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
-    const emptyParams = {
+    const emptyParams = createMockInstallationParams({
       AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "",
       AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "",
       AIO_COMMERCE_AUTH_IMS_ORG_ID: "",
       AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "",
       AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "",
       AIO_COMMERCE_AUTH_IMS_SCOPES: "",
-    };
+    });
+
     const context = makeContext(
       subscribeWebhook,
       vi.fn().mockResolvedValue([]),
       emptyParams,
     );
 
-    const config = {
-      ...configWithWebhooks,
+    const config = createMockWebhooksConfig({
       webhooks: [
-        {
-          label: "Test Webhook",
-          description: "Test webhook",
-          category: "modification" as const,
-          runtimeAction: "my-package/handle-webhook",
+        createMockRuntimeWebhookEntry({
           webhook: {
-            webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "after",
             batch_name: "batch1",
             hook_name: "hook1",
-            method: "POST",
           },
-        },
+        }),
       ],
-    };
+    });
 
-    await expect(createWebhookSubscriptions(config, context)).rejects.toThrow(
-      Error,
-    );
+    await expect(createWebhookSubscriptions(config, context)).rejects.toThrow();
     expect(subscribeWebhook).not.toHaveBeenCalled();
   });
 });
 
 describe("createWebhookSubscription", () => {
-  const resolvedWebhook = {
-    webhook_method: "observer.catalog_product_save_after",
-    webhook_type: "after",
-    batch_name: "my_app_batch",
-    hook_name: "my_app_hook",
-    url: "https://example.com/hook",
-    method: "POST",
-  };
+  const resolvedWebhook = createMockResolvedWebhook();
 
   test("calls subscribeWebhook and returns the resolved webhook", async () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
-    const client = { subscribeWebhook } as never;
-
+    const client = makeWebhookClient(subscribeWebhook);
     const result = await createWebhookSubscription(client, resolvedWebhook);
 
     expect(subscribeWebhook).toHaveBeenCalledWith(resolvedWebhook);
@@ -550,18 +461,13 @@ describe("createWebhookSubscription", () => {
   });
 
   test("throws enriched error when HTTPError response body has a string message", async () => {
-    const mockResponse = {
-      json: vi.fn().mockResolvedValue({ message: "Duplicate webhook" }),
-    };
-    const httpError = new HTTPError(
-      mockResponse as unknown as Response,
-      new Request("https://example.com"),
-      {} as never,
+    const httpError = createHttpError(
+      Response.json({ message: "Duplicate webhook" }),
     );
 
-    const client = {
+    const client = createMockCommerceWebhooksClient({
       subscribeWebhook: vi.fn().mockRejectedValue(httpError),
-    } as never;
+    });
 
     await expect(
       createWebhookSubscription(client, resolvedWebhook),
@@ -571,18 +477,10 @@ describe("createWebhookSubscription", () => {
   });
 
   test("rethrows the original HTTPError when response body has no string message", async () => {
-    const mockResponse = {
-      json: vi.fn().mockResolvedValue({ code: 422 }),
-    };
-    const httpError = new HTTPError(
-      mockResponse as unknown as Response,
-      new Request("https://example.com"),
-      {} as never,
-    );
-
-    const client = {
+    const httpError = createHttpError(Response.json({ code: 422 }));
+    const client = createMockCommerceWebhooksClient({
       subscribeWebhook: vi.fn().mockRejectedValue(httpError),
-    } as never;
+    });
 
     await expect(
       createWebhookSubscription(client, resolvedWebhook),
@@ -590,18 +488,10 @@ describe("createWebhookSubscription", () => {
   });
 
   test("rethrows the original HTTPError when response body cannot be parsed as JSON", async () => {
-    const mockResponse = {
-      json: vi.fn().mockRejectedValue(new SyntaxError("Unexpected token")),
-    };
-    const httpError = new HTTPError(
-      mockResponse as unknown as Response,
-      new Request("https://example.com"),
-      {} as never,
-    );
-
-    const client = {
+    const httpError = createHttpError(new Response("{"));
+    const client = createMockCommerceWebhooksClient({
       subscribeWebhook: vi.fn().mockRejectedValue(httpError),
-    } as never;
+    });
 
     await expect(
       createWebhookSubscription(client, resolvedWebhook),
@@ -610,32 +500,18 @@ describe("createWebhookSubscription", () => {
 });
 
 describe("createOrGetWebhookSubscription", () => {
-  const resolvedWebhook = {
-    webhook_method: "observer.catalog_product_save_after",
-    webhook_type: "after",
-    batch_name: "my_app_batch",
-    hook_name: "my_app_hook",
-    url: "https://example.com/hook",
-    method: "POST",
-  };
-
-  const makeLogger = () => ({
-    info: vi.fn(),
-    debug: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-  });
+  const resolvedWebhook = createMockResolvedWebhook();
 
   test("skips the API call and returns the webhook when already subscribed", async () => {
     const subscribeWebhook = vi.fn();
-    const client = { subscribeWebhook } as never;
-    const logger = makeLogger();
+    const client = makeWebhookClient(subscribeWebhook);
+    const logger = makeWebhookLogger();
 
     const result = await createOrGetWebhookSubscription(
       [resolvedWebhook],
       client,
       resolvedWebhook,
-      logger as never,
+      logger,
     );
 
     expect(subscribeWebhook).not.toHaveBeenCalled();
@@ -647,14 +523,14 @@ describe("createOrGetWebhookSubscription", () => {
 
   test("calls the API and returns the webhook when not yet subscribed", async () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
-    const client = { subscribeWebhook } as never;
-    const logger = makeLogger();
+    const client = makeWebhookClient(subscribeWebhook);
+    const logger = makeWebhookLogger();
 
     const result = await createOrGetWebhookSubscription(
       [],
       client,
       resolvedWebhook,
-      logger as never,
+      logger,
     );
 
     expect(subscribeWebhook).toHaveBeenCalledWith(resolvedWebhook);
@@ -666,8 +542,8 @@ describe("createOrGetWebhookSubscription", () => {
 
   test("treats plugin.magento.X and plugin.X as the same method when checking existing subscriptions", async () => {
     const subscribeWebhook = vi.fn();
-    const client = { subscribeWebhook } as never;
-    const logger = makeLogger();
+    const client = makeWebhookClient(subscribeWebhook);
+    const logger = makeWebhookLogger();
 
     const candidateWithMagento = {
       ...resolvedWebhook,
@@ -683,7 +559,7 @@ describe("createOrGetWebhookSubscription", () => {
       [existingWithoutMagento],
       client,
       candidateWithMagento,
-      logger as never,
+      logger,
     );
 
     expect(subscribeWebhook).not.toHaveBeenCalled();
@@ -695,8 +571,8 @@ describe("createOrGetWebhookSubscription", () => {
 
   test("treats plugin.X and plugin.magento.X as the same method when checking existing subscriptions", async () => {
     const subscribeWebhook = vi.fn();
-    const client = { subscribeWebhook } as never;
-    const logger = makeLogger();
+    const client = makeWebhookClient(subscribeWebhook);
+    const logger = makeWebhookLogger();
 
     const candidateWithoutMagento = {
       ...resolvedWebhook,
@@ -712,7 +588,7 @@ describe("createOrGetWebhookSubscription", () => {
       [existingWithMagento],
       client,
       candidateWithoutMagento,
-      logger as never,
+      logger,
     );
 
     expect(subscribeWebhook).not.toHaveBeenCalled();
@@ -734,24 +610,21 @@ describe("validateWebhookConflicts", () => {
 
   test("returns [] when config has no modification webhooks", async () => {
     const context = makeContext();
-    const config = {
-      ...configWithWebhooks,
+    const config = createMockWebhooksConfig({
       webhooks: [
-        {
+        createMockUrlWebhookEntry({
           label: "Validation Webhook",
           description: "Validation webhook",
-          category: "validation" as const,
+          category: "validation",
           webhook: {
             webhook_method: "plugin.order.api.order_created",
             webhook_type: "before",
             batch_name: "default",
             hook_name: "order_created",
-            method: "POST",
-            url: "https://example.com/hook",
           },
-        },
+        }),
       ],
-    };
+    });
 
     await expect(validateWebhookConflicts(config, context)).resolves.toEqual(
       [],
@@ -763,37 +636,33 @@ describe("validateWebhookConflicts", () => {
     const context = makeContext(vi.fn(), getWebhookList);
 
     await expect(
-      validateWebhookConflicts(configWithWebhooks, context),
+      validateWebhookConflicts(createDefaultWebhooksConfig(), context),
     ).resolves.toEqual([]);
   });
 
   test("returns [] when existing Commerce webhook belongs to this app (same batch_name and hook_name after prefix)", async () => {
     // configWithWebhooks metadata.id = "test-app-webhooks" → prefix "test_app_webhooks_"
-    const sameAppWebhook = {
-      webhook_method: "plugin.order.api.order_created",
-      webhook_type: "after",
-      batch_name: "test_app_webhooks_default",
-      hook_name: "test_app_webhooks_order_created",
-    };
+    const sameAppWebhook = createMockExistingCommerceWebhook();
     const getWebhookList = vi.fn().mockResolvedValue([sameAppWebhook]);
     const context = makeContext(vi.fn(), getWebhookList);
 
     await expect(
-      validateWebhookConflicts(configWithWebhooks, context),
+      validateWebhookConflicts(createDefaultWebhooksConfig(), context),
     ).resolves.toEqual([]);
   });
 
   test("returns a ValidationIssue with code WEBHOOK_CONFLICTS when a modification webhook conflicts with another app", async () => {
-    const conflictingWebhook = {
-      webhook_method: "plugin.order.api.order_created",
-      webhook_type: "after",
+    const conflictingWebhook = createMockExistingCommerceWebhook({
       batch_name: "other_app_default",
       hook_name: "other_app_order_created",
-    };
+    });
     const getWebhookList = vi.fn().mockResolvedValue([conflictingWebhook]);
     const context = makeContext(vi.fn(), getWebhookList);
 
-    const issues = await validateWebhookConflicts(configWithWebhooks, context);
+    const issues = await validateWebhookConflicts(
+      createDefaultWebhooksConfig(),
+      context,
+    );
 
     expect(issues).toHaveLength(1);
     expect(issues[0]).toMatchObject({
@@ -812,50 +681,40 @@ describe("validateWebhookConflicts", () => {
   });
 
   test("includes all conflicting Commerce webhooks in details.conflictedWebhooks", async () => {
-    const config = {
-      ...configWithWebhooks,
+    const config = createMockWebhooksConfig({
       webhooks: [
-        {
+        createMockRuntimeWebhookEntry({
           label: "Order Created Webhook",
           description: "First modification webhook",
-          category: "modification" as const,
           runtimeAction: "my-package/handle-order",
           webhook: {
             webhook_method: "plugin.order.api.order_created",
-            webhook_type: "after",
             batch_name: "default",
             hook_name: "order_created",
-            method: "POST",
           },
-        },
-        {
+        }),
+        createMockRuntimeWebhookEntry({
           label: "Product Save Webhook",
           description: "Second modification webhook",
-          category: "modification" as const,
           runtimeAction: "my-package/handle-product",
           webhook: {
             webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "after",
             batch_name: "products",
             hook_name: "validate",
-            method: "POST",
           },
-        },
+        }),
       ],
-    };
+    });
 
-    const conflictForFirst = {
-      webhook_method: "plugin.order.api.order_created",
-      webhook_type: "after",
+    const conflictForFirst = createMockExistingCommerceWebhook({
       batch_name: "other_app_default",
       hook_name: "other_app_order_created",
-    };
-    const conflictForSecond = {
+    });
+    const conflictForSecond = createMockExistingCommerceWebhook({
       webhook_method: "observer.catalog_product_save_after",
-      webhook_type: "after",
       batch_name: "another_app_products",
       hook_name: "another_app_validate",
-    };
+    });
 
     const getWebhookList = vi
       .fn()
@@ -887,43 +746,36 @@ describe("validateWebhookConflicts", () => {
   });
 
   test("returns [] for webhooks with category other than modification", async () => {
-    const config = {
-      ...configWithWebhooks,
+    const config = createMockWebhooksConfig({
       webhooks: [
-        {
+        createMockUrlWebhookEntry({
           label: "Append Webhook",
           description: "Append webhook",
-          category: "append" as const,
+          category: "append",
           webhook: {
             webhook_method: "plugin.order.api.order_created",
-            webhook_type: "after",
             batch_name: "default",
             hook_name: "order_created",
-            method: "POST",
-            url: "https://example.com/hook",
           },
-        },
-        {
+        }),
+        createMockUrlWebhookEntry({
           label: "No Category Webhook",
           description: "No category webhook",
+          category: undefined,
           webhook: {
             webhook_method: "plugin.order.api.order_created",
-            webhook_type: "after",
             batch_name: "default2",
             hook_name: "order_created2",
-            method: "POST",
             url: "https://example.com/hook2",
           },
-        },
+        }),
       ],
-    };
+    });
 
-    const conflictingWebhook = {
-      webhook_method: "plugin.order.api.order_created",
-      webhook_type: "after",
+    const conflictingWebhook = createMockExistingCommerceWebhook({
       batch_name: "other_app_batch",
       hook_name: "other_app_hook",
-    };
+    });
     const getWebhookList = vi.fn().mockResolvedValue([conflictingWebhook]);
     const context = makeContext(vi.fn(), getWebhookList);
 
@@ -935,14 +787,12 @@ describe("validateWebhookConflicts", () => {
 });
 
 /** Minimal valid IMS params shared across resolveDeveloperConsoleOAuthCredentials tests. */
-const BASE_IMS_PARAMS = {
+const BASE_IMS_PARAMS = createMockInstallationParams({
   AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
   AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",
   AIO_COMMERCE_AUTH_IMS_ORG_ID: "org-id",
   AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "tech-account-id",
-  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test@example.com",
-  AIO_COMMERCE_AUTH_IMS_SCOPES: "AdobeID",
-};
+});
 
 describe("resolveDeveloperConsoleOAuthCredentials", () => {
   test("returns credentials object when all values are present (string secret)", () => {

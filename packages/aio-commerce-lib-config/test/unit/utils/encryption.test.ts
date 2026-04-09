@@ -22,7 +22,7 @@ import {
   validateEncryptionKey,
 } from "#utils/encryption";
 
-describe("encryption utilities", () => {
+describe("utils/encryption", () => {
   let encryptionKey: string;
 
   beforeEach(() => {
@@ -45,6 +45,11 @@ describe("encryption utilities", () => {
     test("should generate a valid encryption key", () => {
       const key = generateEncryptionKey();
       expect(() => validateEncryptionKey(key)).not.toThrow();
+    });
+
+    test("should throw when key is valid hex but wrong length", () => {
+      const shortKey = "deadbeef".repeat(4); // 32 hex chars, needs 64
+      expect(() => validateEncryptionKey(shortKey)).toThrow();
     });
   });
 
@@ -99,6 +104,19 @@ describe("encryption utilities", () => {
   });
 
   describe("decrypt with invalid format", () => {
+    test("should throw when value does not start with encrypted prefix", () => {
+      const invalidEncrypted = "not-encrypted";
+      expect(() => decrypt(invalidEncrypted, encryptionKey)).toThrow(
+        "Invalid encrypted value. Expected value to start with 'enc:'.",
+      );
+    });
+
+    test("should throw when value is empty", () => {
+      expect(() => decrypt("", encryptionKey)).toThrow(
+        "Invalid encrypted value. Expected value to start with 'enc:'.",
+      );
+    });
+
     test("should handle invalid encrypted format gracefully", () => {
       const invalidEncrypted = "enc:invalid-format";
       expect(() => decrypt(invalidEncrypted, encryptionKey)).toThrow();

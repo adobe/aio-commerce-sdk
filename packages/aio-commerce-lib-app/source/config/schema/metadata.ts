@@ -3,6 +3,7 @@ import * as v from "valibot";
 
 import type { CommerceAppConfigOutputModel } from "./app";
 
+const MAX_ID_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 255;
 const MAX_DISPLAY_NAME_LENGTH = 50;
 
@@ -23,7 +24,13 @@ function nonEmptyString(fieldName: string) {
 
 /** The schema for the metadata of the application. */
 export const MetadataSchema = v.object({
-  id: alphaNumericOrHyphenSchema("application id (metadata.id)"),
+  id: v.pipe(
+    alphaNumericOrHyphenSchema("application id (metadata.id)"),
+    v.maxLength(
+      MAX_ID_LENGTH,
+      `The application id must not be longer than ${MAX_ID_LENGTH} characters`,
+    ),
+  ),
   displayName: v.pipe(
     nonEmptyString("application display name"),
     v.maxLength(
