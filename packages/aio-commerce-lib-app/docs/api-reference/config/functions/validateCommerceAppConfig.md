@@ -2,6 +2,18 @@
 
 ```ts
 function validateCommerceAppConfig(config: unknown): {
+  adminUiSdk?: {
+     registration: {
+        menuItems: {
+           id: string;
+           isSection?: boolean;
+           parent?: string;
+           sandbox?: string;
+           sortOrder?: number;
+           title?: string;
+        }[];
+     };
+  };
   businessConfig?: {
      schema: (
         | {
@@ -191,7 +203,7 @@ function validateCommerceAppConfig(config: unknown): {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L54)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L54)
 
 Validates a complete commerce app configuration object against the schema.
 
@@ -204,6 +216,18 @@ Validates a complete commerce app configuration object against the schema.
 ## Returns
 
 \{
+`adminUiSdk?`: \{
+`registration`: \{
+`menuItems`: \{
+`id`: `string`;
+`isSection?`: `boolean`;
+`parent?`: `string`;
+`sandbox?`: `string`;
+`sortOrder?`: `number`;
+`title?`: `string`;
+\}[];
+\};
+\};
 `businessConfig?`: \{
 `schema`: (
 \| \{

@@ -1,5 +1,20 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.2.0
+
+### Minor Changes
+
+- [#351](https://github.com/adobe/aio-commerce-sdk/pull/351) [`8af56e1`](https://github.com/adobe/aio-commerce-sdk/commit/8af56e142179b4d15249ce385bda23117003c133) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Add workspace ID to the event provider instance ID to ensure uniqueness within the IMS org.
+
+- [#372](https://github.com/adobe/aio-commerce-sdk/pull/372) [`a04ee2b`](https://github.com/adobe/aio-commerce-sdk/commit/a04ee2b511aa7169e9fcc827f8eddab6192f00ba) Thanks [@asalloum5](https://github.com/asalloum5)! - Added Admin UI SDK installation step to correctly configure extensions in Adobe Commerce instance.
+
+### Patch Changes
+
+- [#370](https://github.com/adobe/aio-commerce-sdk/pull/370) [`a627efc`](https://github.com/adobe/aio-commerce-sdk/commit/a627efc95d8176ff20a4506f9cadd828c9886d84) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Only configure the Commerce Eventing Module when it doesn't have a default provider or a workspace configuration.
+
+- Updated dependencies [[`fe79660`](https://github.com/adobe/aio-commerce-sdk/commit/fe79660a9f010b5651f36e4e9d85bb11fc856296), [`fe79660`](https://github.com/adobe/aio-commerce-sdk/commit/fe79660a9f010b5651f36e4e9d85bb11fc856296), [`eeef589`](https://github.com/adobe/aio-commerce-sdk/commit/eeef589461f9bd684ed1fcf23ff97dfeba88723e), [`3e4b765`](https://github.com/adobe/aio-commerce-sdk/commit/3e4b7657cd34ff45317d29067846a4a113a3d37f)]:
+  - @adobe/aio-commerce-lib-config@1.1.0
+
 ## 1.1.0
 
 ### Minor Changes

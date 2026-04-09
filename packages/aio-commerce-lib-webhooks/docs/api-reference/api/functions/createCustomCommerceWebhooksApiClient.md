@@ -7,7 +7,7 @@ function createCustomCommerceWebhooksApiClient<TFunctions>(
 ): ApiClientRecord<AdobeCommerceHttpClient, TFunctions>;
 ```
 
-Defined in: [lib/api-client.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-webhooks/source/lib/api-client.ts#L58)
+Defined in: [lib/api-client.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/lib/api-client.ts#L58)
 
 Creates a customized Commerce Webhooks API client with a user-specified set of endpoint functions.
 

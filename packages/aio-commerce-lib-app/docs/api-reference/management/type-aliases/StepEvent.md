@@ -8,7 +8,7 @@ type StepEvent = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L25)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L25)
 
 Base event payload for step events.
 
@@ -20,7 +20,7 @@ Base event payload for step events.
 isLeaf: boolean;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L33)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L33)
 
 Whether this is a leaf step (executable) or branch step (container).
 
@@ -32,7 +32,7 @@ Whether this is a leaf step (executable) or branch step (container).
 path: string[];
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L27)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L27)
 
 Full path to the step (e.g., ["eventing", "commerce", "providers"]).
 
@@ -44,6 +44,6 @@ Full path to the step (e.g., ["eventing", "commerce", "providers"]).
 stepName: string;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L30)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L30)
 
 Step name (last element of path, for convenience).

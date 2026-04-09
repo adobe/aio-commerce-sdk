@@ -1,6 +1,6 @@
 # `LoggerOptions`
 
-Defined in: [actions/http/middleware/logger.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages-private/common-utils/source/actions/http/middleware/logger.ts#L20)
+Defined in: [actions/http/middleware/logger.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages-private/common-utils/source/actions/http/middleware/logger.ts#L20)
 
 ## Extends
 
@@ -14,7 +14,7 @@ Defined in: [actions/http/middleware/logger.ts:20](https://github.com/adobe/aio-
 optional name: (ctx: BaseContext) => string;
 ```
 
-Defined in: [actions/http/middleware/logger.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages-private/common-utils/source/actions/http/middleware/logger.ts#L21)
+Defined in: [actions/http/middleware/logger.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages-private/common-utils/source/actions/http/middleware/logger.ts#L21)
 
 #### Parameters
 

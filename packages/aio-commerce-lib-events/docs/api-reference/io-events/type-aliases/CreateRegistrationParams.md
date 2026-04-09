@@ -6,7 +6,7 @@ type CreateRegistrationParams = v.InferInput<
 >;
 ```
 
-Defined in: [io-events/api/event-registrations/schema.ts:214](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/schema.ts#L214)
+Defined in: [io-events/api/event-registrations/schema.ts:214](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/schema.ts#L214)
 
 The parameters for creating a registration.
 

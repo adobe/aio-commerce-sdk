@@ -1,8 +1,11 @@
-# `BranchStep\<TName, TConfig, TStepCtx\>`
+# `BranchStep\<TName, TConfig, TStepCtx, TChildren\>`
 
 ```ts
-type BranchStep<TName, TConfig, TStepCtx> = StepBase<TName, TConfig> & {
-  children: AnyStep[];
+type BranchStep<TName, TConfig, TStepCtx, TChildren> = StepBase<
+  TName,
+  TConfig
+> & {
+  children: TChildren;
   context?: StepContextFactory<TStepCtx>;
   type: "branch";
   validate?: (
@@ -12,7 +15,7 @@ type BranchStep<TName, TConfig, TStepCtx> = StepBase<TName, TConfig> & {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:130](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L130)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:130](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L130)
 
 A branch step that contains children (no execution).
 
@@ -21,7 +24,7 @@ A branch step that contains children (no execution).
 ### children
 
 ```ts
-children: AnyStep[];
+children: TChildren;
 ```
 
 The children steps of this branch.
@@ -66,8 +69,9 @@ the branch has no issues at this level.
 
 ## Type Parameters
 
-| Type Parameter                                       | Default type                    |
-| ---------------------------------------------------- | ------------------------------- |
-| `TName` _extends_ `string`                           | `string`                        |
-| `TConfig` _extends_ `CommerceAppConfigOutputModel`   | `CommerceAppConfigOutputModel`  |
-| `TStepCtx` _extends_ `Record`\<`string`, `unknown`\> | `Record`\<`string`, `unknown`\> |
+| Type Parameter                                                | Default type                            |
+| ------------------------------------------------------------- | --------------------------------------- |
+| `TName` _extends_ `string`                                    | `string`                                |
+| `TConfig` _extends_ `CommerceAppConfigOutputModel`            | `CommerceAppConfigOutputModel`          |
+| `TStepCtx` _extends_ `Record`\<`string`, `unknown`\>          | `Record`\<`string`, `unknown`\>         |
+| `TChildren` _extends_ [`AnyStep`](../interfaces/AnyStep.md)[] | [`AnyStep`](../interfaces/AnyStep.md)[] |
