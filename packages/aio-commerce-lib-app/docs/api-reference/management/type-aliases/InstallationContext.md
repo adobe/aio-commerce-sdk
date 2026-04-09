@@ -16,7 +16,7 @@ type InstallationContext = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L40)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L40)
 
 Shared context available to all steps during installation.
 
@@ -28,7 +28,7 @@ Shared context available to all steps during installation.
 appData: AppData;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:42](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L42)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:42](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L42)
 
 The credentials of the app being installed
 
@@ -40,7 +40,7 @@ The credentials of the app being installed
 optional customScripts: Record<string, unknown>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L58)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L58)
 
 Custom scripts defined in the configuration (if any).
 
@@ -52,7 +52,7 @@ Custom scripts defined in the configuration (if any).
 logger: ReturnType<typeof AioLogger>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L55)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L55)
 
 Logger instance for installation logging.
 
@@ -71,7 +71,7 @@ params: RuntimeActionParams & {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L45)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L45)
 
 The raw action parameters from the App Builder runtime action.
 

@@ -6,7 +6,7 @@ type ContextBuilder<TExisting, TNew> = (
 ) => Promisable<TNew | undefined>;
 ```
 
-Defined in: [actions/http/types.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages-private/common-utils/source/actions/http/types.ts#L54)
+Defined in: [actions/http/types.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages-private/common-utils/source/actions/http/types.ts#L54)
 
 Context builder function type.
 Receives current context and returns additional context properties (sync or async).

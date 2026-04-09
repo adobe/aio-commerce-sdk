@@ -4,7 +4,7 @@
 function byScopeId(scopeId: string): SelectorByScopeId;
 ```
 
-Defined in: [config-utils.ts:558](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/config-utils.ts#L558)
+Defined in: [config-utils.ts:560](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/config-utils.ts#L560)
 
 Creates a scope selector that identifies a scope by its unique ID.
 

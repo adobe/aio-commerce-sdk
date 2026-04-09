@@ -8,7 +8,7 @@ type ExceptionOperation = {
 };
 ```
 
-Defined in: [responses/operations/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L25)
+Defined in: [responses/operations/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L25)
 
 Exception operation response
 Causes Commerce to terminate the process that triggered the original event.
@@ -21,7 +21,7 @@ Causes Commerce to terminate the process that triggered the original event.
 optional class: string;
 ```
 
-Defined in: [responses/operations/types.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L28)
+Defined in: [responses/operations/types.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L28)
 
 Specifies the exception class. If not set, \Magento\Framework\Exception\LocalizedException will be thrown.
 
@@ -33,7 +33,7 @@ Specifies the exception class. If not set, \Magento\Framework\Exception\Localize
 optional message: string;
 ```
 
-Defined in: [responses/operations/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L30)
+Defined in: [responses/operations/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L30)
 
 Specifies the exception message. If not set, fallbackErrorMessage or system default will be used.
 
@@ -45,4 +45,4 @@ Specifies the exception message. If not set, fallbackErrorMessage or system defa
 op: "exception";
 ```
 
-Defined in: [responses/operations/types.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L26)
+Defined in: [responses/operations/types.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L26)

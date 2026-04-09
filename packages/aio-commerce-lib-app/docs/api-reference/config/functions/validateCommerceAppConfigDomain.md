@@ -2,6 +2,18 @@
 
 ```ts
 function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNullable<Get<{
+  adminUiSdk?: {
+     registration: {
+        menuItems: {
+           id: string;
+           isSection?: boolean;
+           parent?: string;
+           sandbox?: string;
+           sortOrder?: number;
+           title?: string;
+        }[];
+     };
+  };
   businessConfig?: {
      schema: (
         | {
@@ -168,7 +180,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
 }, T>>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L110)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L110)
 
 Validates a specific domain configuration within the commerce app config.
 
@@ -179,9 +191,9 @@ schema for that specific domain.
 
 ## Type Parameters
 
-| Type Parameter                                                                                                                                                                                                                     | Description                                                |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `T` _extends_ \| `"metadata"` \| `"businessConfig"` \| `"eventing"` \| `"installation"` \| `"webhooks"` \| `"businessConfig.schema"` \| `"eventing.commerce"` \| `"eventing.external"` \| `"installation.customInstallationSteps"` | The type of the domain, constrained to valid domain names. |
+| Type Parameter                                                                                                                                                                                                                                       | Description                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `T` _extends_ \| `"metadata"` \| `"businessConfig"` \| `"eventing"` \| `"adminUiSdk"` \| `"installation"` \| `"webhooks"` \| `"businessConfig.schema"` \| `"eventing.commerce"` \| `"eventing.external"` \| `"installation.customInstallationSteps"` | The type of the domain, constrained to valid domain names. |
 
 ## Parameters
 
@@ -193,6 +205,18 @@ schema for that specific domain.
 ## Returns
 
 `NonNullable`\<`Get`\<\{
+`adminUiSdk?`: \{
+`registration`: \{
+`menuItems`: \{
+`id`: `string`;
+`isSection?`: `boolean`;
+`parent?`: `string`;
+`sandbox?`: `string`;
+`sortOrder?`: `number`;
+`title?`: `string`;
+\}[];
+\};
+\};
 `businessConfig?`: \{
 `schema`: (
 \| \{

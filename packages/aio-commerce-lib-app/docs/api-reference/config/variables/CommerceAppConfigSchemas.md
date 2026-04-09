@@ -2,6 +2,18 @@
 
 ```ts
 const CommerceAppConfigSchemas: {
+  adminUiSdk: ObjectSchema<{
+     registration: ObjectSchema<{
+        menuItems: ArraySchema<ObjectSchema<{
+           id: StringSchema<undefined>;
+           isSection: OptionalSchema<BooleanSchema<undefined>, undefined>;
+           parent: OptionalSchema<StringSchema<undefined>, undefined>;
+           sandbox: OptionalSchema<StringSchema<undefined>, undefined>;
+           sortOrder: OptionalSchema<NumberSchema<undefined>, undefined>;
+           title: OptionalSchema<StringSchema<undefined>, undefined>;
+        }, undefined>, undefined>;
+     }, undefined>;
+  }, undefined>;
   businessConfig: ObjectSchema<{
      schema: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<"type", [VariantSchema<"selectionMode", [..., ...], undefined>, ObjectSchema<{
         default: ...;
@@ -256,7 +268,7 @@ const CommerceAppConfigSchemas: {
   metadata: ObjectSchema<{
      description: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, MaxLengthAction<string, 255, "The metadata description must not be longer than 255 characters">]>;
      displayName: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, MaxLengthAction<string, 50, "The application display name must not be longer than 50 characters">]>;
-     id: SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, RegexAction<string, `Only alphanumeric characters and hyphens are allowed in string value of "${string}"${string}`>]>;
+     id: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, RegexAction<string, `Only alphanumeric characters and hyphens are allowed in string value of "${string}"${string}`>]>, MaxLengthAction<string, 100, "The application id must not be longer than 100 characters">]>;
      version: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, RegexAction<string, "The version must follow semantic versioning (semver) format: Major.Minor.Patch (e.g., '1.0.0', '2.3.1')">]>;
   }, undefined>;
   webhooks: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionSchema<[ObjectSchema<{
@@ -355,11 +367,28 @@ const CommerceAppConfigSchemas: {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/domains.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/config/schema/domains.ts#L36)
+Defined in: [aio-commerce-lib-app/source/config/schema/domains.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/config/schema/domains.ts#L37)
 
 The individual validatable domains of the app config.
 
 ## Type Declaration
+
+### adminUiSdk
+
+```ts
+readonly adminUiSdk: ObjectSchema<{
+  registration: ObjectSchema<{
+     menuItems: ArraySchema<ObjectSchema<{
+        id: StringSchema<undefined>;
+        isSection: OptionalSchema<BooleanSchema<undefined>, undefined>;
+        parent: OptionalSchema<StringSchema<undefined>, undefined>;
+        sandbox: OptionalSchema<StringSchema<undefined>, undefined>;
+        sortOrder: OptionalSchema<NumberSchema<undefined>, undefined>;
+        title: OptionalSchema<StringSchema<undefined>, undefined>;
+     }, undefined>, undefined>;
+  }, undefined>;
+}, undefined> = AdminUiSdkSchema;
+```
 
 ### businessConfig
 
@@ -653,7 +682,7 @@ readonly installation.customInstallationSteps: ArraySchema<ObjectSchema<{
 readonly metadata: ObjectSchema<{
   description: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, MaxLengthAction<string, 255, "The metadata description must not be longer than 255 characters">]>;
   displayName: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, MaxLengthAction<string, 50, "The application display name must not be longer than 50 characters">]>;
-  id: SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, RegexAction<string, `Only alphanumeric characters and hyphens are allowed in string value of "${string}"${string}`>]>;
+  id: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, RegexAction<string, `Only alphanumeric characters and hyphens are allowed in string value of "${string}"${string}`>]>, MaxLengthAction<string, 100, "The application id must not be longer than 100 characters">]>;
   version: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, RegexAction<string, "The version must follow semantic versioning (semver) format: Major.Minor.Patch (e.g., '1.0.0', '2.3.1')">]>;
 }, undefined> = MetadataSchema;
 ```
