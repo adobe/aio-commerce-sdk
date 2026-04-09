@@ -169,8 +169,7 @@ export function createMockIoEventsClient(
     createRegistration: vi.fn(overrides?.createRegistration),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllRegistrations: vi.fn(overrides?.getAllRegistrations),
-    updateRegistration: vi.fn(overrides?.updateRegistration),
-  } satisfies CustomAdobeIoEventsApiClient;
+  };
 }
 
 type EventingInstallationContextOverrides = Omit<

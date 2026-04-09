@@ -377,24 +377,3 @@ export async function getCommerceEventingExistingData(
 export type ExistingCommerceEventingData = Awaited<
   ReturnType<typeof getCommerceEventingExistingData>
 >;
-
-/**
- * Transforms app events into the `eventsOfInterest` format required by I/O Events registrations.
- *
- * @param events - The app events to transform
- * @param provider - The I/O Events provider containing the provider ID and metadata type
- * @param metadata - The application metadata used to namespace event names (e.g., `com.adobe.commerce.{metadata.id}.{event.name}`)
- */
-export function intoEventsOfInterest(
-  events: AppEventWithoutRuntimeActions[],
-  provider: IoEventProvider,
-  metadata: ApplicationMetadata,
-) {
-  return events.map((event) => ({
-    providerId: provider.id,
-    eventCode: getIoEventCode(
-      getNamespacedEvent(metadata, event.name),
-      provider.provider_metadata as EventProviderType,
-    ),
-  }));
-}
