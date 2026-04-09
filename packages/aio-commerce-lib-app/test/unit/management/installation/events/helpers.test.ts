@@ -576,6 +576,31 @@ describe("onboardCommerceEventing", () => {
 });
 
 describe("configureCommerceEventing", () => {
+  test("skips configuration when Commerce Eventing is already configured", async () => {
+    const { context, ioData, ioProvider } = createCommerceOnboardingScenario();
+
+    await configureCommerceEventing(
+      {
+        context,
+        config: {
+          enabled: true,
+          merchant_id: context.appData.orgName,
+          environment_id: context.appData.projectName,
+          instance_id: ioProvider.instance_id,
+          workspace_configuration: ioData.workspaceConfiguration,
+        },
+      },
+      createMockExistingCommerceEventingData({
+        isDefaultProviderConfigured: true,
+        isDefaultWorkspaceConfigurationEmpty: false,
+      }),
+    );
+
+    expect(
+      context.commerceEventsClient.updateEventingConfiguration,
+    ).not.toHaveBeenCalled();
+  });
+
   test("rethrows and logs when updating Commerce Eventing configuration returns an unsuccessful response", async () => {
     const { context, ioData, ioProvider } = createCommerceOnboardingScenario();
     const { logger } = context;
