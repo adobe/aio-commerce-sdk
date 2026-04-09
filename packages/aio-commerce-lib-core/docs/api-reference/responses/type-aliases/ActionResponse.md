@@ -6,7 +6,7 @@ type ActionResponse<TSuccessBody, TErrorBody, THeaders> =
   | ErrorResponse<TErrorBody, THeaders>;
 ```
 
-Defined in: [responses/helpers.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-core/source/responses/helpers.ts#L61)
+Defined in: [responses/helpers.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-core/source/responses/helpers.ts#L61)
 
 Union type representing either a successful or error response from a runtime action
 

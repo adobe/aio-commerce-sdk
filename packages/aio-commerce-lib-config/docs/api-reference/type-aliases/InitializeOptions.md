@@ -2,15 +2,28 @@
 
 ```ts
 type InitializeOptions = {
+  libStateOptions?: LibStateOptions;
   schema?: any[];
 };
 ```
 
-Defined in: [config-manager.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/config-manager.ts#L41)
+Defined in: [config-manager.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/config-manager.ts#L45)
 
 Options for initializing the configuration library, so that it works as expected.
 
 ## Properties
+
+### libStateOptions?
+
+```ts
+optional libStateOptions: LibStateOptions;
+```
+
+Defined in: [config-manager.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/config-manager.ts#L50)
+
+The options for initializing the Adobe State library (used for caching).
+
+---
 
 ### schema?
 
@@ -18,6 +31,6 @@ Options for initializing the configuration library, so that it works as expected
 optional schema: any[];
 ```
 
-Defined in: [config-manager.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/config-manager.ts#L43)
+Defined in: [config-manager.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/config-manager.ts#L47)
 
 Optional schema to use as the source of truth (latest version). If not provided, it will use the stored one (but only if it exists).

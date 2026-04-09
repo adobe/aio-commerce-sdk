@@ -7,7 +7,7 @@ type GetFreshScopeTreeParams = {
 };
 ```
 
-Defined in: [config-manager.ts:71](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/config-manager.ts#L71)
+Defined in: [config-manager.ts:73](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/config-manager.ts#L73)
 
 Parameters for getting the scope tree from Commerce API.
 
@@ -19,7 +19,7 @@ Parameters for getting the scope tree from Commerce API.
 commerceConfig: CommerceHttpClientParams;
 ```
 
-Defined in: [config-manager.ts:73](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/config-manager.ts#L73)
+Defined in: [config-manager.ts:75](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/config-manager.ts#L75)
 
 ---
 
@@ -29,4 +29,4 @@ Defined in: [config-manager.ts:73](https://github.com/adobe/aio-commerce-sdk/blo
 refreshData: true;
 ```
 
-Defined in: [config-manager.ts:72](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-config/source/config-manager.ts#L72)
+Defined in: [config-manager.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/config-manager.ts#L74)

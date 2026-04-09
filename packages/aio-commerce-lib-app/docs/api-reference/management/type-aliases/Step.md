@@ -6,7 +6,7 @@ type Step<TName, TConfig, TStepCtx, TOutput> =
   | BranchStep<TName, TConfig, TStepCtx>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:155](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L155)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:156](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L156)
 
 A step in the installation tree (discriminated union by `type`).
 
