@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-config`: `v1.0.3`
+# `@adobe/aio-commerce-lib-config`: `v1.1.0`
 
 This module exports configuration management utilities for the AIO Commerce SDK.
 
@@ -47,18 +47,18 @@ This module exports configuration management utilities for the AIO Commerce SDK.
 
 ## Functions
 
-| Function                                                    | Description                                                                              |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| [byCode](functions/byCode.md)                               | Creates a scope selector that identifies a scope by its code only.                       |
-| [byCodeAndLevel](functions/byCodeAndLevel.md)               | Creates a scope selector that identifies a scope by its code and level.                  |
-| [byScopeId](functions/byScopeId.md)                         | Creates a scope selector that identifies a scope by its unique ID.                       |
-| [generateEncryptionKey](functions/generateEncryptionKey.md) | Generates a new encryption key suitable for AIO_COMMERCE_CONFIG_ENCRYPTION_KEY.          |
-| [getConfiguration](functions/getConfiguration.md)           | Gets configuration for a scope.                                                          |
-| [getConfigurationByKey](functions/getConfigurationByKey.md) | Gets a specific configuration value by key for a scope.                                  |
-| [getScopeTree](functions/getScopeTree.md)                   | Gets the scope tree from cache or Commerce API.                                          |
-| [initialize](functions/initialize.md)                       | Initializes the configuration library so that it works as expected.                      |
-| [setConfiguration](functions/setConfiguration.md)           | Sets configuration values for a scope.                                                   |
-| [setCustomScopeTree](functions/setCustomScopeTree.md)       | Sets the custom scope tree, replacing all existing custom scopes with the provided ones. |
-| [syncCommerceScopes](functions/syncCommerceScopes.md)       | Syncs Commerce scopes by forcing a fresh fetch from Commerce API and updating the cache. |
-| [unsyncCommerceScopes](functions/unsyncCommerceScopes.md)   | Removes the commerce scope from the persisted scope tree.                                |
-| [validateEncryptionKey](functions/validateEncryptionKey.md) | Validates the encryption key.                                                            |
+| Function                                                    | Description                                                                                                                                                                                                                                             |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [byCode](functions/byCode.md)                               | Creates a scope selector that identifies a scope by its code only.                                                                                                                                                                                      |
+| [byCodeAndLevel](functions/byCodeAndLevel.md)               | Creates a scope selector that identifies a scope by its code and level.                                                                                                                                                                                 |
+| [byScopeId](functions/byScopeId.md)                         | Creates a scope selector that identifies a scope by its unique ID.                                                                                                                                                                                      |
+| [generateEncryptionKey](functions/generateEncryptionKey.md) | Generates a new encryption key suitable for AIO_COMMERCE_CONFIG_ENCRYPTION_KEY.                                                                                                                                                                         |
+| [getConfiguration](functions/getConfiguration.md)           | Gets configuration for a scope.                                                                                                                                                                                                                         |
+| [getConfigurationByKey](functions/getConfigurationByKey.md) | Gets a specific configuration value by key for a scope.                                                                                                                                                                                                 |
+| [getScopeTree](functions/getScopeTree.md)                   | Gets the scope tree from cache or Commerce API.                                                                                                                                                                                                         |
+| [initialize](functions/initialize.md)                       | Initializes the configuration library so that it works as expected. The schema is stored in global memory. If a schema is provided, it will be set. If no schema is provided, initialization will succeed only if a schema was previously set globally. |
+| [setConfiguration](functions/setConfiguration.md)           | Sets configuration values for a scope.                                                                                                                                                                                                                  |
+| [setCustomScopeTree](functions/setCustomScopeTree.md)       | Sets the custom scope tree, replacing all existing custom scopes with the provided ones.                                                                                                                                                                |
+| [syncCommerceScopes](functions/syncCommerceScopes.md)       | Syncs Commerce scopes by forcing a fresh fetch from Commerce API and updating the cache.                                                                                                                                                                |
+| [unsyncCommerceScopes](functions/unsyncCommerceScopes.md)   | Removes the commerce scope from the persisted scope tree.                                                                                                                                                                                               |
+| [validateEncryptionKey](functions/validateEncryptionKey.md) | Validates the encryption key.                                                                                                                                                                                                                           |

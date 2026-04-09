@@ -4,7 +4,7 @@
 const HTTP_FORBIDDEN: 403 = 403;
 ```
 
-Defined in: [aio-commerce-lib-api/source/utils/http/codes.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-api/source/utils/http/codes.ts#L35)
+Defined in: [aio-commerce-lib-api/source/utils/http/codes.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-api/source/utils/http/codes.ts#L35)
 
 The HTTP status code for a forbidden request.
 

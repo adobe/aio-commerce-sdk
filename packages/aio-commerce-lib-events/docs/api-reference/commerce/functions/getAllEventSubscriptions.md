@@ -7,7 +7,7 @@ function getAllEventSubscriptions(
 ): Promise<CommerceEventSubscriptionManyResponse>;
 ```
 
-Defined in: [commerce/api/event-subscriptions/endpoints.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/endpoints.ts#L30)
+Defined in: [commerce/api/event-subscriptions/endpoints.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/endpoints.ts#L30)
 
 Gets all event subscriptions in the Commerce instance bound to the given [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md).
 

@@ -13,7 +13,7 @@ function defineRoute<TContext, TParamsSchema, TBodySchema, TQuerySchema>(
 ): RouteConfig<string, TParamsSchema, TBodySchema, TQuerySchema, TContext>;
 ```
 
-Defined in: [actions/http/router.ts:473](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages-private/common-utils/source/actions/http/router.ts#L473)
+Defined in: [actions/http/router.ts:473](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages-private/common-utils/source/actions/http/router.ts#L473)
 
 Define a route handler separately from registration.
 Pass a router to infer context type from middleware.

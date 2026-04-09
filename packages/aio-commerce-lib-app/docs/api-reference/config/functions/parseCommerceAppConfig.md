@@ -2,6 +2,18 @@
 
 ```ts
 function parseCommerceAppConfig(cwd?: string): Promise<{
+  adminUiSdk?: {
+     registration: {
+        menuItems: {
+           id: string;
+           isSection?: boolean;
+           parent?: string;
+           sandbox?: string;
+           sortOrder?: number;
+           title?: string;
+        }[];
+     };
+  };
   businessConfig?: {
      schema: (
         | {
@@ -188,7 +200,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
 }>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:135](https://github.com/adobe/aio-commerce-sdk/blob/0bace73ed392a7067f65f99af36a006b8accb94b/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L135)
+Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:135](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L135)
 
 Read the commerce app config file and parse its contents into its schema.
 
@@ -204,6 +216,18 @@ The config file must export a default export with the configuration object.
 ## Returns
 
 `Promise`\<\{
+`adminUiSdk?`: \{
+`registration`: \{
+`menuItems`: \{
+`id`: `string`;
+`isSection?`: `boolean`;
+`parent?`: `string`;
+`sandbox?`: `string`;
+`sortOrder?`: `number`;
+`title?`: `string`;
+\}[];
+\};
+\};
 `businessConfig?`: \{
 `schema`: (
 \| \{

@@ -1,5 +1,19 @@
 # @adobe/aio-commerce-lib-config
 
+## 1.1.0
+
+### Minor Changes
+
+- [#363](https://github.com/adobe/aio-commerce-sdk/pull/363) [`eeef589`](https://github.com/adobe/aio-commerce-sdk/commit/eeef589461f9bd684ed1fcf23ff97dfeba88723e) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Schema management has been refactored to use a simple in-memory global state instead of persisting schemas to files and caching them. The `initialize()` function must now be called with a schema before using configuration functions. Previously, schemas were persisted to files and could be reused across restarts, making initialization optional.
+
+### Patch Changes
+
+- [#362](https://github.com/adobe/aio-commerce-sdk/pull/362) [`fe79660`](https://github.com/adobe/aio-commerce-sdk/commit/fe79660a9f010b5651f36e4e9d85bb11fc856296) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix a bug where the default value of the `level` in a scope selector was not used when a `level` was not given
+
+- [#362](https://github.com/adobe/aio-commerce-sdk/pull/362) [`fe79660`](https://github.com/adobe/aio-commerce-sdk/commit/fe79660a9f010b5651f36e4e9d85bb11fc856296) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix an issue with the CLI commands were `process.cwd` was not correctly being used as a fallback when the project root dir can't be found
+
+- [#376](https://github.com/adobe/aio-commerce-sdk/pull/376) [`3e4b765`](https://github.com/adobe/aio-commerce-sdk/commit/3e4b7657cd34ff45317d29067846a4a113a3d37f) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Validate edge cases when decrypting
+
 ## 1.0.3
 
 ### Patch Changes
