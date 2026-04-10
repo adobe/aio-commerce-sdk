@@ -211,7 +211,6 @@ function createInstallationHooks(
  * - POST /installation            - Start installation (creates plan, invokes execution async)
  * - POST /installation/execution  - Execute installation (internal, called async)
  * - POST /installation/validation - Pre-installation validation
- * - DELETE /installation          - Clear installation state only (no offboarding)
  * - POST /installation/uninstallation           - Start uninstallation (async)
  * - GET /installation/uninstallation            - Get current uninstallation status
  * - POST /installation/uninstallation/execution - Execute uninstallation (internal, called async)
@@ -430,22 +429,6 @@ router.get("/uninstallation", {
     logger.debug("Getting uninstallation execution status...");
     const store = await createUninstallationStore();
     return readStateFromStore(store, (msg) => logger.debug(msg));
-  },
-});
-
-/**
- * DELETE / - Clear installation state
- *
- * Removes the stored installation state without triggering any offboarding.
- * Use POST /uninstallation to run the full uninstallation workflow.
- */
-router.delete("/", {
-  handler: async (_req, { logger }) => {
-    logger.debug("Clearing installation state...");
-    const store = await createInstallationStore();
-    await store.delete(getStorageKey());
-    logger.debug("Installation state cleared");
-    return noContent();
   },
 });
 
