@@ -72,12 +72,6 @@ export type CustomInstallationStepDefinition<TResult = unknown> = {
  * ```
  */
 export function defineCustomInstallationStep<TResult = unknown>(
-  handler: CustomInstallationStepHandler<TResult>,
-): CustomInstallationStepHandler<TResult>;
-export function defineCustomInstallationStep<TResult = unknown>(
-  definition: CustomInstallationStepDefinition<TResult>,
-): CustomInstallationStepDefinition<TResult>;
-export function defineCustomInstallationStep<TResult = unknown>(
   handlerOrDefinition:
     | CustomInstallationStepHandler<TResult>
     | CustomInstallationStepDefinition<TResult>,

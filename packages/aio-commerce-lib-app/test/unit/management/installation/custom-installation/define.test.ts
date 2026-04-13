@@ -27,7 +27,9 @@ describe("defineCustomInstallationStep - function form (legacy)", () => {
       return `Hello ${config.metadata.displayName}`;
     };
 
-    const wrappedHandler = defineCustomInstallationStep(handler);
+    const wrappedHandler = defineCustomInstallationStep(
+      handler,
+    ) as CustomInstallationStepHandler<string>;
     expect(wrappedHandler).toBe(handler);
 
     const result = wrappedHandler(
@@ -43,7 +45,9 @@ describe("defineCustomInstallationStep - function form (legacy)", () => {
       throw new Error("Custom installation error");
     };
 
-    const wrappedHandler = defineCustomInstallationStep(handler);
+    const wrappedHandler = defineCustomInstallationStep(
+      handler,
+    ) as CustomInstallationStepHandler;
 
     expect(() =>
       wrappedHandler(minimalValidConfig, createMockInstallationContext()),
@@ -67,7 +71,9 @@ describe("defineCustomInstallationStep - object form", () => {
       install: (config) => `Hello ${config.metadata.displayName}`,
     };
 
-    const result = defineCustomInstallationStep(definition);
+    const result = defineCustomInstallationStep(
+      definition,
+    ) as CustomInstallationStepDefinition<string>;
     const installResult = result.install(
       minimalValidConfig,
       createMockInstallationContext(),
@@ -85,7 +91,9 @@ describe("defineCustomInstallationStep - object form", () => {
       uninstall: mockUninstall,
     };
 
-    const result = defineCustomInstallationStep(definition);
+    const result = defineCustomInstallationStep(
+      definition,
+    ) as CustomInstallationStepDefinition;
     await result.uninstall?.(
       minimalValidConfig,
       createMockInstallationContext(),
@@ -102,7 +110,9 @@ describe("defineCustomInstallationStep - object form", () => {
       install: vi.fn(),
     };
 
-    const result = defineCustomInstallationStep(definition);
+    const result = defineCustomInstallationStep(
+      definition,
+    ) as CustomInstallationStepDefinition;
     expect(result.uninstall).toBeUndefined();
   });
 
@@ -113,7 +123,9 @@ describe("defineCustomInstallationStep - object form", () => {
       },
     };
 
-    const result = defineCustomInstallationStep(definition);
+    const result = defineCustomInstallationStep(
+      definition,
+    ) as CustomInstallationStepDefinition;
 
     expect(() =>
       result.install(minimalValidConfig, createMockInstallationContext()),

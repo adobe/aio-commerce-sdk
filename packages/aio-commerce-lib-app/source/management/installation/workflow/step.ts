@@ -70,7 +70,7 @@ export type ExecutionContext<
 
 /**
  * A narrowed context available to step `validate` handlers.
- * Excludes `customScripts` — those only apply during installation `run`, not pre-flight validation.
+ * Excludes `customScripts` — those only apply during installation, not pre-flight validation.
  */
 export type ValidationContext = Omit<InstallationContext, "customScripts">;
 
@@ -133,7 +133,7 @@ export type LeafStep<
 
   /**
    * Optional uninstall handler for the step.
-   * Called during uninstallation to reverse the work done by `run`.
+   * Called during uninstallation to reverse the work done by `install`.
    * If absent, the step is silently skipped during uninstallation.
    */
   uninstall?: (
