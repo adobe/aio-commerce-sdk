@@ -38,7 +38,9 @@ import type {
   IoEventProvider,
   IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
-import type { AppEvent } from "#config/schema/eventing";
+import type { AppEvent, EventProvider } from "#config/schema/eventing";
+import type { ApplicationMetadata } from "#config/schema/metadata";
+import type { EventsExecutionContext } from "./context";
 import type {
   ConfigureCommerceEventingParams,
   CreateCommerceEventSubscriptionParams,
@@ -53,6 +55,7 @@ import type {
 import type {
   ExistingCommerceEventingData,
   ExistingIoEventsData,
+  IoEventProviderWithMetadata,
 } from "./utils";
 
 /**
@@ -626,22 +629,17 @@ export async function onboardCommerceEventing(
 }
 
 /**
- * Offboards a single event source from I/O Events by deleting, in order:
- * 1. All registrations that reference events from this provider.
- * 2. All event metadata entries on the provider.
- * 3. The provider itself.
- *
- * This is the reverse of {@link onboardIoEvents} and is called during uninstall.
- * All deletion errors are caught and logged so that uninstall remains best-effort.
- *
- * @param params - Configuration identifying the provider to offboard.
- * @param existingData - Current I/O Events data (providers and registrations).
+ * Deletes all I/O Events registrations for the given provider.
+ * Registration names are reconstructed deterministically using the same logic as during installation.
+ * Errors are caught and logged so that uninstall remains best-effort.
  */
-export async function offboardIoEvents(
-  params: OffboardEventsParams,
-  existingData: ExistingIoEventsData,
+async function deleteIoEventRegistrations(
+  providerData: IoEventProviderWithMetadata,
+  provider: EventProvider,
+  events: AppEvent[],
+  registrations: IoEventRegistration[],
+  context: EventsExecutionContext,
 ) {
-  const { context, metadata, provider, events } = params;
   const { ioEventsClient, appData, logger, params: runtimeParams } = context;
   const appCredentials = {
     consumerOrgId: appData.consumerOrgId,
@@ -649,102 +647,119 @@ export async function offboardIoEvents(
     workspaceId: appData.workspaceId,
   };
 
-  const instanceId = generateInstanceId(
-    metadata,
-    provider,
-    appData.workspaceId,
-  );
-  const { registrations } = existingData;
-
-  const providerData = existingData.providersWithMetadata.find(
-    (p) => p.instance_id === instanceId,
-  );
-
-  if (!providerData) {
-    logger.info(
-      `No I/O Events provider found with instance ID "${instanceId}", skipping offboarding.`,
-    );
-    return;
-  }
-
   // The getAllRegistrations list endpoint does not populate events_of_interest,
   // so we reconstruct the expected registration names the same way as during installation.
   const actionEventsMap = groupEventsByRuntimeActions(events);
-  const clientId = runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID;
   const registrationNames = new Set(
     Array.from(actionEventsMap.keys()).map((runtimeAction) =>
       getRegistrationName(providerData, runtimeAction),
     ),
   );
   const providerRegistrations = registrations.filter(
-    (reg) => reg.client_id === clientId && registrationNames.has(reg.name),
+    (reg) =>
+      reg.client_id === runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID &&
+      registrationNames.has(reg.name),
   );
 
   if (providerRegistrations.length === 0) {
     logger.info(
-      `No I/O Events registrations found for provider "${provider.label}" (instance ID: "${instanceId}").`,
+      `No I/O Events registrations found for provider "${provider.label}" (instance ID: "${providerData.instance_id}").`,
     );
-  } else {
-    logger.info(
-      `Deleting ${providerRegistrations.length} I/O Events registration(s) for provider "${provider.label}" (instance ID: "${instanceId}")...`,
-    );
-
-    for (const registration of providerRegistrations) {
-      logger.info(
-        `Deleting registration "${registration.name}" (ID: ${registration.id})...`,
-      );
-
-      try {
-        await ioEventsClient.deleteRegistration({
-          ...appCredentials,
-          registrationId: registration.registration_id,
-        });
-        logger.info(
-          `Deleted registration "${registration.name}" (ID: ${registration.id}).`,
-        );
-      } catch (error) {
-        logger.warn(
-          `Failed to delete registration "${registration.name}" (ID: ${registration.id}): ${stringifyError(error)}. Continuing uninstall.`,
-        );
-      }
-    }
+    return;
   }
 
-  // Delete all event metadata entries on the provider.
+  logger.info(
+    `Deleting ${providerRegistrations.length} I/O Events registration(s) for provider "${provider.label}" (instance ID: "${providerData.instance_id}")...`,
+  );
+
+  for (const registration of providerRegistrations) {
+    logger.info(
+      `Deleting registration "${registration.name}" (ID: ${registration.id})...`,
+    );
+
+    try {
+      await ioEventsClient.deleteRegistration({
+        ...appCredentials,
+        registrationId: registration.registration_id,
+      });
+      logger.info(
+        `Deleted registration "${registration.name}" (ID: ${registration.id}).`,
+      );
+    } catch (error) {
+      logger.warn(
+        `Failed to delete registration "${registration.name}" (ID: ${registration.id}): ${stringifyError(error)}. Continuing uninstall.`,
+      );
+    }
+  }
+}
+
+/**
+ * Deletes all event metadata entries from the given I/O Events provider.
+ * Errors are caught and logged so that uninstall remains best-effort.
+ */
+async function deleteIoEventMetadata(
+  providerData: IoEventProviderWithMetadata,
+  provider: EventProvider,
+  context: EventsExecutionContext,
+) {
+  const { ioEventsClient, appData, logger } = context;
+  const appCredentials = {
+    consumerOrgId: appData.consumerOrgId,
+    projectId: appData.projectId,
+    workspaceId: appData.workspaceId,
+  };
+
   const eventMetadataList = providerData.metadata ?? [];
 
   if (eventMetadataList.length === 0) {
     logger.info(
       `No event metadata found for provider "${provider.label}" (ID: ${providerData.id}).`,
     );
-  } else {
-    logger.info(
-      `Deleting ${eventMetadataList.length} event metadata entry(s) for provider "${provider.label}" (ID: ${providerData.id})...`,
-    );
-
-    for (const metadata of eventMetadataList) {
-      logger.info(
-        `Deleting event metadata "${metadata.event_code}" from provider "${providerData.id}"...`,
-      );
-
-      try {
-        await ioEventsClient.deleteEventMetadataForProvider({
-          ...appCredentials,
-          providerId: providerData.id,
-          eventCode: metadata.event_code,
-        });
-        logger.info(
-          `Deleted event metadata "${metadata.event_code}" from provider "${providerData.id}".`,
-        );
-      } catch (error) {
-        logger.warn(
-          `Failed to delete event metadata "${metadata.event_code}" from provider "${providerData.id}": ${stringifyError(error)}. Continuing uninstall.`,
-        );
-      }
-    }
+    return;
   }
 
-  // Delete the provider itself.
+  logger.info(
+    `Deleting ${eventMetadataList.length} event metadata entry(s) for provider "${provider.label}" (ID: ${providerData.id})...`,
+  );
+
+  for (const eventMetadata of eventMetadataList) {
+    logger.info(
+      `Deleting event metadata "${eventMetadata.event_code}" from provider "${providerData.id}"...`,
+    );
+
+    try {
+      await ioEventsClient.deleteEventMetadataForProvider({
+        ...appCredentials,
+        providerId: providerData.id,
+        eventCode: eventMetadata.event_code,
+      });
+      logger.info(
+        `Deleted event metadata "${eventMetadata.event_code}" from provider "${providerData.id}".`,
+      );
+    } catch (error) {
+      logger.warn(
+        `Failed to delete event metadata "${eventMetadata.event_code}" from provider "${providerData.id}": ${stringifyError(error)}. Continuing uninstall.`,
+      );
+    }
+  }
+}
+
+/**
+ * Deletes a single I/O Events provider.
+ * Errors are caught and logged so that uninstall remains best-effort.
+ */
+async function deleteIoEventProvider(
+  providerData: IoEventProviderWithMetadata,
+  provider: EventProvider,
+  context: EventsExecutionContext,
+) {
+  const { ioEventsClient, appData, logger } = context;
+  const appCredentials = {
+    consumerOrgId: appData.consumerOrgId,
+    projectId: appData.projectId,
+    workspaceId: appData.workspaceId,
+  };
+
   logger.info(
     `Deleting I/O Events provider "${provider.label}" (ID: ${providerData.id})...`,
   );
@@ -765,24 +780,65 @@ export async function offboardIoEvents(
 }
 
 /**
- * Offboards Commerce eventing for a single provider. Performs the following steps in order:
- * 1. Unsubscribes all event subscriptions that were created for the given provider.
- * 2. Deletes the Commerce-side event provider itself.
+ * Offboards a single event source from I/O Events by deleting, in order:
+ * 1. All registrations that reference events from this provider.
+ * 2. All event metadata entries on the provider.
+ * 3. The provider itself.
  *
- * Subscriptions are matched by their namespaced name, which is deterministic and built the
- * same way as during {@link onboardCommerceEventing}. The provider is matched by its
- * `instance_id`. Missing subscriptions or providers are silently skipped. All errors are
- * caught and logged so that uninstall remains best-effort.
+ * This is the reverse of {@link onboardIoEvents} and is called during uninstall.
+ * All deletion errors are caught and logged so that uninstall remains best-effort.
  *
- * @param params - Configuration identifying the provider and its events to offboard.
- * @param existingData - Current Commerce eventing data (providers and subscriptions).
+ * @param params - Configuration identifying the provider to offboard.
+ * @param existingData - Current I/O Events data (providers and registrations).
  */
-export async function offboardCommerceEventing(
+export async function offboardIoEvents(
   params: OffboardEventsParams,
-  existingData: ExistingCommerceEventingData,
+  existingData: ExistingIoEventsData,
 ) {
   const { context, metadata, provider, events } = params;
-  const { appData, commerceEventsClient, logger } = context;
+  const { appData, logger } = context;
+
+  const instanceId = generateInstanceId(
+    metadata,
+    provider,
+    appData.workspaceId,
+  );
+
+  const providerData = existingData.providersWithMetadata.find(
+    (p) => p.instance_id === instanceId,
+  );
+
+  if (!providerData) {
+    logger.info(
+      `No I/O Events provider found with instance ID "${instanceId}", skipping offboarding.`,
+    );
+    return;
+  }
+
+  await deleteIoEventRegistrations(
+    providerData,
+    provider,
+    events,
+    existingData.registrations,
+    context,
+  );
+  await deleteIoEventMetadata(providerData, provider, context);
+  await deleteIoEventProvider(providerData, provider, context);
+}
+
+/**
+ * Deletes all Commerce event subscriptions for the given events.
+ * Subscriptions are matched by their namespaced name, built the same way as during installation.
+ * Errors are caught and logged so that uninstall remains best-effort.
+ */
+async function deleteCommerceEventSubscriptions(
+  events: AppEvent[],
+  metadata: ApplicationMetadata,
+  provider: EventProvider,
+  existingSubscriptions: Map<string, CommerceEventSubscription>,
+  context: EventsExecutionContext,
+) {
+  const { commerceEventsClient, logger } = context;
 
   logger.info(
     `Unsubscribing Commerce event subscriptions for provider "${provider.label}"...`,
@@ -791,7 +847,7 @@ export async function offboardCommerceEventing(
   for (const event of events) {
     const eventName = getNamespacedEvent(metadata, event.name);
 
-    if (!existingData.subscriptions.has(eventName)) {
+    if (!existingSubscriptions.has(eventName)) {
       logger.info(
         `No Commerce subscription found for event "${event.name}" (namespaced: "${eventName}"), skipping.`,
       );
@@ -813,14 +869,28 @@ export async function offboardCommerceEventing(
       );
     }
   }
+}
 
-  // Delete the Commerce-side event provider itself (subscriptions must be removed first).
+/**
+ * Deletes a single Commerce-side event provider.
+ * The provider is matched by its deterministic `instance_id`. If not found, deletion is skipped.
+ * Errors are caught and logged so that uninstall remains best-effort.
+ */
+async function deleteCommerceEventProvider(
+  metadata: ApplicationMetadata,
+  provider: EventProvider,
+  existingProviders: CommerceEventProvider[],
+  context: EventsExecutionContext,
+) {
+  const { commerceEventsClient, appData, logger } = context;
+
   const instanceId = generateInstanceId(
     metadata,
     provider,
     appData.workspaceId,
   );
-  const commerceProvider = existingData.providers.find(
+
+  const commerceProvider = existingProviders.find(
     (p) => p.instance_id === instanceId,
   );
 
@@ -847,4 +917,38 @@ export async function offboardCommerceEventing(
       `Failed to delete Commerce event provider "${provider.label}" (provider_id: ${commerceProvider.provider_id}): ${stringifyError(error)}. Continuing uninstall.`,
     );
   }
+}
+
+/**
+ * Offboards Commerce eventing for a single provider. Performs the following steps in order:
+ * 1. Unsubscribes all event subscriptions that were created for the given provider.
+ * 2. Deletes the Commerce-side event provider itself.
+ *
+ * Subscriptions are matched by their namespaced name, which is deterministic and built the
+ * same way as during {@link onboardCommerceEventing}. The provider is matched by its
+ * `instance_id`. Missing subscriptions or providers are silently skipped. All errors are
+ * caught and logged so that uninstall remains best-effort.
+ *
+ * @param params - Configuration identifying the provider and its events to offboard.
+ * @param existingData - Current Commerce eventing data (providers and subscriptions).
+ */
+export async function offboardCommerceEventing(
+  params: OffboardEventsParams,
+  existingData: ExistingCommerceEventingData,
+) {
+  const { context, metadata, provider, events } = params;
+
+  await deleteCommerceEventSubscriptions(
+    events,
+    metadata,
+    provider,
+    existingData.subscriptions,
+    context,
+  );
+  await deleteCommerceEventProvider(
+    metadata,
+    provider,
+    existingData.providers,
+    context,
+  );
 }

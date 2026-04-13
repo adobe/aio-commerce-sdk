@@ -238,6 +238,52 @@ function createCommerceOnboardingScenario({
   };
 }
 
+function createIoOffboardingScenario({
+  context,
+  metadata,
+  provider,
+  event,
+}: {
+  context?: EventsExecutionContext;
+  metadata?: ReturnType<typeof createMockMetadata>;
+  provider?: EventProvider;
+  event?: MockCommerceEvent;
+} = {}) {
+  const resolvedContext = context ?? createDefaultEventingContext();
+  const resolvedMetadata = metadata ?? createDefaultMetadata();
+  const resolvedProvider = provider ?? createDefaultProvider();
+  const resolvedEvent = event ?? createDefaultCommerceEvent();
+
+  const ioProvider = createExistingIoProvider(
+    resolvedContext,
+    resolvedMetadata,
+    resolvedProvider,
+    { id: "io-provider-1" },
+  );
+
+  const registrationName = getRegistrationName(
+    ioProvider,
+    resolvedEvent.runtimeActions[0],
+  );
+
+  const params = {
+    context: resolvedContext,
+    metadata: resolvedMetadata,
+    provider: resolvedProvider,
+    events: [resolvedEvent],
+  };
+
+  return {
+    context: resolvedContext,
+    metadata: resolvedMetadata,
+    provider: resolvedProvider,
+    event: resolvedEvent,
+    ioProvider,
+    registrationName,
+    params,
+  };
+}
+
 describe("onboardIoEvents", () => {
   test("creates missing I/O Events provider, metadata, and registration with app credentials", async () => {
     const { metadata, provider, context, event, input } =
@@ -631,27 +677,9 @@ describe("configureCommerceEventing", () => {
 
 describe("offboardIoEvents", () => {
   test("deletes registrations matched by name and client_id when events_of_interest is empty", async () => {
-    const context = createDefaultEventingContext();
-    const metadata = createDefaultMetadata();
-    const provider = createDefaultProvider();
-    const event = createDefaultCommerceEvent();
+    const { context, params, ioProvider, registrationName } =
+      createIoOffboardingScenario();
 
-    const instanceId = generateInstanceId(
-      metadata,
-      provider,
-      context.appData.workspaceId,
-    );
-    const ioProvider = createMockIoEventProvider({
-      id: "io-provider-1",
-      instance_id: instanceId,
-      provider_metadata: COMMERCE_PROVIDER_TYPE,
-      label: provider.label,
-    });
-
-    const registrationName = getRegistrationName(
-      ioProvider,
-      event.runtimeActions[0],
-    );
     const registration = createMockIoEventRegistration({
       registration_id: "test-registration-uuid",
       name: registrationName,
@@ -660,7 +688,7 @@ describe("offboardIoEvents", () => {
     });
 
     await offboardIoEvents(
-      { context, metadata, provider, events: [event] },
+      params,
       createMockExistingIoEventsData({
         providersWithMetadata: [{ ...ioProvider, metadata: [] }],
         registrations: [registration],
@@ -671,27 +699,9 @@ describe("offboardIoEvents", () => {
   });
 
   test("calls deleteRegistration with registration_id not id", async () => {
-    const context = createDefaultEventingContext();
-    const metadata = createDefaultMetadata();
-    const provider = createDefaultProvider();
-    const event = createDefaultCommerceEvent();
+    const { context, params, ioProvider, registrationName } =
+      createIoOffboardingScenario();
 
-    const instanceId = generateInstanceId(
-      metadata,
-      provider,
-      context.appData.workspaceId,
-    );
-    const ioProvider = createMockIoEventProvider({
-      id: "io-provider-1",
-      instance_id: instanceId,
-      provider_metadata: COMMERCE_PROVIDER_TYPE,
-      label: provider.label,
-    });
-
-    const registrationName = getRegistrationName(
-      ioProvider,
-      event.runtimeActions[0],
-    );
     const registration = createMockIoEventRegistration({
       id: "616664",
       registration_id: "correct-uuid-for-api",
@@ -701,7 +711,7 @@ describe("offboardIoEvents", () => {
     });
 
     await offboardIoEvents(
-      { context, metadata, provider, events: [event] },
+      params,
       createMockExistingIoEventsData({
         providersWithMetadata: [{ ...ioProvider, metadata: [] }],
         registrations: [registration],
@@ -716,31 +726,18 @@ describe("offboardIoEvents", () => {
   });
 
   test("skips registrations that do not match the current client_id or name", async () => {
-    const context = createDefaultEventingContext();
-    const metadata = createDefaultMetadata();
-    const provider = createDefaultProvider();
-    const event = createDefaultCommerceEvent();
-
-    const instanceId = generateInstanceId(
-      metadata,
-      provider,
-      context.appData.workspaceId,
-    );
-    const ioProvider = createMockIoEventProvider({
-      id: "io-provider-1",
-      instance_id: instanceId,
-      provider_metadata: COMMERCE_PROVIDER_TYPE,
-    });
+    const { context, params, ioProvider, registrationName } =
+      createIoOffboardingScenario();
 
     const foreignRegistration = createMockIoEventRegistration({
       registration_id: "foreign-uuid",
-      name: getRegistrationName(ioProvider, event.runtimeActions[0]),
+      name: registrationName,
       client_id: "other-client-id",
       events_of_interest: [],
     });
 
     await offboardIoEvents(
-      { context, metadata, provider, events: [event] },
+      params,
       createMockExistingIoEventsData({
         providersWithMetadata: [{ ...ioProvider, metadata: [] }],
         registrations: [foreignRegistration],

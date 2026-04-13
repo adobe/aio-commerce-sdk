@@ -394,6 +394,10 @@ export type ExistingIoEventsData = Awaited<
   ReturnType<typeof getIoEventsExistingData>
 >;
 
+/** A single I/O Events provider with its event metadata, as returned by {@link getIoEventsExistingData}. */
+export type IoEventProviderWithMetadata =
+  ExistingIoEventsData["providersWithMetadata"][number];
+
 /**
  * Retrieves the current existing Commerce eventing data and returns it in a normalized way.
  * @param context - The execution context.
