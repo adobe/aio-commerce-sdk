@@ -214,7 +214,6 @@ export function findExistingSubscription(
  *
  * @param initialParams - Initial Commerce Eventing configuration parameters.
  * @param existingData - Existing Commerce Eventing state from the API.
- * @param logger - Logger used to report the branch that was chosen.
  */
 export function getCommerceEventingConfigurationUpdateParams(
   initialParams: UpdateEventingConfigurationParams,
