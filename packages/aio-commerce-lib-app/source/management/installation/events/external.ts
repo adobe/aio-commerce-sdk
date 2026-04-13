@@ -16,8 +16,12 @@ import { defineLeafStep } from "#management/installation/workflow/step";
 import { onboardIoEvents } from "./helpers";
 import { EXTERNAL_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
 
+import type { ExternalEventsConfig } from "#config/schema/eventing";
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { EventsExecutionContext } from "./context";
+
+/** The output data of the External Eventing step (auto-inferred). */
+export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;
 
 /** Leaf step for installing external event sources. */
 export const externalEventsStep = defineLeafStep({
@@ -28,47 +32,51 @@ export const externalEventsStep = defineLeafStep({
   },
 
   when: hasExternalEvents,
-  run: async (config, context: EventsExecutionContext) => {
-    const { logger } = context;
-    logger.debug(
-      "Starting installation of External Events with config:",
-      config,
-    );
-
-    // biome-ignore lint/suspicious/noEvolvingTypes: We want the type to be auto-inferred
-    const stepData = [];
-    const existingIoEventsData = await getIoEventsExistingData(context);
-
-    for (const { provider, events } of config.eventing.external) {
-      const { providerData, eventsData } = await onboardIoEvents(
-        {
-          context,
-          metadata: config.metadata,
-          provider,
-          events,
-          providerType: EXTERNAL_PROVIDER_TYPE,
-        },
-        existingIoEventsData,
-      );
-
-      stepData.push({
-        provider: {
-          config: provider,
-          data: {
-            ioEvents: providerData,
-            events: {
-              config: events,
-              data: eventsData,
-            },
-          },
-        },
-      });
-    }
-
-    logger.debug("Completed External Events installation step.");
-    return stepData;
-  },
+  run: createExternalEvents,
 });
 
-/** The output data of the External Eventing step (auto-inferred). */
-export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;
+/**
+ * Creates all needed entities for External Events to work with Adobe I/O Events.
+ * @param config - The configuration of the app, with external events.
+ * @param context - The execution context for the events installation.
+ */
+async function createExternalEvents(
+  config: ExternalEventsConfig,
+  context: EventsExecutionContext,
+) {
+  const { logger } = context;
+  logger.debug("Starting installation of External Events with config:", config);
+
+  // biome-ignore lint/suspicious/noEvolvingTypes: We want the type to be auto-inferred
+  const stepData = [];
+  const existingIoEventsData = await getIoEventsExistingData(context);
+
+  for (const { provider, events } of config.eventing.external) {
+    const { providerData, eventsData } = await onboardIoEvents(
+      {
+        context,
+        metadata: config.metadata,
+        provider,
+        events,
+        providerType: EXTERNAL_PROVIDER_TYPE,
+      },
+      existingIoEventsData,
+    );
+
+    stepData.push({
+      provider: {
+        config: provider,
+        data: {
+          ioEvents: providerData,
+          events: {
+            config: events,
+            data: eventsData,
+          },
+        },
+      },
+    });
+  }
+
+  logger.debug("Completed External Events installation step.");
+  return stepData;
+}

@@ -13,6 +13,7 @@
 import { describe, expect, test, vi } from "vitest";
 
 import {
+  configureCommerceEventing,
   onboardCommerceEventing,
   onboardIoEvents,
 } from "#management/installation/events/helpers";
@@ -481,10 +482,6 @@ describe("onboardCommerceEventing", () => {
       provider_id: existingCommerceProvider.id,
     });
 
-    vi.mocked(
-      commerceEventsClient.updateEventingConfiguration,
-    ).mockResolvedValue(true);
-
     const result = await onboardCommerceEventing(
       {
         context,
@@ -493,6 +490,7 @@ describe("onboardCommerceEventing", () => {
         ioData,
       },
       createMockExistingCommerceEventingData({
+        isDefaultProviderConfigured: true,
         isDefaultWorkspaceConfigurationEmpty: false,
         providers: [existingCommerceProvider],
         subscriptions: new Map([
@@ -510,181 +508,8 @@ describe("onboardCommerceEventing", () => {
     });
 
     expect(result.subscriptions).toEqual([existingSubscription]);
-
-    expect(
-      commerceEventsClient.updateEventingConfiguration,
-    ).toHaveBeenCalledWith(
-      expect.objectContaining({
-        // We should always ensure enabled is set to true.
-        enabled: true,
-      }),
-    );
-
-    expect(
-      commerceEventsClient.updateEventingConfiguration,
-    ).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        workspace_configuration: expect.any(String),
-      }),
-    );
-
     expect(commerceEventsClient.createEventProvider).not.toHaveBeenCalled();
     expect(commerceEventsClient.createEventSubscription).not.toHaveBeenCalled();
-  });
-
-  test("skips configuration when provider is configured and workspace exists", async () => {
-    const { context, metadata, provider, event, ioProvider, ioData } =
-      createCommerceOnboardingScenario();
-
-    const { commerceEventsClient } = context;
-    const existingCommerceProvider = createMockCommerceEventProvider({
-      provider_id: ioProvider.id,
-      label: ioProvider.label,
-      description: ioProvider.description,
-      instance_id: ioProvider.instance_id,
-      workspace_configuration: JSON.stringify(
-        createMockWorkspaceConfiguration(),
-      ),
-    });
-
-    const existingSubscription = createMockCommerceEventSubscription({
-      name: getNamespacedEvent(metadata, event.name),
-      provider_id: existingCommerceProvider.id,
-    });
-
-    const result = await onboardCommerceEventing(
-      {
-        context,
-        metadata,
-        provider,
-        ioData,
-      },
-      createMockExistingCommerceEventingData({
-        isDefaultProviderConfigured: true,
-        isDefaultWorkspaceConfigurationEmpty: false,
-        providers: [existingCommerceProvider],
-        subscriptions: new Map([
-          [existingSubscription.name, existingSubscription],
-        ]),
-      }),
-    );
-
-    expect(result.commerceProvider).toBeDefined();
-    expect(result.subscriptions).toEqual([existingSubscription]);
-    expect(
-      commerceEventsClient.updateEventingConfiguration,
-    ).not.toHaveBeenCalled();
-  });
-
-  test("sends only workspace configuration when provider is configured but workspace is empty", async () => {
-    const { context, metadata, provider, ioProvider, ioData } =
-      createCommerceOnboardingScenario();
-
-    const existingCommerceProvider = createMockCommerceEventProvider({
-      provider_id: ioProvider.id,
-      label: ioProvider.label,
-      description: ioProvider.description,
-      instance_id: ioProvider.instance_id,
-    });
-
-    vi.mocked(
-      context.commerceEventsClient.updateEventingConfiguration,
-    ).mockResolvedValue(true);
-
-    vi.mocked(
-      context.commerceEventsClient.createEventSubscription,
-    ).mockResolvedValue(undefined);
-
-    await onboardCommerceEventing(
-      {
-        context,
-        metadata,
-        provider,
-        ioData,
-      },
-      createMockExistingCommerceEventingData({
-        isDefaultProviderConfigured: true,
-        isDefaultWorkspaceConfigurationEmpty: true,
-        providers: [existingCommerceProvider],
-      }),
-    );
-
-    expect(
-      context.commerceEventsClient.updateEventingConfiguration,
-    ).toHaveBeenCalledWith({
-      workspace_configuration: expect.any(String),
-      enabled: true,
-    });
-  });
-
-  test("requires workspace configuration when there is no existing default configuration", async () => {
-    const { context, metadata, provider, ioData } =
-      createCommerceOnboardingScenario({
-        workspaceConfiguration: "",
-      });
-
-    await expect(
-      onboardCommerceEventing(
-        {
-          context,
-          metadata,
-          provider,
-          ioData: {
-            ...ioData,
-            events: [],
-          },
-        },
-        createMockExistingCommerceEventingData({
-          isDefaultWorkspaceConfigurationEmpty: true,
-        }),
-      ),
-    ).rejects.toThrow();
-
-    expect(
-      context.commerceEventsClient.updateEventingConfiguration,
-    ).not.toHaveBeenCalled();
-  });
-
-  test("updates workspace configuration when the default is not configured yet", async () => {
-    const { context, metadata, provider, ioProvider, ioData } =
-      createCommerceOnboardingScenario();
-
-    const existingCommerceProvider = createMockCommerceEventProvider({
-      provider_id: ioProvider.id,
-      label: ioProvider.label,
-      description: ioProvider.description,
-      instance_id: ioProvider.instance_id,
-    });
-
-    vi.mocked(
-      context.commerceEventsClient.updateEventingConfiguration,
-    ).mockResolvedValue(true);
-
-    vi.mocked(
-      context.commerceEventsClient.createEventSubscription,
-    ).mockResolvedValue(undefined);
-
-    await onboardCommerceEventing(
-      {
-        context,
-        metadata,
-        provider,
-        ioData,
-      },
-      createMockExistingCommerceEventingData({
-        isDefaultWorkspaceConfigurationEmpty: true,
-        providers: [existingCommerceProvider],
-      }),
-    );
-
-    expect(
-      context.commerceEventsClient.updateEventingConfiguration,
-    ).toHaveBeenCalledWith(
-      expect.objectContaining({
-        workspace_configuration: expect.any(String),
-        enabled: true,
-      }),
-    );
   });
 
   test("rethrows and logs when creating a Commerce provider fails", async () => {
@@ -692,10 +517,6 @@ describe("onboardCommerceEventing", () => {
       createCommerceOnboardingScenario();
 
     const { logger } = context;
-    vi.mocked(
-      context.commerceEventsClient.updateEventingConfiguration,
-    ).mockResolvedValue(true);
-
     vi.mocked(
       context.commerceEventsClient.createEventProvider,
     ).mockRejectedValue(new Error("provider creation failed"));
@@ -732,10 +553,6 @@ describe("onboardCommerceEventing", () => {
     });
 
     vi.mocked(
-      context.commerceEventsClient.updateEventingConfiguration,
-    ).mockResolvedValue(true);
-
-    vi.mocked(
       context.commerceEventsClient.createEventSubscription,
     ).mockRejectedValue(new Error("subscription creation failed"));
 
@@ -756,25 +573,51 @@ describe("onboardCommerceEventing", () => {
 
     expect(logger.error).toHaveBeenCalledWith(expect.any(String));
   });
+});
+
+describe("configureCommerceEventing", () => {
+  test("skips configuration when Commerce Eventing is already configured", async () => {
+    const { context, ioData, ioProvider } = createCommerceOnboardingScenario();
+
+    await configureCommerceEventing(
+      {
+        context,
+        config: {
+          enabled: true,
+          merchant_id: context.appData.orgName,
+          environment_id: context.appData.projectName,
+          instance_id: ioProvider.instance_id,
+          workspace_configuration: ioData.workspaceConfiguration,
+        },
+      },
+      createMockExistingCommerceEventingData({
+        isDefaultProviderConfigured: true,
+        isDefaultWorkspaceConfigurationEmpty: false,
+      }),
+    );
+
+    expect(
+      context.commerceEventsClient.updateEventingConfiguration,
+    ).not.toHaveBeenCalled();
+  });
 
   test("rethrows and logs when updating Commerce Eventing configuration returns an unsuccessful response", async () => {
-    const { context, metadata, provider, ioData } =
-      createCommerceOnboardingScenario();
-
+    const { context, ioData, ioProvider } = createCommerceOnboardingScenario();
     const { logger } = context;
     vi.mocked(
       context.commerceEventsClient.updateEventingConfiguration,
     ).mockResolvedValue(false);
 
     await expect(
-      onboardCommerceEventing(
+      configureCommerceEventing(
         {
           context,
-          metadata,
-          provider,
-          ioData: {
-            ...ioData,
-            events: [],
+          config: {
+            enabled: true,
+            merchant_id: context.appData.orgName,
+            environment_id: context.appData.projectName,
+            instance_id: ioProvider.instance_id,
+            workspace_configuration: ioData.workspaceConfiguration,
           },
         },
         createMockExistingCommerceEventingData(),
