@@ -236,3 +236,29 @@ export function createCommerceEventConfig(
     },
   };
 }
+
+export function createConfigWithTwoCommerceEventingSources() {
+  return {
+    ...configWithCommerceEventing,
+    eventing: {
+      commerce: [
+        ...configWithCommerceEventing.eventing.commerce,
+        {
+          provider: {
+            label: "Second Commerce Events Provider",
+            description: "Provides additional commerce events",
+          },
+          events: [
+            {
+              name: "plugin.order_cancelled",
+              label: "Order Cancelled",
+              fields: [{ name: "order_id" }],
+              runtimeActions: ["my-package/handle-order-cancelled"],
+              description: "Triggered when an order is cancelled",
+            },
+          ],
+        },
+      ],
+    },
+  } satisfies CommerceAppConfigOutputModel;
+}

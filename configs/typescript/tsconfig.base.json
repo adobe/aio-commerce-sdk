@@ -8,11 +8,12 @@
 
   "compilerOptions": {
     "rootDir": "${configDir}",
-    "baseUrl": "${configDir}",
     "outDir": "${configDir}/dist",
 
     "module": "ESNext",
     "moduleResolution": "bundler",
+
+    "types": ["node"],
 
     "allowJs": false,
     "noImplicitThis": true,

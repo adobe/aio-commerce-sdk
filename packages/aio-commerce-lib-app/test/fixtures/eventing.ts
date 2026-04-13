@@ -5,6 +5,7 @@ import { createMockInstallationContext } from "./installation";
 import type {
   CommerceEventProvider,
   CommerceEventSubscription,
+  UpdateEventingConfigurationParams,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   IoEventMetadata,
@@ -134,6 +135,19 @@ export function createMockCommerceEventSubscription(
     destination: "default",
     priority: false,
     hipaa_audit_required: false,
+    ...overrides,
+  };
+}
+
+export function createMockUpdateEventingConfigurationParams(
+  overrides: Partial<UpdateEventingConfigurationParams> = {},
+): UpdateEventingConfigurationParams {
+  return {
+    enabled: true,
+    merchant_id: "test-org-name",
+    environment_id: "test-project-name",
+    instance_id: "test-instance-id",
+    workspace_configuration: '{"project":{}}',
     ...overrides,
   };
 }

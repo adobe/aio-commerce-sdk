@@ -19,6 +19,7 @@ import {
   findExistingRegistrations,
   findExistingSubscription,
   generateInstanceId,
+  getCommerceEventingConfigurationUpdateParams,
   getIoEventCode,
   getNamespacedEvent,
   getRegistrationDescription,
@@ -30,7 +31,6 @@ import type {
   CommerceEventProvider,
   CommerceEventSubscription,
   EventSubscriptionCreateParams,
-  UpdateEventingConfigurationParams,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   EventProviderType,
@@ -297,22 +297,23 @@ async function createOrGetIoEventRegistration(
 
 /**
  * Ensures Commerce Eventing is configured with the given configuration, updating it if it already exists.
- * @param eventsClient
- * @param params
- * @param existingData
+ * @param params - The parameters necessary to configure Commerce Eventing.
+ * @param existingData - Existing Commerce Eventing data.
  */
-async function configureCommerceEventing(
+export async function configureCommerceEventing(
   params: ConfigureCommerceEventingParams,
   existingData: ExistingCommerceEventingData,
 ) {
   const { context, config } = params;
   const { commerceEventsClient, logger } = context;
-  const { isDefaultProviderConfigured, isDefaultWorkspaceConfigurationEmpty } =
-    existingData;
 
   logger.info("Starting configuration of the Commerce Eventing Module");
+  const updateParams = getCommerceEventingConfigurationUpdateParams(
+    config,
+    existingData,
+  );
 
-  if (isDefaultProviderConfigured && !isDefaultWorkspaceConfigurationEmpty) {
+  if (updateParams === null) {
     logger.info(
       "Commerce Eventing Module is already configured, skipping configuration step.",
     );
@@ -320,35 +321,9 @@ async function configureCommerceEventing(
     return;
   }
 
-  const { workspace_configuration, ...configWithoutWorkspace } = config;
-  let updateParams: UpdateEventingConfigurationParams = { enabled: true };
-
-  if (isDefaultWorkspaceConfigurationEmpty) {
-    if (!workspace_configuration) {
-      const message =
-        "Workspace configuration is required to enable Commerce Eventing when there is not an existing one.";
-
-      logger.error(message);
-      throw new Error(message);
-    }
-
-    // Not configured, add to payload.
-    updateParams.workspace_configuration = workspace_configuration;
-    logger.info(
-      "Adding workspace configuration to Commerce Eventing configuration as it has not been set up yet.",
-    );
-  }
-
-  if (!isDefaultProviderConfigured) {
-    logger.info(
-      "Default provider not configured, it will be created with the provided configuration.",
-    );
-
-    updateParams = {
-      ...updateParams,
-      ...configWithoutWorkspace,
-    };
-  }
+  logger.info(
+    `Updating Commerce Eventing Module configuration with the following data: [${Object.keys(updateParams).join(", ")}]`,
+  );
 
   return commerceEventsClient
     .updateEventingConfiguration(updateParams)
@@ -528,6 +503,7 @@ export async function onboardIoEvents<EventType extends AppEvent>(
     provider,
     context.appData.workspaceId,
   );
+
   const providerData = await createOrGetIoEventProvider(
     {
       context,
@@ -615,17 +591,6 @@ export async function onboardCommerceEventing(
 
   const instanceId = provider.instance_id;
   const subscriptions: Partial<CommerceEventSubscription>[] = [];
-
-  // The eventing module must be configured before creating the other entities.
-  await configureCommerceEventing(
-    {
-      context,
-      config: {
-        workspace_configuration: workspaceConfiguration,
-      },
-    },
-    existingData,
-  );
 
   const commerceProvider = await createOrGetCommerceProvider(
     {

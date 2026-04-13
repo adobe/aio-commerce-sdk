@@ -14,6 +14,7 @@ import { hasCommerceEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
 import {
+  configureCommerceEventing,
   offboardCommerceEventing,
   offboardIoEvents,
   onboardCommerceEventing,
@@ -24,10 +25,15 @@ import {
   getCommerceEventingExistingData,
   getIoEventsExistingData,
   makeWorkspaceConfig,
+  sanitizeEventingIdentifier,
 } from "./utils";
 
+import type { CommerceEventsConfig } from "#config/schema/eventing";
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { EventsExecutionContext } from "./context";
+
+/** The output data of the Commerce Eventing step (auto-inferred). */
+export type CommerceEventsStepData = InferStepOutput<typeof commerceEventsStep>;
 
 /** Leaf step for installing commerce event sources. */
 export const commerceEventsStep = defineLeafStep({
@@ -42,96 +48,129 @@ export const commerceEventsStep = defineLeafStep({
   },
 
   when: hasCommerceEvents,
-  run: async (config, context: EventsExecutionContext) => {
-    const { logger } = context;
-    logger.debug(
-      "Starting installation of Commerce Events with config:",
-      config,
-    );
-
-    // biome-ignore lint/suspicious/noEvolvingTypes: We want the type to be auto-inferred
-    const stepData = [];
-
-    const workspaceConfiguration = JSON.stringify(makeWorkspaceConfig(context));
-    const existingIoEventsData = await getIoEventsExistingData(context);
-    const commerceEventingExistingData =
-      await getCommerceEventingExistingData(context);
-
-    for (const { provider, events } of config.eventing.commerce) {
-      const { providerData, eventsData } = await onboardIoEvents(
-        {
-          context,
-          metadata: config.metadata,
-          provider,
-          events,
-          providerType: COMMERCE_PROVIDER_TYPE,
-        },
-        existingIoEventsData,
-      );
-
-      const { commerceProvider, subscriptions } = await onboardCommerceEventing(
-        {
-          context,
-          metadata: config.metadata,
-          provider,
-          ioData: {
-            provider: providerData,
-            events: eventsData,
-            workspaceConfiguration,
-          },
-        },
-        commerceEventingExistingData,
-      );
-
-      stepData.push({
-        provider: {
-          config: provider,
-          data: {
-            ioEvents: providerData,
-            commerce: commerceProvider,
-            events: eventsData.map(({ config, data }, index) => {
-              return {
-                config,
-                data: {
-                  ...data,
-                  subscription: subscriptions[index],
-                },
-              };
-            }),
-          },
-        },
-      });
-    }
-
-    logger.debug("Completed Commerce Events installation step.");
-    return stepData;
-  },
-
-  uninstall: async (config, context: EventsExecutionContext) => {
-    const { logger } = context;
-    logger.debug("Starting uninstall of Commerce Events with config:", config);
-
-    const [existingIoEventsData, commerceEventingExistingData] =
-      await Promise.all([
-        getIoEventsExistingData(context),
-        getCommerceEventingExistingData(context),
-      ]);
-
-    for (const { provider, events } of config.eventing.commerce) {
-      await offboardCommerceEventing(
-        { context, metadata: config.metadata, provider, events },
-        commerceEventingExistingData,
-      );
-
-      await offboardIoEvents(
-        { context, metadata: config.metadata, provider, events },
-        existingIoEventsData,
-      );
-    }
-
-    logger.debug("Completed Commerce Events uninstall step.");
-  },
+  run: createCommerceEvents,
+  uninstall: removeCommerceEvents,
 });
 
-/** The output data of the Commerce Eventing step (auto-inferred). */
-export type CommerceEventsStepData = InferStepOutput<typeof commerceEventsStep>;
+/**
+ * Creates all needed entities for Eventing to work with Commerce and Adobe I/O Events.
+ * @param config - The configuration of the app, with commerce events.
+ * @param context - The execution context for the events installation.
+ */
+async function createCommerceEvents(
+  config: CommerceEventsConfig,
+  context: EventsExecutionContext,
+) {
+  const { logger } = context;
+  logger.debug("Starting installation of Commerce Events with config:", config);
+
+  // biome-ignore lint/suspicious/noEvolvingTypes: We want the type to be auto-inferred
+  const stepData = [];
+
+  const workspaceConfiguration = JSON.stringify(makeWorkspaceConfig(context));
+  const existingIoEventsData = await getIoEventsExistingData(context);
+  const commerceEventingExistingData =
+    await getCommerceEventingExistingData(context);
+
+  for (let i = 0; i < config.eventing.commerce.length; i++) {
+    const { provider, events } = config.eventing.commerce[i];
+    const { providerData, eventsData } = await onboardIoEvents(
+      {
+        context,
+        metadata: config.metadata,
+        provider,
+        events,
+        providerType: COMMERCE_PROVIDER_TYPE,
+      },
+      existingIoEventsData,
+    );
+
+    if (i === 0) {
+      // The eventing module must be configured before creating the other entities, and only once.
+      await configureCommerceEventing(
+        {
+          context,
+          config: {
+            enabled: true,
+            merchant_id: sanitizeEventingIdentifier(context.appData.orgName),
+            environment_id: sanitizeEventingIdentifier(
+              context.appData.projectName,
+            ),
+            instance_id: providerData.instance_id,
+            workspace_configuration: workspaceConfiguration,
+          },
+        },
+        commerceEventingExistingData,
+      );
+    }
+
+    const { commerceProvider, subscriptions } = await onboardCommerceEventing(
+      {
+        context,
+        metadata: config.metadata,
+        provider,
+        ioData: {
+          provider: providerData,
+          events: eventsData,
+          workspaceConfiguration,
+        },
+      },
+      commerceEventingExistingData,
+    );
+
+    stepData.push({
+      provider: {
+        config: provider,
+        data: {
+          ioEvents: providerData,
+          commerce: commerceProvider,
+          events: eventsData.map(({ config, data }, index) => {
+            return {
+              config,
+              data: {
+                ...data,
+                subscription: subscriptions[index],
+              },
+            };
+          }),
+        },
+      },
+    });
+  }
+
+  logger.debug("Completed Commerce Events installation step.");
+  return stepData;
+}
+
+/**
+ * Remove all created for Commerce eventing created durint installation
+ * @param config - The configuration of the app, with commerce events.
+ * @param context - The execution context for the events installation.
+ */
+async function removeCommerceEvents(
+  config: CommerceEventsConfig,
+  context: EventsExecutionContext,
+) {
+  const { logger } = context;
+  logger.debug("Starting uninstall of Commerce Events with config:", config);
+
+  const [existingIoEventsData, commerceEventingExistingData] =
+    await Promise.all([
+      getIoEventsExistingData(context),
+      getCommerceEventingExistingData(context),
+    ]);
+
+  for (const { provider, events } of config.eventing.commerce) {
+    await offboardCommerceEventing(
+      { context, metadata: config.metadata, provider, events },
+      commerceEventingExistingData,
+    );
+
+    await offboardIoEvents(
+      { context, metadata: config.metadata, provider, events },
+      existingIoEventsData,
+    );
+  }
+
+  logger.debug("Completed Commerce Events uninstall step.");
+}
