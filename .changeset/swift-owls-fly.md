@@ -2,7 +2,7 @@
 "@adobe/aio-commerce-lib-events": minor
 ---
 
-Add delete operations for events cleanup during uninstallation.
+Add delete operations for both the I/O Events and Commerce Eventing APIs.
 
 - Commerce API: `deleteEventProvider` deletes an event provider by ID from a Commerce instance.
 - Commerce API: `deleteEventSubscription` unsubscribes from an event in a Commerce instance.
