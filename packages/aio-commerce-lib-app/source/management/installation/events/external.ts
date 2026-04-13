@@ -27,16 +27,18 @@ export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;
 export const externalEventsStep = defineLeafStep({
   name: "external",
   meta: {
-    label: "Configure External Events",
-    description: "Sets up I/O Events for external event sources",
-  },
-  uninstallMeta: {
-    label: "Remove External Events",
-    description: "Removes I/O Events for external event sources",
+    install: {
+      label: "Configure External Events",
+      description: "Sets up I/O Events for external event sources",
+    },
+    uninstall: {
+      label: "Remove External Events",
+      description: "Removes I/O Events for external event sources",
+    },
   },
 
   when: hasExternalEvents,
-  run: createExternalEvents,
+  install: createExternalEvents,
   uninstall: removeExternalEvents,
 });
 
@@ -85,7 +87,6 @@ async function createExternalEvents(
   logger.debug("Completed External Events installation step.");
   return stepData;
 }
-
 /**
  * Removed all created entities for External Events during the installation
  * @param config - The configuration of the app, with external events.
