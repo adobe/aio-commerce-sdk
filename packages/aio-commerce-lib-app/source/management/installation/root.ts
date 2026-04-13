@@ -42,8 +42,10 @@ export function createRootInstallationStep(
   return defineBranchStep({
     name: "installation",
     meta: {
-      label: "Installation",
-      description: "App installation workflow",
+      install: {
+        label: "Installation",
+        description: "App installation workflow",
+      },
     },
     children: createDefaultChildSteps(config),
   });
@@ -58,8 +60,10 @@ export function createRootUninstallationStep(
   return defineBranchStep({
     name: "uninstallation",
     meta: {
-      label: "Uninstallation",
-      description: "App uninstallation workflow",
+      install: {
+        label: "Uninstallation",
+        description: "App uninstallation workflow",
+      },
     },
     children: createDefaultChildSteps(config),
   });

@@ -42,11 +42,13 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
   return defineLeafStep({
     name: camelcase(name),
     meta: {
-      label: name,
-      description,
+      install: {
+        label: name,
+        description,
+      },
     },
 
-    run: async (
+    install: async (
       config: ConfigWithInstallationSteps,
       context: ExecutionContext,
     ): Promise<ScriptExecutionResult> => {

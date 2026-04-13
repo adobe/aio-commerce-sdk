@@ -29,18 +29,20 @@ import type { WebhooksExecutionContext } from "./context";
 const subscriptionsStep = defineLeafStep({
   name: "subscriptions",
   meta: {
-    label: "Create Subscriptions",
-    description: "Creates webhook subscriptions in Adobe Commerce",
-  },
-  uninstallMeta: {
-    label: "Delete Subscriptions",
-    description: "Deletes webhook subscriptions from Adobe Commerce",
+    install: {
+      label: "Create Subscriptions",
+      description: "Creates webhook subscriptions in Adobe Commerce",
+    },
+    uninstall: {
+      label: "Delete Subscriptions",
+      description: "Deletes webhook subscriptions from Adobe Commerce",
+    },
   },
 
   validate: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
     validateWebhookConflicts(config, context),
 
-  run: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
+  install: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
     createWebhookSubscriptions(config, context),
 
   uninstall: async (
@@ -55,12 +57,14 @@ const subscriptionsStep = defineLeafStep({
 export const webhooksStep = defineBranchStep({
   name: "webhooks",
   meta: {
-    label: "Webhooks",
-    description: "Sets up Commerce webhooks",
-  },
-  uninstallMeta: {
-    label: "Webhooks",
-    description: "Removes Commerce webhooks",
+    install: {
+      label: "Webhooks",
+      description: "Sets up Commerce webhooks",
+    },
+    uninstall: {
+      label: "Webhooks",
+      description: "Removes Commerce webhooks",
+    },
   },
 
   when: hasWebhooks,

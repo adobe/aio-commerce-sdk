@@ -33,9 +33,16 @@ describe("events installation module", () => {
       expect(isBranchStep(eventingStep)).toBe(true);
       expect(eventingStep.name).toBe("eventing");
       expect(eventingStep.meta).toEqual({
-        label: "Eventing",
-        description:
-          "Sets up the I/O Events and the Commerce events required by the application",
+        install: {
+          label: "Eventing",
+          description:
+            "Sets up the I/O Events and the Commerce events required by the application",
+        },
+        uninstall: {
+          label: "Eventing",
+          description:
+            "Removes the I/O Events and Commerce events configured by the application",
+        },
       });
     });
 
@@ -59,8 +66,14 @@ describe("events installation module", () => {
       expect(isLeafStep(commerceEventsStep)).toBe(true);
       expect(commerceEventsStep.name).toBe("commerce");
       expect(commerceEventsStep.meta).toEqual({
-        label: "Configure Commerce Events",
-        description: "Sets up I/O Events for Adobe Commerce event sources",
+        install: {
+          label: "Configure Commerce Events",
+          description: "Sets up I/O Events for Adobe Commerce event sources",
+        },
+        uninstall: {
+          label: "Remove Commerce Events",
+          description: "Removes I/O Events for Adobe Commerce event sources",
+        },
       });
     });
 
@@ -112,7 +125,7 @@ describe("events installation module", () => {
         },
       });
 
-      const result = await commerceEventsStep.run(
+      const result = await commerceEventsStep.install(
         configWithCommerceEventing,
         mockContext,
       );
@@ -135,8 +148,14 @@ describe("events installation module", () => {
       expect(isLeafStep(externalEventsStep)).toBe(true);
       expect(externalEventsStep.name).toBe("external");
       expect(externalEventsStep.meta).toEqual({
-        label: "Configure External Events",
-        description: "Sets up I/O Events for external event sources",
+        install: {
+          label: "Configure External Events",
+          description: "Sets up I/O Events for external event sources",
+        },
+        uninstall: {
+          label: "Remove External Events",
+          description: "Removes I/O Events for external event sources",
+        },
       });
     });
 
@@ -172,7 +191,7 @@ describe("events installation module", () => {
         },
       });
 
-      const result = await externalEventsStep.run(
+      const result = await externalEventsStep.install(
         configWithExternalEventing,
         mockContext,
       );

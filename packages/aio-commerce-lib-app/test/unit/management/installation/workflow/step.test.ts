@@ -23,21 +23,21 @@ describe("defineLeafStep", () => {
   test("returns a step with type: 'leaf'", () => {
     const step = defineLeafStep({
       name: "test-step",
-      meta: { label: "Test Step" },
-      run: vi.fn(() => ({ result: "test" })),
+      meta: { install: { label: "Test Step" } },
+      install: vi.fn(() => ({ result: "test" })),
     });
 
     expect(step.type).toBe("leaf");
   });
 
-  test("preserves name, meta, when, and run properties", () => {
-    const runFn = vi.fn(() => ({ result: "test" }));
+  test("preserves name, meta, when, and install properties", () => {
+    const installFn = vi.fn(() => ({ result: "test" }));
     const whenFn = vi.fn((_config) => true);
 
     const step = defineLeafStep({
       name: "test-step",
-      meta: { label: "Test Step", description: "A test step" },
-      run: runFn,
+      meta: { install: { label: "Test Step", description: "A test step" } },
+      install: installFn,
 
       // @ts-expect-error It's for testing
       when: whenFn,
@@ -45,26 +45,25 @@ describe("defineLeafStep", () => {
 
     expect(step.name).toBe("test-step");
     expect(step.meta).toEqual({
-      label: "Test Step",
-      description: "A test step",
+      install: { label: "Test Step", description: "A test step" },
     });
     expect(step.when).toBe(whenFn);
-    expect(step.run).toBe(runFn);
+    expect(step.install).toBe(installFn);
   });
 
-  test("works with minimal options (just name, meta, run)", () => {
-    const runFn = vi.fn(() => ({ result: "test" }));
+  test("works with minimal options (just name, meta, install)", () => {
+    const installFn = vi.fn(() => ({ result: "test" }));
 
     const step = defineLeafStep({
       name: "minimal-step",
-      meta: { label: "Minimal Step" },
-      run: runFn,
+      meta: { install: { label: "Minimal Step" } },
+      install: installFn,
     });
 
     expect(step.type).toBe("leaf");
     expect(step.name).toBe("minimal-step");
-    expect(step.meta).toEqual({ label: "Minimal Step" });
-    expect(step.run).toBe(runFn);
+    expect(step.meta).toEqual({ install: { label: "Minimal Step" } });
+    expect(step.install).toBe(installFn);
     expect(step.when).toBeUndefined();
   });
 
@@ -73,8 +72,8 @@ describe("defineLeafStep", () => {
 
     const step = defineLeafStep({
       name: "conditional-step",
-      meta: { label: "Conditional Step" },
-      run: vi.fn(() => ({ result: "test" })),
+      meta: { install: { label: "Conditional Step" } },
+      install: vi.fn(() => ({ result: "test" })),
 
       // @ts-expect-error It's for testing
       when: whenFn,
@@ -88,7 +87,7 @@ describe("defineBranchStep", () => {
   test("returns a step with type: 'branch'", () => {
     const step = defineBranchStep({
       name: "test-branch",
-      meta: { label: "Test Branch" },
+      meta: { install: { label: "Test Branch" } },
       children: [],
     });
 
@@ -100,13 +99,13 @@ describe("defineBranchStep", () => {
     const contextFn = vi.fn(() => ({ client: "mock" }));
     const childStep = defineLeafStep({
       name: "child",
-      meta: { label: "Child" },
-      run: vi.fn(() => ({ result: "test" })),
+      meta: { install: { label: "Child" } },
+      install: vi.fn(() => ({ result: "test" })),
     });
 
     const step = defineBranchStep({
       name: "test-branch",
-      meta: { label: "Test Branch", description: "A test branch" },
+      meta: { install: { label: "Test Branch", description: "A test branch" } },
       context: contextFn,
       children: [childStep],
 
@@ -116,8 +115,7 @@ describe("defineBranchStep", () => {
 
     expect(step.name).toBe("test-branch");
     expect(step.meta).toEqual({
-      label: "Test Branch",
-      description: "A test branch",
+      install: { label: "Test Branch", description: "A test branch" },
     });
     expect(step.when).toBe(whenFn);
     expect(step.context).toBe(contextFn);
@@ -127,13 +125,13 @@ describe("defineBranchStep", () => {
   test("works with minimal options (just name, meta, children)", () => {
     const step = defineBranchStep({
       name: "minimal-branch",
-      meta: { label: "Minimal Branch" },
+      meta: { install: { label: "Minimal Branch" } },
       children: [],
     });
 
     expect(step.type).toBe("branch");
     expect(step.name).toBe("minimal-branch");
-    expect(step.meta).toEqual({ label: "Minimal Branch" });
+    expect(step.meta).toEqual({ install: { label: "Minimal Branch" } });
     expect(step.children).toEqual([]);
     expect(step.when).toBeUndefined();
     expect(step.context).toBeUndefined();
@@ -145,7 +143,7 @@ describe("defineBranchStep", () => {
 
     const step = defineBranchStep({
       name: "optional-branch",
-      meta: { label: "Optional Branch" },
+      meta: { install: { label: "Optional Branch" } },
       context: contextFn,
       children: [],
 
@@ -162,8 +160,8 @@ describe("isLeafStep", () => {
   test("returns true for leaf steps (type: 'leaf')", () => {
     const leafStep = defineLeafStep({
       name: "leaf",
-      meta: { label: "Leaf" },
-      run: vi.fn(() => ({ result: "test" })),
+      meta: { install: { label: "Leaf" } },
+      install: vi.fn(() => ({ result: "test" })),
     });
 
     expect(isLeafStep(leafStep)).toBe(true);
@@ -172,7 +170,7 @@ describe("isLeafStep", () => {
   test("returns false for branch steps (type: 'branch')", () => {
     const branchStep = defineBranchStep({
       name: "branch",
-      meta: { label: "Branch" },
+      meta: { install: { label: "Branch" } },
       children: [],
     });
 
@@ -184,7 +182,7 @@ describe("isBranchStep", () => {
   test("returns true for branch steps (type: 'branch')", () => {
     const branchStep = defineBranchStep({
       name: "branch",
-      meta: { label: "Branch" },
+      meta: { install: { label: "Branch" } },
       children: [],
     });
 
@@ -194,8 +192,8 @@ describe("isBranchStep", () => {
   test("returns false for leaf steps (type: 'leaf')", () => {
     const leafStep = defineLeafStep({
       name: "leaf",
-      meta: { label: "Leaf" },
-      run: vi.fn(() => ({ result: "test" })),
+      meta: { install: { label: "Leaf" } },
+      install: vi.fn(() => ({ result: "test" })),
     });
 
     expect(isBranchStep(leafStep)).toBe(false);

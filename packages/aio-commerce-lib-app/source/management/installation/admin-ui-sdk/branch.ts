@@ -26,15 +26,17 @@ import type { AdminUiSdkConfig, AdminUiSdkExecutionContext } from "./utils";
 const registerExtensionStep = defineLeafStep({
   name: "register-extension",
   meta: {
-    label: "Register Extension",
-    description: "Registers the Admin UI SDK extension in Adobe Commerce",
-  },
-  uninstallMeta: {
-    label: "Unregister Extension",
-    description: "Removes the Admin UI SDK extension from Adobe Commerce",
+    install: {
+      label: "Register Extension",
+      description: "Registers the Admin UI SDK extension in Adobe Commerce",
+    },
+    uninstall: {
+      label: "Unregister Extension",
+      description: "Removes the Admin UI SDK extension from Adobe Commerce",
+    },
   },
 
-  run: (_: AdminUiSdkConfig, context: AdminUiSdkExecutionContext) =>
+  install: (_: AdminUiSdkConfig, context: AdminUiSdkExecutionContext) =>
     registerExtension(context),
 
   uninstall: (_: AdminUiSdkConfig, context: AdminUiSdkExecutionContext) =>
@@ -50,12 +52,14 @@ export type RegisterExtensionStepData = InferStepOutput<
 export const adminUiSdkStep = defineBranchStep({
   name: "admin-ui-sdk",
   meta: {
-    label: "Admin UI SDK",
-    description: "Registers the extension with Adobe Commerce Admin UI SDK",
-  },
-  uninstallMeta: {
-    label: "Admin UI SDK",
-    description: "Removes the extension from Adobe Commerce Admin UI SDK",
+    install: {
+      label: "Admin UI SDK",
+      description: "Registers the extension with Adobe Commerce Admin UI SDK",
+    },
+    uninstall: {
+      label: "Admin UI SDK",
+      description: "Removes the extension from Adobe Commerce Admin UI SDK",
+    },
   },
 
   when: hasAdminUiSdk,

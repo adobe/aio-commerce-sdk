@@ -51,8 +51,15 @@ describe("admin-ui-sdk installation module", () => {
       expect(isBranchStep(adminUiSdkStep)).toBe(true);
       expect(adminUiSdkStep.name).toBe("admin-ui-sdk");
       expect(adminUiSdkStep.meta).toEqual({
-        label: "Admin UI SDK",
-        description: "Registers the extension with Adobe Commerce Admin UI SDK",
+        install: {
+          label: "Admin UI SDK",
+          description:
+            "Registers the extension with Adobe Commerce Admin UI SDK",
+        },
+        uninstall: {
+          label: "Admin UI SDK",
+          description: "Removes the extension from Adobe Commerce Admin UI SDK",
+        },
       });
     });
 
@@ -65,8 +72,8 @@ describe("admin-ui-sdk installation module", () => {
       expect(adminUiSdkStep.when(configWithWebhooks)).toBe(false);
     });
 
-    test("should have uninstallMeta defined", () => {
-      expect(adminUiSdkStep.uninstallMeta).toBeDefined();
+    test("should have meta.uninstall defined", () => {
+      expect(adminUiSdkStep.meta.uninstall).toBeDefined();
     });
 
     test("should have one leaf child: register-extension", () => {
@@ -91,8 +98,8 @@ describe("admin-ui-sdk installation module", () => {
       expect(registerExtensionStep.uninstall).toBeDefined();
     });
 
-    test("should have uninstallMeta defined", () => {
-      expect(registerExtensionStep.uninstallMeta).toBeDefined();
+    test("should have meta.uninstall defined", () => {
+      expect(registerExtensionStep.meta.uninstall).toBeDefined();
     });
 
     test("should call DELETE for the extension using workspaceName and __OW_NAMESPACE", async () => {

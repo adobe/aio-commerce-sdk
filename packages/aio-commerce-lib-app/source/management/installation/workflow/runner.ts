@@ -45,7 +45,7 @@ export type CreateInitialStateOptions = {
   /** The app configuration used to determine applicable steps. */
   config: CommerceAppConfigOutputModel;
 
-  /** The execution mode. When "uninstall", steps use `uninstallMeta` if defined. */
+  /** The execution mode. When "uninstall", steps use `meta.uninstall` if defined; defaults to "install". */
   mode?: ExecutionMode;
 };
 
@@ -67,8 +67,8 @@ export type ExecuteWorkflowOptions = {
   hooks?: InstallationHooks;
 };
 
-/** Execution mode: "run" for installation, "uninstall" for uninstallation. */
-type ExecutionMode = "run" | "uninstall";
+/** Execution mode: "install" or "uninstall". */
+type ExecutionMode = "install" | "uninstall";
 
 /** Context for step execution containing all necessary dependencies. */
 type StepExecutionContext = {
@@ -108,7 +108,7 @@ export function createInitialState(
 export async function executeWorkflow(
   options: ExecuteWorkflowOptions,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
-  return executeWorkflowWithMode(options, "run");
+  return executeWorkflowWithMode(options, "install");
 }
 
 /**
@@ -206,9 +206,9 @@ function buildInitialStepStatus(
     name: step.name,
     path,
     meta:
-      mode === "uninstall" && step.uninstallMeta
-        ? step.uninstallMeta
-        : step.meta,
+      mode === "uninstall" && step.meta.uninstall
+        ? step.meta.uninstall
+        : step.meta.install,
     status: "pending" as const,
     children,
   };
@@ -319,7 +319,7 @@ async function executeLeafStep(
     return;
   }
 
-  const result = await step.run(context.config, executionContext);
+  const result = await step.install(context.config, executionContext);
 
   context.data ??= {};
   setAtPath(context.data, stepStatus.path, result);

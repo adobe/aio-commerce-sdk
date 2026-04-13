@@ -54,6 +54,7 @@ export type {
   Step,
   StepContextFactory,
   StepMeta,
+  StepMetaInfo,
   ValidationContext,
   ValidationExecutionContext,
   ValidationIssue,

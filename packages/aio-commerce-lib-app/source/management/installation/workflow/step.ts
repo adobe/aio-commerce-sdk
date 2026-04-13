@@ -79,10 +79,16 @@ export type ValidationExecutionContext<
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
 > = ValidationContext & TStepCtx;
 
-/** Metadata for a step (used for UI display). */
-export type StepMeta = {
+/** Metadata info for a step (used for UI display). */
+export type StepMetaInfo = {
   label: string;
   description?: string;
+};
+
+/** Step metadata keyed by execution mode. */
+export type StepMeta = {
+  install: StepMetaInfo;
+  uninstall?: StepMetaInfo;
 };
 
 /** Defines the base properties of a step. */
@@ -93,11 +99,8 @@ export type StepBase<
   /** The name of this step. */
   name: TName;
 
-  /** Metadata associated with the step. */
+  /** Metadata associated with the step, keyed by execution mode. */
   meta: StepMeta;
-
-  /** Optional metadata override used during uninstallation. Falls back to `meta` if absent. */
-  uninstallMeta?: StepMeta;
 
   /** Whether the step should be taken into consideration. */
   when?: (config: CommerceAppConfigOutputModel) => config is TConfig;
@@ -113,7 +116,7 @@ export type LeafStep<
   type: "leaf";
 
   /** The execution handler for the step. */
-  run: (
+  install: (
     config: TConfig,
     context: ExecutionContext<TStepCtx>,
   ) => TOutput | Promise<TOutput>;
@@ -181,13 +184,12 @@ export interface AnyStep {
 
   // biome-ignore-start lint/suspicious/noExplicitAny: We need the flexibility here
   context?: (context: InstallationContext) => any;
+  install?: (config: any, context: any) => unknown | Promise<unknown>;
   meta: StepMeta;
   name: string;
-  run?: (config: any, context: any) => unknown | Promise<unknown>;
   type: "leaf" | "branch";
 
   uninstall?: (config: any, context: any) => void | Promise<void>;
-  uninstallMeta?: StepMeta;
 
   validate?: (
     config: any,
@@ -231,8 +233,8 @@ export type BranchStepOptions<
  * ```typescript
  * const createProviders = defineLeafStep({
  *   name: "providers",
- *   meta: { label: "Create Providers", description: "Creates I/O Events providers" },
- *   run: async ({ config, stepContext }) => {
+ *   meta: { install: { label: "Create Providers", description: "Creates I/O Events providers" } },
+ *   install: async ({ config, stepContext }) => {
  *     const { eventsClient } = stepContext;
  *     return eventsClient.createProvider(config.eventing);
  *   },
@@ -249,11 +251,10 @@ export function defineLeafStep<
     type: "leaf",
     name: options.name,
     meta: options.meta,
-    uninstallMeta: options.uninstallMeta,
     when: options.when,
-    run: options.run,
-    validate: options.validate,
+    install: options.install,
     uninstall: options.uninstall,
+    validate: options.validate,
   } satisfies LeafStep<TName, TConfig, TStepCtx, TOutput>;
 }
 
@@ -264,7 +265,7 @@ export function defineLeafStep<
  * ```typescript
  * const eventing = defineBranchStep({
  *   name: "eventing",
- *   meta: { label: "Eventing", description: "Sets up I/O Events" },
+ *   meta: { install: { label: "Eventing", description: "Sets up I/O Events" } },
  *   when: hasEventing,
  *   context: async (ctx) => ({ eventsClient: await createEventsClient(ctx) }),
  *   children: [commerceEventsStep, externalEventsStep],
@@ -281,7 +282,6 @@ export function defineBranchStep<
     type: "branch",
     name: options.name,
     meta: options.meta,
-    uninstallMeta: options.uninstallMeta,
     when: options.when,
     context: options.context,
     children: options.children,

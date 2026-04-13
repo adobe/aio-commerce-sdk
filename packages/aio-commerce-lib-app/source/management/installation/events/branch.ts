@@ -21,14 +21,16 @@ import { externalEventsStep } from "./external";
 export const eventingStep = defineBranchStep({
   name: "eventing",
   meta: {
-    label: "Eventing",
-    description:
-      "Sets up the I/O Events and the Commerce events required by the application",
-  },
-  uninstallMeta: {
-    label: "Eventing",
-    description:
-      "Removes the I/O Events and Commerce events configured by the application",
+    install: {
+      label: "Eventing",
+      description:
+        "Sets up the I/O Events and the Commerce events required by the application",
+    },
+    uninstall: {
+      label: "Eventing",
+      description:
+        "Removes the I/O Events and Commerce events configured by the application",
+    },
   },
 
   when: hasEventing,

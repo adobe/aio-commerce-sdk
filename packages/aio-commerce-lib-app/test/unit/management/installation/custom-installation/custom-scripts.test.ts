@@ -62,13 +62,13 @@ describe("createCustomScriptSteps", () => {
     // Verify each step is a leaf step with correct metadata
     expect(steps[0].type).toBe("leaf");
     expect(steps[0].name).toBe("demoSuccess");
-    expect(steps[0].meta.label).toBe("Demo Success");
-    expect(steps[0].meta.description).toBe("Success script");
+    expect(steps[0].meta.install.label).toBe("Demo Success");
+    expect(steps[0].meta.install.description).toBe("Success script");
 
     expect(steps[1].type).toBe("leaf");
     expect(steps[1].name).toBe("demoError");
-    expect(steps[1].meta.label).toBe("Demo Error");
-    expect(steps[1].meta.description).toBe("Error script");
+    expect(steps[1].meta.install.label).toBe("Demo Error");
+    expect(steps[1].meta.install.description).toBe("Error script");
   });
 
   test("should throw if multiple steps have the same name", () => {
@@ -114,7 +114,7 @@ describe("createCustomScriptStep - run function", () => {
       "./demo-success.js": { default: mockScript },
     };
 
-    const result = await step.run(
+    const result = await step.install(
       configWithCustomInstallationSteps,
       mockContext,
     );
@@ -137,7 +137,7 @@ describe("createCustomScriptStep - run function", () => {
     mockContext.customScripts = {};
 
     await expect(
-      step.run(configWithCustomInstallationSteps, mockContext),
+      step.install(configWithCustomInstallationSteps, mockContext),
     ).rejects.toThrow();
   });
 
@@ -149,7 +149,7 @@ describe("createCustomScriptStep - run function", () => {
     mockContext.customScripts = undefined;
 
     await expect(
-      step.run(configWithCustomInstallationSteps, mockContext),
+      step.install(configWithCustomInstallationSteps, mockContext),
     ).rejects.toThrow();
   });
 
@@ -163,7 +163,7 @@ describe("createCustomScriptStep - run function", () => {
     };
 
     await expect(
-      step.run(configWithCustomInstallationSteps, mockContext),
+      step.install(configWithCustomInstallationSteps, mockContext),
     ).rejects.toThrow();
   });
 
@@ -181,7 +181,7 @@ describe("createCustomScriptStep - run function", () => {
     };
 
     await expect(
-      step.run(configWithCustomInstallationSteps, mockContext),
+      step.install(configWithCustomInstallationSteps, mockContext),
     ).rejects.toThrow("Script execution failed");
   });
 });
@@ -199,7 +199,7 @@ describe("createCustomScriptStep - run function (object form)", () => {
       "./demo-success.js": { default: { install: mockInstall } },
     };
 
-    const result = await step.run(
+    const result = await step.install(
       configWithCustomInstallationSteps,
       mockContext,
     );
@@ -224,7 +224,7 @@ describe("createCustomScriptStep - run function (object form)", () => {
     };
 
     await expect(
-      step.run(configWithCustomInstallationSteps, mockContext),
+      step.install(configWithCustomInstallationSteps, mockContext),
     ).rejects.toThrow();
   });
 });
