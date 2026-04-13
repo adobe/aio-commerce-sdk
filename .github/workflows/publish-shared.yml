@@ -78,7 +78,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Prepare release context
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         id: prepare
         env:
           REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
@@ -107,7 +107,7 @@ jobs:
       - name: Publish snapshot packages
         id: snapshot
         if: inputs.channel == 'internal' && !inputs.publish_only
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GITHUB_TOKEN: ${{ github.token }}
           SNAPSHOT_TAG: ${{ inputs.snapshot_tag || '' }}
@@ -140,7 +140,7 @@ jobs:
           inputs.notify_slack &&
           ((inputs.channel == 'internal' && steps.snapshot.outputs.published == 'true') ||
           (inputs.channel == 'public' && steps.changesets.outputs.published == 'true'))
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PUBLISHED_PACKAGES: ${{ inputs.channel == 'internal' && steps.snapshot.outputs.publishedPackages || steps.changesets.outputs.publishedPackages }}
           REGISTRY_PACKAGE_BASE_URL: ${{ secrets.REGISTRY_PACKAGE_BASE_URL }}
