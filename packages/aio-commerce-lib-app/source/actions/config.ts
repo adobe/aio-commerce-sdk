@@ -111,7 +111,11 @@ router.get("/", {
   },
 });
 
-/** POST / - Set configuration */
+/**
+ * PUT / - Set configuration (deprecated)
+ * @deprecated Use PATCH instead. This endpoint overwrites all values for the scope
+ * and does not support partial updates or unset semantics.
+ */
 router.put("/", {
   body: v.object({
     scopeId: nonEmptyStringValueSchema("scopeId"),
@@ -142,6 +146,38 @@ router.put("/", {
         encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
       },
     );
+
+    result.config = filterPasswordFields(configSchema, result.config);
+    return ok({
+      body: result,
+      headers: { "Cache-Control": "no-store", Deprecation: "true" },
+    });
+  },
+});
+
+/** PATCH / - Partially update configuration */
+router.patch("/", {
+  body: v.object({
+    scopeId: nonEmptyStringValueSchema("scopeId"),
+    config: v.array(
+      v.object({
+        name: nonEmptyStringValueSchema("config.name"),
+        // null unsets the field, restoring inheritance from the parent scope
+        value: v.nullable(v.union([v.string(), v.array(v.string())])),
+      }),
+    ),
+  }),
+
+  handler: async (req, ctx) => {
+    const { logger, rawParams } = ctx;
+    const { configSchema } = rawParams;
+
+    logger.debug(`Patching configuration with scope id: ${req.body.scopeId}`);
+    const { scopeId, config } = req.body;
+
+    const result = await setConfiguration({ config }, byScopeId(scopeId), {
+      encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+    });
 
     result.config = filterPasswordFields(configSchema, result.config);
     return ok({
