@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+
 import type { AdminUiSdkExecutionContext } from "./utils";
 
 /** The response shape returned by POST /V1/adminuisdk/extension. */
@@ -46,4 +48,33 @@ export async function registerExtension(context: AdminUiSdkExecutionContext) {
   );
 
   return response;
+}
+
+/**
+ * Unregisters the extension from Commerce via DELETE /V1/adminuisdk/extension/:workspace_name/:extension_name.
+ * Best-effort: errors are logged as warnings and do not stop the uninstall workflow.
+ *
+ * @param context - The execution context providing the Commerce HTTP client and logger.
+ */
+export async function uninstallExtension(
+  context: AdminUiSdkExecutionContext,
+): Promise<void> {
+  const { commerceClient, appData, logger } = context;
+  const extensionName = process.env.__OW_NAMESPACE;
+  const endpoint = `adminuisdk/extension/${appData.workspaceName}/${extensionName}`;
+
+  logger.info(
+    `Unregistering Admin UI SDK extension "${extensionName}" from workspace "${appData.workspaceName}"...`,
+  );
+
+  try {
+    await commerceClient.delete(endpoint);
+    logger.info(
+      `Admin UI SDK extension "${extensionName}" unregistered successfully.`,
+    );
+  } catch (error: unknown) {
+    logger.warn(
+      `Failed to unregister Admin UI SDK extension "${extensionName}": ${stringifyError(error)}. Continuing uninstall.`,
+    );
+  }
 }

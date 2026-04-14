@@ -16,7 +16,7 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   AnyStep,
   BranchStep,
-  StepMeta,
+  StepMetaInfo,
   ValidationContext,
   ValidationIssue,
 } from "./step";
@@ -32,7 +32,7 @@ export type StepValidationResult = {
   path: string[];
 
   /** Step metadata (for display purposes). */
-  meta: StepMeta;
+  meta: StepMetaInfo;
 
   /** Issues found for this specific step (not including children). */
   issues: ValidationIssue[];
@@ -129,7 +129,7 @@ async function validateStep(
     }
   }
 
-  return { name: step.name, path, meta: step.meta, issues, children };
+  return { name: step.name, path, meta: step.meta.install, issues, children };
 }
 
 /** Resolves the child context for a branch step, reporting errors as issues. */

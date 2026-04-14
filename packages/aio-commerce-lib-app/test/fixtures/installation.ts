@@ -155,7 +155,7 @@ export function createMockBranchStep(
   return {
     type: "branch",
     name: "installation",
-    meta: { label: "Installation" },
+    meta: { install: { label: "Installation" } },
     children: [],
     ...overrides,
   };

@@ -29,7 +29,7 @@ function makeRoot(
 ) {
   return defineBranchStep({
     name: "root",
-    meta: rootMeta,
+    meta: { install: rootMeta },
     children,
   });
 }
@@ -54,8 +54,8 @@ describe("validateStepTree — result structure", () => {
   test("child results carry name, path (root → child) and meta", async () => {
     const child = defineLeafStep({
       name: "step-a",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
     });
     const rootStep = makeRoot([child]);
 
@@ -88,7 +88,7 @@ describe("validateStepTree — valid flag", () => {
   test("valid is false when root step has an error issue", async () => {
     const rootStep = defineBranchStep({
       name: "root",
-      meta: rootMeta,
+      meta: { install: rootMeta },
       children: [],
       validate: async () => [
         { code: "ERR", message: "bad", severity: "error" },
@@ -107,7 +107,7 @@ describe("validateStepTree — valid flag", () => {
   test("valid is false when root step has a warning issue", async () => {
     const rootStep = defineBranchStep({
       name: "root",
-      meta: rootMeta,
+      meta: { install: rootMeta },
       children: [],
       validate: async () => [
         { code: "WARN", message: "caution", severity: "warning" },
@@ -126,8 +126,8 @@ describe("validateStepTree — valid flag", () => {
   test("valid is false when a child step has an error issue", async () => {
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
       validate: async () => [
         { code: "CHILD_ERR", message: "child error", severity: "error" },
       ],
@@ -148,8 +148,8 @@ describe("validateStepTree — runStepValidation", () => {
   test("returns no issues when step has no validate handler", async () => {
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
     });
     const rootStep = makeRoot([child]);
 
@@ -170,8 +170,8 @@ describe("validateStepTree — runStepValidation", () => {
       ]);
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
       validate,
     });
     const rootStep = makeRoot([child]);
@@ -194,8 +194,8 @@ describe("validateStepTree — runStepValidation", () => {
   test("catches Error thrown by validate and reports VALIDATION_HANDLER_ERROR", async () => {
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
       validate: async () => {
         throw new Error("boom");
       },
@@ -220,8 +220,8 @@ describe("validateStepTree — runStepValidation", () => {
   test("catches non-Error thrown by validate and converts it to a string message", async () => {
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
       validate: async () => {
         // biome-ignore lint/style/useThrowOnlyError: intentional non-Error throw
         throw "string-error";
@@ -248,8 +248,8 @@ describe("validateStepTree — resolveBranchContext", () => {
     const validate = vi.fn().mockResolvedValue([]);
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
       validate,
     });
     const rootStep = makeRoot([child]);
@@ -270,13 +270,13 @@ describe("validateStepTree — resolveBranchContext", () => {
     const validate = vi.fn().mockResolvedValue([]);
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
       validate,
     });
     const branch = defineBranchStep({
       name: "root",
-      meta: rootMeta,
+      meta: { install: rootMeta },
       context: async (): Promise<Record<string, unknown>> => ({
         myClient: "injected-client",
       }),
@@ -299,12 +299,12 @@ describe("validateStepTree — resolveBranchContext", () => {
     // resolveBranchContext is only invoked when children.length > 0
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
     });
     const rootStep = defineBranchStep({
       name: "root",
-      meta: rootMeta,
+      meta: { install: rootMeta },
       context: async (): Promise<Record<string, unknown>> => {
         throw new Error("context factory failed");
       },
@@ -328,12 +328,12 @@ describe("validateStepTree — resolveBranchContext", () => {
     // resolveBranchContext is only invoked when children.length > 0
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
     });
     const rootStep = defineBranchStep({
       name: "root",
-      meta: rootMeta,
+      meta: { install: rootMeta },
       context: async (): Promise<Record<string, unknown>> => {
         // biome-ignore lint/style/useThrowOnlyError: intentional non-Error throw
         throw 42;
@@ -358,13 +358,13 @@ describe("validateStepTree — resolveBranchContext", () => {
     const validate = vi.fn().mockResolvedValue([]);
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
       validate,
     });
     const rootStep = defineBranchStep({
       name: "root",
-      meta: rootMeta,
+      meta: { install: rootMeta },
       context: async (): Promise<Record<string, unknown>> => {
         throw new Error("boom");
       },
@@ -390,8 +390,8 @@ describe("validateStepTree — when condition", () => {
     const validate = vi.fn().mockResolvedValue([]);
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
       validate,
       // @ts-expect-error It's for testing
       when: () => false,
@@ -411,8 +411,8 @@ describe("validateStepTree — when condition", () => {
   test("includes child whose when() returns true", async () => {
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
       // @ts-expect-error It's for testing
       when: () => true,
     });
@@ -430,8 +430,8 @@ describe("validateStepTree — when condition", () => {
   test("includes children without a when condition", async () => {
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
     });
     const rootStep = makeRoot([child]);
 
@@ -447,15 +447,15 @@ describe("validateStepTree — when condition", () => {
   test("includes only children whose when() is true when siblings differ", async () => {
     const included = defineLeafStep({
       name: "included",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
       // @ts-expect-error - It's for testing
       when: () => true,
     });
     const excluded = defineLeafStep({
       name: "excluded",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
       // @ts-expect-error - It's for testing
       when: () => false,
     });
@@ -486,7 +486,7 @@ describe("validateStepTree — summary aggregation", () => {
   test("counts errors from root step", async () => {
     const rootStep = defineBranchStep({
       name: "root",
-      meta: rootMeta,
+      meta: { install: rootMeta },
       children: [],
       validate: async () => [
         { code: "A", message: "a", severity: "error" as const },
@@ -508,7 +508,7 @@ describe("validateStepTree — summary aggregation", () => {
   test("counts warnings from root step", async () => {
     const rootStep = defineBranchStep({
       name: "root",
-      meta: rootMeta,
+      meta: { install: rootMeta },
       children: [],
       validate: async () => [
         { code: "W", message: "w", severity: "warning" as const },
@@ -529,8 +529,8 @@ describe("validateStepTree — summary aggregation", () => {
   test("does not count info-severity issues in totals", async () => {
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
       validate: async () => [
         { code: "INFO", message: "fyi", severity: "info" as const },
       ],
@@ -551,8 +551,8 @@ describe("validateStepTree — summary aggregation", () => {
   test("aggregates issues across root and all children", async () => {
     const child = defineLeafStep({
       name: "child",
-      meta: childMeta,
-      run: vi.fn(),
+      meta: { install: childMeta },
+      install: vi.fn(),
       validate: async () => [
         {
           code: "CHILD_W",
@@ -563,7 +563,7 @@ describe("validateStepTree — summary aggregation", () => {
     });
     const rootStep = defineBranchStep({
       name: "root",
-      meta: rootMeta,
+      meta: { install: rootMeta },
       children: [child],
       validate: async () => [
         { code: "ROOT_E", message: "root error", severity: "error" as const },
@@ -584,15 +584,15 @@ describe("validateStepTree — summary aggregation", () => {
   test("aggregates issues across deeply nested children", async () => {
     const grandchild = defineLeafStep({
       name: "grandchild",
-      meta: { label: "Grandchild" },
-      run: vi.fn(),
+      meta: { install: { label: "Grandchild" } },
+      install: vi.fn(),
       validate: async () => [
         { code: "GC_E", message: "gc error", severity: "error" as const },
       ],
     });
     const branch = defineBranchStep({
       name: "branch",
-      meta: childMeta,
+      meta: { install: childMeta },
       children: [grandchild],
     });
     const rootStep = makeRoot([branch]);

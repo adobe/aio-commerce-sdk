@@ -39,24 +39,24 @@ describe("executeWorkflow — multi-level interactions", () => {
   });
 
   test("should pass context from branch step context factory to children", async () => {
-    const runFn = vi.fn().mockReturnValue("result");
+    const installFn = vi.fn().mockReturnValue("result");
 
     const leafStep = defineLeafStep({
       name: "child",
-      meta: { label: "Child" },
-      run: runFn,
+      meta: { install: { label: "Child" } },
+      install: installFn,
     });
 
     const branchStep = defineBranchStep({
       name: "branch",
-      meta: { label: "Branch" },
+      meta: { install: { label: "Branch" } },
       context: async () => ({ sharedValue: "from-branch" }),
       children: [leafStep],
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [branchStep],
     });
 
@@ -73,7 +73,7 @@ describe("executeWorkflow — multi-level interactions", () => {
       initialState,
     });
 
-    expect(runFn).toHaveBeenCalledWith(
+    expect(installFn).toHaveBeenCalledWith(
       minimalValidConfig,
       expect.objectContaining({
         sharedValue: "from-branch",
@@ -86,13 +86,13 @@ describe("executeWorkflow — multi-level interactions", () => {
 
     const leafStep = defineLeafStep({
       name: "step1",
-      meta: { label: "Step 1" },
-      run: () => "result",
+      meta: { install: { label: "Step 1" } },
+      install: () => "result",
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [leafStep],
     });
 
@@ -134,15 +134,15 @@ describe("executeWorkflow — multi-level interactions", () => {
 
     const failingStep = defineLeafStep({
       name: "failing",
-      meta: { label: "Failing" },
-      run: () => {
+      meta: { install: { label: "Failing" } },
+      install: () => {
         throw new Error("Failure");
       },
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [failingStep],
     });
 
@@ -184,8 +184,8 @@ describe("executeWorkflow — multi-level interactions", () => {
 
     const deepLeaf = defineLeafStep({
       name: "deep-leaf",
-      meta: { label: "Deep Leaf" },
-      run: (_config, ctx) => {
+      meta: { install: { label: "Deep Leaf" } },
+      install: (_config, ctx) => {
         receivedContexts.push({ ...ctx });
         return "deep-result";
       },
@@ -193,7 +193,7 @@ describe("executeWorkflow — multi-level interactions", () => {
 
     const innerBranch = defineBranchStep({
       name: "inner-branch",
-      meta: { label: "Inner Branch" },
+      meta: { install: { label: "Inner Branch" } },
       context: async () => ({
         innerValue: "from-inner",
         shared: "inner-override",
@@ -203,7 +203,7 @@ describe("executeWorkflow — multi-level interactions", () => {
 
     const outerBranch = defineBranchStep({
       name: "outer-branch",
-      meta: { label: "Outer Branch" },
+      meta: { install: { label: "Outer Branch" } },
       context: async () => ({
         outerValue: "from-outer",
         shared: "outer-original",
@@ -213,7 +213,7 @@ describe("executeWorkflow — multi-level interactions", () => {
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [outerBranch],
     });
 
@@ -243,25 +243,25 @@ describe("executeWorkflow — multi-level interactions", () => {
   test("should accumulate results from multiple leaf steps in data", async () => {
     const step1 = defineLeafStep({
       name: "step1",
-      meta: { label: "Step 1" },
-      run: () => ({ provider: "provider-123", created: true }),
+      meta: { install: { label: "Step 1" } },
+      install: () => ({ provider: "provider-123", created: true }),
     });
 
     const step2 = defineLeafStep({
       name: "step2",
-      meta: { label: "Step 2" },
-      run: () => ({ registrations: ["reg-1", "reg-2"] }),
+      meta: { install: { label: "Step 2" } },
+      install: () => ({ registrations: ["reg-1", "reg-2"] }),
     });
 
     const step3 = defineLeafStep({
       name: "step3",
-      meta: { label: "Step 3" },
-      run: () => ({ subscriptions: 5, status: "active" }),
+      meta: { install: { label: "Step 3" } },
+      install: () => ({ subscriptions: 5, status: "active" }),
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [step1, step2, step3],
     });
 
@@ -289,37 +289,37 @@ describe("executeWorkflow — multi-level interactions", () => {
   test("should accumulate results from nested branch structures", async () => {
     const eventsLeaf1 = defineLeafStep({
       name: "commerce",
-      meta: { label: "Commerce Events" },
-      run: () => ({ providerId: "commerce-provider" }),
+      meta: { install: { label: "Commerce Events" } },
+      install: () => ({ providerId: "commerce-provider" }),
     });
 
     const eventsLeaf2 = defineLeafStep({
       name: "external",
-      meta: { label: "External Events" },
-      run: () => ({ providerId: "external-provider" }),
+      meta: { install: { label: "External Events" } },
+      install: () => ({ providerId: "external-provider" }),
     });
 
     const eventsBranch = defineBranchStep({
       name: "eventing",
-      meta: { label: "Eventing" },
+      meta: { install: { label: "Eventing" } },
       children: [eventsLeaf1, eventsLeaf2],
     });
 
     const webhooksLeaf = defineLeafStep({
       name: "subscriptions",
-      meta: { label: "Subscriptions" },
-      run: () => ({ count: 3 }),
+      meta: { install: { label: "Subscriptions" } },
+      install: () => ({ count: 3 }),
     });
 
     const webhooksBranch = defineBranchStep({
       name: "webhooks",
-      meta: { label: "Webhooks" },
+      meta: { install: { label: "Webhooks" } },
       children: [webhooksLeaf],
     });
 
     const rootStep = defineBranchStep({
       name: "installation",
-      meta: { label: "Installation" },
+      meta: { install: { label: "Installation" } },
       children: [eventsBranch, webhooksBranch],
     });
 

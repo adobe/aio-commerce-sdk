@@ -70,7 +70,7 @@ export type ExecutionContext<
 
 /**
  * A narrowed context available to step `validate` handlers.
- * Excludes `customScripts` — those only apply during installation `run`, not pre-flight validation.
+ * Excludes `customScripts` — those only apply during installation, not pre-flight validation.
  */
 export type ValidationContext = Omit<InstallationContext, "customScripts">;
 
@@ -79,10 +79,16 @@ export type ValidationExecutionContext<
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
 > = ValidationContext & TStepCtx;
 
-/** Metadata for a step (used for UI display). */
-export type StepMeta = {
+/** Metadata info for a step (used for UI display). */
+export type StepMetaInfo = {
   label: string;
   description?: string;
+};
+
+/** Step metadata keyed by execution mode. */
+export type StepMeta = {
+  install: StepMetaInfo;
+  uninstall?: StepMetaInfo;
 };
 
 /** Defines the base properties of a step. */
@@ -93,7 +99,7 @@ export type StepBase<
   /** The name of this step. */
   name: TName;
 
-  /** Metadata associated with the step. */
+  /** Metadata associated with the step, keyed by execution mode. */
   meta: StepMeta;
 
   /** Whether the step should be taken into consideration. */
@@ -110,7 +116,7 @@ export type LeafStep<
   type: "leaf";
 
   /** The execution handler for the step. */
-  run: (
+  install: (
     config: TConfig,
     context: ExecutionContext<TStepCtx>,
   ) => TOutput | Promise<TOutput>;
@@ -124,6 +130,16 @@ export type LeafStep<
     config: TConfig,
     context: ValidationExecutionContext<TStepCtx>,
   ) => ValidationIssue[] | Promise<ValidationIssue[]>;
+
+  /**
+   * Optional uninstall handler for the step.
+   * Called during uninstallation to reverse the work done by `install`.
+   * If absent, the step is silently skipped during uninstallation.
+   */
+  uninstall?: (
+    config: TConfig,
+    context: ExecutionContext<TStepCtx>,
+  ) => void | Promise<void>;
 };
 
 /** A branch step that contains children (no execution). */
@@ -168,10 +184,13 @@ export interface AnyStep {
 
   // biome-ignore-start lint/suspicious/noExplicitAny: We need the flexibility here
   context?: (context: InstallationContext) => any;
+  install?: (config: any, context: any) => unknown | Promise<unknown>;
   meta: StepMeta;
   name: string;
-  run?: (config: any, context: any) => unknown | Promise<unknown>;
   type: "leaf" | "branch";
+
+  uninstall?: (config: any, context: any) => void | Promise<void>;
+
   validate?: (
     config: any,
     context: any,
@@ -214,8 +233,8 @@ export type BranchStepOptions<
  * ```typescript
  * const createProviders = defineLeafStep({
  *   name: "providers",
- *   meta: { label: "Create Providers", description: "Creates I/O Events providers" },
- *   run: async ({ config, stepContext }) => {
+ *   meta: { install: { label: "Create Providers", description: "Creates I/O Events providers" } },
+ *   install: async ({ config, stepContext }) => {
  *     const { eventsClient } = stepContext;
  *     return eventsClient.createProvider(config.eventing);
  *   },
@@ -233,7 +252,8 @@ export function defineLeafStep<
     name: options.name,
     meta: options.meta,
     when: options.when,
-    run: options.run,
+    install: options.install,
+    uninstall: options.uninstall,
     validate: options.validate,
   } satisfies LeafStep<TName, TConfig, TStepCtx, TOutput>;
 }
@@ -245,7 +265,7 @@ export function defineLeafStep<
  * ```typescript
  * const eventing = defineBranchStep({
  *   name: "eventing",
- *   meta: { label: "Eventing", description: "Sets up I/O Events" },
+ *   meta: { install: { label: "Eventing", description: "Sets up I/O Events" } },
  *   when: hasEventing,
  *   context: async (ctx) => ({ eventsClient: await createEventsClient(ctx) }),
  *   children: [commerceEventsStep, externalEventsStep],

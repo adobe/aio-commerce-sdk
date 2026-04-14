@@ -60,6 +60,21 @@ export function generateInstanceId(
 }
 
 /**
+ * Old version of instanceId generator which can be not unique within the same ORG.
+ *
+ * @param metadata - The metadata of the application
+ * @param provider - The event provider for which to generate the instance ID
+ * @deprecated use {@link generateInstanceId} instead
+ */
+export function generateInstanceIdDeprecated(
+  metadata: ApplicationMetadata,
+  provider: EventProvider,
+) {
+  const slugLabel = provider.label.toLowerCase().replace(/\s+/g, "-");
+  return `${metadata.id}-${provider.key ?? slugLabel}`.toLowerCase();
+}
+
+/**
  * Find an existing event provider by its instance ID.
  * @param allProviders - The list of all existing event providers.
  * @param instanceId - The instance ID to search for.
@@ -393,6 +408,10 @@ export async function getIoEventsExistingData(context: EventsExecutionContext) {
 export type ExistingIoEventsData = Awaited<
   ReturnType<typeof getIoEventsExistingData>
 >;
+
+/** A single I/O Events provider with its event metadata, as returned by {@link getIoEventsExistingData}. */
+export type IoEventProviderWithMetadata =
+  ExistingIoEventsData["providersWithMetadata"][number];
 
 /**
  * Retrieves the current existing Commerce eventing data and returns it in a normalized way.

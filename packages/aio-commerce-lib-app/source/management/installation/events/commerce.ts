@@ -15,6 +15,8 @@ import { defineLeafStep } from "#management/installation/workflow/step";
 
 import {
   configureCommerceEventing,
+  offboardCommerceEventing,
+  offboardIoEvents,
   onboardCommerceEventing,
   onboardIoEvents,
 } from "./helpers";
@@ -37,12 +39,19 @@ export type CommerceEventsStepData = InferStepOutput<typeof commerceEventsStep>;
 export const commerceEventsStep = defineLeafStep({
   name: "commerce",
   meta: {
-    label: "Configure Commerce Events",
-    description: "Sets up I/O Events for Adobe Commerce event sources",
+    install: {
+      label: "Configure Commerce Events",
+      description: "Sets up I/O Events for Adobe Commerce event sources",
+    },
+    uninstall: {
+      label: "Remove Commerce Events",
+      description: "Removes I/O Events for Adobe Commerce event sources",
+    },
   },
 
   when: hasCommerceEvents,
-  run: createCommerceEvents,
+  install: createCommerceEvents,
+  uninstall: removeCommerceEvents,
 });
 
 /**
@@ -133,4 +142,37 @@ async function createCommerceEvents(
 
   logger.debug("Completed Commerce Events installation step.");
   return stepData;
+}
+
+/**
+ * Remove all created for Commerce eventing created durint installation
+ * @param config - The configuration of the app, with commerce events.
+ * @param context - The execution context for the events installation.
+ */
+async function removeCommerceEvents(
+  config: CommerceEventsConfig,
+  context: EventsExecutionContext,
+) {
+  const { logger } = context;
+  logger.debug("Starting uninstall of Commerce Events with config:", config);
+
+  const [existingIoEventsData, commerceEventingExistingData] =
+    await Promise.all([
+      getIoEventsExistingData(context),
+      getCommerceEventingExistingData(context),
+    ]);
+
+  for (const { provider, events } of config.eventing.commerce) {
+    await offboardCommerceEventing(
+      { context, metadata: config.metadata, provider, events },
+      commerceEventingExistingData,
+    );
+
+    await offboardIoEvents(
+      { context, metadata: config.metadata, provider, events },
+      existingIoEventsData,
+    );
+  }
+
+  logger.debug("Completed Commerce Events uninstall step.");
 }

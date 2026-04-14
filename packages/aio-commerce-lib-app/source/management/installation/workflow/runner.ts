@@ -44,6 +44,9 @@ export type CreateInitialStateOptions = {
 
   /** The app configuration used to determine applicable steps. */
   config: CommerceAppConfigOutputModel;
+
+  /** The execution mode. When "uninstall", steps use `meta.uninstall` if defined; defaults to "install". */
+  mode?: ExecutionMode;
 };
 
 /** Options for executing a workflow. */
@@ -64,6 +67,9 @@ export type ExecuteWorkflowOptions = {
   hooks?: InstallationHooks;
 };
 
+/** Execution mode: "install" or "uninstall". */
+type ExecutionMode = "install" | "uninstall";
+
 /** Context for step execution containing all necessary dependencies. */
 type StepExecutionContext = {
   installationContext: InstallationContext;
@@ -74,6 +80,7 @@ type StepExecutionContext = {
   data: Record<string, unknown> | null;
   error: InstallationError | null;
   hooks?: InstallationHooks;
+  mode: ExecutionMode;
 };
 
 /**
@@ -85,12 +92,12 @@ type StepExecutionContext = {
 export function createInitialState(
   options: CreateInitialStateOptions,
 ): InProgressInstallationState {
-  const { rootStep, config } = options;
+  const { rootStep, config, mode } = options;
   return {
     id: crypto.randomUUID(),
     startedAt: nowIsoString(),
     status: "in-progress",
-    step: buildInitialStepStatus(rootStep, config, []),
+    step: buildInitialStepStatus(rootStep, config, [], mode),
     data: null,
   };
 }
@@ -100,6 +107,26 @@ export function createInitialState(
  */
 export async function executeWorkflow(
   options: ExecuteWorkflowOptions,
+): Promise<SucceededInstallationState | FailedInstallationState> {
+  return executeWorkflowWithMode(options, "install");
+}
+
+/**
+ * Executes an uninstall workflow from an initial state. Returns the final state (never throws).
+ * Steps with an `uninstall` handler get it called; steps without are silently skipped.
+ */
+export async function executeUninstallWorkflow(
+  options: ExecuteWorkflowOptions,
+): Promise<SucceededInstallationState | FailedInstallationState> {
+  return executeWorkflowWithMode(options, "uninstall");
+}
+
+/**
+ * Internal implementation shared by executeWorkflow and executeUninstallWorkflow.
+ */
+async function executeWorkflowWithMode(
+  options: ExecuteWorkflowOptions,
+  mode: ExecutionMode,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
   const { rootStep, installationContext, config, initialState, hooks } =
     options;
@@ -115,6 +142,7 @@ export async function executeWorkflow(
     data: null,
     error: null,
     hooks,
+    mode,
   };
 
   await callHook(hooks, "onInstallationStart", snapshot(context));
@@ -157,6 +185,7 @@ function buildInitialStepStatus(
   step: AnyStep,
   config: CommerceAppConfigOutputModel,
   parentPath: string[],
+  mode?: ExecutionMode,
 ): StepStatus {
   const path = [...parentPath, step.name];
   const children: StepStatus[] = [];
@@ -168,7 +197,7 @@ function buildInitialStepStatus(
         continue;
       }
 
-      children.push(buildInitialStepStatus(child, config, path));
+      children.push(buildInitialStepStatus(child, config, path, mode));
     }
   }
 
@@ -176,7 +205,10 @@ function buildInitialStepStatus(
     id: crypto.randomUUID(),
     name: step.name,
     path,
-    meta: step.meta,
+    meta:
+      mode === "uninstall" && step.meta.uninstall
+        ? step.meta.uninstall
+        : step.meta.install,
     status: "pending" as const,
     children,
   };
@@ -270,7 +302,7 @@ async function executeBranchStep(
   }
 }
 
-/** Executes a leaf step and stores its result. */
+/** Executes a leaf step and stores its result, or runs uninstall if in uninstall mode. */
 async function executeLeafStep(
   step: LeafStep,
   stepStatus: StepStatus,
@@ -278,7 +310,16 @@ async function executeLeafStep(
   context: StepExecutionContext,
 ): Promise<void> {
   const executionContext = { ...context.installationContext, ...inherited };
-  const result = await step.run(context.config, executionContext);
+
+  if (context.mode === "uninstall") {
+    // Silently skip steps that don't have an uninstall handler
+    if (step.uninstall) {
+      await step.uninstall(context.config, executionContext);
+    }
+    return;
+  }
+
+  const result = await step.install(context.config, executionContext);
 
   context.data ??= {};
   setAtPath(context.data, stepStatus.path, result);
