@@ -19,6 +19,7 @@ import {
   findExistingRegistrations,
   findExistingSubscription,
   generateInstanceId,
+  generateInstanceIdDeprecated,
   getCommerceEventingConfigurationUpdateParams,
   getIoEventCode,
   getNamespacedEvent,
@@ -804,8 +805,11 @@ export async function offboardIoEvents(
     appData.workspaceId,
   );
 
+  const instanceIdOldVersion = generateInstanceIdDeprecated(metadata, provider);
+
   const providerData = existingData.providersWithMetadata.find(
-    (p) => p.instance_id === instanceId,
+    (p) =>
+      p.instance_id === instanceId || p.instance_id === instanceIdOldVersion,
   );
 
   if (!providerData) {
@@ -890,8 +894,11 @@ async function deleteCommerceEventProvider(
     appData.workspaceId,
   );
 
+  const instanceIdOldVersion = generateInstanceIdDeprecated(metadata, provider);
+
   const commerceProvider = existingProviders.find(
-    (p) => p.instance_id === instanceId,
+    (p) =>
+      p.instance_id === instanceId || p.instance_id === instanceIdOldVersion,
   );
 
   if (!commerceProvider) {

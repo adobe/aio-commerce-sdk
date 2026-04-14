@@ -14,6 +14,7 @@ import { describe, expect, test, vi } from "vitest";
 
 import {
   configureCommerceEventing,
+  offboardCommerceEventing,
   offboardIoEvents,
   onboardCommerceEventing,
   onboardIoEvents,
@@ -21,6 +22,7 @@ import {
 import {
   COMMERCE_PROVIDER_TYPE,
   generateInstanceId,
+  generateInstanceIdDeprecated,
   getIoEventCode,
   getNamespacedEvent,
   getRegistrationName,
@@ -745,5 +747,76 @@ describe("offboardIoEvents", () => {
     );
 
     expect(context.ioEventsClient.deleteRegistration).not.toHaveBeenCalled();
+  });
+
+  test("finds provider by deprecated instance ID (without workspaceId)", async () => {
+    const {
+      context,
+      params,
+      ioProvider,
+      metadata,
+      provider,
+      registrationName,
+    } = createIoOffboardingScenario();
+
+    const deprecatedInstanceId = generateInstanceIdDeprecated(
+      metadata,
+      provider,
+    );
+    const providerWithDeprecatedId = {
+      ...ioProvider,
+      instance_id: deprecatedInstanceId,
+      metadata: [],
+    };
+
+    const registration = createMockIoEventRegistration({
+      registration_id: "test-registration-uuid",
+      name: registrationName,
+      client_id: context.params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+      events_of_interest: [],
+    });
+
+    await offboardIoEvents(
+      params,
+      createMockExistingIoEventsData({
+        providersWithMetadata: [providerWithDeprecatedId],
+        registrations: [registration],
+      }),
+    );
+
+    expect(context.ioEventsClient.deleteRegistration).toHaveBeenCalled();
+  });
+});
+
+describe("offboardCommerceEventing", () => {
+  test("finds provider by deprecated instance ID (without workspaceId)", async () => {
+    const { context, params, metadata, provider, event } =
+      createIoOffboardingScenario();
+
+    const deprecatedInstanceId = generateInstanceIdDeprecated(
+      metadata,
+      provider,
+    );
+    const commerceProvider = createMockCommerceEventProvider({
+      instance_id: deprecatedInstanceId,
+    });
+
+    const eventName = getNamespacedEvent(metadata, event.name);
+    const subscription = createMockCommerceEventSubscription({
+      name: eventName,
+    });
+
+    await offboardCommerceEventing(
+      params,
+      createMockExistingCommerceEventingData({
+        providers: [commerceProvider],
+        subscriptions: new Map([[eventName, subscription]]),
+      }),
+    );
+
+    expect(
+      context.commerceEventsClient.deleteEventSubscription,
+    ).toHaveBeenCalled();
+    expect(context.commerceEventsClient.deleteEventProvider).toHaveBeenCalled();
   });
 });
