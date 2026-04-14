@@ -21,9 +21,29 @@ import type {
   CustomInstallationStep,
 } from "#config/schema/installation";
 import type {
+  CustomInstallationStepDefinition,
+  CustomInstallationStepHandler,
+} from "#management/installation/custom-installation/define";
+import type {
   AnyStep,
   ExecutionContext,
 } from "#management/installation/workflow/step";
+
+function isCustomInstallationStepDefinition(
+  obj: unknown,
+): obj is CustomInstallationStepDefinition {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    typeof (obj as Record<string, unknown>).install === "function"
+  );
+}
+
+function isCustomInstallationStepHandler(
+  obj: unknown,
+): obj is CustomInstallationStepHandler {
+  return typeof obj === "function";
+}
 
 /** Result of executing a single custom installation script. */
 type ScriptExecutionResult = {
@@ -74,19 +94,15 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
       }
 
       const defaultExport = scriptModule.default;
-      let runFunction: unknown = null;
+      let runFunction: CustomInstallationStepHandler | null = null;
 
-      if (typeof defaultExport === "function") {
+      if (isCustomInstallationStepHandler(defaultExport)) {
         runFunction = defaultExport;
-      } else if (
-        typeof defaultExport === "object" &&
-        defaultExport !== null &&
-        typeof (defaultExport as Record<string, unknown>).install === "function"
-      ) {
-        runFunction = (defaultExport as Record<string, unknown>).install;
+      } else if (isCustomInstallationStepDefinition(defaultExport)) {
+        runFunction = defaultExport.install;
       }
 
-      if (typeof runFunction !== "function") {
+      if (runFunction === null) {
         throw new Error(
           `Script ${script} default export must be a function or an object with an install method. Use defineCustomInstallationStep helper.`,
         );
@@ -119,22 +135,24 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
       }
 
       const defaultExport = (scriptModule as Record<string, unknown>).default;
-      const uninstallFunction =
-        typeof defaultExport === "object" &&
-        defaultExport !== null &&
-        typeof (defaultExport as Record<string, unknown>).uninstall ===
-          "function"
-          ? (defaultExport as Record<string, unknown>).uninstall
-          : null;
 
-      if (typeof uninstallFunction !== "function") {
+      if (!isCustomInstallationStepDefinition(defaultExport)) {
         logger.debug(
           `Script ${script} does not export an uninstall function, skipping uninstall.`,
         );
         return;
       }
 
-      await uninstallFunction(config, context);
+      const { uninstall } = defaultExport;
+
+      if (!uninstall) {
+        logger.debug(
+          `Script ${script} does not export an uninstall function, skipping uninstall.`,
+        );
+        return;
+      }
+
+      await uninstall(config, context);
       logger.info(`Successfully uninstalled script: ${name}`);
     },
   });
