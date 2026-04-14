@@ -35,7 +35,8 @@ function isCustomInstallationStepDefinition(
   return (
     typeof obj === "object" &&
     obj !== null &&
-    "install" in obj && typeof obj.install === "function"
+    "install" in obj &&
+    typeof obj.install === "function"
   );
 }
 
