@@ -134,6 +134,12 @@ router.put("/", {
     logger.debug(`Setting configuration with scope id: ${req.body.scopeId}`);
     const { scopeId, config } = req.body;
 
+    const validatedSchema = validateCommerceAppConfigDomain(
+      configSchema,
+      "businessConfig.schema",
+    );
+    initialize({ schema: validatedSchema });
+
     // The UI sent it to us as a masked value, which means the user didn't update it.
     const updatedFields = config.filter(
       (item) => item.value !== MASKED_PASSWORD_VALUE,
@@ -177,6 +183,12 @@ router.patch("/", {
 
     logger.debug(`Patching configuration with scope id: ${req.body.scopeId}`);
     const { scopeId, config } = req.body;
+
+    const validatedSchema = validateCommerceAppConfigDomain(
+      configSchema,
+      "businessConfig.schema",
+    );
+    initialize({ schema: validatedSchema });
 
     const result = await setConfiguration({ config }, byScopeId(scopeId), {
       encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
