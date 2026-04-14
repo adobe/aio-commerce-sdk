@@ -150,7 +150,10 @@ router.put("/", {
     result.config = filterPasswordFields(configSchema, result.config);
     return ok({
       body: result,
-      headers: { "Cache-Control": "no-store", Deprecation: "true" },
+      headers: {
+        "Cache-Control": "no-store",
+        Deprecation: "Wed, 15 Apr 2026 00:00:00 GMT",
+      },
     });
   },
 });
