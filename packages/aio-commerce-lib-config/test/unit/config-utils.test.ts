@@ -13,6 +13,7 @@
 import { describe, expect, test } from "vitest";
 
 import { mergeScopes, sanitizeRequestEntries } from "#config-utils";
+import { mockGlobalConfigValues } from "#test/fixtures/config-values";
 
 import type { ConfigValueWithOptionalOrigin } from "#modules/configuration/types";
 
@@ -130,18 +131,7 @@ describe("config-utils", () => {
   });
 
   describe("mergeScopes", () => {
-    const existing: ConfigValueWithOptionalOrigin[] = [
-      {
-        name: "currency",
-        value: "USD",
-        origin: { code: "global", level: "global" },
-      },
-      {
-        name: "locale",
-        value: "en_US",
-        origin: { code: "global", level: "global" },
-      },
-    ];
+    const existing = mockGlobalConfigValues;
 
     test("adds new entries from requested with current scope as origin", () => {
       const result = mergeScopes(
