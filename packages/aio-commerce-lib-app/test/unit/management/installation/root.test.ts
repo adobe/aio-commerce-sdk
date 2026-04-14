@@ -19,6 +19,7 @@ import {
   createRootUninstallationStep,
 } from "#management/installation/root";
 import { webhooksStep } from "#management/installation/webhooks/branch";
+import { isBranchStep } from "#management/installation/workflow/step";
 import {
   configWithCustomInstallationSteps,
   minimalValidConfig,
@@ -49,18 +50,13 @@ describe("createRootInstallationStep", () => {
     expect(customInstallationStep.type).toBe("branch");
 
     // The custom installation step should have children (script steps directly)
-    if (
-      customInstallationStep.type === "branch" &&
-      customInstallationStep.children
-    ) {
-      expect(customInstallationStep.children.length).toBe(2);
-      expect(customInstallationStep.children[0].name).toBe("demoSuccess");
-      expect(customInstallationStep.children[0].meta.install.label).toBe(
-        "Demo Success",
-      );
-
-      expect(customInstallationStep.children[0].type).toBe("leaf");
-    }
+    expect.assert(isBranchStep(customInstallationStep));
+    expect(customInstallationStep.children.length).toBe(2);
+    expect(customInstallationStep.children[0].name).toBe("demoSuccess");
+    expect(customInstallationStep.children[0].meta.install.label).toBe(
+      "Demo Success",
+    );
+    expect(customInstallationStep.children[0].type).toBe("leaf");
   });
 });
 
@@ -100,17 +96,12 @@ describe("createRootUninstallationStep", () => {
     expect(customInstallationStep.type).toBe("branch");
 
     // The custom installation step should have children (script steps directly)
-    if (
-      customInstallationStep.type === "branch" &&
-      customInstallationStep.children
-    ) {
-      expect(customInstallationStep.children.length).toBe(2);
-      expect(customInstallationStep.children[0].name).toBe("demoSuccess");
-      expect(customInstallationStep.children[0].meta.install.label).toBe(
-        "Demo Success",
-      );
-
-      expect(customInstallationStep.children[0].type).toBe("leaf");
-    }
+    expect.assert(isBranchStep(customInstallationStep));
+    expect(customInstallationStep.children.length).toBe(2);
+    expect(customInstallationStep.children[0].name).toBe("demoSuccess");
+    expect(customInstallationStep.children[0].meta.install.label).toBe(
+      "Demo Success",
+    );
+    expect(customInstallationStep.children[0].type).toBe("leaf");
   });
 });
