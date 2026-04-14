@@ -35,7 +35,7 @@ function isCustomInstallationStepDefinition(
   return (
     typeof obj === "object" &&
     obj !== null &&
-    typeof (obj as Record<string, unknown>).install === "function"
+    "install" in obj && typeof obj.install === "function"
   );
 }
 
