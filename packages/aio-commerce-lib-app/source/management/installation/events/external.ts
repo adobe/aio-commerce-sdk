@@ -13,7 +13,7 @@
 import { hasExternalEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
-import { onboardIoEvents } from "./helpers";
+import { offboardIoEvents, onboardIoEvents } from "./helpers";
 import { EXTERNAL_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
 
 import type { ExternalEventsConfig } from "#config/schema/eventing";
@@ -27,12 +27,19 @@ export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;
 export const externalEventsStep = defineLeafStep({
   name: "external",
   meta: {
-    label: "Configure External Events",
-    description: "Sets up I/O Events for external event sources",
+    install: {
+      label: "Configure External Events",
+      description: "Sets up I/O Events for external event sources",
+    },
+    uninstall: {
+      label: "Remove External Events",
+      description: "Removes I/O Events for external event sources",
+    },
   },
 
   when: hasExternalEvents,
-  run: createExternalEvents,
+  install: createExternalEvents,
+  uninstall: removeExternalEvents,
 });
 
 /**
@@ -79,4 +86,27 @@ async function createExternalEvents(
 
   logger.debug("Completed External Events installation step.");
   return stepData;
+}
+/**
+ * Removed all created entities for External Events during the installation
+ * @param config - The configuration of the app, with external events.
+ * @param context - The execution context for the events installation.
+ */
+async function removeExternalEvents(
+  config: ExternalEventsConfig,
+  context: EventsExecutionContext,
+) {
+  const { logger } = context;
+  logger.debug("Starting uninstall of External Events with config:", config);
+
+  const existingIoEventsData = await getIoEventsExistingData(context);
+
+  for (const { provider, events } of config.eventing.external) {
+    await offboardIoEvents(
+      { context, metadata: config.metadata, provider, events },
+      existingIoEventsData,
+    );
+  }
+
+  logger.debug("Completed External Events uninstall step.");
 }

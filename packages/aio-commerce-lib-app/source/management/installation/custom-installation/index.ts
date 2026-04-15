@@ -16,4 +16,7 @@ export { createCustomInstallationStep } from "./branch";
 export { createCustomScriptSteps } from "./custom-scripts";
 export { defineCustomInstallationStep } from "./define";
 
-export type { CustomInstallationStepHandler } from "./define";
+export type {
+  CustomInstallationStepDefinition,
+  CustomInstallationStepHandler,
+} from "./define";

@@ -25,8 +25,14 @@ describe("externalEventsStep leaf step", () => {
     expect(isLeafStep(externalEventsStep)).toBe(true);
     expect(externalEventsStep.name).toBe("external");
     expect(externalEventsStep.meta).toEqual({
-      label: "Configure External Events",
-      description: "Sets up I/O Events for external event sources",
+      install: {
+        label: "Configure External Events",
+        description: "Sets up I/O Events for external event sources",
+      },
+      uninstall: {
+        label: "Remove External Events",
+        description: "Removes I/O Events for external event sources",
+      },
     });
   });
 
