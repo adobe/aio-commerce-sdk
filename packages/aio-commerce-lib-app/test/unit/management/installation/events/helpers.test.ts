@@ -14,12 +14,15 @@ import { describe, expect, test, vi } from "vitest";
 
 import {
   configureCommerceEventing,
+  offboardCommerceEventing,
+  offboardIoEvents,
   onboardCommerceEventing,
   onboardIoEvents,
 } from "#management/installation/events/helpers";
 import {
   COMMERCE_PROVIDER_TYPE,
   generateInstanceId,
+  generateInstanceIdDeprecated,
   getIoEventCode,
   getNamespacedEvent,
   getRegistrationName,
@@ -234,6 +237,52 @@ function createCommerceOnboardingScenario({
     event: resolvedEvent,
     ioProvider,
     ioData,
+  };
+}
+
+function createIoOffboardingScenario({
+  context,
+  metadata,
+  provider,
+  event,
+}: {
+  context?: EventsExecutionContext;
+  metadata?: ReturnType<typeof createMockMetadata>;
+  provider?: EventProvider;
+  event?: MockCommerceEvent;
+} = {}) {
+  const resolvedContext = context ?? createDefaultEventingContext();
+  const resolvedMetadata = metadata ?? createDefaultMetadata();
+  const resolvedProvider = provider ?? createDefaultProvider();
+  const resolvedEvent = event ?? createDefaultCommerceEvent();
+
+  const ioProvider = createExistingIoProvider(
+    resolvedContext,
+    resolvedMetadata,
+    resolvedProvider,
+    { id: "io-provider-1" },
+  );
+
+  const registrationName = getRegistrationName(
+    ioProvider,
+    resolvedEvent.runtimeActions[0],
+  );
+
+  const params = {
+    context: resolvedContext,
+    metadata: resolvedMetadata,
+    provider: resolvedProvider,
+    events: [resolvedEvent],
+  };
+
+  return {
+    context: resolvedContext,
+    metadata: resolvedMetadata,
+    provider: resolvedProvider,
+    event: resolvedEvent,
+    ioProvider,
+    registrationName,
+    params,
   };
 }
 
@@ -625,5 +674,149 @@ describe("configureCommerceEventing", () => {
     ).rejects.toThrow();
 
     expect(logger.error).toHaveBeenCalledWith(expect.any(String));
+  });
+});
+
+describe("offboardIoEvents", () => {
+  test("deletes registrations matched by name and client_id when events_of_interest is empty", async () => {
+    const { context, params, ioProvider, registrationName } =
+      createIoOffboardingScenario();
+
+    const registration = createMockIoEventRegistration({
+      registration_id: "test-registration-uuid",
+      name: registrationName,
+      client_id: context.params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+      events_of_interest: [],
+    });
+
+    await offboardIoEvents(
+      params,
+      createMockExistingIoEventsData({
+        providersWithMetadata: [{ ...ioProvider, metadata: [] }],
+        registrations: [registration],
+      }),
+    );
+
+    expect(context.ioEventsClient.deleteRegistration).toHaveBeenCalled();
+  });
+
+  test("calls deleteRegistration with registration_id not id", async () => {
+    const { context, params, ioProvider, registrationName } =
+      createIoOffboardingScenario();
+
+    const registration = createMockIoEventRegistration({
+      id: "616664",
+      registration_id: "correct-uuid-for-api",
+      name: registrationName,
+      client_id: context.params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+      events_of_interest: [],
+    });
+
+    await offboardIoEvents(
+      params,
+      createMockExistingIoEventsData({
+        providersWithMetadata: [{ ...ioProvider, metadata: [] }],
+        registrations: [registration],
+      }),
+    );
+
+    expect(context.ioEventsClient.deleteRegistration).toHaveBeenCalledWith(
+      expect.objectContaining({
+        registrationId: "correct-uuid-for-api",
+      }),
+    );
+  });
+
+  test("skips registrations that do not match the current client_id or name", async () => {
+    const { context, params, ioProvider, registrationName } =
+      createIoOffboardingScenario();
+
+    const foreignRegistration = createMockIoEventRegistration({
+      registration_id: "foreign-uuid",
+      name: registrationName,
+      client_id: "other-client-id",
+      events_of_interest: [],
+    });
+
+    await offboardIoEvents(
+      params,
+      createMockExistingIoEventsData({
+        providersWithMetadata: [{ ...ioProvider, metadata: [] }],
+        registrations: [foreignRegistration],
+      }),
+    );
+
+    expect(context.ioEventsClient.deleteRegistration).not.toHaveBeenCalled();
+  });
+
+  test("finds provider by deprecated instance ID (without workspaceId)", async () => {
+    const {
+      context,
+      params,
+      ioProvider,
+      metadata,
+      provider,
+      registrationName,
+    } = createIoOffboardingScenario();
+
+    const deprecatedInstanceId = generateInstanceIdDeprecated(
+      metadata,
+      provider,
+    );
+    const providerWithDeprecatedId = {
+      ...ioProvider,
+      instance_id: deprecatedInstanceId,
+      metadata: [],
+    };
+
+    const registration = createMockIoEventRegistration({
+      registration_id: "test-registration-uuid",
+      name: registrationName,
+      client_id: context.params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+      events_of_interest: [],
+    });
+
+    await offboardIoEvents(
+      params,
+      createMockExistingIoEventsData({
+        providersWithMetadata: [providerWithDeprecatedId],
+        registrations: [registration],
+      }),
+    );
+
+    expect(context.ioEventsClient.deleteRegistration).toHaveBeenCalled();
+  });
+});
+
+describe("offboardCommerceEventing", () => {
+  test("finds provider by deprecated instance ID (without workspaceId)", async () => {
+    const { context, params, metadata, provider, event } =
+      createIoOffboardingScenario();
+
+    const deprecatedInstanceId = generateInstanceIdDeprecated(
+      metadata,
+      provider,
+    );
+    const commerceProvider = createMockCommerceEventProvider({
+      instance_id: deprecatedInstanceId,
+    });
+
+    const eventName = getNamespacedEvent(metadata, event.name);
+    const subscription = createMockCommerceEventSubscription({
+      name: eventName,
+    });
+
+    await offboardCommerceEventing(
+      params,
+      createMockExistingCommerceEventingData({
+        providers: [commerceProvider],
+        subscriptions: new Map([[eventName, subscription]]),
+      }),
+    );
+
+    expect(
+      context.commerceEventsClient.deleteEventSubscription,
+    ).toHaveBeenCalled();
+    expect(context.commerceEventsClient.deleteEventProvider).toHaveBeenCalled();
   });
 });

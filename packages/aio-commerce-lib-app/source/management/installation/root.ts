@@ -42,8 +42,28 @@ export function createRootInstallationStep(
   return defineBranchStep({
     name: "installation",
     meta: {
-      label: "Installation",
-      description: "App installation workflow",
+      install: {
+        label: "Installation",
+        description: "App installation workflow",
+      },
+    },
+    children: createDefaultChildSteps(config),
+  });
+}
+
+/**
+ * Creates a root uninstallation step with dynamic children based on the config.
+ */
+export function createRootUninstallationStep(
+  config: CommerceAppConfigOutputModel,
+): BranchStep {
+  return defineBranchStep({
+    name: "uninstallation",
+    meta: {
+      install: {
+        label: "Uninstallation",
+        description: "App uninstallation workflow",
+      },
     },
     children: createDefaultChildSteps(config),
   });

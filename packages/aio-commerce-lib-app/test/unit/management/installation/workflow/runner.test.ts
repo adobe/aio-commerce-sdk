@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   createInitialState,
+  executeUninstallWorkflow,
   executeWorkflow,
 } from "#management/installation/workflow/runner";
 import {
@@ -41,7 +42,7 @@ describe("createInitialState", () => {
   test("should create initial state with unique id and in-progress status", () => {
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [],
     });
 
@@ -56,7 +57,9 @@ describe("createInitialState", () => {
   test("should build step status from root step with name and meta", () => {
     const rootStep = defineBranchStep({
       name: "installation",
-      meta: { label: "Installation", description: "Main installation" },
+      meta: {
+        install: { label: "Installation", description: "Main installation" },
+      },
       children: [],
     });
 
@@ -73,8 +76,8 @@ describe("createInitialState", () => {
   test("should filter children based on when conditions (include steps where when returns true)", () => {
     const includedStep = defineLeafStep({
       name: "included",
-      meta: { label: "Included" },
-      run: vi.fn(),
+      meta: { install: { label: "Included" } },
+      install: vi.fn(),
 
       // @ts-expect-error It's for testing
       when: () => true,
@@ -82,8 +85,8 @@ describe("createInitialState", () => {
 
     const excludedStep = defineLeafStep({
       name: "excluded",
-      meta: { label: "Excluded" },
-      run: vi.fn(),
+      meta: { install: { label: "Excluded" } },
+      install: vi.fn(),
 
       // @ts-expect-error It's for testing
       when: () => false,
@@ -91,7 +94,7 @@ describe("createInitialState", () => {
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [includedStep, excludedStep],
     });
 
@@ -103,19 +106,19 @@ describe("createInitialState", () => {
   test("should recursively build children for branch steps", () => {
     const grandchildStep = defineLeafStep({
       name: "grandchild",
-      meta: { label: "Grandchild" },
-      run: vi.fn(),
+      meta: { install: { label: "Grandchild" } },
+      install: vi.fn(),
     });
 
     const childBranch = defineBranchStep({
       name: "child-branch",
-      meta: { label: "Child Branch" },
+      meta: { install: { label: "Child Branch" } },
       children: [grandchildStep],
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [childBranch],
     });
 
@@ -129,13 +132,13 @@ describe("createInitialState", () => {
   test("should handle leaf steps (no children)", () => {
     const leafStep = defineLeafStep({
       name: "leaf",
-      meta: { label: "Leaf" },
-      run: vi.fn(),
+      meta: { install: { label: "Leaf" } },
+      install: vi.fn(),
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [leafStep],
     });
 
@@ -144,6 +147,64 @@ describe("createInitialState", () => {
     expect(state.step.children).toHaveLength(1);
     expect(state.step.children[0].name).toBe("leaf");
     expect(state.step.children[0].children).toEqual([]);
+  });
+
+  test("should use uninstallMeta for steps when mode is 'uninstall'", () => {
+    const childStep = defineLeafStep({
+      name: "child",
+      meta: {
+        install: { label: "Install Child", description: "Installs something" },
+        uninstall: {
+          label: "Uninstall Child",
+          description: "Removes something",
+        },
+      },
+      install: vi.fn(),
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: {
+        install: { label: "Installation" },
+        uninstall: { label: "Uninstallation" },
+      },
+      children: [childStep],
+    });
+
+    const state = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+      mode: "uninstall",
+    });
+
+    expect(state.step.meta).toEqual({ label: "Uninstallation" });
+    expect(state.step.children[0].meta).toEqual({
+      label: "Uninstall Child",
+      description: "Removes something",
+    });
+  });
+
+  test("should fall back to meta when uninstallMeta is absent and mode is 'uninstall'", () => {
+    const childStep = defineLeafStep({
+      name: "child",
+      meta: { install: { label: "Install Child" } },
+      install: vi.fn(),
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { install: { label: "Installation" } },
+      children: [childStep],
+    });
+
+    const state = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+      mode: "uninstall",
+    });
+
+    expect(state.step.meta).toEqual({ label: "Installation" });
+    expect(state.step.children[0].meta).toEqual({ label: "Install Child" });
   });
 });
 
@@ -160,13 +221,13 @@ describe("executeWorkflow", () => {
   test("should return succeeded state when all steps complete successfully", async () => {
     const leafStep = defineLeafStep({
       name: "step1",
-      meta: { label: "Step 1" },
-      run: () => "result",
+      meta: { install: { label: "Step 1" } },
+      install: () => "result",
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [leafStep],
     });
 
@@ -188,7 +249,7 @@ describe("executeWorkflow", () => {
   test("should fall back to INSTALLATION_FAILED when a success hook throws after execution completes", async () => {
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [],
     });
 
@@ -220,15 +281,15 @@ describe("executeWorkflow", () => {
   test("should return failed state when a step throws an error", async () => {
     const failingStep = defineLeafStep({
       name: "failing",
-      meta: { label: "Failing Step" },
-      run: () => {
+      meta: { install: { label: "Failing Step" } },
+      install: () => {
         throw new Error("Step failed");
       },
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [failingStep],
     });
 
@@ -253,13 +314,13 @@ describe("executeWorkflow", () => {
   test("should call onInstallationStart hook at the beginning", async () => {
     const leafStep = defineLeafStep({
       name: "step1",
-      meta: { label: "Step 1" },
-      run: () => "result",
+      meta: { install: { label: "Step 1" } },
+      install: () => "result",
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [leafStep],
     });
 
@@ -291,13 +352,13 @@ describe("executeWorkflow", () => {
   test("should call onInstallationSuccess hook on success", async () => {
     const leafStep = defineLeafStep({
       name: "step1",
-      meta: { label: "Step 1" },
-      run: () => "result",
+      meta: { install: { label: "Step 1" } },
+      install: () => "result",
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [leafStep],
     });
 
@@ -329,15 +390,15 @@ describe("executeWorkflow", () => {
   test("should call onInstallationFailure hook on failure", async () => {
     const failingStep = defineLeafStep({
       name: "failing",
-      meta: { label: "Failing" },
-      run: () => {
+      meta: { install: { label: "Failing" } },
+      install: () => {
         throw new Error("Failure");
       },
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [failingStep],
     });
 
@@ -372,13 +433,13 @@ describe("executeWorkflow", () => {
   test("should call onStepStart, onStepSuccess for each step", async () => {
     const leafStep = defineLeafStep({
       name: "step1",
-      meta: { label: "Step 1" },
-      run: () => "result",
+      meta: { install: { label: "Step 1" } },
+      install: () => "result",
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [leafStep],
     });
 
@@ -418,15 +479,15 @@ describe("executeWorkflow", () => {
   test("should call onStepFailure when a step fails", async () => {
     const failingStep = defineLeafStep({
       name: "failing",
-      meta: { label: "Failing" },
-      run: () => {
+      meta: { install: { label: "Failing" } },
+      install: () => {
         throw new Error("Step error");
       },
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [failingStep],
     });
 
@@ -459,16 +520,16 @@ describe("executeWorkflow", () => {
   });
 
   test("should execute leaf step run functions with config and context", async () => {
-    const runFn = vi.fn().mockReturnValue("result");
+    const installFn = vi.fn().mockReturnValue("result");
     const leafStep = defineLeafStep({
       name: "step1",
-      meta: { label: "Step 1" },
-      run: runFn,
+      meta: { install: { label: "Step 1" } },
+      install: installFn,
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [leafStep],
     });
 
@@ -485,8 +546,8 @@ describe("executeWorkflow", () => {
       initialState,
     });
 
-    expect(runFn).toHaveBeenCalledTimes(1);
-    expect(runFn).toHaveBeenCalledWith(
+    expect(installFn).toHaveBeenCalledTimes(1);
+    expect(installFn).toHaveBeenCalledWith(
       minimalValidConfig,
       expect.objectContaining({
         params: installationContext.params,
@@ -498,13 +559,13 @@ describe("executeWorkflow", () => {
   test("should store leaf step results in data at the correct path", async () => {
     const leafStep = defineLeafStep({
       name: "step1",
-      meta: { label: "Step 1" },
-      run: () => ({ key: "value" }),
+      meta: { install: { label: "Step 1" } },
+      install: () => ({ key: "value" }),
     });
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [leafStep],
     });
 
@@ -532,8 +593,8 @@ describe("executeWorkflow", () => {
 
     const step1 = defineLeafStep({
       name: "step1",
-      meta: { label: "Step 1" },
-      run: () => {
+      meta: { install: { label: "Step 1" } },
+      install: () => {
         executionOrder.push("step1");
         return "result1";
       },
@@ -541,8 +602,8 @@ describe("executeWorkflow", () => {
 
     const step2 = defineLeafStep({
       name: "step2",
-      meta: { label: "Step 2" },
-      run: () => {
+      meta: { install: { label: "Step 2" } },
+      install: () => {
         executionOrder.push("step2");
         return "result2";
       },
@@ -550,8 +611,8 @@ describe("executeWorkflow", () => {
 
     const step3 = defineLeafStep({
       name: "step3",
-      meta: { label: "Step 3" },
-      run: () => {
+      meta: { install: { label: "Step 3" } },
+      install: () => {
         executionOrder.push("step3");
         return "result3";
       },
@@ -559,7 +620,7 @@ describe("executeWorkflow", () => {
 
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [step1, step2, step3],
     });
 
@@ -580,7 +641,7 @@ describe("executeWorkflow", () => {
   test("should return a failed state when the initial state references a child step missing from the definition", async () => {
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [],
     });
 
@@ -614,7 +675,7 @@ describe("executeWorkflow", () => {
   test("should tolerate a malformed step object that is neither branch nor leaf", async () => {
     const rootStep = defineBranchStep({
       name: "root",
-      meta: { label: "Root" },
+      meta: { install: { label: "Root" } },
       children: [],
     });
     Reflect.set(rootStep, "type", "unknown");
@@ -633,5 +694,285 @@ describe("executeWorkflow", () => {
 
     expect(result.status).toBe("succeeded");
     expect(result.step.status).toBe("succeeded");
+  });
+});
+
+describe("executeUninstallWorkflow", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(FAKE_SYSTEM_TIME));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("should call uninstall handler on steps that have one", async () => {
+    const uninstallFn = vi.fn();
+    const leafStep = defineLeafStep({
+      name: "step1",
+      meta: { install: { label: "Step 1" } },
+      install: vi.fn(),
+      uninstall: uninstallFn,
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { install: { label: "Root" } },
+      children: [leafStep],
+    });
+
+    const installationContext = createMockInstallationContext();
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    const result = await executeUninstallWorkflow({
+      rootStep,
+      installationContext,
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(result.status).toBe("succeeded");
+    expect(uninstallFn).toHaveBeenCalledTimes(1);
+    expect(uninstallFn).toHaveBeenCalledWith(
+      minimalValidConfig,
+      expect.objectContaining({
+        params: installationContext.params,
+        logger: installationContext.logger,
+      }),
+    );
+  });
+
+  test("should silently skip steps that do not have an uninstall handler", async () => {
+    const installFn = vi.fn().mockReturnValue("result");
+    const leafStep = defineLeafStep({
+      name: "step1",
+      meta: { install: { label: "Step 1" } },
+      install: installFn,
+      // no uninstall handler
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { install: { label: "Root" } },
+      children: [leafStep],
+    });
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    const result = await executeUninstallWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    // Step should succeed even without an uninstall handler
+    expect(result.status).toBe("succeeded");
+    // The install function should NOT be called during uninstall
+    expect(installFn).not.toHaveBeenCalled();
+  });
+
+  test("should return failed state when an uninstall handler throws", async () => {
+    const leafStep = defineLeafStep({
+      name: "step1",
+      meta: { install: { label: "Step 1" } },
+      install: vi.fn(),
+      uninstall: () => {
+        throw new Error("Uninstall failed");
+      },
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { install: { label: "Root" } },
+      children: [leafStep],
+    });
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    const result = await executeUninstallWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(result.status).toBe("failed");
+    if (result.status === "failed") {
+      expect(result.error).toBeDefined();
+      expect(result.error.message).toBe("Uninstall failed");
+    }
+  });
+
+  test("should call lifecycle hooks the same way as executeWorkflow", async () => {
+    const leafStep = defineLeafStep({
+      name: "step1",
+      meta: { install: { label: "Step 1" } },
+      install: vi.fn(),
+      uninstall: vi.fn(),
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { install: { label: "Root" } },
+      children: [leafStep],
+    });
+
+    const hooks: InstallationHooks = {
+      onInstallationStart: vi.fn(),
+      onInstallationSuccess: vi.fn(),
+      onStepStart: vi.fn(),
+      onStepSuccess: vi.fn(),
+    };
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    await executeUninstallWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+      hooks,
+    });
+
+    expect(hooks.onInstallationStart).toHaveBeenCalledTimes(1);
+    expect(hooks.onInstallationSuccess).toHaveBeenCalledTimes(1);
+    // Called for root and step1
+    expect(hooks.onStepStart).toHaveBeenCalledTimes(2);
+    expect(hooks.onStepSuccess).toHaveBeenCalledTimes(2);
+  });
+
+  test("should not store step results in data during uninstall", async () => {
+    const leafStep = defineLeafStep({
+      name: "step1",
+      meta: { install: { label: "Step 1" } },
+      install: vi.fn().mockReturnValue({ key: "value" }),
+      uninstall: vi.fn(),
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { install: { label: "Root" } },
+      children: [leafStep],
+    });
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    const result = await executeUninstallWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    // No step results stored during uninstall (uninstall returns void, not keyed data)
+    expect(result.status).toBe("succeeded");
+    // data may be initialized to an empty object, but no step results are nested in it
+    expect(result.data).not.toHaveProperty("root.step1");
+  });
+
+  test("should call onInstallationFailure hook when uninstall handler throws", async () => {
+    const leafStep = defineLeafStep({
+      name: "step1",
+      meta: { install: { label: "Step 1" } },
+      install: vi.fn(),
+      uninstall: () => {
+        throw new Error("Uninstall error");
+      },
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { install: { label: "Root" } },
+      children: [leafStep],
+    });
+
+    const hooks: InstallationHooks = {
+      onInstallationFailure: vi.fn(),
+    };
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    await executeUninstallWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+      hooks,
+    });
+
+    expect(hooks.onInstallationFailure).toHaveBeenCalledTimes(1);
+    expect(hooks.onInstallationFailure).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "failed",
+        id: initialState.id,
+        error: expect.objectContaining({
+          message: "Uninstall error",
+        }),
+      }),
+    );
+  });
+
+  test("should handle mixed scenario — some steps have uninstall, some do not", async () => {
+    const uninstallFn = vi.fn();
+    const installFn2 = vi.fn().mockReturnValue("result2");
+
+    const step1 = defineLeafStep({
+      name: "step1",
+      meta: { install: { label: "Step 1" } },
+      install: vi.fn(),
+      uninstall: uninstallFn,
+    });
+
+    const step2 = defineLeafStep({
+      name: "step2",
+      meta: { install: { label: "Step 2" } },
+      install: installFn2,
+      // no uninstall handler
+    });
+
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { install: { label: "Root" } },
+      children: [step1, step2],
+    });
+
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+
+    const result = await executeUninstallWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    // step1's uninstall should be called
+    expect(uninstallFn).toHaveBeenCalledTimes(1);
+    // step2 should be silently skipped, install should not be called
+    expect(installFn2).not.toHaveBeenCalled();
+    // Overall workflow result should be succeeded
+    expect(result.status).toBe("succeeded");
   });
 });

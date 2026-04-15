@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type { StepMeta } from "./step";
+import type { StepMetaInfo } from "./step";
 
 /** Status of a step execution. */
 export type ExecutionStatus =
@@ -53,7 +53,7 @@ export type StepStatus = {
   path: string[];
 
   /** Step metadata (for display purposes). */
-  meta: StepMeta;
+  meta: StepMetaInfo;
 
   /** Current execution status. */
   status: ExecutionStatus;

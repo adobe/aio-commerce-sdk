@@ -32,8 +32,14 @@ describe("commerceEventsStep leaf step", () => {
     expect(isLeafStep(commerceEventsStep)).toBe(true);
     expect(commerceEventsStep.name).toBe("commerce");
     expect(commerceEventsStep.meta).toEqual({
-      label: "Configure Commerce Events",
-      description: "Sets up I/O Events for Adobe Commerce event sources",
+      install: {
+        label: "Configure Commerce Events",
+        description: "Sets up I/O Events for Adobe Commerce event sources",
+      },
+      uninstall: {
+        label: "Remove Commerce Events",
+        description: "Removes I/O Events for Adobe Commerce event sources",
+      },
     });
   });
 
@@ -146,7 +152,7 @@ describe("commerceEventsStep orchestration", () => {
       subscriptions: [],
     });
 
-    const result = await commerceEventsStep.run(
+    const result = await commerceEventsStep.install(
       createConfigWithTwoCommerceEventingSources(),
       context,
     );

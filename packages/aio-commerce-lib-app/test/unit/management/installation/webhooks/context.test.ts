@@ -38,6 +38,7 @@ describe("createWebhooksStepContext", () => {
 
     const getWebhookList = vi.fn();
     const subscribeWebhook = vi.fn();
+    const unsubscribeWebhook = vi.fn();
 
     vi.doMock("@adobe/aio-commerce-lib-api", () => ({
       resolveCommerceHttpClientParams,
@@ -47,6 +48,7 @@ describe("createWebhooksStepContext", () => {
       createCustomCommerceWebhooksApiClient,
       getWebhookList,
       subscribeWebhook,
+      unsubscribeWebhook,
     }));
 
     const { createWebhooksStepContext } = await import(
@@ -72,6 +74,7 @@ describe("createWebhooksStepContext", () => {
       {
         getWebhookList,
         subscribeWebhook,
+        unsubscribeWebhook,
       },
     );
 

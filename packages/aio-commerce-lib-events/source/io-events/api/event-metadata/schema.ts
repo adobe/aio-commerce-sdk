@@ -109,10 +109,27 @@ export type GetEventMetadataForEventAndProviderParams = v.InferInput<
   typeof GetEventMetadataForEventAndProviderSchema
 >;
 
+/** The schema of the parameters received by the DELETE `providers/:id/eventmetadata/:code` Adobe I/O Events API endpoint. */
+export const DeleteEventMetadataForProviderSchema = v.object({
+  consumerOrgId: stringValueSchema("consumerOrgId"),
+  projectId: stringValueSchema("projectId"),
+  workspaceId: stringValueSchema("workspaceId"),
+  providerId: stringValueSchema("providerId"),
+  eventCode: stringValueSchema("eventCode"),
+});
+
 /**
  * The schema of the parameters received by the POST `providers/:id/eventmetadata` Adobe I/O Events API endpoint.
  * @see https://developer.adobe.com/events/docs/api#operation/postEventMetadata
  */
 export type CreateEventMetadataForProviderParams = v.InferInput<
   typeof CreateEventMetadataForProviderSchema
+>;
+
+/**
+ * The schema of the parameters received by the DELETE `providers/:id/eventmetadata/:code` Adobe I/O Events API endpoint.
+ * @see https://developer.adobe.com/events/docs/api#operation/deleteEventMetadata
+ */
+export type DeleteEventMetadataForProviderParams = v.InferInput<
+  typeof DeleteEventMetadataForProviderSchema
 >;

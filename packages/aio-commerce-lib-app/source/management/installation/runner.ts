@@ -10,8 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-import { createRootInstallationStep } from "./root";
-import { createInitialState, executeWorkflow } from "./workflow";
+import {
+  createRootInstallationStep,
+  createRootUninstallationStep,
+} from "./root";
+import {
+  createInitialState,
+  executeUninstallWorkflow,
+  executeWorkflow,
+} from "./workflow";
 import { validateStepTree } from "./workflow/validation";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -69,6 +76,52 @@ export function runInstallation(
   const { installationContext, config, initialState, hooks } = options;
   const rootStep = createRootInstallationStep(config);
   return executeWorkflow({
+    rootStep,
+    installationContext,
+    config,
+    initialState,
+    hooks,
+  });
+}
+
+/** Options for creating an initial uninstallation state. */
+export type CreateInitialUninstallationStateOptions = {
+  /** The app configuration used to determine applicable steps. */
+  config: CommerceAppConfigOutputModel;
+};
+
+/** Options for running an uninstallation. */
+export type RunUninstallationOptions = {
+  /** Shared installation context (params, logger, etc.). */
+  installationContext: InstallationContext;
+  /** The app configuration. */
+  config: CommerceAppConfigOutputModel;
+  /** The initial uninstallation state (with all steps pending). */
+  initialState: InProgressInstallationState;
+  /** Lifecycle hooks for status change notifications. */
+  hooks?: InstallationHooks;
+};
+
+/**
+ * Creates an initial uninstallation state from the config and step definitions.
+ */
+export function createInitialUninstallationState(
+  options: CreateInitialUninstallationStateOptions,
+): InProgressInstallationState {
+  const { config } = options;
+  const rootStep = createRootUninstallationStep(config);
+  return createInitialState({ rootStep, config, mode: "uninstall" });
+}
+
+/**
+ * Runs the full uninstallation workflow. Returns the final state (never throws).
+ */
+export function runUninstallation(
+  options: RunUninstallationOptions,
+): Promise<SucceededInstallationState | FailedInstallationState> {
+  const { installationContext, config, initialState, hooks } = options;
+  const rootStep = createRootUninstallationStep(config);
+  return executeUninstallWorkflow({
     rootStep,
     installationContext,
     config,
