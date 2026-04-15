@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,14 +10,20 @@
  * governing permissions and limitations under the License.
  */
 
-export { getConfiguration } from "./get-config";
-export { getConfigurationByKey } from "./get-config-by-key";
-export { setConfiguration } from "./set-config";
+import type { ConfigValueWithOptionalOrigin } from "#modules/configuration/types";
 
-export type * as ConfigurationRepository from "./configuration-repository";
-export type {
-  ConfigContext,
-  ConfigOrigin,
-  ConfigValue,
-  SetConfigValue,
-} from "./types";
+/**
+ * Sample configuration values set at the global scope, used as a base for merging tests.
+ */
+export const mockGlobalConfigValues: ConfigValueWithOptionalOrigin[] = [
+  {
+    name: "currency",
+    value: "USD",
+    origin: { code: "global", level: "global" },
+  },
+  {
+    name: "locale",
+    value: "en_US",
+    origin: { code: "global", level: "global" },
+  },
+];
