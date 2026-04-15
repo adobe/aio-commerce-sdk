@@ -1,4 +1,38 @@
-# Claude Code — Repo Conventions
+# Codebase
+
+## Project Structure
+
+- pnpm monorepo managed with Turborepo; workspace packages in `packages/`, `packages-private/`, `configs/`, `turbo/`
+- `packages/aio-commerce-sdk` — meta-package that re-exports all public libraries
+- `packages/aio-commerce-lib-*` — individual public libraries (api, app, auth, config, core, events, webhooks)
+- `packages-private/` — internal utilities not published to npm (common-utils, scripting-utils)
+- Each package is self-contained: its own `package.json`, `tsconfig.json`, tests, and build output in `dist/`
+
+## Commands
+
+- `pnpm test` — run all tests (Vitest, with coverage)
+- `pnpm typecheck` — TypeScript type-check across all packages
+- `pnpm build` — build all packages via Turborepo
+- `pnpm lint` — lint with Biome
+- `pnpm check:ci` — runs automatically on commit via lint-staged
+- Run scoped: `pnpm --filter @adobe/aio-commerce-lib-core test`
+
+## Testing
+
+- Test framework: Vitest
+- Tests live in `test/unit/` and `test/integration/` within each package; fixtures in `test/fixtures/`
+- HTTP mocking: msw
+- Run all: `pnpm test`; scoped: `pnpm --filter <package> test`
+
+## Code Style
+
+- Linter/formatter: Biome (replaces ESLint + Prettier)
+- Validation: valibot
+- HTTP client: ky
+- TypeScript strict mode; run `pnpm typecheck` to verify
+- Auto-fixed on commit via lint-staged (`pnpm check:ci`)
+
+# Workflow
 
 ## Commits
 
