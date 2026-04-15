@@ -214,13 +214,13 @@ describe("config-manager", () => {
     ).toBe("$");
     expect(
       result.config.find((e: ConfigValue) => e.name === "currency")?.origin,
-    ).toEqual({ code: "global", level: "global" });
+    ).toEqual({ id: "id-global", code: "global", level: "global" });
     expect(
       result.config.find((e: ConfigValue) => e.name === "exampleList")?.value,
     ).toBe("option1");
     expect(
       result.config.find((e: ConfigValue) => e.name === "exampleList")?.origin,
-    ).toEqual({ code: "default", level: "store_view" });
+    ).toEqual({ id: "idsv", code: "default", level: "store_view" });
   });
 
   test("resolves scope by code+level to id and fetches same via id", async () => {

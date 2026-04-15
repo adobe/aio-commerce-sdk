@@ -13,7 +13,7 @@
 import { describe, expect, test } from "vitest";
 
 import { mergeScopes, sanitizeRequestEntries } from "#config-utils";
-import { mockGlobalConfigValues } from "#test/fixtures/config-values";
+import { globalConfigValues } from "#test/fixtures/config-values";
 
 import type { ConfigValueWithOptionalOrigin } from "#modules/configuration/types";
 
@@ -24,7 +24,7 @@ describe("config-utils", () => {
         {
           name: "currency",
           value: "USD",
-          origin: { code: "global", level: "global" },
+          origin: { id: "id-global", code: "global", level: "global" },
         },
         { name: "locale", value: "en_US" },
       ];
@@ -131,48 +131,71 @@ describe("config-utils", () => {
   });
 
   describe("mergeScopes", () => {
-    const existing = mockGlobalConfigValues;
+    const existing = globalConfigValues;
 
-    test("adds new entries from requested with current scope as origin", () => {
+    test("sets id on the origin of a new entry", () => {
       const result = mergeScopes(
         existing,
         [{ name: "timezone", value: "UTC" }],
         "base",
         "website",
+        "scope-website-1",
       );
 
       expect(result.find((e) => e.name === "timezone")).toMatchObject({
         name: "timezone",
         value: "UTC",
-        origin: { code: "base", level: "website" },
+        origin: { id: "scope-website-1", code: "base", level: "website" },
       });
     });
 
-    test("overrides existing entries and updates origin to current scope", () => {
+    test("sets id on the origin when overriding an existing entry", () => {
       const result = mergeScopes(
         existing,
         [{ name: "currency", value: "EUR" }],
         "base",
         "website",
+        "scope-website-1",
       );
 
       expect(result.find((e) => e.name === "currency")).toMatchObject({
         value: "EUR",
-        origin: { code: "base", level: "website" },
+        origin: { id: "scope-website-1", code: "base", level: "website" },
       });
     });
 
-    test("preserves entries not in the requested list", () => {
+    test("preserves the original origin (including id) for entries not in the requested list", () => {
       const result = mergeScopes(
         existing,
         [{ name: "currency", value: "EUR" }],
         "base",
         "website",
+        "scope-website-1",
       );
 
       expect(result.find((e) => e.name === "locale")).toMatchObject({
         value: "en_US",
-        origin: { code: "global", level: "global" },
+        origin: { id: "id-global", code: "global", level: "global" },
+      });
+    });
+
+    test("uses scopeId as fallback origin id for existing entries without an origin", () => {
+      const entriesWithoutOrigin: ConfigValueWithOptionalOrigin[] = [
+        { name: "currency", value: "USD" },
+      ];
+
+      const result = mergeScopes(
+        entriesWithoutOrigin,
+        [],
+        "global",
+        "global",
+        "id-global",
+      );
+
+      expect(result.find((e) => e.name === "currency")?.origin).toMatchObject({
+        id: "id-global",
+        code: "global",
+        level: "global",
       });
     });
 
@@ -182,6 +205,7 @@ describe("config-utils", () => {
         [{ name: "currency", value: null }],
         "base",
         "website",
+        "scope-website-1",
       );
 
       expect(result.find((e) => e.name === "currency")).toBeUndefined();
@@ -193,6 +217,7 @@ describe("config-utils", () => {
         [{ name: "currency", value: null }],
         "base",
         "website",
+        "scope-website-1",
       );
 
       expect(result.find((e) => e.name === "locale")).toBeDefined();
@@ -205,6 +230,7 @@ describe("config-utils", () => {
         [{ name: "nonExistent", value: null }],
         "base",
         "website",
+        "scope-website-1",
       );
 
       expect(result).toHaveLength(existing.length);
@@ -220,6 +246,7 @@ describe("config-utils", () => {
         ],
         "base",
         "website",
+        "scope-website-1",
       );
 
       expect(result.find((e) => e.name === "currency")?.value).toBe("GBP");
@@ -228,7 +255,9 @@ describe("config-utils", () => {
     });
 
     test("returns empty array when both inputs are empty", () => {
-      expect(mergeScopes([], [], "base", "website")).toEqual([]);
+      expect(
+        mergeScopes([], [], "base", "website", "scope-website-1"),
+      ).toEqual([]);
     });
 
     test("returns requested entries when existing is empty", () => {
@@ -237,6 +266,7 @@ describe("config-utils", () => {
         [{ name: "field", value: "value" }],
         "base",
         "website",
+        "scope-website-1",
       );
 
       expect(result).toHaveLength(1);
@@ -249,6 +279,7 @@ describe("config-utils", () => {
         [{ name: "field", value: null }],
         "base",
         "website",
+        "scope-website-1",
       );
 
       expect(result).toHaveLength(0);

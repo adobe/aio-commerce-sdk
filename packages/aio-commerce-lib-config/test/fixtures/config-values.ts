@@ -13,17 +13,18 @@
 import type { ConfigValueWithOptionalOrigin } from "#modules/configuration/types";
 
 /**
- * Sample configuration values set at the global scope, used as a base for merging tests.
+ * Mock config values set at global scope for use in unit tests.
+ * IDs match the scope tree fixture in `scope-tree.ts`.
  */
-export const mockGlobalConfigValues: ConfigValueWithOptionalOrigin[] = [
+export const globalConfigValues: ConfigValueWithOptionalOrigin[] = [
   {
     name: "currency",
     value: "USD",
-    origin: { code: "global", level: "global" },
+    origin: { id: "id-global", code: "global", level: "global" },
   },
   {
     name: "locale",
     value: "en_US",
-    origin: { code: "global", level: "global" },
+    origin: { id: "id-global", code: "global", level: "global" },
   },
 ];

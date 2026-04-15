@@ -63,6 +63,7 @@ export async function fetchRawConfiguration(
       configData,
       scopeCode,
       scopeLevel,
+      scopeId,
       scopePath,
 
       loadScopeConfigFn: (code: string) => configRepository.loadConfig(code),

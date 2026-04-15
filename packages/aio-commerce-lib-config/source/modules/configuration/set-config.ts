@@ -76,6 +76,7 @@ export async function setConfiguration(
     encryptedEntries,
     scopeCode,
     scopeLevel,
+    scopeId,
   );
 
   const payload = {

@@ -14,6 +14,7 @@ import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "#utils/constants";
 
 import type { ConfigValue } from "#modules/configuration/index";
 import type {
+  ConfigOrigin,
   ConfigValueWithOptionalOrigin,
   SetConfigValue,
 } from "#modules/configuration/types";
@@ -281,6 +282,7 @@ export function sanitizeRequestEntries(
  * @param requestedScopeEntries - The requested scope entries.
  * @param scopeCode - The code of the scope.
  * @param scopeLevel - The level of the scope.
+ * @param scopeId - The unique identifier of the scope.
  * @returns The merged scope entries.
  */
 export function mergeScopes(
@@ -288,13 +290,18 @@ export function mergeScopes(
   requestedScopeEntries: SetConfigValue[],
   scopeCode: string,
   scopeLevel: string,
+  scopeId: string,
 ) {
   const mergedMap = new Map<string, ConfigValue>();
   for (const existingEntry of existingScopeEntries) {
     mergedMap.set(existingEntry.name, {
       name: existingEntry.name,
       value: existingEntry.value,
-      origin: existingEntry.origin || { code: scopeCode, level: scopeLevel },
+      origin: existingEntry.origin || {
+        id: scopeId,
+        code: scopeCode,
+        level: scopeLevel,
+      },
     });
   }
 
@@ -305,7 +312,7 @@ export function mergeScopes(
       mergedMap.set(requestedEntry.name, {
         name: requestedEntry.name,
         value: requestedEntry.value,
-        origin: { code: scopeCode, level: scopeLevel },
+        origin: { id: scopeId, code: scopeCode, level: scopeLevel },
       });
     }
   }
@@ -328,7 +335,7 @@ export function getSchemaDefaults(schema: BusinessConfigSchema) {
     .map((field) => ({
       name: field.name,
       value: field.default as string,
-      origin: { code: "default", level: "system" },
+      origin: { id: "default", code: "default", level: "system" },
     }));
 
   return { config: defaults };
@@ -343,7 +350,7 @@ export function getSchemaDefaults(schema: BusinessConfigSchema) {
 function mergeConfigEntries(
   merged: Map<string, ConfigValue>,
   entries: ConfigValue[],
-  origin: { code: string; level: string },
+  origin: ConfigOrigin,
 ) {
   for (const entry of entries) {
     if (!merged.has(entry.name)) {
@@ -373,6 +380,7 @@ async function mergeConfigFromPath(
     const persisted = await loadScopeConfigFn(node.code);
     if (persisted?.config && Array.isArray(persisted.config)) {
       mergeConfigEntries(merged, persisted.config, {
+        id: node.id,
         code: node.code,
         level: node.level,
       });
@@ -401,6 +409,7 @@ async function mergeGlobalConfigIfNeeded(
     const globalConfig = await loadScopeConfigFn("global");
     if (globalConfig?.config && Array.isArray(globalConfig.config)) {
       mergeConfigEntries(merged, globalConfig.config, {
+        id: globalConfig.scope.id,
         code: "global",
         level: "global",
       });
@@ -414,12 +423,14 @@ async function mergeGlobalConfigIfNeeded(
  * @param configData - The current config data
  * @param scopeCode - The code of the scope
  * @param scopeLevel - The level of the scope
+ * @param scopeId - The unique identifier of the scope
  */
 function mergeCurrentConfigData(
   merged: Map<string, ConfigValue>,
   configData: { scope: ScopeNode; config: ConfigValue[] },
   scopeCode: string,
   scopeLevel: string,
+  scopeId: string,
 ) {
   if (configData?.config && Array.isArray(configData.config)) {
     for (const entry of configData.config) {
@@ -428,6 +439,7 @@ function mergeCurrentConfigData(
           name: entry.name,
           value: entry.value,
           origin: entry.origin || {
+            id: configData.scope?.id || scopeId,
             code: configData.scope?.code || scopeCode,
             level: configData.scope?.level || scopeLevel,
           },
@@ -451,7 +463,7 @@ function applySchemaDefaults(
       merged.set(name, {
         name,
         value: def,
-        origin: { code: "default", level: "system" },
+        origin: { id: "default", code: "default", level: "system" },
       });
     }
   }
@@ -466,6 +478,7 @@ type MergeWithSchemaDefaultsParams = {
   configData: { scope: ScopeNode; config: ConfigValue[] };
   scopeCode: string;
   scopeLevel: string;
+  scopeId: string;
   scopePath: ScopeNode[];
 };
 
@@ -477,6 +490,7 @@ type MergeWithSchemaDefaultsParams = {
  * @param params.configData - The config data to merge.
  * @param params.scopeCode - The code of the scope.
  * @param params.scopeLevel - The level of the scope.
+ * @param params.scopeId - The unique identifier of the scope.
  * @param params.scopePath - The path of the scope.
  * @returns The merged config data. Returns null if the config data is not valid.
  * @throws An error if the config data is not valid.
@@ -487,6 +501,7 @@ export async function mergeWithSchemaDefaults({
   configData,
   scopeCode,
   scopeLevel,
+  scopeId,
   scopePath,
 }: MergeWithSchemaDefaultsParams) {
   const schema = await getSchemaFn();
@@ -501,7 +516,7 @@ export async function mergeWithSchemaDefaults({
   await mergeConfigFromPath(merged, scopePath, loadScopeConfigFn);
   await mergeGlobalConfigIfNeeded(merged, scopePath, loadScopeConfigFn);
 
-  mergeCurrentConfigData(merged, configData, scopeCode, scopeLevel);
+  mergeCurrentConfigData(merged, configData, scopeCode, scopeLevel, scopeId);
   applySchemaDefaults(merged, defaultMap);
   configData.config = Array.from(merged.entries()).map(([name, data]) => ({
     name,

@@ -17,6 +17,8 @@ import type { BusinessConfigSchemaValue } from "#modules/schema/types";
  * Represents the origin of a configuration value, indicating which scope it came from.
  */
 export type ConfigOrigin = {
+  /** The unique identifier of the scope where the configuration value originates. */
+  id: string;
   /** The scope code where the configuration value originates. */
   code: string;
   /** The scope level where the configuration value originates. */
