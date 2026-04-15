@@ -29,3 +29,4 @@
   - `minor` — additive non-breaking changes (new exports, new optional fields, enriched responses)
   - `major` — breaking changes (removed exports, required fields added to input/write types, renamed types)
 - If the bump type is ambiguous, ask before proceeding
+- Before each commit, check if the changeset message still accurately describes the change
