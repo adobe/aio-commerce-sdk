@@ -255,9 +255,9 @@ describe("config-utils", () => {
     });
 
     test("returns empty array when both inputs are empty", () => {
-      expect(
-        mergeScopes([], [], "base", "website", "scope-website-1"),
-      ).toEqual([]);
+      expect(mergeScopes([], [], "base", "website", "scope-website-1")).toEqual(
+        [],
+      );
     });
 
     test("returns requested entries when existing is empty", () => {
