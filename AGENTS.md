@@ -6,6 +6,7 @@
 - `packages/aio-commerce-sdk` — meta-package that re-exports all public libraries
 - `packages/aio-commerce-lib-*` — individual public libraries (api, app, auth, config, core, events, webhooks)
 - `packages-private/` — internal utilities not published to npm (common-utils, scripting-utils)
+- `scripts/` (`@aio-commerce-sdk/scripts`) — workspace-wide scripting utilities (e.g. prepack/postpack hooks); private, not published
 - Each package is self-contained: its own `package.json`, `tsconfig.json`, tests, and build output in `dist/`
 
 ## Commands
@@ -16,6 +17,8 @@
 - `pnpm lint` — lint with Biome
 - `pnpm check:ci` — runs automatically on commit via lint-staged
 - Run scoped: `pnpm --filter @adobe/aio-commerce-lib-core test`
+- Clear Turbo cache: `pnpm clean:turbo` (run before build if cached results look stale)
+- Clean build artifacts: `pnpm clean:dist` — removes all `dist/` folders; `pnpm clean:all` — full reset (dist + node_modules)
 
 ## Testing
 
@@ -36,13 +39,13 @@
 
 - Source is ESM only (`import/export`); build output ships both ESM and CJS (generated automatically by TSDown — don't modify format settings)
 - Build tool: TSDown; each package has a `tsdown.config.ts` extending `baseConfig` from `@aio-commerce-sdk/config-tsdown` via `mergeConfig`
-- Scaffold new packages with `pnpm turbo gen create-package`
+- New packages are scaffolded manually (interactive): `pnpm turbo gen create-package`
 - Public packages: `@adobe/` scope (`"private": false`); internal: `@aio-commerce-sdk/` scope (`"private": true`)
-- Monorepo-local deps use `workspace:*`; third-party deps use `catalog:` (defined in `pnpm-workspace.yaml`)
-- Every public package must have `"sideEffects": false` in `package.json`
+- Monorepo-local deps use `workspace:*`; third-party deps shared across multiple packages use `catalog:` (defined in `pnpm-workspace.yaml`)
+- Every public package must declare `"sideEffects"` in `package.json`: `false` if no side effects, or an array of files that do have side effects
 - `package.json` has two exports configs: `exports` (source paths, for local dev) and `publishConfig.exports` (dist paths, for consumers)
 - Format Markdown with `pnpm format:markdown` (Prettier)
-- JSDoc: use `@example` for non-obvious public APIs
+- JSDoc: document all public APIs you write; use `@example` for non-obvious usage; keep comments concise — don't restate what the types already say
 
 # Workflow
 
