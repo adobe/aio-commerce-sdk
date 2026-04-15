@@ -48,5 +48,37 @@ describe("schema/utils", () => {
         );
       }).not.toThrow();
     });
+
+    test("should accept a boolean field with default true", () => {
+      expect(() =>
+        validateBusinessConfigSchema([
+          { name: "enableFeature", type: "boolean", default: true },
+        ]),
+      ).not.toThrow();
+    });
+
+    test("should accept a boolean field with default false", () => {
+      expect(() =>
+        validateBusinessConfigSchema([
+          { name: "disabledByDefault", type: "boolean", default: false },
+        ]),
+      ).not.toThrow();
+    });
+
+    test("should accept a boolean field without a default", () => {
+      expect(() =>
+        validateBusinessConfigSchema([
+          { name: "optionalToggle", type: "boolean" },
+        ]),
+      ).not.toThrow();
+    });
+
+    test("should reject a boolean field with a non-boolean default", () => {
+      expect(() =>
+        validateBusinessConfigSchema([
+          { name: "badField", type: "boolean", default: "true" as never },
+        ]),
+      ).toThrow();
+    });
   });
 });
