@@ -32,6 +32,18 @@
 - TypeScript strict mode; run `pnpm typecheck` to verify
 - Auto-fixed on commit via lint-staged (`pnpm check:ci`)
 
+## Package Conventions
+
+- Source is ESM only (`import/export`); build output ships both ESM and CJS (generated automatically by TSDown — don't modify format settings)
+- Build tool: TSDown; each package has a `tsdown.config.ts` extending `baseConfig` from `@aio-commerce-sdk/config-tsdown` via `mergeConfig`
+- Scaffold new packages with `pnpm turbo gen create-package`
+- Public packages: `@adobe/` scope (`"private": false`); internal: `@aio-commerce-sdk/` scope (`"private": true`)
+- Monorepo-local deps use `workspace:*`; third-party deps use `catalog:` (defined in `pnpm-workspace.yaml`)
+- Every public package must have `"sideEffects": false` in `package.json`
+- `package.json` has two exports configs: `exports` (source paths, for local dev) and `publishConfig.exports` (dist paths, for consumers)
+- Format Markdown with `pnpm format:markdown` (Prettier)
+- JSDoc: use `@example` for non-obvious public APIs
+
 # Workflow
 
 ## Commits
