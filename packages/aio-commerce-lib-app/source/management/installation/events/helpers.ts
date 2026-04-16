@@ -92,7 +92,7 @@ async function createIoEventProvider(params: CreateIoProviderParams) {
     })
     .catch(async (error) => {
       const msg = await unwrapHttpError(error);
-      const enriched = `Failed to create IO Events provider '${provider.label}': ${msg}`;
+      const enriched = `Failed to create I/O Events provider '${provider.label}': ${msg}`;
       logger.error(enriched);
       throw new Error(enriched);
     });
@@ -171,7 +171,7 @@ async function createIoEventProviderEventMetadata(
     })
     .catch(async (error) => {
       const msg = await unwrapHttpError(error);
-      const enriched = `Failed to register IO Events metadata for '${eventCode}': ${msg}`;
+      const enriched = `Failed to register I/O Events metadata for '${eventCode}': ${msg}`;
       logger.error(enriched);
       throw new Error(enriched);
     });
@@ -260,7 +260,7 @@ async function createIoEventRegistration(params: CreateRegistrationParams) {
     })
     .catch(async (error) => {
       const msg = await unwrapHttpError(error);
-      const enriched = `Failed to create IO Events registration '${name}': ${msg}`;
+      const enriched = `Failed to create I/O Events registration '${name}': ${msg}`;
       logger.error(enriched);
       throw new Error(enriched);
     });
@@ -684,7 +684,7 @@ async function deleteIoEventRegistrations(
     } catch (error) {
       const msg = await unwrapHttpError(error);
       logger.warn(
-        `Failed to delete IO Events registration "${registration.name}" (ID: ${registration.id}): ${msg}. Continuing uninstall.`,
+        `Failed to delete I/O Events registration "${registration.name}" (ID: ${registration.id}): ${msg}. Continuing uninstall.`,
       );
     }
   }
@@ -736,7 +736,7 @@ async function deleteIoEventMetadata(
     } catch (error) {
       const msg = await unwrapHttpError(error);
       logger.warn(
-        `Failed to delete IO Events metadata "${eventMetadata.event_code}" from provider "${providerData.id}": ${msg}. Continuing uninstall.`,
+        `Failed to delete I/O Events metadata "${eventMetadata.event_code}" from provider "${providerData.id}": ${msg}. Continuing uninstall.`,
       );
     }
   }
@@ -773,7 +773,7 @@ async function deleteIoEventProvider(
   } catch (error) {
     const msg = await unwrapHttpError(error);
     logger.warn(
-      `Failed to delete IO Events provider "${provider.label}" (ID: ${providerData.id}): ${msg}. Continuing uninstall.`,
+      `Failed to delete I/O Events provider "${provider.label}" (ID: ${providerData.id}): ${msg}. Continuing uninstall.`,
     );
   }
 }

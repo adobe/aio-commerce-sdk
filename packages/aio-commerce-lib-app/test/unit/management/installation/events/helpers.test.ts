@@ -69,9 +69,9 @@ const DEFAULT_WORKSPACE_CONFIGURATION = JSON.stringify(
   createMockWorkspaceConfiguration(),
 );
 
-const RE_FAIL_IO_PROVIDER = /^Failed to create IO Events provider '/;
-const RE_FAIL_IO_METADATA = /^Failed to register IO Events metadata for '/;
-const RE_FAIL_IO_REGISTRATION = /^Failed to create IO Events registration '/;
+const RE_FAIL_IO_PROVIDER = /^Failed to create I\/O Events provider '/;
+const RE_FAIL_IO_METADATA = /^Failed to register I\/O Events metadata for '/;
+const RE_FAIL_IO_REGISTRATION = /^Failed to create I\/O Events registration '/;
 const RE_FAIL_CONFIGURE_EVENTING =
   /^Failed to configure Adobe Commerce eventing:/;
 const RE_FAIL_COMMERCE_PROVIDER =
