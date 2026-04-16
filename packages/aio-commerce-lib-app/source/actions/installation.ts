@@ -44,6 +44,7 @@ import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InstallationContext, ValidationContext } from "#management/index";
+import type { StepFailedEvent } from "#management/installation/workflow/hooks";
 import type {
   InProgressInstallationState,
   InstallationState,
@@ -198,8 +199,11 @@ function createInstallationHooks(
       logAndSave(`Step started: ${event.stepName}`, state),
     onStepSuccess: (event: { stepName: string }, state: InstallationState) =>
       logAndSave(`Step succeeded: ${event.stepName}`, state),
-    onStepFailure: (event: { stepName: string }, state: InstallationState) =>
-      logAndSave(`Step failed: ${event.stepName}`, state),
+    onStepFailure: (event: StepFailedEvent, state: InstallationState) =>
+      logAndSave(
+        `Step failed: ${event.stepName} — ${event.error.message ?? `(key: ${event.error.key})`}`,
+        state,
+      ),
   };
 }
 
@@ -249,7 +253,9 @@ router.post("/", {
   body: InstallationRequestBodySchema,
 
   handler: async (req, { logger, rawParams }) => {
-    logger.debug("Starting installation...");
+    logger.debug(
+      `Starting installation for app "${req.body.appData.projectName}" (workspace: "${req.body.appData.workspaceName}", commerce: "${req.body.commerceBaseUrl}")`,
+    );
 
     const store = await createInstallationStore();
     const existingState = await store.get(getStorageKey());
@@ -344,7 +350,9 @@ router.post("/execution", {
       logger,
     );
 
-    logger.debug(`Executing installation: ${initialState.id}`);
+    logger.debug(
+      `Executing installation ${initialState.id} for app "${params.appData.projectName}" (workspace: "${params.appData.workspaceName}", commerce: "${params.AIO_COMMERCE_API_BASE_URL}")`,
+    );
     const result = await runInstallation({
       installationContext,
       config: appConfig,
@@ -446,7 +454,9 @@ router.post("/uninstallation", {
   body: InstallationRequestBodySchema,
 
   handler: async (req, { logger, rawParams }) => {
-    logger.debug("Starting async uninstallation...");
+    logger.debug(
+      `Starting uninstallation for app "${req.body.appData.projectName}" (workspace: "${req.body.appData.workspaceName}", commerce: "${req.body.commerceBaseUrl}")`,
+    );
 
     const appConfig = rawParams.appConfig;
 
@@ -531,7 +541,9 @@ router.post("/uninstallation/execution", {
       logger,
     );
 
-    logger.debug(`Executing uninstallation: ${initialState.id}`);
+    logger.debug(
+      `Executing uninstallation ${initialState.id} for app "${params.appData.projectName}" (workspace: "${params.appData.workspaceName}", commerce: "${params.AIO_COMMERCE_API_BASE_URL}")`,
+    );
     const result = await runUninstallation({
       installationContext,
       config: appConfig,

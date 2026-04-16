@@ -11,7 +11,8 @@
  */
 
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+
+import { unwrapHttpError } from "#management/installation/utils/http-error";
 
 import {
   findExistingProvider,
@@ -89,12 +90,11 @@ async function createIoEventProvider(params: CreateIoProviderParams) {
       logger.info(`Provider "${provider.label}" created with ID '${res.id}'`);
       return res;
     })
-    .catch((error) => {
-      logger.error(
-        `Failed to create provider "${provider.label}": ${stringifyError(error)}`,
-      );
-
-      throw error;
+    .catch(async (error) => {
+      const msg = await unwrapHttpError(error);
+      const enriched = `Failed to create IO Events provider '${provider.label}': ${msg}`;
+      logger.error(enriched);
+      throw new Error(enriched);
     });
 }
 
@@ -169,12 +169,11 @@ async function createIoEventProviderEventMetadata(
 
       return res;
     })
-    .catch((error) => {
-      logger.error(
-        `Failed to create event metadata "${event.label}" for provider "${provider.label}": ${stringifyError(error)}`,
-      );
-
-      throw error;
+    .catch(async (error) => {
+      const msg = await unwrapHttpError(error);
+      const enriched = `Failed to register IO Events metadata for '${eventCode}': ${msg}`;
+      logger.error(enriched);
+      throw new Error(enriched);
     });
 }
 
@@ -259,12 +258,11 @@ async function createIoEventRegistration(params: CreateRegistrationParams) {
 
       return res;
     })
-    .catch((error) => {
-      logger.error(
-        `Failed to create registration "${name}" for provider "${provider.label}": ${stringifyError(error)}`,
-      );
-
-      throw error;
+    .catch(async (error) => {
+      const msg = await unwrapHttpError(error);
+      const enriched = `Failed to create IO Events registration '${name}': ${msg}`;
+      logger.error(enriched);
+      throw new Error(enriched);
     });
 }
 
@@ -342,12 +340,11 @@ export async function configureCommerceEventing(
         "Something went wrong while configuring Commerce Eventing Module. Response was not successful but no error was thrown.",
       );
     })
-    .catch((err) => {
-      logger.error(
-        `Failed to configure Commerce Eventing Module: ${stringifyError(err)}`,
-      );
-
-      throw err;
+    .catch(async (err) => {
+      const msg = await unwrapHttpError(err);
+      const enriched = `Failed to configure Adobe Commerce eventing: ${msg}`;
+      logger.error(enriched);
+      throw new Error(enriched);
     });
 }
 
@@ -377,12 +374,11 @@ export async function createCommerceProvider(
 
       return res;
     })
-    .catch((err) => {
-      logger.error(
-        `Failed to create Commerce provider "${provider.label}": ${stringifyError(err)}`,
-      );
-
-      throw err;
+    .catch(async (err) => {
+      const msg = await unwrapHttpError(err);
+      const enriched = `Failed to create Adobe Commerce event provider '${provider.label}': ${msg}`;
+      logger.error(enriched);
+      throw new Error(enriched);
     });
 }
 
@@ -453,12 +449,11 @@ async function createCommerceEventSubscription(
 
       return eventSpec;
     })
-    .catch((err) => {
-      logger.error(
-        `Failed to create event subscription for event "${event.config.name}" to provider "${provider.label}": ${stringifyError(err)}`,
-      );
-
-      throw err;
+    .catch(async (err) => {
+      const msg = await unwrapHttpError(err);
+      const enriched = `Failed to create Adobe Commerce event subscription for '${event.config.name}': ${msg}`;
+      logger.error(enriched);
+      throw new Error(enriched);
     });
 }
 
@@ -687,8 +682,9 @@ async function deleteIoEventRegistrations(
         `Deleted registration "${registration.name}" (ID: ${registration.id}).`,
       );
     } catch (error) {
+      const msg = await unwrapHttpError(error);
       logger.warn(
-        `Failed to delete registration "${registration.name}" (ID: ${registration.id}): ${stringifyError(error)}. Continuing uninstall.`,
+        `Failed to delete IO Events registration "${registration.name}" (ID: ${registration.id}): ${msg}. Continuing uninstall.`,
       );
     }
   }
@@ -738,8 +734,9 @@ async function deleteIoEventMetadata(
         `Deleted event metadata "${eventMetadata.event_code}" from provider "${providerData.id}".`,
       );
     } catch (error) {
+      const msg = await unwrapHttpError(error);
       logger.warn(
-        `Failed to delete event metadata "${eventMetadata.event_code}" from provider "${providerData.id}": ${stringifyError(error)}. Continuing uninstall.`,
+        `Failed to delete IO Events metadata "${eventMetadata.event_code}" from provider "${providerData.id}": ${msg}. Continuing uninstall.`,
       );
     }
   }
@@ -774,8 +771,9 @@ async function deleteIoEventProvider(
       `Deleted I/O Events provider "${provider.label}" (ID: ${providerData.id}).`,
     );
   } catch (error) {
+    const msg = await unwrapHttpError(error);
     logger.warn(
-      `Failed to delete I/O Events provider "${provider.label}" (ID: ${providerData.id}): ${stringifyError(error)}. Continuing uninstall.`,
+      `Failed to delete IO Events provider "${provider.label}" (ID: ${providerData.id}): ${msg}. Continuing uninstall.`,
     );
   }
 }
@@ -868,8 +866,9 @@ async function deleteCommerceEventSubscriptions(
         `Unsubscribed Commerce event subscription for "${eventName}".`,
       );
     } catch (error) {
+      const msg = await unwrapHttpError(error);
       logger.warn(
-        `Failed to unsubscribe Commerce event subscription for "${eventName}": ${stringifyError(error)}. Continuing uninstall.`,
+        `Failed to unsubscribe Adobe Commerce event subscription for "${eventName}": ${msg}. Continuing uninstall.`,
       );
     }
   }
@@ -920,8 +919,9 @@ async function deleteCommerceEventProvider(
       `Deleted Commerce event provider "${provider.label}" (provider_id: ${commerceProvider.provider_id}).`,
     );
   } catch (error) {
+    const msg = await unwrapHttpError(error);
     logger.warn(
-      `Failed to delete Commerce event provider "${provider.label}" (provider_id: ${commerceProvider.provider_id}): ${stringifyError(error)}. Continuing uninstall.`,
+      `Failed to delete Adobe Commerce event provider "${provider.label}" (provider_id: ${commerceProvider.provider_id}): ${msg}. Continuing uninstall.`,
     );
   }
 }

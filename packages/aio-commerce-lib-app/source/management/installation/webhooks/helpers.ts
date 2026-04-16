@@ -11,8 +11,8 @@
  */
 
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
-import { HTTPError } from "ky";
+
+import { unwrapHttpError } from "#management/installation/utils/http-error";
 
 import type {
   CommerceWebhook,
@@ -245,9 +245,8 @@ export async function deleteWebhookSubscriptions(
       logger.info(`Unsubscribed webhook: ${getWebhookName(webhook)}`);
       unsubscribedWebhooks.push(params);
     } catch (error) {
-      logger.warn(
-        `Failed to unsubscribe webhook "${getWebhookName(webhook)}": ${stringifyError(error)}. Continuing uninstall.`,
-      );
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.warn(`${msg}. Continuing uninstall.`);
     }
   }
 
@@ -280,28 +279,18 @@ export async function createOrGetWebhookSubscription(
 }
 
 /**
- * Re-throws `err`, enriching the message with the webhook name if the error is an
- * `HTTPError` with a JSON body containing a string `message` field.
+ * Re-throws `err` as a new Error with an enriched message that includes the webhook name
+ * and the unwrapped HTTP response body (if available).
  */
 async function rethrowWithWebhookName(
   err: unknown,
   webhookName: string,
   operation: string,
 ): Promise<never> {
-  if (err instanceof HTTPError) {
-    let body: { message?: unknown } | undefined;
-    try {
-      body = await err.response.json<{ message?: unknown }>();
-    } catch {
-      throw err;
-    }
-    if (typeof body?.message === "string") {
-      throw new Error(
-        `Webhook ${operation} failed for "${webhookName}": ${body.message}`,
-      );
-    }
-  }
-  throw err;
+  const msg = await unwrapHttpError(err);
+  throw new Error(
+    `Failed to ${operation} webhook subscription for "${webhookName}": ${msg}`,
+  );
 }
 
 /**
@@ -319,7 +308,7 @@ export async function createWebhookSubscription(
     return await rethrowWithWebhookName(
       err,
       getWebhookName(resolvedWebhook),
-      "subscription",
+      "create",
     );
   }
 }
@@ -336,10 +325,10 @@ async function deleteWebhookSubscription(
   try {
     await client.unsubscribeWebhook(params);
   } catch (err) {
-    await rethrowWithWebhookName(
+    return rethrowWithWebhookName(
       err,
       getWebhookName(resolvedWebhook),
-      "unsubscription",
+      "delete",
     );
   }
 }

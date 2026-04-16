@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { unwrapHttpError } from "#management/installation/utils/http-error";
 
 import type { AdminUiSdkExecutionContext } from "./utils";
 
@@ -30,18 +30,27 @@ export async function registerExtension(context: AdminUiSdkExecutionContext) {
 
   logger.info(`Registering Admin UI SDK extension: ${appData.projectName}`);
 
-  const response = await commerceClient
-    .post("adminuisdk/extension", {
-      json: {
-        extension: {
-          extensionName: process.env.__OW_NAMESPACE,
-          extensionTitle: appData.projectTitle,
-          extensionUrl: `https://${process.env.__OW_NAMESPACE}.adobeio-static.net/index.html`,
-          extensionWorkspace: appData.workspaceName,
+  let response: RegisterExtensionResponse;
+
+  try {
+    response = await commerceClient
+      .post("adminuisdk/extension", {
+        json: {
+          extension: {
+            extensionName: process.env.__OW_NAMESPACE,
+            extensionTitle: appData.projectTitle,
+            extensionUrl: `https://${process.env.__OW_NAMESPACE}.adobeio-static.net/index.html`,
+            extensionWorkspace: appData.workspaceName,
+          },
         },
-      },
-    })
-    .json<RegisterExtensionResponse>();
+      })
+      .json<RegisterExtensionResponse>();
+  } catch (error: unknown) {
+    const msg = await unwrapHttpError(error);
+    const enriched = `Failed to register Admin UI SDK extension: ${msg}`;
+    logger.error(enriched);
+    throw new Error(enriched);
+  }
 
   logger.info(
     `Admin UI SDK extension registered successfully: ${response.extensionId}`,
@@ -73,8 +82,9 @@ export async function uninstallExtension(
       `Admin UI SDK extension "${extensionName}" unregistered successfully.`,
     );
   } catch (error: unknown) {
+    const msg = await unwrapHttpError(error);
     logger.warn(
-      `Failed to unregister Admin UI SDK extension "${extensionName}": ${stringifyError(error)}. Continuing uninstall.`,
+      `Failed to unregister Admin UI SDK extension "${extensionName}": ${msg}. Continuing uninstall.`,
     );
   }
 }
