@@ -18,7 +18,7 @@ import { run as generateManifestCommand } from "#commands/generate/manifest/main
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import { loadAppManifest } from "#commands/utils";
 
-type Extension = "extensibility/1" | "configuration/1";
+type Extension = "extensibility/1" | "configuration/1" | "backend-ui/1";
 
 /**
  * Runs the pre-app-build hook for the given extension.
@@ -38,6 +38,11 @@ export async function run(extension: Extension) {
 
   if (extension === "configuration/1") {
     await generateSchemaCommand(appManifest);
+    return;
+  }
+
+  if (extension === "backend-ui/1") {
+    // Registration config is inlined at generate time — nothing to regenerate at build.
     return;
   }
 

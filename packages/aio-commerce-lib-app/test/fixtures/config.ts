@@ -123,7 +123,100 @@ export const configWithAdminUiSdk = {
   metadata: { ...mockMetadata, id: "test-app-admin-ui-sdk" },
   adminUiSdk: {
     registration: {
-      menuItems: [{ id: "test-menu-item", title: "Test Menu Item" }],
+      menuItems: [
+        {
+          id: "test-app::menu",
+          title: "Test App",
+          sortOrder: 1,
+          isSection: false,
+        },
+      ],
+      order: {
+        massActions: [
+          {
+            actionId: "test-app::order-mass-action",
+            label: "Order Mass Action",
+            path: "#/order-mass-action",
+            selectionLimit: 1,
+            confirm: { title: "Confirm", message: "Are you sure?" },
+          },
+        ],
+        gridColumns: {
+          data: { meshId: "mesh-123" },
+          properties: [
+            {
+              label: "Col 1",
+              columnId: "col_1",
+              type: "string",
+              align: "left",
+            },
+          ],
+        },
+        viewButtons: [
+          {
+            buttonId: "test-app::delete-order",
+            label: "Delete",
+            path: "#/delete",
+            level: 0,
+            confirm: { message: "Are you sure?" },
+          },
+        ],
+        customFees: [
+          {
+            id: "test-app::fee",
+            label: "Test Fee",
+            value: 5.0,
+            applyFeeOnLastCreditMemo: false,
+          },
+        ],
+      },
+      product: {
+        massActions: [
+          {
+            actionId: "test-app::product-mass-action",
+            label: "Product Mass Action",
+            path: "#/product-mass-action",
+          },
+        ],
+        gridColumns: {
+          data: { meshId: "mesh-456" },
+          properties: [
+            { label: "Col", columnId: "col", type: "integer", align: "right" },
+          ],
+        },
+      },
+      customer: {
+        massActions: [
+          {
+            actionId: "test-app::customer-mass-action",
+            label: "Customer Mass Action",
+            path: "#/customer-mass-action",
+          },
+        ],
+        gridColumns: {
+          data: { meshId: "mesh-789" },
+          properties: [
+            { label: "Col", columnId: "col", type: "boolean", align: "center" },
+          ],
+        },
+      },
+      bannerNotification: {
+        massActions: {
+          order: [
+            {
+              actionId: "test-app::order-mass-action",
+              successMessage: "Done!",
+            },
+          ],
+        },
+        orderViewButtons: [
+          {
+            buttonId: "test-app::delete-order",
+            successMessage: "Done!",
+            errorMessage: "Failed!",
+          },
+        ],
+      },
     },
   },
 } satisfies CommerceAppConfigOutputModel;

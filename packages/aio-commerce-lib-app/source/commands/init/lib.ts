@@ -24,6 +24,7 @@ import { consola } from "consola";
 import * as prettier from "prettier";
 
 import {
+  BACKEND_UI_EXTENSION_POINT_ID,
   COMMERCE_APP_CONFIG_FILE,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -208,6 +209,14 @@ export async function ensureAppConfig(
     );
   }
 
+  if (domains.has("adminUiSdk")) {
+    await addExtensionPointToAppConfig(
+      BACKEND_UI_EXTENSION_POINT_ID,
+      rootDirectory,
+      " This extension is required for Admin UI SDK. Do not remove.",
+    );
+  }
+
   // This is always needed (to get the app config at least)
   await addExtensionPointToAppConfig(
     EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -300,6 +309,14 @@ export async function ensureInstallYaml(
       CONFIGURATION_EXTENSION_POINT_ID,
       rootDirectory,
       " This extension is required for business configuration. Do not remove.",
+    );
+  }
+
+  if (domains.has("adminUiSdk")) {
+    await addExtensionPointToInstallYaml(
+      BACKEND_UI_EXTENSION_POINT_ID,
+      rootDirectory,
+      " This extension is required for Admin UI SDK. Do not remove.",
     );
   }
 
