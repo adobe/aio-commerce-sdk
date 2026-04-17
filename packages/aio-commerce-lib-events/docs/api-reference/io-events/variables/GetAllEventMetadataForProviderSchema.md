@@ -9,6 +9,6 @@ const GetAllEventMetadataForProviderSchema: ObjectSchema<
 >;
 ```
 
-Defined in: [io-events/api/event-metadata/schema.ts:71](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/schema.ts#L71)
+Defined in: [io-events/api/event-metadata/schema.ts:71](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/schema.ts#L71)
 
 The schema of the parameters received by the GET `providers/:id/eventmetadata` Adobe I/O Events API endpoint.

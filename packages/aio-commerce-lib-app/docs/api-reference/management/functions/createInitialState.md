@@ -6,7 +6,7 @@ function createInitialState(
 ): InProgressInstallationState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/runner.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/runner.ts#L85)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/runner.ts:92](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/runner.ts#L92)
 
 Creates an initial installation state from a root step and config.
 

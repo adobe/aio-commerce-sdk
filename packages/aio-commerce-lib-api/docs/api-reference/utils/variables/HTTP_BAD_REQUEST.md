@@ -4,7 +4,7 @@
 const HTTP_BAD_REQUEST: 400 = 400;
 ```
 
-Defined in: [aio-commerce-lib-api/source/utils/http/codes.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-api/source/utils/http/codes.ts#L23)
+Defined in: [aio-commerce-lib-api/source/utils/http/codes.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-api/source/utils/http/codes.ts#L23)
 
 The HTTP status code for a bad request.
 
