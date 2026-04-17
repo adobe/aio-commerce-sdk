@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-config
 
+## 1.2.0
+
+### Minor Changes
+
+- [#387](https://github.com/adobe/aio-commerce-sdk/pull/387) [`0803ecb`](https://github.com/adobe/aio-commerce-sdk/commit/0803ecb143ee6a0e6d4113cb380d625e20ee4e2f) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Add support for unset configuration values.
+
 ## 1.1.0
 
 ### Minor Changes
