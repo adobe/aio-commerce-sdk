@@ -34,8 +34,14 @@ describe("webhooks installation module", () => {
       expect(isBranchStep(webhooksStep)).toBe(true);
       expect(webhooksStep.name).toBe("webhooks");
       expect(webhooksStep.meta).toEqual({
-        label: "Webhooks",
-        description: "Sets up Commerce webhooks",
+        install: {
+          label: "Webhooks",
+          description: "Sets up Commerce webhooks",
+        },
+        uninstall: {
+          label: "Webhooks",
+          description: "Removes Commerce webhooks",
+        },
       });
     });
 
@@ -63,8 +69,14 @@ describe("webhooks installation module", () => {
       expect(isLeafStep(subscriptionsStep)).toBe(true);
       expect(subscriptionsStep.name).toBe("subscriptions");
       expect(subscriptionsStep.meta).toEqual({
-        label: "Create Subscriptions",
-        description: "Creates webhook subscriptions in Adobe Commerce",
+        install: {
+          label: "Create Subscriptions",
+          description: "Creates webhook subscriptions in Adobe Commerce",
+        },
+        uninstall: {
+          label: "Delete Subscriptions",
+          description: "Deletes webhook subscriptions from Adobe Commerce",
+        },
       });
     });
   });

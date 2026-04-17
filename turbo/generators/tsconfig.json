@@ -1,8 +1,7 @@
 {
   "extends": "@aio-commerce-sdk/config-typescript/tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "baseUrl": "."
+    "rootDir": "."
   },
 
   "include": ["./**/*.ts", "create-package/index.ts"],

@@ -26,7 +26,7 @@ import type {
   SetConfigurationRequest,
   SetConfigurationResponse,
 } from "#types/index";
-import type { ConfigContext, ConfigValueWithOptionalOrigin } from "./types";
+import type { ConfigContext, SetConfigValue } from "./types";
 
 /**
  * Sets configuration values for a scope identified by code and level or id.
@@ -84,33 +84,31 @@ export async function setConfiguration(
   };
 
   await configRepository.persistConfig(scopeCode, payload);
-  const responseConfig = sanitizedEntries.map((entry) => ({
-    name: entry.name,
-    value: entry.value,
-  }));
 
   return {
     message: "Configuration values updated successfully",
     timestamp: new Date().toISOString(),
     scope: { id: String(scopeId), code: scopeCode, level: scopeLevel },
-    config: responseConfig,
+    config: mergedScopeConfig.map(({ name, value }) => ({ name, value })),
   };
 }
 
 /**
  * Encrypts password fields in the configuration entries.
+ * Entries with a `null` value (unset) are passed through unchanged.
  *
  * @param entries - Configuration entries to process.
  * @param passwordFields - Set of field names that should be encrypted.
  * @returns Configuration entries with password fields encrypted.
  */
 function encryptPasswordFields(
-  entries: ConfigValueWithOptionalOrigin[],
+  entries: SetConfigValue[],
   passwordFields: Set<string>,
   encryptionKey?: string,
-): ConfigValueWithOptionalOrigin[] {
+): SetConfigValue[] {
   return entries.map((entry) => {
     if (
+      entry.value !== null &&
       passwordFields.has(entry.name) &&
       typeof entry.value === "string" &&
       entry.value.length > 0

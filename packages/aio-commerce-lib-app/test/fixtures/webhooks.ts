@@ -134,12 +134,14 @@ export function createMockExistingCommerceWebhook(
 export function createMockCommerceWebhooksClient({
   subscribeWebhook = vi.fn().mockResolvedValue(null),
   getWebhookList = vi.fn().mockResolvedValue([]),
+  unsubscribeWebhook = vi.fn().mockResolvedValue(null),
 }: Partial<
   WebhooksExecutionContext["commerceWebhooksClient"]
 > = {}): WebhooksExecutionContext["commerceWebhooksClient"] {
   return {
     getWebhookList,
     subscribeWebhook,
+    unsubscribeWebhook,
   };
 }
 
@@ -157,6 +159,7 @@ export function createMockWebhooksContext(
   subscribeWebhookFn = vi.fn().mockResolvedValue(null),
   getWebhookListFn = vi.fn().mockResolvedValue([]),
   params: Partial<WebhooksExecutionContext["params"]> = {},
+  unsubscribeWebhookFn = vi.fn().mockResolvedValue(null),
 ): WebhooksExecutionContext {
   const mockInstallation = createMockInstallationContext({
     params,
@@ -168,6 +171,7 @@ export function createMockWebhooksContext(
     commerceWebhooksClient: {
       getWebhookList: getWebhookListFn,
       subscribeWebhook: subscribeWebhookFn,
+      unsubscribeWebhook: unsubscribeWebhookFn,
     },
   };
 }

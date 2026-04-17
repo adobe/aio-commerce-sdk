@@ -13,7 +13,10 @@
 import { DEFAULT_CUSTOM_SCOPE_LEVEL } from "#utils/constants";
 
 import type { ConfigValue } from "#modules/configuration/index";
-import type { ConfigValueWithOptionalOrigin } from "#modules/configuration/types";
+import type {
+  ConfigValueWithOptionalOrigin,
+  SetConfigValue,
+} from "#modules/configuration/types";
 import type {
   BusinessConfigSchema,
   BusinessConfigSchemaValue,
@@ -236,18 +239,24 @@ export function findScopePath(tree: ScopeTree, code: string, level: string) {
 }
 
 /**
- * Sanitize request config entries to contain only valid name/value pairs
+ * Sanitize request config entries to contain only valid name/value pairs.
+ * A `null` value is allowed and signals that the field should be unset
+ * (removing the explicit override at the current scope to restore inheritance).
  * @param entries - The entries to sanitize.
  * @returns The sanitized entries.
  */
 export function sanitizeRequestEntries(
-  entries: ConfigValueWithOptionalOrigin[],
-): ConfigValueWithOptionalOrigin[] {
+  entries: SetConfigValue[],
+): SetConfigValue[] {
   const list = Array.isArray(entries) ? entries : [];
   return list
     .filter((entry) => {
       if (!entry || typeof entry.name !== "string") {
         return false;
+      }
+
+      if (entry.value === null) {
+        return true; // null is valid: signals an unset
       }
 
       // TODO: This should be done via schema validation.
@@ -260,13 +269,14 @@ export function sanitizeRequestEntries(
     })
     .map((entry) => ({
       name: String(entry.name).trim(),
-      value: entry.value as BusinessConfigSchemaValue,
-      origin: entry.origin,
+      value: entry.value as BusinessConfigSchemaValue | null,
     }));
 }
 
 /**
- * Merge existing and requested entries, setting origin to the current scope for requested entries
+ * Merge existing and requested entries, setting origin to the current scope for requested entries.
+ * A `null` value in a requested entry removes that field from the persisted config,
+ * restoring inheritance from the parent scope.
  * @param existingScopeEntries - The existing scope entries.
  * @param requestedScopeEntries - The requested scope entries.
  * @param scopeCode - The code of the scope.
@@ -275,7 +285,7 @@ export function sanitizeRequestEntries(
  */
 export function mergeScopes(
   existingScopeEntries: ConfigValueWithOptionalOrigin[],
-  requestedScopeEntries: ConfigValueWithOptionalOrigin[],
+  requestedScopeEntries: SetConfigValue[],
   scopeCode: string,
   scopeLevel: string,
 ) {
@@ -289,11 +299,15 @@ export function mergeScopes(
   }
 
   for (const requestedEntry of requestedScopeEntries) {
-    mergedMap.set(requestedEntry.name, {
-      name: requestedEntry.name,
-      value: requestedEntry.value,
-      origin: { code: scopeCode, level: scopeLevel },
-    });
+    if (requestedEntry.value === null) {
+      mergedMap.delete(requestedEntry.name); // unset: remove override, restore inheritance
+    } else {
+      mergedMap.set(requestedEntry.name, {
+        name: requestedEntry.name,
+        value: requestedEntry.value,
+        origin: { code: scopeCode, level: scopeLevel },
+      });
+    }
   }
 
   return Array.from(mergedMap.values()).map((data) => ({

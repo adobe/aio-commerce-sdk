@@ -109,3 +109,11 @@ export type OnboardCommerceEventingParams = {
     workspaceConfiguration: string;
   };
 };
+
+/** Parameters shared by `offboardIoEvents` and `offboardCommerceEventing`. */
+export type OffboardEventsParams = {
+  context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
+  provider: EventProvider;
+  events: AppEvent[];
+};

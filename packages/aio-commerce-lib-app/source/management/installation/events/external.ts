@@ -13,62 +13,100 @@
 import { hasExternalEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
-import { onboardIoEvents } from "./helpers";
+import { offboardIoEvents, onboardIoEvents } from "./helpers";
 import { EXTERNAL_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
 
+import type { ExternalEventsConfig } from "#config/schema/eventing";
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { EventsExecutionContext } from "./context";
+
+/** The output data of the External Eventing step (auto-inferred). */
+export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;
 
 /** Leaf step for installing external event sources. */
 export const externalEventsStep = defineLeafStep({
   name: "external",
   meta: {
-    label: "Configure External Events",
-    description: "Sets up I/O Events for external event sources",
+    install: {
+      label: "Configure External Events",
+      description: "Sets up I/O Events for external event sources",
+    },
+    uninstall: {
+      label: "Remove External Events",
+      description: "Removes I/O Events for external event sources",
+    },
   },
 
   when: hasExternalEvents,
-  run: async (config, context: EventsExecutionContext) => {
-    const { logger } = context;
-    logger.debug(
-      "Starting installation of External Events with config:",
-      config,
-    );
-
-    // biome-ignore lint/suspicious/noEvolvingTypes: We want the type to be auto-inferred
-    const stepData = [];
-    const existingIoEventsData = await getIoEventsExistingData(context);
-
-    for (const { provider, events } of config.eventing.external) {
-      const { providerData, eventsData } = await onboardIoEvents(
-        {
-          context,
-          metadata: config.metadata,
-          provider,
-          events,
-          providerType: EXTERNAL_PROVIDER_TYPE,
-        },
-        existingIoEventsData,
-      );
-
-      stepData.push({
-        provider: {
-          config: provider,
-          data: {
-            ioEvents: providerData,
-            events: {
-              config: events,
-              data: eventsData,
-            },
-          },
-        },
-      });
-    }
-
-    logger.debug("Completed External Events installation step.");
-    return stepData;
-  },
+  install: createExternalEvents,
+  uninstall: removeExternalEvents,
 });
 
-/** The output data of the External Eventing step (auto-inferred). */
-export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;
+/**
+ * Creates all needed entities for External Events to work with Adobe I/O Events.
+ * @param config - The configuration of the app, with external events.
+ * @param context - The execution context for the events installation.
+ */
+async function createExternalEvents(
+  config: ExternalEventsConfig,
+  context: EventsExecutionContext,
+) {
+  const { logger } = context;
+  logger.debug("Starting installation of External Events with config:", config);
+
+  // biome-ignore lint/suspicious/noEvolvingTypes: We want the type to be auto-inferred
+  const stepData = [];
+  const existingIoEventsData = await getIoEventsExistingData(context);
+
+  for (const { provider, events } of config.eventing.external) {
+    const { providerData, eventsData } = await onboardIoEvents(
+      {
+        context,
+        metadata: config.metadata,
+        provider,
+        events,
+        providerType: EXTERNAL_PROVIDER_TYPE,
+      },
+      existingIoEventsData,
+    );
+
+    stepData.push({
+      provider: {
+        config: provider,
+        data: {
+          ioEvents: providerData,
+          events: {
+            config: events,
+            data: eventsData,
+          },
+        },
+      },
+    });
+  }
+
+  logger.debug("Completed External Events installation step.");
+  return stepData;
+}
+/**
+ * Removed all created entities for External Events during the installation
+ * @param config - The configuration of the app, with external events.
+ * @param context - The execution context for the events installation.
+ */
+async function removeExternalEvents(
+  config: ExternalEventsConfig,
+  context: EventsExecutionContext,
+) {
+  const { logger } = context;
+  logger.debug("Starting uninstall of External Events with config:", config);
+
+  const existingIoEventsData = await getIoEventsExistingData(context);
+
+  for (const { provider, events } of config.eventing.external) {
+    await offboardIoEvents(
+      { context, metadata: config.metadata, provider, events },
+      existingIoEventsData,
+    );
+  }
+
+  logger.debug("Completed External Events uninstall step.");
+}

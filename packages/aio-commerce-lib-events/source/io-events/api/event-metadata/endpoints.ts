@@ -14,6 +14,7 @@ import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import {
   CreateEventMetadataForProviderSchema,
+  DeleteEventMetadataForProviderSchema,
   GetAllEventMetadataForProviderSchema,
   GetEventMetadataForEventAndProviderSchema,
 } from "./schema";
@@ -23,6 +24,7 @@ import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/er
 import type { HTTPError, Options } from "ky";
 import type {
   CreateEventMetadataForProviderParams,
+  DeleteEventMetadataForProviderParams,
   GetAllEventMetadataForProviderParams,
   GetEventMetadataForEventAndProviderParams,
 } from "./schema";
@@ -121,4 +123,35 @@ export async function createEventMetadataForProvider(
       },
     )
     .json<IoEventMetadataOneResponse>();
+}
+
+/**
+ * Deletes event metadata for a specific event code and provider.
+ * @see https://developer.adobe.com/events/docs/api#operation/deleteEventMetadata
+ *
+ * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
+ * @param params - The parameters to delete the event metadata with.
+ * @param fetchOptions - The {@link Options} to use to make the request.
+ *
+ * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
+ * @throws An {@link HTTPError} If the status code is not 2XX.
+ */
+export async function deleteEventMetadataForProvider(
+  httpClient: AdobeIoEventsHttpClient,
+  params: DeleteEventMetadataForProviderParams,
+  fetchOptions?: Options,
+): Promise<void> {
+  const validatedParams = parseOrThrow(
+    DeleteEventMetadataForProviderSchema,
+    params,
+  );
+
+  return httpClient
+    .delete(
+      `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/providers/${validatedParams.providerId}/eventmetadata/${validatedParams.eventCode}`,
+      fetchOptions,
+    )
+    .then((_res) => {
+      // We set this `then` to make the response type `void`
+    });
 }

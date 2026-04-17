@@ -5,6 +5,7 @@ import { createMockInstallationContext } from "./installation";
 import type {
   CommerceEventProvider,
   CommerceEventSubscription,
+  UpdateEventingConfigurationParams,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   IoEventMetadata,
@@ -138,6 +139,19 @@ export function createMockCommerceEventSubscription(
   };
 }
 
+export function createMockUpdateEventingConfigurationParams(
+  overrides: Partial<UpdateEventingConfigurationParams> = {},
+): UpdateEventingConfigurationParams {
+  return {
+    enabled: true,
+    merchant_id: "test-org-name",
+    environment_id: "test-project-name",
+    instance_id: "test-instance-id",
+    workspace_configuration: '{"project":{}}',
+    ...overrides,
+  };
+}
+
 type IoEventMetadataHalModel = IoEventMetadataManyResponse["_embedded"][number];
 type IoEventProviderHalModel =
   IoEventProviderManyResponse["_embedded"]["providers"][number];
@@ -153,6 +167,16 @@ export function createMockCommerceEventsClient(
     createEventProvider: vi.fn(overrides?.createEventProvider),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     createEventSubscription: vi.fn(overrides?.createEventSubscription),
+    deleteEventProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteEventProvider ?? (() => Promise.resolve()),
+      ),
+    deleteEventSubscription: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteEventSubscription ?? (() => Promise.resolve()),
+      ),
     getAllEventSubscriptions: vi.fn(overrides?.getAllEventSubscriptions),
     updateEventingConfiguration: vi.fn(overrides?.updateEventingConfiguration),
   };
@@ -167,19 +191,35 @@ export function createMockIoEventsClient(
     ),
     createEventProvider: vi.fn(overrides?.createEventProvider),
     createRegistration: vi.fn(overrides?.createRegistration),
+    deleteEventMetadataForProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteEventMetadataForProvider ?? (() => Promise.resolve()),
+      ),
+    deleteEventProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteEventProvider ?? (() => Promise.resolve()),
+      ),
+    deleteRegistration: vi
+      .fn()
+      .mockImplementation(
+        overrides?.deleteRegistration ?? (() => Promise.resolve()),
+      ),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllRegistrations: vi.fn(overrides?.getAllRegistrations),
   };
 }
 
-type EventingInstallationContextOverrides = Omit<
+/** Options for creating a mock {@link EventsExecutionContext}. */
+export type MockEventingInstallationContextOptions = Omit<
   Partial<EventsExecutionContext>,
-  "appData" | "params" | "commerceEventsClient" | "ioEventsClient"
+  "appData" | "params" | "ioEventsClient" | "commerceEventsClient"
 > & {
   appData?: Partial<EventsExecutionContext["appData"]>;
   params?: Partial<EventsExecutionContext["params"]>;
-  commerceEventsClient?: Partial<CustomCommerceEventsApiClient>;
   ioEventsClient?: Partial<CustomAdobeIoEventsApiClient>;
+  commerceEventsClient?: Partial<CustomCommerceEventsApiClient>;
 };
 
 /** Creates a mock {@link EventsExecutionContext} for testing. */
@@ -187,7 +227,7 @@ export function createMockEventingInstallationContext({
   commerceEventsClient,
   ioEventsClient,
   ...installationOverrides
-}: EventingInstallationContextOverrides = {}): EventsExecutionContext {
+}: MockEventingInstallationContextOptions = {}): EventsExecutionContext {
   const mockInstallationContext = createMockInstallationContext(
     installationOverrides,
   );

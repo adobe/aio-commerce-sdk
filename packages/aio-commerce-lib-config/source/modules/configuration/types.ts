@@ -46,6 +46,25 @@ export type ConfigValue = {
 export type ConfigValueWithOptionalOrigin = SetOptional<ConfigValue, "origin">;
 
 /**
+ * A configuration entry used in set/patch requests.
+ *
+ * Value can be `null` to unset the field, which removes the explicit override
+ * at the current scope and restores inheritance from the parent scope.
+ *
+ * @internal
+ */
+export type SetConfigValue = {
+  /** The name of the configuration field. */
+  name: string;
+  /**
+   * The value to set (string, number, or boolean).
+   * Pass `null` to unset the field, removing the explicit override at the
+   * current scope and restoring inheritance from the parent scope.
+   */
+  value: BusinessConfigSchemaValue | null;
+};
+
+/**
  * Context needed for configuration operations.
  */
 export type ConfigContext = {

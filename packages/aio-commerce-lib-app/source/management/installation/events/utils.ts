@@ -15,6 +15,7 @@ import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
 import type {
   CommerceEventProvider,
   CommerceEventSubscription,
+  UpdateEventingConfigurationParams,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   EventProviderType,
@@ -56,6 +57,21 @@ export function generateInstanceId(
   const appId = metadata.id.slice(0, METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID);
   const slugLabel = provider.label.toLowerCase().replace(/\s+/g, "-");
   return `${appId}-${provider.key ?? slugLabel}-${workspaceId}`.toLowerCase();
+}
+
+/**
+ * Old version of instanceId generator which can be not unique within the same ORG.
+ *
+ * @param metadata - The metadata of the application
+ * @param provider - The event provider for which to generate the instance ID
+ * @deprecated use {@link generateInstanceId} instead
+ */
+export function generateInstanceIdDeprecated(
+  metadata: ApplicationMetadata,
+  provider: EventProvider,
+) {
+  const slugLabel = provider.label.toLowerCase().replace(/\s+/g, "-");
+  return `${metadata.id}-${provider.key ?? slugLabel}`.toLowerCase();
 }
 
 /**
@@ -208,6 +224,64 @@ export function findExistingSubscription(
 }
 
 /**
+ * Builds the payload to send to Commerce when configuring Eventing.
+ * Returns `null` when no update call is needed.
+ *
+ * @param initialParams - Initial Commerce Eventing configuration parameters.
+ * @param existingData - Existing Commerce Eventing state from the API.
+ */
+export function getCommerceEventingConfigurationUpdateParams(
+  initialParams: UpdateEventingConfigurationParams,
+  existingData: Pick<
+    ExistingCommerceEventingData,
+    "isDefaultProviderConfigured" | "isDefaultWorkspaceConfigurationEmpty"
+  >,
+) {
+  const { isDefaultProviderConfigured, isDefaultWorkspaceConfigurationEmpty } =
+    existingData;
+
+  if (isDefaultProviderConfigured && !isDefaultWorkspaceConfigurationEmpty) {
+    return null;
+  }
+
+  const { workspace_configuration, ...configWithoutWorkspace } = initialParams;
+  let updateParams: UpdateEventingConfigurationParams = { enabled: true };
+
+  if (isDefaultWorkspaceConfigurationEmpty) {
+    if (!workspace_configuration) {
+      const message =
+        "Workspace configuration is required to enable Commerce Eventing when there is not an existing one.";
+
+      throw new Error(message);
+    }
+
+    updateParams.workspace_configuration = workspace_configuration;
+  }
+
+  if (!isDefaultProviderConfigured) {
+    updateParams = {
+      ...updateParams,
+      ...configWithoutWorkspace,
+    };
+  }
+
+  return updateParams;
+}
+
+/**
+ * Sanitizes a Commerce Eventing identifier.
+ * Preserves underscores, converts spaces to underscores, lowercases, and strips the rest.
+ *
+ * @param value - The raw identifier value to normalize.
+ */
+export function sanitizeEventingIdentifier(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
+}
+
+/**
  * Creates a partially filled workspace configuration object based on the app credentials and parameters.
  * This configuration is used when creating an event provider in Commerce.
  *
@@ -334,6 +408,10 @@ export async function getIoEventsExistingData(context: EventsExecutionContext) {
 export type ExistingIoEventsData = Awaited<
   ReturnType<typeof getIoEventsExistingData>
 >;
+
+/** A single I/O Events provider with its event metadata, as returned by {@link getIoEventsExistingData}. */
+export type IoEventProviderWithMetadata =
+  ExistingIoEventsData["providersWithMetadata"][number];
 
 /**
  * Retrieves the current existing Commerce eventing data and returns it in a normalized way.

@@ -21,9 +21,30 @@ import type {
   CustomInstallationStep,
 } from "#config/schema/installation";
 import type {
+  CustomInstallationStepDefinition,
+  CustomInstallationStepHandler,
+} from "#management/installation/custom-installation/define";
+import type {
   AnyStep,
   ExecutionContext,
 } from "#management/installation/workflow/step";
+
+function isCustomInstallationStepDefinition(
+  obj: unknown,
+): obj is CustomInstallationStepDefinition {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "install" in obj &&
+    typeof obj.install === "function"
+  );
+}
+
+function isCustomInstallationStepHandler(
+  obj: unknown,
+): obj is CustomInstallationStepHandler {
+  return typeof obj === "function";
+}
 
 /** Result of executing a single custom installation script. */
 type ScriptExecutionResult = {
@@ -42,11 +63,13 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
   return defineLeafStep({
     name: camelcase(name),
     meta: {
-      label: name,
-      description,
+      install: {
+        label: name,
+        description,
+      },
     },
 
-    run: async (
+    install: async (
       config: ConfigWithInstallationSteps,
       context: ExecutionContext,
     ): Promise<ScriptExecutionResult> => {
@@ -67,15 +90,22 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
       // Only support default export
       if (typeof scriptModule !== "object" || !("default" in scriptModule)) {
         throw new Error(
-          `Script ${script} must export a default function. Use defineCustomInstallationStep helper.`,
+          `Script ${script} must export a default function or object. Use defineCustomInstallationStep helper.`,
         );
       }
 
-      const runFunction = scriptModule.default;
+      const defaultExport = scriptModule.default;
+      let runFunction: CustomInstallationStepHandler | null = null;
 
-      if (typeof runFunction !== "function") {
+      if (isCustomInstallationStepHandler(defaultExport)) {
+        runFunction = defaultExport;
+      } else if (isCustomInstallationStepDefinition(defaultExport)) {
+        runFunction = defaultExport.install;
+      }
+
+      if (runFunction === null) {
         throw new Error(
-          `Script ${script} default export must be a function, got ${typeof runFunction}`,
+          `Script ${script} default export must be a function or an object with an install method. Use defineCustomInstallationStep helper.`,
         );
       }
 
@@ -86,6 +116,45 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
         script,
         data: scriptResult,
       };
+    },
+
+    uninstall: async (
+      config: ConfigWithInstallationSteps,
+      context: ExecutionContext,
+    ): Promise<void> => {
+      const { logger } = context;
+      const customScripts = context.customScripts || {};
+
+      logger.debug(`Uninstalling custom script: ${name}`);
+
+      const scriptModule = customScripts[script];
+
+      if (!scriptModule) {
+        throw new Error(
+          `Script ${script} not found in customScripts context. Make sure the script is defined in the configuration and the action was generated with custom scripts support.`,
+        );
+      }
+
+      const defaultExport = (scriptModule as Record<string, unknown>).default;
+
+      if (!isCustomInstallationStepDefinition(defaultExport)) {
+        logger.debug(
+          `Script ${script} does not export an uninstall function, skipping uninstall.`,
+        );
+        return;
+      }
+
+      const { uninstall } = defaultExport;
+
+      if (!uninstall) {
+        logger.debug(
+          `Script ${script} does not export an uninstall function, skipping uninstall.`,
+        );
+        return;
+      }
+
+      await uninstall(config, context);
+      logger.info(`Successfully uninstalled script: ${name}`);
     },
   });
 }
