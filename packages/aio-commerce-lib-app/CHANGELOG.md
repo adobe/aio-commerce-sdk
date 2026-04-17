@@ -1,5 +1,21 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.3.0
+
+### Minor Changes
+
+- [#369](https://github.com/adobe/aio-commerce-sdk/pull/369) [`d8b0fa9`](https://github.com/adobe/aio-commerce-sdk/commit/d8b0fa9e3370b7abd0fb71b42d0078c375f63fb3) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Add uninstallation flow for both native steps and custom steps. `defineCustomInstallationStep` now accepts an object with `install` and an optional `uninstall` handler in addition to a plain function, enabling per-step cleanup logic.
+
+- [#387](https://github.com/adobe/aio-commerce-sdk/pull/387) [`0803ecb`](https://github.com/adobe/aio-commerce-sdk/commit/0803ecb143ee6a0e6d4113cb380d625e20ee4e2f) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Adding new PATCH endpoint for configuration which allows to partially set configuration values. Deprecating PUT endpoint in favor of PATCH.
+
+### Patch Changes
+
+- [#375](https://github.com/adobe/aio-commerce-sdk/pull/375) [`f5ac1a1`](https://github.com/adobe/aio-commerce-sdk/commit/f5ac1a1a400a6e609f296ef8de21ef6b20602120) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix an issue where the Commerce Eventing module was constantly being updated for each provider of an app.
+
+- Updated dependencies [[`d8b0fa9`](https://github.com/adobe/aio-commerce-sdk/commit/d8b0fa9e3370b7abd0fb71b42d0078c375f63fb3), [`0803ecb`](https://github.com/adobe/aio-commerce-sdk/commit/0803ecb143ee6a0e6d4113cb380d625e20ee4e2f)]:
+  - @adobe/aio-commerce-lib-events@1.1.0
+  - @adobe/aio-commerce-lib-config@1.2.0
+
 ## 1.2.0
 
 ### Minor Changes

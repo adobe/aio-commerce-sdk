@@ -9,7 +9,7 @@ type CommerceWebhookDeveloperConsoleOAuth = {
 };
 ```
 
-Defined in: [api/webhooks/types.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L33)
+Defined in: [api/webhooks/types.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L33)
 
 Developer Console OAuth credentials attached to a webhook.
 
@@ -21,7 +21,7 @@ Developer Console OAuth credentials attached to a webhook.
 client_id: string;
 ```
 
-Defined in: [api/webhooks/types.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L34)
+Defined in: [api/webhooks/types.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L34)
 
 ---
 
@@ -31,7 +31,7 @@ Defined in: [api/webhooks/types.ts:34](https://github.com/adobe/aio-commerce-sdk
 client_secret: string;
 ```
 
-Defined in: [api/webhooks/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L35)
+Defined in: [api/webhooks/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L35)
 
 ---
 
@@ -41,7 +41,7 @@ Defined in: [api/webhooks/types.ts:35](https://github.com/adobe/aio-commerce-sdk
 optional environment: string;
 ```
 
-Defined in: [api/webhooks/types.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L37)
+Defined in: [api/webhooks/types.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L37)
 
 ---
 
@@ -51,4 +51,4 @@ Defined in: [api/webhooks/types.ts:37](https://github.com/adobe/aio-commerce-sdk
 org_id: string;
 ```
 
-Defined in: [api/webhooks/types.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L36)
+Defined in: [api/webhooks/types.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L36)

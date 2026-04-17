@@ -1,5 +1,12 @@
 # @adobe/aio-commerce-sdk
 
+## 1.1.1
+
+### Patch Changes
+
+- Updated dependencies [[`d8b0fa9`](https://github.com/adobe/aio-commerce-sdk/commit/d8b0fa9e3370b7abd0fb71b42d0078c375f63fb3)]:
+  - @adobe/aio-commerce-lib-events@1.1.0
+
 ## 1.1.0
 
 ### Minor Changes
