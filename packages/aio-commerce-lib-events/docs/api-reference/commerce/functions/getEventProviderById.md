@@ -10,7 +10,7 @@ function getEventProviderById(
 ): Promise<CommerceEventProvider>;
 ```
 
-Defined in: [commerce/api/event-providers/endpoints.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts#L61)
+Defined in: [commerce/api/event-providers/endpoints.ts:63](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts#L63)
 
 Gets the info of the event provider with the given ID of the Commerce instance bound to the given [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md).
 

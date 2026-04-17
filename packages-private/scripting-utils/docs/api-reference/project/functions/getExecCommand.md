@@ -4,7 +4,7 @@
 function getExecCommand(packageManager: PackageManager): string;
 ```
 
-Defined in: [project.ts:164](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages-private/scripting-utils/source/project.ts#L164)
+Defined in: [project.ts:164](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages-private/scripting-utils/source/project.ts#L164)
 
 Get the appropriate exec command based on package manager
 

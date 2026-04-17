@@ -8,7 +8,7 @@ type CommerceWebhookRule = {
 };
 ```
 
-Defined in: [api/webhooks/types.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L20)
+Defined in: [api/webhooks/types.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L20)
 
 A conditional rule in a Commerce webhook subscription.
 
@@ -20,7 +20,7 @@ A conditional rule in a Commerce webhook subscription.
 field: string;
 ```
 
-Defined in: [api/webhooks/types.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L21)
+Defined in: [api/webhooks/types.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L21)
 
 ---
 
@@ -30,7 +30,7 @@ Defined in: [api/webhooks/types.ts:21](https://github.com/adobe/aio-commerce-sdk
 operator: string;
 ```
 
-Defined in: [api/webhooks/types.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L22)
+Defined in: [api/webhooks/types.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L22)
 
 ---
 
@@ -40,4 +40,4 @@ Defined in: [api/webhooks/types.ts:22](https://github.com/adobe/aio-commerce-sdk
 value: string;
 ```
 
-Defined in: [api/webhooks/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L23)
+Defined in: [api/webhooks/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L23)

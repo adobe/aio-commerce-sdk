@@ -2,11 +2,15 @@
 
 ```ts
 type LeafStep<TName, TConfig, TStepCtx, TOutput> = StepBase<TName, TConfig> & {
-  run: (
+  install: (
     config: TConfig,
     context: ExecutionContext<TStepCtx>,
   ) => TOutput | Promise<TOutput>;
   type: "leaf";
+  uninstall?: (
+    config: TConfig,
+    context: ExecutionContext<TStepCtx>,
+  ) => void | Promise<void>;
   validate?: (
     config: TConfig,
     context: ValidationExecutionContext<TStepCtx>,
@@ -14,16 +18,16 @@ type LeafStep<TName, TConfig, TStepCtx, TOutput> = StepBase<TName, TConfig> & {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L104)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L110)
 
 A leaf step that executes work (no children).
 
 ## Type Declaration
 
-### run()
+### install
 
 ```ts
-run: (config: TConfig, context: ExecutionContext<TStepCtx>) =>
+install: (config: TConfig, context: ExecutionContext<TStepCtx>) =>
   TOutput | Promise<TOutput>;
 ```
 
@@ -46,10 +50,31 @@ The execution handler for the step.
 type: "leaf";
 ```
 
-### validate()?
+### uninstall?
 
 ```ts
-optional validate: (config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
+optional uninstall?: (config: TConfig, context: ExecutionContext<TStepCtx>) => void | Promise<void>;
+```
+
+Optional uninstall handler for the step.
+Called during uninstallation to reverse the work done by `install`.
+If absent, the step is silently skipped during uninstallation.
+
+#### Parameters
+
+| Parameter | Type                                                    |
+| --------- | ------------------------------------------------------- |
+| `config`  | `TConfig`                                               |
+| `context` | [`ExecutionContext`](ExecutionContext.md)\<`TStepCtx`\> |
+
+#### Returns
+
+`void` \| `Promise`\<`void`\>
+
+### validate?
+
+```ts
+optional validate?: (config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
   | ValidationIssue[]
 | Promise<ValidationIssue[]>;
 ```
