@@ -20,10 +20,6 @@ import * as v from "valibot";
 import type { AdminUiSdkConfig } from "#management/installation/admin-ui-sdk/utils";
 import type { CommerceAppConfigOutputModel } from "./app";
 
-// ---------------------------------------------------------------------------
-// Shared primitives
-// ---------------------------------------------------------------------------
-
 const ColumnTypeSchema = v.picklist([
   "boolean",
   "date",
@@ -43,10 +39,6 @@ const ViewButtonConfirmSchema = v.object({
   message: v.optional(nonEmptyStringValueSchema("confirm message")),
 });
 
-// ---------------------------------------------------------------------------
-// Grid columns
-// ---------------------------------------------------------------------------
-
 const GridColumnPropertySchema = v.object({
   label: nonEmptyStringValueSchema("column label"),
   columnId: nonEmptyStringValueSchema("column ID"),
@@ -64,10 +56,6 @@ const GridColumnsSchema = v.object({
   ),
 });
 
-// ---------------------------------------------------------------------------
-// Mass action (shared across all entities)
-// ---------------------------------------------------------------------------
-
 const MassActionSchema = v.object({
   actionId: nonEmptyStringValueSchema("mass action ID"),
   label: nonEmptyStringValueSchema("mass action label"),
@@ -80,10 +68,6 @@ const MassActionSchema = v.object({
   sandbox: v.optional(nonEmptyStringValueSchema("sandbox")),
 });
 
-// ---------------------------------------------------------------------------
-// Order view button
-// ---------------------------------------------------------------------------
-
 const OrderViewButtonSchema = v.object({
   buttonId: nonEmptyStringValueSchema("view button ID"),
   label: nonEmptyStringValueSchema("view button label"),
@@ -95,10 +79,6 @@ const OrderViewButtonSchema = v.object({
   timeout: v.optional(positiveNumberValueSchema("timeout")),
   sandbox: v.optional(nonEmptyStringValueSchema("sandbox")),
 });
-
-// ---------------------------------------------------------------------------
-// Custom fee
-// ---------------------------------------------------------------------------
 
 const CustomFeeSchema = v.object({
   id: nonEmptyStringValueSchema("custom fee ID"),
@@ -114,10 +94,6 @@ const CustomFeeSchema = v.object({
     booleanValueSchema("applyFeeOnLastCreditMemo"),
   ),
 });
-
-// ---------------------------------------------------------------------------
-// Entity extension point schemas
-// ---------------------------------------------------------------------------
 
 const OrderExtensionPointsSchema = v.object({
   massActions: v.optional(v.array(MassActionSchema)),
@@ -135,10 +111,6 @@ const CustomerExtensionPointsSchema = v.object({
   massActions: v.optional(v.array(MassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
 });
-
-// ---------------------------------------------------------------------------
-// Banner notification
-// ---------------------------------------------------------------------------
 
 const MassActionBannerSchema = v.object({
   actionId: nonEmptyStringValueSchema("mass action ID"),
@@ -163,10 +135,6 @@ const BannerNotificationSchema = v.object({
   orderViewButtons: v.optional(v.array(OrderViewButtonBannerSchema)),
 });
 
-// ---------------------------------------------------------------------------
-// Menu item
-// ---------------------------------------------------------------------------
-
 const MenuItemSchema = v.object({
   id: nonEmptyStringValueSchema("menu item ID"),
   title: v.optional(nonEmptyStringValueSchema("menu item title")),
@@ -175,10 +143,6 @@ const MenuItemSchema = v.object({
   isSection: v.optional(booleanValueSchema("isSection")),
   sandbox: v.optional(nonEmptyStringValueSchema("sandbox")),
 });
-
-// ---------------------------------------------------------------------------
-// Top-level registration schema
-// ---------------------------------------------------------------------------
 
 /**
  * Schema for the Admin UI SDK registration parameters (for the `adminUiSdk.registration` config section).
@@ -196,10 +160,6 @@ const AdminUiSdkRegistrationSchema = v.object({
 export const AdminUiSdkSchema = v.object({
   registration: AdminUiSdkRegistrationSchema,
 });
-
-// ---------------------------------------------------------------------------
-// Type exports
-// ---------------------------------------------------------------------------
 
 /** The Admin UI SDK configuration for an Adobe Commerce application. */
 export type AdminUiSdkConfiguration = v.InferInput<typeof AdminUiSdkSchema>;
@@ -226,10 +186,6 @@ export type BannerNotification = v.InferInput<typeof BannerNotificationSchema>;
 
 /** A menu item registration entry. */
 export type MenuItem = v.InferInput<typeof MenuItemSchema>;
-
-// ---------------------------------------------------------------------------
-// Guards
-// ---------------------------------------------------------------------------
 
 /** Check if config has Admin UI SDK registration configuration. */
 export function hasAdminUiSdk(
