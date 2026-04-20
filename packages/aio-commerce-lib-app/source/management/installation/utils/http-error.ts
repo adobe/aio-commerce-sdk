@@ -72,7 +72,7 @@ function interpolateParameters(message: string, parameters: unknown[]): string {
 
 function extractJsonMessage(json: unknown): string | undefined {
   if (typeof json !== "object" || json === null) {
-    return undefined;
+    return;
   }
   const obj = json as Record<string, unknown>;
 
@@ -97,5 +97,4 @@ function extractJsonMessage(json: unknown): string | undefined {
       return first.message;
     }
   }
-  return undefined;
 }
