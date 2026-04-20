@@ -15,7 +15,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import {
   APP_CONFIG_FILE,
@@ -24,13 +24,16 @@ import {
   INSTALL_YAML_FILE,
   PACKAGE_JSON_FILE,
 } from "#commands/constants";
+import * as manifestCommand from "#commands/generate/manifest/main";
 import { DOMAIN_DEFAULTS } from "#commands/init/constants";
 import {
   ensureAppConfig,
   ensureCommerceAppConfig,
   ensureInstallYaml,
   ensurePackageJson,
+  runGeneration,
 } from "#commands/init/lib";
+import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
   configWithAdminUiSdk,
   configWithBusinessConfig,
@@ -414,6 +417,23 @@ describe("commands/init/lib", () => {
         ).toBe(true);
         expect(existsSync(generatedSchemaFile(tempDir))).toBe(true);
       });
+    });
+
+    test("throws when an underlying generator fails", async () => {
+      const spy = vi
+        .spyOn(manifestCommand, "run")
+        .mockRejectedValueOnce(new Error("boom"));
+
+      await withTempProject(
+        { ...EMPTY_PROJECT, ...makeTemplateFiles() },
+        async () => {
+          await expect(
+            runGeneration(configWithBusinessConfig, "npx"),
+          ).rejects.toThrow();
+        },
+      );
+
+      spy.mockRestore();
     });
   });
 });
