@@ -218,7 +218,7 @@ describe("generateRegistrationActionFile", () => {
     expect(contentStr).toContain('"customerSelectLimit": 1');
   });
 
-  test("writes to a path ending in registration.js", async () => {
+  test("writes to registration/index.js", async () => {
     const mockWriteFile = vi.mocked(writeFile);
 
     await generateRegistrationActionFile(
@@ -227,6 +227,6 @@ describe("generateRegistrationActionFile", () => {
     );
 
     const [filePath] = mockWriteFile.mock.calls[0];
-    expect(String(filePath)).toContain("registration.js");
+    expect(String(filePath)).toContain("index.js");
   });
 });

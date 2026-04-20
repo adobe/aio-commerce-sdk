@@ -244,7 +244,7 @@ export function buildAdminUiSdkExtConfig() {
           license: "Apache-2.0",
           actions: {
             registration: {
-              function: `${ADMIN_UI_SDK_ACTIONS_PATH}/registration.js`,
+              function: `${ADMIN_UI_SDK_ACTIONS_PATH}/index.js`,
               web: "yes",
               runtime: "nodejs:22",
               annotations: {

@@ -33,7 +33,7 @@ describe("buildAdminUiSdkExtConfig", () => {
     expect(
       config.runtimeManifest?.packages?.["admin-ui-sdk"]?.actions?.registration
         ?.function,
-    ).toContain("admin-ui-sdk/registration.js");
+    ).toContain("registration/index.js");
     expect(
       config.runtimeManifest?.packages?.["admin-ui-sdk"]?.actions?.registration
         ?.annotations?.["require-adobe-auth"],
@@ -46,7 +46,7 @@ describe("buildAdminUiSdkExtConfig", () => {
       config.runtimeManifest?.packages?.["admin-ui-sdk"]?.actions?.registration
         ?.function;
 
-    expect(fnPath).toBe(`${ADMIN_UI_SDK_ACTIONS_PATH}/registration.js`);
+    expect(fnPath).toBe(`${ADMIN_UI_SDK_ACTIONS_PATH}/index.js`);
   });
 
   test("registration action has web: yes and runtime: nodejs:22", () => {

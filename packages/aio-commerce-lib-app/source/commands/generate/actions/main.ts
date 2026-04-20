@@ -289,7 +289,7 @@ export async function generateCustomScriptsTemplate(
 }
 
 /**
- * Generates `registration.js` with the Admin UI SDK registration config inlined as a JSON literal.
+ * Generates `registration/index.js` with the Admin UI SDK registration config inlined as a JSON literal.
  * @param appManifest - The validated app config; must satisfy `hasAdminUiSdk`.
  * @param extensionPointId - The extension point ID that owns the registration action.
  */
@@ -317,7 +317,7 @@ export async function generateRegistrationActionFile(
     `const registration = ${JSON.stringify(registration, null, 2)};`,
   );
 
-  const actionPath = join(outputDir, "registration.js");
+  const actionPath = join(outputDir, "index.js");
   await writeFile(actionPath, content, "utf-8");
   consola.success(
     `Generated registration action at ${relative(process.cwd(), actionPath)}`,
