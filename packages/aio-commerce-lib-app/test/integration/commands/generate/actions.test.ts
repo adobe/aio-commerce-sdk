@@ -14,10 +14,6 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import {
-  withChdir,
-  withTempFiles,
-} from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -36,6 +32,7 @@ import {
   EMPTY_PROJECT,
   INVALID_PROJECT,
   MINIMAL_PROJECT,
+  withTempProject,
 } from "#test/fixtures/project";
 
 function getActionsDir(tempDir: string, extensionPointId: string) {
@@ -53,10 +50,10 @@ describe("commands/generate/actions", () => {
 
   describe("run", () => {
     test("generates app-config action for minimal config", async () => {
-      await withTempFiles(
+      await withTempProject(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await withChdir(tempDir, () => run(minimalValidConfig, tempDir));
+          await run(minimalValidConfig, tempDir);
 
           const actionsDir = getActionsDir(
             tempDir,
@@ -69,10 +66,10 @@ describe("commands/generate/actions", () => {
     });
 
     test("generates ext.config.yaml for extensibility extension point", async () => {
-      await withTempFiles(
+      await withTempProject(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await withChdir(tempDir, () => run(minimalValidConfig, tempDir));
+          await run(minimalValidConfig, tempDir);
 
           const extConfigPath = join(
             tempDir,
@@ -86,12 +83,10 @@ describe("commands/generate/actions", () => {
     });
 
     test("generates business configuration actions when business config schema is present", async () => {
-      await withTempFiles(
+      await withTempProject(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await withChdir(tempDir, () =>
-            run(configWithBusinessConfig, tempDir),
-          );
+          await run(configWithBusinessConfig, tempDir);
 
           const businessActionsDir = getActionsDir(
             tempDir,
@@ -107,10 +102,10 @@ describe("commands/generate/actions", () => {
     });
 
     test("generates installation action with custom scripts loader", async () => {
-      await withTempFiles(
+      await withTempProject(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await withChdir(tempDir, () => run(configWithOneScript, tempDir));
+          await run(configWithOneScript, tempDir);
 
           const actionsDir = getActionsDir(
             tempDir,
@@ -137,22 +132,22 @@ describe("commands/generate/actions", () => {
     });
 
     test("succeeds when a valid config file exists", async () => {
-      await withTempFiles(MINIMAL_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
+      await withTempProject(MINIMAL_PROJECT, async () => {
+        await exec();
         expect(exitSpy).not.toHaveBeenCalled();
       });
     });
 
     test("exits with 1 when config file is missing", async () => {
-      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
+      await withTempProject(EMPTY_PROJECT, async () => {
+        await exec();
         expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });
 
     test("exits with 1 when config file is invalid", async () => {
-      await withTempFiles(INVALID_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
+      await withTempProject(INVALID_PROJECT, async () => {
+        await exec();
         expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });

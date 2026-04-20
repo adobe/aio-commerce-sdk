@@ -14,10 +14,7 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import {
-  withChdir,
-  withTempFiles,
-} from "@aio-commerce-sdk/scripting-utils/filesystem";
+import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -51,6 +48,7 @@ import {
   INVALID_PROJECT,
   makeProjectFiles,
   withGeneratedProject,
+  withTempProject,
 } from "#test/fixtures/project";
 
 import type { InitOptions } from "#commands/init/utils";
@@ -277,8 +275,8 @@ describe("commands/init/lib", () => {
     });
 
     test("adds postinstall script when package.json has no postinstall", async () => {
-      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => ensurePackageJson(tempDir));
+      await withTempProject(EMPTY_PROJECT, async (tempDir) => {
+        await ensurePackageJson(tempDir);
 
         const written = JSON.parse(
           await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
@@ -295,10 +293,10 @@ describe("commands/init/lib", () => {
         scripts: { postinstall: "npx aio-commerce-lib-app hooks postinstall" },
       });
 
-      await withTempFiles(
+      await withTempProject(
         { [PACKAGE_JSON_FILE]: original },
         async (tempDir) => {
-          await withChdir(tempDir, () => ensurePackageJson(tempDir));
+          await ensurePackageJson(tempDir);
 
           const after = await readFile(
             join(tempDir, PACKAGE_JSON_FILE),
@@ -315,10 +313,10 @@ describe("commands/init/lib", () => {
         scripts: { postinstall: "echo hello" },
       });
 
-      await withTempFiles(
+      await withTempProject(
         { [PACKAGE_JSON_FILE]: packageJson },
         async (tempDir) => {
-          await withChdir(tempDir, () => ensurePackageJson(tempDir));
+          await ensurePackageJson(tempDir);
 
           const written = JSON.parse(
             await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),

@@ -113,6 +113,19 @@ export function generatedSchemaFile(tempDir: string) {
 }
 
 /**
+ * Scaffolds a temp project with the given files and runs the callback with
+ * the tempDir as the current working directory.
+ */
+export async function withTempProject(
+  files: Record<string, string>,
+  callback: (tempDir: string) => void | Promise<void>,
+) {
+  await withTempFiles(files, async (tempDir) => {
+    await withChdir(tempDir, () => callback(tempDir));
+  });
+}
+
+/**
  * Scaffolds an EMPTY_PROJECT with action templates, chdir's into it, runs
  * `runGeneration`, then yields the tempDir path to the caller for assertions.
  */
@@ -120,10 +133,10 @@ export async function withGeneratedProject(
   config: CommerceAppConfigOutputModel,
   assertions: (tempDir: string) => void | Promise<void>,
 ) {
-  await withTempFiles(
+  await withTempProject(
     { ...EMPTY_PROJECT, ...makeTemplateFiles() },
     async (tempDir) => {
-      await withChdir(tempDir, () => runGeneration(config, "npx"));
+      await runGeneration(config, "npx");
       await assertions(tempDir);
     },
   );

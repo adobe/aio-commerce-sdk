@@ -14,10 +14,6 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import {
-  withChdir,
-  withTempFiles,
-} from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -35,6 +31,7 @@ import {
   envObject,
   INVALID_PROJECT,
   makeProjectFiles,
+  withTempProject,
 } from "#test/fixtures/project";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -67,8 +64,8 @@ describe("commands/generate/schema", () => {
 
   describe("run", () => {
     test("skips generation when config has no business config schema", async () => {
-      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => run(minimalValidConfig));
+      await withTempProject(EMPTY_PROJECT, async (tempDir) => {
+        await run(minimalValidConfig);
         const outputDir = join(
           tempDir,
           getExtensionPointFolderPath(CONFIGURATION_EXTENSION_POINT_ID),
@@ -82,8 +79,8 @@ describe("commands/generate/schema", () => {
     });
 
     test("writes schema JSON when business config schema is present", async () => {
-      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => run(configWithBusinessConfig));
+      await withTempProject(EMPTY_PROJECT, async (tempDir) => {
+        await run(configWithBusinessConfig);
         const parsed = JSON.parse(
           await readFile(getSchemaPath(tempDir), "utf-8"),
         );
@@ -112,12 +109,12 @@ describe("commands/generate/schema", () => {
         },
       };
 
-      await withTempFiles(EMPTY_PROJECT, async (tempDirA) => {
-        await withChdir(tempDirA, () => run(schemaA));
+      await withTempProject(EMPTY_PROJECT, async (tempDirA) => {
+        await run(schemaA);
         const hashA = sha256(await readFile(getSchemaPath(tempDirA), "utf-8"));
 
-        await withTempFiles(EMPTY_PROJECT, async (tempDirB) => {
-          await withChdir(tempDirB, () => run(schemaB));
+        await withTempProject(EMPTY_PROJECT, async (tempDirB) => {
+          await run(schemaB);
           const hashB = sha256(
             await readFile(getSchemaPath(tempDirB), "utf-8"),
           );
@@ -142,14 +139,14 @@ describe("commands/generate/schema", () => {
         },
       };
 
-      await withTempFiles(
+      await withTempProject(
         makeProjectFiles(configWithPassword, "esm", {
           ".env": envObject({
             AIO_COMMERCE_CONFIG_ENCRYPTION_KEY: "some-valid-key",
           }),
         }),
-        async (tempDir) => {
-          await withChdir(tempDir, () => run(configWithPassword));
+        async () => {
+          await run(configWithPassword);
           expect(mockExecSync).toHaveBeenCalledWith(
             expect.stringContaining("encryption validate"),
           );
@@ -172,10 +169,10 @@ describe("commands/generate/schema", () => {
         },
       };
 
-      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
+      await withTempProject(EMPTY_PROJECT, async () => {
         // Clear any leftover from previous tests — process.loadEnvFile doesn't overwrite existing vars
         vi.stubEnv("AIO_COMMERCE_CONFIG_ENCRYPTION_KEY", "");
-        await withChdir(tempDir, () => run(configWithPassword));
+        await run(configWithPassword);
 
         expect(mockExecSync).toHaveBeenCalledWith(
           expect.stringContaining("encryption setup"),
@@ -194,10 +191,10 @@ describe("commands/generate/schema", () => {
     });
 
     test("succeeds when a valid config with schema exists", async () => {
-      await withTempFiles(
+      await withTempProject(
         makeProjectFiles(configWithBusinessConfig, "esm"),
         async (tempDir) => {
-          await withChdir(tempDir, () => exec());
+          await exec();
           expect(exitSpy).not.toHaveBeenCalled();
 
           const parsed = JSON.parse(
@@ -212,15 +209,15 @@ describe("commands/generate/schema", () => {
     });
 
     test("exits with 1 when config file is missing", async () => {
-      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
+      await withTempProject(EMPTY_PROJECT, async () => {
+        await exec();
         expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });
 
     test("exits with 1 when config file is invalid", async () => {
-      await withTempFiles(INVALID_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
+      await withTempProject(INVALID_PROJECT, async () => {
+        await exec();
         expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });

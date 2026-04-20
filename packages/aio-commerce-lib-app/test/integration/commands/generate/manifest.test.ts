@@ -14,10 +14,6 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import {
-  withChdir,
-  withTempFiles,
-} from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -35,6 +31,7 @@ import {
   EMPTY_PROJECT,
   INVALID_PROJECT,
   MINIMAL_PROJECT,
+  withTempProject,
 } from "#test/fixtures/project";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -55,8 +52,8 @@ function getManifestPath(tempDir: string) {
 describe("commands/generate/manifest", () => {
   describe("run", () => {
     test("writes manifest JSON to the extensibility extension point directory", async () => {
-      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => run(minimalValidConfig));
+      await withTempProject(EMPTY_PROJECT, async (tempDir) => {
+        await run(minimalValidConfig);
 
         const contents = await readFile(getManifestPath(tempDir), "utf-8");
         expect(JSON.parse(contents)).toEqual(minimalValidConfig);
@@ -77,14 +74,14 @@ describe("commands/generate/manifest", () => {
         metadata: mockMetadata,
       };
 
-      await withTempFiles(EMPTY_PROJECT, async (tempDirA) => {
-        await withChdir(tempDirA, () => run(configA));
+      await withTempProject(EMPTY_PROJECT, async (tempDirA) => {
+        await run(configA);
         const hashA = sha256(
           await readFile(getManifestPath(tempDirA), "utf-8"),
         );
 
-        await withTempFiles(EMPTY_PROJECT, async (tempDirB) => {
-          await withChdir(tempDirB, () => run(configB));
+        await withTempProject(EMPTY_PROJECT, async (tempDirB) => {
+          await run(configB);
           const hashB = sha256(
             await readFile(getManifestPath(tempDirB), "utf-8"),
           );
@@ -95,8 +92,8 @@ describe("commands/generate/manifest", () => {
     });
 
     test("serializes all config fields", async () => {
-      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => run(fullConfig));
+      await withTempProject(EMPTY_PROJECT, async (tempDir) => {
+        await run(fullConfig);
 
         const outputPath = join(
           tempDir,
@@ -126,8 +123,8 @@ describe("commands/generate/manifest", () => {
     });
 
     test("succeeds when a valid config file exists", async () => {
-      await withTempFiles(MINIMAL_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
+      await withTempProject(MINIMAL_PROJECT, async (tempDir) => {
+        await exec();
         expect(exitSpy).not.toHaveBeenCalled();
 
         const contents = await readFile(getManifestPath(tempDir), "utf-8");
@@ -136,15 +133,15 @@ describe("commands/generate/manifest", () => {
     });
 
     test("exits with 1 when config file is missing", async () => {
-      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
+      await withTempProject(EMPTY_PROJECT, async () => {
+        await exec();
         expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });
 
     test("exits with 1 when config file is invalid", async () => {
-      await withTempFiles(INVALID_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
+      await withTempProject(INVALID_PROJECT, async () => {
+        await exec();
         expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });

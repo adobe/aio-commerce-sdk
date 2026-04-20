@@ -14,10 +14,6 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import {
-  withChdir,
-  withTempFiles,
-} from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -37,6 +33,7 @@ import {
   INVALID_PROJECT,
   MINIMAL_PROJECT,
   makeProjectFiles,
+  withTempProject,
 } from "#test/fixtures/project";
 
 // syncImsCredentials is the external boundary — reads AIO CLI credentials
@@ -52,8 +49,8 @@ describe("commands/hooks/pre-app-build", () => {
 
   describe("run", () => {
     test("generates manifest for extensibility/1", async () => {
-      await withTempFiles(MINIMAL_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => run("extensibility/1"));
+      await withTempProject(MINIMAL_PROJECT, async (tempDir) => {
+        await run("extensibility/1");
 
         const manifestPath = join(
           tempDir,
@@ -70,10 +67,10 @@ describe("commands/hooks/pre-app-build", () => {
     });
 
     test("generates schema for configuration/1", async () => {
-      await withTempFiles(
+      await withTempProject(
         makeProjectFiles(configWithBusinessConfig),
         async (tempDir) => {
-          await withChdir(tempDir, () => run("configuration/1"));
+          await run("configuration/1");
 
           const schemaPath = join(
             tempDir,
@@ -93,13 +90,11 @@ describe("commands/hooks/pre-app-build", () => {
     });
 
     test("throws for unsupported extension", async () => {
-      await withTempFiles(MINIMAL_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () =>
-          expect(
-            // @ts-expect-error Testing with invalid extension value
-            run("unknown/1"),
-          ).rejects.toThrow("Unsupported extension"),
-        );
+      await withTempProject(MINIMAL_PROJECT, async () => {
+        await expect(
+          // @ts-expect-error Testing with invalid extension value
+          run("unknown/1"),
+        ).rejects.toThrow("Unsupported extension");
       });
     });
   });
@@ -114,8 +109,8 @@ describe("commands/hooks/pre-app-build", () => {
     });
 
     test("exits with 1 when EXTENSION env var is not set", async () => {
-      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
+      await withTempProject(EMPTY_PROJECT, async () => {
+        await exec();
         expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });
@@ -123,8 +118,8 @@ describe("commands/hooks/pre-app-build", () => {
     test("runs successfully for extensibility/1", async () => {
       vi.stubEnv("EXTENSION", "extensibility/1");
 
-      await withTempFiles(MINIMAL_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
+      await withTempProject(MINIMAL_PROJECT, async () => {
+        await exec();
         expect(exitSpy).not.toHaveBeenCalled();
       });
     });
@@ -132,10 +127,10 @@ describe("commands/hooks/pre-app-build", () => {
     test("runs successfully for configuration/1", async () => {
       vi.stubEnv("EXTENSION", "configuration/1");
 
-      await withTempFiles(
+      await withTempProject(
         makeProjectFiles(configWithBusinessConfig),
-        async (tempDir) => {
-          await withChdir(tempDir, () => exec());
+        async () => {
+          await exec();
           expect(exitSpy).not.toHaveBeenCalled();
         },
       );
@@ -144,8 +139,8 @@ describe("commands/hooks/pre-app-build", () => {
     test("exits with 1 when config file is invalid", async () => {
       vi.stubEnv("EXTENSION", "extensibility/1");
 
-      await withTempFiles(INVALID_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
+      await withTempProject(INVALID_PROJECT, async () => {
+        await exec();
         expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });

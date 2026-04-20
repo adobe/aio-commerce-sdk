@@ -19,7 +19,7 @@ vi.mock("node:child_process", () => ({
   execSync: (...args: unknown[]) => mockExecSync(...args),
 }));
 
-describe("commands/init/lib (unit)", () => {
+describe("commands/init/lib", () => {
   beforeEach(() => {
     mockExecSync.mockImplementation(() => Buffer.from(""));
   });

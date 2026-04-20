@@ -13,10 +13,6 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-import {
-  withChdir,
-  withTempFiles,
-} from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -34,17 +30,16 @@ import {
   BUSINESS_CONFIG_PROJECT,
   EMPTY_PROJECT,
   INVALID_PROJECT,
+  withTempProject,
 } from "#test/fixtures/project";
 
 describe("commands/hooks/postinstall", () => {
   describe("run", () => {
     test("generates actions, manifest, and schema", async () => {
-      await withTempFiles(
+      await withTempProject(
         { ...BUSINESS_CONFIG_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await withChdir(tempDir, () =>
-            run(configWithBusinessConfig, tempDir),
-          );
+          await run(configWithBusinessConfig, tempDir);
 
           const extensibilityDir = join(
             tempDir,
@@ -90,22 +85,22 @@ describe("commands/hooks/postinstall", () => {
     });
 
     test("succeeds when a valid config file exists", async () => {
-      await withTempFiles(BUSINESS_CONFIG_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
+      await withTempProject(BUSINESS_CONFIG_PROJECT, async () => {
+        await exec();
         expect(exitSpy).not.toHaveBeenCalled();
       });
     });
 
     test("exits with 1 when config file is missing", async () => {
-      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
+      await withTempProject(EMPTY_PROJECT, async () => {
+        await exec();
         expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });
 
     test("exits with 1 when config file fails validation", async () => {
-      await withTempFiles(INVALID_PROJECT, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
+      await withTempProject(INVALID_PROJECT, async () => {
+        await exec();
         expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });
