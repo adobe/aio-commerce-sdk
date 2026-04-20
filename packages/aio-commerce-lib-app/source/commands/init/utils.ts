@@ -36,15 +36,34 @@ import { DOMAIN_DEFAULTS } from "./constants";
 import type { Document, YAMLSeq } from "yaml";
 import type { CommerceAppConfig, CommerceAppConfigDomain } from "#config/index";
 
-type ScaffoldAppAnswers = {
+export type ScaffoldAppAnswers = {
   appName: string;
   configFile: string;
   configFormat: "ts" | "js";
   domains: Set<CommerceAppConfigDomain>;
 };
 
-/** Prompt the user to scaffold a new Commerce App configuration. */
-export async function promptForCommerceAppConfig() {
+/** Options for non-interactive init. When all fields are provided, prompts are skipped. */
+export type InitOptions = {
+  appName: string;
+  configFormat: "ts" | "js";
+  domains: CommerceAppConfigDomain[];
+};
+
+/** Prompt the user to scaffold a new Commerce App configuration. When options are provided, prompts are skipped. */
+export async function promptForCommerceAppConfig(
+  options?: InitOptions,
+): Promise<ScaffoldAppAnswers> {
+  if (options) {
+    const configFile = `${COMMERCE_APP_CONFIG_FILE}.${options.configFormat}`;
+    return {
+      appName: options.appName,
+      configFile,
+      configFormat: options.configFormat,
+      domains: new Set<CommerceAppConfigDomain>(options.domains),
+    };
+  }
+
   const configFormat = await consola.prompt(
     "What format do you want to use for the config file?",
     {
@@ -98,7 +117,7 @@ export async function promptForCommerceAppConfig() {
     configFile,
     domains,
     configFormat,
-  } satisfies ScaffoldAppAnswers;
+  };
 }
 
 /** Create the default commerce app config file content */

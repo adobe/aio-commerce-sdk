@@ -13,6 +13,7 @@
 import { dirname, join } from "node:path";
 
 import { replaceEnvVar } from "@aio-commerce-sdk/scripting-utils/env";
+import { touch } from "@aio-commerce-sdk/scripting-utils/filesystem/helpers";
 import { findNearestPackageJson } from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
 
@@ -21,7 +22,8 @@ import { generateEncryptionKey } from "#utils/encryption";
 const ENCRYPTION_KEY_ENV_VAR = "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY";
 
 /** Sets up an encryption key for password field at the given environment file path. */
-export function run(envPath: string) {
+export async function run(envPath: string) {
+  await touch(envPath);
   process.loadEnvFile(envPath);
 
   if (!process.env[ENCRYPTION_KEY_ENV_VAR]) {

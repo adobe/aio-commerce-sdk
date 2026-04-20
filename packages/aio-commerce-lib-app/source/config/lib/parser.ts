@@ -115,7 +115,7 @@ export async function readCommerceAppConfig(
       Object.keys(config.default).length === 0)
   ) {
     throw new Error(
-      "Commerce app config file does not export a default export. Make sure you use `export default` or `module.exports = { /* your config */ }`",
+      "Commerce app config file does not export a default export or exports an empty object. Make sure you use `export default` or `module.exports = { /* your config */ }`",
     );
   }
 

@@ -30,10 +30,21 @@ describe("commands/encryption/setup", () => {
   });
 
   describe("run", () => {
-    test("generates and writes an encryption key when none exists", async () => {
-      await withTempFiles({ ".env": "" }, async (tempDir) => {
+    test.each([
+      {
+        label: "with env file",
+        files: { ".env": "" },
+      },
+      {
+        label: "without env file",
+        files: {} as Record<string, string>,
+      },
+    ])("generates and writes an encryption key when none exists ($label)", async ({
+      files,
+    }) => {
+      await withTempFiles(files, async (tempDir) => {
         const envPath = join(tempDir, ".env");
-        run(envPath);
+        await run(envPath);
 
         const contents = await readFile(envPath, "utf-8");
         expect(contents).toContain(`${ENCRYPTION_KEY_ENV_VAR}=`);
@@ -53,7 +64,7 @@ describe("commands/encryption/setup", () => {
         { ".env": `${ENCRYPTION_KEY_ENV_VAR}=${existingKey}` },
         async (tempDir) => {
           const envPath = join(tempDir, ".env");
-          run(envPath);
+          await run(envPath);
 
           const contents = await readFile(envPath, "utf-8");
           expect(contents).toContain(
@@ -88,13 +99,6 @@ describe("commands/encryption/setup", () => {
       await withTempFiles(files, async (tempDir) => {
         await withChdir(tempDir, () => exec());
         expect(exitSpy).not.toHaveBeenCalled();
-      });
-    });
-
-    test("calls process.exit(1) when .env file is missing", async () => {
-      await withTempFiles({}, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
-        expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });
   });

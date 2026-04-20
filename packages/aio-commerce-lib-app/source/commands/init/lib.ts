@@ -21,7 +21,6 @@ import {
   readPackageJson,
 } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
-import * as prettier from "prettier";
 
 import {
   COMMERCE_APP_CONFIG_FILE,
@@ -31,8 +30,10 @@ import {
 } from "#commands/constants";
 import { run as generateActionsCommand } from "#commands/generate/actions/main";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
+import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import {
   getConfigDomains,
+  hasConfigDomain,
   parseCommerceAppConfig,
   readCommerceAppConfig,
   validateCommerceAppConfig,
@@ -49,9 +50,13 @@ import type { PackageManager } from "@aio-commerce-sdk/scripting-utils/project";
 import type { PackageJson } from "type-fest";
 import type { CommerceAppConfigDomain } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { InitOptions } from "./utils";
 
-/** Ensure app.commerce.config file exists, allow creating if it doesn't */
-export async function ensureCommerceAppConfig(cwd = process.cwd()) {
+/** Ensure app.commerce.config file exists, allow creating if it doesn't. When options are provided, prompts are skipped. */
+export async function ensureCommerceAppConfig(
+  cwd = process.cwd(),
+  options?: InitOptions,
+) {
   let config: unknown | null = null;
   try {
     config = await readCommerceAppConfig(cwd);
@@ -77,40 +82,49 @@ export async function ensureCommerceAppConfig(cwd = process.cwd()) {
     }
   }
 
-  consola.warn(`${COMMERCE_APP_CONFIG_FILE} not found.`);
-  const createConfig = await consola.prompt(
-    `Do you want to create a ${COMMERCE_APP_CONFIG_FILE} file? (y/n)`,
-    {
-      type: "confirm",
-      initial: true,
-      default: false,
-    },
-  );
+  if (!options) {
+    consola.warn(`${COMMERCE_APP_CONFIG_FILE} not found.`);
+    const createConfig = await consola.prompt(
+      `Do you want to create a ${COMMERCE_APP_CONFIG_FILE} file? (y/n)`,
+      {
+        type: "confirm",
+        initial: true,
+        default: false,
+      },
+    );
 
-  if (!createConfig) {
-    throw new Error("Initialization cancelled.");
+    if (!createConfig) {
+      throw new Error("Initialization cancelled.");
+    }
   }
 
-  const answers = await promptForCommerceAppConfig();
+  const answers = await promptForCommerceAppConfig(options);
   try {
     const configContent = await getDefaultCommerceAppConfig(cwd, answers);
     consola.info(`Creating ${answers.configFile}...`);
 
     const path = join(await getProjectRootDirectory(cwd), answers.configFile);
-    const formattedConfig = await prettier.format(configContent, {
-      semi: true,
-      quoteStyle: "double",
-      arrowParens: "always",
-      bracketSameLine: true,
-      bracketSpacing: true,
-      trailingComma: "all",
-      tabWidth: 2,
-      useTabs: false,
-      printWidth: 80,
-      filepath: path,
-    });
 
-    await writeFile(path, formattedConfig, "utf-8");
+    // Skip formatting during tests, prettier cold-start is expensive and formatting is not under test.
+    if (process.env.VITEST) {
+      await writeFile(path, configContent, "utf-8");
+    } else {
+      const prettier = await import("prettier");
+      const formattedConfig = await prettier.format(configContent, {
+        semi: true,
+        quoteStyle: "double",
+        arrowParens: "always",
+        bracketSameLine: true,
+        bracketSpacing: true,
+        trailingComma: "all",
+        tabWidth: 2,
+        useTabs: false,
+        printWidth: 80,
+        filepath: path,
+      });
+      await writeFile(path, formattedConfig, "utf-8");
+    }
+
     consola.success(`Created ${answers.configFile}`);
 
     const config = await parseCommerceAppConfig(cwd);
@@ -278,6 +292,10 @@ export async function runGeneration(
   try {
     await generateActionsCommand(appConfig);
     await generateManifestCommand(appConfig);
+
+    if (hasConfigDomain(appConfig, "businessConfig.schema")) {
+      await generateSchemaCommand(appConfig);
+    }
   } catch (error) {
     throw new Error(
       `Failed to run generation command. Please run manually: ${execCommand} aio-commerce-lib-app generate all`,
