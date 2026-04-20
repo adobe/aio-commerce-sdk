@@ -13,9 +13,9 @@
 import { join } from "node:path";
 
 import {
+  ADMIN_UI_SDK_ACTIONS_PATH,
   ADMIN_UI_SDK_PACKAGE_NAME,
   GENERATED_ACTIONS_PATH,
-  GENERATED_PATH,
   PACKAGE_NAME,
 } from "#commands/constants";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
@@ -217,9 +217,6 @@ export function buildBusinessConfigurationExtConfig() {
     },
   } satisfies ExtConfig;
 }
-
-/** The path to the generated admin UI SDK actions directory */
-export const ADMIN_UI_SDK_ACTIONS_PATH = `${GENERATED_PATH}/actions/${ADMIN_UI_SDK_PACKAGE_NAME}`;
 
 /**
  * Builds the ext.config.yaml configuration for the Admin UI SDK backend-ui extension.

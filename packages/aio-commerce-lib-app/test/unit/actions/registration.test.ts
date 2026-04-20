@@ -52,4 +52,14 @@ describe("registrationRuntimeAction", () => {
       body: { registration },
     });
   });
+
+  test("returns 405 for non-GET methods", async () => {
+    const handler = registrationRuntimeAction({ registration: {} });
+    const result = await handler({
+      ...mockParams,
+      __ow_method: "post",
+    } as unknown as RuntimeActionParams);
+
+    expect(result).toMatchObject({ error: { statusCode: 405 } });
+  });
 });

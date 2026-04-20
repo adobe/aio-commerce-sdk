@@ -10,8 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { writeFile } from "node:fs/promises";
 
+import { beforeEach, describe, expect, test, vi } from "vitest";
+
+import { BACKEND_UI_EXTENSION_POINT_ID } from "#commands/constants";
 import {
   CUSTOM_IMPORTS_PLACEHOLDER,
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
@@ -20,10 +23,12 @@ import {
 import {
   applyCustomScripts,
   generateCustomScriptsTemplate,
+  generateRegistrationActionFile,
 } from "#commands/generate/actions/main";
 import { templates } from "#test/fixtures/commands";
 import {
   configWithCustomInstallationSteps,
+  configWithFullAdminUiSdk,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
@@ -31,7 +36,13 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 vi.mock("@aio-commerce-sdk/scripting-utils/project", () => ({
   getProjectRootDirectory: () => "/fake/project/root",
+  makeOutputDirFor: vi.fn(() => Promise.resolve("/fake/output/dir")),
 }));
+
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs/promises")>();
+  return { ...actual, writeFile: vi.fn().mockResolvedValue(undefined) };
+});
 
 describe("applyCustomScripts", () => {
   describe("when no custom installation steps are configured", () => {
@@ -153,5 +164,48 @@ describe("generateCustomScriptsTemplate", () => {
 
       expect(result).toBeNull();
     });
+  });
+});
+
+describe("generateRegistrationActionFile", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("writes registration.js with inlined registration JSON", async () => {
+    const mockWriteFile = vi.mocked(writeFile);
+
+    await generateRegistrationActionFile(
+      configWithFullAdminUiSdk,
+      BACKEND_UI_EXTENSION_POINT_ID,
+    );
+
+    expect(mockWriteFile).toHaveBeenCalledOnce();
+
+    const [_path, content] = mockWriteFile.mock.calls[0];
+    const contentStr = content as string;
+
+    expect(contentStr).toContain("// This file has been auto-generated");
+    expect(contentStr).toContain(
+      'import { registrationRuntimeAction } from "@adobe/aio-commerce-lib-app/actions/registration"',
+    );
+    expect(contentStr).toContain("const registration =");
+    expect(contentStr).toContain(
+      "export const main = registrationRuntimeAction({ registration })",
+    );
+    expect(contentStr).toContain('"my-app::first"');
+    expect(contentStr).toContain('"selectionLimit": 1');
+  });
+
+  test("writes to a path ending in registration.js", async () => {
+    const mockWriteFile = vi.mocked(writeFile);
+
+    await generateRegistrationActionFile(
+      configWithFullAdminUiSdk,
+      BACKEND_UI_EXTENSION_POINT_ID,
+    );
+
+    const [filePath] = mockWriteFile.mock.calls[0];
+    expect(String(filePath)).toContain("registration.js");
   });
 });

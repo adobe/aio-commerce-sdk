@@ -221,6 +221,136 @@ export const configWithAdminUiSdk = {
   },
 } satisfies CommerceAppConfigOutputModel;
 
+/** Full Admin UI SDK config fixture covering all extension points. */
+export const configWithFullAdminUiSdk = {
+  metadata: { ...mockMetadata, id: "test-app-full-admin-ui-sdk" },
+  adminUiSdk: {
+    registration: {
+      menuItems: [
+        {
+          id: "my-app::first",
+          title: "App on App Builder",
+          parent: "my-app::apps",
+          sortOrder: 1,
+          isSection: false,
+          sandbox: "allow-modals",
+        },
+      ],
+      order: {
+        massActions: [
+          {
+            actionId: "my-app::order-mass-action",
+            label: "Order Mass Action",
+            title: "Page Title",
+            confirm: { title: "Confirm", message: "Are you sure?" },
+            path: "#/order-mass-action",
+            selectionLimit: 1,
+            displayIframe: true,
+            timeout: 10,
+            sandbox: "allow-modals",
+          },
+        ],
+        gridColumns: {
+          data: { meshId: "MESH_ID" },
+          properties: [
+            {
+              label: "Column Name",
+              columnId: "column_id",
+              type: "string" as const,
+              align: "left" as const,
+            },
+          ],
+        },
+        viewButtons: [
+          {
+            buttonId: "my-app::delete-order",
+            label: "Delete",
+            confirm: { message: "Are you sure?" },
+            path: "#/delete-order",
+            level: 0 as const,
+            sortOrder: 80,
+            displayIframe: true,
+            timeout: 10,
+            sandbox: "allow-modals",
+          },
+        ],
+        customFees: [
+          {
+            id: "fee-1",
+            label: "Test Fee",
+            value: 1.0,
+            orderMinimumAmount: 0,
+            applyFeeOnLastInvoice: false,
+            applyFeeOnLastCreditMemo: true,
+          },
+        ],
+      },
+      product: {
+        massActions: [
+          {
+            actionId: "my-app::product-mass-action",
+            label: "Product Mass Action",
+            path: "#/mass-action",
+            selectionLimit: 1,
+          },
+        ],
+        gridColumns: {
+          data: { meshId: "MESH_ID" },
+          properties: [
+            {
+              label: "Column",
+              columnId: "col_id",
+              type: "string" as const,
+              align: "left" as const,
+            },
+          ],
+        },
+      },
+      customer: {
+        massActions: [
+          {
+            actionId: "my-app::customer-mass-action",
+            label: "Customer Mass Action",
+            path: "#/customer-mass-action",
+            selectionLimit: 1,
+          },
+        ],
+        gridColumns: {
+          data: { meshId: "MESH_ID" },
+          properties: [
+            {
+              label: "Column",
+              columnId: "col_id",
+              type: "string" as const,
+              align: "left" as const,
+            },
+          ],
+        },
+      },
+      bannerNotification: {
+        massActions: {
+          order: [
+            {
+              actionId: "my-app::order-mass-action",
+              successMessage: "Done!",
+              errorMessage: "Failed!",
+            },
+          ],
+          product: [{ actionId: "my-app::product-mass-action" }],
+          customer: [{ actionId: "my-app::customer-mass-action" }],
+        },
+        orderViewButtons: [
+          {
+            buttonId: "my-app::delete-order",
+            successMessage: "Done!",
+            errorMessage: "Failed!",
+          },
+        ],
+      },
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 /** Config fixture with webhooks configured. */
 export const configWithWebhooks = {
   metadata: { ...mockMetadata, id: "test-app-webhooks" },

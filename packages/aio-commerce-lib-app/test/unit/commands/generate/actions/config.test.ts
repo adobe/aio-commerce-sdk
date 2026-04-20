@@ -12,8 +12,8 @@
 
 import { describe, expect, test } from "vitest";
 
+import { ADMIN_UI_SDK_ACTIONS_PATH } from "#commands/constants";
 import {
-  ADMIN_UI_SDK_ACTIONS_PATH,
   buildAdminUiSdkExtConfig,
   buildAppManagementExtConfig,
 } from "#commands/generate/actions/config";

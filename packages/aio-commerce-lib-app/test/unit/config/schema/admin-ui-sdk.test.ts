@@ -16,6 +16,7 @@ import { describe, expect, test } from "vitest";
 import { AdminUiSdkSchema, hasAdminUiSdk } from "#config/schema/admin-ui-sdk";
 import {
   configWithAdminUiSdk,
+  configWithFullAdminUiSdk,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
@@ -144,6 +145,14 @@ describe("AdminUiSdkSchema", () => {
       const result = v.safeParse(
         AdminUiSdkSchema,
         configWithAdminUiSdk.adminUiSdk,
+      );
+      expect(result.success).toBe(true);
+    });
+
+    test("full config from configWithFullAdminUiSdk fixture", () => {
+      const result = v.safeParse(
+        AdminUiSdkSchema,
+        configWithFullAdminUiSdk.adminUiSdk,
       );
       expect(result.success).toBe(true);
     });

@@ -25,6 +25,7 @@ import { consola } from "consola";
 import { formatTree } from "consola/utils";
 
 import {
+  ADMIN_UI_SDK_ACTIONS_PATH,
   BACKEND_UI_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -39,7 +40,6 @@ import {
 } from "#config/index";
 
 import {
-  ADMIN_UI_SDK_ACTIONS_PATH,
   buildAdminUiSdkExtConfig,
   buildAppManagementExtConfig,
   buildBusinessConfigurationExtConfig,
@@ -93,7 +93,10 @@ export async function run(appManifest: CommerceAppConfigOutputModel) {
   // Phase 3 — Admin UI SDK backend-ui extension point
   if (hasAdminUiSdk(appManifest)) {
     await updateExtConfig(appManifest, BACKEND_UI_EXTENSION_POINT_ID);
-    await generateRegistrationActionFile(appManifest);
+    await generateRegistrationActionFile(
+      appManifest,
+      BACKEND_UI_EXTENSION_POINT_ID,
+    );
   }
 }
 
@@ -285,13 +288,13 @@ export async function generateCustomScriptsTemplate(
 }
 
 /** Generate the registration action file with inlined Admin UI SDK registration config */
-async function generateRegistrationActionFile(
+export async function generateRegistrationActionFile(
   appManifest: CommerceAppConfigOutputModel,
+  extensionPointId: ValidExtensionPointId,
 ) {
   consola.start("Generating Admin UI SDK registration action...");
-  const extensionPointFolderPath = getExtensionPointFolderPath(
-    BACKEND_UI_EXTENSION_POINT_ID,
-  );
+  const extensionPointFolderPath =
+    getExtensionPointFolderPath(extensionPointId);
 
   const outputDir = await makeOutputDirFor(
     join(extensionPointFolderPath, ADMIN_UI_SDK_ACTIONS_PATH),
@@ -325,5 +328,7 @@ async function generateRegistrationActionFile(
 
   const actionPath = join(outputDir, "registration.js");
   await writeFile(actionPath, content, "utf-8");
-  consola.success("Generated registration.js");
+  consola.success(
+    `Generated registration action at ${relative(process.cwd(), actionPath)}`,
+  );
 }
