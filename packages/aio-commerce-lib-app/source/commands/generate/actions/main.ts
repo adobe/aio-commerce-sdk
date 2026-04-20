@@ -287,7 +287,11 @@ export async function generateCustomScriptsTemplate(
   return result.replace(CUSTOM_SCRIPTS_MAP_PLACEHOLDER, scriptMap);
 }
 
-/** Generate the registration action file with inlined Admin UI SDK registration config */
+/**
+ * Generates `registration.js` with the Admin UI SDK registration config inlined as a JSON literal.
+ * @param appManifest - The validated app config; must satisfy `hasAdminUiSdk`.
+ * @param extensionPointId - The extension point ID that owns the registration action.
+ */
 export async function generateRegistrationActionFile(
   appManifest: CommerceAppConfigOutputModel,
   extensionPointId: ValidExtensionPointId,
