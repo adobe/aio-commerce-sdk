@@ -288,8 +288,13 @@ export async function generateCustomScriptsTemplate(
   return result.replace(CUSTOM_SCRIPTS_MAP_PLACEHOLDER, scriptMap);
 }
 
+function toJsObjectLiteral(value: unknown): string {
+  const json = JSON.stringify(value, null, 2);
+  return json.replace(/^(\s*)"([A-Za-z_$][\w$]*)":/gm, "$1$2:");
+}
+
 /**
- * Generates `registration/index.js` with the Admin UI SDK registration config inlined as a JSON literal.
+ * Generates `registration/index.js` with the Admin UI SDK registration config inlined as a JS object literal.
  * @param appManifest - The validated app config; must satisfy `hasAdminUiSdk`.
  * @param extensionPointId - The extension point ID that owns the registration action.
  */
@@ -314,7 +319,7 @@ export async function generateRegistrationActionFile(
   const registration = appManifest.adminUiSdk?.registration ?? {};
   const content = template.replace(
     REGISTRATION_JSON_PLACEHOLDER,
-    `const registration = ${JSON.stringify(registration, null, 2)};`,
+    `const registration = ${toJsObjectLiteral(registration)};`,
   );
 
   const actionPath = join(outputDir, "index.js");
