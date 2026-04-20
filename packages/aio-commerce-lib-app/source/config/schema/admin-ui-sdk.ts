@@ -56,16 +56,32 @@ const GridColumnsSchema = v.object({
   ),
 });
 
-const MassActionSchema = v.object({
+const massActionBaseEntries = {
   actionId: nonEmptyStringValueSchema("mass action ID"),
   label: nonEmptyStringValueSchema("mass action label"),
   title: v.optional(nonEmptyStringValueSchema("mass action page title")),
   confirm: v.optional(MassActionConfirmSchema),
   path: nonEmptyStringValueSchema("mass action path"),
-  selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
   displayIframe: v.optional(booleanValueSchema("displayIframe")),
   timeout: v.optional(positiveNumberValueSchema("timeout")),
   sandbox: v.optional(nonEmptyStringValueSchema("sandbox")),
+};
+
+const OrderMassActionSchema = v.strictObject({
+  ...massActionBaseEntries,
+  orderSelectLimit: v.optional(positiveNumberValueSchema("orderSelectLimit")),
+});
+
+const ProductMassActionSchema = v.strictObject({
+  ...massActionBaseEntries,
+  productSelectLimit: v.optional(
+    positiveNumberValueSchema("productSelectLimit"),
+  ),
+});
+
+const CustomerMassActionSchema = v.strictObject({
+  ...massActionBaseEntries,
+  selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
 });
 
 const OrderViewButtonSchema = v.object({
@@ -96,19 +112,19 @@ const CustomFeeSchema = v.object({
 });
 
 const OrderExtensionPointsSchema = v.object({
-  massActions: v.optional(v.array(MassActionSchema)),
+  massActions: v.optional(v.array(OrderMassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
   viewButtons: v.optional(v.array(OrderViewButtonSchema)),
   customFees: v.optional(v.array(CustomFeeSchema)),
 });
 
 const ProductExtensionPointsSchema = v.object({
-  massActions: v.optional(v.array(MassActionSchema)),
+  massActions: v.optional(v.array(ProductMassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
 });
 
 const CustomerExtensionPointsSchema = v.object({
-  massActions: v.optional(v.array(MassActionSchema)),
+  massActions: v.optional(v.array(CustomerMassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
 });
 
@@ -169,8 +185,14 @@ export type AdminUiSdkRegistration = v.InferInput<
   typeof AdminUiSdkRegistrationSchema
 >;
 
-/** A mass action registration entry. */
-export type MassAction = v.InferInput<typeof MassActionSchema>;
+/** An order mass action registration entry (uses `orderSelectLimit`). */
+export type OrderMassAction = v.InferInput<typeof OrderMassActionSchema>;
+
+/** A product mass action registration entry (uses `productSelectLimit`). */
+export type ProductMassAction = v.InferInput<typeof ProductMassActionSchema>;
+
+/** A customer mass action registration entry (uses `selectionLimit`). */
+export type CustomerMassAction = v.InferInput<typeof CustomerMassActionSchema>;
 
 /** An order view button registration entry. */
 export type OrderViewButton = v.InferInput<typeof OrderViewButtonSchema>;

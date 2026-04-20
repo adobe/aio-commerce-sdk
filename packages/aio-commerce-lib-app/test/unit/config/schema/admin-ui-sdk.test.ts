@@ -61,10 +61,46 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    test("registration with order mass actions including selectionLimit", () => {
+    test("order mass action with orderSelectLimit", () => {
       const result = v.safeParse(AdminUiSdkSchema, {
         registration: {
           order: {
+            massActions: [
+              {
+                actionId: "app::action",
+                label: "Action",
+                path: "#/action",
+                orderSelectLimit: 5,
+              },
+            ],
+          },
+        },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("product mass action with productSelectLimit", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          product: {
+            massActions: [
+              {
+                actionId: "app::action",
+                label: "Action",
+                path: "#/action",
+                productSelectLimit: 5,
+              },
+            ],
+          },
+        },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("customer mass action with selectionLimit", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          customer: {
             massActions: [
               {
                 actionId: "app::action",
@@ -275,6 +311,60 @@ describe("AdminUiSdkSchema", () => {
         registration: {
           order: {
             customFees: [{ id: "app::fee", label: "Fee" }],
+          },
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("product mass action with selectionLimit — parse fails (use productSelectLimit instead)", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          product: {
+            massActions: [
+              {
+                actionId: "app::action",
+                label: "Action",
+                path: "#/action",
+                selectionLimit: 5,
+              },
+            ],
+          },
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("order mass action with selectionLimit — parse fails (use orderSelectLimit instead)", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          order: {
+            massActions: [
+              {
+                actionId: "app::action",
+                label: "Action",
+                path: "#/action",
+                selectionLimit: 5,
+              },
+            ],
+          },
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("customer mass action with productSelectLimit — parse fails (use selectionLimit instead)", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          customer: {
+            massActions: [
+              {
+                actionId: "app::action",
+                label: "Action",
+                path: "#/action",
+                productSelectLimit: 5,
+              },
+            ],
           },
         },
       });

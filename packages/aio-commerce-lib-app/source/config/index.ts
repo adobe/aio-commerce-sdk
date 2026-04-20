@@ -53,11 +53,13 @@ export type {
   AdminUiSdkConfiguration,
   AdminUiSdkRegistration,
   BannerNotification,
+  CustomerMassAction,
   CustomFee,
   GridColumns,
-  MassAction,
   MenuItem,
+  OrderMassAction,
   OrderViewButton,
+  ProductMassAction,
 } from "./schema/admin-ui-sdk";
 export type { CommerceAppConfig } from "./schema/app";
 export type {

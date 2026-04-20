@@ -213,6 +213,8 @@ describe("generateRegistrationActionFile", () => {
       "export const main = registrationRuntimeAction({ registration })",
     );
     expect(contentStr).toContain('"my-app::first"');
+    expect(contentStr).toContain('"orderSelectLimit": 1');
+    expect(contentStr).toContain('"productSelectLimit": 1');
     expect(contentStr).toContain('"selectionLimit": 1');
   });
 
