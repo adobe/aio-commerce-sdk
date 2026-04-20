@@ -325,29 +325,31 @@ describe("config-manager", () => {
 
   test("resolves scope by code only using byCode selector", async () => {
     await configRepository.saveConfig(
-      "base_region",
-      buildPayload("id-base-region", "base_region", "base", [
+      "global_region",
+      buildPayload("id-global-region", "global_region", "global", [
         {
           name: "currency",
           value: "AUD",
-          origin: { code: "base_region", level: "base" },
+          origin: { code: "global_region", level: "global" },
         },
       ]),
     );
 
-    const result = await getConfiguration(byCode("base_region"));
-    expect(result.scope.code).toBe("base_region");
+    const result = await getConfiguration(byCode("global_region"));
+    expect(result.scope.code).toBe("global_region");
+    expect(result.scope.level).toBe("global");
     expect(result.config.find((e) => e.name === "currency")?.value).toBe("AUD");
   });
 
   test("sets configuration using byCode selector", async () => {
     await setConfiguration(
       { config: [{ name: "currency", value: "NZD" }] },
-      byCode("base_region"),
+      byCode("global_region"),
     );
 
-    const result = await getConfiguration(byCode("base_region"));
-    expect(result.scope.code).toBe("base_region");
+    const result = await getConfiguration(byCode("global_region"));
+    expect(result.scope.code).toBe("global_region");
+    expect(result.scope.level).toBe("global");
     expect(result.config.find((e) => e.name === "currency")?.value).toBe("NZD");
   });
 

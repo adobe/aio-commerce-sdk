@@ -250,22 +250,23 @@ describe("getConfigurationByKey", () => {
 
   test("resolves scope using byCode selector", async () => {
     await configRepository.saveConfig(
-      "base_region",
-      buildPayload("id-base-region", "base_region", "base", [
+      "global_region",
+      buildPayload("id-global-region", "global_region", "global", [
         {
           name: "currency",
           value: "CHF",
-          origin: { code: "base_region", level: "base" },
+          origin: { code: "global_region", level: "global" },
         },
       ]),
     );
 
     const result = await getConfigurationByKey(
       "currency",
-      byCode("base_region"),
+      byCode("global_region"),
     );
 
-    expect(result.scope.code).toBe("base_region");
+    expect(result.scope.code).toBe("global_region");
+    expect(result.scope.level).toBe("global");
     expect(result.config?.value).toBe("CHF");
   });
 
