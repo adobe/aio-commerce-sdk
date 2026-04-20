@@ -43,7 +43,7 @@ describe("commands/encryption/setup", () => {
 
         const value = match?.[1];
         expect.assert(value, "Encryption key should be present in .env file");
-        expect(() => validateEncryptionKey(value)).not.toThrow;
+        expect(() => validateEncryptionKey(value)).not.toThrow();
       });
     });
 
