@@ -2,16 +2,21 @@
 
 ```ts
 function defineCustomInstallationStep<TResult>(
-  handler: CustomInstallationStepHandler<TResult>,
-): CustomInstallationStepHandler<TResult>;
+  handlerOrDefinition:
+    | CustomInstallationStepHandler<TResult>
+    | CustomInstallationStepDefinition<TResult>,
+):
+  | CustomInstallationStepHandler<TResult>
+  | CustomInstallationStepDefinition<TResult>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/custom-installation/define.ts:56](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/custom-installation/define.ts#L56)
+Defined in: [aio-commerce-lib-app/source/management/installation/custom-installation/define.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/custom-installation/define.ts#L74)
 
 Define a custom installation step with type-safe parameters.
 
 This helper provides type safety and IDE autocompletion for custom installation scripts.
-The handler function receives properly typed `config` and `context` parameters.
+Accepts either a plain function (install only) or an object with `install` and optional
+`uninstall` handlers.
 
 ## Type Parameters
 
@@ -21,32 +26,37 @@ The handler function receives properly typed `config` and `context` parameters.
 
 ## Parameters
 
-| Parameter | Type                                                                                             | Description                            |
-| --------- | ------------------------------------------------------------------------------------------------ | -------------------------------------- |
-| `handler` | [`CustomInstallationStepHandler`](../type-aliases/CustomInstallationStepHandler.md)\<`TResult`\> | The installation step handler function |
+| Parameter             | Type                                                                                                                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `handlerOrDefinition` | \| [`CustomInstallationStepHandler`](../type-aliases/CustomInstallationStepHandler.md)\<`TResult`\> \| [`CustomInstallationStepDefinition`](../type-aliases/CustomInstallationStepDefinition.md)\<`TResult`\> |
 
 ## Returns
 
-[`CustomInstallationStepHandler`](../type-aliases/CustomInstallationStepHandler.md)\<`TResult`\>
+\| [`CustomInstallationStepHandler`](../type-aliases/CustomInstallationStepHandler.md)\<`TResult`\>
+\| [`CustomInstallationStepDefinition`](../type-aliases/CustomInstallationStepDefinition.md)\<`TResult`\>
 
-The same handler function (for use as default export)
-
-## Example
+## Examples
 
 ```typescript
 import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
 
 export default defineCustomInstallationStep(async (config, context) => {
   const { logger, params } = context;
-
   logger.info(`Setting up ${config.metadata.displayName}...`);
+  return { status: "success" };
+});
+```
 
-  // Your installation logic here
-  // TypeScript will provide autocompletion for config and context
+```typescript
+import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
 
-  return {
-    status: "success",
-    message: "Setup completed",
-  };
+export default defineCustomInstallationStep({
+  install: async (config, context) => {
+    context.logger.info(`Registering ${config.metadata.displayName}...`);
+    return { status: "success" };
+  },
+  uninstall: async (config, context) => {
+    context.logger.info(`Removing ${config.metadata.displayName}...`);
+  },
 });
 ```

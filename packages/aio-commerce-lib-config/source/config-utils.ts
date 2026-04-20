@@ -198,7 +198,7 @@ export function deriveScopeFromArgs(args: unknown[], tree: ScopeTree) {
     // Try as ID first, then as code with default level
     try {
       return deriveScopeFromId(arg, tree);
-    } catch (_error) {
+    } catch {
       // If ID lookup fails, treat as code with default level
       return deriveScopeFromCodeWithOptionalLevel(arg, undefined, tree);
     }

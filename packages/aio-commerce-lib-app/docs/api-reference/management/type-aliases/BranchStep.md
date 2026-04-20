@@ -15,7 +15,7 @@ type BranchStep<TName, TConfig, TStepCtx, TChildren> = StepBase<
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:130](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L130)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:146](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L146)
 
 A branch step that contains children (no execution).
 
@@ -32,7 +32,7 @@ The children steps of this branch.
 ### context?
 
 ```ts
-optional context: StepContextFactory<TStepCtx>;
+optional context?: StepContextFactory<TStepCtx>;
 ```
 
 An optional factory function to setup shared context for the children steps.
@@ -43,10 +43,10 @@ An optional factory function to setup shared context for the children steps.
 type: "branch";
 ```
 
-### validate()?
+### validate?
 
 ```ts
-optional validate: (config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
+optional validate?: (config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
   | ValidationIssue[]
 | Promise<ValidationIssue[]>;
 ```

@@ -16,7 +16,7 @@ type SetConfigurationResponse = {
 };
 ```
 
-Defined in: [types/api.ts:73](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/types/api.ts#L73)
+Defined in: [types/api.ts:68](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/types/api.ts#L68)
 
 Response type for setting configuration values.
 
@@ -32,7 +32,7 @@ config: {
 [];
 ```
 
-Defined in: [types/api.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/types/api.ts#L85)
+Defined in: [types/api.ts:80](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/types/api.ts#L80)
 
 Array of updated configuration values.
 
@@ -56,7 +56,7 @@ value: BusinessConfigSchemaValue;
 message: string;
 ```
 
-Defined in: [types/api.ts:75](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/types/api.ts#L75)
+Defined in: [types/api.ts:70](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/types/api.ts#L70)
 
 Success message.
 
@@ -72,7 +72,7 @@ scope: {
 }
 ```
 
-Defined in: [types/api.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/types/api.ts#L79)
+Defined in: [types/api.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/types/api.ts#L74)
 
 Scope information including id, code, and level.
 
@@ -102,6 +102,6 @@ level: string;
 timestamp: string;
 ```
 
-Defined in: [types/api.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/types/api.ts#L77)
+Defined in: [types/api.ts:72](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/types/api.ts#L72)
 
 ISO timestamp of when the configuration was updated.

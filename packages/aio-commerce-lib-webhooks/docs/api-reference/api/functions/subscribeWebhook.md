@@ -41,7 +41,7 @@ function subscribeWebhook(
 ): Promise<void>;
 ```
 
-Defined in: [api/webhooks/endpoints.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-webhooks/source/api/webhooks/endpoints.ts#L59)
+Defined in: [api/webhooks/endpoints.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/api/webhooks/endpoints.ts#L59)
 
 Subscribes a webhook in the Commerce instance.
 

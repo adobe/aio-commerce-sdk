@@ -12,7 +12,7 @@ type CustomScopeOutput = {
 };
 ```
 
-Defined in: [types/api.ts:134](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/types/api.ts#L134)
+Defined in: [types/api.ts:129](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/types/api.ts#L129)
 
 Output type for a custom scope definition (includes assigned ID).
 
@@ -24,7 +24,7 @@ Output type for a custom scope definition (includes assigned ID).
 optional children: CustomScopeOutput[];
 ```
 
-Defined in: [types/api.ts:148](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/types/api.ts#L148)
+Defined in: [types/api.ts:143](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/types/api.ts#L143)
 
 Optional child scopes for hierarchical structures.
 
@@ -36,7 +36,7 @@ Optional child scopes for hierarchical structures.
 code: string;
 ```
 
-Defined in: [types/api.ts:138](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/types/api.ts#L138)
+Defined in: [types/api.ts:133](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/types/api.ts#L133)
 
 Unique code identifier for the scope.
 
@@ -48,7 +48,7 @@ Unique code identifier for the scope.
 id: string;
 ```
 
-Defined in: [types/api.ts:136](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/types/api.ts#L136)
+Defined in: [types/api.ts:131](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/types/api.ts#L131)
 
 Assigned scope ID.
 
@@ -60,7 +60,7 @@ Assigned scope ID.
 is_editable: boolean;
 ```
 
-Defined in: [types/api.ts:144](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/types/api.ts#L144)
+Defined in: [types/api.ts:139](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/types/api.ts#L139)
 
 Whether the scope configuration can be edited.
 
@@ -72,7 +72,7 @@ Whether the scope configuration can be edited.
 is_final: boolean;
 ```
 
-Defined in: [types/api.ts:146](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/types/api.ts#L146)
+Defined in: [types/api.ts:141](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/types/api.ts#L141)
 
 Whether this is a final (leaf) scope that cannot have children.
 
@@ -84,7 +84,7 @@ Whether this is a final (leaf) scope that cannot have children.
 label: string;
 ```
 
-Defined in: [types/api.ts:140](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/types/api.ts#L140)
+Defined in: [types/api.ts:135](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/types/api.ts#L135)
 
 Human-readable label for the scope.
 
@@ -96,6 +96,6 @@ Human-readable label for the scope.
 level: string;
 ```
 
-Defined in: [types/api.ts:142](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-config/source/types/api.ts#L142)
+Defined in: [types/api.ts:137](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/types/api.ts#L137)
 
 Scope level.

@@ -11,7 +11,7 @@ function getEventMetadataForEventAndProvider(
 ): Promise<IoEventMetadataHalModel>;
 ```
 
-Defined in: [io-events/api/event-metadata/endpoints.ts:71](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/endpoints.ts#L71)
+Defined in: [io-events/api/event-metadata/endpoints.ts:73](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/endpoints.ts#L73)
 
 Gets event metadata for a specific event code and provider.
 

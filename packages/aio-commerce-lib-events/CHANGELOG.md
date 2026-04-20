@@ -1,5 +1,15 @@
 # @adobe/aio-commerce-lib-events
 
+## 1.1.0
+
+### Minor Changes
+
+- [#369](https://github.com/adobe/aio-commerce-sdk/pull/369) [`d8b0fa9`](https://github.com/adobe/aio-commerce-sdk/commit/d8b0fa9e3370b7abd0fb71b42d0078c375f63fb3) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Add delete operations for both the I/O Events and Commerce Eventing APIs.
+  - Commerce API: `deleteEventProvider` deletes an event provider by ID from a Commerce instance.
+  - Commerce API: `deleteEventSubscription` unsubscribes from an event in a Commerce instance.
+  - IO Events API: `deleteEventProvider` deletes an event provider from Adobe I/O Events.
+  - IO Events API: `deleteEventMetadataForProvider` deletes event metadata for a specific event code and provider.
+
 ## 1.0.1
 
 ### Patch Changes
