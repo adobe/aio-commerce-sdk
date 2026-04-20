@@ -10,9 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
-import { unwrapHttpError } from "#management/installation/utils/http-error";
+import {
+  throwHttpError,
+  unwrapHttpError,
+} from "#management/installation/utils/http-error";
 import { makeHttpError } from "#test/fixtures/http-error";
 
 describe("unwrapHttpError", () => {
@@ -117,5 +120,32 @@ describe("unwrapHttpError", () => {
     expect(await unwrapHttpError(error)).toBe(
       "HTTP 503 Service Unavailable — Service is down",
     );
+  });
+});
+
+describe("throwHttpError", () => {
+  test("logs and throws an enriched error message", async () => {
+    const logger = { error: vi.fn() };
+    const error = makeHttpError(
+      400,
+      "Bad Request",
+      JSON.stringify({ message: "Boom" }),
+    );
+
+    await expect(
+      throwHttpError(logger, error, "Failed to do the thing"),
+    ).rejects.toThrow("Failed to do the thing: HTTP 400 Bad Request — Boom");
+    expect(logger.error).toHaveBeenCalledOnce();
+    expect(logger.error).toHaveBeenCalledWith(
+      "Failed to do the thing: HTTP 400 Bad Request — Boom",
+    );
+  });
+
+  test("enriches plain Error via stringifyError fallback", async () => {
+    const logger = { error: vi.fn() };
+
+    await expect(
+      throwHttpError(logger, new Error("plain"), "Failed to do the thing"),
+    ).rejects.toThrow("Failed to do the thing: plain");
   });
 });

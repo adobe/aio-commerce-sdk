@@ -12,7 +12,10 @@
 
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 
-import { unwrapHttpError } from "#management/installation/utils/http-error";
+import {
+  throwHttpError,
+  unwrapHttpError,
+} from "#management/installation/utils/http-error";
 
 import {
   findExistingProvider,
@@ -90,12 +93,13 @@ async function createIoEventProvider(params: CreateIoProviderParams) {
       logger.info(`Provider "${provider.label}" created with ID '${res.id}'`);
       return res;
     })
-    .catch(async (error) => {
-      const msg = await unwrapHttpError(error);
-      const enriched = `Failed to create I/O Events provider '${provider.label}': ${msg}`;
-      logger.error(enriched);
-      throw new Error(enriched);
-    });
+    .catch((error) =>
+      throwHttpError(
+        logger,
+        error,
+        `Failed to create I/O Events provider '${provider.label}'`,
+      ),
+    );
 }
 
 /**
@@ -169,12 +173,13 @@ async function createIoEventProviderEventMetadata(
 
       return res;
     })
-    .catch(async (error) => {
-      const msg = await unwrapHttpError(error);
-      const enriched = `Failed to register I/O Events metadata for '${eventCode}': ${msg}`;
-      logger.error(enriched);
-      throw new Error(enriched);
-    });
+    .catch((error) =>
+      throwHttpError(
+        logger,
+        error,
+        `Failed to register I/O Events metadata for '${eventCode}'`,
+      ),
+    );
 }
 
 /**
@@ -258,12 +263,13 @@ async function createIoEventRegistration(params: CreateRegistrationParams) {
 
       return res;
     })
-    .catch(async (error) => {
-      const msg = await unwrapHttpError(error);
-      const enriched = `Failed to create I/O Events registration '${name}': ${msg}`;
-      logger.error(enriched);
-      throw new Error(enriched);
-    });
+    .catch((error) =>
+      throwHttpError(
+        logger,
+        error,
+        `Failed to create I/O Events registration '${name}'`,
+      ),
+    );
 }
 
 /**
@@ -340,12 +346,13 @@ export async function configureCommerceEventing(
         "Something went wrong while configuring Commerce Eventing Module. Response was not successful but no error was thrown.",
       );
     })
-    .catch(async (err) => {
-      const msg = await unwrapHttpError(err);
-      const enriched = `Failed to configure Adobe Commerce eventing: ${msg}`;
-      logger.error(enriched);
-      throw new Error(enriched);
-    });
+    .catch((err) =>
+      throwHttpError(
+        logger,
+        err,
+        "Failed to configure Adobe Commerce eventing",
+      ),
+    );
 }
 
 /**
@@ -374,12 +381,13 @@ export async function createCommerceProvider(
 
       return res;
     })
-    .catch(async (err) => {
-      const msg = await unwrapHttpError(err);
-      const enriched = `Failed to create Adobe Commerce event provider '${provider.label}': ${msg}`;
-      logger.error(enriched);
-      throw new Error(enriched);
-    });
+    .catch((err) =>
+      throwHttpError(
+        logger,
+        err,
+        `Failed to create Adobe Commerce event provider '${provider.label}'`,
+      ),
+    );
 }
 
 /**
@@ -449,12 +457,13 @@ async function createCommerceEventSubscription(
 
       return eventSpec;
     })
-    .catch(async (err) => {
-      const msg = await unwrapHttpError(err);
-      const enriched = `Failed to create Adobe Commerce event subscription for '${event.config.name}': ${msg}`;
-      logger.error(enriched);
-      throw new Error(enriched);
-    });
+    .catch((err) =>
+      throwHttpError(
+        logger,
+        err,
+        `Failed to create Adobe Commerce event subscription for '${event.config.name}'`,
+      ),
+    );
 }
 
 /**

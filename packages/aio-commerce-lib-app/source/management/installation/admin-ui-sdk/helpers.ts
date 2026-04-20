@@ -10,7 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { unwrapHttpError } from "#management/installation/utils/http-error";
+import {
+  throwHttpError,
+  unwrapHttpError,
+} from "#management/installation/utils/http-error";
 
 import type { AdminUiSdkExecutionContext } from "./utils";
 
@@ -30,27 +33,25 @@ export async function registerExtension(context: AdminUiSdkExecutionContext) {
 
   logger.info(`Registering Admin UI SDK extension: ${appData.projectName}`);
 
-  let response: RegisterExtensionResponse;
-
-  try {
-    response = await commerceClient
-      .post("adminuisdk/extension", {
-        json: {
-          extension: {
-            extensionName: process.env.__OW_NAMESPACE,
-            extensionTitle: appData.projectTitle,
-            extensionUrl: `https://${process.env.__OW_NAMESPACE}.adobeio-static.net/index.html`,
-            extensionWorkspace: appData.workspaceName,
-          },
+  const response = await commerceClient
+    .post("adminuisdk/extension", {
+      json: {
+        extension: {
+          extensionName: process.env.__OW_NAMESPACE,
+          extensionTitle: appData.projectTitle,
+          extensionUrl: `https://${process.env.__OW_NAMESPACE}.adobeio-static.net/index.html`,
+          extensionWorkspace: appData.workspaceName,
         },
-      })
-      .json<RegisterExtensionResponse>();
-  } catch (error: unknown) {
-    const msg = await unwrapHttpError(error);
-    const enriched = `Failed to register Admin UI SDK extension: ${msg}`;
-    logger.error(enriched);
-    throw new Error(enriched);
-  }
+      },
+    })
+    .json<RegisterExtensionResponse>()
+    .catch((error: unknown) =>
+      throwHttpError(
+        logger,
+        error,
+        "Failed to register Admin UI SDK extension",
+      ),
+    );
 
   logger.info(
     `Admin UI SDK extension registered successfully: ${response.extensionId}`,
