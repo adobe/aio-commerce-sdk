@@ -16,40 +16,12 @@ import {
   registerExtension,
   uninstallExtension,
 } from "#management/installation/admin-ui-sdk/helpers";
+import { createMockAdminUiSdkContext } from "#test/fixtures/admin-ui-sdk";
 import { makeHttpError } from "#test/fixtures/http-error";
-import {
-  createMockInstallationContext,
-  createMockLogger,
-} from "#test/fixtures/installation";
-
-import type { AdminUiSdkExecutionContext } from "#management/installation/admin-ui-sdk/utils";
+import { createMockLogger } from "#test/fixtures/installation";
 
 const REGISTER_EXTENSION_COMBINED_PATTERN =
   /Failed to register Admin UI SDK extension.*Insufficient permissions/;
-
-function createMockAdminUiSdkContext(overrides?: {
-  postImpl?: () => Promise<unknown>;
-  deleteImpl?: () => Promise<unknown>;
-}): AdminUiSdkExecutionContext {
-  const mockInstallation = createMockInstallationContext();
-  const jsonFn = vi
-    .fn()
-    .mockImplementation(
-      overrides?.postImpl ??
-        (() => Promise.resolve({ extensionId: "ext-123" })),
-    );
-  const postFn = vi.fn().mockReturnValue({ json: jsonFn });
-
-  return {
-    ...mockInstallation,
-    commerceClient: {
-      post: postFn,
-      delete: vi
-        .fn()
-        .mockImplementation(overrides?.deleteImpl ?? (() => Promise.resolve())),
-    } as unknown as AdminUiSdkExecutionContext["commerceClient"],
-  };
-}
 
 describe("registerExtension", () => {
   beforeEach(() => {
