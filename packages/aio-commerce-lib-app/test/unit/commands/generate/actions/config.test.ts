@@ -57,6 +57,20 @@ describe("buildAdminUiSdkExtConfig", () => {
     expect(action?.web).toBe("yes");
     expect(action?.runtime).toBe("nodejs:22");
   });
+
+  test("declares operations.view entry for the admin UI iframe", () => {
+    const config = buildAdminUiSdkExtConfig();
+
+    expect(config.operations?.view).toEqual([
+      { type: "web", impl: "index.html" },
+    ]);
+  });
+
+  test("declares top-level web source directory", () => {
+    const config = buildAdminUiSdkExtConfig();
+
+    expect(config.web).toBe("web-src");
+  });
 });
 
 describe("buildAppManagementExtConfig — adminUiSdk", () => {

@@ -236,7 +236,10 @@ export function buildAdminUiSdkExtConfig() {
           impl: `${ADMIN_UI_SDK_PACKAGE_NAME}/registration`,
         },
       ],
+      view: [{ type: "web", impl: "index.html" }],
     },
+
+    web: "web-src",
 
     runtimeManifest: {
       packages: {
