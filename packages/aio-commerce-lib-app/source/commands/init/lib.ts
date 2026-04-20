@@ -247,7 +247,8 @@ export function runInstall(
   const packagesToInstall = dependencies.join(" ");
   const installCommandMap = {
     pnpm: `pnpm add ${packagesToInstall}`,
-    yarn: `yarn add ${packagesToInstall}`,
+    "yarn-classic": `yarn add ${packagesToInstall}`,
+    "yarn-berry": `yarn add ${packagesToInstall}`,
     bun: `bun add ${packagesToInstall}`,
     npm: `npm install ${packagesToInstall}`,
   } as const;
