@@ -1,8 +1,25 @@
+import { join } from "node:path";
 import { inspect } from "node:util";
 
+import {
+  withChdir,
+  withTempFiles,
+} from "@aio-commerce-sdk/scripting-utils/filesystem";
+
+import {
+  CONFIGURATION_EXTENSION_POINT_ID,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
+} from "#commands/constants";
+import { runGeneration } from "#commands/init/lib";
+import { getActionPath, getManifestPath, getSchemaPath } from "#commands/utils";
+
+import { makeTemplateFiles } from "./commands";
 import { configWithBusinessConfig, minimalValidConfig } from "./config";
 
-import type { CommerceAppConfig } from "#config/schema/app";
+import type {
+  CommerceAppConfig,
+  CommerceAppConfigOutputModel,
+} from "#config/schema/app";
 
 /** The minimum set of files needed for our commands to work (no config file). */
 export const EMPTY_PROJECT = makeProjectFiles(null);
@@ -67,4 +84,47 @@ export function envObject(env: Record<string, string>): string {
   return Object.entries(env)
     .map(([key, value]) => `${key}=${value}`)
     .join("\n");
+}
+
+/** Absolute path to a generated extensibility action file inside a temp project. */
+export function extensibilityActionFile(tempDir: string, actionName: string) {
+  return join(
+    tempDir,
+    getActionPath(EXTENSIBILITY_EXTENSION_POINT_ID, actionName),
+  );
+}
+
+/** Absolute path to a generated business configuration action file inside a temp project. */
+export function businessConfigActionFile(tempDir: string, actionName: string) {
+  return join(
+    tempDir,
+    getActionPath(CONFIGURATION_EXTENSION_POINT_ID, actionName),
+  );
+}
+
+/** Absolute path to the generated app manifest file inside a temp project. */
+export function generatedManifestFile(tempDir: string) {
+  return join(tempDir, getManifestPath());
+}
+
+/** Absolute path to the generated configuration schema file inside a temp project. */
+export function generatedSchemaFile(tempDir: string) {
+  return join(tempDir, getSchemaPath());
+}
+
+/**
+ * Scaffolds an EMPTY_PROJECT with action templates, chdir's into it, runs
+ * `runGeneration`, then yields the tempDir path to the caller for assertions.
+ */
+export async function withGeneratedProject(
+  config: CommerceAppConfigOutputModel,
+  assertions: (tempDir: string) => void | Promise<void>,
+) {
+  await withTempFiles(
+    { ...EMPTY_PROJECT, ...makeTemplateFiles() },
+    async (tempDir) => {
+      await withChdir(tempDir, () => runGeneration(config, "npx"));
+      await assertions(tempDir);
+    },
+  );
 }

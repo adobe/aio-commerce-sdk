@@ -10,10 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
+import {
+  withChdir,
+  withTempFiles,
+} from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -21,17 +25,32 @@ import {
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   INSTALL_YAML_FILE,
+  PACKAGE_JSON_FILE,
 } from "#commands/constants";
 import {
   ensureAppConfig,
   ensureCommerceAppConfig,
   ensureInstallYaml,
+  ensurePackageJson,
 } from "#commands/init/lib";
-import { minimalValidConfig } from "#test/fixtures/config";
 import {
+  configWithAdminUiSdk,
+  configWithBusinessConfig,
+  configWithCommerceEventing,
+  configWithCustomInstallationSteps,
+  configWithExternalEventing,
+  configWithWebhooks,
+  minimalValidConfig,
+} from "#test/fixtures/config";
+import {
+  businessConfigActionFile,
   EMPTY_PROJECT,
+  extensibilityActionFile,
+  generatedManifestFile,
+  generatedSchemaFile,
   INVALID_PROJECT,
   makeProjectFiles,
+  withGeneratedProject,
 } from "#test/fixtures/project";
 
 import type { InitOptions } from "#commands/init/utils";
@@ -240,6 +259,132 @@ describe("commands/init/lib", () => {
           expect(matches).toHaveLength(1);
         },
       );
+    });
+  });
+
+  describe("ensurePackageJson", () => {
+    test("creates package.json with postinstall script when missing", async () => {
+      await withTempFiles({}, async (tempDir) => {
+        await ensurePackageJson(tempDir);
+
+        const written = JSON.parse(
+          await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
+        );
+        expect(written.scripts.postinstall).toBe(
+          "npx aio-commerce-lib-app hooks postinstall",
+        );
+      });
+    });
+
+    test("adds postinstall script when package.json has no postinstall", async () => {
+      await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
+        await withChdir(tempDir, () => ensurePackageJson(tempDir));
+
+        const written = JSON.parse(
+          await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
+        );
+        expect(written.scripts.postinstall).toBe(
+          "npx aio-commerce-lib-app hooks postinstall",
+        );
+      });
+    });
+
+    test("leaves package.json untouched when postinstall is already configured", async () => {
+      const original = JSON.stringify({
+        type: "module",
+        scripts: { postinstall: "npx aio-commerce-lib-app hooks postinstall" },
+      });
+
+      await withTempFiles(
+        { [PACKAGE_JSON_FILE]: original },
+        async (tempDir) => {
+          await withChdir(tempDir, () => ensurePackageJson(tempDir));
+
+          const after = await readFile(
+            join(tempDir, PACKAGE_JSON_FILE),
+            "utf-8",
+          );
+          expect(after).toBe(original);
+        },
+      );
+    });
+
+    test("appends to an existing different postinstall script", async () => {
+      const packageJson = JSON.stringify({
+        type: "module",
+        scripts: { postinstall: "echo hello" },
+      });
+
+      await withTempFiles(
+        { [PACKAGE_JSON_FILE]: packageJson },
+        async (tempDir) => {
+          await withChdir(tempDir, () => ensurePackageJson(tempDir));
+
+          const written = JSON.parse(
+            await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
+          );
+          expect(written.scripts.postinstall).toBe(
+            "echo hello && npx aio-commerce-lib-app hooks postinstall",
+          );
+        },
+      );
+    });
+  });
+
+  describe("runGeneration", () => {
+    test("always generates the app-config action and manifest", async () => {
+      await withGeneratedProject(minimalValidConfig, (tempDir) => {
+        expect(existsSync(extensibilityActionFile(tempDir, "app-config"))).toBe(
+          true,
+        );
+        expect(existsSync(generatedManifestFile(tempDir))).toBe(true);
+      });
+    });
+
+    test("does not generate installation or business config actions for a minimal config", async () => {
+      await withGeneratedProject(minimalValidConfig, (tempDir) => {
+        expect(
+          existsSync(extensibilityActionFile(tempDir, "installation")),
+        ).toBe(false);
+        expect(existsSync(businessConfigActionFile(tempDir, "config"))).toBe(
+          false,
+        );
+        expect(
+          existsSync(businessConfigActionFile(tempDir, "scope-tree")),
+        ).toBe(false);
+        expect(existsSync(generatedSchemaFile(tempDir))).toBe(false);
+      });
+    });
+
+    test.each([
+      {
+        domain: "installation.customInstallationSteps",
+        config: configWithCustomInstallationSteps,
+      },
+      { domain: "eventing.commerce", config: configWithCommerceEventing },
+      { domain: "eventing.external", config: configWithExternalEventing },
+      { domain: "webhooks", config: configWithWebhooks },
+      { domain: "adminUiSdk", config: configWithAdminUiSdk },
+    ])("generates the installation action when $domain is configured", async ({
+      config,
+    }) => {
+      await withGeneratedProject(config, (tempDir) => {
+        expect(
+          existsSync(extensibilityActionFile(tempDir, "installation")),
+        ).toBe(true);
+      });
+    });
+
+    test("generates business configuration actions and schema when businessConfig.schema is configured", async () => {
+      await withGeneratedProject(configWithBusinessConfig, (tempDir) => {
+        expect(existsSync(businessConfigActionFile(tempDir, "config"))).toBe(
+          true,
+        );
+        expect(
+          existsSync(businessConfigActionFile(tempDir, "scope-tree")),
+        ).toBe(true);
+        expect(existsSync(generatedSchemaFile(tempDir))).toBe(true);
+      });
     });
   });
 });
