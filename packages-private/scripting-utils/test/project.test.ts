@@ -257,15 +257,48 @@ describe("detectPackageManager", () => {
     );
   });
 
-  test("should detect yarn from yarn.lock", async () => {
+  test("should detect yarn-classic from yarn.lock + packageManager: yarn@1.x", async () => {
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test" }),
+        "package.json": JSON.stringify({
+          name: "test",
+          packageManager: "yarn@1.22.22",
+        }),
         "yarn.lock": "",
       },
       async (tempDir) => {
         const result = await detectPackageManager(tempDir);
-        expect(result).toBe("yarn");
+        expect(result).toBe("yarn-classic");
+      },
+    );
+  });
+
+  test("should detect yarn-berry from yarn.lock + packageManager: yarn@4.x", async () => {
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({
+          name: "test",
+          packageManager: "yarn@4.5.1",
+        }),
+        "yarn.lock": "",
+      },
+      async (tempDir) => {
+        const result = await detectPackageManager(tempDir);
+        expect(result).toBe("yarn-berry");
+      },
+    );
+  });
+
+  test("should detect yarn-berry from yarn.lock + .yarnrc.yml", async () => {
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test" }),
+        "yarn.lock": "",
+        ".yarnrc.yml": "",
+      },
+      async (tempDir) => {
+        const result = await detectPackageManager(tempDir);
+        expect(result).toBe("yarn-berry");
       },
     );
   });
@@ -301,12 +334,16 @@ describe("getExecCommand", () => {
     expect(getExecCommand("npm")).toBe("npx");
   });
 
-  test("should return pnpx for pnpm", () => {
-    expect(getExecCommand("pnpm")).toBe("pnpx");
+  test("should return pnpm exec for pnpm", () => {
+    expect(getExecCommand("pnpm")).toBe("pnpm exec");
   });
 
-  test("should return yarn dlx for yarn", () => {
-    expect(getExecCommand("yarn")).toBe("yarn dlx");
+  test("should return yarn for yarn-classic", () => {
+    expect(getExecCommand("yarn-classic")).toBe("yarn");
+  });
+
+  test("should return yarn exec for yarn-berry", () => {
+    expect(getExecCommand("yarn-berry")).toBe("yarn exec");
   });
 
   test("should return bunx for bun", () => {
