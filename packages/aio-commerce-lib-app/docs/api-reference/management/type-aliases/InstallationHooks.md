@@ -11,7 +11,7 @@ type InstallationHooks = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L52)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L52)
 
 Lifecycle hooks for installation execution.
 
@@ -20,57 +20,57 @@ Lifecycle hooks for installation execution.
 ### onInstallationFailure?
 
 ```ts
-optional onInstallationFailure: InstallationHook;
+optional onInstallationFailure?: InstallationHook;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L55)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L55)
 
 ---
 
 ### onInstallationStart?
 
 ```ts
-optional onInstallationStart: InstallationHook;
+optional onInstallationStart?: InstallationHook;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L53)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L53)
 
 ---
 
 ### onInstallationSuccess?
 
 ```ts
-optional onInstallationSuccess: InstallationHook;
+optional onInstallationSuccess?: InstallationHook;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L54)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L54)
 
 ---
 
 ### onStepFailure?
 
 ```ts
-optional onStepFailure: HookFunction<StepFailedEvent>;
+optional onStepFailure?: HookFunction<StepFailedEvent>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L59)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L59)
 
 ---
 
 ### onStepStart?
 
 ```ts
-optional onStepStart: HookFunction<StepStartedEvent>;
+optional onStepStart?: HookFunction<StepStartedEvent>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L57)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L57)
 
 ---
 
 ### onStepSuccess?
 
 ```ts
-optional onStepSuccess: HookFunction<StepSucceededEvent>;
+optional onStepSuccess?: HookFunction<StepSucceededEvent>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L58)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L58)

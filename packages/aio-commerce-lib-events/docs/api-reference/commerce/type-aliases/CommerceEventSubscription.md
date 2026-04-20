@@ -13,7 +13,7 @@ type CommerceEventSubscription = {
 };
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L27)
+Defined in: [commerce/api/event-subscriptions/types.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L27)
 
 Defines the structure of a Commerce event subscription.
 
@@ -25,7 +25,7 @@ Defines the structure of a Commerce event subscription.
 destination: "default" | string;
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L35)
+Defined in: [commerce/api/event-subscriptions/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L35)
 
 ---
 
@@ -35,7 +35,7 @@ Defined in: [commerce/api/event-subscriptions/types.ts:35](https://github.com/ad
 fields: CommerceEventSubscriptionField[];
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L32)
+Defined in: [commerce/api/event-subscriptions/types.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L32)
 
 ---
 
@@ -45,7 +45,7 @@ Defined in: [commerce/api/event-subscriptions/types.ts:32](https://github.com/ad
 hipaa_audit_required: boolean;
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L37)
+Defined in: [commerce/api/event-subscriptions/types.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L37)
 
 ---
 
@@ -55,7 +55,7 @@ Defined in: [commerce/api/event-subscriptions/types.ts:37](https://github.com/ad
 name: string;
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L28)
+Defined in: [commerce/api/event-subscriptions/types.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L28)
 
 ---
 
@@ -65,7 +65,7 @@ Defined in: [commerce/api/event-subscriptions/types.ts:28](https://github.com/ad
 parent: string;
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L29)
+Defined in: [commerce/api/event-subscriptions/types.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L29)
 
 ---
 
@@ -75,7 +75,7 @@ Defined in: [commerce/api/event-subscriptions/types.ts:29](https://github.com/ad
 priority: boolean;
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L36)
+Defined in: [commerce/api/event-subscriptions/types.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L36)
 
 ---
 
@@ -85,7 +85,7 @@ Defined in: [commerce/api/event-subscriptions/types.ts:36](https://github.com/ad
 provider_id: "default" | string;
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L30)
+Defined in: [commerce/api/event-subscriptions/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L30)
 
 ---
 
@@ -95,4 +95,4 @@ Defined in: [commerce/api/event-subscriptions/types.ts:30](https://github.com/ad
 rules: CommerceEventSubscriptionRule[];
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L33)
+Defined in: [commerce/api/event-subscriptions/types.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L33)

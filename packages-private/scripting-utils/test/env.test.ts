@@ -43,7 +43,6 @@ describe("syncImsCredentials", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // biome-ignore lint/performance/noDelete: Just for testing purposes.
     delete process.env.INIT_CWD;
   });
 

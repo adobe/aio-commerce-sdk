@@ -4,7 +4,7 @@
 function replaceEnvVar(filePath: string, key: string, value: string): void;
 ```
 
-Defined in: [env.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages-private/scripting-utils/source/env.ts#L53)
+Defined in: [env.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages-private/scripting-utils/source/env.ts#L53)
 
 Replaces or creates an environment variable in a .env file
 

@@ -49,13 +49,11 @@ export const successOperation = (): SuccessOperation => ({ op: "success" });
 export const exceptionOperation = (
   message: string,
   exceptionClass?: string,
-): ExceptionOperation => {
-  return {
-    op: "exception",
-    ...(message && { message }),
-    ...(exceptionClass && { class: exceptionClass }),
-  };
-};
+): ExceptionOperation => ({
+  op: "exception",
+  ...(message && { message }),
+  ...(exceptionClass && { class: exceptionClass }),
+});
 
 /**
  * Creates an add operation response

@@ -1,4 +1,4 @@
-# `CustomInstallationStepHandler()\<TResult\>`
+# `CustomInstallationStepHandler\<TResult\>`
 
 ```ts
 type CustomInstallationStepHandler<TResult> = (
@@ -7,7 +7,7 @@ type CustomInstallationStepHandler<TResult> = (
 ) => TResult | Promise<TResult>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/custom-installation/define.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/custom-installation/define.ts#L23)
+Defined in: [aio-commerce-lib-app/source/management/installation/custom-installation/define.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/custom-installation/define.ts#L23)
 
 Handler function type for custom installation steps.
 
