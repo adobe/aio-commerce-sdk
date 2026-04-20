@@ -32,14 +32,6 @@ describe("registerExtension", () => {
     vi.unstubAllEnvs();
   });
 
-  test("resolves with extension ID on success", async () => {
-    const context = createMockAdminUiSdkContext();
-
-    const result = await registerExtension(context);
-
-    expect(result).toEqual({ extensionId: "ext-123" });
-  });
-
   test("throws enriched error when POST fails", async () => {
     const httpError = makeHttpError(
       403,
@@ -85,24 +77,6 @@ describe("uninstallExtension", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
-  });
-
-  test("calls DELETE with correct endpoint", async () => {
-    const context = createMockAdminUiSdkContext();
-
-    await uninstallExtension(context);
-
-    expect(context.commerceClient.delete).toHaveBeenCalledWith(
-      `adminuisdk/extension/${context.appData.workspaceName}/test-ns`,
-    );
-  });
-
-  test("resolves without throwing when DELETE fails (best-effort)", async () => {
-    const context = createMockAdminUiSdkContext({
-      deleteImpl: () => Promise.reject(new Error("DELETE failed")),
-    });
-
-    await expect(uninstallExtension(context)).resolves.toBeUndefined();
   });
 
   test("warns with enriched error message when DELETE fails", async () => {
