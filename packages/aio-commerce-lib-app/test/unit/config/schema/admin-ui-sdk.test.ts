@@ -61,7 +61,7 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    test("order mass action with orderSelectLimit", () => {
+    test("order mass action with selectionLimit", () => {
       const result = v.safeParse(AdminUiSdkSchema, {
         registration: {
           order: {
@@ -70,7 +70,7 @@ describe("AdminUiSdkSchema", () => {
                 actionId: "app::action",
                 label: "Action",
                 path: "#/action",
-                orderSelectLimit: 5,
+                selectionLimit: 5,
               },
             ],
           },
@@ -97,7 +97,7 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    test("customer mass action with selectionLimit", () => {
+    test("customer mass action with customerSelectLimit", () => {
       const result = v.safeParse(AdminUiSdkSchema, {
         registration: {
           customer: {
@@ -106,7 +106,7 @@ describe("AdminUiSdkSchema", () => {
                 actionId: "app::action",
                 label: "Action",
                 path: "#/action",
-                selectionLimit: 5,
+                customerSelectLimit: 5,
               },
             ],
           },
@@ -317,7 +317,7 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(false);
     });
 
-    test("product mass action with selectionLimit — parse fails (use productSelectLimit instead)", () => {
+    test("product mass action with selectionLimit — parse fails (use productSelectLimit)", () => {
       const result = v.safeParse(AdminUiSdkSchema, {
         registration: {
           product: {
@@ -335,10 +335,10 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(false);
     });
 
-    test("order mass action with selectionLimit — parse fails (use orderSelectLimit instead)", () => {
+    test("customer mass action with selectionLimit — parse fails (use customerSelectLimit)", () => {
       const result = v.safeParse(AdminUiSdkSchema, {
         registration: {
-          order: {
+          customer: {
             massActions: [
               {
                 actionId: "app::action",
@@ -353,10 +353,10 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(false);
     });
 
-    test("customer mass action with productSelectLimit — parse fails (use selectionLimit instead)", () => {
+    test("order mass action with productSelectLimit — parse fails (use selectionLimit)", () => {
       const result = v.safeParse(AdminUiSdkSchema, {
         registration: {
-          customer: {
+          order: {
             massActions: [
               {
                 actionId: "app::action",

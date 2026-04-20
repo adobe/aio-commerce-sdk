@@ -69,7 +69,7 @@ const massActionBaseEntries = {
 
 const OrderMassActionSchema = v.strictObject({
   ...massActionBaseEntries,
-  orderSelectLimit: v.optional(positiveNumberValueSchema("orderSelectLimit")),
+  selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
 });
 
 const ProductMassActionSchema = v.strictObject({
@@ -81,7 +81,9 @@ const ProductMassActionSchema = v.strictObject({
 
 const CustomerMassActionSchema = v.strictObject({
   ...massActionBaseEntries,
-  selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
+  customerSelectLimit: v.optional(
+    positiveNumberValueSchema("customerSelectLimit"),
+  ),
 });
 
 const OrderViewButtonSchema = v.object({
@@ -185,13 +187,13 @@ export type AdminUiSdkRegistration = v.InferInput<
   typeof AdminUiSdkRegistrationSchema
 >;
 
-/** An order mass action registration entry (uses `orderSelectLimit`). */
+/** An order mass action registration entry (uses `selectionLimit`). */
 export type OrderMassAction = v.InferInput<typeof OrderMassActionSchema>;
 
 /** A product mass action registration entry (uses `productSelectLimit`). */
 export type ProductMassAction = v.InferInput<typeof ProductMassActionSchema>;
 
-/** A customer mass action registration entry (uses `selectionLimit`). */
+/** A customer mass action registration entry (uses `customerSelectLimit`). */
 export type CustomerMassAction = v.InferInput<typeof CustomerMassActionSchema>;
 
 /** An order view button registration entry. */

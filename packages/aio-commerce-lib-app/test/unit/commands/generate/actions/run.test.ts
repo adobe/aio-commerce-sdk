@@ -213,9 +213,9 @@ describe("generateRegistrationActionFile", () => {
       "export const main = registrationRuntimeAction({ registration })",
     );
     expect(contentStr).toContain('"my-app::first"');
-    expect(contentStr).toContain('"orderSelectLimit": 1');
-    expect(contentStr).toContain('"productSelectLimit": 1');
     expect(contentStr).toContain('"selectionLimit": 1');
+    expect(contentStr).toContain('"productSelectLimit": 1');
+    expect(contentStr).toContain('"customerSelectLimit": 1');
   });
 
   test("writes to a path ending in registration.js", async () => {
