@@ -62,4 +62,4 @@ const EventProviderCreateParamsSchema: ObjectSchema<
 >;
 ```
 
-Defined in: [commerce/api/event-providers/schema.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/commerce/api/event-providers/schema.ts#L22)
+Defined in: [commerce/api/event-providers/schema.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/commerce/api/event-providers/schema.ts#L22)

@@ -2,15 +2,17 @@
 
 ```ts
 function defineLeafStep<TName, TConfig, TStepCtx, TOutput>(options: LeafStepOptions<TName, TConfig, TStepCtx, TOutput>): {
+  install: (config: TConfig, context: ExecutionContext<TStepCtx>) => TOutput | Promise<TOutput>;
   meta: StepMeta;
   name: TName;
-  run: (config: TConfig, context: ExecutionContext<TStepCtx>) => TOutput | Promise<TOutput>;
   type: "leaf";
-  validate:   | (config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
-     | ValidationIssue[]
-     | Promise<ValidationIssue[]>
+  uninstall:   | ((config: TConfig, context: ExecutionContext<TStepCtx>) => void | Promise<void>)
      | undefined;
-  when:   | (config: {
+  validate:   | ((config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
+     | ValidationIssue[]
+     | Promise<ValidationIssue[]>)
+     | undefined;
+  when:   | ((config: {
      adminUiSdk?: {
         registration: {
            menuItems: {
@@ -164,12 +166,12 @@ function defineLeafStep<TName, TConfig, TStepCtx, TOutput>(options: LeafStepOpti
      })[];
    } & {
    [key: string]: unknown;
-   }) => config is TConfig
+   }) => config is TConfig)
      | undefined;
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:225](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L225)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:244](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L244)
 
 Define a leaf step (executable, no children).
 
@@ -192,15 +194,17 @@ Define a leaf step (executable, no children).
 
 ```ts
 {
+  install: (config: TConfig, context: ExecutionContext<TStepCtx>) => TOutput | Promise<TOutput>;
   meta: StepMeta;
   name: TName;
-  run: (config: TConfig, context: ExecutionContext<TStepCtx>) => TOutput | Promise<TOutput>;
   type: "leaf";
-  validate:   | (config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
-     | ValidationIssue[]
-     | Promise<ValidationIssue[]>
+  uninstall:   | ((config: TConfig, context: ExecutionContext<TStepCtx>) => void | Promise<void>)
      | undefined;
-  when:   | (config: {
+  validate:   | ((config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
+     | ValidationIssue[]
+     | Promise<ValidationIssue[]>)
+     | undefined;
+  when:   | ((config: {
      adminUiSdk?: {
         registration: {
            menuItems: {
@@ -354,27 +358,15 @@ Define a leaf step (executable, no children).
      })[];
    } & {
    [key: string]: unknown;
-   }) => config is TConfig
+   }) => config is TConfig)
      | undefined;
 }
 ```
 
-### meta
+### install
 
 ```ts
-meta: StepMeta = options.meta;
-```
-
-### name
-
-```ts
-name: TName = options.name;
-```
-
-### run()
-
-```ts
-run: (config: TConfig, context: ExecutionContext<TStepCtx>) => TOutput | Promise<TOutput> = options.run;
+install: (config: TConfig, context: ExecutionContext<TStepCtx>) => TOutput | Promise<TOutput> = options.install;
 ```
 
 #### Parameters
@@ -388,19 +380,39 @@ run: (config: TConfig, context: ExecutionContext<TStepCtx>) => TOutput | Promise
 
 `TOutput` \| `Promise`\<`TOutput`\>
 
+### meta
+
+```ts
+meta: StepMeta = options.meta;
+```
+
+### name
+
+```ts
+name: TName = options.name;
+```
+
 ### type
 
 ```ts
 type: "leaf" = "leaf";
 ```
 
+### uninstall
+
+```ts
+uninstall:
+  | ((config: TConfig, context: ExecutionContext<TStepCtx>) => void | Promise<void>)
+  | undefined = options.uninstall;
+```
+
 ### validate
 
 ```ts
 validate:
-  | (config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
+  | ((config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
   | ValidationIssue[]
-  | Promise<ValidationIssue[]>
+  | Promise<ValidationIssue[]>)
   | undefined = options.validate;
 ```
 
@@ -408,7 +420,7 @@ validate:
 
 ```ts
 when:
-  | (config: {
+  | ((config: {
   adminUiSdk?: {
      registration: {
         menuItems: {
@@ -562,7 +574,7 @@ when:
   })[];
 } & {
 [key: string]: unknown;
-}) => config is TConfig
+}) => config is TConfig)
   | undefined = options.when;
 ```
 
@@ -572,10 +584,12 @@ when:
 const createProviders = defineLeafStep({
   name: "providers",
   meta: {
-    label: "Create Providers",
-    description: "Creates I/O Events providers",
+    install: {
+      label: "Create Providers",
+      description: "Creates I/O Events providers",
+    },
   },
-  run: async ({ config, stepContext }) => {
+  install: async ({ config, stepContext }) => {
     const { eventsClient } = stepContext;
     return eventsClient.createProvider(config.eventing);
   },

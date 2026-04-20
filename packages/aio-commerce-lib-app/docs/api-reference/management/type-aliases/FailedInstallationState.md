@@ -9,7 +9,7 @@ type FailedInstallationState = InstallationStateBase & {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L101)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L101)
 
 Installation state when failed.
 

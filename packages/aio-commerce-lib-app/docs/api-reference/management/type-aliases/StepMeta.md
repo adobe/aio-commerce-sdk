@@ -2,31 +2,31 @@
 
 ```ts
 type StepMeta = {
-  description?: string;
-  label: string;
+  install: StepMetaInfo;
+  uninstall?: StepMetaInfo;
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:83](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L83)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:89](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L89)
 
-Metadata for a step (used for UI display).
+Step metadata keyed by execution mode.
 
 ## Properties
 
-### description?
+### install
 
 ```ts
-optional description: string;
+install: StepMetaInfo;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L85)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:90](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L90)
 
 ---
 
-### label
+### uninstall?
 
 ```ts
-label: string;
+optional uninstall?: StepMetaInfo;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:84](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L84)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L91)
