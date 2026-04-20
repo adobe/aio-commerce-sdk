@@ -24,6 +24,7 @@ import {
   INSTALL_YAML_FILE,
   PACKAGE_JSON_FILE,
 } from "#commands/constants";
+import { DOMAIN_DEFAULTS } from "#commands/init/constants";
 import {
   ensureAppConfig,
   ensureCommerceAppConfig,
@@ -135,12 +136,18 @@ describe("commands/init/lib", () => {
       await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
         const result = await ensureCommerceAppConfig(tempDir, options);
 
-        expect(result.config.businessConfig).toBeDefined();
-        expect(result.config.eventing?.commerce).toBeDefined();
-        expect(result.config.eventing?.external).toBeDefined();
-        expect(
-          result.config.installation?.customInstallationSteps,
-        ).toBeDefined();
+        expect(result.config.businessConfig?.schema).toEqual(
+          DOMAIN_DEFAULTS.businessConfig.schema,
+        );
+        expect(result.config.eventing?.commerce).toEqual(
+          DOMAIN_DEFAULTS["eventing.commerce"],
+        );
+        expect(result.config.eventing?.external).toEqual(
+          DOMAIN_DEFAULTS["eventing.external"],
+        );
+        expect(result.config.installation?.customInstallationSteps).toEqual(
+          DOMAIN_DEFAULTS["installation.customInstallationSteps"],
+        );
       });
     });
 
@@ -203,6 +210,18 @@ describe("commands/init/lib", () => {
         },
       );
     });
+
+    test("throws with a manual-fix hint when app.config.yaml is unreadable", async () => {
+      // Stage a directory at the app.config.yaml path to force readFile → EISDIR.
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [`${APP_CONFIG_FILE}/.keep`]: "" },
+        async (tempDir) => {
+          await expect(ensureAppConfig(new Set(), tempDir)).rejects.toThrow(
+            new RegExp(`Failed to parse ${APP_CONFIG_FILE}`),
+          );
+        },
+      );
+    });
   });
 
   describe("ensureInstallYaml", () => {
@@ -255,6 +274,18 @@ describe("commands/init/lib", () => {
           );
 
           expect(matches).toHaveLength(1);
+        },
+      );
+    });
+
+    test("throws with a manual-fix hint when install.yaml is unreadable", async () => {
+      // Stage a directory at the install.yaml path to force readFile → EISDIR.
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [`${INSTALL_YAML_FILE}/.keep`]: "" },
+        async (tempDir) => {
+          await expect(ensureInstallYaml(new Set(), tempDir)).rejects.toThrow(
+            new RegExp(`Failed to parse ${INSTALL_YAML_FILE}`),
+          );
         },
       );
     });
