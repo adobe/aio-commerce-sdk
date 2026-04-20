@@ -253,8 +253,9 @@ router.post("/", {
   body: InstallationRequestBodySchema,
 
   handler: async (req, { logger, rawParams }) => {
+    const { appData, commerceBaseUrl } = req.body;
     logger.debug(
-      `Starting installation for app "${req.body.appData.projectName}" (workspace: "${req.body.appData.workspaceName}", commerce: "${req.body.commerceBaseUrl}")`,
+      `Starting installation for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${commerceBaseUrl}")`,
     );
 
     const store = await createInstallationStore();
@@ -332,7 +333,8 @@ router.post("/", {
 router.post("/execution", {
   handler: async (_req, { logger, rawParams }) => {
     const params = rawParams as ExecutionRouteParams;
-    const { initialState, appConfig } = params;
+    const { initialState, appConfig, appData, AIO_COMMERCE_API_BASE_URL } =
+      params;
 
     if (!initialState) {
       return badRequest("initialState is required for execution");
@@ -351,7 +353,7 @@ router.post("/execution", {
     );
 
     logger.debug(
-      `Executing installation ${initialState.id} for app "${params.appData.projectName}" (workspace: "${params.appData.workspaceName}", commerce: "${params.AIO_COMMERCE_API_BASE_URL}")`,
+      `Executing installation ${initialState.id} for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${AIO_COMMERCE_API_BASE_URL}")`,
     );
     const result = await runInstallation({
       installationContext,
@@ -454,8 +456,9 @@ router.post("/uninstallation", {
   body: InstallationRequestBodySchema,
 
   handler: async (req, { logger, rawParams }) => {
+    const { appData, commerceBaseUrl } = req.body;
     logger.debug(
-      `Starting uninstallation for app "${req.body.appData.projectName}" (workspace: "${req.body.appData.workspaceName}", commerce: "${req.body.commerceBaseUrl}")`,
+      `Starting uninstallation for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${commerceBaseUrl}")`,
     );
 
     const appConfig = rawParams.appConfig;
@@ -523,7 +526,8 @@ router.post("/uninstallation", {
 router.post("/uninstallation/execution", {
   handler: async (_req, { logger, rawParams }) => {
     const params = rawParams as ExecutionRouteParams;
-    const { initialState, appConfig } = params;
+    const { initialState, appConfig, appData, AIO_COMMERCE_API_BASE_URL } =
+      params;
 
     if (!initialState) {
       return badRequest("initialState is required for execution");
@@ -542,7 +546,7 @@ router.post("/uninstallation/execution", {
     );
 
     logger.debug(
-      `Executing uninstallation ${initialState.id} for app "${params.appData.projectName}" (workspace: "${params.appData.workspaceName}", commerce: "${params.AIO_COMMERCE_API_BASE_URL}")`,
+      `Executing uninstallation ${initialState.id} for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${AIO_COMMERCE_API_BASE_URL}")`,
     );
     const result = await runUninstallation({
       installationContext,
