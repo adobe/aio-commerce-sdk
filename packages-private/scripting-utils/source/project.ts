@@ -15,6 +15,7 @@
  * @packageDocumentation
  */
 
+import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { access, mkdir, readFile } from "node:fs/promises";
 import { dirname, join, parse } from "node:path";
@@ -135,7 +136,55 @@ export async function makeOutputDirFor(fileOrFolder: string) {
 }
 
 /** The package manager used to install the package */
-export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
+export type PackageManager =
+  | "npm"
+  | "pnpm"
+  | "yarn-classic"
+  | "yarn-berry"
+  | "bun";
+
+const YARN_PM_FIELD_MAJOR_REGEX = /yarn@(\d+)/;
+const YARN_VERSION_MAJOR_REGEX = /(\d+)\.\d+\.\d+/;
+
+/**
+ * Detect the yarn variant (classic 1.x vs berry 2+) for a project.
+ * Layered detection: `packageManager` field → `.yarnrc.yml` → `yarn --version`.
+ * Defaults to berry when detection fails (modern default).
+ */
+async function detectYarnVariant(
+  rootDirectory: string,
+): Promise<"yarn-classic" | "yarn-berry"> {
+  const packageJson = await readPackageJson(rootDirectory);
+  const pmField = packageJson?.packageManager;
+  if (typeof pmField === "string" && pmField.startsWith("yarn@")) {
+    const major = pmField.match(YARN_PM_FIELD_MAJOR_REGEX)?.[1];
+    if (major === "1") {
+      return "yarn-classic";
+    }
+    if (major) {
+      return "yarn-berry";
+    }
+  }
+
+  if (existsSync(join(rootDirectory, ".yarnrc.yml"))) {
+    return "yarn-berry";
+  }
+
+  try {
+    const raw = execSync("yarn --version", {
+      cwd: rootDirectory,
+      stdio: ["ignore", "pipe", "ignore"],
+    }).toString();
+    const major = raw.match(YARN_VERSION_MAJOR_REGEX)?.[1];
+    if (major === "1") {
+      return "yarn-classic";
+    }
+  } catch {
+    // yarn not on PATH or other failure — fall through to berry default
+  }
+
+  return "yarn-berry";
+}
 
 /** Detect the package manager by checking for lock files */
 export async function detectPackageManager(
@@ -151,22 +200,33 @@ export async function detectPackageManager(
 
   const lockFileName = Object.keys(lockFileMap).find((name) =>
     existsSync(join(rootDirectory, name)),
-  ) as keyof typeof lockFileMap;
+  ) as keyof typeof lockFileMap | undefined;
 
   if (!lockFileName) {
     return "npm";
   }
 
-  return lockFileMap[lockFileName];
+  const manager = lockFileMap[lockFileName];
+  if (manager === "yarn") {
+    return detectYarnVariant(rootDirectory);
+  }
+
+  return manager;
 }
 
-/** Get the appropriate exec command based on package manager */
+/**
+ * Get the exec command that runs a **locally installed** binary from
+ * `node_modules/.bin` for the given package manager. This is not a
+ * dlx/remote-fetch command — don't swap pnpm to `pnpx` or yarn-berry to
+ * `yarn dlx`, both of which bypass local resolution.
+ */
 export function getExecCommand(packageManager: PackageManager): string {
   const execCommandMap = {
-    pnpm: "pnpx",
-    yarn: "yarn dlx",
-    bun: "bunx",
     npm: "npx",
+    pnpm: "pnpm exec",
+    "yarn-classic": "yarn",
+    "yarn-berry": "yarn exec",
+    bun: "bunx",
   } as const;
 
   return execCommandMap[packageManager];
