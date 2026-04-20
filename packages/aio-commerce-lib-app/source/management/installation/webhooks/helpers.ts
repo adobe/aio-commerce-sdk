@@ -11,6 +11,7 @@
  */
 
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 
 import { unwrapHttpError } from "#management/installation/utils/http-error";
 
@@ -245,8 +246,7 @@ export async function deleteWebhookSubscriptions(
       logger.info(`Unsubscribed webhook: ${getWebhookName(webhook)}`);
       unsubscribedWebhooks.push(params);
     } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      logger.warn(`${msg}. Continuing uninstall.`);
+      logger.warn(`${stringifyError(error)}. Continuing uninstall.`);
     }
   }
 
