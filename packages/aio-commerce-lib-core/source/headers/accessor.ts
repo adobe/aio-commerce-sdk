@@ -15,6 +15,10 @@ import camelcase from "camelcase";
 import { getHeader } from "./helpers";
 import { assertRequiredHeaders } from "./validation";
 
+// NOTE(breaking): remove together with the `.replace(...)` call below in `createHeaderAccessor`
+// once the type and runtime camelCase helpers are aligned in the next major release.
+const LEADING_UNDERSCORES = /^_+/;
+
 import type {
   GetHeaderOptions,
   HttpHeaderAccessorMap,
@@ -65,7 +69,9 @@ export function createHeaderAccessor<
   const accessor: Record<string, string | string[]> = {};
 
   for (const header of requiredHeaders) {
-    const camelKey = camelcase(header);
+    // Strip leading underscores so runtime keys match `HttpHeaderAccessorMap`, which uses type-fest's
+    // `CamelCase` (drops leading `_`). The `camelcase` npm package preserves them.
+    const camelKey = camelcase(header.replace(LEADING_UNDERSCORES, ""));
     const value = getHeader(headers, header, options);
 
     // We know value is defined because assertRequiredHeaders passed
