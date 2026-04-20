@@ -16,5 +16,8 @@ import { vi } from "vitest";
 // Mock logging utilities to avoid noisy tests
 vi.mock("consola");
 
-// Pre-warm jiti runtime so the first test that imports a config file doesn't pay the cold-start cost.
-createJiti(import.meta.url);
+// Pre-warm jiti in every worker: Import the package's own config entry
+// so the transformer pipeline + module graph are already cached before any test
+// runs, amortizing the cost into setup instead of a random "first" test.
+const jiti = createJiti(import.meta.url);
+await jiti.import("@adobe/aio-commerce-lib-app/config");
