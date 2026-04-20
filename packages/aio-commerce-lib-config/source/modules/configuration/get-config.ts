@@ -68,7 +68,7 @@ export async function fetchRawConfiguration(
       loadScopeConfigFn: (code: string) => configRepository.loadConfig(code),
       getSchemaFn: async () => Promise.resolve(schema),
     });
-  } catch (_e) {
+  } catch {
     // Continue with original configData if merging fails
   }
 
