@@ -24,6 +24,7 @@ import {
   installDependencies,
   runGeneration,
   runInstall,
+  writePostinstallHook,
 } from "./lib";
 
 import type { CommerceAppConfigDomain } from "#config/index";
@@ -74,6 +75,10 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   await runGeneration(config, execCommand);
   await ensureAppConfig(domains);
   await ensureInstallYaml(domains);
+
+  // Register the postinstall hook last so future installs run after init has
+  // created the files the hook depends on.
+  writePostinstallHook(execCommand);
 
   consola.success("Initialization complete!");
   consola.box(

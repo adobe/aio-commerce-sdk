@@ -55,11 +55,6 @@ import type { CommerceAppConfigDomain } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InitFlags } from "./main";
 
-/**
- * Injected by tsdown / vitest at build time via `define`. See their respective
- * configs which read the concrete versions from neighbor `package.json` files
- * so the CLI pins exactly the versions it was built against.
- */
 declare const __PKG_VERSION__: string;
 declare const __LIB_CONFIG_RANGE__: string;
 
@@ -137,12 +132,14 @@ export async function ensureCommerceAppConfig(
   }
 }
 
-/** Ensure package.json has the postinstall script */
+/**
+ * Ensure a package.json exists and detect the package manager.
+ * @param cwd - Directory to check; defaults to `process.cwd()`
+ */
 export async function ensurePackageJson(cwd = process.cwd()) {
   const packageJson = await readPackageJson(cwd);
   const packageManager = await detectPackageManager(cwd);
   const execCommand = getExecCommand(packageManager);
-  const postinstallScript = `${execCommand} aio-commerce-lib-app hooks postinstall`;
 
   if (!packageJson) {
     consola.warn("package.json not found. Creating one...");
@@ -150,10 +147,6 @@ export async function ensurePackageJson(cwd = process.cwd()) {
       name: "my-commerce-app",
       version: "1.0.0",
       private: true,
-
-      scripts: {
-        postinstall: postinstallScript,
-      },
     };
 
     await writeFile(
@@ -169,29 +162,36 @@ export async function ensurePackageJson(cwd = process.cwd()) {
       execCommand,
     } as const;
   }
-  packageJson.scripts ??= {};
+  return {
+    packageJson,
+    packageManager,
+    execCommand,
+  };
+}
 
-  if (
-    packageJson.scripts.postinstall === postinstallScript ||
-    packageJson.scripts.postinstall?.includes(postinstallScript)
-  ) {
+/**
+ * Register the `hooks postinstall` script in package.json.
+ * @param execCommand - Prefix for running local binaries (e.g. `pnpm exec`, `npx`)
+ */
+export function writePostinstallHook(execCommand: string) {
+  const postinstallScript = `${execCommand} aio-commerce-lib-app hooks postinstall`;
+  const existing = execSync("npm pkg get scripts.postinstall")
+    .toString()
+    .trim()
+    .replace(/^"|"$/g, "");
+
+  if (existing === postinstallScript || existing.includes(postinstallScript)) {
     consola.success(
       `postinstall script already configured in ${PACKAGE_JSON_FILE}`,
     );
-
-    return {
-      packageJson,
-      packageManager,
-      execCommand,
-    };
+    return;
   }
 
-  if (packageJson.scripts.postinstall) {
+  if (existing && existing !== "{}") {
     consola.warn(
       `${PACKAGE_JSON_FILE} already has a postinstall script. Adding a new one...`,
     );
-
-    const script = `${packageJson.scripts.postinstall} && ${postinstallScript}`;
+    const script = `${existing} && ${postinstallScript}`;
     execSync(`npm pkg set scripts.postinstall="${script}"`);
   } else {
     consola.info(`Adding postinstall script to ${PACKAGE_JSON_FILE}...`);
@@ -199,11 +199,6 @@ export async function ensurePackageJson(cwd = process.cwd()) {
   }
 
   consola.success(`Added postinstall script to ${PACKAGE_JSON_FILE}`);
-  return {
-    packageJson,
-    packageManager,
-    execCommand,
-  };
 }
 
 /** Ensure app.config.yaml has the extension reference */
