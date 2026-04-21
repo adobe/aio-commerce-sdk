@@ -12,24 +12,15 @@
 
 import { HTTPError } from "ky";
 
-/**
- * Creates a mock ky `HTTPError` with the given status, statusText, and response body string.
- * Uses `Object.setPrototypeOf` to make `instanceof HTTPError` checks work correctly.
- */
+import type { NormalizedOptions } from "ky";
+
+/** Creates a ky `HTTPError` with the given status, statusText, and response body string. */
 export function makeHttpError(
   status: number,
   statusText: string,
   body: string,
 ): HTTPError {
   const response = new Response(body, { status, statusText });
-  const error = Object.assign(
-    new Error(`Request failed with status code ${status}`),
-    {
-      response,
-      request: new Request("https://example.com"),
-      options: {},
-    },
-  );
-  Object.setPrototypeOf(error, HTTPError.prototype);
-  return error as HTTPError;
+  const request = new Request("https://example.com");
+  return new HTTPError(response, request, {} as NormalizedOptions);
 }
