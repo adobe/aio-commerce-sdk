@@ -193,6 +193,9 @@ importers:
       dotenv:
         specifier: ^17.2.3
         version: 17.4.2
+      package-manager-detector:
+        specifier: ^1.6.0
+        version: 1.6.0
       type-fest:
         specifier: 'catalog:'
         version: 5.6.0
@@ -661,6 +664,7 @@ packages:
   '@adobe/aio-lib-core-networking@5.1.0':
     resolution: {integrity: sha512-RZgA73yUHhikjIGy7k0DRobPbIXbtuI/0ixrBXOVqj19WTqFFrEuyHtzOuRsBAmu0OvVkf6slQHtDTL9oPLxfg==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-core-tvm@4.0.3':
     resolution: {integrity: sha512-zwl4GeU5CryZBozpub4jI9tnGW2ewD6mMLaXX8HhO8DqKzcjnjYr+MbUS0c/QzGd8gTzZWbikm4J7tfpCn3cAA==}
@@ -669,6 +673,7 @@ packages:
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-files@4.1.3':
     resolution: {integrity: sha512-OO0752wrKx57Uvu+OLkUA7UiU6OG3iQj5T0IjTqq1pflnG9wPk4fjjERj++0xv2tf/gtJouZGcUtfAD15p1vrg==}

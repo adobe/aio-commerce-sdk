@@ -15,10 +15,12 @@
  * @packageDocumentation
  */
 
-import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { access, mkdir, readFile } from "node:fs/promises";
 import { dirname, join, parse } from "node:path";
+
+import { resolveCommand } from "package-manager-detector";
+import { detect } from "package-manager-detector/detect";
 
 import type { PackageJson } from "type-fest";
 
@@ -135,99 +137,73 @@ export async function makeOutputDirFor(fileOrFolder: string) {
   return outputDir;
 }
 
-/** The package manager used to install the package */
-export type PackageManager =
-  | "npm"
-  | "pnpm"
-  | "yarn-classic"
-  | "yarn-berry"
-  | "bun";
+// App Builder targets Node.js — unsupported detections (e.g. deno) fall back to npm.
+const VALID_PACKAGE_MANAGERS = ["npm", "pnpm", "yarn", "bun"] as const;
 
-const YARN_PM_FIELD_MAJOR_REGEX = /yarn@(\d+)/;
-const YARN_VERSION_MAJOR_REGEX = /(\d+)\.\d+\.\d+/;
+/** The package manager used to install the package */
+export type PackageManager = (typeof VALID_PACKAGE_MANAGERS)[number];
 
 /**
- * Detect the yarn variant (classic 1.x vs berry 2+) for a project.
- * Layered detection: `packageManager` field → `.yarnrc.yml` → `yarn --version`.
- * Defaults to berry when detection fails (modern default).
+ * Type guard to assert that a value is a valid PackageManager. Throws an error if the value is not valid.
+ * @param value - The value to validate
  */
-async function detectYarnVariant(
-  rootDirectory: string,
-): Promise<"yarn-classic" | "yarn-berry"> {
-  const packageJson = await readPackageJson(rootDirectory);
-  const pmField = packageJson?.packageManager;
-  if (typeof pmField === "string" && pmField.startsWith("yarn@")) {
-    const major = pmField.match(YARN_PM_FIELD_MAJOR_REGEX)?.[1];
-    if (major === "1") {
-      return "yarn-classic";
-    }
-    if (major) {
-      return "yarn-berry";
-    }
-  }
-
-  if (existsSync(join(rootDirectory, ".yarnrc.yml"))) {
-    return "yarn-berry";
-  }
-
-  try {
-    const raw = execSync("yarn --version", {
-      cwd: rootDirectory,
-      stdio: ["ignore", "pipe", "ignore"],
-    }).toString();
-    const major = raw.match(YARN_VERSION_MAJOR_REGEX)?.[1];
-    if (major === "1") {
-      return "yarn-classic";
-    }
-  } catch {
-    // yarn not on PATH or other failure — fall through to berry default
-  }
-
-  return "yarn-berry";
+function isValidPackageManager(
+  value: string | undefined,
+): value is PackageManager {
+  return (
+    value !== undefined &&
+    VALID_PACKAGE_MANAGERS.includes(value as PackageManager)
+  );
 }
 
-/** Detect the package manager by checking for lock files */
+/**
+ * Detect the package manager for a project.
+ *
+ * Delegates to `package-manager-detector`, which inspects lock files, the
+ * `packageManager` / `devEngines.packageManager` fields in package.json, and
+ * installation metadata. Yarn berry and pnpm v6 are collapsed into their
+ * base agent name — the exec commands we emit are identical across versions
+ * for our use cases.
+ */
 export async function detectPackageManager(
   cwd = process.cwd(),
 ): Promise<PackageManager> {
   const rootDirectory = await getProjectRootDirectory(cwd);
-  const lockFileMap = {
-    "bun.lockb": "bun",
-    "pnpm-lock.yaml": "pnpm",
-    "yarn.lock": "yarn",
-    "package-lock.json": "npm",
-  } as const;
+  const result = await detect({ cwd: rootDirectory });
 
-  const lockFileName = Object.keys(lockFileMap).find((name) =>
-    existsSync(join(rootDirectory, name)),
-  ) as keyof typeof lockFileMap | undefined;
-
-  if (!lockFileName) {
-    return "npm";
+  if (isValidPackageManager(result?.name)) {
+    return result.name;
   }
 
-  const manager = lockFileMap[lockFileName];
-  if (manager === "yarn") {
-    return detectYarnVariant(rootDirectory);
-  }
-
-  return manager;
+  // Unsupported or undetectable package manager — default to npm, which is the most common denominator and supported by all platforms.
+  return "npm";
 }
 
 /**
  * Get the exec command that runs a **locally installed** binary from
- * `node_modules/.bin` for the given package manager. This is not a
- * dlx/remote-fetch command — don't swap pnpm to `pnpx` or yarn-berry to
- * `yarn dlx`, both of which bypass local resolution.
+ * `node_modules/.bin` for the given package manager.
  */
 export function getExecCommand(packageManager: PackageManager): string {
-  const execCommandMap = {
-    npm: "npx",
-    pnpm: "pnpm exec",
-    "yarn-classic": "yarn",
-    "yarn-berry": "yarn exec",
-    bun: "bunx",
-  } as const;
+  const resolved = resolveCommand(packageManager, "execute-local", []);
+  if (!resolved) {
+    return "npx";
+  }
 
-  return execCommandMap[packageManager];
+  return [resolved.command, ...resolved.args].filter(Boolean).join(" ");
+}
+
+/**
+ * Get the command to install the given dependencies with the given package
+ * manager (e.g. `pnpm add foo bar`, `npm i foo bar`).
+ */
+export function getInstallCommand(
+  packageManager: PackageManager,
+  packages: string[],
+): string {
+  const resolved = resolveCommand(packageManager, "add", packages);
+  if (!resolved) {
+    return ["npm", "install", ...packages].join(" ");
+  }
+
+  return [resolved.command, ...resolved.args].filter(Boolean).join(" ");
 }
