@@ -10,14 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import { HTTPError } from "ky";
 
 /**
  * Unwraps a ky `HTTPError` to produce a human-readable string that includes the
  * HTTP status and the message extracted from the response body.
  *
- * If `error` is not an `HTTPError`, falls back to `stringifyError(error)`.
+ * If `error` is not an `HTTPError`, falls back to `error.message` for `Error`
+ * instances or `String(error)` for anything else.
  *
  * Tries the following shapes from the response JSON body, in order:
  * - `body.message` (string) — if `body.parameters` is a non-empty array, `%1`/`%2`/... placeholders are replaced with the corresponding parameter values
@@ -33,7 +33,7 @@ import { HTTPError } from "ky";
  */
 export async function unwrapHttpError(error: unknown): Promise<string> {
   if (!(error instanceof HTTPError)) {
-    return stringifyError(error);
+    return error instanceof Error ? error.message : String(error);
   }
 
   const { response } = error;

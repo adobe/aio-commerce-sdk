@@ -13,7 +13,7 @@
 import {
   throwHttpError,
   unwrapHttpError,
-} from "#management/installation/utils/http-error";
+} from "@adobe/aio-commerce-lib-api/utils";
 
 import type { AdminUiSdkExecutionContext } from "./utils";
 

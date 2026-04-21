@@ -12,19 +12,16 @@
 
 import { describe, expect, test, vi } from "vitest";
 
-import {
-  throwHttpError,
-  unwrapHttpError,
-} from "#management/installation/utils/http-error";
 import { makeHttpError } from "#test/fixtures/http-error";
+import { throwHttpError, unwrapHttpError } from "#utils/http/error";
 
 describe("unwrapHttpError", () => {
-  test("falls back to stringifyError for a plain Error", async () => {
+  test("falls back to error.message for a plain Error", async () => {
     const result = await unwrapHttpError(new Error("plain error"));
     expect(result).toBe("plain error");
   });
 
-  test("falls back to stringifyError for a non-Error value", async () => {
+  test("falls back to String() for a non-Error value", async () => {
     const result = await unwrapHttpError("unexpected string");
     expect(result).toBe("unexpected string");
   });
@@ -141,7 +138,7 @@ describe("throwHttpError", () => {
     );
   });
 
-  test("enriches plain Error via stringifyError fallback", async () => {
+  test("enriches plain Error with the given prefix", async () => {
     const logger = { error: vi.fn() };
 
     await expect(

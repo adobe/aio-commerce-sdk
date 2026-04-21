@@ -10,12 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { inspect } from "@aio-commerce-sdk/common-utils/logging";
-
 import {
   throwHttpError,
   unwrapHttpError,
-} from "#management/installation/utils/http-error";
+} from "@adobe/aio-commerce-lib-api/utils";
+import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 
 import {
   findExistingProvider,

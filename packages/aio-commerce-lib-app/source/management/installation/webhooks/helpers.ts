@@ -10,10 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
+import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
-
-import { unwrapHttpError } from "#management/installation/utils/http-error";
 
 import type {
   CommerceWebhook,

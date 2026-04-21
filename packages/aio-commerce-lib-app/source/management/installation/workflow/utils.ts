@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { unwrapHttpError } from "#management/installation/utils/http-error";
+import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 
 import type {
   FailedInstallationState,
