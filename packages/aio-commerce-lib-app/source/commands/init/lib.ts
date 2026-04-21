@@ -267,6 +267,10 @@ export function installDependencies(
     packages.push("@adobe/aio-commerce-lib-config");
   }
 
+  if (domains.has("webhooks")) {
+    packages.push("@adobe/aio-commerce-lib-webhooks");
+  }
+
   runInstall(packageManager, packages, cwd);
 }
 

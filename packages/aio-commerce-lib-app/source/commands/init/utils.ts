@@ -82,6 +82,7 @@ export async function promptForCommerceAppConfig() {
           label: "Custom Installation Steps",
           value: "installation.customInstallationSteps",
         },
+        { label: "Commerce Webhooks", value: "webhooks" },
       ] as const,
     },
   );
@@ -148,6 +149,10 @@ export async function getDefaultCommerceAppConfig(
       customInstallationSteps:
         DOMAIN_DEFAULTS["installation.customInstallationSteps"],
     };
+  }
+
+  if (domains.has("webhooks")) {
+    defaultConfig.webhooks = DOMAIN_DEFAULTS.webhooks;
   }
 
   const configContent = inspect(defaultConfig, { colors: false });

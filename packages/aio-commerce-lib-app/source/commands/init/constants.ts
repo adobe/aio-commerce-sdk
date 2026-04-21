@@ -92,4 +92,20 @@ export const DOMAIN_DEFAULTS = {
       script: "./path/to/script.js",
     },
   ],
+
+  webhooks: [
+    {
+      label: "Sample Webhook",
+      description: "A sample Commerce Webhook handler.",
+      runtimeAction: "my-package/handle-webhook",
+      category: "modification",
+      webhook: {
+        webhook_method: "plugin.sample.event",
+        webhook_type: "after",
+        batch_name: "my_app",
+        hook_name: "sample_hook",
+        method: "POST",
+      },
+    },
+  ],
 } satisfies DomainDefaults;
