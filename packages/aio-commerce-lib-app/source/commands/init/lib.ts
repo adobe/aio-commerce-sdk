@@ -55,6 +55,14 @@ import type { CommerceAppConfigDomain } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InitFlags } from "./main";
 
+/**
+ * Injected by tsdown / vitest at build time via `define`. See their respective
+ * configs which read the concrete versions from neighbor `package.json` files
+ * so the CLI pins exactly the versions it was built against.
+ */
+declare const __PKG_VERSION__: string;
+declare const __LIB_CONFIG_RANGE__: string;
+
 /** Ensure app.commerce.config file exists, allow creating if it doesn't. When options are provided, prompts are skipped. */
 export async function ensureCommerceAppConfig(
   cwd = process.cwd(),
@@ -132,6 +140,9 @@ export async function ensureCommerceAppConfig(
 /** Ensure package.json has the postinstall script */
 export async function ensurePackageJson(cwd = process.cwd()) {
   const packageJson = await readPackageJson(cwd);
+  const packageManager = await detectPackageManager(cwd);
+  const execCommand = getExecCommand(packageManager);
+  const postinstallScript = `${execCommand} aio-commerce-lib-app hooks postinstall`;
 
   if (!packageJson) {
     consola.warn("package.json not found. Creating one...");
@@ -141,7 +152,7 @@ export async function ensurePackageJson(cwd = process.cwd()) {
       private: true,
 
       scripts: {
-        postinstall: "npx aio-commerce-lib-app hooks postinstall",
+        postinstall: postinstallScript,
       },
     };
 
@@ -154,15 +165,10 @@ export async function ensurePackageJson(cwd = process.cwd()) {
     consola.success("Wrote package.json");
     return {
       packageJson: packageJsonContent,
-      packageManager: "npm",
-      execCommand: "npx",
+      packageManager,
+      execCommand,
     } as const;
   }
-
-  const packageManager = await detectPackageManager();
-  const execCommand = getExecCommand(packageManager);
-
-  const postinstallScript = `${execCommand} aio-commerce-lib-app hooks postinstall`;
   packageJson.scripts ??= {};
 
   if (
@@ -271,7 +277,7 @@ export function installDependencies(
   const packages: string[] = [];
 
   if (domains.has("businessConfig.schema")) {
-    packages.push("@adobe/aio-commerce-lib-config");
+    packages.push(`@adobe/aio-commerce-lib-config@${__LIB_CONFIG_RANGE__}`);
   }
 
   runInstall(packageManager, packages, cwd);
