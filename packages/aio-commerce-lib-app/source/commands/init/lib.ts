@@ -17,6 +17,7 @@ import { join, resolve } from "node:path";
 import {
   detectPackageManager,
   getExecCommand,
+  getInstallCommand,
   getProjectRootDirectory,
   readPackageJson,
 } from "@aio-commerce-sdk/scripting-utils/project";
@@ -244,16 +245,7 @@ export function runInstall(
     `Installing the following dependencies with ${packageManager}:\n${dependencyListString}`,
   );
 
-  const packagesToInstall = dependencies.join(" ");
-  const installCommandMap = {
-    pnpm: `pnpm add ${packagesToInstall}`,
-    "yarn-classic": `yarn add ${packagesToInstall}`,
-    "yarn-berry": `yarn add ${packagesToInstall}`,
-    bun: `bun add ${packagesToInstall}`,
-    npm: `npm install ${packagesToInstall}`,
-  } as const;
-
-  const installCommand = installCommandMap[packageManager];
+  const installCommand = getInstallCommand(packageManager, dependencies);
   try {
     execSync(installCommand, {
       cwd,

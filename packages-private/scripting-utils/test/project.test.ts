@@ -22,6 +22,7 @@ import {
   findNearestPackageJson,
   findUp,
   getExecCommand,
+  getInstallCommand,
   getProjectRootDirectory,
   isESM,
   makeOutputDirFor,
@@ -257,48 +258,30 @@ describe("detectPackageManager", () => {
     );
   });
 
-  test("should detect yarn-classic from yarn.lock + packageManager: yarn@1.x", async () => {
+  test("should detect yarn from yarn.lock", async () => {
     await withTempFiles(
       {
-        "package.json": JSON.stringify({
-          name: "test",
-          packageManager: "yarn@1.22.22",
-        }),
+        "package.json": JSON.stringify({ name: "test" }),
         "yarn.lock": "",
       },
       async (tempDir) => {
         const result = await detectPackageManager(tempDir);
-        expect(result).toBe("yarn-classic");
+        expect(result).toBe("yarn");
       },
     );
   });
 
-  test("should detect yarn-berry from yarn.lock + packageManager: yarn@4.x", async () => {
+  test("should detect yarn from packageManager: yarn@4.x (berry) and collapse to yarn", async () => {
     await withTempFiles(
       {
         "package.json": JSON.stringify({
           name: "test",
           packageManager: "yarn@4.5.1",
         }),
-        "yarn.lock": "",
       },
       async (tempDir) => {
         const result = await detectPackageManager(tempDir);
-        expect(result).toBe("yarn-berry");
-      },
-    );
-  });
-
-  test("should detect yarn-berry from yarn.lock + .yarnrc.yml", async () => {
-    await withTempFiles(
-      {
-        "package.json": JSON.stringify({ name: "test" }),
-        "yarn.lock": "",
-        ".yarnrc.yml": "",
-      },
-      async (tempDir) => {
-        const result = await detectPackageManager(tempDir);
-        expect(result).toBe("yarn-berry");
+        expect(result).toBe("yarn");
       },
     );
   });
@@ -338,16 +321,32 @@ describe("getExecCommand", () => {
     expect(getExecCommand("pnpm")).toBe("pnpm exec");
   });
 
-  test("should return yarn for yarn-classic", () => {
-    expect(getExecCommand("yarn-classic")).toBe("yarn");
+  test("should return yarn exec for yarn", () => {
+    expect(getExecCommand("yarn")).toBe("yarn exec");
   });
 
-  test("should return yarn exec for yarn-berry", () => {
-    expect(getExecCommand("yarn-berry")).toBe("yarn exec");
+  test("should return bun x for bun", () => {
+    expect(getExecCommand("bun")).toBe("bun x");
+  });
+});
+
+describe("getInstallCommand", () => {
+  const pkgs = ["foo", "bar"];
+
+  test("should return npm i <pkgs> for npm", () => {
+    expect(getInstallCommand("npm", pkgs)).toBe("npm i foo bar");
   });
 
-  test("should return bunx for bun", () => {
-    expect(getExecCommand("bun")).toBe("bunx");
+  test("should return pnpm add <pkgs> for pnpm", () => {
+    expect(getInstallCommand("pnpm", pkgs)).toBe("pnpm add foo bar");
+  });
+
+  test("should return yarn add <pkgs> for yarn", () => {
+    expect(getInstallCommand("yarn", pkgs)).toBe("yarn add foo bar");
+  });
+
+  test("should return bun add <pkgs> for bun", () => {
+    expect(getInstallCommand("bun", pkgs)).toBe("bun add foo bar");
   });
 });
 
