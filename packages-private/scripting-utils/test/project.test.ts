@@ -14,7 +14,7 @@ import { existsSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { withTempFiles } from "#filesystem/temp";
 import {
@@ -232,6 +232,10 @@ describe("isESM", () => {
 });
 
 describe("detectPackageManager", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   test("should detect npm from package-lock.json", async () => {
     await withTempFiles(
       {
@@ -299,7 +303,21 @@ describe("detectPackageManager", () => {
     );
   });
 
-  test("should default to npm when no lock file is found", async () => {
+  test("should fall back to invoking PM via npm_config_user_agent when no lock file is found", async () => {
+    vi.stubEnv("npm_config_user_agent", "pnpm/9.0.0 npm/? node/v20.0.0");
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test" }),
+      },
+      async (tempDir) => {
+        const result = await detectPackageManager(tempDir);
+        expect(result).toBe("pnpm");
+      },
+    );
+  });
+
+  test("should default to npm when no lock file and no user-agent are available", async () => {
+    vi.stubEnv("npm_config_user_agent", "");
     await withTempFiles(
       {
         "package.json": JSON.stringify({ name: "test" }),
@@ -307,6 +325,20 @@ describe("detectPackageManager", () => {
       async (tempDir) => {
         const result = await detectPackageManager(tempDir);
         expect(result).toBe("npm");
+      },
+    );
+  });
+
+  test("should prefer lockfile over user-agent (on-disk evidence wins)", async () => {
+    vi.stubEnv("npm_config_user_agent", "pnpm/9.0.0 npm/? node/v20.0.0");
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test" }),
+        "yarn.lock": "",
+      },
+      async (tempDir) => {
+        const result = await detectPackageManager(tempDir);
+        expect(result).toBe("yarn");
       },
     );
   });

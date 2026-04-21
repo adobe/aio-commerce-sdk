@@ -20,7 +20,7 @@ import { access, mkdir, readFile } from "node:fs/promises";
 import { dirname, join, parse } from "node:path";
 
 import { resolveCommand } from "package-manager-detector";
-import { detect } from "package-manager-detector/detect";
+import { detect, getUserAgent } from "package-manager-detector/detect";
 
 import type { PackageJson } from "type-fest";
 
@@ -170,7 +170,12 @@ export async function detectPackageManager(
     return result.name;
   }
 
-  // Unsupported or undetectable package manager — default to npm, which is the most common denominator and supported by all platforms.
+  // Greenfield scaffolds have no on-disk evidence; fall back to the invoking PM.
+  const fromUserAgent = getUserAgent() ?? undefined;
+  if (isValidPackageManager(fromUserAgent)) {
+    return fromUserAgent;
+  }
+
   return "npm";
 }
 
