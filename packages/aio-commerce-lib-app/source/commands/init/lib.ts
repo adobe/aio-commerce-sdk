@@ -51,6 +51,14 @@ import type { PackageJson } from "type-fest";
 import type { CommerceAppConfigDomain } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
+/**
+ * Injected by tsdown / vitest at build time via `define`. See their respective
+ * configs which read the concrete versions from neighbor `package.json` files
+ * so the CLI pins exactly the versions it was built against.
+ */
+declare const __PKG_VERSION__: string;
+declare const __LIB_CONFIG_RANGE__: string;
+
 /** Ensure app.commerce.config file exists, allow creating if it doesn't */
 export async function ensureCommerceAppConfig(cwd = process.cwd()) {
   let config: unknown | null = null;
@@ -257,7 +265,7 @@ export function installDependencies(
   const packages: string[] = [];
 
   if (domains.has("businessConfig.schema")) {
-    packages.push("@adobe/aio-commerce-lib-config");
+    packages.push(`@adobe/aio-commerce-lib-config@${__LIB_CONFIG_RANGE__}`);
   }
 
   runInstall(packageManager, packages, cwd);
