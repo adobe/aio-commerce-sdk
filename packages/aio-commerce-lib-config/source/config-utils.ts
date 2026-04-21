@@ -328,7 +328,7 @@ export function getSchemaDefaults(schema: BusinessConfigSchema) {
     .map((field) => ({
       name: field.name,
       value: field.default as string,
-      origin: { code: "default", level: DEFAULT_CUSTOM_SCOPE_LEVEL },
+      origin: { code: "default", level: "system" },
     }));
 
   return { config: defaults };
@@ -451,7 +451,7 @@ function applySchemaDefaults(
       merged.set(name, {
         name,
         value: def,
-        origin: { code: "default", level: DEFAULT_CUSTOM_SCOPE_LEVEL },
+        origin: { code: "default", level: "system" },
       });
     }
   }

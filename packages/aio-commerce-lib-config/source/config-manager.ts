@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { byCodeAndLevel } from "#config-utils";
+import { byCode } from "#config-utils";
 import {
   requireGlobalSchema,
   setGlobalSchema,
@@ -308,10 +308,7 @@ export async function unsyncCommerceScopes() {
  * ```
  */
 export async function getConfiguration(
-  selector: SelectorBy = byCodeAndLevel(
-    DEFAULT_CUSTOM_SCOPE_LEVEL,
-    DEFAULT_CUSTOM_SCOPE_LEVEL,
-  ),
+  selector: SelectorBy = byCode(DEFAULT_CUSTOM_SCOPE_LEVEL),
   options?: ConfigOptions,
 ) {
   const context = {
@@ -363,10 +360,7 @@ export async function getConfiguration(
  */
 export async function getConfigurationByKey(
   configKey: string,
-  selector: SelectorBy = byCodeAndLevel(
-    DEFAULT_CUSTOM_SCOPE_LEVEL,
-    DEFAULT_CUSTOM_SCOPE_LEVEL,
-  ),
+  selector: SelectorBy = byCode(DEFAULT_CUSTOM_SCOPE_LEVEL),
   options?: ConfigOptions,
 ) {
   const context = {
@@ -436,10 +430,7 @@ export async function getConfigurationByKey(
  */
 export async function setConfiguration(
   request: SetConfigurationRequest,
-  selector: SelectorBy = byCodeAndLevel(
-    DEFAULT_CUSTOM_SCOPE_LEVEL,
-    DEFAULT_CUSTOM_SCOPE_LEVEL,
-  ),
+  selector: SelectorBy = byCode(DEFAULT_CUSTOM_SCOPE_LEVEL),
   options?: ConfigOptions,
 ) {
   const context = {
