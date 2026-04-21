@@ -300,6 +300,42 @@ const client = new AdobeIoEventsHttpClient({
 });
 ```
 
+### Unwrapping HTTP Errors
+
+When a request fails with a non-2xx status, `ky` throws an `HTTPError` whose `message` looks like `Request failed with status code 400: POST https://.../adminuisdk/extension`. The actual reason from the API lives in the response body and is not surfaced.
+
+`unwrapHttpError` returns a human-readable string that includes the HTTP status and the message extracted from the response body. For non-`HTTPError` inputs it falls back to `error.message` (for `Error` instances) or `String(error)`.
+
+It probes the response body in this order: `body.message` → `body.error` (string) → `body.error.message` → `body.errors[0].message` → raw text. When `body.message` comes with a `parameters` array (the Commerce convention), `%1`, `%2`, ... placeholders are interpolated with the corresponding values.
+
+```typescript
+import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
+
+try {
+  await commerceClient.delete(`adminuisdk/extension/${workspace}/${name}`);
+} catch (error) {
+  const message = await unwrapHttpError(error);
+  // e.g. 'HTTP 404 Not Found — Extension "foo" does not exist'
+  logger.warn(
+    `Failed to unregister extension: ${message}. Continuing uninstall.`,
+  );
+}
+```
+
+Commerce's parameterized-message shape is handled automatically:
+
+```jsonc
+// Response body
+{
+  "message": "The event provider id \"%1\" is not configured. Configured: [%2]",
+  "parameters": ["918d1e28-bc6c-4303-8a3e-827b42b30795", "abc, xyz"],
+}
+```
+
+```
+HTTP 400 Bad Request — The event provider id "918d1e28-bc6c-4303-8a3e-827b42b30795" is not configured. Configured: [abc, xyz]
+```
+
 ### Advanced Usage
 
 #### Extending HTTP Clients

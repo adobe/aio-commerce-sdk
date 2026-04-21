@@ -44,6 +44,7 @@ import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InstallationContext, ValidationContext } from "#management/index";
+import type { StepFailedEvent } from "#management/installation/workflow/hooks";
 import type {
   InProgressInstallationState,
   InstallationState,
@@ -198,8 +199,11 @@ function createInstallationHooks(
       logAndSave(`Step started: ${event.stepName}`, state),
     onStepSuccess: (event: { stepName: string }, state: InstallationState) =>
       logAndSave(`Step succeeded: ${event.stepName}`, state),
-    onStepFailure: (event: { stepName: string }, state: InstallationState) =>
-      logAndSave(`Step failed: ${event.stepName}`, state),
+    onStepFailure: (event: StepFailedEvent, state: InstallationState) =>
+      logAndSave(
+        `Step failed: ${event.stepName} — ${event.error.message ?? `(key: ${event.error.key})`}`,
+        state,
+      ),
   };
 }
 
@@ -249,7 +253,10 @@ router.post("/", {
   body: InstallationRequestBodySchema,
 
   handler: async (req, { logger, rawParams }) => {
-    logger.debug("Starting installation...");
+    const { appData, commerceBaseUrl } = req.body;
+    logger.debug(
+      `Starting installation for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${commerceBaseUrl}")`,
+    );
 
     const store = await createInstallationStore();
     const existingState = await store.get(getStorageKey());
@@ -326,7 +333,8 @@ router.post("/", {
 router.post("/execution", {
   handler: async (_req, { logger, rawParams }) => {
     const params = rawParams as ExecutionRouteParams;
-    const { initialState, appConfig } = params;
+    const { initialState, appConfig, appData, AIO_COMMERCE_API_BASE_URL } =
+      params;
 
     if (!initialState) {
       return badRequest("initialState is required for execution");
@@ -344,7 +352,9 @@ router.post("/execution", {
       logger,
     );
 
-    logger.debug(`Executing installation: ${initialState.id}`);
+    logger.debug(
+      `Executing installation ${initialState.id} for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${AIO_COMMERCE_API_BASE_URL}")`,
+    );
     const result = await runInstallation({
       installationContext,
       config: appConfig,
@@ -446,7 +456,10 @@ router.post("/uninstallation", {
   body: InstallationRequestBodySchema,
 
   handler: async (req, { logger, rawParams }) => {
-    logger.debug("Starting async uninstallation...");
+    const { appData, commerceBaseUrl } = req.body;
+    logger.debug(
+      `Starting uninstallation for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${commerceBaseUrl}")`,
+    );
 
     const appConfig = rawParams.appConfig;
 
@@ -513,7 +526,8 @@ router.post("/uninstallation", {
 router.post("/uninstallation/execution", {
   handler: async (_req, { logger, rawParams }) => {
     const params = rawParams as ExecutionRouteParams;
-    const { initialState, appConfig } = params;
+    const { initialState, appConfig, appData, AIO_COMMERCE_API_BASE_URL } =
+      params;
 
     if (!initialState) {
       return badRequest("initialState is required for execution");
@@ -531,7 +545,9 @@ router.post("/uninstallation/execution", {
       logger,
     );
 
-    logger.debug(`Executing uninstallation: ${initialState.id}`);
+    logger.debug(
+      `Executing uninstallation ${initialState.id} for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${AIO_COMMERCE_API_BASE_URL}")`,
+    );
     const result = await runUninstallation({
       installationContext,
       config: appConfig,
