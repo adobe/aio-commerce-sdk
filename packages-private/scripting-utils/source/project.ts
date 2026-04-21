@@ -144,8 +144,8 @@ const VALID_PACKAGE_MANAGERS = ["npm", "pnpm", "yarn", "bun"] as const;
 export type PackageManager = (typeof VALID_PACKAGE_MANAGERS)[number];
 
 /**
- * Type guard to assert that a value is a valid PackageManager. Throws an error if the value is not valid.
- * @param value - The value to validate
+ * Type guard asserting that a value is a supported `PackageManager`.
+ * @param value - The value to check
  */
 function isValidPackageManager(
   value: string | undefined,
@@ -158,12 +158,7 @@ function isValidPackageManager(
 
 /**
  * Detect the package manager for a project.
- *
- * Delegates to `package-manager-detector`, which inspects lock files, the
- * `packageManager` / `devEngines.packageManager` fields in package.json, and
- * installation metadata. Yarn berry and pnpm v6 are collapsed into their
- * base agent name — the exec commands we emit are identical across versions
- * for our use cases.
+ * @param cwd - Directory to start detection from; defaults to `process.cwd()`
  */
 export async function detectPackageManager(
   cwd = process.cwd(),
@@ -182,6 +177,7 @@ export async function detectPackageManager(
 /**
  * Get the exec command that runs a **locally installed** binary from
  * `node_modules/.bin` for the given package manager.
+ * @param packageManager - The detected package manager
  */
 export function getExecCommand(packageManager: PackageManager): string {
   const resolved = resolveCommand(packageManager, "execute-local", []);
@@ -195,6 +191,8 @@ export function getExecCommand(packageManager: PackageManager): string {
 /**
  * Get the command to install the given dependencies with the given package
  * manager (e.g. `pnpm add foo bar`, `npm i foo bar`).
+ * @param packageManager - The detected package manager
+ * @param packages - Package specifiers to install (e.g. `["foo@^1.0"]`)
  */
 export function getInstallCommand(
   packageManager: PackageManager,

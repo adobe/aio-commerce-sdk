@@ -23,9 +23,9 @@ import {
   installDependencies,
   runGeneration,
   runInstall,
+  writePostinstallHook,
 } from "./lib";
 
-// Injected by tsdown / vitest at build time via `define`.
 declare const __PKG_VERSION__: string;
 
 // Pin the self-install to the executing version so running `init` on a
@@ -54,6 +54,10 @@ export async function exec() {
     await runGeneration(config, execCommand);
     await ensureAppConfig(domains);
     await ensureInstallYaml(domains);
+
+    // Register the postinstall hook last — the config file it depends on
+    // now exists, so any future `<pm> install` will find what it needs.
+    writePostinstallHook(execCommand);
 
     consola.success("Initialization complete!");
     consola.box(
