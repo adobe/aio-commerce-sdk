@@ -232,12 +232,21 @@ export async function ensureAppConfig(
   );
 }
 
-/** Install the given dependencies */
+/**
+ * Install the given dependencies.
+ * @param packageManager - The detected package manager
+ * @param dependencies - Package specifiers to install; no-op when empty
+ * @param cwd - Working directory for the install command
+ */
 export function runInstall(
   packageManager: PackageManager,
   dependencies: string[],
   cwd = process.cwd(),
 ) {
+  if (dependencies.length === 0) {
+    return;
+  }
+
   const dependencyListString = dependencies
     .map((dependency) => `  - ${dependency}`)
     .join("\n");
@@ -263,7 +272,12 @@ export function runInstall(
   }
 }
 
-/** Install required dependencies */
+/**
+ * Install the domain-specific dependencies derived from the selected domains.
+ * @param packageManager - The detected package manager
+ * @param domains - Domains enabled in the commerce app config
+ * @param cwd - Working directory for the install command
+ */
 export function installDependencies(
   packageManager: PackageManager,
   domains: Set<CommerceAppConfigDomain>,
@@ -273,6 +287,11 @@ export function installDependencies(
 
   if (domains.has("businessConfig.schema")) {
     packages.push(`@adobe/aio-commerce-lib-config@${__LIB_CONFIG_RANGE__}`);
+  }
+
+  if (packages.length === 0) {
+    consola.info("No additional domain dependencies to install.");
+    return;
   }
 
   runInstall(packageManager, packages, cwd);
