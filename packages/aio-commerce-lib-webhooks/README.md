@@ -1,5 +1,8 @@
 # `@adobe/aio-commerce-lib-webhooks`
 
+> [!WARNING]
+> This package is a work in progress and is not yet ready for use. You may be able to install it, but if you do, expect breaking changes.
+
 This package provides an interface to interact with the Adobe Commerce Webhooks API.
 
 ## Installation
