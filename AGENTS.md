@@ -45,7 +45,7 @@
 - Every public package must declare `"sideEffects"` in `package.json`: `false` if no side effects, or an array of files that do have side effects
 - `package.json` has two exports configs: `exports` (source paths, for local dev) and `publishConfig.exports` (dist paths, for consumers)
 - Format Markdown with `pnpm format:markdown` (Prettier)
-- JSDoc: document all public APIs you write; use `@example` for non-obvious usage; keep comments concise — don't restate what the types already say
+
 
 # Workflow
 
@@ -66,6 +66,24 @@
    * governing permissions and limitations under the License.
    */
   ```
+
+## Documentation
+
+Each package has it's own documentation under their own `docs` folder (except for the meta-package). This includes a general `usage.md` guide and an auto-generated API reference generated via Typedoc (`pnpm run docs`) using the JSDoc comments in the source. When implementing any changes, follow the below rules:
+
+- Document only the public interface; internal helpers MUST NOT be documented.
+- Never edit the auto-generated api reference manually, any change will be wiped out during regeneration.
+- Never regenerate the API reference for PRs, they clutter the diff and complicate review. We will regenerate it before publishing.
+- Never use emojis, of any kind, for public documentation.
+- Ensure documentation is kept up to date on every change, including README (if applicable), `usage.md` (together any other supporting doc if the documentation is fragmented), and the API reference (modified indirectly via the JSDoc).
+
+### Comments
+
+For source code comments, follow these rules:
+
+- Never use comments to explain the WHAT, or the HOW. You should only use them to explain the WHY, and only as needed, don't over-document.
+- Avoid justifying changes in the JSDoc, even if it's only an internal helper. It's okay to have comments explaining the rationale behind decisions, but keep them away from JSDoc. Either inline them in the code, or suggest the user to explain them during the PR creation.
+- Document all public APIs you write with proper JSDoc; use `@example` for non-obvious usage; keep comments concise — don't restate what the types already say
 
 ## Commits
 
