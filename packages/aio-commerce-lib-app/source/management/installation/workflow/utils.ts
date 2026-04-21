@@ -50,7 +50,7 @@ export function getAtPath(
   let current: unknown = data;
   for (const key of path) {
     if (current == null || typeof current !== "object") {
-      return undefined;
+      return;
     }
     current = (current as Record<string, unknown>)[key];
   }
