@@ -75,7 +75,7 @@ Each package has it's own documentation under their own `docs` folder (except fo
 - Never edit the auto-generated api reference manually, any change will be wiped out during regeneration.
 - Never regenerate the API reference for PRs, they clutter the diff and complicate review. We will regenerate it before publishing.
 - Never use emojis, of any kind, for public documentation.
-- Ensure documentation is kept up to date on every change, including README (if applicable), `usage.md` (together any other supporting doc if the documentation is fragmented), and the API reference (modified indirectly via the JSDoc).
+- Ensure documentation is kept up to date on every change, including README (if applicable), `usage.md` (together with any other supporting doc if the documentation is fragmented), and the API reference (modified indirectly via the JSDoc).
 
 ### Comments
 
