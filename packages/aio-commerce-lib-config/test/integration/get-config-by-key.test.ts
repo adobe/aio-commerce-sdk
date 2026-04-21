@@ -250,22 +250,23 @@ describe("getConfigurationByKey", () => {
 
   test("resolves scope using byCode selector", async () => {
     await configRepository.saveConfig(
-      "base_region",
-      buildPayload("id-base-region", "base_region", "base", [
+      "global_region",
+      buildPayload("id-global-region", "global_region", "global", [
         {
           name: "currency",
           value: "CHF",
-          origin: { code: "base_region", level: "base" },
+          origin: { code: "global_region", level: "global" },
         },
       ]),
     );
 
     const result = await getConfigurationByKey(
       "currency",
-      byCode("base_region"),
+      byCode("global_region"),
     );
 
-    expect(result.scope.code).toBe("base_region");
+    expect(result.scope.code).toBe("global_region");
+    expect(result.scope.level).toBe("global");
     expect(result.config?.value).toBe("CHF");
   });
 
@@ -288,6 +289,24 @@ describe("getConfigurationByKey", () => {
 
     expect(result.scope.id).toBe("id-global");
     expect(result.config?.value).toBe("SGD");
+  });
+
+  test("resolves to global scope when no selector is provided", async () => {
+    await configRepository.saveConfig(
+      "global",
+      buildPayload("id-global", "global", "global", [
+        {
+          name: "currency",
+          value: "USD",
+          origin: { code: "global", level: "global" },
+        },
+      ]),
+    );
+
+    const result = await getConfigurationByKey("currency");
+    expect(result.scope.code).toBe("global");
+    expect(result.scope.level).toBe("global");
+    expect(result.config?.value).toBe("USD");
   });
 
   test("returns scope information alongside the config value", async () => {

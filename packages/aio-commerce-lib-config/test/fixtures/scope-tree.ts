@@ -68,13 +68,13 @@ export const mockScopeTree: ScopeTree = [
     ],
   },
 
-  // Default level when using `byCode` is `base`. For tests to be able to test
+  // Default level when using `byCode` is `global`. For tests to be able to test
   // any path using the above selector we need a scope with that level
   {
-    id: "id-base-region",
-    code: "base_region",
-    label: "Base Region",
-    level: "base",
+    id: "id-global-region",
+    code: "global_region",
+    label: "Global Region",
+    level: "global",
     is_editable: true,
     is_final: true,
     is_removable: true,

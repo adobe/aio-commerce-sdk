@@ -101,7 +101,7 @@ export type CustomScopeInput = {
   code: string;
   /** Human-readable label for the scope. */
   label: string;
-  /** Optional level. Defaults to base level if not provided. */
+  /** Optional level. Defaults to global level if not provided. */
   level?: string;
   /** Whether the scope configuration can be edited. */
   is_editable: boolean;
