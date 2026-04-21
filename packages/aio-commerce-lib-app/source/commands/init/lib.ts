@@ -137,13 +137,14 @@ export async function ensureCommerceAppConfig(
  * @param cwd - Directory to check; defaults to `process.cwd()`
  */
 export async function ensurePackageJson(cwd = process.cwd()) {
-  const packageJson = await readPackageJson(cwd);
-  const packageManager = await detectPackageManager(cwd);
-  const execCommand = getExecCommand(packageManager);
+  const existing = await readPackageJson(cwd);
+  let packageJson: PackageJson;
 
-  if (!packageJson) {
+  if (existing) {
+    packageJson = existing;
+  } else {
     consola.warn("package.json not found. Creating one...");
-    const packageJsonContent: PackageJson = {
+    packageJson = {
       name: "my-commerce-app",
       version: "1.0.0",
       private: true,
@@ -151,25 +152,27 @@ export async function ensurePackageJson(cwd = process.cwd()) {
 
     await writeFile(
       join(resolve(cwd), PACKAGE_JSON_FILE),
-      JSON.stringify(packageJsonContent, null, 2),
+      JSON.stringify(packageJson, null, 2),
       "utf-8",
     );
 
     consola.success("Wrote package.json");
+<<<<<<< HEAD
     return {
       packageJson: packageJsonContent,
       packageManager,
       execCommand,
     } as const;
   }
-  return {
-    packageJson,
-    packageManager,
-    execCommand,
-  };
-}
+=======
+  }
+>>>>>>> 2326ec20 (fix: greenfield projects always defaulting to npm regardless of running pm)
 
-/**
+  // Detect after writing the skeleton — `detectPackageManager` walks up for a
+  // `package.json`, and the fresh-scaffold path has none until we've written one.
+  const packageManager = await detectPackageManager(cwd);
+  const execCommand = getExecCommand(packageManager);
+
  * Register the `hooks postinstall` script in package.json.
  * @param execCommand - Prefix for running local binaries (e.g. `pnpm exec`, `npx`)
  */
