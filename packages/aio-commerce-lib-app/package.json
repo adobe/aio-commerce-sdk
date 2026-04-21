@@ -29,7 +29,7 @@
     "directory": "packages/aio-commerce-lib-app"
   },
   "bin": {
-    "@adobe/aio-commerce-lib-app": "./bin/cli.mjs"
+    "aio-commerce-lib-app": "./bin/cli.mjs"
   },
   "publishConfig": {
     "exports": {
