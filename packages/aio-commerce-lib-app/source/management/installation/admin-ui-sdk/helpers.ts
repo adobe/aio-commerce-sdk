@@ -10,10 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  throwHttpError,
-  unwrapHttpError,
-} from "@adobe/aio-commerce-lib-api/utils";
+import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
+
+import { throwHttpError } from "../utils/http-error";
 
 import type { AdminUiSdkExecutionContext } from "./utils";
 

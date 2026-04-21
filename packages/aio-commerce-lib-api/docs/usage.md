@@ -300,13 +300,11 @@ const client = new AdobeIoEventsHttpClient({
 });
 ```
 
-### HTTP Error Handling
+### Unwrapping HTTP Errors
 
-When a request fails with a non-2xx status, `ky` throws an `HTTPError` whose `message` looks like `Request failed with status code 400: POST https://.../adminuisdk/extension`. The actual reason from the API lives in the response body and is not surfaced. `@adobe/aio-commerce-lib-api/utils` provides two helpers to extract it.
+When a request fails with a non-2xx status, `ky` throws an `HTTPError` whose `message` looks like `Request failed with status code 400: POST https://.../adminuisdk/extension`. The actual reason from the API lives in the response body and is not surfaced.
 
-#### `unwrapHttpError`
-
-Returns a human-readable string that includes the HTTP status and the message extracted from the response body. For non-`HTTPError` inputs it falls back to `error.message` (for `Error` instances) or `String(error)`.
+`unwrapHttpError` returns a human-readable string that includes the HTTP status and the message extracted from the response body. For non-`HTTPError` inputs it falls back to `error.message` (for `Error` instances) or `String(error)`.
 
 It probes the response body in this order: `body.message` → `body.error` (string) → `body.error.message` → `body.errors[0].message` → raw text. When `body.message` comes with a `parameters` array (the Commerce convention), `%1`, `%2`, ... placeholders are interpolated with the corresponding values.
 
@@ -337,25 +335,6 @@ Commerce's parameterized-message shape is handled automatically:
 ```
 HTTP 400 Bad Request — The event provider id "918d1e28-bc6c-4303-8a3e-827b42b30795" is not configured. Configured: [abc, xyz]
 ```
-
-#### `throwHttpError`
-
-Convenience wrapper around `unwrapHttpError` for the common "log and throw with a prefix" pattern. It unwraps the error, prefixes it, logs it at `error` level, and throws a new `Error` with the enriched message. Its return type is `Promise<never>`, so it composes cleanly inside a `.catch()` without upsetting the inferred type of the surrounding expression.
-
-```typescript
-import { throwHttpError } from "@adobe/aio-commerce-lib-api/utils";
-
-const response = await commerceClient
-  .post("adminuisdk/extension", { json: payload })
-  .json<RegisterExtensionResponse>()
-  .catch((error: unknown) =>
-    throwHttpError(logger, error, "Failed to register Admin UI SDK extension"),
-  );
-// On failure, logs and throws:
-//   "Failed to register Admin UI SDK extension: HTTP 400 Bad Request — Provider already exists"
-```
-
-The `logger` argument is a minimal structural type (`{ error: (msg: string) => void }`), so any Winston/Pino/AIO logger works without adapters.
 
 ### Advanced Usage
 

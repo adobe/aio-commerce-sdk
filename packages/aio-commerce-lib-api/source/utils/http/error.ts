@@ -63,25 +63,6 @@ export async function unwrapHttpError(error: unknown): Promise<string> {
   return `${statusPrefix} — ${bodyText}`;
 }
 
-/**
- * Unwraps an error via {@link unwrapHttpError}, prefixes it, logs it at error
- * level, and throws a new `Error` with the enriched message.
- *
- * @example
- * .catch((error) =>
- *   throwHttpError(logger, error, `Failed to create I/O Events provider '${label}'`),
- * );
- */
-export async function throwHttpError(
-  logger: { error: (msg: string) => void },
-  error: unknown,
-  prefix: string,
-): Promise<never> {
-  const message = `${prefix}: ${await unwrapHttpError(error)}`;
-  logger.error(message);
-  throw new Error(message);
-}
-
 function interpolateParameters(message: string, parameters: unknown[]): string {
   return parameters.reduce<string>(
     (result, param, index) => result.replaceAll(`%${index + 1}`, String(param)),
