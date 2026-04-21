@@ -131,11 +131,14 @@ export async function ensureCommerceAppConfig(cwd = process.cwd()) {
  * @param cwd - Directory to check; defaults to `process.cwd()`
  */
 export async function ensurePackageJson(cwd = process.cwd()) {
-  const packageJson = await readPackageJson(cwd);
+  const existing = await readPackageJson(cwd);
+  let packageJson: PackageJson;
 
-  if (!packageJson) {
+  if (existing) {
+    packageJson = existing;
+  } else {
     consola.warn("package.json not found. Creating one...");
-    const packageJsonContent: PackageJson = {
+    packageJson = {
       name: "my-commerce-app",
       version: "1.0.0",
       private: true,
@@ -143,19 +146,16 @@ export async function ensurePackageJson(cwd = process.cwd()) {
 
     await writeFile(
       join(resolve(cwd), PACKAGE_JSON_FILE),
-      JSON.stringify(packageJsonContent, null, 2),
+      JSON.stringify(packageJson, null, 2),
       "utf-8",
     );
 
     consola.success("Wrote package.json");
-    return {
-      packageJson: packageJsonContent,
-      packageManager: "npm",
-      execCommand: "npx",
-    } as const;
   }
 
-  const packageManager = await detectPackageManager();
+  // Detect after writing the skeleton — `detectPackageManager` walks up for a
+  // `package.json`, and the fresh-scaffold path has none until we've written one.
+  const packageManager = await detectPackageManager(cwd);
   const execCommand = getExecCommand(packageManager);
 
   return {
