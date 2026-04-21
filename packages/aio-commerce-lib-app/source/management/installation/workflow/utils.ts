@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
+
 import type {
   FailedInstallationState,
   InstallationError,
@@ -58,15 +60,15 @@ export function getAtPath(
 }
 
 /** Creates an installation error from an exception. */
-export function createInstallationError(
+export async function createInstallationError(
   err: unknown,
   path: string[],
   key = "STEP_EXECUTION_FAILED",
-): InstallationError {
+): Promise<InstallationError> {
   return {
     path,
     key,
-    message: err instanceof Error ? err.message : String(err),
+    message: await unwrapHttpError(err),
   };
 }
 

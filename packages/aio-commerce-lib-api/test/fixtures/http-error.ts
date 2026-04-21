@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,10 +10,17 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the entrypoint of the utils package API */
+import { HTTPError } from "ky";
 
-export * from "./auth/hooks";
-export * from "./http/codes";
-export * from "./http/error";
+import type { NormalizedOptions } from "ky";
 
-export type { ImsAuthParamsWithOptionalScopes } from "./auth/ims-scopes";
+/** Creates a ky `HTTPError` with the given status, statusText, and response body string. */
+export function makeHttpError(
+  status: number,
+  statusText: string,
+  body: string,
+): HTTPError {
+  const response = new Response(body, { status, statusText });
+  const request = new Request("https://example.com");
+  return new HTTPError(response, request, {} as NormalizedOptions);
+}
