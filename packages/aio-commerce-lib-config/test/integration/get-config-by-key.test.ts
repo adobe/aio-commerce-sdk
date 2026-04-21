@@ -291,6 +291,24 @@ describe("getConfigurationByKey", () => {
     expect(result.config?.value).toBe("SGD");
   });
 
+  test("resolves to global scope when no selector is provided", async () => {
+    await configRepository.saveConfig(
+      "global",
+      buildPayload("id-global", "global", "global", [
+        {
+          name: "currency",
+          value: "USD",
+          origin: { code: "global", level: "global" },
+        },
+      ]),
+    );
+
+    const result = await getConfigurationByKey("currency");
+    expect(result.scope.code).toBe("global");
+    expect(result.scope.level).toBe("global");
+    expect(result.config?.value).toBe("USD");
+  });
+
   test("returns scope information alongside the config value", async () => {
     await configRepository.saveConfig(
       "global",

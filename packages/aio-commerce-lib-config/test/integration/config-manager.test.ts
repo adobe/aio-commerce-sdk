@@ -364,6 +364,27 @@ describe("config-manager", () => {
     expect(result.config.find((e) => e.name === "currency")?.value).toBe("SEK");
   });
 
+  test("resolves to global scope when no selector is provided", async () => {
+    const result = await getConfiguration();
+    expect(result.scope.code).toBe("global");
+    expect(result.scope.level).toBe("global");
+  });
+
+  test("sets configuration using default global selector when no selector is provided", async () => {
+    await setConfiguration({ config: [{ name: "currency", value: "EUR" }] });
+
+    const result = await getConfiguration();
+    expect(result.scope.code).toBe("global");
+    expect(result.scope.level).toBe("global");
+    expect(result.config.find((e) => e.name === "currency")?.value).toBe("EUR");
+  });
+
+  test("schema defaults have global level as origin", async () => {
+    const result = await getConfiguration(byCodeAndLevel("global", "global"));
+    const schemaDefault = result.config.find((e) => e.name === "currency");
+    expect(schemaDefault?.origin.level).toBe("global");
+  });
+
   test("throws when setting a password field without an encryption key", async () => {
     await expect(
       setConfiguration(
