@@ -39,8 +39,9 @@ describe("getDefaultCommerceAppConfig", () => {
       domains: makeDomains("webhooks"),
     });
 
-    expect(output).toContain("webhooks");
-    expect(output).toContain("webhook_method");
+    expect(output).toContain("plugin.sample.event");
+    expect(output).toContain("sample_hook");
+    expect(output).toContain("my_app");
   });
 
   test("does NOT include webhooks when 'webhooks' domain is not selected", async () => {
@@ -49,8 +50,8 @@ describe("getDefaultCommerceAppConfig", () => {
       domains: makeDomains("businessConfig.schema"),
     });
 
-    expect(output).not.toContain("webhooks");
-    expect(output).not.toContain("webhook_method");
+    expect(output).not.toContain("plugin.sample.event");
+    expect(output).not.toContain("sample_hook");
   });
 
   test("includes businessConfig defaults when 'businessConfig.schema' domain is selected", async () => {
@@ -59,8 +60,8 @@ describe("getDefaultCommerceAppConfig", () => {
       domains: makeDomains("businessConfig.schema"),
     });
 
-    expect(output).toContain("businessConfig");
-    expect(output).toContain("schema");
+    expect(output).toContain("sampleList");
+    expect(output).toContain("sampleText");
   });
 
   test("includes eventing.commerce defaults when that domain is selected", async () => {
@@ -69,8 +70,7 @@ describe("getDefaultCommerceAppConfig", () => {
       domains: makeDomains("eventing.commerce"),
     });
 
-    expect(output).toContain("commerce");
-    expect(output).toContain("eventing");
+    expect(output).toContain("plugin.sample_event");
   });
 
   test("includes eventing.external defaults when that domain is selected", async () => {
@@ -79,8 +79,7 @@ describe("getDefaultCommerceAppConfig", () => {
       domains: makeDomains("eventing.external"),
     });
 
-    expect(output).toContain("external");
-    expect(output).toContain("eventing");
+    expect(output).toContain("be-observer.sample_event");
   });
 
   test("includes both webhooks and eventing when both domains are selected", async () => {
@@ -89,10 +88,8 @@ describe("getDefaultCommerceAppConfig", () => {
       domains: makeDomains("webhooks", "eventing.commerce"),
     });
 
-    expect(output).toContain("webhooks");
-    expect(output).toContain("webhook_method");
-    expect(output).toContain("commerce");
-    expect(output).toContain("eventing");
+    expect(output).toContain("plugin.sample.event"); // webhooks default
+    expect(output).toContain("plugin.sample_event"); // eventing.commerce default
   });
 
   test("produces minimal config (only metadata) when no feature domains are selected", async () => {
@@ -102,8 +99,19 @@ describe("getDefaultCommerceAppConfig", () => {
     });
 
     expect(output).toContain("metadata");
-    expect(output).not.toContain("webhooks");
-    expect(output).not.toContain("businessConfig");
-    expect(output).not.toContain("eventing");
+    expect(output).not.toContain("plugin.sample.event");
+    expect(output).not.toContain("sampleList");
+    expect(output).not.toContain("plugin.sample_event");
+  });
+
+  test("uses CJS export syntax when configFormat is 'js' and project is not ESM", async () => {
+    const output = await getDefaultCommerceAppConfig("/fake/cwd", {
+      ...BASE_ANSWERS,
+      configFormat: "js",
+      domains: makeDomains(),
+    });
+
+    expect(output).toContain("module.exports =");
+    expect(output).not.toContain("export default");
   });
 });

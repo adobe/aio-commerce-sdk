@@ -77,12 +77,12 @@ export async function promptForCommerceAppConfig() {
       options: [
         { label: "Business Configuration", value: "businessConfig.schema" },
         { label: "Commerce Events", value: "eventing.commerce" },
+        { label: "Commerce Webhooks", value: "webhooks" },
         { label: "External Events", value: "eventing.external" },
         {
           label: "Custom Installation Steps",
           value: "installation.customInstallationSteps",
         },
-        { label: "Commerce Webhooks", value: "webhooks" },
       ] as const,
     },
   );

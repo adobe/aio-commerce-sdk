@@ -64,9 +64,14 @@ describe("installDependencies", () => {
       "/fake/cwd",
     );
 
-    const call = mockedExecSync.mock.calls[0][0] as string;
-    expect(call).toContain("@adobe/aio-commerce-lib-config");
-    expect(call).toContain("@adobe/aio-commerce-lib-webhooks");
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining("@adobe/aio-commerce-lib-config"),
+      expect.any(Object),
+    );
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining("@adobe/aio-commerce-lib-webhooks"),
+      expect.any(Object),
+    );
   });
 
   test("does NOT install webhooks package when 'webhooks' domain is not selected", () => {
