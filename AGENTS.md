@@ -69,21 +69,22 @@
 
 ## Documentation
 
-Each package has it's own documentation under their own `docs` folder (except for the meta-package). This includes a general `usage.md` guide and an auto-generated API reference generated via Typedoc (`pnpm run docs`) using the JSDoc comments in the source. When implementing any changes, follow the below rules:
+Each package has its own documentation under a `docs` folder (except for the meta-package). This includes a general `usage.md` guide and an auto-generated API reference produced by Typedoc (`pnpm run docs`) from the JSDoc comments in the source. When making changes, follow these rules:
 
-- Document only the public interface; internal helpers MUST NOT be documented.
-- Never edit the auto-generated api reference manually, any change will be wiped out during regeneration.
-- Never regenerate the API reference for PRs, they clutter the diff and complicate review. We will regenerate it before publishing.
-- Never use emojis, of any kind, for public documentation.
-- Ensure documentation is kept up to date on every change, including README (if applicable), `usage.md` (together with any other supporting doc if the documentation is fragmented), and the API reference (modified indirectly via the JSDoc).
+- Document only the public interface; internal helpers MUST NOT appear in `usage.md`. Internal helpers may still carry JSDoc (and this is preferred), unless the symbol is self-explanatory or trivially obvious. Documenting functions and their purpose helps future maintainers understand what a function does without having to trace it through the codebase.
+- Never edit the auto-generated API reference by hand — any changes will be wiped out on regeneration.
+- Never regenerate the API reference in PRs. It clutters the diff and complicates review; we regenerate it before publishing.
+- Never use emojis of any kind in public documentation.
+- Keep documentation in sync on every change: the README (if applicable), `usage.md` (along with any supporting docs when documentation is fragmented across files), and the API reference (updated indirectly via JSDoc).
 
 ### Comments
 
 For source code comments, follow these rules:
 
-- Never use comments to explain the WHAT, or the HOW. You should only use them to explain the WHY, and only as needed, don't over-document.
-- Avoid justifying changes in the JSDoc, even if it's only an internal helper. It's okay to have comments explaining the rationale behind decisions, but keep them away from JSDoc. Either inline them in the code, or suggest the user to explain them during the PR creation.
-- Document all public APIs you write with proper JSDoc; use `@example` for non-obvious usage; keep comments concise — don't restate what the types already say
+- Never use inline comments to explain the WHAT or the HOW — only the WHY, and only when necessary. Don't over-document.
+- Don't let documentation go stale (e.g. a `@param` left behind after the parameter was removed). Audit this actively, not only when touching the surrounding code.
+- Don't justify changes in JSDoc, even for internal helpers. Rationale behind a decision belongs either as an inline comment in the code or in the PR description — not in JSDoc.
+- Document all public APIs with proper JSDoc. Use `@example` for non-obvious usage, and keep comments concise — don't restate what the types already convey.
 
 ## Commits
 
