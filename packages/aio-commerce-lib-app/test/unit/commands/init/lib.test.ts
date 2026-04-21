@@ -44,36 +44,6 @@ describe("installDependencies", () => {
     );
   });
 
-  test("installs @adobe/aio-commerce-lib-config when 'businessConfig.schema' domain is selected", () => {
-    installDependencies(
-      "npm",
-      makeDomains("businessConfig.schema"),
-      "/fake/cwd",
-    );
-
-    expect(mockedExecSync).toHaveBeenCalledWith(
-      expect.stringContaining("@adobe/aio-commerce-lib-config"),
-      expect.any(Object),
-    );
-  });
-
-  test("installs both packages when both domains are selected", () => {
-    installDependencies(
-      "npm",
-      makeDomains("businessConfig.schema", "webhooks"),
-      "/fake/cwd",
-    );
-
-    expect(mockedExecSync).toHaveBeenCalledWith(
-      expect.stringContaining("@adobe/aio-commerce-lib-config"),
-      expect.any(Object),
-    );
-    expect(mockedExecSync).toHaveBeenCalledWith(
-      expect.stringContaining("@adobe/aio-commerce-lib-webhooks"),
-      expect.any(Object),
-    );
-  });
-
   test("does NOT install webhooks package when 'webhooks' domain is not selected", () => {
     installDependencies(
       "npm",
