@@ -2,4 +2,4 @@
 "@adobe/aio-commerce-lib-config": minor
 ---
 
-Use global as default level in byCode()
+Make scope selector optional in getConfiguration, getConfigurationByKey and setConfiguration, defaulting to the global scope

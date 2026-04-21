@@ -379,10 +379,10 @@ describe("config-manager", () => {
     expect(result.config.find((e) => e.name === "currency")?.value).toBe("EUR");
   });
 
-  test("schema defaults have global level as origin", async () => {
+  test("schema defaults have system level as origin", async () => {
     const result = await getConfiguration(byCodeAndLevel("global", "global"));
     const schemaDefault = result.config.find((e) => e.name === "currency");
-    expect(schemaDefault?.origin.level).toBe("global");
+    expect(schemaDefault?.origin.level).toBe("system");
   });
 
   test("throws when setting a password field without an encryption key", async () => {
