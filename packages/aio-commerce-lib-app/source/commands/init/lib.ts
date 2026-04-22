@@ -59,12 +59,13 @@ import type { InitFlags } from "./main";
 // __LIB_CONFIG_RANGE__ is injected and replaced at build time.
 declare const __LIB_CONFIG_RANGE__: string;
 
-// Flags to keep installs quiet and avoid noisy logs.
+// Flags that drop progress/audit chatter but leave each PM's natural summary
+// line intact (e.g. npm's "added X packages")
 const SILENT_INSTALL_FLAGS: Record<PackageManager, string[]> = {
-  npm: ["--silent", "--no-audit", "--no-fund", "--no-progress"],
-  pnpm: ["--reporter=silent"],
-  yarn: ["--silent"],
-  bun: ["--silent"],
+  npm: ["--no-audit", "--no-fund", "--no-progress"],
+  pnpm: ["--reporter=append-only"],
+  yarn: [],
+  bun: [],
 };
 
 // Yarn berry ignores `--silent`; these env knobs are how you quiet it down.
@@ -72,7 +73,19 @@ const SILENT_INSTALL_FLAGS: Record<PackageManager, string[]> = {
 const SILENT_INSTALL_ENV: Record<PackageManager, NodeJS.ProcessEnv> = {
   npm: {},
   pnpm: {},
-  yarn: { YARN_ENABLE_PROGRESS_BARS: "0", YARN_ENABLE_INLINE_BUILDS: "0" },
+  yarn: {
+    YARN_ENABLE_PROGRESS_BARS: "0",
+    YARN_ENABLE_INLINE_BUILDS: "0",
+    YARN_ENABLE_TIMERS: "0",
+
+    // Drop the following lines:
+    YARN_LOG_FILTERS: JSON.stringify([
+      // Step headers (YN0000)
+      { code: "YN0000", level: "discard" },
+      // Per-package add lines (YN0085)
+      { code: "YN0085", level: "discard" },
+    ]),
+  },
   bun: {},
 };
 
@@ -280,7 +293,7 @@ export function runInstall(
     .map((dependency) => `  - ${dependency}`)
     .join("\n");
 
-  consola.info(
+  consola.start(
     `Installing the following dependencies with ${packageManager}:\n${dependencyListString}`,
   );
 
