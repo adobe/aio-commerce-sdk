@@ -265,9 +265,8 @@ export function runInstall(
 
   consola.start(
     [
-      `Installing the following dependencies with ${packageManager}:\n${dependencyListString}`,
-      "This may take a few seconds...",
-      "",
+      `Installing the following dependencies with ${packageManager}:\n${dependencyListString}\n`,
+      "This may take a few seconds...\n",
     ].join("\n"),
   );
 
