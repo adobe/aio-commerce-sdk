@@ -31,8 +31,8 @@ declare const __PKG_VERSION__: string;
 // Pin the self-install to the executing version so running `init` on a
 // specific release doesn't silently downgrade to the latest stable.
 const REQUIRED_DEPENDENCIES = [
-  `@adobe/aio-commerce-lib-app@${__PKG_VERSION__}`,
   "@adobe/aio-commerce-sdk",
+  `@adobe/aio-commerce-lib-app@${__PKG_VERSION__}`,
 ];
 
 /** Initialize the project with @adobe/aio-commerce-lib-app */
