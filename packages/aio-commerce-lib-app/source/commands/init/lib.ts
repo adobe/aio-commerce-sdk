@@ -251,8 +251,8 @@ export function runInstall(
 
   consola.start(
     [
-      `Installing the following dependencies with ${packageManager}:\n${dependencyListString},
-      "This may take a few seconds..."`,
+      `Installing the following dependencies with ${packageManager}:\n${dependencyListString}`,
+      "This may take a few seconds...",
       "",
     ].join("\n"),
   );
@@ -275,7 +275,8 @@ export function runInstall(
     );
   }
 
-  consola.success("\nDependencies installed successfully");
+  consola.log(""); // Add a newline after the install output for readability.
+  consola.success("Dependencies installed successfully");
 }
 
 /**
