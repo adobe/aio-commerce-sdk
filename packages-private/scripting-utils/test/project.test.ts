@@ -366,19 +366,31 @@ describe("getInstallCommand", () => {
   const pkgs = ["foo", "bar"];
 
   test("should return npm i <pkgs> for npm", () => {
-    expect(getInstallCommand("npm", pkgs)).toBe("npm i foo bar");
+    expect(getInstallCommand("npm", pkgs)).toEqual({
+      command: "npm",
+      args: ["i", "foo", "bar"],
+    });
   });
 
   test("should return pnpm add <pkgs> for pnpm", () => {
-    expect(getInstallCommand("pnpm", pkgs)).toBe("pnpm add foo bar");
+    expect(getInstallCommand("pnpm", pkgs)).toEqual({
+      command: "pnpm",
+      args: ["add", "foo", "bar"],
+    });
   });
 
   test("should return yarn add <pkgs> for yarn", () => {
-    expect(getInstallCommand("yarn", pkgs)).toBe("yarn add foo bar");
+    expect(getInstallCommand("yarn", pkgs)).toEqual({
+      command: "yarn",
+      args: ["add", "foo", "bar"],
+    });
   });
 
   test("should return bun add <pkgs> for bun", () => {
-    expect(getInstallCommand("bun", pkgs)).toBe("bun add foo bar");
+    expect(getInstallCommand("bun", pkgs)).toEqual({
+      command: "bun",
+      args: ["add", "foo", "bar"],
+    });
   });
 });
 
