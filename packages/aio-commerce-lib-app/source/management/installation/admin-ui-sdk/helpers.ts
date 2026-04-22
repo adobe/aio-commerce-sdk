@@ -10,7 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
+
+import { throwHttpError } from "../utils/http-error";
 
 import type { AdminUiSdkExecutionContext } from "./utils";
 
@@ -41,7 +43,14 @@ export async function registerExtension(context: AdminUiSdkExecutionContext) {
         },
       },
     })
-    .json<RegisterExtensionResponse>();
+    .json<RegisterExtensionResponse>()
+    .catch((error: unknown) =>
+      throwHttpError(
+        logger,
+        error,
+        "Failed to register Admin UI SDK extension",
+      ),
+    );
 
   logger.info(
     `Admin UI SDK extension registered successfully: ${response.extensionId}`,
@@ -73,8 +82,9 @@ export async function uninstallExtension(
       `Admin UI SDK extension "${extensionName}" unregistered successfully.`,
     );
   } catch (error: unknown) {
+    const msg = await unwrapHttpError(error);
     logger.warn(
-      `Failed to unregister Admin UI SDK extension "${extensionName}": ${stringifyError(error)}. Continuing uninstall.`,
+      `Failed to unregister Admin UI SDK extension "${extensionName}": ${msg}. Continuing uninstall.`,
     );
   }
 }

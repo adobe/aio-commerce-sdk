@@ -160,7 +160,8 @@ async function executeWorkflowWithMode(
     return succeeded;
   } catch (err) {
     const error =
-      context.error ?? createInstallationError(err, [], "INSTALLATION_FAILED");
+      context.error ??
+      (await createInstallationError(err, [], "INSTALLATION_FAILED"));
 
     const failed = createFailedState(
       {
@@ -267,7 +268,7 @@ async function executeStep(
   } catch (err) {
     stepStatus.status = "failed";
 
-    context.error ??= createInstallationError(err, path);
+    context.error ??= await createInstallationError(err, path);
     await callHook(
       context.hooks,
       "onStepFailure",
