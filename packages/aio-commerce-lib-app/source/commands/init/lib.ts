@@ -55,36 +55,6 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 // __LIB_CONFIG_RANGE__ is injected and replaced at build time.
 declare const __LIB_CONFIG_RANGE__: string;
 
-// Flags that drop progress/audit chatter but leave each PM's natural summary
-// line intact (e.g. npm's "added X packages")
-const SILENT_INSTALL_FLAGS: Record<PackageManager, string[]> = {
-  npm: ["--no-audit", "--no-fund", "--no-progress"],
-  pnpm: ["--reporter=append-only"],
-  yarn: [],
-  bun: [],
-};
-
-// Yarn berry ignores `--silent`; these env knobs are how you quiet it down.
-// Classic yarn ignores them, so both get set unconditionally for `yarn`.
-const SILENT_INSTALL_ENV: Record<PackageManager, NodeJS.ProcessEnv> = {
-  npm: {},
-  pnpm: {},
-  yarn: {
-    YARN_ENABLE_PROGRESS_BARS: "0",
-    YARN_ENABLE_INLINE_BUILDS: "0",
-    YARN_ENABLE_TIMERS: "0",
-
-    // Drop the following lines:
-    YARN_LOG_FILTERS: JSON.stringify([
-      // Step headers (YN0000)
-      { code: "YN0000", level: "discard" },
-      // Per-package add lines (YN0085)
-      { code: "YN0085", level: "discard" },
-    ]),
-  },
-  bun: {},
-};
-
 /** Ensure app.commerce.config file exists, allow creating if it doesn't */
 export async function ensureCommerceAppConfig(cwd = process.cwd()) {
   let config: unknown | null = null;
@@ -280,17 +250,18 @@ export function runInstall(
     .join("\n");
 
   consola.start(
-    `Installing the following dependencies with ${packageManager}:\n${dependencyListString}`,
+    [
+      `Installing the following dependencies with ${packageManager}:\n${dependencyListString},
+      "This may take a few seconds..."`,
+      "",
+    ].join("\n"),
   );
 
   const { command, args } = getInstallCommand(packageManager, dependencies);
-  const allArgs = [...args, ...SILENT_INSTALL_FLAGS[packageManager]];
-  const displayCommand = [command, ...allArgs].join(" ");
-
-  const result = spawnSync(command, allArgs, {
+  const displayCommand = [command, ...args].join(" ");
+  const result = spawnSync(command, args, {
     cwd,
     stdio: "inherit",
-    env: { ...process.env, ...SILENT_INSTALL_ENV[packageManager] },
   });
 
   if (result.error || result.status !== 0) {
@@ -304,7 +275,7 @@ export function runInstall(
     );
   }
 
-  consola.success("Dependencies installed successfully");
+  consola.success("\nDependencies installed successfully");
 }
 
 /**
