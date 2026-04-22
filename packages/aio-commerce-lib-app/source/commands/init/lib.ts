@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { execSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
@@ -21,6 +21,7 @@ import {
   getProjectRootDirectory,
   readPackageJson,
 } from "@aio-commerce-sdk/scripting-utils/project";
+import NpmPackageJson from "@npmcli/package-json";
 import { consola } from "consola";
 
 import {
@@ -55,8 +56,25 @@ import type { CommerceAppConfigDomain } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InitFlags } from "./main";
 
-declare const __PKG_VERSION__: string;
+// __LIB_CONFIG_RANGE__ is injected and replaced at build time.
 declare const __LIB_CONFIG_RANGE__: string;
+
+// Flags to keep installs quiet and avoid noisy logs.
+const SILENT_INSTALL_FLAGS: Record<PackageManager, string[]> = {
+  npm: ["--silent", "--no-audit", "--no-fund", "--no-progress"],
+  pnpm: ["--reporter=silent"],
+  yarn: ["--silent"],
+  bun: ["--silent"],
+};
+
+// Yarn berry ignores `--silent`; these env knobs are how you quiet it down.
+// Classic yarn ignores them, so both get set unconditionally for `yarn`.
+const SILENT_INSTALL_ENV: Record<PackageManager, NodeJS.ProcessEnv> = {
+  npm: {},
+  pnpm: {},
+  yarn: { YARN_ENABLE_PROGRESS_BARS: "0", YARN_ENABLE_INLINE_BUILDS: "0" },
+  bun: {},
+};
 
 /** Ensure app.commerce.config file exists, allow creating if it doesn't. When options are provided, prompts are skipped. */
 export async function ensureCommerceAppConfig(
@@ -157,50 +175,58 @@ export async function ensurePackageJson(cwd = process.cwd()) {
     );
 
     consola.success("Wrote package.json");
-<<<<<<< HEAD
-    return {
-      packageJson: packageJsonContent,
-      packageManager,
-      execCommand,
-    } as const;
   }
-=======
-  }
->>>>>>> 2326ec20 (fix: greenfield projects always defaulting to npm regardless of running pm)
 
   // Detect after writing the skeleton — `detectPackageManager` walks up for a
   // `package.json`, and the fresh-scaffold path has none until we've written one.
   const packageManager = await detectPackageManager(cwd);
   const execCommand = getExecCommand(packageManager);
 
+  return {
+    packageJson,
+    packageManager,
+    execCommand,
+  };
+}
+
+/**
  * Register the `hooks postinstall` script in package.json.
  * @param execCommand - Prefix for running local binaries (e.g. `pnpm exec`, `npx`)
+ * @param cwd - Directory containing the package.json to update
  */
-export function writePostinstallHook(execCommand: string) {
+export async function writePostinstallHook(
+  execCommand: string,
+  cwd = process.cwd(),
+) {
   const postinstallScript = `${execCommand} aio-commerce-lib-app hooks postinstall`;
-  const existing = execSync("npm pkg get scripts.postinstall")
-    .toString()
-    .trim()
-    .replace(/^"|"$/g, "");
+  const pkg = await NpmPackageJson.load(cwd);
+  const existing = pkg.content.scripts?.postinstall;
 
-  if (existing === postinstallScript || existing.includes(postinstallScript)) {
+  if (existing === postinstallScript || existing?.includes(postinstallScript)) {
     consola.success(
       `postinstall script already configured in ${PACKAGE_JSON_FILE}`,
     );
+
     return;
   }
 
-  if (existing && existing !== "{}") {
+  const nextPostinstall = existing
+    ? `${existing} && ${postinstallScript}`
+    : postinstallScript;
+
+  if (existing) {
     consola.warn(
       `${PACKAGE_JSON_FILE} already has a postinstall script. Adding a new one...`,
     );
-    const script = `${existing} && ${postinstallScript}`;
-    execSync(`npm pkg set scripts.postinstall="${script}"`);
   } else {
     consola.info(`Adding postinstall script to ${PACKAGE_JSON_FILE}...`);
-    execSync(`npm pkg set scripts.postinstall="${postinstallScript}"`);
   }
 
+  pkg.update({
+    scripts: { ...pkg.content.scripts, postinstall: nextPostinstall },
+  });
+
+  await pkg.save();
   consola.success(`Added postinstall script to ${PACKAGE_JSON_FILE}`);
 }
 
@@ -258,21 +284,28 @@ export function runInstall(
     `Installing the following dependencies with ${packageManager}:\n${dependencyListString}`,
   );
 
-  const installCommand = getInstallCommand(packageManager, dependencies);
-  try {
-    execSync(installCommand, {
-      cwd,
-      stdio: "inherit",
-    });
-    consola.success("Dependencies installed successfully");
-  } catch (error) {
+  const { command, args } = getInstallCommand(packageManager, dependencies);
+  const allArgs = [...args, ...SILENT_INSTALL_FLAGS[packageManager]];
+  const displayCommand = [command, ...allArgs].join(" ");
+
+  const result = spawnSync(command, allArgs, {
+    cwd,
+    stdio: "inherit",
+    env: { ...process.env, ...SILENT_INSTALL_ENV[packageManager] },
+  });
+
+  if (result.error || result.status !== 0) {
     throw new Error(
-      `Failed to install dependencies automatically. Please install manually: ${installCommand}`,
+      `Failed to install dependencies automatically. Please install manually: ${displayCommand}`,
       {
-        cause: error,
+        cause:
+          result.error ??
+          new Error(`Install exited with code ${result.status}`),
       },
     );
   }
+
+  consola.success("Dependencies installed successfully");
 }
 
 /**

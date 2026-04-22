@@ -202,11 +202,15 @@ export function getExecCommand(packageManager: PackageManager): string {
 export function getInstallCommand(
   packageManager: PackageManager,
   packages: string[],
-): string {
+): { command: string; args: string[] } {
   const resolved = resolveCommand(packageManager, "add", packages);
   if (!resolved) {
-    return ["npm", "install", ...packages].join(" ");
+    return { command: "npm", args: ["install", ...packages] };
   }
 
-  return [resolved.command, ...resolved.args].filter(Boolean).join(" ");
+  return {
+    // Filter out any empty args via truthyness check.
+    args: resolved.args.filter((a) => Boolean(a)),
+    command: resolved.command,
+  };
 }
