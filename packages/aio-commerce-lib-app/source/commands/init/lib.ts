@@ -289,7 +289,8 @@ export function runInstall(
     );
   }
 
-  consola.success("\nDependencies installed successfully");
+  consola.log(""); // Add a newline after the install output for readability.
+  consola.success("Dependencies installed successfully");
 }
 
 /**
