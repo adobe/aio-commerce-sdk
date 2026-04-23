@@ -134,6 +134,33 @@ describe("headers/accessor", () => {
       expect(accessor.anotherLongHeader).toBe("value2");
     });
 
+    test("should transform header names with various casing styles to match the inferred return type", () => {
+      const headers = {
+        test_snake: "test",
+        _underscore_prefix: "test2",
+        testCamelCase: "test3",
+        "kebab-case": "test4",
+      };
+
+      const accessor = createHeaderAccessor(headers, [
+        "test_snake",
+        "_underscore_prefix",
+        "testCamelCase",
+        "kebab-case",
+      ]);
+
+      // Typing `expected` as `typeof accessor` ties the expected shape to the inferred
+      // return type if runtime output drifts from the type, this assertion fails.
+      const expected: typeof accessor = {
+        testSnake: "test",
+        underscorePrefix: "test2",
+        testCamelCase: "test3",
+        kebabCase: "test4",
+      };
+
+      expect(accessor).toEqual(expected);
+    });
+
     test("should provide type-safe destructuring", () => {
       const headers = {
         "x-api-key": "test-key",
