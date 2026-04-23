@@ -32,7 +32,7 @@ import {
   GENERATED_ACTIONS_PATH,
   getExtensionPointFolderPath,
 } from "#commands/constants";
-import { loadAppManifest } from "#commands/utils";
+import { loadAppManifest, prettierFormat } from "#commands/utils";
 import {
   hasAdminUiSdk,
   hasBusinessConfigSchema,
@@ -288,11 +288,6 @@ export async function generateCustomScriptsTemplate(
   return result.replace(CUSTOM_SCRIPTS_MAP_PLACEHOLDER, scriptMap);
 }
 
-function toJsObjectLiteral(value: unknown): string {
-  const json = JSON.stringify(value, null, 2);
-  return json.replace(/^(\s*)"([A-Za-z_$][\w$]*)":/gm, "$1$2:");
-}
-
 /**
  * Generates `registration/index.js` with the Admin UI SDK registration config inlined as a JS object literal.
  * @param appManifest - The validated app config; must satisfy `hasAdminUiSdk`.
@@ -317,13 +312,15 @@ export async function generateRegistrationActionFile(
   const template = await readFile(templatePath, "utf-8");
 
   const registration = appManifest.adminUiSdk?.registration ?? {};
+  const actionPath = join(outputDir, "index.js");
   const content = template.replace(
     REGISTRATION_JSON_PLACEHOLDER,
-    `const registration = ${toJsObjectLiteral(registration)};`,
+    `const registration = ${JSON.stringify(registration)};`,
   );
 
-  const actionPath = join(outputDir, "index.js");
-  await writeFile(actionPath, content, "utf-8");
+  const formattedContent = await prettierFormat(content, actionPath);
+
+  await writeFile(actionPath, formattedContent, "utf-8");
   consola.success(
     `Generated registration action at ${relative(process.cwd(), actionPath)}`,
   );

@@ -21,7 +21,6 @@ import {
   readPackageJson,
 } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
-import * as prettier from "prettier";
 
 import {
   BACKEND_UI_EXTENSION_POINT_ID,
@@ -32,6 +31,7 @@ import {
 } from "#commands/constants";
 import { run as generateActionsCommand } from "#commands/generate/actions/main";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
+import { prettierFormat } from "#commands/utils";
 import {
   getConfigDomains,
   parseCommerceAppConfig,
@@ -98,18 +98,7 @@ export async function ensureCommerceAppConfig(cwd = process.cwd()) {
     consola.info(`Creating ${answers.configFile}...`);
 
     const path = join(await getProjectRootDirectory(cwd), answers.configFile);
-    const formattedConfig = await prettier.format(configContent, {
-      semi: true,
-      quoteStyle: "double",
-      arrowParens: "always",
-      bracketSameLine: true,
-      bracketSpacing: true,
-      trailingComma: "all",
-      tabWidth: 2,
-      useTabs: false,
-      printWidth: 80,
-      filepath: path,
-    });
+    const formattedConfig = await prettierFormat(configContent, path);
 
     await writeFile(path, formattedConfig, "utf-8");
     consola.success(`Created ${answers.configFile}`);
