@@ -105,6 +105,12 @@ For source code comments, follow these rules:
 - Prefix the PR title with the Jira ticket (e.g. `CEXT-1234: short description`)
 - Always follow `.github/PULL_REQUEST_TEMPLATE.md` when writing PR descriptions
 
+## Specs
+
+- Feature specs live in `specs/features/`; use `specs/features/_template.md` as the starting point
+- See `specs/conventions.md` for authoring guidelines
+- New features should be preceded by a spec before implementation begins
+
 ## Changesets
 
 - Every code change that requires a release must include a changeset (test-only changes do not need one)
