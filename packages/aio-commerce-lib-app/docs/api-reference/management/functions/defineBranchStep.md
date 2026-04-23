@@ -8,11 +8,11 @@ function defineBranchStep<TName, TConfig, TStepCtx, TChildren>(options: BranchSt
   meta: StepMeta;
   name: TName;
   type: "branch";
-  validate:   | (config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
+  validate:   | ((config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
      | ValidationIssue[]
-     | Promise<ValidationIssue[]>
+     | Promise<ValidationIssue[]>)
      | undefined;
-  when:   | (config: {
+  when:   | ((config: {
      adminUiSdk?: {
         registration: {
            menuItems: {
@@ -166,12 +166,12 @@ function defineBranchStep<TName, TConfig, TStepCtx, TChildren>(options: BranchSt
      })[];
    } & {
    [key: string]: unknown;
-   }) => config is TConfig
+   }) => config is TConfig)
      | undefined;
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:255](https://github.com/adobe/aio-commerce-sdk/blob/5f20787a78164e7b48d6abbf2d3b892fa2268319/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L255)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:275](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L275)
 
 Define a branch step (container with children, no runner).
 
@@ -200,11 +200,11 @@ Define a branch step (container with children, no runner).
   meta: StepMeta;
   name: TName;
   type: "branch";
-  validate:   | (config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
+  validate:   | ((config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
      | ValidationIssue[]
-     | Promise<ValidationIssue[]>
+     | Promise<ValidationIssue[]>)
      | undefined;
-  when:   | (config: {
+  when:   | ((config: {
      adminUiSdk?: {
         registration: {
            menuItems: {
@@ -358,7 +358,7 @@ Define a branch step (container with children, no runner).
      })[];
    } & {
    [key: string]: unknown;
-   }) => config is TConfig
+   }) => config is TConfig)
      | undefined;
 }
 ```
@@ -399,9 +399,9 @@ type: "branch" = "branch";
 
 ```ts
 validate:
-  | (config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
+  | ((config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
   | ValidationIssue[]
-  | Promise<ValidationIssue[]>
+  | Promise<ValidationIssue[]>)
   | undefined = options.validate;
 ```
 
@@ -409,7 +409,7 @@ validate:
 
 ```ts
 when:
-  | (config: {
+  | ((config: {
   adminUiSdk?: {
      registration: {
         menuItems: {
@@ -563,7 +563,7 @@ when:
   })[];
 } & {
 [key: string]: unknown;
-}) => config is TConfig
+}) => config is TConfig)
   | undefined = options.when;
 ```
 
@@ -572,7 +572,7 @@ when:
 ```typescript
 const eventing = defineBranchStep({
   name: "eventing",
-  meta: { label: "Eventing", description: "Sets up I/O Events" },
+  meta: { install: { label: "Eventing", description: "Sets up I/O Events" } },
   when: hasEventing,
   context: async (ctx) => ({ eventsClient: await createEventsClient(ctx) }),
   children: [commerceEventsStep, externalEventsStep],

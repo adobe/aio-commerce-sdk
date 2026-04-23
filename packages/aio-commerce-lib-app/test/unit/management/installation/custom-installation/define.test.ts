@@ -23,9 +23,8 @@ import type {
 
 describe("defineCustomInstallationStep - function form (legacy)", () => {
   test("should preserve handler functionality", () => {
-    const handler: CustomInstallationStepHandler<string> = (config, _) => {
-      return `Hello ${config.metadata.displayName}`;
-    };
+    const handler: CustomInstallationStepHandler<string> = (config, _) =>
+      `Hello ${config.metadata.displayName}`;
 
     const wrappedHandler = defineCustomInstallationStep(
       handler,

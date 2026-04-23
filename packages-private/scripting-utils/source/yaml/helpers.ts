@@ -39,7 +39,7 @@ export async function readYamlFile(path: string) {
     try {
       const fileContent = await readFile(path, "utf-8");
       doc = parseDocument(fileContent, { keepSourceTokens: true });
-    } catch (_) {
+    } catch {
       const file = basename(path);
       throw new Error(`Failed to parse ${file}`);
     }

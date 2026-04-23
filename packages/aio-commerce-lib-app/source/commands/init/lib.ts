@@ -55,7 +55,7 @@ export async function ensureCommerceAppConfig(cwd = process.cwd()) {
   let config: unknown | null = null;
   try {
     config = await readCommerceAppConfig(cwd);
-  } catch (_) {
+  } catch {
     // Ignore if not found.
   }
 

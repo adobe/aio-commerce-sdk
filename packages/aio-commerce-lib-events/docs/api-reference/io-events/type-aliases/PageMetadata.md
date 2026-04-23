@@ -10,7 +10,7 @@ type PageMetadata = {
 };
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L74)
+Defined in: [io-events/api/event-registrations/types.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L74)
 
 Defines the pagination metadata for paginated responses.
 
@@ -22,7 +22,7 @@ Defines the pagination metadata for paginated responses.
 number: number;
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L76)
+Defined in: [io-events/api/event-registrations/types.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L76)
 
 ---
 
@@ -32,7 +32,7 @@ Defined in: [io-events/api/event-registrations/types.ts:76](https://github.com/a
 numberOfElements: number;
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L77)
+Defined in: [io-events/api/event-registrations/types.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L77)
 
 ---
 
@@ -42,7 +42,7 @@ Defined in: [io-events/api/event-registrations/types.ts:77](https://github.com/a
 size: number;
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:75](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L75)
+Defined in: [io-events/api/event-registrations/types.ts:75](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L75)
 
 ---
 
@@ -52,7 +52,7 @@ Defined in: [io-events/api/event-registrations/types.ts:75](https://github.com/a
 totalElements: number;
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:78](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L78)
+Defined in: [io-events/api/event-registrations/types.ts:78](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L78)
 
 ---
 
@@ -62,4 +62,4 @@ Defined in: [io-events/api/event-registrations/types.ts:78](https://github.com/a
 totalPages: number;
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L79)
+Defined in: [io-events/api/event-registrations/types.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L79)

@@ -11,7 +11,7 @@ function getEventProviderById(
 ): Promise<IoEventProviderHalModel>;
 ```
 
-Defined in: [io-events/api/event-providers/endpoints.ts:84](https://github.com/adobe/aio-commerce-sdk/blob/56effeb75fc9dd82afc4ef7ec109d3451fa8a60e/packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts#L84)
+Defined in: [io-events/api/event-providers/endpoints.ts:86](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts#L86)
 
 Gets an event provider by ID.
 
