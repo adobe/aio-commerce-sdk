@@ -1,5 +1,11 @@
 # Capability Discovery
 
+## Metadata
+
+| Ticket                                                    | Description  |
+| --------------------------------------------------------- | ------------ |
+| [CEXT-6138](https://jira.corp.adobe.com/browse/CEXT-6138) | Initial spec |
+
 ## Background
 
 Clients that integrate with SDK-based apps need to know which endpoints are active for a given deployment. Without a formal mechanism, clients are forced to infer feature availability at runtime by calling endpoints and inspecting response shapes — a fragile pattern that couples client logic to internal API details.
