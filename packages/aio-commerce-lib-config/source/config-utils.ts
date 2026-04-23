@@ -261,7 +261,7 @@ export function sanitizeRequestEntries(
 
       // TODO: This should be done via schema validation.
       const hasValidValue =
-        ["string"].includes(typeof entry.value) ||
+        ["string", "boolean"].includes(typeof entry.value) ||
         (Array.isArray(entry.value) &&
           entry.value.every((item) => typeof item === "string"));
 
