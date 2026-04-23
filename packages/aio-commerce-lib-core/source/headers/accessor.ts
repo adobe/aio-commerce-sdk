@@ -15,15 +15,29 @@ import camelcase from "camelcase";
 import { getHeader } from "./helpers";
 import { assertRequiredHeaders } from "./validation";
 
-// NOTE(breaking): remove together with the `.replace(...)` call below in `createHeaderAccessor`
-// once the type and runtime camelCase helpers are aligned in the next major release.
-const LEADING_UNDERSCORES = /^_+/;
-
 import type {
   GetHeaderOptions,
   HttpHeaderAccessorMap,
   HttpHeaders,
 } from "./types";
+
+const LEADING_UNDERSCORES = /^_+/;
+
+/**
+ * Converts a header name to a camelCase key aligned with `type-fest`'s `CamelCase` type.
+ *
+ * `camelcase` v9+ preserves leading underscores (e.g. `_foo_bar` → `_fooBar`), but
+ * `type-fest`'s `CamelCase` — used by `HttpHeaderAccessorMap` — drops them
+ * (e.g. `_foo_bar` → `fooBar`). Without stripping them first, runtime keys would diverge
+ * from the inferred TypeScript type.
+ *
+ * @remarks This function must be removed and replaced with a bare `camelcase(header)` call
+ * once the two helpers agree on leading-underscore handling. That cleanup is a breaking
+ * change and must land in a major release.
+ */
+function toHeaderCamelKey(header: string): string {
+  return camelcase(header.replace(LEADING_UNDERSCORES, ""));
+}
 
 /**
  * Creates a type-safe header accessor object with validated required headers.
@@ -69,9 +83,7 @@ export function createHeaderAccessor<
   const accessor: Record<string, string | string[]> = {};
 
   for (const header of requiredHeaders) {
-    // Strip leading underscores so runtime keys match `HttpHeaderAccessorMap`, which uses type-fest's
-    // `CamelCase` (drops leading `_`). The `camelcase` npm package preserves them.
-    const camelKey = camelcase(header.replace(LEADING_UNDERSCORES, ""));
+    const camelKey = toHeaderCamelKey(header);
     const value = getHeader(headers, header, options);
 
     // We know value is defined because assertRequiredHeaders passed
