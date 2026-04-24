@@ -1,43 +1,39 @@
 # Spec Conventions
 
-## Structure
+## Why specs
 
-Specs live in `specs/features/`. Each spec is a single Markdown file named after
-the feature it describes (e.g. `capability-discovery.md`).
+The RFC process provides a consistent path for substantial changes to the SDK so
+that all stakeholders can be confident about its direction.
 
-`specs/features/_template.md` is the canonical template for new specs.
+Many changes — bug fixes, internal refactoring, documentation improvements — can
+go straight to a pull request. But some changes are substantial enough to warrant
+a design process and explicit alignment before implementation begins.
 
-## File naming
+## When to write a spec
 
-- Lowercase, hyphen-separated (e.g. `capability-discovery.md`)
-- Name the file after the feature, not the ticket
+Write a spec when the change is "substantial". This includes:
 
-## Spec format
+- New public API surface (new exports, new config fields, new lifecycle hooks)
+- Changes to existing public API that affect SDK consumers
+- New SDK-level features that span multiple packages
+- Removal of existing public API
 
-Specs follow an RFC-inspired format. Every spec must include, in order:
+A spec is not required for:
 
-1. **Title** — `# RFC: Feature Name`
-2. **Metadata** — ticket and creation date (see below)
-3. **Summary** — one paragraph explanation of the feature
-4. **Motivation** — the problem being solved; be concrete about the pain point
-5. **Developer experience** — how the feature looks from an app developer's perspective; use examples
-6. **Design** — technical detail; interactions with existing SDK features, implementation approach, edge cases
-7. **Drawbacks** — honest reasons not to do this
-8. **Rationale and alternatives** — why this design, what was rejected and why
-9. **Unresolved questions** — open decisions; remove the section once all are resolved
-10. **Future possibilities** — natural extensions; out-of-scope ideas worth capturing
+- Bug fixes with no API surface change
+- Internal refactoring that doesn't affect SDK consumers
+- Test or documentation additions
+- Dependency updates
 
-## Metadata
+If in doubt, write a spec. A short spec is better than a surprise.
 
-Every spec includes a metadata block below the title:
+## Files
 
-```md
-- **Ticket:** [CEXT-XXXX](https://jira.corp.adobe.com/browse/CEXT-XXXX)
-- **Created:** YYYY-MM-DD
+Specs live in `specs/features/` and are named with the Jira ticket prefix so
+they are easy to find:
+
+```
+specs/features/CEXT-6138-capability-discovery.md
 ```
 
-## Keeping specs current
-
-A spec is a living document. When implementation reveals that the approach needs
-to change, update the spec before (or alongside) the code change. The associated
-Jira ticket is the changelog — link it in the commit message.
+Use `specs/features/_template.md` as the starting point.
