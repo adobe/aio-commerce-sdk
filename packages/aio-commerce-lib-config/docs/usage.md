@@ -178,13 +178,10 @@ import {
   byCodeAndLevel,
 } from "@adobe/aio-commerce-lib-config";
 
-// Get configuration for the global scope (selector is optional, defaults to global)
-const config = await getConfiguration();
-
 // Get configuration by scope ID
 const config1 = await getConfiguration(byScopeId("scope-id-123"));
 
-// Get configuration by scope code (uses default level global)
+// Get configuration by scope code (uses default level base)
 const config2 = await getConfiguration(byCode("us-east"));
 
 // Get configuration by scope code and level
