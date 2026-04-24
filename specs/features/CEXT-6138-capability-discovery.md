@@ -93,6 +93,18 @@ protected by the same IMS authentication as the rest of the SDK endpoints.
 
 Suggested path: `/__metadata__/openapi.json`
 
+The filtered spec is bundled into the action at build time, following the same
+pattern used by other SDK actions (e.g. `app-config`, `config`): `pre-app-build`
+writes `openapi.json` to a well-known path, and the generated action template
+imports it statically:
+
+```js
+import openApiSpec from "../../openapi.json" with { type: "json" };
+```
+
+The bundler inlines the JSON at build time; no disk read occurs at request time.
+The action factory receives the spec object and returns it in the response body.
+
 ### 4. SDK upgrades
 
 When an app upgrades its `aio-commerce-lib-app` dependency, the full `openapi.json`
@@ -133,8 +145,6 @@ Alternatives considered:
 
 - Which config domains map to which endpoints in the filtered spec — to be
   defined during implementation based on the state of the SDK at that time.
-- How does the `metadata` action serve the generated file at runtime — is it
-  bundled at build time, read from disk, or generated inline at request time?
 
 ## Future possibilities
 
