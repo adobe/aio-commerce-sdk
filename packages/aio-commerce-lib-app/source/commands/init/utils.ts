@@ -77,6 +77,7 @@ export async function promptForCommerceAppConfig() {
       options: [
         { label: "Business Configuration", value: "businessConfig.schema" },
         { label: "Commerce Events", value: "eventing.commerce" },
+        { label: "Commerce Webhooks", value: "webhooks" },
         { label: "External Events", value: "eventing.external" },
         {
           label: "Custom Installation Steps",
@@ -148,6 +149,10 @@ export async function getDefaultCommerceAppConfig(
       customInstallationSteps:
         DOMAIN_DEFAULTS["installation.customInstallationSteps"],
     };
+  }
+
+  if (domains.has("webhooks")) {
+    defaultConfig.webhooks = DOMAIN_DEFAULTS.webhooks;
   }
 
   const configContent = inspect(defaultConfig, { colors: false });
