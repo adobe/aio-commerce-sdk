@@ -2,6 +2,7 @@
 
 - **Ticket:** [CEXT-XXXX](https://jira.corp.adobe.com/browse/CEXT-XXXX)
 - **Created:** YYYY-MM-DD
+- **Implemented:** [ ]
 
 ## Summary
 
@@ -13,6 +14,9 @@ Describe the problem this feature solves for developers building Commerce apps
 with the SDK. Include necessary background and specific use cases where this
 feature helps. This is the most important section — be concrete about the pain
 point before proposing a solution.
+
+Close the section with explicit goals (what success looks like) and non-goals
+(what is explicitly out of scope), so that the design that follows is bounded.
 
 ## Developer experience
 
