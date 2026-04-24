@@ -1,4 +1,4 @@
-# spec: Feature Name
+# Feature Name
 
 - **Ticket:** [CEXT-XXXX](https://jira.corp.adobe.com/browse/CEXT-XXXX)
 - **Created:** YYYY-MM-DD
