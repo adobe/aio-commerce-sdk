@@ -19,7 +19,7 @@
     "code:fix": "turbo run code:fix",
     "docs": "turbo run docs",
     "format": "turbo run format",
-    "format:markdown": "turbo run format:markdown",
+    "format:markdown": "turbo run format:markdown && prettier --no-error-on-unmatched-pattern --write 'specs/**/*.md'",
     "format:check": "turbo run format:check",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
