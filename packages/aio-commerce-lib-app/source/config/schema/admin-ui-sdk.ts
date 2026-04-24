@@ -58,6 +58,12 @@ const ViewButtonConfirmSchema = v.object({
   message: v.optional(nonEmptyStringValueSchema("confirm message")),
 });
 
+const iframeActionEntries = {
+  displayIframe: v.optional(booleanValueSchema("displayIframe")),
+  timeout: v.optional(positiveNumberValueSchema("timeout")),
+  sandbox: v.optional(SandboxSchema),
+};
+
 const GridColumnPropertySchema = v.object({
   label: nonEmptyStringValueSchema("column label"),
   columnId: nonEmptyStringValueSchema("column ID"),
@@ -81,9 +87,7 @@ const massActionBaseEntries = {
   title: v.optional(nonEmptyStringValueSchema("mass action page title")),
   confirm: v.optional(MassActionConfirmSchema),
   path: nonEmptyStringValueSchema("mass action path"),
-  displayIframe: v.optional(booleanValueSchema("displayIframe")),
-  timeout: v.optional(positiveNumberValueSchema("timeout")),
-  sandbox: v.optional(SandboxSchema),
+  ...iframeActionEntries,
 };
 
 const SANDBOX_DISPLAY_IFRAME_MESSAGE =
@@ -130,30 +134,37 @@ function withSandboxDisplayIframeCheck<
   );
 }
 
-const OrderMassActionSchema = withSandboxDisplayIframeCheck(
-  v.strictObject({
-    ...massActionBaseEntries,
-    selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
-  }),
-);
+type SchemaEntries = Record<
+  string,
+  v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>
+>;
 
-const ProductMassActionSchema = withSandboxDisplayIframeCheck(
-  v.strictObject({
-    ...massActionBaseEntries,
-    productSelectLimit: v.optional(
-      positiveNumberValueSchema("productSelectLimit"),
-    ),
-  }),
-);
+function createMassActionSchema<TEntries extends SchemaEntries>(
+  variantEntries: TEntries,
+) {
+  return withSandboxDisplayIframeCheck(
+    v.strictObject({
+      ...massActionBaseEntries,
+      ...variantEntries,
+    }),
+  );
+}
 
-const CustomerMassActionSchema = withSandboxDisplayIframeCheck(
-  v.strictObject({
-    ...massActionBaseEntries,
-    customerSelectLimit: v.optional(
-      positiveNumberValueSchema("customerSelectLimit"),
-    ),
-  }),
-);
+const OrderMassActionSchema = createMassActionSchema({
+  selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
+});
+
+const ProductMassActionSchema = createMassActionSchema({
+  productSelectLimit: v.optional(
+    positiveNumberValueSchema("productSelectLimit"),
+  ),
+});
+
+const CustomerMassActionSchema = createMassActionSchema({
+  customerSelectLimit: v.optional(
+    positiveNumberValueSchema("customerSelectLimit"),
+  ),
+});
 
 const OrderViewButtonSchema = withSandboxDisplayIframeCheck(
   v.object({
@@ -163,9 +174,7 @@ const OrderViewButtonSchema = withSandboxDisplayIframeCheck(
     path: nonEmptyStringValueSchema("view button path"),
     level: v.optional(ViewButtonLevelSchema),
     sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
-    displayIframe: v.optional(booleanValueSchema("displayIframe")),
-    timeout: v.optional(positiveNumberValueSchema("timeout")),
-    sandbox: v.optional(SandboxSchema),
+    ...iframeActionEntries,
   }),
 );
 

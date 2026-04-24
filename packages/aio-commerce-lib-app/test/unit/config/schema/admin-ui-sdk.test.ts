@@ -22,6 +22,10 @@ import {
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
+function parseRegistration(registration: unknown) {
+  return v.safeParse(AdminUiSdkSchema, { registration });
+}
+
 describe("hasAdminUiSdk", () => {
   test("returns true for configWithAdminUiSdk", () => {
     expect(hasAdminUiSdk(configWithAdminUiSdk)).toBe(true);
@@ -369,6 +373,42 @@ describe("AdminUiSdkSchema", () => {
         },
       });
       expect(result.success).toBe(false);
+    });
+
+    test("iframe action sandbox without displayIframe true — parse fails", () => {
+      const registrations = [
+        {
+          order: {
+            massActions: [
+              {
+                actionId: "app::action",
+                label: "Action",
+                path: "#/action",
+                sandbox: "allow-modals",
+              },
+            ],
+          },
+        },
+        {
+          order: {
+            viewButtons: [
+              {
+                buttonId: "app::btn",
+                label: "Btn",
+                path: "#/btn",
+                displayIframe: false,
+                sandbox: "allow-modals",
+              },
+            ],
+          },
+        },
+      ];
+
+      for (const registration of registrations) {
+        const result = parseRegistration(registration);
+
+        expect(result.success).toBe(false);
+      }
     });
   });
 });
