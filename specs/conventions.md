@@ -2,7 +2,7 @@
 
 ## Why specs
 
-The RFC process provides a consistent path for substantial changes to the SDK so
+The spec process provides a consistent path for substantial changes to the SDK so
 that all stakeholders can be confident about its direction.
 
 Many changes — bug fixes, internal refactoring, documentation improvements — can

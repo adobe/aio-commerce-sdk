@@ -107,9 +107,9 @@ For source code comments, follow these rules:
 
 ## Specs
 
-- Feature specs live in `specs/features/`; use `specs/features/_template.md` as the starting point
-- See `specs/conventions.md` for authoring guidelines
-- New features should be preceded by a spec before implementation begins
+- Specs live in `specs/features/`, named with the Jira ticket prefix (e.g. `CEXT-6138-capability-discovery.md`)
+- Use `specs/features/_template.md` as the starting point
+- See `specs/conventions.md` for when a spec is required and authoring guidelines
 
 ## Changesets
 
