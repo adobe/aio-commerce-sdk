@@ -2,6 +2,7 @@
 
 - **Ticket:** [CEXT-6138](https://jira.corp.adobe.com/browse/CEXT-6138)
 - **Created:** 2026-04-23
+- **Implemented:** [ ]
 
 ## Summary
 
@@ -22,6 +23,18 @@ internal API details.
 and inspects the response shape to decide which UI features to show or hide. Every
 new SDK capability requires a corresponding change in `commerce-app-management` to
 detect it. This does not scale as the number of clients and SDK features grows.
+
+**Goals:**
+
+- Give any authenticated client a stable, versioned description of which endpoints are active for a given deployment.
+- Remove the need for clients to infer feature availability by parsing response shapes or probing endpoints.
+- Keep the SDK as the single source of truth for the API contract.
+
+**Non-goals:**
+
+- Providing a general API documentation portal or developer-facing reference — the full spec in the SDK repository serves that purpose.
+- Runtime introspection of config-dependent availability — endpoint availability is determined at build time and is fixed for a given deployment.
+- Client code generation from the spec.
 
 ## Developer experience
 
