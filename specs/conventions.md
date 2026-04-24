@@ -9,6 +9,12 @@ Many changes — bug fixes, internal refactoring, documentation improvements —
 go straight to a pull request. But some changes are substantial enough to warrant
 a design process and explicit alignment before implementation begins.
 
+A spec is not a living document. It represents the design agreed upon at the
+time the spec PR was merged. If a subsequent ticket changes the design, it
+produces a new spec file — the original remains unchanged as a record of what
+was decided and why. This avoids spec drift: the spec always reflects the
+intent at the time it was written, not whatever was eventually built.
+
 ## When to write a spec
 
 Write a spec when the change is "substantial". This includes:
@@ -29,12 +35,6 @@ If in doubt, write a spec. A short spec is better than a surprise. A spec
 should be detailed enough to align on the design and unblock implementation,
 but not so detailed that it describes code — leave implementation choices to
 the implementor.
-
-A spec is not a living document. It represents the design agreed upon at the
-time the spec PR was merged. If a subsequent ticket changes the design, it
-produces a new spec file — the original remains unchanged as a record of what
-was decided and why. This avoids spec drift: the spec always reflects the
-intent at the time it was written, not whatever was eventually built.
 
 ## Files
 
