@@ -30,6 +30,12 @@ should be detailed enough to align on the design and unblock implementation,
 but not so detailed that it describes code — leave implementation choices to
 the implementor.
 
+A spec is not a living document. It represents the design agreed upon at the
+time the spec PR was merged. If a subsequent ticket changes the design, it
+produces a new spec file — the original remains unchanged as a record of what
+was decided and why. This avoids spec drift: the spec always reflects the
+intent at the time it was written, not whatever was eventually built.
+
 ## Files
 
 Specs live in `specs/features/` and are named with the Jira ticket prefix so
@@ -57,12 +63,6 @@ A feature goes through two pull requests:
 
 This separation ensures design decisions are made explicitly and are not
 shaped retroactively by implementation details.
-
-A spec is not a living document. It represents the design agreed upon at the
-time the spec PR was merged. If a subsequent ticket changes the design, it
-produces a new spec file — the original remains unchanged as a record of what
-was decided and why. This avoids spec drift: the spec always reflects the
-intent at the time it was written, not whatever was eventually built.
 
 ### Status
 
