@@ -1,51 +1,63 @@
-# Feature Name
+# RFC: Feature Name
 
-## Metadata
+- **Ticket:** [CEXT-XXXX](https://jira.corp.adobe.com/browse/CEXT-XXXX)
+- **Created:** YYYY-MM-DD
 
-| Ticket                                                    | Description  |
-| --------------------------------------------------------- | ------------ |
-| [CEXT-XXXX](https://jira.corp.adobe.com/browse/CEXT-XXXX) | Initial spec |
+## Summary
 
-## Background
+One paragraph explanation of the feature.
 
-<!-- What problem does this feature solve and why does it matter?
-     Describe the current state and its shortcomings. -->
+## Motivation
 
-## Goals
+Describe the problem this feature solves for developers building Commerce apps
+with the SDK. Include necessary background and specific use cases where this
+feature helps. This is the most important section — be concrete about the pain
+point before proposing a solution.
 
-<!-- What must the feature achieve? State as outcomes, not implementation steps. -->
+## Developer experience
 
--
--
--
+Explain the feature as if it were already shipped and you were showing it to an
+app developer using the SDK. This means:
 
-## Approach
+- What new concepts or APIs does it introduce?
+- Show concrete usage examples (config, code, CLI output).
+- How should developers think about this feature and how does it change how they
+  build apps?
+- If applicable, show what error messages or warnings look like.
+- Does this affect how developers read or maintain existing app code?
 
-### 1. <!-- Component or step name -->
+## Design
 
-<!-- Describe this part of the approach. -->
+The technical detail of the feature. Cover enough that:
 
-### 2. <!-- Component or step name -->
+- Interactions with existing SDK features (lib-app, lib-auth, lib-config, etc.)
+  are clear.
+- It is reasonably clear how the feature would be implemented.
+- Edge cases are called out explicitly.
 
-<!-- Describe this part of the approach. -->
+Return to the examples from the Developer experience section and explain how the
+design makes them work.
 
-### 3. <!-- Component or step name -->
+## Drawbacks
 
-<!-- Describe this part of the approach. -->
+Why should we _not_ do this? Consider implementation cost, maintenance burden,
+impact on SDK consumers, and whether it adds complexity for the common case.
 
-## Security
+## Rationale and alternatives
 
-<!-- Any security considerations relevant to this feature.
-     Remove this section if there are none. -->
+- Why is this the best design in the space of possible designs?
+- What other approaches were considered and why were they rejected?
+- What is the impact of not doing this?
+- Could this be achieved in user-space (i.e. without SDK changes)?
 
-## SDK upgrades
+## Unresolved questions
 
-<!-- How does upgrading the SDK affect this feature?
-     Remove this section if not applicable. -->
+- What needs to be resolved through discussion before this spec is accepted?
+- What needs to be resolved during implementation before the feature ships?
+- What related problems are explicitly out of scope for this RFC?
 
-## Open questions
+## Future possibilities
 
-<!-- Unresolved decisions that need alignment before or during implementation.
-     Remove this section once all are resolved. -->
-
--
+What is the natural evolution of this feature? How might it interact with other
+planned SDK features? Use this section to capture related ideas that are out of
+scope now but worth tracking.
