@@ -1,4 +1,4 @@
-# RFC: Feature Name
+# spec: Feature Name
 
 - **Ticket:** [CEXT-XXXX](https://jira.corp.adobe.com/browse/CEXT-XXXX)
 - **Created:** YYYY-MM-DD
@@ -54,7 +54,7 @@ impact on SDK consumers, and whether it adds complexity for the common case.
 
 - What needs to be resolved through discussion before this spec is accepted?
 - What needs to be resolved during implementation before the feature ships?
-- What related problems are explicitly out of scope for this RFC?
+- What related problems are explicitly out of scope for this spec?
 
 ## Future possibilities
 
