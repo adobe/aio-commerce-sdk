@@ -86,14 +86,6 @@ Availability is determined by what the app developer declares in
 place where both the full SDK spec and the app's config are available
 simultaneously.
 
-The filtering logic mirrors what already drives `ext.config.yaml` generation:
-
-| Config domain active                                                                 | Endpoints included     |
-| ------------------------------------------------------------------------------------ | ---------------------- |
-| Always                                                                               | `app-config`           |
-| `eventing.commerce` or `eventing.external` or `installation.customInstallationSteps` | `installation`         |
-| `businessConfig`                                                                     | `config`, `scope-tree` |
-
 ### 3. Metadata action
 
 The filtered `openapi.json` is served by a dedicated `metadata` runtime action
@@ -139,7 +131,10 @@ Alternatives considered:
 
 ## Unresolved questions
 
-None.
+- Which config domains map to which endpoints in the filtered spec — to be
+  defined during implementation based on the state of the SDK at that time.
+- How does the `metadata` action serve the generated file at runtime — is it
+  bundled at build time, read from disk, or generated inline at request time?
 
 ## Future possibilities
 
