@@ -20,6 +20,25 @@ import * as v from "valibot";
 import type { AdminUiSdkConfig } from "#management/installation/admin-ui-sdk/utils";
 import type { CommerceAppConfigOutputModel } from "./app";
 
+const SANDBOX_VALUES = [
+  "allow-downloads",
+  "allow-modals",
+  "allow-popups",
+] as const;
+
+const SandboxSchema = v.pipe(
+  v.string('Expected a string value for "sandbox"'),
+  v.check(
+    (val) =>
+      val
+        .split(" ")
+        .every((value) =>
+          (SANDBOX_VALUES as readonly string[]).includes(value),
+        ),
+    `sandbox must contain only single-space-separated values from: ${SANDBOX_VALUES.map((t) => `"${t}"`).join(", ")}`,
+  ),
+);
+
 const ColumnTypeSchema = v.picklist([
   "boolean",
   "date",
@@ -64,39 +83,91 @@ const massActionBaseEntries = {
   path: nonEmptyStringValueSchema("mass action path"),
   displayIframe: v.optional(booleanValueSchema("displayIframe")),
   timeout: v.optional(positiveNumberValueSchema("timeout")),
-  sandbox: v.optional(nonEmptyStringValueSchema("sandbox")),
+  sandbox: v.optional(SandboxSchema),
 };
 
-const OrderMassActionSchema = v.strictObject({
-  ...massActionBaseEntries,
-  selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
-});
+const SANDBOX_DISPLAY_IFRAME_MESSAGE =
+  "sandbox is only relevant when displayIframe is set to true";
 
-const ProductMassActionSchema = v.strictObject({
-  ...massActionBaseEntries,
-  productSelectLimit: v.optional(
-    positiveNumberValueSchema("productSelectLimit"),
+type SandboxDisplayIframeInput = {
+  sandbox?: string | undefined;
+  displayIframe?: boolean | undefined;
+};
+
+// Defined once with a concrete input type; cast inside withSandboxDisplayIframeCheck
+// to the actual schema output type (safe because every schema using this has both fields).
+const sandboxDisplayIframeCheck = v.forward(
+  v.partialCheck<
+    SandboxDisplayIframeInput,
+    readonly [readonly ["sandbox"], readonly ["displayIframe"]],
+    SandboxDisplayIframeInput,
+    typeof SANDBOX_DISPLAY_IFRAME_MESSAGE
+  >(
+    [["sandbox"], ["displayIframe"]],
+    (input) => input.sandbox === undefined || input.displayIframe === true,
+    SANDBOX_DISPLAY_IFRAME_MESSAGE,
   ),
-});
+  ["sandbox"],
+);
 
-const CustomerMassActionSchema = v.strictObject({
-  ...massActionBaseEntries,
-  customerSelectLimit: v.optional(
-    positiveNumberValueSchema("customerSelectLimit"),
-  ),
-});
+function withSandboxDisplayIframeCheck<
+  TSchema extends v.BaseSchema<
+    unknown,
+    SandboxDisplayIframeInput,
+    v.BaseIssue<unknown>
+  >,
+>(schema: TSchema) {
+  return v.pipe(
+    schema,
+    // Cast is required: valibot's "~types" property is invariant, so a shared action
+    // constant cannot be assigned to PipeItem<FullSchemaOutput> without this cast.
+    // Runtime behavior is identical to inlining the check in each schema.
+    sandboxDisplayIframeCheck as unknown as v.BaseValidation<
+      v.InferOutput<TSchema>,
+      v.InferOutput<TSchema>,
+      v.BaseIssue<unknown>
+    >,
+  );
+}
 
-const OrderViewButtonSchema = v.object({
-  buttonId: nonEmptyStringValueSchema("view button ID"),
-  label: nonEmptyStringValueSchema("view button label"),
-  confirm: v.optional(ViewButtonConfirmSchema),
-  path: nonEmptyStringValueSchema("view button path"),
-  level: v.optional(ViewButtonLevelSchema),
-  sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
-  displayIframe: v.optional(booleanValueSchema("displayIframe")),
-  timeout: v.optional(positiveNumberValueSchema("timeout")),
-  sandbox: v.optional(nonEmptyStringValueSchema("sandbox")),
-});
+const OrderMassActionSchema = withSandboxDisplayIframeCheck(
+  v.strictObject({
+    ...massActionBaseEntries,
+    selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
+  }),
+);
+
+const ProductMassActionSchema = withSandboxDisplayIframeCheck(
+  v.strictObject({
+    ...massActionBaseEntries,
+    productSelectLimit: v.optional(
+      positiveNumberValueSchema("productSelectLimit"),
+    ),
+  }),
+);
+
+const CustomerMassActionSchema = withSandboxDisplayIframeCheck(
+  v.strictObject({
+    ...massActionBaseEntries,
+    customerSelectLimit: v.optional(
+      positiveNumberValueSchema("customerSelectLimit"),
+    ),
+  }),
+);
+
+const OrderViewButtonSchema = withSandboxDisplayIframeCheck(
+  v.object({
+    buttonId: nonEmptyStringValueSchema("view button ID"),
+    label: nonEmptyStringValueSchema("view button label"),
+    confirm: v.optional(ViewButtonConfirmSchema),
+    path: nonEmptyStringValueSchema("view button path"),
+    level: v.optional(ViewButtonLevelSchema),
+    sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
+    displayIframe: v.optional(booleanValueSchema("displayIframe")),
+    timeout: v.optional(positiveNumberValueSchema("timeout")),
+    sandbox: v.optional(SandboxSchema),
+  }),
+);
 
 const CustomFeeSchema = v.object({
   id: nonEmptyStringValueSchema("custom fee ID"),
@@ -159,7 +230,7 @@ const MenuItemSchema = v.object({
   parent: v.optional(nonEmptyStringValueSchema("menu item parent")),
   sortOrder: v.optional(v.number()),
   isSection: v.optional(booleanValueSchema("isSection")),
-  sandbox: v.optional(nonEmptyStringValueSchema("sandbox")),
+  sandbox: v.optional(SandboxSchema),
 });
 
 /**
