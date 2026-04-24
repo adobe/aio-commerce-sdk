@@ -10,9 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import { execSync } from "node:child_process";
-
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import NpmPackageJson from "@npmcli/package-json";
 import { consola } from "consola";
 
 import {
@@ -23,14 +22,20 @@ import {
   installDependencies,
   runGeneration,
   runInstall,
+  writePostinstallHook,
 } from "./lib";
 
+// __PKG_VERSION__ are injected and replaced at build time.
+declare const __PKG_VERSION__: string;
+
+// Pin the self-install to the executing version so running `init` on a
+// specific release doesn't silently downgrade to the latest stable.
 const REQUIRED_DEPENDENCIES = [
-  "@adobe/aio-commerce-lib-app",
   "@adobe/aio-commerce-sdk",
+  `@adobe/aio-commerce-lib-app@${__PKG_VERSION__}`,
 ];
 
-/** Initialize the project with @adobe/aio-commerce-lib-config */
+/** Initialize the project with @adobe/aio-commerce-lib-app */
 export async function exec() {
   try {
     consola.start("Initializing app...");
@@ -42,13 +47,21 @@ export async function exec() {
     installDependencies(packageManager, domains);
 
     // Sync the package.json with the app config
-    execSync(`npm pkg set name="${config.metadata.id}"`);
-    execSync(`npm pkg set version="${config.metadata.version}"`);
-    execSync(`npm pkg set description="${config.metadata.description}"`);
+    const pkg = await NpmPackageJson.load(process.cwd());
+    pkg.update({
+      name: config.metadata.id,
+      version: config.metadata.version,
+      description: config.metadata.description,
+    });
 
+    await pkg.save();
     await runGeneration(config, execCommand);
     await ensureAppConfig(domains);
     await ensureInstallYaml(domains);
+
+    // Register the postinstall hook last — the config file it depends on
+    // now exists, so any future `<pm> install` will find what it needs.
+    await writePostinstallHook(execCommand);
 
     consola.success("Initialization complete!");
     consola.box(

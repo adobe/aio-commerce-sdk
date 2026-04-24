@@ -37,6 +37,7 @@ import {
   makeOutputDirFor,
   detectPackageManager,
   getExecCommand,
+  getInstallCommand,
 } from "@aio-commerce-sdk/scripting-utils/project";
 
 // Find a file by walking up parent directories
@@ -60,8 +61,13 @@ const outputDir = await makeOutputDirFor("dist/generated");
 // Detect the package manager (npm, pnpm, yarn, or bun)
 const packageManager = await detectPackageManager();
 
-// Get the appropriate exec command (npx, pnpx, yarn dlx, or bunx)
+// Get the exec command for a locally installed binary
+// (npx, pnpm exec, yarn exec, or bun x)
 const execCommand = getExecCommand(packageManager);
+
+// Get the command to install dependencies
+// (e.g. "pnpm add foo bar", "npm i foo bar")
+const installCommand = getInstallCommand(packageManager, ["foo", "bar"]);
 ```
 
 ## Filesystem Utilities

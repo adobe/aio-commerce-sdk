@@ -93,6 +93,7 @@ export async function promptForCommerceAppConfig() {
     featuresToAdd as string[],
   );
 
+  consola.log("");
   return {
     appName,
     configFile,
