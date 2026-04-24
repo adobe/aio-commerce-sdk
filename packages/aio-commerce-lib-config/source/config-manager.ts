@@ -10,16 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { byCode } from "#config-utils";
 import {
   requireGlobalSchema,
   setGlobalSchema,
 } from "#modules/schema/config-schema-repository";
-import {
-  DEFAULT_CACHE_TIMEOUT,
-  DEFAULT_CUSTOM_SCOPE_LEVEL,
-  DEFAULT_NAMESPACE,
-} from "#utils/constants";
+import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "#utils/constants";
 import { setGlobalStateOptions } from "#utils/repository";
 
 import {
@@ -308,7 +303,7 @@ export async function unsyncCommerceScopes() {
  * ```
  */
 export async function getConfiguration(
-  selector: SelectorBy = byCode(DEFAULT_CUSTOM_SCOPE_LEVEL),
+  selector: SelectorBy,
   options?: ConfigOptions,
 ) {
   const context = {
@@ -360,7 +355,7 @@ export async function getConfiguration(
  */
 export async function getConfigurationByKey(
   configKey: string,
-  selector: SelectorBy = byCode(DEFAULT_CUSTOM_SCOPE_LEVEL),
+  selector: SelectorBy,
   options?: ConfigOptions,
 ) {
   const context = {
@@ -430,7 +425,7 @@ export async function getConfigurationByKey(
  */
 export async function setConfiguration(
   request: SetConfigurationRequest,
-  selector: SelectorBy = byCode(DEFAULT_CUSTOM_SCOPE_LEVEL),
+  selector: SelectorBy,
   options?: ConfigOptions,
 ) {
   const context = {
