@@ -60,6 +60,8 @@ describe("commands/generate/schema", () => {
   afterEach(() => {
     mockExecSync.mockClear();
     vi.unstubAllEnvs();
+
+    delete process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY;
   });
 
   describe("run", () => {
@@ -170,10 +172,7 @@ describe("commands/generate/schema", () => {
       };
 
       await withTempProject(EMPTY_PROJECT, async () => {
-        // Clear any leftover from previous tests — process.loadEnvFile doesn't overwrite existing vars
-        vi.stubEnv("AIO_COMMERCE_CONFIG_ENCRYPTION_KEY", "");
         await run(configWithPassword);
-
         expect(mockExecSync).toHaveBeenCalledWith(
           expect.stringContaining("encryption setup"),
         );
