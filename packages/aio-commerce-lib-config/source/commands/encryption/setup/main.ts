@@ -44,7 +44,7 @@ export async function exec() {
     const dir = packageJson ? dirname(packageJson) : process.cwd();
     const envPath = join(dir, ".env");
 
-    run(envPath);
+    await run(envPath);
   } catch (error) {
     consola.error(error);
     process.exit(1);
