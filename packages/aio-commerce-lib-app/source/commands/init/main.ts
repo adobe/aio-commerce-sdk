@@ -13,6 +13,7 @@
 import { execSync } from "node:child_process";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 
 import {
@@ -25,45 +26,70 @@ import {
   runInstall,
 } from "./lib";
 
+import type { CommerceAppConfigDomain } from "#config/index";
+
 const REQUIRED_DEPENDENCIES = [
   "@adobe/aio-commerce-lib-app",
   "@adobe/aio-commerce-sdk",
 ];
 
-/** Initialize the project with @adobe/aio-commerce-lib-config */
+/** The flags that the `init` command should accept (useful for non-interactive). */
+export type InitFlags = {
+  appName: string;
+  configFormat: "ts" | "js";
+  domains: CommerceAppConfigDomain[];
+};
+
+/** Extra options that can be given to the `init` handler that would not necessarily become CLI flags. */
+type InitExtraOptions = {
+  formatConfig?: boolean;
+};
+
+/** Initialize the project */
+export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
+  consola.start("Initializing app...");
+
+  const { execCommand, packageManager } = await ensurePackageJson();
+  runInstall(packageManager, REQUIRED_DEPENDENCIES);
+
+  const projectDir = await getProjectRootDirectory();
+  const { config, domains } = await ensureCommerceAppConfig(
+    projectDir,
+    extraOptions?.formatConfig ?? true,
+    flags,
+  );
+
+  installDependencies(packageManager, domains);
+
+  // Sync the package.json with the app config
+  execSync(`npm pkg set name="${config.metadata.id}"`);
+  execSync(`npm pkg set version="${config.metadata.version}"`);
+  execSync(`npm pkg set description="${config.metadata.description}"`);
+
+  await runGeneration(config, execCommand);
+  await ensureAppConfig(domains);
+  await ensureInstallYaml(domains);
+
+  consola.success("Initialization complete!");
+  consola.box(
+    [
+      "Next steps:",
+      "  - Review and customize app.commerce.config.*",
+      "  - Build and deploy your app",
+    ].join("\n"),
+  );
+}
+
+/** Run the init command */
 export async function exec() {
   try {
-    consola.start("Initializing app...");
-
-    const { execCommand, packageManager } = await ensurePackageJson();
-    runInstall(packageManager, REQUIRED_DEPENDENCIES);
-
-    const { config, domains } = await ensureCommerceAppConfig();
-    installDependencies(packageManager, domains);
-
-    // Sync the package.json with the app config
-    execSync(`npm pkg set name="${config.metadata.id}"`);
-    execSync(`npm pkg set version="${config.metadata.version}"`);
-    execSync(`npm pkg set description="${config.metadata.description}"`);
-
-    await runGeneration(config, execCommand);
-    await ensureAppConfig(domains);
-    await ensureInstallYaml(domains);
-
-    consola.success("Initialization complete!");
-    consola.box(
-      [
-        "Next steps:",
-        "  - Review and customize app.commerce.config.*",
-        "  - Build and deploy your app",
-      ].join("\n"),
-    );
+    await run();
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());
+    } else {
+      consola.error(error);
     }
-
-    consola.error(error);
     process.exit(1);
   }
 }

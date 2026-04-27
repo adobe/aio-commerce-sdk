@@ -20,7 +20,7 @@ import {
 import {
   applyCustomScripts,
   generateCustomScriptsTemplate,
-} from "#commands/generate/actions/main";
+} from "#commands/generate/actions/lib";
 import { templates } from "#test/fixtures/commands";
 import {
   configWithCustomInstallationSteps,
@@ -152,6 +152,31 @@ describe("generateCustomScriptsTemplate", () => {
       );
 
       expect(result).toBeNull();
+    });
+
+    test("prefixes a bare relative import path with './' when the script resolves inside the generated actions dir", async () => {
+      // Scripts outside the generated actions dir already start with `..`; a
+      // script that happens to resolve inside it produces a bare path, which
+      // needs the explicit `./` prefix to be a valid relative import.
+      const appManifest: Partial<CommerceAppConfigOutputModel> = {
+        installation: {
+          customInstallationSteps: [
+            {
+              script:
+                "src/commerce-extensibility-1/.generated/actions/app-management/nested.js",
+              name: "Nested",
+              description: "Script inside the generated actions dir",
+            },
+          ],
+        },
+      };
+
+      const result = await generateCustomScriptsTemplate(
+        templates.customScripts,
+        appManifest as CommerceAppConfigOutputModel,
+      );
+
+      expect(result).toContain('import * as customScript0 from "./nested.js"');
     });
   });
 });
