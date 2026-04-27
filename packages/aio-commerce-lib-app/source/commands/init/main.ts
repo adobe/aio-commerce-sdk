@@ -33,7 +33,7 @@ const REQUIRED_DEPENDENCIES = [
   "@adobe/aio-commerce-sdk",
 ];
 
-/** The flags that the `init` command should accept via non-interactive input. */
+/** The flags that the `init` command should accept (useful for non-interactive). */
 export type InitFlags = {
   appName: string;
   configFormat: "ts" | "js";
