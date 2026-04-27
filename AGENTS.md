@@ -86,6 +86,12 @@
 - Prefix the PR title with the Jira ticket (e.g. `CEXT-1234: short description`)
 - Always follow `.github/PULL_REQUEST_TEMPLATE.md` when writing PR descriptions
 
+## Specs
+
+- Specs live in `specs/features/`, named with the Jira ticket prefix (e.g. `CEXT-6138-capability-discovery.md`)
+- Use `specs/features/_template.md` as the starting point
+- See `specs/conventions.md` for when a spec is required and authoring guidelines
+
 ## Changesets
 
 - Every code change that requires a release must include a changeset (test-only changes do not need one)
