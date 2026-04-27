@@ -13,7 +13,7 @@ catalog:
   ansis: ^4.1.0
   camelcase: ^9.0.0
   consola: ^3.4.2
-  ky: ^1.9.0
+  ky: ^2.0.0
   msw: ^2.11.1
   prettier: ^3.8.1
   safe-stable-stringify: ^2.5.0
