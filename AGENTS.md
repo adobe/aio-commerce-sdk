@@ -75,6 +75,7 @@ Each package has its own documentation under a `docs` folder (except for the met
 - Never regenerate the API reference in PRs. It clutters the diff and complicates review; we regenerate it before publishing.
 - Never use emojis of any kind in public documentation.
 - Keep documentation in sync on every change: the README (if applicable), `usage.md` (along with any supporting docs when documentation is fragmented across files), and the API reference (updated indirectly via JSDoc).
+- Document all public APIs with proper JSDoc. Use `@example` for non-obvious usage, and keep comments concise — don't restate what the types already convey.
 
 ### Comments
 
@@ -84,7 +85,6 @@ For source code comments, follow these rules:
 - JSDoc describes WHAT, inline comments describe WHY. They're opposites — don't mix them up.
 - Don't let documentation go stale (e.g. a `@param` left behind after the parameter was removed). Audit this actively, not only when touching the surrounding code.
 - Don't justify changes in JSDoc, even for internal helpers. Rationale behind a decision belongs either as an inline comment in the code or in the PR description — not in JSDoc.
-- Document all public APIs with proper JSDoc. Use `@example` for non-obvious usage, and keep comments concise — don't restate what the types already convey.
 
 ## Commits
 
