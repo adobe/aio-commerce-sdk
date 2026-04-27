@@ -230,12 +230,6 @@ export function buildAdminUiSdkExtConfig() {
     },
 
     operations: {
-      workerProcess: [
-        {
-          type: "action",
-          impl: `${ADMIN_UI_SDK_PACKAGE_NAME}/registration`,
-        },
-      ],
       view: [{ type: "web", impl: "index.html" }],
     },
 

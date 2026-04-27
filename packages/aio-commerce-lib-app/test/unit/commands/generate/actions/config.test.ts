@@ -27,9 +27,6 @@ describe("buildAdminUiSdkExtConfig", () => {
     const config = buildAdminUiSdkExtConfig();
 
     expect(config.hooks?.["pre-app-build"]).toContain("backend-ui/1");
-    expect(config.operations?.workerProcess?.[0]?.impl).toBe(
-      "admin-ui-sdk/registration",
-    );
     expect(
       config.runtimeManifest?.packages?.["admin-ui-sdk"]?.actions?.registration
         ?.function,
