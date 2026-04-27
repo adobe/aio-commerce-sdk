@@ -5,7 +5,7 @@
   "version": "1.0.1",
   "private": false,
   "engines": {
-    "node": ">=20 <=24"
+    "node": ">=22 <=26"
   },
   "license": "Apache-2.0",
   "description": "A set of utilities to build HTTP/API clients for I/O Events and Adobe Commerce",
