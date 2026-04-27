@@ -49,16 +49,19 @@ describe("commands/init/main", () => {
   describe("run", () => {
     test("orchestrates the init flow: installs deps, syncs package.json, wires up yaml extension points, and leaves generated dirs populated", async () => {
       await withTempProject(EMPTY_PROJECT, async (tempDir) => {
-        await run({
-          appName: "Smoke App",
-          configFormat: "ts",
-          domains: [
-            "businessConfig.schema",
-            "eventing.commerce",
-            "eventing.external",
-            "installation.customInstallationSteps",
-          ],
-        });
+        await run(
+          {
+            appName: "Smoke App",
+            configFormat: "ts",
+            domains: [
+              "businessConfig.schema",
+              "eventing.commerce",
+              "eventing.external",
+              "installation.customInstallationSteps",
+            ],
+          },
+          { formatConfig: false },
+        );
 
         const pkgJson: PackageJson = JSON.parse(
           await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),

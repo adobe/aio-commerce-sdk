@@ -55,7 +55,7 @@ import {
   withTempProject,
 } from "#test/fixtures/project";
 
-import type { InitOptions } from "#commands/init/utils";
+import type { InitFlags } from "#commands/init/main";
 
 describe("commands/init/lib", () => {
   describe("ensureCommerceAppConfig", () => {
@@ -80,14 +80,14 @@ describe("commands/init/lib", () => {
     });
 
     test("creates a JS config file when none exists and options are provided", async () => {
-      const options: InitOptions = {
+      const options: InitFlags = {
         appName: "Test App",
         configFormat: "js",
         domains: ["businessConfig.schema"],
       };
 
       await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
-        const result = await ensureCommerceAppConfig(tempDir, options);
+        const result = await ensureCommerceAppConfig(tempDir, false, options);
 
         expect(result.config.metadata.id).toBe("test-app");
         expect(result.config.metadata.displayName).toBe("Test App");
@@ -104,14 +104,14 @@ describe("commands/init/lib", () => {
     });
 
     test("creates a TypeScript config when ts format is specified", async () => {
-      const options: InitOptions = {
+      const options: InitFlags = {
         appName: "TS App",
         configFormat: "ts",
         domains: [],
       };
 
       await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
-        const result = await ensureCommerceAppConfig(tempDir, options);
+        const result = await ensureCommerceAppConfig(tempDir, false, options);
 
         expect(result.config.metadata.id).toBe("ts-app");
         expect(result.config.metadata.displayName).toBe("TS App");
@@ -125,7 +125,7 @@ describe("commands/init/lib", () => {
     });
 
     test("includes selected domain defaults in generated config", async () => {
-      const options: InitOptions = {
+      const options: InitFlags = {
         appName: "Full App",
         configFormat: "ts",
         domains: [
@@ -137,7 +137,7 @@ describe("commands/init/lib", () => {
       };
 
       await withTempFiles(EMPTY_PROJECT, async (tempDir) => {
-        const result = await ensureCommerceAppConfig(tempDir, options);
+        const result = await ensureCommerceAppConfig(tempDir, false, options);
 
         expect(result.config.businessConfig?.schema).toEqual(
           DOMAIN_DEFAULTS.businessConfig.schema,
