@@ -24,21 +24,24 @@ const SANDBOX_VALUES = [
   "allow-downloads",
   "allow-modals",
   "allow-popups",
-] as const;
+] as const satisfies string[];
+
+type SandboxValue = (typeof SANDBOX_VALUES)[number];
+
+function isSandboxValue(value: string): value is SandboxValue {
+  return SANDBOX_VALUES.includes(value as SandboxValue);
+}
 
 const SandboxSchema = v.pipe(
   v.string('Expected a string value for "sandbox"'),
   v.check(
-    (val) =>
-      val
-        .split(" ")
-        .every((value) =>
-          (SANDBOX_VALUES as readonly string[]).includes(value),
-        ),
+    (val) => val.split(" ").every(isSandboxValue),
     `sandbox must contain only single-space-separated values from: ${SANDBOX_VALUES.map((t) => `"${t}"`).join(", ")}`,
   ),
 );
 
+const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
+const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
 const ColumnTypeSchema = v.picklist([
   "boolean",
   "date",
@@ -46,8 +49,6 @@ const ColumnTypeSchema = v.picklist([
   "integer",
   "string",
 ]);
-const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
-const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
 
 const MassActionConfirmSchema = v.object({
   title: v.optional(nonEmptyStringValueSchema("confirm title")),
@@ -58,10 +59,22 @@ const ViewButtonConfirmSchema = v.object({
   message: v.optional(nonEmptyStringValueSchema("confirm message")),
 });
 
-const iframeActionEntries = {
-  displayIframe: v.optional(booleanValueSchema("displayIframe")),
+const IframeBaseEntries = {
   timeout: v.optional(positiveNumberValueSchema("timeout")),
+};
+
+const IframeEnabledEntries = {
+  ...IframeBaseEntries,
+  displayIframe: v.literal(true),
   sandbox: v.optional(SandboxSchema),
+};
+
+const IframeDisabledEntries = {
+  ...IframeBaseEntries,
+  displayIframe: v.optional(v.literal(false)),
+  sandbox: v.optional(
+    v.never("sandbox is only relevant when displayIframe is set to true"),
+  ),
 };
 
 const GridColumnPropertySchema = v.object({
@@ -87,62 +100,21 @@ const massActionBaseEntries = {
   title: v.optional(nonEmptyStringValueSchema("mass action page title")),
   confirm: v.optional(MassActionConfirmSchema),
   path: nonEmptyStringValueSchema("mass action path"),
-  ...iframeActionEntries,
 };
 
-const SANDBOX_DISPLAY_IFRAME_MESSAGE =
-  "sandbox is only relevant when displayIframe is set to true";
-
-type SandboxDisplayIframeInput = {
-  sandbox?: string | undefined;
-  displayIframe?: boolean | undefined;
-};
-
-// Defined once with a concrete input type; cast inside withSandboxDisplayIframeCheck
-// to the actual schema output type (safe because every schema using this has both fields).
-const sandboxDisplayIframeCheck = v.forward(
-  v.partialCheck<
-    SandboxDisplayIframeInput,
-    readonly [readonly ["sandbox"], readonly ["displayIframe"]],
-    SandboxDisplayIframeInput,
-    typeof SANDBOX_DISPLAY_IFRAME_MESSAGE
-  >(
-    [["sandbox"], ["displayIframe"]],
-    (input) => input.sandbox === undefined || input.displayIframe === true,
-    SANDBOX_DISPLAY_IFRAME_MESSAGE,
-  ),
-  ["sandbox"],
-);
-
-function withSandboxDisplayIframeCheck<
-  TSchema extends v.BaseSchema<
-    unknown,
-    SandboxDisplayIframeInput,
-    v.BaseIssue<unknown>
-  >,
->(schema: TSchema) {
-  return v.pipe(
-    schema,
-    // Cast is required: valibot's "~types" property is invariant, so a shared action
-    // constant cannot be assigned to PipeItem<FullSchemaOutput> without this cast.
-    // Runtime behavior is identical to inlining the check in each schema.
-    sandboxDisplayIframeCheck as unknown as v.BaseValidation<
-      v.InferOutput<TSchema>,
-      v.InferOutput<TSchema>,
-      v.BaseIssue<unknown>
-    >,
-  );
+function createIframeActionSchema<TEntries extends v.ObjectEntries>(
+  schema: v.StrictObjectSchema<TEntries, undefined>,
+) {
+  return v.variant("displayIframe", [
+    v.strictObject({ ...schema.entries, ...IframeEnabledEntries }),
+    v.strictObject({ ...schema.entries, ...IframeDisabledEntries }),
+  ]);
 }
 
-type SchemaEntries = Record<
-  string,
-  v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>
->;
-
-function createMassActionSchema<TEntries extends SchemaEntries>(
+function createMassActionSchema<TEntries extends v.ObjectEntries>(
   variantEntries: TEntries,
 ) {
-  return withSandboxDisplayIframeCheck(
+  return createIframeActionSchema(
     v.strictObject({
       ...massActionBaseEntries,
       ...variantEntries,
@@ -166,15 +138,14 @@ const CustomerMassActionSchema = createMassActionSchema({
   ),
 });
 
-const OrderViewButtonSchema = withSandboxDisplayIframeCheck(
-  v.object({
+const OrderViewButtonSchema = createIframeActionSchema(
+  v.strictObject({
     buttonId: nonEmptyStringValueSchema("view button ID"),
     label: nonEmptyStringValueSchema("view button label"),
     confirm: v.optional(ViewButtonConfirmSchema),
     path: nonEmptyStringValueSchema("view button path"),
     level: v.optional(ViewButtonLevelSchema),
     sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
-    ...iframeActionEntries,
   }),
 );
 

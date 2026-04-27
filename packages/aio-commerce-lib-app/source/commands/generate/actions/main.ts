@@ -23,6 +23,7 @@ import { createOrUpdateExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml"
 import { readYamlFile } from "@aio-commerce-sdk/scripting-utils/yaml/index";
 import { consola } from "consola";
 import { formatTree } from "consola/utils";
+import { stringify } from "safe-stable-stringify";
 
 import {
   ADMIN_UI_SDK_ACTIONS_PATH,
@@ -31,6 +32,7 @@ import {
   EXTENSIBILITY_EXTENSION_POINT_ID,
   GENERATED_ACTIONS_PATH,
   getExtensionPointFolderPath,
+  REGISTRATION_FILE_NAME,
 } from "#commands/constants";
 import { loadAppManifest, prettierFormat } from "#commands/utils";
 import {
@@ -47,7 +49,6 @@ import {
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
   CUSTOM_SCRIPTS_MAP_PLACEHOLDER,
   getRuntimeActions,
-  REGISTRATION_JSON_PLACEHOLDER,
 } from "./config";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
@@ -300,6 +301,9 @@ export async function generateRegistrationActionFile(
   consola.start("Generating Admin UI SDK registration action...");
   const extensionPointFolderPath =
     getExtensionPointFolderPath(extensionPointId);
+  const generatedDir = await makeOutputDirFor(
+    join(extensionPointFolderPath, ".generated"),
+  );
 
   const outputDir = await makeOutputDirFor(
     join(extensionPointFolderPath, ADMIN_UI_SDK_ACTIONS_PATH),
@@ -313,14 +317,12 @@ export async function generateRegistrationActionFile(
 
   const registration = appManifest.adminUiSdk?.registration ?? {};
   const actionPath = join(outputDir, "index.js");
-  const content = template.replace(
-    REGISTRATION_JSON_PLACEHOLDER,
-    `const registration = ${JSON.stringify(registration)};`,
-  );
-
-  const formattedContent = await prettierFormat(content, actionPath);
+  const registrationPath = join(generatedDir, REGISTRATION_FILE_NAME);
+  const registrationContents = stringify(registration, null, 2);
+  const formattedContent = await prettierFormat(template, actionPath);
 
   await writeFile(actionPath, formattedContent, "utf-8");
+  await writeFile(registrationPath, registrationContents, "utf-8");
   consola.success(
     `Generated registration action at ${relative(process.cwd(), actionPath)}`,
   );
