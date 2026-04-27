@@ -21,9 +21,9 @@ import {
   readPackageJson,
 } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
-import * as prettier from "prettier";
 
 import {
+  BACKEND_UI_EXTENSION_POINT_ID,
   COMMERCE_APP_CONFIG_FILE,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -31,6 +31,7 @@ import {
 } from "#commands/constants";
 import { run as generateActionsCommand } from "#commands/generate/actions/main";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
+import { prettierFormat } from "#commands/utils";
 import {
   getConfigDomains,
   parseCommerceAppConfig,
@@ -97,18 +98,7 @@ export async function ensureCommerceAppConfig(cwd = process.cwd()) {
     consola.info(`Creating ${answers.configFile}...`);
 
     const path = join(await getProjectRootDirectory(cwd), answers.configFile);
-    const formattedConfig = await prettier.format(configContent, {
-      semi: true,
-      quoteStyle: "double",
-      arrowParens: "always",
-      bracketSameLine: true,
-      bracketSpacing: true,
-      trailingComma: "all",
-      tabWidth: 2,
-      useTabs: false,
-      printWidth: 80,
-      filepath: path,
-    });
+    const formattedConfig = await prettierFormat(configContent, path);
 
     await writeFile(path, formattedConfig, "utf-8");
     consola.success(`Created ${answers.configFile}`);
@@ -208,6 +198,14 @@ export async function ensureAppConfig(
     );
   }
 
+  if (domains.has("adminUiSdk")) {
+    await addExtensionPointToAppConfig(
+      BACKEND_UI_EXTENSION_POINT_ID,
+      rootDirectory,
+      " This extension is required for Admin UI SDK. Do not remove.",
+    );
+  }
+
   // This is always needed (to get the app config at least)
   await addExtensionPointToAppConfig(
     EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -300,6 +298,14 @@ export async function ensureInstallYaml(
       CONFIGURATION_EXTENSION_POINT_ID,
       rootDirectory,
       " This extension is required for business configuration. Do not remove.",
+    );
+  }
+
+  if (domains.has("adminUiSdk")) {
+    await addExtensionPointToInstallYaml(
+      BACKEND_UI_EXTENSION_POINT_ID,
+      rootDirectory,
+      " This extension is required for Admin UI SDK. Do not remove.",
     );
   }
 

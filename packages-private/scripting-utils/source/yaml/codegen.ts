@@ -45,8 +45,22 @@ export async function createOrUpdateExtConfig(
   buildOperations(extConfigDoc, config.operations);
   buildRuntimeManifest(extConfigDoc, config.runtimeManifest);
 
+  if (config.web !== undefined) {
+    buildWeb(extConfigDoc, config.web);
+  }
+
   await writeExtConfig(path, extConfigDoc);
   return extConfigDoc;
+}
+
+/**
+ * Set the top-level `web` scalar only if it's missing.
+ * Preserves any user-customized value already present.
+ */
+function buildWeb(extConfig: Document, web: string) {
+  if (!extConfig.hasIn(["web"])) {
+    extConfig.add(extConfig.createPair("web", web));
+  }
 }
 
 /**
@@ -129,6 +143,23 @@ function buildOperations(extConfig: Document, operations: Operations) {
       return map;
     }),
   );
+
+  if (operations.view !== undefined) {
+    const view = getOrCreateSeq(extConfig, ["operations", "view"]);
+
+    // Seed defaults only when the user has not already populated the view list.
+    if (view.items.length === 0) {
+      view.items.push(
+        ...operations.view.map((v) => {
+          const map = new YAMLMap();
+          map.set("type", v.type);
+          map.set("impl", v.impl);
+
+          return map;
+        }),
+      );
+    }
+  }
 }
 
 /**
