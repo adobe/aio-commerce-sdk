@@ -119,6 +119,25 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(true);
     });
 
+    test("iframe-enabled mass action allows sandbox", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          order: {
+            massActions: [
+              {
+                actionId: "app::action",
+                label: "Action",
+                path: "#/action",
+                displayIframe: true,
+                sandbox: "allow-modals",
+              },
+            ],
+          },
+        },
+      });
+      expect(result.success).toBe(true);
+    });
+
     test("registration with grid columns — all 5 type values", () => {
       for (const type of [
         "boolean",
@@ -161,6 +180,25 @@ describe("AdminUiSdkSchema", () => {
         });
         expect(result.success, `level ${level} should be valid`).toBe(true);
       }
+    });
+
+    test("iframe-enabled view button allows sandbox", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          order: {
+            viewButtons: [
+              {
+                buttonId: "app::btn",
+                label: "Btn",
+                path: "#/btn",
+                displayIframe: true,
+                sandbox: "allow-modals",
+              },
+            ],
+          },
+        },
+      });
+      expect(result.success).toBe(true);
     });
 
     test("registration with custom fees including applyFeeOnLastCreditMemo", () => {
