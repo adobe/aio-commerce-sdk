@@ -20,4 +20,4 @@ export const DEFAULT_NAMESPACE = "aio-commerce-config";
 export const DEFAULT_CACHE_TIMEOUT = 300;
 
 /** Default custom scope level. */
-export const DEFAULT_CUSTOM_SCOPE_LEVEL = "global";
+export const DEFAULT_CUSTOM_SCOPE_LEVEL = "base";
