@@ -35,12 +35,18 @@ export async function loadAppManifest() {
   return appConfig;
 }
 
-/** Path to an extension point's `.generated` directory, relative to the project root. */
+/**
+ * Path to an extension point's `.generated` directory, relative to the project root.
+ * @param extensionPointId - The extension point ID, e.g. "commerce/extensibility/1"
+ */
 export function getGeneratedDir(extensionPointId: string) {
   return join(getExtensionPointFolderPath(extensionPointId), GENERATED_PATH);
 }
 
-/** Path to an extension point's generated actions directory, relative to the project root. */
+/**
+ * Path to an extension point's generated actions directory, relative to the project root.
+ * @param extensionPointId - The extension point ID, e.g. "commerce/extensibility/1"
+ */
 export function getActionsDir(extensionPointId: string) {
   return join(
     getExtensionPointFolderPath(extensionPointId),
@@ -48,12 +54,19 @@ export function getActionsDir(extensionPointId: string) {
   );
 }
 
-/** Path to a specific generated action file, relative to the project root. */
+/**
+ * Path to a specific generated action file, relative to the project root.
+ * @param extensionPointId - The extension point ID, e.g. "commerce/extensibility/1"
+ * @param actionName - The name of the action, e.g. "my-action"
+ */
 export function getActionPath(extensionPointId: string, actionName: string) {
   return join(getActionsDir(extensionPointId), `${actionName}.js`);
 }
 
-/** Path to an extension point's `ext.config.yaml`, relative to the project root. */
+/**
+ * Path to an extension point's `ext.config.yaml`, relative to the project root.
+ * @param extensionPointId - The extension point ID, e.g. "commerce/extensibility/1"
+ */
 export function getExtConfigPath(extensionPointId: string) {
   return join(getExtensionPointFolderPath(extensionPointId), "ext.config.yaml");
 }
