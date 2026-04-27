@@ -12,6 +12,7 @@
 
 import * as v from "valibot";
 
+const DEFAULT_BOOLEAN_VALUE = false as const;
 const DEFAULT_STRING_VALUE = "" as const;
 const DEFAULT_MULTIPLE_LIST_VALUE = [] as const;
 
@@ -151,6 +152,16 @@ const PhoneSchema = v.object({
   ),
 });
 
+/** Schema for a boolean toggle field that accepts true/false values */
+const BooleanSchema = v.object({
+  ...BaseOptionSchema.entries,
+  type: v.literal("boolean", "Expected the type to be 'boolean'"),
+  default: v.optional(
+    v.boolean("Expected a boolean for the default value"),
+    DEFAULT_BOOLEAN_VALUE,
+  ),
+});
+
 /** Schema for a configuration field that can be one of various field types (list, text, password, email, url, or phone) */
 export const FieldSchema = v.variant("type", [
   ListSchema,
@@ -159,6 +170,7 @@ export const FieldSchema = v.variant("type", [
   EmailSchema,
   UrlSchema,
   PhoneSchema,
+  BooleanSchema,
 ]);
 
 /** Schema for the schema of the business configuration, which is an array of configuration fields with at least one field required */

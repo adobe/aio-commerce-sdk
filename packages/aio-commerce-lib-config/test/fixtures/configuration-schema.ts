@@ -86,6 +86,17 @@ export const VALID_CONFIGURATION = [
     label: "Telephone Field",
     default: "+1234567890",
   },
+  {
+    name: "enableFeatureFlag",
+    type: "boolean",
+    label: "Enable Feature Flag",
+    default: true,
+  },
+  {
+    name: "optionalToggle",
+    type: "boolean",
+    label: "Optional Toggle",
+  },
 ] satisfies BusinessConfigSchema;
 
 export const INVALID_CONFIGURATION = [

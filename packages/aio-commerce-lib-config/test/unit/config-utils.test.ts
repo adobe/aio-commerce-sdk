@@ -79,12 +79,13 @@ describe("config-utils", () => {
       expect(sanitizeRequestEntries(entries)).toHaveLength(0);
     });
 
-    test("filters out entries with boolean values", () => {
+    test("should accept boolean values", () => {
       const entries = [
         { name: "flag", value: true },
+        { name: "flag", value: false },
       ] as unknown as ConfigValueWithOptionalOrigin[];
 
-      expect(sanitizeRequestEntries(entries)).toHaveLength(0);
+      expect(sanitizeRequestEntries(entries)).toHaveLength(2);
     });
 
     test("filters out entries with undefined values", () => {

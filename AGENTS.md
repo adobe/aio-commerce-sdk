@@ -45,7 +45,6 @@
 - Every public package must declare `"sideEffects"` in `package.json`: `false` if no side effects, or an array of files that do have side effects
 - `package.json` has two exports configs: `exports` (source paths, for local dev) and `publishConfig.exports` (dist paths, for consumers)
 - Format Markdown with `pnpm format:markdown` (Prettier)
-- JSDoc: document all public APIs you write; use `@example` for non-obvious usage; keep comments concise — don't restate what the types already say
 
 # Workflow
 
@@ -66,6 +65,26 @@
    * governing permissions and limitations under the License.
    */
   ```
+
+## Documentation
+
+Each package has its own documentation under a `docs` folder (except for the meta-package). This includes a general `usage.md` guide and an auto-generated API reference produced by Typedoc (`pnpm run docs`) from the JSDoc comments in the source. When making changes, follow these rules:
+
+- Document only the public interface; internal helpers MUST NOT appear in `usage.md`. Internal helpers may still carry JSDoc (and this is preferred), unless the symbol is self-explanatory or trivially obvious. Documenting functions and their purpose helps future maintainers understand what a function does without having to trace it through the codebase.
+- Never edit the auto-generated API reference by hand — any changes will be wiped out on regeneration.
+- Never regenerate the API reference in PRs. It clutters the diff and complicates review; we regenerate it before publishing.
+- Never use emojis of any kind in public documentation.
+- Keep documentation in sync on every change: the README (if applicable), `usage.md` (along with any supporting docs when documentation is fragmented across files), and the API reference (updated indirectly via JSDoc).
+- Document all public APIs with proper JSDoc. Use `@example` for non-obvious usage, and keep comments concise — don't restate what the types already convey.
+
+### Comments
+
+For source code comments, follow these rules:
+
+- Never use inline comments to explain the WHAT or the HOW — only the WHY, and only when necessary. Avoid over-documenting with innecessary implementation details (e.g "This function works this way because the returned result of that other function is X instead of Y).
+- JSDoc describes WHAT, inline comments describe WHY. They're opposites — don't mix them up.
+- Don't let documentation go stale (e.g. a `@param` left behind after the parameter was removed). Audit this actively, not only when touching the surrounding code.
+- Don't justify changes in JSDoc, even for internal helpers. Rationale behind a decision belongs either as an inline comment in the code or in the PR description — not in JSDoc.
 
 ## Commits
 
