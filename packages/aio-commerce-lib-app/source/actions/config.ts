@@ -172,7 +172,9 @@ router.patch("/", {
       v.object({
         name: nonEmptyStringValueSchema("config.name"),
         // null unsets the field, restoring inheritance from the parent scope
-        value: v.nullable(v.union([v.string(), v.array(v.string())])),
+        value: v.nullable(
+          v.union([v.boolean(), v.string(), v.array(v.string())]),
+        ),
       }),
     ),
   }),
