@@ -33,7 +33,6 @@ import { run as generateManifestCommand } from "#commands/generate/manifest/main
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import {
   getConfigDomains,
-  hasConfigDomain,
   parseCommerceAppConfig,
   readCommerceAppConfig,
   validateCommerceAppConfig,
@@ -295,10 +294,7 @@ export async function runGeneration(
   try {
     await generateActionsCommand(appConfig);
     await generateManifestCommand(appConfig);
-
-    if (hasConfigDomain(appConfig, "businessConfig.schema")) {
-      await generateSchemaCommand(appConfig);
-    }
+    await generateSchemaCommand(appConfig);
   } catch (error) {
     throw new Error(
       `Failed to run generation command. Please run manually: ${execCommand} aio-commerce-lib-app generate all`,

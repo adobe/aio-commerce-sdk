@@ -35,12 +35,15 @@ import { hasBusinessConfigSchema } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 export async function run(appConfig: CommerceAppConfigOutputModel) {
-  consola.info("Generating configuration schema...");
-
   if (!hasBusinessConfigSchema(appConfig)) {
-    consola.warn("Business configuration schema not found");
+    consola.debug(
+      "Business configuration schema not found in application configuration. Nothing to do.",
+    );
+
     return;
   }
+
+  consola.info("Generating configuration schema...");
 
   const projectDir = await getProjectRootDirectory();
   const envPath = join(projectDir, ".env");
