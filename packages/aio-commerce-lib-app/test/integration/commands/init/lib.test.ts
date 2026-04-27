@@ -133,6 +133,7 @@ describe("commands/init/lib", () => {
           "eventing.commerce",
           "eventing.external",
           "installation.customInstallationSteps",
+          "webhooks",
         ],
       };
 
@@ -151,6 +152,7 @@ describe("commands/init/lib", () => {
         expect(result.config.installation?.customInstallationSteps).toEqual(
           DOMAIN_DEFAULTS["installation.customInstallationSteps"],
         );
+        expect(result.config.webhooks).toEqual(DOMAIN_DEFAULTS.webhooks);
       });
     });
 
