@@ -35,6 +35,7 @@ import { DOMAIN_DEFAULTS } from "./constants";
 
 import type { Document, YAMLSeq } from "yaml";
 import type { CommerceAppConfig, CommerceAppConfigDomain } from "#config/index";
+import type { InitFlags } from "./main";
 
 export type ScaffoldAppAnswers = {
   appName: string;
@@ -43,27 +44,24 @@ export type ScaffoldAppAnswers = {
   domains: Set<CommerceAppConfigDomain>;
 };
 
-/** Options for non-interactive init. When all fields are provided, prompts are skipped. */
-export type InitOptions = {
-  appName: string;
-  configFormat: "ts" | "js";
-  domains: CommerceAppConfigDomain[];
-};
+/**
+ * Convert the given init options to answers for scaffolding the app config. This is useful for non-interactive use cases, such as running the command with a config file or from another script.
+ * @param flags - The initialization options
+ */
+export function initFlagsToScaffoldAppAnswers(
+  flags: InitFlags,
+): ScaffoldAppAnswers {
+  const configFile = `${COMMERCE_APP_CONFIG_FILE}.${flags.configFormat}`;
+  return {
+    appName: flags.appName,
+    configFile,
+    configFormat: flags.configFormat,
+    domains: new Set<CommerceAppConfigDomain>(flags.domains),
+  };
+}
 
 /** Prompt the user to scaffold a new Commerce App configuration. When options are provided, prompts are skipped. */
-export async function promptForCommerceAppConfig(
-  options?: InitOptions,
-): Promise<ScaffoldAppAnswers> {
-  if (options) {
-    const configFile = `${COMMERCE_APP_CONFIG_FILE}.${options.configFormat}`;
-    return {
-      appName: options.appName,
-      configFile,
-      configFormat: options.configFormat,
-      domains: new Set<CommerceAppConfigDomain>(options.domains),
-    };
-  }
-
+export async function promptForCommerceAppConfig(): Promise<ScaffoldAppAnswers> {
   const configFormat = await consola.prompt(
     "What format do you want to use for the config file?",
     {

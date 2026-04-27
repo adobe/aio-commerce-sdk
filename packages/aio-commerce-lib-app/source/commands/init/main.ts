@@ -13,6 +13,7 @@
 import { execSync } from "node:child_process";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 
 import {
@@ -25,24 +26,39 @@ import {
   runInstall,
 } from "./lib";
 
-import type { InitOptions } from "./utils";
+import type { CommerceAppConfigDomain } from "#config/index";
 
 const REQUIRED_DEPENDENCIES = [
   "@adobe/aio-commerce-lib-app",
   "@adobe/aio-commerce-sdk",
 ];
 
+/** The flags that the `init` command should accept via non-interactive input. */
+export type InitFlags = {
+  appName: string;
+  configFormat: "ts" | "js";
+  domains: CommerceAppConfigDomain[];
+};
+
+/** Extra options that can be given to the `init` handler that would not necessarily become CLI flags. */
+type InitExtraOptions = {
+  formatConfig?: boolean;
+};
+
 /** Initialize the project */
-export async function run(options?: InitOptions) {
+export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   consola.start("Initializing app...");
 
   const { execCommand, packageManager } = await ensurePackageJson();
   runInstall(packageManager, REQUIRED_DEPENDENCIES);
 
+  const projectDir = await getProjectRootDirectory();
   const { config, domains } = await ensureCommerceAppConfig(
-    process.cwd(),
-    options,
+    projectDir,
+    extraOptions?.formatConfig ?? true,
+    flags,
   );
+
   installDependencies(packageManager, domains);
 
   // Sync the package.json with the app config

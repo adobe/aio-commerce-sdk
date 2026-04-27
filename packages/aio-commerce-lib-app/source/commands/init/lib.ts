@@ -43,6 +43,7 @@ import {
   addExtensionPointToAppConfig,
   addExtensionPointToInstallYaml,
   getDefaultCommerceAppConfig,
+  initFlagsToScaffoldAppAnswers,
   promptForCommerceAppConfig,
 } from "./utils";
 
@@ -50,12 +51,13 @@ import type { PackageManager } from "@aio-commerce-sdk/scripting-utils/project";
 import type { PackageJson } from "type-fest";
 import type { CommerceAppConfigDomain } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { InitOptions } from "./utils";
+import type { InitFlags } from "./main";
 
 /** Ensure app.commerce.config file exists, allow creating if it doesn't. When options are provided, prompts are skipped. */
 export async function ensureCommerceAppConfig(
   cwd = process.cwd(),
-  options?: InitOptions,
+  formatConfig = true,
+  flags?: InitFlags,
 ) {
   let config: unknown | null = null;
   try {
@@ -82,7 +84,7 @@ export async function ensureCommerceAppConfig(
     }
   }
 
-  if (!options) {
+  if (!flags) {
     consola.warn(`${COMMERCE_APP_CONFIG_FILE} not found.`);
     const createConfig = await consola.prompt(
       `Do you want to create a ${COMMERCE_APP_CONFIG_FILE} file? (y/n)`,
@@ -98,17 +100,16 @@ export async function ensureCommerceAppConfig(
     }
   }
 
-  const answers = await promptForCommerceAppConfig(options);
+  const answers = flags
+    ? initFlagsToScaffoldAppAnswers(flags)
+    : await promptForCommerceAppConfig();
+
   try {
     const configContent = await getDefaultCommerceAppConfig(cwd, answers);
+    const path = join(await getProjectRootDirectory(cwd), answers.configFile);
     consola.info(`Creating ${answers.configFile}...`);
 
-    const path = join(await getProjectRootDirectory(cwd), answers.configFile);
-
-    // Skip formatting during tests, prettier cold-start is expensive and formatting is not under test.
-    if (process.env.VITEST) {
-      await writeFile(path, configContent, "utf-8");
-    } else {
+    if (formatConfig) {
       const prettier = await import("prettier");
       const formattedConfig = await prettier.format(configContent, {
         semi: true,
@@ -123,11 +124,13 @@ export async function ensureCommerceAppConfig(
         filepath: path,
       });
       await writeFile(path, formattedConfig, "utf-8");
+    } else {
+      await writeFile(path, configContent, "utf-8");
     }
 
+    const config = await parseCommerceAppConfig(cwd);
     consola.success(`Created ${answers.configFile}`);
 
-    const config = await parseCommerceAppConfig(cwd);
     return { config, domains: answers.domains };
   } catch (error) {
     throw new Error(`Failed to create ${answers.configFile}`, {
