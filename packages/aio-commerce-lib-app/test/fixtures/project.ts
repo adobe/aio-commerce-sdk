@@ -72,7 +72,7 @@ export function makeProjectFiles(
     };
   }
 
-  const serialized = inspect(config ?? {}, { depth: null });
+  const serialized = inspect(config, { depth: null });
   const fileName =
     format === "esm" ? "app.commerce.config.ts" : "app.commerce.config.js";
 
