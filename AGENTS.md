@@ -46,7 +46,6 @@
 - `package.json` has two exports configs: `exports` (source paths, for local dev) and `publishConfig.exports` (dist paths, for consumers)
 - Format Markdown with `pnpm format:markdown` (Prettier)
 
-
 # Workflow
 
 ## Files
@@ -81,7 +80,7 @@ Each package has its own documentation under a `docs` folder (except for the met
 
 For source code comments, follow these rules:
 
-- Never use inline comments to explain the WHAT or the HOW — only the WHY, and only when necessary. Don't over-document.
+- Never use inline comments to explain the WHAT or the HOW — only the WHY, and only when necessary. Avoid over-documenting with innecessary implementation details (e.g "This function works this way because the returned result of that other function is X instead of Y).
 - JSDoc describes WHAT, inline comments describe WHY. They're opposites — don't mix them up.
 - Don't let documentation go stale (e.g. a `@param` left behind after the parameter was removed). Audit this actively, not only when touching the surrounding code.
 - Don't justify changes in JSDoc, even for internal helpers. Rationale behind a decision belongs either as an inline comment in the code or in the PR description — not in JSDoc.
