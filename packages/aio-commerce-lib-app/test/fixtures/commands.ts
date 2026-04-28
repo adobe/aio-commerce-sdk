@@ -1,7 +1,6 @@
 // @ts-expect-error - Importing the template as a raw string for testing purposes.
-
-// @ts-expect-error - Importing the template as a raw string for testing purposes.
 import registrationTemplate from "#templates/admin-ui-sdk/registration.js?raw";
+// @ts-expect-error - Importing the template as a raw string for testing purposes.
 import appConfigTemplate from "#templates/app-management/app-config.js?raw";
 // @ts-expect-error - Importing the template as a raw string for testing purposes.
 import customScripts from "#templates/app-management/custom-scripts.js?raw";
