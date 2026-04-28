@@ -155,7 +155,7 @@ export function deriveScopeFromId(
 /**
  * Derives scope from code with optional level (applies default if missing)
  * @param code - The code of the scope to find.
- * @param level - The level of the scope to find (optional, defaults to global level).
+ * @param level - The level of the scope to find (optional, defaults to base level).
  * @param tree - The scope tree to search.
  * @returns The derived scope information including code, level, id, and path.
  */
@@ -261,7 +261,7 @@ export function sanitizeRequestEntries(
 
       // TODO: This should be done via schema validation.
       const hasValidValue =
-        ["string"].includes(typeof entry.value) ||
+        ["string", "boolean"].includes(typeof entry.value) ||
         (Array.isArray(entry.value) &&
           entry.value.every((item) => typeof item === "string"));
 

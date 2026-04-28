@@ -14,11 +14,14 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { syncImsCredentials } from "@aio-commerce-sdk/scripting-utils/env";
 import consola from "consola";
 
+import { BACKEND_UI_EXTENSION_POINT_ID } from "#commands/constants";
+import { generateRegistrationActionFile } from "#commands/generate/actions/main";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import { loadAppManifest } from "#commands/utils";
+import { hasAdminUiSdk } from "#config/index";
 
-type Extension = "extensibility/1" | "configuration/1";
+type Extension = "extensibility/1" | "configuration/1" | "backend-ui/1";
 
 /**
  * Runs the pre-app-build hook for the given extension.
@@ -38,6 +41,16 @@ export async function run(extension: Extension) {
 
   if (extension === "configuration/1") {
     await generateSchemaCommand(appManifest);
+    return;
+  }
+
+  if (extension === "backend-ui/1") {
+    if (hasAdminUiSdk(appManifest)) {
+      await generateRegistrationActionFile(
+        appManifest,
+        BACKEND_UI_EXTENSION_POINT_ID,
+      );
+    }
     return;
   }
 

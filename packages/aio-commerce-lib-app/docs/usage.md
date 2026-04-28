@@ -1,8 +1,5 @@
 # `@adobe/aio-commerce-lib-app` Documentation
 
-> [!WARNING]
-> This package is a work in progress and is not yet ready for use. You may be able to install it, but if you do, expect breaking changes.
-
 ## Overview
 
 The `@adobe/aio-commerce-lib-app` library provides:

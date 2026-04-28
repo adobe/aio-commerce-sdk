@@ -15,8 +15,14 @@ export type WorkerProcess = {
   impl: string;
 };
 
+export type ViewOperation = {
+  type: "web";
+  impl: string;
+};
+
 export type Operations = {
   workerProcess?: WorkerProcess[];
+  view?: ViewOperation[];
 };
 
 export type ActionDefinition = {
@@ -46,6 +52,7 @@ export type ExtConfig = {
   hooks?: Record<string, string>;
   operations?: Operations;
   runtimeManifest?: RuntimeManifest;
+  web?: string;
 };
 
 /** Simple representation of a partial app.config.yaml file */
