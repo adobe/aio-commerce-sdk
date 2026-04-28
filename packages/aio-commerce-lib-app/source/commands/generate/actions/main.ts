@@ -70,7 +70,6 @@ export async function run(
     );
   }
 
-  // Phase 3 — Admin UI SDK backend-ui extension point
   if (hasAdminUiSdk(appManifest)) {
     await updateExtConfig(appManifest, BACKEND_UI_EXTENSION_POINT_ID);
     await generateRegistrationActionFile(
@@ -95,9 +94,3 @@ export async function exec() {
     process.exit(1);
   }
 }
-
-export {
-  applyCustomScripts,
-  generateCustomScriptsTemplate,
-  generateRegistrationActionFile,
-} from "./lib";

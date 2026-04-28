@@ -12,52 +12,141 @@
 
 import { describe, expect, test } from "vitest";
 
-import { ADMIN_UI_SDK_ACTIONS_PATH } from "#commands/constants";
+import { PACKAGE_NAME } from "#commands/constants";
 import {
   buildAdminUiSdkExtConfig,
   buildAppManagementExtConfig,
+  buildBusinessConfigurationExtConfig,
+  getRuntimeActions,
 } from "#commands/generate/actions/config";
 import {
   configWithAdminUiSdk,
+  configWithCommerceEventing,
+  configWithCustomInstallationSteps,
+  configWithExternalEventing,
+  configWithWebhooks,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
+const EXTENSIBILITY_EXTENSION_MATCHER = /EXTENSION=extensibility\/1/;
+const CONFIGURATION_EXTENSION_MATCHER = /EXTENSION=configuration\/1/;
+const BACKEND_UI_EXTENSION_MATCHER = /EXTENSION=backend-ui\/1/;
+
+describe("buildAppManagementExtConfig", () => {
+  test("app-config action is included with minimal config", () => {
+    const result = buildAppManagementExtConfig(minimalValidConfig);
+
+    const actions = result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions;
+    expect(actions?.["app-config"]).toBeDefined();
+  });
+
+  test("does not include installation action for minimal config", () => {
+    const result = buildAppManagementExtConfig(minimalValidConfig);
+
+    const actions = result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions;
+    expect(actions?.installation).toBeUndefined();
+  });
+
+  test.concurrent.each([
+    { label: "commerce eventing", config: configWithCommerceEventing },
+    { label: "external eventing", config: configWithExternalEventing },
+    {
+      label: "custom installation steps",
+      config: configWithCustomInstallationSteps,
+    },
+    { label: "webhooks", config: configWithWebhooks },
+    { label: "adminUiSdk", config: configWithAdminUiSdk },
+  ])("includes installation action when $label is configured", ({ config }) => {
+    const result = buildAppManagementExtConfig(config);
+
+    const actions = result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions;
+    expect(actions?.installation).toBeDefined();
+  });
+
+  test.concurrent.each([
+    { label: "commerce eventing", config: configWithCommerceEventing },
+    { label: "external eventing", config: configWithExternalEventing },
+    {
+      label: "custom installation steps",
+      config: configWithCustomInstallationSteps,
+    },
+    { label: "webhooks", config: configWithWebhooks },
+    { label: "adminUiSdk", config: configWithAdminUiSdk },
+  ])("includes installation workerProcess entry when $label is configured", ({
+    config,
+  }) => {
+    const result = buildAppManagementExtConfig(config);
+    const workerImpls =
+      result.operations?.workerProcess?.map((worker) => worker.impl) ?? [];
+
+    expect(workerImpls).toContain("app-management/installation");
+  });
+
+  test("installation action includes encryption key input when schema has password fields", () => {
+    const configWithPassword = {
+      ...configWithCommerceEventing,
+      businessConfig: {
+        schema: [
+          {
+            name: "secret",
+            label: "Secret",
+            type: "password" as const,
+            default: "" as const,
+          },
+        ],
+      },
+    };
+
+    const result = buildAppManagementExtConfig(configWithPassword);
+    const installAction =
+      result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions?.installation;
+
+    expect(installAction?.inputs?.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY).toBe(
+      "$AIO_COMMERCE_CONFIG_ENCRYPTION_KEY",
+    );
+  });
+
+  test("installation action omits encryption key input when no password fields", () => {
+    const result = buildAppManagementExtConfig(configWithCommerceEventing);
+    const installAction =
+      result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions?.installation;
+
+    expect(
+      installAction?.inputs?.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+    ).toBeUndefined();
+  });
+
+  test("all actions are web:yes", () => {
+    const result = buildAppManagementExtConfig(configWithCommerceEventing);
+    const actions = result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions;
+
+    for (const action of Object.values(actions ?? {})) {
+      expect(action.web).toBe("yes");
+    }
+  });
+
+  test("pre-app-build hook uses extensibility/1", () => {
+    const result = buildAppManagementExtConfig(configWithCommerceEventing);
+    const preBuildHook = result.hooks?.["pre-app-build"] ?? "";
+
+    expect(preBuildHook).toMatch(EXTENSIBILITY_EXTENSION_MATCHER);
+  });
+
+  test("declares workerProcess operations for each runtime action", () => {
+    const result = buildAppManagementExtConfig(configWithCommerceEventing);
+    const workerImpls =
+      result.operations?.workerProcess?.map((worker) => worker) ?? [];
+
+    expect(workerImpls).toEqual([
+      { type: "action", impl: "app-management/app-config" },
+      { type: "action", impl: "app-management/installation" },
+    ]);
+  });
+});
+
 describe("buildAdminUiSdkExtConfig", () => {
-  test("returns the correct ext config structure", () => {
-    const config = buildAdminUiSdkExtConfig();
-
-    expect(config.hooks?.["pre-app-build"]).toContain("backend-ui/1");
-    expect(
-      config.runtimeManifest?.packages?.["admin-ui-sdk"]?.actions?.registration
-        ?.function,
-    ).toContain("registration/index.js");
-    expect(
-      config.runtimeManifest?.packages?.["admin-ui-sdk"]?.actions?.registration
-        ?.annotations?.["require-adobe-auth"],
-    ).toBe(true);
-  });
-
-  test("registration action function path uses ADMIN_UI_SDK_ACTIONS_PATH", () => {
-    const config = buildAdminUiSdkExtConfig();
-    const fnPath =
-      config.runtimeManifest?.packages?.["admin-ui-sdk"]?.actions?.registration
-        ?.function;
-
-    expect(fnPath).toBe(`${ADMIN_UI_SDK_ACTIONS_PATH}/index.js`);
-  });
-
-  test("registration action has web: yes and runtime: nodejs:22", () => {
-    const config = buildAdminUiSdkExtConfig();
-    const action =
-      config.runtimeManifest?.packages?.["admin-ui-sdk"]?.actions?.registration;
-
-    expect(action?.web).toBe("yes");
-    expect(action?.runtime).toBe("nodejs:22");
-  });
-
   test("declares operations.view entry for the admin UI iframe", () => {
     const config = buildAdminUiSdkExtConfig();
-
     expect(config.operations?.view).toEqual([
       { type: "web", impl: "index.html" },
     ]);
@@ -65,33 +154,70 @@ describe("buildAdminUiSdkExtConfig", () => {
 
   test("declares top-level web source directory", () => {
     const config = buildAdminUiSdkExtConfig();
-
     expect(config.web).toBe("web-src");
+  });
+
+  test("registration action has web: yes", () => {
+    const config = buildAdminUiSdkExtConfig();
+    const action =
+      config.runtimeManifest?.packages?.["admin-ui-sdk"]?.actions?.registration;
+
+    expect(action?.web).toBe("yes");
+  });
+
+  test("pre-app-build hook uses backend-ui/1", () => {
+    const result = buildAdminUiSdkExtConfig();
+    const preBuildHook = result.hooks?.["pre-app-build"] ?? "";
+
+    expect(preBuildHook).toMatch(BACKEND_UI_EXTENSION_MATCHER);
   });
 });
 
-describe("buildAppManagementExtConfig — adminUiSdk", () => {
-  test("does not include installation action when adminUiSdk is not configured", () => {
-    const config = buildAppManagementExtConfig(minimalValidConfig);
-    const actions =
-      config.runtimeManifest?.packages?.["app-management"]?.actions ?? {};
+describe("buildBusinessConfigurationExtConfig", () => {
+  test("config action is included", () => {
+    const result = buildBusinessConfigurationExtConfig();
+    const actions = result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions;
 
-    expect(Object.keys(actions)).not.toContain("installation");
+    expect(actions?.config).toBeDefined();
   });
 
-  test("includes installation action when adminUiSdk is configured", () => {
-    const config = buildAppManagementExtConfig(configWithAdminUiSdk);
-    const actions =
-      config.runtimeManifest?.packages?.["app-management"]?.actions ?? {};
+  test("scope-tree action is included", () => {
+    const result = buildBusinessConfigurationExtConfig();
+    const actions = result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions;
 
-    expect(Object.keys(actions)).toContain("installation");
+    expect(actions?.["scope-tree"]).toBeDefined();
   });
 
-  test("includes installation workerProcess entry when adminUiSdk is configured", () => {
-    const config = buildAppManagementExtConfig(configWithAdminUiSdk);
+  test("pre-app-build hook uses configuration/1", () => {
+    const result = buildBusinessConfigurationExtConfig();
+    const preBuildHook = result.hooks?.["pre-app-build"] ?? "";
+
+    expect(preBuildHook).toMatch(CONFIGURATION_EXTENSION_MATCHER);
+  });
+
+  test("all actions are web:yes", () => {
+    const result = buildBusinessConfigurationExtConfig();
+    const actions = result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions;
+
+    for (const action of Object.values(actions ?? {})) {
+      expect(action.web).toBe("yes");
+    }
+  });
+
+  test("declares workerProcess operations for each runtime action", () => {
+    const result = buildBusinessConfigurationExtConfig();
     const workerImpls =
-      config.operations?.workerProcess?.map((w) => w.impl) ?? [];
+      result.operations?.workerProcess?.map((worker) => worker) ?? [];
 
-    expect(workerImpls).toContain("app-management/installation");
+    expect(workerImpls).toEqual([
+      { type: "action", impl: "app-management/config" },
+      { type: "action", impl: "app-management/scope-tree" },
+    ]);
+  });
+});
+
+describe("getRuntimeActions", () => {
+  test("returns an empty list when the app-management package has no actions", () => {
+    expect(getRuntimeActions({}, "app-management")).toEqual([]);
   });
 });

@@ -14,6 +14,7 @@ import { describe, expect, test } from "vitest";
 
 import { getConfigDomains, hasConfigDomain } from "#config/schema/domains";
 import {
+  configWithAdminUiSdk,
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
@@ -78,6 +79,14 @@ describe.concurrent("domains schema helpers", () => {
       expect(domains.has("installation.customInstallationSteps")).toBe(true);
     });
 
+    test("should include adminUiSdk domain when admin UI SDK is present", () => {
+      const domains = getConfigDomains(configWithAdminUiSdk);
+
+      expect(domains.has("metadata")).toBe(true);
+      expect(domains.has("adminUiSdk")).toBe(true);
+      expect(domains.has("eventing")).toBe(false);
+    });
+
     test("should include multiple domains when config has multiple features", () => {
       const domains = getConfigDomains(configWithEventingAndWebhooks);
 
@@ -132,6 +141,7 @@ describe.concurrent("domains schema helpers", () => {
         config: configWithCustomInstallationSteps,
         domain: "installation.customInstallationSteps",
       },
+      { config: configWithAdminUiSdk, domain: "adminUiSdk" },
     ] as const)('should return true for domain "$domain" when config with "$domain" domain is present', ({
       config,
       domain,
@@ -146,6 +156,7 @@ describe.concurrent("domains schema helpers", () => {
       { config: minimalValidConfig, domain: "eventing" },
       { config: minimalValidConfig, domain: "webhooks" },
       { config: minimalValidConfig, domain: "installation" },
+      { config: minimalValidConfig, domain: "adminUiSdk" },
       { config: configWithCommerceEventing, domain: "eventing.external" },
       { config: configWithExternalEventing, domain: "eventing.commerce" },
     ] as const)('should return false for domain "$domain" when config with "$domain" domain is not present', ({

@@ -27,9 +27,9 @@ import { isMap } from "yaml";
 import {
   APP_CONFIG_FILE,
   COMMERCE_APP_CONFIG_FILE,
-  getExtensionPointFolderPath,
   INSTALL_YAML_FILE,
 } from "#commands/constants";
+import { getExtConfigPath } from "#commands/utils";
 
 import { DOMAIN_DEFAULTS } from "./constants";
 
@@ -192,15 +192,11 @@ export async function addExtensionPointToAppConfig(
   commentBefore: string,
 ) {
   const appConfigPath = join(rootDirectory, APP_CONFIG_FILE);
-  const extensionPointFolderPath = join(
-    rootDirectory,
-    getExtensionPointFolderPath(extensionPointId),
-  );
 
   let doc: Document;
   const includePath = relative(
     rootDirectory,
-    join(extensionPointFolderPath, "ext.config.yaml"),
+    join(rootDirectory, getExtConfigPath(extensionPointId)),
   );
 
   try {

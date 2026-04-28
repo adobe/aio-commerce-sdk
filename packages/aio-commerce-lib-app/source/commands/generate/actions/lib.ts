@@ -24,7 +24,6 @@ import { consola } from "consola";
 import { formatTree } from "consola/utils";
 
 import {
-  ADMIN_UI_SDK_ACTIONS_PATH,
   BACKEND_UI_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -33,6 +32,8 @@ import {
 import {
   getActionPath,
   getActionsDir,
+  getAdminUiSdkActionsDir,
+  getAdminUiSdkRegistrationActionPath,
   getExtConfigPath,
   prettierFormat,
 } from "#commands/utils";
@@ -51,6 +52,7 @@ import {
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
+import type { AdminUiSdkConfig } from "#management/installation/admin-ui-sdk/utils";
 import type { TemplateAction } from "./config";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -240,18 +242,13 @@ export async function generateCustomScriptsTemplate(
  * @param templatesDir - The root directory containing the action templates.
  */
 export async function generateRegistrationActionFile(
-  appManifest: CommerceAppConfigOutputModel,
+  appManifest: AdminUiSdkConfig,
   extensionPointId: typeof BACKEND_UI_EXTENSION_POINT_ID,
   templatesDir = TEMPLATES_DIR,
 ) {
   consola.start("Generating Admin UI SDK registration action...");
 
-  await makeOutputDirFor(
-    join(
-      getExtensionPointFolderPath(extensionPointId),
-      ADMIN_UI_SDK_ACTIONS_PATH,
-    ),
-  );
+  await makeOutputDirFor(getAdminUiSdkActionsDir(extensionPointId));
   const projectRoot = await getProjectRootDirectory();
   const templatePath = join(
     templatesDir,
@@ -260,12 +257,10 @@ export async function generateRegistrationActionFile(
   );
   const template = await readFile(templatePath, "utf-8");
 
-  const registration = appManifest.adminUiSdk?.registration ?? {};
+  const { registration } = appManifest.adminUiSdk;
   const actionPath = join(
     projectRoot,
-    getExtensionPointFolderPath(extensionPointId),
-    ADMIN_UI_SDK_ACTIONS_PATH,
-    "index.js",
+    getAdminUiSdkRegistrationActionPath(extensionPointId),
   );
   const content = template.replace(
     REGISTRATION_JSON_PLACEHOLDER,

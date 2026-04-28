@@ -235,7 +235,6 @@ export function buildAdminUiSdkExtConfig() {
     },
 
     web: "web-src",
-
     runtimeManifest: {
       packages: {
         [ADMIN_UI_SDK_PACKAGE_NAME]: {
