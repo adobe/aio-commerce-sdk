@@ -40,8 +40,6 @@ const SandboxSchema = v.pipe(
   ),
 );
 
-const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
-const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
 const ColumnTypeSchema = v.picklist([
   "boolean",
   "date",
@@ -49,6 +47,8 @@ const ColumnTypeSchema = v.picklist([
   "integer",
   "string",
 ]);
+const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
+const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
 
 const MassActionConfirmSchema = v.object({
   title: v.optional(nonEmptyStringValueSchema("confirm title")),
@@ -59,22 +59,10 @@ const ViewButtonConfirmSchema = v.object({
   message: v.optional(nonEmptyStringValueSchema("confirm message")),
 });
 
-const IframeBaseEntries = {
+const iframeActionEntries = {
+  displayIframe: v.optional(booleanValueSchema("displayIframe")),
   timeout: v.optional(positiveNumberValueSchema("timeout")),
-};
-
-const IframeEnabledEntries = {
-  ...IframeBaseEntries,
-  displayIframe: v.literal(true),
   sandbox: v.optional(SandboxSchema),
-};
-
-const IframeDisabledEntries = {
-  ...IframeBaseEntries,
-  displayIframe: v.optional(v.literal(false)),
-  sandbox: v.optional(
-    v.never("sandbox is only relevant when displayIframe is set to true"),
-  ),
 };
 
 const GridColumnPropertySchema = v.object({
@@ -100,21 +88,62 @@ const massActionBaseEntries = {
   title: v.optional(nonEmptyStringValueSchema("mass action page title")),
   confirm: v.optional(MassActionConfirmSchema),
   path: nonEmptyStringValueSchema("mass action path"),
+  ...iframeActionEntries,
 };
 
-function createIframeActionSchema<TEntries extends v.ObjectEntries>(
-  schema: v.StrictObjectSchema<TEntries, undefined>,
-) {
-  return v.variant("displayIframe", [
-    v.strictObject({ ...schema.entries, ...IframeEnabledEntries }),
-    v.strictObject({ ...schema.entries, ...IframeDisabledEntries }),
-  ]);
+const SANDBOX_DISPLAY_IFRAME_MESSAGE =
+  "sandbox is only relevant when displayIframe is set to true";
+
+type SandboxDisplayIframeInput = {
+  sandbox?: string | undefined;
+  displayIframe?: boolean | undefined;
+};
+
+// Defined once with a concrete input type; cast inside withSandboxDisplayIframeCheck
+// to the actual schema output type (safe because every schema using this has both fields).
+const sandboxDisplayIframeCheck = v.forward(
+  v.partialCheck<
+    SandboxDisplayIframeInput,
+    readonly [readonly ["sandbox"], readonly ["displayIframe"]],
+    SandboxDisplayIframeInput,
+    typeof SANDBOX_DISPLAY_IFRAME_MESSAGE
+  >(
+    [["sandbox"], ["displayIframe"]],
+    (input) => input.sandbox === undefined || input.displayIframe === true,
+    SANDBOX_DISPLAY_IFRAME_MESSAGE,
+  ),
+  ["sandbox"],
+);
+
+function withSandboxDisplayIframeCheck<
+  TSchema extends v.BaseSchema<
+    unknown,
+    SandboxDisplayIframeInput,
+    v.BaseIssue<unknown>
+  >,
+>(schema: TSchema) {
+  return v.pipe(
+    schema,
+    // Cast is required: valibot's "~types" property is invariant, so a shared action
+    // constant cannot be assigned to PipeItem<FullSchemaOutput> without this cast.
+    // Runtime behavior is identical to inlining the check in each schema.
+    sandboxDisplayIframeCheck as unknown as v.BaseValidation<
+      v.InferOutput<TSchema>,
+      v.InferOutput<TSchema>,
+      v.BaseIssue<unknown>
+    >,
+  );
 }
 
-function createMassActionSchema<TEntries extends v.ObjectEntries>(
+type SchemaEntries = Record<
+  string,
+  v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>
+>;
+
+function createMassActionSchema<TEntries extends SchemaEntries>(
   variantEntries: TEntries,
 ) {
-  return createIframeActionSchema(
+  return withSandboxDisplayIframeCheck(
     v.strictObject({
       ...massActionBaseEntries,
       ...variantEntries,
@@ -138,14 +167,15 @@ const CustomerMassActionSchema = createMassActionSchema({
   ),
 });
 
-const OrderViewButtonSchema = createIframeActionSchema(
-  v.strictObject({
+const OrderViewButtonSchema = withSandboxDisplayIframeCheck(
+  v.object({
     buttonId: nonEmptyStringValueSchema("view button ID"),
     label: nonEmptyStringValueSchema("view button label"),
     confirm: v.optional(ViewButtonConfirmSchema),
     path: nonEmptyStringValueSchema("view button path"),
     level: v.optional(ViewButtonLevelSchema),
     sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
+    ...iframeActionEntries,
   }),
 );
 
