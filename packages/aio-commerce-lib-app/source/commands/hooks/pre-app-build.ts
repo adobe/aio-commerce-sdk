@@ -10,18 +10,37 @@
  * governing permissions and limitations under the License.
  */
 
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { syncImsCredentials } from "@aio-commerce-sdk/scripting-utils/env";
 import consola from "consola";
 
-import { BACKEND_UI_EXTENSION_POINT_ID } from "#commands/constants";
-import { generateRegistrationActionFile } from "#commands/generate/actions/lib";
+import {
+  BACKEND_UI_EXTENSION_POINT_ID,
+  CONFIGURATION_EXTENSION_POINT_ID,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
+} from "#commands/constants";
+import { getRuntimeActions } from "#commands/generate/actions/config";
+import {
+  generateActionFiles,
+  generateRegistrationActionFile,
+  readExtConfig,
+} from "#commands/generate/actions/lib";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import { loadAppManifest } from "#commands/utils";
 import { hasAdminUiSdk } from "#config/index";
 
+import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
+
 type Extension = "extensibility/1" | "configuration/1" | "backend-ui/1";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const TEMPLATES_DIR = join(__dirname, "templates");
 
 /**
  * Runs the pre-app-build hook for the given extension.
@@ -31,7 +50,20 @@ export async function run(extension: Extension) {
   const appManifest = await loadAppManifest();
 
   if (extension === "extensibility/1") {
+    const { doc: extensibilityExtConfig } = await readExtConfig(
+      EXTENSIBILITY_EXTENSION_POINT_ID,
+    );
+
     await generateManifestCommand(appManifest);
+    await generateActionFiles(
+      appManifest,
+      getRuntimeActions(
+        extensibilityExtConfig.toJS() as ExtConfig,
+        "app-management",
+      ),
+      EXTENSIBILITY_EXTENSION_POINT_ID,
+      TEMPLATES_DIR,
+    );
 
     consola.info("Syncing IMS credentials...");
     await syncImsCredentials();
@@ -40,7 +72,21 @@ export async function run(extension: Extension) {
   }
 
   if (extension === "configuration/1") {
+    const { doc: businessConfigExtConfig } = await readExtConfig(
+      CONFIGURATION_EXTENSION_POINT_ID,
+    );
+
     await generateSchemaCommand(appManifest);
+    await generateActionFiles(
+      appManifest,
+      getRuntimeActions(
+        businessConfigExtConfig.toJS() as ExtConfig,
+        "business-configuration",
+      ),
+      CONFIGURATION_EXTENSION_POINT_ID,
+      TEMPLATES_DIR,
+    );
+
     return;
   }
 

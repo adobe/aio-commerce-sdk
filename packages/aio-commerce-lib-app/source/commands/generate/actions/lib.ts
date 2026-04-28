@@ -66,6 +66,22 @@ type ValidExtensionPointId =
   | typeof CONFIGURATION_EXTENSION_POINT_ID
   | typeof BACKEND_UI_EXTENSION_POINT_ID;
 
+/**
+ * Read an extension point's ext.config.yaml file and return it as a JS object.
+ * @param extensionPointId - The extension point ID to read the config for.
+ */
+export async function readExtConfig(extensionPointId: ValidExtensionPointId) {
+  const extConfigPath = join(
+    await getProjectRootDirectory(),
+    getExtConfigPath(extensionPointId),
+  );
+
+  return {
+    path: extConfigPath,
+    doc: await readYamlFile(extConfigPath),
+  };
+}
+
 /** Update the ext.config.yaml file */
 export async function updateExtConfig(
   appConfig: CommerceAppConfigOutputModel,
@@ -74,9 +90,8 @@ export async function updateExtConfig(
   consola.info(`Updating ext.config.yaml for ${extensionPointId}...`);
 
   await makeOutputDirFor(getExtensionPointFolderPath(extensionPointId));
-  const projectRoot = await getProjectRootDirectory();
-  const extConfigPath = join(projectRoot, getExtConfigPath(extensionPointId));
-  const extConfigDoc = await readYamlFile(extConfigPath);
+  const { path: extConfigPath, doc: extConfigDoc } =
+    await readExtConfig(extensionPointId);
 
   let extConfig: ExtConfig;
 

@@ -31,8 +31,8 @@ import {
 } from "#commands/constants";
 import { run as generateActionsCommand } from "#commands/generate/actions/main";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
-import { prettierFormat } from "#commands/utils";
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
+import { prettierFormat } from "#commands/utils";
 import {
   getConfigDomains,
   parseCommerceAppConfig,
