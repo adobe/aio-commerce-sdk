@@ -23,11 +23,11 @@ export default mergeConfig(baseConfig, {
   copy: [
     {
       from: "./source/commands/generate/actions/templates",
-      to: "./dist/cjs/commands/templates",
+      to: "./dist/cjs/commands",
     },
     {
       from: "./source/commands/generate/actions/templates",
-      to: "./dist/es/commands/templates",
+      to: "./dist/es/commands",
     },
   ],
 });
