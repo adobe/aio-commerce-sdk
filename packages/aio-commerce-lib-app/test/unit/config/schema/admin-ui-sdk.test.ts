@@ -119,6 +119,25 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(true);
     });
 
+    test("iframe-enabled mass action allows sandbox", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          order: {
+            massActions: [
+              {
+                actionId: "app::action",
+                label: "Action",
+                path: "#/action",
+                displayIframe: true,
+                sandbox: "allow-modals",
+              },
+            ],
+          },
+        },
+      });
+      expect(result.success).toBe(true);
+    });
+
     test("registration with grid columns — all 5 type values", () => {
       for (const type of [
         "boolean",
@@ -161,6 +180,25 @@ describe("AdminUiSdkSchema", () => {
         });
         expect(result.success, `level ${level} should be valid`).toBe(true);
       }
+    });
+
+    test("iframe-enabled view button allows sandbox", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          order: {
+            viewButtons: [
+              {
+                buttonId: "app::btn",
+                label: "Btn",
+                path: "#/btn",
+                displayIframe: true,
+                sandbox: "allow-modals",
+              },
+            ],
+          },
+        },
+      });
+      expect(result.success).toBe(true);
     });
 
     test("registration with custom fees including applyFeeOnLastCreditMemo", () => {
@@ -409,6 +447,30 @@ describe("AdminUiSdkSchema", () => {
 
         expect(result.success).toBe(false);
       }
+    });
+
+    test("iframe action with non-boolean displayIframe returns a boolean error", () => {
+      const result = parseRegistration({
+        order: {
+          massActions: [
+            {
+              actionId: "app::action",
+              label: "Action",
+              path: "#/action",
+              displayIframe: 1,
+            },
+          ],
+        },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            message: "Expected a boolean value for 'displayIframe'",
+          }),
+        ]),
+      );
     });
   });
 });
