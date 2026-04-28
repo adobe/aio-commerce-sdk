@@ -115,6 +115,7 @@ const sandboxDisplayIframeCheck = v.forward(
   ["sandbox"],
 );
 
+// TODO: Cleanup after https://github.com/open-circle/valibot/issues/1459
 function withSandboxDisplayIframeCheck<
   TSchema extends v.BaseSchema<
     unknown,
