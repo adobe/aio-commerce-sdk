@@ -17,10 +17,13 @@ import {
   withChdir,
   withTempFiles,
 } from "@aio-commerce-sdk/scripting-utils/filesystem";
+import { stringify } from "yaml";
 
 import {
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
+  getExtensionPointFolderPath,
+  PACKAGE_NAME,
 } from "#commands/constants";
 import { runGeneration } from "#commands/init/lib";
 import { getActionPath, getManifestPath, getSchemaPath } from "#commands/utils";
@@ -93,6 +96,33 @@ export function envObject(env: Record<string, string>): string {
   return Object.entries(env)
     .map(([key, value]) => `${key}=${value}`)
     .join("\n");
+}
+
+/**
+ * Creates an entry for an extension point ext.config.yaml with the given actions.
+ * @param extensionPointId The extension point ID to create the config for.
+ * @param actionNames The names of the actions to include in the config.
+ */
+export function makeExtConfigFile(
+  extensionPointId: string,
+  actionNames: string[],
+) {
+  const extConfig = {
+    runtimeManifest: {
+      packages: {
+        [PACKAGE_NAME]: {
+          actions: Object.fromEntries(
+            actionNames.map((actionName) => [actionName, {}]),
+          ),
+        },
+      },
+    },
+  };
+
+  return {
+    [join(getExtensionPointFolderPath(extensionPointId), "ext.config.yaml")]:
+      stringify(extConfig),
+  };
 }
 
 /** Absolute path to a generated extensibility action file inside a temp project. */

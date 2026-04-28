@@ -16,7 +16,10 @@ const QUOTED_MENU_ITEMS_RE = /"menuItems":/u;
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { BACKEND_UI_EXTENSION_POINT_ID } from "#commands/constants";
+import {
+  BACKEND_UI_EXTENSION_POINT_ID,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
+} from "#commands/constants";
 import {
   CUSTOM_IMPORTS_PLACEHOLDER,
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
@@ -26,6 +29,7 @@ import {
   applyCustomScripts,
   generateCustomScriptsTemplate,
   generateRegistrationActionFile,
+  readExtConfig,
 } from "#commands/generate/actions/lib";
 import { templates } from "#test/fixtures/commands";
 import {
@@ -41,6 +45,10 @@ vi.mock("@aio-commerce-sdk/scripting-utils/project", () => ({
   makeOutputDirFor: vi.fn(() => Promise.resolve("/fake/output/dir")),
 }));
 
+vi.mock("@aio-commerce-sdk/scripting-utils/yaml/index", () => ({
+  readYamlFile: vi.fn(),
+}));
+
 vi.mock("node:fs/promises", async (importOriginal) => {
   const actual = await importOriginal<typeof import("node:fs/promises")>();
   return {
@@ -48,6 +56,22 @@ vi.mock("node:fs/promises", async (importOriginal) => {
     readFile: vi.fn(),
     writeFile: vi.fn().mockResolvedValue(undefined),
   };
+});
+
+describe("readExtConfig", () => {
+  test("throws a helpful error when ext.config.yaml is missing", async () => {
+    const { readYamlFile } = await import(
+      "@aio-commerce-sdk/scripting-utils/yaml/index"
+    );
+
+    vi.mocked(readYamlFile).mockRejectedValue(new Error("ENOENT"));
+
+    await expect(
+      readExtConfig(EXTENSIBILITY_EXTENSION_POINT_ID),
+    ).rejects.toThrow(
+      "Could not read ext.config.yaml for commerce/extensibility/1",
+    );
+  });
 });
 
 describe("applyCustomScripts", () => {

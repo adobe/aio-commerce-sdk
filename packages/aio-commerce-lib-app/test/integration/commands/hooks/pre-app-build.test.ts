@@ -17,25 +17,29 @@ import { join } from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
-  APP_MANIFEST_FILE,
   BACKEND_UI_EXTENSION_POINT_ID,
-  CONFIG_SCHEMA_FILE_NAME,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
-  getExtensionPointFolderPath,
 } from "#commands/constants";
 import { exec, run } from "#commands/hooks/pre-app-build";
-import { getAdminUiSdkRegistrationActionPath } from "#commands/utils";
+import {
+  getAdminUiSdkRegistrationActionPath,
+  getManifestPath,
+  getSchemaPath,
+} from "#commands/utils";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
   configWithBusinessConfig,
+  configWithCommerceEventing,
   configWithFullAdminUiSdk,
-  minimalValidConfig,
 } from "#test/fixtures/config";
 import {
+  businessConfigActionFile,
   EMPTY_PROJECT,
+  extensibilityActionFile,
   INVALID_PROJECT,
   MINIMAL_PROJECT,
+  makeExtConfigFile,
   makeProjectFiles,
   withTempProject,
 } from "#test/fixtures/project";
@@ -52,45 +56,58 @@ describe("commands/hooks/pre-app-build", () => {
   });
 
   describe("run", () => {
-    test("generates manifest for extensibility/1", async () => {
-      await withTempProject(MINIMAL_PROJECT, async (tempDir) => {
-        await run("extensibility/1");
+    test("generates manifest and actions for extensibility/1", async () => {
+      const actions = ["app-config", "installation"];
+      const extensibilityProject = {
+        ...makeProjectFiles(configWithCommerceEventing),
+        ...makeTemplateFiles(),
+        ...makeExtConfigFile(EXTENSIBILITY_EXTENSION_POINT_ID, actions),
+      };
 
-        const manifestPath = join(
+      await withTempProject(extensibilityProject, async (tempDir) => {
+        await run("extensibility/1", tempDir);
+
+        const manifestPath = join(tempDir, getManifestPath());
+        const appConfigPath = extensibilityActionFile(tempDir, "app-config");
+        const installationPath = extensibilityActionFile(
           tempDir,
-          getExtensionPointFolderPath(EXTENSIBILITY_EXTENSION_POINT_ID),
-          ".generated",
-          APP_MANIFEST_FILE,
+          "installation",
         );
 
+        expect(existsSync(appConfigPath)).toBe(true);
+        expect(existsSync(installationPath)).toBe(true);
         expect(existsSync(manifestPath)).toBe(true);
 
         const parsed = JSON.parse(await readFile(manifestPath, "utf-8"));
-        expect(parsed).toEqual(minimalValidConfig);
+        expect(parsed).toEqual(configWithCommerceEventing);
       });
     });
 
-    test("generates schema for configuration/1", async () => {
-      await withTempProject(
-        makeProjectFiles(configWithBusinessConfig),
-        async (tempDir) => {
-          await run("configuration/1");
+    test("generates schema and actions for configuration/1", async () => {
+      const actions = ["config", "scope-tree"];
+      const businessConfigProject = {
+        ...makeProjectFiles(configWithBusinessConfig),
+        ...makeTemplateFiles(),
+        ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, actions),
+      };
 
-          const schemaPath = join(
-            tempDir,
-            getExtensionPointFolderPath(CONFIGURATION_EXTENSION_POINT_ID),
-            ".generated",
-            CONFIG_SCHEMA_FILE_NAME,
-          );
+      await withTempProject(businessConfigProject, async (tempDir) => {
+        await run("configuration/1", tempDir);
 
-          expect(existsSync(schemaPath)).toBe(true);
+        const schemaPath = join(tempDir, getSchemaPath());
+        const configActionPath = businessConfigActionFile(tempDir, "config");
+        const scopeTreeActionPath = businessConfigActionFile(
+          tempDir,
+          "scope-tree",
+        );
 
-          const parsed = JSON.parse(await readFile(schemaPath, "utf-8"));
-          expect(parsed).toEqual(
-            configWithBusinessConfig.businessConfig.schema,
-          );
-        },
-      );
+        expect(existsSync(configActionPath)).toBe(true);
+        expect(existsSync(scopeTreeActionPath)).toBe(true);
+        expect(existsSync(schemaPath)).toBe(true);
+
+        const parsed = JSON.parse(await readFile(schemaPath, "utf-8"));
+        expect(parsed).toEqual(configWithBusinessConfig.businessConfig.schema);
+      });
     });
 
     test("generates backend-ui registration action for backend-ui/1", async () => {
@@ -160,18 +177,33 @@ describe("commands/hooks/pre-app-build", () => {
 
     test("runs successfully for extensibility/1", async () => {
       vi.stubEnv("EXTENSION", "extensibility/1");
-
-      await withTempProject(MINIMAL_PROJECT, async () => {
-        await exec();
-        expect(exitSpy).not.toHaveBeenCalled();
-      });
+      await withTempProject(
+        {
+          ...MINIMAL_PROJECT,
+          ...makeTemplateFiles(),
+          ...makeExtConfigFile(EXTENSIBILITY_EXTENSION_POINT_ID, [
+            "app-config",
+          ]),
+        },
+        async () => {
+          await exec();
+          expect(exitSpy).not.toHaveBeenCalled();
+        },
+      );
     });
 
     test("runs successfully for configuration/1", async () => {
       vi.stubEnv("EXTENSION", "configuration/1");
 
       await withTempProject(
-        makeProjectFiles(configWithBusinessConfig),
+        {
+          ...makeProjectFiles(configWithBusinessConfig),
+          ...makeTemplateFiles(),
+          ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, [
+            "config",
+            "scope-tree",
+          ]),
+        },
         async () => {
           await exec();
           expect(exitSpy).not.toHaveBeenCalled();
