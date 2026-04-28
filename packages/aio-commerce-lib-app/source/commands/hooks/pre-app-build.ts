@@ -10,9 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { syncImsCredentials } from "@aio-commerce-sdk/scripting-utils/env";
 import consola from "consola";
@@ -27,6 +24,7 @@ import {
   generateActionFiles,
   generateRegistrationActionFile,
   readExtConfig,
+  TEMPLATES_DIR,
 } from "#commands/generate/actions/lib";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
@@ -37,16 +35,12 @@ import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
 
 type Extension = "extensibility/1" | "configuration/1" | "backend-ui/1";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const TEMPLATES_DIR = join(__dirname, "templates");
-
 /**
  * Runs the pre-app-build hook for the given extension.
  * @param extension - The extension to run the hook for.
+ * @param templatesDir - The directory to load templates from, for testing purposes. Defaults to the generated actions template root.
  */
-export async function run(extension: Extension) {
+export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
   const appManifest = await loadAppManifest();
 
   if (extension === "extensibility/1") {
@@ -62,7 +56,7 @@ export async function run(extension: Extension) {
         "app-management",
       ),
       EXTENSIBILITY_EXTENSION_POINT_ID,
-      TEMPLATES_DIR,
+      templatesDir,
     );
 
     consola.info("Syncing IMS credentials...");
@@ -84,7 +78,7 @@ export async function run(extension: Extension) {
         "business-configuration",
       ),
       CONFIGURATION_EXTENSION_POINT_ID,
-      TEMPLATES_DIR,
+      templatesDir,
     );
 
     return;

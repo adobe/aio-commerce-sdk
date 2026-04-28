@@ -59,7 +59,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /** The path to the action templates directory, sibling to this file. */
-const TEMPLATES_DIR = join(__dirname, "templates");
+export const TEMPLATES_DIR = join(__dirname, "templates");
 
 type ValidExtensionPointId =
   | typeof EXTENSIBILITY_EXTENSION_POINT_ID
@@ -76,10 +76,25 @@ export async function readExtConfig(extensionPointId: ValidExtensionPointId) {
     getExtConfigPath(extensionPointId),
   );
 
-  return {
-    path: extConfigPath,
-    doc: await readYamlFile(extConfigPath),
-  };
+  try {
+    return {
+      path: extConfigPath,
+      doc: await readYamlFile(extConfigPath),
+    };
+  } catch (error) {
+    const reason =
+      error instanceof Error
+        ? error.message
+        : "Unexpected error while reading the file.";
+
+    throw new Error(
+      [
+        `Could not read ext.config.yaml for ${extensionPointId} at ${extConfigPath}.`,
+        `Make sure the file exists and is valid YAML. You can regenerate it with "aio-commerce-lib-app generate actions".`,
+        `Reason: ${reason}`,
+      ].join("\n"),
+    );
+  }
 }
 
 /** Update the ext.config.yaml file */
