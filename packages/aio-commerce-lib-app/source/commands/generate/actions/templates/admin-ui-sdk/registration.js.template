@@ -18,5 +18,4 @@ import { registrationRuntimeAction } from "@adobe/aio-commerce-lib-app/actions/r
 // The registration config is always at this relative constant path from the action.
 import registration from "../../registration.json" with { type: "json" };
 
-const args = { registration };
-export const main = registrationRuntimeAction(args);
+export const main = registrationRuntimeAction({ registration });
