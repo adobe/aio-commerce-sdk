@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -32,6 +32,7 @@ import {
 import { run as generateActionsCommand } from "#commands/generate/actions/main";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
 import { prettierFormat } from "#commands/utils";
+import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import {
   getConfigDomains,
   parseCommerceAppConfig,
@@ -43,6 +44,7 @@ import {
   addExtensionPointToAppConfig,
   addExtensionPointToInstallYaml,
   getDefaultCommerceAppConfig,
+  initFlagsToScaffoldAppAnswers,
   promptForCommerceAppConfig,
 } from "./utils";
 
@@ -50,9 +52,14 @@ import type { PackageManager } from "@aio-commerce-sdk/scripting-utils/project";
 import type { PackageJson } from "type-fest";
 import type { CommerceAppConfigDomain } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { InitFlags } from "./main";
 
-/** Ensure app.commerce.config file exists, allow creating if it doesn't */
-export async function ensureCommerceAppConfig(cwd = process.cwd()) {
+/** Ensure app.commerce.config file exists, allow creating if it doesn't. When options are provided, prompts are skipped. */
+export async function ensureCommerceAppConfig(
+  cwd = process.cwd(),
+  formatConfig = true,
+  flags?: InitFlags,
+) {
   let config: unknown | null = null;
   try {
     config = await readCommerceAppConfig(cwd);
@@ -78,32 +85,41 @@ export async function ensureCommerceAppConfig(cwd = process.cwd()) {
     }
   }
 
-  consola.warn(`${COMMERCE_APP_CONFIG_FILE} not found.`);
-  const createConfig = await consola.prompt(
-    `Do you want to create a ${COMMERCE_APP_CONFIG_FILE} file? (y/n)`,
-    {
-      type: "confirm",
-      initial: true,
-      default: false,
-    },
-  );
+  if (!flags) {
+    consola.warn(`${COMMERCE_APP_CONFIG_FILE} not found.`);
+    const createConfig = await consola.prompt(
+      `Do you want to create a ${COMMERCE_APP_CONFIG_FILE} file? (y/n)`,
+      {
+        type: "confirm",
+        initial: true,
+        default: false,
+      },
+    );
 
-  if (!createConfig) {
-    throw new Error("Initialization cancelled.");
+    if (!createConfig) {
+      throw new Error("Initialization cancelled.");
+    }
   }
 
-  const answers = await promptForCommerceAppConfig();
+  const answers = flags
+    ? initFlagsToScaffoldAppAnswers(flags)
+    : await promptForCommerceAppConfig();
+
   try {
     const configContent = await getDefaultCommerceAppConfig(cwd, answers);
+    const path = join(await getProjectRootDirectory(cwd), answers.configFile);
     consola.info(`Creating ${answers.configFile}...`);
 
-    const path = join(await getProjectRootDirectory(cwd), answers.configFile);
-    const formattedConfig = await prettierFormat(configContent, path);
-
-    await writeFile(path, formattedConfig, "utf-8");
-    consola.success(`Created ${answers.configFile}`);
+    if (formatConfig) {
+      const formattedConfig = await prettierFormat(configContent, path);
+      await writeFile(path, formattedConfig, "utf-8");
+    } else {
+      await writeFile(path, configContent, "utf-8");
+    }
 
     const config = await parseCommerceAppConfig(cwd);
+    consola.success(`Created ${answers.configFile}`);
+
     return { config, domains: answers.domains };
   } catch (error) {
     throw new Error(`Failed to create ${answers.configFile}`, {
@@ -276,6 +292,7 @@ export async function runGeneration(
   try {
     await generateActionsCommand(appConfig);
     await generateManifestCommand(appConfig);
+    await generateSchemaCommand(appConfig);
   } catch (error) {
     throw new Error(
       `Failed to run generation command. Please run manually: ${execCommand} aio-commerce-lib-app generate all`,

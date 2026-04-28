@@ -15,7 +15,7 @@ import { syncImsCredentials } from "@aio-commerce-sdk/scripting-utils/env";
 import consola from "consola";
 
 import { BACKEND_UI_EXTENSION_POINT_ID } from "#commands/constants";
-import { generateRegistrationActionFile } from "#commands/generate/actions/main";
+import { generateRegistrationActionFile } from "#commands/generate/actions/lib";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import { loadAppManifest } from "#commands/utils";
@@ -71,9 +71,9 @@ export async function exec() {
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());
+    } else {
+      consola.error(error);
     }
-
-    consola.error(error);
     process.exit(1);
   }
 }
