@@ -21,9 +21,8 @@ import { stringify } from "safe-stable-stringify";
 import {
   APP_MANIFEST_FILE,
   EXTENSIBILITY_EXTENSION_POINT_ID,
-  getExtensionPointFolderPath,
 } from "#commands/constants";
-import { loadAppManifest } from "#commands/utils";
+import { getGeneratedDir, loadAppManifest } from "#commands/utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
@@ -32,7 +31,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
 
   const contents = stringify(appConfig, null, 2);
   const outputDir = await makeOutputDirFor(
-    `${getExtensionPointFolderPath(EXTENSIBILITY_EXTENSION_POINT_ID)}/.generated`,
+    getGeneratedDir(EXTENSIBILITY_EXTENSION_POINT_ID),
   );
 
   const manifestPath = join(outputDir, APP_MANIFEST_FILE);
@@ -49,9 +48,9 @@ export async function exec() {
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());
+    } else {
+      consola.error(error);
     }
-
-    consola.error(error);
     process.exit(1);
   }
 }

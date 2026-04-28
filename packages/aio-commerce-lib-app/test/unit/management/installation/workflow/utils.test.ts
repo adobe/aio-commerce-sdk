@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { HTTPError } from "ky";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -21,6 +20,7 @@ import {
   nowIsoString,
   setAtPath,
 } from "#management/installation/workflow/utils";
+import { makeHttpError } from "#test/fixtures/http-error";
 import {
   createMockInstallationError,
   createMockStepStatus,
@@ -132,19 +132,11 @@ describe("createInstallationError", () => {
   });
 
   test("should unwrap HTTPError response body", async () => {
-    const response = new Response(
+    const err = makeHttpError(
+      400,
+      "Bad Request",
       JSON.stringify({ message: "API error detail" }),
-      { status: 400, statusText: "Bad Request" },
     );
-    const err = Object.assign(
-      new Error("Request failed with status code 400"),
-      {
-        response,
-        request: new Request("https://example.com"),
-        options: {},
-      },
-    );
-    Object.setPrototypeOf(err, HTTPError.prototype);
 
     const result = await createInstallationError(err, ["step"]);
     expect(result).toEqual({

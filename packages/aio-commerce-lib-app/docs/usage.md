@@ -475,9 +475,6 @@ When you run `generate actions`, the CLI automatically:
 2. Finds all custom installation scripts defined in `installation.customInstallationSteps`
 3. Appends them to the generated `installation` action.
 
-> [!IMPORTANT]
-> Scripts are pre-loaded and bundled with your action during the `generate actions` command. After modifying custom installation scripts, run `npx aio-commerce-lib-app generate actions` to regenerate the `installation` action.
-
 This ensures your installation action includes the latest script imports and configuration.
 
 ### Using the Configuration API

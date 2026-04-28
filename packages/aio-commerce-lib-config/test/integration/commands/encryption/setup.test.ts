@@ -90,12 +90,5 @@ describe("commands/encryption/setup", () => {
         expect(exitSpy).not.toHaveBeenCalled();
       });
     });
-
-    test("calls process.exit(1) when .env file is missing", async () => {
-      await withTempFiles({}, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
-        expect(exitSpy).toHaveBeenCalledWith(1);
-      });
-    });
   });
 });

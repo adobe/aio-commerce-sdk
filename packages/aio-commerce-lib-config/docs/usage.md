@@ -305,6 +305,19 @@ Use text fields for free-form input values like merchant identifiers or custom s
 }
 ```
 
+**Boolean Field:**
+
+Use boolean fields for flag-like fields that only accept true/false values. Boolean fields support optional default values.
+
+```javascript
+{
+  name: "enabled",
+  label: "Enable Feature",
+  type: "boolean",
+  default: true
+}
+```
+
 **Email Field:**
 
 Use email fields for email addresses with automatic validation. Email fields support optional default values.
