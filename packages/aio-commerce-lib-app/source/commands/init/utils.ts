@@ -110,6 +110,7 @@ export async function promptForCommerceAppConfig(): Promise<ScaffoldAppAnswers> 
     featuresToAdd as string[],
   );
 
+  consola.log("");
   return {
     appName,
     configFile,

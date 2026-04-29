@@ -10,16 +10,18 @@
  * governing permissions and limitations under the License.
  */
 
-import { execSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
 import {
   detectPackageManager,
   getExecCommand,
+  getInstallCommand,
   getProjectRootDirectory,
   readPackageJson,
 } from "@aio-commerce-sdk/scripting-utils/project";
+import NpmPackageJson from "@npmcli/package-json";
 import { consola } from "consola";
 
 import {
@@ -53,6 +55,9 @@ import type { PackageJson } from "type-fest";
 import type { CommerceAppConfigDomain } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InitFlags } from "./main";
+
+// __LIB_CONFIG_RANGE__ is injected and replaced at build time.
+declare const __LIB_CONFIG_RANGE__: string;
 
 /** Ensure app.commerce.config file exists, allow creating if it doesn't. When options are provided, prompts are skipped. */
 export async function ensureCommerceAppConfig(
@@ -128,75 +133,84 @@ export async function ensureCommerceAppConfig(
   }
 }
 
-/** Ensure package.json has the postinstall script */
+/**
+ * Ensure a package.json exists and detect the package manager.
+ * @param cwd - Directory to check; defaults to `process.cwd()`
+ */
 export async function ensurePackageJson(cwd = process.cwd()) {
-  const packageJson = await readPackageJson(cwd);
+  const existing = await readPackageJson(cwd);
+  let packageJson: PackageJson;
 
-  if (!packageJson) {
+  if (existing) {
+    packageJson = existing;
+  } else {
     consola.warn("package.json not found. Creating one...");
-    const packageJsonContent: PackageJson = {
+    packageJson = {
       name: "my-commerce-app",
       version: "1.0.0",
       private: true,
-
-      scripts: {
-        postinstall: "npx aio-commerce-lib-app hooks postinstall",
-      },
     };
 
     await writeFile(
       join(resolve(cwd), PACKAGE_JSON_FILE),
-      JSON.stringify(packageJsonContent, null, 2),
+      JSON.stringify(packageJson, null, 2),
       "utf-8",
     );
 
     consola.success("Wrote package.json");
-    return {
-      packageJson: packageJsonContent,
-      packageManager: "npm",
-      execCommand: "npx",
-    } as const;
   }
 
-  const packageManager = await detectPackageManager();
+  // Detect after writing the skeleton — `detectPackageManager` walks up for a
+  // `package.json`, and the fresh-scaffold path has none until we've written one.
+  const packageManager = await detectPackageManager(cwd);
   const execCommand = getExecCommand(packageManager);
 
-  const postinstallScript = `${execCommand} aio-commerce-lib-app hooks postinstall`;
-  packageJson.scripts ??= {};
-
-  if (
-    packageJson.scripts.postinstall === postinstallScript ||
-    packageJson.scripts.postinstall?.includes(postinstallScript)
-  ) {
-    consola.success(
-      `postinstall script already configured in ${PACKAGE_JSON_FILE}`,
-    );
-
-    return {
-      packageJson,
-      packageManager,
-      execCommand,
-    };
-  }
-
-  if (packageJson.scripts.postinstall) {
-    consola.warn(
-      `${PACKAGE_JSON_FILE} already has a postinstall script. Adding a new one...`,
-    );
-
-    const script = `${packageJson.scripts.postinstall} && ${postinstallScript}`;
-    execSync(`npm pkg set scripts.postinstall="${script}"`);
-  } else {
-    consola.info(`Adding postinstall script to ${PACKAGE_JSON_FILE}...`);
-    execSync(`npm pkg set scripts.postinstall="${postinstallScript}"`);
-  }
-
-  consola.success(`Added postinstall script to ${PACKAGE_JSON_FILE}`);
   return {
     packageJson,
     packageManager,
     execCommand,
   };
+}
+
+/**
+ * Register the `hooks postinstall` script in package.json.
+ * @param execCommand - Prefix for running local binaries (e.g. `pnpm exec`, `npx`)
+ * @param cwd - Directory containing the package.json to update
+ */
+export async function writePostinstallHook(
+  execCommand: string,
+  cwd = process.cwd(),
+) {
+  const postinstallScript = `${execCommand} aio-commerce-lib-app hooks postinstall`;
+  const pkg = await NpmPackageJson.load(cwd);
+  const existing = pkg.content.scripts?.postinstall;
+
+  if (existing === postinstallScript || existing?.includes(postinstallScript)) {
+    consola.success(
+      `postinstall script already configured in ${PACKAGE_JSON_FILE}`,
+    );
+
+    return;
+  }
+
+  const nextPostinstall = existing
+    ? `${existing} && ${postinstallScript}`
+    : postinstallScript;
+
+  if (existing) {
+    consola.warn(
+      `${PACKAGE_JSON_FILE} already has a postinstall script. Adding a new one...`,
+    );
+  } else {
+    consola.info(`Adding postinstall script to ${PACKAGE_JSON_FILE}...`);
+  }
+
+  pkg.update({
+    scripts: { ...pkg.content.scripts, postinstall: nextPostinstall },
+  });
+
+  await pkg.save();
+  consola.success(`Added postinstall script to ${PACKAGE_JSON_FILE}`);
 }
 
 /** Ensure app.config.yaml has the extension reference */
@@ -230,46 +244,60 @@ export async function ensureAppConfig(
   );
 }
 
-/** Install the given dependencies */
+/**
+ * Install the given dependencies.
+ * @param packageManager - The detected package manager
+ * @param dependencies - Package specifiers to install; no-op when empty
+ * @param cwd - Working directory for the install command
+ */
 export function runInstall(
   packageManager: PackageManager,
   dependencies: string[],
   cwd = process.cwd(),
 ) {
+  if (dependencies.length === 0) {
+    return;
+  }
+
   const dependencyListString = dependencies
     .map((dependency) => `  - ${dependency}`)
     .join("\n");
 
-  consola.info(
-    `Installing the following dependencies with ${packageManager}:\n${dependencyListString}`,
+  consola.start(
+    [
+      `Installing the following dependencies with ${packageManager}:\n${dependencyListString}\n`,
+      "This may take a few seconds...\n",
+    ].join("\n"),
   );
 
-  const packagesToInstall = dependencies.join(" ");
-  const installCommandMap = {
-    pnpm: `pnpm add ${packagesToInstall}`,
-    yarn: `yarn add ${packagesToInstall}`,
-    bun: `bun add ${packagesToInstall}`,
-    npm: `npm install ${packagesToInstall}`,
-  } as const;
+  const { command, args } = getInstallCommand(packageManager, dependencies);
+  const displayCommand = [command, ...args].join(" ");
+  const result = spawnSync(command, args, {
+    cwd,
+    stdio: "inherit",
+  });
 
-  const installCommand = installCommandMap[packageManager];
-  try {
-    execSync(installCommand, {
-      cwd,
-      stdio: "inherit",
-    });
-    consola.success("Dependencies installed successfully");
-  } catch (error) {
+  if (result.error || result.status !== 0) {
     throw new Error(
-      `Failed to install dependencies automatically. Please install manually: ${installCommand}`,
+      `Failed to install dependencies automatically. Please install manually: ${displayCommand}`,
       {
-        cause: error,
+        cause:
+          result.error ??
+          new Error(`Install exited with code ${result.status}`),
       },
     );
   }
+
+  consola.log(""); // Add a newline after the install output for readability.
+  consola.success("Dependencies installed successfully");
 }
 
-/** Install required dependencies */
+/**
+ * Install the domain-specific dependencies derived from the selected domains.
+ * @param packageManager - The detected package manager
+ * @param domains - Domains enabled in the commerce app config
+ * @param cwd - Working directory for the install command
+ */
 export function installDependencies(
   packageManager: PackageManager,
   domains: Set<CommerceAppConfigDomain>,
@@ -278,7 +306,12 @@ export function installDependencies(
   const packages: string[] = [];
 
   if (domains.has("businessConfig.schema")) {
-    packages.push("@adobe/aio-commerce-lib-config");
+    packages.push(`@adobe/aio-commerce-lib-config@${__LIB_CONFIG_RANGE__}`);
+  }
+
+  if (packages.length === 0) {
+    consola.info("No additional domain dependencies to install.");
+    return;
   }
 
   runInstall(packageManager, packages, cwd);

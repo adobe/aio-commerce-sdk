@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import { registrationRuntimeAction } from "#actions/registration";
 
@@ -22,6 +22,24 @@ const mockParams = {
   __ow_headers: {},
   LOG_LEVEL: "debug",
 } as unknown as RuntimeActionParams;
+
+vi.mock("@aio-commerce-sdk/common-utils/actions", async () => {
+  const [actual, fixtures] = await Promise.all([
+    vi.importActual<typeof import("@aio-commerce-sdk/common-utils/actions")>(
+      "@aio-commerce-sdk/common-utils/actions",
+    ),
+    vi.importActual<typeof import("#test/fixtures/installation")>(
+      "#test/fixtures/installation",
+    ),
+  ]);
+
+  return {
+    ...actual,
+    logger: vi.fn(() => () => ({
+      logger: fixtures.createMockLogger(),
+    })),
+  };
+});
 
 describe("registrationRuntimeAction", () => {
   test("the factory returns a function", () => {

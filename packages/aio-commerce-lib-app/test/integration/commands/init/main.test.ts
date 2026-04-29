@@ -34,16 +34,62 @@ import {
 
 import type { PackageJson } from "type-fest";
 
-const { mockExecSync } = await vi.hoisted(async () => {
-  const { stubInstallCommands: stub } = await import("#test/fixtures/exec");
-  return { mockExecSync: await stub() };
-});
+const { mockSpawnSync } = vi.hoisted(() => ({
+  mockSpawnSync: vi.fn(() => ({ status: 0 })),
+}));
 
-vi.mock("node:child_process", () => ({ execSync: mockExecSync }));
+const PACKAGE_MANAGER_CASES = [
+  {
+    execCommand: "npx",
+    installPrefix: "npm i",
+    lockFile: ["package-lock.json", "{}"] as const,
+    packageManager: "npm",
+  },
+  {
+    execCommand: "pnpm exec",
+    installPrefix: "pnpm add",
+    lockFile: ["pnpm-lock.yaml", "lockfileVersion: '9.0'"] as const,
+    packageManager: "pnpm",
+  },
+  {
+    execCommand: "yarn exec",
+    installPrefix: "yarn add",
+    lockFile: ["yarn.lock", ""] as const,
+    packageManager: "yarn",
+  },
+  {
+    execCommand: "bun x",
+    installPrefix: "bun add",
+    lockFile: ["bun.lockb", ""] as const,
+    packageManager: "bun",
+  },
+] as const;
+
+vi.mock("node:child_process", () => ({ spawnSync: mockSpawnSync }));
+
+function stringifySpawnCall(call: unknown[]): string | null {
+  const [command, args] = call;
+  if (typeof command !== "string") {
+    return null;
+  }
+
+  if (!(Array.isArray(args) && args.every((arg) => typeof arg === "string"))) {
+    return command;
+  }
+
+  return [command, ...args].join(" ");
+}
+
+function getInstallCalls(): string[] {
+  return mockSpawnSync.mock.calls
+    .map((call) => stringifySpawnCall(call))
+    .filter((call): call is string => call !== null)
+    .filter((command) => INSTALL_COMMAND_RE.test(command));
+}
 
 describe("commands/init/main", () => {
   afterEach(() => {
-    mockExecSync.mockClear();
+    mockSpawnSync.mockClear();
   });
 
   describe("run", () => {
@@ -75,9 +121,7 @@ describe("commands/init/main", () => {
         );
 
         // At least one package install was invoked
-        const installCalls = mockExecSync.mock.calls
-          .map((c) => String(c[0]))
-          .filter((cmd) => INSTALL_COMMAND_RE.test(cmd));
+        const installCalls = getInstallCalls();
         expect(installCalls.length).toBeGreaterThan(0);
 
         expect(existsSync(join(tempDir, "app.commerce.config.ts"))).toBe(true);
@@ -108,6 +152,44 @@ describe("commands/init/main", () => {
         expect(configurationGenerated.length).toBeGreaterThan(0);
       });
     });
+
+    test.each(
+      PACKAGE_MANAGER_CASES,
+    )("uses $packageManager commands throughout init when $lockFile.0 is present", async ({
+      execCommand,
+      installPrefix,
+      lockFile,
+    }) => {
+      await withTempProject(
+        {
+          ...EMPTY_PROJECT,
+          [lockFile[0]]: lockFile[1],
+        },
+        async (tempDir) => {
+          await run(
+            {
+              appName: "Package Manager App",
+              configFormat: "ts",
+              domains: ["businessConfig.schema"],
+            },
+            { formatConfig: false },
+          );
+
+          const pkgJson: PackageJson = JSON.parse(
+            await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
+          );
+          expect(pkgJson.scripts?.postinstall).toBe(
+            `${execCommand} aio-commerce-lib-app hooks postinstall`,
+          );
+
+          const installCalls = getInstallCalls();
+          expect(installCalls).toHaveLength(2);
+          expect(
+            installCalls.every((call) => call.startsWith(installPrefix)),
+          ).toBe(true);
+        },
+      );
+    });
   });
 
   describe("exec", () => {
@@ -127,10 +209,10 @@ describe("commands/init/main", () => {
     });
 
     test("exits with 1 when an unexpected error is thrown", async () => {
-      const error = new Error("Unexpected error");
-      mockExecSync.mockImplementationOnce(() => {
-        throw error;
-      });
+      mockSpawnSync.mockImplementationOnce(() => ({
+        error: new Error("Unexpected error"),
+        status: 1,
+      }));
 
       await withTempProject(EMPTY_PROJECT, async () => {
         await exec();
