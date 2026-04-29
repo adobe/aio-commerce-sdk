@@ -14,7 +14,7 @@ import { existsSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { withTempFiles } from "#filesystem/temp";
 import {
@@ -22,6 +22,7 @@ import {
   findNearestPackageJson,
   findUp,
   getExecCommand,
+  getInstallCommand,
   getProjectRootDirectory,
   isESM,
   makeOutputDirFor,
@@ -231,6 +232,10 @@ describe("isESM", () => {
 });
 
 describe("detectPackageManager", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   test("should detect npm from package-lock.json", async () => {
     await withTempFiles(
       {
@@ -270,6 +275,21 @@ describe("detectPackageManager", () => {
     );
   });
 
+  test("should detect yarn from packageManager: yarn@4.x (berry) and collapse to yarn", async () => {
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({
+          name: "test",
+          packageManager: "yarn@4.5.1",
+        }),
+      },
+      async (tempDir) => {
+        const result = await detectPackageManager(tempDir);
+        expect(result).toBe("yarn");
+      },
+    );
+  });
+
   test("should detect bun from bun.lockb", async () => {
     await withTempFiles(
       {
@@ -283,7 +303,21 @@ describe("detectPackageManager", () => {
     );
   });
 
-  test("should default to npm when no lock file is found", async () => {
+  test("should fall back to invoking PM via npm_config_user_agent when no lock file is found", async () => {
+    vi.stubEnv("npm_config_user_agent", "pnpm/9.0.0 npm/? node/v20.0.0");
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test" }),
+      },
+      async (tempDir) => {
+        const result = await detectPackageManager(tempDir);
+        expect(result).toBe("pnpm");
+      },
+    );
+  });
+
+  test("should default to npm when no lock file and no user-agent are available", async () => {
+    vi.stubEnv("npm_config_user_agent", "");
     await withTempFiles(
       {
         "package.json": JSON.stringify({ name: "test" }),
@@ -294,6 +328,20 @@ describe("detectPackageManager", () => {
       },
     );
   });
+
+  test("should prefer lockfile over user-agent (on-disk evidence wins)", async () => {
+    vi.stubEnv("npm_config_user_agent", "pnpm/9.0.0 npm/? node/v20.0.0");
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test" }),
+        "yarn.lock": "",
+      },
+      async (tempDir) => {
+        const result = await detectPackageManager(tempDir);
+        expect(result).toBe("yarn");
+      },
+    );
+  });
 });
 
 describe("getExecCommand", () => {
@@ -301,16 +349,48 @@ describe("getExecCommand", () => {
     expect(getExecCommand("npm")).toBe("npx");
   });
 
-  test("should return pnpx for pnpm", () => {
-    expect(getExecCommand("pnpm")).toBe("pnpx");
+  test("should return pnpm exec for pnpm", () => {
+    expect(getExecCommand("pnpm")).toBe("pnpm exec");
   });
 
-  test("should return yarn dlx for yarn", () => {
-    expect(getExecCommand("yarn")).toBe("yarn dlx");
+  test("should return yarn exec for yarn", () => {
+    expect(getExecCommand("yarn")).toBe("yarn exec");
   });
 
-  test("should return bunx for bun", () => {
-    expect(getExecCommand("bun")).toBe("bunx");
+  test("should return bun x for bun", () => {
+    expect(getExecCommand("bun")).toBe("bun x");
+  });
+});
+
+describe("getInstallCommand", () => {
+  const pkgs = ["foo", "bar"];
+
+  test("should return npm i <pkgs> for npm", () => {
+    expect(getInstallCommand("npm", pkgs)).toEqual({
+      command: "npm",
+      args: ["i", "foo", "bar"],
+    });
+  });
+
+  test("should return pnpm add <pkgs> for pnpm", () => {
+    expect(getInstallCommand("pnpm", pkgs)).toEqual({
+      command: "pnpm",
+      args: ["add", "foo", "bar"],
+    });
+  });
+
+  test("should return yarn add <pkgs> for yarn", () => {
+    expect(getInstallCommand("yarn", pkgs)).toEqual({
+      command: "yarn",
+      args: ["add", "foo", "bar"],
+    });
+  });
+
+  test("should return bun add <pkgs> for bun", () => {
+    expect(getInstallCommand("bun", pkgs)).toEqual({
+      command: "bun",
+      args: ["add", "foo", "bar"],
+    });
   });
 });
 

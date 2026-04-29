@@ -10,10 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import { execSync } from "node:child_process";
-
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
+import NpmPackageJson from "@npmcli/package-json";
 import { consola } from "consola";
 
 import {
@@ -24,13 +22,19 @@ import {
   installDependencies,
   runGeneration,
   runInstall,
+  writePostinstallHook,
 } from "./lib";
 
 import type { CommerceAppConfigDomain } from "#config/index";
 
+// __PKG_VERSION__ is injected and replaced at build time.
+declare const __PKG_VERSION__: string;
+
+// Pin the self-install to the executing version so running `init` on a
+// specific release doesn't silently downgrade to the latest stable.
 const REQUIRED_DEPENDENCIES = [
-  "@adobe/aio-commerce-lib-app",
   "@adobe/aio-commerce-sdk",
+  `@adobe/aio-commerce-lib-app@${__PKG_VERSION__}`,
 ];
 
 /** The flags that the `init` command should accept (useful for non-interactive). */
@@ -52,9 +56,8 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   const { execCommand, packageManager } = await ensurePackageJson();
   runInstall(packageManager, REQUIRED_DEPENDENCIES);
 
-  const projectDir = await getProjectRootDirectory();
   const { config, domains } = await ensureCommerceAppConfig(
-    projectDir,
+    process.cwd(),
     extraOptions?.formatConfig ?? true,
     flags,
   );
@@ -62,13 +65,22 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   installDependencies(packageManager, domains);
 
   // Sync the package.json with the app config
-  execSync(`npm pkg set name="${config.metadata.id}"`);
-  execSync(`npm pkg set version="${config.metadata.version}"`);
-  execSync(`npm pkg set description="${config.metadata.description}"`);
+  const pkg = await NpmPackageJson.load(process.cwd());
+  pkg.update({
+    name: config.metadata.id,
+    version: config.metadata.version,
+    description: config.metadata.description,
+  });
+
+  await pkg.save();
 
   await runGeneration(config, execCommand);
   await ensureAppConfig(domains);
   await ensureInstallYaml(domains);
+
+  // Register the postinstall hook last so future installs run after init has
+  // created the files the hook depends on.
+  await writePostinstallHook(execCommand);
 
   consola.success("Initialization complete!");
   consola.box(

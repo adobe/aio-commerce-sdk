@@ -15,10 +15,12 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
+import { getExecCommand } from "@aio-commerce-sdk/scripting-utils/project";
 import { describe, expect, test, vi } from "vitest";
 
 import {
   APP_CONFIG_FILE,
+  BACKEND_UI_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   INSTALL_YAML_FILE,
@@ -32,6 +34,7 @@ import {
   ensureInstallYaml,
   ensurePackageJson,
   runGeneration,
+  writePostinstallHook,
 } from "#commands/init/lib";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
@@ -195,6 +198,22 @@ describe("commands/init/lib", () => {
       );
     });
 
+    test("adds backend-ui extension point when adminUiSdk is in domains", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
+        async (tempDir) => {
+          await ensureAppConfig(new Set(["adminUiSdk"]), tempDir);
+
+          const content = await readFile(
+            join(tempDir, APP_CONFIG_FILE),
+            "utf-8",
+          );
+          expect(content).toContain(BACKEND_UI_EXTENSION_POINT_ID);
+          expect(content).toContain(EXTENSIBILITY_EXTENSION_POINT_ID);
+        },
+      );
+    });
+
     test("does not duplicate extension points on repeated calls", async () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
@@ -261,6 +280,22 @@ describe("commands/init/lib", () => {
       );
     });
 
+    test("adds backend-ui extension point when adminUiSdk is in domains", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
+        async (tempDir) => {
+          await ensureInstallYaml(new Set(["adminUiSdk"]), tempDir);
+          const content = await readFile(
+            join(tempDir, INSTALL_YAML_FILE),
+            "utf-8",
+          );
+
+          expect(content).toContain(BACKEND_UI_EXTENSION_POINT_ID);
+          expect(content).toContain(EXTENSIBILITY_EXTENSION_POINT_ID);
+        },
+      );
+    });
+
     test("does not duplicate extension points on repeated calls", async () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
@@ -297,42 +332,104 @@ describe("commands/init/lib", () => {
   });
 
   describe("ensurePackageJson", () => {
-    test("creates package.json with postinstall script when missing", async () => {
+    test("creates package.json when missing and returns the detected exec command", async () => {
       await withTempFiles({}, async (tempDir) => {
-        await ensurePackageJson(tempDir);
+        const result = await ensurePackageJson(tempDir);
 
         const written = JSON.parse(
           await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
         );
-        expect(written.scripts.postinstall).toBe(
-          "npx aio-commerce-lib-app hooks postinstall",
-        );
+        expect(written).toMatchObject({
+          name: "my-commerce-app",
+          version: "1.0.0",
+          private: true,
+        });
+        expect(written.scripts).toBeUndefined();
+        expect(result.execCommand).toBe(getExecCommand(result.packageManager));
       });
     });
 
+    test("returns an existing package.json unchanged when postinstall is not set", async () => {
+      await withTempProject(EMPTY_PROJECT, async (tempDir) => {
+        const result = await ensurePackageJson(tempDir);
+
+        const written = JSON.parse(
+          await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
+        );
+        expect(written.scripts?.postinstall).toBeUndefined();
+        expect(result.execCommand).toBe(getExecCommand(result.packageManager));
+      });
+    });
+
+    test.each([
+      {
+        execCommand: "npx",
+        lockFile: ["package-lock.json", "{}"] as const,
+        packageManager: "npm",
+      },
+      {
+        execCommand: "pnpm exec",
+        lockFile: ["pnpm-lock.yaml", "lockfileVersion: '9.0'"] as const,
+        packageManager: "pnpm",
+      },
+      {
+        execCommand: "yarn exec",
+        lockFile: ["yarn.lock", ""] as const,
+        packageManager: "yarn",
+      },
+      {
+        execCommand: "bun x",
+        lockFile: ["bun.lockb", ""] as const,
+        packageManager: "bun",
+      },
+    ])("detects $packageManager from $lockFile.0 and returns the matching exec command", async ({
+      execCommand,
+      lockFile,
+      packageManager,
+    }) => {
+      await withTempProject(
+        {
+          ...EMPTY_PROJECT,
+          [lockFile[0]]: lockFile[1],
+        },
+        async (tempDir) => {
+          const result = await ensurePackageJson(tempDir);
+
+          expect(result.packageManager).toBe(packageManager);
+          expect(result.execCommand).toBe(execCommand);
+        },
+      );
+    });
+  });
+
+  describe("writePostinstallHook", () => {
     test("adds postinstall script when package.json has no postinstall", async () => {
       await withTempProject(EMPTY_PROJECT, async (tempDir) => {
-        await ensurePackageJson(tempDir);
+        const { execCommand } = await ensurePackageJson(tempDir);
+        await writePostinstallHook(execCommand, tempDir);
 
         const written = JSON.parse(
           await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
         );
         expect(written.scripts.postinstall).toBe(
-          "npx aio-commerce-lib-app hooks postinstall",
+          `${execCommand} aio-commerce-lib-app hooks postinstall`,
         );
       });
     });
 
     test("leaves package.json untouched when postinstall is already configured", async () => {
+      const execCommand = "npx";
       const original = JSON.stringify({
         type: "module",
-        scripts: { postinstall: "npx aio-commerce-lib-app hooks postinstall" },
+        scripts: {
+          postinstall: `${execCommand} aio-commerce-lib-app hooks postinstall`,
+        },
       });
 
       await withTempProject(
         { [PACKAGE_JSON_FILE]: original },
         async (tempDir) => {
-          await ensurePackageJson(tempDir);
+          await writePostinstallHook(execCommand, tempDir);
 
           const after = await readFile(
             join(tempDir, PACKAGE_JSON_FILE),
@@ -352,13 +449,14 @@ describe("commands/init/lib", () => {
       await withTempProject(
         { [PACKAGE_JSON_FILE]: packageJson },
         async (tempDir) => {
-          await ensurePackageJson(tempDir);
+          const { execCommand } = await ensurePackageJson(tempDir);
+          await writePostinstallHook(execCommand, tempDir);
 
           const written = JSON.parse(
             await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
           );
           expect(written.scripts.postinstall).toBe(
-            "echo hello && npx aio-commerce-lib-app hooks postinstall",
+            `echo hello && ${execCommand} aio-commerce-lib-app hooks postinstall`,
           );
         },
       );

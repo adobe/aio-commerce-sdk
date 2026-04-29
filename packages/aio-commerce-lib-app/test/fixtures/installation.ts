@@ -49,6 +49,7 @@ export function createMockLogger(): ReturnType<typeof AioLogger> {
   logger.verbose = vi.fn();
   logger.silly = vi.fn();
   logger.close = vi.fn();
+
   return logger;
 }
 

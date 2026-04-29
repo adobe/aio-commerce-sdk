@@ -10,8 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
+import libConfigPkg from "@adobe/aio-commerce-lib-config/package.json" with {
+  type: "json",
+};
 import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
 import { mergeConfig } from "tsdown";
+
+import pkg from "./package.json" with { type: "json" };
 
 export default mergeConfig(baseConfig, {
   entry: [
@@ -20,6 +25,10 @@ export default mergeConfig(baseConfig, {
     "./source/commands/index.ts",
     "./source/management/index.ts",
   ],
+  define: {
+    __PKG_VERSION__: JSON.stringify(pkg.version),
+    __LIB_CONFIG_RANGE__: JSON.stringify(`^${libConfigPkg.version}`),
+  },
   copy: [
     {
       from: "./source/commands/generate/actions/templates",

@@ -33,7 +33,7 @@
   "module": "./dist/es/index.mjs",
   "types": "./dist/cjs/index.d.cts",
   "bin": {
-    "@adobe/aio-commerce-lib-config": "./bin/cli.mjs"
+    "aio-commerce-lib-config": "./bin/cli.mjs"
   },
   "publishConfig": {
     "exports": {
