@@ -15,6 +15,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
+import { getExecCommand } from "@aio-commerce-sdk/scripting-utils/project";
 import { describe, expect, test, vi } from "vitest";
 
 import {
@@ -32,6 +33,7 @@ import {
   ensureInstallYaml,
   ensurePackageJson,
   runGeneration,
+  writePostinstallHook,
 } from "#commands/init/lib";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
@@ -297,42 +299,64 @@ describe("commands/init/lib", () => {
   });
 
   describe("ensurePackageJson", () => {
-    test("creates package.json with postinstall script when missing", async () => {
+    test("creates package.json when missing and returns the detected exec command", async () => {
       await withTempFiles({}, async (tempDir) => {
-        await ensurePackageJson(tempDir);
+        const result = await ensurePackageJson(tempDir);
 
         const written = JSON.parse(
           await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
         );
-        expect(written.scripts.postinstall).toBe(
-          "npx aio-commerce-lib-app hooks postinstall",
-        );
+        expect(written).toMatchObject({
+          name: "my-commerce-app",
+          version: "1.0.0",
+          private: true,
+        });
+        expect(written.scripts).toBeUndefined();
+        expect(result.execCommand).toBe(getExecCommand(result.packageManager));
       });
     });
 
+    test("returns an existing package.json unchanged when postinstall is not set", async () => {
+      await withTempProject(EMPTY_PROJECT, async (tempDir) => {
+        const result = await ensurePackageJson(tempDir);
+
+        const written = JSON.parse(
+          await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
+        );
+        expect(written.scripts?.postinstall).toBeUndefined();
+        expect(result.execCommand).toBe(getExecCommand(result.packageManager));
+      });
+    });
+  });
+
+  describe("writePostinstallHook", () => {
     test("adds postinstall script when package.json has no postinstall", async () => {
       await withTempProject(EMPTY_PROJECT, async (tempDir) => {
-        await ensurePackageJson(tempDir);
+        const { execCommand } = await ensurePackageJson(tempDir);
+        await writePostinstallHook(execCommand, tempDir);
 
         const written = JSON.parse(
           await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
         );
         expect(written.scripts.postinstall).toBe(
-          "npx aio-commerce-lib-app hooks postinstall",
+          `${execCommand} aio-commerce-lib-app hooks postinstall`,
         );
       });
     });
 
     test("leaves package.json untouched when postinstall is already configured", async () => {
+      const execCommand = "npx";
       const original = JSON.stringify({
         type: "module",
-        scripts: { postinstall: "npx aio-commerce-lib-app hooks postinstall" },
+        scripts: {
+          postinstall: `${execCommand} aio-commerce-lib-app hooks postinstall`,
+        },
       });
 
       await withTempProject(
         { [PACKAGE_JSON_FILE]: original },
         async (tempDir) => {
-          await ensurePackageJson(tempDir);
+          await writePostinstallHook(execCommand, tempDir);
 
           const after = await readFile(
             join(tempDir, PACKAGE_JSON_FILE),
@@ -352,13 +376,14 @@ describe("commands/init/lib", () => {
       await withTempProject(
         { [PACKAGE_JSON_FILE]: packageJson },
         async (tempDir) => {
-          await ensurePackageJson(tempDir);
+          const { execCommand } = await ensurePackageJson(tempDir);
+          await writePostinstallHook(execCommand, tempDir);
 
           const written = JSON.parse(
             await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
           );
           expect(written.scripts.postinstall).toBe(
-            "echo hello && npx aio-commerce-lib-app hooks postinstall",
+            `echo hello && ${execCommand} aio-commerce-lib-app hooks postinstall`,
           );
         },
       );

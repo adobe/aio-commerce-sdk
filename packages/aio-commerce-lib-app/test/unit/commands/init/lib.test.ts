@@ -14,26 +14,30 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { installDependencies, runInstall } from "#commands/init/lib";
 
-const mockExecSync = vi.fn<(...args: unknown[]) => unknown>();
+const mockSpawnSync = vi.fn<(...args: unknown[]) => unknown>();
+const INSTALL_VERB_RE = /^(i|install)$/;
+const CONFIG_PACKAGE_RE = /^@adobe\/aio-commerce-lib-config@/;
+
 vi.mock("node:child_process", () => ({
-  execSync: (...args: unknown[]) => mockExecSync(...args),
+  spawnSync: (...args: unknown[]) => mockSpawnSync(...args),
 }));
 
 describe("commands/init/lib", () => {
   beforeEach(() => {
-    mockExecSync.mockImplementation(() => Buffer.from(""));
+    mockSpawnSync.mockImplementation(() => ({ status: 0 }));
   });
 
   afterEach(() => {
-    mockExecSync.mockReset();
+    mockSpawnSync.mockReset();
   });
 
   describe("runInstall", () => {
     test("runs the npm install command with the given dependencies", () => {
       runInstall("npm", ["@adobe/aio-commerce-lib-config"], "/tmp/project");
 
-      expect(mockExecSync).toHaveBeenCalledWith(
-        "npm install @adobe/aio-commerce-lib-config",
+      expect(mockSpawnSync).toHaveBeenCalledWith(
+        "npm",
+        ["i", "@adobe/aio-commerce-lib-config"],
         { cwd: "/tmp/project", stdio: "inherit" },
       );
     });
@@ -41,16 +45,18 @@ describe("commands/init/lib", () => {
     test("uses the pnpm add command for pnpm", () => {
       runInstall("pnpm", ["@adobe/aio-commerce-lib-config"], "/tmp/project");
 
-      expect(mockExecSync).toHaveBeenCalledWith(
-        "pnpm add @adobe/aio-commerce-lib-config",
+      expect(mockSpawnSync).toHaveBeenCalledWith(
+        "pnpm",
+        ["add", "@adobe/aio-commerce-lib-config"],
         { cwd: "/tmp/project", stdio: "inherit" },
       );
     });
 
     test("throws when the install fails", () => {
-      mockExecSync.mockImplementationOnce(() => {
-        throw new Error("install failed");
-      });
+      mockSpawnSync.mockImplementationOnce(() => ({
+        error: new Error("install failed"),
+        status: 1,
+      }));
 
       expect(() =>
         runInstall("npm", ["@adobe/aio-commerce-lib-config"], "/tmp/project"),
@@ -66,8 +72,12 @@ describe("commands/init/lib", () => {
         "/tmp/project",
       );
 
-      expect(mockExecSync).toHaveBeenCalledWith(
-        "npm install @adobe/aio-commerce-lib-config",
+      expect(mockSpawnSync).toHaveBeenCalledWith(
+        "npm",
+        [
+          expect.stringMatching(INSTALL_VERB_RE),
+          expect.stringMatching(CONFIG_PACKAGE_RE),
+        ],
         { cwd: "/tmp/project", stdio: "inherit" },
       );
     });
@@ -79,9 +89,7 @@ describe("commands/init/lib", () => {
         "/tmp/project",
       );
 
-      expect(mockExecSync).not.toHaveBeenCalledWith(
-        expect.stringContaining("@adobe/aio-commerce-lib-config"),
-      );
+      expect(mockSpawnSync).not.toHaveBeenCalled();
     });
   });
 });

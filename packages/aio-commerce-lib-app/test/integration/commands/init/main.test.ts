@@ -34,16 +34,15 @@ import {
 
 import type { PackageJson } from "type-fest";
 
-const { mockExecSync } = await vi.hoisted(async () => {
-  const { stubInstallCommands: stub } = await import("#test/fixtures/exec");
-  return { mockExecSync: await stub() };
-});
+const { mockSpawnSync } = vi.hoisted(() => ({
+  mockSpawnSync: vi.fn(() => ({ status: 0 })),
+}));
 
-vi.mock("node:child_process", () => ({ execSync: mockExecSync }));
+vi.mock("node:child_process", () => ({ spawnSync: mockSpawnSync }));
 
 describe("commands/init/main", () => {
   afterEach(() => {
-    mockExecSync.mockClear();
+    mockSpawnSync.mockClear();
   });
 
   describe("run", () => {
@@ -75,8 +74,10 @@ describe("commands/init/main", () => {
         );
 
         // At least one package install was invoked
-        const installCalls = mockExecSync.mock.calls
-          .map((c) => String(c[0]))
+        const installCalls = mockSpawnSync.mock.calls
+          .map((c) =>
+            [String(c[0]), ...(Array.isArray(c[1]) ? c[1] : [])].join(" "),
+          )
           .filter((cmd) => INSTALL_COMMAND_RE.test(cmd));
         expect(installCalls.length).toBeGreaterThan(0);
 
@@ -127,10 +128,10 @@ describe("commands/init/main", () => {
     });
 
     test("exits with 1 when an unexpected error is thrown", async () => {
-      const error = new Error("Unexpected error");
-      mockExecSync.mockImplementationOnce(() => {
-        throw error;
-      });
+      mockSpawnSync.mockImplementationOnce(() => ({
+        error: new Error("Unexpected error"),
+        status: 1,
+      }));
 
       await withTempProject(EMPTY_PROJECT, async () => {
         await exec();
