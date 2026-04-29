@@ -7,6 +7,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
+- **Admin UI SDK Configuration**: Generate and manage the runtime action that powers the `commerce/backend-ui/1` extension point.
 
 ## Reference
 
@@ -95,6 +96,11 @@ This produces the following files, organized by extension point:
 - `src/commerce-configuration-1/.generated/actions/business-configuration/scope-tree.js`: handles scope hierarchy management for both Adobe Commerce and custom external scopes
 - `src/commerce-configuration-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
+**`commerce/backend-ui/1`**: Admin UI SDK (generated when `adminUiSdk.registration` is defined):
+
+- `src/commerce-backend-ui-1/.generated/actions/registration/index.js`: serves the Admin UI SDK registration object to Adobe Commerce
+- `src/commerce-backend-ui-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
+
 4. In your `app.config.yaml`, reference the generated extension configurations. If you have multiple extension points, add each as a new entry:
 
 ```yaml
@@ -104,6 +110,9 @@ extensions:
   # Only include this if businessConfig is defined in your app.commerce.config.*:
   commerce/configuration/1:
     $include: "src/commerce-configuration-1/ext.config.yaml"
+  # Only include this if adminUiSdk.registration is defined in your app.commerce.config.*:
+  commerce/backend-ui/1:
+    $include: "src/commerce-backend-ui-1/ext.config.yaml"
 ```
 
 5. In your `install.yaml`, add the extension point references. If you have multiple extension points, add each as a new entry:
@@ -113,6 +122,8 @@ extensions:
   - extensionPointId: commerce/extensibility/1
   # Only include this if businessConfig is defined in your app.commerce.config.*:
   - extensionPointId: commerce/configuration/1
+  # Only include this if adminUiSdk.registration is defined in your app.commerce.config.*:
+  - extensionPointId: commerce/backend-ui/1
 ```
 
 ### Defining Configuration
@@ -123,6 +134,7 @@ The current app configuration definition contains the following sections:
 - **businessConfig**: Business configuration schema
 - **eventing**: Eventing configuration
 - **installation**: Installation configuration
+- **adminUiSdk**: Admin UI SDK registration
 
 #### Application Metadata
 
@@ -449,6 +461,168 @@ export default defineCustomInstallationStep(async (config, context) => {
 - Scripts are executed **sequentially** in the order defined in the configuration
 - If any script throws an error, the entire installation fails and subsequent scripts are not executed
 - Scripts have access to the complete app configuration and can use it to make decisions
+
+#### Admin UI SDK Configuration
+
+The `adminUiSdk.registration` field declares the registration payload served by the Admin UI SDK runtime action. When defined, `init` and `generate all` automatically wire up the `commerce/backend-ui/1` extension, including the generated runtime action and the `pre-app-build` hook that keeps it in sync with your config. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
+
+```javascript
+adminUiSdk: {
+  registration: {
+    menuItems: [
+      {
+        id: "my-app::menu",
+        title: "My App",
+        parent: "my-app::apps",
+        sortOrder: 1,
+        isSection: false,
+        sandbox: "allow-modals",
+      },
+    ],
+
+    order: {
+      massActions: [
+        {
+          actionId: "my-app::order-mass-action",
+          label: "Order Mass Action",
+          title: "Page Title",
+          path: "#/order-mass-action",
+          selectionLimit: 1,
+          confirm: { title: "Confirm", message: "Are you sure?" },
+          displayIframe: true,
+          timeout: 10,
+          sandbox: "allow-modals",
+        },
+      ],
+      gridColumns: {
+        data: { meshId: "MESH_ID" },
+        properties: [
+          {
+            label: "Column Name",
+            columnId: "column_id",
+            type: "string",
+            align: "left",
+          },
+        ],
+      },
+      viewButtons: [
+        {
+          buttonId: "my-app::delete-order",
+          label: "Delete",
+          path: "#/delete-order",
+          level: 0,
+          sortOrder: 80,
+          confirm: { message: "Are you sure?" },
+          displayIframe: true,
+          timeout: 10,
+          sandbox: "allow-modals",
+        },
+      ],
+      customFees: [
+        {
+          id: "fee-1",
+          label: "My Custom Fee",
+          value: 1.0,
+          orderMinimumAmount: 0,
+          applyFeeOnLastInvoice: false,
+          applyFeeOnLastCreditMemo: true,
+        },
+      ],
+    },
+
+    product: {
+      massActions: [
+        {
+          actionId: "my-app::product-mass-action",
+          label: "Product Mass Action",
+          path: "#/product-mass-action",
+          productSelectLimit: 1,
+        },
+      ],
+      gridColumns: {
+        data: { meshId: "MESH_ID" },
+        properties: [
+          { label: "Column Name", columnId: "column_id", type: "string", align: "left" },
+        ],
+      },
+    },
+
+    customer: {
+      massActions: [
+        {
+          actionId: "my-app::customer-mass-action",
+          label: "Customer Mass Action",
+          path: "#/customer-mass-action",
+          customerSelectLimit: 1,
+        },
+      ],
+      gridColumns: {
+        data: { meshId: "MESH_ID" },
+        properties: [
+          { label: "Column Name", columnId: "column_id", type: "string", align: "left" },
+        ],
+      },
+    },
+
+    bannerNotification: {
+      massActions: {
+        order: [
+          {
+            actionId: "my-app::order-mass-action",
+            successMessage: "Order action completed.",
+            errorMessage: "Order action failed.",
+          },
+        ],
+        product: [{ actionId: "my-app::product-mass-action" }],
+        customer: [{ actionId: "my-app::customer-mass-action" }],
+      },
+      orderViewButtons: [
+        {
+          buttonId: "my-app::delete-order",
+          successMessage: "Order deleted.",
+          errorMessage: "Delete failed.",
+        },
+      ],
+    },
+  },
+}
+```
+
+##### Menu Items:
+
+- **id**: Required, non-empty string
+- **title**, **parent**: Optional, non-empty string
+- **sortOrder**: Optional number
+- **isSection**: Optional boolean
+- **sandbox**: Optional; space-separated combination of `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
+
+##### Order Extension Points:
+
+- **massActions** (optional array): **`actionId`**, **`label`**, **`path`** required; `title` optional; `selectionLimit` optional positive number; `confirm.title` and `confirm.message` optional; `displayIframe` optional boolean; `timeout` optional positive number; `sandbox` optional (see above)
+- **gridColumns** (optional): `data.meshId` required; `properties` must contain at least one entry; each property requires `label`, `columnId`, `type` (`"boolean"`, `"date"`, `"float"`, `"integer"`, or `"string"`), and `align` (`"left"`, `"right"`, or `"center"`)
+- **viewButtons** (optional array): **`buttonId`**, **`label`**, **`path`** required; `level` optional (`-1`, `0`, or `1`); `sortOrder` optional; `confirm.message` optional; `displayIframe`, `timeout`, `sandbox` optional
+- **customFees** (optional array): **`id`**, **`label`** required; **`value`** required number; `orderMinimumAmount` optional number; `applyFeeOnLastInvoice`, `applyFeeOnLastCreditMemo` optional boolean
+
+##### Product Extension Points:
+
+- **massActions** (optional array): same fields as order mass actions, but uses `productSelectLimit` instead of `selectionLimit`
+- **gridColumns** (optional): same shape as order grid columns
+
+##### Customer Extension Points:
+
+- **massActions** (optional array): same fields as order mass actions, but uses `customerSelectLimit` instead of `selectionLimit`
+- **gridColumns** (optional): same shape as order grid columns
+
+##### Banner Notifications:
+
+- **massActions.order**, **massActions.product**, **massActions.customer** (optional arrays): each entry requires **`actionId`**; `successMessage` and `errorMessage` are optional non-empty strings
+- **orderViewButtons** (optional array): each entry requires **`buttonId`**; `successMessage` and `errorMessage` are optional non-empty strings
+
+##### Cross-Field Rules:
+
+- `sandbox` is only relevant when `displayIframe` is set to `true`; this applies to all mass actions and view button entries
+
+Every field of `adminUiSdk.registration` is optional — configure only the extension points your application needs.
 
 ### CLI Commands
 
