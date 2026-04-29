@@ -15,7 +15,8 @@ import { vi } from "vitest";
 import type * as ChildProcess from "node:child_process";
 
 /** Matches any package-install invocation across the supported package managers. */
-export const INSTALL_COMMAND_RE = /^(npm install|pnpm add|yarn add|bun add)\b/;
+export const INSTALL_COMMAND_RE =
+  /^(npm (i|install)|pnpm add|yarn add|bun add)\b/;
 
 /**
  * Builds a `vi.fn` spy that stubs package-install invocations

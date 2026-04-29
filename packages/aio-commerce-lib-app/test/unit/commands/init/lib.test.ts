@@ -32,6 +32,11 @@ describe("commands/init/lib", () => {
   });
 
   describe("runInstall", () => {
+    test("does nothing when no dependencies are provided", () => {
+      runInstall("npm", [], "/tmp/project");
+      expect(mockSpawnSync).not.toHaveBeenCalled();
+    });
+
     test("runs the npm install command with the given dependencies", () => {
       runInstall("npm", ["@adobe/aio-commerce-lib-config"], "/tmp/project");
 
@@ -47,6 +52,25 @@ describe("commands/init/lib", () => {
 
       expect(mockSpawnSync).toHaveBeenCalledWith(
         "pnpm",
+        ["add", "@adobe/aio-commerce-lib-config"],
+        { cwd: "/tmp/project", stdio: "inherit" },
+      );
+    });
+
+    test("uses the yarn add command for yarn", () => {
+      runInstall("yarn", ["@adobe/aio-commerce-lib-config"], "/tmp/project");
+
+      expect(mockSpawnSync).toHaveBeenCalledWith(
+        "yarn",
+        ["add", "@adobe/aio-commerce-lib-config"],
+        { cwd: "/tmp/project", stdio: "inherit" },
+      );
+    });
+
+    test("uses the bun add command for bun", () => {
+      runInstall("bun", ["@adobe/aio-commerce-lib-config"], "/tmp/project");
+      expect(mockSpawnSync).toHaveBeenCalledWith(
+        "bun",
         ["add", "@adobe/aio-commerce-lib-config"],
         { cwd: "/tmp/project", stdio: "inherit" },
       );
@@ -90,6 +114,24 @@ describe("commands/init/lib", () => {
       );
 
       expect(mockSpawnSync).not.toHaveBeenCalled();
+    });
+
+    test("installs aio-commerce-lib-config when businessConfig.schema is selected alongside other domains", () => {
+      installDependencies(
+        "npm",
+        new Set(["businessConfig.schema", "eventing.commerce"]),
+        "/tmp/project",
+      );
+
+      expect(mockSpawnSync).toHaveBeenCalledTimes(1);
+      expect(mockSpawnSync).toHaveBeenCalledWith(
+        "npm",
+        [
+          expect.stringMatching(INSTALL_VERB_RE),
+          expect.stringMatching(CONFIG_PACKAGE_RE),
+        ],
+        { cwd: "/tmp/project", stdio: "inherit" },
+      );
     });
   });
 });

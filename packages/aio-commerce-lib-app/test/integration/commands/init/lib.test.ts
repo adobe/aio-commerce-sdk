@@ -20,6 +20,7 @@ import { describe, expect, test, vi } from "vitest";
 
 import {
   APP_CONFIG_FILE,
+  BACKEND_UI_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   INSTALL_YAML_FILE,
@@ -197,6 +198,22 @@ describe("commands/init/lib", () => {
       );
     });
 
+    test("adds backend-ui extension point when adminUiSdk is in domains", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
+        async (tempDir) => {
+          await ensureAppConfig(new Set(["adminUiSdk"]), tempDir);
+
+          const content = await readFile(
+            join(tempDir, APP_CONFIG_FILE),
+            "utf-8",
+          );
+          expect(content).toContain(BACKEND_UI_EXTENSION_POINT_ID);
+          expect(content).toContain(EXTENSIBILITY_EXTENSION_POINT_ID);
+        },
+      );
+    });
+
     test("does not duplicate extension points on repeated calls", async () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
@@ -258,6 +275,22 @@ describe("commands/init/lib", () => {
           );
 
           expect(content).toContain(CONFIGURATION_EXTENSION_POINT_ID);
+          expect(content).toContain(EXTENSIBILITY_EXTENSION_POINT_ID);
+        },
+      );
+    });
+
+    test("adds backend-ui extension point when adminUiSdk is in domains", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
+        async (tempDir) => {
+          await ensureInstallYaml(new Set(["adminUiSdk"]), tempDir);
+          const content = await readFile(
+            join(tempDir, INSTALL_YAML_FILE),
+            "utf-8",
+          );
+
+          expect(content).toContain(BACKEND_UI_EXTENSION_POINT_ID);
           expect(content).toContain(EXTENSIBILITY_EXTENSION_POINT_ID);
         },
       );
@@ -326,6 +359,46 @@ describe("commands/init/lib", () => {
         expect(written.scripts?.postinstall).toBeUndefined();
         expect(result.execCommand).toBe(getExecCommand(result.packageManager));
       });
+    });
+
+    test.each([
+      {
+        execCommand: "npx",
+        lockFile: ["package-lock.json", "{}"] as const,
+        packageManager: "npm",
+      },
+      {
+        execCommand: "pnpm exec",
+        lockFile: ["pnpm-lock.yaml", "lockfileVersion: '9.0'"] as const,
+        packageManager: "pnpm",
+      },
+      {
+        execCommand: "yarn exec",
+        lockFile: ["yarn.lock", ""] as const,
+        packageManager: "yarn",
+      },
+      {
+        execCommand: "bun x",
+        lockFile: ["bun.lockb", ""] as const,
+        packageManager: "bun",
+      },
+    ])("detects $packageManager from $lockFile.0 and returns the matching exec command", async ({
+      execCommand,
+      lockFile,
+      packageManager,
+    }) => {
+      await withTempProject(
+        {
+          ...EMPTY_PROJECT,
+          [lockFile[0]]: lockFile[1],
+        },
+        async (tempDir) => {
+          const result = await ensurePackageJson(tempDir);
+
+          expect(result.packageManager).toBe(packageManager);
+          expect(result.execCommand).toBe(execCommand);
+        },
+      );
     });
   });
 
