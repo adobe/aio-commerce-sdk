@@ -23,7 +23,10 @@ import {
   getExtensionPointFolderPath,
 } from "#commands/constants";
 import { exec, run } from "#commands/generate/actions/main";
-import { getAdminUiSdkRegistrationActionPath } from "#commands/utils";
+import {
+  getAdminUiSdkRegistrationActionPath,
+  getGeneratedDir,
+} from "#commands/utils";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
   configWithBusinessConfig,
@@ -124,7 +127,7 @@ describe("commands/generate/actions", () => {
       );
     });
 
-    test("generates backend-ui registration action when adminUiSdk is configured", async () => {
+    test("generates backend-ui registration action and registration json when adminUiSdk is configured", async () => {
       await withTempProject(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
@@ -132,20 +135,31 @@ describe("commands/generate/actions", () => {
 
           const registrationPath = join(
             tempDir,
-            getAdminUiSdkRegistrationActionPath(BACKEND_UI_EXTENSION_POINT_ID),
+            getAdminUiSdkRegistrationActionPath(),
           );
+
           const extConfigPath = join(
             tempDir,
             getExtensionPointFolderPath(BACKEND_UI_EXTENSION_POINT_ID),
             "ext.config.yaml",
           );
 
+          const registrationJsonPath = join(
+            tempDir,
+            getGeneratedDir(BACKEND_UI_EXTENSION_POINT_ID),
+            "registration.json",
+          );
+
           expect(existsSync(registrationPath)).toBe(true);
           expect(existsSync(extConfigPath)).toBe(true);
+          expect(existsSync(registrationJsonPath)).toBe(true);
 
           const content = await readFile(registrationPath, "utf-8");
-          expect(content).toContain("registrationRuntimeAction");
-          expect(content).toContain("my-app::first");
+          expect(content).toContain('with { type: "json" }');
+
+          expect(
+            JSON.parse(await readFile(registrationJsonPath, "utf-8")),
+          ).toStrictEqual(configWithFullAdminUiSdk.adminUiSdk.registration);
         },
       );
     });

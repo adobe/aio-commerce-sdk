@@ -20,6 +20,7 @@ import { parseCommerceAppConfig } from "#config/index";
 import {
   ADMIN_UI_SDK_ACTIONS_PATH,
   APP_MANIFEST_FILE,
+  BACKEND_UI_EXTENSION_POINT_ID,
   CONFIG_SCHEMA_FILE_NAME,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -89,23 +90,17 @@ export function getExtConfigPath(extensionPointId: string) {
   return join(getExtensionPointFolderPath(extensionPointId), "ext.config.yaml");
 }
 
-/**
- * Path to an Admin UI SDK generated actions directory, relative to the project root.
- * @param extensionPointId - The extension point ID, e.g. "commerce/backend-ui/1"
- */
-export function getAdminUiSdkActionsDir(extensionPointId: string) {
+/** Path to an Admin UI SDK generated actions directory, relative to the project root. */
+export function getAdminUiSdkActionsDir() {
   return join(
-    getExtensionPointFolderPath(extensionPointId),
+    getExtensionPointFolderPath(BACKEND_UI_EXTENSION_POINT_ID),
     ADMIN_UI_SDK_ACTIONS_PATH,
   );
 }
 
-/**
- * Path to the generated Admin UI SDK registration action file, relative to the project root.
- * @param extensionPointId - The extension point ID, e.g. "commerce/backend-ui/1"
- */
-export function getAdminUiSdkRegistrationActionPath(extensionPointId: string) {
-  return join(getAdminUiSdkActionsDir(extensionPointId), "index.js");
+/** Path to the generated Admin UI SDK registration action file, relative to the project root. */
+export function getAdminUiSdkRegistrationActionPath() {
+  return join(getAdminUiSdkActionsDir(), "registration.js");
 }
 
 /** Path to the generated app manifest file, relative to the project root. */

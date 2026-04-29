@@ -28,14 +28,12 @@ import {
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   getExtensionPointFolderPath,
+  REGISTRATION_FILE_NAME,
 } from "#commands/constants";
 import {
-  getActionPath,
   getActionsDir,
-  getAdminUiSdkActionsDir,
-  getAdminUiSdkRegistrationActionPath,
   getExtConfigPath,
-  prettierFormat,
+  getGeneratedDir,
 } from "#commands/utils";
 import { hasCustomInstallationSteps } from "#config/index";
 
@@ -46,7 +44,6 @@ import {
   CUSTOM_IMPORTS_PLACEHOLDER,
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
   CUSTOM_SCRIPTS_MAP_PLACEHOLDER,
-  REGISTRATION_JSON_PLACEHOLDER,
 } from "./config";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
@@ -141,13 +138,21 @@ export async function generateActionFiles(
 ) {
   consola.start("Generating runtime actions...");
 
-  await makeOutputDirFor(getActionsDir(extensionPointId));
   const projectRoot = await getProjectRootDirectory();
   const outputFiles: string[] = [];
 
   for (const action of actions) {
     const templatePath = join(templatesDir, action.templateFile);
     let template = await readFile(templatePath, "utf-8");
+
+    const outputDir = action.generatedBasePath
+      ? join(
+          getExtensionPointFolderPath(extensionPointId),
+          action.generatedBasePath,
+        )
+      : getActionsDir(extensionPointId);
+
+    await makeOutputDirFor(outputDir);
 
     // For installation action, inject custom script imports
     if (action.name === "installation") {
@@ -165,17 +170,32 @@ export async function generateActionFiles(
       template = applyCustomScripts(template, scriptsTemplate);
     }
 
-    const actionPath = join(
-      projectRoot,
-      getActionPath(extensionPointId, action.name),
-    );
-
+    const actionPath = join(projectRoot, outputDir, `${action.name}.js`);
     await writeFile(actionPath, template, "utf-8");
+
     outputFiles.push(` ${relative(process.cwd(), actionPath)}`);
   }
 
   consola.success(`Generated ${actions.length} action(s)`);
   consola.log.raw(formatTree(outputFiles));
+}
+
+/** Generate the backend-ui registration JSON consumed by the generated action. */
+export async function generateRegistrationJson(appManifest: AdminUiSdkConfig) {
+  await makeOutputDirFor(getGeneratedDir(BACKEND_UI_EXTENSION_POINT_ID));
+  const registrationJsonPath = join(
+    await getProjectRootDirectory(),
+    getGeneratedDir(BACKEND_UI_EXTENSION_POINT_ID),
+    REGISTRATION_FILE_NAME,
+  );
+
+  await writeFile(
+    registrationJsonPath,
+    JSON.stringify(appManifest.adminUiSdk.registration, null, 2),
+    "utf-8",
+  );
+
+  return registrationJsonPath;
 }
 
 /**
@@ -262,45 +282,4 @@ export async function generateCustomScriptsTemplate(
   // Inject imports and function into template
   const result = template.replace(CUSTOM_IMPORTS_PLACEHOLDER, importStatements);
   return result.replace(CUSTOM_SCRIPTS_MAP_PLACEHOLDER, scriptMap);
-}
-
-/**
- * Generates `registration/index.js` with the Admin UI SDK registration config
- * inlined as a JS object literal.
- * @param appManifest - The validated app config; must satisfy `hasAdminUiSdk`.
- * @param extensionPointId - The extension point ID that owns the registration action.
- * @param templatesDir - The root directory containing the action templates.
- */
-export async function generateRegistrationActionFile(
-  appManifest: AdminUiSdkConfig,
-  extensionPointId: typeof BACKEND_UI_EXTENSION_POINT_ID,
-  templatesDir = TEMPLATES_DIR,
-) {
-  consola.start("Generating Admin UI SDK registration action...");
-
-  await makeOutputDirFor(getAdminUiSdkActionsDir(extensionPointId));
-  const projectRoot = await getProjectRootDirectory();
-  const templatePath = join(
-    templatesDir,
-    "admin-ui-sdk",
-    "registration.js.template",
-  );
-  const template = await readFile(templatePath, "utf-8");
-
-  const { registration } = appManifest.adminUiSdk;
-  const actionPath = join(
-    projectRoot,
-    getAdminUiSdkRegistrationActionPath(extensionPointId),
-  );
-  const content = template.replace(
-    REGISTRATION_JSON_PLACEHOLDER,
-    `const registration = ${JSON.stringify(registration)};`,
-  );
-
-  const formattedContent = await prettierFormat(content, actionPath);
-
-  await writeFile(actionPath, formattedContent, "utf-8");
-  consola.success(
-    `Generated registration action at ${relative(process.cwd(), actionPath)}`,
-  );
 }

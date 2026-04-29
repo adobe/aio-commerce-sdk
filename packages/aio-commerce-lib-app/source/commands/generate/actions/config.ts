@@ -31,6 +31,7 @@ import type { CommerceAppConfigDomain } from "#config/schema/domains";
 type ActionConfig = {
   requiresSchema?: boolean;
   requiresEncryptionKey?: boolean;
+  generatedBasePath?: string;
 };
 
 export type TemplateAction = ActionConfig & {
@@ -71,7 +72,7 @@ function createActionDefinition(
   const def: ActionDefinition = {
     ...options,
 
-    function: `${GENERATED_ACTIONS_PATH}/${actionName}.js`,
+    function: `${config.generatedBasePath ?? GENERATED_ACTIONS_PATH}/${actionName}.js`,
     web: options.web ?? "yes",
     runtime: "nodejs:22",
     annotations: {
@@ -93,15 +94,25 @@ function createActionDefinition(
 /**
  * Gets the runtime actions to be generated from the ext.config.yaml configuration.
  * @param extConfig - The ext.config.yaml configuration.
+ * @param dir - The directory where the action templates are located.
+ * @param packageName - The name of the package containing the actions (default: "app-management").
  */
-export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
+export function getRuntimeActions(
+  extConfig: ExtConfig,
+  dir: string,
+  packageName = PACKAGE_NAME,
+) {
   return Object.entries(
-    extConfig.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions ?? {},
+    extConfig.runtimeManifest?.packages?.[packageName]?.actions ?? {},
   ).map(
     ([name, _]) =>
       ({
         name,
         templateFile: join(dir, `${name}.js.template`),
+        generatedBasePath:
+          packageName === ADMIN_UI_SDK_PACKAGE_NAME
+            ? ADMIN_UI_SDK_ACTIONS_PATH
+            : undefined,
       }) satisfies TemplateAction,
   );
 }
@@ -220,10 +231,17 @@ export function buildBusinessConfigurationExtConfig() {
   } satisfies ExtConfig;
 }
 
-/**
- * Builds the ext.config.yaml configuration for the Admin UI SDK backend-ui extension.
- */
+/** Builds the ext.config.yaml configuration for the Admin UI SDK backend-ui extension. */
 export function buildAdminUiSdkExtConfig() {
+  const actions = [
+    {
+      name: "registration",
+      templateFile: "registration.js.template",
+      requiresEncryptionKey: true,
+      generatedBasePath: ADMIN_UI_SDK_ACTIONS_PATH,
+    },
+  ] satisfies TemplateAction[];
+
   return {
     hooks: {
       "pre-app-build":
@@ -239,17 +257,12 @@ export function buildAdminUiSdkExtConfig() {
       packages: {
         [ADMIN_UI_SDK_PACKAGE_NAME]: {
           license: "Apache-2.0",
-          actions: {
-            registration: {
-              function: `${ADMIN_UI_SDK_ACTIONS_PATH}/index.js`,
-              web: "yes",
-              runtime: "nodejs:22",
-              annotations: {
-                "require-adobe-auth": true,
-                final: true,
-              },
-            },
-          } satisfies Record<string, ActionDefinition>,
+          actions: Object.fromEntries(
+            actions.map((action) => [
+              action.name,
+              createActionDefinition(action.name, action),
+            ]),
+          ),
         },
       },
     },
