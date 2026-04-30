@@ -1,8 +1,25 @@
-import { writeFile } from "node:fs/promises";
+/*
+ * Copyright 2026 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 
-import { describe, expect, test, vi } from "vitest";
+import { readFile, writeFile } from "node:fs/promises";
 
-import { EXTENSIBILITY_EXTENSION_POINT_ID } from "#commands/constants";
+const QUOTED_MENU_ITEMS_RE = /"menuItems":/u;
+
+import { beforeEach, describe, expect, test, vi } from "vitest";
+
+import {
+  BACKEND_UI_EXTENSION_POINT_ID,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
+} from "#commands/constants";
 import {
   CUSTOM_IMPORTS_PLACEHOLDER,
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
@@ -11,7 +28,7 @@ import {
 import {
   applyCustomScripts,
   generateCustomScriptsTemplate,
-  generateRegistrationJson,
+  generateRegistrationActionFile,
   readExtConfig,
 } from "#commands/generate/actions/lib";
 import { templates } from "#test/fixtures/commands";
@@ -53,30 +70,6 @@ describe("readExtConfig", () => {
       readExtConfig(EXTENSIBILITY_EXTENSION_POINT_ID),
     ).rejects.toThrow(
       "Could not read ext.config.yaml for commerce/extensibility/1",
-    );
-  });
-});
-
-describe("generateRegistrationJson", () => {
-  test("writes the generated backend-ui registration json", async () => {
-    const mockWriteFile = vi.mocked(writeFile);
-
-    const registrationJsonPath = await generateRegistrationJson(
-      configWithFullAdminUiSdk,
-    );
-
-    expect(mockWriteFile).toHaveBeenCalledOnce();
-    expect(registrationJsonPath).toContain(
-      "/src/commerce-backend-ui-1/.generated/registration.json",
-    );
-
-    const [filePath, content] = mockWriteFile.mock.calls[0];
-    expect(String(filePath)).toContain(
-      "/src/commerce-backend-ui-1/.generated/registration.json",
-    );
-
-    expect(JSON.parse(String(content))).toStrictEqual(
-      configWithFullAdminUiSdk.adminUiSdk.registration,
     );
   });
 });
@@ -222,5 +215,55 @@ describe("generateCustomScriptsTemplate", () => {
 
       expect(result).toContain('import * as customScript0 from "./nested.js"');
     });
+  });
+});
+
+describe("generateRegistrationActionFile", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(readFile).mockResolvedValue(templates.registration);
+  });
+
+  test("writes registration.js with inlined registration JSON", async () => {
+    const mockReadFile = vi.mocked(readFile);
+    const mockWriteFile = vi.mocked(writeFile);
+
+    await generateRegistrationActionFile(
+      configWithFullAdminUiSdk,
+      BACKEND_UI_EXTENSION_POINT_ID,
+    );
+
+    expect(mockReadFile).toHaveBeenCalledOnce();
+    expect(mockWriteFile).toHaveBeenCalledOnce();
+
+    const [_path, content] = mockWriteFile.mock.calls[0];
+    const contentStr = content as string;
+
+    expect(contentStr).toContain("// This file has been auto-generated");
+    expect(contentStr).toContain(
+      'import { registrationRuntimeAction } from "@adobe/aio-commerce-lib-app/actions/registration"',
+    );
+    expect(contentStr).toContain("const registration =");
+    expect(contentStr).toContain(
+      "export const main = registrationRuntimeAction({ registration })",
+    );
+    expect(contentStr).toContain('"my-app::first"');
+    expect(contentStr).toContain("selectionLimit: 1");
+    expect(contentStr).toContain("productSelectLimit: 1");
+    expect(contentStr).toContain("customerSelectLimit: 1");
+    expect(contentStr).toContain("menuItems: [");
+    expect(contentStr).not.toMatch(QUOTED_MENU_ITEMS_RE);
+  });
+
+  test("writes to registration/index.js", async () => {
+    const mockWriteFile = vi.mocked(writeFile);
+
+    await generateRegistrationActionFile(
+      configWithFullAdminUiSdk,
+      BACKEND_UI_EXTENSION_POINT_ID,
+    );
+
+    const [filePath] = mockWriteFile.mock.calls[0];
+    expect(String(filePath)).toContain("index.js");
   });
 });

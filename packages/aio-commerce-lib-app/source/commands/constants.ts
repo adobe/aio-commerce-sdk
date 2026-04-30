@@ -35,7 +35,7 @@ export const BACKEND_UI_EXTENSION_POINT_ID = "commerce/backend-ui/1";
 export const ADMIN_UI_SDK_PACKAGE_NAME = "admin-ui-sdk";
 
 /** The path to the directory containing the generated Admin UI SDK actions. */
-export const ADMIN_UI_SDK_ACTIONS_PATH = `${GENERATED_PATH}/actions`;
+export const ADMIN_UI_SDK_ACTIONS_PATH = `${GENERATED_PATH}/actions/registration`;
 
 /** The name of the configuration schema file */
 export const APP_MANIFEST_FILE = "app.commerce.manifest.json";
@@ -45,9 +45,6 @@ export const COMMERCE_APP_CONFIG_FILE = "app.commerce.config";
 
 /** The name of the configuration schema file */
 export const CONFIG_SCHEMA_FILE_NAME = "configuration-schema.json";
-
-/** The name of the Admin UI SDK registration file */
-export const REGISTRATION_FILE_NAME = "registration.json";
 
 /** The name of the project package file */
 export const PACKAGE_JSON_FILE = "package.json";

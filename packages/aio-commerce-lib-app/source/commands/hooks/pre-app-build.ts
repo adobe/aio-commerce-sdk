@@ -15,7 +15,6 @@ import { syncImsCredentials } from "@aio-commerce-sdk/scripting-utils/env";
 import consola from "consola";
 
 import {
-  ADMIN_UI_SDK_PACKAGE_NAME,
   BACKEND_UI_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -23,7 +22,7 @@ import {
 import { getRuntimeActions } from "#commands/generate/actions/config";
 import {
   generateActionFiles,
-  generateRegistrationJson,
+  generateRegistrationActionFile,
   readExtConfig,
   TEMPLATES_DIR,
 } from "#commands/generate/actions/lib";
@@ -87,23 +86,11 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
 
   if (extension === "backend-ui/1") {
     if (hasAdminUiSdk(appManifest)) {
-      const { doc: adminUiSdkExtConfig } = await readExtConfig(
-        BACKEND_UI_EXTENSION_POINT_ID,
-      );
-
-      await generateRegistrationJson(appManifest);
-      await generateActionFiles(
+      await generateRegistrationActionFile(
         appManifest,
-        getRuntimeActions(
-          adminUiSdkExtConfig.toJS() as ExtConfig,
-          "admin-ui-sdk",
-          ADMIN_UI_SDK_PACKAGE_NAME,
-        ),
         BACKEND_UI_EXTENSION_POINT_ID,
-        templatesDir,
       );
     }
-
     return;
   }
 

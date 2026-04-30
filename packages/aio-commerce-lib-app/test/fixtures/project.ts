@@ -106,12 +106,11 @@ export function envObject(env: Record<string, string>): string {
 export function makeExtConfigFile(
   extensionPointId: string,
   actionNames: string[],
-  packageName = PACKAGE_NAME,
 ) {
   const extConfig = {
     runtimeManifest: {
       packages: {
-        [packageName]: {
+        [PACKAGE_NAME]: {
           actions: Object.fromEntries(
             actionNames.map((actionName) => [actionName, {}]),
           ),

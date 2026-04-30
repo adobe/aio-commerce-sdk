@@ -17,7 +17,6 @@ import { join } from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
-  ADMIN_UI_SDK_PACKAGE_NAME,
   BACKEND_UI_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -25,7 +24,6 @@ import {
 import { exec, run } from "#commands/hooks/pre-app-build";
 import {
   getAdminUiSdkRegistrationActionPath,
-  getGeneratedDir,
   getManifestPath,
   getSchemaPath,
 } from "#commands/utils";
@@ -113,39 +111,24 @@ describe("commands/hooks/pre-app-build", () => {
     });
 
     test("generates backend-ui registration action for backend-ui/1", async () => {
-      const actions = ["registration"];
       await withTempProject(
         {
           ...makeProjectFiles(configWithFullAdminUiSdk),
           ...makeTemplateFiles(),
-          ...makeExtConfigFile(
-            BACKEND_UI_EXTENSION_POINT_ID,
-            actions,
-            ADMIN_UI_SDK_PACKAGE_NAME,
-          ),
         },
         async (tempDir) => {
           await run("backend-ui/1");
 
           const registrationPath = join(
             tempDir,
-            getAdminUiSdkRegistrationActionPath(),
-          );
-          const registrationJsonPath = join(
-            tempDir,
-            getGeneratedDir(BACKEND_UI_EXTENSION_POINT_ID),
-            "registration.json",
+            getAdminUiSdkRegistrationActionPath(BACKEND_UI_EXTENSION_POINT_ID),
           );
 
           expect(existsSync(registrationPath)).toBe(true);
-          expect(existsSync(registrationJsonPath)).toBe(true);
 
           const content = await readFile(registrationPath, "utf-8");
           expect(content).toContain("registrationRuntimeAction");
-          expect(content).toContain('with { type: "json" }');
-          expect(
-            JSON.parse(await readFile(registrationJsonPath, "utf-8")),
-          ).toStrictEqual(configWithFullAdminUiSdk.adminUiSdk.registration);
+          expect(content).toContain("my-app::first");
         },
       );
     });
@@ -158,7 +141,7 @@ describe("commands/hooks/pre-app-build", () => {
 
           const registrationPath = join(
             tempDir,
-            getAdminUiSdkRegistrationActionPath(),
+            getAdminUiSdkRegistrationActionPath(BACKEND_UI_EXTENSION_POINT_ID),
           );
 
           expect(existsSync(registrationPath)).toBe(false);
