@@ -2,7 +2,7 @@
 
 - **Ticket:** [CEXT-XXXX](https://jira.corp.adobe.com/browse/CEXT-XXXX)
 - **Created:** YYYY-MM-DD
-- **Implemented:** [ ]
+- [ ] **Implemented**
 
 ## Summary
 
