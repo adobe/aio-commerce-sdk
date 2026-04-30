@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,9 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Public API for the events/io-events entrypoint */
+import * as v from "valibot";
 
-export * from "./messages";
-export * from "./schemas/functions";
-export * from "./schemas/primitives";
-export * from "./utils";
+/**
+ * Adds a prefix to the error messages of a given schema.
+ * @param schema The schema to wrap with a prefixed message.
+ * @param prefix The prefix to add to the error messages.
+ */
+export function withPrefixedMessage<TSchema extends v.GenericSchema>(
+  schema: TSchema,
+  prefix: string,
+): TSchema {
+  return v.message(schema, (issue) => `${prefix}: ${issue.message}`);
+}
