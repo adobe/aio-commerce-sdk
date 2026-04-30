@@ -53,6 +53,26 @@ describe("withPrefixedMessage", () => {
     );
   });
 
+  test("supports a callback prefix", async () => {
+    const schema = withPrefixedMessage(
+      v.string("Expected a plain string"),
+      (issue) => {
+        const path = v.getDotPath(issue);
+
+        if (path) {
+          return `Invalid input at ${path}`;
+        }
+
+        return "Invalid input at value";
+      },
+    );
+
+    await expectValiIssueMessage(
+      () => v.parse(schema, 123),
+      "Invalid input at value → Expected a plain string",
+    );
+  });
+
   test("supports an empty separator", async () => {
     const schema = withPrefixedMessage(
       v.string("Expected a plain string"),

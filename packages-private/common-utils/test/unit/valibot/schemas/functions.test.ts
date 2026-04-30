@@ -58,10 +58,99 @@ describe.each([
     );
   });
 
+  test("includes the argument index in custom argument errors", async () => {
+    const validatedFunction = v.parse(
+      validator({ args: v.tuple([v.string("Not a string!")]) }),
+      (_: string) => {
+        // No-op
+      },
+    );
+
+    await expectValiIssueMessage(
+      // @ts-expect-error: Testing invalid arguments
+      () => validatedFunction(123),
+      "The given arguments do not match the expected function signature → arguments[0] → Not a string!",
+    );
+  });
+
+  test("includes nested argument paths in custom argument errors", async () => {
+    const validatedFunction = v.parse(
+      validator({
+        args: v.tuple([
+          v.object({
+            name: v.string("Not a string!"),
+          }),
+        ]),
+      }),
+      (_: { name: string }) => {
+        // No-op
+      },
+    );
+
+    await expectValiIssueMessage(
+      // @ts-expect-error: Testing invalid nested argument property
+      () => validatedFunction({ name: 123 }),
+      "The given arguments do not match the expected function signature → arguments[0].name → Not a string!",
+    );
+  });
+
+  test("uses the generic arguments label for tuple-level argument issues", async () => {
+    const validatedFunction = v.parse(
+      validator({
+        args: v.pipe(
+          v.tuple([]),
+          v.check(() => false, "Tuple root failure"),
+        ),
+      }),
+      () => {
+        // No-op
+      },
+    );
+
+    await expectValiIssueMessage(
+      () => validatedFunction(),
+      "The given arguments do not match the expected function signature → arguments → Tuple root failure",
+    );
+  });
+
+  test("uses the dot path when a tuple-level issue is forwarded to a named argument path", async () => {
+    const validatedFunction = v.parse(
+      validator({
+        args: v.pipe(
+          v.tuple([]),
+          v.forward(
+            v.check(() => false, "Forwarded tuple failure"),
+            ["meta"] as never,
+          ),
+        ),
+      }),
+      () => {
+        // No-op
+      },
+    );
+
+    await expectValiIssueMessage(
+      () => validatedFunction(),
+      "The given arguments do not match the expected function signature → arguments.meta → Forwarded tuple failure",
+    );
+  });
+
   test("rejects unexpected output with the no-output message", async () => {
     const validatedFunction = v.parse(validator(), () => 123);
     await expectValiIssueMessage(
       () => validatedFunction(),
+      NO_OUTPUT_MESSAGE_REGEX,
+    );
+  });
+
+  test("rejects unexpected output for args-only schemas", async () => {
+    const validatedFunction = v.parse(
+      validator({ args: StringArgSchema }),
+      (_: string) => 123,
+    );
+
+    await expectValiIssueMessage(
+      () => validatedFunction("test"),
       NO_OUTPUT_MESSAGE_REGEX,
     );
   });
@@ -75,6 +164,30 @@ describe.each([
     await expectValiIssueMessage(
       () => validatedFunction(),
       INVALID_OUTPUT_MESSAGE_REGEX,
+    );
+  });
+
+  test("rejects invalid output for args-and-output schemas", async () => {
+    const validatedFunction = v.parse(
+      validator({ args: StringArgSchema, output: NumberOutputSchema }),
+      (_: string) => "123",
+    );
+
+    await expectValiIssueMessage(
+      () => validatedFunction("test"),
+      INVALID_OUTPUT_MESSAGE_REGEX,
+    );
+  });
+
+  test("preserves custom output errors without redundant return context", async () => {
+    const validatedFunction = v.parse(
+      validator({ output: v.number("Not a number!") }),
+      () => "123",
+    );
+
+    await expectValiIssueMessage(
+      () => validatedFunction(),
+      "The function does not return the expected output → Not a number!",
     );
   });
 
@@ -138,6 +251,21 @@ describe.each([
     );
   });
 
+  test("includes the argument index in async custom argument errors", async () => {
+    const validatedFunction = v.parse(
+      validator({ args: v.tuple([v.string("Not a string!")]) }),
+      async (_: string) => {
+        await Promise.resolve();
+      },
+    );
+
+    await expectValiIssueMessage(
+      // @ts-expect-error: Testing invalid arguments
+      () => validatedFunction(123),
+      "The given arguments do not match the expected function signature → arguments[0] → Not a string!",
+    );
+  });
+
   test("rejects invalid output with the prefixed output message", async () => {
     const validatedFunction = v.parse(
       validator({ output: NumberOutputSchema }),
@@ -147,6 +275,42 @@ describe.each([
     await expectValiIssueMessage(
       () => validatedFunction(),
       INVALID_OUTPUT_MESSAGE_REGEX,
+    );
+  });
+
+  test("rejects unexpected output for async args-only schemas", async () => {
+    const validatedFunction = v.parse(
+      validator({ args: StringArgSchema }),
+      async (_: string) => 123,
+    );
+
+    await expectValiIssueMessage(
+      () => validatedFunction("test"),
+      NO_OUTPUT_MESSAGE_REGEX,
+    );
+  });
+
+  test("rejects invalid output for async args-and-output schemas", async () => {
+    const validatedFunction = v.parse(
+      validator({ args: StringArgSchema, output: NumberOutputSchema }),
+      async (_: string) => "123",
+    );
+
+    await expectValiIssueMessage(
+      () => validatedFunction("test"),
+      INVALID_OUTPUT_MESSAGE_REGEX,
+    );
+  });
+
+  test("preserves async custom output errors without redundant return context", async () => {
+    const validatedFunction = v.parse(
+      validator({ output: v.number("Not a number!") }),
+      async () => "123",
+    );
+
+    await expectValiIssueMessage(
+      () => validatedFunction(),
+      "The function does not return the expected output → Not a number!",
     );
   });
 

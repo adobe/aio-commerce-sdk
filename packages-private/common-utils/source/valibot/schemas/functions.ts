@@ -25,6 +25,29 @@ const INVALID_OUTPUT_MESSAGE =
 
 const INVALID_FUNCTION_MESSAGE = "The value is not a valid function";
 
+function createArgumentIssuePrefix(issue: v.BaseIssue<unknown>) {
+  const dotPath = v.getDotPath(issue);
+
+  if (!dotPath) {
+    return `${INVALID_ARGS_MESSAGE} → arguments`;
+  }
+
+  // For args, Valibot doesn't know the argument names, so the path is based on the argument index
+  // (e.g. "0" for the first argument) and any nested properties (e.g. "0.name" for a "name" property on the first argument).
+  // This function converts that into a more user-friendly message like "argument 1" instead of "arguments.0".
+  const [firstSegment, ...restSegments] = dotPath.split(".");
+  const argumentIndex = Number(firstSegment);
+
+  if (!Number.isInteger(argumentIndex)) {
+    return `${INVALID_ARGS_MESSAGE} → arguments.${dotPath}`;
+  }
+
+  const nestedPath =
+    restSegments.length > 0 ? `.${restSegments.join(".")}` : "";
+
+  return `${INVALID_ARGS_MESSAGE} → arguments[${argumentIndex}]${nestedPath}`;
+}
+
 type AnyTupleSchema = v.TupleSchema<
   v.TupleItems,
   v.ErrorMessage<v.TupleIssue> | undefined
@@ -56,7 +79,7 @@ function createSyncFunctionSchemaWithArgs<ArgsSchema extends AnyTupleSchema>(
 ) {
   return v.pipe(
     v.function(INVALID_FUNCTION_MESSAGE),
-    v.args(withPrefixedMessage(args, INVALID_ARGS_MESSAGE)),
+    v.args(withPrefixedMessage(args, createArgumentIssuePrefix)),
     v.returns(withPrefixedMessage(v.void(), NO_OUTPUT_MESSAGE)),
   );
 }
@@ -86,7 +109,7 @@ function createSyncFunctionSchemaWithArgsAndOutput<
 >(args: ArgsSchema, output: OutputSchema) {
   return v.pipe(
     v.function(INVALID_FUNCTION_MESSAGE),
-    v.args(withPrefixedMessage(args, INVALID_ARGS_MESSAGE)),
+    v.args(withPrefixedMessage(args, createArgumentIssuePrefix)),
     v.returns(withPrefixedMessage(output, INVALID_OUTPUT_MESSAGE)),
   );
 }
@@ -169,7 +192,7 @@ function createAsyncFunctionSchemaWithArgs<ArgsSchema extends AnyTupleSchema>(
 ) {
   return v.pipe(
     v.function(INVALID_FUNCTION_MESSAGE),
-    v.args(withPrefixedMessage(args, INVALID_ARGS_MESSAGE)),
+    v.args(withPrefixedMessage(args, createArgumentIssuePrefix)),
     v.returnsAsync(withPrefixedMessage(v.void(), NO_OUTPUT_MESSAGE)),
   );
 }
@@ -192,7 +215,7 @@ function createAsyncFunctionSchemaWithArgsAndOutput<
 >(args: ArgsSchema, output: OutputSchema) {
   return v.pipe(
     v.function(INVALID_FUNCTION_MESSAGE),
-    v.args(withPrefixedMessage(args, INVALID_ARGS_MESSAGE)),
+    v.args(withPrefixedMessage(args, createArgumentIssuePrefix)),
     v.returnsAsync(withPrefixedMessage(output, INVALID_OUTPUT_MESSAGE)),
   );
 }
@@ -278,7 +301,7 @@ function createSyncOrAsyncFunctionSchemaWithArgs<
 >(args: ArgsSchema) {
   return v.pipe(
     v.function(INVALID_FUNCTION_MESSAGE),
-    v.args(withPrefixedMessage(args, INVALID_ARGS_MESSAGE)),
+    v.args(withPrefixedMessage(args, createArgumentIssuePrefix)),
     returnsSyncOrAsync(withPrefixedMessage(v.void(), NO_OUTPUT_MESSAGE)),
   );
 }
@@ -308,7 +331,7 @@ function createSyncOrAsyncFunctionSchemaWithArgsAndOutput<
 >(args: ArgsSchema, output: OutputSchema) {
   return v.pipe(
     v.function(INVALID_FUNCTION_MESSAGE),
-    v.args(withPrefixedMessage(args, INVALID_ARGS_MESSAGE)),
+    v.args(withPrefixedMessage(args, createArgumentIssuePrefix)),
     returnsSyncOrAsync(withPrefixedMessage(output, INVALID_OUTPUT_MESSAGE)),
   );
 }

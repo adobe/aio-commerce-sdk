@@ -14,6 +14,23 @@ import * as v from "valibot";
 
 // The internal representation of issues array for Valibot.
 type Issues = [v.BaseIssue<unknown>, ...v.BaseIssue<unknown>[]];
+type MessagePrefix = string | ((issue: v.BaseIssue<unknown>) => string);
+
+/**
+ * Resolves a message prefix, which can be either a string or a callback function that generates a string based on the issue.
+ * @param issue The Valibot issue for which to resolve the prefix.
+ * @param prefix The message prefix, either a string or a callback function.
+ */
+function resolvePrefix(
+  issue: v.BaseIssue<unknown>,
+  prefix: MessagePrefix,
+): string {
+  if (typeof prefix === "function") {
+    return prefix(issue);
+  }
+
+  return prefix;
+}
 
 /**
  * Prefixes the message of a Valibot issue and all of its nested issues with a given prefix.
@@ -23,7 +40,7 @@ type Issues = [v.BaseIssue<unknown>, ...v.BaseIssue<unknown>[]];
  */
 function prefixIssue(
   issue: v.BaseIssue<unknown>,
-  prefix: string,
+  prefix: MessagePrefix,
   separator: string,
 ): v.BaseIssue<unknown> {
   let joiner = "";
@@ -33,9 +50,11 @@ function prefixIssue(
     joiner = separator.endsWith(" ") ? separator : `${separator} `;
   }
 
+  const resolvedPrefix = resolvePrefix(issue, prefix);
+
   return {
     ...issue,
-    message: `${prefix}${joiner}${issue.message}`,
+    message: `${resolvedPrefix}${joiner}${issue.message}`,
     issues: issue.issues
       ? prefixIssueMessages(issue.issues, prefix, separator)
       : undefined,
@@ -50,7 +69,7 @@ function prefixIssue(
  */
 function prefixIssueMessages(
   issues: Issues,
-  prefix: string,
+  prefix: MessagePrefix,
   separator: string,
 ): Issues {
   const [firstIssue, ...restIssues] = issues;
@@ -71,7 +90,7 @@ function prefixIssueMessages(
  */
 export function withPrefixedMessage<TSchema extends v.GenericSchema>(
   schema: TSchema,
-  prefix: string,
+  prefix: MessagePrefix,
   separator = " →",
 ): TSchema {
   return {
