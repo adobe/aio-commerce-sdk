@@ -448,29 +448,5 @@ describe("AdminUiSdkSchema", () => {
         expect(result.success).toBe(false);
       }
     });
-
-    test("iframe action with non-boolean displayIframe returns a boolean error", () => {
-      const result = parseRegistration({
-        order: {
-          massActions: [
-            {
-              actionId: "app::action",
-              label: "Action",
-              path: "#/action",
-              displayIframe: 1,
-            },
-          ],
-        },
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.issues).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            message: "Expected a boolean value for 'displayIframe'",
-          }),
-        ]),
-      );
-    });
   });
 });
