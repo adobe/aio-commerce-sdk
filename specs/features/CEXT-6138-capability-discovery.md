@@ -145,6 +145,9 @@ Alternatives considered:
 
 - Which config domains map to which endpoints in the filtered spec — to be
   defined during implementation based on the state of the SDK at that time.
+- Whether the full `openapi.json` in the SDK package is hand-authored or
+  generated from the `HttpActionRouter` schemas (e.g. via Standard Schema +
+  `@standard-community/standard-openapi`) — to be decided during implementation.
 
 ## Future possibilities
 

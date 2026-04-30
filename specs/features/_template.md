@@ -28,7 +28,7 @@ app developer using the SDK. This means:
 - How should developers think about this feature and how does it change how they
   build apps?
 - If applicable, show what error messages or warnings look like.
-- Does this affect how developers read or maintain existing app code?
+- Does this affect how developers read or maintain their existing Commerce app?
 
 ## Design
 
