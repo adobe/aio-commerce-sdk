@@ -85,8 +85,20 @@ function prefixIssueMessages(
 /**
  * Adds a prefix to the error messages of a given schema.
  * @param schema The schema to wrap with a prefixed message.
- * @param prefix The prefix to add to the error messages.
+ * @param prefix The prefix to add to the error messages. This can be a fixed string or a callback that derives the prefix from each emitted issue.
  * @param separator The string used to join the prefix and the original message.
+ *
+ * @example
+ * ```ts
+ * const schema = withPrefixedMessage(v.string(), "Invalid input");
+ * ```
+ * @example
+ * ```ts
+ * const schema = withPrefixedMessage(v.string(), (issue) => {
+ *   const path = v.getDotPath(issue);
+ *   return path ? `Invalid field ${path}` : "Invalid input";
+ * });
+ * ```
  */
 export function withPrefixedMessage<TSchema extends v.GenericSchema>(
   schema: TSchema,

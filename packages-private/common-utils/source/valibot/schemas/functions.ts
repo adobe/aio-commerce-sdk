@@ -148,8 +148,16 @@ export function syncFunctionSchema(options?: {
 }): ReturnType<typeof createSyncFunctionSchema>;
 
 /**
- * A schema for a synchronous function with optional argument and output schemas.
+ * Creates a Valibot schema for a synchronous function with optional argument and output schemas.
  * @param options An object describing the arguments and output of the function schema to create.
+ *
+ * @example
+ * ```ts
+ * const schema = syncFunctionSchema({
+ *   args: v.tuple([v.string()]),
+ *   output: v.number(),
+ * });
+ * ```
  */
 export function syncFunctionSchema<
   const ArgsSchema extends AnyTupleSchema | undefined,
@@ -254,8 +262,16 @@ export function asyncFunctionSchema(options?: {
 }): ReturnType<typeof createAsyncFunctionSchema>;
 
 /**
- * A schema for an asynchronous function with optional argument and output schemas.
+ * Creates a Valibot schema for an asynchronous function with optional argument and output schemas.
  * @param options An object describing the arguments and output of the function schema to create.
+ *
+ * @example
+ * ```ts
+ * const schema = asyncFunctionSchema({
+ *   args: v.tuple([v.string()]),
+ *   output: v.number(),
+ * });
+ * ```
  */
 export function asyncFunctionSchema<
   const ArgsSchema extends AnyTupleSchema | undefined,
@@ -373,8 +389,16 @@ export function syncOrAsyncFunctionSchema(options?: {
 }): ReturnType<typeof createSyncOrAsyncFunctionSchema>;
 
 /**
- * A schema for a function that can be either synchronous or asynchronous with optional argument and output schemas.
+ * Creates a Valibot schema for a function that may return either a direct value or a promise-like value.
  * @param options An object describing the arguments and output of the function schema to create.
+ *
+ * @example
+ * ```ts
+ * const schema = syncOrAsyncFunctionSchema({
+ *   args: v.tuple([v.string()]),
+ *   output: v.number(),
+ * });
+ * ```
  */
 export function syncOrAsyncFunctionSchema<
   const ArgsSchema extends AnyTupleSchema | undefined,

@@ -12,6 +12,7 @@ pnpm add @aio-commerce-sdk/common-utils
 ## Usage
 
 See the [Usage Guide](./docs/usage.md) for more information.
+The guide includes examples for the Valibot function schema helpers, prefixed validation messages, and the HTTP action router utilities exported by this package.
 
 ## Reference
 

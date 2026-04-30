@@ -74,6 +74,64 @@ const userSchema = v.object({
 const user = parseOrThrow(userSchema, { name: "John", age: 30 });
 ```
 
+### Function Schema Helpers
+
+The Valibot entrypoint also exports helpers for validating function signatures and return values with consistent error messages.
+
+```typescript
+import * as v from "valibot";
+import {
+  asyncFunctionSchema,
+  syncFunctionSchema,
+  syncOrAsyncFunctionSchema,
+} from "@aio-commerce-sdk/common-utils/valibot";
+
+const args = v.tuple([v.string()]);
+const output = v.number();
+
+const syncValidator = syncFunctionSchema({ args, output });
+const asyncValidator = asyncFunctionSchema({ args, output });
+const hybridValidator = syncOrAsyncFunctionSchema({ args, output });
+
+const syncHandler = v.parse(syncValidator, (value: string) => value.length);
+const asyncHandler = v.parse(
+  asyncValidator,
+  async (value: string) => value.length,
+);
+const hybridHandler = v.parse(hybridValidator, (value: string) => value.length);
+
+syncHandler("abc");
+await asyncHandler("abc");
+await hybridHandler("abc");
+```
+
+Use `syncOrAsyncFunctionSchema` when the validated function may return either a direct value or a promise-like value at runtime.
+
+### Prefixed Validation Messages
+
+Use `withPrefixedMessage` to prepend a fixed label or an issue-aware label to any Valibot schema message.
+
+```typescript
+import * as v from "valibot";
+import { withPrefixedMessage } from "@aio-commerce-sdk/common-utils/valibot";
+
+const schema = withPrefixedMessage(
+  v.object({
+    email: v.pipe(v.string(), v.email("Must be a valid email address")),
+  }),
+  (issue) => {
+    const path = v.getDotPath(issue);
+    return path ? `Invalid payload at "${path}"` : "Invalid payload";
+  },
+);
+
+v.parse(schema, { email: "not-an-email" });
+// Throws a ValiError with a message like:
+// Invalid payload at "email" → Must be a valid email address
+```
+
+Pass a custom separator as the third argument when you need something other than the default `" →"` joiner.
+
 ## API Reference
 
 For a complete list of all available types, functions, and schemas, see the [API Reference](./api-reference/README.md).
