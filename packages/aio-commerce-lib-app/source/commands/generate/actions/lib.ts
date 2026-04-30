@@ -22,6 +22,7 @@ import { createOrUpdateExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml"
 import { readYamlFile } from "@aio-commerce-sdk/scripting-utils/yaml/index";
 import { consola } from "consola";
 import { formatTree } from "consola/utils";
+import stringify from "safe-stable-stringify";
 
 import {
   BACKEND_UI_EXTENSION_POINT_ID,
@@ -294,7 +295,7 @@ export async function generateRegistrationActionFile(
   );
   const content = template.replace(
     REGISTRATION_JSON_PLACEHOLDER,
-    `const registration = ${JSON.stringify(registration)};`,
+    `const registration = ${stringify(registration)};`,
   );
 
   const formattedContent = await prettierFormat(content, actionPath);
