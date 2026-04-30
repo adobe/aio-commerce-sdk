@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 
@@ -20,34 +19,46 @@ import {
   alphaNumericOrUnderscoreSchema,
   booleanValueSchema,
   nonEmptyStringValueSchema,
+  numberValueSchema,
+  positiveNumberValueSchema,
   stringValueSchema,
-} from "#valibot/schemas";
-import { parseOrThrow } from "#valibot/utils";
+} from "#valibot/schemas/primitives";
 
-const SimpleObjectSchema = v.object({
-  foo: v.string(),
+describe("numberValueSchema", () => {
+  const schema = numberValueSchema("testField");
+
+  it.each([
+    { value: 123, description: "positive numbers" },
+    { value: 0, description: "zero" },
+    { value: -123, description: "negative numbers" },
+  ])("should accept $description", ({ value }) => {
+    expect(() => v.parse(schema, value)).not.toThrow();
+  });
+
+  it.each([
+    { value: "123", description: "numeric strings" },
+    { value: true, description: "booleans" },
+    { value: null, description: "null" },
+  ])("should reject $description", ({ value }) => {
+    expect(() => v.parse(schema, value)).toThrow();
+  });
 });
 
-describe("parseOrThrow", () => {
-  it("should not throw and return expected object", () => {
-    const input = { foo: "bar" };
-    expect(parseOrThrow(SimpleObjectSchema, input)).toEqual({ foo: "bar" });
+describe("positiveNumberValueSchema", () => {
+  const schema = positiveNumberValueSchema("testField");
+
+  it.each([
+    { value: 123, description: "positive numbers" },
+    { value: 0, description: "zero" },
+  ])("should accept $description", ({ value }) => {
+    expect(() => v.parse(schema, value)).not.toThrow();
   });
 
-  it("should throw CommerceSdkValidationError", () => {
-    expect(() => parseOrThrow(SimpleObjectSchema, { foo: 123 })).toThrowError(
-      CommerceSdkValidationError,
-    );
-  });
-
-  it("should throw CommerceSdkValidationError with custom message", () => {
-    const customMessage = "Custom validation error message";
-    try {
-      parseOrThrow(SimpleObjectSchema, { foo: 123 }, customMessage);
-    } catch (error) {
-      expect(error).toBeInstanceOf(CommerceSdkValidationError);
-      expect((error as CommerceSdkValidationError).message).toBe(customMessage);
-    }
+  it.each([
+    { value: -1, description: "negative numbers" },
+    { value: "123", description: "numeric strings" },
+  ])("should reject $description", ({ value }) => {
+    expect(() => v.parse(schema, value)).toThrow();
   });
 });
 

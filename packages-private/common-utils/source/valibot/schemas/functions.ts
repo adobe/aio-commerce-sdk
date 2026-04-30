@@ -12,6 +12,7 @@
 
 import * as v from "valibot";
 
+import { returnsSyncOrAsync } from "../actions/returns-sync-or-async";
 import { withPrefixedMessage } from "../messages";
 
 const NO_ARGS_MESSAGE = "Expected no arguments for this function";
@@ -261,48 +262,55 @@ export function asyncFunctionSchema<
 
 /** A schema for a function that can be either synchronous or asynchronous (no args, no output) */
 function createSyncOrAsyncFunctionSchema() {
-  return v.union([createSyncFunctionSchema(), createAsyncFunctionSchema()]);
+  return v.pipe(
+    v.function(INVALID_FUNCTION_MESSAGE),
+    v.args(withPrefixedMessage(v.tuple([]), NO_ARGS_MESSAGE)),
+    returnsSyncOrAsync(withPrefixedMessage(v.void(), NO_OUTPUT_MESSAGE)),
+  );
 }
 
 /**
  * A schema for a function that can be either synchronous or asynchronous with arguments.
- * @param args - The schema for the function arguments.
+ * @param args The schema for the function arguments.
  */
 function createSyncOrAsyncFunctionSchemaWithArgs<
   ArgsSchema extends AnyTupleSchema,
 >(args: ArgsSchema) {
-  return v.union([
-    createSyncFunctionSchemaWithArgs(args),
-    createAsyncFunctionSchemaWithArgs(args),
-  ]);
+  return v.pipe(
+    v.function(INVALID_FUNCTION_MESSAGE),
+    v.args(withPrefixedMessage(args, INVALID_ARGS_MESSAGE)),
+    returnsSyncOrAsync(withPrefixedMessage(v.void(), NO_OUTPUT_MESSAGE)),
+  );
 }
 
 /**
  * A schema for a function that can be either synchronous or asynchronous with output.
- * @param output - The schema for the function output.
+ * @param output The schema for the function output.
  */
 function createSyncOrAsyncFunctionSchemaWithOutput<
   OutputSchema extends v.GenericSchema,
 >(output: OutputSchema) {
-  return v.union([
-    createSyncFunctionSchemaWithOutput(output),
-    createAsyncFunctionSchemaWithOutput(output),
-  ]);
+  return v.pipe(
+    v.function(INVALID_FUNCTION_MESSAGE),
+    v.args(withPrefixedMessage(v.tuple([]), NO_ARGS_MESSAGE)),
+    returnsSyncOrAsync(withPrefixedMessage(output, INVALID_OUTPUT_MESSAGE)),
+  );
 }
 
 /**
  * A schema for a function that can be either synchronous or asynchronous with both arguments and output.
- * @param args - The schema for the function arguments.
- * @param output - The schema for the function output.
+ * @param args The schema for the function arguments.
+ * @param output The schema for the function output.
  */
 function createSyncOrAsyncFunctionSchemaWithArgsAndOutput<
   ArgsSchema extends AnyTupleSchema,
   OutputSchema extends v.GenericSchema,
 >(args: ArgsSchema, output: OutputSchema) {
-  return v.union([
-    createSyncFunctionSchemaWithArgsAndOutput(args, output),
-    createAsyncFunctionSchemaWithArgsAndOutput(args, output),
-  ]);
+  return v.pipe(
+    v.function(INVALID_FUNCTION_MESSAGE),
+    v.args(withPrefixedMessage(args, INVALID_ARGS_MESSAGE)),
+    returnsSyncOrAsync(withPrefixedMessage(output, INVALID_OUTPUT_MESSAGE)),
+  );
 }
 
 // Overload for sync or async function schema with both arguments and output

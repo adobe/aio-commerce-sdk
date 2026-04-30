@@ -13,20 +13,12 @@
 import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
 import { defineConfig, mergeConfig } from "vitest/config";
 
-// Barrel files are those that only contain exports.
-const BARREL_FILES = [
-  "source/index.ts",
-  "source/actions/index.ts",
-  "source/storage/index.ts",
-  "source/valibot/index.ts",
-];
-
 export default mergeConfig(
   baseConfig,
   defineConfig({
     test: {
       coverage: {
-        exclude: [...BARREL_FILES],
+        exclude: ["source/**/index.ts"],
         thresholds: {
           statements: 90,
           branches: 80,

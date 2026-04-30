@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -18,6 +17,11 @@ import {
   parseRequestBody,
   validateSchema,
 } from "#actions/http/utils";
+import {
+  NestedEmailSchema,
+  UppercaseTransformSchema,
+  UserSchema,
+} from "#test/fixtures/schemas";
 
 describe("actions/http/utils", () => {
   describe("parseRequestBody", () => {
@@ -144,15 +148,9 @@ describe("actions/http/utils", () => {
   });
 
   describe("validateSchema", () => {
-    const userSchema = v.object({
-      id: v.string(),
-      name: v.string(),
-      age: v.pipe(v.number(), v.minValue(0)),
-    });
-
     it("should return success with valid data", async () => {
       const input = { id: "123", name: "John", age: 25 };
-      const result = await validateSchema(userSchema, input);
+      const result = await validateSchema(UserSchema, input);
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -162,7 +160,7 @@ describe("actions/http/utils", () => {
 
     it("should return failure with invalid data", async () => {
       const input = { id: 123, name: "John", age: 25 };
-      const result = await validateSchema(userSchema, input);
+      const result = await validateSchema(UserSchema, input);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -173,7 +171,7 @@ describe("actions/http/utils", () => {
 
     it("should return failure with missing required fields", async () => {
       const input = { id: "123" };
-      const result = await validateSchema(userSchema, input);
+      const result = await validateSchema(UserSchema, input);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -183,7 +181,7 @@ describe("actions/http/utils", () => {
 
     it("should return failure with multiple validation errors", async () => {
       const input = { id: 123, name: 456, age: -1 };
-      const result = await validateSchema(userSchema, input);
+      const result = await validateSchema(UserSchema, input);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -192,16 +190,8 @@ describe("actions/http/utils", () => {
     });
 
     it("should normalize issue paths", async () => {
-      const nestedSchema = v.object({
-        user: v.object({
-          profile: v.object({
-            email: v.pipe(v.string(), v.email()),
-          }),
-        }),
-      });
-
       const input = { user: { profile: { email: "invalid-email" } } };
-      const result = await validateSchema(nestedSchema, input);
+      const result = await validateSchema(NestedEmailSchema, input);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -212,12 +202,7 @@ describe("actions/http/utils", () => {
     });
 
     it("should handle transformation schemas", async () => {
-      const transformSchema = v.pipe(
-        v.string(),
-        v.transform((val) => val.toUpperCase()),
-      );
-
-      const result = await validateSchema(transformSchema, "hello");
+      const result = await validateSchema(UppercaseTransformSchema, "hello");
 
       expect(result.success).toBe(true);
       if (result.success) {

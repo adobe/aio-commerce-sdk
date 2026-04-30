@@ -12,14 +12,85 @@
 
 import * as v from "valibot";
 
+// The internal representation of issues array for Valibot.
+type Issues = [v.BaseIssue<unknown>, ...v.BaseIssue<unknown>[]];
+
+/**
+ * Prefixes the message of a Valibot issue and all of its nested issues with a given prefix.
+ * @param issue The issue to prefix.
+ * @param prefix The prefix to add to the issue message.
+ * @param separator The string used to join the prefix and the original message.
+ */
+function prefixIssue(
+  issue: v.BaseIssue<unknown>,
+  prefix: string,
+  separator: string,
+): v.BaseIssue<unknown> {
+  let joiner = "";
+
+  // Catches empty strings as separators
+  if (separator) {
+    joiner = separator.endsWith(" ") ? separator : `${separator} `;
+  }
+
+  return {
+    ...issue,
+    message: `${prefix}${joiner}${issue.message}`,
+    issues: issue.issues
+      ? prefixIssueMessages(issue.issues, prefix, separator)
+      : undefined,
+  };
+}
+
+/**
+ * Prefixes the messages of an array of Valibot issues with a given prefix.
+ * @param issues - The issues to prefix.
+ * @param prefix - The prefix to add to the issue messages.
+ * @param separator - The string used to join the prefix and the original messages.
+ */
+function prefixIssueMessages(
+  issues: Issues,
+  prefix: string,
+  separator: string,
+): Issues {
+  const [firstIssue, ...restIssues] = issues;
+
+  // Issues is typed as an array with at least one value, so firstIssue is guaranteed to exist.
+  // We need to do these two separate passes to satisfy TypeScript
+  return [
+    prefixIssue(firstIssue, prefix, separator),
+    ...restIssues.map((issue) => prefixIssue(issue, prefix, separator)),
+  ];
+}
+
 /**
  * Adds a prefix to the error messages of a given schema.
  * @param schema The schema to wrap with a prefixed message.
  * @param prefix The prefix to add to the error messages.
+ * @param separator The string used to join the prefix and the original message.
  */
 export function withPrefixedMessage<TSchema extends v.GenericSchema>(
   schema: TSchema,
   prefix: string,
+  separator = " →",
 ): TSchema {
-  return v.message(schema, (issue) => `${prefix}: ${issue.message}`);
+  return {
+    ...schema,
+    get "~standard"() {
+      return v._getStandardProps(this);
+    },
+
+    "~run"(dataset, config) {
+      const result = schema["~run"](dataset, config);
+
+      if (result.issues) {
+        return {
+          ...result,
+          issues: prefixIssueMessages(result.issues, prefix, separator),
+        };
+      }
+
+      return result;
+    },
+  };
 }
