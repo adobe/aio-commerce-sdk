@@ -16,6 +16,27 @@ const DEFAULT_BOOLEAN_VALUE = false as const;
 const DEFAULT_STRING_VALUE = "" as const;
 const DEFAULT_MULTIPLE_LIST_VALUE = [] as const;
 
+/** The list of supported Commerce flavors a configuration field can be scoped to. */
+export const COMMERCE_FLAVORS = ["paas", "saas"] as const;
+
+/** Schema for a single Commerce flavor a configuration field can be scoped to. */
+const CommerceFlavorSchema = v.picklist(
+  COMMERCE_FLAVORS,
+  `Expected one of: ${COMMERCE_FLAVORS.map((f) => `"${f}"`).join(", ")}`,
+);
+
+/**
+ * Schema for the optional `env` property used to scope a configuration field to
+ * specific Commerce flavors. When omitted, the field applies to all flavors.
+ */
+const EnvSchema = v.pipe(
+  v.array(
+    CommerceFlavorSchema,
+    "Expected an array of Commerce flavors for the field env",
+  ),
+  v.nonEmpty("The env array must contain at least one Commerce flavor"),
+);
+
 /** Base schema for configuration field options with name, optional label, and optional description */
 const BaseOptionSchema = v.object({
   name: v.pipe(
@@ -26,6 +47,7 @@ const BaseOptionSchema = v.object({
   description: v.optional(
     v.string("Expected a string for the field description"),
   ),
+  env: v.optional(EnvSchema),
 });
 
 /** Schema for a single option in a list field, containing a display label and a value */
