@@ -12,6 +12,8 @@
 
 import {
   byScopeId,
+  filterBusinessConfigSchemaByContext,
+  filterBusinessConfigSchemaByFlavor,
   getConfiguration,
   initialize,
   setConfiguration,
@@ -42,6 +44,13 @@ type ConfigActionFactoryArgs = {
 type ConfigActionParams = RuntimeActionParams &
   ConfigActionFactoryArgs & {
     AIO_COMMERCE_CONFIG_ENCRYPTION_KEY?: string;
+    AIO_COMMERCE_API_FLAVOR?: unknown;
+    AIO_COMMERCE_API_BASE_URL?: unknown;
+    commerceEnv?: unknown;
+    commerceBaseUrl?: unknown;
+    commerceUrl?: unknown;
+    commerceInstanceUrl?: unknown;
+    instanceUrl?: unknown;
   };
 
 /** The context for the config action. */
@@ -51,6 +60,31 @@ interface ConfigActionContext extends BaseContext {
 
 // Placeholder value for password fields.
 const MASKED_PASSWORD_VALUE = "*****";
+
+/** Normalizes a possible flavor value to a supported Commerce flavor. */
+function normalizeCommerceFlavor(value: unknown): "paas" | "saas" | undefined {
+  if (typeof value !== "string") {
+    return;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "paas" || normalized === "saas") {
+    return normalized;
+  }
+
+  return;
+}
+
+/** Picks the first non-empty string value from a list of candidates. */
+function firstNonEmptyString(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value;
+    }
+  }
+
+  return;
+}
 
 /**
  * Filters password fields from the configuration values.
@@ -79,6 +113,8 @@ const router = new HttpActionRouter<ConfigActionContext>().use(logger());
 router.get("/", {
   query: v.object({
     scopeId: nonEmptyStringValueSchema("scopeId"),
+    commerceEnv: v.optional(v.picklist(["paas", "saas"] as const)),
+    commerceBaseUrl: v.optional(nonEmptyStringValueSchema("commerceBaseUrl")),
   }),
 
   handler: async (req, ctx) => {
@@ -91,7 +127,28 @@ router.get("/", {
       "businessConfig.schema",
     );
 
-    initialize({ schema: validatedSchema });
+    const explicitFlavor =
+      req.query.commerceEnv ?? normalizeCommerceFlavor(rawParams.commerceEnv);
+    const commerceEnvAsBaseUrl =
+      explicitFlavor === undefined ? rawParams.commerceEnv : undefined;
+
+    const filteredSchema = explicitFlavor
+      ? filterBusinessConfigSchemaByFlavor(validatedSchema, explicitFlavor)
+      : filterBusinessConfigSchemaByContext(validatedSchema, {
+          AIO_COMMERCE_API_FLAVOR:
+            rawParams.AIO_COMMERCE_API_FLAVOR ?? rawParams.commerceEnv,
+          AIO_COMMERCE_API_BASE_URL: firstNonEmptyString(
+            rawParams.AIO_COMMERCE_API_BASE_URL,
+            req.query.commerceBaseUrl,
+            rawParams.commerceBaseUrl,
+            rawParams.commerceUrl,
+            rawParams.commerceInstanceUrl,
+            rawParams.instanceUrl,
+            commerceEnvAsBaseUrl,
+          ),
+        });
+
+    initialize({ schema: filteredSchema });
 
     const { scopeId } = req.query;
     logger.debug(`Retrieving configuration with scope id: ${scopeId}`);
@@ -101,12 +158,12 @@ router.get("/", {
 
     logger.debug("Masking password values...");
     appConfiguration.config = filterPasswordFields(
-      configSchema,
+      filteredSchema,
       appConfiguration.config,
     );
 
     return ok({
-      body: { schema: validatedSchema, values: appConfiguration },
+      body: { schema: filteredSchema, values: appConfiguration },
     });
   },
 });
