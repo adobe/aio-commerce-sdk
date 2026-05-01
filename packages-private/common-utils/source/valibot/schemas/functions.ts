@@ -48,23 +48,38 @@ function createArgumentIssuePrefix(issue: v.BaseIssue<unknown>) {
   return `${INVALID_ARGS_MESSAGE} → arguments[${argumentIndex}]${nestedPath}`;
 }
 
-type AnyTupleSchema = v.TupleSchema<
+/** A schema for a function that may return either a direct value or a promise-like value. */
+export type AnyTupleSchema = v.TupleSchema<
   v.TupleItems,
   v.ErrorMessage<v.TupleIssue> | undefined
 >;
 
-type FunctionSchemaOptions<
+/**
+ * Options for creating a function schema, including optional argument and output schemas and a custom message.
+ * @template ArgsSchema The schema for the function arguments, which must be a tuple schema or undefined.
+ * @template OutputSchema The schema for the function output, which must be a Valibot generic schema or undefined.
+ */
+export type FunctionSchemaOptions<
   ArgsSchema extends AnyTupleSchema | undefined,
   OutputSchema extends v.GenericSchema | undefined,
 > = {
   args?: ArgsSchema;
   output?: OutputSchema;
+  message?: string;
 };
 
+/**
+ * Convenience type for an options object which only allows configuring the args for a function schema.
+ * @template ArgsSchema The schema for the function arguments, which must be a tuple schema.
+ */
+export type OnlyArgsFunctionSchemaOptions<
+  ArgsSchema extends AnyTupleSchema | undefined,
+> = Omit<FunctionSchemaOptions<ArgsSchema, undefined>, "output">;
+
 /** A schema for a simple synchronous function (no args, no output) */
-function createSyncFunctionSchema() {
+function createSyncFunctionSchema(message = INVALID_FUNCTION_MESSAGE) {
   return v.pipe(
-    v.function(INVALID_FUNCTION_MESSAGE),
+    v.function(message),
     v.args(withPrefixedMessage(v.tuple([]), NO_ARGS_MESSAGE)),
     v.returns(withPrefixedMessage(v.void(), NO_OUTPUT_MESSAGE)),
   );
@@ -76,9 +91,10 @@ function createSyncFunctionSchema() {
  */
 function createSyncFunctionSchemaWithArgs<ArgsSchema extends AnyTupleSchema>(
   args: ArgsSchema,
+  message = INVALID_FUNCTION_MESSAGE,
 ) {
   return v.pipe(
-    v.function(INVALID_FUNCTION_MESSAGE),
+    v.function(message),
     v.args(withPrefixedMessage(args, createArgumentIssuePrefix)),
     v.returns(withPrefixedMessage(v.void(), NO_OUTPUT_MESSAGE)),
   );
@@ -90,9 +106,9 @@ function createSyncFunctionSchemaWithArgs<ArgsSchema extends AnyTupleSchema>(
  */
 function createSyncFunctionSchemaWithOutput<
   OutputSchema extends v.GenericSchema,
->(output: OutputSchema) {
+>(output: OutputSchema, message = INVALID_FUNCTION_MESSAGE) {
   return v.pipe(
-    v.function(INVALID_FUNCTION_MESSAGE),
+    v.function(message),
     v.args(withPrefixedMessage(v.tuple([]), NO_ARGS_MESSAGE)),
     v.returns(withPrefixedMessage(output, INVALID_OUTPUT_MESSAGE)),
   );
@@ -106,9 +122,9 @@ function createSyncFunctionSchemaWithOutput<
 function createSyncFunctionSchemaWithArgsAndOutput<
   ArgsSchema extends AnyTupleSchema,
   OutputSchema extends v.GenericSchema,
->(args: ArgsSchema, output: OutputSchema) {
+>(args: ArgsSchema, output: OutputSchema, message = INVALID_FUNCTION_MESSAGE) {
   return v.pipe(
-    v.function(INVALID_FUNCTION_MESSAGE),
+    v.function(message),
     v.args(withPrefixedMessage(args, createArgumentIssuePrefix)),
     v.returns(withPrefixedMessage(output, INVALID_OUTPUT_MESSAGE)),
   );
@@ -121,6 +137,7 @@ export function syncFunctionSchema<
 >(options: {
   args: ArgsSchema;
   output: OutputSchema;
+  message?: string;
 }): ReturnType<
   typeof createSyncFunctionSchemaWithArgsAndOutput<ArgsSchema, OutputSchema>
 >;
@@ -131,6 +148,7 @@ export function syncFunctionSchema<
 >(options: {
   args: ArgsSchema;
   output?: undefined;
+  message?: string;
 }): ReturnType<typeof createSyncFunctionSchemaWithArgs<ArgsSchema>>;
 
 // Overload for sync function schema with only output
@@ -139,12 +157,14 @@ export function syncFunctionSchema<
 >(options: {
   args?: undefined;
   output: OutputSchema;
+  message?: string;
 }): ReturnType<typeof createSyncFunctionSchemaWithOutput<OutputSchema>>;
 
 // Overload for sync function schema with no arguments and no output
 export function syncFunctionSchema(options?: {
   args?: undefined;
   output?: undefined;
+  message?: string;
 }): ReturnType<typeof createSyncFunctionSchema>;
 
 /**
@@ -171,24 +191,25 @@ export function syncFunctionSchema<
     return createSyncFunctionSchemaWithArgsAndOutput(
       options.args,
       options.output,
+      options.message,
     );
   }
 
   if (options.args) {
-    return createSyncFunctionSchemaWithArgs(options.args);
+    return createSyncFunctionSchemaWithArgs(options.args, options.message);
   }
 
   if (options.output) {
-    return createSyncFunctionSchemaWithOutput(options.output);
+    return createSyncFunctionSchemaWithOutput(options.output, options.message);
   }
 
-  return createSyncFunctionSchema();
+  return createSyncFunctionSchema(options?.message);
 }
 
 /** A schema for an asynchronous function with optional argument and output schemas. */
-function createAsyncFunctionSchema() {
+function createAsyncFunctionSchema(message = INVALID_FUNCTION_MESSAGE) {
   return v.pipe(
-    v.function(INVALID_FUNCTION_MESSAGE),
+    v.function(message),
     v.args(withPrefixedMessage(v.tuple([]), NO_ARGS_MESSAGE)),
     v.returnsAsync(withPrefixedMessage(v.void(), NO_OUTPUT_MESSAGE)),
   );
@@ -197,9 +218,10 @@ function createAsyncFunctionSchema() {
 /** A schema for an asynchronous function with arguments. */
 function createAsyncFunctionSchemaWithArgs<ArgsSchema extends AnyTupleSchema>(
   args: ArgsSchema,
+  message = INVALID_FUNCTION_MESSAGE,
 ) {
   return v.pipe(
-    v.function(INVALID_FUNCTION_MESSAGE),
+    v.function(message),
     v.args(withPrefixedMessage(args, createArgumentIssuePrefix)),
     v.returnsAsync(withPrefixedMessage(v.void(), NO_OUTPUT_MESSAGE)),
   );
@@ -208,9 +230,9 @@ function createAsyncFunctionSchemaWithArgs<ArgsSchema extends AnyTupleSchema>(
 /** A schema for an asynchronous function with output. */
 function createAsyncFunctionSchemaWithOutput<
   OutputSchema extends v.GenericSchema,
->(output: OutputSchema) {
+>(output: OutputSchema, message = INVALID_FUNCTION_MESSAGE) {
   return v.pipe(
-    v.function(INVALID_FUNCTION_MESSAGE),
+    v.function(message),
     v.args(withPrefixedMessage(v.tuple([]), NO_ARGS_MESSAGE)),
     v.returnsAsync(withPrefixedMessage(output, INVALID_OUTPUT_MESSAGE)),
   );
@@ -220,9 +242,9 @@ function createAsyncFunctionSchemaWithOutput<
 function createAsyncFunctionSchemaWithArgsAndOutput<
   ArgsSchema extends AnyTupleSchema,
   OutputSchema extends v.GenericSchema,
->(args: ArgsSchema, output: OutputSchema) {
+>(args: ArgsSchema, output: OutputSchema, message = INVALID_FUNCTION_MESSAGE) {
   return v.pipe(
-    v.function(INVALID_FUNCTION_MESSAGE),
+    v.function(message),
     v.args(withPrefixedMessage(args, createArgumentIssuePrefix)),
     v.returnsAsync(withPrefixedMessage(output, INVALID_OUTPUT_MESSAGE)),
   );
@@ -235,6 +257,7 @@ export function asyncFunctionSchema<
 >(options: {
   args: ArgsSchema;
   output: OutputSchema;
+  message?: string;
 }): ReturnType<
   typeof createAsyncFunctionSchemaWithArgsAndOutput<ArgsSchema, OutputSchema>
 >;
@@ -245,6 +268,7 @@ export function asyncFunctionSchema<
 >(options: {
   args: ArgsSchema;
   output?: undefined;
+  message?: string;
 }): ReturnType<typeof createAsyncFunctionSchemaWithArgs<ArgsSchema>>;
 
 // Overload for async function schema with only output
@@ -253,12 +277,14 @@ export function asyncFunctionSchema<
 >(options: {
   args?: undefined;
   output: OutputSchema;
+  message?: string;
 }): ReturnType<typeof createAsyncFunctionSchemaWithOutput<OutputSchema>>;
 
 // Overload for async function schema with no arguments and no output
 export function asyncFunctionSchema(options?: {
   args?: undefined;
   output?: undefined;
+  message?: string;
 }): ReturnType<typeof createAsyncFunctionSchema>;
 
 /**
@@ -285,24 +311,25 @@ export function asyncFunctionSchema<
     return createAsyncFunctionSchemaWithArgsAndOutput(
       options.args,
       options.output,
+      options.message,
     );
   }
 
   if (options.args) {
-    return createAsyncFunctionSchemaWithArgs(options.args);
+    return createAsyncFunctionSchemaWithArgs(options.args, options.message);
   }
 
   if (options.output) {
-    return createAsyncFunctionSchemaWithOutput(options.output);
+    return createAsyncFunctionSchemaWithOutput(options.output, options.message);
   }
 
-  return createAsyncFunctionSchema();
+  return createAsyncFunctionSchema(options?.message);
 }
 
 /** A schema for a function that can be either synchronous or asynchronous (no args, no output) */
-function createSyncOrAsyncFunctionSchema() {
+function createSyncOrAsyncFunctionSchema(message = INVALID_FUNCTION_MESSAGE) {
   return v.pipe(
-    v.function(INVALID_FUNCTION_MESSAGE),
+    v.function(message),
     v.args(withPrefixedMessage(v.tuple([]), NO_ARGS_MESSAGE)),
     returnsSyncOrAsync(withPrefixedMessage(v.void(), NO_OUTPUT_MESSAGE)),
   );
@@ -314,9 +341,9 @@ function createSyncOrAsyncFunctionSchema() {
  */
 function createSyncOrAsyncFunctionSchemaWithArgs<
   ArgsSchema extends AnyTupleSchema,
->(args: ArgsSchema) {
+>(args: ArgsSchema, message = INVALID_FUNCTION_MESSAGE) {
   return v.pipe(
-    v.function(INVALID_FUNCTION_MESSAGE),
+    v.function(message),
     v.args(withPrefixedMessage(args, createArgumentIssuePrefix)),
     returnsSyncOrAsync(withPrefixedMessage(v.void(), NO_OUTPUT_MESSAGE)),
   );
@@ -328,9 +355,9 @@ function createSyncOrAsyncFunctionSchemaWithArgs<
  */
 function createSyncOrAsyncFunctionSchemaWithOutput<
   OutputSchema extends v.GenericSchema,
->(output: OutputSchema) {
+>(output: OutputSchema, message = INVALID_FUNCTION_MESSAGE) {
   return v.pipe(
-    v.function(INVALID_FUNCTION_MESSAGE),
+    v.function(message),
     v.args(withPrefixedMessage(v.tuple([]), NO_ARGS_MESSAGE)),
     returnsSyncOrAsync(withPrefixedMessage(output, INVALID_OUTPUT_MESSAGE)),
   );
@@ -344,9 +371,9 @@ function createSyncOrAsyncFunctionSchemaWithOutput<
 function createSyncOrAsyncFunctionSchemaWithArgsAndOutput<
   ArgsSchema extends AnyTupleSchema,
   OutputSchema extends v.GenericSchema,
->(args: ArgsSchema, output: OutputSchema) {
+>(args: ArgsSchema, output: OutputSchema, message = INVALID_FUNCTION_MESSAGE) {
   return v.pipe(
-    v.function(INVALID_FUNCTION_MESSAGE),
+    v.function(message),
     v.args(withPrefixedMessage(args, createArgumentIssuePrefix)),
     returnsSyncOrAsync(withPrefixedMessage(output, INVALID_OUTPUT_MESSAGE)),
   );
@@ -359,6 +386,7 @@ export function syncOrAsyncFunctionSchema<
 >(options: {
   args: ArgsSchema;
   output: OutputSchema;
+  message?: string;
 }): ReturnType<
   typeof createSyncOrAsyncFunctionSchemaWithArgsAndOutput<
     ArgsSchema,
@@ -372,6 +400,7 @@ export function syncOrAsyncFunctionSchema<
 >(options: {
   args: ArgsSchema;
   output?: undefined;
+  message?: string;
 }): ReturnType<typeof createSyncOrAsyncFunctionSchemaWithArgs<ArgsSchema>>;
 
 // Overload for sync or async function schema with only output
@@ -380,12 +409,14 @@ export function syncOrAsyncFunctionSchema<
 >(options: {
   args?: undefined;
   output: OutputSchema;
+  message?: string;
 }): ReturnType<typeof createSyncOrAsyncFunctionSchemaWithOutput<OutputSchema>>;
 
 // Overload for sync or async function schema with no arguments and no output
 export function syncOrAsyncFunctionSchema(options?: {
   args?: undefined;
   output?: undefined;
+  message?: string;
 }): ReturnType<typeof createSyncOrAsyncFunctionSchema>;
 
 /**
@@ -412,16 +443,23 @@ export function syncOrAsyncFunctionSchema<
     return createSyncOrAsyncFunctionSchemaWithArgsAndOutput(
       options.args,
       options.output,
+      options.message,
     );
   }
 
   if (options.args) {
-    return createSyncOrAsyncFunctionSchemaWithArgs(options.args);
+    return createSyncOrAsyncFunctionSchemaWithArgs(
+      options.args,
+      options.message,
+    );
   }
 
   if (options.output) {
-    return createSyncOrAsyncFunctionSchemaWithOutput(options.output);
+    return createSyncOrAsyncFunctionSchemaWithOutput(
+      options.output,
+      options.message,
+    );
   }
 
-  return createSyncOrAsyncFunctionSchema();
+  return createSyncOrAsyncFunctionSchema(options?.message);
 }

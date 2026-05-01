@@ -91,6 +91,8 @@ const output = v.number();
 
 const syncValidator = syncFunctionSchema({ args, output });
 const asyncValidator = asyncFunctionSchema({ args, output });
+
+// Use `syncOrAsyncFunctionSchema` when the validated function may return either a direct value or a promise-like value at runtime.
 const hybridValidator = syncOrAsyncFunctionSchema({ args, output });
 
 const syncHandler = v.parse(syncValidator, (value: string) => value.length);
@@ -105,7 +107,15 @@ await asyncHandler("abc");
 await hybridHandler("abc");
 ```
 
-Use `syncOrAsyncFunctionSchema` when the validated function may return either a direct value or a promise-like value at runtime.
+Pass a `message` option to replace the default error with a context-specific message:
+
+```typescript
+const syncValidator = syncFunctionSchema({
+  args,
+  output,
+  message: "Expected a handler function",
+});
+```
 
 ### Prefixed Validation Messages
 

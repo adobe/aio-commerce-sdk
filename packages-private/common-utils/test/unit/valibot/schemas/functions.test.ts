@@ -207,6 +207,48 @@ describe.each([
       NO_OUTPUT_MESSAGE_REGEX,
     );
   });
+
+  test("uses a custom message when rejecting non-function values", async () => {
+    const schema = validator({ message: "Custom function error" });
+    await expectValiIssueMessage(
+      () => v.parse(schema, 123),
+      "Custom function error",
+    );
+  });
+
+  test("uses a custom message with an args-only schema", async () => {
+    const schema = validator({
+      args: StringArgSchema,
+      message: "Custom function error",
+    });
+    await expectValiIssueMessage(
+      () => v.parse(schema, 123),
+      "Custom function error",
+    );
+  });
+
+  test("uses a custom message with an output-only schema", async () => {
+    const schema = validator({
+      output: NumberOutputSchema,
+      message: "Custom function error",
+    });
+    await expectValiIssueMessage(
+      () => v.parse(schema, 123),
+      "Custom function error",
+    );
+  });
+
+  test("uses a custom message with an args-and-output schema", async () => {
+    const schema = validator({
+      args: StringArgSchema,
+      output: NumberOutputSchema,
+      message: "Custom function error",
+    });
+    await expectValiIssueMessage(
+      () => v.parse(schema, 123),
+      "Custom function error",
+    );
+  });
 });
 
 describe.each([
@@ -319,6 +361,48 @@ describe.each([
     await expectValiIssueMessage(
       () => validatedFunction(),
       NO_OUTPUT_MESSAGE_REGEX,
+    );
+  });
+
+  test("uses a custom message when rejecting non-function values", async () => {
+    const schema = validator({ message: "Custom function error" });
+    await expectValiIssueMessage(
+      () => v.parse(schema, 123),
+      "Custom function error",
+    );
+  });
+
+  test("uses a custom message with an args-only schema", async () => {
+    const schema = validator({
+      args: StringArgSchema,
+      message: "Custom function error",
+    });
+    await expectValiIssueMessage(
+      () => v.parse(schema, 123),
+      "Custom function error",
+    );
+  });
+
+  test("uses a custom message with an output-only schema", async () => {
+    const schema = validator({
+      output: NumberOutputSchema,
+      message: "Custom function error",
+    });
+    await expectValiIssueMessage(
+      () => v.parse(schema, 123),
+      "Custom function error",
+    );
+  });
+
+  test("uses a custom message with an args-and-output schema", async () => {
+    const schema = validator({
+      args: StringArgSchema,
+      output: NumberOutputSchema,
+      message: "Custom function error",
+    });
+    await expectValiIssueMessage(
+      () => v.parse(schema, 123),
+      "Custom function error",
     );
   });
 });

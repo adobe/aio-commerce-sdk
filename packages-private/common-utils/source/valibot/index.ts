@@ -16,3 +16,5 @@ export * from "./messages";
 export * from "./schemas/functions";
 export * from "./schemas/primitives";
 export * from "./utils";
+
+export type * from "./schemas/functions";
