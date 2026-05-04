@@ -12,7 +12,6 @@
 
 import {
   byScopeId,
-  filterBusinessConfigSchemaByContext,
   filterBusinessConfigSchemaByFlavor,
   getConfiguration,
   initialize,
@@ -45,12 +44,7 @@ type ConfigActionParams = RuntimeActionParams &
   ConfigActionFactoryArgs & {
     AIO_COMMERCE_CONFIG_ENCRYPTION_KEY?: string;
     AIO_COMMERCE_API_FLAVOR?: unknown;
-    AIO_COMMERCE_API_BASE_URL?: unknown;
     commerceEnv?: unknown;
-    commerceBaseUrl?: unknown;
-    commerceUrl?: unknown;
-    commerceInstanceUrl?: unknown;
-    instanceUrl?: unknown;
   };
 
 /** The context for the config action. */
@@ -70,17 +64,6 @@ function normalizeCommerceFlavor(value: unknown): "paas" | "saas" | undefined {
   const normalized = value.trim().toLowerCase();
   if (normalized === "paas" || normalized === "saas") {
     return normalized;
-  }
-
-  return;
-}
-
-/** Picks the first non-empty string value from a list of candidates. */
-function firstNonEmptyString(...values: unknown[]): string | undefined {
-  for (const value of values) {
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value;
-    }
   }
 
   return;
@@ -114,7 +97,6 @@ router.get("/", {
   query: v.object({
     scopeId: nonEmptyStringValueSchema("scopeId"),
     commerceEnv: v.optional(v.picklist(["paas", "saas"] as const)),
-    commerceBaseUrl: v.optional(nonEmptyStringValueSchema("commerceBaseUrl")),
   }),
 
   handler: async (req, ctx) => {
@@ -127,26 +109,14 @@ router.get("/", {
       "businessConfig.schema",
     );
 
-    const explicitFlavor =
-      req.query.commerceEnv ?? normalizeCommerceFlavor(rawParams.commerceEnv);
-    const commerceEnvAsBaseUrl =
-      explicitFlavor === undefined ? rawParams.commerceEnv : undefined;
+    const flavor =
+      req.query.commerceEnv ??
+      normalizeCommerceFlavor(rawParams.commerceEnv) ??
+      normalizeCommerceFlavor(rawParams.AIO_COMMERCE_API_FLAVOR);
 
-    const filteredSchema = explicitFlavor
-      ? filterBusinessConfigSchemaByFlavor(validatedSchema, explicitFlavor)
-      : filterBusinessConfigSchemaByContext(validatedSchema, {
-          AIO_COMMERCE_API_FLAVOR:
-            rawParams.AIO_COMMERCE_API_FLAVOR ?? rawParams.commerceEnv,
-          AIO_COMMERCE_API_BASE_URL: firstNonEmptyString(
-            rawParams.AIO_COMMERCE_API_BASE_URL,
-            req.query.commerceBaseUrl,
-            rawParams.commerceBaseUrl,
-            rawParams.commerceUrl,
-            rawParams.commerceInstanceUrl,
-            rawParams.instanceUrl,
-            commerceEnvAsBaseUrl,
-          ),
-        });
+    const filteredSchema = flavor
+      ? filterBusinessConfigSchemaByFlavor(validatedSchema, flavor)
+      : validatedSchema;
 
     initialize({ schema: filteredSchema });
 
