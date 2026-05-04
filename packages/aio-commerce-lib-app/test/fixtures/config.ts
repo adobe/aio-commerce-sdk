@@ -234,6 +234,10 @@ export const configWithFullAdminUiSdk = {
           sortOrder: 1,
           isSection: false,
           sandbox: "allow-modals",
+          aclResource: {
+            id: "Acme_Promotions::dashboard",
+            title: "Promotions Dashboard",
+          },
         },
       ],
       order: {

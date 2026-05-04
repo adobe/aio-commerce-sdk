@@ -233,6 +233,11 @@ const BannerNotificationSchema = v.object({
   orderViewButtons: v.optional(v.array(OrderViewButtonBannerSchema)),
 });
 
+const AclResourceSchema = v.object({
+  id: nonEmptyStringValueSchema("ACL resource ID"),
+  title: v.optional(nonEmptyStringValueSchema("ACL resource title")),
+});
+
 const MenuItemSchema = v.object({
   id: nonEmptyStringValueSchema("menu item ID"),
   title: v.optional(nonEmptyStringValueSchema("menu item title")),
@@ -240,6 +245,7 @@ const MenuItemSchema = v.object({
   sortOrder: v.optional(v.number()),
   isSection: v.optional(booleanValueSchema("isSection")),
   sandbox: v.optional(SandboxSchema),
+  aclResource: v.optional(AclResourceSchema),
 });
 
 /**

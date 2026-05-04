@@ -15,6 +15,7 @@ import { defineConfig, mergeConfig } from "vitest/config";
 
 const BARREL_FILES = [
   "./source/index.ts",
+  "./source/lib/commerce/admin-ui-sdk-permissions/index.ts",
   "./source/utils/http/index.ts",
   "./source/utils/transformations/index.ts",
 ];

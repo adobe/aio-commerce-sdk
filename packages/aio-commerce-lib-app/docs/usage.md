@@ -477,6 +477,10 @@ adminUiSdk: {
         sortOrder: 1,
         isSection: false,
         sandbox: "allow-modals",
+        aclResource: {
+          id: "Acme_Promotions::dashboard",
+          title: "Promotions Dashboard",
+        },
       },
     ],
 
@@ -595,6 +599,28 @@ adminUiSdk: {
 - **sortOrder**: Optional number
 - **isSection**: Optional boolean
 - **sandbox**: Optional; space-separated combination of `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
+- **aclResource**: Optional Admin UI SDK ACL resource; `id` is required and `title` is optional. Commerce uses this resource to decide whether the menu item is visible to the current admin user.
+
+Minimal menu item ACL example:
+
+```javascript
+adminUiSdk: {
+  registration: {
+    menuItems: [
+      {
+        id: "promotions/dashboard",
+        title: "Promotions",
+        aclResource: {
+          id: "Acme_Promotions::dashboard",
+          title: "Promotions Dashboard",
+        },
+      },
+    ],
+  },
+}
+```
+
+Use the same `aclResource.id` with the `@adobe/aio-commerce-lib-api` Admin UI SDK permission helper when gating the SPA route or runtime actions for that menu item.
 
 ##### Order Extension Points:
 

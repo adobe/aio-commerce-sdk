@@ -65,6 +65,39 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(true);
     });
 
+    test("menu item with aclResource id and title", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          menuItems: [
+            {
+              id: "promotions/dashboard",
+              aclResource: {
+                id: "Acme_Promotions::dashboard",
+                title: "Promotions Dashboard",
+              },
+            },
+          ],
+        },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    test("menu item with aclResource id only", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          menuItems: [
+            {
+              id: "promotions/dashboard",
+              aclResource: { id: "Acme_Promotions::dashboard" },
+            },
+          ],
+        },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
     test("order mass action with selectionLimit", () => {
       const result = v.safeParse(AdminUiSdkSchema, {
         registration: {
@@ -307,6 +340,31 @@ describe("AdminUiSdkSchema", () => {
           menuItems: [{ id: "", title: "Item" }],
         },
       });
+      expect(result.success).toBe(false);
+    });
+
+    test("menu item with aclResource empty id — parse fails", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          menuItems: [{ id: "promotions/dashboard", aclResource: { id: "" } }],
+        },
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    test("menu item with aclResource missing id — parse fails", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          menuItems: [
+            {
+              id: "promotions/dashboard",
+              aclResource: { title: "Only title" },
+            },
+          ],
+        },
+      });
+
       expect(result.success).toBe(false);
     });
 
