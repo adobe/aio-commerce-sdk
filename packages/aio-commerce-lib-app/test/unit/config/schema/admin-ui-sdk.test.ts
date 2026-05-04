@@ -83,7 +83,27 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    test("menu item with aclResource id only", () => {
+    test("menu item with aclResource parent and sortOrder", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          menuItems: [
+            {
+              id: "promotions/campaigns",
+              aclResource: {
+                id: "Acme_Promotions::campaigns",
+                title: "Campaigns",
+                parent: "Acme_Promotions::dashboard",
+                sortOrder: 20,
+              },
+            },
+          ],
+        },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    test("menu item with aclResource missing title — parse fails", () => {
       const result = v.safeParse(AdminUiSdkSchema, {
         registration: {
           menuItems: [
@@ -95,7 +115,7 @@ describe("AdminUiSdkSchema", () => {
         },
       });
 
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
     });
 
     test("order mass action with selectionLimit", () => {

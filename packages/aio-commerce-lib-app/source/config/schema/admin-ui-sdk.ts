@@ -235,7 +235,9 @@ const BannerNotificationSchema = v.object({
 
 const AclResourceSchema = v.object({
   id: nonEmptyStringValueSchema("ACL resource ID"),
-  title: v.optional(nonEmptyStringValueSchema("ACL resource title")),
+  title: nonEmptyStringValueSchema("ACL resource title"),
+  parent: v.optional(nonEmptyStringValueSchema("ACL resource parent")),
+  sortOrder: v.optional(positiveNumberValueSchema("ACL resource sortOrder")),
 });
 
 const MenuItemSchema = v.object({
