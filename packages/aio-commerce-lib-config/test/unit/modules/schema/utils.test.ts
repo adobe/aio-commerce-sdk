@@ -13,9 +13,7 @@
 import { describe, expect, test } from "vitest";
 
 import {
-  filterBusinessConfigSchemaByContext,
   filterBusinessConfigSchemaByFlavor,
-  resolveCommerceFlavorFromContext,
   validateBusinessConfigSchema,
 } from "#modules/schema/utils";
 import {
@@ -173,99 +171,6 @@ describe("schema/utils", () => {
 
     test("should return an empty array when the schema is empty", () => {
       expect(filterBusinessConfigSchemaByFlavor([], "saas")).toEqual([]);
-    });
-  });
-
-  describe("resolveCommerceFlavorFromContext", () => {
-    test("should use explicit flavor when provided", () => {
-      expect(
-        resolveCommerceFlavorFromContext({
-          AIO_COMMERCE_API_FLAVOR: "saas",
-          AIO_COMMERCE_API_BASE_URL: "https://example.invalid",
-        }),
-      ).toBe("saas");
-    });
-
-    test("should resolve saas flavor from SaaS API URL", () => {
-      expect(
-        resolveCommerceFlavorFromContext({
-          AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/tenant-id",
-        }),
-      ).toBe("saas");
-    });
-
-    test("should resolve saas flavor from base64 encoded SaaS API URL", () => {
-      expect(
-        resolveCommerceFlavorFromContext({
-          AIO_COMMERCE_API_BASE_URL:
-            "aHR0cHM6Ly9hcGkuY29tbWVyY2UuYWRvYmUuY29tL3RlbmFudC1pZA==",
-        }),
-      ).toBe("saas");
-    });
-
-    test("should resolve saas flavor from base64url encoded SaaS API URL", () => {
-      expect(
-        resolveCommerceFlavorFromContext({
-          AIO_COMMERCE_API_BASE_URL:
-            "aHR0cHM6Ly9hcGkuY29tbWVyY2UuYWRvYmUuY29tL3RlbmFudC1pZA",
-        }),
-      ).toBe("saas");
-    });
-
-    test("should resolve paas flavor from non-SaaS API URL", () => {
-      expect(
-        resolveCommerceFlavorFromContext({
-          AIO_COMMERCE_API_BASE_URL: "https://store.example.com",
-        }),
-      ).toBe("paas");
-    });
-
-    test("should return undefined when base URL is invalid and flavor is not explicit", () => {
-      expect(
-        resolveCommerceFlavorFromContext({
-          AIO_COMMERCE_API_BASE_URL: "not-a-url",
-        }),
-      ).toBeUndefined();
-    });
-
-    test("should return undefined when context does not include flavor inputs", () => {
-      expect(resolveCommerceFlavorFromContext({})).toBeUndefined();
-    });
-  });
-
-  describe("filterBusinessConfigSchemaByContext", () => {
-    const schema = [
-      { name: "shared", type: "text", label: "Shared" },
-      { name: "saasOnly", type: "text", label: "SaaS Only", env: ["saas"] },
-      { name: "paasOnly", type: "text", label: "PaaS Only", env: ["paas"] },
-    ] satisfies BusinessConfigSchema;
-
-    test("should filter by explicit context flavor", () => {
-      const result = filterBusinessConfigSchemaByContext(schema, {
-        AIO_COMMERCE_API_FLAVOR: "saas",
-      });
-
-      expect(result.map((field) => field.name)).toEqual(["shared", "saasOnly"]);
-    });
-
-    test("should infer flavor from base URL when explicit flavor is absent", () => {
-      const result = filterBusinessConfigSchemaByContext(schema, {
-        AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/tenant-id",
-      });
-
-      expect(result.map((field) => field.name)).toEqual(["shared", "saasOnly"]);
-    });
-
-    test("should return original schema when flavor cannot be resolved", () => {
-      const result = filterBusinessConfigSchemaByContext(schema, {
-        AIO_COMMERCE_API_BASE_URL: "not-a-url",
-      });
-
-      expect(result.map((field) => field.name)).toEqual([
-        "shared",
-        "saasOnly",
-        "paasOnly",
-      ]);
     });
   });
 });

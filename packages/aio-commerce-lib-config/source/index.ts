@@ -26,9 +26,7 @@ export {
   type SelectorByScopeId,
 } from "./config-utils";
 export {
-  filterBusinessConfigSchemaByContext,
   filterBusinessConfigSchemaByFlavor,
-  resolveCommerceFlavorFromContext,
   SchemaBusinessConfig,
 } from "./modules/schema";
 export * from "./types";
