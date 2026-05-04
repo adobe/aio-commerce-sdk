@@ -143,6 +143,8 @@ export function buildAppManagementExtConfig(
     "installation.customInstallationSteps",
     "eventing.commerce",
     "eventing.external",
+    "webhooks",
+    "adminUiSdk",
   ];
 
   if (
