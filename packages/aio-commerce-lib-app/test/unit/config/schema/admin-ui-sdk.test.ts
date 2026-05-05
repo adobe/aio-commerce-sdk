@@ -103,21 +103,6 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    test("menu item with aclResource missing title — parse fails", () => {
-      const result = v.safeParse(AdminUiSdkSchema, {
-        registration: {
-          menuItems: [
-            {
-              id: "promotions/dashboard",
-              aclResource: { id: "Acme_Promotions::dashboard" },
-            },
-          ],
-        },
-      });
-
-      expect(result.success).toBe(false);
-    });
-
     test("order mass action with selectionLimit", () => {
       const result = v.safeParse(AdminUiSdkSchema, {
         registration: {
@@ -290,6 +275,21 @@ describe("AdminUiSdkSchema", () => {
   });
 
   describe("invalid cases", () => {
+    test("menu item with aclResource missing title — parse fails", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          menuItems: [
+            {
+              id: "promotions/dashboard",
+              aclResource: { id: "Acme_Promotions::dashboard" },
+            },
+          ],
+        },
+      });
+
+      expect(result.success).toBe(false);
+    });
+
     test("mass action missing required actionId — parse fails", () => {
       const result = v.safeParse(AdminUiSdkSchema, {
         registration: {

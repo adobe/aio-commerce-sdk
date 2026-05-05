@@ -599,7 +599,7 @@ adminUiSdk: {
 - **sortOrder**: Optional number
 - **isSection**: Optional boolean
 - **sandbox**: Optional; space-separated combination of `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
-- **aclResource**: Optional Admin UI SDK ACL resource; `id` is required and `title` is optional. Commerce uses this resource to decide whether the menu item is visible to the current admin user.
+- **aclResource**: Optional Admin UI SDK ACL resource; both `id` and `title` are required. `id` must follow the `Vendor_Module::resource_name` format. Optional: `parent` (same format) sets the ACL hierarchy parent; `sortOrder` controls display order. Commerce uses this resource to decide whether the menu item is visible to the current admin user. The same resource can also gate a SPA route or runtime action in the app itself — see the [`@adobe/aio-commerce-lib-api` permission helper](../../aio-commerce-lib-api/docs/usage.md#checking-admin-ui-sdk-permissions).
 
 Minimal menu item ACL example:
 
@@ -619,8 +619,6 @@ adminUiSdk: {
   },
 }
 ```
-
-Use the same `aclResource.id` with the `@adobe/aio-commerce-lib-api` Admin UI SDK permission helper when gating the SPA route or runtime actions for that menu item.
 
 ##### Order Extension Points:
 
