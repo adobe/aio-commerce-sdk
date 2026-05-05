@@ -19,7 +19,7 @@ import {
   asyncFunctionSchema,
   syncFunctionSchema,
   syncOrAsyncFunctionSchema,
-} from "#valibot/schemas/functions";
+} from "#valibot/schemas/functions/index";
 
 const INVALID_ARGS_MESSAGE_REGEX =
   /^The given arguments do not match the expected function signature/;
