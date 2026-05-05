@@ -38,11 +38,11 @@ detect it. This does not scale as the number of clients and SDK features grows.
 
 ## Developer experience
 
-An authenticated client fetches `/__metadata__/openapi.json` with a valid IMS
+An authenticated client fetches `/app-config/openapi.json` with a valid IMS
 bearer token:
 
 ```http
-GET /__metadata__/openapi.json
+GET /app-config/openapi.json
 Authorization: Bearer <ims-token>
 ```
 
@@ -53,7 +53,7 @@ knowledge required.
 **Example: `commerce-app-management`**
 
 On load, `commerce-app-management` already holds an IMS token from the user
-session. It fetches `/__metadata__/openapi.json` and drives UI visibility based on
+session. It fetches `/app-config/openapi.json` and drives UI visibility based on
 which endpoints are present — showing or hiding features accordingly. This
 replaces the current pattern of calling `getAppConfig` and inferring availability
 from the response shape.
@@ -86,24 +86,25 @@ Availability is determined by what the app developer declares in
 place where both the full SDK spec and the app's config are available
 simultaneously.
 
-### 3. Metadata action
+### 3. OpenAPI endpoint on the `app-config` action
 
-The filtered `openapi.json` is served by a dedicated `metadata` runtime action
-protected by the same IMS authentication as the rest of the SDK endpoints.
+The filtered `openapi.json` is served by a new `GET /openapi.json` route added to
+the existing `app-config` runtime action, protected by the same IMS authentication
+as all other SDK endpoints.
 
-Suggested path: `/__metadata__/openapi.json`
+Path: `/app-config/openapi.json`
 
-The filtered spec is bundled into the action at build time, following the same
-pattern used by other SDK actions (e.g. `app-config`, `config`): `pre-app-build`
-writes `openapi.json` to a well-known path, and the generated action template
-imports it statically:
+The filtered spec is bundled into the `app-config` action at build time:
+`pre-app-build` writes `openapi.json` to a well-known path, and the generated
+action template imports it statically:
 
 ```js
 import openApiSpec from "../../openapi.json" with { type: "json" };
 ```
 
 The bundler inlines the JSON at build time; no disk read occurs at request time.
-The action factory receives the spec object and returns it in the response body.
+The `appConfigRuntimeAction` factory is extended to also receive the spec object,
+which the new route returns directly.
 
 ### 4. SDK upgrades
 
@@ -118,11 +119,16 @@ if their config domain is already active. If a new feature introduces a new conf
 domain, the app developer opts in by declaring it in `app.commerce.config.ts` and
 rebuilding.
 
+The `app-config` action is always present in every SDK-based deployment, so the
+`/app-config/openapi.json` endpoint is always reachable without any additional
+routing configuration.
+
 ## Drawbacks
 
-- Adds a new `metadata` runtime action to every SDK-based deployment.
 - Clients must hold a valid IMS token before they can discover what is available,
   which adds a bootstrap step for clients that don't already have one.
+- The `app-config` action takes on a dual responsibility: serving the app config
+  and serving the deployment's API contract. These are related but distinct concerns.
 
 ## Rationale and alternatives
 
@@ -140,6 +146,13 @@ Alternatives considered:
   deployment-specific configuration without auth.
 - **Capabilities list endpoint** — a simpler boolean feature map instead of a
   full OpenAPI spec; less powerful and doesn't give clients the full contract.
+- **Dedicated `metadata` runtime action at `/__metadata__/openapi.json`** — cleaner
+  separation of concerns and a natural namespace for future deployment metadata, but
+  adds one runtime action to every deployment. Since `app-config` is already
+  present in all deployments, always under the same path, and already holds an IMS
+  authentication requirement, reusing it avoids the extra action without meaningful
+  loss of clarity. The concerns are related: both `app-config` and the OpenAPI spec
+  describe what a deployment exposes.
 
 ## Unresolved questions
 
@@ -151,8 +164,8 @@ Alternatives considered:
 
 ## Future possibilities
 
-- The `metadata` action could be extended to expose additional deployment
+- The `app-config` action could be extended to expose additional deployment
   information beyond the OpenAPI spec (e.g. SDK version, configured domains)
-  under a common `/__metadata__/` namespace.
+  as additional routes under `/app-config/`.
 - The full `openapi.json` in the SDK package could be used to power generated
   client libraries or documentation automatically.
