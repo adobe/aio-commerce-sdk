@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.3.1
+
+### Patch Changes
+
+- [#421](https://github.com/adobe/aio-commerce-sdk/pull/421) [`88150aa`](https://github.com/adobe/aio-commerce-sdk/commit/88150aa8c94872bd39f418aab721ae4685431840) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Fix Install button visibility in App Management for apps without events
+
 ## 1.3.0
 
 ### Minor Changes
