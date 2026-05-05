@@ -233,15 +233,33 @@ const BannerNotificationSchema = v.object({
   orderViewButtons: v.optional(v.array(OrderViewButtonBannerSchema)),
 });
 
+const ACL_RESOURCE_ID_REGEX =
+  /^[A-Z][A-Za-z0-9]+_[A-Z][A-Za-z0-9]+::[A-Za-z_0-9]+$/;
+const ACL_RESOURCE_ID_REGEX_MESSAGE =
+  "must follow the Vendor_Module::resource_name format";
+
+function aclResourceIdSchema(label: string) {
+  return v.pipe(
+    nonEmptyStringValueSchema(label),
+    v.regex(ACL_RESOURCE_ID_REGEX, `${label} ${ACL_RESOURCE_ID_REGEX_MESSAGE}`),
+  );
+}
+
 const AclResourceSchema = v.object({
-  id: nonEmptyStringValueSchema("ACL resource ID"),
+  id: aclResourceIdSchema("ACL resource ID"),
   title: nonEmptyStringValueSchema("ACL resource title"),
-  parent: v.optional(nonEmptyStringValueSchema("ACL resource parent")),
+  parent: v.optional(aclResourceIdSchema("ACL resource parent")),
   sortOrder: v.optional(positiveNumberValueSchema("ACL resource sortOrder")),
 });
 
 const MenuItemSchema = v.object({
-  id: nonEmptyStringValueSchema("menu item ID"),
+  id: v.pipe(
+    nonEmptyStringValueSchema("menu item ID"),
+    v.regex(
+      /^[A-Za-z0-9/:_]+$/,
+      "menu item ID must contain only alphanumeric characters, forward slashes (/), colons (:), and underscores (_)",
+    ),
+  ),
   title: v.optional(nonEmptyStringValueSchema("menu item title")),
   parent: v.optional(nonEmptyStringValueSchema("menu item parent")),
   sortOrder: v.optional(v.number()),

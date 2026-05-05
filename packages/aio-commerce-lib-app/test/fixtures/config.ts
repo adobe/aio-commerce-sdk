@@ -125,7 +125,7 @@ export const configWithAdminUiSdk = {
     registration: {
       menuItems: [
         {
-          id: "test-app::menu",
+          id: "test_app::menu",
           title: "Test App",
           sortOrder: 1,
           isSection: false,
@@ -228,7 +228,7 @@ export const configWithFullAdminUiSdk = {
     registration: {
       menuItems: [
         {
-          id: "my-app::first",
+          id: "my_app::first",
           title: "App on App Builder",
           parent: "my-app::apps",
           sortOrder: 1,

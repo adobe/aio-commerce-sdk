@@ -363,6 +363,63 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(false);
     });
 
+    test("menu item id with invalid characters — parse fails", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          menuItems: [{ id: "promotions dashboard!", title: "Item" }],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("menu item with aclResource id in invalid format — parse fails", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          menuItems: [
+            {
+              id: "promotions/dashboard",
+              aclResource: { id: "promotions/dashboard", title: "Dashboard" },
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("menu item with aclResource id with lowercase vendor — parse fails", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          menuItems: [
+            {
+              id: "promotions/dashboard",
+              aclResource: {
+                id: "acme_Promotions::dashboard",
+                title: "Dashboard",
+              },
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("menu item with aclResource id with lowercase module — parse fails", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          menuItems: [
+            {
+              id: "promotions/dashboard",
+              aclResource: {
+                id: "Acme_promotions::dashboard",
+                title: "Dashboard",
+              },
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
     test("menu item with aclResource empty id — parse fails", () => {
       const result = v.safeParse(AdminUiSdkSchema, {
         registration: {
@@ -380,6 +437,25 @@ describe("AdminUiSdkSchema", () => {
             {
               id: "promotions/dashboard",
               aclResource: { title: "Only title" },
+            },
+          ],
+        },
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    test("menu item with aclResource parent in invalid format — parse fails", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          menuItems: [
+            {
+              id: "promotions/dashboard",
+              aclResource: {
+                id: "Acme_Promotions::dashboard",
+                title: "Dashboard",
+                parent: "invalid-parent/format",
+              },
             },
           ],
         },
