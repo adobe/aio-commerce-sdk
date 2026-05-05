@@ -17,7 +17,7 @@ import stringify from "safe-stable-stringify";
 
 import { SchemaBusinessConfig } from "./index";
 
-import type { BusinessConfigSchema } from "./types";
+import type { BusinessConfigSchema, CommerceFlavor } from "./types";
 
 /**
  * Calculates schema version hash from content.
@@ -61,5 +61,31 @@ export function getPasswordFields(schema: BusinessConfigSchema) {
     schema
       .filter((field) => field.type === "password")
       .map((field) => field.name),
+  );
+}
+
+/**
+ * Filters a business configuration schema to the fields applicable to the
+ * given Commerce flavor.
+ *
+ * Fields without an `env` property apply to all flavors and are always
+ * included. Fields with an `env` array are included only when the array
+ * contains the given flavor.
+ *
+ * @param schema - The business configuration schema to filter.
+ * @param flavor - The Commerce flavor to filter by.
+ * @returns The schema fields applicable to the given flavor.
+ *
+ * @example
+ * ```ts
+ * filterBusinessConfigSchemaByFlavor(schema, "saas");
+ * ```
+ */
+export function filterBusinessConfigSchemaByFlavor(
+  schema: BusinessConfigSchema,
+  flavor: CommerceFlavor,
+): BusinessConfigSchema {
+  return schema.filter(
+    (field) => field.env === undefined || field.env.includes(flavor),
   );
 }

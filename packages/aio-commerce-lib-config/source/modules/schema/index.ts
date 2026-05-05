@@ -14,6 +14,8 @@ import * as v from "valibot";
 
 import { SchemaBusinessConfigSchema } from "./fields";
 
+export { filterBusinessConfigSchemaByFlavor } from "./utils";
+
 /** The schema used to validate the the business configuration settings. */
 export const SchemaBusinessConfig = v.object({
   schema: v.optional(SchemaBusinessConfigSchema, []),

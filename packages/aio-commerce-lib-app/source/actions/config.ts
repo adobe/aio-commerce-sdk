@@ -12,6 +12,7 @@
 
 import {
   byScopeId,
+  filterBusinessConfigSchemaByFlavor,
   getConfiguration,
   initialize,
   setConfiguration,
@@ -42,6 +43,8 @@ type ConfigActionFactoryArgs = {
 type ConfigActionParams = RuntimeActionParams &
   ConfigActionFactoryArgs & {
     AIO_COMMERCE_CONFIG_ENCRYPTION_KEY?: string;
+    AIO_COMMERCE_API_FLAVOR?: unknown;
+    commerceEnv?: unknown;
   };
 
 /** The context for the config action. */
@@ -51,6 +54,20 @@ interface ConfigActionContext extends BaseContext {
 
 // Placeholder value for password fields.
 const MASKED_PASSWORD_VALUE = "*****";
+
+/** Normalizes a possible flavor value to a supported Commerce flavor. */
+function normalizeCommerceFlavor(value: unknown): "paas" | "saas" | undefined {
+  if (typeof value !== "string") {
+    return;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "paas" || normalized === "saas") {
+    return normalized;
+  }
+
+  return;
+}
 
 /**
  * Filters password fields from the configuration values.
@@ -79,6 +96,7 @@ const router = new HttpActionRouter<ConfigActionContext>().use(logger());
 router.get("/", {
   query: v.object({
     scopeId: nonEmptyStringValueSchema("scopeId"),
+    commerceEnv: v.optional(v.picklist(["paas", "saas"] as const)),
   }),
 
   handler: async (req, ctx) => {
@@ -91,7 +109,16 @@ router.get("/", {
       "businessConfig.schema",
     );
 
-    initialize({ schema: validatedSchema });
+    const flavor =
+      req.query.commerceEnv ??
+      normalizeCommerceFlavor(rawParams.commerceEnv) ??
+      normalizeCommerceFlavor(rawParams.AIO_COMMERCE_API_FLAVOR);
+
+    const filteredSchema = flavor
+      ? filterBusinessConfigSchemaByFlavor(validatedSchema, flavor)
+      : validatedSchema;
+
+    initialize({ schema: filteredSchema });
 
     const { scopeId } = req.query;
     logger.debug(`Retrieving configuration with scope id: ${scopeId}`);
@@ -101,12 +128,12 @@ router.get("/", {
 
     logger.debug("Masking password values...");
     appConfiguration.config = filterPasswordFields(
-      configSchema,
+      filteredSchema,
       appConfiguration.config,
     );
 
     return ok({
-      body: { schema: validatedSchema, values: appConfiguration },
+      body: { schema: filteredSchema, values: appConfiguration },
     });
   },
 });
