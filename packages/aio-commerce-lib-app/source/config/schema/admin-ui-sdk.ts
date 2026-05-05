@@ -24,17 +24,18 @@ const SANDBOX_VALUES = [
   "allow-downloads",
   "allow-modals",
   "allow-popups",
-] as const;
+] as const satisfies string[];
+
+type SandboxValue = (typeof SANDBOX_VALUES)[number];
+
+function isSandboxValue(value: string): value is SandboxValue {
+  return SANDBOX_VALUES.includes(value as SandboxValue);
+}
 
 const SandboxSchema = v.pipe(
   v.string('Expected a string value for "sandbox"'),
   v.check(
-    (val) =>
-      val
-        .split(" ")
-        .every((value) =>
-          (SANDBOX_VALUES as readonly string[]).includes(value),
-        ),
+    (val) => val.split(" ").every(isSandboxValue),
     `sandbox must contain only single-space-separated values from: ${SANDBOX_VALUES.map((t) => `"${t}"`).join(", ")}`,
   ),
 );
@@ -114,6 +115,7 @@ const sandboxDisplayIframeCheck = v.forward(
   ["sandbox"],
 );
 
+// TODO: Cleanup after https://github.com/open-circle/valibot/issues/1459
 function withSandboxDisplayIframeCheck<
   TSchema extends v.BaseSchema<
     unknown,

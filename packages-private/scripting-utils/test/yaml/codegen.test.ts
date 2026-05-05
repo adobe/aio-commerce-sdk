@@ -109,6 +109,7 @@ runtimeManifest:
         const fileContent = await readFile(configPath, "utf-8");
         expect(fileContent).toContain("existing-hook");
         expect(fileContent).toContain("new-hook");
+        expect(fileContent).not.toContain("workerProcess: []");
       },
     );
   });
@@ -127,7 +128,7 @@ runtimeManifest:
 
       // Should have default empty structures
       expect(doc.has("hooks")).toBe(true);
-      expect(doc.has("operations")).toBe(true);
+      expect(doc.has("operations")).toBe(false);
       expect(doc.has("runtimeManifest")).toBe(true);
     });
   });
@@ -165,7 +166,10 @@ runtimeManifest:
         new Document({}),
       );
 
-      expect(doc.has("operations")).toBe(true);
+      expect(doc.has("operations")).toBe(false);
+
+      const fileContent = await readFile(configPath, "utf-8");
+      expect(fileContent).not.toContain("workerProcess: []");
     });
   });
 
@@ -533,6 +537,7 @@ hooks:
         expect(fileContent).toContain("view:");
         expect(fileContent).toContain("type: web");
         expect(fileContent).toContain("impl: index.html");
+        expect(fileContent).not.toContain("workerProcess: []");
       });
     });
 
