@@ -20,7 +20,6 @@ import {
 import type {
   AdminUiSdkPermissionClient,
   AdminUiSdkPermissionClientOptions,
-  WithAdminUiSdkPermissionParams,
 } from "#lib/commerce/admin-ui-sdk-permissions/types";
 import type { AdobeCommerceHttpClient } from "#lib/commerce/http-client";
 
@@ -52,18 +51,6 @@ describe("AdminUiSdkPermissionClient", () => {
     expectTypeOf<AdminUiSdkPermissionClient["invalidate"]>().toEqualTypeOf<
       (resource?: string) => void
     >();
-  });
-});
-
-describe("WithAdminUiSdkPermissionParams", () => {
-  it("describes a resource, client, and handler", () => {
-    expectTypeOf<
-      WithAdminUiSdkPermissionParams<{ foo: string }, { statusCode: number }>
-    >().toMatchTypeOf<{
-      resource: string;
-      client: AdminUiSdkPermissionClient;
-      handler: (params: { foo: string }) => Promise<{ statusCode: number }>;
-    }>();
   });
 });
 

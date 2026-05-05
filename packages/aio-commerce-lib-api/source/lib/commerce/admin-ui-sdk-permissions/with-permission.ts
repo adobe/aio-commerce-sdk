@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { AdminUiSdkPermissionDeniedError } from "./errors";
+
 import type { AdminUiSdkPermissionClient } from "./types";
 
 const DENIED_RESPONSE = {
@@ -29,8 +31,11 @@ export function withAdminUiSdkPermission<
   return async (params: TParams) => {
     try {
       await client.require(resource);
-    } catch {
-      return DENIED_RESPONSE;
+    } catch (error) {
+      if (error instanceof AdminUiSdkPermissionDeniedError) {
+        return DENIED_RESPONSE;
+      }
+      throw error;
     }
 
     return handler(params);

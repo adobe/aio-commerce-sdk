@@ -23,17 +23,21 @@ export interface AdminUiSdkPermissionClientOptions {
 
 /** Client for checking the current user's Admin UI SDK resource permissions. */
 export interface AdminUiSdkPermissionClient {
+  /**
+   * Returns `true` if the current user has the given resource granted, `false` if denied.
+   * Returns `false` on network or parse errors when `denyOnError: true` (default).
+   * Always throws `AdminUiSdkPermissionError` on 401, regardless of `denyOnError`.
+   */
   check(resource: string): Promise<boolean>;
+  /**
+   * Clears the cached result for `resource`. If called without an argument, clears
+   * all cached entries and cancels deduplication of any in-flight requests.
+   */
   invalidate(resource?: string): void;
+  /**
+   * Resolves when the current user has the given resource granted.
+   * Throws `AdminUiSdkPermissionDeniedError` if denied.
+   * Always throws `AdminUiSdkPermissionError` on 401, regardless of `denyOnError`.
+   */
   require(resource: string): Promise<void>;
 }
-
-/** Parameters for wrapping a runtime action with an Admin UI SDK permission check. */
-export type WithAdminUiSdkPermissionParams<
-  TParams = Record<string, unknown>,
-  TResult = unknown,
-> = {
-  resource: string;
-  client: AdminUiSdkPermissionClient;
-  handler: (params: TParams) => Promise<TResult>;
-};

@@ -57,21 +57,19 @@ describe("withAdminUiSdkPermission", () => {
     expect(result).toMatchObject({ statusCode: 403 });
   });
 
-  it("returns 403 on permission check errors", async () => {
+  it("re-throws errors that are not AdminUiSdkPermissionDeniedError", async () => {
+    const authError = new Error("network error");
     const errClient: AdminUiSdkPermissionClient = {
       check: vi.fn().mockResolvedValue(false),
-      require: vi.fn().mockRejectedValue(new Error("network error")),
+      require: vi.fn().mockRejectedValue(authError),
       invalidate: vi.fn(),
     };
-    const handler = vi.fn();
     const wrapped = withAdminUiSdkPermission(
       "Acme_Promotions::dashboard",
       errClient,
-      handler,
+      vi.fn(),
     );
-    const result = await wrapped({});
 
-    expect(handler).not.toHaveBeenCalled();
-    expect(result).toMatchObject({ statusCode: 403 });
+    await expect(wrapped({})).rejects.toThrow(authError);
   });
 });
