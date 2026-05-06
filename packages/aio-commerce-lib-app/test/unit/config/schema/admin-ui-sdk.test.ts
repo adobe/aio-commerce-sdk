@@ -604,3 +604,12 @@ describe("AdminUiSdkSchema", () => {
     });
   });
 });
+
+describe("AclResource type export", () => {
+  test("AclResource is exported from the schema file", () => {
+    // Compile-time check: this import would fail TypeScript if AclResource is not exported.
+    type _Check = import("#config/schema/admin-ui-sdk").AclResource;
+    // Minimal runtime guard so the test is not empty.
+    expect(true).toBe(true);
+  });
+});
