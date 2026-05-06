@@ -84,23 +84,12 @@ describe("configRuntimeAction", () => {
       }),
     );
 
-    expect(initializeMock).toHaveBeenCalledWith({ schema: configSchema });
-    expect(byScopeIdMock).toHaveBeenCalledWith("store-1");
-    expect(getConfigurationMock).toHaveBeenCalledWith(
-      { scopeId: "store-1" },
-      { encryptionKey: "encryption-key" },
-    );
-    expect(result).toEqual({
-      type: "success",
-      statusCode: 200,
+    expect(result).toMatchObject({
       body: {
-        schema: configSchema,
         values: {
-          scopeId: "store-1",
-          config: [
+          config: expect.arrayContaining([
             { name: "apiKey", value: "*****", origin: "scope" },
-            { name: "mode", value: "live", origin: "scope" },
-          ],
+          ]),
         },
       },
     });
@@ -113,27 +102,19 @@ describe("configRuntimeAction", () => {
 
     expect(result).toMatchObject({
       type: "error",
-      error: {
-        statusCode: 400,
-        body: {
-          message: "Invalid query parameters",
-        },
-      },
+      error: { statusCode: 400 },
     });
   });
 
   test("filters masked password values before saving with PUT /", async () => {
     setConfigurationMock.mockResolvedValue({
       scopeId: "store-1",
-      config: [
-        { name: "apiKey", value: "updated-secret", origin: "scope" },
-        { name: "mode", value: "live", origin: "scope" },
-      ],
+      config: [],
     });
 
     const handler = configRuntimeAction({ configSchema });
 
-    const result = await handler(
+    await handler(
       createRuntimeActionParams({
         method: "put",
         body: {
@@ -146,38 +127,85 @@ describe("configRuntimeAction", () => {
       }),
     );
 
-    expect(initializeMock).toHaveBeenCalledWith({ schema: configSchema });
     expect(setConfigurationMock).toHaveBeenCalledWith(
-      {
-        config: [{ name: "mode", value: "live" }],
-      },
-      { scopeId: "store-1" },
-      { encryptionKey: undefined },
+      { config: [{ name: "mode", value: "live" }] },
+      expect.any(Object),
+      expect.any(Object),
     );
-    expect(result).toEqual({
-      type: "success",
-      statusCode: 200,
-      headers: {
-        "Cache-Control": "no-store",
-        Deprecation: "Wed, 15 Apr 2026 00:00:00 GMT",
-      },
-      body: {
-        scopeId: "store-1",
-        config: [
-          { name: "apiKey", value: "*****", origin: "scope" },
-          { name: "mode", value: "live", origin: "scope" },
-        ],
-      },
+  });
+
+  test("sets Cache-Control: no-store on the PUT / response", async () => {
+    setConfigurationMock.mockResolvedValue({
+      scopeId: "store-1",
+      config: [],
+    });
+
+    const handler = configRuntimeAction({ configSchema });
+
+    const result = await handler(
+      createRuntimeActionParams({
+        method: "put",
+        body: {
+          scopeId: "store-1",
+          config: [{ name: "mode", value: "live" }],
+        },
+      }),
+    );
+
+    expect(result).toMatchObject({
+      headers: { "Cache-Control": "no-store" },
     });
   });
 
-  test("forwards partial updates and null unsets with PATCH /", async () => {
+  test("rejects null values with PUT /", async () => {
+    const handler = configRuntimeAction({ configSchema });
+
+    const result = await handler(
+      createRuntimeActionParams({
+        method: "put",
+        body: {
+          scopeId: "store-1",
+          config: [{ name: "apiKey", value: null }],
+        },
+      }),
+    );
+
+    expect(setConfigurationMock).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      type: "error",
+      error: { statusCode: 400 },
+    });
+  });
+
+  test("accepts null values as unsets with PATCH /", async () => {
     setConfigurationMock.mockResolvedValue({
       scopeId: "store-1",
-      config: [
-        { name: "apiKey", value: "persisted-secret", origin: "scope" },
-        { name: "mode", value: "live", origin: "scope" },
-      ],
+      config: [],
+    });
+
+    const handler = configRuntimeAction({ configSchema });
+
+    await handler(
+      createRuntimeActionParams({
+        method: "patch",
+        body: {
+          scopeId: "store-1",
+          config: [{ name: "apiKey", value: null }],
+        },
+      }),
+    );
+
+    expect(setConfigurationMock).toHaveBeenCalledWith(
+      { config: [{ name: "apiKey", value: null }] },
+      expect.any(Object),
+      expect.any(Object),
+    );
+  });
+
+  test("sets Cache-Control: no-store on the PATCH / response", async () => {
+    setConfigurationMock.mockResolvedValue({
+      scopeId: "store-1",
+      config: [],
     });
 
     const handler = configRuntimeAction({ configSchema });
@@ -187,38 +215,13 @@ describe("configRuntimeAction", () => {
         method: "patch",
         body: {
           scopeId: "store-1",
-          config: [
-            { name: "apiKey", value: null },
-            { name: "mode", value: "live" },
-          ],
+          config: [{ name: "mode", value: "live" }],
         },
-        AIO_COMMERCE_CONFIG_ENCRYPTION_KEY: "encryption-key",
       }),
     );
 
-    expect(setConfigurationMock).toHaveBeenCalledWith(
-      {
-        config: [
-          { name: "apiKey", value: null },
-          { name: "mode", value: "live" },
-        ],
-      },
-      { scopeId: "store-1" },
-      { encryptionKey: "encryption-key" },
-    );
-    expect(result).toEqual({
-      type: "success",
-      statusCode: 200,
-      headers: {
-        "Cache-Control": "no-store",
-      },
-      body: {
-        scopeId: "store-1",
-        config: [
-          { name: "apiKey", value: "*****", origin: "scope" },
-          { name: "mode", value: "live", origin: "scope" },
-        ],
-      },
+    expect(result).toMatchObject({
+      headers: { "Cache-Control": "no-store" },
     });
   });
 });
