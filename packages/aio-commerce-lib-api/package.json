@@ -96,7 +96,8 @@
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "camelcase": "catalog:",
     "ky": "catalog:",
-    "type-fest": "catalog:"
+    "type-fest": "catalog:",
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",

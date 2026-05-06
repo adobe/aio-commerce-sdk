@@ -178,6 +178,70 @@ export const main = async function (params) {
 
 The resolver automatically detects flavor from the URL and auth type from the provided parameters. Define actual values in your `.env` file.
 
+### Checking Admin UI SDK Permissions
+
+Use `getAdminUiSdkPermissionClient` when your Admin UI SDK extension needs to gate a SPA route or runtime action by an ACL resource declared in the app registration. The client calls the Commerce permission endpoint, caches successful endpoint results for 5 minutes by default, and deduplicates concurrent checks for the same resource.
+
+`check(resource)` returns `false` on network or response-shape errors by default so callers fail closed. A `401` response always throws from `check` and `require` because it indicates an authentication configuration issue. Set `denyOnError: false` to throw on all errors. Call `invalidate(resource)` or `invalidate()` when grants change and cached results should be refreshed.
+
+SPA bootstrap example:
+
+```typescript
+import {
+  AdobeCommerceHttpClient,
+  getAdminUiSdkPermissionClient,
+  resolveCommerceHttpClientParams,
+} from "@adobe/aio-commerce-lib-api";
+
+async function bootstrapAdminRoute(params) {
+  const commerceClient = new AdobeCommerceHttpClient(
+    resolveCommerceHttpClientParams(params, { tryForwardAuthProvider: true }),
+  );
+  const permissions = getAdminUiSdkPermissionClient({
+    httpClient: commerceClient,
+  });
+
+  const allowed = await permissions.check("Acme_Promotions::dashboard");
+  if (!allowed) {
+    renderAccessDenied();
+    return;
+  }
+
+  renderDashboard();
+}
+```
+
+Runtime action wrapper example:
+
+```typescript
+import {
+  AdobeCommerceHttpClient,
+  getAdminUiSdkPermissionClient,
+  resolveCommerceHttpClientParams,
+  withAdminUiSdkPermission,
+} from "@adobe/aio-commerce-lib-api";
+
+async function updatePromotion(params) {
+  return { statusCode: 200, body: { updated: true } };
+}
+
+export const main = async (params) => {
+  const commerceClient = new AdobeCommerceHttpClient(
+    resolveCommerceHttpClientParams(params, { tryForwardAuthProvider: true }),
+  );
+  const permissions = getAdminUiSdkPermissionClient({
+    httpClient: commerceClient,
+  });
+  const protectedHandler = withAdminUiSdkPermission(
+    "Acme_Promotions::edit",
+    permissions,
+    updatePromotion,
+  );
+
+  return protectedHandler(params);
+};
+```
+
 ### Creating API Clients
 
 The `ApiClient` class allows you to bind API functions to HTTP clients, creating a clean interface for your API operations:

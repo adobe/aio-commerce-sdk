@@ -13,6 +13,7 @@
 /** biome-ignore-all lint/performance/noBarrelFile: This is the entrypoint of the package API */
 
 export { ApiClient } from "./lib/api-client";
+export * from "./lib/commerce/admin-ui-sdk-permissions";
 export { resolveCommerceHttpClientParams } from "./lib/commerce/helpers";
 export { AdobeCommerceHttpClient } from "./lib/commerce/http-client";
 export { resolveIoEventsHttpClientParams } from "./lib/io-events/helpers";
