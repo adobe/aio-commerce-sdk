@@ -49,8 +49,6 @@ npx skills add adobe/aio-commerce-sdk --skill commerce-app-init
 npx skills add adobe/aio-commerce-sdk --all
 ```
 
-> **Note:** Monorepo support in the `skills` CLI is pending confirmation. If the above does not work, copy the skill folder manually into your agent's skills directory.
-
 ## Evaluations
 
 Implemented skills ship with evals in `skills/<skill-name>/evals/evals.json`, following the [agentskills.io eval format](https://agentskills.io/skill-creation/evaluating-skills.md).
