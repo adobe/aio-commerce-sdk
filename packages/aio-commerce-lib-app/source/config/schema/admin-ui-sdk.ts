@@ -248,7 +248,7 @@ const MenuItemSchema = v.object({
  * Schema for the Admin UI SDK registration parameters (for the `adminUiSdk.registration` config section).
  * @see https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/ for more details.
  */
-const AdminUiSdkRegistrationSchema = v.object({
+export const AdminUiSdkRegistrationSchema = v.object({
   menuItems: v.optional(v.array(MenuItemSchema)),
   order: v.optional(OrderExtensionPointsSchema),
   product: v.optional(ProductExtensionPointsSchema),

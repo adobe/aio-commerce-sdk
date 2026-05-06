@@ -22,31 +22,41 @@ import {
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
+import openAPISpec from "#generated/openapi.gen.json" with { type: "json" };
+
+import { AppConfigResponseSchema } from "./schema";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { CommerceAppConfig } from "#config/schema/app";
 
-/** Arguments for the runtime action factory. */
-type RuntimeActionFactoryArgs = {
+/** The arguments required to create the runtime action for the app-config action. */
+export type RuntimeActionFactoryArgs = RuntimeActionParams & {
   appConfig: CommerceAppConfig;
 };
 
-/** Params received by all handlers. */
-type RuntimeActionArgs = RuntimeActionParams & RuntimeActionFactoryArgs;
-
-/** The context for the config action. */
+/** The context for the app-config action. */
 interface AppConfigActionContext extends BaseContext {
-  rawParams: RuntimeActionArgs;
+  rawParams: RuntimeActionFactoryArgs;
 }
 
-/** Router for the app config actions. */
-const router = new HttpActionRouter<AppConfigActionContext>().use(
+/**
+ * App Config action router.
+ *
+ * Routes:
+ * - GET /               - Retrieve the Commerce App configuration.
+ * - GET /openapi.json   - Returns the OpenAPI spec for all SDK actions
+ */
+export const router = new HttpActionRouter<AppConfigActionContext>().use(
   logger({ name: () => "app-config" }),
 );
 
 /** GET / - Get app config */
 router.get("/", {
+  responses: {
+    200: AppConfigResponseSchema,
+  },
+
   handler: async (_req, { logger, rawParams }) => {
     const rawAppConfig = rawParams.appConfig;
 
@@ -80,13 +90,7 @@ router.get("/", {
   },
 });
 
-/** Factory to create the route handler for the `app-config` action. */
-export const appConfigRuntimeAction =
-  ({ appConfig }: RuntimeActionFactoryArgs) =>
-  async (params: RuntimeActionParams) => {
-    const handler = router.handler();
-    return await handler({
-      ...params,
-      appConfig,
-    });
-  };
+/** GET /openapi.json - Returns the OpenAPI spec for all SDK actions */
+router.get("/openapi.json", {
+  handler: () => ok({ body: openAPISpec }),
+});

@@ -24,7 +24,7 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 import openwhisk from "openwhisk";
-import { object, string } from "valibot";
+import * as v from "valibot";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import {
@@ -38,9 +38,16 @@ import {
   runUninstallation,
   runValidation,
 } from "#management/index";
-import { AppDataSchema } from "#management/installation/schema";
 
-import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+import {
+  AcceptedBodySchema,
+  ConflictBodySchema,
+  FailedExecutionBodySchema,
+  InstallationRequestBodySchema,
+  InstallationStateSchema,
+  ValidationResultSchema,
+} from "./schema";
+
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type {
@@ -69,24 +76,13 @@ type RuntimeActionFactoryArgs = {
 };
 
 /** Params received by all handlers. */
-type RuntimeActionArgs = InstallationContext["params"] & {
-  appConfig: CommerceAppConfig;
-  customScriptsLoader?: CustomScriptsLoader;
-};
+type RuntimeActionArgs = InstallationContext["params"] &
+  RuntimeActionFactoryArgs;
 
 /** The context for the installation action. */
 interface InstallationActionContext extends BaseContext {
   rawParams: RuntimeActionArgs;
 }
-
-/** Request body schema shared by POST / and POST /validation. */
-const InstallationRequestBodySchema = object({
-  appData: AppDataSchema,
-  commerceBaseUrl: string(),
-  commerceEnv: string(),
-  ioEventsUrl: string(),
-  ioEventsEnv: string(),
-});
 
 type WorkflowRequestBody = {
   appData: InstallationContext["appData"];
@@ -222,16 +218,16 @@ function createInstallationHooks(
  * Installation action router.
  *
  * Routes:
- * - GET /installation             - Get current installation status
- * - POST /installation            - Start installation (creates plan, invokes execution async)
- * - POST /installation/execution  - Execute installation (internal, called async)
- * - POST /installation/validation - Pre-installation validation
- * - POST /installation/uninstallation           - Start uninstallation (async)
- * - GET /installation/uninstallation            - Get current uninstallation status
- * - POST /installation/uninstallation/execution - Execute uninstallation (internal, called async)
- * - DELETE /installation/uninstallation         - Clear uninstallation state only (no offboarding)
+ * - GET /                            - Get current installation status
+ * - POST /                           - Start installation (creates plan, invokes execution async)
+ * - POST /execution                  - Execute installation (internal, called async)
+ * - POST /validation                 - Pre-installation validation
+ * - POST /uninstallation             - Start uninstallation (creates plan, invokes execution async)
+ * - GET /uninstallation              - Get current uninstallation status
+ * - POST /uninstallation/execution   - Execute uninstallation (internal, called async)
+ * - DELETE /uninstallation           - Clear uninstallation state only (no offboarding)
  */
-const router = new HttpActionRouter<InstallationActionContext>().use(
+export const router = new HttpActionRouter<InstallationActionContext>().use(
   logger({ name: () => "installation" }),
 );
 
@@ -244,6 +240,7 @@ const router = new HttpActionRouter<InstallationActionContext>().use(
  * 3. If not found: return empty status
  */
 router.get("/", {
+  responses: { 200: InstallationStateSchema, 204: v.void() },
   handler: async (_req, { logger }) => {
     logger.debug("Getting installation execution status...");
 
@@ -262,6 +259,7 @@ router.get("/", {
  */
 router.post("/", {
   body: InstallationRequestBodySchema,
+  responses: { 202: AcceptedBodySchema, 409: ConflictBodySchema },
 
   handler: async (req, { logger, rawParams }) => {
     const { appData, commerceBaseUrl } = req.body;
@@ -343,6 +341,7 @@ router.post("/", {
  * It runs the actual installation workflow and saves state.
  */
 router.post("/execution", {
+  responses: { 200: InstallationStateSchema, 500: FailedExecutionBodySchema },
   handler: async (_req, { logger, rawParams }) => {
     const params = rawParams as ExecutionRouteParams;
     const {
@@ -410,6 +409,7 @@ router.post("/execution", {
  */
 router.post("/validation", {
   body: InstallationRequestBodySchema,
+  responses: { 200: ValidationResultSchema },
 
   handler: async (req, { logger, rawParams }) => {
     logger.debug("Running pre-installation validation...");
@@ -453,6 +453,7 @@ router.post("/validation", {
  * Returns 200 with state if an uninstallation has been started, 204 otherwise.
  */
 router.get("/uninstallation", {
+  responses: { 200: InstallationStateSchema, 204: v.void() },
   handler: async (_req, { logger }) => {
     logger.debug("Getting uninstallation execution status...");
     const store = await createUninstallationStore();
@@ -472,6 +473,7 @@ router.get("/uninstallation", {
  */
 router.post("/uninstallation", {
   body: InstallationRequestBodySchema,
+  responses: { 202: AcceptedBodySchema, 409: ConflictBodySchema },
 
   handler: async (req, { logger, rawParams }) => {
     const { appData, commerceBaseUrl } = req.body;
@@ -543,6 +545,7 @@ router.post("/uninstallation", {
  * 5. Return 200 on success, 500 on failure
  */
 router.post("/uninstallation/execution", {
+  responses: { 200: InstallationStateSchema, 500: FailedExecutionBodySchema },
   handler: async (_req, { logger, rawParams }) => {
     const params = rawParams as ExecutionRouteParams;
     const {
@@ -610,6 +613,7 @@ router.post("/uninstallation/execution", {
  * Removes the stored uninstallation state without triggering any offboarding.
  */
 router.delete("/uninstallation", {
+  responses: { 204: v.void() },
   handler: async (_req, { logger }) => {
     logger.debug("Clearing uninstallation state...");
     const store = await createUninstallationStore();
@@ -618,15 +622,3 @@ router.delete("/uninstallation", {
     return noContent();
   },
 });
-
-/** Factory to create the route handler for the `installation` action. */
-export const installationRuntimeAction =
-  ({ appConfig, customScriptsLoader }: RuntimeActionFactoryArgs) =>
-  async (params: RuntimeActionParams) => {
-    const handler = router.handler();
-    return await handler({
-      ...params,
-      appConfig,
-      customScriptsLoader,
-    });
-  };

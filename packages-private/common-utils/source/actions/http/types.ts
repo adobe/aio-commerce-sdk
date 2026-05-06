@@ -132,11 +132,20 @@ export interface CompiledRoute {
   /** Optional schema for validating route parameters */
   params?: StandardSchemaV1;
 
+  /** Original path pattern string (e.g., "/users/:id") */
+  path: string;
+
   /** Compiled regex pattern for path matching */
   pattern: RegExp;
 
   /** Optional schema for validating query parameters */
   query?: StandardSchemaV1;
+
+  /**
+   * Per-status-code response schemas (used for OpenAPI generation only, not validated at runtime).
+   * The 200 entry also constrains the handler return type at the `RouteConfig` level.
+   */
+  responses?: Partial<Record<number, StandardSchemaV1>>;
 }
 
 /**
@@ -201,6 +210,22 @@ export type RouteConfig<
 
   /** Optional schema for validating and typing query parameters */
   query?: TQuerySchema;
+
+  /**
+   * Per-status-code response schemas for OpenAPI generation (not validated at runtime).
+   *
+   * @example
+   * ```typescript
+   * router.get("/items", {
+   *   responses: {
+   *     200: object({ items: array(string()) }),
+   *     404: object({ message: string(), code: string() }),
+   *   },
+   *   handler: () => ok({ body: { items: [] } }),
+   * });
+   * ```
+   */
+  responses?: Partial<Record<number, StandardSchemaV1>>;
 
   /** Route handler with properly typed request and context */
   handler: (

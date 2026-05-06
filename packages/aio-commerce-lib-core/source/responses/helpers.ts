@@ -18,12 +18,14 @@ export type BodyRecordWithMessage = BodyRecord & { message: string };
  * Common payload structure for runtime action responses
  * @template TBody - Response body properties
  * @template THeaders - Custom response headers
+ * @template TStatusCode - HTTP status code type
  */
 export type ResponsePayload<
   TBody extends BodyRecord = BodyRecord,
   THeaders extends HeadersRecord = HeadersRecord,
+  TStatusCode extends number = number,
 > = {
-  statusCode: number;
+  statusCode: TStatusCode;
   body?: TBody;
   headers?: THeaders;
 };
@@ -32,24 +34,28 @@ export type ResponsePayload<
  * Represents an error response from a runtime action
  * @template TBody - Additional error body properties beyond the required message field
  * @template THeaders - Custom response headers
+ * @template TStatusCode - HTTP status code type
  */
 export type ErrorResponse<
   TBody extends BodyRecordWithMessage = BodyRecordWithMessage,
   THeaders extends HeadersRecord = HeadersRecord,
+  TStatusCode extends number = number,
 > = {
   type: "error";
-  error: ResponsePayload<TBody, THeaders>;
+  error: ResponsePayload<TBody, THeaders, TStatusCode>;
 };
 
 /**
  * Represents a successful response from a runtime action
  * @template TBody - Response body properties
  * @template THeaders - Custom response headers
+ * @template TStatusCode - HTTP status code type
  */
 export type SuccessResponse<
   TBody extends BodyRecord = BodyRecord,
   THeaders extends HeadersRecord = HeadersRecord,
-> = ResponsePayload<TBody, THeaders> & {
+  TStatusCode extends number = number,
+> = ResponsePayload<TBody, THeaders, TStatusCode> & {
   type: "success";
 };
 
@@ -72,11 +78,11 @@ export type ActionResponse<
  *
  * @template TBody - Additional error body properties beyond the required message field
  * @template THeaders - Custom response headers
+ * @template TStatusCode - HTTP status code type
  *
  * @param statusCode - HTTP status code (e.g., 400, 404, 500)
  * @param payload - Error response configuration
- * @param payload.message - Human-readable error message (required)
- * @param payload.body - Optional additional error details to include in the response body
+ * @param payload.body - Error details including the required message field
  * @param payload.headers - Optional custom response headers
  *
  * @returns Standardized error response object with type discriminator
@@ -85,18 +91,17 @@ export type ActionResponse<
  * ```typescript
  * // Simple error with just a message
  * const error = buildErrorResponse(404, {
- *   message: 'Resource not found'
+ *   body: { message: 'Resource not found' }
  * });
  *
  * // Error with additional body data
  * const error = buildErrorResponse(400, {
- *   message: 'Invalid request',
- *   body: { field: 'email', code: 'INVALID_FORMAT' }
+ *   body: { message: 'Invalid request', field: 'email', code: 'INVALID_FORMAT' }
  * });
  *
  * // Error with custom headers
  * const error = buildErrorResponse(429, {
- *   message: 'Rate limit exceeded',
+ *   body: { message: 'Rate limit exceeded' },
  *   headers: { 'Retry-After': '60' }
  * });
  * ```
@@ -104,15 +109,15 @@ export type ActionResponse<
 export function buildErrorResponse<
   TBody extends BodyRecordWithMessage = BodyRecordWithMessage,
   THeaders extends HeadersRecord = HeadersRecord,
+  TStatusCode extends number = number,
 >(
-  statusCode: number,
+  statusCode: TStatusCode,
   payload: { body: TBody; headers?: THeaders },
-): ErrorResponse<TBody, THeaders> {
+): ErrorResponse<TBody, THeaders, TStatusCode> {
   return {
     type: "error",
     error: {
       ...(payload?.headers && { headers: payload.headers }),
-
       statusCode,
       body: payload.body,
     },
@@ -125,11 +130,11 @@ export function buildErrorResponse<
  *
  * @template TBody - Response body properties
  * @template THeaders - Custom response headers
+ * @template TStatusCode - HTTP status code type
  *
  * @param statusCode - HTTP status code (typically 200, 201, 204, etc.)
  * @param payload - Success response configuration
- * @param payload.message - Human-readable success message (required)
- * @param payload.body - Optional additional response data to include in the response body
+ * @param payload.body - Optional response data to include in the response body
  * @param payload.headers - Optional custom response headers
  *
  * @returns Standardized success response object with type discriminator
@@ -137,13 +142,10 @@ export function buildErrorResponse<
  * @example
  * ```typescript
  * // Simple success response
- * const response = buildSuccessResponse(200, {
- *   message: 'Operation successful'
- * });
+ * const response = buildSuccessResponse(200);
  *
- * // Success with additional body data
+ * // Success with body data
  * const response = buildSuccessResponse(201, {
- *   message: 'Resource created',
  *   body: { id: '456', created: true },
  *   headers: { 'Location': '/api/resources/456' }
  * });
@@ -152,14 +154,14 @@ export function buildErrorResponse<
 export function buildSuccessResponse<
   TBody extends BodyRecord = BodyRecord,
   THeaders extends HeadersRecord = HeadersRecord,
+  TStatusCode extends number = number,
 >(
-  statusCode: number,
+  statusCode: TStatusCode,
   payload?: { body?: TBody; headers?: THeaders },
-): SuccessResponse<TBody, THeaders> {
+): SuccessResponse<TBody, THeaders, TStatusCode> {
   return {
     type: "success",
     statusCode,
-
     ...(payload?.headers && { headers: payload.headers }),
     ...(payload?.body && { body: payload.body }),
   };
