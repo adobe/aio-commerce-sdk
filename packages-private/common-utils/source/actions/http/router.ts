@@ -78,6 +78,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
   ): this {
     const { pattern, keys } = parse(path);
     this.routes.push({
+      path,
       method,
       pattern,
       keys,
@@ -85,6 +86,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
       params: config.params as StandardSchemaV1 | undefined,
       body: config.body,
       query: config.query,
+      responses: config.responses,
       handler: config.handler,
     });
 
@@ -262,6 +264,13 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
   ): HttpActionRouter<TContext & TNew> {
     this.contextBuilders.push(builder as ContextBuilder);
     return this as unknown as HttpActionRouter<TContext & TNew>;
+  }
+
+  /**
+   * Returns the registered routes for introspection (e.g., OpenAPI generation).
+   */
+  public getRoutes(): readonly CompiledRoute[] {
+    return this.routes;
   }
 
   /**

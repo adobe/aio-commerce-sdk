@@ -27,16 +27,28 @@ import {
   logger,
 } from "@aio-commerce-sdk/common-utils/actions";
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
-import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
-import * as v from "valibot";
+
+import {
+  CachedScopeTreeResponseSchema,
+  CachedSyncedScopeTreeResponseSchema,
+  ScopeTreeResponseSchema,
+  SetCustomScopeTreeBodySchema,
+  SetCustomScopeTreeResponseSchema,
+  SyncCommerceScopesBodySchema,
+  SyncedScopeTreeResponseSchema,
+  UnsyncScopeTreeResponseSchema,
+} from "./schema";
 
 import type { SetCustomScopeTreeRequest } from "@adobe/aio-commerce-lib-config";
 
-// The router that will hold the scope-tree routes
-const router = new HttpActionRouter().use(logger());
+export const router = new HttpActionRouter().use(logger());
 
 /** GET / - Get scope tree */
 router.get("/", {
+  responses: {
+    200: ScopeTreeResponseSchema,
+    203: CachedScopeTreeResponseSchema,
+  },
   handler: async (_req, ctx) => {
     const { logger } = ctx;
     const result = await getScopeTree();
@@ -58,11 +70,12 @@ router.get("/", {
   },
 });
 
-/** POST / - Set custom scope tree */
+/** PUT / - Set custom scope tree */
 router.put("/", {
-  body: v.object({
-    scopes: v.array(v.any()),
-  }),
+  responses: {
+    200: SetCustomScopeTreeResponseSchema,
+  },
+  body: SetCustomScopeTreeBodySchema,
 
   handler: async (req, ctx) => {
     const { logger } = ctx;
@@ -90,10 +103,11 @@ router.put("/", {
 
 /** POST /commerce - Sync commerce scopes */
 router.post("/commerce", {
-  body: v.object({
-    commerceBaseUrl: nonEmptyStringValueSchema("commerceBaseUrl"),
-    commerceEnv: v.optional(nonEmptyStringValueSchema("commerceEnv")),
-  }),
+  responses: {
+    200: SyncedScopeTreeResponseSchema,
+    203: CachedSyncedScopeTreeResponseSchema,
+  },
+  body: SyncCommerceScopesBodySchema,
 
   handler: async (req, ctx) => {
     const { logger } = ctx;
@@ -154,6 +168,7 @@ router.post("/commerce", {
 
 /** DELETE /commerce - Unsync commerce scopes */
 router.delete("/commerce", {
+  responses: { 200: UnsyncScopeTreeResponseSchema },
   handler: async (_req, ctx) => {
     const { logger } = ctx;
     logger.debug("Unsyncing commerce scopes...");
@@ -173,6 +188,3 @@ router.delete("/commerce", {
     return ok(message);
   },
 });
-
-/** The handler method for the `scope-tree` action. */
-export const scopeTreeRuntimeAction = router.handler();
