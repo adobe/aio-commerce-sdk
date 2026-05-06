@@ -1,0 +1,41 @@
+{
+  "skill_name": "commerce-app-init",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a new Adobe Commerce app called 'Loyalty Rewards' that manages customer loyalty points.",
+      "expected_output": "Project is initialized and app.commerce.config.ts is created with metadata: a meaningful id (e.g. loyalty-rewards), displayName 'Loyalty Rewards', a description about loyalty points, and version 1.0.0. Validation passes with no errors. No domain configuration (events, webhooks, business config) is added.",
+      "assertions": [
+        "app.commerce.config.ts is created at the project root",
+        "metadata.id contains only alphanumeric characters and hyphens",
+        "metadata.displayName is 'Loyalty Rewards' or equivalent (max 50 chars)",
+        "metadata.version is a numeric semver string (e.g. 1.0.0)",
+        "No domain keys (eventing, webhooks, businessConfig) appear in the config",
+        "npx @adobe/aio-commerce-lib-app generate manifest runs without errors"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I have an existing App Builder project and I want to add Commerce app support to it. The app is for syncing inventory updates between Commerce and an external warehouse system.",
+      "expected_output": "The agent skips project initialization (existing project) and proceeds directly to creating app.commerce.config.ts with appropriate metadata. The id, displayName, and description reflect the inventory sync purpose. Validation passes.",
+      "assertions": [
+        "Agent runs the init command (safe on existing projects — it skips config creation if already valid)",
+        "app.commerce.config.ts is created with metadata only",
+        "metadata.description references inventory or warehouse sync",
+        "No domain configuration is added",
+        "npx @adobe/aio-commerce-lib-app generate manifest runs without errors"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create a Commerce app that listens to order placed events and sends a notification to Slack.",
+      "expected_output": "The agent scaffolds the base app with metadata only. It does not add event configuration. After completing the scaffold, the agent proactively suggests chaining to the commerce-app-eventing skill to add event sources.",
+      "assertions": [
+        "app.commerce.config.ts is created with metadata only",
+        "No eventing configuration is added to the config",
+        "Agent suggests using commerce-app-eventing skill for the event source setup",
+        "npx @adobe/aio-commerce-lib-app generate manifest runs without errors"
+      ]
+    }
+  ]
+}
