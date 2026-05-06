@@ -15,9 +15,7 @@ import { buildErrorResponse, buildSuccessResponse } from "./helpers";
 import type {
   BodyRecord,
   BodyRecordWithMessage,
-  ErrorResponse,
   HeadersRecord,
-  SuccessResponse,
 } from "./helpers";
 
 export const HTTP_OK = 200;
@@ -33,48 +31,22 @@ export const HTTP_METHOD_NOT_ALLOWED = 405;
 export const HTTP_CONFLICT = 409;
 export const HTTP_INTERNAL_SERVER_ERROR = 500;
 
-function curryBuildSuccessResponse<const TCode extends number>(code: TCode) {
-  function inner(
-    payload: string,
-  ): SuccessResponse<{ message: string }, HeadersRecord, TCode>;
-  function inner<TBody extends BodyRecord = BodyRecord>(payload?: {
-    body?: TBody;
-    headers?: HeadersRecord;
-  }): SuccessResponse<TBody, HeadersRecord, TCode>;
-  function inner<TBody extends BodyRecord>(
-    payload?: string | { body?: TBody; headers?: HeadersRecord },
-  ) {
-    if (typeof payload === "string") {
-      return buildSuccessResponse(code, { body: { message: payload } });
-    }
-
-    return buildSuccessResponse(code, payload);
-  }
-
-  return inner;
+function curryBuildSuccessResponse(code: number) {
+  return (payload?: string | { body?: BodyRecord; headers?: HeadersRecord }) =>
+    buildSuccessResponse(
+      code,
+      typeof payload === "string" ? { body: { message: payload } } : payload,
+    );
 }
 
-function curryBuildErrorResponse<const TCode extends number>(code: TCode) {
-  function inner(
-    payload: string,
-  ): ErrorResponse<{ message: string }, HeadersRecord, TCode>;
-  function inner<
-    TBody extends BodyRecordWithMessage = BodyRecordWithMessage,
-  >(payload: {
-    body: TBody;
-    headers?: HeadersRecord;
-  }): ErrorResponse<TBody, HeadersRecord, TCode>;
-  function inner<TBody extends BodyRecordWithMessage>(
-    payload: string | { body: TBody; headers?: HeadersRecord },
-  ) {
-    if (typeof payload === "string") {
-      return buildErrorResponse(code, { body: { message: payload } });
-    }
-
-    return buildErrorResponse(code, payload);
-  }
-
-  return inner;
+function curryBuildErrorResponse(code: number) {
+  return (
+    payload: string | { body: BodyRecordWithMessage; headers?: HeadersRecord },
+  ) =>
+    buildErrorResponse(
+      code,
+      typeof payload === "string" ? { body: { message: payload } } : payload,
+    );
 }
 
 /**
