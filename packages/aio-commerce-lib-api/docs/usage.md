@@ -180,11 +180,11 @@ The resolver automatically detects flavor from the URL and auth type from the pr
 
 ### Checking Admin UI SDK Permissions
 
-Use `getAdminUiSdkPermissionClient` when your Admin UI SDK extension needs to gate a SPA route or runtime action by an ACL resource declared in the app registration. The client calls the Commerce permission endpoint, caches successful endpoint results for 5 minutes by default, and deduplicates concurrent checks for the same resource.
+Use `getAdminUiSdkPermissionClient` when your Admin UI SDK extension needs to gate a runtime action by an ACL resource declared in the app registration. The client calls the Commerce permission endpoint, caches successful endpoint results for 5 minutes by default, and deduplicates concurrent checks for the same resource.
 
 `check(resource)` returns `false` on network or response-shape errors by default so callers fail closed. A `401` response always throws from `check` and `require` because it indicates an authentication configuration issue. Set `denyOnError: false` to throw on all errors. Call `invalidate(resource)` or `invalidate()` when grants change and cached results should be refreshed.
 
-SPA bootstrap example:
+Using `permissions.check` directly:
 
 ```typescript
 import {
@@ -193,7 +193,7 @@ import {
   resolveCommerceHttpClientParams,
 } from "@adobe/aio-commerce-lib-api";
 
-async function bootstrapAdminRoute(params) {
+export const main = async (params) => {
   const commerceClient = new AdobeCommerceHttpClient(
     resolveCommerceHttpClientParams(params, { tryForwardAuthProvider: true }),
   );
@@ -203,15 +203,19 @@ async function bootstrapAdminRoute(params) {
 
   const allowed = await permissions.check("Acme_Promotions::dashboard");
   if (!allowed) {
-    renderAccessDenied();
-    return;
+    return { statusCode: 403, body: { error: "Access denied" } };
   }
 
-  renderDashboard();
-}
+  return {
+    statusCode: 200,
+    body: {
+      /* ... */
+    },
+  };
+};
 ```
 
-Runtime action wrapper example:
+Using `withAdminUiSdkPermission` to wrap a handler:
 
 ```typescript
 import {
