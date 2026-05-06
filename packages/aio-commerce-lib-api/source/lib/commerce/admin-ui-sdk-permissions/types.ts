@@ -38,6 +38,9 @@ export interface AdminUiSdkPermissionClient {
    * Resolves when the current user has the given resource granted.
    * Throws `AdminUiSdkPermissionDeniedError` if denied.
    * Always throws `AdminUiSdkPermissionError` on 401, regardless of `denyOnError`.
+   * When `denyOnError: true` (default), network and parse errors also throw
+   * `AdminUiSdkPermissionDeniedError` (fail-closed). Set `denyOnError: false`
+   * to receive `AdminUiSdkPermissionError` instead.
    */
   require(resource: string): Promise<void>;
 }

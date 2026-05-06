@@ -302,4 +302,18 @@ describe("client.require", () => {
       client.require("Acme_Promotions::dashboard"),
     ).rejects.toBeInstanceOf(AdminUiSdkPermissionDeniedError);
   });
+
+  it("throws AdminUiSdkPermissionError on 401 even with denyOnError: true", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({ message: "Unauthorized" }, { status: 401 }),
+    );
+    const client = getAdminUiSdkPermissionClient({
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
+      cacheTtlMs: 0,
+    });
+
+    await expect(
+      client.require("Acme_Promotions::dashboard"),
+    ).rejects.toBeInstanceOf(AdminUiSdkPermissionError);
+  });
 });
