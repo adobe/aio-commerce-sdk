@@ -56,11 +56,14 @@ If the config is invalid, the build fails with a detailed validation error point
 
 ## Chaining
 
-Once the base app is ready, extend it with domain skills:
+After the base app is scaffolded and `aio app build` passes:
 
-- `commerce-app-eventing` — manage Commerce and external event sources
-- `commerce-app-webhooks` — manage webhook interception
-- `commerce-app-business-config` — manage custom business configuration
+1. **Bootstrap the Developer Console** — use `appbuilder-project-init` (from `adobe/skills`) to create a Console project and workspace, subscribe the required AIO services, and wire the local app with `aio app use --no-input`. Skip the `aio app init` steps in that skill — the Commerce scaffold already exists.
+
+2. **Extend with domain skills** — once the workspace is wired:
+   - `commerce-app-eventing` — manage Commerce and external event sources
+   - `commerce-app-webhooks` — manage webhook interception
+   - `commerce-app-business-config` — manage custom business configuration
 
 ## References
 
