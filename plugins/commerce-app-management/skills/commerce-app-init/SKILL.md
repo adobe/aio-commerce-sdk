@@ -13,7 +13,7 @@ compatibility: >
   Requires Node.js 22+, aio CLI, and @adobe/aio-commerce-lib-app.
   For Developer Console setup (project/workspace creation, API subscriptions, workspace wiring, deploy, or run),
   also requires appbuilder-project-init from adobe/skills:
-  npx skills add adobe/skills appbuilder-project-init --yes
+  npx skills add adobe/skills --skill appbuilder-project-init -y
 metadata:
   author: adobe
   sdk-package: "@adobe/aio-commerce-lib-app"
@@ -69,7 +69,7 @@ After `aio app build` passes:
    If `appbuilder-project-init` is not installed, ask the user to install it first:
 
    ```sh
-   npx skills add adobe/skills appbuilder-project-init --yes
+   npx skills add adobe/skills --skill appbuilder-project-init -y
    ```
 
 2. **Extend with domain skills** — once the workspace is wired:
