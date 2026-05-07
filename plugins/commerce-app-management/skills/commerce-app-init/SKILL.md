@@ -9,7 +9,11 @@ description: >
   Does not configure extensibility domains — use commerce-app-eventing,
   commerce-app-webhooks, or commerce-app-business-config for that.
 license: Apache-2.0
-compatibility: Requires Node.js 22+, aio CLI, and @adobe/aio-commerce-lib-app installed
+compatibility: >
+  Requires Node.js 22+, aio CLI, and @adobe/aio-commerce-lib-app.
+  For Developer Console setup (project/workspace creation, API subscriptions, workspace wiring, deploy, or run),
+  also requires appbuilder-project-init from adobe/skills:
+  npx skills add adobe/skills appbuilder-project-init --yes
 metadata:
   author: adobe
   sdk-package: "@adobe/aio-commerce-lib-app"
@@ -60,7 +64,13 @@ If the config is invalid, the build fails with a detailed validation error point
 
 After `aio app build` passes:
 
-1. **Bootstrap the Developer Console** — if the user wants to deploy or needs a Console workspace, invoke skill `appbuilder-project-init` (from `adobe/skills`). It will create the project and workspace, subscribe the required AIO services, and wire the local app with `aio app use --no-input`. Tell it to skip the `aio app init` steps — the Commerce scaffold already exists.
+1. **Bootstrap the Developer Console** — if the user wants to deploy, run, connect to a Developer Console workspace, subscribe AIO services, or wire the local app, invoke skill `appbuilder-project-init` (from `adobe/skills`). It will create the project and workspace, subscribe the required AIO services, and wire the local app with `aio app use --no-input`. Tell it to skip the `aio app init` steps — the Commerce scaffold already exists.
+
+   If `appbuilder-project-init` is not installed, ask the user to install it first:
+
+   ```sh
+   npx skills add adobe/skills appbuilder-project-init --yes
+   ```
 
 2. **Extend with domain skills** — once the workspace is wired:
    - `commerce-app-eventing` — manage Commerce and external event sources
