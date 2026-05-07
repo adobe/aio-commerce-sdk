@@ -7,7 +7,7 @@ description: >
   app project. Does not configure extensibility domains — use commerce-app-eventing,
   commerce-app-webhooks, or commerce-app-business-config for that.
 license: Apache-2.0
-compatibility: Requires Node.js 18+, aio CLI, and @adobe/aio-commerce-lib-app installed
+compatibility: Requires Node.js 22+, aio CLI, and @adobe/aio-commerce-lib-app installed
 metadata:
   author: adobe
   sdk-package: "@adobe/aio-commerce-lib-app"

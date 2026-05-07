@@ -6,7 +6,7 @@ description: >
   (validation, append, modification). Requires a base app initialized with
   commerce-app-init.
 license: Apache-2.0
-compatibility: Requires Node.js 18+, aio CLI, and @adobe/aio-commerce-lib-app installed
+compatibility: Requires Node.js 22+, aio CLI, and @adobe/aio-commerce-lib-app installed
 metadata:
   author: adobe
   sdk-package: "@adobe/aio-commerce-lib-app"
