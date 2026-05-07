@@ -51,4 +51,4 @@ npx skills add adobe/aio-commerce-sdk --all
 
 ## Contributing
 
-See [DEVELOPMENT.md](./DEVELOPMENT.md) for authoring guidelines and how to run evals.
+See [DEVELOPMENT.md](./DEVELOPMENT.md).
