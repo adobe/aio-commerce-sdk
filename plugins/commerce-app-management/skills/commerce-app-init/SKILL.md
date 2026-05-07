@@ -4,7 +4,9 @@ description: >
   Scaffold a new Adobe Commerce app using the aio-commerce-sdk. Creates the base
   project structure and app.commerce.config file with metadata. Use when the user
   wants to create a new Commerce app from scratch or initialize a bare Commerce
-  app project. Does not configure extensibility domains — use commerce-app-eventing,
+  app project. After scaffolding, chains to appbuilder-project-init for Developer
+  Console setup (project, workspace, API subscriptions) when the user wants to deploy.
+  Does not configure extensibility domains — use commerce-app-eventing,
   commerce-app-webhooks, or commerce-app-business-config for that.
 license: Apache-2.0
 compatibility: Requires Node.js 22+, aio CLI, and @adobe/aio-commerce-lib-app installed
@@ -56,9 +58,9 @@ If the config is invalid, the build fails with a detailed validation error point
 
 ## Chaining
 
-After the base app is scaffolded and `aio app build` passes:
+After `aio app build` passes:
 
-1. **Bootstrap the Developer Console** — use `appbuilder-project-init` (from `adobe/skills`) to create a Console project and workspace, subscribe the required AIO services, and wire the local app with `aio app use --no-input`. Skip the `aio app init` steps in that skill — the Commerce scaffold already exists.
+1. **Bootstrap the Developer Console** — if the user wants to deploy or needs a Console workspace, invoke skill `appbuilder-project-init` (from `adobe/skills`). It will create the project and workspace, subscribe the required AIO services, and wire the local app with `aio app use --no-input`. Tell it to skip the `aio app init` steps — the Commerce scaffold already exists.
 
 2. **Extend with domain skills** — once the workspace is wired:
    - `commerce-app-eventing` — manage Commerce and external event sources
