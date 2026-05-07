@@ -64,7 +64,7 @@ If the config is invalid, the build fails with a detailed validation error point
 
 After `aio app build` passes:
 
-1. **Bootstrap the Developer Console** — if the user wants to deploy, run, connect to a Developer Console workspace, subscribe AIO services, or wire the local app, invoke skill `appbuilder-project-init` (from `adobe/skills`). It will create the project and workspace, subscribe the required AIO services, and wire the local app with `aio app use --no-input`. Tell it to skip the `aio app init` steps — the Commerce scaffold already exists.
+1. **Bootstrap the Developer Console** — for any follow-up topic related to App Builder setup (Console project/workspace, API subscriptions, deploy, run, workspace wiring), invoke skill `appbuilder-project-init` (from `adobe/skills`). Tell it to skip the `aio app init` steps — the Commerce scaffold already exists.
 
    If `appbuilder-project-init` is not installed, ask the user to install it first:
 
