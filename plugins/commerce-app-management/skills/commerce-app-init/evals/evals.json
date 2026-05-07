@@ -29,7 +29,7 @@
     {
       "id": 3,
       "prompt": "Create a Commerce app that listens to order placed events and sends a notification to Slack.",
-      "expected_output": "The agent scaffolds the base app with metadata only. It does not add event configuration. After completing the scaffold, the agent proactively suggests chaining to the commerce-app-eventing skill to add event sources.",
+      "expected_output": "The agent scaffolds the base app with metadata only and does not add event configuration.",
       "assertions": [
         "app.commerce.config.ts is created with metadata only",
         "No eventing configuration is added to the config",
