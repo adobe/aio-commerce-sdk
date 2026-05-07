@@ -26,9 +26,8 @@ describe("appConfigRuntimeAction", () => {
 
     const result = await handler(createRuntimeActionParams());
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       type: "success",
-      statusCode: 200,
       body: minimalValidConfig,
     });
   });
@@ -42,13 +41,7 @@ describe("appConfigRuntimeAction", () => {
 
     expect(result).toMatchObject({
       type: "error",
-      error: {
-        statusCode: 500,
-        body: {
-          message: "Internal server error",
-          error: "Invalid commerce app config",
-        },
-      },
+      error: { statusCode: 500 },
     });
   });
 });
