@@ -2,21 +2,17 @@
 
 ## Local installation
 
-To test skills during development, use `scripts/install-local.sh <dest-dir>`, where
-`<dest-dir>` is the project you want to install into. It delegates to `npx skills add`,
-which auto-detects the agent from the destination directory (`.claude/` → Claude Code,
-`.cursor/` → Cursor, etc.) and installs to the right location. If no agent config is
-found, the CLI prompts interactively. Any extra arguments are forwarded to `npx skills add`:
+Use `npx skills add` to install skills into a project for local testing. Run from inside
+the target project — the CLI auto-detects the agent and installs to the right location.
 
 ```sh
-# Install all skills (prompts for selection)
-bash plugins/commerce-app-management/scripts/install-local.sh ~/my-commerce-app
+cd ~/my-commerce-app
 
-# Install all skills without prompts
-bash plugins/commerce-app-management/scripts/install-local.sh ~/my-commerce-app --yes
+# Install all skills
+npx skills add /path/to/aio-commerce-sdk/plugins/commerce-app-management --yes
 
 # Install a specific skill only
-bash plugins/commerce-app-management/scripts/install-local.sh ~/my-commerce-app --skill commerce-app-init
+npx skills add /path/to/aio-commerce-sdk/plugins/commerce-app-management --yes --skill commerce-app-init
 ```
 
 ## Authoring skills
