@@ -2,9 +2,9 @@ import { defineConfig } from "@adobe/aio-commerce-lib-app/config";
 
 export default defineConfig({
   metadata: {
-    id: "my-commerce-app",
-    displayName: "My Commerce App",
-    description: "A Commerce app built with aio-commerce-sdk.",
-    version: "1.0.0",
+    id: "my-commerce-app", // alphanumeric + hyphens only, max 100 chars
+    displayName: "My Commerce App", // shown in Commerce Admin, max 50 chars
+    description: "A Commerce app built with aio-commerce-sdk.", // max 255 chars
+    version: "1.0.0", // Major.Minor.Patch only, no pre-release identifiers
   },
 });

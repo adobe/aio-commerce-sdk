@@ -83,3 +83,15 @@ The agent will run each prompt with and without the skill, grade assertions, and
 ### Workspace directories
 
 Eval results are written to `skills/<skill-name>-workspace/` and are excluded from version control. Only `evals/evals.json` is committed — it is the source of truth for what the skill is expected to do.
+
+## Authoring
+
+### Asset constraints vs references
+
+For config templates, put field constraints as inline comments in the asset file
+(`assets/<config-file>`). This keeps the template and its constraints co-located and
+avoids an extra fetch step for the agent.
+
+For domain skills with complex schemas already documented in `usage.md`, use a
+`references/` folder with a fetchable link to the source documentation instead of
+duplicating constraints inline.
