@@ -64,13 +64,13 @@ Field constraints:
 
 ## Step 3 — Verify the config
 
-Generate the app manifest to confirm the config parses without errors:
+Build the project to confirm everything is valid:
 
 ```sh
-npx @adobe/aio-commerce-lib-app generate manifest
+aio app build
 ```
 
-If the config is invalid, this command fails with a detailed validation error pointing to the offending field.
+If the config is invalid, the build fails with a detailed validation error pointing to the offending field.
 
 ## Common Issues
 
@@ -80,7 +80,6 @@ If the config is invalid, this command fails with a detailed validation error po
 
 ## Quality Bar
 
-- `npx @adobe/aio-commerce-lib-app generate manifest` completes without errors
 - `aio app build` completes without errors
 
 ## Chaining

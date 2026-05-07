@@ -11,7 +11,7 @@
         "metadata.displayName is 'Loyalty Rewards' or equivalent (max 50 chars)",
         "metadata.version is a numeric semver string (e.g. 1.0.0)",
         "No domain keys (eventing, webhooks, businessConfig) appear in the config",
-        "npx @adobe/aio-commerce-lib-app generate manifest runs without errors"
+        "aio app build completes without errors"
       ]
     },
     {
@@ -23,7 +23,7 @@
         "app.commerce.config.ts is created with metadata only",
         "metadata.description references inventory or warehouse sync",
         "No domain configuration is added",
-        "npx @adobe/aio-commerce-lib-app generate manifest runs without errors"
+        "aio app build completes without errors"
       ]
     },
     {
@@ -34,7 +34,7 @@
         "app.commerce.config.ts is created with metadata only",
         "No eventing configuration is added to the config",
         "Agent suggests using commerce-app-eventing skill for the event source setup",
-        "npx @adobe/aio-commerce-lib-app generate manifest runs without errors"
+        "aio app build completes without errors"
       ]
     }
   ]
