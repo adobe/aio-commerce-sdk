@@ -25,6 +25,10 @@
 
   "labels": ["dependencies"],
   "postUpdateOptions": ["pnpmDedupe"],
+  "postUpgradeTasks": {
+    "commands": ["pnpm code:fix"],
+    "executionMode": "branch"
+  },
   "packageRules": [
     {
       "description": "Update tsdown and rolldown",
