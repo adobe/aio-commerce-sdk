@@ -17,7 +17,7 @@ import { vi } from "vitest";
 export function createMockLibState() {
   const MockLibState = vi.fn(
     class MockLibStateClass {
-      private state = new Map<string, string>();
+      private readonly state = new Map<string, string>();
 
       public get = vi.fn(async (key: string) => {
         const value = this.state.get(key) || null;
