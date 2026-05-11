@@ -92,10 +92,6 @@ Add a Node.js version to the SDK's supported range **when it enters Active LTS**
 - Raise the upper bound of `engines.node` to include the new version.
 - Release as a `minor` bump.
 
-Testing against the Current (pre-LTS) phase is permitted on a best-effort basis
-but must not block merges or releases. The CI matrix must only gate on LTS
-versions.
-
 ### Dropping support for an EOL version
 
 Drop a Node.js version **in a dedicated standalone release after its EOL date**.
@@ -110,8 +106,7 @@ The drop must not be bundled with unrelated changes.
 ### CI matrix rule
 
 The CI matrix must cover **all Active LTS Node.js versions** at all times. No
-more, no less, unless a Current version is being tested on a best-effort basis
-for a specific investigation.
+more, no less.
 
 ### Semver reference
 
