@@ -193,7 +193,12 @@ function createInstallationHooks(
     onInstallationFailure: (state: InstallationState) =>
       logAndSave("Installation failed", state),
     onInstallationSuccess: (state: InstallationState) =>
-      logAndSave("Installation succeeded", state),
+      logAndSave(
+        state.status === "succeeded" && state.isRetry
+          ? "Installation succeeded on retry"
+          : "Installation succeeded",
+        state,
+      ),
 
     onStepStart: (event: { stepName: string }, state: InstallationState) =>
       logAndSave(`Step started: ${event.stepName}`, state),
