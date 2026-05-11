@@ -17,6 +17,27 @@ npx skills add /path/to/aio-commerce-sdk/plugins/commerce-app-management --yes -
 
 ## Authoring skills
 
+### Frontmatter requirements
+
+Always include `metadata.version` — without it the skill reviewer warns on every check:
+
+```yaml
+metadata:
+  author: adobe
+  sdk-package: "@adobe/aio-commerce-lib-app"
+  version: "0.0.1" # increment when the skill changes meaningfully
+```
+
+### Inline examples are required
+
+Asset files (`assets/`) are loaded on demand and are **not** visible to the reviewer
+when scoring the skill. Every skill must include at least one minimal inline code
+example in the body — enough that an agent can act on the skill without loading the
+asset file. The asset file can still provide the full annotated reference.
+
+Rule of thumb: if removing the asset file would make Step 3 ambiguous, the inline
+example is missing.
+
 ### Asset constraints vs references
 
 For config templates, put field constraints as inline comments in the asset file
@@ -26,6 +47,30 @@ avoids an extra fetch step for the agent.
 For domain skills with complex schemas already documented in `usage.md`, use a
 `references/` folder with a fetchable link to the source documentation instead of
 duplicating constraints inline.
+
+### Common Issues section
+
+Only include failure modes that are **non-obvious** and not already covered by the
+Step 2 validation table. Restating table constraints in prose adds noise without
+value — a reader who hit the error will already have read the table.
+
+## Quality review
+
+Before shipping a skill, run the tessl reviewer to catch structural and quality issues:
+
+```sh
+npx tessl skill review skills/<skill-name>
+```
+
+A passing skill has 0 errors and 0 warnings. The judge score should be ≥ 90%.
+Common failure patterns: missing `metadata.version`, no inline code example, Common
+Issues section that restates the validation table.
+
+To auto-fix (requires tessl login):
+
+```sh
+npx tessl skill review --optimize -y skills/<skill-name>
+```
 
 ## Evaluations
 
