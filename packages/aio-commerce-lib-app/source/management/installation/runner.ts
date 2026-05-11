@@ -105,7 +105,10 @@ export async function runInstallation(
     installationContext,
     config,
     initialState: retryState,
-    hooks: { ...baseHooks, onInstallationFailure },
+    hooks: {
+      ...baseHooks,
+      ...(onInstallationFailure === undefined ? {} : { onInstallationFailure }),
+    },
   });
 
   if (retryResult.status === "succeeded") {

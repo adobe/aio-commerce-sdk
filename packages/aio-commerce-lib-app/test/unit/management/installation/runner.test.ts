@@ -310,7 +310,7 @@ describe("runInstallation — retry behavior", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(FAKE_SYSTEM_TIME));
-    vi.clearAllMocks();
+    vi.mocked(executeWorkflow).mockClear();
   });
 
   afterEach(() => {
@@ -335,7 +335,7 @@ describe("runInstallation — retry behavior", () => {
     });
 
     expect(result.status).toBe("succeeded");
-    expect(result.isRetry).toBe(true);
+    expect(result.status === "succeeded" && result.isRetry).toBe(true);
     expect(vi.mocked(executeWorkflow)).toHaveBeenCalledTimes(2);
   });
 
@@ -380,6 +380,7 @@ describe("runInstallation — retry behavior", () => {
     });
 
     expect(result.status).toBe("failed");
+    expect("isRetry" in result && result.isRetry).toBeFalsy();
     expect(vi.mocked(executeWorkflow)).toHaveBeenCalledTimes(2);
     // First call should NOT include onInstallationFailure
     expect(
