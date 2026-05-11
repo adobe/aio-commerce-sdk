@@ -95,6 +95,9 @@ export type SucceededInstallationState = InstallationStateBase & {
 
   /** ISO timestamp when installation completed. */
   completedAt: string;
+
+  /** True when installation succeeded on a retry (first attempt failed). */
+  isRetry?: boolean;
 };
 
 /** Installation state when failed. */
