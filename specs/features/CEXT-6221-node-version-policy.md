@@ -62,8 +62,8 @@ spec to get additional context.
 
 Node.js releases a new even-numbered version every April. That version becomes
 Active LTS in October of the same year and reaches EOL approximately 30 months
-after its initial release. Odd-numbered versions are short-lived (Current only,
-~6 months) and never become LTS.
+after entering LTS (36 months after initial release). Odd-numbered versions are
+short-lived (Current only, ~6 months) and never become LTS.
 
 Current schedule (as of spec creation):
 
@@ -72,7 +72,7 @@ Current schedule (as of spec creation):
 | 20      | October 2023 | April 2026 |
 | 22      | October 2024 | April 2027 |
 | 24      | October 2025 | April 2028 |
-| 26      | October 2026 | April 2030 |
+| 26      | October 2026 | April 2029 |
 
 ### Adding support for a new version
 
