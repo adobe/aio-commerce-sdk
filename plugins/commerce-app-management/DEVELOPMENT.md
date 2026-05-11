@@ -66,12 +66,6 @@ A passing skill has 0 errors and 0 warnings. The judge score should be ≥ 90%.
 Common failure patterns: missing `metadata.version`, no inline code example, Common
 Issues section that restates the validation table.
 
-To auto-fix (requires tessl login):
-
-```sh
-npx tessl skill review --optimize -y skills/<skill-name>
-```
-
 ## Evaluations
 
 Implemented skills ship with evals in `skills/<skill-name>/evals/evals.json`, following the [agentskills.io eval format](https://agentskills.io/skill-creation/evaluating-skills.md).
