@@ -33,7 +33,6 @@ surrounding work (CI changes, `engines` updates, changelests).
 
 **Non-goals:**
 
-- Support policy for other runtimes (Bun, Deno) — out of scope for this spec.
 - Specifying a deprecation-warning mechanism in SDK code — the `engines` field
   and changelog are sufficient.
 
@@ -41,10 +40,10 @@ surrounding work (CI changes, `engines` updates, changelests).
 
 SDK consumers will see Node.js version changes communicated consistently:
 
-- **Dropping a version**: a `minor` release with a changelog entry such as
-  "Drop Node 20 support (EOL April 2026)". The new lower bound appears in
-  `engines.node`. Consumers still on the dropped version will see pnpm/npm
-  engine warnings on install.
+- **Dropping a version**: a `minor` release (see [Rationale](#rationale-and-alternatives)
+  for why not `major`) with a changelog entry such as "Drop Node 20 support
+  (EOL April 2026)". The new lower bound appears in `engines.node`. Consumers
+  still on the dropped version will see pnpm/npm engine warnings on install.
 - **Adding a version**: a `minor` release noting that the SDK now officially
   supports the new LTS version. No action required from consumers.
 
