@@ -35,6 +35,7 @@ There is currently no way to express this in the schema.
 - Dynamic field types (making a field appear or disappear at runtime).
 - Dynamic whole-schema factories (replacing the entire schema at runtime).
 - Centralising option resolution in a single action (see Unresolved questions).
+- Validating submitted configuration values against the resolved list options.
 
 ## Developer experience
 
@@ -137,8 +138,29 @@ type ListOptionsValue = ListOption[] | ListOptionsFactory;
 ```
 
 The Valibot field schema in
-`packages/aio-commerce-lib-config/source/modules/schema/fields.ts` is updated to accept
-`v.union([v.array(ListOptionSchema), <appropriate_factory_schema_here>])` for the `options` property.
+`packages/aio-commerce-lib-config/source/modules/schema/fields.ts` is updated to accept a typed
+custom function branch alongside the static options array:
+
+```ts
+const ListOptionsSchema = v.array(
+  ListOptionSchema,
+  "Expected an array of list options",
+);
+
+type ListOptionsFactoryInput = (
+  params: RuntimeActionParams,
+) =>
+  | v.InferOutput<typeof ListOptionsSchema>
+  | Promise<v.InferOutput<typeof ListOptionsSchema>>;
+
+const ListOptionsValueSchema = v.union([
+  ListOptionsSchema,
+  v.custom<ListOptionsFactoryInput>(
+    (input) => typeof input === "function",
+    'Expected an array or factory function for "options"',
+  ),
+]);
+```
 
 Because `ListOptionsFactory` is a function, it cannot be validated as data; the Valibot schema
 accepts any function for `options` at schema-definition time and defers correctness to the return
@@ -164,6 +186,8 @@ function resolveDynamicBusinessConfigSchema(
 - Fields with a static `options` array are returned unchanged.
 - Each resolved options array is validated against `v.array(ListOptionSchema)` before being used,
   so a factory that returns malformed data surfaces a clear error.
+- If an options factory throws or rejects, schema resolution fails and the error propagates to the
+  caller. Generated runtime actions surface that failure as an action error.
 - Returns a new schema object; the original is not mutated.
 
 ### Impact on code generation
@@ -210,8 +234,9 @@ for that specific action.
   response.
 - **`config` action (GET /)**: resolves the schema before returning it alongside configuration
   values; the App Management UI uses this to render the form.
-- **`config` action (PUT /, PATCH /)**: resolves the schema before building the Valibot validator,
-  so only values present in the resolved options are accepted.
+- **`config` action (PUT /, PATCH /)**: resolves the schema before using it for configuration
+  operations. Validating submitted values against the resolved option set is out of scope for this
+  feature and should be handled separately.
 
 ### Schema definition vs. resolved schema
 
@@ -231,8 +256,8 @@ Given the `paymentMethod` example above:
   `schema` array where `paymentMethod.options` is a concrete `ListOption[]`, populated from the
   merchant's Commerce store. The App Management UI renders this directly as a dropdown.
 - When `config` handles a `PUT /` or `PATCH /`, it calls `resolveDynamicBusinessConfigSchema`
-  before building the Valibot validator, so only values present in the resolved options are
-  accepted.
+  before configuration operations, so the action uses a concrete schema. Enforcing that submitted
+  list values are present in the resolved option set is separate validation work.
 
 ## Drawbacks
 
@@ -295,16 +320,17 @@ round-trip. An alternative would be to have the `config` and other actions invok
 action to obtain a pre-resolved schema. This reduces duplication but introduces action-to-action
 coupling. This tradeoff should be evaluated before implementation.
 
-**Factory error handling.**  
-A factory that throws propagates as a runtime error in the action. The expected behaviour is
-undefined and should be decided during implementation.
-
 **Empty options.**  
 Should the SDK validate that a resolved options array is non-empty? A factory that returns `[]`
 would produce a list field with no choices, which is probably a developer error but could also be a
 valid transient state.
 
 ## Future possibilities
+
+**Resolved option value validation.** The SDK could validate submitted single-select and
+multi-select list values against the resolved option set during configuration writes. That belongs
+to a separate validation-focused change because existing configuration writes currently validate
+value shape, not membership in list options.
 
 **Dynamic field visibility.** The same pattern (factory function that receives `params`) could
 extend to other schema properties, for example whether a field is shown at all. This is a natural
