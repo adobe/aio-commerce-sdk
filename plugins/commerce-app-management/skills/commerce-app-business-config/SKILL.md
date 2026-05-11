@@ -13,6 +13,7 @@ compatibility: >
 metadata:
   author: adobe
   sdk-package: "@adobe/aio-commerce-lib-app"
+  version: "0.0.1"
 ---
 
 # Configure Commerce App Business Config
