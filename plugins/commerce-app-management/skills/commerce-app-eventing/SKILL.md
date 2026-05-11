@@ -27,7 +27,7 @@ Verify `app.commerce.config.ts` exists in the project root. If it doesn't, stop 
 
 Ask whether the user wants to configure Commerce events, external events, or both:
 
-- **Commerce events** (`eventing.commerce`): events emitted by Adobe Commerce itself (e.g., order placed, product saved). Names follow `plugin.<segments>` or `observer.<segments>`.
+- **Commerce events** (`eventing.commerce`): native Commerce events. Names follow `plugin.<segments>` or `observer.<segments>`.
 - **External events** (`eventing.external`): events from third-party systems (e.g., ERP, CRM). Names are free-form (`[\w\-_.]+`).
 
 For each event source, gather:
@@ -55,9 +55,26 @@ Apply the following validation rules before writing the config. Surface any issu
 
 ## Step 3 — Update `app.commerce.config.ts`
 
-Add or merge `eventing.commerce` and/or `eventing.external` into the existing config, preserving all other domains. Use [assets/eventing-config.ts](assets/eventing-config.ts) as the reference shape for both event source types.
+Add or merge `eventing.commerce` and/or `eventing.external` into the existing config, preserving all other domains. If the config already has an `eventing` key, extend it rather than replacing it.
 
-If the config already has an `eventing` key, extend it rather than replacing it.
+Minimal example (Commerce event):
+
+```ts
+eventing: {
+  commerce: [{
+    provider: { label: "Commerce Events Provider", description: "..." },
+    events: [{
+      name: "plugin.order_placed",          // plugin.<segments> or observer.<segments>
+      label: "Order Placed",
+      description: "Triggered when a customer places an order.",
+      fields: [{ name: "order_id" }],       // empty array = full payload; Commerce events only
+      runtimeActions: ["my-package/handle-order-placed"], // <package>/<action>
+    }],
+  }],
+}
+```
+
+See [assets/eventing-config.ts](assets/eventing-config.ts) for the full reference including external event sources.
 
 ## Step 4 — Validate
 

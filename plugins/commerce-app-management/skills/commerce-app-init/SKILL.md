@@ -27,8 +27,23 @@ Extensibility domains (events, webhooks, business config) are added separately v
 
 ## Step 1 — Create the config
 
-Derive values for each field in [assets/app.commerce.config.ts](assets/app.commerce.config.ts)
-from the user's intent, confirm, then copy it to the project root substituting the derived values.
+Derive values for the following fields from the user's intent, confirm, then write the file to the project root:
+
+```ts
+// app.commerce.config.ts
+import { defineConfig } from "@adobe/aio-commerce-lib-app/config";
+
+export default defineConfig({
+  metadata: {
+    id: "my-commerce-app", // alphanumeric + hyphens only, max 100 chars
+    displayName: "My Commerce App", // shown in App Management UI, max 50 chars
+    description: "...", // max 255 chars
+    version: "1.0.0", // Major.Minor.Patch only, no pre-release identifiers
+  },
+});
+```
+
+See [assets/app.commerce.config.ts](assets/app.commerce.config.ts) for the full annotated template.
 
 ## Step 2 — Initialize the project
 

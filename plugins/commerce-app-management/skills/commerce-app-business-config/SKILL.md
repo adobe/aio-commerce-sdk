@@ -2,8 +2,10 @@
 name: commerce-app-business-config
 description: >
   Manage custom business configuration in an Adobe Commerce app. Use when the
-  user wants to add, modify, or remove merchant-configurable settings exposed
-  through Commerce Admin. Requires a base app initialized with commerce-app-init.
+  user wants to add, modify, or remove merchant-configurable settings (config
+  fields, admin config, store configuration) exposed through Commerce Admin.
+  Creates typed config fields (text, password, email, url, tel, boolean, list)
+  in businessConfig.schema. Requires a base app initialized with commerce-app-init.
 license: Apache-2.0
 compatibility: >
   Requires Node.js 22+, aio CLI, and @adobe/aio-commerce-lib-app installed.
@@ -59,9 +61,31 @@ Apply the following per-type validation rules before writing. Surface any issues
 
 ## Step 3 — Update `app.commerce.config.ts`
 
-Add (or merge into) the top-level `businessConfig.schema` array, preserving all other domains. Use [assets/business-config.ts](assets/business-config.ts) as the reference shape showing all field types.
+Add (or merge into) the top-level `businessConfig.schema` array, preserving all other domains. If the config already has a `businessConfig` key, append to `businessConfig.schema` rather than replacing it.
 
-If the config already has a `businessConfig` key, append to `businessConfig.schema` rather than replacing it.
+Minimal examples:
+
+```ts
+businessConfig: {
+  schema: [
+    // Password (masked input — API keys, secrets)
+    { name: "api_key", type: "password", label: "API Key", default: "" },
+
+    // Single-select list
+    {
+      name: "region", type: "list", selectionMode: "single",
+      label: "Region",
+      options: [{ label: "EU", value: "eu" }, { label: "US", value: "us" }],
+      default: "eu",   // required; must match an option value
+    },
+
+    // Boolean toggle
+    { name: "debug_mode", type: "boolean", label: "Enable Debug Mode", default: false },
+  ],
+}
+```
+
+See [assets/business-config.ts](assets/business-config.ts) for the full reference showing all field types.
 
 ## Step 4 — Validate
 
@@ -76,12 +100,8 @@ A build failure with a validation error points directly to the offending field.
 ## Common Issues
 
 - **`schema` must have at least one entry**: `businessConfig.schema` requires at least one field — an empty array is rejected.
-- **`password` default rejected**: The only valid default for a `password` field is `""`. Any non-empty string is rejected to prevent secrets in config.
-- **`list` field missing `options`**: Every `list` field requires an `options` array with at least one `{ label, value }` entry.
-- **`list/single` default missing or not matching**: Single-select list fields require a `default` that exactly matches one of the option `value` strings.
-- **Invalid `email` / `url` default**: Must be either `""` or a fully valid email/URL. Partial values (e.g. `"user@"` or `"https://"`) are rejected.
-- **Invalid `tel` default**: Only digits, spaces, hyphens, parentheses, and an optional leading `+` are accepted. Letters or other symbols are rejected.
-- **`selectionMode` typo**: Must be exactly `"single"` or `"multiple"` — no other values are accepted.
+- **`list/single` default missing**: Single-select list fields require a `default` — it can't be omitted. It must exactly match one of the option `value` strings.
+- **Invalid `email` / `url` default**: Must be `""` or a fully valid value — partial values like `"user@"` or `"https://"` are rejected.
 - **`defineConfig` not found**: Ensure `@adobe/aio-commerce-lib-app` is installed and `defineConfig` is imported from `@adobe/aio-commerce-lib-app/config`.
 
 ## Quality Bar

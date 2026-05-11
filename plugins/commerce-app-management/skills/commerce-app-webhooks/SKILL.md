@@ -52,9 +52,46 @@ Apply the following validation rules before writing. Surface any issues to the u
 
 ## Step 3 — Update `app.commerce.config.ts`
 
-Add entries to the top-level `webhooks` array (or create it), preserving all other domains. Use [assets/webhooks-config.ts](assets/webhooks-config.ts) as the reference shape for both entry types (runtime action and explicit URL).
+Add entries to the top-level `webhooks` array (or create it), preserving all other domains. If the config already has a `webhooks` key, append to it rather than replacing it.
 
-If the config already has a `webhooks` key, append to it rather than replacing it.
+Minimal examples:
+
+```ts
+// Runtime action handler (handler lives in this app)
+webhooks: [
+  {
+    label: "Validate Product Save",
+    description: "Validates product data before saving.",
+    category: "validation", // optional
+    runtimeAction: "my-package/validate-product", // <package>/<action>
+    webhook: {
+      webhook_method: "plugin.magento.catalog_product.save",
+      webhook_type: "before",
+      batch_name: "my_app", // [a-zA-Z0-9_]+ only
+      hook_name: "validate_product", // [a-zA-Z0-9_]+ only
+      method: "POST",
+    },
+  },
+];
+
+// URL handler (external endpoint)
+webhooks: [
+  {
+    label: "Fraud Check",
+    description: "Calls external fraud service before order placement.",
+    webhook: {
+      webhook_method: "plugin.magento.sales_order.place",
+      webhook_type: "before",
+      batch_name: "my_app",
+      hook_name: "fraud_check",
+      method: "POST",
+      url: "https://fraud.example.com/check", // inside webhook object, not top level
+    },
+  },
+];
+```
+
+See [assets/webhooks-config.ts](assets/webhooks-config.ts) for the full annotated reference.
 
 ## Step 4 — Validate
 
