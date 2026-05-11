@@ -14,12 +14,21 @@ import * as v from "valibot";
 
 import { SchemaBusinessConfigSchema } from "./fields";
 
+import type { BusinessConfigSchema } from "./types";
+
 /** The schema used to validate the the business configuration settings. */
 export const SchemaBusinessConfig = v.object({
   schema: v.optional(SchemaBusinessConfigSchema, []),
 });
 
 /** Defines the shape of the business configuration settings. */
-export type BusinessConfig = v.InferInput<typeof SchemaBusinessConfig>;
+export type BusinessConfig = {
+  schema?: BusinessConfigSchema;
+};
+
+export {
+  hasDynamicListOptions,
+  resolveDynamicBusinessConfigSchema,
+} from "./utils";
 
 export type * from "./types";

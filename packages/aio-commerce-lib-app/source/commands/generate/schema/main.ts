@@ -11,7 +11,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { writeFile } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
@@ -29,7 +29,12 @@ import {
   CONFIG_SCHEMA_FILE_NAME,
   CONFIGURATION_EXTENSION_POINT_ID,
 } from "#commands/constants";
-import { getGeneratedDir, loadAppManifest } from "#commands/utils";
+import {
+  getGeneratedDir,
+  getSchemaPath,
+  hasDynamicBusinessConfigSchema,
+  loadAppManifest,
+} from "#commands/utils";
 import { hasBusinessConfigSchema } from "#config/index";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -67,6 +72,12 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
     } else {
       execSync(`${packageExec} aio-commerce-lib-config encryption setup`);
     }
+  }
+
+  if (hasDynamicBusinessConfigSchema(appConfig)) {
+    await rm(join(projectDir, getSchemaPath()), { force: true });
+    consola.success(`Removed JSON schema: ${CONFIG_SCHEMA_FILE_NAME}`);
+    return;
   }
 
   const contents = stringify(appConfig.businessConfig.schema, null, 2);

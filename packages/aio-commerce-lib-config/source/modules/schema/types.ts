@@ -10,8 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type * as v from "valibot";
-import type { FieldSchema, SchemaBusinessConfigSchema } from "./fields";
+import type { FieldSchema } from "./fields";
 
 /** Context needed for schema operations. */
 export type SchemaContext = {
@@ -28,7 +29,55 @@ export type SchemaContext = {
  * Represents a single field definition in the configuration schema, which can be
  * one of various types: list, text, password, email, url, phone, or boolean.
  */
-export type BusinessConfigSchemaField = v.InferInput<typeof FieldSchema>;
+type BusinessConfigSchemaFieldInput = v.InferInput<typeof FieldSchema>;
+
+type BusinessConfigSchemaListFieldInput = Extract<
+  BusinessConfigSchemaFieldInput,
+  { type: "list" }
+>;
+
+/**
+ * The schema type for an option in a list configuration field.
+ * Represents a single option that can be selected in a list-type configuration field.
+ */
+export type BusinessConfigSchemaListOption = Extract<
+  BusinessConfigSchemaListFieldInput["options"],
+  readonly unknown[]
+>[number];
+
+/**
+ * Factory function that resolves list options at runtime.
+ *
+ * The factory receives the App Builder runtime action params for the action
+ * resolving the schema.
+ */
+export type ListOptionsFactory = (
+  params: RuntimeActionParams,
+) =>
+  | BusinessConfigSchemaListOption[]
+  | Promise<BusinessConfigSchemaListOption[]>;
+
+/** Static or runtime-resolved options for a list configuration field. */
+export type ListOptionsValue =
+  | BusinessConfigSchemaListOption[]
+  | ListOptionsFactory;
+
+type BusinessConfigSchemaListField = Omit<
+  BusinessConfigSchemaListFieldInput,
+  "options"
+> & {
+  options: ListOptionsValue;
+};
+
+/**
+ * The schema type for a configuration field.
+ *
+ * Represents a single field definition in the configuration schema, which can be
+ * one of various types: list, text, password, email, url, phone, or boolean.
+ */
+export type BusinessConfigSchemaField =
+  | Exclude<BusinessConfigSchemaFieldInput, { type: "list" }>
+  | BusinessConfigSchemaListField;
 
 /**
  * The schema type for the business configuration schema.
@@ -36,18 +85,7 @@ export type BusinessConfigSchemaField = v.InferInput<typeof FieldSchema>;
  * Represents an array of configuration field definitions that make up the complete
  * business configuration schema. Must contain at least one field.
  */
-export type BusinessConfigSchema = v.InferInput<
-  typeof SchemaBusinessConfigSchema
->;
+export type BusinessConfigSchema = BusinessConfigSchemaField[];
 
 /** The schema type for the business configuration schema. */
 export type BusinessConfigSchemaValue = BusinessConfigSchemaField["default"];
-
-/**
- * The schema type for an option in a list configuration field.
- * Represents a single option that can be selected in a list-type configuration field.
- */
-export type BusinessConfigSchemaListOption = Extract<
-  BusinessConfigSchemaField,
-  { type: "list" }
->["options"][number];

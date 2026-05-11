@@ -34,6 +34,7 @@ import {
   withTempProject,
 } from "#test/fixtures/project";
 
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 function sha256(content: string) {
@@ -89,6 +90,46 @@ describe("commands/generate/schema", () => {
 
         expect(parsed).toEqual(configWithBusinessConfig.businessConfig.schema);
       });
+    });
+
+    test("removes schema JSON when list options are dynamic", async () => {
+      const dynamicConfig = {
+        ...configWithBusinessConfig,
+        businessConfig: {
+          schema: [
+            {
+              name: "paymentMethod",
+              type: "list",
+              selectionMode: "single",
+              default: "braintree",
+              options: (params: RuntimeActionParams) => [
+                {
+                  label: String(params.PAYMENT_LABEL ?? "Braintree"),
+                  value: "braintree",
+                },
+              ],
+            },
+          ],
+        },
+      } satisfies CommerceAppConfigOutputModel;
+
+      await withTempProject(
+        {
+          ...EMPTY_PROJECT,
+          [join(
+            getExtensionPointFolderPath(CONFIGURATION_EXTENSION_POINT_ID),
+            ".generated",
+            CONFIG_SCHEMA_FILE_NAME,
+          )]: "[]",
+        },
+        async (tempDir) => {
+          await run(dynamicConfig);
+
+          await expect(
+            readFile(getSchemaPath(tempDir), "utf-8"),
+          ).rejects.toThrow();
+        },
+      );
     });
 
     test("produces identical checksum for equivalent schemas with different key order", async () => {

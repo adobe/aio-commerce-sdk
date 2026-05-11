@@ -14,6 +14,11 @@ import {
   requireGlobalSchema,
   setGlobalSchema,
 } from "#modules/schema/config-schema-repository";
+import {
+  hasDynamicListOptions,
+  resolveDynamicBusinessConfigSchema,
+  validateBusinessConfigSchema,
+} from "#modules/schema/utils";
 import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "#utils/constants";
 import { setGlobalStateOptions } from "#utils/repository";
 
@@ -30,6 +35,7 @@ import {
 } from "./modules/scope-tree";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { SelectorBy } from "#config-utils";
 import type { BusinessConfigSchema } from "#modules/schema/types";
 import type { LibStateOptions } from "#utils/repository";
@@ -50,23 +56,64 @@ export type InitializeOptions = {
   libStateOptions?: LibStateOptions;
 };
 
+/** Options for initializing the configuration library with runtime params. */
+export type InitializeWithRuntimeParamsOptions = InitializeOptions & {
+  /** Schema to resolve and use as the source of truth. */
+  schema: BusinessConfigSchema;
+
+  /** Runtime action params used to resolve dynamic list options. */
+  params: RuntimeActionParams;
+};
+
+/** Result returned after initializing the configuration library with a schema. */
+export type InitializeResult = {
+  /** The concrete schema stored in global memory. */
+  configSchema: BusinessConfigSchema;
+};
+
+async function initializeWithRuntimeParams({
+  params,
+  schema,
+}: InitializeWithRuntimeParamsOptions) {
+  const configSchema = await resolveDynamicBusinessConfigSchema(schema, params);
+  setGlobalSchema(configSchema);
+  return { configSchema };
+}
+
 /**
  * Initializes the configuration library so that it works as expected.
  * The schema is stored in global memory. If a schema is provided, it will be set.
  * If no schema is provided, initialization will succeed only if a schema was previously set globally.
  * @param options - Options for initializing the configuration library.
  */
-export function initialize(options: InitializeOptions) {
+export function initialize(
+  options: InitializeWithRuntimeParamsOptions,
+): Promise<InitializeResult>;
+export function initialize(options: InitializeOptions): InitializeResult;
+export function initialize(
+  options: InitializeOptions | InitializeWithRuntimeParamsOptions,
+) {
   if (options.libStateOptions) {
     setGlobalStateOptions(options.libStateOptions);
   }
 
   if (options.schema) {
-    setGlobalSchema(options.schema);
-    return;
+    if ("params" in options) {
+      return initializeWithRuntimeParams(options);
+    }
+
+    if (hasDynamicListOptions(options.schema)) {
+      throw new Error(
+        "Dynamic list options require runtime params. Call `initialize({ schema, params })` before using configuration functions.",
+      );
+    }
+
+    const configSchema = validateBusinessConfigSchema(options.schema);
+    setGlobalSchema(configSchema);
+    return { configSchema };
   }
 
-  requireGlobalSchema();
+  return { configSchema: requireGlobalSchema() };
 }
 
 /** Parameters for getting the scope tree from Commerce API. */

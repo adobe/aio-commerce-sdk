@@ -25,7 +25,11 @@ export {
   type SelectorByCodeAndLevel,
   type SelectorByScopeId,
 } from "./config-utils";
-export { SchemaBusinessConfig } from "./modules/schema";
+export {
+  hasDynamicListOptions,
+  resolveDynamicBusinessConfigSchema,
+  SchemaBusinessConfig,
+} from "./modules/schema";
 export * from "./types";
 export {
   generateEncryptionKey,
@@ -39,5 +43,7 @@ export type {
   BusinessConfigSchemaField,
   BusinessConfigSchemaListOption,
   BusinessConfigSchemaValue,
+  ListOptionsFactory,
+  ListOptionsValue,
 } from "./modules/schema";
 export type { ScopeNode, ScopeTree } from "./modules/scope-tree";

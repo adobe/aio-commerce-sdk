@@ -17,13 +17,17 @@ import { join } from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
+  APP_CONFIG_IMPORT_ALIAS,
   BACKEND_UI_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   GENERATED_ACTIONS_PATH,
   getExtensionPointFolderPath,
 } from "#commands/constants";
 import { exec, run } from "#commands/generate/actions/main";
-import { getAdminUiSdkRegistrationActionPath } from "#commands/utils";
+import {
+  getAdminUiSdkRegistrationActionPath,
+  getRuntimeAppConfigPath,
+} from "#commands/utils";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
   configWithBusinessConfig,
@@ -37,6 +41,52 @@ import {
   MINIMAL_PROJECT,
   withTempProject,
 } from "#test/fixtures/project";
+
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+
+const dynamicOptionsConfig = {
+  metadata: {
+    id: "dynamic-options",
+    displayName: "Dynamic Options",
+    description: "Dynamic options test",
+    version: "1.0.0",
+  },
+  businessConfig: {
+    schema: [
+      {
+        name: "paymentMethod",
+        type: "list",
+        selectionMode: "single",
+        default: "braintree",
+        options: (params: RuntimeActionParams) => [
+          {
+            label: String(params.PAYMENT_LABEL ?? "Braintree"),
+            value: "braintree",
+          },
+        ],
+      },
+    ],
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+const dynamicOptionsConfigFile = `export default {
+  metadata: {
+    id: "dynamic-options",
+    displayName: "Dynamic Options",
+    description: "Dynamic options test",
+    version: "1.0.0",
+  },
+  businessConfig: {
+    schema: [{
+      name: "paymentMethod",
+      type: "list",
+      selectionMode: "single",
+      default: "braintree",
+      options: (params) => [{ label: String(params.PAYMENT_LABEL ?? "Braintree"), value: "braintree" }],
+    }],
+  },
+};`;
 
 function getActionsDir(tempDir: string, extensionPointId: string) {
   return join(
@@ -64,6 +114,142 @@ describe("commands/generate/actions", () => {
           );
 
           expect(existsSync(join(actionsDir, "app-config.js"))).toBe(true);
+        },
+      );
+    });
+
+    test("uses static JSON imports when list options are static", async () => {
+      await withTempProject(
+        {
+          ...EMPTY_PROJECT,
+          "package.json": JSON.stringify({
+            type: "module",
+            imports: {
+              [APP_CONFIG_IMPORT_ALIAS]:
+                "./src/commerce-extensibility-1/.generated/app.commerce.config.js",
+            },
+          }),
+          [getRuntimeAppConfigPath()]: "export default {};",
+          ...makeTemplateFiles(),
+        },
+        async (tempDir) => {
+          await run(minimalValidConfig, tempDir);
+
+          const packageJson = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
+          );
+          const appConfigAction = await readFile(
+            join(
+              getActionsDir(tempDir, EXTENSIBILITY_EXTENSION_POINT_ID),
+              "app-config.js",
+            ),
+            "utf-8",
+          );
+
+          expect(existsSync(join(tempDir, getRuntimeAppConfigPath()))).toBe(
+            false,
+          );
+          expect(
+            packageJson.imports?.[APP_CONFIG_IMPORT_ALIAS],
+          ).toBeUndefined();
+          expect(appConfigAction).toContain(
+            'import commerceAppManifest from "../../app.commerce.manifest.json" with { type: "json" }',
+          );
+        },
+      );
+    });
+
+    test("generates runtime app config module and package import alias for dynamic list options", async () => {
+      await withTempProject(
+        {
+          "package.json": JSON.stringify({ type: "module" }),
+          "app.commerce.config.js": dynamicOptionsConfigFile,
+          ...makeTemplateFiles(),
+        },
+        async (tempDir) => {
+          await run(dynamicOptionsConfig, tempDir);
+
+          const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
+          const packageJson = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
+          );
+          const appConfigAction = await readFile(
+            join(
+              getActionsDir(tempDir, EXTENSIBILITY_EXTENSION_POINT_ID),
+              "app-config.js",
+            ),
+            "utf-8",
+          );
+
+          expect(existsSync(runtimeConfigPath)).toBe(true);
+          expect(packageJson.imports[APP_CONFIG_IMPORT_ALIAS]).toBe(
+            "./src/commerce-extensibility-1/.generated/app.commerce.config.js",
+          );
+          expect(appConfigAction).toContain(
+            `import appConfig from "${APP_CONFIG_IMPORT_ALIAS}"`,
+          );
+        },
+      );
+    });
+
+    test("generates a passthrough runtime module for JavaScript config files", async () => {
+      await withTempProject(
+        {
+          "package.json": JSON.stringify({ type: "module" }),
+          "app.commerce.config.js": dynamicOptionsConfigFile,
+          ...makeTemplateFiles(),
+        },
+        async (tempDir) => {
+          await run(dynamicOptionsConfig, tempDir);
+
+          const runtimeConfig = await readFile(
+            join(tempDir, getRuntimeAppConfigPath()),
+            "utf-8",
+          );
+
+          expect(runtimeConfig).toContain("app.commerce.config.js");
+          expect(runtimeConfig).toContain("export default appConfig");
+        },
+      );
+    });
+
+    test("bundles TypeScript config files into a runtime JavaScript module", async () => {
+      const dynamicConfig = `const dynamicLabel = "Braintree";
+
+export default {
+  metadata: {
+    id: "dynamic-options",
+    displayName: "Dynamic Options",
+    description: "Dynamic options test",
+    version: "1.0.0",
+  },
+  businessConfig: {
+    schema: [{
+      name: "paymentMethod",
+      type: "list",
+      selectionMode: "single",
+      default: "braintree",
+      options: () => [{ label: dynamicLabel, value: "braintree" }],
+    }],
+  },
+};`;
+
+      await withTempProject(
+        {
+          "package.json": JSON.stringify({ type: "module" }),
+          "app.commerce.config.ts": dynamicConfig,
+          ...makeTemplateFiles(),
+        },
+        async (tempDir) => {
+          await run(dynamicOptionsConfig, tempDir);
+
+          const runtimeConfig = await readFile(
+            join(tempDir, getRuntimeAppConfigPath()),
+            "utf-8",
+          );
+
+          expect(runtimeConfig).toContain("dynamicLabel");
+          expect(runtimeConfig).not.toContain("import appConfig from");
         },
       );
     });

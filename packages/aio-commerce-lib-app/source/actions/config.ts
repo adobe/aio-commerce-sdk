@@ -72,6 +72,18 @@ function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
   });
 }
 
+async function resolveConfigSchema(params: ConfigActionParams) {
+  const { configSchema } = await initialize({
+    schema: params.configSchema,
+    params,
+  });
+
+  return validateCommerceAppConfigDomain(
+    configSchema,
+    "businessConfig.schema",
+  ) as BusinessConfigSchema;
+}
+
 // The router that will hold the config routes
 const router = new HttpActionRouter<ConfigActionContext>().use(logger());
 
@@ -83,15 +95,9 @@ router.get("/", {
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
-    const configSchema = rawParams.configSchema;
 
     logger.debug("Validating configuration schema...");
-    const validatedSchema = validateCommerceAppConfigDomain(
-      configSchema,
-      "businessConfig.schema",
-    );
-
-    initialize({ schema: validatedSchema });
+    const validatedSchema = await resolveConfigSchema(rawParams);
 
     const { scopeId } = req.query;
     logger.debug(`Retrieving configuration with scope id: ${scopeId}`);
@@ -101,7 +107,7 @@ router.get("/", {
 
     logger.debug("Masking password values...");
     appConfiguration.config = filterPasswordFields(
-      configSchema,
+      validatedSchema,
       appConfiguration.config,
     );
 
@@ -129,17 +135,11 @@ router.put("/", {
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
-    const { configSchema } = rawParams;
 
     logger.debug(`Setting configuration with scope id: ${req.body.scopeId}`);
     const { scopeId, config } = req.body;
 
-    const validatedSchema = validateCommerceAppConfigDomain(
-      configSchema,
-      "businessConfig.schema",
-    );
-    initialize({ schema: validatedSchema });
-
+    const validatedSchema = await resolveConfigSchema(rawParams);
     // The UI sent it to us as a masked value, which means the user didn't update it.
     const updatedFields = config.filter(
       (item) => item.value !== MASKED_PASSWORD_VALUE,
@@ -153,7 +153,7 @@ router.put("/", {
       },
     );
 
-    result.config = filterPasswordFields(configSchema, result.config);
+    result.config = filterPasswordFields(validatedSchema, result.config);
     return ok({
       body: result,
       headers: {
@@ -181,22 +181,16 @@ router.patch("/", {
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
-    const { configSchema } = rawParams;
 
     logger.debug(`Patching configuration with scope id: ${req.body.scopeId}`);
     const { scopeId, config } = req.body;
 
-    const validatedSchema = validateCommerceAppConfigDomain(
-      configSchema,
-      "businessConfig.schema",
-    );
-    initialize({ schema: validatedSchema });
-
+    const validatedSchema = await resolveConfigSchema(rawParams);
     const result = await setConfiguration({ config }, byScopeId(scopeId), {
       encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
     });
 
-    result.config = filterPasswordFields(configSchema, result.config);
+    result.config = filterPasswordFields(validatedSchema, result.config);
     return ok({
       body: result,
       headers: { "Cache-Control": "no-store" },

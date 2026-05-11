@@ -43,6 +43,12 @@ export const APP_MANIFEST_FILE = "app.commerce.manifest.json";
 /** The name of the commerce app configuration file */
 export const COMMERCE_APP_CONFIG_FILE = "app.commerce.config";
 
+/** Package import alias for the generated runtime-safe app config module. */
+export const APP_CONFIG_IMPORT_ALIAS = "#app.commerce.config";
+
+/** The name of the generated runtime-safe app config module. */
+export const RUNTIME_APP_CONFIG_FILE = "app.commerce.config.js";
+
 /** The name of the configuration schema file */
 export const CONFIG_SCHEMA_FILE_NAME = "configuration-schema.json";
 

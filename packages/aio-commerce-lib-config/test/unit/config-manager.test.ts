@@ -35,6 +35,7 @@ import { createMockLibState } from "#test/mocks/lib-state";
 import * as repository from "#utils/repository";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BusinessConfigSchema, ConfigValue } from "#index";
 import type { ScopeTree } from "#modules/scope-tree/types";
 
@@ -441,6 +442,46 @@ describe("initialize", () => {
 
     const storedSchema = getGlobalSchema();
     expect(storedSchema).toEqual(testSchema);
+  });
+
+  test("should resolve dynamic list options when runtime params are provided", async () => {
+    const testSchema = [
+      {
+        name: "paymentMethod",
+        type: "list",
+        selectionMode: "single",
+        default: "braintree",
+        options: (params: RuntimeActionParams) => [
+          { label: String(params.PAYMENT_LABEL), value: "braintree" },
+        ],
+      },
+    ] satisfies BusinessConfigSchema;
+
+    const result = await initialize({
+      schema: testSchema,
+      params: { PAYMENT_LABEL: "Braintree" },
+    });
+
+    expect(result.configSchema[0]).toMatchObject({
+      options: [{ label: "Braintree", value: "braintree" }],
+    });
+    expect(getGlobalSchema()).toEqual(result.configSchema);
+  });
+
+  test("should reject dynamic list options when runtime params are missing", () => {
+    const testSchema = [
+      {
+        name: "paymentMethod",
+        type: "list",
+        selectionMode: "single",
+        default: "braintree",
+        options: () => [{ label: "Braintree", value: "braintree" }],
+      },
+    ] satisfies BusinessConfigSchema;
+
+    expect(() => initialize({ schema: testSchema })).toThrow(
+      "Dynamic list options require runtime params",
+    );
   });
 
   test("should throw error when no schema provided and no global schema exists", () => {

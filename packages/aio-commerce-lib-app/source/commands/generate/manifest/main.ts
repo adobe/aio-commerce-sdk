@@ -10,11 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-import { writeFile } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { makeOutputDirFor } from "@aio-commerce-sdk/scripting-utils/project";
+import {
+  getProjectRootDirectory,
+  makeOutputDirFor,
+} from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 import { stringify } from "safe-stable-stringify";
 
@@ -22,11 +25,25 @@ import {
   APP_MANIFEST_FILE,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
-import { getGeneratedDir, loadAppManifest } from "#commands/utils";
+import {
+  getGeneratedDir,
+  getManifestPath,
+  hasDynamicBusinessConfigSchema,
+  loadAppManifest,
+} from "#commands/utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 export async function run(appConfig: CommerceAppConfigOutputModel) {
+  if (hasDynamicBusinessConfigSchema(appConfig)) {
+    await rm(join(await getProjectRootDirectory(), getManifestPath()), {
+      force: true,
+    });
+
+    consola.success(`Removed JSON manifest: ${APP_MANIFEST_FILE}`);
+    return;
+  }
+
   consola.info("Generating app manifest...");
 
   const contents = stringify(appConfig, null, 2);

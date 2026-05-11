@@ -71,16 +71,24 @@ function buildWeb(extConfig: Document, web: string) {
  * @param path - The path where the action is located
  * @param action - The action definition
  */
-function buildActionDefinition(action: ActionDefinition) {
+function buildActionDefinition(
+  action: ActionDefinition,
+  existingAction?: YAMLMap,
+) {
   const actionDef: YAMLMap = new YAMLMap();
-  const inputs = {
+  const managedInputs = {
     LOG_LEVEL: "$LOG_LEVEL",
   };
+  const existingInputs = getExistingInputs(existingAction);
 
   actionDef.set("function", action.function);
   actionDef.set("web", action.web ?? "yes");
   actionDef.set("runtime", action.runtime ?? "nodejs:22");
-  actionDef.set("inputs", { ...inputs, ...(action.inputs ?? {}) });
+  actionDef.set("inputs", {
+    ...existingInputs,
+    ...managedInputs,
+    ...(action.inputs ?? {}),
+  });
   actionDef.set("annotations", {
     ...(action.annotations ?? {
       "require-adobe-auth": true,
@@ -107,6 +115,25 @@ function buildActionDefinition(action: ActionDefinition) {
   }
 
   return actionDef;
+}
+
+function getExistingInputs(existingAction?: YAMLMap) {
+  const inputs = existingAction?.get("inputs");
+
+  if (!(inputs instanceof YAMLMap)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    inputs.items.map((item) => [
+      String(item.key),
+      typeof item.value === "object" &&
+      item.value !== null &&
+      "value" in item.value
+        ? item.value.value
+        : item.value,
+    ]),
+  );
 }
 
 /**
@@ -204,13 +231,21 @@ function buildRuntimeManifest(extConfig: Document, manifest: RuntimeManifest) {
       },
     );
 
+    const existingActions = packageDef.get("actions");
     const actions = new YAMLMap();
 
     packageDef.set("license", pkg.license ?? "Apache-2.0");
     packageDef.set("actions", actions);
 
     for (const [actionName, action] of Object.entries(pkg.actions ?? {})) {
-      const actionDef = buildActionDefinition(action);
+      const existingAction =
+        existingActions instanceof YAMLMap
+          ? existingActions.get(actionName)
+          : undefined;
+      const actionDef = buildActionDefinition(
+        action,
+        existingAction instanceof YAMLMap ? existingAction : undefined,
+      );
       actions.set(actionName, actionDef);
     }
   }

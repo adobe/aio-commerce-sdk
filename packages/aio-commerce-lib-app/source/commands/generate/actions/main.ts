@@ -13,6 +13,7 @@ import { getRuntimeActions } from "./config";
 import {
   generateActionFiles,
   generateRegistrationActionFile,
+  prepareRuntimeAppConfigModule,
   TEMPLATES_DIR,
   updateExtConfig,
 } from "./lib";
@@ -28,6 +29,8 @@ export async function run(
   appManifest: CommerceAppConfigOutputModel,
   templatesDir = TEMPLATES_DIR,
 ) {
+  await prepareRuntimeAppConfigModule(appManifest);
+
   const appManagementExtConfig = await updateExtConfig(
     appManifest,
     EXTENSIBILITY_EXTENSION_POINT_ID,
