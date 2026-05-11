@@ -80,14 +80,12 @@ export async function runInstallation(
 ): Promise<SucceededInstallationState | FailedInstallationState> {
   const { installationContext, config, initialState, hooks } = options;
   const rootStep = createRootInstallationStep(config);
-  const { onInstallationFailure: _, ...baseHooks } = hooks ?? {};
-
   const firstResult = await executeWorkflow({
     rootStep,
     installationContext,
     config,
     initialState,
-    hooks: baseHooks,
+    hooks: { ...hooks, onInstallationFailure: undefined },
   });
 
   if (firstResult.status === "succeeded") {

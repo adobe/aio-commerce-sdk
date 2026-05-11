@@ -383,8 +383,8 @@ describe("runInstallation — retry behavior", () => {
     expect("isRetry" in result && result.isRetry).toBeFalsy();
     expect(vi.mocked(executeWorkflow)).toHaveBeenCalledTimes(2);
     expect(
-      vi.mocked(executeWorkflow).mock.calls[0][0].hooks,
-    ).not.toHaveProperty("onInstallationFailure");
+      vi.mocked(executeWorkflow).mock.calls[0][0].hooks?.onInstallationFailure,
+    ).toBeUndefined();
     expect(vi.mocked(executeWorkflow).mock.calls[1][0].hooks).toMatchObject({
       onInstallationFailure,
     });
