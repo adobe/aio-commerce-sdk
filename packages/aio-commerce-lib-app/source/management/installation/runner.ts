@@ -80,7 +80,7 @@ export async function runInstallation(
 ): Promise<SucceededInstallationState | FailedInstallationState> {
   const { installationContext, config, initialState, hooks } = options;
   const rootStep = createRootInstallationStep(config);
-  const { onInstallationFailure, ...baseHooks } = hooks ?? {};
+  const { onInstallationFailure: _, ...baseHooks } = hooks ?? {};
 
   const firstResult = await executeWorkflow({
     rootStep,
@@ -105,10 +105,7 @@ export async function runInstallation(
     installationContext,
     config,
     initialState: retryState,
-    hooks: {
-      ...baseHooks,
-      onInstallationFailure,
-    },
+    hooks,
   });
 
   if (retryResult.status === "succeeded") {
