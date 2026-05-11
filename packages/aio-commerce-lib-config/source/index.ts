@@ -25,10 +25,7 @@ export {
   type SelectorByCodeAndLevel,
   type SelectorByScopeId,
 } from "./config-utils";
-export {
-  filterBusinessConfigSchemaByFlavor,
-  SchemaBusinessConfig,
-} from "./modules/schema";
+export { SchemaBusinessConfig } from "./modules/schema";
 export * from "./types";
 export {
   generateEncryptionKey,
@@ -42,6 +39,5 @@ export type {
   BusinessConfigSchemaField,
   BusinessConfigSchemaListOption,
   BusinessConfigSchemaValue,
-  CommerceFlavor,
 } from "./modules/schema";
 export type { ScopeNode, ScopeTree } from "./modules/scope-tree";

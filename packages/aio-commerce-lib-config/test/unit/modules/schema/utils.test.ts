@@ -12,10 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 
-import {
-  filterBusinessConfigSchemaByFlavor,
-  validateBusinessConfigSchema,
-} from "#modules/schema/utils";
+import { validateBusinessConfigSchema } from "#modules/schema/utils";
 import {
   INVALID_CONFIGURATION,
   VALID_CONFIGURATION,
@@ -121,56 +118,11 @@ describe("schema/utils", () => {
             name: "scoped",
             type: "text",
             label: "Scoped",
-            env: ["onprem" as never],
+            // @ts-expect-error - Testing an invalid value on purpose
+            env: ["onprem"],
           },
-        ]),
+        ] satisfies BusinessConfigSchema),
       ).toThrow();
-    });
-  });
-
-  describe("filterBusinessConfigSchemaByFlavor", () => {
-    const schema = [
-      { name: "shared", type: "text", label: "Shared" },
-      { name: "saasOnly", type: "text", label: "SaaS Only", env: ["saas"] },
-      { name: "paasOnly", type: "text", label: "PaaS Only", env: ["paas"] },
-      {
-        name: "explicitBoth",
-        type: "text",
-        label: "Both",
-        env: ["paas", "saas"],
-      },
-    ] satisfies BusinessConfigSchema;
-
-    test("should include fields without env and SaaS-scoped fields when filtering by saas", () => {
-      const result = filterBusinessConfigSchemaByFlavor(schema, "saas");
-
-      expect(result.map((field) => field.name)).toEqual([
-        "shared",
-        "saasOnly",
-        "explicitBoth",
-      ]);
-    });
-
-    test("should include fields without env and PaaS-scoped fields when filtering by paas", () => {
-      const result = filterBusinessConfigSchemaByFlavor(schema, "paas");
-
-      expect(result.map((field) => field.name)).toEqual([
-        "shared",
-        "paasOnly",
-        "explicitBoth",
-      ]);
-    });
-
-    test("should preserve the order of the input schema", () => {
-      const result = filterBusinessConfigSchemaByFlavor(schema, "saas");
-      const inputOrder = schema.map((field) => field.name);
-      const resultOrder = result.map((field) => field.name);
-
-      expect(resultOrder).toEqual(inputOrder.filter((n) => n !== "paasOnly"));
-    });
-
-    test("should return an empty array when the schema is empty", () => {
-      expect(filterBusinessConfigSchemaByFlavor([], "saas")).toEqual([]);
     });
   });
 });

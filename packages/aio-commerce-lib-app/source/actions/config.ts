@@ -12,7 +12,6 @@
 
 import {
   byScopeId,
-  filterBusinessConfigSchemaByFlavor,
   getConfiguration,
   initialize,
   setConfiguration,
@@ -43,8 +42,6 @@ type ConfigActionFactoryArgs = {
 type ConfigActionParams = RuntimeActionParams &
   ConfigActionFactoryArgs & {
     AIO_COMMERCE_CONFIG_ENCRYPTION_KEY?: string;
-    AIO_COMMERCE_API_FLAVOR?: unknown;
-    commerceEnv?: unknown;
   };
 
 /** The context for the config action. */
@@ -55,18 +52,23 @@ interface ConfigActionContext extends BaseContext {
 // Placeholder value for password fields.
 const MASKED_PASSWORD_VALUE = "*****";
 
-/** Normalizes a possible flavor value to a supported Commerce flavor. */
-function normalizeCommerceFlavor(value: unknown): "paas" | "saas" | undefined {
-  if (typeof value !== "string") {
-    return;
-  }
+/** The set of valid Commerce flavors a configuration field can be scoped to. */
+type CommerceFlavor = "paas" | "saas";
 
-  const normalized = value.trim().toLowerCase();
-  if (normalized === "paas" || normalized === "saas") {
-    return normalized;
-  }
-
-  return;
+/**
+ * Filters a business configuration schema to the fields applicable to the
+ * given Commerce flavor. Fields without an `env` property apply to all
+ * flavors and are always included.
+ * @param schema - The business configuration schema to filter.
+ * @param flavor - The Commerce flavor to filter by.
+ */
+function filterSchemaByFlavor(
+  schema: BusinessConfigSchema,
+  flavor: CommerceFlavor,
+): BusinessConfigSchema {
+  return schema.filter(
+    (field) => field.env === undefined || field.env.includes(flavor),
+  );
 }
 
 /**
@@ -109,13 +111,10 @@ router.get("/", {
       "businessConfig.schema",
     );
 
-    const flavor =
-      req.query.commerceEnv ??
-      normalizeCommerceFlavor(rawParams.commerceEnv) ??
-      normalizeCommerceFlavor(rawParams.AIO_COMMERCE_API_FLAVOR);
+    const flavor = req.query.commerceEnv;
 
     const filteredSchema = flavor
-      ? filterBusinessConfigSchemaByFlavor(validatedSchema, flavor)
+      ? filterSchemaByFlavor(validatedSchema, flavor)
       : validatedSchema;
 
     initialize({ schema: filteredSchema });

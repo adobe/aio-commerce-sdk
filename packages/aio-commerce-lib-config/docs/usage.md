@@ -305,6 +305,19 @@ Use text fields for free-form input values like merchant identifiers or custom s
 }
 ```
 
+**Boolean Field:**
+
+Use boolean fields for flag-like fields that only accept true/false values. Boolean fields support optional default values.
+
+```javascript
+{
+  name: "enabled",
+  label: "Enable Feature",
+  type: "boolean",
+  default: true
+}
+```
+
 **Email Field:**
 
 Use email fields for email addresses with automatic validation. Email fields support optional default values.
@@ -408,9 +421,9 @@ Multiple selection example:
 
 ### Conditional Fields by Commerce Flavor
 
-Each schema field accepts an optional `env` property to scope it to specific Commerce flavors. The property is an array of flavors (`"paas"`, `"saas"`) and supports any combination of one or more values.
+Each schema field accepts an optional `env` property to scope it to specific Commerce flavors. The value is an array of flavors (`"paas"`, `"saas"`) and accepts any combination of one or more.
 
-When `env` is omitted, the field applies to all flavors. When `env` is provided, the field is only relevant for the listed flavors and can be filtered out for the others — for example, when rendering the configuration form in the App Management UI for an app associated with a SaaS Commerce instance.
+When `env` is omitted, the field applies to all Commerce flavors. When `env` is set, the field is only relevant for the listed flavors and can be filtered out for the others — for example, when rendering the configuration form in App Management for a SaaS Commerce instance.
 
 ```javascript
 {
@@ -429,20 +442,9 @@ When `env` is omitted, the field applies to all flavors. When `env` is provided,
   name: "sharedApiKey",
   label: "Shared API Key",
   type: "password"
-  // No `env` -> applies to all flavors
+  // No `env` -> applies to all Commerce flavors
 }
 ```
-
-Use `filterBusinessConfigSchemaByFlavor` to keep only the fields applicable to a given flavor:
-
-```typescript
-import { filterBusinessConfigSchemaByFlavor } from "@adobe/aio-commerce-lib-config";
-
-const saasFields = filterBusinessConfigSchemaByFlavor(schema, "saas");
-const paasFields = filterBusinessConfigSchemaByFlavor(schema, "paas");
-```
-
-Fields without `env` are always included. Field order is preserved.
 
 ## CLI Commands
 
