@@ -135,7 +135,12 @@ and not bundled with unrelated dependency updates.
 The April release (Current phase) is too early: tooling support, type
 definitions, and the broader ecosystem often lag by months. LTS entry in October
 is the conventional signal that a version is production-ready. Our own toolchain
-(tsdown, pnpm, lint-staged) consistently targets LTS versions.
+(tsdown, pnpm, lint-staged) consistently targets LTS versions. This also keeps
+the SDK's supported range aligned with the Node.js LTS versions available in
+[App Builder runtime](https://github.com/AdobeDocs/app-builder/blob/main/src/pages/guides/runtime_guides/reference_docs/runtimes.md),
+which is the primary deployment target for SDK consumers. Note that the runtime
+retains EOL versions longer than this policy does — the alignment is on which
+LTS versions are supported, not on the EOL drop schedule.
 
 **Alternative: grace period (e.g. drop 3 months after EOL)**
 A fixed grace period adds complexity without proportional benefit. The "first
