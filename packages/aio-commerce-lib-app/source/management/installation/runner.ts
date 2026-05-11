@@ -107,7 +107,7 @@ export async function runInstallation(
     initialState: retryState,
     hooks: {
       ...baseHooks,
-      ...(onInstallationFailure === undefined ? {} : { onInstallationFailure }),
+      onInstallationFailure,
     },
   });
 
