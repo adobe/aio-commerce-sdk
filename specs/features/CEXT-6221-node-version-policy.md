@@ -59,10 +59,20 @@ spec to get additional context.
 
 ### Node.js release schedule
 
-Node.js releases a new even-numbered version every April. That version becomes
-Active LTS in October of the same year and reaches EOL approximately 30 months
-after entering LTS (36 months after initial release). Odd-numbered versions are
-short-lived (Current only, ~6 months) and never become LTS.
+Under the current model (through Node 26), Node.js releases a new even-numbered
+version every April. That version becomes Active LTS in October of the same year
+and reaches EOL approximately 30 months after entering LTS (36 months after
+initial release). Odd-numbered versions are short-lived (Current only, ~6 months)
+and never become LTS.
+
+**Note:** Starting with Node 27, the release model is
+[changing](https://nodejs.org/en/blog/announcements/evolving-the-nodejs-release-schedule).
+There will be one release per year (stable in April, LTS in October), every
+release will become LTS, and a new Alpha channel will replace the experimental
+role of odd-numbered releases. Node 26 is the last release under the current
+odd/even model. The policy rules in this spec (add at LTS entry, drop at EOL)
+remain valid under the new model; only the "even year" framing becomes
+irrelevant from Node 27 onwards.
 
 Current schedule (as of spec creation):
 
@@ -76,7 +86,7 @@ Current schedule (as of spec creation):
 ### Adding support for a new version
 
 Add a Node.js version to the SDK's supported range **when it enters Active LTS**
-(October each even year).
+(October each year).
 
 - Add it to the CI matrix.
 - Raise the upper bound of `engines.node` to include the new version.
