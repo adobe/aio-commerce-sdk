@@ -110,10 +110,10 @@ more, no less.
 
 ### Semver reference
 
-| Transition                      | Bump  |
-| ------------------------------- | ----- |
-| Add new Active LTS to CI matrix | minor |
-| Drop EOL version from CI matrix | minor |
+| Transition                          | Bump  |
+| ----------------------------------- | ----- |
+| Adding support for a new version    | minor |
+| Dropping support for an EOL version | minor |
 
 Both transitions affect the runtime constraint (`engines.node`) but not the
 public API surface, which is why `major` is not warranted.
