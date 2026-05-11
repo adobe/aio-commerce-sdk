@@ -69,19 +69,49 @@ export function createInitialInstallationState(
 
 /**
  * Runs the full installation workflow. Returns the final state (never throws).
+ *
+ * Retries once on failure: the failure hook is suppressed on the first attempt,
+ * a warning is logged with full error details to aid root-cause analysis, and
+ * the workflow runs again from a fresh state. On retry success `isRetry` is set
+ * to `true` on the result. On retry failure `onInstallationFailure` fires normally.
  */
-export function runInstallation(
+export async function runInstallation(
   options: RunInstallationOptions,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
   const { installationContext, config, initialState, hooks } = options;
   const rootStep = createRootInstallationStep(config);
-  return executeWorkflow({
+  const { onInstallationFailure, ...baseHooks } = hooks ?? {};
+
+  const firstResult = await executeWorkflow({
     rootStep,
     installationContext,
     config,
     initialState,
-    hooks,
+    hooks: baseHooks,
   });
+
+  if (firstResult.status === "succeeded") {
+    return firstResult;
+  }
+
+  const { error } = firstResult;
+  installationContext.logger.warn(
+    `Installation attempt 1 failed: step "${error.path.join(".")}", key "${error.key}"${error.message ? `, message "${error.message}"` : ""}. Retrying once.`,
+  );
+
+  const retryState = createInitialState({ rootStep, config });
+  const retryResult = await executeWorkflow({
+    rootStep,
+    installationContext,
+    config,
+    initialState: retryState,
+    hooks: { ...baseHooks, onInstallationFailure },
+  });
+
+  if (retryResult.status === "succeeded") {
+    return { ...retryResult, isRetry: true };
+  }
+  return retryResult;
 }
 
 /** Options for creating an initial uninstallation state. */
