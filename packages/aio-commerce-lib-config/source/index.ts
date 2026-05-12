@@ -27,6 +27,7 @@ export {
 } from "./config-utils";
 export {
   hasDynamicListOptions,
+  hasDynamicSchema,
   resolveBusinessConfigSchema,
   SchemaBusinessConfig,
 } from "./modules/schema";

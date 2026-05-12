@@ -12,7 +12,7 @@
 
 import { join } from "node:path";
 
-import { hasDynamicListOptions } from "@adobe/aio-commerce-lib-config";
+import { hasDynamicSchema } from "@adobe/aio-commerce-lib-config";
 import consola from "consola";
 import * as prettier from "prettier";
 
@@ -62,7 +62,7 @@ export function hasDynamicBusinessConfigSchema(
   appConfig: CommerceAppConfigOutputModel,
 ) {
   const schema = appConfig.businessConfig?.schema;
-  return Array.isArray(schema) && hasDynamicListOptions(schema);
+  return Array.isArray(schema) && hasDynamicSchema(schema);
 }
 
 /**

@@ -14,6 +14,7 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { describe, expect, test } from "vitest";
 
 import {
+  hasDynamicSchema,
   resolveBusinessConfigSchema,
   validateBusinessConfigSchema,
 } from "#modules/schema/utils";
@@ -99,6 +100,36 @@ describe("schema/utils", () => {
           },
         ]),
       ).not.toThrow();
+    });
+  });
+
+  describe("hasDynamicSchema", () => {
+    test("should return true when the schema contains dynamic list options", () => {
+      const schema = validateBusinessConfigSchema([
+        {
+          name: "paymentMethod",
+          type: "list",
+          selectionMode: "single",
+          default: "braintree",
+          options: () => [{ label: "Braintree", value: "braintree" }],
+        },
+      ]);
+
+      expect(hasDynamicSchema(schema)).toBe(true);
+    });
+
+    test("should return false when the schema is static", () => {
+      const schema = validateBusinessConfigSchema([
+        {
+          name: "paymentMethod",
+          type: "list",
+          selectionMode: "single",
+          default: "braintree",
+          options: [{ label: "Braintree", value: "braintree" }],
+        },
+      ]);
+
+      expect(hasDynamicSchema(schema)).toBe(false);
     });
   });
 

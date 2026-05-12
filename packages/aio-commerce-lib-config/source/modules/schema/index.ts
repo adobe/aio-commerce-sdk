@@ -28,6 +28,7 @@ export type BusinessConfig = {
 
 export {
   hasDynamicListOptions,
+  hasDynamicSchema,
   resolveBusinessConfigSchema,
 } from "./utils";
 

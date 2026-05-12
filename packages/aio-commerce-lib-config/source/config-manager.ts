@@ -15,7 +15,7 @@ import {
   setGlobalSchema,
 } from "#modules/schema/config-schema-repository";
 import {
-  hasDynamicListOptions,
+  hasDynamicSchema,
   resolveBusinessConfigSchema,
   validateBusinessConfigSchema,
 } from "#modules/schema/utils";
@@ -131,7 +131,7 @@ export function initialize(
   }
 
   if (options.schema) {
-    if (hasDynamicListOptions(options.schema)) {
+    if (hasDynamicSchema(options.schema)) {
       throw new Error(
         "Dynamic list options require runtime params. Call `initialize({ schema, params })` before using configuration functions.",
       );

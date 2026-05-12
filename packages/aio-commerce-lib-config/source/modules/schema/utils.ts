@@ -70,6 +70,16 @@ export function hasDynamicListOptions(
 }
 
 /**
+ * Checks whether a business configuration schema contains runtime-resolved values.
+ *
+ * @param schema - Schema to inspect.
+ * @returns True when at least one field requires runtime resolution.
+ */
+export function hasDynamicSchema(schema: MaybeDynamicBusinessConfigSchema) {
+  return hasDynamicListOptions(schema);
+}
+
+/**
  * Resolves list options in a business configuration schema.
  *
  * @param schema - Schema that may contain list option factories.
