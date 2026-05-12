@@ -70,10 +70,8 @@ export function createInitialInstallationState(
 /**
  * Runs the full installation workflow. Returns the final state (never throws).
  *
- * Retries once on failure: the failure hook is suppressed on the first attempt,
- * a warning is logged with full error details to aid root-cause analysis, and
- * the workflow runs again from a fresh state. On retry success `isRetry` is set
- * to `true` on the result. On retry failure `onInstallationFailure` fires normally.
+ * Retries once on failure. `onInstallationFailure` only fires if both attempts fail;
+ * `isRetry: true` is set on the result when the retry succeeds.
  */
 export async function runInstallation(
   options: RunInstallationOptions,
