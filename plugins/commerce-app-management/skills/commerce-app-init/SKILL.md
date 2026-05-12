@@ -80,7 +80,9 @@ If the config is invalid, the build fails with a detailed validation error point
 
 After `aio app build` passes:
 
-1. **Bootstrap the Developer Console** — for any follow-up topic related to App Builder setup (Console project/workspace, API subscriptions, deploy, run, workspace wiring), invoke skill `appbuilder-project-init` (from `adobe/skills`). Tell it to skip the `aio app init` steps — the Commerce scaffold already exists.
+1. **Bootstrap the Developer Console** — for any follow-up topic related to App Builder setup (Console project/workspace, API subscriptions, deploy, run, workspace wiring), invoke skill `appbuilder-project-init` (from `adobe/skills`). Tell it:
+   - Skip the `aio app init` steps — the Commerce scaffold already exists
+   - Subscribe `AdobeIOManagementAPISDK` (I/O Management API) as part of the workspace bootstrap — it is required for IMS credential syncing at runtime
 
    If `appbuilder-project-init` is not installed, ask the user to install it first:
 

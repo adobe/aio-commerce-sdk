@@ -22,7 +22,27 @@ Extensibility domains other than eventing (webhooks, business config) are added 
 
 ## Prerequisites
 
-Verify `app.commerce.config.ts` exists in the project root. If it doesn't, stop and invoke `commerce-app-init` first.
+- Verify `app.commerce.config.ts` exists in the project root. If it doesn't, stop and invoke `commerce-app-init` first.
+- Ensure `CloudIntegrationSDK` (I/O Events) and `commerceeventing` (Adobe I/O Events for Adobe Commerce) are subscribed in the Developer Console workspace:
+  1. List currently subscribed services:
+
+     ```sh
+     aio console workspace api list --projectName <project> --workspaceName <workspace> --json
+     ```
+
+  2. If either service is missing, re-subscribe with the **full merged set** of service codes (existing + missing). `aio console workspace api add` replaces the subscription list — omitting a currently-subscribed service will remove it.
+
+     ```sh
+     aio console workspace api add \
+       --projectName <project> \
+       --workspaceName <workspace> \
+       --service-code <existing-codes>,CloudIntegrationSDK,commerceeventing \
+       --json
+     ```
+
+     If the command fails with "product profile required" for `commerceeventing`, ask the user for the profile name and retry with `--license-config commerceeventing=<profile>`.
+
+- **Adobe Commerce as Cloud Service (ACCS instances only)**: if the Commerce backend is Adobe Commerce as Cloud Service, this service must also be added through the Developer Console UI (not available via CLI). Ask the user whether their Commerce instance is ACCS or PaaS — if ACCS, ask them to confirm the service has been added before proceeding. PaaS instances do not need this step.
 
 ## Step 1 — Understand intent
 

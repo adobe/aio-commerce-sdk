@@ -23,7 +23,8 @@ Other extensibility domains (events, business config) are added separately via t
 
 ## Prerequisites
 
-Verify `app.commerce.config.ts` exists in the project root. If it doesn't, stop and invoke `commerce-app-init` first.
+- Verify `app.commerce.config.ts` exists in the project root. If it doesn't, stop and invoke `commerce-app-init` first.
+- **Adobe Commerce as Cloud Service (ACCS instances only)**: if the Commerce backend is Adobe Commerce as Cloud Service, this service must be subscribed in the Developer Console workspace before Commerce can invoke webhook handlers. It cannot be subscribed via CLI — ask the user whether their Commerce instance is ACCS or PaaS. If ACCS, ask them to confirm the service has been added through the Developer Console UI before proceeding. PaaS instances do not need this step.
 
 ## Step 1 — Understand intent
 
