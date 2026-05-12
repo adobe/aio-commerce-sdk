@@ -16,6 +16,7 @@ import {
 } from "./root";
 import {
   createInitialState,
+  createRetryState,
   executeUninstallWorkflow,
   executeWorkflow,
 } from "./workflow";
@@ -95,7 +96,7 @@ export async function runInstallation(
     `Installation attempt 1 failed: step "${error.path.join(".")}", key "${error.key}"${error.message ? `, message "${error.message}"` : ""}. Retrying once.`,
   );
 
-  const retryState = createInitialState({ rootStep, config });
+  const retryState = createRetryState(firstResult);
   const retryResult = await executeWorkflow({
     rootStep,
     installationContext,

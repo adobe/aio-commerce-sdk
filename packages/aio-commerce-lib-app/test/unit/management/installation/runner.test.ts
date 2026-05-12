@@ -38,6 +38,7 @@ import {
 import {
   createMockFailedState,
   createMockInstallationContext,
+  createMockStepStatus,
   createMockSucceededState,
   FAKE_SYSTEM_TIME,
 } from "#test/fixtures/installation";
@@ -374,6 +375,41 @@ describe("runInstallation — retry behavior", () => {
     expect(vi.mocked(executeWorkflow).mock.calls[1][0].hooks).toMatchObject({
       onInstallationFailure,
     });
+  });
+
+  test("should pass firstResult-based retry state (not fresh all-pending state) to second executeWorkflow call", async () => {
+    const failedState = createMockFailedState({
+      step: createMockStepStatus({
+        status: "failed",
+        children: [
+          createMockStepStatus({
+            name: "step-a",
+            path: ["installation", "step-a"],
+            status: "succeeded",
+          }),
+          createMockStepStatus({
+            name: "step-b",
+            path: ["installation", "step-b"],
+            status: "failed",
+          }),
+        ],
+      }),
+    });
+
+    vi.mocked(executeWorkflow)
+      .mockResolvedValueOnce(failedState)
+      .mockResolvedValueOnce(createMockSucceededState());
+
+    await runInstallation({
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    const secondCallInitialState =
+      vi.mocked(executeWorkflow).mock.calls[1][0].initialState;
+    expect(secondCallInitialState.step.children[0].status).toBe("succeeded");
+    expect(secondCallInitialState.step.children[1].status).toBe("pending");
   });
 
   test("should log warning with step path, key and message when retrying", async () => {
