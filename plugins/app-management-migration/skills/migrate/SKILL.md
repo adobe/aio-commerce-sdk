@@ -1,0 +1,370 @@
+---
+name: migrate
+description: Migrate an Adobe Commerce App Builder project from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach. Run from the root of the App Builder project to be migrated. Pass --auto to skip confirmation prompts (suitable for CI or batch use).
+---
+
+# Migrate to App Management
+
+Use this skill when the user wants to migrate an Adobe Commerce App Builder
+project from the Integration Starter Kit or Checkout Starter Kit to the new
+App Management approach using `@adobe/aio-commerce-lib-app`.
+
+This skill orchestrates the full migration: detection → domain analysis → Q&A →
+config assembly → execution. It leaves the project fully migrated and ready to deploy.
+
+---
+
+## Preflight Check
+
+Before doing anything else, verify the current directory looks like an App Builder project.
+Check that ALL of these exist:
+
+- `app.config.yaml`
+- `package.json`
+- At least one of: `actions/` directory OR `src/` directory OR `actions-src/` directory
+  (some projects compile TypeScript from `actions-src/` to `actions/`; `actions/` may be
+  gitignored and absent in a fresh checkout)
+
+If none of those pass, stop immediately and output:
+
+    This directory does not appear to be a Commerce App Builder project.
+    Expected to find: app.config.yaml, package.json, and an actions/ or src/ directory.
+
+    Please run this skill from the root of your App Builder project.
+
+Do not proceed further if the preflight fails.
+
+---
+
+## Step 1: Run Analyzer Agent
+
+Dispatch the Analyzer agent (defined in `${CLAUDE_SKILL_DIR}/agents/analyzer.md`) using the Agent tool.
+The Analyzer reads the current directory and returns a `ProjectSnapshot` JSON object
+(schema defined in `${CLAUDE_SKILL_DIR}/shared/schema.md`).
+
+**Before printing the summary, check these early-exit conditions:**
+
+**If `alreadyMigrated === true`:** Output:
+
+    This project appears to already be migrated to App Management.
+    Found: app.commerce.config.ts (or app.commerce.config.js with ESM defineConfig)
+
+    Re-running migration would overwrite your existing configuration.
+    If you want to re-generate specific sections, please specify which
+    section to update: metadata / eventing / installation / adminUiSdk / businessConfig
+
+Then, before stopping, check the ProjectSnapshot for any issues that exist
+regardless of migration state:
+
+**If `openWhiskTriggers` is non-empty** (even on already-migrated projects), append:
+
+    ⚠ OpenWhisk triggers still present (require manual replacement):
+      <list each trigger description>
+    These scheduled triggers are not handled by App Management and will stop
+    working after deployment. For replacement options, run the skill without
+    --auto on a non-migrated project or see the App Management migration guide.
+
+**If `hasApiGateway === true`** (even on already-migrated projects), append:
+
+    ⚠ API Gateway routes still present (require manual migration).
+    These HTTP routes have no App Management equivalent. See the API Gateway
+    migration options described in the App Management migration guide.
+
+**If `hasSequences === true`** (even on already-migrated projects), append:
+
+    ⚠ OpenWhisk sequences still present (require manual refactoring).
+    Action sequences have no equivalent in App Management. Each sequence must
+    be refactored: inline all chained action logic into a single action function.
+
+Then stop. Do not proceed further.
+
+**If `legacyJsConfig === true`** (and `alreadyMigrated === false`): Do NOT halt.
+Append a note to the human-readable summary printed after the analyzer returns:
+
+    ⚠ Legacy config detected: app.commerce.config.js uses the old module.exports format.
+      Migration will create a new app.commerce.config.ts to replace it.
+      The old app.commerce.config.js will remain on disk — you can delete it after verifying
+      the new config is correct.
+
+**Do not proceed further if alreadyMigrated is true unless the developer explicitly
+requests a specific section update.**
+
+After the Analyzer returns, print a human-readable summary:
+
+    Detected project:
+      Type:             <starterKitType> Starter Kit
+      Auth mode:        <authMode> (<paas = "PaaS/OAuth1" | saas = "SaaS/IMS" | dual = "Both PaaS + SaaS" | unknown = "Unknown">)
+      Action packages:  <comma-separated list of package names> (<count> packages)
+      Onboarding:       <comma-separated list of script paths with purposes, or "none">
+      Package manager:  <packageManager>
+
+    Migration will include: <list domains where confidence !== "none">
+
+**If `openWhiskTriggers` is non-empty**, append a warning section:
+
+    ⚠ OpenWhisk triggers detected (cannot be auto-migrated):
+      <list each trigger description>
+
+    These scheduled triggers have no direct equivalent in App Management.
+    Manual replacement options (choose one per trigger):
+
+    Option A — AIO Events recurring event (recommended for Commerce-integrated workflows):
+      Use Adobe I/O Events scheduler to emit a recurring custom event that your
+      consumer action subscribes to. See:
+      https://developer.adobe.com/events/docs/guides/using/scheduling/
+
+    Option B — Adobe Commerce Scheduled Jobs (Cron):
+      If the trigger action calls back into Commerce, implement the logic as a
+      Commerce module cron job (Magento\Cron\Model\Config\Backend\Cron).
+      This keeps scheduling within Commerce without external dependencies.
+
+    Option C — External cron + REST API invocation:
+      Use any external scheduler (GitHub Actions schedule, AWS EventBridge, cron server)
+      to POST to the App Builder action's web URL on a schedule:
+        curl -X POST https://<runtime-ns>.adobeioruntime.net/api/v1/web/<ns>/<pkg>/<action> \
+          -H "Authorization: Bearer $AIO_TOKEN"
+
+    Note: AIO runtime actions must be web-accessible (web: 'yes') and authenticated
+    to be invoked this way.
+
+**If `hasMeshConfig === true`**, append a warning:
+
+    ⚠ API Mesh configuration detected (mesh.json).
+    Mesh configuration cannot be migrated automatically and must be preserved manually.
+
+**If `hasApiGateway === true`**, append a warning:
+
+    ⚠ OpenWhisk API Gateway routes detected (apis: blocks in runtime manifest).
+    These synchronous HTTP REST endpoints have no direct equivalent in App Management.
+
+    Manual migration options:
+
+    Option A — Adobe API Mesh (recommended for REST/GraphQL proxying):
+      Replace API Gateway routes with Adobe API Mesh resolvers.
+      Mesh handles routing, auth, and rate limiting natively.
+      See: https://developer.adobe.com/graphql-mesh-gateway/
+
+    Option B — Web action with direct URL invocation:
+      Convert the action to a standard web action (web: 'yes') and invoke it
+      directly via its App Builder runtime URL. You lose the API Gateway path
+      mapping but retain the action logic.
+
+    Option C — Commerce API Mesh + REST route:
+      For Commerce-facing REST endpoints, implement as a Commerce module plugin
+      that exposes a REST endpoint in the Commerce API surface.
+
+    Each `apis:` block in the runtime manifest corresponds to one route that
+    needs manual re-implementation before the migrated app can fully replace
+    the original.
+
+**If `hasSequences === true`**, append a warning:
+
+    ⚠ OpenWhisk sequences detected.
+    Action sequences (chained action calls) have no equivalent in App Management.
+    Each sequence must be manually refactored: inline all chained action logic
+    into a single action function, or use explicit function calls within one action.
+
+Then ask:
+
+    Does this look correct? (yes / no — if no, describe what's wrong)
+    Press Enter or type "yes" to proceed automatically.
+
+**END YOUR TURN HERE. Do not call any tools. Do not proceed to Step 2.
+Your response must end with this question. Wait for the user's reply in the next turn.**
+
+**Autonomous mode exception:** If the user invoked this skill with the argument
+`--auto` or `--yes`, or if the context indicates an automated pipeline (no
+interactive terminal), skip this confirmation and proceed directly to Step 2.
+
+**Handle corrections:**
+
+- If developer corrects `starterKitType`, update it in the ProjectSnapshot before proceeding
+- If developer corrects `authMode`, update it
+- Re-print summary with corrections and ask again until confirmed
+
+**Handle unknown starterKitType:**
+If `starterKitType === "unknown"`, check `extensionPointsInUse`:
+
+- If `"commerce/backend-ui/1"` is present → this is an **Admin UI SDK extension**, not a
+  Starter Kit. Proceed with `starterKitType = "unknown"` — the domain agents will handle it.
+  Print a note: "Detected an Admin UI SDK extension project. Proceeding with adminUiSdk migration."
+- If all confidence values are `"none"` AND `extensionPointsInUse` is empty:
+  Output:
+
+      This project does not appear to be based on the Integration Starter Kit
+      or Checkout Starter Kit. No event consumers, webhooks, or Admin UI SDK
+      patterns were detected.
+
+      Migration can still generate a minimal app.commerce.config.ts with metadata
+      only. Continue? (yes / no)
+
+  If developer says no, stop. If yes, proceed with empty domain results.
+
+- Otherwise, ask the developer:
+
+      I couldn't determine which starter kit this project is based on.
+      Is this an Integration Starter Kit or a Checkout Starter Kit?
+      Options: [integration / checkout / adminUiSdk / custom]
+
+  Update the ProjectSnapshot with their answer before proceeding.
+
+---
+
+## Step 2: Dispatch Domain Agents in Parallel
+
+For each domain where `confidence !== "none"`, dispatch the corresponding agent
+**at the same time** using the Agent tool (all in one parallel call):
+
+| confidence field                       | Agent file                                      |
+| -------------------------------------- | ----------------------------------------------- |
+| `confidence.events !== "none"`         | `${CLAUDE_SKILL_DIR}/agents/events.md`          |
+| `confidence.webhooks !== "none"`       | `${CLAUDE_SKILL_DIR}/agents/webhooks.md`        |
+| `confidence.adminUiSdk !== "none"`     | `${CLAUDE_SKILL_DIR}/agents/admin-ui-sdk.md`    |
+| `confidence.businessConfig !== "none"` | `${CLAUDE_SKILL_DIR}/agents/business-config.md` |
+
+Each agent receives:
+
+- The `ProjectSnapshot` JSON
+- Instruction to read the relevant files in the current directory using their own Read tools
+
+Collect all returned `DomainResult` objects. Each has `domain`, `configFragment`,
+and `unresolvedQuestions` fields (schema in `${CLAUDE_SKILL_DIR}/shared/schema.md`).
+
+---
+
+## Step 3: Grouped Q&A
+
+Collect all `unresolvedQuestions` from every `DomainResult`.
+If there are no unresolved questions across all domains, skip to Step 4.
+
+Present all questions in a single grouped session (format defined in `${CLAUDE_SKILL_DIR}/shared/questions.md`):
+
+- Group by domain
+- For questions with `default` values, show as confirmations: "(suggested: X)"
+- Number questions sequentially across domains
+
+**END YOUR TURN HERE. Do not call any tools. Do not proceed to Step 4.
+Your response must end with these questions. Wait for the user's reply in the next turn.**
+
+For each answer received:
+
+- Apply it to the `configFragment` of the corresponding `DomainResult`
+- Use the question `id` to locate the exact field to update
+
+If the developer accepts a suggested value (presses Enter / says "yes"), use the `default`.
+
+**Special case — skip-by-default questions** (where `default` is `"no"`):
+These questions ask whether to include an optional section that was omitted from the
+`configFragment` because required data was missing (e.g. a provider direction with no
+deployed action package). Interpret the developer's reply as:
+
+- `"no"` (or pressing Enter) → leave the section out of the `configFragment`; do nothing
+- `"yes"` or any action string → add the section back; prompt for the runtime action name
+  if not already specified in the reply, then apply it to the `configFragment`
+
+---
+
+## Step 4: Assemble app.commerce.config.ts
+
+Read `package.json` from the current directory to extract metadata.
+
+Assemble the full config content by merging all `configFragment` objects:
+
+```typescript
+import { defineConfig } from "@adobe/aio-commerce-lib-app/config";
+
+export default defineConfig({
+  metadata: {
+    id: "<derived from package.json name>",
+    displayName: "<derived from package.json name>",
+    version: "<from package.json version or 1.0.0>",
+    description:
+      "<from package.json description or 'Commerce App Builder application'>",
+  },
+  // eventing: { ... }          ← from events DomainResult, if present
+  // installation: { ... }      ← from webhooks DomainResult, if present
+  // adminUiSdk: { ... }        ← from admin-ui-sdk DomainResult, if present
+  // businessConfig: { ... }    ← from business-config DomainResult, if present
+});
+```
+
+**Metadata derivation rules:**
+
+- `id`: Check `extension-manifest.json` first — if it has an `id` field and it is not
+  the same as the package name boilerplate, use it (apply same normalization: lowercase,
+  replace non-alphanumeric with `-`, trim, max 50 chars).
+  Otherwise take `name` from `package.json`. Strip npm scope (`@scope/`). Replace
+  any non-alphanumeric characters (except `-`) with `-`. Lowercase the entire string.
+  Trim leading/trailing dashes. Max 50 chars.
+  Known ISK boilerplate names to skip in favor of extension-manifest.json:
+  `commerce-integration-starter-kit`, `starter-kit`, `commerce-checkout-starter-kit`,
+  `aio-app-builder-template`.
+- `displayName`: Check `extension-manifest.json` first — if it has a `displayName` field,
+  use it (truncated to 50 chars). Otherwise title-case the `id` (replace `-` with spaces).
+  Max 50 chars.
+- `version`: Use `package.json` `version`. Default: `"1.0.0"`.
+- `description`: Use `package.json` `description` if present.
+  If the description exceeds 255 characters, truncate it to 252 characters and append `"..."`.
+  If absent or empty, check `extension-manifest.json` `description` field (truncate to 255 if needed).
+  If neither has a description: `"Commerce App Builder application"`.
+
+Print the assembled TypeScript content to the terminal:
+
+    Here is the app.commerce.config.ts that will be created:
+
+    ─────────────────────────────────────────────────────────
+    import { defineConfig } from '@adobe/aio-commerce-lib-app/config'
+
+    export default defineConfig({
+      ...assembled content...
+    })
+    ─────────────────────────────────────────────────────────
+
+    Does this look correct? (yes / no — if no, which section needs updating?)
+    Press Enter or type "yes" to proceed automatically.
+
+**END YOUR TURN HERE. Do not call any tools. Do not proceed to Step 5.
+Your response must end with this question. Wait for the user's reply in the next turn.**
+
+**Autonomous mode exception:** If the user invoked this skill with the argument
+`--auto` or `--yes`, or if the context indicates an automated pipeline, skip
+this confirmation and proceed directly to Step 5.
+
+**Handle rejection:**
+If the developer says no, ask: "Which section needs updating? (metadata / eventing /
+installation / adminUiSdk / businessConfig)"
+
+Then ask the specific corrective question for that section, update the assembled
+config accordingly, re-print, and ask for confirmation again.
+
+Repeat until the developer confirms. Do NOT restart the entire flow — only
+re-enter the Q&A for the specific section being corrected.
+
+---
+
+## Step 5: Execute Migration
+
+Dispatch the Executor agent (`${CLAUDE_SKILL_DIR}/agents/executor.md`) with:
+
+1. The assembled `app.commerce.config.ts` TypeScript content as a string
+2. The final `ProjectSnapshot` JSON
+
+The Executor performs all file writes and CLI commands and prints the migration summary.
+
+If the Executor reports an error, relay the error message and the step that failed.
+Do not attempt to roll back changes — the git branch created by the Executor provides
+a rollback point (`git checkout main` to abandon the migration).
+
+---
+
+## Notes
+
+- Domain agents run **in parallel** in Step 2 — dispatch all eligible agents in a
+  single Agent tool call, not sequentially
+- The Analyzer (Step 1) and Executor (Step 5) run sequentially — everything depends
+  on the Analyzer; the Executor mutates the filesystem
+- This skill runs in the **developer's starter kit project directory**, not in the
+  migration skill repository
+- Skill files are at: `${CLAUDE_SKILL_DIR}`
+  Use this base path when reading agent files, e.g.:
+  `${CLAUDE_SKILL_DIR}/agents/analyzer.md`

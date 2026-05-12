@@ -1,0 +1,31 @@
+{
+  "name": "commerce-app-management-plugins",
+  "owner": {
+    "name": "Adobe Commerce",
+    "email": "commerce-app-management@adobe.com"
+  },
+  "metadata": {
+    "description": "Claude Code plugins for Adobe Commerce App Builder development and migration.",
+    "version": "1.0.0",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "app-management-migration",
+      "description": "Migrate an Adobe Commerce App Builder project from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach.",
+      "source": "./plugins/app-management-migration",
+      "author": {
+        "name": "Commerce App Management",
+        "email": "commerce-app-management@adobe.com"
+      },
+      "keywords": [
+        "adobe-commerce",
+        "app-builder",
+        "migration",
+        "app-management",
+        "starter-kit"
+      ],
+      "category": "utilities"
+    }
+  ]
+}
