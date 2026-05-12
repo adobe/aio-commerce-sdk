@@ -199,11 +199,11 @@ export async function generateRuntimeAppConfigModule() {
     );
   }
 
+  consola.info("Generating JS config module...");
+
   if (TYPESCRIPT_CONFIG_EXTENSIONS.has(extname(configFilePath))) {
-    consola.info("Generating JS config module...");
     await bundleTypeScriptAppConfigModule(configFilePath, outputPath);
   } else {
-    consola.info("Generating JS config module...");
     await writeJavaScriptAppConfigModule(configFilePath, outputPath);
   }
 
