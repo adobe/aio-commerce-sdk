@@ -13,8 +13,11 @@
 import { describe, expect, test, vi } from "vitest";
 
 import { configRuntimeAction } from "#actions/config";
+import {
+  schemaWithDynamicListOptions,
+  schemaWithStaticListOptions,
+} from "#test/fixtures/business-config";
 
-import type { MaybeDynamicBusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 
 vi.mock("@adobe/aio-commerce-lib-config", async (importOriginal) => {
@@ -35,7 +38,11 @@ vi.mock("@adobe/aio-commerce-lib-config", async (importOriginal) => {
         ? await actual.resolveBusinessConfigSchema(schema, params)
         : schema,
     })),
-    setConfiguration: vi.fn(),
+    setConfiguration: vi.fn(async () => ({
+      message: "Configuration values updated successfully",
+      scope: { id: "scope-1", code: "global", level: "global" },
+      config: [{ name: "currency", value: "USD" }],
+    })),
   };
 });
 
@@ -57,44 +64,95 @@ vi.mock("@aio-commerce-sdk/common-utils/actions", async () => {
   };
 });
 
-const mockParams = {
-  __ow_method: "GET",
-  __ow_path: "/",
-  __ow_headers: {},
-  __ow_query: "scopeId=scope-1",
-  PAYMENT_LABEL: "Braintree",
-} as unknown as RuntimeActionParams;
-
 describe("configRuntimeAction", () => {
-  test("returns a resolved business config schema for GET requests", async () => {
-    const configSchema = [
-      {
-        name: "paymentMethod",
-        type: "list",
-        selectionMode: "single",
-        default: "braintree",
-        options: (params: RuntimeActionParams) => [
-          {
-            label: String(params.PAYMENT_LABEL),
-            value: "braintree",
-          },
-        ],
-      },
-    ] satisfies MaybeDynamicBusinessConfigSchema;
+  describe("GET /", () => {
+    const mockParams = {
+      __ow_method: "get",
+      __ow_path: "/",
+      __ow_headers: {},
+      __ow_query: "scopeId=scope-1",
+    } satisfies RuntimeActionParams;
 
-    const handler = configRuntimeAction({ configSchema });
-    const result = await handler(mockParams);
+    test("returns resolved schema with dynamic options", async () => {
+      const result = await configRuntimeAction({
+        configSchema: schemaWithDynamicListOptions,
+      })(mockParams);
 
-    expect(result).toMatchObject({
-      type: "success",
-      statusCode: 200,
-      body: {
-        schema: [
-          {
-            options: [{ label: "Braintree", value: "braintree" }],
-          },
-        ],
-      },
+      expect(result).toMatchObject({
+        type: "success",
+        statusCode: 200,
+        body: {
+          schema: [{ options: [{ label: "Braintree", value: "braintree" }] }],
+        },
+      });
+    });
+
+    test("returns schema as-is when all list options are static", async () => {
+      const result = await configRuntimeAction({
+        configSchema: schemaWithStaticListOptions,
+      })(mockParams);
+
+      expect(result).toMatchObject({
+        type: "success",
+        statusCode: 200,
+        body: {
+          schema: [{ options: [{ label: "Braintree", value: "braintree" }] }],
+        },
+      });
+    });
+  });
+
+  describe("PUT /", () => {
+    test("resolves schema and delegates to setConfiguration", async () => {
+      const params = {
+        __ow_method: "put",
+        __ow_path: "/",
+        __ow_headers: {},
+        __ow_body: JSON.stringify({
+          scopeId: "scope-1",
+          config: [{ name: "currency", value: "EUR" }],
+        }),
+      } satisfies RuntimeActionParams;
+
+      const result = await configRuntimeAction({
+        configSchema: schemaWithStaticListOptions,
+      })(params);
+
+      expect(result).toMatchObject({
+        type: "success",
+        statusCode: 200,
+        body: {
+          message: "Configuration values updated successfully",
+          scope: { id: "scope-1" },
+        },
+      });
+    });
+  });
+
+  describe("PATCH /", () => {
+    test("resolves schema and delegates to setConfiguration", async () => {
+      const params = {
+        __ow_method: "patch",
+        __ow_path: "/",
+        __ow_headers: {},
+        __ow_body: JSON.stringify({
+          scopeId: "scope-1",
+          config: [{ name: "currency", value: null }],
+        }),
+      } satisfies RuntimeActionParams;
+
+      const result = await configRuntimeAction({
+        configSchema: schemaWithStaticListOptions,
+      })(params);
+
+      expect(result).toMatchObject({
+        type: "success",
+        statusCode: 200,
+        body: {
+          message: "Configuration values updated successfully",
+          scope: { id: "scope-1" },
+        },
+      });
     });
   });
 });

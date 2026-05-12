@@ -13,9 +13,13 @@
 import { describe, expect, test, vi } from "vitest";
 
 import { appConfigRuntimeAction } from "#actions/app-config";
+import {
+  appConfigWithDynamicListOptions,
+  appConfigWithoutBusinessConfig,
+  appConfigWithStaticListOptions,
+} from "#test/fixtures/config";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
-import type { CommerceAppConfig } from "#config/schema/app";
 
 vi.mock("@aio-commerce-sdk/common-utils/actions", async () => {
   const [actual, fixtures] = await Promise.all([
@@ -35,55 +39,56 @@ vi.mock("@aio-commerce-sdk/common-utils/actions", async () => {
   };
 });
 
-const mockParams = {
-  __ow_method: "GET",
-  __ow_path: "/",
-  __ow_headers: {},
-  PAYMENT_LABEL: "Braintree",
-} as unknown as RuntimeActionParams;
-
 describe("appConfigRuntimeAction", () => {
-  test("resolves dynamic business config options with runtime params", async () => {
-    const appConfig = {
-      metadata: {
-        id: "dynamic-options",
-        displayName: "Dynamic Options",
-        description: "Dynamic options test",
-        version: "1.0.0",
-      },
-      businessConfig: {
-        schema: [
-          {
-            name: "paymentMethod",
-            type: "list",
-            selectionMode: "single",
-            default: "braintree",
-            options: (params: RuntimeActionParams) => [
-              {
-                label: String(params.PAYMENT_LABEL),
-                value: "braintree",
-              },
-            ],
+  describe("GET /", () => {
+    const mockParams = {
+      __ow_method: "get",
+      __ow_path: "/",
+      __ow_headers: {},
+    } satisfies RuntimeActionParams;
+
+    test("returns config as-is when there is no business config schema", async () => {
+      const result = await appConfigRuntimeAction({
+        appConfig: appConfigWithoutBusinessConfig,
+      })(mockParams);
+
+      expect(result).toMatchObject({
+        type: "success",
+        statusCode: 200,
+        body: { metadata: { id: appConfigWithoutBusinessConfig.metadata.id } },
+      });
+    });
+
+    test("returns config as-is when the business config schema has only static options", async () => {
+      const result = await appConfigRuntimeAction({
+        appConfig: appConfigWithStaticListOptions,
+      })(mockParams);
+
+      expect(result).toMatchObject({
+        type: "success",
+        statusCode: 200,
+        body: {
+          businessConfig: {
+            schema: [{ options: [{ label: "Braintree", value: "braintree" }] }],
           },
-        ],
-      },
-    } satisfies CommerceAppConfig;
-
-    const handler = appConfigRuntimeAction({ appConfig });
-    const result = await handler(mockParams);
-
-    expect(result).toMatchObject({
-      type: "success",
-      statusCode: 200,
-      body: {
-        businessConfig: {
-          schema: [
-            {
-              options: [{ label: "Braintree", value: "braintree" }],
-            },
-          ],
         },
-      },
+      });
+    });
+
+    test("resolves dynamic business config options with runtime params", async () => {
+      const result = await appConfigRuntimeAction({
+        appConfig: appConfigWithDynamicListOptions,
+      })(mockParams);
+
+      expect(result).toMatchObject({
+        type: "success",
+        statusCode: 200,
+        body: {
+          businessConfig: {
+            schema: [{ options: [{ label: "Braintree", value: "braintree" }] }],
+          },
+        },
+      });
     });
   });
 });

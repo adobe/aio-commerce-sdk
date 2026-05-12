@@ -443,10 +443,10 @@ describe("initialize", () => {
       },
     ] satisfies BusinessConfigSchema;
 
-    initialize({ schema: testSchema });
+    const result = initialize({ schema: testSchema });
 
-    const storedSchema = getGlobalSchema();
-    expect(storedSchema).toEqual(testSchema);
+    expect(result.configSchema).toEqual(testSchema);
+    expect(getGlobalSchema()).toEqual(testSchema);
   });
 
   test("should resolve dynamic list options when runtime params are provided", async () => {
@@ -531,8 +531,9 @@ describe("initialize", () => {
     // Verify schema was set
     expect(getGlobalSchema()).toEqual(existingSchema);
 
-    // Second initialize without schema should succeed
-    expect(() => initialize({})).not.toThrow();
+    // Second initialize without schema should succeed and return the stored schema
+    const result = initialize({});
+    expect(result.configSchema).toEqual(existingSchema);
 
     // Schema should still be the same
     expect(getGlobalSchema()).toEqual(existingSchema);

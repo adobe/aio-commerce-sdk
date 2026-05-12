@@ -20,7 +20,6 @@ import {
   APP_CONFIG_IMPORT_ALIAS,
   BACKEND_UI_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
-  GENERATED_ACTIONS_PATH,
   getExtensionPointFolderPath,
 } from "#commands/constants";
 import { exec, run } from "#commands/generate/actions/main";
@@ -31,70 +30,19 @@ import {
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
   configWithBusinessConfig,
+  configWithDynamicListOptions,
   configWithFullAdminUiSdk,
   configWithOneScript,
+  dynamicOptionsConfigFile,
   minimalValidConfig,
 } from "#test/fixtures/config";
 import {
   EMPTY_PROJECT,
+  generatedActionsDir,
   INVALID_PROJECT,
   MINIMAL_PROJECT,
   withTempProject,
 } from "#test/fixtures/project";
-
-import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-
-const dynamicOptionsConfig = {
-  metadata: {
-    id: "dynamic-options",
-    displayName: "Dynamic Options",
-    description: "Dynamic options test",
-    version: "1.0.0",
-  },
-  businessConfig: {
-    schema: [
-      {
-        name: "paymentMethod",
-        type: "list",
-        selectionMode: "single",
-        default: "braintree",
-        options: (params: RuntimeActionParams) => [
-          {
-            label: String(params.PAYMENT_LABEL ?? "Braintree"),
-            value: "braintree",
-          },
-        ],
-      },
-    ],
-  },
-} satisfies CommerceAppConfigOutputModel;
-
-const dynamicOptionsConfigFile = `export default {
-  metadata: {
-    id: "dynamic-options",
-    displayName: "Dynamic Options",
-    description: "Dynamic options test",
-    version: "1.0.0",
-  },
-  businessConfig: {
-    schema: [{
-      name: "paymentMethod",
-      type: "list",
-      selectionMode: "single",
-      default: "braintree",
-      options: (params) => [{ label: String(params.PAYMENT_LABEL ?? "Braintree"), value: "braintree" }],
-    }],
-  },
-};`;
-
-function getActionsDir(tempDir: string, extensionPointId: string) {
-  return join(
-    tempDir,
-    getExtensionPointFolderPath(extensionPointId),
-    GENERATED_ACTIONS_PATH,
-  );
-}
 
 describe("commands/generate/actions", () => {
   afterEach(() => {
@@ -108,7 +56,7 @@ describe("commands/generate/actions", () => {
         async (tempDir) => {
           await run(minimalValidConfig, tempDir);
 
-          const actionsDir = getActionsDir(
+          const actionsDir = generatedActionsDir(
             tempDir,
             EXTENSIBILITY_EXTENSION_POINT_ID,
           );
@@ -140,7 +88,7 @@ describe("commands/generate/actions", () => {
           );
           const appConfigAction = await readFile(
             join(
-              getActionsDir(tempDir, EXTENSIBILITY_EXTENSION_POINT_ID),
+              generatedActionsDir(tempDir, EXTENSIBILITY_EXTENSION_POINT_ID),
               "app-config.js",
             ),
             "utf-8",
@@ -167,7 +115,7 @@ describe("commands/generate/actions", () => {
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
-          await run(dynamicOptionsConfig, tempDir);
+          await run(configWithDynamicListOptions, tempDir);
 
           const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
           const packageJson = JSON.parse(
@@ -175,7 +123,7 @@ describe("commands/generate/actions", () => {
           );
           const appConfigAction = await readFile(
             join(
-              getActionsDir(tempDir, EXTENSIBILITY_EXTENSION_POINT_ID),
+              generatedActionsDir(tempDir, EXTENSIBILITY_EXTENSION_POINT_ID),
               "app-config.js",
             ),
             "utf-8",
@@ -200,7 +148,7 @@ describe("commands/generate/actions", () => {
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
-          await run(dynamicOptionsConfig, tempDir);
+          await run(configWithDynamicListOptions, tempDir);
 
           const runtimeConfig = await readFile(
             join(tempDir, getRuntimeAppConfigPath()),
@@ -241,7 +189,7 @@ export default {
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
-          await run(dynamicOptionsConfig, tempDir);
+          await run(configWithDynamicListOptions, tempDir);
 
           const runtimeConfig = await readFile(
             join(tempDir, getRuntimeAppConfigPath()),
@@ -277,7 +225,7 @@ export default {
         async (tempDir) => {
           await run(configWithBusinessConfig, tempDir);
 
-          const businessActionsDir = getActionsDir(
+          const businessActionsDir = generatedActionsDir(
             tempDir,
             "commerce/configuration/1",
           );
@@ -296,7 +244,7 @@ export default {
         async (tempDir) => {
           await run(configWithOneScript, tempDir);
 
-          const actionsDir = getActionsDir(
+          const actionsDir = generatedActionsDir(
             tempDir,
             EXTENSIBILITY_EXTENSION_POINT_ID,
           );
