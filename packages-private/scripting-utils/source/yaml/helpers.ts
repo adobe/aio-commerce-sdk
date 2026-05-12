@@ -14,7 +14,15 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
-import { Document, isMap, isSeq, parseDocument, YAMLMap, YAMLSeq } from "yaml";
+import {
+  Document,
+  isMap,
+  isPair,
+  isSeq,
+  parseDocument,
+  YAMLMap,
+  YAMLSeq,
+} from "yaml";
 
 import type { Node, Pair } from "yaml";
 
@@ -131,4 +139,26 @@ export function getOrCreateMap(
     createNode: () => new YAMLMap(),
     typeName: "map",
   });
+}
+
+/**
+ * Get the existing inputs from an app-config-like YAML object.
+ * @param existingAction - The YAML map representing the existing action
+ */
+export function getExistingInputs(existingAction?: YAMLMap) {
+  const inputs = existingAction?.get("inputs");
+
+  if (!isMap(inputs)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    inputs.items.map((item) => {
+      if (!isPair(item)) {
+        return [];
+      }
+
+      return [String(item.key), item.value];
+    }),
+  );
 }

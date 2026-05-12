@@ -12,10 +12,14 @@
 
 import { writeFile } from "node:fs/promises";
 
-import { Document, YAMLMap, YAMLSeq } from "yaml";
+import { Document, isMap, YAMLMap, YAMLSeq } from "yaml";
 
 import { detectPackageManager, getExecCommand } from "#project";
-import { getOrCreateMap, getOrCreateSeq } from "#yaml/helpers";
+import {
+  getExistingInputs,
+  getOrCreateMap,
+  getOrCreateSeq,
+} from "#yaml/helpers";
 
 import type {
   ActionDefinition,
@@ -67,19 +71,18 @@ function buildWeb(extConfig: Document, web: string) {
 
 /**
  * Build the definition for a runtime action
- * @param name - The name of the action
- * @param path - The path where the action is located
- * @param action - The action definition
+ * @param action - The action definition to build
+ * @param existingAction - The existing action definition from the ext.config.yaml file, if any. This is used to preserve any user-customized inputs.
  */
 function buildActionDefinition(
   action: ActionDefinition,
   existingAction?: YAMLMap,
 ) {
   const actionDef: YAMLMap = new YAMLMap();
+  const existingInputs = getExistingInputs(existingAction);
   const managedInputs = {
     LOG_LEVEL: "$LOG_LEVEL",
   };
-  const existingInputs = getExistingInputs(existingAction);
 
   actionDef.set("function", action.function);
   actionDef.set("web", action.web ?? "yes");
@@ -89,6 +92,7 @@ function buildActionDefinition(
     ...managedInputs,
     ...(action.inputs ?? {}),
   });
+
   actionDef.set("annotations", {
     ...(action.annotations ?? {
       "require-adobe-auth": true,
@@ -115,25 +119,6 @@ function buildActionDefinition(
   }
 
   return actionDef;
-}
-
-function getExistingInputs(existingAction?: YAMLMap) {
-  const inputs = existingAction?.get("inputs");
-
-  if (!(inputs instanceof YAMLMap)) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    inputs.items.map((item) => [
-      String(item.key),
-      typeof item.value === "object" &&
-      item.value !== null &&
-      "value" in item.value
-        ? item.value.value
-        : item.value,
-    ]),
-  );
 }
 
 /**
@@ -199,7 +184,7 @@ function buildOperations(extConfig: Document, operations: Operations) {
   }
 
   const operationsMap = extConfig.getIn(["operations"]);
-  if (operationsMap instanceof YAMLMap && operationsMap.items.length === 0) {
+  if (isMap(operationsMap) && operationsMap.items.length === 0) {
     extConfig.deleteIn(["operations"]);
   }
 }
@@ -238,14 +223,15 @@ function buildRuntimeManifest(extConfig: Document, manifest: RuntimeManifest) {
     packageDef.set("actions", actions);
 
     for (const [actionName, action] of Object.entries(pkg.actions ?? {})) {
-      const existingAction =
-        existingActions instanceof YAMLMap
-          ? existingActions.get(actionName)
-          : undefined;
+      const existingAction = isMap(existingActions)
+        ? existingActions.get(actionName)
+        : undefined;
+
       const actionDef = buildActionDefinition(
         action,
-        existingAction instanceof YAMLMap ? existingAction : undefined,
+        isMap(existingAction) ? existingAction : undefined,
       );
+
       actions.set(actionName, actionDef);
     }
   }
