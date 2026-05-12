@@ -24,8 +24,6 @@ import {
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import { validateCommerceAppConfigDomain } from "#config/index";
-
 import type {
   BusinessConfigSchema,
   ConfigValue,
@@ -72,18 +70,6 @@ function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
   });
 }
 
-async function resolveConfigSchema(params: ConfigActionParams) {
-  const { configSchema } = await initialize({
-    schema: params.configSchema,
-    params,
-  });
-
-  return validateCommerceAppConfigDomain(
-    configSchema,
-    "businessConfig.schema",
-  ) as BusinessConfigSchema;
-}
-
 // The router that will hold the config routes
 const router = new HttpActionRouter<ConfigActionContext>().use(logger());
 
@@ -97,7 +83,10 @@ router.get("/", {
     const { logger, rawParams } = ctx;
 
     logger.debug("Validating configuration schema...");
-    const validatedSchema = await resolveConfigSchema(rawParams);
+    const { configSchema } = await initialize({
+      schema: rawParams.configSchema,
+      params: rawParams,
+    });
 
     const { scopeId } = req.query;
     logger.debug(`Retrieving configuration with scope id: ${scopeId}`);
@@ -107,12 +96,12 @@ router.get("/", {
 
     logger.debug("Masking password values...");
     appConfiguration.config = filterPasswordFields(
-      validatedSchema,
+      configSchema,
       appConfiguration.config,
     );
 
     return ok({
-      body: { schema: validatedSchema, values: appConfiguration },
+      body: { schema: configSchema, values: appConfiguration },
     });
   },
 });
@@ -138,8 +127,11 @@ router.put("/", {
 
     logger.debug(`Setting configuration with scope id: ${req.body.scopeId}`);
     const { scopeId, config } = req.body;
+    const { configSchema } = await initialize({
+      schema: rawParams.configSchema,
+      params: rawParams,
+    });
 
-    const validatedSchema = await resolveConfigSchema(rawParams);
     // The UI sent it to us as a masked value, which means the user didn't update it.
     const updatedFields = config.filter(
       (item) => item.value !== MASKED_PASSWORD_VALUE,
@@ -153,7 +145,7 @@ router.put("/", {
       },
     );
 
-    result.config = filterPasswordFields(validatedSchema, result.config);
+    result.config = filterPasswordFields(configSchema, result.config);
     return ok({
       body: result,
       headers: {
@@ -184,13 +176,16 @@ router.patch("/", {
 
     logger.debug(`Patching configuration with scope id: ${req.body.scopeId}`);
     const { scopeId, config } = req.body;
+    const { configSchema } = await initialize({
+      schema: rawParams.configSchema,
+      params: rawParams,
+    });
 
-    const validatedSchema = await resolveConfigSchema(rawParams);
     const result = await setConfiguration({ config }, byScopeId(scopeId), {
       encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
     });
 
-    result.config = filterPasswordFields(validatedSchema, result.config);
+    result.config = filterPasswordFields(configSchema, result.config);
     return ok({
       body: result,
       headers: { "Cache-Control": "no-store" },
