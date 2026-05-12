@@ -88,7 +88,15 @@ businessConfig: {
 
 See [assets/business-config.ts](assets/business-config.ts) for the full reference showing all field types.
 
-## Step 4 — Validate
+## Step 4 — Register the extension point
+
+Run init so that `commerce/configuration/1` is added to `app.config.yaml` and `install.yaml`, and the required `@adobe/aio-commerce-lib-config` dependency is installed. This is idempotent — safe to run even if the extension is already registered.
+
+```sh
+npx @adobe/aio-commerce-lib-app init
+```
+
+## Step 5 — Validate
 
 Build the project to confirm the updated config is valid:
 
