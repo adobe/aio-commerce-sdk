@@ -42,7 +42,9 @@ Extensibility domains other than eventing (webhooks, business config) are added 
 
      If the command fails with "product profile required" for `commerceeventing`, ask the user for the profile name and retry with `--license-config commerceeventing=<profile>`.
 
-- **Adobe Commerce as Cloud Service (ACCS instances only)**: if the Commerce backend is Adobe Commerce as Cloud Service, this service must also be added through the Developer Console UI (not available via CLI). Ask the user whether their Commerce instance is ACCS or PaaS — if ACCS, ask them to confirm the service has been added before proceeding. PaaS instances do not need this step.
+- **Adobe Commerce as Cloud Service (ACCS instances only)**: if the Commerce backend is Adobe Commerce as Cloud Service, this service must also be subscribed through the Developer Console UI (not available via CLI). Ask the user whether their Commerce instance is ACCS or PaaS. If ACCS:
+  - Offer to open the workspace: ask the user to type "open", then run `aio console workspace open` to launch the Developer Console in the browser
+  - **Do not proceed until the user explicitly confirms the service has been added**
 
 ## Step 1 — Understand intent
 
