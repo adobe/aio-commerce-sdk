@@ -16,7 +16,7 @@ import {
 } from "#modules/schema/config-schema-repository";
 import {
   hasDynamicListOptions,
-  resolveDynamicBusinessConfigSchema,
+  resolveBusinessConfigSchema,
   validateBusinessConfigSchema,
 } from "#modules/schema/utils";
 import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "#utils/constants";
@@ -37,7 +37,11 @@ import {
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { SelectorBy } from "#config-utils";
-import type { BusinessConfigSchema } from "#modules/schema/types";
+import type {
+  BusinessConfigSchema,
+  BusinessConfigSchemaOutput,
+  MaybeDynamicBusinessConfigSchema,
+} from "#modules/schema/types";
 import type { LibStateOptions } from "#utils/repository";
 import type { GetScopeTreeResult, ScopeTree } from "./modules/scope-tree";
 import type {
@@ -47,37 +51,60 @@ import type {
   SetCustomScopeTreeRequest,
 } from "./types";
 
-/** Options for initializing the configuration library, so that it works as expected. */
-export type InitializeOptions = {
-  /** Optional schema to use as the source of truth (latest version). If not provided, it will use the stored one (but only if it exists). */
-  schema?: BusinessConfigSchema;
-
+type InitializeBaseOptions = {
   /** The options for initializing the Adobe State library (used for caching). */
   libStateOptions?: LibStateOptions;
 };
 
-/** Options for initializing the configuration library with runtime params. */
-export type InitializeWithRuntimeParamsOptions = InitializeOptions & {
-  /** Schema to resolve and use as the source of truth. */
-  schema: BusinessConfigSchema;
-
-  /** Runtime action params used to resolve dynamic list options. */
-  params: RuntimeActionParams;
+/** Options for initializing the configuration library, so that it works as expected. */
+export type InitializeOptions = InitializeBaseOptions & {
+  /** Optional schema to use as the source of truth (latest version). If not provided, it will use the stored one (but only if it exists). */
+  schema?: BusinessConfigSchema;
 };
+
+/** Options for asynchronous initialization with a schema that may require runtime resolution. */
+export type InitializeAsyncOptions = InitializeBaseOptions &
+  (
+    | {
+        /** Schema to resolve and use as the source of truth. */
+        schema: MaybeDynamicBusinessConfigSchema;
+
+        /** Runtime action params used to resolve dynamic list options. */
+        params: RuntimeActionParams;
+      }
+    | {
+        /** Use the schema already stored in memory. */
+        schema?: undefined;
+
+        /** Runtime params are only accepted together with a schema. */
+        params?: undefined;
+      }
+  );
+
+type InitializeSchemaResolutionOptions = Extract<
+  InitializeAsyncOptions,
+  { schema: MaybeDynamicBusinessConfigSchema }
+>;
 
 /** Result returned after initializing the configuration library with a schema. */
 export type InitializeResult = {
   /** The concrete schema stored in global memory. */
-  configSchema: BusinessConfigSchema;
+  configSchema: BusinessConfigSchemaOutput;
 };
 
-async function initializeWithRuntimeParams({
-  params,
-  schema,
-}: InitializeWithRuntimeParamsOptions) {
-  const configSchema = await resolveDynamicBusinessConfigSchema(schema, params);
+/**
+ * Initializes the configuration library with a static schema.
+ * @param configSchema - The static business configuration schema to set globally.
+ */
+function initializeStatic(configSchema: BusinessConfigSchemaOutput) {
   setGlobalSchema(configSchema);
   return { configSchema };
+}
+
+function hasSchemaResolutionOptions(
+  options: InitializeOptions | InitializeAsyncOptions,
+): options is InitializeSchemaResolutionOptions {
+  return Boolean(options.schema && "params" in options && options.params);
 }
 
 /**
@@ -86,31 +113,31 @@ async function initializeWithRuntimeParams({
  * If no schema is provided, initialization will succeed only if a schema was previously set globally.
  * @param options - Options for initializing the configuration library.
  */
-export function initialize(
-  options: InitializeWithRuntimeParamsOptions,
-): Promise<InitializeResult>;
 export function initialize(options: InitializeOptions): InitializeResult;
 export function initialize(
-  options: InitializeOptions | InitializeWithRuntimeParamsOptions,
+  options: InitializeSchemaResolutionOptions,
+): Promise<InitializeResult>;
+export function initialize(
+  options: InitializeOptions | InitializeAsyncOptions,
 ) {
   if (options.libStateOptions) {
     setGlobalStateOptions(options.libStateOptions);
   }
 
-  if (options.schema) {
-    if ("params" in options) {
-      return initializeWithRuntimeParams(options);
-    }
+  if (hasSchemaResolutionOptions(options)) {
+    return resolveBusinessConfigSchema(options.schema, options.params).then(
+      initializeStatic,
+    );
+  }
 
+  if (options.schema) {
     if (hasDynamicListOptions(options.schema)) {
       throw new Error(
         "Dynamic list options require runtime params. Call `initialize({ schema, params })` before using configuration functions.",
       );
     }
 
-    const configSchema = validateBusinessConfigSchema(options.schema);
-    setGlobalSchema(configSchema);
-    return { configSchema };
+    return initializeStatic(validateBusinessConfigSchema(options.schema));
   }
 
   return { configSchema: requireGlobalSchema() };

@@ -4,20 +4,19 @@ import {
   getGlobalSchema,
   setGlobalSchema,
 } from "#modules/schema/config-schema-repository";
-import { VALID_CONFIGURATION } from "#test/fixtures/configuration-schema";
+import { VALID_CONFIGURATION_OUTPUT } from "#test/fixtures/configuration-schema";
 
 import type { BusinessConfigSchema } from "#modules/schema/types";
 
 describe("schema/config-schema-repository", () => {
   beforeEach(() => {
-    // Reset global schema before each test
-    setGlobalSchema(null as unknown as BusinessConfigSchema);
+    // @ts-expect-error Reset global schema before each test
+    setGlobalSchema(null);
   });
 
   describe("setGlobalSchema", () => {
     test("should set global schema", () => {
-      const schema = VALID_CONFIGURATION;
-
+      const schema = VALID_CONFIGURATION_OUTPUT;
       setGlobalSchema(schema);
 
       const result = getGlobalSchema();
@@ -25,7 +24,7 @@ describe("schema/config-schema-repository", () => {
     });
 
     test("should overwrite existing schema", () => {
-      const schema1 = VALID_CONFIGURATION;
+      const schema1 = VALID_CONFIGURATION_OUTPUT;
       const schema2 = [
         {
           name: "newField",
@@ -51,7 +50,7 @@ describe("schema/config-schema-repository", () => {
     });
 
     test("should return the schema that was set", () => {
-      const schema = VALID_CONFIGURATION;
+      const schema = VALID_CONFIGURATION_OUTPUT;
 
       setGlobalSchema(schema);
 
@@ -60,7 +59,7 @@ describe("schema/config-schema-repository", () => {
     });
 
     test("should return the same reference that was set", () => {
-      const schema = VALID_CONFIGURATION;
+      const schema = VALID_CONFIGURATION_OUTPUT;
 
       setGlobalSchema(schema);
 

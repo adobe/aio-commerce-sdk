@@ -14,7 +14,7 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { describe, expect, test } from "vitest";
 
 import {
-  resolveDynamicBusinessConfigSchema,
+  resolveBusinessConfigSchema,
   validateBusinessConfigSchema,
 } from "#modules/schema/utils";
 import {
@@ -102,7 +102,7 @@ describe("schema/utils", () => {
     });
   });
 
-  describe("resolveDynamicBusinessConfigSchema", () => {
+  describe("resolveBusinessConfigSchema", () => {
     test("should resolve sync and async list option factories with runtime params", async () => {
       const schema = validateBusinessConfigSchema([
         {
@@ -124,7 +124,7 @@ describe("schema/utils", () => {
         },
       ]);
 
-      const result = await resolveDynamicBusinessConfigSchema(schema, {
+      const result = await resolveBusinessConfigSchema(schema, {
         METHOD_LABEL: "Braintree",
         STORE_VIEW_CODE: "default",
       });
@@ -159,7 +159,7 @@ describe("schema/utils", () => {
         },
       ]);
 
-      const result = await resolveDynamicBusinessConfigSchema(schema, {});
+      const result = await resolveBusinessConfigSchema(schema, {});
 
       expect(schema[0]).toMatchObject({ options: optionsFactory });
       expect(result).not.toBe(schema);
@@ -181,12 +181,12 @@ describe("schema/utils", () => {
         },
       ]);
 
-      await expect(
-        resolveDynamicBusinessConfigSchema(schema, {}),
-      ).rejects.toThrow('Invalid options returned for list field "badOptions"');
-      await expect(
-        resolveDynamicBusinessConfigSchema(schema, {}),
-      ).rejects.toThrow(CommerceSdkValidationError);
+      await expect(resolveBusinessConfigSchema(schema, {})).rejects.toThrow(
+        'Invalid options returned for list field "badOptions"',
+      );
+      await expect(resolveBusinessConfigSchema(schema, {})).rejects.toThrow(
+        CommerceSdkValidationError,
+      );
     });
 
     test("should wrap factory errors with the field name", async () => {
@@ -202,13 +202,11 @@ describe("schema/utils", () => {
         },
       ]);
 
-      await expect(
-        resolveDynamicBusinessConfigSchema(schema, {}),
-      ).rejects.toThrow(
+      await expect(resolveBusinessConfigSchema(schema, {})).rejects.toThrow(
         'Failed to resolve options for list field "badOptions"',
       );
 
-      await resolveDynamicBusinessConfigSchema(schema, {}).catch((error) => {
+      await resolveBusinessConfigSchema(schema, {}).catch((error) => {
         expect(error).toBeInstanceOf(Error);
         expect((error as Error).cause).toEqual(
           new Error("Could not load options"),

@@ -14,7 +14,7 @@ import { describe, expect, test, vi } from "vitest";
 
 import { configRuntimeAction } from "#actions/config";
 
-import type { BusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
+import type { MaybeDynamicBusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 
 vi.mock("@adobe/aio-commerce-lib-config", async (importOriginal) => {
@@ -32,7 +32,7 @@ vi.mock("@adobe/aio-commerce-lib-config", async (importOriginal) => {
     })),
     initialize: vi.fn(async ({ params, schema }) => ({
       configSchema: params
-        ? await actual.resolveDynamicBusinessConfigSchema(schema, params)
+        ? await actual.resolveBusinessConfigSchema(schema, params)
         : schema,
     })),
     setConfiguration: vi.fn(),
@@ -80,7 +80,7 @@ describe("configRuntimeAction", () => {
           },
         ],
       },
-    ] satisfies BusinessConfigSchema;
+    ] satisfies MaybeDynamicBusinessConfigSchema;
 
     const handler = configRuntimeAction({ configSchema });
     const result = await handler(mockParams);

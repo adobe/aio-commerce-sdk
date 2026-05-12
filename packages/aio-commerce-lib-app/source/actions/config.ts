@@ -25,15 +25,16 @@ import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibo
 import * as v from "valibot";
 
 import type {
-  BusinessConfigSchema,
+  BusinessConfigSchemaOutput,
   ConfigValue,
+  MaybeDynamicBusinessConfigSchema,
 } from "@adobe/aio-commerce-lib-config";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 
 /** The arguments for the config action factory. */
 type ConfigActionFactoryArgs = {
-  configSchema: BusinessConfigSchema;
+  configSchema: MaybeDynamicBusinessConfigSchema;
 };
 
 /** The parameters for the config action. */
@@ -57,7 +58,7 @@ const MASKED_PASSWORD_VALUE = "*****";
  * @returns The filtered values.
  */
 function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
-  schema: BusinessConfigSchema,
+  schema: BusinessConfigSchemaOutput,
   values: T[],
 ) {
   return values.map((item) => {

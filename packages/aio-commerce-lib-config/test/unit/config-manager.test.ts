@@ -36,7 +36,11 @@ import * as repository from "#utils/repository";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
-import type { BusinessConfigSchema, ConfigValue } from "#index";
+import type {
+  BusinessConfigSchema,
+  ConfigValue,
+  MaybeDynamicBusinessConfigSchema,
+} from "#index";
 import type { ScopeTree } from "#modules/scope-tree/types";
 
 const MockState = createMockLibState();
@@ -117,8 +121,8 @@ describe("ConfigManager functions", () => {
   });
 
   test("throws error when schema not initialized", async () => {
-    // Clear the schema to simulate not calling initialize
-    setGlobalSchema(null as unknown as BusinessConfigSchema);
+    // @ts-expect-error - Clear the schema to simulate not calling initialize
+    setGlobalSchema(null);
 
     await expect(
       getConfiguration(byCodeAndLevel("global", "global")),
@@ -262,8 +266,8 @@ describe("ConfigManager functions", () => {
   });
 
   test("throws error when setting configuration without schema initialized", async () => {
-    // Clear the schema to simulate not calling initialize
-    setGlobalSchema(null as unknown as BusinessConfigSchema);
+    // @ts-expect-error - Clear the schema to simulate not calling initialize
+    setGlobalSchema(null);
 
     await expect(
       setConfiguration(
@@ -424,8 +428,9 @@ describe("unsyncCommerceScopes", () => {
 describe("initialize", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset global schema before each test
-    setGlobalSchema(null as unknown as BusinessConfigSchema);
+
+    // @ts-expect-error - Reset global schema before each test
+    setGlobalSchema(null);
   });
 
   test("should set global schema when schema is provided", () => {
@@ -455,7 +460,7 @@ describe("initialize", () => {
           { label: String(params.PAYMENT_LABEL), value: "braintree" },
         ],
       },
-    ] satisfies BusinessConfigSchema;
+    ] satisfies MaybeDynamicBusinessConfigSchema;
 
     const result = await initialize({
       schema: testSchema,
@@ -477,11 +482,11 @@ describe("initialize", () => {
         default: "braintree",
         options: () => [{ label: "Braintree", value: "braintree" }],
       },
-    ] satisfies BusinessConfigSchema;
+    ] satisfies MaybeDynamicBusinessConfigSchema;
 
-    expect(() => initialize({ schema: testSchema })).toThrow(
-      "Dynamic list options require runtime params",
-    );
+    expect(() =>
+      initialize({ schema: testSchema as unknown as BusinessConfigSchema }),
+    ).toThrow("Dynamic list options require runtime params");
   });
 
   test("should throw error when no schema provided and no global schema exists", () => {

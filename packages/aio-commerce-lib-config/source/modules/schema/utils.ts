@@ -20,7 +20,12 @@ import { ListOptionsSchema } from "./fields";
 import { SchemaBusinessConfig } from "./index";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
-import type { BusinessConfigSchema, ListOptionsFactory } from "./types";
+import type {
+  BusinessConfigSchema,
+  BusinessConfigSchemaOutput,
+  ListOptionsFactory,
+  MaybeDynamicBusinessConfigSchema,
+} from "./types";
 
 /**
  * Calculates schema version hash from content.
@@ -56,25 +61,31 @@ export function validateBusinessConfigSchema(value: unknown) {
  * @param schema - Schema to inspect.
  * @returns True when at least one list field uses an options factory.
  */
-export function hasDynamicListOptions(schema: BusinessConfigSchema) {
+export function hasDynamicListOptions(
+  schema: MaybeDynamicBusinessConfigSchema,
+) {
   return schema.some(
     (field) => field.type === "list" && typeof field.options === "function",
   );
 }
 
 /**
- * Resolves dynamic list options in a business configuration schema.
+ * Resolves list options in a business configuration schema.
  *
  * @param schema - Schema that may contain list option factories.
  * @param params - Runtime action params to pass to each option factory.
- * @returns A new schema with all list options resolved to arrays.
+ * @returns A concrete schema with list options resolved to arrays.
  *
  * @throws {CommerceSdkValidationError} If any resolved options are invalid.
  */
-export async function resolveDynamicBusinessConfigSchema(
-  schema: BusinessConfigSchema,
+export async function resolveBusinessConfigSchema(
+  schema: MaybeDynamicBusinessConfigSchema,
   params: RuntimeActionParams,
-): Promise<BusinessConfigSchema> {
+) {
+  if (!hasDynamicListOptions(schema)) {
+    return validateBusinessConfigSchema(schema);
+  }
+
   const resolvedFields = await Promise.all(
     schema.map(async (field) => {
       if (field.type !== "list" || typeof field.options !== "function") {
@@ -113,7 +124,7 @@ export async function resolveDynamicBusinessConfigSchema(
  * @param namespace - The namespace to get the schema from.
  * @returns Set of field names that are of type "password".
  */
-export function getPasswordFields(schema: BusinessConfigSchema) {
+export function getPasswordFields(schema: BusinessConfigSchemaOutput) {
   return new Set(
     schema
       .filter((field) => field.type === "password")

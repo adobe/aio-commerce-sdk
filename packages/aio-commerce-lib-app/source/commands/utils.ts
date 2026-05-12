@@ -30,7 +30,6 @@ import {
   RUNTIME_APP_CONFIG_FILE,
 } from "./constants";
 
-import type { BusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Format file content using prettier, inferring the parser from the file path. */
@@ -63,10 +62,7 @@ export function hasDynamicBusinessConfigSchema(
   appConfig: CommerceAppConfigOutputModel,
 ) {
   const schema = appConfig.businessConfig?.schema;
-  return (
-    Array.isArray(schema) &&
-    hasDynamicListOptions(schema as BusinessConfigSchema)
-  );
+  return Array.isArray(schema) && hasDynamicListOptions(schema);
 }
 
 /**

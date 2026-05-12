@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { resolveDynamicBusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
+import { resolveBusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
 import { ok } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
@@ -20,7 +20,6 @@ import {
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
-import type { BusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { CommerceAppConfig } from "#config/schema/app";
@@ -53,20 +52,20 @@ router.get("/", {
 
     if (hasBusinessConfigSchema(config)) {
       logger.debug("Resolving business config schema...");
-      const schema = await resolveDynamicBusinessConfigSchema(
-        config.businessConfig.schema as BusinessConfigSchema,
+      const schema = await resolveBusinessConfigSchema(
+        config.businessConfig.schema,
         rawParams,
       );
 
-      config = validateCommerceAppConfig({
+      config = {
         ...config,
         businessConfig: { ...config.businessConfig, schema },
-      });
+      };
+
       logger.debug("Successfully resolved business config schema");
     }
 
     logger.debug("Successfully validated the app config");
-
     return ok({
       body: config,
     });

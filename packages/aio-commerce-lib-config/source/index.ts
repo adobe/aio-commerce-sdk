@@ -27,7 +27,7 @@ export {
 } from "./config-utils";
 export {
   hasDynamicListOptions,
-  resolveDynamicBusinessConfigSchema,
+  resolveBusinessConfigSchema,
   SchemaBusinessConfig,
 } from "./modules/schema";
 export * from "./types";
@@ -41,9 +41,13 @@ export type {
   BusinessConfig,
   BusinessConfigSchema,
   BusinessConfigSchemaField,
+  BusinessConfigSchemaFieldOutput,
   BusinessConfigSchemaListOption,
+  BusinessConfigSchemaOutput,
   BusinessConfigSchemaValue,
   ListOptionsFactory,
   ListOptionsValue,
+  MaybeDynamicBusinessConfigSchema,
+  MaybeDynamicBusinessConfigSchemaField,
 } from "./modules/schema";
 export type { ScopeNode, ScopeTree } from "./modules/scope-tree";
