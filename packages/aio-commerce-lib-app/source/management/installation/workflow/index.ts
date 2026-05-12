@@ -67,6 +67,7 @@ export type {
   InProgressInstallationState,
   InstallationData,
   InstallationError,
+  InstallationRetryMetadata,
   InstallationState,
   InstallationStatus,
   StepStatus,

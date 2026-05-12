@@ -105,10 +105,7 @@ export async function runInstallation(
     hooks,
   });
 
-  if (retryResult.status === "succeeded") {
-    return { ...retryResult, isRetry: true };
-  }
-  return retryResult;
+  return { ...retryResult, metadata: { isRetry: true } };
 }
 
 /** Options for creating an initial uninstallation state. */

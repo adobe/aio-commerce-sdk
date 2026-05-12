@@ -194,7 +194,7 @@ function createInstallationHooks(
       logAndSave("Installation failed", state),
     onInstallationSuccess: (state: InstallationState) =>
       logAndSave(
-        state.status === "succeeded" && state.isRetry
+        state.status === "succeeded" && state.metadata?.isRetry
           ? "Installation succeeded on retry"
           : "Installation succeeded",
         state,

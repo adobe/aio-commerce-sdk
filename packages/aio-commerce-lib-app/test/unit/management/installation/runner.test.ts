@@ -323,7 +323,7 @@ describe("runInstallation — retry behavior", () => {
     vi.useRealTimers();
   });
 
-  test("should retry once and return succeeded with isRetry true when first attempt fails", async () => {
+  test("should retry once and return succeeded with metadata.isRetry true when first attempt fails", async () => {
     vi.mocked(executeWorkflow)
       .mockResolvedValueOnce(createMockFailedState())
       .mockResolvedValueOnce(createMockSucceededState());
@@ -334,8 +334,30 @@ describe("runInstallation — retry behavior", () => {
       initialState,
     });
 
-    expect(result).toMatchObject({ status: "succeeded", isRetry: true });
+    expect(result).toMatchObject({
+      status: "succeeded",
+      metadata: { isRetry: true },
+    });
+    expect((result as Record<string, unknown>).isRetry).toBeUndefined();
     expect(vi.mocked(executeWorkflow)).toHaveBeenCalledTimes(2);
+  });
+
+  test("should set metadata.isRetry true on failed result when both attempts fail", async () => {
+    const failedState = createMockFailedState();
+    vi.mocked(executeWorkflow)
+      .mockResolvedValueOnce(failedState)
+      .mockResolvedValueOnce(failedState);
+
+    const result = await runInstallation({
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(result).toMatchObject({
+      status: "failed",
+      metadata: { isRetry: true },
+    });
   });
 
   test("should not call onInstallationFailure on first failed attempt", async () => {
