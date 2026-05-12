@@ -16,25 +16,25 @@ const DEFAULT_BOOLEAN_VALUE = false as const;
 const DEFAULT_STRING_VALUE = "" as const;
 const DEFAULT_MULTIPLE_LIST_VALUE = [] as const;
 
-/** The list of supported Commerce flavors a configuration field can be scoped to. */
-export const COMMERCE_FLAVORS = ["paas", "saas"] as const;
+/** The list of supported Commerce Env a configuration field can be scoped to. */
+export const COMMERCE_ENV = ["paas", "saas"] as const;
 
-/** Schema for a single Commerce flavor a configuration field can be scoped to. */
-const CommerceFlavorSchema = v.picklist(
-  COMMERCE_FLAVORS,
-  `Expected one of: ${COMMERCE_FLAVORS.map((f) => `"${f}"`).join(", ")}`,
+/** Schema for a single Commerce Env a configuration field can be scoped to. */
+const CommerceEnvSchema = v.picklist(
+  COMMERCE_ENV,
+  `Expected one of: ${COMMERCE_ENV.map((f) => `"${f}"`).join(", ")}`,
 );
 
 /**
  * Schema for the optional `env` property used to scope a configuration field to
- * specific Commerce flavors. When omitted, the field applies to all flavors.
+ * specific Commerce Env. When omitted, the field applies to all Env.
  */
 const EnvSchema = v.pipe(
   v.array(
-    CommerceFlavorSchema,
-    "Expected an array of Commerce flavors for the field env",
+    CommerceEnvSchema,
+    "Expected an array of Commerce Env for the field env",
   ),
-  v.nonEmpty("The env array must contain at least one Commerce flavor"),
+  v.nonEmpty("The env array must contain at least one Commerce Env"),
 );
 
 /** Base schema for configuration field options with name, optional label, and optional description */

@@ -52,22 +52,22 @@ interface ConfigActionContext extends BaseContext {
 // Placeholder value for password fields.
 const MASKED_PASSWORD_VALUE = "*****";
 
-/** The set of valid Commerce flavors a configuration field can be scoped to. */
-type CommerceFlavor = "paas" | "saas";
+/** The set of valid Commerce Env a configuration field can be scoped to. */
+type CommerceEnv = "paas" | "saas";
 
 /**
  * Filters a business configuration schema to the fields applicable to the
- * given Commerce flavor. Fields without an `env` property apply to all
- * flavors and are always included.
+ * given Commerce environment. Fields without an `env` property apply to all
+ * environments and are always included.
  * @param schema - The business configuration schema to filter.
- * @param flavor - The Commerce flavor to filter by.
+ * @param env - The Commerce environment to filter by.
  */
-function filterSchemaByFlavor(
+function filterSchemaByEnv(
   schema: BusinessConfigSchema,
-  flavor: CommerceFlavor,
+  env: CommerceEnv,
 ): BusinessConfigSchema {
   return schema.filter(
-    (field) => field.env === undefined || field.env.includes(flavor),
+    (field) => field.env === undefined || field.env.includes(env),
   );
 }
 
@@ -111,10 +111,10 @@ router.get("/", {
       "businessConfig.schema",
     );
 
-    const flavor = req.query.commerceEnv;
+    const envParam = req.query.commerceEnv;
 
-    const filteredSchema = flavor
-      ? filterSchemaByFlavor(validatedSchema, flavor)
+    const filteredSchema = envParam
+      ? filterSchemaByEnv(validatedSchema, envParam)
       : validatedSchema;
 
     initialize({ schema: filteredSchema });

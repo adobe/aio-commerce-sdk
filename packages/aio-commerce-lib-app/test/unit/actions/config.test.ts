@@ -75,13 +75,8 @@ describe("configRuntimeAction (GET /)", () => {
       statusCode: 200,
     });
 
-    if (result.type !== "success") {
-      throw new Error("Expected a successful response");
-    }
-
-    if (!result.body) {
-      throw new Error("Expected response body");
-    }
+    expect.assert(result.type === "success");
+    expect.assert(result.body);
 
     const responseSchema = result.body.schema as BusinessConfigSchema;
 
@@ -116,13 +111,8 @@ describe("configRuntimeAction (GET /)", () => {
       statusCode: 200,
     });
 
-    if (result.type !== "success") {
-      throw new Error("Expected a successful response");
-    }
-
-    if (!result.body) {
-      throw new Error("Expected response body");
-    }
+    expect.assert(result.type === "success");
+    expect.assert(result.body);
 
     const responseSchema = result.body.schema as BusinessConfigSchema;
 

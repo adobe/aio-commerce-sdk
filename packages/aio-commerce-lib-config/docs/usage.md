@@ -419,11 +419,11 @@ Multiple selection example:
 > [!NOTE]
 > For `selectionMode: "multiple"`, the `default` value must be an array of strings, even if only one option is selected by default.
 
-### Conditional Fields by Commerce Flavor
+### Conditional Fields by Commerce Environment
 
-Each schema field accepts an optional `env` property to scope it to specific Commerce flavors. The value is an array of flavors (`"paas"`, `"saas"`) and accepts any combination of one or more.
+Each schema field accepts an optional `env` property to scope it to specific Commerce environment. The value is an array of env (`"paas"`, `"saas"`) and accepts any combination of one or more.
 
-When `env` is omitted, the field applies to all Commerce flavors. When `env` is set, the field is only relevant for the listed flavors and can be filtered out for the others — for example, when rendering the configuration form in App Management for a SaaS Commerce instance.
+When `env` is omitted, the field applies to all Commerce environment. When `env` is set, the field is only relevant for the listed environment and can be filtered out for the others — for example, when rendering the configuration form in App Management for a SaaS Commerce instance.
 
 ```javascript
 {
@@ -442,7 +442,7 @@ When `env` is omitted, the field applies to all Commerce flavors. When `env` is 
   name: "sharedApiKey",
   label: "Shared API Key",
   type: "password"
-  // No `env` -> applies to all Commerce flavors
+  // No `env` -> applies to all Commerce environments
 }
 ```
 
