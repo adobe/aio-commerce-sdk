@@ -24,9 +24,23 @@ Other extensibility domains (events, business config) are added separately via t
 ## Prerequisites
 
 - Verify `app.commerce.config.ts` exists in the project root. If it doesn't, stop and invoke `commerce-app-init` first.
-- **Adobe Commerce as Cloud Service (ACCS instances only)**: if the Commerce backend is Adobe Commerce as Cloud Service, this service must be subscribed in the Developer Console workspace before Commerce can invoke webhook handlers. It cannot be subscribed via CLI — ask the user whether their Commerce instance is ACCS or PaaS. If ACCS:
-  - Offer to open the workspace: ask the user to type "open", then run `aio console open` to launch the Developer Console in the browser
-  - **Do not proceed until the user explicitly confirms the service has been added**
+- **Adobe Commerce as Cloud Service (ACCS instances only)**: ask the user whether their Commerce instance is ACCS or PaaS. If ACCS, subscribe `ACCS-REST-API` via CLI before Commerce can invoke webhook handlers. First discover the available product profiles:
+
+  ```sh
+  aio console api list --json \
+    | jq '[.[] | select(.code == "ACCS-REST-API" and .type == "entp") | .properties.licenseConfigs[] | .name]'
+  ```
+
+  Then add `ACCS-REST-API` to the **full merged set** of currently-subscribed services. Quote the `CODE=PROFILE` value if the profile name contains spaces:
+
+  ```sh
+  aio console workspace api add \
+    --projectName <project> \
+    --workspaceName <workspace> \
+    --service-code <existing-codes>,ACCS-REST-API \
+    --license-config "ACCS-REST-API=<profile name>" \
+    --json
+  ```
 
 ## Step 1 — Understand intent
 
