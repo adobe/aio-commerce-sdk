@@ -16,8 +16,6 @@ import { appConfigRuntimeAction } from "#actions/app-config";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import { minimalValidConfig } from "#test/fixtures/config";
 
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-
 describe("appConfigRuntimeAction", () => {
   test("returns the validated app config for GET /", async () => {
     const handler = appConfigRuntimeAction({
@@ -34,7 +32,8 @@ describe("appConfigRuntimeAction", () => {
 
   test("returns a 500 error when the app config is invalid", async () => {
     const handler = appConfigRuntimeAction({
-      appConfig: {} as unknown as CommerceAppConfigOutputModel,
+      // @ts-expect-error - intentionally invalid app config to trigger validation failure
+      appConfig: {},
     });
 
     const result = await handler(createRuntimeActionParams());

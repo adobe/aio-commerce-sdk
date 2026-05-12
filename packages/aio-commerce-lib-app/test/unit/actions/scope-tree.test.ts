@@ -185,6 +185,25 @@ describe("scopeTreeRuntimeAction", () => {
     expect(result).toMatchObject({
       type: "success",
       statusCode: 203,
+    });
+  });
+
+  test("sets x-cache: hit header when synced commerce scopes come from cache", async () => {
+    resolveCommerceHttpClientParamsMock.mockReturnValue({});
+    syncCommerceScopesMock.mockResolvedValue({ synced: false, scopeTree });
+
+    const result = await scopeTreeRuntimeAction(
+      createRuntimeActionParams({
+        method: "post",
+        path: "/commerce",
+        body: {
+          commerceBaseUrl: "https://commerce.example.com",
+          commerceEnv: "stage",
+        },
+      }),
+    );
+
+    expect(result).toMatchObject({
       headers: { "x-cache": "hit" },
     });
   });
