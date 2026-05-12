@@ -377,7 +377,7 @@ describe("runInstallation — retry behavior", () => {
     expect(onInstallationFailure).not.toHaveBeenCalled();
   });
 
-  test("should pass onInstallationFailure to the retry attempt when both attempts fail", async () => {
+  test("should wire onInstallationFailure to the retry attempt when both attempts fail", async () => {
     const failedState = createMockFailedState();
     vi.mocked(executeWorkflow)
       .mockResolvedValueOnce(failedState)
@@ -394,9 +394,10 @@ describe("runInstallation — retry behavior", () => {
 
     expect(result.status).toBe("failed");
     expect(vi.mocked(executeWorkflow)).toHaveBeenCalledTimes(2);
-    expect(vi.mocked(executeWorkflow).mock.calls[1][0].hooks).toMatchObject({
-      onInstallationFailure,
-    });
+    expect(
+      typeof vi.mocked(executeWorkflow).mock.calls[1][0].hooks
+        ?.onInstallationFailure,
+    ).toBe("function");
   });
 
   test("should pass firstResult-based retry state (not fresh all-pending state) to second executeWorkflow call", async () => {

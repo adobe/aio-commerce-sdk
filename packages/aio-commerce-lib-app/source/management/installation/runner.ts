@@ -28,6 +28,7 @@ import type {
   InProgressInstallationState,
   InstallationContext,
   InstallationHooks,
+  InstallationState,
   SucceededInstallationState,
   ValidationContext,
 } from "./workflow";
@@ -102,7 +103,19 @@ export async function runInstallation(
     installationContext,
     config,
     initialState: retryState,
-    hooks,
+    hooks: hooks && {
+      ...hooks,
+      onInstallationSuccess: (state) =>
+        hooks.onInstallationSuccess?.({
+          ...state,
+          metadata: { isRetry: true },
+        } as InstallationState),
+      onInstallationFailure: (state) =>
+        hooks.onInstallationFailure?.({
+          ...state,
+          metadata: { isRetry: true },
+        } as InstallationState),
+    },
   });
 
   return { ...retryResult, metadata: { isRetry: true } };
