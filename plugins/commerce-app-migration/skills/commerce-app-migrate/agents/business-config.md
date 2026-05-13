@@ -26,7 +26,7 @@ You will be given:
 
 - `"secret": true` on the property → always map to `type: "password"`, regardless of other signals.
 - `"format": "password"` or `"format": "secret"` → map to `type: "password"`.
-- `"type": "boolean"` → map to `type: "list"` (use the boolean-to-list template from Type inference).
+- `"type": "boolean"` → keep as `type: "boolean"`.
 - `"type": "number"` or `"type": "integer"` → map to `type: "text"`.
 
 Also read `app.config.yaml` if it exists at the project root — the `configSchema:` block
@@ -55,10 +55,9 @@ Look for objects that define typed configuration fields. A config schema field
 typically has properties like `name`, `type`, `label`, `description`, and
 optionally `options` (for list fields) or `default`.
 
-**Valid field types (SDK-enforced):** `text` | `list` | `password` | `email` | `url` | `tel`
+**Valid field types (SDK-enforced):** `text` | `list` | `password` | `email` | `url` | `tel` | `boolean`
 
-Note: `boolean` and `number` are NOT valid types in the SDK. Use the mappings
-below when you encounter them in the source schema.
+Note: `number` is NOT a valid type in the SDK. Map it to `text` when encountered in the source schema.
 
 For each field found, create a field object (see per-type templates below).
 
@@ -68,7 +67,7 @@ If the type is not explicitly stated, infer from context:
 
 - String values with no format constraint → `"text"`
 - Numeric values (integers, floats) → `"text"` (no numeric type in SDK)
-- True/false, toggle, checkbox, enabled/disabled → `"list"` (see list template below)
+- True/false, toggle, checkbox, enabled/disabled → `"boolean"`
 - Values chosen from a fixed list of options → `"list"`
 - API keys, tokens, secrets, passwords, `secret: true` in source → `"password"`
 - Email address fields → `"email"`
@@ -103,22 +102,17 @@ If the type still cannot be determined, add an unresolved question.
       "default": "<value1>"
     }
 
-For boolean-to-list mapping (toggle/checkbox fields), use:
+**`boolean`:**
 
     {
       "name": "<field name>",
-      "type": "list",
+      "type": "boolean",
       "label": "<human-readable label>",
       "description": "<field description if available>",
-      "selectionMode": "single",
-      "options": [
-        { "label": "Enabled", "value": "true" },
-        { "label": "Disabled", "value": "false" }
-      ],
-      "default": "false"
+      "default": false
     }
 
-Adjust `default` to `"true"` or `"false"` based on the source schema's default value.
+Adjust `default` to `true` or `false` based on the source schema's default value.
 
 ---
 
