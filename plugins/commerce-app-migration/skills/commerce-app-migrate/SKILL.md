@@ -12,6 +12,15 @@ App Management approach using `@adobe/aio-commerce-lib-app`.
 This skill orchestrates the full migration: detection → domain analysis → Q&A →
 config assembly → execution. It leaves the project fully migrated and ready to deploy.
 
+### Confirmation protocol
+
+At each step marked **[await]**: end your turn immediately, output nothing further,
+and wait for the developer's reply before proceeding.
+
+**Autonomous mode:** If invoked with `--auto` or `--yes`, or the context indicates an
+automated pipeline (no interactive terminal), skip all **[await]** points and proceed
+directly to the next step.
+
 ---
 
 ## Preflight Check
@@ -81,12 +90,7 @@ Then ask:
     Does this look correct? (yes / no — if no, describe what's wrong)
     Press Enter or type "yes" to proceed automatically.
 
-**END YOUR TURN HERE. Do not call any tools. Do not proceed to Step 2.
-Your response must end with this question. Wait for the user's reply in the next turn.**
-
-**Autonomous mode exception:** If the user invoked this skill with the argument
-`--auto` or `--yes`, or if the context indicates an automated pipeline (no
-interactive terminal), skip this confirmation and proceed directly to Step 2.
+**[await]**
 
 **Handle corrections:**
 
@@ -189,8 +193,7 @@ Present all questions in a single grouped session (format defined in `${CLAUDE_S
 - For questions with `default` values, show as confirmations: "(suggested: X)"
 - Number questions sequentially across domains
 
-**END YOUR TURN HERE. Do not call any tools. Do not proceed to Step 4.
-Your response must end with these questions. Wait for the user's reply in the next turn.**
+**[await]**
 
 For each answer received:
 
@@ -269,12 +272,7 @@ Print the assembled TypeScript content to the terminal:
     Does this look correct? (yes / no — if no, which section needs updating?)
     Press Enter or type "yes" to proceed automatically.
 
-**END YOUR TURN HERE. Do not call any tools. Do not proceed to Step 5.
-Your response must end with this question. Wait for the user's reply in the next turn.**
-
-**Autonomous mode exception:** If the user invoked this skill with the argument
-`--auto` or `--yes`, or if the context indicates an automated pipeline, skip
-this confirmation and proceed directly to Step 5.
+**[await]**
 
 **Handle rejection:**
 If the developer says no, ask: "Which section needs updating? (metadata / eventing /
@@ -305,15 +303,9 @@ a rollback point (`git checkout main` to abandon the migration).
 
 ## Notes
 
-- Domain agents run **in parallel** in Step 2 — dispatch all eligible agents in a
-  single Agent tool call, not sequentially
-- The Analyzer (Step 1) and Executor (Step 5) run sequentially — everything depends
-  on the Analyzer; the Executor mutates the filesystem
-- This skill runs in the **developer's starter kit project directory**, not in the
-  migration skill repository
-- Skill files are at: `${CLAUDE_SKILL_DIR}`
-  Use this base path when reading agent files, e.g.:
-  `${CLAUDE_SKILL_DIR}/agents/analyzer.md`
+- Domain agents (Step 2) run **in parallel** — dispatch all eligible agents in one Agent tool call
+- Analyzer (Step 1) and Executor (Step 5) are sequential — Analyzer first, Executor last
+- This skill runs in the **developer's project directory**, not the migration skill repository
 
 ## Supporting Files
 
