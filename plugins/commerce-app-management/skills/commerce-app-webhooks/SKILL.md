@@ -94,6 +94,72 @@ webhooks: [
 
 See [assets/webhooks-config.ts](assets/webhooks-config.ts) for the full annotated reference.
 
+## Creating the handler action
+
+For webhook entries that use `runtimeAction`, create the action file under `src/actions/` and register it in `app.config.yaml`.
+
+### Register the action
+
+In `app.config.yaml`, add the action under `application.runtimeManifest.packages`:
+
+```yaml
+application:
+  runtimeManifest:
+    packages:
+      my-package:
+        actions:
+          validate-product:
+            function: actions/validate-product/index.js
+            web: "yes"
+            annotations:
+              require-adobe-auth: true
+```
+
+The `<package>/<action>` format in `runtimeAction` maps to this structure: `my-package/validate-product` → package `my-package`, action `validate-product`.
+
+### Handler skeleton
+
+```typescript
+// src/actions/validate-product/index.ts
+import {
+  ok,
+  successOperation,
+  exceptionOperation,
+  addOperation,
+  replaceOperation,
+  removeOperation,
+} from "@adobe/aio-commerce-lib-webhooks/responses";
+
+export async function main(params: Record<string, unknown>) {
+  // params contains the Commerce operation payload
+
+  // Allow the operation to proceed
+  return ok(successOperation());
+
+  // Block the operation (validation failure)
+  // return ok(exceptionOperation("Product SKU is required"));
+
+  // Append data to the operation result
+  // return ok(addOperation("result/custom_field", { value: "appended" }));
+
+  // Modify a field in the result
+  // return ok(replaceOperation("result/price", 99.99));
+
+  // Remove a field from the result
+  // return ok(removeOperation("result/unwanted_field"));
+}
+```
+
+Operation types:
+
+| Response                        | Effect                                          |
+| ------------------------------- | ----------------------------------------------- |
+| `successOperation()`            | Allow — operation proceeds unchanged            |
+| `exceptionOperation(message)`   | Block — operation is rejected with this message |
+| `addOperation(path, value)`     | Append data at `path` in the result             |
+| `replaceOperation(path, value)` | Replace the value at `path` in the result       |
+| `removeOperation(path)`         | Remove the field at `path` from the result      |
+
 ## Step 4 — Validate
 
 Build the project to confirm the updated config is valid:

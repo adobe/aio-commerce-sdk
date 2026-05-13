@@ -95,6 +95,48 @@ eventing: {
 
 See [assets/eventing-config.ts](assets/eventing-config.ts) for the full reference including external event sources.
 
+## Creating the handler action
+
+For events that reference runtime actions via `runtimeActions`, create the action file under `src/actions/` and register it in `app.config.yaml`.
+
+### Register the action
+
+In `app.config.yaml`, add the action under `application.runtimeManifest.packages`:
+
+```yaml
+application:
+  runtimeManifest:
+    packages:
+      my-package:
+        actions:
+          handle-order-placed:
+            function: actions/handle-order-placed/index.js
+            web: "no"
+            annotations:
+              require-adobe-auth: false
+```
+
+The `<package>/<action>` format in `runtimeActions` maps to this structure: `my-package/handle-order-placed` → package `my-package`, action `handle-order-placed`.
+
+### Handler skeleton
+
+Event handlers receive a CloudEvents-shaped payload. The event data lives in `params.data`.
+
+```typescript
+// src/actions/handle-order-placed/index.ts
+export async function main(params: Record<string, unknown>) {
+  const data = params.data as Record<string, unknown>;
+  // data contains the fields declared in the event's `fields` array
+  // (or the full payload if fields is empty)
+
+  const orderId = data["order_id"];
+
+  // process the event ...
+
+  return { statusCode: 200, body: { processed: true } };
+}
+```
+
 ## Step 4 — Validate
 
 Build the project to confirm the updated config is valid:
