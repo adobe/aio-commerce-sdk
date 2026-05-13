@@ -118,6 +118,10 @@ If `starterKitType === "unknown"`, check `extensionPointsInUse`:
       Is this an Integration Starter Kit or a Checkout Starter Kit?
       Options: [integration / checkout / adminUiSdk / custom]
 
+      Not sure? See the documentation:
+        • Integration Starter Kit: https://developer.adobe.com/commerce/extensibility/starter-kit/integration/
+        • Checkout Starter Kit:     https://developer.adobe.com/commerce/extensibility/starter-kit/checkout/
+
   Update the ProjectSnapshot with their answer before proceeding.
 
 ### Cross-cutting Warnings
@@ -327,3 +331,4 @@ Shared reference files:
 - [Schema](shared/schema.md)
 - [Questions format](shared/questions.md)
 - [Migration warnings](shared/migration-warnings.md)
+- [External references](shared/references.md)
