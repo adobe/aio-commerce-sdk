@@ -42,24 +42,6 @@ Extensibility domains other than eventing (webhooks, business config) are added 
 
      If the command fails with "product profile required" for `commerceeventing`, ask the user for the profile name and retry with `--license-config commerceeventing=<profile>`.
 
-- **Adobe Commerce as Cloud Service (ACCS instances only)**: ask the user whether their Commerce instance is ACCS or PaaS. If ACCS, subscribe `ACCS-REST-API` via CLI. First discover the available product profiles:
-
-  ```sh
-  aio console api list --json \
-    | jq '[.[] | select(.code == "ACCS-REST-API" and .type == "entp") | .properties.licenseConfigs[] | .name]'
-  ```
-
-  Then subscribe all required services in a single call. Quote the `CODE=PROFILE` value if the profile name contains spaces:
-
-  ```sh
-  aio console workspace api add \
-    --projectName <project> \
-    --workspaceName <workspace> \
-    --service-code AdobeIOManagementAPISDK,CloudIntegrationSDK,commerceeventing,ACCS-REST-API \
-    --license-config "ACCS-REST-API=<profile name>" \
-    --json
-  ```
-
 ## Step 1 — Understand intent
 
 Ask whether the user wants to configure Commerce events, external events, or both:

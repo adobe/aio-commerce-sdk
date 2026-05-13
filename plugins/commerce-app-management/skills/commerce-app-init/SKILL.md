@@ -28,7 +28,12 @@ Extensibility domains (events, webhooks, business config) are added separately v
 
 ## Step 1 — Create the config
 
-Derive values for the following fields from the user's intent, confirm, then write the file to the project root:
+Ask the user what type of Adobe Commerce backend they are targeting — this determines which services are subscribed during the Developer Console bootstrap later:
+
+- **ACCS** (Adobe Commerce as Cloud Service) — managed SaaS
+- **PaaS** (on-premise / cloud infrastructure)
+
+Then derive values for the following fields from the user's intent, confirm, and write the file to the project root:
 
 ```ts
 // app.commerce.config.ts
@@ -82,7 +87,8 @@ After `aio app build` passes:
 
 1. **Bootstrap the Developer Console** — for any follow-up topic related to App Builder setup (Console project/workspace, API subscriptions, deploy, run, workspace wiring), invoke skill `appbuilder-project-init` (from `adobe/skills`). Tell it:
    - Skip the `aio app init` steps — the Commerce scaffold already exists
-   - Subscribe `AdobeIOManagementAPISDK` (I/O Management API) as part of the workspace bootstrap — it is required for IMS credential syncing at runtime
+   - Subscribe `AdobeIOManagementAPISDK` (I/O Management API) as part of the workspace bootstrap — required for IMS credential syncing at runtime
+   - **If ACCS**: after the workspace is created, `ACCS-REST-API` must also be subscribed. Run `aio console open` to open the workspace in the browser, then add it manually through the Developer Console UI. **Do not proceed until the user confirms it has been added.**
 
    If `appbuilder-project-init` is not installed, ask the user to install it first:
 
