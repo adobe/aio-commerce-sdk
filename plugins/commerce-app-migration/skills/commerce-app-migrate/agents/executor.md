@@ -390,16 +390,16 @@ Private helpers (e.g. `formatErrorMessage`) are removed — errors now throw dir
 
 Build the package list from the table below, then run one install command.
 
-| Package                            | Install when                                                                                                                                                                  |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@adobe/aio-commerce-lib-app`      | Always                                                                                                                                                                        |
-| `@adobe/aio-commerce-sdk`          | Always                                                                                                                                                                        |
-| `@adobe/aio-commerce-lib-auth`     | `authMode` is `saas`, `paas`, or `dual` (i.e. the project authenticates with Commerce)                                                                                        |
-| `@adobe/aio-commerce-lib-api`      | Any action makes HTTP calls to Commerce or an external API (look for `got`, `node-fetch`, `fetch`, `axios`, or a custom Commerce HTTP client like `lib/adobe-commerce.js`)    |
-| `@adobe/aio-commerce-lib-core`     | Any action validates params, parses headers, or returns structured responses (look for `statusCode`/`body` response objects, `__ow_headers` access, or required-param checks) |
-| `@adobe/aio-commerce-lib-webhooks` | Assembled config has a non-empty `webhooks` array                                                                                                                             |
-| `@adobe/aio-commerce-lib-events`   | Assembled config has an `eventing` section                                                                                                                                    |
-| `@adobe/aio-commerce-lib-config`   | Assembled config has a `businessConfig` section                                                                                                                               |
+| Package                          | Install when                                    |
+| -------------------------------- | ----------------------------------------------- |
+| `@adobe/aio-commerce-lib-app`    | Always                                          |
+| `@adobe/aio-commerce-sdk`        | Always                                          |
+| `@adobe/aio-commerce-lib-config` | Assembled config has a `businessConfig` section |
+
+Note: `@adobe/aio-commerce-sdk` is an umbrella package that bundles
+`aio-commerce-lib-auth`, `aio-commerce-lib-core`, `aio-commerce-lib-api`,
+`aio-commerce-lib-events`, and `aio-commerce-lib-webhooks` as direct dependencies —
+those do not need to be installed separately.
 
 Run the appropriate command for the `packageManager` from `ProjectSnapshot`:
 
