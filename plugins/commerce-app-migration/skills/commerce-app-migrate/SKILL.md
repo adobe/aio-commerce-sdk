@@ -1,6 +1,6 @@
 ---
 name: commerce-app-migrate
-description: Migrate an Adobe Commerce App Builder project from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach. Run from the root of the App Builder project to be migrated. Pass --auto to skip confirmation prompts (suitable for CI or batch use).
+description: Migrate an Adobe Commerce App Builder project from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach. Run from the root of the App Builder project to be migrated. Pass --auto to skip confirmation prompts (suitable for CI or batch use). Use when the user wants to migrate an App Builder project from the Integration Starter Kit or Checkout Starter Kit to the App Management approach, or mentions upgrading their Adobe Commerce extension architecture.
 ---
 
 # Migrate to App Management
@@ -53,30 +53,7 @@ The Analyzer reads the current directory and returns a `ProjectSnapshot` JSON ob
     If you want to re-generate specific sections, please specify which
     section to update: metadata / eventing / installation / adminUiSdk / businessConfig
 
-Then, before stopping, check the ProjectSnapshot for any issues that exist
-regardless of migration state:
-
-**If `openWhiskTriggers` is non-empty** (even on already-migrated projects), append:
-
-    ⚠ OpenWhisk triggers still present (require manual replacement):
-      <list each trigger description>
-    These scheduled triggers are not handled by App Management and will stop
-    working after deployment. For replacement options, run the skill without
-    --auto on a non-migrated project or see the App Management migration guide.
-
-**If `hasApiGateway === true`** (even on already-migrated projects), append:
-
-    ⚠ API Gateway routes still present (require manual migration).
-    These HTTP routes have no App Management equivalent. See the API Gateway
-    migration options described in the App Management migration guide.
-
-**If `hasSequences === true`** (even on already-migrated projects), append:
-
-    ⚠ OpenWhisk sequences still present (require manual refactoring).
-    Action sequences have no equivalent in App Management. Each sequence must
-    be refactored: inline all chained action logic into a single action function.
-
-Then stop. Do not proceed further.
+Then apply any applicable Cross-cutting Warnings (see subsection below). Then stop.
 
 **If `legacyJsConfig === true`** (and `alreadyMigrated === false`): Do NOT halt.
 Append a note to the human-readable summary printed after the analyzer returns:
@@ -100,69 +77,12 @@ After the Analyzer returns, print a human-readable summary:
 
     Migration will include: <list domains where confidence !== "none">
 
-**If `openWhiskTriggers` is non-empty**, append a warning section:
+Apply any applicable Cross-cutting Warnings (see subsection below).
 
-    ⚠ OpenWhisk triggers detected (cannot be auto-migrated):
-      <list each trigger description>
-
-    These scheduled triggers have no direct equivalent in App Management.
-    Manual replacement options (choose one per trigger):
-
-    Option A — AIO Events recurring event (recommended for Commerce-integrated workflows):
-      Use Adobe I/O Events scheduler to emit a recurring custom event that your
-      consumer action subscribes to. See:
-      https://developer.adobe.com/events/docs/guides/using/scheduling/
-
-    Option B — Adobe Commerce Scheduled Jobs (Cron):
-      If the trigger action calls back into Commerce, implement the logic as a
-      Commerce module cron job (Magento\Cron\Model\Config\Backend\Cron).
-      This keeps scheduling within Commerce without external dependencies.
-
-    Option C — External cron + REST API invocation:
-      Use any external scheduler (GitHub Actions schedule, AWS EventBridge, cron server)
-      to POST to the App Builder action's web URL on a schedule:
-        curl -X POST https://<runtime-ns>.adobeioruntime.net/api/v1/web/<ns>/<pkg>/<action> \
-          -H "Authorization: Bearer $AIO_TOKEN"
-
-    Note: AIO runtime actions must be web-accessible (web: 'yes') and authenticated
-    to be invoked this way.
-
-**If `hasMeshConfig === true`**, append a warning:
+**If `hasMeshConfig === true`**, also append:
 
     ⚠ API Mesh configuration detected (mesh.json).
     Mesh configuration cannot be migrated automatically and must be preserved manually.
-
-**If `hasApiGateway === true`**, append a warning:
-
-    ⚠ OpenWhisk API Gateway routes detected (apis: blocks in runtime manifest).
-    These synchronous HTTP REST endpoints have no direct equivalent in App Management.
-
-    Manual migration options:
-
-    Option A — Adobe API Mesh (recommended for REST/GraphQL proxying):
-      Replace API Gateway routes with Adobe API Mesh resolvers.
-      Mesh handles routing, auth, and rate limiting natively.
-      See: https://developer.adobe.com/graphql-mesh-gateway/
-
-    Option B — Web action with direct URL invocation:
-      Convert the action to a standard web action (web: 'yes') and invoke it
-      directly via its App Builder runtime URL. You lose the API Gateway path
-      mapping but retain the action logic.
-
-    Option C — Commerce API Mesh + REST route:
-      For Commerce-facing REST endpoints, implement as a Commerce module plugin
-      that exposes a REST endpoint in the Commerce API surface.
-
-    Each `apis:` block in the runtime manifest corresponds to one route that
-    needs manual re-implementation before the migrated app can fully replace
-    the original.
-
-**If `hasSequences === true`**, append a warning:
-
-    ⚠ OpenWhisk sequences detected.
-    Action sequences (chained action calls) have no equivalent in App Management.
-    Each sequence must be manually refactored: inline all chained action logic
-    into a single action function, or use explicit function calls within one action.
 
 Then ask:
 
@@ -207,6 +127,36 @@ If `starterKitType === "unknown"`, check `extensionPointsInUse`:
       Options: [integration / checkout / adminUiSdk / custom]
 
   Update the ProjectSnapshot with their answer before proceeding.
+
+### Cross-cutting Warnings
+
+Apply these whenever the corresponding field is set in the ProjectSnapshot, regardless
+of migration state. Append each matching block to whatever output is currently being built.
+
+**If `openWhiskTriggers` is non-empty**, append:
+
+    ⚠ OpenWhisk triggers detected (cannot be auto-migrated):
+      <list each trigger description>
+    These scheduled triggers have no direct equivalent in App Management.
+
+Read `${CLAUDE_SKILL_DIR}/shared/migration-warnings.md` (OpenWhisk Triggers section)
+and present the replacement options to the developer.
+
+**If `hasApiGateway === true`**, append:
+
+    ⚠ OpenWhisk API Gateway routes detected (apis: blocks in runtime manifest).
+    These HTTP routes have no direct equivalent in App Management.
+
+Read `${CLAUDE_SKILL_DIR}/shared/migration-warnings.md` (API Gateway section)
+and present the migration options to the developer.
+
+**If `hasSequences === true`**, append:
+
+    ⚠ OpenWhisk sequences detected.
+    Action sequences have no equivalent in App Management.
+
+Read `${CLAUDE_SKILL_DIR}/shared/migration-warnings.md` (Sequences section)
+and present the refactoring guidance to the developer.
 
 ---
 
@@ -368,3 +318,20 @@ a rollback point (`git checkout main` to abandon the migration).
 - Skill files are at: `${CLAUDE_SKILL_DIR}`
   Use this base path when reading agent files, e.g.:
   `${CLAUDE_SKILL_DIR}/agents/analyzer.md`
+
+## Supporting Files
+
+Agent files dispatched by this skill:
+
+- [Analyzer](agents/analyzer.md)
+- [Events](agents/events.md)
+- [Webhooks](agents/webhooks.md)
+- [Admin UI SDK](agents/admin-ui-sdk.md)
+- [Business Config](agents/business-config.md)
+- [Executor](agents/executor.md)
+
+Shared reference files:
+
+- [Schema](shared/schema.md)
+- [Questions format](shared/questions.md)
+- [Migration warnings](shared/migration-warnings.md)
