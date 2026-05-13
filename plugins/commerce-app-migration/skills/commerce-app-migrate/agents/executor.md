@@ -599,14 +599,28 @@ exists, or create `install.yaml` if neither exists.**
 
 ## Step 8: Add postinstall hook to package.json
 
+Determine the exec prefix from `packageManager` in the ProjectSnapshot:
+
+| packageManager | exec prefix |
+| -------------- | ----------- |
+| `npm`          | `npx`       |
+| `pnpm`         | `pnpm exec` |
+| `yarn`         | `yarn exec` |
+| `bun`          | `bunx`      |
+
 Read `package.json`. In the `scripts` section, add or update the `postinstall`
-script:
+script using the exec prefix:
 
-    "postinstall": "./node_modules/.bin/aio-commerce-lib-app hooks postinstall"
+    "postinstall": "<exec prefix> aio-commerce-lib-app hooks postinstall"
 
-If a `postinstall` script already exists, append with `&&`:
+For example, for an npm project:
 
-    "<existing command> && ./node_modules/.bin/aio-commerce-lib-app hooks postinstall"
+    "postinstall": "npx aio-commerce-lib-app hooks postinstall"
+
+If a `postinstall` script already exists and does not already contain
+`aio-commerce-lib-app hooks postinstall`, append with `&&`:
+
+    "<existing command> && <exec prefix> aio-commerce-lib-app hooks postinstall"
 
 Write the updated `package.json` back. Preserve all other fields exactly.
 
