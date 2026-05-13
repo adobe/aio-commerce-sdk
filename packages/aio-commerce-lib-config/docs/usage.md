@@ -419,6 +419,27 @@ Multiple selection example:
 > [!NOTE]
 > For `selectionMode: "multiple"`, the `default` value must be an array of strings, even if only one option is selected by default.
 
+List options can also be resolved at runtime by providing a function for `options`. The function receives the App Builder runtime action `params` for the action resolving the schema, so any required credentials or inputs must be declared on each generated action that needs to resolve the options.
+
+If the function throws or resolves to anything other than a valid list of `{ label, value }` options, schema resolution fails. The generated runtime actions return that failure as an action error; custom code that resolves schemas manually may catch and handle the error differently.
+
+```javascript
+{
+  name: "paymentMethod",
+  label: "Default Payment Method",
+  type: "list",
+  selectionMode: "single",
+  options: async (params) => {
+    const methods = await fetchPaymentMethods(params.PAYMENT_API_KEY);
+    return methods.map((method) => ({
+      label: method.title,
+      value: method.code,
+    }));
+  },
+  default: "checkmo"
+}
+```
+
 ## CLI Commands
 
 The library provides CLI commands to help manage encryption for password fields:

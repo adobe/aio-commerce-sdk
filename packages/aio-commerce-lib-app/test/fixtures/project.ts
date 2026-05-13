@@ -26,7 +26,12 @@ import {
   PACKAGE_NAME,
 } from "#commands/constants";
 import { runGeneration } from "#commands/init/lib";
-import { getActionPath, getManifestPath, getSchemaPath } from "#commands/utils";
+import {
+  getActionPath,
+  getActionsDir,
+  getManifestPath,
+  getSchemaPath,
+} from "#commands/utils";
 
 import { makeTemplateFiles } from "./commands";
 import { configWithBusinessConfig, minimalValidConfig } from "./config";
@@ -149,6 +154,11 @@ export function generatedManifestFile(tempDir: string) {
 /** Absolute path to the generated configuration schema file inside a temp project. */
 export function generatedSchemaFile(tempDir: string) {
   return join(tempDir, getSchemaPath());
+}
+
+/** Absolute path to the generated actions directory for an extension point inside a temp project. */
+export function generatedActionsDir(tempDir: string, extensionPointId: string) {
+  return join(tempDir, getActionsDir(extensionPointId));
 }
 
 /**

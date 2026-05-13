@@ -12,12 +12,20 @@
 
 import { createHash } from "node:crypto";
 
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 import stringify from "safe-stable-stringify";
 
+import { ListOptionsSchema } from "./fields";
 import { SchemaBusinessConfig } from "./index";
 
-import type { BusinessConfigSchema } from "./types";
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+import type {
+  BusinessConfigSchema,
+  BusinessConfigSchemaOutput,
+  ListOptionsFactory,
+  MaybeDynamicBusinessConfigSchema,
+} from "./types";
 
 /**
  * Calculates schema version hash from content.
@@ -44,10 +52,80 @@ export function calculateSchemaVersion(schema: BusinessConfigSchema): string {
  * @throws {CommerceSdkValidationError} If the schema is invalid.
  */
 export function validateBusinessConfigSchema(value: unknown) {
-  return parseOrThrow(
-    SchemaBusinessConfig.entries.schema,
-    value,
-  ) satisfies BusinessConfigSchema;
+  return parseOrThrow(SchemaBusinessConfig.entries.schema, value);
+}
+
+/**
+ * Checks whether a business configuration schema contains dynamic list options.
+ *
+ * @param schema - Schema to inspect.
+ * @returns True when at least one list field uses an options factory.
+ */
+export function hasDynamicListOptions(
+  schema: MaybeDynamicBusinessConfigSchema,
+) {
+  return schema.some(
+    (field) => field.type === "list" && typeof field.options === "function",
+  );
+}
+
+/**
+ * Checks whether a business configuration schema contains runtime-resolved values.
+ *
+ * @param schema - Schema to inspect.
+ * @returns True when at least one field requires runtime resolution.
+ */
+export function hasDynamicSchema(schema: MaybeDynamicBusinessConfigSchema) {
+  return hasDynamicListOptions(schema);
+}
+
+/**
+ * Resolves list options in a business configuration schema.
+ *
+ * @param schema - Schema that may contain list option factories.
+ * @param params - Runtime action params to pass to each option factory.
+ * @returns A concrete schema with list options resolved to arrays.
+ *
+ * @throws {CommerceSdkValidationError} If any resolved options are invalid.
+ */
+export async function resolveBusinessConfigSchema(
+  schema: MaybeDynamicBusinessConfigSchema,
+  params: RuntimeActionParams,
+) {
+  if (!hasDynamicListOptions(schema)) {
+    return validateBusinessConfigSchema(schema);
+  }
+
+  const resolvedFields = await Promise.all(
+    schema.map(async (field) => {
+      if (field.type !== "list" || typeof field.options !== "function") {
+        return field;
+      }
+
+      try {
+        const options = await (field.options as ListOptionsFactory)(params);
+        return {
+          ...field,
+          options: parseOrThrow(
+            ListOptionsSchema,
+            options,
+            `Invalid options returned for list field "${field.name}"`,
+          ),
+        };
+      } catch (error) {
+        if (error instanceof CommerceSdkValidationError) {
+          throw error;
+        }
+
+        throw new Error(
+          `Failed to resolve options for list field "${field.name}"`,
+          { cause: error },
+        );
+      }
+    }),
+  );
+
+  return validateBusinessConfigSchema(resolvedFields);
 }
 
 /**
@@ -56,7 +134,7 @@ export function validateBusinessConfigSchema(value: unknown) {
  * @param namespace - The namespace to get the schema from.
  * @returns Set of field names that are of type "password".
  */
-export function getPasswordFields(schema: BusinessConfigSchema) {
+export function getPasswordFields(schema: BusinessConfigSchemaOutput) {
   return new Set(
     schema
       .filter((field) => field.type === "password")

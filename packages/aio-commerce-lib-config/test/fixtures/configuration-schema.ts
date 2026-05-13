@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { validateBusinessConfigSchema } from "#modules/schema/utils";
+
 import type { BusinessConfigSchema } from "#modules/schema/types";
 
 export const VALID_CONFIGURATION = [
@@ -98,6 +100,10 @@ export const VALID_CONFIGURATION = [
     label: "Optional Toggle",
   },
 ] satisfies BusinessConfigSchema;
+
+// Pass a valid *input* schema through validation to get the expected *output* schema with transformations (e.g., defaults) applied
+export const VALID_CONFIGURATION_OUTPUT =
+  validateBusinessConfigSchema(VALID_CONFIGURATION);
 
 export const INVALID_CONFIGURATION = [
   {

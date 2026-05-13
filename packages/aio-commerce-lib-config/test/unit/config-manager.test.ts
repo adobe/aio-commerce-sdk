@@ -35,7 +35,12 @@ import { createMockLibState } from "#test/mocks/lib-state";
 import * as repository from "#utils/repository";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
-import type { BusinessConfigSchema, ConfigValue } from "#index";
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+import type {
+  BusinessConfigSchema,
+  ConfigValue,
+  MaybeDynamicBusinessConfigSchema,
+} from "#index";
 import type { ScopeTree } from "#modules/scope-tree/types";
 
 const MockState = createMockLibState();
@@ -116,8 +121,8 @@ describe("ConfigManager functions", () => {
   });
 
   test("throws error when schema not initialized", async () => {
-    // Clear the schema to simulate not calling initialize
-    setGlobalSchema(null as unknown as BusinessConfigSchema);
+    // @ts-expect-error - Clear the schema to simulate not calling initialize
+    setGlobalSchema(null);
 
     await expect(
       getConfiguration(byCodeAndLevel("global", "global")),
@@ -261,8 +266,8 @@ describe("ConfigManager functions", () => {
   });
 
   test("throws error when setting configuration without schema initialized", async () => {
-    // Clear the schema to simulate not calling initialize
-    setGlobalSchema(null as unknown as BusinessConfigSchema);
+    // @ts-expect-error - Clear the schema to simulate not calling initialize
+    setGlobalSchema(null);
 
     await expect(
       setConfiguration(
@@ -423,8 +428,9 @@ describe("unsyncCommerceScopes", () => {
 describe("initialize", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset global schema before each test
-    setGlobalSchema(null as unknown as BusinessConfigSchema);
+
+    // @ts-expect-error - Reset global schema before each test
+    setGlobalSchema(null);
   });
 
   test("should set global schema when schema is provided", () => {
@@ -437,10 +443,50 @@ describe("initialize", () => {
       },
     ] satisfies BusinessConfigSchema;
 
-    initialize({ schema: testSchema });
+    const result = initialize({ schema: testSchema });
 
-    const storedSchema = getGlobalSchema();
-    expect(storedSchema).toEqual(testSchema);
+    expect(result.configSchema).toEqual(testSchema);
+    expect(getGlobalSchema()).toEqual(testSchema);
+  });
+
+  test("should resolve dynamic list options when runtime params are provided", async () => {
+    const testSchema = [
+      {
+        name: "paymentMethod",
+        type: "list",
+        selectionMode: "single",
+        default: "braintree",
+        options: (params: RuntimeActionParams) => [
+          { label: String(params.PAYMENT_LABEL), value: "braintree" },
+        ],
+      },
+    ] satisfies MaybeDynamicBusinessConfigSchema;
+
+    const result = await initialize({
+      schema: testSchema,
+      params: { PAYMENT_LABEL: "Braintree" },
+    });
+
+    expect(result.configSchema[0]).toMatchObject({
+      options: [{ label: "Braintree", value: "braintree" }],
+    });
+    expect(getGlobalSchema()).toEqual(result.configSchema);
+  });
+
+  test("should reject dynamic list options when runtime params are missing", () => {
+    const testSchema = [
+      {
+        name: "paymentMethod",
+        type: "list",
+        selectionMode: "single",
+        default: "braintree",
+        options: () => [{ label: "Braintree", value: "braintree" }],
+      },
+    ] satisfies MaybeDynamicBusinessConfigSchema;
+
+    expect(() =>
+      initialize({ schema: testSchema as unknown as BusinessConfigSchema }),
+    ).toThrow("Dynamic list options require runtime params");
   });
 
   test("should throw error when no schema provided and no global schema exists", () => {
@@ -485,8 +531,9 @@ describe("initialize", () => {
     // Verify schema was set
     expect(getGlobalSchema()).toEqual(existingSchema);
 
-    // Second initialize without schema should succeed
-    expect(() => initialize({})).not.toThrow();
+    // Second initialize without schema should succeed and return the stored schema
+    const result = initialize({});
+    expect(result.configSchema).toEqual(existingSchema);
 
     // Schema should still be the same
     expect(getGlobalSchema()).toEqual(existingSchema);

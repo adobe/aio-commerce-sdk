@@ -17,13 +17,10 @@ import {
   findNearestPackageJson,
   findUp,
 } from "@aio-commerce-sdk/scripting-utils/project";
-import { createJiti } from "jiti";
 
 import { validateCommerceAppConfig } from "./validate";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-
-const jiti = createJiti(import.meta.url);
 
 // Config paths to search for. In order of likely appearance to speed up the check.
 const configPaths = Object.freeze([
@@ -96,6 +93,8 @@ export async function readCommerceAppConfig(
   type ImportedConfig = { default: unknown };
   let config: ImportedConfig | null = null;
   try {
+    const { createJiti } = await import("jiti");
+    const jiti = createJiti(import.meta.url);
     config = await jiti.import<ImportedConfig>(configFilePath);
   } catch (error) {
     const message = stringifyError(error);

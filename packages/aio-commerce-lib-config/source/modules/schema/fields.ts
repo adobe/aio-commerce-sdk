@@ -12,6 +12,8 @@
 
 import * as v from "valibot";
 
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+
 const DEFAULT_BOOLEAN_VALUE = false as const;
 const DEFAULT_STRING_VALUE = "" as const;
 const DEFAULT_MULTIPLE_LIST_VALUE = [] as const;
@@ -29,10 +31,31 @@ const BaseOptionSchema = v.object({
 });
 
 /** Schema for a single option in a list field, containing a display label and a value */
-const ListOptionSchema = v.object({
+export const ListOptionSchema = v.object({
   label: v.string("Expected a string for the option label"),
   value: v.string("Expected a string for the option value"),
 });
+
+/** Schema for an array of list field options. */
+export const ListOptionsSchema = v.array(
+  ListOptionSchema,
+  "Expected an array of list options",
+);
+
+type ListOptionsFactoryInput = (
+  params: RuntimeActionParams,
+) =>
+  | v.InferOutput<typeof ListOptionsSchema>
+  | Promise<v.InferOutput<typeof ListOptionsSchema>>;
+
+/** Schema for static or dynamic list field options. */
+const ListOptionsValueSchema = v.union([
+  ListOptionsSchema,
+  v.custom<ListOptionsFactoryInput>(
+    (input) => typeof input === "function",
+    'Expected an array or factory function for "options"',
+  ),
+]);
 
 /** Schema for a list field that allows single selection from a list of options */
 const SingleListSchema = v.object({
@@ -43,7 +66,7 @@ const SingleListSchema = v.object({
     "single",
     "Expected the selectionMode to be 'single'",
   ),
-  options: v.array(ListOptionSchema, "Expected an array of list options"),
+  options: ListOptionsValueSchema,
   default: v.pipe(
     v.string("Expected a string for the default value"),
     v.nonEmpty("The default value must not be empty"),
@@ -59,7 +82,7 @@ const MultipleListSchema = v.object({
     "multiple",
     "Expected the selectionMode to be 'multiple'",
   ),
-  options: v.array(ListOptionSchema, "Expected an array of list options"),
+  options: ListOptionsValueSchema,
   default: v.optional(
     v.array(
       v.pipe(

@@ -26,6 +26,7 @@ import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 import openwhisk from "openwhisk";
 import { object, string } from "valibot";
 
+import { validateCommerceAppConfig } from "#config/lib/validate";
 import {
   createInitialInstallationState,
   createInitialUninstallationState,
@@ -42,7 +43,10 @@ import { AppDataSchema } from "#management/installation/schema";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type {
+  CommerceAppConfig,
+  CommerceAppConfigOutputModel,
+} from "#config/schema/app";
 import type { InstallationContext, ValidationContext } from "#management/index";
 import type { StepFailedEvent } from "#management/installation/workflow/hooks";
 import type {
@@ -60,13 +64,15 @@ type CustomScriptsLoader = (
 
 /** Arguments for the runtime action factory. */
 type RuntimeActionFactoryArgs = {
-  appConfig: CommerceAppConfigOutputModel;
+  appConfig: CommerceAppConfig;
   customScriptsLoader?: CustomScriptsLoader;
 };
 
 /** Params received by all handlers. */
-type RuntimeActionArgs = InstallationContext["params"] &
-  RuntimeActionFactoryArgs;
+type RuntimeActionArgs = InstallationContext["params"] & {
+  appConfig: CommerceAppConfigOutputModel;
+  customScriptsLoader?: CustomScriptsLoader;
+};
 
 /** The context for the installation action. */
 interface InstallationActionContext extends BaseContext {
@@ -602,7 +608,7 @@ export const installationRuntimeAction =
     const handler = router.handler();
     return await handler({
       ...params,
-      appConfig,
+      appConfig: validateCommerceAppConfig(appConfig),
       customScriptsLoader,
     });
   };

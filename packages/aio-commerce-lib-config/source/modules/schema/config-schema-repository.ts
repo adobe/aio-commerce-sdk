@@ -10,17 +10,17 @@
  * governing permissions and limitations under the License.
  */
 
-import type { BusinessConfigSchema } from "./types";
+import type { BusinessConfigSchemaOutput } from "./types";
 
 // Global in-memory schema storage
-let __globalSchema: BusinessConfigSchema | null = null;
+let __globalSchema: BusinessConfigSchemaOutput | null = null;
 
 /**
  * Sets the global schema in memory.
  *
  * @param schema - Schema to store in memory.
  */
-export function setGlobalSchema(schema: BusinessConfigSchema): void {
+export function setGlobalSchema(schema: BusinessConfigSchemaOutput): void {
   __globalSchema = schema;
 }
 
@@ -29,7 +29,7 @@ export function setGlobalSchema(schema: BusinessConfigSchema): void {
  *
  * @returns The schema stored in memory or null if not set.
  */
-export function getGlobalSchema(): BusinessConfigSchema | null {
+export function getGlobalSchema(): BusinessConfigSchemaOutput | null {
   return __globalSchema;
 }
 
@@ -39,7 +39,7 @@ export function getGlobalSchema(): BusinessConfigSchema | null {
  * @returns The schema stored in memory.
  * @throws Error if schema has not been initialized.
  */
-export function requireGlobalSchema(): BusinessConfigSchema {
+export function requireGlobalSchema(): BusinessConfigSchemaOutput {
   const schema = __globalSchema;
 
   if (!schema) {

@@ -12,6 +12,7 @@
 
 import { join } from "node:path";
 
+import { hasDynamicSchema } from "@adobe/aio-commerce-lib-config";
 import consola from "consola";
 import * as prettier from "prettier";
 
@@ -26,7 +27,10 @@ import {
   GENERATED_ACTIONS_PATH,
   GENERATED_PATH,
   getExtensionPointFolderPath,
+  RUNTIME_APP_CONFIG_FILE,
 } from "./constants";
+
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Format file content using prettier, inferring the parser from the file path. */
 export function prettierFormat(content: string, filepath: string) {
@@ -51,6 +55,14 @@ export async function loadAppManifest() {
   consola.debug("Loaded app commerce config");
 
   return appConfig;
+}
+
+/** Check whether the app config uses dynamic business configuration list options. */
+export function hasDynamicBusinessConfigSchema(
+  appConfig: CommerceAppConfigOutputModel,
+) {
+  const schema = appConfig.businessConfig?.schema;
+  return Array.isArray(schema) && hasDynamicSchema(schema);
 }
 
 /**
@@ -113,6 +125,14 @@ export function getManifestPath() {
   return join(
     getGeneratedDir(EXTENSIBILITY_EXTENSION_POINT_ID),
     APP_MANIFEST_FILE,
+  );
+}
+
+/** Path to the generated runtime-safe app config module, relative to the project root. */
+export function getRuntimeAppConfigPath() {
+  return join(
+    getGeneratedDir(EXTENSIBILITY_EXTENSION_POINT_ID),
+    RUNTIME_APP_CONFIG_FILE,
   );
 }
 

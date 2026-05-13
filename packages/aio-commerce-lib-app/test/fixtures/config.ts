@@ -1,5 +1,13 @@
+import {
+  schemaWithDynamicListOptions,
+  schemaWithStaticListOptions,
+} from "#test/fixtures/business-config";
+
 import type { ApplicationMetadata } from "#config/index";
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type {
+  CommerceAppConfig,
+  CommerceAppConfigOutputModel,
+} from "#config/schema/app";
 
 /** Base metadata for test configs. */
 export const mockMetadata = {
@@ -459,6 +467,51 @@ export function createCommerceEventConfig(
     },
   };
 }
+
+/** App config with no businessConfig section. */
+export const appConfigWithoutBusinessConfig = {
+  metadata: mockMetadata,
+} satisfies CommerceAppConfig;
+
+/** App config whose business config schema uses only static list options. */
+export const appConfigWithStaticListOptions = {
+  metadata: { ...mockMetadata, id: "static-list-options-app" },
+  businessConfig: { schema: schemaWithStaticListOptions },
+} satisfies CommerceAppConfig;
+
+/** App config whose business config schema uses dynamic list options (factory functions). */
+export const appConfigWithDynamicListOptions = {
+  metadata: { ...mockMetadata, id: "dynamic-list-options-app" },
+  businessConfig: { schema: schemaWithDynamicListOptions },
+} satisfies CommerceAppConfig;
+
+/** Config fixture with dynamic business config list options (for codegen integration tests). */
+export const configWithDynamicListOptions = {
+  metadata: { ...mockMetadata, id: "dynamic-list-options-app" },
+  businessConfig: { schema: schemaWithDynamicListOptions },
+} satisfies CommerceAppConfigOutputModel;
+
+/**
+ * JS source file content for a config with dynamic list options — written to disk
+ * as `app.commerce.config.js` in temp project fixtures for integration tests.
+ */
+export const dynamicOptionsConfigFile = `export default {
+  metadata: {
+    id: "dynamic-options",
+    displayName: "Dynamic Options",
+    description: "Dynamic options test",
+    version: "1.0.0",
+  },
+  businessConfig: {
+    schema: [{
+      name: "paymentMethod",
+      type: "list",
+      selectionMode: "single",
+      default: "braintree",
+      options: () => [{ label: "Braintree", value: "braintree" }],
+    }],
+  },
+};`;
 
 export function createConfigWithTwoCommerceEventingSources() {
   return {

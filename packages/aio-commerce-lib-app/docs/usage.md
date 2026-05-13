@@ -84,14 +84,15 @@ This produces the following files, organized by extension point:
 
 **`commerce/extensibility/1`**: App management:
 
-- `src/commerce-extensibility-1/.generated/app.commerce.manifest.json`: a validated JSON representation of your app config
+- `src/commerce-extensibility-1/.generated/app.commerce.manifest.json`: a validated JSON representation of your app config when generated actions can use static JSON
+- `src/commerce-extensibility-1/.generated/app.commerce.config.js`: runtime-safe JavaScript app config module used by generated actions when business configuration list options are dynamic
 - `src/commerce-extensibility-1/.generated/actions/app-management/app-config.js`: serves the app configuration to the App Management UI
 - `src/commerce-extensibility-1/.generated/actions/app-management/installation.js`: drives the installation flow, including any custom scripts you define
 - `src/commerce-extensibility-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
 **`commerce/configuration/1`**: Business configuration (generated when `businessConfig` is defined):
 
-- `src/commerce-configuration-1/.generated/configuration-schema.json`: a validated JSON representation of your schema for runtime use
+- `src/commerce-configuration-1/.generated/configuration-schema.json`: a validated JSON representation of your schema when generated actions can use static JSON
 - `src/commerce-configuration-1/.generated/actions/business-configuration/config.js`: handles retrieving and updating configuration values across scopes
 - `src/commerce-configuration-1/.generated/actions/business-configuration/scope-tree.js`: handles scope hierarchy management for both Adobe Commerce and custom external scopes
 - `src/commerce-configuration-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
@@ -188,6 +189,8 @@ businessConfig: {
 ```
 
 For detailed information about available field types and their usage, see the [`@adobe/aio-commerce-lib-config` documentation](../../aio-commerce-lib-config/docs/usage.md#field-types).
+
+List fields can use dynamic `options` by providing a function. Generated runtime actions resolve that function with their own App Builder action `params`, so any inputs or secrets used by the function must be declared on each action that resolves the business configuration schema. If an options function throws, the runtime action fails instead of returning a partially resolved schema.
 
 #### Eventing Configuration
 

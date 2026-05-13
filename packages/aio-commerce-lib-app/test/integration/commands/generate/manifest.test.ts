@@ -34,6 +34,7 @@ import {
   withTempProject,
 } from "#test/fixtures/project";
 
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 function sha256(content: string) {
@@ -58,6 +59,46 @@ describe("commands/generate/manifest", () => {
         const contents = await readFile(getManifestPath(tempDir), "utf-8");
         expect(JSON.parse(contents)).toEqual(minimalValidConfig);
       });
+    });
+
+    test("removes manifest JSON when list options are dynamic", async () => {
+      const dynamicConfig = {
+        ...minimalValidConfig,
+        businessConfig: {
+          schema: [
+            {
+              name: "paymentMethod",
+              type: "list",
+              selectionMode: "single",
+              default: "braintree",
+              options: (params: RuntimeActionParams) => [
+                {
+                  label: String(params.PAYMENT_LABEL ?? "Braintree"),
+                  value: "braintree",
+                },
+              ],
+            },
+          ],
+        },
+      } satisfies CommerceAppConfigOutputModel;
+
+      await withTempProject(
+        {
+          ...EMPTY_PROJECT,
+          [join(
+            getExtensionPointFolderPath(EXTENSIBILITY_EXTENSION_POINT_ID),
+            ".generated",
+            APP_MANIFEST_FILE,
+          )]: "{}",
+        },
+        async (tempDir) => {
+          await run(dynamicConfig);
+
+          await expect(
+            readFile(getManifestPath(tempDir), "utf-8"),
+          ).rejects.toThrow();
+        },
+      );
     });
 
     test("produces identical checksum for equivalent configs with different key order", async () => {

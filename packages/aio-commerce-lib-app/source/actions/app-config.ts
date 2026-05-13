@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { resolveBusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
 import { ok } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
@@ -17,14 +18,15 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
+import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { CommerceAppConfig } from "#config/schema/app";
 
 /** Arguments for the runtime action factory. */
 type RuntimeActionFactoryArgs = {
-  appConfig: CommerceAppConfigOutputModel;
+  appConfig: CommerceAppConfig;
 };
 
 /** Params received by all handlers. */
@@ -43,12 +45,27 @@ const router = new HttpActionRouter<AppConfigActionContext>().use(
 /** GET / - Get app config */
 router.get("/", {
   handler: async (_req, { logger, rawParams }) => {
-    logger.debug("Validating app config...");
-
     const { appConfig } = rawParams;
-    const config = validateCommerceAppConfig(appConfig);
-    logger.debug("Successfully validated the app config");
 
+    logger.debug("Validating app config...");
+    let config = validateCommerceAppConfig(appConfig);
+
+    if (hasBusinessConfigSchema(config)) {
+      logger.debug("Resolving business config schema...");
+      const schema = await resolveBusinessConfigSchema(
+        config.businessConfig.schema,
+        rawParams,
+      );
+
+      config = {
+        ...config,
+        businessConfig: { ...config.businessConfig, schema },
+      };
+
+      logger.debug("Successfully resolved business config schema");
+    }
+
+    logger.debug("Successfully validated the app config");
     return ok({
       body: config,
     });
