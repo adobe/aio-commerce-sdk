@@ -14,8 +14,8 @@ Read ALL of the following. Skip files that don't exist (do not error).
 
 1. `app.config.yaml` — packages, extensions block, included action configs
 2. `package.json` — dependencies and scripts
-3. `.env` — preferred source for auth mode
-4. `env.dist` — fallback if `.env` is absent
+3. `env.dist` — variable names for auth mode detection
+4. `.env` — last resort; extract key names only via shell, do not read with Read tool
 5. Every file under `scripts/onboarding/` (list directory first, then read each file)
 6. Every `actions.config.yaml` under `actions/` (list directory recursively, read each)
 7. `install.yaml` AND `install.yml` — existing extension point declarations (either extension may exist)
@@ -71,8 +71,13 @@ Signals:
 
 ### authMode
 
-Check `.env` first, then `env.dist`, then `app.config.yaml` global inputs, then any `ext.config.yaml`
-files. Read the raw content looking for non-commented, non-empty lines.
+Check in this order, stopping as soon as both signals are resolved:
+
+1. `app.config.yaml` global inputs and any `ext.config.yaml` files — look for input variable names
+2. `env.dist` — read the file and look for non-commented, non-empty variable name lines
+3. `.env` — last resort only; do NOT read the file with Read. Instead run:
+   `grep -E '^[A-Z_]+=' .env | sed 's/=.*//'`
+   This extracts only variable names, never values.
 
 - `COMMERCE_CONSUMER_KEY` OR `AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY` present → PaaS signal
 - `OAUTH_CLIENT_ID` OR `AIO_COMMERCE_AUTH_IMS_CLIENT_ID` present → SaaS signal
