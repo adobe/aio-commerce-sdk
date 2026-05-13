@@ -17,30 +17,32 @@ import { createRuntimeActionParams } from "#test/fixtures/actions";
 import { minimalValidConfig } from "#test/fixtures/config";
 
 describe("appConfigRuntimeAction", () => {
-  test("returns the validated app config for GET /", async () => {
-    const handler = appConfigRuntimeAction({
-      appConfig: minimalValidConfig,
+  describe("GET /", () => {
+    test("returns the validated app config", async () => {
+      const handler = appConfigRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(createRuntimeActionParams());
+
+      expect(result).toMatchObject({
+        type: "success",
+        body: minimalValidConfig,
+      });
     });
 
-    const result = await handler(createRuntimeActionParams());
+    test("returns a 500 error when the app config is invalid", async () => {
+      const handler = appConfigRuntimeAction({
+        // @ts-expect-error - intentionally invalid app config to trigger validation failure
+        appConfig: {},
+      });
 
-    expect(result).toMatchObject({
-      type: "success",
-      body: minimalValidConfig,
-    });
-  });
+      const result = await handler(createRuntimeActionParams());
 
-  test("returns a 500 error when the app config is invalid", async () => {
-    const handler = appConfigRuntimeAction({
-      // @ts-expect-error - intentionally invalid app config to trigger validation failure
-      appConfig: {},
-    });
-
-    const result = await handler(createRuntimeActionParams());
-
-    expect(result).toMatchObject({
-      type: "error",
-      error: { statusCode: 500 },
+      expect(result).toMatchObject({
+        type: "error",
+        error: { statusCode: 500 },
+      });
     });
   });
 });

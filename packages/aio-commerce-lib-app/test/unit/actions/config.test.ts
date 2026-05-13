@@ -66,162 +66,168 @@ describe("configRuntimeAction", () => {
     byScopeIdMock.mockImplementation((scopeId: string) => ({ scopeId }));
   });
 
-  test("masks password values when retrieving configuration", async () => {
-    getConfigurationMock.mockResolvedValue({
-      scopeId: "store-1",
-      config: [
-        { name: "apiKey", value: "super-secret", origin: "scope" },
-        { name: "mode", value: "live", origin: "scope" },
-      ],
-    });
+  describe("GET /", () => {
+    test("masks password values when retrieving configuration", async () => {
+      getConfigurationMock.mockResolvedValue({
+        scopeId: "store-1",
+        config: [
+          { name: "apiKey", value: "super-secret", origin: "scope" },
+          { name: "mode", value: "live", origin: "scope" },
+        ],
+      });
 
-    const handler = configRuntimeAction({ configSchema });
+      const handler = configRuntimeAction({ configSchema });
 
-    const result = await handler(
-      createRuntimeActionParams({
-        query: "scopeId=store-1",
-        AIO_COMMERCE_CONFIG_ENCRYPTION_KEY: "encryption-key",
-      }),
-    );
+      const result = await handler(
+        createRuntimeActionParams({
+          query: "scopeId=store-1",
+          AIO_COMMERCE_CONFIG_ENCRYPTION_KEY: "encryption-key",
+        }),
+      );
 
-    expect(result).toMatchObject({
-      body: {
-        values: {
-          config: expect.arrayContaining([
-            { name: "apiKey", value: "*****", origin: "scope" },
-          ]),
-        },
-      },
-    });
-  });
-
-  test("returns a 400 error when the scope id query parameter is missing", async () => {
-    const handler = configRuntimeAction({ configSchema });
-
-    const result = await handler(createRuntimeActionParams());
-
-    expect(result).toMatchObject({
-      type: "error",
-      error: { statusCode: 400 },
-    });
-  });
-
-  test("filters masked password values before saving with PUT /", async () => {
-    setConfigurationMock.mockResolvedValue({
-      scopeId: "store-1",
-      config: [],
-    });
-
-    const handler = configRuntimeAction({ configSchema });
-
-    await handler(
-      createRuntimeActionParams({
-        method: "put",
+      expect(result).toMatchObject({
         body: {
-          scopeId: "store-1",
-          config: [
-            { name: "apiKey", value: "*****" },
-            { name: "mode", value: "live" },
-          ],
+          values: {
+            config: expect.arrayContaining([
+              { name: "apiKey", value: "*****", origin: "scope" },
+            ]),
+          },
         },
-      }),
-    );
-
-    expect(setConfigurationMock).toHaveBeenCalledWith(
-      { config: [{ name: "mode", value: "live" }] },
-      expect.any(Object),
-      expect.any(Object),
-    );
-  });
-
-  test("sets Cache-Control: no-store on the PUT / response", async () => {
-    setConfigurationMock.mockResolvedValue({
-      scopeId: "store-1",
-      config: [],
+      });
     });
 
-    const handler = configRuntimeAction({ configSchema });
+    test("returns a 400 error when the scope id query parameter is missing", async () => {
+      const handler = configRuntimeAction({ configSchema });
 
-    const result = await handler(
-      createRuntimeActionParams({
-        method: "put",
-        body: {
-          scopeId: "store-1",
-          config: [{ name: "mode", value: "live" }],
-        },
-      }),
-    );
+      const result = await handler(createRuntimeActionParams());
 
-    expect(result).toMatchObject({
-      headers: { "Cache-Control": "no-store" },
+      expect(result).toMatchObject({
+        type: "error",
+        error: { statusCode: 400 },
+      });
     });
   });
 
-  test("rejects null values with PUT /", async () => {
-    const handler = configRuntimeAction({ configSchema });
+  describe("PUT /", () => {
+    test("filters masked password values before saving", async () => {
+      setConfigurationMock.mockResolvedValue({
+        scopeId: "store-1",
+        config: [],
+      });
 
-    const result = await handler(
-      createRuntimeActionParams({
-        method: "put",
-        body: {
-          scopeId: "store-1",
-          config: [{ name: "apiKey", value: null }],
-        },
-      }),
-    );
+      const handler = configRuntimeAction({ configSchema });
 
-    expect(setConfigurationMock).not.toHaveBeenCalled();
-    expect(result).toMatchObject({
-      type: "error",
-      error: { statusCode: 400 },
+      await handler(
+        createRuntimeActionParams({
+          method: "put",
+          body: {
+            scopeId: "store-1",
+            config: [
+              { name: "apiKey", value: "*****" },
+              { name: "mode", value: "live" },
+            ],
+          },
+        }),
+      );
+
+      expect(setConfigurationMock).toHaveBeenCalledWith(
+        { config: [{ name: "mode", value: "live" }] },
+        expect.any(Object),
+        expect.any(Object),
+      );
+    });
+
+    test("sets Cache-Control: no-store on the response", async () => {
+      setConfigurationMock.mockResolvedValue({
+        scopeId: "store-1",
+        config: [],
+      });
+
+      const handler = configRuntimeAction({ configSchema });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          method: "put",
+          body: {
+            scopeId: "store-1",
+            config: [{ name: "mode", value: "live" }],
+          },
+        }),
+      );
+
+      expect(result).toMatchObject({
+        headers: { "Cache-Control": "no-store" },
+      });
+    });
+
+    test("rejects null values", async () => {
+      const handler = configRuntimeAction({ configSchema });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          method: "put",
+          body: {
+            scopeId: "store-1",
+            config: [{ name: "apiKey", value: null }],
+          },
+        }),
+      );
+
+      expect(setConfigurationMock).not.toHaveBeenCalled();
+      expect(result).toMatchObject({
+        type: "error",
+        error: { statusCode: 400 },
+      });
     });
   });
 
-  test("accepts null values as unsets with PATCH /", async () => {
-    setConfigurationMock.mockResolvedValue({
-      scopeId: "store-1",
-      config: [],
+  describe("PATCH /", () => {
+    test("accepts null values as unsets", async () => {
+      setConfigurationMock.mockResolvedValue({
+        scopeId: "store-1",
+        config: [],
+      });
+
+      const handler = configRuntimeAction({ configSchema });
+
+      await handler(
+        createRuntimeActionParams({
+          method: "patch",
+          body: {
+            scopeId: "store-1",
+            config: [{ name: "apiKey", value: null }],
+          },
+        }),
+      );
+
+      expect(setConfigurationMock).toHaveBeenCalledWith(
+        { config: [{ name: "apiKey", value: null }] },
+        expect.any(Object),
+        expect.any(Object),
+      );
     });
 
-    const handler = configRuntimeAction({ configSchema });
+    test("sets Cache-Control: no-store on the response", async () => {
+      setConfigurationMock.mockResolvedValue({
+        scopeId: "store-1",
+        config: [],
+      });
 
-    await handler(
-      createRuntimeActionParams({
-        method: "patch",
-        body: {
-          scopeId: "store-1",
-          config: [{ name: "apiKey", value: null }],
-        },
-      }),
-    );
+      const handler = configRuntimeAction({ configSchema });
 
-    expect(setConfigurationMock).toHaveBeenCalledWith(
-      { config: [{ name: "apiKey", value: null }] },
-      expect.any(Object),
-      expect.any(Object),
-    );
-  });
+      const result = await handler(
+        createRuntimeActionParams({
+          method: "patch",
+          body: {
+            scopeId: "store-1",
+            config: [{ name: "mode", value: "live" }],
+          },
+        }),
+      );
 
-  test("sets Cache-Control: no-store on the PATCH / response", async () => {
-    setConfigurationMock.mockResolvedValue({
-      scopeId: "store-1",
-      config: [],
-    });
-
-    const handler = configRuntimeAction({ configSchema });
-
-    const result = await handler(
-      createRuntimeActionParams({
-        method: "patch",
-        body: {
-          scopeId: "store-1",
-          config: [{ name: "mode", value: "live" }],
-        },
-      }),
-    );
-
-    expect(result).toMatchObject({
-      headers: { "Cache-Control": "no-store" },
+      expect(result).toMatchObject({
+        headers: { "Cache-Control": "no-store" },
+      });
     });
   });
 });
