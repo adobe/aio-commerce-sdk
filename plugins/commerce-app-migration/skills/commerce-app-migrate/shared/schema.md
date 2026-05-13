@@ -22,12 +22,8 @@ interface ProjectSnapshot {
   // "unknown" if neither found
   authMode: "paas" | "saas" | "dual" | "unknown";
 
-  // true if app.commerce.config.ts exists, OR app.commerce.config.js exists with ESM defineConfig content
+  // true if app.commerce.config.ts OR app.commerce.config.js exists at the project root
   alreadyMigrated: boolean;
-
-  // true if app.commerce.config.js exists with module.exports (old CJS format)
-  // Means the project has a stale config that will be superseded by the new .ts file
-  legacyJsConfig: boolean;
 
   // All action packages from app.config.yaml (including $include-resolved, from
   // both application: and extensions: blocks)

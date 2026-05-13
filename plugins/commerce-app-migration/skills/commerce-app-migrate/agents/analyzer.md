@@ -32,25 +32,8 @@ Read ALL of the following. Skip files that don't exist (do not error).
 
 ### alreadyMigrated
 
-Check if `app.commerce.config.ts` exists at the project root.
-
-- If found: `alreadyMigrated: true` (TypeScript defineConfig format is always current).
-
-If only `app.commerce.config.js` exists, inspect its content:
-
-- If the file contains `export default defineConfig(` → `alreadyMigrated: true`
-  (ESM defineConfig format, treated as already-migrated).
-- If the file contains `module.exports` → `alreadyMigrated: false`
-  (old CJS format from a prior SDK iteration; this project needs migration).
-- If the file content is empty or cannot be determined → `alreadyMigrated: false`.
-
-If neither file exists: `alreadyMigrated: false`.
-
-Also add a field to the snapshot:
-
-- `legacyJsConfig: true` when `app.commerce.config.js` exists with `module.exports`
-  content (so the SKILL.md orchestrator can warn the developer that the old file
-  will be superseded by the new `app.commerce.config.ts`).
+- `true` — `app.commerce.config.ts` OR `app.commerce.config.js` exists at the project root
+- `false` — neither file exists
 
 ### starterKitType
 

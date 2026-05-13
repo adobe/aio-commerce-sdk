@@ -55,14 +55,6 @@ The Analyzer reads the current directory and returns a `ProjectSnapshot` JSON ob
 
 Then apply any applicable Cross-cutting Warnings (see subsection below). Then stop.
 
-**If `legacyJsConfig === true`** (and `alreadyMigrated === false`): Do NOT halt.
-Append a note to the human-readable summary printed after the analyzer returns:
-
-    ⚠ Legacy config detected: app.commerce.config.js uses the old module.exports format.
-      Migration will create a new app.commerce.config.ts to replace it.
-      The old app.commerce.config.js will remain on disk — you can delete it after verifying
-      the new config is correct.
-
 **Do not proceed further if alreadyMigrated is true unless the developer explicitly
 requests a specific section update.**
 
