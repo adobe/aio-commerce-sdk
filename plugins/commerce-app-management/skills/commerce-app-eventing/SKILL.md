@@ -110,7 +110,7 @@ application:
       my-package:
         actions:
           handle-order-placed:
-            function: actions/handle-order-placed/index.js
+            function: src/actions/handle-order-placed/index.js
             web: "no"
             annotations:
               require-adobe-auth: false

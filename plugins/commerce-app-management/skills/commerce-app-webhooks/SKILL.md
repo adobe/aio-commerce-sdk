@@ -109,7 +109,7 @@ application:
       my-package:
         actions:
           validate-product:
-            function: actions/validate-product/index.js
+            function: src/actions/validate-product/index.js
             web: "yes"
             annotations:
               require-adobe-auth: true
