@@ -1,19 +1,13 @@
 {
-  "name": "commerce-app-management-plugins",
+  "name": "adobe-aio-commerce-sdk",
   "owner": {
-    "name": "Adobe Commerce",
-    "email": "commerce-app-management@adobe.com"
-  },
-  "metadata": {
-    "description": "Claude Code plugins for Adobe Commerce App Builder development and migration.",
-    "version": "1.0.0",
-    "pluginRoot": "./plugins"
+    "name": "Adobe"
   },
   "plugins": [
     {
       "name": "app-management-migration",
       "description": "Migrate an Adobe Commerce App Builder project from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach.",
-      "source": "./plugins/app-management-migration",
+      "source": "./plugins/commerce-app-migration",
       "author": {
         "name": "Commerce App Management",
         "email": "commerce-app-management@adobe.com"

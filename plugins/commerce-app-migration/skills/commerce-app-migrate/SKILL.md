@@ -1,5 +1,5 @@
 ---
-name: migrate
+name: commerce-app-migrate
 description: Migrate an Adobe Commerce App Builder project from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach. Run from the root of the App Builder project to be migrated. Pass --auto to skip confirmation prompts (suitable for CI or batch use).
 ---
 
