@@ -100,13 +100,19 @@ For webhook entries that use `runtimeAction`, create the action file under `src/
 
 ### Register the action
 
-In `app.config.yaml`, add the action under `application.runtimeManifest.packages`:
+In `app.config.yaml`, add an `application:` block alongside the existing `extensions:` block:
 
 ```yaml
+# app.config.yaml
+extensions:
+  commerce/extensibility/1:
+    $include: "src/commerce-extensibility-1/ext.config.yaml"
+  # ... other extension includes
+
 application:
   runtimeManifest:
     packages:
-      my-package:
+      my-package: # any name except "app-management" (reserved by the framework)
         actions:
           validate-product:
             function: src/actions/validate-product/index.js
@@ -176,6 +182,7 @@ A build failure with a validation error points directly to the offending config 
 - **Both `runtimeAction` and `webhook.url` set**: These are mutually exclusive — remove one. Use `runtimeAction` when the handler lives in this app; use `webhook.url` for an external endpoint.
 - **`url` at wrong level**: For URL-based entries, `url` must be inside the nested `webhook` object, not at the top level alongside `label`.
 - **`category` value rejected**: Must be exactly `validation`, `append`, or `modification` — no other values are accepted.
+- **`app-management` package name conflict**: The framework reserves `app-management` as the package name in each generated `ext.config.yaml`. Use any other name for your own actions to avoid collisions.
 - **`defineConfig` not found**: Ensure `@adobe/aio-commerce-lib-app` is installed and `defineConfig` is imported from `@adobe/aio-commerce-lib-app/config`.
 
 ## Quality Bar

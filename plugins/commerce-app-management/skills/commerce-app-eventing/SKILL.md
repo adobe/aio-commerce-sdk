@@ -101,13 +101,19 @@ For events that reference runtime actions via `runtimeActions`, create the actio
 
 ### Register the action
 
-In `app.config.yaml`, add the action under `application.runtimeManifest.packages`:
+In `app.config.yaml`, add an `application:` block alongside the existing `extensions:` block:
 
 ```yaml
+# app.config.yaml
+extensions:
+  commerce/extensibility/1:
+    $include: "src/commerce-extensibility-1/ext.config.yaml"
+  # ... other extension includes
+
 application:
   runtimeManifest:
     packages:
-      my-package:
+      my-package: # any name except "app-management" (reserved by the framework)
         actions:
           handle-order-placed:
             function: src/actions/handle-order-placed/index.js
@@ -152,6 +158,7 @@ A build failure with a validation error points directly to the offending config 
 - **Commerce event name rejected**: Each segment must match `[a-z_]+` — no digits, uppercase letters, or hyphens in segments. Valid: `plugin.order_placed`. Invalid: `plugin.orderPlaced`, `plugin.order-placed`.
 - **External event has `fields`**: The `fields` property is only valid on Commerce events; external events don't support it.
 - **`runtimeActions` format error**: Must be `<package>/<action>`. Both parts are lowercase alphanumeric + hyphens only.
+- **`app-management` package name conflict**: The framework reserves `app-management` as the package name in each generated `ext.config.yaml`. Use any other name for your own actions to avoid collisions.
 - **`defineConfig` not found**: Ensure `@adobe/aio-commerce-lib-app` is installed and `defineConfig` is imported from `@adobe/aio-commerce-lib-app/config`.
 - **Build fails on missing action**: A runtime action referenced in `runtimeActions` must exist in the project. Check the action files under `actions/` and create any missing stubs.
 
