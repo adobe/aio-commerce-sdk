@@ -11,17 +11,7 @@
  */
 
 import type * as v from "valibot";
-import type {
-  COMMERCE_ENV,
-  FieldSchema,
-  SchemaBusinessConfigSchema,
-} from "./fields";
-
-/**
- * The environment of an Adobe Commerce application a configuration field can be
- * scoped to via the `env` property.
- */
-export type CommerceFlavor = (typeof COMMERCE_ENV)[number];
+import type { FieldSchema, SchemaBusinessConfigSchema } from "./fields";
 
 /** Context needed for schema operations. */
 export type SchemaContext = {

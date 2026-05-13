@@ -52,8 +52,9 @@ interface ConfigActionContext extends BaseContext {
 // Placeholder value for password fields.
 const MASKED_PASSWORD_VALUE = "*****";
 
-/** The set of valid Commerce Env a configuration field can be scoped to. */
-type CommerceEnv = "paas" | "saas";
+/** The set of valid Commerce environments a configuration field can be scoped to. */
+const COMMERCE_ENVS = ["paas", "saas"] as const;
+type CommerceEnv = (typeof COMMERCE_ENVS)[number];
 
 /**
  * Filters a business configuration schema to the fields applicable to the
@@ -98,7 +99,7 @@ const router = new HttpActionRouter<ConfigActionContext>().use(logger());
 router.get("/", {
   query: v.object({
     scopeId: nonEmptyStringValueSchema("scopeId"),
-    commerceEnv: v.optional(v.picklist(["paas", "saas"] as const)),
+    commerceEnv: v.optional(v.picklist(COMMERCE_ENVS)),
   }),
 
   handler: async (req, ctx) => {
@@ -111,10 +112,10 @@ router.get("/", {
       "businessConfig.schema",
     );
 
-    const envParam = req.query.commerceEnv;
+    const env = req.query.commerceEnv;
 
-    const filteredSchema = envParam
-      ? filterSchemaByEnv(validatedSchema, envParam)
+    const filteredSchema = env
+      ? filterSchemaByEnv(validatedSchema, env)
       : validatedSchema;
 
     initialize({ schema: filteredSchema });

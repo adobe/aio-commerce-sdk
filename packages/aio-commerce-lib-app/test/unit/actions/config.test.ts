@@ -15,7 +15,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { configRuntimeAction } from "#actions/config";
 
 import type { BusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
-import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 
 const { mockInitialize, mockGetConfiguration, mockSetConfiguration } =
   vi.hoisted(() => ({
@@ -68,7 +67,7 @@ describe("configRuntimeAction (GET /)", () => {
       __ow_query: "scopeId=scope-1",
       __ow_headers: {},
       LOG_LEVEL: "debug",
-    } as unknown as RuntimeActionParams);
+    });
 
     expect(result).toMatchObject({
       type: "success",
@@ -104,7 +103,7 @@ describe("configRuntimeAction (GET /)", () => {
       __ow_query: "scopeId=scope-1&commerceEnv=paas",
       __ow_headers: {},
       LOG_LEVEL: "debug",
-    } as unknown as RuntimeActionParams);
+    });
 
     expect(result).toMatchObject({
       type: "success",
@@ -138,7 +137,7 @@ describe("configRuntimeAction (GET /)", () => {
       __ow_query: "scopeId=scope-1&commerceEnv=production",
       __ow_headers: {},
       LOG_LEVEL: "debug",
-    } as unknown as RuntimeActionParams);
+    });
 
     expect(result).toMatchObject({
       type: "error",
@@ -160,20 +159,15 @@ describe("configRuntimeAction (GET /)", () => {
       __ow_query: "scopeId=scope-1&commerceEnv=saas",
       __ow_headers: {},
       LOG_LEVEL: "debug",
-    } as unknown as RuntimeActionParams);
+    });
 
     expect(result).toMatchObject({
       type: "success",
       statusCode: 200,
     });
 
-    if (result.type !== "success") {
-      throw new Error("Expected a successful response");
-    }
-
-    if (!result.body) {
-      throw new Error("Expected response body");
-    }
+    expect.assert(result.type === "success");
+    expect.assert(result.body);
 
     const responseSchema = result.body.schema as BusinessConfigSchema;
 
