@@ -54,6 +54,22 @@ Only include failure modes that are **non-obvious** and not already covered by t
 Step 2 validation table. Restating table constraints in prose adds noise without
 value — a reader who hit the error will already have read the table.
 
+## Tessl tile
+
+This plugin ships a single `tile.json` at the plugin root (`plugins/commerce-app-management/tile.json`). One tile per plugin — not one per skill — because the skills are a cohesive family distributed as a unit.
+
+The tile references all skills under the `skills` key. When adding a new skill, add a matching entry:
+
+```json
+"skills": {
+  "commerce-app-<name>": {
+    "path": "skills/commerce-app-<name>/SKILL.md"
+  }
+}
+```
+
+`tile.json` and `.claude-plugin/plugin.json` carry the same `version` and `summary` — keep them in sync when either changes.
+
 ## Quality review
 
 Before shipping a skill, run the tessl reviewer to catch structural and quality issues:
