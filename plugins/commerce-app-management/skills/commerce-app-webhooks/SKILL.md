@@ -100,33 +100,30 @@ For webhook entries that use `runtimeAction`, create the action file under `src/
 
 ### Register the action
 
-In `app.config.yaml`, add an `application:` block alongside the existing `extensions:` block:
+Add a user-defined package to `src/commerce-extensibility-1/ext.config.yaml` alongside the existing `app-management` package. Use any name except `app-management` (reserved by the framework):
 
 ```yaml
-# app.config.yaml
-extensions:
-  commerce/extensibility/1:
-    $include: "src/commerce-extensibility-1/ext.config.yaml"
-  # ... other extension includes
-
-application:
-  runtimeManifest:
-    packages:
-      my-package: # any name except "app-management" (reserved by the framework)
-        actions:
-          validate-product:
-            function: src/actions/validate-product/index.js
-            web: "yes"
-            annotations:
-              require-adobe-auth: true
+# src/commerce-extensibility-1/ext.config.yaml
+# (add below the auto-generated app-management package)
+runtimeManifest:
+  packages:
+    app-management:
+      # ... auto-generated — do not edit
+    my-app: # your package name — any name except "app-management"
+      actions:
+        validate-product:
+          function: actions/validate-product/index.js # relative to src/commerce-extensibility-1/
+          web: "yes"
+          annotations:
+            require-adobe-auth: true
 ```
 
-The `<package>/<action>` format in `runtimeAction` maps to this structure: `my-package/validate-product` → package `my-package`, action `validate-product`.
+The `<package>/<action>` format in `runtimeAction` maps directly: `my-app/validate-product` → package `my-app`, action `validate-product`.
 
 ### Handler skeleton
 
 ```typescript
-// src/actions/validate-product/index.ts
+// src/commerce-extensibility-1/actions/validate-product/index.ts
 import {
   ok,
   successOperation,
@@ -182,7 +179,8 @@ A build failure with a validation error points directly to the offending config 
 - **Both `runtimeAction` and `webhook.url` set**: These are mutually exclusive — remove one. Use `runtimeAction` when the handler lives in this app; use `webhook.url` for an external endpoint.
 - **`url` at wrong level**: For URL-based entries, `url` must be inside the nested `webhook` object, not at the top level alongside `label`.
 - **`category` value rejected**: Must be exactly `validation`, `append`, or `modification` — no other values are accepted.
-- **`app-management` package name conflict**: The framework reserves `app-management` as the package name in each generated `ext.config.yaml`. Use any other name for your own actions to avoid collisions.
+- **`app-management` package name conflict**: The framework generates this package in `ext.config.yaml` on every build. Use any other name for your own actions.
+- **Function path is relative to `src/commerce-extensibility-1/`**: Do not use `src/...` or project-root-relative paths. `actions/validate-product/index.js` resolves correctly; `src/commerce-extensibility-1/actions/validate-product/index.js` does not.
 - **`defineConfig` not found**: Ensure `@adobe/aio-commerce-lib-app` is installed and `defineConfig` is imported from `@adobe/aio-commerce-lib-app/config`.
 
 ## Quality Bar

@@ -101,35 +101,32 @@ For events that reference runtime actions via `runtimeActions`, create the actio
 
 ### Register the action
 
-In `app.config.yaml`, add an `application:` block alongside the existing `extensions:` block:
+Add a user-defined package to `src/commerce-extensibility-1/ext.config.yaml` alongside the existing `app-management` package. Use any name except `app-management` (reserved by the framework):
 
 ```yaml
-# app.config.yaml
-extensions:
-  commerce/extensibility/1:
-    $include: "src/commerce-extensibility-1/ext.config.yaml"
-  # ... other extension includes
-
-application:
-  runtimeManifest:
-    packages:
-      my-package: # any name except "app-management" (reserved by the framework)
-        actions:
-          handle-order-placed:
-            function: src/actions/handle-order-placed/index.js
-            web: "no"
-            annotations:
-              require-adobe-auth: false
+# src/commerce-extensibility-1/ext.config.yaml
+# (add below the auto-generated app-management package)
+runtimeManifest:
+  packages:
+    app-management:
+      # ... auto-generated — do not edit
+    my-app: # your package name — any name except "app-management"
+      actions:
+        handle-order-placed:
+          function: actions/handle-order-placed/index.js # relative to src/commerce-extensibility-1/
+          web: "no"
+          annotations:
+            require-adobe-auth: false
 ```
 
-The `<package>/<action>` format in `runtimeActions` maps to this structure: `my-package/handle-order-placed` → package `my-package`, action `handle-order-placed`.
+The `<package>/<action>` format in `runtimeActions` maps directly: `my-app/handle-order-placed` → package `my-app`, action `handle-order-placed`.
 
 ### Handler skeleton
 
 Event handlers receive a CloudEvents-shaped payload. The event data lives in `params.data`.
 
 ```typescript
-// src/actions/handle-order-placed/index.ts
+// src/commerce-extensibility-1/actions/handle-order-placed/index.ts
 export async function main(params: Record<string, unknown>) {
   const data = params.data as Record<string, unknown>;
   // data contains the fields declared in the event's `fields` array
@@ -158,9 +155,10 @@ A build failure with a validation error points directly to the offending config 
 - **Commerce event name rejected**: Each segment must match `[a-z_]+` — no digits, uppercase letters, or hyphens in segments. Valid: `plugin.order_placed`. Invalid: `plugin.orderPlaced`, `plugin.order-placed`.
 - **External event has `fields`**: The `fields` property is only valid on Commerce events; external events don't support it.
 - **`runtimeActions` format error**: Must be `<package>/<action>`. Both parts are lowercase alphanumeric + hyphens only.
-- **`app-management` package name conflict**: The framework reserves `app-management` as the package name in each generated `ext.config.yaml`. Use any other name for your own actions to avoid collisions.
+- **`app-management` package name conflict**: The framework generates this package in `ext.config.yaml` on every build. Use any other name for your own actions.
+- **Function path is relative to `src/commerce-extensibility-1/`**: Do not use `src/...` or project-root-relative paths. `actions/handle-order-placed/index.js` resolves correctly; `src/commerce-extensibility-1/actions/handle-order-placed/index.js` does not.
 - **`defineConfig` not found**: Ensure `@adobe/aio-commerce-lib-app` is installed and `defineConfig` is imported from `@adobe/aio-commerce-lib-app/config`.
-- **Build fails on missing action**: A runtime action referenced in `runtimeActions` must exist in the project. Check the action files under `actions/` and create any missing stubs.
+- **Build fails on missing action**: A runtime action referenced in `runtimeActions` must exist in the project. Check the action files under `src/commerce-extensibility-1/actions/` and create any missing stubs.
 
 ## Quality Bar
 
