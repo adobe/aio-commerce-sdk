@@ -45,10 +45,14 @@ or more of these top-level keys:
 **Static registration:** If the file exports a static object (values are not
 computed from env vars, API calls, or runtime data), extract it directly.
 
-**Dynamic registration:** If values are computed at runtime (e.g. reading
-from `process.env`, making API calls, or using template strings with variable
-interpolation), the agent cannot safely infer static values. Add an unresolved
-question.
+**Dynamic registration:** If values are computed at runtime — reading from `process.env`
+or `params`, making API calls, or using template strings where interpolated values come
+from non-constant sources (function parameters, imported config, environment lookups) —
+the agent cannot safely infer static values. Add an unresolved question.
+
+**Exception:** Template strings whose interpolated values are module-level constants
+defined in the same file (e.g. `` `${BASE_PATH}/route` `` where `const BASE_PATH = '/api'`)
+are resolvable — substitute the constant and treat the result as static.
 
 **Dynamic `gridColumns` or `massActions`:** These are sometimes assembled
 dynamically (columns fetched from an API, action labels from env). If the
