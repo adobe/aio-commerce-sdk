@@ -59,14 +59,13 @@ Signals:
   - Action directories follow the `actions/<entity>/commerce/` + `actions/<entity>/external/`
     bidirectional pattern for at least 2 entities (e.g. `actions/product/commerce/`,
     `actions/product/external/`, `actions/order/commerce/`, `actions/order/external/`)
-- `"checkout"` — ANY of these package names present: `cart`, `payment`,
-  `checkout`, `cart-commerce`, `payment-commerce`, `commerce-checkout-starter-kit`
-  OR any of these structural signals:
-  - `@adobe/commerce-checkout-starter-kit` present in `package.json` dependencies
-  - Any action in any collected config file has annotation `raw-http: true` AND an input
-    named `COMMERCE_WEBHOOKS_PUBLIC_KEY`
+- `"checkout"` — ANY of these signals:
+  - `events.config.yaml`, `payment-methods.yaml`, `shipping-carriers.yaml`, or `tax-integrations.yaml` exists at the project root
+  - Any of these npm scripts present in `package.json`: `configure-events`, `configure-commerce-events`, `create-payment-methods`, `create-tax-integrations`, `create-shipping-carriers`, `get-shipping-carriers`, `sync-oauth-credentials`
+  - Any action in any collected config file has annotation `raw-http: true` AND an input named `COMMERCE_WEBHOOKS_PUBLIC_KEY`
   - Any webhook method path in any config file contains `out_of_process`
   - `scripts/create-shipping-carriers.js` OR `scripts/create-payment-methods.js` exists
+  - `commerce-checkout-starter-kit` present in the `name` field of `package.json`
 - If both signal sets appear, use `"integration"`
 - `"unknown"` — no signals from either set
 
