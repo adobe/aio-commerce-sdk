@@ -49,6 +49,13 @@ const EXTERNAL_EVENT_NAME_REGEX = /^[\w\-_.]+$/;
 const FIELD_NAME_REGEX = /^([a-zA-Z0-9_\-.[\]]+|\*)$/;
 
 /**
+ * Regex for Adobe I/O Events API text fields (label, description).
+ * Valid characters per API: letters, numbers, spaces, underscores, hyphens,
+ * dots, colons, parentheses, commas, @, and /.
+ */
+const IO_EVENTS_TEXT_REGEX = /^[a-zA-Z0-9 _.:()\-,@/]+$/;
+
+/**
  * Schema for Commerce event names.
  * Validates that the event name starts with "plugin." or "observer."
  * followed by one or more dot-separated lowercase segments containing letters
@@ -117,6 +124,10 @@ function commerceEventFieldSchema() {
 const ProviderSchema = v.object({
   label: v.pipe(
     nonEmptyStringValueSchema("provider label"),
+    v.regex(
+      IO_EVENTS_TEXT_REGEX,
+      "Provider label can only contain letters, numbers, spaces, underscores, hyphens, dots, colons, parentheses, commas, @, and /",
+    ),
     v.maxLength(
       MAX_LABEL_LENGTH,
       `The provider label must not be longer than ${MAX_LABEL_LENGTH} characters`,
@@ -124,6 +135,10 @@ const ProviderSchema = v.object({
   ),
   description: v.pipe(
     nonEmptyStringValueSchema("provider description"),
+    v.regex(
+      IO_EVENTS_TEXT_REGEX,
+      "Provider description can only contain letters, numbers, spaces, underscores, hyphens, dots, colons, parentheses, commas, @, and /",
+    ),
     v.maxLength(
       MAX_DESCRIPTION_LENGTH,
       `The provider description must not be longer than ${MAX_DESCRIPTION_LENGTH} characters`,
@@ -144,6 +159,10 @@ const ProviderSchema = v.object({
 const BaseEventSchema = v.object({
   label: v.pipe(
     nonEmptyStringValueSchema("event label"),
+    v.regex(
+      IO_EVENTS_TEXT_REGEX,
+      "Event label can only contain letters, numbers, spaces, underscores, hyphens, dots, colons, parentheses, commas, @, and /",
+    ),
     v.maxLength(
       MAX_LABEL_LENGTH,
       `The event label must not be longer than ${MAX_LABEL_LENGTH} characters`,
@@ -152,6 +171,10 @@ const BaseEventSchema = v.object({
 
   description: v.pipe(
     nonEmptyStringValueSchema("event description"),
+    v.regex(
+      IO_EVENTS_TEXT_REGEX,
+      "Event description can only contain letters, numbers, spaces, underscores, hyphens, dots, colons, parentheses, commas, @, and /",
+    ),
     v.maxLength(
       MAX_DESCRIPTION_LENGTH,
       `The event description must not be longer than ${MAX_DESCRIPTION_LENGTH} characters`,
