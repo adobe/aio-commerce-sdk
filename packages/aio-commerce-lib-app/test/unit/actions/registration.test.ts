@@ -13,15 +13,9 @@
 import { describe, expect, test, vi } from "vitest";
 
 import { registrationRuntimeAction } from "#actions/registration";
+import { createRuntimeActionParams } from "#test/fixtures/actions";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
-
-const mockParams = {
-  __ow_method: "GET",
-  __ow_path: "/",
-  __ow_headers: {},
-  LOG_LEVEL: "debug",
-} as unknown as RuntimeActionParams;
 
 vi.mock("@aio-commerce-sdk/common-utils/actions", async () => {
   const [actual, fixtures] = await Promise.all([
@@ -42,42 +36,57 @@ vi.mock("@aio-commerce-sdk/common-utils/actions", async () => {
 });
 
 describe("registrationRuntimeAction", () => {
-  test("the factory returns a function", () => {
-    const handler = registrationRuntimeAction({ registration: {} });
-    expect(typeof handler).toBe("function");
-  });
+  describe("GET /", () => {
+    test("returns the provided registration object in the response body", async () => {
+      const registration = {
+        menuItems: [{ id: "test::item", title: "Item" }],
+      };
+      const handler = registrationRuntimeAction({ registration });
 
-  test("when called with a registration object, the handler returns it in the body", async () => {
-    const registration = { menuItems: [{ id: "test::item", title: "Item" }] };
-    const handler = registrationRuntimeAction({ registration });
-    const result = await handler(mockParams);
+      const result = await handler(createRuntimeActionParams());
 
-    expect(result).toMatchObject({
-      type: "success",
-      statusCode: 200,
-      body: { registration },
+      expect(result).toMatchObject({ body: { registration } });
+    });
+
+    test("returns a 200 response for a non-empty registration", async () => {
+      const registration = {
+        menuItems: [{ id: "test::item", title: "Item" }],
+      };
+      const handler = registrationRuntimeAction({ registration });
+
+      const result = await handler(createRuntimeActionParams());
+
+      expect(result).toMatchObject({ type: "success", statusCode: 200 });
+    });
+
+    test("returns a 200 response for an empty registration", async () => {
+      const handler = registrationRuntimeAction({ registration: {} });
+
+      const result = await handler(createRuntimeActionParams());
+
+      expect(result).toMatchObject({ type: "success", statusCode: 200 });
     });
   });
 
-  test("when called with an empty registration, the handler returns 200", async () => {
-    const registration = {};
-    const handler = registrationRuntimeAction({ registration });
-    const result = await handler(mockParams);
+  describe.each([
+    "post",
+    "put",
+    "patch",
+    "delete",
+  ] as const)("%s /", (method) => {
+    test("returns a 405 response for unsupported methods", async () => {
+      const handler = registrationRuntimeAction({ registration: {} });
 
-    expect(result).toMatchObject({
-      type: "success",
-      statusCode: 200,
-      body: { registration },
+      const result = await handler(
+        createRuntimeActionParams({
+          method: method as RuntimeActionParams["__ow_method"],
+        }),
+      );
+
+      expect(result).toMatchObject({
+        type: "error",
+        error: { statusCode: 405 },
+      });
     });
-  });
-
-  test("returns 405 for non-GET methods", async () => {
-    const handler = registrationRuntimeAction({ registration: {} });
-    const result = await handler({
-      ...mockParams,
-      __ow_method: "post",
-    } as unknown as RuntimeActionParams);
-
-    expect(result).toMatchObject({ error: { statusCode: 405 } });
   });
 });
