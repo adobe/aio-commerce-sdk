@@ -21,12 +21,12 @@ A developer creating an app that needs events and webhooks would run `commerce-a
 
 ## Available skills
 
-| Skill                                                                  | Description                                | Status          |
-| ---------------------------------------------------------------------- | ------------------------------------------ | --------------- |
-| [commerce-app-init](./skills/commerce-app-init/)                       | Scaffold a new Commerce app with metadata  | Available       |
-| [commerce-app-eventing](./skills/commerce-app-eventing/)               | Manage Commerce and external event sources | Not implemented |
-| [commerce-app-webhooks](./skills/commerce-app-webhooks/)               | Manage webhook interception                | Not implemented |
-| [commerce-app-business-config](./skills/commerce-app-business-config/) | Manage custom business configuration       | Not implemented |
+| Skill                                                                  | Description                                | Status    |
+| ---------------------------------------------------------------------- | ------------------------------------------ | --------- |
+| [commerce-app-init](./skills/commerce-app-init/)                       | Scaffold a new Commerce app with metadata  | Available |
+| [commerce-app-eventing](./skills/commerce-app-eventing/)               | Manage Commerce and external event sources | Available |
+| [commerce-app-webhooks](./skills/commerce-app-webhooks/)               | Manage webhook interception                | Available |
+| [commerce-app-business-config](./skills/commerce-app-business-config/) | Manage custom business configuration       | Available |
 
 ## Installation
 
