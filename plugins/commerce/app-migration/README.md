@@ -1,23 +1,25 @@
-# commerce-app-migration
+# Commerce App Migration Skills
 
-Agent skill for migrating Adobe Commerce App Builder projects to the App Management approach, following the [agentskills.io](https://agentskills.io) open standard. Compatible with Claude Code, Cursor, VS Code Copilot, Gemini CLI, and other supported agents.
+> ⚠️ **Experimental** — These skills are under active development and subject to change.
 
-## Skills
+Agent skills for migrating Adobe Commerce App Builder projects to the App Management approach, following the [agentskills.io](https://agentskills.io) open standard. Compatible with Claude Code, Cursor, VS Code Copilot, Gemini CLI, and other supported agents.
+
+## Available skills
+
+| Skill                                                  | Description                                                                               | Status    |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- | --------- |
+| [commerce-app-migrate](./skills/commerce-app-migrate/) | Orchestrate the full migration from Integration or Checkout Starter Kit to App Management | Available |
 
 ### `commerce-app-migrate`
 
-Orchestrates the full migration workflow: project detection → domain analysis → Q&A → config assembly → execution.
-
-**Usage:** Run from the root of the App Builder project to be migrated.
+Orchestrates the full migration workflow: project detection → domain analysis → Q&A → config assembly → execution. Run from the root of the App Builder project to be migrated.
 
 ```
 /commerce-app-migrate
-/commerce-app-migrate --auto
+/commerce-app-migrate --auto   # skip confirmation prompts (CI or batch use)
 ```
 
-Pass `--auto` to skip all confirmation prompts (suitable for CI or batch use).
-
-#### What it does
+**What it does:**
 
 1. **Preflight** — verifies the directory contains a valid App Builder project (`app.config.yaml`, `package.json`, and an actions or source directory)
 2. **Analyze** — detects starter kit type, auth mode, action packages, eventing, webhooks, Admin UI SDK usage, and business config
@@ -26,38 +28,27 @@ Pass `--auto` to skip all confirmation prompts (suitable for CI or batch use).
 5. **Config assembly** — generates `app.commerce.config.ts` with `defineConfig(...)` from `@adobe/aio-commerce-lib-app/config`
 6. **Execute** — writes the config file and applies required project changes
 
-#### Supported source projects
+**Supported source projects:** Integration Starter Kit, Checkout Starter Kit, Admin UI SDK extensions.
 
-- Integration Starter Kit
-- Checkout Starter Kit
-- Admin UI SDK extensions
-
-#### Output
-
-A ready-to-deploy `app.commerce.config.ts` in the project root, with all detected domains mapped to the App Management configuration schema.
+**Output:** A ready-to-deploy `app.commerce.config.ts` in the project root, with all detected domains mapped to the App Management configuration schema.
 
 ## Installation
 
-**Claude Code plugin (recommended):**
+**Claude Code plugin:**
 
 ```sh
 /plugin marketplace add adobe/aio-commerce-sdk
 /plugin install commerce-app-migration@adobe-aio-commerce-sdk
 ```
 
-**Single skill via skills CLI:**
+**Tessl CLI:**
+
+```sh
+tessl install github:adobe/aio-commerce-sdk --skills commerce-app-migrate
+```
+
+**npx skills:**
 
 ```sh
 npx skills add adobe/aio-commerce-sdk --skill commerce-app-migrate
 ```
-
-**All skills via skills CLI:**
-
-```sh
-npx skills add adobe/aio-commerce-sdk --all
-```
-
-## Requirements
-
-- Claude Code with plugin support
-- An App Builder project in the working directory when invoking the skill

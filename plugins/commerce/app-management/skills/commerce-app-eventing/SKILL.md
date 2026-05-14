@@ -1,9 +1,10 @@
 ---
 name: commerce-app-eventing
 description: >
-  Add or modify event subscriptions in an Adobe Commerce app. Use when the user
-  wants to configure Commerce events (such as order placement or catalog changes)
-  or external event sources in an existing Commerce app. Requires a base app
+  Add or modify Commerce and external event subscriptions, configure event field
+  extraction and filter rules in an Adobe Commerce app. Use when the user wants
+  to set up event-driven workflows triggered by Commerce operations (such as order
+  placement or catalog changes) or third-party systems. Requires a base app
   initialized with commerce-app-init.
 license: Apache-2.0
 compatibility: >
@@ -153,7 +154,6 @@ A build failure with a validation error points directly to the offending config 
 
 ## Common Issues
 
-- **Commerce event name rejected**: Each segment must match `[a-z_]+` — no digits, uppercase letters, or hyphens in segments. Valid: `plugin.order_placed`. Invalid: `plugin.orderPlaced`, `plugin.order-placed`.
 - **External event has `fields`**: The `fields` property is only valid on Commerce events; external events don't support it.
 - **`runtimeActions` format error**: Must be `<package>/<action>`. Both parts are lowercase alphanumeric + hyphens only.
 - **`app-management` package name conflict**: The framework generates this package in `ext.config.yaml` on every build. Use any other name for your own actions.

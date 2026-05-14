@@ -9,10 +9,10 @@ the target project — the CLI auto-detects the agent and installs to the right 
 cd ~/my-commerce-app
 
 # Install all skills
-npx skills add /path/to/aio-commerce-sdk/plugins/commerce-app-management --yes
+npx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-management --yes
 
 # Install a specific skill only
-npx skills add /path/to/aio-commerce-sdk/plugins/commerce-app-management --yes --skill commerce-app-init
+npx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-management --yes --skill commerce-app-init
 ```
 
 ## Authoring skills
@@ -53,6 +53,22 @@ duplicating constraints inline.
 Only include failure modes that are **non-obvious** and not already covered by the
 Step 2 validation table. Restating table constraints in prose adds noise without
 value — a reader who hit the error will already have read the table.
+
+## Tessl tile
+
+Each plugin ships a single `tile.json` at its root (`plugins/commerce/<plugin>/tile.json`) — one tile per plugin, not one per skill, because the skills in a plugin are a cohesive family distributed as a unit.
+
+The tile references all skills under the `skills` key. When adding a new skill to a plugin, add a matching entry:
+
+```json
+"skills": {
+  "commerce-app-<name>": {
+    "path": "skills/commerce-app-<name>/SKILL.md"
+  }
+}
+```
+
+`tile.json` and `.claude-plugin/plugin.json` carry the same `version` and `summary` — keep them in sync when either changes.
 
 ## Quality review
 
