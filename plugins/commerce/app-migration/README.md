@@ -52,7 +52,3 @@ tessl install github:adobe/aio-commerce-sdk --skills commerce-app-migrate
 ```sh
 npx skills add adobe/aio-commerce-sdk --skill commerce-app-migrate
 ```
-
-## Contributing
-
-See the [Commerce plugins contributing guide](../README.md#contributing).

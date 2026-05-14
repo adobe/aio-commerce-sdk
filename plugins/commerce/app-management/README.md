@@ -51,7 +51,3 @@ npx skills add adobe/aio-commerce-sdk --skill commerce-app-eventing
 npx skills add adobe/aio-commerce-sdk --skill commerce-app-webhooks
 npx skills add adobe/aio-commerce-sdk --skill commerce-app-business-config
 ```
-
-## Contributing
-
-See the [Commerce plugins contributing guide](../README.md#contributing).
