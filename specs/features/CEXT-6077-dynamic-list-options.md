@@ -6,10 +6,12 @@
 
 ## Summary
 
-Allow the `options` field on `list`-type business configuration schema entries to be a factory
-function instead of a static array, enabling app developers to populate select dropdowns with values
-computed or fetched at runtime (such as payment methods or store views available in a specific
-merchant's Commerce installation).
+Extend the existing `list` field type in business configuration schemas to accept a factory
+function for `options`, enabling app developers to populate select dropdowns with values fetched
+from external APIs (such as payment methods or store views available in a specific merchant's
+Commerce installation). The `list` type continues to accept static option arrays; a new
+`MaybeDynamic` type layer in `lib-config` distinguishes definition-time schemas (which may contain
+factories) from resolved schemas (which always contain concrete arrays).
 
 ## Motivation
 
@@ -25,10 +27,11 @@ There is currently no way to express this in the schema.
 
 **Goals**
 
-- Allow any `list` field's `options` to be `(params) => ListOption[] | Promise<ListOption[]>`.
-- The factory receives the standard App Builder runtime `params` so it can access environment inputs
-  (credentials, base URLs, etc.) declared in the action's `ext.config.yaml`.
-- Static `options` arrays continue to work without any changes.
+- Extend `list` fields to accept a factory for `options` via `MaybeDynamic` wrapper types;
+  `default` can also be a function that derives its value from the resolved options.
+- The existing `list` type and its static array contract are unchanged.
+- Consumers (e.g. App Management UI) receive a fully resolved `list`-shaped field; no changes
+  required on the consumer side.
 
 **Non-goals**
 
@@ -59,19 +62,33 @@ const schema: BusinessConfigSchema = [
 ];
 ```
 
-With this feature, `options` can be a function:
+With this feature, `list` fields can supply a factory function for `options` instead of a static
+array. `default` can also be a function that derives its value from the resolved options:
 
 ```ts
-import { fetchExternalApi } from "../lib/external.js";
+import { fetchPaymentMethods } from "../lib/commerce.js";
 
-const schema: BusinessConfigSchema = [
+const schema: MaybeDynamicBusinessConfigSchema = [
+  // Single selection — default required (static or derived from resolved options)
   {
     name: "paymentMethod",
     label: "Default Payment Method",
     type: "list",
     selectionMode: "single",
     options: async (params) => {
-      const methods = await fetchExternalApi(params.SOME_API_KEY);
+      const methods = await fetchPaymentMethods(params.SOME_API_KEY);
+      return methods.map((m) => ({ label: m.title, value: m.code }));
+    },
+    default: (resolvedOptions) => resolvedOptions[0].value,
+  },
+  // Multiple selection — default optional, falls back to []
+  {
+    name: "paymentMethods",
+    label: "Enabled Payment Methods",
+    type: "list",
+    selectionMode: "multiple",
+    options: async (params) => {
+      const methods = await fetchPaymentMethods(params.SOME_API_KEY);
       return methods.map((m) => ({ label: m.title, value: m.code }));
     },
   },
@@ -126,45 +143,47 @@ options. No new UI concepts are introduced.
 
 ## Design
 
-### Type changes in `lib-config`
+### `MaybeDynamic` types in `lib-config`
 
-The `options` property on list fields currently has type `ListOption[]`. It becomes a union:
+New types are added in
+`packages/aio-commerce-lib-config/source/modules/schema/types.ts` to distinguish definition-time
+schemas (which may contain factories) from resolved schemas (which always contain concrete arrays).
+The existing `list` field type and its Valibot schema are extended to accept a factory for
+`options` alongside the existing static array.
 
 ```ts
 type ListOptionsFactory = (
   params: RuntimeActionParams,
 ) => ListOption[] | Promise<ListOption[]>;
-type ListOptionsValue = ListOption[] | ListOptionsFactory;
+
+type ListOptionsDefaultFactory = (
+  resolvedOptions: ListOption[],
+) => string | string[];
+
+// Extends the static list field to allow a factory for options and/or default
+type MaybeDynamicBusinessConfigSchemaListField = Omit<
+  BusinessConfigSchemaListField,
+  "options" | "default"
+> & {
+  options: ListOption[] | ListOptionsFactory;
+  default?: string | string[] | ListOptionsDefaultFactory;
+};
+
+type MaybeDynamicBusinessConfigSchemaField =
+  | Exclude<BusinessConfigSchemaField, { type: "list" }>
+  | MaybeDynamicBusinessConfigSchemaListField;
+
+type MaybeDynamicBusinessConfigSchema = MaybeDynamicBusinessConfigSchemaField[];
 ```
 
-The Valibot field schema in
-`packages/aio-commerce-lib-config/source/modules/schema/fields.ts` is updated to accept a typed
-custom function branch alongside the static options array:
+`default` follows the same rules as on a static `list` field: required for
+`selectionMode: "single"` (an error is thrown at resolution time if absent), optional for
+`selectionMode: "multiple"` (falls back to `[]`). When `default` is a `ListOptionsDefaultFactory`,
+it is called with the resolved options array after the `options` factory resolves.
 
-```ts
-const ListOptionsSchema = v.array(
-  ListOptionSchema,
-  "Expected an array of list options",
-);
-
-type ListOptionsFactoryInput = (
-  params: RuntimeActionParams,
-) =>
-  | v.InferOutput<typeof ListOptionsSchema>
-  | Promise<v.InferOutput<typeof ListOptionsSchema>>;
-
-const ListOptionsValueSchema = v.union([
-  ListOptionsSchema,
-  v.custom<ListOptionsFactoryInput>(
-    (input) => typeof input === "function",
-    'Expected an array or factory function for "options"',
-  ),
-]);
-```
-
-Because `ListOptionsFactory` is a function, it cannot be validated as data; the Valibot schema
-accepts any function for `options` at schema-definition time and defers correctness to the return
-value at resolution time.
+Because `ListOptionsFactory` is a function, the Valibot schema accepts any function for `options`
+at schema-definition time and defers correctness to the return value at resolution time. The same
+applies to `default` when it is a function.
 
 ### Resolution utility
 
@@ -176,14 +195,15 @@ designed to handle any future dynamic schema features through the same call:
 
 ```ts
 function resolveDynamicBusinessConfigSchema(
-  schema: BusinessConfigSchema,
+  schema: MaybeDynamicBusinessConfigSchema,
   params: RuntimeActionParams,
 ): Promise<BusinessConfigSchema>;
 ```
 
-- Iterates the schema and resolves the `options` factory on any `list` field where `options` is a
-  function.
-- Fields with a static `options` array are returned unchanged.
+- Iterates the schema and, for each `list` field whose `options` is a function, calls the factory
+  with `params` to produce a `ListOption[]`, then evaluates `default` (calling the default factory
+  with the resolved options if it is a function), and returns the field with concrete values.
+- `list` fields with a static `options` array and all other field types are returned unchanged.
 - Each resolved options array is validated against `v.array(ListOptionSchema)` before being used,
   so a factory that returns malformed data surfaces a clear error.
 - If an options factory throws or rejects, schema resolution fails and the error propagates to the
@@ -204,8 +224,8 @@ Factory functions cannot be JSON-serialized and would be silently stripped. This
 change when the schema contains dynamic options.
 
 **Detection**: during `pre-app-build`, after loading the developer's config via `jiti`, check
-whether any `list` field has a function for `options`. A helper like `isDynamicSchema()` in
-`lib-config` can provide this check.
+whether any `list` field has a function for `options`. The `hasDynamicSchema()` helper in
+`lib-config` (which delegates to `hasDynamicListOptions()`) provides this check.
 
 **If no factories are present**: existing behavior unchanged. The schema is serialized to
 `configuration-schema.json` and the generated action imports it as a JSON module.
@@ -242,11 +262,12 @@ for that specific action.
 
 It is useful to distinguish two points in time:
 
-1. **Definition time**: the developer's `schema` object, which may contain factory functions.
-   `lib-config` refers to this as a `BusinessConfigSchema` (extended to accept `ListOptionsFactory`
-   in `options`).
-2. **Resolution time**: the fully resolved schema with all `options` arrays populated. This is what
-   the existing validation and rendering code receives, and its shape does not change.
+1. **Definition time**: the developer's `schema` object, typed as
+   `MaybeDynamicBusinessConfigSchema`. `list` fields may carry a `ListOptionsFactory` for `options`
+   and/or a `ListOptionsDefaultFactory` for `default`.
+2. **Resolution time**: the fully resolved schema, typed as `BusinessConfigSchema`. All `list`
+   fields have concrete `options` arrays and resolved `default` values. This is what the existing
+   validation and rendering code receives, and its shape does not change.
 
 ### Returning to the examples
 
@@ -290,6 +311,14 @@ Options freshness is not a UI concern; it is a resolution concern. Because `reso
 is called on every request, the frontend already receives up-to-date options on any `config GET /`.
 A refresh is simply re-fetching the config response; no additional SDK work is needed.
 
+**Why `MaybeDynamic` wrappers instead of a separate `dynamicList` type?**  
+A separate `dynamicList` type would break backwards compatibility: existing schemas typed as
+`BusinessConfigSchema` would not accept the new type without a union, and consumers that switch on
+`field.type` would need updating. The `MaybeDynamic` wrapper preserves the `list` type value
+throughout — only the TypeScript type of `options` widens at definition time and narrows back at
+resolution time. The distinction is entirely SDK-internal; consumers and existing code are
+unaffected.
+
 **Factory at the schema level (not the field level).**  
 The previous implementation supported a factory that returned the entire schema. Rejected for this
 spec: it is broader than the stated need and makes the schema shape harder to reason about
@@ -299,19 +328,6 @@ statically. It can be revisited independently.
 Apps that need merchant-specific or any other dynamic options cannot express them through the schema and must work around the limitation outside the SDK.
 
 ## Unresolved questions
-
-**`default` for dynamic single-select lists.**  
-Single-select `list` fields currently require a non-empty `default`. With dynamic options, the
-default value cannot be validated against the options at schema-definition time (the options are not
-known yet). Options:
-
-- Make `default` optional on fields with a factory for `options`.
-- Make `default` an index of the resolved array options (e.g: option 0)
-- Keep `default` required but skip cross-validation with the resolved options array.
-- Validate `default` at resolution time and surface an error if it is not present in the resolved
-  options.
-
-This must be resolved before implementation begins, as it affects the public schema type.
 
 **Centralising resolution.**  
 Each action that needs a resolved schema currently calls the factory independently, which means
