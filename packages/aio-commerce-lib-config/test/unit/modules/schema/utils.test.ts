@@ -86,7 +86,7 @@ describe("schema/utils", () => {
     test("should accept a field without an env property", () => {
       expect(() =>
         validateBusinessConfigSchema([
-          { name: "anyFlavor", type: "text", label: "Any Flavor" },
+          { name: "anyEnv", type: "text", label: "Any Env" },
         ]),
       ).not.toThrow();
     });
@@ -111,7 +111,7 @@ describe("schema/utils", () => {
       ).toThrow();
     });
 
-    test("should reject an env entry that is not a known flavor", () => {
+    test("should reject an env entry that is not a known commerce environment", () => {
       expect(() =>
         validateBusinessConfigSchema([
           {

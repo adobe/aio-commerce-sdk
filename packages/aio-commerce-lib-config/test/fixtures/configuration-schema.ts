@@ -110,9 +110,9 @@ export const VALID_CONFIGURATION = [
     env: ["paas"],
   },
   {
-    name: "bothFlavorsField",
+    name: "bothEnvsField",
     type: "text",
-    label: "Both Flavors Field",
+    label: "Both Envs Field",
     env: ["paas", "saas"],
   },
 ] satisfies BusinessConfigSchema;

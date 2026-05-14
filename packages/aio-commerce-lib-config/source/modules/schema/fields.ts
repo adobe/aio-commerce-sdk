@@ -37,7 +37,11 @@ const EnvSchema = v.pipe(
   v.nonEmpty('The "env" array must contain at least one commerce environment'),
 );
 
-/** Base schema for configuration field options with name, optional label, and optional description */
+/**
+ * Base schema for configuration field options with name, optional label,
+ * optional description, and optional `env` to scope the field to specific
+ * Commerce environments (when omitted, the field applies to all environments).
+ */
 const BaseOptionSchema = v.object({
   name: v.pipe(
     v.string("Expected a string for the field name"),
