@@ -6,12 +6,13 @@
 
 ## Summary
 
-Extend the existing `list` field type in business configuration schemas to accept a factory
-function for `options`, enabling app developers to populate select dropdowns with values fetched
-from external APIs (such as payment methods or store views available in a specific merchant's
-Commerce installation). The `list` type continues to accept static option arrays; a new
-`MaybeDynamic` type layer in `lib-config` distinguishes definition-time schemas (which may contain
-factories) from resolved schemas (which always contain concrete arrays).
+Introduce a new `dynamicList` field type for business configuration schemas. Unlike the existing
+`list` type, a `dynamicList` field resolves its options at runtime via a factory function, enabling
+app developers to populate select dropdowns with values fetched from external APIs (such as payment
+methods or store views available in a specific merchant's Commerce installation).
+`BusinessConfigSchema` is widened to accept `dynamicList` fields alongside existing static field
+types. A new `ResolvedBusinessConfigSchema` type represents the post-resolution form where all
+`dynamicList` fields have been converted to concrete `list` fields.
 
 ## Motivation
 
@@ -27,9 +28,11 @@ There is currently no way to express this in the schema.
 
 **Goals**
 
-- Extend `list` fields to accept a factory for `options` via `MaybeDynamic` wrapper types;
-  `default` can also be a function that derives its value from the resolved options.
-- The existing `list` type and its static array contract are unchanged.
+- Introduce `type: "dynamicList"` as a new field type with its own explicit contract.
+- The options factory receives `params` and returns `ListOption[]`; on a `dynamicList` field,
+  `default` is a factory that derives its value from the resolved options.
+- Widen `BusinessConfigSchema` to include `dynamicList` fields and introduce
+  `ResolvedBusinessConfigSchema` as the post-resolution type containing only static fields.
 - Consumers (e.g. App Management UI) receive a fully resolved `list`-shaped field; no changes
   required on the consumer side.
 
@@ -62,18 +65,19 @@ const schema: BusinessConfigSchema = [
 ];
 ```
 
-With this feature, `list` fields can supply a factory function for `options` instead of a static
-array. `default` can also be a function that derives its value from the resolved options:
+With this feature, a new field type `dynamicList` is available. `options` is a factory function
+that receives `params` and returns a `ListOption[]`. `default` can be a static value or a function
+that derives its value from the resolved options:
 
 ```ts
 import { fetchPaymentMethods } from "../lib/commerce.js";
 
-const schema: MaybeDynamicBusinessConfigSchema = [
-  // Single selection — default required (static or derived from resolved options)
+const schema: BusinessConfigSchema = [
+  // Single selection — default required
   {
     name: "paymentMethod",
     label: "Default Payment Method",
-    type: "list",
+    type: "dynamicList",
     selectionMode: "single",
     options: async (params) => {
       const methods = await fetchPaymentMethods(params.SOME_API_KEY);
@@ -85,7 +89,7 @@ const schema: MaybeDynamicBusinessConfigSchema = [
   {
     name: "paymentMethods",
     label: "Enabled Payment Methods",
-    type: "list",
+    type: "dynamicList",
     selectionMode: "multiple",
     options: async (params) => {
       const methods = await fetchPaymentMethods(params.SOME_API_KEY);
@@ -110,30 +114,28 @@ action lives in the extensibility extension and the `config` action lives in the
 extension, in two separate files:
 
 ```yaml
-# src/commerce-extensibility-1/ext.config.yaml
+# ext.config.yaml (app-config action)
 runtimeManifest:
   packages:
     app-management:
       actions:
         app-config:
-          # ... existing config ...
           inputs:
             SOME_API_KEY: $SOME_API_KEY
 ```
 
 ```yaml
-# src/commerce-configuration-1/ext.config.yaml
+# ext.config.yaml (config action)
 runtimeManifest:
   packages:
     app-management:
       actions:
         config:
-          # ... existing config ...
           inputs:
             SOME_API_KEY: $SOME_API_KEY
 ```
 
-The values are sourced from the developer's `.env` file (local), following the standard App Builder pattern. Nothing changes about how secrets are managed, only that the same secret may now need to appear in more than one extension point's config.
+Nothing changes about how secrets are managed; the same secret may now need to appear in more than one extension point's config.
 
 ### What merchants see
 
@@ -143,13 +145,13 @@ options. No new UI concepts are introduced.
 
 ## Design
 
-### `MaybeDynamic` types in `lib-config`
+### New `dynamicList` field type and `ResolvedBusinessConfigSchema` in `lib-config`
 
-New types are added in
-`packages/aio-commerce-lib-config/source/modules/schema/types.ts` to distinguish definition-time
-schemas (which may contain factories) from resolved schemas (which always contain concrete arrays).
-The existing `list` field type and its Valibot schema are extended to accept a factory for
-`options` alongside the existing static array.
+A new field type `"dynamicList"` is added to `lib-config` alongside the existing field types. The
+`list` type and its schema are unchanged.
+
+The options factory returns a plain `ListOption[]`; `default` is a factory that derives its value
+from the resolved options:
 
 ```ts
 type ListOptionsFactory = (
@@ -160,55 +162,55 @@ type ListOptionsDefaultFactory = (
   resolvedOptions: ListOption[],
 ) => string | string[];
 
-// Extends the static list field to allow a factory for options and/or default
-type MaybeDynamicBusinessConfigSchemaListField = Omit<
-  BusinessConfigSchemaListField,
-  "options" | "default"
-> & {
-  options: ListOption[] | ListOptionsFactory;
-  default?: string | string[] | ListOptionsDefaultFactory;
+type DynamicListField = {
+  name: string;
+  label?: string;
+  description?: string;
+  type: "dynamicList";
+  selectionMode: "single" | "multiple";
+  options: ListOptionsFactory;
+  default?: ListOptionsDefaultFactory;
 };
-
-type MaybeDynamicBusinessConfigSchemaField =
-  | Exclude<BusinessConfigSchemaField, { type: "list" }>
-  | MaybeDynamicBusinessConfigSchemaListField;
-
-type MaybeDynamicBusinessConfigSchema = MaybeDynamicBusinessConfigSchemaField[];
 ```
 
-`default` follows the same rules as on a static `list` field: required for
-`selectionMode: "single"` (an error is thrown at resolution time if absent), optional for
-`selectionMode: "multiple"` (falls back to `[]`). When `default` is a `ListOptionsDefaultFactory`,
-it is called with the resolved options array after the `options` factory resolves.
+`default` is called with the resolved options array after the `options` factory resolves. It is
+required for `selectionMode: "single"` (an error is thrown at resolution time if absent) and
+optional for `selectionMode: "multiple"` (falls back to `[]`).
 
-Because `ListOptionsFactory` is a function, the Valibot schema accepts any function for `options`
-at schema-definition time and defers correctness to the return value at resolution time. The same
-applies to `default` when it is a function.
+Because both factories are functions, neither `options` nor `default` can be validated at
+schema-definition time; correctness is deferred to their return values at resolution time.
+
+`BusinessConfigSchema` in `lib-config` is widened to include `DynamicListField` alongside the
+existing static field types. A new `ResolvedBusinessConfigSchema` type represents the
+post-resolution form, containing only static fields:
+
+```ts
+type BusinessConfigSchema = (BusinessConfigSchemaField | DynamicListField)[];
+
+type ResolvedBusinessConfigSchema = BusinessConfigSchemaField[];
+```
+
+Existing schemas typed as `BusinessConfigSchema` that contain only static fields remain valid; the
+widening is additive.
 
 ### Resolution utility
 
-A new function `resolveDynamicBusinessConfigSchema` is added in
-`packages/aio-commerce-lib-config/source/modules/schema/utils.ts`, alongside existing schema
-helpers such as `validateBusinessConfigSchema` and `getPasswordFields`. It is the single entry
-point for resolving all dynamic parts of a schema. Today it only resolves list option factories, but
-designed to handle any future dynamic schema features through the same call:
+A new function `resolveBusinessConfigSchema` is added to `lib-config`. It is the single
+entry point for resolving all dynamic parts of a schema. Today it only resolves `dynamicList`
+fields, but is designed to handle any future dynamic schema features through the same call:
 
 ```ts
-function resolveDynamicBusinessConfigSchema(
-  schema: MaybeDynamicBusinessConfigSchema,
+function resolveBusinessConfigSchema(
+  schema: BusinessConfigSchema,
   params: RuntimeActionParams,
-): Promise<BusinessConfigSchema>;
+): Promise<ResolvedBusinessConfigSchema>;
 ```
 
-- Iterates the schema and, for each `list` field whose `options` is a function, calls the factory
-  with `params` to produce a `ListOption[]`, then evaluates `default` (calling the default factory
-  with the resolved options if it is a function), and returns the field with concrete values.
-- `list` fields with a static `options` array and all other field types are returned unchanged.
-- Each resolved options array is validated against `v.array(ListOptionSchema)` before being used,
-  so a factory that returns malformed data surfaces a clear error.
-- If an options factory throws or rejects, schema resolution fails and the error propagates to the
-  caller. Generated runtime actions surface that failure as an action error.
-- Returns a new schema object; the original is not mutated.
+- Each `dynamicList` field is resolved to an equivalent `list`-shaped field with concrete options
+  and a resolved `default` value. All other field types pass through unchanged.
+- A factory that returns malformed data or throws surfaces a clear error; schema resolution fails
+  and the error propagates to the caller.
+- Returns a new `ResolvedBusinessConfigSchema`; the original is not mutated.
 
 ### Impact on code generation
 
@@ -223,30 +225,19 @@ import configSchema from "../../configuration-schema.json" with { type: "json" }
 Factory functions cannot be JSON-serialized and would be silently stripped. This pipeline must
 change when the schema contains dynamic options.
 
-**Detection**: during `pre-app-build`, after loading the developer's config via `jiti`, check
-whether any `list` field has a function for `options`. The `hasDynamicSchema()` helper in
-`lib-config` (which delegates to `hasDynamicListOptions()`) provides this check.
+**Detection**: during `pre-app-build`, check whether any field has `type: "dynamicList"`.
+`lib-config` exposes a helper for this check.
 
 **If no factories are present**: existing behavior unchanged. The schema is serialized to
 `configuration-schema.json` and the generated action imports it as a JSON module.
 
 **If any factory is present**: the hook generates a `configuration-schema.js` file with the schema
-inlined as JavaScript code. The hook already loads the developer's config via `jiti` (which handles
-TypeScript); the generated file duplicates the loaded schema as a JS module, serializing static
-values as literals and factory functions via their source representation. Importing the TypeScript
-source directly from the generated action is not viable since the project may not have a
-TypeScript setup.
-
-```js
-// .generated/actions/app-management/config.js
-import { schema as configSchema } from "../../configuration-schema.js";
-```
-
-The same change applies to the `app-config` action template.
+inlined as JavaScript code, so factory functions are preserved. The same change applies to the
+`app-config` action template.
 
 ### Integration with `lib-app` actions
 
-Both the `app-config` and `config` actions call `resolveDynamicBusinessConfigSchema` before using
+Both the `app-config` and `config` actions call `resolveBusinessConfigSchema` before using
 the schema. Each action passes its own `params`, so the factory has access to the inputs declared
 for that specific action.
 
@@ -262,21 +253,21 @@ for that specific action.
 
 It is useful to distinguish two points in time:
 
-1. **Definition time**: the developer's `schema` object, typed as
-   `MaybeDynamicBusinessConfigSchema`. `list` fields may carry a `ListOptionsFactory` for `options`
-   and/or a `ListOptionsDefaultFactory` for `default`.
-2. **Resolution time**: the fully resolved schema, typed as `BusinessConfigSchema`. All `list`
-   fields have concrete `options` arrays and resolved `default` values. This is what the existing
-   validation and rendering code receives, and its shape does not change.
+1. **Definition time**: the developer's `schema` object, typed as `BusinessConfigSchema`. It may
+   contain `dynamicList` fields with factory functions for `options` and/or `default`.
+2. **Resolution time**: the fully resolved schema, typed as `ResolvedBusinessConfigSchema`. All
+   `dynamicList` fields have been converted to `list`-shaped fields with concrete `options` arrays
+   and resolved `default` values. This is what the existing validation and rendering code receives,
+   and its shape does not change.
 
 ### Returning to the examples
 
 Given the `paymentMethod` example above:
 
-- When `config` handles a `GET /`, it calls `resolveDynamicBusinessConfigSchema` and returns a
+- When `config` handles a `GET /`, it calls `resolveBusinessConfigSchema` and returns a
   `schema` array where `paymentMethod.options` is a concrete `ListOption[]`, populated from the
   merchant's Commerce store. The App Management UI renders this directly as a dropdown.
-- When `config` handles a `PUT /` or `PATCH /`, it calls `resolveDynamicBusinessConfigSchema`
+- When `config` handles a `PUT /` or `PATCH /`, it calls `resolveBusinessConfigSchema`
   before configuration operations, so the action uses a concrete schema. Enforcing that submitted
   list values are present in the resolved option set is separate validation work.
 
@@ -307,22 +298,28 @@ endpoints the SDK can reach without custom auth logic and removes the ability to
 response shape.
 
 **A "refresh options" button in the UI.**  
-Options freshness is not a UI concern; it is a resolution concern. Because `resolveDynamicBusinessConfigSchema`
+Options freshness is not a UI concern; it is a resolution concern. Because `resolveBusinessConfigSchema`
 is called on every request, the frontend already receives up-to-date options on any `config GET /`.
 A refresh is simply re-fetching the config response; no additional SDK work is needed.
 
-**Why `MaybeDynamic` wrappers instead of a separate `dynamicList` type?**  
-A separate `dynamicList` type would break backwards compatibility: existing schemas typed as
-`BusinessConfigSchema` would not accept the new type without a union, and consumers that switch on
-`field.type` would need updating. The `MaybeDynamic` wrapper preserves the `list` type value
-throughout — only the TypeScript type of `options` widens at definition time and narrows back at
-resolution time. The distinction is entirely SDK-internal; consumers and existing code are
-unaffected.
+**Why a separate `dynamicList` type instead of extending `list`?**  
+A separate type makes the contract explicit at definition time: a `dynamicList` field always has a
+factory; a `list` field always has a static array. Mixing the two in a union on `list` would make
+the static guarantee of `BusinessConfigSchema` meaningless and complicate schema validation in
+ways that are hard to check statically. Consumers always receive a `list`-shaped field after
+resolution, so the distinction is SDK-internal.
+
+**Why widen `BusinessConfigSchema` rather than introduce a separate input type?**  
+A separate input type (e.g. `MaybeDynamicBusinessConfigSchema`) would require every API that today
+accepts `BusinessConfigSchema` to be updated, and would leave developers with two schema type names
+to reason about. Widening `BusinessConfigSchema` directly is additive: existing static schemas
+remain valid, existing type annotations compile unchanged, and there is one canonical type name for
+"the schema a developer writes." The resolved form gets its own name, `ResolvedBusinessConfigSchema`,
+which makes the post-resolution guarantee explicit without inventing additional intermediate types.
 
 **Factory at the schema level (not the field level).**  
-The previous implementation supported a factory that returned the entire schema. Rejected for this
-spec: it is broader than the stated need and makes the schema shape harder to reason about
-statically. It can be revisited independently.
+Rejected for this spec: it is broader than the stated need and makes the schema shape harder to
+reason about statically. It can be revisited independently.
 
 **What is the impact of not doing this?**  
 Apps that need merchant-specific or any other dynamic options cannot express them through the schema and must work around the limitation outside the SDK.
