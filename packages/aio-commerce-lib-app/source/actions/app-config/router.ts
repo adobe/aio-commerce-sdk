@@ -17,31 +17,31 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
+import openAPISpec from "#generated/openapi.gen.json" with { type: "json" };
+
+import { AppConfigResponseSchema } from "./schema";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-/** Arguments for the runtime action factory. */
-type RuntimeActionFactoryArgs = {
+type RuntimeActionArgs = RuntimeActionParams & {
   appConfig: CommerceAppConfigOutputModel;
 };
 
-/** Params received by all handlers. */
-type RuntimeActionArgs = RuntimeActionParams & RuntimeActionFactoryArgs;
-
-/** The context for the config action. */
 interface AppConfigActionContext extends BaseContext {
   rawParams: RuntimeActionArgs;
 }
 
-/** Router for the app config actions. */
-const router = new HttpActionRouter<AppConfigActionContext>().use(
+export const router = new HttpActionRouter<AppConfigActionContext>().use(
   logger({ name: () => "app-config" }),
 );
 
 /** GET / - Get app config */
 router.get("/", {
+  responses: {
+    200: AppConfigResponseSchema,
+  },
   handler: async (_req, { logger, rawParams }) => {
     logger.debug("Validating app config...");
 
@@ -55,13 +55,7 @@ router.get("/", {
   },
 });
 
-/** Factory to create the route handler for the `app-config` action. */
-export const appConfigRuntimeAction =
-  ({ appConfig }: RuntimeActionFactoryArgs) =>
-  async (params: RuntimeActionParams) => {
-    const handler = router.handler();
-    return await handler({
-      ...params,
-      appConfig,
-    });
-  };
+/** GET /openapi.json - Returns the OpenAPI spec for all SDK actions */
+router.get("/openapi.json", {
+  handler: () => ok({ body: openAPISpec }),
+});

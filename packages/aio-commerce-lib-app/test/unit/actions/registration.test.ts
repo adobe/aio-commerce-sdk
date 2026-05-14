@@ -12,7 +12,7 @@
 
 import { describe, expect, test, vi } from "vitest";
 
-import { registrationRuntimeAction } from "#actions/registration";
+import { registrationRuntimeAction } from "#actions/registration/index";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 

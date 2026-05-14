@@ -425,6 +425,21 @@ describe("actions/http/router", () => {
     });
   });
 
+  describe("getRoutes()", () => {
+    it("should return all registered routes with their metadata", () => {
+      const router = new HttpActionRouter();
+
+      router.get("/users", { handler: () => ok() });
+      router.post("/users/:id", { handler: () => ok() });
+
+      const routes = router.getRoutes();
+
+      expect(routes).toHaveLength(2);
+      expect(routes[0]).toMatchObject({ method: "GET", path: "/users" });
+      expect(routes[1]).toMatchObject({ method: "POST", path: "/users/:id" });
+    });
+  });
+
   describe("HTTP method handlers", () => {
     it.each([
       ["get", "GET"],

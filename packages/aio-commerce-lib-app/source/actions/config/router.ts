@@ -26,6 +26,14 @@ import * as v from "valibot";
 
 import { validateCommerceAppConfigDomain } from "#config/index";
 
+import {
+  GetConfigurationResponseSchema,
+  PatchConfigBodySchema,
+  PatchConfigurationResponseSchema,
+  PutConfigBodySchema,
+  SetConfigurationResponseSchema,
+} from "./schema";
+
 import type {
   BusinessConfigSchema,
   ConfigValue,
@@ -33,18 +41,11 @@ import type {
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 
-/** The arguments for the config action factory. */
-type ConfigActionFactoryArgs = {
+type ConfigActionParams = RuntimeActionParams & {
   configSchema: BusinessConfigSchema;
+  AIO_COMMERCE_CONFIG_ENCRYPTION_KEY?: string;
 };
 
-/** The parameters for the config action. */
-type ConfigActionParams = RuntimeActionParams &
-  ConfigActionFactoryArgs & {
-    AIO_COMMERCE_CONFIG_ENCRYPTION_KEY?: string;
-  };
-
-/** The context for the config action. */
 interface ConfigActionContext extends BaseContext {
   rawParams: ConfigActionParams;
 }
@@ -72,14 +73,15 @@ function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
   });
 }
 
-// The router that will hold the config routes
-const router = new HttpActionRouter<ConfigActionContext>().use(logger());
+export const router = new HttpActionRouter<ConfigActionContext>().use(logger());
 
 /** GET / - Retrieve configuration */
 router.get("/", {
   query: v.object({
     scopeId: nonEmptyStringValueSchema("scopeId"),
   }),
+
+  responses: { 200: GetConfigurationResponseSchema },
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
@@ -117,15 +119,9 @@ router.get("/", {
  * and does not support partial updates or unset semantics.
  */
 router.put("/", {
-  body: v.object({
-    scopeId: nonEmptyStringValueSchema("scopeId"),
-    config: v.array(
-      v.object({
-        name: nonEmptyStringValueSchema("config.name"),
-        value: v.union([v.string(), v.array(v.string())]),
-      }),
-    ),
-  }),
+  body: PutConfigBodySchema,
+
+  responses: { 200: SetConfigurationResponseSchema },
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
@@ -166,18 +162,9 @@ router.put("/", {
 
 /** PATCH / - Partially update configuration */
 router.patch("/", {
-  body: v.object({
-    scopeId: nonEmptyStringValueSchema("scopeId"),
-    config: v.array(
-      v.object({
-        name: nonEmptyStringValueSchema("config.name"),
-        // null unsets the field, restoring inheritance from the parent scope
-        value: v.nullable(
-          v.union([v.boolean(), v.string(), v.array(v.string())]),
-        ),
-      }),
-    ),
-  }),
+  body: PatchConfigBodySchema,
+
+  responses: { 200: PatchConfigurationResponseSchema },
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
@@ -203,14 +190,3 @@ router.patch("/", {
     });
   },
 });
-
-/** Factory to create the route handler for the `config` action. */
-export const configRuntimeAction =
-  ({ configSchema }: ConfigActionFactoryArgs) =>
-  async (params: RuntimeActionParams) => {
-    const handler = router.handler();
-    return await handler({
-      ...params,
-      configSchema,
-    });
-  };
