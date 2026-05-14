@@ -56,9 +56,9 @@ value — a reader who hit the error will already have read the table.
 
 ## Tessl tile
 
-This plugin ships a single `tile.json` at the plugin root (`plugins/commerce/app-management/tile.json`). One tile per plugin — not one per skill — because the skills are a cohesive family distributed as a unit.
+Each plugin ships a single `tile.json` at its root (`plugins/commerce/<plugin>/tile.json`) — one tile per plugin, not one per skill, because the skills in a plugin are a cohesive family distributed as a unit.
 
-The tile references all skills under the `skills` key. When adding a new skill, add a matching entry:
+The tile references all skills under the `skills` key. When adding a new skill to a plugin, add a matching entry:
 
 ```json
 "skills": {
