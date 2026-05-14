@@ -22,6 +22,7 @@ import type {
   FailedInstallationState,
   InProgressInstallationState,
   InstallationError,
+  InstallationState,
   StepStatus,
   SucceededInstallationState,
 } from "#management/installation/workflow/types";
@@ -299,5 +300,53 @@ export function createMockValidationResult(
     result: createMockStepValidationResult(),
     summary: createMockValidationSummary(),
     ...overrides,
+  };
+}
+
+/** Creates an in-memory mock of a key/value store for installation state. */
+export function createMockInstallationStore(
+  initialValue: InstallationState | null = null,
+) {
+  let value = initialValue;
+
+  return {
+    get: vi.fn(async (_key: string) => value),
+    put: vi.fn(async (_key: string, nextValue: InstallationState) => {
+      value = nextValue;
+    }),
+    delete: vi.fn(async (_key: string) => {
+      const hasValue = value !== null;
+      value = null;
+      return hasValue;
+    }),
+  };
+}
+
+export type MockInstallationStore = ReturnType<
+  typeof createMockInstallationStore
+>;
+
+/**
+ * Builds a `createCombinedStore` mock implementation that routes to the
+ * provided installation/uninstallation stores based on the requested prefix.
+ */
+export function createMockCombinedStoreImpl(
+  getStores: () => {
+    installation: MockInstallationStore;
+    uninstallation: MockInstallationStore;
+  },
+) {
+  return async (options?: { cache?: { keyPrefix?: string } }) => {
+    const prefix = options?.cache?.keyPrefix;
+    const stores = getStores();
+
+    if (prefix === "installation") {
+      return stores.installation;
+    }
+    if (prefix === "uninstallation") {
+      return stores.uninstallation;
+    }
+
+    throw new Error(`Unexpected store prefix: ${String(prefix)}`);
   };
 }
