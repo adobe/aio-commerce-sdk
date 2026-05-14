@@ -1,6 +1,6 @@
 # commerce-app-migration
 
-A Claude Code plugin that migrates Adobe Commerce App Builder projects from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach using `@adobe/aio-commerce-lib-app`.
+Agent skill for migrating Adobe Commerce App Builder projects to the App Management approach, following the [agentskills.io](https://agentskills.io) open standard. Compatible with Claude Code, Cursor, VS Code Copilot, Gemini CLI, and other supported agents.
 
 ## Skills
 
