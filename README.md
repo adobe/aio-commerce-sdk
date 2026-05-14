@@ -64,7 +64,7 @@ See also the [Contributing Guide](./.github/CONTRIBUTING.md) for more informatio
 
 ## Agentic Tooling
 
-Agentic tooling lives under [`plugins/`](./plugins/). Each plugin is independently installable and may include agent skills, MCP configurations, or other agentic content. See [`plugins/commerce/app-management/README.md`](./plugins/commerce/app-management/README.md) for the Commerce App Management plugin.
+Agentic tooling lives under [`plugins/`](./plugins/). Each plugin is independently installable and may include agent skills, MCP configurations, or other agentic content. See [`plugins/commerce/`](./plugins/commerce/README.md) for available Commerce plugins and distribution channel guidance.
 
 ## Resources
 
