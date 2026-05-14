@@ -170,9 +170,7 @@ With the key in place, `getConfigurationByKey` returns the plaintext value — n
 
 ## Common Issues
 
-- **`schema` must have at least one entry**: `businessConfig.schema` requires at least one field — an empty array is rejected.
 - **`list/single` default missing**: Single-select list fields require a `default` — it can't be omitted. It must exactly match one of the option `value` strings.
-- **Invalid `email` / `url` default**: Must be `""` or a fully valid value — partial values like `"user@"` or `"https://"` are rejected.
 - **`defineConfig` not found**: Ensure `@adobe/aio-commerce-lib-app` is installed and `defineConfig` is imported from `@adobe/aio-commerce-lib-app/config`.
 
 ## Quality Bar

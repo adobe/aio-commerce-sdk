@@ -176,10 +176,9 @@ A build failure with a validation error points directly to the offending config 
 
 ## Common Issues
 
-- **`batch_name` or `hook_name` rejected**: Only `[a-zA-Z0-9_]+` is accepted — no hyphens, dots, or spaces. Use underscores as separators (`my_app`, `validate_product_save`).
-- **Both `runtimeAction` and `webhook.url` set**: These are mutually exclusive — remove one. Use `runtimeAction` when the handler lives in this app; use `webhook.url` for an external endpoint.
+- **`batch_name` or `hook_name` rejected**: Use underscores as separators (`my_app`, `validate_product_save`) — hyphens, dots, and spaces are not accepted.
+- **Both `runtimeAction` and `webhook.url` set**: These are mutually exclusive — use `runtimeAction` when the handler lives in this app; `webhook.url` for an external endpoint.
 - **`url` at wrong level**: For URL-based entries, `url` must be inside the nested `webhook` object, not at the top level alongside `label`.
-- **`category` value rejected**: Must be exactly `validation`, `append`, or `modification` — no other values are accepted.
 - **`app-management` package name conflict**: The framework generates this package in `ext.config.yaml` on every build. Use any other name for your own actions.
 - **Function path is relative to `src/commerce-extensibility-1/`**: Do not use `src/...` or project-root-relative paths. `actions/validate-product/index.js` resolves correctly; `src/commerce-extensibility-1/actions/validate-product/index.js` does not.
 - **`defineConfig` not found**: Ensure `@adobe/aio-commerce-lib-app` is installed and `defineConfig` is imported from `@adobe/aio-commerce-lib-app/config`.
