@@ -49,6 +49,7 @@ router.get("/", {
 /**
  * Factory to create the route handler for the `registration` action.
  * @param args - The registration configuration to inline in the action.
+ * @experimental
  */
 export const registrationRuntimeAction =
   ({ registration }: RegistrationActionArgs) =>
