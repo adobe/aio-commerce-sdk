@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "commerce-app-management",
-      "source": "./plugins/commerce-app-management",
+      "source": "./plugins/commerce/app-management",
       "description": "Skills for Adobe Commerce App Management — scaffold and configure Commerce apps using the aio-commerce-sdk."
     }
   ]

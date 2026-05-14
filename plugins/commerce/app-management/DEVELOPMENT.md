@@ -9,10 +9,10 @@ the target project — the CLI auto-detects the agent and installs to the right 
 cd ~/my-commerce-app
 
 # Install all skills
-npx skills add /path/to/aio-commerce-sdk/plugins/commerce-app-management --yes
+npx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-management --yes
 
 # Install a specific skill only
-npx skills add /path/to/aio-commerce-sdk/plugins/commerce-app-management --yes --skill commerce-app-init
+npx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-management --yes --skill commerce-app-init
 ```
 
 ## Authoring skills
@@ -56,7 +56,7 @@ value — a reader who hit the error will already have read the table.
 
 ## Tessl tile
 
-This plugin ships a single `tile.json` at the plugin root (`plugins/commerce-app-management/tile.json`). One tile per plugin — not one per skill — because the skills are a cohesive family distributed as a unit.
+This plugin ships a single `tile.json` at the plugin root (`plugins/commerce/app-management/tile.json`). One tile per plugin — not one per skill — because the skills are a cohesive family distributed as a unit.
 
 The tile references all skills under the `skills` key. When adding a new skill, add a matching entry:
 

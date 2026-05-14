@@ -30,23 +30,28 @@ A developer creating an app that needs events and webhooks would run `commerce-a
 
 ## Installation
 
-**Claude Code plugin (recommended):**
+> **For most users:** install from [adobe/skills](https://github.com/adobe/skills), which ships tested, stable releases. The commands below install directly from this repository and are intended for contributors and early adopters who need unreleased changes.
+
+**Claude Code plugin:**
 
 ```sh
 /plugin marketplace add adobe/aio-commerce-sdk
 /plugin install commerce-app-management@adobe-aio-commerce-sdk
 ```
 
-**Single skill via skills CLI:**
+**Tessl CLI:**
+
+```sh
+tessl install github:adobe/aio-commerce-sdk --skills commerce-app-management
+```
+
+**npx skills:**
 
 ```sh
 npx skills add adobe/aio-commerce-sdk --skill commerce-app-init
-```
-
-**All skills via skills CLI:**
-
-```sh
-npx skills add adobe/aio-commerce-sdk --all
+npx skills add adobe/aio-commerce-sdk --skill commerce-app-eventing
+npx skills add adobe/aio-commerce-sdk --skill commerce-app-webhooks
+npx skills add adobe/aio-commerce-sdk --skill commerce-app-business-config
 ```
 
 ## Contributing
