@@ -15,7 +15,7 @@
  * @packageDocumentation
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 // @ts-expect-error - The library doesn't export types.
@@ -106,17 +106,26 @@ function resolveImsS2SContext(): Promise<ImsContext | null> {
   return context.get(credential);
 }
 
+export type SyncImsCredentialsResult =
+  | { ok: true }
+  | { ok: false; reason: "missing-env" | "no-ims-context" };
+
 /**
  * Syncs the IMS credentials environment variables from the configured IMS context in
- * the .env file, in a way that is compatible with `@adobe/aio-commerce-lib-auth`
+ * the .env file, in a way that is compatible with `@adobe/aio-commerce-lib-auth`.
  */
-export async function syncImsCredentials() {
+export async function syncImsCredentials(): Promise<SyncImsCredentialsResult> {
   const envPath = resolveEnvPath();
+
+  if (!existsSync(envPath)) {
+    return { ok: false, reason: "missing-env" };
+  }
+
   const envVars = dotenv.parse(readFileSync(envPath, "utf8"));
   const imsContext = await resolveImsS2SContext();
 
   if (!imsContext) {
-    return;
+    return { ok: false, reason: "no-ims-context" };
   }
 
   const { data } = imsContext;
@@ -131,4 +140,6 @@ export async function syncImsCredentials() {
       replaceEnvVar(envPath, oauthKey, value);
     }
   }
+
+  return { ok: true };
 }
