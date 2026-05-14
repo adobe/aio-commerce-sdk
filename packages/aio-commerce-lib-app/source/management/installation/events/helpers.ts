@@ -390,7 +390,7 @@ export async function createCommerceProvider(
 /**
  * Creates or retrieves an existing Commerce event provider.
  * @param params - Parameters needed to create or get the Commerce provider.
- * @param existingData - Existing Commerce providers.
+ * @param existingProviders - Existing Commerce providers.
  */
 export async function createOrGetCommerceProvider(
   params: CreateCommerceProviderParams,
@@ -405,11 +405,18 @@ export async function createOrGetCommerceProvider(
   );
 
   if (existing) {
-    logger.info(
-      `Provider "${provider.label}" already exists with ID "${existing.id}", skipping creation.`,
-    );
+    if (existing.provider_id === provider.id) {
+      logger.info(
+        `Provider "${provider.label}" already exists with provider ID "${existing.provider_id}", skipping creation.`,
+      );
 
-    return existing;
+      return existing;
+    }
+
+    logger.warn(
+      `Provider "${provider.label}" exists (instance ID: ${provider.instance_id}) but with a different ` +
+        `provider ID ("${existing.provider_id}" → "${provider.id}"). Registering updated provider in Commerce.`,
+    );
   }
 
   return createCommerceProvider(params);
