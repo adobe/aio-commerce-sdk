@@ -44,7 +44,15 @@ export default defineConfig({
         },
         {
           label: "Packages",
-          items: [{ autogenerate: { directory: "packages" } }],
+          items: [
+            { slug: "packages/aio-commerce-lib-api" },
+            { slug: "packages/aio-commerce-lib-app" },
+            { slug: "packages/aio-commerce-lib-auth" },
+            { slug: "packages/aio-commerce-lib-config" },
+            { slug: "packages/aio-commerce-lib-core" },
+            { slug: "packages/aio-commerce-lib-events" },
+            { slug: "packages/aio-commerce-lib-webhooks" },
+          ],
         },
       ],
       plugins: [
