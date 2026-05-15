@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   createInitialState,
+  createRetryState,
   executeUninstallWorkflow,
   executeWorkflow,
 } from "#management/installation/workflow/runner";
@@ -23,7 +24,9 @@ import {
 } from "#management/installation/workflow/step";
 import { minimalValidConfig } from "#test/fixtures/config";
 import {
+  createMockFailedState,
   createMockInstallationContext,
+  createMockStepStatus,
   FAKE_SYSTEM_TIME,
 } from "#test/fixtures/installation";
 
@@ -974,5 +977,128 @@ describe("executeUninstallWorkflow", () => {
     expect(installFn2).not.toHaveBeenCalled();
     // Overall workflow result should be succeeded
     expect(result.status).toBe("succeeded");
+  });
+});
+
+describe("createRetryState", () => {
+  test("should preserve id and startedAt from failed state", () => {
+    const failedState = createMockFailedState({
+      id: "install-abc",
+      startedAt: FAKE_SYSTEM_TIME,
+    });
+
+    const retryState = createRetryState(failedState);
+
+    expect(retryState.id).toBe("install-abc");
+    expect(retryState.startedAt).toBe(FAKE_SYSTEM_TIME);
+    expect(retryState.status).toBe("in-progress");
+  });
+
+  test("should preserve succeeded child statuses and reset failed child to pending", () => {
+    const failedState = createMockFailedState({
+      step: createMockStepStatus({
+        status: "failed",
+        children: [
+          createMockStepStatus({
+            name: "step-a",
+            path: ["installation", "step-a"],
+            status: "succeeded",
+          }),
+          createMockStepStatus({
+            name: "step-b",
+            path: ["installation", "step-b"],
+            status: "failed",
+          }),
+        ],
+      }),
+    });
+
+    const retryState = createRetryState(failedState);
+
+    expect(retryState.step.children[0].status).toBe("succeeded");
+    expect(retryState.step.children[1].status).toBe("pending");
+  });
+
+  test("should reset root step to pending when it was failed", () => {
+    const failedState = createMockFailedState({
+      step: createMockStepStatus({ status: "failed", children: [] }),
+    });
+
+    const retryState = createRetryState(failedState);
+
+    expect(retryState.step.status).toBe("pending");
+  });
+
+  test("should carry over data from the failed state", () => {
+    const partialData = { installation: { "step-a": { id: "123" } } };
+    const failedState = createMockFailedState({ data: partialData });
+
+    const retryState = createRetryState(failedState);
+
+    expect(retryState.data).toBe(partialData);
+  });
+});
+
+describe("executeWorkflow — skip already-succeeded steps", () => {
+  test("should skip leaf steps with status succeeded in initial state", async () => {
+    const install = vi.fn().mockResolvedValue({ id: "from-retry" });
+    const leafStep = defineLeafStep({
+      name: "leaf",
+      meta: { install: { label: "Leaf" } },
+      install,
+    });
+    const rootStep = defineBranchStep({
+      name: "installation",
+      meta: { install: { label: "Installation" } },
+      children: [leafStep],
+    });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+    initialState.step.children[0].status = "succeeded";
+
+    await executeWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(install).not.toHaveBeenCalled();
+  });
+
+  test("should preserve data from initial state for skipped steps", async () => {
+    const install = vi.fn().mockResolvedValue({ id: "new-result" });
+    const leafStep = defineLeafStep({
+      name: "leaf",
+      meta: { install: { label: "Leaf" } },
+      install,
+    });
+    const rootStep = defineBranchStep({
+      name: "installation",
+      meta: { install: { label: "Installation" } },
+      children: [leafStep],
+    });
+    const initialState = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+    initialState.step.children[0].status = "succeeded";
+    initialState.data = { installation: { leaf: { id: "from-first-run" } } };
+
+    const result = await executeWorkflow({
+      rootStep,
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(result.status).toBe("succeeded");
+    expect(
+      (result.data as Record<string, unknown>)?.installation,
+    ).toMatchObject({
+      leaf: { id: "from-first-run" },
+    });
   });
 });
