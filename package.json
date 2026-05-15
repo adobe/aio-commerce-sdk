@@ -29,7 +29,7 @@
     "test": "turbo test",
     "turbo": "turbo",
     "typecheck": "turbo typecheck",
-    "docs:dev": "astro dev --root docs",
+    "docs:dev": "node docs/scripts/prepare-api-ref.mjs && astro dev --root docs",
     "docs:build": "node docs/scripts/prepare-api-ref.mjs && astro build --root docs",
     "docs:preview": "astro preview --root docs"
   },
