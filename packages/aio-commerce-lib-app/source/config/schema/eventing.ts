@@ -218,9 +218,12 @@ const CommerceEventSchema = v.object({
   ...BaseEventSchema.entries,
 
   name: commerceEventNameSchema(),
-  fields: v.array(
-    commerceEventFieldSchema(),
-    "Expected an array of event field objects with a 'name' property",
+  fields: v.pipe(
+    v.array(
+      commerceEventFieldSchema(),
+      "Expected an array of event field objects with a 'name' property",
+    ),
+    v.minLength(1, "Commerce event must have at least one field"),
   ),
   rules: v.optional(
     v.array(

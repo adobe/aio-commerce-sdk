@@ -1485,4 +1485,12 @@ describe("validateConfigDomain", () => {
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
+
+  test("should throw when commerce event fields array is empty", () => {
+    const config = createCommerceEventConfig("observer.order_placed", {
+      fields: [],
+    });
+
+    expect(() => validateCommerceAppConfig(config)).toThrow();
+  });
 });
