@@ -52,6 +52,26 @@ interface ConfigActionContext extends BaseContext {
 // Placeholder value for password fields.
 const MASKED_PASSWORD_VALUE = "*****";
 
+/** The set of valid Commerce environments a configuration field can be scoped to. */
+const COMMERCE_ENVS = ["paas", "saas"] as const;
+type CommerceEnv = (typeof COMMERCE_ENVS)[number];
+
+/**
+ * Filters a business configuration schema to the fields applicable to the
+ * given Commerce environment. Fields without an `env` property apply to all
+ * environments and are always included.
+ * @param schema - The business configuration schema to filter.
+ * @param env - The Commerce environment to filter by.
+ */
+function filterSchemaByEnv(
+  schema: BusinessConfigSchema,
+  env: CommerceEnv,
+): BusinessConfigSchema {
+  return schema.filter(
+    (field) => field.env === undefined || field.env.includes(env),
+  );
+}
+
 /**
  * Filters password fields from the configuration values.
  * @param schema - The schema to use to filter the values.
@@ -79,6 +99,7 @@ const router = new HttpActionRouter<ConfigActionContext>().use(logger());
 router.get("/", {
   query: v.object({
     scopeId: nonEmptyStringValueSchema("scopeId"),
+    commerceEnv: v.optional(v.picklist(COMMERCE_ENVS)),
   }),
 
   handler: async (req, ctx) => {
@@ -91,7 +112,13 @@ router.get("/", {
       "businessConfig.schema",
     );
 
-    initialize({ schema: validatedSchema });
+    const env = req.query.commerceEnv;
+
+    const filteredSchema = env
+      ? filterSchemaByEnv(validatedSchema, env)
+      : validatedSchema;
+
+    initialize({ schema: filteredSchema });
 
     const { scopeId } = req.query;
     logger.debug(`Retrieving configuration with scope id: ${scopeId}`);
@@ -101,12 +128,12 @@ router.get("/", {
 
     logger.debug("Masking password values...");
     appConfiguration.config = filterPasswordFields(
-      configSchema,
+      filteredSchema,
       appConfiguration.config,
     );
 
     return ok({
-      body: { schema: validatedSchema, values: appConfiguration },
+      body: { schema: filteredSchema, values: appConfiguration },
     });
   },
 });

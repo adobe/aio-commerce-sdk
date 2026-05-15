@@ -17,7 +17,7 @@ import { vi } from "vitest";
 export function createMockLibFiles() {
   const MockLibFiles = vi.fn(
     class MockLibFilesClass {
-      private files = new Map<string, string>();
+      private readonly files = new Map<string, string>();
 
       public list = vi.fn(async (path?: string) => {
         if (!path) {

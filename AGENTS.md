@@ -105,6 +105,20 @@ For source code comments, follow these rules:
 - Prefix the PR title with the Jira ticket (e.g. `CEXT-1234: short description`)
 - Always follow `.github/PULL_REQUEST_TEMPLATE.md` when writing PR descriptions
 
+## Specs
+
+- Specs live in `specs/features/`, named with the Jira ticket prefix (e.g. `CEXT-6138-capability-discovery.md`)
+- Use `specs/features/_template.md` as the starting point
+- See `specs/conventions.md` for when a spec is required and authoring guidelines
+
+## Agentic Tooling
+
+Agentic tooling lives under `plugins/`. Each subdirectory is a self-contained plugin with its own `.claude-plugin/plugin.json` manifest and installable content (skills, MCP configs, etc.).
+
+@plugins/commerce/README.md
+
+When making changes to the SDK that affect a plugin's domain (e.g. changes to config schemas, CLI flags, installation APIs), update the relevant plugin content in the same PR. Plugin content must stay in sync with the SDK it describes — stale plugin content is treated the same as stale documentation.
+
 ## Changesets
 
 - Every code change that requires a release must include a changeset (test-only changes do not need one)
