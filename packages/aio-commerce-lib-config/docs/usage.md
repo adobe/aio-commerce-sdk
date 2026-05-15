@@ -1,3 +1,8 @@
+---
+title: "@adobe/aio-commerce-lib-config"
+description: Hierarchical configuration management for Adobe Commerce apps, with scope inheritance, persistent storage via Adobe I/O State and Files, and schema validation.
+---
+
 # `@adobe/aio-commerce-lib-config` Documentation
 
 ## Overview

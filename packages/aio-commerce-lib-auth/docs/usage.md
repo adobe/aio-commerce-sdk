@@ -1,3 +1,8 @@
+---
+title: "@adobe/aio-commerce-lib-auth"
+description: Authentication utilities for Adobe Commerce apps, supporting IMS and Commerce integration OAuth flows with token management and credential forwarding for proxy patterns.
+---
+
 # `@adobe/aio-commerce-lib-auth` Documentation
 
 ## Overview

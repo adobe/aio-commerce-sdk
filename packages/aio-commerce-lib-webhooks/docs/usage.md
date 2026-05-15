@@ -1,3 +1,8 @@
+---
+title: "@adobe/aio-commerce-lib-webhooks"
+description: Webhook management library for Adobe Commerce, providing an API client for managing subscriptions and typed response builders for webhook handler runtime actions.
+---
+
 # `@adobe/aio-commerce-lib-webhooks` Documentation
 
 ## Overview

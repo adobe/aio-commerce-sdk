@@ -145,3 +145,8 @@ out
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Docs site build output
+docs/dist
+docs/.astro
+docs/node_modules

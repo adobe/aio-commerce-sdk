@@ -1,3 +1,8 @@
+---
+title: "@adobe/aio-commerce-lib-app"
+description: App configuration management for Adobe Commerce App Builder applications, generating runtime actions for installation, business configuration, and Admin UI SDK registration.
+---
+
 # `@adobe/aio-commerce-lib-app` Documentation
 
 ## Overview

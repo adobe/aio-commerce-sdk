@@ -28,9 +28,13 @@
     "publint": "turbo run publint",
     "test": "turbo test",
     "turbo": "turbo",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "docs:dev": "astro dev --root docs",
+    "docs:build": "astro build --root docs",
+    "docs:preview": "astro preview --root docs"
   },
   "devDependencies": {
+    "@astrojs/starlight": "^0.39.2",
     "@biomejs/biome": "2.4.14",
     "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.30.0",
@@ -38,10 +42,13 @@
     "@types/node": "^24.12.0",
     "@vitest/coverage-v8": "^4.1.0",
     "@vitest/ui": "^4.1.0",
+    "astro": "^6.3.3",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "catalog:",
     "publint": "^0.3.18",
+    "sharp": "^0.34.5",
+    "starlight-llms-txt": "^0.10.0",
     "tsdown": "^0.21.4",
     "turbo": "^2.8.17",
     "typedoc": "^0.28.17",

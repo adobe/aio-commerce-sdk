@@ -1,3 +1,8 @@
+---
+title: "@adobe/aio-commerce-lib-api"
+description: HTTP client utilities for Adobe Commerce and Adobe I/O Events APIs, including pre-built clients, an API client builder, authentication integration, and response transformation utilities.
+---
+
 # `@adobe/aio-commerce-lib-api` Documentation
 
 ## Overview

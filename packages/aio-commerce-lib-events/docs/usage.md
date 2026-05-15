@@ -1,3 +1,8 @@
+---
+title: "@adobe/aio-commerce-lib-events"
+description: Event management library for Adobe Commerce and Adobe I/O Events, with API clients for managing providers, subscriptions, event metadata, and registrations.
+---
+
 # `@adobe/aio-commerce-lib-events` Documentation
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+title: "@adobe/aio-commerce-lib-core"
+description: Core utilities for the Adobe Commerce SDK, providing error handling, standardized runtime action responses, parameter validation, and HTTP header helpers.
+---
+
 # `@adobe/aio-commerce-lib-core` Documentation
 
 ## Overview

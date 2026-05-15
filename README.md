@@ -5,6 +5,7 @@ A comprehensive TypeScript SDK for building Adobe Commerce integrations with Ado
 This monorepo contains a collection of modular libraries that streamline the development of Adobe Commerce applications on the App Builder platform. Each package is designed to be used independently or combined through a [convenient meta-package](./packages/aio-commerce-sdk).
 
 - [Adobe Commerce SDK for App Builder](#adobe-commerce-sdk-for-app-builder)
+  - [Documentation](#documentation)
   - [Quick Start](#quick-start)
   - [Packages](#packages)
   - [Architecture](#architecture)
@@ -12,6 +13,12 @@ This monorepo contains a collection of modular libraries that streamline the dev
   - [Resources](#resources)
   - [License](#license)
   - [Governance](#governance)
+
+## Documentation
+
+The full documentation site is available at **[https://adobe.github.io/aio-commerce-sdk/](https://adobe.github.io/aio-commerce-sdk/)**.
+
+Per-package documentation is sourced directly from each package's `docs/usage.md` file. To contribute or update package docs, edit the relevant `packages/<name>/docs/usage.md`.
 
 ## Quick Start
 

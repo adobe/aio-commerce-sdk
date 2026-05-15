@@ -56,6 +56,19 @@
     "publint": {
       "dependsOn": ["build"],
       "cache": false
+    },
+    "docs:build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "docs/**",
+        "packages/*/docs/usage.md",
+        "packages/*/package.json"
+      ],
+      "outputs": ["docs/dist/**", "docs/.astro/**"]
+    },
+    "docs:dev": {
+      "cache": false,
+      "persistent": true
     }
   }
 }
