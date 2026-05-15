@@ -885,6 +885,99 @@ describe("validateConfig", () => {
     expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 
+  test("should throw when provider label contains invalid characters", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        external: [
+          {
+            provider: {
+              label: "Catalog & Sales Rules Events", // & is not a valid character
+              description: "Provider description",
+            },
+            events: [
+              {
+                name: "event",
+                label: "Event",
+                description: "An event",
+                runtimeActions: ["my-package/event-handler"],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow();
+  });
+
+  test("should throw when provider description contains invalid characters", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        external: [
+          {
+            provider: {
+              label: "Provider",
+              description: "Events for <Commerce>", // < and > are not valid characters
+            },
+            events: [
+              {
+                name: "event",
+                label: "Event",
+                description: "An event",
+                runtimeActions: ["my-package/event-handler"],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow();
+  });
+
+  test("should accept provider label with all valid special characters", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        external: [
+          {
+            provider: {
+              label: "Events: (Commerce) v1.0, @Adobe / sales_rules-test.v2",
+              description: "Provider description",
+            },
+            events: [
+              {
+                name: "event",
+                label: "Event",
+                description: "An event",
+                runtimeActions: ["my-package/event-handler"],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).not.toThrow();
+  });
+
   test("should throw when commerce event description exceeds max length", () => {
     const config = {
       metadata: {
@@ -1391,5 +1484,13 @@ describe("validateConfigDomain", () => {
     };
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
+  });
+
+  test("should throw when commerce event fields array is empty", () => {
+    const config = createCommerceEventConfig("observer.order_placed", {
+      fields: [],
+    });
+
+    expect(() => validateCommerceAppConfig(config)).toThrow();
   });
 });

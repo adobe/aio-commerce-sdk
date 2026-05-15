@@ -57,7 +57,7 @@ export const DOMAIN_DEFAULTS = {
       events: [
         {
           name: "plugin.sample_event",
-          fields: [],
+          fields: [{ name: "*" }],
 
           label: "Sample Event",
           description: "Use case description for the event.",
