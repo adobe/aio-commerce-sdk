@@ -60,6 +60,12 @@ const configSchema = [
   },
 ] satisfies BusinessConfigSchema;
 
+const envScopedSchema = [
+  { name: "shared", type: "text", label: "Shared" },
+  { name: "paasOnly", type: "text", label: "PaaS", env: ["paas"] },
+  { name: "saasOnly", type: "text", label: "SaaS", env: ["saas"] },
+] satisfies BusinessConfigSchema;
+
 describe("configRuntimeAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -100,6 +106,110 @@ describe("configRuntimeAction", () => {
       const handler = configRuntimeAction({ configSchema });
 
       const result = await handler(createRuntimeActionParams());
+
+      expect(result).toMatchObject({
+        type: "error",
+        error: { statusCode: 400 },
+      });
+    });
+
+    test("returns full schema when commerceEnv is omitted", async () => {
+      getConfigurationMock.mockResolvedValue({
+        scopeId: "store-1",
+        config: [],
+      });
+
+      const handler = configRuntimeAction({ configSchema: envScopedSchema });
+
+      const result = await handler(
+        createRuntimeActionParams({ query: "scopeId=store-1" }),
+      );
+
+      expect(result).toMatchObject({ type: "success", statusCode: 200 });
+      expect.assert(result.type === "success");
+      expect.assert(result.body);
+
+      const responseSchema = result.body.schema as BusinessConfigSchema;
+      expect(responseSchema.map((field) => field.name)).toEqual([
+        "shared",
+        "paasOnly",
+        "saasOnly",
+      ]);
+
+      expect(initializeMock).toHaveBeenCalledWith({
+        schema: expect.arrayContaining([
+          expect.objectContaining({ name: "shared" }),
+          expect.objectContaining({ name: "paasOnly" }),
+          expect.objectContaining({ name: "saasOnly" }),
+        ]),
+      });
+    });
+
+    test("filters schema by commerceEnv=paas", async () => {
+      getConfigurationMock.mockResolvedValue({
+        scopeId: "store-1",
+        config: [],
+      });
+
+      const handler = configRuntimeAction({ configSchema: envScopedSchema });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          query: "scopeId=store-1&commerceEnv=paas",
+        }),
+      );
+
+      expect(result).toMatchObject({ type: "success", statusCode: 200 });
+      expect.assert(result.type === "success");
+      expect.assert(result.body);
+
+      const responseSchema = result.body.schema as BusinessConfigSchema;
+      expect(responseSchema.map((field) => field.name)).toEqual([
+        "shared",
+        "paasOnly",
+      ]);
+
+      expect(initializeMock).toHaveBeenCalledWith({
+        schema: expect.arrayContaining([
+          expect.objectContaining({ name: "shared" }),
+          expect.objectContaining({ name: "paasOnly" }),
+        ]),
+      });
+    });
+
+    test("filters schema by commerceEnv=saas", async () => {
+      getConfigurationMock.mockResolvedValue({
+        scopeId: "store-1",
+        config: [],
+      });
+
+      const handler = configRuntimeAction({ configSchema: envScopedSchema });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          query: "scopeId=store-1&commerceEnv=saas",
+        }),
+      );
+
+      expect(result).toMatchObject({ type: "success", statusCode: 200 });
+      expect.assert(result.type === "success");
+      expect.assert(result.body);
+
+      const responseSchema = result.body.schema as BusinessConfigSchema;
+      expect(responseSchema.map((field) => field.name)).toEqual([
+        "shared",
+        "saasOnly",
+      ]);
+    });
+
+    test("returns 400 when commerceEnv is invalid", async () => {
+      const handler = configRuntimeAction({ configSchema: envScopedSchema });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          query: "scopeId=store-1&commerceEnv=production",
+        }),
+      );
 
       expect(result).toMatchObject({
         type: "error",
