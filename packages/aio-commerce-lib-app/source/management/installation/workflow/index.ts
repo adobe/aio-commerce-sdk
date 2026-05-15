@@ -14,6 +14,7 @@
 
 export {
   createInitialState,
+  createRetryState,
   executeUninstallWorkflow,
   executeWorkflow,
 } from "./runner";
@@ -66,6 +67,7 @@ export type {
   InProgressInstallationState,
   InstallationData,
   InstallationError,
+  InstallationRetryMetadata,
   InstallationState,
   InstallationStatus,
   StepStatus,
