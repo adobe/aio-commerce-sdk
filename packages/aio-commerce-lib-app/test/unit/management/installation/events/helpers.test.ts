@@ -614,6 +614,39 @@ describe("onboardCommerceEventing", () => {
     expect(commerceEventsClient.createEventSubscription).toHaveBeenCalledOnce();
   });
 
+  test("skips creation when an existing provider has the correct provider ID but a different instance ID", async () => {
+    const { context, metadata, provider, ioProvider, ioData } =
+      createCommerceOnboardingScenario();
+
+    const { commerceEventsClient } = context;
+
+    const existingCommerceProvider = createMockCommerceEventProvider({
+      provider_id: ioProvider.id,
+      instance_id: "different-instance-id",
+    });
+
+    vi.mocked(commerceEventsClient.createEventSubscription).mockResolvedValue(
+      undefined,
+    );
+
+    const result = await onboardCommerceEventing(
+      { context, metadata, provider, ioData },
+      createMockExistingCommerceEventingData({
+        providers: [existingCommerceProvider],
+      }),
+    );
+
+    expect(commerceEventsClient.createEventProvider).not.toHaveBeenCalled();
+    expect(result.commerceProvider).toEqual({
+      id: existingCommerceProvider.id,
+      provider_id: ioProvider.id,
+      label: existingCommerceProvider.label,
+      description: existingCommerceProvider.description,
+      instance_id: "different-instance-id",
+    });
+    expect(commerceEventsClient.createEventSubscription).toHaveBeenCalledOnce();
+  });
+
   test("rethrows and logs when creating a Commerce provider fails", async () => {
     const { context, metadata, provider, ioData } =
       createCommerceOnboardingScenario();

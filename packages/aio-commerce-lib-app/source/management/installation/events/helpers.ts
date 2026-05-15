@@ -389,6 +389,12 @@ export async function createCommerceProvider(
 
 /**
  * Creates or retrieves an existing Commerce event provider.
+ *
+ * Checks by `provider_id` first, since Commerce validates subscriptions against that field.
+ * A previous partial run may have left multiple records sharing the same `instance_id` but
+ * with different `provider_id` values; checking by `provider_id` first avoids re-creating a
+ * provider that is already correctly registered.
+ *
  * @param params - Parameters needed to create or get the Commerce provider.
  * @param existingProviders - Existing Commerce providers.
  */
@@ -399,23 +405,27 @@ export async function createOrGetCommerceProvider(
   const { context, provider } = params;
   const { logger } = context;
 
-  const existing = findExistingProvider(
+  const existingByProviderId = existingProviders.find(
+    (p) => p.provider_id === provider.id,
+  );
+
+  if (existingByProviderId) {
+    logger.info(
+      `Provider "${provider.label}" already exists with provider ID "${provider.id}", skipping creation.`,
+    );
+
+    return existingByProviderId;
+  }
+
+  const existingByInstanceId = findExistingProvider(
     existingProviders,
     provider.instance_id,
   );
 
-  if (existing) {
-    if (existing.provider_id === provider.id) {
-      logger.info(
-        `Provider "${provider.label}" already exists with provider ID "${existing.provider_id}", skipping creation.`,
-      );
-
-      return existing;
-    }
-
+  if (existingByInstanceId) {
     logger.warn(
       `Provider "${provider.label}" exists (instance ID: ${provider.instance_id}) but with a different ` +
-        `provider ID ("${existing.provider_id}" → "${provider.id}"). Registering updated provider in Commerce.`,
+        `provider ID ("${existingByInstanceId.provider_id}" → "${provider.id}"). Registering updated provider in Commerce.`,
     );
   }
 
