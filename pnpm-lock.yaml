@@ -101,6 +101,9 @@ importers:
       starlight-llms-txt:
         specifier: ^0.10.0
         version: 0.10.0(@astrojs/starlight@0.39.2(astro@6.3.3(@azure/storage-blob@12.31.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(yaml@2.8.4))(typescript@6.0.3))(astro@6.3.3(@azure/storage-blob@12.31.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(yaml@2.8.4))
+      starlight-typedoc:
+        specifier: ^0.22.0
+        version: 0.22.0(@astrojs/starlight@0.39.2(astro@6.3.3(@azure/storage-blob@12.31.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(yaml@2.8.4))(typescript@6.0.3))(typedoc-plugin-markdown@4.11.0(typedoc@0.28.19(typescript@6.0.3)))(typedoc@0.28.19(typescript@6.0.3))
       tsdown:
         specifier: ^0.21.4
         version: 0.21.10(publint@0.3.18)(typescript@6.0.3)
@@ -4511,6 +4514,14 @@ packages:
     peerDependencies:
       '@astrojs/starlight': '>=0.38.0'
       astro: ^6.0.0
+
+  starlight-typedoc@0.22.0:
+    resolution: {integrity: sha512-Hq2UQh1zKG4Ljs1U9hCdvBwKqFOqt2gUkwOqi6vTtyXW/4JtRkGBNod/+1wTquYBRqxPKUXMcwbACCBqcua4FQ==}
+    engines: {node: '>=22.12.0'}
+    peerDependencies:
+      '@astrojs/starlight': '>=0.39.0'
+      typedoc: '>=0.28.0'
+      typedoc-plugin-markdown: '>=4.6.0'
 
   statuses@2.0.2:
     resolution: {integrity: sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==}
@@ -9645,6 +9656,13 @@ snapshots:
       unist-util-remove: 4.0.0
     transitivePeerDependencies:
       - supports-color
+
+  starlight-typedoc@0.22.0(@astrojs/starlight@0.39.2(astro@6.3.3(@azure/storage-blob@12.31.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(yaml@2.8.4))(typescript@6.0.3))(typedoc-plugin-markdown@4.11.0(typedoc@0.28.19(typescript@6.0.3)))(typedoc@0.28.19(typescript@6.0.3)):
+    dependencies:
+      '@astrojs/starlight': 0.39.2(astro@6.3.3(@azure/storage-blob@12.31.0)(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(yaml@2.8.4))(typescript@6.0.3)
+      github-slugger: 2.0.0
+      typedoc: 0.28.19(typescript@6.0.3)
+      typedoc-plugin-markdown: 4.11.0(typedoc@0.28.19(typescript@6.0.3))
 
   statuses@2.0.2: {}
 

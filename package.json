@@ -49,6 +49,7 @@
     "publint": "^0.3.18",
     "sharp": "^0.34.5",
     "starlight-llms-txt": "^0.10.0",
+    "starlight-typedoc": "^0.22.0",
     "tsdown": "^0.21.4",
     "turbo": "^2.8.17",
     "typedoc": "^0.28.17",

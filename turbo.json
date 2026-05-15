@@ -62,7 +62,8 @@
       "inputs": [
         "docs/**",
         "packages/*/docs/usage.md",
-        "packages/*/package.json"
+        "packages/*/package.json",
+        "packages/*/source/**"
       ],
       "outputs": ["docs/dist/**", "docs/.astro/**"]
     },
