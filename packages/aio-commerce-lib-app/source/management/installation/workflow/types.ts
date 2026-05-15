@@ -86,6 +86,12 @@ export type InProgressInstallationState = InstallationStateBase & {
   startedAt: string;
 };
 
+/** Metadata set when a retry was attempted, regardless of outcome. */
+export type InstallationRetryMetadata = {
+  /** True when installation was attempted more than once. */
+  isRetry: boolean;
+};
+
 /** Installation state when completed successfully. */
 export type SucceededInstallationState = InstallationStateBase & {
   status: "succeeded";
@@ -95,6 +101,9 @@ export type SucceededInstallationState = InstallationStateBase & {
 
   /** ISO timestamp when installation completed. */
   completedAt: string;
+
+  /** Retry metadata, present when a retry was attempted. */
+  metadata?: InstallationRetryMetadata;
 };
 
 /** Installation state when failed. */
@@ -109,6 +118,9 @@ export type FailedInstallationState = InstallationStateBase & {
 
   /** Error information about the failure. */
   error: InstallationError;
+
+  /** Retry metadata, present when a retry was attempted. */
+  metadata?: InstallationRetryMetadata;
 };
 
 /**

@@ -16,6 +16,7 @@ import {
 } from "./root";
 import {
   createInitialState,
+  createRetryState,
   executeUninstallWorkflow,
   executeWorkflow,
 } from "./workflow";
@@ -27,6 +28,7 @@ import type {
   InProgressInstallationState,
   InstallationContext,
   InstallationHooks,
+  InstallationState,
   SucceededInstallationState,
   ValidationContext,
 } from "./workflow";
@@ -69,19 +71,58 @@ export function createInitialInstallationState(
 
 /**
  * Runs the full installation workflow. Returns the final state (never throws).
+ *
+ * Retries once on failure. `onInstallationFailure` only fires if both attempts fail;
+ * `isRetry: true` is set on the result when the retry succeeds.
  */
-export function runInstallation(
+export async function runInstallation(
   options: RunInstallationOptions,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
   const { installationContext, config, initialState, hooks } = options;
   const rootStep = createRootInstallationStep(config);
-  return executeWorkflow({
+  const firstResult = await executeWorkflow({
     rootStep,
     installationContext,
     config,
     initialState,
-    hooks,
+    hooks: {
+      ...hooks,
+      onInstallationFailure: undefined,
+      onStepFailure: undefined,
+    },
   });
+
+  if (firstResult.status === "succeeded") {
+    return firstResult;
+  }
+
+  const { error } = firstResult;
+  installationContext.logger.warn(
+    `Installation attempt 1 failed: step "${error.path.join(".")}", key "${error.key}"${error.message ? `, message "${error.message}"` : ""}. Retrying once.`,
+  );
+
+  const retryState = createRetryState(firstResult);
+  const retryResult = await executeWorkflow({
+    rootStep,
+    installationContext,
+    config,
+    initialState: retryState,
+    hooks: hooks && {
+      ...hooks,
+      onInstallationSuccess: (state) =>
+        hooks.onInstallationSuccess?.({
+          ...state,
+          metadata: { isRetry: true },
+        } as InstallationState),
+      onInstallationFailure: (state) =>
+        hooks.onInstallationFailure?.({
+          ...state,
+          metadata: { isRetry: true },
+        } as InstallationState),
+    },
+  });
+
+  return { ...retryResult, metadata: { isRetry: true } };
 }
 
 /** Options for creating an initial uninstallation state. */

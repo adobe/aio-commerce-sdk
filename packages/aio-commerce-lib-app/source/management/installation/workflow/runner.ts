@@ -103,6 +103,32 @@ export function createInitialState(
 }
 
 /**
+ * Creates a retry state from a failed state.
+ * Preserves succeeded steps and their data so the workflow resumes from
+ * the failed step rather than restarting from scratch.
+ */
+export function createRetryState(
+  failedState: FailedInstallationState,
+): InProgressInstallationState {
+  return {
+    id: failedState.id,
+    startedAt: failedState.startedAt,
+    status: "in-progress",
+    step: resetFailedSteps(failedState.step),
+    data: failedState.data,
+  };
+}
+
+/** Recursively resets non-succeeded steps back to "pending". */
+function resetFailedSteps(step: StepStatus): StepStatus {
+  return {
+    ...step,
+    status: step.status === "succeeded" ? "succeeded" : "pending",
+    children: step.children.map(resetFailedSteps),
+  };
+}
+
+/**
  * Executes a workflow from an initial state. Returns the final state (never throws).
  */
 export async function executeWorkflow(
@@ -139,7 +165,7 @@ async function executeWorkflowWithMode(
     id: initialState.id,
     startedAt: initialState.startedAt,
     step,
-    data: null,
+    data: initialState.data as Record<string, unknown> | null,
     error: null,
     hooks,
     mode,
@@ -233,6 +259,10 @@ async function executeStep(
   inherited: Record<string, unknown>,
   context: StepExecutionContext,
 ): Promise<void> {
+  if (stepStatus.status === "succeeded") {
+    return;
+  }
+
   const { path } = stepStatus;
   const isLeaf = isLeafStep(step);
 

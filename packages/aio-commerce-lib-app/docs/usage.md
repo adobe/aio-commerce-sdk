@@ -464,6 +464,8 @@ export default defineCustomInstallationStep(async (config, context) => {
 
 #### Admin UI SDK Configuration
 
+> **Experimental:** Admin UI SDK support is not yet production-ready. The API may change in future releases.
+
 The `adminUiSdk.registration` field declares the registration payload served by the Admin UI SDK runtime action. When defined, `init` and `generate all` automatically wire up the `commerce/backend-ui/1` extension, including the generated runtime action and the `pre-app-build` hook that keeps it in sync with your config. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ```javascript
