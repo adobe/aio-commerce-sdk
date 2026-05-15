@@ -16,7 +16,32 @@ const DEFAULT_BOOLEAN_VALUE = false as const;
 const DEFAULT_STRING_VALUE = "" as const;
 const DEFAULT_MULTIPLE_LIST_VALUE = [] as const;
 
-/** Base schema for configuration field options with name, optional label, and optional description */
+/** The list of supported Commerce environments a configuration field can be scoped to. */
+const COMMERCE_ENVS = ["paas", "saas"] as const;
+
+/** Schema for a single Commerce environment a configuration field can be scoped to. */
+const CommerceEnvSchema = v.picklist(
+  COMMERCE_ENVS,
+  `Expected one of: ${COMMERCE_ENVS.map((e) => `"${e}"`).join(", ")}`,
+);
+
+/**
+ * Schema for the optional `env` property used to scope a configuration field to
+ * specific Commerce environments. When omitted, the field applies to all environments.
+ */
+const EnvSchema = v.pipe(
+  v.array(
+    CommerceEnvSchema,
+    'Expected an array of commerce environments for the field "env"',
+  ),
+  v.nonEmpty('The "env" array must contain at least one commerce environment'),
+);
+
+/**
+ * Base schema for configuration field options with name, optional label,
+ * optional description, and optional `env` to scope the field to specific
+ * Commerce environments (when omitted, the field applies to all environments).
+ */
 const BaseOptionSchema = v.object({
   name: v.pipe(
     v.string("Expected a string for the field name"),
@@ -26,6 +51,7 @@ const BaseOptionSchema = v.object({
   description: v.optional(
     v.string("Expected a string for the field description"),
   ),
+  env: v.optional(EnvSchema),
 });
 
 /** Schema for a single option in a list field, containing a display label and a value */

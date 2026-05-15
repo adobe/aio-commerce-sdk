@@ -97,6 +97,24 @@ export const VALID_CONFIGURATION = [
     type: "boolean",
     label: "Optional Toggle",
   },
+  {
+    name: "saasOnlyApiKey",
+    type: "password",
+    label: "SaaS API Key",
+    env: ["saas"],
+  },
+  {
+    name: "paasOnlyToken",
+    type: "text",
+    label: "PaaS Token",
+    env: ["paas"],
+  },
+  {
+    name: "bothEnvsField",
+    type: "text",
+    label: "Both Envs Field",
+    env: ["paas", "saas"],
+  },
 ] satisfies BusinessConfigSchema;
 
 export const INVALID_CONFIGURATION = [

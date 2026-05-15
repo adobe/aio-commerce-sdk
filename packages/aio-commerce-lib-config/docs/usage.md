@@ -419,6 +419,33 @@ Multiple selection example:
 > [!NOTE]
 > For `selectionMode: "multiple"`, the `default` value must be an array of strings, even if only one option is selected by default.
 
+### Conditional Fields by Commerce Environment
+
+Each schema field accepts an optional `env` property to scope it to specific Commerce environment. The value is an array of env (`"paas"`, `"saas"`) and accepts any combination of one or more.
+
+When `env` is omitted, the field applies to all Commerce environment. When `env` is set, the field is only relevant for the listed environment and can be filtered out for the others — for example, when rendering the configuration form in App Management for a SaaS Commerce instance.
+
+```javascript
+{
+  name: "commerceTenantId",
+  label: "Commerce Tenant ID",
+  type: "text",
+  env: ["saas"]
+},
+{
+  name: "magentoCloudProjectId",
+  label: "Magento Cloud Project ID",
+  type: "text",
+  env: ["paas"]
+},
+{
+  name: "sharedApiKey",
+  label: "Shared API Key",
+  type: "password"
+  // No `env` -> applies to all Commerce environments
+}
+```
+
 ## CLI Commands
 
 The library provides CLI commands to help manage encryption for password fields:
