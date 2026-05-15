@@ -256,44 +256,80 @@ const AdminUiSdkRegistrationSchema = v.object({
   bannerNotification: v.optional(BannerNotificationSchema),
 });
 
-/** Schema for Admin UI SDK configuration. */
+/**
+ * Schema for Admin UI SDK configuration.
+ * @experimental
+ */
 export const AdminUiSdkSchema = v.object({
   registration: AdminUiSdkRegistrationSchema,
 });
 
-/** The Admin UI SDK configuration for an Adobe Commerce application. */
+/**
+ * The Admin UI SDK configuration for an Adobe Commerce application.
+ * @experimental
+ */
 export type AdminUiSdkConfiguration = v.InferInput<typeof AdminUiSdkSchema>;
 
-/** The Admin UI SDK registration configuration. */
+/**
+ * The Admin UI SDK registration configuration.
+ * @experimental
+ */
 export type AdminUiSdkRegistration = v.InferInput<
   typeof AdminUiSdkRegistrationSchema
 >;
 
-/** An order mass action registration entry (uses `selectionLimit`). */
+/**
+ * An order mass action registration entry (uses `selectionLimit`).
+ * @experimental
+ */
 export type OrderMassAction = v.InferInput<typeof OrderMassActionSchema>;
 
-/** A product mass action registration entry (uses `productSelectLimit`). */
+/**
+ * A product mass action registration entry (uses `productSelectLimit`).
+ * @experimental
+ */
 export type ProductMassAction = v.InferInput<typeof ProductMassActionSchema>;
 
-/** A customer mass action registration entry (uses `customerSelectLimit`). */
+/**
+ * A customer mass action registration entry (uses `customerSelectLimit`).
+ * @experimental
+ */
 export type CustomerMassAction = v.InferInput<typeof CustomerMassActionSchema>;
 
-/** An order view button registration entry. */
+/**
+ * An order view button registration entry.
+ * @experimental
+ */
 export type OrderViewButton = v.InferInput<typeof OrderViewButtonSchema>;
 
-/** A custom fee registration entry. */
+/**
+ * A custom fee registration entry.
+ * @experimental
+ */
 export type CustomFee = v.InferInput<typeof CustomFeeSchema>;
 
-/** Grid columns registration configuration. */
+/**
+ * Grid columns registration configuration.
+ * @experimental
+ */
 export type GridColumns = v.InferInput<typeof GridColumnsSchema>;
 
-/** Banner notification registration configuration. */
+/**
+ * Banner notification registration configuration.
+ * @experimental
+ */
 export type BannerNotification = v.InferInput<typeof BannerNotificationSchema>;
 
-/** A menu item registration entry. */
+/**
+ * A menu item registration entry.
+ * @experimental
+ */
 export type MenuItem = v.InferInput<typeof MenuItemSchema>;
 
-/** Check if config has Admin UI SDK registration configuration. */
+/**
+ * Check if config has Admin UI SDK registration configuration.
+ * @experimental
+ */
 export function hasAdminUiSdk(
   config: CommerceAppConfigOutputModel,
 ): config is AdminUiSdkConfig {
