@@ -3,7 +3,7 @@
   "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.base.json"],
 
   "entryPoints": ["./source/index.ts", "./source/utils/index.ts"],
-  "out": "docs/api-reference",
+  "out": "../../docs/src/content/docs/packages/aio-commerce-lib-api/api-reference",
 
   "intentionallyNotExported": [
     "RequiredComerceHttpClientConfig",

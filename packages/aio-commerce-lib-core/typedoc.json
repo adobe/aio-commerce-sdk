@@ -8,7 +8,7 @@
     "./source/responses/index.ts"
   ],
   "entryPointStrategy": "expand",
-  "out": "docs/api-reference",
+  "out": "../../docs/src/content/docs/packages/aio-commerce-lib-core/api-reference",
 
   "validation": {
     "notExported": false

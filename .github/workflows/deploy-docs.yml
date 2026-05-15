@@ -42,10 +42,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build packages (via Turbo)
-        run: pnpm turbo run build
+      - name: Build packages and generate API reference (via Turbo)
+        run: pnpm turbo run build docs
 
-      - name: Build docs
+      - name: Build docs site
         run: pnpm docs:build
 
       - name: Upload artifact

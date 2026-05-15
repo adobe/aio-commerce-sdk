@@ -58,12 +58,11 @@
       "cache": false
     },
     "docs:build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "^docs"],
       "inputs": [
         "docs/**",
         "packages/*/docs/usage.md",
-        "packages/*/package.json",
-        "packages/*/source/**"
+        "packages/*/package.json"
       ],
       "outputs": ["docs/dist/**", "docs/.astro/**"]
     },

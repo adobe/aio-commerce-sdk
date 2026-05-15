@@ -12,7 +12,7 @@
     "./source/commands/index.ts",
     "./source/management/index.ts"
   ],
-  "out": "docs/api-reference",
+  "out": "../../docs/src/content/docs/packages/aio-commerce-lib-app/api-reference",
 
   "validation": {
     "notExported": false
