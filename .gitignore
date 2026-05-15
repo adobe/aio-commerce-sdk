@@ -138,3 +138,10 @@ out
 .cursor/*
 !.cursor/rules
 .worktrees/
+
+# Tessl
+.tessl/
+.mcp.json
+
+# Claude Code local settings
+.claude/settings.local.json
