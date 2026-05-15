@@ -10,6 +10,17 @@
  * governing permissions and limitations under the License.
  */
 
+vi.mock("#management/installation/workflow/index", async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import("#management/installation/workflow/index")
+    >();
+  return {
+    ...actual,
+    executeWorkflow: vi.fn().mockImplementation(actual.executeWorkflow),
+  };
+});
+
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -18,13 +29,17 @@ import {
   runInstallation,
   runUninstallation,
 } from "#management/installation/runner";
+import { executeWorkflow } from "#management/installation/workflow/index";
 import {
   configWithCommerceEventing,
   configWithWebhooks,
   minimalValidConfig,
 } from "#test/fixtures/config";
 import {
+  createMockFailedState,
   createMockInstallationContext,
+  createMockStepStatus,
+  createMockSucceededState,
   FAKE_SYSTEM_TIME,
 } from "#test/fixtures/installation";
 
@@ -289,5 +304,188 @@ describe("runUninstallation", () => {
     expect(hooks.onInstallationSuccess).toHaveBeenCalledTimes(1);
     expect(hooks.onStepStart).toHaveBeenCalled();
     expect(hooks.onStepSuccess).toHaveBeenCalled();
+  });
+});
+
+describe("runInstallation — retry behavior", () => {
+  let initialState!: ReturnType<typeof createInitialInstallationState>;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(FAKE_SYSTEM_TIME));
+    vi.mocked(executeWorkflow).mockClear();
+    initialState = createInitialInstallationState({
+      config: minimalValidConfig,
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("should retry once and return succeeded with metadata.isRetry true when first attempt fails", async () => {
+    vi.mocked(executeWorkflow)
+      .mockResolvedValueOnce(createMockFailedState())
+      .mockResolvedValueOnce(createMockSucceededState());
+
+    const result = await runInstallation({
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(result).toMatchObject({
+      status: "succeeded",
+      metadata: { isRetry: true },
+    });
+    expect((result as Record<string, unknown>).isRetry).toBeUndefined();
+    expect(vi.mocked(executeWorkflow)).toHaveBeenCalledTimes(2);
+  });
+
+  test("should set metadata.isRetry true on failed result when both attempts fail", async () => {
+    const failedState = createMockFailedState();
+    vi.mocked(executeWorkflow)
+      .mockResolvedValueOnce(failedState)
+      .mockResolvedValueOnce(failedState);
+
+    const result = await runInstallation({
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(result).toMatchObject({
+      status: "failed",
+      metadata: { isRetry: true },
+    });
+  });
+
+  test("should not call onInstallationFailure on first failed attempt", async () => {
+    vi.mocked(executeWorkflow)
+      .mockResolvedValueOnce(createMockFailedState())
+      .mockResolvedValueOnce(createMockSucceededState());
+
+    const onInstallationFailure = vi.fn();
+
+    await runInstallation({
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+      hooks: { onInstallationFailure },
+    });
+
+    expect(onInstallationFailure).not.toHaveBeenCalled();
+  });
+
+  test("should suppress onStepFailure in first attempt so failed step state is not persisted before retry", async () => {
+    vi.mocked(executeWorkflow)
+      .mockResolvedValueOnce(createMockFailedState())
+      .mockResolvedValueOnce(createMockSucceededState());
+
+    const onStepFailure = vi.fn();
+
+    await runInstallation({
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+      hooks: { onStepFailure },
+    });
+
+    expect(
+      vi.mocked(executeWorkflow).mock.calls[0][0].hooks?.onStepFailure,
+    ).toBeUndefined();
+    expect(
+      typeof vi.mocked(executeWorkflow).mock.calls[1][0].hooks?.onStepFailure,
+    ).toBe("function");
+  });
+
+  test("should wire onInstallationFailure to the retry attempt when both attempts fail", async () => {
+    const failedState = createMockFailedState();
+    vi.mocked(executeWorkflow)
+      .mockResolvedValueOnce(failedState)
+      .mockResolvedValueOnce(failedState);
+
+    const onInstallationFailure = vi.fn();
+
+    const result = await runInstallation({
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+      hooks: { onInstallationFailure },
+    });
+
+    expect(result.status).toBe("failed");
+    expect(vi.mocked(executeWorkflow)).toHaveBeenCalledTimes(2);
+    expect(
+      typeof vi.mocked(executeWorkflow).mock.calls[1][0].hooks
+        ?.onInstallationFailure,
+    ).toBe("function");
+  });
+
+  test("should pass firstResult-based retry state (not fresh all-pending state) to second executeWorkflow call", async () => {
+    const failedState = createMockFailedState({
+      step: createMockStepStatus({
+        status: "failed",
+        children: [
+          createMockStepStatus({
+            name: "step-a",
+            path: ["installation", "step-a"],
+            status: "succeeded",
+          }),
+          createMockStepStatus({
+            name: "step-b",
+            path: ["installation", "step-b"],
+            status: "failed",
+          }),
+        ],
+      }),
+    });
+
+    vi.mocked(executeWorkflow)
+      .mockResolvedValueOnce(failedState)
+      .mockResolvedValueOnce(createMockSucceededState());
+
+    await runInstallation({
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    const secondCallInitialState =
+      vi.mocked(executeWorkflow).mock.calls[1][0].initialState;
+    expect(secondCallInitialState.step.children[0].status).toBe("succeeded");
+    expect(secondCallInitialState.step.children[1].status).toBe("pending");
+  });
+
+  test("should log warning with step path, key and message when retrying", async () => {
+    vi.mocked(executeWorkflow)
+      .mockResolvedValueOnce(
+        createMockFailedState({
+          error: {
+            path: ["eventing", "commerce"],
+            key: "PROVIDER_CREATION_FAILED",
+            message: "Provider already exists",
+          },
+        }),
+      )
+      .mockResolvedValueOnce(createMockSucceededState());
+
+    const mockContext = createMockInstallationContext();
+
+    await runInstallation({
+      installationContext: mockContext,
+      config: minimalValidConfig,
+      initialState,
+    });
+
+    expect(mockContext.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("eventing.commerce"),
+    );
+    expect(mockContext.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("PROVIDER_CREATION_FAILED"),
+    );
+    expect(mockContext.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Provider already exists"),
+    );
   });
 });
