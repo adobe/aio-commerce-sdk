@@ -3,7 +3,11 @@
   "extends": ["@aio-commerce-sdk/config-typedoc/typedoc.base.json"],
 
   "entryPoints": [
-    "./source/actions/index.ts",
+    "./source/actions/app-config.ts",
+    "./source/actions/config.ts",
+    "./source/actions/installation.ts",
+    "./source/actions/registration.ts",
+    "./source/actions/scope-tree.ts",
     "./source/config/index.ts",
     "./source/commands/index.ts",
     "./source/management/index.ts"

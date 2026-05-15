@@ -67,7 +67,7 @@
     }
   },
   "exports": {
-    "./actions": "./source/actions/index.ts",
+    "./actions/*": "./source/actions/*.ts",
     "./config": "./source/config/index.ts",
     "./management": "./source/management/index.ts",
     "./package.json": "./package.json"

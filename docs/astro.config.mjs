@@ -163,7 +163,11 @@ export default defineConfig({
         }),
         typeDocApp({
           entryPoints: [
-            pkg("aio-commerce-lib-app", "source/actions/index.ts"),
+            pkg("aio-commerce-lib-app", "source/actions/app-config.ts"),
+            pkg("aio-commerce-lib-app", "source/actions/config.ts"),
+            pkg("aio-commerce-lib-app", "source/actions/installation.ts"),
+            pkg("aio-commerce-lib-app", "source/actions/registration.ts"),
+            pkg("aio-commerce-lib-app", "source/actions/scope-tree.ts"),
             pkg("aio-commerce-lib-app", "source/config/index.ts"),
             pkg("aio-commerce-lib-app", "source/commands/index.ts"),
             pkg("aio-commerce-lib-app", "source/management/index.ts"),
