@@ -85,7 +85,11 @@ export async function runInstallation(
     installationContext,
     config,
     initialState,
-    hooks: { ...hooks, onInstallationFailure: undefined },
+    hooks: {
+      ...hooks,
+      onInstallationFailure: undefined,
+      onStepFailure: undefined,
+    },
   });
 
   if (firstResult.status === "succeeded") {

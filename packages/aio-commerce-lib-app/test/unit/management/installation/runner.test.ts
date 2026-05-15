@@ -377,6 +377,28 @@ describe("runInstallation — retry behavior", () => {
     expect(onInstallationFailure).not.toHaveBeenCalled();
   });
 
+  test("should suppress onStepFailure in first attempt so failed step state is not persisted before retry", async () => {
+    vi.mocked(executeWorkflow)
+      .mockResolvedValueOnce(createMockFailedState())
+      .mockResolvedValueOnce(createMockSucceededState());
+
+    const onStepFailure = vi.fn();
+
+    await runInstallation({
+      installationContext: createMockInstallationContext(),
+      config: minimalValidConfig,
+      initialState,
+      hooks: { onStepFailure },
+    });
+
+    expect(
+      vi.mocked(executeWorkflow).mock.calls[0][0].hooks?.onStepFailure,
+    ).toBeUndefined();
+    expect(
+      typeof vi.mocked(executeWorkflow).mock.calls[1][0].hooks?.onStepFailure,
+    ).toBe("function");
+  });
+
   test("should wire onInstallationFailure to the retry attempt when both attempts fail", async () => {
     const failedState = createMockFailedState();
     vi.mocked(executeWorkflow)
