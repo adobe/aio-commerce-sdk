@@ -37,16 +37,32 @@ export async function createOrUpdateExtConfig(
 ) {
   const extConfigDoc = doc ?? new Document({});
 
+  // Keep this up so that it appears before other sections, and users see it right away.
+  if (config.web !== undefined) {
+    buildWeb(extConfigDoc, config.web);
+  }
+
   config.hooks ??= {};
-  config.operations ??= { workerProcess: [] };
   config.runtimeManifest ??= { packages: {} };
 
   await buildHooks(extConfigDoc, config.hooks);
-  buildOperations(extConfigDoc, config.operations);
+  if (config.operations !== undefined) {
+    buildOperations(extConfigDoc, config.operations);
+  }
   buildRuntimeManifest(extConfigDoc, config.runtimeManifest);
 
   await writeExtConfig(path, extConfigDoc);
   return extConfigDoc;
+}
+
+/**
+ * Set the top-level `web` scalar only if it's missing.
+ * Preserves any user-customized value already present.
+ */
+function buildWeb(extConfig: Document, web: string) {
+  if (!extConfig.hasIn(["web"])) {
+    extConfig.add(extConfig.createPair("web", web));
+  }
 }
 
 /**
@@ -99,36 +115,66 @@ function buildActionDefinition(action: ActionDefinition) {
  * @param operations - The operations to build
  */
 function buildOperations(extConfig: Document, operations: Operations) {
-  getOrCreateMap(extConfig, ["operations"], {
-    onBeforeCreate: (pair) => {
-      pair.key.spaceBefore = true;
-    },
-  });
-
-  const workerProcess = getOrCreateSeq(
-    extConfig,
-    ["operations", "workerProcess"],
-    {
-      onBeforeCreate: (pair) => {
-        pair.key.commentBefore =
-          " These worker processes definitions are auto-generated. Do not remove or manually edit.";
-      },
-    },
-  );
-
-  // Clear existing items to rebuild from scratch
-  workerProcess.items = [];
-
   const ourOps = operations.workerProcess ?? [];
-  workerProcess.items.push(
-    ...ourOps.map((op) => {
-      const map = new YAMLMap();
-      map.set("type", op.type);
-      map.set("impl", op.impl);
+  if (ourOps.length > 0) {
+    getOrCreateMap(extConfig, ["operations"], {
+      onBeforeCreate: (pair) => {
+        pair.key.spaceBefore = true;
+      },
+    });
 
-      return map;
-    }),
-  );
+    const workerProcess = getOrCreateSeq(
+      extConfig,
+      ["operations", "workerProcess"],
+      {
+        onBeforeCreate: (pair) => {
+          pair.key.commentBefore =
+            " These worker processes definitions are auto-generated. Do not remove or manually edit.";
+        },
+      },
+    );
+
+    workerProcess.items = [];
+    workerProcess.items.push(
+      ...ourOps.map((op) => {
+        const map = new YAMLMap();
+        map.set("type", op.type);
+        map.set("impl", op.impl);
+
+        return map;
+      }),
+    );
+  } else if (extConfig.hasIn(["operations", "workerProcess"])) {
+    extConfig.deleteIn(["operations", "workerProcess"]);
+  }
+
+  if (operations.view !== undefined) {
+    getOrCreateMap(extConfig, ["operations"], {
+      onBeforeCreate: (pair) => {
+        pair.key.spaceBefore = true;
+      },
+    });
+
+    const view = getOrCreateSeq(extConfig, ["operations", "view"]);
+
+    // Seed defaults only when the user has not already populated the view list.
+    if (view.items.length === 0) {
+      view.items.push(
+        ...operations.view.map((v) => {
+          const map = new YAMLMap();
+          map.set("type", v.type);
+          map.set("impl", v.impl);
+
+          return map;
+        }),
+      );
+    }
+  }
+
+  const operationsMap = extConfig.getIn(["operations"]);
+  if (operationsMap instanceof YAMLMap && operationsMap.items.length === 0) {
+    extConfig.deleteIn(["operations"]);
+  }
 }
 
 /**

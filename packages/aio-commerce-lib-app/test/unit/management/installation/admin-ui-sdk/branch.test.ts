@@ -17,33 +17,13 @@ import {
   isBranchStep,
   isLeafStep,
 } from "#management/installation/workflow/step";
+import { createMockAdminUiSdkContext } from "#test/fixtures/admin-ui-sdk";
 import {
   configWithAdminUiSdk,
   configWithWebhooks,
   minimalValidConfig,
 } from "#test/fixtures/config";
-import {
-  createMockInstallationContext,
-  createMockLogger,
-} from "#test/fixtures/installation";
-
-import type { AdminUiSdkExecutionContext } from "#management/installation/admin-ui-sdk/utils";
-
-/** Creates a mock AdminUiSdkExecutionContext with a spy Commerce client. */
-function createMockAdminUiSdkContext(
-  deleteImpl?: () => Promise<unknown>,
-): AdminUiSdkExecutionContext {
-  const mockInstallation = createMockInstallationContext();
-
-  return {
-    ...mockInstallation,
-    commerceClient: {
-      delete: vi
-        .fn()
-        .mockImplementation(deleteImpl ?? (() => Promise.resolve())),
-    } as unknown as AdminUiSdkExecutionContext["commerceClient"],
-  };
-}
+import { createMockLogger } from "#test/fixtures/installation";
 
 describe("admin-ui-sdk installation module", () => {
   describe("adminUiSdkStep branch step", () => {
@@ -113,9 +93,9 @@ describe("admin-ui-sdk installation module", () => {
     });
 
     test("should not throw when the DELETE call fails (best-effort)", async () => {
-      const context = createMockAdminUiSdkContext(() =>
-        Promise.reject(new Error("Commerce API error")),
-      );
+      const context = createMockAdminUiSdkContext({
+        deleteImpl: () => Promise.reject(new Error("Commerce API error")),
+      });
 
       await expect(
         registerExtensionStep.uninstall?.(configWithAdminUiSdk, context),
@@ -125,9 +105,9 @@ describe("admin-ui-sdk installation module", () => {
     test("should log a warning when the DELETE call fails", async () => {
       const logger = createMockLogger();
       const context = {
-        ...createMockAdminUiSdkContext(() =>
-          Promise.reject(new Error("Commerce API error")),
-        ),
+        ...createMockAdminUiSdkContext({
+          deleteImpl: () => Promise.reject(new Error("Commerce API error")),
+        }),
         logger,
       };
 

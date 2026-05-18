@@ -86,6 +86,35 @@ export const VALID_CONFIGURATION = [
     label: "Telephone Field",
     default: "+1234567890",
   },
+  {
+    name: "enableFeatureFlag",
+    type: "boolean",
+    label: "Enable Feature Flag",
+    default: true,
+  },
+  {
+    name: "optionalToggle",
+    type: "boolean",
+    label: "Optional Toggle",
+  },
+  {
+    name: "saasOnlyApiKey",
+    type: "password",
+    label: "SaaS API Key",
+    env: ["saas"],
+  },
+  {
+    name: "paasOnlyToken",
+    type: "text",
+    label: "PaaS Token",
+    env: ["paas"],
+  },
+  {
+    name: "bothEnvsField",
+    type: "text",
+    label: "Both Envs Field",
+    env: ["paas", "saas"],
+  },
 ] satisfies BusinessConfigSchema;
 
 export const INVALID_CONFIGURATION = [

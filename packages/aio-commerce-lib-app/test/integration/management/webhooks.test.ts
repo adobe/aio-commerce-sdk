@@ -47,7 +47,7 @@ function findValidationNodeByPath(
     }
   }
 
-  return undefined;
+  return;
 }
 
 setupApiTestLifecycle();

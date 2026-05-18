@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -43,8 +43,24 @@ describe("syncImsCredentials", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // biome-ignore lint/performance/noDelete: Just for testing purposes.
     delete process.env.INIT_CWD;
+  });
+
+  test("should do nothing when .env file does not exist", async () => {
+    vi.mocked(config.get).mockReturnValue([
+      { integration_type: "oauth_server_to_server", name: "my-s2s-context" },
+    ]);
+    vi.mocked(context.get).mockResolvedValue({
+      name: "my-s2s-context",
+      data: { client_id: "test-client-id" },
+    });
+
+    await withTempFiles({}, async (tempDir) => {
+      process.env.INIT_CWD = tempDir;
+      const result = await syncImsCredentials();
+      expect(result).toEqual({ ok: false, reason: "missing-env" });
+      expect(existsSync(join(tempDir, ".env"))).toBe(false);
+    });
   });
 
   test("should do nothing when no IMS context is found", async () => {
@@ -55,8 +71,9 @@ describe("syncImsCredentials", () => {
       },
       async (tempDir) => {
         process.env.INIT_CWD = tempDir;
-        await syncImsCredentials();
+        const result = await syncImsCredentials();
 
+        expect(result).toEqual({ ok: false, reason: "no-ims-context" });
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
         expect(envContent).toBe("SOME_VAR=value\n");
       },
@@ -74,8 +91,9 @@ describe("syncImsCredentials", () => {
       },
       async (tempDir) => {
         process.env.INIT_CWD = tempDir;
-        await syncImsCredentials();
+        const result = await syncImsCredentials();
 
+        expect(result).toEqual({ ok: false, reason: "no-ims-context" });
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
         expect(envContent).toBe("SOME_VAR=value\n");
       },

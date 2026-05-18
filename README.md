@@ -62,6 +62,10 @@ The guide includes detailed information about:
 
 See also the [Contributing Guide](./.github/CONTRIBUTING.md) for more information on contributing guidelines.
 
+## Agentic Tooling
+
+Agentic tooling lives under [`plugins/`](./plugins/). Each plugin is independently installable and may include agent skills, MCP configurations, or other agentic content. See [`plugins/commerce/`](./plugins/commerce/README.md) for available Commerce plugins and distribution channel guidance.
+
 ## Resources
 
 - [Adobe App Builder Documentation](https://developer.adobe.com/app-builder/docs/overview/)

@@ -20,6 +20,7 @@ import {
   nowIsoString,
   setAtPath,
 } from "#management/installation/workflow/utils";
+import { makeHttpError } from "#test/fixtures/http-error";
 import {
   createMockInstallationError,
   createMockStepStatus,
@@ -101,9 +102,9 @@ describe("getAtPath", () => {
 });
 
 describe("createInstallationError", () => {
-  test("should create error from Error instance", () => {
+  test("should create error from Error instance", async () => {
     const err = new Error("Something went wrong");
-    const result = createInstallationError(err, ["step", "child"]);
+    const result = await createInstallationError(err, ["step", "child"]);
     expect(result).toEqual({
       path: ["step", "child"],
       key: "STEP_EXECUTION_FAILED",
@@ -111,8 +112,8 @@ describe("createInstallationError", () => {
     });
   });
 
-  test("should create error from string", () => {
-    const result = createInstallationError("string error", ["a", "b"]);
+  test("should create error from string", async () => {
+    const result = await createInstallationError("string error", ["a", "b"]);
     expect(result).toEqual({
       path: ["a", "b"],
       key: "STEP_EXECUTION_FAILED",
@@ -120,13 +121,28 @@ describe("createInstallationError", () => {
     });
   });
 
-  test("should use custom key when provided", () => {
+  test("should use custom key when provided", async () => {
     const err = new Error("Error message");
-    const result = createInstallationError(err, ["path"], "CUSTOM_KEY");
+    const result = await createInstallationError(err, ["path"], "CUSTOM_KEY");
     expect(result).toEqual({
       path: ["path"],
       key: "CUSTOM_KEY",
       message: "Error message",
+    });
+  });
+
+  test("should unwrap HTTPError response body", async () => {
+    const err = makeHttpError(
+      400,
+      "Bad Request",
+      JSON.stringify({ message: "API error detail" }),
+    );
+
+    const result = await createInstallationError(err, ["step"]);
+    expect(result).toEqual({
+      path: ["step"],
+      key: "STEP_EXECUTION_FAILED",
+      message: "HTTP 400 Bad Request — API error detail",
     });
   });
 });

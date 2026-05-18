@@ -59,9 +59,7 @@ describe("release/utils.ts", () => {
     test("rejected promises are not caught and marked as failed", async () => {
       const core = createCoreMock();
       await expect(() =>
-        runGitHubScript(asCore(core), () => {
-          return Promise.reject("boom");
-        }),
+        runGitHubScript(asCore(core), () => Promise.reject("boom")),
       ).rejects.toBe("boom");
 
       expect(core.setFailed).not.toHaveBeenCalled();

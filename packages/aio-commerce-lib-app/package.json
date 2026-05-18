@@ -29,7 +29,7 @@
     "directory": "packages/aio-commerce-lib-app"
   },
   "bin": {
-    "@adobe/aio-commerce-lib-app": "./bin/cli.mjs"
+    "aio-commerce-lib-app": "./bin/cli.mjs"
   },
   "publishConfig": {
     "exports": {
@@ -113,10 +113,11 @@
     "@adobe/aio-commerce-lib-events": "workspace:*",
     "@adobe/aio-commerce-lib-webhooks": "workspace:*",
     "@adobe/aio-lib-core-logging": "catalog:",
+    "@npmcli/package-json": "^7.0.5",
     "camelcase": "catalog:",
     "consola": "catalog:",
-    "ky": "catalog:",
     "jiti": "^2.6.1",
+    "ky": "catalog:",
     "openwhisk": "^3.21.8",
     "prettier": "catalog:",
     "safe-stable-stringify": "catalog:",
@@ -132,6 +133,7 @@
     "@aio-commerce-sdk/config-vitest": "workspace:*",
     "@aio-commerce-sdk/scripting-utils": "workspace:*",
     "@aio-commerce-sdk/scripts": "workspace:*",
+    "@types/npmcli__package-json": "^4.0.4",
     "msw": "catalog:",
     "typescript": "catalog:"
   },

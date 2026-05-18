@@ -109,6 +109,7 @@ runtimeManifest:
         const fileContent = await readFile(configPath, "utf-8");
         expect(fileContent).toContain("existing-hook");
         expect(fileContent).toContain("new-hook");
+        expect(fileContent).not.toContain("workerProcess: []");
       },
     );
   });
@@ -127,7 +128,7 @@ runtimeManifest:
 
       // Should have default empty structures
       expect(doc.has("hooks")).toBe(true);
-      expect(doc.has("operations")).toBe(true);
+      expect(doc.has("operations")).toBe(false);
       expect(doc.has("runtimeManifest")).toBe(true);
     });
   });
@@ -165,7 +166,10 @@ runtimeManifest:
         new Document({}),
       );
 
-      expect(doc.has("operations")).toBe(true);
+      expect(doc.has("operations")).toBe(false);
+
+      const fileContent = await readFile(configPath, "utf-8");
+      expect(fileContent).not.toContain("workerProcess: []");
     });
   });
 
@@ -514,5 +518,91 @@ hooks:
         expect(hookValue).toBe("echo 'test'");
       },
     );
+  });
+
+  describe("operations.view", () => {
+    test("seeds operations.view entries when the list is absent", async () => {
+      await withTempFiles({}, async (tempDir) => {
+        const configPath = join(tempDir, "ext.config.yaml");
+        const config = {
+          operations: {
+            workerProcess: [],
+            view: [{ type: "web" as const, impl: "index.html" }],
+          },
+        };
+
+        await createOrUpdateExtConfig(configPath, config, new Document({}));
+        const fileContent = await readFile(configPath, "utf-8");
+
+        expect(fileContent).toContain("view:");
+        expect(fileContent).toContain("type: web");
+        expect(fileContent).toContain("impl: index.html");
+        expect(fileContent).not.toContain("workerProcess: []");
+      });
+    });
+
+    test("preserves existing operations.view entries", async () => {
+      const existingConfig = `
+operations:
+  view:
+    - type: web
+      impl: custom.html
+`;
+      await withTempFiles(
+        { "ext.config.yaml": existingConfig },
+        async (tempDir) => {
+          const configPath = join(tempDir, "ext.config.yaml");
+          const existingDoc = parseDocument(existingConfig);
+          const config = {
+            operations: {
+              workerProcess: [],
+              view: [{ type: "web" as const, impl: "index.html" }],
+            },
+          };
+
+          await createOrUpdateExtConfig(configPath, config, existingDoc);
+          const fileContent = await readFile(configPath, "utf-8");
+
+          expect(fileContent).toContain("impl: custom.html");
+          expect(fileContent).not.toContain("impl: index.html");
+        },
+      );
+    });
+  });
+
+  describe("web", () => {
+    test("writes top-level web when missing", async () => {
+      await withTempFiles({}, async (tempDir) => {
+        const configPath = join(tempDir, "ext.config.yaml");
+        const config = {
+          web: "web-src",
+        };
+
+        await createOrUpdateExtConfig(configPath, config, new Document({}));
+        const fileContent = await readFile(configPath, "utf-8");
+
+        expect(fileContent).toContain("web: web-src");
+      });
+    });
+
+    test("preserves an existing web value", async () => {
+      const existingConfig = "web: custom-web\n";
+      await withTempFiles(
+        { "ext.config.yaml": existingConfig },
+        async (tempDir) => {
+          const configPath = join(tempDir, "ext.config.yaml");
+          const existingDoc = parseDocument(existingConfig);
+          const config = {
+            web: "web-src",
+          };
+
+          await createOrUpdateExtConfig(configPath, config, existingDoc);
+          const fileContent = await readFile(configPath, "utf-8");
+
+          expect(fileContent).toContain("web: custom-web");
+          expect(fileContent).not.toContain("web: web-src");
+        },
+      );
+    });
   });
 });

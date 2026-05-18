@@ -19,6 +19,8 @@ import {
   VALID_CONFIGURATION_WITHOUT_DEFAULTS,
 } from "#test/fixtures/configuration-schema";
 
+import type { BusinessConfigSchema } from "#modules/schema/types";
+
 describe("schema/utils", () => {
   describe("validateBusinessConfigSchema", () => {
     test("should not throw with valid schema", () => {
@@ -47,6 +49,80 @@ describe("schema/utils", () => {
           VALID_CONFIGURATION_WITHOUT_DEFAULTS.length,
         );
       }).not.toThrow();
+    });
+
+    test("should accept a boolean field with default true", () => {
+      expect(() =>
+        validateBusinessConfigSchema([
+          { name: "enableFeature", type: "boolean", default: true },
+        ]),
+      ).not.toThrow();
+    });
+
+    test("should accept a boolean field with default false", () => {
+      expect(() =>
+        validateBusinessConfigSchema([
+          { name: "disabledByDefault", type: "boolean", default: false },
+        ]),
+      ).not.toThrow();
+    });
+
+    test("should accept a boolean field without a default", () => {
+      expect(() =>
+        validateBusinessConfigSchema([
+          { name: "optionalToggle", type: "boolean" },
+        ]),
+      ).not.toThrow();
+    });
+
+    test("should reject a boolean field with a non-boolean default", () => {
+      expect(() =>
+        validateBusinessConfigSchema([
+          { name: "badField", type: "boolean", default: "true" as never },
+        ]),
+      ).toThrow();
+    });
+
+    test("should accept a field without an env property", () => {
+      expect(() =>
+        validateBusinessConfigSchema([
+          { name: "anyEnv", type: "text", label: "Any Env" },
+        ]),
+      ).not.toThrow();
+    });
+
+    test.each<{ env: ("paas" | "saas")[] }>([
+      { env: ["saas"] },
+      { env: ["paas"] },
+      { env: ["paas", "saas"] },
+    ])("should accept a field with env $env", ({ env }) => {
+      expect(() =>
+        validateBusinessConfigSchema([
+          { name: "scoped", type: "text", label: "Scoped", env },
+        ]),
+      ).not.toThrow();
+    });
+
+    test("should reject an empty env array", () => {
+      expect(() =>
+        validateBusinessConfigSchema([
+          { name: "scoped", type: "text", label: "Scoped", env: [] },
+        ]),
+      ).toThrow();
+    });
+
+    test("should reject an env entry that is not a known commerce environment", () => {
+      expect(() =>
+        validateBusinessConfigSchema([
+          {
+            name: "scoped",
+            type: "text",
+            label: "Scoped",
+            // @ts-expect-error - Testing an invalid value on purpose
+            env: ["onprem"],
+          },
+        ] satisfies BusinessConfigSchema),
+      ).toThrow();
     });
   });
 });

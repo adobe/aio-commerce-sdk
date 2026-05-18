@@ -17,4 +17,5 @@
  * @packageDocumentation
  */
 
+export * from "./helpers";
 export * from "./temp";

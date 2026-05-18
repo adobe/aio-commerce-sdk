@@ -32,7 +32,7 @@ export async function getCachedConfig(scopeCode: string) {
       return parsed.data || null;
     }
     return null;
-  } catch (_) {
+  } catch {
     return null;
   }
 }
@@ -79,7 +79,7 @@ export async function getPersistedConfig(scopeCode: string) {
 
     const content = await files.read(filePath);
     return content ? content.toString("utf8") : null;
-  } catch (_) {
+  } catch {
     return null;
   }
 }

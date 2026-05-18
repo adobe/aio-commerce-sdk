@@ -46,6 +46,7 @@ import {
   createMockProvider,
   createMockWorkspaceConfiguration,
 } from "#test/fixtures/eventing";
+import { makeHttpError } from "#test/fixtures/http-error";
 
 import type { EventProvider } from "#config/schema/eventing";
 import type { EventsExecutionContext } from "#management/installation/events/context";
@@ -67,6 +68,17 @@ const DEFAULT_IO_EVENT_CODE = "code-1";
 const DEFAULT_WORKSPACE_CONFIGURATION = JSON.stringify(
   createMockWorkspaceConfiguration(),
 );
+
+const RE_FAIL_IO_PROVIDER = /^Failed to create I\/O Events provider '/;
+const RE_FAIL_IO_METADATA = /^Failed to register I\/O Events metadata for '/;
+const RE_FAIL_IO_REGISTRATION = /^Failed to create I\/O Events registration '/;
+const RE_FAIL_CONFIGURE_EVENTING =
+  /^Failed to configure Adobe Commerce eventing:/;
+const RE_FAIL_COMMERCE_PROVIDER =
+  /^Failed to create Adobe Commerce event provider '/;
+const RE_FAIL_COMMERCE_SUBSCRIPTION =
+  /^Failed to create Adobe Commerce event subscription for '/;
+const RE_CONTINUING_UNINSTALL = /Continuing uninstall\./;
 
 function createDefaultEventingContext() {
   return createMockEventingInstallationContext();
@@ -436,7 +448,7 @@ describe("onboardIoEvents", () => {
 
     await expect(
       onboardIoEvents(input, createMockExistingIoEventsData()),
-    ).rejects.toThrow("provider creation failed");
+    ).rejects.toThrow(RE_FAIL_IO_PROVIDER);
 
     expect(logger.error).toHaveBeenCalledWith(expect.any(String));
   });
@@ -468,7 +480,7 @@ describe("onboardIoEvents", () => {
 
     await expect(
       onboardIoEvents(input, createMockExistingIoEventsData()),
-    ).rejects.toThrow("metadata creation failed");
+    ).rejects.toThrow(RE_FAIL_IO_METADATA);
 
     expect(logger.error).toHaveBeenCalledWith(expect.any(String));
   });
@@ -504,7 +516,7 @@ describe("onboardIoEvents", () => {
 
     await expect(
       onboardIoEvents(input, createMockExistingIoEventsData()),
-    ).rejects.toThrow("registration creation failed");
+    ).rejects.toThrow(RE_FAIL_IO_REGISTRATION);
 
     expect(logger.error).toHaveBeenCalledWith(expect.any(String));
   });
@@ -561,6 +573,80 @@ describe("onboardCommerceEventing", () => {
     expect(commerceEventsClient.createEventSubscription).not.toHaveBeenCalled();
   });
 
+  test("registers a new Commerce provider when the existing one has a different provider ID", async () => {
+    const { context, metadata, provider, ioProvider, ioData } =
+      createCommerceOnboardingScenario();
+
+    const { commerceEventsClient } = context;
+
+    const staleCommerceProvider = createMockCommerceEventProvider({
+      provider_id: "old-provider-id",
+      instance_id: ioProvider.instance_id,
+    });
+
+    const newCommerceProvider = createMockCommerceEventProvider({
+      provider_id: ioProvider.id,
+      instance_id: ioProvider.instance_id,
+    });
+
+    vi.mocked(commerceEventsClient.createEventProvider).mockResolvedValue(
+      newCommerceProvider,
+    );
+    vi.mocked(commerceEventsClient.createEventSubscription).mockResolvedValue(
+      undefined,
+    );
+
+    const result = await onboardCommerceEventing(
+      { context, metadata, provider, ioData },
+      createMockExistingCommerceEventingData({
+        providers: [staleCommerceProvider],
+      }),
+    );
+
+    expect(commerceEventsClient.createEventProvider).toHaveBeenCalledOnce();
+    expect(result.commerceProvider).toEqual({
+      id: newCommerceProvider.id,
+      provider_id: ioProvider.id,
+      label: newCommerceProvider.label,
+      description: newCommerceProvider.description,
+      instance_id: ioProvider.instance_id,
+    });
+    expect(commerceEventsClient.createEventSubscription).toHaveBeenCalledOnce();
+  });
+
+  test("skips creation when an existing provider has the correct provider ID but a different instance ID", async () => {
+    const { context, metadata, provider, ioProvider, ioData } =
+      createCommerceOnboardingScenario();
+
+    const { commerceEventsClient } = context;
+
+    const existingCommerceProvider = createMockCommerceEventProvider({
+      provider_id: ioProvider.id,
+      instance_id: "different-instance-id",
+    });
+
+    vi.mocked(commerceEventsClient.createEventSubscription).mockResolvedValue(
+      undefined,
+    );
+
+    const result = await onboardCommerceEventing(
+      { context, metadata, provider, ioData },
+      createMockExistingCommerceEventingData({
+        providers: [existingCommerceProvider],
+      }),
+    );
+
+    expect(commerceEventsClient.createEventProvider).not.toHaveBeenCalled();
+    expect(result.commerceProvider).toEqual({
+      id: existingCommerceProvider.id,
+      provider_id: ioProvider.id,
+      label: existingCommerceProvider.label,
+      description: existingCommerceProvider.description,
+      instance_id: "different-instance-id",
+    });
+    expect(commerceEventsClient.createEventSubscription).toHaveBeenCalledOnce();
+  });
+
   test("rethrows and logs when creating a Commerce provider fails", async () => {
     const { context, metadata, provider, ioData } =
       createCommerceOnboardingScenario();
@@ -583,7 +669,7 @@ describe("onboardCommerceEventing", () => {
           providers: [],
         }),
       ),
-    ).rejects.toThrow("provider creation failed");
+    ).rejects.toThrow(RE_FAIL_COMMERCE_PROVIDER);
 
     expect(logger.error).toHaveBeenCalledWith(expect.any(String));
   });
@@ -618,7 +704,7 @@ describe("onboardCommerceEventing", () => {
           providers: [existingCommerceProvider],
         }),
       ),
-    ).rejects.toThrow("subscription creation failed");
+    ).rejects.toThrow(RE_FAIL_COMMERCE_SUBSCRIPTION);
 
     expect(logger.error).toHaveBeenCalledWith(expect.any(String));
   });
@@ -671,7 +757,7 @@ describe("configureCommerceEventing", () => {
         },
         createMockExistingCommerceEventingData(),
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(RE_FAIL_CONFIGURE_EVENTING);
 
     expect(logger.error).toHaveBeenCalledWith(expect.any(String));
   });
@@ -786,6 +872,119 @@ describe("offboardIoEvents", () => {
 
     expect(context.ioEventsClient.deleteRegistration).toHaveBeenCalled();
   });
+
+  test("warns and continues when deleteRegistration fails", async () => {
+    const { context, params, ioProvider, registrationName } =
+      createIoOffboardingScenario();
+
+    const registration = createMockIoEventRegistration({
+      registration_id: "test-registration-uuid",
+      name: registrationName,
+      client_id: context.params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+      events_of_interest: [],
+    });
+
+    vi.mocked(context.ioEventsClient.deleteRegistration).mockRejectedValue(
+      makeHttpError(
+        500,
+        "Internal Server Error",
+        JSON.stringify({ message: "Registry down" }),
+      ),
+    );
+
+    await expect(
+      offboardIoEvents(
+        params,
+        createMockExistingIoEventsData({
+          providersWithMetadata: [{ ...ioProvider, metadata: [] }],
+          registrations: [registration],
+        }),
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringMatching(RE_CONTINUING_UNINSTALL),
+    );
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining(registrationName),
+    );
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Registry down"),
+    );
+  });
+
+  test("warns and continues when deleteEventMetadataForProvider fails", async () => {
+    const { context, params, ioProvider } = createIoOffboardingScenario();
+
+    const eventMetadata = createMockIoEventMetadata({
+      event_code: "com.adobe.commerce.test-app.observer.order_placed",
+    });
+
+    vi.mocked(
+      context.ioEventsClient.deleteEventMetadataForProvider,
+    ).mockRejectedValue(
+      makeHttpError(
+        500,
+        "Internal Server Error",
+        JSON.stringify({ message: "Metadata service unavailable" }),
+      ),
+    );
+
+    await expect(
+      offboardIoEvents(
+        params,
+        createMockExistingIoEventsData({
+          providersWithMetadata: [
+            { ...ioProvider, metadata: [{ ...eventMetadata, sample: null }] },
+          ],
+          registrations: [],
+        }),
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringMatching(RE_CONTINUING_UNINSTALL),
+    );
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining(eventMetadata.event_code),
+    );
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Metadata service unavailable"),
+    );
+  });
+
+  test("warns and continues when deleteEventProvider fails", async () => {
+    const { context, params, ioProvider, provider } =
+      createIoOffboardingScenario();
+
+    vi.mocked(context.ioEventsClient.deleteEventProvider).mockRejectedValue(
+      makeHttpError(
+        500,
+        "Internal Server Error",
+        JSON.stringify({ message: "Provider deletion failed" }),
+      ),
+    );
+
+    await expect(
+      offboardIoEvents(
+        params,
+        createMockExistingIoEventsData({
+          providersWithMetadata: [{ ...ioProvider, metadata: [] }],
+          registrations: [],
+        }),
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringMatching(RE_CONTINUING_UNINSTALL),
+    );
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining(provider.label),
+    );
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Provider deletion failed"),
+    );
+  });
 });
 
 describe("offboardCommerceEventing", () => {
@@ -818,5 +1017,88 @@ describe("offboardCommerceEventing", () => {
       context.commerceEventsClient.deleteEventSubscription,
     ).toHaveBeenCalled();
     expect(context.commerceEventsClient.deleteEventProvider).toHaveBeenCalled();
+  });
+
+  test("warns and continues when deleteEventSubscription fails", async () => {
+    const { context, params, metadata, event } = createIoOffboardingScenario();
+
+    const eventName = getNamespacedEvent(metadata, event.name);
+    const subscription = createMockCommerceEventSubscription({
+      name: eventName,
+    });
+
+    vi.mocked(
+      context.commerceEventsClient.deleteEventSubscription,
+    ).mockRejectedValue(
+      makeHttpError(
+        500,
+        "Internal Server Error",
+        JSON.stringify({ message: "Subscription service unavailable" }),
+      ),
+    );
+
+    await expect(
+      offboardCommerceEventing(
+        params,
+        createMockExistingCommerceEventingData({
+          subscriptions: new Map([[eventName, subscription]]),
+        }),
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringMatching(RE_CONTINUING_UNINSTALL),
+    );
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining(eventName),
+    );
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Subscription service unavailable"),
+    );
+  });
+
+  test("warns and continues when Commerce deleteEventProvider fails", async () => {
+    const { context, params, metadata, provider } =
+      createIoOffboardingScenario();
+
+    const instanceId = generateInstanceId(
+      metadata,
+      provider,
+      context.appData.workspaceId,
+    );
+
+    const commerceProvider = createMockCommerceEventProvider({
+      instance_id: instanceId,
+      provider_id: "io-provider-to-delete",
+    });
+
+    vi.mocked(
+      context.commerceEventsClient.deleteEventProvider,
+    ).mockRejectedValue(
+      makeHttpError(
+        500,
+        "Internal Server Error",
+        JSON.stringify({ message: "Provider service unavailable" }),
+      ),
+    );
+
+    await expect(
+      offboardCommerceEventing(
+        params,
+        createMockExistingCommerceEventingData({
+          providers: [commerceProvider],
+        }),
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringMatching(RE_CONTINUING_UNINSTALL),
+    );
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining(provider.label),
+    );
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Provider service unavailable"),
+    );
   });
 });

@@ -20,8 +20,11 @@ import { loadAppManifest } from "#commands/utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-async function run(appManifest: CommerceAppConfigOutputModel) {
-  await generateActionsCommand(appManifest);
+export async function run(
+  appManifest: CommerceAppConfigOutputModel,
+  templatesDir?: string,
+) {
+  await generateActionsCommand(appManifest, templatesDir);
   await generateManifestCommand(appManifest);
   await generateSchemaCommand(appManifest);
 }
@@ -35,9 +38,9 @@ export async function exec() {
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());
+    } else {
+      consola.error(error);
     }
-
-    consola.error(error);
     process.exit(1);
   }
 }

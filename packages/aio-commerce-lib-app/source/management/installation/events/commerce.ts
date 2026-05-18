@@ -126,15 +126,13 @@ async function createCommerceEvents(
         data: {
           ioEvents: providerData,
           commerce: commerceProvider,
-          events: eventsData.map(({ config, data }, index) => {
-            return {
-              config,
-              data: {
-                ...data,
-                subscription: subscriptions[index],
-              },
-            };
-          }),
+          events: eventsData.map(({ config, data }, index) => ({
+            config,
+            data: {
+              ...data,
+              subscription: subscriptions[index],
+            },
+          })),
         },
       },
     });

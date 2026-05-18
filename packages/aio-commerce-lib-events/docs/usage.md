@@ -1,8 +1,5 @@
 # `@adobe/aio-commerce-lib-events` Documentation
 
-> [!WARNING]
-> This package is a work in progress and is not yet ready for use yet. You may be able to install it, but if you do, expect breaking changes.
-
 ## Overview
 
 The library provides two main event management APIs:
