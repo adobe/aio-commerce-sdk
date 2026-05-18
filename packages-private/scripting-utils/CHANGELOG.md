@@ -1,5 +1,11 @@
 # @aio-commerce-sdk/scripting-utils
 
+## 0.3.1
+
+### Patch Changes
+
+- [#445](https://github.com/adobe/aio-commerce-sdk/pull/445) [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3) Thanks [@github-actions](https://github.com/apps/github-actions)! - Fix `syncImsCredentials` crashing when `.env` file does not exist; warns with an actionable message when credentials cannot be synced
+
 ## 0.3.0
 
 ### Minor Changes

@@ -1,5 +1,13 @@
 # @adobe/aio-commerce-lib-auth
 
+## 1.0.2
+
+### Patch Changes
+
+- [#445](https://github.com/adobe/aio-commerce-sdk/pull/445) [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3) Thanks [@github-actions](https://github.com/apps/github-actions)! - Removed organization scope from the `bin` entrypoint.
+
+- [#445](https://github.com/adobe/aio-commerce-sdk/pull/445) [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3) Thanks [@github-actions](https://github.com/apps/github-actions)! - Fix `syncImsCredentials` crashing when `.env` file does not exist; warns with an actionable message when credentials cannot be synced
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @adobe/aio-commerce-sdk
 
+## 1.1.2
+
+### Patch Changes
+
+- Updated dependencies [[`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3), [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3), [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3), [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3)]:
+  - @adobe/aio-commerce-lib-webhooks@1.0.0
+  - @adobe/aio-commerce-lib-auth@1.0.2
+  - @adobe/aio-commerce-lib-api@1.1.0
+  - @adobe/aio-commerce-lib-events@1.1.1
+
 ## 1.1.1
 
 ### Patch Changes

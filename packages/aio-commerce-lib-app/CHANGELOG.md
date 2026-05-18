@@ -1,5 +1,42 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.4.0
+
+### Minor Changes
+
+- [#445](https://github.com/adobe/aio-commerce-sdk/pull/445) [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3) Thanks [@github-actions](https://github.com/apps/github-actions)! - Add full Admin UI SDK support: generate the `commerce/backend-ui/1` registration action from `adminUiSdk.registration` config, covering menu items, mass actions, grid columns, view buttons, custom fees, and banner notifications.
+
+- [#445](https://github.com/adobe/aio-commerce-sdk/pull/445) [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3) Thanks [@github-actions](https://github.com/apps/github-actions)! - Support ability to filter configuration fields of applications by the Commerce environment where they are installed.
+
+- [#445](https://github.com/adobe/aio-commerce-sdk/pull/445) [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3) Thanks [@github-actions](https://github.com/apps/github-actions)! - Support boolean field in PATCH config values
+
+### Patch Changes
+
+- [#445](https://github.com/adobe/aio-commerce-sdk/pull/445) [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3) Thanks [@github-actions](https://github.com/apps/github-actions)! - Improve error logging and fix an issue where the project root directory was not derived correctly in some situations.
+
+- [#445](https://github.com/adobe/aio-commerce-sdk/pull/445) [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3) Thanks [@github-actions](https://github.com/apps/github-actions)! - Mark Admin UI SDK APIs as experimental.
+
+- [#445](https://github.com/adobe/aio-commerce-sdk/pull/445) [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3) Thanks [@github-actions](https://github.com/apps/github-actions)! - Improve installation and uninstallation error messages: HTTP API errors from Commerce and Adobe IO Events now include the response body in the error message, making it clearer which entity failed and why.
+
+- [#445](https://github.com/adobe/aio-commerce-sdk/pull/445) [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3) Thanks [@github-actions](https://github.com/apps/github-actions)! - Installation now retries once on failure. The retry resumes from the failed step, preserving progress from the first attempt. When a retry was attempted, the final state (whether succeeded or failed) includes `metadata: { isRetry: true }`.
+
+- [#445](https://github.com/adobe/aio-commerce-sdk/pull/445) [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3) Thanks [@github-actions](https://github.com/apps/github-actions)! - Fix event subscriptions failing with 400 when a Commerce event provider exists with the same instance ID but a stale provider ID from a previous installation.
+
+  Add character validation to provider and event label/description fields in the eventing schema, rejecting values with characters not accepted by the Adobe I/O Events API (valid characters: letters, numbers, spaces, underscores, hyphens, dots, colons, parentheses, commas, @, and /).
+
+  Add validation for at least one field requirement in the Commerce event `fields` arrays.
+
+- [#445](https://github.com/adobe/aio-commerce-sdk/pull/445) [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3) Thanks [@github-actions](https://github.com/apps/github-actions)! - Fix hook and post-install scripts failing to resolve CLI binaries under pnpm and yarn. Generated commands now use `pnpm exec` / `yarn exec` instead of `pnpx` / `yarn dlx`, which bypass local `node_modules/.bin` resolution.
+
+- [#445](https://github.com/adobe/aio-commerce-sdk/pull/445) [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3) Thanks [@github-actions](https://github.com/apps/github-actions)! - Regenerate action source code during the `pre-app-build` hook.
+
+- Updated dependencies [[`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3), [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3), [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3), [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3), [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3), [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3), [`c886416`](https://github.com/adobe/aio-commerce-sdk/commit/c88641645a1d5991b8f1903eaebe4bcb279b39f3)]:
+  - @adobe/aio-commerce-lib-webhooks@1.0.0
+  - @adobe/aio-commerce-lib-config@1.3.0
+  - @adobe/aio-commerce-lib-auth@1.0.2
+  - @adobe/aio-commerce-lib-api@1.1.0
+  - @adobe/aio-commerce-lib-events@1.1.1
+
 ## 1.3.1
 
 ### Patch Changes
