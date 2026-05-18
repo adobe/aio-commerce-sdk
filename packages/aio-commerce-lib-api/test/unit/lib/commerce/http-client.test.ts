@@ -80,7 +80,7 @@ describe("lib/commerce/http-client", () => {
         await testClient.get("test", {
           hooks: {
             beforeRequest: [
-              (request) => {
+              ({ request }) => {
                 expect(request.url).toBe(expectedUrl);
               },
             ],
@@ -94,7 +94,7 @@ describe("lib/commerce/http-client", () => {
           await testClient.get("test", {
             hooks: {
               beforeRequest: [
-                (request) => {
+                ({ request }) => {
                   expect(request.headers.get("Store")).toBe("all");
                 },
               ],
@@ -111,7 +111,7 @@ describe("lib/commerce/http-client", () => {
           await testClient.get("test", {
             hooks: {
               beforeRequest: [
-                (request) => {
+                ({ request }) => {
                   const authHeader = request.headers.get("Authorization");
                   expect(authHeader).toContain("OAuth");
                   expect(authHeader).toContain("oauth_consumer_key");
@@ -130,7 +130,7 @@ describe("lib/commerce/http-client", () => {
           await testClient.get("test", {
             hooks: {
               beforeRequest: [
-                (request) => {
+                ({ request }) => {
                   const authHeader = request.headers.get("Authorization");
                   const apiKeyHeader = request.headers.get("x-api-key");
                   expect(authHeader).toBe("Bearer supersecrettoken");
@@ -160,7 +160,7 @@ describe("lib/commerce/http-client", () => {
       await testClient.get("test", {
         hooks: {
           beforeRequest: [
-            (request) => {
+            ({ request }) => {
               expect(request.headers.get("Authorization")).toBe(
                 "OAuth oauth_consumer_key=custom-consumer-key, oauth_signature=custom-signature",
               );
@@ -189,7 +189,7 @@ describe("lib/commerce/http-client", () => {
       await testClient.get("test", {
         hooks: {
           beforeRequest: [
-            (request) => {
+            ({ request }) => {
               expect(request.headers.get("x-api-key")).toBe("custom-client-id");
               expect(request.headers.get("Authorization")).toBe(
                 "Bearer customsecrettoken",
@@ -212,7 +212,7 @@ describe("lib/commerce/http-client", () => {
       await testClient.get("test", {
         hooks: {
           beforeRequest: [
-            (request) => {
+            ({ request }) => {
               expect(request.headers.get("x-custom-header")).toBe(
                 "custom-value",
               );
@@ -271,7 +271,7 @@ describe("lib/commerce/http-client", () => {
       await testClient.get("test", {
         hooks: {
           beforeRequest: [
-            (request) => {
+            ({ request }) => {
               expect(request.url).toBe(expectedUrl);
               // Ensure no double slashes in the path (except after protocol)
               expect(request.url).not.toMatch(DOUBLE_SLASH_REGEX);

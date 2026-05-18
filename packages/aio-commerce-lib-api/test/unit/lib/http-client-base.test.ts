@@ -79,7 +79,7 @@ describe("lib/http-client-base", () => {
       await extendedClient.get("test", {
         hooks: {
           beforeRequest: [
-            (request) => {
+            ({ request }) => {
               expect(request.headers.get("X-Extended")).toBe("true");
             },
           ],
@@ -106,7 +106,7 @@ describe("lib/http-client-base", () => {
       await extendedClient.get("test", {
         hooks: {
           beforeRequest: [
-            (request) => {
+            ({ request }) => {
               expect(request.headers.get("X-Extended")).toBe("true");
             },
           ],

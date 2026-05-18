@@ -28,30 +28,43 @@ import { HTTPError } from "ky";
  *
  * @example
  * // Commerce returns { "message": "Provider already exists" } with status 400
- * await unwrapHttpError(err)
+ * unwrapHttpError(err)
  * // → "HTTP 400 Bad Request — Provider already exists"
  */
-export async function unwrapHttpError(error: unknown): Promise<string> {
+export function unwrapHttpError(error: unknown): string {
   if (!(error instanceof HTTPError)) {
     return error instanceof Error ? error.message : String(error);
   }
 
-  const { response } = error;
+  const { response, data } = error;
   const statusPrefix = `HTTP ${response.status} ${response.statusText}`;
 
-  let bodyText: string;
-  try {
-    bodyText = await response.clone().text();
-  } catch {
+  if (data === undefined) {
     return statusPrefix;
   }
 
-  if (!bodyText) {
+  if (typeof data !== "string") {
+    const message = extractJsonMessage(data);
+    if (message) {
+      return `${statusPrefix} — ${message}`;
+    }
+    try {
+      const raw = JSON.stringify(data);
+      if (raw) {
+        return `${statusPrefix} — ${raw}`;
+      }
+    } catch {
+      // ignore
+    }
+    return statusPrefix;
+  }
+
+  if (!data) {
     return statusPrefix;
   }
 
   try {
-    const json = JSON.parse(bodyText) as unknown;
+    const json = JSON.parse(data) as unknown;
     const message = extractJsonMessage(json);
     if (message) {
       return `${statusPrefix} — ${message}`;
@@ -60,7 +73,7 @@ export async function unwrapHttpError(error: unknown): Promise<string> {
     // not valid JSON — fall through to raw text
   }
 
-  return `${statusPrefix} — ${bodyText}`;
+  return `${statusPrefix} — ${data}`;
 }
 
 function interpolateParameters(message: string, parameters: unknown[]): string {

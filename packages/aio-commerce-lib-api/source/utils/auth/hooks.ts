@@ -52,7 +52,7 @@ export function buildIntegrationAuthBeforeRequestHook(
     ? integrationAuth
     : getIntegrationAuthProvider(integrationAuth);
 
-  return (request: KyRequest) => {
+  return ({ request }: { request: KyRequest }) => {
     const headers = integrationAuthProvider.getHeaders(
       request.method.toUpperCase() as HttpMethod,
       request.url,
@@ -73,7 +73,7 @@ export function buildImsAuthBeforeRequestHook(
     ? imsAuth
     : getImsAuthProvider(imsAuth);
 
-  return async (request: KyRequest) => {
+  return async ({ request }: { request: KyRequest }) => {
     const headers = await imsAuthProvider.getHeaders();
     request.headers.set("Authorization", headers.Authorization);
 
