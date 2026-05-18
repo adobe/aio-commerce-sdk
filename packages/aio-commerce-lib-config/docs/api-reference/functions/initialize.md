@@ -4,7 +4,7 @@
 function initialize(options: InitializeOptions): void;
 ```
 
-Defined in: [config-manager.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/config-manager.ts#L59)
+Defined in: [config-manager.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-config/source/config-manager.ts#L59)
 
 Initializes the configuration library so that it works as expected.
 The schema is stored in global memory. If a schema is provided, it will be set.

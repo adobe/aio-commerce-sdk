@@ -2,10 +2,10 @@
   "name": "@adobe/aio-commerce-lib-api",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "1.0.1",
+  "version": "1.2.0",
   "private": false,
   "engines": {
-    "node": ">=20 <=24"
+    "node": ">=22 <=24"
   },
   "license": "Apache-2.0",
   "description": "A set of utilities to build HTTP/API clients for I/O Events and Adobe Commerce",

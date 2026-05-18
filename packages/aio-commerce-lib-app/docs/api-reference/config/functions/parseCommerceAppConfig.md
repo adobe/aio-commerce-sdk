@@ -4,7 +4,28 @@
 function parseCommerceAppConfig(cwd?: string): Promise<{
   adminUiSdk?: {
      registration: {
-        menuItems: {
+        bannerNotification?: {
+           massActions?: {
+              customer?: ... | ...;
+              order?: ... | ...;
+              product?: ... | ...;
+           };
+           orderViewButtons?: {
+              buttonId: ...;
+              errorMessage?: ...;
+              successMessage?: ...;
+           }[];
+        };
+        customer?: {
+           gridColumns?: {
+              data: {
+                 meshId: ...;
+              };
+              properties: ...[];
+           };
+           massActions?: unknown[];
+        };
+        menuItems?: {
            id: string;
            isSection?: boolean;
            parent?: string;
@@ -12,6 +33,33 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
            sortOrder?: number;
            title?: string;
         }[];
+        order?: {
+           customFees?: {
+              applyFeeOnLastCreditMemo?: ...;
+              applyFeeOnLastInvoice?: ...;
+              id: ...;
+              label: ...;
+              orderMinimumAmount?: ...;
+              value: ...;
+           }[];
+           gridColumns?: {
+              data: {
+                 meshId: ...;
+              };
+              properties: ...[];
+           };
+           massActions?: unknown[];
+           viewButtons?: unknown[];
+        };
+        product?: {
+           gridColumns?: {
+              data: {
+                 meshId: ...;
+              };
+              properties: ...[];
+           };
+           massActions?: unknown[];
+        };
      };
   };
   businessConfig?: {
@@ -19,6 +67,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
         | {
         default: string;
         description?: string;
+        env?: (... | ...)[];
         label?: string;
         name: string;
         options: {
@@ -31,6 +80,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
         | {
         default: string[];
         description?: string;
+        env?: (... | ...)[];
         label?: string;
         name: string;
         options: {
@@ -43,6 +93,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
         | {
         default: string;
         description?: string;
+        env?: (... | ...)[];
         label?: string;
         name: string;
         type: "text";
@@ -50,6 +101,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
         | {
         default: "";
         description?: string;
+        env?: (... | ...)[];
         label?: string;
         name: string;
         type: "password";
@@ -57,6 +109,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
         | {
         default: string;
         description?: string;
+        env?: (... | ...)[];
         label?: string;
         name: string;
         type: "email";
@@ -64,6 +117,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
         | {
         default: string;
         description?: string;
+        env?: (... | ...)[];
         label?: string;
         name: string;
         type: "url";
@@ -71,9 +125,18 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
         | {
         default: string;
         description?: string;
+        env?: (... | ...)[];
         label?: string;
         name: string;
         type: "tel";
+      }
+        | {
+        default: boolean;
+        description?: string;
+        env?: (... | ...)[];
+        label?: string;
+        name: string;
+        type: "boolean";
      })[];
   };
   eventing?: {
@@ -200,7 +263,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
 }>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:135](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L135)
+Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:135](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L135)
 
 Read the commerce app config file and parse its contents into its schema.
 
@@ -218,7 +281,28 @@ The config file must export a default export with the configuration object.
 `Promise`\<\{
 `adminUiSdk?`: \{
 `registration`: \{
-`menuItems`: \{
+`bannerNotification?`: \{
+`massActions?`: \{
+`customer?`: ... \| ...;
+`order?`: ... \| ...;
+`product?`: ... \| ...;
+\};
+`orderViewButtons?`: \{
+`buttonId`: ...;
+`errorMessage?`: ...;
+`successMessage?`: ...;
+\}[];
+\};
+`customer?`: \{
+`gridColumns?`: \{
+`data`: \{
+`meshId`: ...;
+\};
+`properties`: ...[];
+\};
+`massActions?`: `unknown`[];
+\};
+`menuItems?`: \{
 `id`: `string`;
 `isSection?`: `boolean`;
 `parent?`: `string`;
@@ -226,6 +310,33 @@ The config file must export a default export with the configuration object.
 `sortOrder?`: `number`;
 `title?`: `string`;
 \}[];
+`order?`: \{
+`customFees?`: \{
+`applyFeeOnLastCreditMemo?`: ...;
+`applyFeeOnLastInvoice?`: ...;
+`id`: ...;
+`label`: ...;
+`orderMinimumAmount?`: ...;
+`value`: ...;
+\}[];
+`gridColumns?`: \{
+`data`: \{
+`meshId`: ...;
+\};
+`properties`: ...[];
+\};
+`massActions?`: `unknown`[];
+`viewButtons?`: `unknown`[];
+\};
+`product?`: \{
+`gridColumns?`: \{
+`data`: \{
+`meshId`: ...;
+\};
+`properties`: ...[];
+\};
+`massActions?`: `unknown`[];
+\};
 \};
 \};
 `businessConfig?`: \{
@@ -233,6 +344,7 @@ The config file must export a default export with the configuration object.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: (... \| ...)[];
 `label?`: `string`;
 `name`: `string`;
 `options`: \{
@@ -245,6 +357,7 @@ The config file must export a default export with the configuration object.
 \| \{
 `default`: `string`[];
 `description?`: `string`;
+`env?`: (... \| ...)[];
 `label?`: `string`;
 `name`: `string`;
 `options`: \{
@@ -257,6 +370,7 @@ The config file must export a default export with the configuration object.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: (... \| ...)[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"text"`;
@@ -264,6 +378,7 @@ The config file must export a default export with the configuration object.
 \| \{
 `default`: `""`;
 `description?`: `string`;
+`env?`: (... \| ...)[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"password"`;
@@ -271,6 +386,7 @@ The config file must export a default export with the configuration object.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: (... \| ...)[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"email"`;
@@ -278,6 +394,7 @@ The config file must export a default export with the configuration object.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: (... \| ...)[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"url"`;
@@ -285,9 +402,18 @@ The config file must export a default export with the configuration object.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: (... \| ...)[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"tel"`;
+\}
+\| \{
+`default`: `boolean`;
+`description?`: `string`;
+`env?`: (... \| ...)[];
+`label?`: `string`;
+`name`: `string`;
+`type`: `"boolean"`;
 \})[];
 \};
 `eventing?`: \{

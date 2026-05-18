@@ -1,6 +1,6 @@
 # `AnyStep`
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:182](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L182)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:182](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L182)
 
 Loosely-typed step for use in non type-safe contexts.
 
@@ -12,7 +12,7 @@ Loosely-typed step for use in non type-safe contexts.
 optional children?: AnyStep[];
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:183](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L183)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:183](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L183)
 
 ---
 
@@ -22,7 +22,7 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 optional context?: (context: InstallationContext) => any;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:186](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L186)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:186](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L186)
 
 #### Parameters
 
@@ -42,7 +42,7 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 optional install?: (config: any, context: any) => unknown;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:187](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L187)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:187](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L187)
 
 #### Parameters
 
@@ -63,7 +63,7 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 meta: StepMeta;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:188](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L188)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:188](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L188)
 
 ---
 
@@ -73,7 +73,7 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 name: string;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:189](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L189)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:189](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L189)
 
 ---
 
@@ -83,7 +83,7 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 type: "leaf" | "branch";
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:190](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L190)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:190](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L190)
 
 ---
 
@@ -93,7 +93,7 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 optional uninstall?: (config: any, context: any) => void | Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:192](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L192)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:192](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L192)
 
 #### Parameters
 
@@ -116,7 +116,7 @@ optional validate?: (config: any, context: any) =>
 | Promise<ValidationIssue[]>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:194](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L194)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:194](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L194)
 
 #### Parameters
 
@@ -138,14 +138,45 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 optional when?: (config: {
   adminUiSdk?: {
      registration: {
-        menuItems: {
+        bannerNotification?: {
+           massActions?: {
+              customer?: ...;
+              order?: ...;
+              product?: ...;
+           };
+           orderViewButtons?: ...[];
+        };
+        customer?: {
+           gridColumns?: {
+              data: ...;
+              properties: ...;
+           };
+           massActions?: ...[];
+        };
+        menuItems?: {
            id: string;
-           isSection?: boolean;
-           parent?: string;
-           sandbox?: string;
-           sortOrder?: number;
-           title?: string;
+           isSection?: ... | ... | ...;
+           parent?: ... | ...;
+           sandbox?: ... | ...;
+           sortOrder?: ... | ...;
+           title?: ... | ...;
         }[];
+        order?: {
+           customFees?: ...[];
+           gridColumns?: {
+              data: ...;
+              properties: ...;
+           };
+           massActions?: ...[];
+           viewButtons?: ...[];
+        };
+        product?: {
+           gridColumns?: {
+              data: ...;
+              properties: ...;
+           };
+           massActions?: ...[];
+        };
      };
   };
   businessConfig?: {
@@ -153,6 +184,7 @@ optional when?: (config: {
         | {
         default: string;
         description?: string;
+        env?: ...[];
         label?: string;
         name: string;
         options: {
@@ -165,6 +197,7 @@ optional when?: (config: {
         | {
         default: string[];
         description?: string;
+        env?: ...[];
         label?: string;
         name: string;
         options: {
@@ -177,6 +210,7 @@ optional when?: (config: {
         | {
         default: string;
         description?: string;
+        env?: ...[];
         label?: string;
         name: string;
         type: "text";
@@ -184,6 +218,7 @@ optional when?: (config: {
         | {
         default: "";
         description?: string;
+        env?: ...[];
         label?: string;
         name: string;
         type: "password";
@@ -191,6 +226,7 @@ optional when?: (config: {
         | {
         default: string;
         description?: string;
+        env?: ...[];
         label?: string;
         name: string;
         type: "email";
@@ -198,6 +234,7 @@ optional when?: (config: {
         | {
         default: string;
         description?: string;
+        env?: ...[];
         label?: string;
         name: string;
         type: "url";
@@ -205,9 +242,18 @@ optional when?: (config: {
         | {
         default: string;
         description?: string;
+        env?: ...[];
         label?: string;
         name: string;
         type: "tel";
+      }
+        | {
+        default: boolean;
+        description?: string;
+        env?: ...[];
+        label?: string;
+        name: string;
+        type: "boolean";
      })[];
   };
   eventing?: {
@@ -314,13 +360,13 @@ optional when?: (config: {
 }) => boolean;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:199](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L199)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:199](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L199)
 
 #### Parameters
 
-| Parameter | Type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `config`  | \{ `adminUiSdk?`: \{ `registration`: \{ `menuItems`: \{ `id`: `string`; `isSection?`: `boolean`; `parent?`: `string`; `sandbox?`: `string`; `sortOrder?`: `number`; `title?`: `string`; \}[]; \}; \}; `businessConfig?`: \{ `schema`: ( \| \{ `default`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `options`: \{ `label`: ...; `value`: ...; \}[]; `selectionMode`: `"single"`; `type`: `"list"`; \} \| \{ `default`: `string`[]; `description?`: `string`; `label?`: `string`; `name`: `string`; `options`: \{ `label`: ...; `value`: ...; \}[]; `selectionMode`: `"multiple"`; `type`: `"list"`; \} \| \{ `default`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"text"`; \} \| \{ `default`: `""`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"password"`; \} \| \{ `default`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"email"`; \} \| \{ `default`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"url"`; \} \| \{ `default`: `string`; `description?`: `string`; `label?`: `string`; `name`: `string`; `type`: `"tel"`; \})[]; \}; `eventing?`: \{ `commerce?`: \{ `events`: \{ `description`: ...; `destination?`: ...; `fields`: ...; `force?`: ...; `hipaa_audit_required?`: ...; `label`: ...; `name`: ...; `priority?`: ...; `rules?`: ...; `runtimeActions`: ...; \}[]; `provider`: \{ `description`: `string`; `key?`: ... \| ...; `label`: `string`; \}; \}[]; `external?`: \{ `events`: \{ `description`: ...; `label`: ...; `name`: ...; `runtimeActions`: ...; \}[]; `provider`: \{ `description`: `string`; `key?`: ... \| ...; `label`: `string`; \}; \}[]; \}; `installation?`: \{ `customInstallationSteps?`: \{ `description`: `string`; `name`: `string`; `script`: `string`; \}[]; `messages?`: \{ `postInstallation?`: `string`; `preInstallation?`: `string`; \}; \}; `metadata`: \{ `description`: `string`; `displayName`: `string`; `id`: `string`; `version`: `string`; \}; `webhooks?`: ( \| \{ `category?`: `"validation"` \| `"append"` \| `"modification"`; `description`: `string`; `label`: `string`; `requireAdobeAuth?`: `boolean`; `runtimeAction`: `string`; `webhook`: \{ `batch_name`: `string`; `batch_order?`: `number`; `fallback_error_message?`: `string`; `fields?`: ...[]; `headers?`: ...[]; `hook_name`: `string`; `method`: `string`; `priority?`: `number`; `required?`: `boolean`; `rules?`: ...[]; `soft_timeout?`: `number`; `timeout?`: `number`; `ttl?`: `number`; `webhook_method`: `string`; `webhook_type`: `string`; \}; \} \| \{ `category?`: `"validation"` \| `"append"` \| `"modification"`; `description`: `string`; `label`: `string`; `webhook`: \{ `batch_name`: `string`; `batch_order?`: `number`; `fallback_error_message?`: `string`; `fields?`: ...[]; `headers?`: ...[]; `hook_name`: `string`; `method`: `string`; `priority?`: `number`; `required?`: `boolean`; `rules?`: ...[]; `soft_timeout?`: `number`; `timeout?`: `number`; `ttl?`: `number`; `url`: `string`; `webhook_method`: `string`; `webhook_type`: `string`; \}; \})[]; \} & \{ \[`key`: `string`\]: `unknown`; \} |
+| Parameter | Type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`  | \{ `adminUiSdk?`: \{ `registration`: \{ `bannerNotification?`: \{ `massActions?`: \{ `customer?`: ...; `order?`: ...; `product?`: ...; \}; `orderViewButtons?`: ...[]; \}; `customer?`: \{ `gridColumns?`: \{ `data`: ...; `properties`: ...; \}; `massActions?`: ...[]; \}; `menuItems?`: \{ `id`: `string`; `isSection?`: ... \| ... \| ...; `parent?`: ... \| ...; `sandbox?`: ... \| ...; `sortOrder?`: ... \| ...; `title?`: ... \| ...; \}[]; `order?`: \{ `customFees?`: ...[]; `gridColumns?`: \{ `data`: ...; `properties`: ...; \}; `massActions?`: ...[]; `viewButtons?`: ...[]; \}; `product?`: \{ `gridColumns?`: \{ `data`: ...; `properties`: ...; \}; `massActions?`: ...[]; \}; \}; \}; `businessConfig?`: \{ `schema`: ( \| \{ `default`: `string`; `description?`: `string`; `env?`: ...[]; `label?`: `string`; `name`: `string`; `options`: \{ `label`: ...; `value`: ...; \}[]; `selectionMode`: `"single"`; `type`: `"list"`; \} \| \{ `default`: `string`[]; `description?`: `string`; `env?`: ...[]; `label?`: `string`; `name`: `string`; `options`: \{ `label`: ...; `value`: ...; \}[]; `selectionMode`: `"multiple"`; `type`: `"list"`; \} \| \{ `default`: `string`; `description?`: `string`; `env?`: ...[]; `label?`: `string`; `name`: `string`; `type`: `"text"`; \} \| \{ `default`: `""`; `description?`: `string`; `env?`: ...[]; `label?`: `string`; `name`: `string`; `type`: `"password"`; \} \| \{ `default`: `string`; `description?`: `string`; `env?`: ...[]; `label?`: `string`; `name`: `string`; `type`: `"email"`; \} \| \{ `default`: `string`; `description?`: `string`; `env?`: ...[]; `label?`: `string`; `name`: `string`; `type`: `"url"`; \} \| \{ `default`: `string`; `description?`: `string`; `env?`: ...[]; `label?`: `string`; `name`: `string`; `type`: `"tel"`; \} \| \{ `default`: `boolean`; `description?`: `string`; `env?`: ...[]; `label?`: `string`; `name`: `string`; `type`: `"boolean"`; \})[]; \}; `eventing?`: \{ `commerce?`: \{ `events`: \{ `description`: ...; `destination?`: ...; `fields`: ...; `force?`: ...; `hipaa_audit_required?`: ...; `label`: ...; `name`: ...; `priority?`: ...; `rules?`: ...; `runtimeActions`: ...; \}[]; `provider`: \{ `description`: `string`; `key?`: ... \| ...; `label`: `string`; \}; \}[]; `external?`: \{ `events`: \{ `description`: ...; `label`: ...; `name`: ...; `runtimeActions`: ...; \}[]; `provider`: \{ `description`: `string`; `key?`: ... \| ...; `label`: `string`; \}; \}[]; \}; `installation?`: \{ `customInstallationSteps?`: \{ `description`: `string`; `name`: `string`; `script`: `string`; \}[]; `messages?`: \{ `postInstallation?`: `string`; `preInstallation?`: `string`; \}; \}; `metadata`: \{ `description`: `string`; `displayName`: `string`; `id`: `string`; `version`: `string`; \}; `webhooks?`: ( \| \{ `category?`: `"validation"` \| `"append"` \| `"modification"`; `description`: `string`; `label`: `string`; `requireAdobeAuth?`: `boolean`; `runtimeAction`: `string`; `webhook`: \{ `batch_name`: `string`; `batch_order?`: `number`; `fallback_error_message?`: `string`; `fields?`: ...[]; `headers?`: ...[]; `hook_name`: `string`; `method`: `string`; `priority?`: `number`; `required?`: `boolean`; `rules?`: ...[]; `soft_timeout?`: `number`; `timeout?`: `number`; `ttl?`: `number`; `webhook_method`: `string`; `webhook_type`: `string`; \}; \} \| \{ `category?`: `"validation"` \| `"append"` \| `"modification"`; `description`: `string`; `label`: `string`; `webhook`: \{ `batch_name`: `string`; `batch_order?`: `number`; `fallback_error_message?`: `string`; `fields?`: ...[]; `headers?`: ...[]; `hook_name`: `string`; `method`: `string`; `priority?`: `number`; `required?`: `boolean`; `rules?`: ...[]; `soft_timeout?`: `number`; `timeout?`: `number`; `ttl?`: `number`; `url`: `string`; `webhook_method`: `string`; `webhook_type`: `string`; \}; \})[]; \} & \{ \[`key`: `string`\]: `unknown`; \} |
 
 #### Returns
 

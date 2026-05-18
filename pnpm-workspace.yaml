@@ -21,9 +21,9 @@ catalog:
   typescript: ^6.0.0
   valibot: ^1.1.0
   yaml: ^2.8.1
-
-onlyBuiltDependencies:
-  - "@actions/github-script"
-  - core-js-pure
-  - esbuild
-  - msw
+engineStrict: true
+allowBuilds:
+  '@actions/github-script': true
+  core-js-pure: true
+  esbuild: true
+  msw: true

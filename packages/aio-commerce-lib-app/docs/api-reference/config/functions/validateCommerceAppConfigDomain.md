@@ -4,14 +4,45 @@
 function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNullable<Get<{
   adminUiSdk?: {
      registration: {
-        menuItems: {
+        bannerNotification?: {
+           massActions?: {
+              customer?: ...;
+              order?: ...;
+              product?: ...;
+           };
+           orderViewButtons?: ...[];
+        };
+        customer?: {
+           gridColumns?: {
+              data: ...;
+              properties: ...;
+           };
+           massActions?: ...[];
+        };
+        menuItems?: {
            id: string;
-           isSection?: boolean;
-           parent?: string;
-           sandbox?: string;
-           sortOrder?: number;
-           title?: string;
+           isSection?: ... | ... | ...;
+           parent?: ... | ...;
+           sandbox?: ... | ...;
+           sortOrder?: ... | ...;
+           title?: ... | ...;
         }[];
+        order?: {
+           customFees?: ...[];
+           gridColumns?: {
+              data: ...;
+              properties: ...;
+           };
+           massActions?: ...[];
+           viewButtons?: ...[];
+        };
+        product?: {
+           gridColumns?: {
+              data: ...;
+              properties: ...;
+           };
+           massActions?: ...[];
+        };
      };
   };
   businessConfig?: {
@@ -19,6 +50,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
         | {
         default: string;
         description?: string;
+        env?: ...[];
         label?: string;
         name: string;
         options: {
@@ -31,6 +63,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
         | {
         default: string[];
         description?: string;
+        env?: ...[];
         label?: string;
         name: string;
         options: {
@@ -43,6 +76,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
         | {
         default: string;
         description?: string;
+        env?: ...[];
         label?: string;
         name: string;
         type: "text";
@@ -50,6 +84,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
         | {
         default: "";
         description?: string;
+        env?: ...[];
         label?: string;
         name: string;
         type: "password";
@@ -57,6 +92,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
         | {
         default: string;
         description?: string;
+        env?: ...[];
         label?: string;
         name: string;
         type: "email";
@@ -64,6 +100,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
         | {
         default: string;
         description?: string;
+        env?: ...[];
         label?: string;
         name: string;
         type: "url";
@@ -71,9 +108,18 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
         | {
         default: string;
         description?: string;
+        env?: ...[];
         label?: string;
         name: string;
         type: "tel";
+      }
+        | {
+        default: boolean;
+        description?: string;
+        env?: ...[];
+        label?: string;
+        name: string;
+        type: "boolean";
      })[];
   };
   eventing?: {
@@ -180,7 +226,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
 }, T>>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L110)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L110)
 
 Validates a specific domain configuration within the commerce app config.
 
@@ -207,14 +253,45 @@ schema for that specific domain.
 `NonNullable`\<`Get`\<\{
 `adminUiSdk?`: \{
 `registration`: \{
-`menuItems`: \{
+`bannerNotification?`: \{
+`massActions?`: \{
+`customer?`: ...;
+`order?`: ...;
+`product?`: ...;
+\};
+`orderViewButtons?`: ...[];
+\};
+`customer?`: \{
+`gridColumns?`: \{
+`data`: ...;
+`properties`: ...;
+\};
+`massActions?`: ...[];
+\};
+`menuItems?`: \{
 `id`: `string`;
-`isSection?`: `boolean`;
-`parent?`: `string`;
-`sandbox?`: `string`;
-`sortOrder?`: `number`;
-`title?`: `string`;
+`isSection?`: ... \| ... \| ...;
+`parent?`: ... \| ...;
+`sandbox?`: ... \| ...;
+`sortOrder?`: ... \| ...;
+`title?`: ... \| ...;
 \}[];
+`order?`: \{
+`customFees?`: ...[];
+`gridColumns?`: \{
+`data`: ...;
+`properties`: ...;
+\};
+`massActions?`: ...[];
+`viewButtons?`: ...[];
+\};
+`product?`: \{
+`gridColumns?`: \{
+`data`: ...;
+`properties`: ...;
+\};
+`massActions?`: ...[];
+\};
 \};
 \};
 `businessConfig?`: \{
@@ -222,6 +299,7 @@ schema for that specific domain.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: ...[];
 `label?`: `string`;
 `name`: `string`;
 `options`: \{
@@ -234,6 +312,7 @@ schema for that specific domain.
 \| \{
 `default`: `string`[];
 `description?`: `string`;
+`env?`: ...[];
 `label?`: `string`;
 `name`: `string`;
 `options`: \{
@@ -246,6 +325,7 @@ schema for that specific domain.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: ...[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"text"`;
@@ -253,6 +333,7 @@ schema for that specific domain.
 \| \{
 `default`: `""`;
 `description?`: `string`;
+`env?`: ...[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"password"`;
@@ -260,6 +341,7 @@ schema for that specific domain.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: ...[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"email"`;
@@ -267,6 +349,7 @@ schema for that specific domain.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: ...[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"url"`;
@@ -274,9 +357,18 @@ schema for that specific domain.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: ...[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"tel"`;
+\}
+\| \{
+`default`: `boolean`;
+`description?`: `string`;
+`env?`: ...[];
+`label?`: `string`;
+`name`: `string`;
+`type`: `"boolean"`;
 \})[];
 \};
 `eventing?`: \{

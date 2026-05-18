@@ -11,7 +11,7 @@ type RuntimeActionParams = {
 };
 ```
 
-Defined in: [params/types.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-core/source/params/types.ts#L33)
+Defined in: [params/types.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-core/source/params/types.ts#L33)
 
 The type of the runtime action parameters.
 
@@ -26,10 +26,10 @@ The type of the runtime action parameters.
 ### \_\_ow_body?
 
 ```ts
-optional __ow_body: string;
+optional __ow_body?: string;
 ```
 
-Defined in: [params/types.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-core/source/params/types.ts#L44)
+Defined in: [params/types.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-core/source/params/types.ts#L44)
 
 If the runtime action is invoked via HTTP, this will be the request body entity, as a base64-encoded string when its content is binary or JSON object/array, or as a plain string otherwise
 
@@ -38,10 +38,10 @@ If the runtime action is invoked via HTTP, this will be the request body entity,
 ### \_\_ow_headers?
 
 ```ts
-optional __ow_headers: Record<string, string | undefined>;
+optional __ow_headers?: Record<string, string | undefined>;
 ```
 
-Defined in: [params/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-core/source/params/types.ts#L35)
+Defined in: [params/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-core/source/params/types.ts#L35)
 
 If the runtime action is invoked via HTTP, this will be the headers of the request.
 
@@ -50,10 +50,10 @@ If the runtime action is invoked via HTTP, this will be the headers of the reque
 ### \_\_ow_method?
 
 ```ts
-optional __ow_method: HttpMethodLowercase;
+optional __ow_method?: HttpMethodLowercase;
 ```
 
-Defined in: [params/types.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-core/source/params/types.ts#L38)
+Defined in: [params/types.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-core/source/params/types.ts#L38)
 
 If the runtime action is invoked via HTTP, this will be the HTTP method of the request.
 
@@ -62,10 +62,10 @@ If the runtime action is invoked via HTTP, this will be the HTTP method of the r
 ### \_\_ow_path?
 
 ```ts
-optional __ow_path: string;
+optional __ow_path?: string;
 ```
 
-Defined in: [params/types.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-core/source/params/types.ts#L41)
+Defined in: [params/types.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-core/source/params/types.ts#L41)
 
 If the runtime action is invoked via HTTP, this will be the unmatched path of the request (matching stops after consuming the action extension)
 
@@ -74,9 +74,9 @@ If the runtime action is invoked via HTTP, this will be the unmatched path of th
 ### \_\_ow_query?
 
 ```ts
-optional __ow_query: string;
+optional __ow_query?: string;
 ```
 
-Defined in: [params/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-core/source/params/types.ts#L47)
+Defined in: [params/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-core/source/params/types.ts#L47)
 
 If the runtime action is invoked via HTTP, this will be the query parameters of the request, as an unparsed string.
