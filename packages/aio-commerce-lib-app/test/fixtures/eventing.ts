@@ -62,7 +62,7 @@ export function createMockIoEventProvider(
   return {
     id: "io-provider-1",
     instance_id: "test-app-commerce-test-workspace-id",
-    label: "Commerce Provider",
+    label: "Order Provider",
     source: "magento",
     publisher: "adobe",
     provider_metadata: "dx_commerce_events",
@@ -87,7 +87,7 @@ export function createMockIoEventRegistration(
 ): IoEventRegistration {
   return {
     id: "registration-1",
-    name: "Commerce Event Registration: Action (My Package)",
+    name: "Commerce Event Registration: Order Provider - Action (My Package)",
     client_id: "test-client-id",
     status: "enabled",
     type: "workspace",
