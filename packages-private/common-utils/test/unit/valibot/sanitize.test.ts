@@ -10,50 +10,60 @@
  * governing permissions and limitations under the License.
  */
 
-import { sanitizeMarkdownUrls } from "@aio-commerce-sdk/common-utils/valibot";
+import { validateMarkdownUrls } from "@aio-commerce-sdk/common-utils/valibot";
 import { describe, expect, test } from "vitest";
 
-describe("sanitizeMarkdownUrls", () => {
-  test("returns plain text unchanged", () => {
-    expect(sanitizeMarkdownUrls("no links here")).toBe("no links here");
+describe("validateMarkdownUrls", () => {
+  test("returns true for plain text", () => {
+    expect(validateMarkdownUrls("no links here")).toBe(true);
   });
-  test("keeps https links", () => {
-    expect(sanitizeMarkdownUrls("[Docs](https://example.com)")).toBe(
-      "[Docs](https://example.com)",
+
+  test("returns true for https links", () => {
+    expect(validateMarkdownUrls("[Docs](https://example.com)")).toBe(true);
+  });
+
+  test("returns true for http links", () => {
+    expect(validateMarkdownUrls("[Docs](http://example.com)")).toBe(true);
+  });
+
+  test("returns false for javascript: links", () => {
+    expect(validateMarkdownUrls("[Click](javascript:alert('xss'))")).toBe(
+      false,
     );
   });
-  test("keeps http links", () => {
-    expect(sanitizeMarkdownUrls("[Docs](http://example.com)")).toBe(
-      "[Docs](http://example.com)",
-    );
+
+  test("returns false for data: links", () => {
+    expect(validateMarkdownUrls("[x](data:text/html,<h1>hi</h1>)")).toBe(false);
   });
-  test("strips javascript: links", () => {
-    expect(sanitizeMarkdownUrls("[Click](javascript:alert('xss'))")).toBe(
-      "[Click]()",
-    );
+
+  test("returns false for relative links", () => {
+    expect(validateMarkdownUrls("[x](/relative/path)")).toBe(false);
   });
-  test("strips data: links", () => {
-    expect(sanitizeMarkdownUrls("[x](data:text/html,<h1>hi</h1>)")).toBe(
-      "[x]()",
-    );
+
+  test("returns false for empty URL in link syntax", () => {
+    expect(validateMarkdownUrls("[x]()")).toBe(false);
   });
-  test("strips relative links", () => {
-    expect(sanitizeMarkdownUrls("[x](/relative/path)")).toBe("[x]()");
-  });
-  test("handles multiple links — strips only unsafe ones", () => {
+
+  test("returns false when any link is unsafe (mixed safe and unsafe)", () => {
     expect(
-      sanitizeMarkdownUrls(
-        "See [Docs](https://example.com) or [bad](javascript:evil()) for more",
+      validateMarkdownUrls(
+        "See [Docs](https://example.com) or [bad](javascript:evil())",
       ),
-    ).toBe("See [Docs](https://example.com) or [bad]() for more");
+    ).toBe(false);
   });
+
+  test("returns true for multiple safe links", () => {
+    expect(
+      validateMarkdownUrls("[A](https://a.com) and [B](http://b.com)"),
+    ).toBe(true);
+  });
+
   test("is case-insensitive on scheme", () => {
-    expect(sanitizeMarkdownUrls("[x](HTTPS://example.com)")).toBe(
-      "[x](HTTPS://example.com)",
-    );
-    expect(sanitizeMarkdownUrls("[x](Javascript:evil())")).toBe("[x]()");
+    expect(validateMarkdownUrls("[x](HTTPS://example.com)")).toBe(true);
+    expect(validateMarkdownUrls("[x](Javascript:evil())")).toBe(false);
   });
-  test("returns empty string unchanged", () => {
-    expect(sanitizeMarkdownUrls("")).toBe("");
+
+  test("returns true for empty string", () => {
+    expect(validateMarkdownUrls("")).toBe(true);
   });
 });

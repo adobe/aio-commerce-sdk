@@ -3,4 +3,4 @@
 "@aio-commerce-sdk/common-utils": patch
 ---
 
-Config field descriptions now support Markdown links. Non-http(s) URLs are stripped automatically.
+Config field descriptions now support Markdown links (`[label](url)`). Links must use http(s) URLs; non-http(s) URLs cause a validation error.

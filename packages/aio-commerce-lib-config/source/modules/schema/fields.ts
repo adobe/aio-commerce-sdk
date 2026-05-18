@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { sanitizeMarkdownUrls } from "@aio-commerce-sdk/common-utils/valibot";
+import { validateMarkdownUrls } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
 const DEFAULT_BOOLEAN_VALUE = false as const;
@@ -52,7 +52,10 @@ const BaseOptionSchema = v.object({
   description: v.optional(
     v.pipe(
       v.string("Expected a string for the field description"),
-      v.transform(sanitizeMarkdownUrls),
+      v.check(
+        validateMarkdownUrls,
+        "Field description contains a link with a non-http(s) URL",
+      ),
     ),
   ),
   env: v.optional(EnvSchema),

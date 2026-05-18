@@ -14,12 +14,16 @@ const MARKDOWN_LINK_RE = /\[([^\]]*)\]\(((?:[^)(]|\([^)]*\))*)\)/g;
 const SAFE_URL_RE = /^https?:\/\//i;
 
 /**
- * Strips non-http(s) URLs from Markdown link syntax in a string.
- * Links with `javascript:`, `data:`, relative paths, or any non-http(s)
- * scheme have their URL removed while preserving the label text.
+ * Returns true if every Markdown link in the string has an http(s) URL.
+ * Returns false if any link has a non-http(s) or empty URL.
+ * Plain text with no Markdown links always returns true.
  */
-export function sanitizeMarkdownUrls(text: string): string {
-  return text.replace(MARKDOWN_LINK_RE, (match, label: string, url: string) =>
-    SAFE_URL_RE.test(url.trim()) ? match : `[${label}]()`,
-  );
+export function validateMarkdownUrls(text: string): boolean {
+  for (const match of text.matchAll(MARKDOWN_LINK_RE)) {
+    const url = match[2].trim();
+    if (!SAFE_URL_RE.test(url)) {
+      return false;
+    }
+  }
+  return true;
 }

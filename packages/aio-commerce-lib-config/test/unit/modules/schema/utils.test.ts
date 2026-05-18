@@ -125,16 +125,16 @@ describe("schema/utils", () => {
       ).toThrow();
     });
 
-    test("sanitizes javascript: links in field description at parse time", () => {
-      const result = validateBusinessConfigSchema([
-        {
-          name: "my-field",
-          type: "text",
-          description: "See [docs](javascript:evil()) for details",
-        },
-      ]);
-
-      expect(result[0]?.description).toBe("See [docs]() for details");
+    test("rejects javascript: links in field description", () => {
+      expect(() =>
+        validateBusinessConfigSchema([
+          {
+            name: "my-field",
+            type: "text",
+            description: "See [docs](javascript:evil()) for details",
+          },
+        ]),
+      ).toThrow();
     });
 
     test("preserves valid https links in field description", () => {
