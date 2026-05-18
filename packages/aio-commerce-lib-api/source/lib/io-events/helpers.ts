@@ -47,7 +47,7 @@ export function buildIoEventsHttpClient(
 
   const adobeIoBaseUrl = config.baseUrl;
   const httpClient = ky.create({
-    prefixUrl: adobeIoBaseUrl,
+    prefix: adobeIoBaseUrl,
     headers: {
       Accept: "application/hal+json",
     },

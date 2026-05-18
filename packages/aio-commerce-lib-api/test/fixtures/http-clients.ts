@@ -35,7 +35,7 @@ export type TestHttpClientParams = {
 export class TestHttpClient extends HttpClientBase<TestHttpClientConfig> {
   public constructor(params: TestHttpClientParams, mockFetch: typeof fetch) {
     const kyInstance = ky.create({
-      prefixUrl: params.config.baseUrl,
+      prefix: params.config.baseUrl,
       fetch: mockFetch as unknown as typeof globalThis.fetch,
     });
 
