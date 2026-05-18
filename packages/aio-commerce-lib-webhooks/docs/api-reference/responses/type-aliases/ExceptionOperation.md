@@ -8,7 +8,7 @@ type ExceptionOperation = {
 };
 ```
 
-Defined in: [responses/operations/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L25)
+Defined in: [responses/operations/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L25)
 
 Exception operation response
 Causes Commerce to terminate the process that triggered the original event.
@@ -18,10 +18,10 @@ Causes Commerce to terminate the process that triggered the original event.
 ### class?
 
 ```ts
-optional class: string;
+optional class?: string;
 ```
 
-Defined in: [responses/operations/types.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L28)
+Defined in: [responses/operations/types.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L28)
 
 Specifies the exception class. If not set, \Magento\Framework\Exception\LocalizedException will be thrown.
 
@@ -30,10 +30,10 @@ Specifies the exception class. If not set, \Magento\Framework\Exception\Localize
 ### message?
 
 ```ts
-optional message: string;
+optional message?: string;
 ```
 
-Defined in: [responses/operations/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L30)
+Defined in: [responses/operations/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L30)
 
 Specifies the exception message. If not set, fallbackErrorMessage or system default will be used.
 
@@ -45,4 +45,4 @@ Specifies the exception message. If not set, fallbackErrorMessage or system defa
 op: "exception";
 ```
 
-Defined in: [responses/operations/types.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L26)
+Defined in: [responses/operations/types.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L26)

@@ -1,5 +1,22 @@
 # @adobe/aio-commerce-lib-config
 
+## 1.3.0
+
+### Minor Changes
+
+- [#418](https://github.com/adobe/aio-commerce-sdk/pull/418) [`402948e`](https://github.com/adobe/aio-commerce-sdk/commit/402948eaeaba09ecd8397ed3b9b7ba1c8f6114c4) Thanks [@vinayrao2000](https://github.com/vinayrao2000)! - Add optional `env` property on business configuration schema fields to scope them to specific Commerce environments (`"paas"`, `"saas"`).
+
+- [#392](https://github.com/adobe/aio-commerce-sdk/pull/392) [`9ccbbde`](https://github.com/adobe/aio-commerce-sdk/commit/9ccbbdeb7bfca645d1b2b5750b18f36a16f59d82) Thanks [@asalloum5](https://github.com/asalloum5)! - Support new `boolean` property type
+
+### Patch Changes
+
+- [#405](https://github.com/adobe/aio-commerce-sdk/pull/405) [`775860b`](https://github.com/adobe/aio-commerce-sdk/commit/775860bdf654b2fedeffeaa328a110dfc10daa85) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Removed organization scope from the `bin` entrypoint.
+
+- [#403](https://github.com/adobe/aio-commerce-sdk/pull/403) [`dd249cc`](https://github.com/adobe/aio-commerce-sdk/commit/dd249cca536e4a26ae6fff042e6e776f81dcc608) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix `encryption setup` failing when the target `.env` file does not exist, the file is now created if missing.
+
+- Updated dependencies [[`aeb0411`](https://github.com/adobe/aio-commerce-sdk/commit/aeb0411521c0cd8bc9e878beb160eeb92e98d090)]:
+  - @adobe/aio-commerce-lib-api@1.1.0
+
 ## 1.2.0
 
 ### Minor Changes

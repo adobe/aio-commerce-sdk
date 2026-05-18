@@ -6,9 +6,12 @@ function runInstallation(
 ): Promise<SucceededInstallationState | FailedInstallationState>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:73](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L73)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:78](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L78)
 
 Runs the full installation workflow. Returns the final state (never throws).
+
+Retries once on failure. `onInstallationFailure` only fires if both attempts fail;
+`isRetry: true` is set on the result when the retry succeeds.
 
 ## Parameters
 

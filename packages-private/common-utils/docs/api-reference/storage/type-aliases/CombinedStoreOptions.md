@@ -9,7 +9,7 @@ type CombinedStoreOptions<T> = {
 };
 ```
 
-Defined in: [storage/types.ts:75](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages-private/common-utils/source/storage/types.ts#L75)
+Defined in: [storage/types.ts:75](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages-private/common-utils/source/storage/types.ts#L75)
 
 Options for creating a combined store.
 
@@ -24,10 +24,10 @@ Options for creating a combined store.
 ### cache?
 
 ```ts
-optional cache: StateStoreOptions;
+optional cache?: StateStoreOptions;
 ```
 
-Defined in: [storage/types.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages-private/common-utils/source/storage/types.ts#L77)
+Defined in: [storage/types.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages-private/common-utils/source/storage/types.ts#L77)
 
 Options for the cache (lib-state) store.
 
@@ -36,12 +36,12 @@ Options for the cache (lib-state) store.
 ### persistent?
 
 ```ts
-optional persistent: FilesStoreOptions & {
+optional persistent?: FilesStoreOptions & {
   shouldPersist?: PersistPredicate<T>;
 };
 ```
 
-Defined in: [storage/types.ts:80](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages-private/common-utils/source/storage/types.ts#L80)
+Defined in: [storage/types.ts:80](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages-private/common-utils/source/storage/types.ts#L80)
 
 Options for the persistent (lib-files) store.
 
@@ -50,7 +50,7 @@ Options for the persistent (lib-files) store.
 ##### shouldPersist?
 
 ```ts
-optional shouldPersist: PersistPredicate<T>;
+optional shouldPersist?: PersistPredicate<T>;
 ```
 
 Predicate to determine if data should be persisted.

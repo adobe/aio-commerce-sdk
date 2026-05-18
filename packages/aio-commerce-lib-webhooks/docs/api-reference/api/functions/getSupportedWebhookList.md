@@ -7,7 +7,7 @@ function getSupportedWebhookList(
 ): Promise<CommerceSupportedWebhookManyResponse>;
 ```
 
-Defined in: [api/webhooks/endpoints.ts:107](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/api/webhooks/endpoints.ts#L107)
+Defined in: [api/webhooks/endpoints.ts:107](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-webhooks/source/api/webhooks/endpoints.ts#L107)
 
 Returns the list of webhooks supported in Adobe Commerce as a Cloud Service (SaaS only).
 
