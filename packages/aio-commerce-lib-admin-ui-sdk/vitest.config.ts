@@ -10,10 +10,20 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Public entrypoint for Admin UI SDK permission helpers */
+import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
+import { defineConfig, mergeConfig } from "vitest/config";
 
-export * from "./client";
-export * from "./errors";
-export * from "./with-permission";
+const BARREL_FILES = ["./source/index.ts"];
 
-export type * from "./types";
+export default mergeConfig(
+  baseConfig,
+  defineConfig({
+    plugins: [],
+    test: {
+      passWithNoTests: true,
+      coverage: {
+        exclude: [...BARREL_FILES, "./source/**/types.ts"],
+      },
+    },
+  }),
+);

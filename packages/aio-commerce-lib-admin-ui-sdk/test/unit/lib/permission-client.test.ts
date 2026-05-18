@@ -12,41 +12,14 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getAdminUiSdkPermissionClient } from "#lib/commerce/admin-ui-sdk-permissions/client";
 import {
   AdminUiSdkPermissionDeniedError,
   AdminUiSdkPermissionError,
-} from "#lib/commerce/admin-ui-sdk-permissions/errors";
-import { TestAdobeCommerceHttpClient } from "#test/fixtures/http-clients";
+} from "#errors";
+import { getAdminUiSdkPermissionClient } from "#lib/permission-client";
+import { BASE_URL, makeHttpClient } from "#test/fixtures/http-client";
 
-const BASE_URL = "https://commerce.test";
 const CHECK_URL = `${BASE_URL}/rest/all/V1/adminuisdk/permission/check`;
-type FetchInput = Parameters<typeof fetch>[0];
-
-const clientParams = {
-  config: {
-    baseUrl: BASE_URL,
-    flavor: "paas" as const,
-  },
-  auth: {
-    getHeaders: () => ({ Authorization: "Bearer test-token" }),
-  },
-  fetchOptions: {
-    retry: 0,
-  },
-};
-
-function makeHttpClient(fetchMock: typeof fetch) {
-  return new TestAdobeCommerceHttpClient(clientParams, fetchMock);
-}
-
-function readRequestJson(input: FetchInput) {
-  if (input instanceof Request) {
-    return input.clone().json();
-  }
-
-  throw new Error("Expected ky to call fetch with a Request instance");
-}
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -56,9 +29,10 @@ describe("client.check — happy path", () => {
   it("posts { resource } and returns true when server responds { allowed: true }", async () => {
     let capturedBody: unknown;
     let capturedUrl = "";
-    const fetchMock = vi.fn(async (input: FetchInput) => {
-      capturedUrl = input instanceof Request ? input.url : String(input);
-      capturedBody = await readRequestJson(input);
+
+    const fetchMock = vi.fn(async (input: Request) => {
+      capturedUrl = input.url;
+      capturedBody = await input.clone().json();
       return Response.json({ allowed: true });
     });
 
@@ -174,9 +148,8 @@ describe("client.check — TTL cache", () => {
   });
 
   it("does not cache an in-flight response after invalidation", async () => {
-    let resolveFirstResponse: (response: Response) => void = () => {
-      /* noop — overwritten in the Promise constructor below */
-    };
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: placeholder reassigned inside the Promise constructor
+    let resolveFirstResponse: (response: Response) => void = () => {};
     const firstResponse = new Promise<Response>((resolve) => {
       resolveFirstResponse = resolve;
     });
@@ -303,7 +276,7 @@ describe("client.require", () => {
     ).rejects.toBeInstanceOf(AdminUiSdkPermissionDeniedError);
   });
 
-  it("throws AdminUiSdkPermissionError on 401 even with denyOnError: true", async () => {
+  it("throws AdminUiSdkPermissionError on 401", async () => {
     const fetchMock = vi.fn(async () =>
       Response.json({ message: "Unauthorized" }, { status: 401 }),
     );

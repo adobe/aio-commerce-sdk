@@ -76,6 +76,16 @@
         "default": "./dist/cjs/webhooks/*.cjs"
       }
     },
+    "./admin-ui-sdk/*": {
+      "import": {
+        "types": "./dist/es/admin-ui-sdk/*.d.mts",
+        "default": "./dist/es/admin-ui-sdk/*.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/admin-ui-sdk/*.d.cts",
+        "default": "./dist/cjs/admin-ui-sdk/*.cjs"
+      }
+    },
     "./*": {
       "import": {
         "types": "./dist/es/*.d.mts",
@@ -113,6 +123,7 @@
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-api": "workspace:*",
+    "@adobe/aio-commerce-lib-admin-ui-sdk": "workspace:*",
     "@adobe/aio-commerce-lib-events": "workspace:*",
     "@adobe/aio-commerce-lib-webhooks": "workspace:*",
     "type-fest": "catalog:"
@@ -122,5 +133,80 @@
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "typescript": "catalog:"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "publishConfig": {
+    "exports": {
+      "./api": {
+        "import": {
+          "types": "./dist/es/api/index.d.mts",
+          "default": "./dist/es/api/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/api/index.d.cts",
+          "default": "./dist/cjs/api/index.cjs"
+        }
+      },
+      "./api/*": {
+        "import": {
+          "types": "./dist/es/api/*.d.mts",
+          "default": "./dist/es/api/*.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/api/*.d.cts",
+          "default": "./dist/cjs/api/*.cjs"
+        }
+      },
+      "./events/*": {
+        "import": {
+          "types": "./dist/es/events/*.d.mts",
+          "default": "./dist/es/events/*.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/events/*.d.cts",
+          "default": "./dist/cjs/events/*.cjs"
+        }
+      },
+      "./core/*": {
+        "import": {
+          "types": "./dist/es/core/*.d.mts",
+          "default": "./dist/es/core/*.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/core/*.d.cts",
+          "default": "./dist/cjs/core/*.cjs"
+        }
+      },
+      "./webhooks/*": {
+        "import": {
+          "types": "./dist/es/webhooks/*.d.mts",
+          "default": "./dist/es/webhooks/*.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/webhooks/*.d.cts",
+          "default": "./dist/cjs/webhooks/*.cjs"
+        }
+      },
+      "./admin-ui-sdk/*": {
+        "import": {
+          "types": "./dist/es/admin-ui-sdk/*.d.mts",
+          "default": "./dist/es/admin-ui-sdk/*.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/admin-ui-sdk/*.d.cts",
+          "default": "./dist/cjs/admin-ui-sdk/*.cjs"
+        }
+      },
+      "./*": {
+        "import": {
+          "types": "./dist/es/*.d.mts",
+          "default": "./dist/es/*.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/*.d.cts",
+          "default": "./dist/cjs/*.cjs"
+        }
+      },
+      "./package.json": "./package.json"
+    }
+  }
 }

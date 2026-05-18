@@ -32,14 +32,14 @@ describe("registerExtension", () => {
     vi.unstubAllEnvs();
   });
 
-  test("throws enriched error when POST fails", async () => {
+  test("throws enriched error when registerExtension call fails", async () => {
     const httpError = makeHttpError(
       403,
       "Forbidden",
       JSON.stringify({ message: "Insufficient permissions" }),
     );
     const context = createMockAdminUiSdkContext({
-      postImpl: () => Promise.reject(httpError),
+      registerExtensionImpl: () => Promise.reject(httpError),
     });
 
     await expect(registerExtension(context)).rejects.toThrow(
@@ -56,7 +56,7 @@ describe("registerExtension", () => {
     );
     const context = {
       ...createMockAdminUiSdkContext({
-        postImpl: () => Promise.reject(httpError),
+        registerExtensionImpl: () => Promise.reject(httpError),
       }),
       logger,
     };
@@ -79,7 +79,7 @@ describe("uninstallExtension", () => {
     vi.unstubAllEnvs();
   });
 
-  test("warns with enriched error message when DELETE fails", async () => {
+  test("warns with enriched error message when uninstallExtension call fails", async () => {
     const logger = createMockLogger();
     const httpError = makeHttpError(
       500,
@@ -88,7 +88,7 @@ describe("uninstallExtension", () => {
     );
     const context = {
       ...createMockAdminUiSdkContext({
-        deleteImpl: () => Promise.reject(httpError),
+        uninstallExtensionImpl: () => Promise.reject(httpError),
       }),
       logger,
     };

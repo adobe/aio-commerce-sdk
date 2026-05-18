@@ -16,7 +16,7 @@ import { describe, expect, it } from "vitest";
 import {
   AdminUiSdkPermissionDeniedError,
   AdminUiSdkPermissionError,
-} from "#lib/commerce/admin-ui-sdk-permissions/errors";
+} from "#errors";
 
 describe("AdminUiSdkPermissionError", () => {
   it("extends CommerceSdkErrorBase", () => {
@@ -36,9 +36,9 @@ describe("AdminUiSdkPermissionError", () => {
   });
 
   it("is recognised by CommerceSdkErrorBase.isSdkError", () => {
-    const error = new AdminUiSdkPermissionError("err");
-
-    expect(CommerceSdkErrorBase.isSdkError(error)).toBe(true);
+    expect(
+      CommerceSdkErrorBase.isSdkError(new AdminUiSdkPermissionError("err")),
+    ).toBe(true);
   });
 });
 

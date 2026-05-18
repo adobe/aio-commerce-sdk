@@ -13,19 +13,49 @@
 import { HTTPError } from "ky";
 import * as v from "valibot";
 
+import { permissionCheckResponseSchema } from "#api/permissions/schema";
 import {
   AdminUiSdkPermissionDeniedError,
   AdminUiSdkPermissionError,
-} from "./errors";
-import { permissionCheckResponseSchema } from "./schemas";
+} from "#errors";
 
-import type {
-  AdminUiSdkPermissionClient,
-  AdminUiSdkPermissionClientOptions,
-} from "./types";
+import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 
 const DEFAULT_CACHE_TTL_MS = 300_000;
 const CHECK_ENDPOINT = "adminuisdk/permission/check";
+
+/** Options used to create an Admin UI SDK permission client. */
+export interface AdminUiSdkPermissionClientOptions {
+  /** Milliseconds to cache a permission result. Default: 300_000 (5 minutes). Set to 0 to disable caching. */
+  cacheTtlMs?: number;
+  /** Return false instead of throwing when a network or parse error occurs. Default: true. */
+  denyOnError?: boolean;
+  httpClient: AdobeCommerceHttpClient;
+}
+
+/** Client for checking the current user's Admin UI SDK resource permissions. */
+export interface AdminUiSdkPermissionClient {
+  /**
+   * Returns `true` if the current user has the given resource granted, `false` if denied.
+   * Returns `false` on network or parse errors when `denyOnError: true` (default).
+   * Always throws `AdminUiSdkPermissionError` on 401, regardless of `denyOnError`.
+   */
+  check(resource: string): Promise<boolean>;
+  /**
+   * Clears the cached result for `resource`. If called without an argument, clears
+   * all cached entries and cancels deduplication of any in-flight requests.
+   */
+  invalidate(resource?: string): void;
+  /**
+   * Resolves when the current user has the given resource granted.
+   * Throws `AdminUiSdkPermissionDeniedError` if denied.
+   * Always throws `AdminUiSdkPermissionError` on 401, regardless of `denyOnError`.
+   * When `denyOnError: true` (default), network and parse errors also throw
+   * `AdminUiSdkPermissionDeniedError` (fail-closed). Set `denyOnError: false`
+   * to receive `AdminUiSdkPermissionError` instead.
+   */
+  require(resource: string): Promise<void>;
+}
 
 type PermissionCheckResult = {
   allowed: boolean;

@@ -16,27 +16,27 @@ import { createMockInstallationContext } from "#test/fixtures/installation";
 
 import type { AdminUiSdkExecutionContext } from "#management/installation/admin-ui-sdk/utils";
 
-/** Creates a mock AdminUiSdkExecutionContext with Commerce client methods. */
+/** Creates a mock AdminUiSdkExecutionContext with Admin UI SDK client methods. */
 export function createMockAdminUiSdkContext(overrides?: {
-  postImpl?: () => Promise<unknown>;
-  deleteImpl?: () => Promise<unknown>;
+  registerExtensionImpl?: () => Promise<unknown>;
+  uninstallExtensionImpl?: () => Promise<unknown>;
 }): AdminUiSdkExecutionContext {
   const mockInstallation = createMockInstallationContext();
-  const jsonFn = vi
-    .fn()
-    .mockImplementation(
-      overrides?.postImpl ??
-        (() => Promise.resolve({ extensionId: "ext-123" })),
-    );
-  const postFn = vi.fn().mockReturnValue({ json: jsonFn });
 
   return {
     ...mockInstallation,
-    commerceClient: {
-      post: postFn,
-      delete: vi
+    adminUiSdkClient: {
+      registerExtension: vi
         .fn()
-        .mockImplementation(overrides?.deleteImpl ?? (() => Promise.resolve())),
-    } as unknown as AdminUiSdkExecutionContext["commerceClient"],
+        .mockImplementation(
+          overrides?.registerExtensionImpl ??
+            (() => Promise.resolve({ extensionId: "ext-123" })),
+        ),
+      uninstallExtension: vi
+        .fn()
+        .mockImplementation(
+          overrides?.uninstallExtensionImpl ?? (() => Promise.resolve()),
+        ),
+    } as unknown as AdminUiSdkExecutionContext["adminUiSdkClient"],
   };
 }

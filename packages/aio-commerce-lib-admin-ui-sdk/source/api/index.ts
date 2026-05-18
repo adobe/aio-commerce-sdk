@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,24 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
-import { defineConfig, mergeConfig } from "vitest/config";
+/** biome-ignore-all lint/performance/noBarrelFile: api sub-barrel */
 
-const BARREL_FILES = [
-  "./source/index.ts",
-  "./source/utils/http/index.ts",
-  "./source/utils/transformations/index.ts",
-];
+export * from "./extensions/endpoints";
+export * from "./permissions/endpoints";
 
-export default mergeConfig(
-  baseConfig,
-  defineConfig({
-    plugins: [],
-    test: {
-      coverage: {
-        // Exclude files that don't contain "logic".
-        exclude: [...BARREL_FILES, "./source/utils/http/codes.ts"],
-      },
-    },
-  }),
-);
+export type * from "./extensions/schema";
+export type * from "./extensions/types";
+export type * from "./permissions/schema";
