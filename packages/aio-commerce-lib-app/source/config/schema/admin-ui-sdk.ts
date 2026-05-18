@@ -352,10 +352,12 @@ export type BannerNotification = v.InferInput<typeof BannerNotificationSchema>;
  */
 export type MenuItem = v.InferInput<typeof MenuItemSchema>;
 
-/** An ACL resource registration entry for Admin UI SDK menu items. */
+/**
+ * An ACL resource registration entry for Admin UI SDK menu items.
+ * @experimental
+ */
 export type AclResource = v.InferInput<typeof AclResourceSchema>;
 
-/** Check if config has Admin UI SDK registration configuration. */
 /**
  * Check if config has Admin UI SDK registration configuration.
  * @experimental
