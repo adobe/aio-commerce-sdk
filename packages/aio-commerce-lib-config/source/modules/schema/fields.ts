@@ -66,7 +66,7 @@ const BaseOptionSchema = v.object({
       v.string("Expected a string for the field description"),
       v.check(
         validateMarkdownUrls,
-        "Field description contains a link with a non-http(s) URL",
+        "Field description contains a non valid markdown URL",
       ),
     ),
   ),
