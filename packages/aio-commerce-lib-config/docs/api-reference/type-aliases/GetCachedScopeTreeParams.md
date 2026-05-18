@@ -6,7 +6,7 @@ type GetCachedScopeTreeParams = {
 };
 ```
 
-Defined in: [config-manager.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/config-manager.ts#L79)
+Defined in: [config-manager.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-config/source/config-manager.ts#L79)
 
 Parameters for getting the scope tree from cache.
 
@@ -15,7 +15,7 @@ Parameters for getting the scope tree from cache.
 ### refreshData?
 
 ```ts
-optional refreshData: false;
+optional refreshData?: false;
 ```
 
-Defined in: [config-manager.ts:80](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/config-manager.ts#L80)
+Defined in: [config-manager.ts:80](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-config/source/config-manager.ts#L80)

@@ -4,7 +4,33 @@
 function validateCommerceAppConfig(config: unknown): {
   adminUiSdk?: {
      registration: {
-        menuItems: {
+        bannerNotification?: {
+           massActions?: {
+              customer?: ...[];
+              order?: ...[];
+              product?: ...[];
+           };
+           orderViewButtons?: {
+              buttonId: string;
+              errorMessage?: ... | ...;
+              successMessage?: ... | ...;
+           }[];
+        };
+        customer?: {
+           gridColumns?: {
+              data: {
+                 meshId: string;
+              };
+              properties: {
+                 align: ...;
+                 columnId: ...;
+                 label: ...;
+                 type: ...;
+              }[];
+           };
+           massActions?: unknown[];
+        };
+        menuItems?: {
            id: string;
            isSection?: boolean;
            parent?: string;
@@ -12,6 +38,43 @@ function validateCommerceAppConfig(config: unknown): {
            sortOrder?: number;
            title?: string;
         }[];
+        order?: {
+           customFees?: {
+              applyFeeOnLastCreditMemo?: ... | ... | ...;
+              applyFeeOnLastInvoice?: ... | ... | ...;
+              id: string;
+              label: string;
+              orderMinimumAmount?: ... | ...;
+              value: number;
+           }[];
+           gridColumns?: {
+              data: {
+                 meshId: string;
+              };
+              properties: {
+                 align: ...;
+                 columnId: ...;
+                 label: ...;
+                 type: ...;
+              }[];
+           };
+           massActions?: unknown[];
+           viewButtons?: unknown[];
+        };
+        product?: {
+           gridColumns?: {
+              data: {
+                 meshId: string;
+              };
+              properties: {
+                 align: ...;
+                 columnId: ...;
+                 label: ...;
+                 type: ...;
+              }[];
+           };
+           massActions?: unknown[];
+        };
      };
   };
   businessConfig?: {
@@ -19,6 +82,7 @@ function validateCommerceAppConfig(config: unknown): {
         | {
         default: string;
         description?: string;
+        env?: ("paas" | "saas")[];
         label?: string;
         name: string;
         options: {
@@ -31,6 +95,7 @@ function validateCommerceAppConfig(config: unknown): {
         | {
         default: string[];
         description?: string;
+        env?: ("paas" | "saas")[];
         label?: string;
         name: string;
         options: {
@@ -43,6 +108,7 @@ function validateCommerceAppConfig(config: unknown): {
         | {
         default: string;
         description?: string;
+        env?: ("paas" | "saas")[];
         label?: string;
         name: string;
         type: "text";
@@ -50,6 +116,7 @@ function validateCommerceAppConfig(config: unknown): {
         | {
         default: "";
         description?: string;
+        env?: ("paas" | "saas")[];
         label?: string;
         name: string;
         type: "password";
@@ -57,6 +124,7 @@ function validateCommerceAppConfig(config: unknown): {
         | {
         default: string;
         description?: string;
+        env?: ("paas" | "saas")[];
         label?: string;
         name: string;
         type: "email";
@@ -64,6 +132,7 @@ function validateCommerceAppConfig(config: unknown): {
         | {
         default: string;
         description?: string;
+        env?: ("paas" | "saas")[];
         label?: string;
         name: string;
         type: "url";
@@ -71,9 +140,18 @@ function validateCommerceAppConfig(config: unknown): {
         | {
         default: string;
         description?: string;
+        env?: ("paas" | "saas")[];
         label?: string;
         name: string;
         type: "tel";
+      }
+        | {
+        default: boolean;
+        description?: string;
+        env?: ("paas" | "saas")[];
+        label?: string;
+        name: string;
+        type: "boolean";
      })[];
   };
   eventing?: {
@@ -203,7 +281,7 @@ function validateCommerceAppConfig(config: unknown): {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L54)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L54)
 
 Validates a complete commerce app configuration object against the schema.
 
@@ -218,7 +296,33 @@ Validates a complete commerce app configuration object against the schema.
 \{
 `adminUiSdk?`: \{
 `registration`: \{
-`menuItems`: \{
+`bannerNotification?`: \{
+`massActions?`: \{
+`customer?`: ...[];
+`order?`: ...[];
+`product?`: ...[];
+\};
+`orderViewButtons?`: \{
+`buttonId`: `string`;
+`errorMessage?`: ... \| ...;
+`successMessage?`: ... \| ...;
+\}[];
+\};
+`customer?`: \{
+`gridColumns?`: \{
+`data`: \{
+`meshId`: `string`;
+\};
+`properties`: \{
+`align`: ...;
+`columnId`: ...;
+`label`: ...;
+`type`: ...;
+\}[];
+\};
+`massActions?`: `unknown`[];
+\};
+`menuItems?`: \{
 `id`: `string`;
 `isSection?`: `boolean`;
 `parent?`: `string`;
@@ -226,6 +330,43 @@ Validates a complete commerce app configuration object against the schema.
 `sortOrder?`: `number`;
 `title?`: `string`;
 \}[];
+`order?`: \{
+`customFees?`: \{
+`applyFeeOnLastCreditMemo?`: ... \| ... \| ...;
+`applyFeeOnLastInvoice?`: ... \| ... \| ...;
+`id`: `string`;
+`label`: `string`;
+`orderMinimumAmount?`: ... \| ...;
+`value`: `number`;
+\}[];
+`gridColumns?`: \{
+`data`: \{
+`meshId`: `string`;
+\};
+`properties`: \{
+`align`: ...;
+`columnId`: ...;
+`label`: ...;
+`type`: ...;
+\}[];
+\};
+`massActions?`: `unknown`[];
+`viewButtons?`: `unknown`[];
+\};
+`product?`: \{
+`gridColumns?`: \{
+`data`: \{
+`meshId`: `string`;
+\};
+`properties`: \{
+`align`: ...;
+`columnId`: ...;
+`label`: ...;
+`type`: ...;
+\}[];
+\};
+`massActions?`: `unknown`[];
+\};
 \};
 \};
 `businessConfig?`: \{
@@ -233,6 +374,7 @@ Validates a complete commerce app configuration object against the schema.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: (`"paas"` \| `"saas"`)[];
 `label?`: `string`;
 `name`: `string`;
 `options`: \{
@@ -245,6 +387,7 @@ Validates a complete commerce app configuration object against the schema.
 \| \{
 `default`: `string`[];
 `description?`: `string`;
+`env?`: (`"paas"` \| `"saas"`)[];
 `label?`: `string`;
 `name`: `string`;
 `options`: \{
@@ -257,6 +400,7 @@ Validates a complete commerce app configuration object against the schema.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: (`"paas"` \| `"saas"`)[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"text"`;
@@ -264,6 +408,7 @@ Validates a complete commerce app configuration object against the schema.
 \| \{
 `default`: `""`;
 `description?`: `string`;
+`env?`: (`"paas"` \| `"saas"`)[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"password"`;
@@ -271,6 +416,7 @@ Validates a complete commerce app configuration object against the schema.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: (`"paas"` \| `"saas"`)[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"email"`;
@@ -278,6 +424,7 @@ Validates a complete commerce app configuration object against the schema.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: (`"paas"` \| `"saas"`)[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"url"`;
@@ -285,9 +432,18 @@ Validates a complete commerce app configuration object against the schema.
 \| \{
 `default`: `string`;
 `description?`: `string`;
+`env?`: (`"paas"` \| `"saas"`)[];
 `label?`: `string`;
 `name`: `string`;
 `type`: `"tel"`;
+\}
+\| \{
+`default`: `boolean`;
+`description?`: `string`;
+`env?`: (`"paas"` \| `"saas"`)[];
+`label?`: `string`;
+`name`: `string`;
+`type`: `"boolean"`;
 \})[];
 \};
 `eventing?`: \{

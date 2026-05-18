@@ -16,7 +16,7 @@ function getImsAuthProvider(authParams: {
 };
 ```
 
-Defined in: [ims-auth/provider.ts:119](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L119)
+Defined in: [ims-auth/provider.ts:119](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L119)
 
 Creates an [ImsAuthProvider](../type-aliases/ImsAuthProvider.md) based on the provided configuration.
 
@@ -45,7 +45,7 @@ Creates an [ImsAuthProvider](../type-aliases/ImsAuthProvider.md) based on the pr
 
 An [ImsAuthProvider](../type-aliases/ImsAuthProvider.md) instance that can be used to get access token and auth headers.
 
-### getAccessToken()
+### getAccessToken
 
 ```ts
 getAccessToken: () => Promise<string>;
@@ -55,7 +55,7 @@ getAccessToken: () => Promise<string>;
 
 `Promise`\<`string`\>
 
-### getHeaders()
+### getHeaders
 
 ```ts
 getHeaders: () => Promise<ImsAuthHeaders>;

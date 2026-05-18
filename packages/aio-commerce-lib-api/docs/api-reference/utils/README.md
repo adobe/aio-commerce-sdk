@@ -19,8 +19,9 @@
 
 ## Functions
 
-| Function                                                                                    | Description                                                       |
-| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| [buildImsAuthBeforeRequestHook](functions/buildImsAuthBeforeRequestHook.md)                 | Builds a before request hook for IMS authentication.              |
-| [buildIntegrationAuthBeforeRequestHook](functions/buildIntegrationAuthBeforeRequestHook.md) | Builds a before request hook for integration authentication.      |
-| [isAuthProvider](functions/isAuthProvider.md)                                               | Type guard to check if the given auth object is an auth provider. |
+| Function                                                                                    | Description                                                                                                                                 |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| [buildImsAuthBeforeRequestHook](functions/buildImsAuthBeforeRequestHook.md)                 | Builds a before request hook for IMS authentication.                                                                                        |
+| [buildIntegrationAuthBeforeRequestHook](functions/buildIntegrationAuthBeforeRequestHook.md) | Builds a before request hook for integration authentication.                                                                                |
+| [isAuthProvider](functions/isAuthProvider.md)                                               | Type guard to check if the given auth object is an auth provider.                                                                           |
+| [unwrapHttpError](functions/unwrapHttpError.md)                                             | Unwraps a ky `HTTPError` to produce a human-readable string that includes the HTTP status and the message extracted from the response body. |

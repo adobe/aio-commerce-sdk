@@ -1,18 +1,21 @@
 # `getExecCommand()`
 
 ```ts
-function getExecCommand(packageManager: PackageManager): string;
+function getExecCommand(
+  packageManager: "npm" | "pnpm" | "yarn" | "bun",
+): string;
 ```
 
-Defined in: [project.ts:164](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages-private/scripting-utils/source/project.ts#L164)
+Defined in: [project.ts:187](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages-private/scripting-utils/source/project.ts#L187)
 
-Get the appropriate exec command based on package manager
+Get the exec command that runs a **locally installed** binary from
+`node_modules/.bin` for the given package manager.
 
 ## Parameters
 
-| Parameter        | Type                                                  |
-| ---------------- | ----------------------------------------------------- |
-| `packageManager` | [`PackageManager`](../type-aliases/PackageManager.md) |
+| Parameter        | Type                                       | Description                  |
+| ---------------- | ------------------------------------------ | ---------------------------- |
+| `packageManager` | `"npm"` \| `"pnpm"` \| `"yarn"` \| `"bun"` | The detected package manager |
 
 ## Returns
 

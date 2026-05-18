@@ -10,13 +10,14 @@ This module exports shared project utilities for the AIO Commerce SDK.
 
 ## Functions
 
-| Function                                                        | Description                                                                             |
-| --------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| [detectPackageManager](functions/detectPackageManager.md)       | Detect the package manager by checking for lock files                                   |
-| [findNearestPackageJson](functions/findNearestPackageJson.md)   | Find the nearest package.json file in the current working directory or its parents      |
-| [findUp](functions/findUp.md)                                   | Find a file by walking up parent directories                                            |
-| [getExecCommand](functions/getExecCommand.md)                   | Get the appropriate exec command based on package manager                               |
-| [getProjectRootDirectory](functions/getProjectRootDirectory.md) | Get the root directory of the project                                                   |
-| [isESM](functions/isESM.md)                                     | Check if the current working directory is an ESM project.                               |
-| [makeOutputDirFor](functions/makeOutputDirFor.md)               | Create the output directory for the given file or folder (relative to the project root) |
-| [readPackageJson](functions/readPackageJson.md)                 | Read the package.json file                                                              |
+| Function                                                        | Description                                                                                                                  |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| [detectPackageManager](functions/detectPackageManager.md)       | Detect the package manager for a project.                                                                                    |
+| [findNearestPackageJson](functions/findNearestPackageJson.md)   | Find the nearest package.json file in the current working directory or its parents                                           |
+| [findUp](functions/findUp.md)                                   | Find a file by walking up parent directories                                                                                 |
+| [getExecCommand](functions/getExecCommand.md)                   | Get the exec command that runs a **locally installed** binary from `node_modules/.bin` for the given package manager.        |
+| [getInstallCommand](functions/getInstallCommand.md)             | Get the command to install the given dependencies with the given package manager (e.g. `pnpm add foo bar`, `npm i foo bar`). |
+| [getProjectRootDirectory](functions/getProjectRootDirectory.md) | Get the root directory of the project                                                                                        |
+| [isESM](functions/isESM.md)                                     | Check if the current working directory is an ESM project.                                                                    |
+| [makeOutputDirFor](functions/makeOutputDirFor.md)               | Create the output directory for the given file or folder (relative to the project root)                                      |
+| [readPackageJson](functions/readPackageJson.md)                 | Read the package.json file                                                                                                   |
