@@ -1,0 +1,57 @@
+---
+title: "createEventProvider()"
+editUrl: false
+prev: false
+next: false
+---
+
+```ts
+function createEventProvider(
+  httpClient: AdobeCommerceHttpClient,
+  params: {
+    description?: string;
+    instance_id: string;
+    label?: string;
+    provider_id: string;
+    workspace_configuration?:
+      | string
+      | {
+          [key: string]: unknown;
+        };
+  },
+  fetchOptions?: Options,
+): Promise<CommerceEventProvider>;
+```
+
+Defined in: [commerce/api/event-providers/endpoints.ts:89](https://github.com/adobe/aio-commerce-sdk/blob/d3b51b3a74b902fcf7e96c43e79d467248c8da30/packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts#L89)
+
+Creates an event provider in the Commerce instance bound to the given [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md).
+
+## Parameters
+
+| Parameter                         | Type                                                                                                                                                                                    | Description                                                                                                                                                                                        |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `httpClient`                      | [`AdobeCommerceHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md)                    | The [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md) to use to make the request. |
+| `params`                          | \{ `description?`: `string`; `instance_id`: `string`; `label?`: `string`; `provider_id`: `string`; `workspace_configuration?`: \| `string` \| \{ \[`key`: `string`\]: `unknown`; \}; \} | The parameters to create the event provider with.                                                                                                                                                  |
+| `params.description?`             | `string`                                                                                                                                                                                | -                                                                                                                                                                                                  |
+| `params.instance_id?`             | `string`                                                                                                                                                                                | -                                                                                                                                                                                                  |
+| `params.label?`                   | `string`                                                                                                                                                                                | -                                                                                                                                                                                                  |
+| `params.provider_id?`             | `string`                                                                                                                                                                                | -                                                                                                                                                                                                  |
+| `params.workspace_configuration?` | \| `string` \| \{ \[`key`: `string`\]: `unknown`; \}                                                                                                                                    | -                                                                                                                                                                                                  |
+| `fetchOptions?`                   | [`Options`](https://github.com/sindresorhus/ky?tab=readme-ov-file#options)                                                                                                              | The [Options](https://github.com/sindresorhus/ky?tab=readme-ov-file#options) to use to make the request.                                                                                           |
+
+## Returns
+
+`Promise`\<[`CommerceEventProvider`](../type-aliases/CommerceEventProvider.md)\>
+
+## See
+
+https://developer.adobe.com/commerce/extensibility/events/api/#create-an-event-provider
+
+## Throws
+
+A [CommerceSdkValidationError](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-core/docs/api-reference/classes/CommerceSdkValidationError.md) If the parameters are in the wrong format.
+
+## Throws
+
+An [HTTPError](https://github.com/sindresorhus/ky?tab=readme-ov-file#httperror) If the status code is not 2XX.

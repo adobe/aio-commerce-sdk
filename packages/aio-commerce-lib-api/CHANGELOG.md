@@ -1,5 +1,16 @@
 # @adobe/aio-commerce-lib-api
 
+## 1.1.0
+
+### Minor Changes
+
+- [#393](https://github.com/adobe/aio-commerce-sdk/pull/393) [`aeb0411`](https://github.com/adobe/aio-commerce-sdk/commit/aeb0411521c0cd8bc9e878beb160eeb92e98d090) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Add `unwrapHttpError` utility under `@adobe/aio-commerce-lib-api/utils` for extracting readable messages from ky `HTTPError` response bodies, with support for Commerce-style `%1`/`%2` parameter interpolation.
+
+### Patch Changes
+
+- Updated dependencies [[`775860b`](https://github.com/adobe/aio-commerce-sdk/commit/775860bdf654b2fedeffeaa328a110dfc10daa85), [`3207ff2`](https://github.com/adobe/aio-commerce-sdk/commit/3207ff247b06c4889795d50f82e219eec70d6b16)]:
+  - @adobe/aio-commerce-lib-auth@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes

@@ -6,7 +6,7 @@ type CreateInitialUninstallationStateOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:88](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L88)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:129](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L129)
 
 Options for creating an initial uninstallation state.
 
@@ -18,6 +18,6 @@ Options for creating an initial uninstallation state.
 config: CommerceAppConfigOutputModel;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:90](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L90)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:131](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L131)
 
 The app configuration used to determine applicable steps.

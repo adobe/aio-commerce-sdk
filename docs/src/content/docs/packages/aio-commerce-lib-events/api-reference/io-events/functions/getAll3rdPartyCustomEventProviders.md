@@ -1,0 +1,54 @@
+---
+title: "getAll3rdPartyCustomEventProviders()"
+editUrl: false
+prev: false
+next: false
+---
+
+```ts
+function getAll3rdPartyCustomEventProviders(
+  httpClient: AdobeIoEventsHttpClient,
+  params: {
+    consumerOrgId: string;
+    filterBy?: {
+      instanceId?: string;
+      providerTypes?: ("dx_commerce_events" | "3rd_party_custom_events")[];
+    };
+    withEventMetadata?: boolean;
+  },
+  fetchOptions?: Options,
+): Promise<IoEventProviderManyResponse>;
+```
+
+Defined in: [io-events/api/event-providers/shorthands.ts:64](https://github.com/adobe/aio-commerce-sdk/blob/d3b51b3a74b902fcf7e96c43e79d467248c8da30/packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts#L64)
+
+Lists all 3rd Party Custom Events (of type `3rd_party_custom_events`) event providers for the given consumer organization ID.
+
+## Parameters
+
+| Parameter                        | Type                                                                                                                                                                                        | Description                                                                                                                                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `httpClient`                     | [`AdobeIoEventsHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeIoEventsHttpClient.md)                        | The [AdobeIoEventsHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeIoEventsHttpClient.md) to use to make the request. |
+| `params`                         | \{ `consumerOrgId`: `string`; `filterBy?`: \{ `instanceId?`: `string`; `providerTypes?`: (`"dx_commerce_events"` \| `"3rd_party_custom_events"`)[]; \}; `withEventMetadata?`: `boolean`; \} | The parameters to list the event providers with.                                                                                                                                                   |
+| `params.consumerOrgId`           | `string`                                                                                                                                                                                    | -                                                                                                                                                                                                  |
+| `params.filterBy?`               | \{ `instanceId?`: `string`; `providerTypes?`: (`"dx_commerce_events"` \| `"3rd_party_custom_events"`)[]; \}                                                                                 | -                                                                                                                                                                                                  |
+| `params.filterBy.instanceId?`    | `string`                                                                                                                                                                                    | -                                                                                                                                                                                                  |
+| `params.filterBy.providerTypes?` | (`"dx_commerce_events"` \| `"3rd_party_custom_events"`)[]                                                                                                                                   | -                                                                                                                                                                                                  |
+| `params.withEventMetadata?`      | `boolean`                                                                                                                                                                                   | -                                                                                                                                                                                                  |
+| `fetchOptions?`                  | [`Options`](https://github.com/sindresorhus/ky?tab=readme-ov-file#options)                                                                                                                  | The [Options](https://github.com/sindresorhus/ky?tab=readme-ov-file#options) to use to make the request.                                                                                           |
+
+## Returns
+
+`Promise`\<[`IoEventProviderManyResponse`](../type-aliases/IoEventProviderManyResponse.md)\>
+
+## See
+
+https://developer.adobe.com/events/docs/api#operation/getProvidersByConsumerOrgId
+
+## Throws
+
+A [CommerceSdkValidationError](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-core/docs/api-reference/classes/CommerceSdkValidationError.md) If the parameters are in the wrong format.
+
+## Throws
+
+An [HTTPError](https://github.com/sindresorhus/ky?tab=readme-ov-file#httperror) If the status code is not 2XX.

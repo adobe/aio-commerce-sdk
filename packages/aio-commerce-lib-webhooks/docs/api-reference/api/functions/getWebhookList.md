@@ -7,7 +7,7 @@ function getWebhookList(
 ): Promise<CommerceWebhookManyResponse>;
 ```
 
-Defined in: [api/webhooks/endpoints.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-webhooks/source/api/webhooks/endpoints.ts#L39)
+Defined in: [api/webhooks/endpoints.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-webhooks/source/api/webhooks/endpoints.ts#L39)
 
 Returns a list of all subscribed webhooks in the Commerce instance.
 

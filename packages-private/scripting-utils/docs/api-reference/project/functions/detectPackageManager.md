@@ -1,19 +1,21 @@
 # `detectPackageManager()`
 
 ```ts
-function detectPackageManager(cwd?: string): Promise<PackageManager>;
+function detectPackageManager(
+  cwd?: string,
+): Promise<"npm" | "pnpm" | "yarn" | "bun">;
 ```
 
-Defined in: [project.ts:141](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages-private/scripting-utils/source/project.ts#L141)
+Defined in: [project.ts:163](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages-private/scripting-utils/source/project.ts#L163)
 
-Detect the package manager by checking for lock files
+Detect the package manager for a project.
 
 ## Parameters
 
-| Parameter | Type     |
-| --------- | -------- |
-| `cwd`     | `string` |
+| Parameter | Type     | Description                                                    |
+| --------- | -------- | -------------------------------------------------------------- |
+| `cwd`     | `string` | Directory to start detection from; defaults to `process.cwd()` |
 
 ## Returns
 
-`Promise`\<[`PackageManager`](../type-aliases/PackageManager.md)\>
+`Promise`\<`"npm"` \| `"pnpm"` \| `"yarn"` \| `"bun"`\>
