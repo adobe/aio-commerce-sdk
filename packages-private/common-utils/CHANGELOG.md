@@ -1,5 +1,12 @@
 # @aio-commerce-sdk/common-utils
 
+## 0.2.4
+
+### Patch Changes
+
+- Updated dependencies [[`38adb09`](https://github.com/adobe/aio-commerce-sdk/commit/38adb09e1e2bd1b8fa764ecc2e0d21ecc0071ca7)]:
+  - @adobe/aio-commerce-lib-core@1.1.0
+
 ## 0.2.3
 
 ### Patch Changes
