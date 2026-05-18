@@ -1,5 +1,21 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.5.0
+
+### Minor Changes
+
+- [#345](https://github.com/adobe/aio-commerce-sdk/pull/345) [`38adb09`](https://github.com/adobe/aio-commerce-sdk/commit/38adb09e1e2bd1b8fa764ecc2e0d21ecc0071ca7) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Drop Node 20 support (EOL April 2026).
+
+### Patch Changes
+
+- Updated dependencies [[`38adb09`](https://github.com/adobe/aio-commerce-sdk/commit/38adb09e1e2bd1b8fa764ecc2e0d21ecc0071ca7)]:
+  - @adobe/aio-commerce-lib-api@1.2.0
+  - @adobe/aio-commerce-lib-auth@1.1.0
+  - @adobe/aio-commerce-lib-config@1.4.0
+  - @adobe/aio-commerce-lib-core@1.1.0
+  - @adobe/aio-commerce-lib-events@1.2.0
+  - @adobe/aio-commerce-lib-webhooks@1.1.0
+
 ## 1.4.0
 
 ### Minor Changes
