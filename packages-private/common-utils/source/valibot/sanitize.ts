@@ -11,8 +11,8 @@
  */
 
 // Supports one level of nested parens in URLs (e.g. Wikipedia-style links); deeper nesting is not needed for config descriptions.
-const MARKDOWN_LINK_RE = /\[([^\]]*)\]\(((?:[^)(]|\([^)]*\))*)\)/g;
-const SAFE_URL_RE = /^https?:\/\//i;
+const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(((?:[^)(]|\([^)]*\))*)\)/g;
+const SAFE_URL_REGEX = /^https?:\/\//i;
 
 /**
  * Returns true if every Markdown link in the string uses an http(s) URL.
@@ -20,9 +20,9 @@ const SAFE_URL_RE = /^https?:\/\//i;
  * Plain text with no Markdown links always returns true.
  */
 export function validateMarkdownUrls(text: string): boolean {
-  for (const match of text.matchAll(MARKDOWN_LINK_RE)) {
+  for (const match of text.matchAll(MARKDOWN_LINK_REGEX)) {
     const url = match[2].trim();
-    if (!SAFE_URL_RE.test(url)) {
+    if (!SAFE_URL_REGEX.test(url)) {
       return false;
     }
   }
