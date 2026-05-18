@@ -26,7 +26,7 @@ const commerceEventingPart = {
   commerce: [
     {
       provider: {
-        label: "Commerce Events Provider",
+        label: "Order Events Provider",
         description: "Provides commerce events",
       },
       events: [
@@ -47,7 +47,7 @@ const externalEventingPart = {
   external: [
     {
       provider: {
-        label: "External Events Provider",
+        label: "Third Party Events Provider",
         description: "Provides external events",
       },
       events: [

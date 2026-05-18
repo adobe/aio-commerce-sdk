@@ -213,7 +213,7 @@ describe("events installation module", () => {
 
     test("should delete I/O Events registrations for each commerce provider", async () => {
       const instanceId =
-        "test-app-commerce-events-commerce-events-provider-test-workspace-id";
+        "test-app-commerce-events-order-events-provider-test-workspace-id";
       const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
 
       const mockContext = createMockEventingInstallationContext({
@@ -223,6 +223,7 @@ describe("events installation module", () => {
               providers: [
                 {
                   id: "io-provider-123",
+                  label: "Order Events Provider",
                   instance_id: instanceId,
                   provider_metadata: "dx_commerce_events",
                   _embedded: { eventmetadata: [] },
@@ -235,7 +236,7 @@ describe("events installation module", () => {
               registrations: [
                 {
                   id: "616664",
-                  name: "Commerce Event Registration: Handle Order (My Package)",
+                  name: "Commerce Event Registration: Order Events Provider - Handle Order (My Package)",
                   client_id: "test-client-id",
                   events_of_interest: [],
                   status: "VERIFIED",
@@ -269,6 +270,62 @@ describe("events installation module", () => {
       );
     });
 
+    test("should delete I/O Events registrations created by older SDK versions (legacy name format)", async () => {
+      const instanceId =
+        "test-app-commerce-events-order-events-provider-test-workspace-id";
+      const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
+
+      const mockContext = createMockEventingInstallationContext({
+        ioEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue({
+            _embedded: {
+              providers: [
+                {
+                  id: "io-provider-123",
+                  label: "Order Events Provider",
+                  instance_id: instanceId,
+                  provider_metadata: "dx_commerce_events",
+                  _embedded: { eventmetadata: [] },
+                },
+              ],
+            },
+          }),
+          getAllRegistrations: vi.fn().mockResolvedValue({
+            _embedded: {
+              registrations: [
+                {
+                  id: "616664",
+                  // Legacy name format: uses generic type label "Commerce" instead of provider label
+                  name: "Commerce Event Registration: Handle Order (My Package)",
+                  client_id: "test-client-id",
+                  events_of_interest: [],
+                  status: "VERIFIED",
+                  type: "APP_REGISTRATION",
+                  integration_status: "VERIFIED",
+                  registration_id: "reg-legacy",
+                  delivery_type: "webhook",
+                },
+              ],
+            },
+          }),
+          deleteRegistration: mockDeleteRegistration,
+        },
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
+      });
+
+      await commerceEventsStep.uninstall?.(
+        configWithCommerceEventing,
+        mockContext,
+      );
+
+      expect(mockDeleteRegistration).toHaveBeenCalledWith(
+        expect.objectContaining({ registrationId: "reg-legacy" }),
+      );
+    });
+
     test("should skip deletion when no provider found for instance ID", async () => {
       const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
 
@@ -298,7 +355,7 @@ describe("events installation module", () => {
 
     test("should not throw when deleteRegistration fails (best-effort)", async () => {
       const instanceId =
-        "test-app-commerce-events-commerce-events-provider-test-workspace-id";
+        "test-app-commerce-events-order-events-provider-test-workspace-id";
 
       const mockContext = createMockEventingInstallationContext({
         ioEventsClient: {
@@ -352,7 +409,7 @@ describe("events installation module", () => {
 
     test("should handle provider with zero registrations gracefully", async () => {
       const instanceId =
-        "test-app-commerce-events-commerce-events-provider-test-workspace-id";
+        "test-app-commerce-events-order-events-provider-test-workspace-id";
       const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
 
       const mockContext = createMockEventingInstallationContext({
@@ -501,7 +558,7 @@ describe("events installation module", () => {
 
   describe("commerceEventsStep uninstall — Commerce provider deletion", () => {
     const instanceId =
-      "test-app-commerce-events-commerce-events-provider-test-workspace-id";
+      "test-app-commerce-events-order-events-provider-test-workspace-id";
 
     test("should delete the Commerce event provider after subscriptions", async () => {
       const mockDeleteEventProvider = vi.fn().mockResolvedValue(undefined);
@@ -599,7 +656,7 @@ describe("events installation module", () => {
   describe("commerceEventsStep uninstall — I/O Events metadata and provider cleanup", () => {
     test("should delete event metadata and provider after registrations", async () => {
       const instanceId =
-        "test-app-commerce-events-commerce-events-provider-test-workspace-id";
+        "test-app-commerce-events-order-events-provider-test-workspace-id";
       const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
       const mockDeleteEventMetadata = vi.fn().mockResolvedValue(undefined);
       const mockDeleteEventProvider = vi.fn().mockResolvedValue(undefined);
@@ -657,7 +714,7 @@ describe("events installation module", () => {
 
     test("should not throw when deleteEventMetadataForProvider fails (best-effort)", async () => {
       const instanceId =
-        "test-app-commerce-events-commerce-events-provider-test-workspace-id";
+        "test-app-commerce-events-order-events-provider-test-workspace-id";
 
       const mockContext = createMockEventingInstallationContext({
         ioEventsClient: {
@@ -702,7 +759,7 @@ describe("events installation module", () => {
 
     test("should not throw when deleteEventProvider fails (best-effort)", async () => {
       const instanceId =
-        "test-app-commerce-events-commerce-events-provider-test-workspace-id";
+        "test-app-commerce-events-order-events-provider-test-workspace-id";
 
       const mockContext = createMockEventingInstallationContext({
         ioEventsClient: {
@@ -744,7 +801,7 @@ describe("events installation module", () => {
 
     test("should delete I/O Events registrations for each external provider", async () => {
       const instanceId =
-        "test-app-external-events-external-events-provider-test-workspace-id";
+        "test-app-external-events-third-party-events-provider-test-workspace-id";
       const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
 
       const mockContext = createMockEventingInstallationContext({
@@ -821,7 +878,7 @@ describe("events installation module", () => {
 
     test("should not throw when deleteRegistration fails (best-effort)", async () => {
       const instanceId =
-        "test-app-external-events-external-events-provider-test-workspace-id";
+        "test-app-external-events-third-party-events-provider-test-workspace-id";
 
       const mockContext = createMockEventingInstallationContext({
         ioEventsClient: {
@@ -872,7 +929,7 @@ describe("events installation module", () => {
 
     test("should delete event metadata and provider after registrations for external provider", async () => {
       const instanceId =
-        "test-app-external-events-external-events-provider-test-workspace-id";
+        "test-app-external-events-third-party-events-provider-test-workspace-id";
       const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
       const mockDeleteEventMetadata = vi.fn().mockResolvedValue(undefined);
       const mockDeleteEventProvider = vi.fn().mockResolvedValue(undefined);
