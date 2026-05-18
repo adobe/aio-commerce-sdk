@@ -66,4 +66,14 @@ describe("validateMarkdownUrls", () => {
   test("returns true for empty string", () => {
     expect(validateMarkdownUrls("")).toBe(true);
   });
+
+  test("returns true for safe URL with nested parens (Wikipedia-style)", () => {
+    expect(
+      validateMarkdownUrls("[x](https://en.wikipedia.org/wiki/Foo_(bar))"),
+    ).toBe(true);
+  });
+
+  test("returns false for protocol-relative URL", () => {
+    expect(validateMarkdownUrls("[x](//example.com)")).toBe(false);
+  });
 });
