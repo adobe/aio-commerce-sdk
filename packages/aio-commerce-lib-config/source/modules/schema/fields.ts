@@ -10,8 +10,20 @@
  * governing permissions and limitations under the License.
  */
 
-import { validateMarkdownUrls } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
+
+// Supports one level of nested parens in URLs (e.g. Wikipedia-style links).
+const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(((?:[^)(]|\([^)]*\))*)\)/g;
+const SAFE_URL_REGEX = /^https?:\/\//i;
+
+function validateMarkdownUrls(text: string): boolean {
+  for (const match of text.matchAll(MARKDOWN_LINK_REGEX)) {
+    if (!SAFE_URL_REGEX.test(match[2].trim())) {
+      return false;
+    }
+  }
+  return true;
+}
 
 const DEFAULT_BOOLEAN_VALUE = false as const;
 const DEFAULT_STRING_VALUE = "" as const;
