@@ -21,6 +21,24 @@ import type {
   HttpHeaders,
 } from "./types";
 
+const LEADING_UNDERSCORES = /^_+/;
+
+/**
+ * Converts a header name to a camelCase key aligned with `type-fest`'s `CamelCase` type.
+ *
+ * `camelcase` v9+ preserves leading underscores (e.g. `_foo_bar` → `_fooBar`), but
+ * `type-fest`'s `CamelCase` — used by `HttpHeaderAccessorMap` — drops them
+ * (e.g. `_foo_bar` → `fooBar`). Without stripping them first, runtime keys would diverge
+ * from the inferred TypeScript type.
+ *
+ * @remarks This function must be removed and replaced with a bare `camelcase(header)` call
+ * once the two helpers agree on leading-underscore handling. That cleanup is a breaking
+ * change and must land in a major release.
+ */
+function toHeaderCamelKey(header: string): string {
+  return camelcase(header.replace(LEADING_UNDERSCORES, ""));
+}
+
 /**
  * Creates a type-safe header accessor object with validated required headers.
  * Header names are normalized to camelCase for consistent access.
@@ -65,7 +83,7 @@ export function createHeaderAccessor<
   const accessor: Record<string, string | string[]> = {};
 
   for (const header of requiredHeaders) {
-    const camelKey = camelcase(header);
+    const camelKey = toHeaderCamelKey(header);
     const value = getHeader(headers, header, options);
 
     // We know value is defined because assertRequiredHeaders passed

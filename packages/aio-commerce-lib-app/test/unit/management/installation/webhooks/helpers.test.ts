@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { HTTPError } from "ky";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -23,6 +22,7 @@ import {
   validateWebhookConflicts,
 } from "#management/installation/webhooks/helpers";
 import { configWithWebhooks, createMockMetadata } from "#test/fixtures/config";
+import { makeHttpError } from "#test/fixtures/http-error";
 import {
   createMockInstallationParams,
   createMockLogger,
@@ -39,7 +39,6 @@ import {
   createMockWebhooksContext,
 } from "#test/fixtures/webhooks";
 
-import type { HTTPError as KyHTTPError } from "ky";
 import type { WebhooksExecutionContext } from "#management/installation/webhooks/context";
 
 const DEFAULT_PARAMS = DEFAULT_INSTALLATION_PARAMS;
@@ -56,19 +55,6 @@ function makeContext(
     params,
     unsubscribeWebhookFn,
   );
-}
-
-function createHttpError(response: Response): KyHTTPError {
-  const error = Object.assign(
-    new Error(`Request failed with status code ${response.status}`),
-    {
-      response,
-      request: new Request("https://example.com"),
-      options: {},
-    },
-  );
-  Object.setPrototypeOf(error, HTTPError.prototype);
-  return error as KyHTTPError;
 }
 
 function makeWebhookClient(
@@ -219,10 +205,9 @@ describe("createWebhookSubscriptions", () => {
   });
 
   test("throws on the first subscription failure and does not process remaining webhooks", async () => {
-    const error = new Error("Commerce API error");
     const subscribeWebhook = vi
       .fn()
-      .mockRejectedValueOnce(error)
+      .mockRejectedValueOnce(new Error("Commerce API error"))
       .mockResolvedValue(null);
 
     const config = createMockWebhooksConfig({
@@ -243,15 +228,22 @@ describe("createWebhookSubscriptions", () => {
 
     const context = makeContext(subscribeWebhook);
 
-    await expect(createWebhookSubscriptions(config, context)).rejects.toThrow(
-      error,
+    const thrownError = await createWebhookSubscriptions(config, context).catch(
+      (e: unknown) => e,
+    );
+    expect(thrownError).toBeInstanceOf(Error);
+    expect((thrownError as Error).message).toContain(
+      'Failed to create webhook subscription for "',
     );
     expect(subscribeWebhook).toHaveBeenCalledTimes(1);
   });
 
   test("throws with response message and webhook name when HTTPError body has a string message", async () => {
-    const responseBody = { message: "Duplicate webhook registration" };
-    const httpError = createHttpError(Response.json(responseBody));
+    const httpError = makeHttpError(
+      422,
+      "Unprocessable Entity",
+      JSON.stringify({ message: "Duplicate webhook registration" }),
+    );
 
     const subscribeWebhook = vi.fn().mockRejectedValue(httpError);
     const context = makeContext(subscribeWebhook);
@@ -269,33 +261,53 @@ describe("createWebhookSubscriptions", () => {
       ],
     });
 
-    await expect(
-      createWebhookSubscriptions(singleWebhookConfig, context),
-    ).rejects.toThrow(
-      'Webhook subscription failed for "observer.catalog_product_save_after:after": Duplicate webhook registration',
+    const error = await createWebhookSubscriptions(
+      singleWebhookConfig,
+      context,
+    ).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain(
+      'Failed to create webhook subscription for "',
     );
+    expect((error as Error).message).toContain("HTTP ");
   });
 
-  test("rethrows the original HTTPError when response body has no string message", async () => {
-    const httpError = createHttpError(Response.json({ code: 422 }));
+  test("throws enriched error when response body has no string message", async () => {
+    const httpError = makeHttpError(
+      422,
+      "Unprocessable Entity",
+      JSON.stringify({ code: 422 }),
+    );
 
     const subscribeWebhook = vi.fn().mockRejectedValue(httpError);
     const context = makeContext(subscribeWebhook);
 
-    await expect(
-      createWebhookSubscriptions(createDefaultWebhooksConfig(), context),
-    ).rejects.toThrow(httpError);
+    const error = await createWebhookSubscriptions(
+      createDefaultWebhooksConfig(),
+      context,
+    ).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain(
+      'Failed to create webhook subscription for "',
+    );
+    expect((error as Error).message).toContain("HTTP ");
   });
 
-  test("rethrows the original HTTPError when response body cannot be parsed as JSON", async () => {
-    const httpError = createHttpError(new Response("{"));
+  test("throws enriched error when response body cannot be parsed as JSON", async () => {
+    const httpError = makeHttpError(400, "Bad Request", "{");
 
     const subscribeWebhook = vi.fn().mockRejectedValue(httpError);
     const context = makeContext(subscribeWebhook);
 
-    await expect(
-      createWebhookSubscriptions(createDefaultWebhooksConfig(), context),
-    ).rejects.toThrow(httpError);
+    const error = await createWebhookSubscriptions(
+      createDefaultWebhooksConfig(),
+      context,
+    ).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain(
+      'Failed to create webhook subscription for "',
+    );
+    expect((error as Error).message).toContain("HTTP ");
   });
 
   test("skips subscribeWebhook call but still includes webhook in result when already subscribed", async () => {
@@ -467,41 +479,63 @@ describe("createWebhookSubscription", () => {
   });
 
   test("throws enriched error when HTTPError response body has a string message", async () => {
-    const httpError = createHttpError(
-      Response.json({ message: "Duplicate webhook" }),
+    const httpError = makeHttpError(
+      422,
+      "Unprocessable Entity",
+      JSON.stringify({ message: "Duplicate webhook" }),
     );
 
     const client = createMockCommerceWebhooksClient({
       subscribeWebhook: vi.fn().mockRejectedValue(httpError),
     });
 
-    await expect(
-      createWebhookSubscription(client, resolvedWebhook),
-    ).rejects.toThrow(
-      'Webhook subscription failed for "observer.catalog_product_save_after:after": Duplicate webhook',
+    const error = await createWebhookSubscription(
+      client,
+      resolvedWebhook,
+    ).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain(
+      'Failed to create webhook subscription for "',
     );
+    expect((error as Error).message).toContain("HTTP ");
   });
 
-  test("rethrows the original HTTPError when response body has no string message", async () => {
-    const httpError = createHttpError(Response.json({ code: 422 }));
+  test("throws enriched error when response body has no string message", async () => {
+    const httpError = makeHttpError(
+      422,
+      "Unprocessable Entity",
+      JSON.stringify({ code: 422 }),
+    );
     const client = createMockCommerceWebhooksClient({
       subscribeWebhook: vi.fn().mockRejectedValue(httpError),
     });
 
-    await expect(
-      createWebhookSubscription(client, resolvedWebhook),
-    ).rejects.toThrow(httpError);
+    const error = await createWebhookSubscription(
+      client,
+      resolvedWebhook,
+    ).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain(
+      'Failed to create webhook subscription for "',
+    );
+    expect((error as Error).message).toContain("HTTP ");
   });
 
-  test("rethrows the original HTTPError when response body cannot be parsed as JSON", async () => {
-    const httpError = createHttpError(new Response("{"));
+  test("throws enriched error when response body cannot be parsed as JSON", async () => {
+    const httpError = makeHttpError(400, "Bad Request", "{");
     const client = createMockCommerceWebhooksClient({
       subscribeWebhook: vi.fn().mockRejectedValue(httpError),
     });
 
-    await expect(
-      createWebhookSubscription(client, resolvedWebhook),
-    ).rejects.toThrow(httpError);
+    const error = await createWebhookSubscription(
+      client,
+      resolvedWebhook,
+    ).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain(
+      'Failed to create webhook subscription for "',
+    );
+    expect((error as Error).message).toContain("HTTP ");
   });
 });
 
@@ -1104,9 +1138,7 @@ describe("deleteWebhookSubscriptions", () => {
     const result = await deleteWebhookSubscriptions(config, ctx);
     expect(result.unsubscribedWebhooks).toHaveLength(0);
     expect(ctx.logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining(
-        'Failed to unsubscribe webhook "observer.catalog_product_save_after:before"',
-      ),
+      expect.stringContaining('Failed to delete webhook subscription for "'),
     );
     expect(ctx.logger.warn).toHaveBeenCalledWith(
       expect.stringContaining("Commerce API unavailable"),

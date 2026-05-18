@@ -49,6 +49,13 @@ const EXTERNAL_EVENT_NAME_REGEX = /^[\w\-_.]+$/;
 const FIELD_NAME_REGEX = /^([a-zA-Z0-9_\-.[\]]+|\*)$/;
 
 /**
+ * Regex for Adobe I/O Events API text fields (label, description).
+ * Valid characters per API: letters, numbers, spaces, underscores, hyphens,
+ * dots, colons, parentheses, commas, @, and /.
+ */
+const IO_EVENTS_TEXT_REGEX = /^[a-zA-Z0-9 _.:()\-,@/]+$/;
+
+/**
  * Schema for Commerce event names.
  * Validates that the event name starts with "plugin." or "observer."
  * followed by one or more dot-separated lowercase segments containing letters
@@ -102,6 +109,14 @@ function fieldNameSchema() {
   );
 }
 
+/** Validates that a text field contains only characters accepted by the Adobe I/O Events API. */
+function ioEventsTextSchema(name: string) {
+  return v.regex(
+    IO_EVENTS_TEXT_REGEX,
+    `${name} can only contain letters, numbers, spaces, underscores, hyphens, dots, colons, parentheses, commas, @, and /`,
+  );
+}
+
 /**
  * Schema for field objects in Commerce events.
  * Each field has a required name and an optional source.
@@ -117,6 +132,7 @@ function commerceEventFieldSchema() {
 const ProviderSchema = v.object({
   label: v.pipe(
     nonEmptyStringValueSchema("provider label"),
+    ioEventsTextSchema("Provider label"),
     v.maxLength(
       MAX_LABEL_LENGTH,
       `The provider label must not be longer than ${MAX_LABEL_LENGTH} characters`,
@@ -124,6 +140,7 @@ const ProviderSchema = v.object({
   ),
   description: v.pipe(
     nonEmptyStringValueSchema("provider description"),
+    ioEventsTextSchema("Provider description"),
     v.maxLength(
       MAX_DESCRIPTION_LENGTH,
       `The provider description must not be longer than ${MAX_DESCRIPTION_LENGTH} characters`,
@@ -144,6 +161,7 @@ const ProviderSchema = v.object({
 const BaseEventSchema = v.object({
   label: v.pipe(
     nonEmptyStringValueSchema("event label"),
+    ioEventsTextSchema("Event label"),
     v.maxLength(
       MAX_LABEL_LENGTH,
       `The event label must not be longer than ${MAX_LABEL_LENGTH} characters`,
@@ -152,6 +170,7 @@ const BaseEventSchema = v.object({
 
   description: v.pipe(
     nonEmptyStringValueSchema("event description"),
+    ioEventsTextSchema("Event description"),
     v.maxLength(
       MAX_DESCRIPTION_LENGTH,
       `The event description must not be longer than ${MAX_DESCRIPTION_LENGTH} characters`,
@@ -199,9 +218,15 @@ const CommerceEventSchema = v.object({
   ...BaseEventSchema.entries,
 
   name: commerceEventNameSchema(),
-  fields: v.array(
-    commerceEventFieldSchema(),
-    "Expected an array of event field objects with a 'name' property",
+  fields: v.pipe(
+    v.array(
+      commerceEventFieldSchema(),
+      "Expected an array of event field objects with a 'name' property",
+    ),
+    v.minLength(
+      1,
+      "The Commerce event configuration must define at least one field",
+    ),
   ),
   rules: v.optional(
     v.array(

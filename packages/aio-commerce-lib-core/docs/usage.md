@@ -1,8 +1,5 @@
 # `@adobe/aio-commerce-lib-core` Documentation
 
-> [!WARNING]
-> This package is still under development and is not yet ready for use. You might be able to install it, but you may encounter breaking changes.
-
 ## Overview
 
 This package provides core utilities for the Adobe Commerce SDK libraries:

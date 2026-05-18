@@ -28,6 +28,15 @@ export const EXTENSIBILITY_EXTENSION_POINT_ID = "commerce/extensibility/1";
 /** The name of the extension point for configuration. */
 export const CONFIGURATION_EXTENSION_POINT_ID = "commerce/configuration/1";
 
+/** The name of the extension point for Admin UI SDK. */
+export const BACKEND_UI_EXTENSION_POINT_ID = "commerce/backend-ui/1";
+
+/** The name of the package containing the admin UI SDK generated actions */
+export const ADMIN_UI_SDK_PACKAGE_NAME = "admin-ui-sdk";
+
+/** The path to the directory containing the generated Admin UI SDK actions. */
+export const ADMIN_UI_SDK_ACTIONS_PATH = `${GENERATED_PATH}/actions/registration`;
+
 /** The name of the configuration schema file */
 export const APP_MANIFEST_FILE = "app.commerce.manifest.json";
 

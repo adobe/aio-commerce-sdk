@@ -39,6 +39,11 @@
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true,
       "schedule": ["on Monday"]
+    },
+    {
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "automerge": true,
+      "schedule": ["on Monday"]
     }
   ]
 }

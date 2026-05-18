@@ -26,7 +26,7 @@ export type SchemaContext = {
  * The schema type for a configuration field.
  *
  * Represents a single field definition in the configuration schema, which can be
- * one of various types: list, text, password, email, url, or phone.
+ * one of various types: list, text, password, email, url, phone, or boolean.
  */
 export type BusinessConfigSchemaField = v.InferInput<typeof FieldSchema>;
 

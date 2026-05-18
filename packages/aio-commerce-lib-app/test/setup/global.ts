@@ -1,0 +1,23 @@
+/*
+ * Copyright 2026 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+import { createJiti } from "jiti";
+import { vi } from "vitest";
+
+// Mock logging utilities to avoid noisy tests
+vi.mock("consola");
+
+// Pre-warm jiti in every worker: Import the package's own config entry
+// so the transformer pipeline + module graph are already cached before any test
+// runs, amortizing the cost into setup instead of a random "first" test.
+const jiti = createJiti(import.meta.url);
+await jiti.import("@adobe/aio-commerce-lib-app/config");

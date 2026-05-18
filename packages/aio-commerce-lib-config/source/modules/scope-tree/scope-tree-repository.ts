@@ -35,7 +35,7 @@ export async function getCachedScopeTree(
       return parsed.data || null;
     }
     return null;
-  } catch (_error) {
+  } catch {
     return null;
   }
 }
@@ -110,7 +110,7 @@ export async function getPersistedScopeTree(
       const content = await files.read(filePath);
       const data = JSON.parse(content.toString());
       return data.scopes as ScopeTree;
-    } catch (_readError) {
+    } catch {
       // File doesn't exist, create and return initial tree
       const initialTree = createInitialScopeTree();
       await saveScopeTree(namespace, initialTree);

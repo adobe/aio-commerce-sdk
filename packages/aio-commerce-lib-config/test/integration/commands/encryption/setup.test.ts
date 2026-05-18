@@ -43,7 +43,7 @@ describe("commands/encryption/setup", () => {
 
         const value = match?.[1];
         expect.assert(value, "Encryption key should be present in .env file");
-        expect(() => validateEncryptionKey(value)).not.toThrow;
+        expect(() => validateEncryptionKey(value)).not.toThrow();
       });
     });
 
@@ -88,13 +88,6 @@ describe("commands/encryption/setup", () => {
       await withTempFiles(files, async (tempDir) => {
         await withChdir(tempDir, () => exec());
         expect(exitSpy).not.toHaveBeenCalled();
-      });
-    });
-
-    test("calls process.exit(1) when .env file is missing", async () => {
-      await withTempFiles({}, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
-        expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });
   });

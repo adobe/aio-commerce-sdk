@@ -14,5 +14,6 @@
 
 export * from "./auth/hooks";
 export * from "./http/codes";
+export * from "./http/error";
 
 export type { ImsAuthParamsWithOptionalScopes } from "./auth/ims-scopes";

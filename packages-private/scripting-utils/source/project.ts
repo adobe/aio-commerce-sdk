@@ -19,6 +19,9 @@ import { existsSync } from "node:fs";
 import { access, mkdir, readFile } from "node:fs/promises";
 import { dirname, join, parse } from "node:path";
 
+import { resolveCommand } from "package-manager-detector";
+import { detect, getUserAgent } from "package-manager-detector/detect";
+
 import type { PackageJson } from "type-fest";
 
 /**
@@ -134,40 +137,80 @@ export async function makeOutputDirFor(fileOrFolder: string) {
   return outputDir;
 }
 
-/** The package manager used to install the package */
-export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
+// App Builder targets Node.js — unsupported detections (e.g. deno) fall back to npm.
+const VALID_PACKAGE_MANAGERS = ["npm", "pnpm", "yarn", "bun"] as const;
 
-/** Detect the package manager by checking for lock files */
+/** The package manager used to install the package */
+export type PackageManager = (typeof VALID_PACKAGE_MANAGERS)[number];
+
+/**
+ * Type guard asserting that a value is a supported `PackageManager`.
+ * @param value - The value to check
+ */
+function isValidPackageManager(
+  value: string | undefined,
+): value is PackageManager {
+  return (
+    value !== undefined &&
+    VALID_PACKAGE_MANAGERS.includes(value as PackageManager)
+  );
+}
+
+/**
+ * Detect the package manager for a project.
+ * @param cwd - Directory to start detection from; defaults to `process.cwd()`
+ */
 export async function detectPackageManager(
   cwd = process.cwd(),
 ): Promise<PackageManager> {
   const rootDirectory = await getProjectRootDirectory(cwd);
-  const lockFileMap = {
-    "bun.lockb": "bun",
-    "pnpm-lock.yaml": "pnpm",
-    "yarn.lock": "yarn",
-    "package-lock.json": "npm",
-  } as const;
+  const result = await detect({ cwd: rootDirectory });
 
-  const lockFileName = Object.keys(lockFileMap).find((name) =>
-    existsSync(join(rootDirectory, name)),
-  ) as keyof typeof lockFileMap;
-
-  if (!lockFileName) {
-    return "npm";
+  if (isValidPackageManager(result?.name)) {
+    return result.name;
   }
 
-  return lockFileMap[lockFileName];
+  // Greenfield scaffolds have no on-disk evidence; fall back to the invoking PM.
+  const fromUserAgent = getUserAgent() ?? undefined;
+  if (isValidPackageManager(fromUserAgent)) {
+    return fromUserAgent;
+  }
+
+  return "npm";
 }
 
-/** Get the appropriate exec command based on package manager */
+/**
+ * Get the exec command that runs a **locally installed** binary from
+ * `node_modules/.bin` for the given package manager.
+ * @param packageManager - The detected package manager
+ */
 export function getExecCommand(packageManager: PackageManager): string {
-  const execCommandMap = {
-    pnpm: "pnpx",
-    yarn: "yarn dlx",
-    bun: "bunx",
-    npm: "npx",
-  } as const;
+  const resolved = resolveCommand(packageManager, "execute-local", []);
+  if (!resolved) {
+    return "npx";
+  }
 
-  return execCommandMap[packageManager];
+  return [resolved.command, ...resolved.args].filter(Boolean).join(" ");
+}
+
+/**
+ * Get the command to install the given dependencies with the given package
+ * manager (e.g. `pnpm add foo bar`, `npm i foo bar`).
+ * @param packageManager - The detected package manager
+ * @param packages - Package specifiers to install (e.g. `["foo@^1.0"]`)
+ */
+export function getInstallCommand(
+  packageManager: PackageManager,
+  packages: string[],
+): { command: string; args: string[] } {
+  const resolved = resolveCommand(packageManager, "add", packages);
+  if (!resolved) {
+    return { command: "npm", args: ["install", ...packages] };
+  }
+
+  return {
+    // Filter out any empty args via truthyness check.
+    args: resolved.args.filter((a) => Boolean(a)),
+    command: resolved.command,
+  };
 }

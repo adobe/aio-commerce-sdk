@@ -12,13 +12,14 @@
 
 import { execSync } from "node:child_process";
 import { writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { touch } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import {
   detectPackageManager,
-  findNearestPackageJson,
   getExecCommand,
+  getProjectRootDirectory,
   makeOutputDirFor,
 } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
@@ -27,23 +28,28 @@ import { stringify } from "safe-stable-stringify";
 import {
   CONFIG_SCHEMA_FILE_NAME,
   CONFIGURATION_EXTENSION_POINT_ID,
-  getExtensionPointFolderPath,
 } from "#commands/constants";
-import { loadAppManifest } from "#commands/utils";
+import { getGeneratedDir, loadAppManifest } from "#commands/utils";
 import { hasBusinessConfigSchema } from "#config/index";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 export async function run(appConfig: CommerceAppConfigOutputModel) {
-  consola.info("Generating configuration schema...");
-
   if (!hasBusinessConfigSchema(appConfig)) {
-    consola.warn("Business configuration schema not found");
+    consola.debug(
+      "Business configuration schema not found in application configuration. Nothing to do.",
+    );
+
     return;
   }
 
-  const projectDir = dirname((await findNearestPackageJson()) ?? process.cwd());
+  consola.info("Generating configuration schema...");
+
+  const projectDir = await getProjectRootDirectory();
   const envPath = join(projectDir, ".env");
+
+  // Ensure .env file exists to avoid failing when loading it.
+  await touch(envPath);
   process.loadEnvFile(envPath);
 
   const hasPasswordFields = appConfig.businessConfig.schema.some(
@@ -65,7 +71,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
 
   const contents = stringify(appConfig.businessConfig.schema, null, 2);
   const outputDir = await makeOutputDirFor(
-    `${getExtensionPointFolderPath(CONFIGURATION_EXTENSION_POINT_ID)}/.generated`,
+    getGeneratedDir(CONFIGURATION_EXTENSION_POINT_ID),
   );
 
   const manifestPath = join(outputDir, CONFIG_SCHEMA_FILE_NAME);
@@ -74,7 +80,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   consola.success(`Generated ${CONFIG_SCHEMA_FILE_NAME}`);
 }
 
-/** Run the generate manifest command */
+/** Run the generate schema command */
 export async function exec() {
   try {
     const config = await loadAppManifest();
@@ -82,9 +88,9 @@ export async function exec() {
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());
+    } else {
+      consola.error(error);
     }
-
-    consola.error(error);
     process.exit(1);
   }
 }

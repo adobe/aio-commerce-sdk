@@ -55,7 +55,7 @@ function findStepStatusByPath(
     }
   }
 
-  return undefined;
+  return;
 }
 
 describe("createInitialInstallationState", () => {
