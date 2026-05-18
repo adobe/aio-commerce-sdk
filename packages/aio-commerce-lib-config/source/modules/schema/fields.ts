@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { sanitizeMarkdownUrls } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
 const DEFAULT_BOOLEAN_VALUE = false as const;
@@ -49,7 +50,10 @@ const BaseOptionSchema = v.object({
   ),
   label: v.optional(v.string("Expected a string for the field label")),
   description: v.optional(
-    v.string("Expected a string for the field description"),
+    v.pipe(
+      v.string("Expected a string for the field description"),
+      v.transform(sanitizeMarkdownUrls),
+    ),
   ),
   env: v.optional(EnvSchema),
 });

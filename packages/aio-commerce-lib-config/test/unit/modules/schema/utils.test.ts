@@ -124,5 +124,31 @@ describe("schema/utils", () => {
         ] satisfies BusinessConfigSchema),
       ).toThrow();
     });
+
+    test("sanitizes javascript: links in field description at parse time", () => {
+      const result = validateBusinessConfigSchema([
+        {
+          name: "my-field",
+          type: "text",
+          description: "See [docs](javascript:evil()) for details",
+        },
+      ]);
+
+      expect(result[0]?.description).toBe("See [docs]() for details");
+    });
+
+    test("preserves valid https links in field description", () => {
+      const result = validateBusinessConfigSchema([
+        {
+          name: "my-field",
+          type: "text",
+          description: "Click [here](https://example.com) for more",
+        },
+      ]);
+
+      expect(result[0]?.description).toBe(
+        "Click [here](https://example.com) for more",
+      );
+    });
   });
 });

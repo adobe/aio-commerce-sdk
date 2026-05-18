@@ -86,6 +86,7 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@aio-commerce-sdk/common-utils": "workspace:*",
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-lib-core-logging": "catalog:",
@@ -98,7 +99,6 @@
     "valibot": "catalog:"
   },
   "devDependencies": {
-    "@aio-commerce-sdk/common-utils": "workspace:*",
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "msw": "catalog:",
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
