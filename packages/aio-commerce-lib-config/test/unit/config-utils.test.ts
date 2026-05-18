@@ -12,10 +12,23 @@
 
 import { describe, expect, test } from "vitest";
 
-import { mergeScopes, sanitizeRequestEntries } from "#config-utils";
+import {
+  areValidArgs,
+  byStoreId,
+  byStoreViewId,
+  byWebsiteId,
+  deriveScopeFromArgs,
+  deriveScopeFromCommerceId,
+  mergeScopes,
+  sanitizeRequestEntries,
+} from "#config-utils";
 import { mockGlobalConfigValues } from "#test/fixtures/config-values";
+import { mockScopeTree } from "#test/fixtures/scope-tree";
 
 import type { ConfigValueWithOptionalOrigin } from "#modules/configuration/types";
+
+const INVALID_SCOPE_RE = /INVALID_SCOPE/;
+const INVALID_ARGS_RE = /INVALID_ARGS/;
 
 describe("config-utils", () => {
   describe("sanitizeRequestEntries", () => {
@@ -253,6 +266,113 @@ describe("config-utils", () => {
       );
 
       expect(result).toHaveLength(0);
+    });
+  });
+
+  describe("Commerce ID selectors", () => {
+    test("byWebsiteId hard-codes level=website", () => {
+      expect(byWebsiteId(1)).toEqual({
+        by: { _tag: "commerceId", commerceId: 1, level: "website" },
+      });
+    });
+
+    test("byStoreId hard-codes level=store", () => {
+      expect(byStoreId(1)).toEqual({
+        by: { _tag: "commerceId", commerceId: 1, level: "store" },
+      });
+    });
+
+    test("byStoreViewId hard-codes level=store_view", () => {
+      expect(byStoreViewId(1)).toEqual({
+        by: { _tag: "commerceId", commerceId: 1, level: "store_view" },
+      });
+    });
+  });
+
+  describe("deriveScopeFromCommerceId", () => {
+    test("resolves a website scope by commerce_id and level", () => {
+      const result = deriveScopeFromCommerceId(1, "website", mockScopeTree);
+
+      expect(result.scopeId).toBe("idw");
+      expect(result.scopeCode).toBe("base");
+      expect(result.scopeLevel).toBe("website");
+      // findScopePath returns the path bottom-up (leaf first, root last)
+      expect(result.scopePath.map((node) => node.id)).toEqual([
+        "idw",
+        "id-commerce",
+      ]);
+    });
+
+    test("disambiguates by level when commerce_id is reused across levels", () => {
+      // mockScopeTree has commerce_id=1 on website, store, and store_view
+      const store = deriveScopeFromCommerceId(1, "store", mockScopeTree);
+      const storeView = deriveScopeFromCommerceId(
+        1,
+        "store_view",
+        mockScopeTree,
+      );
+
+      expect(store.scopeId).toBe("ids");
+      expect(store.scopeLevel).toBe("store");
+      expect(storeView.scopeId).toBe("idsv");
+      expect(storeView.scopeLevel).toBe("store_view");
+    });
+
+    test("throws INVALID_SCOPE when commerce_id is unknown", () => {
+      expect(() =>
+        deriveScopeFromCommerceId(999, "website", mockScopeTree),
+      ).toThrow(INVALID_SCOPE_RE);
+    });
+
+    test("throws INVALID_SCOPE when level does not match", () => {
+      expect(() =>
+        deriveScopeFromCommerceId(1, "store_view", [
+          // tree without commerce_id=1 at store_view level
+          mockScopeTree[0],
+        ]),
+      ).toThrow(INVALID_SCOPE_RE);
+    });
+
+    test("throws INVALID_ARGS for non-number commerceId", () => {
+      expect(() =>
+        deriveScopeFromCommerceId("1", "website", mockScopeTree),
+      ).toThrow(INVALID_ARGS_RE);
+    });
+
+    test("throws INVALID_ARGS for missing level", () => {
+      expect(() => deriveScopeFromCommerceId(1, "", mockScopeTree)).toThrow(
+        INVALID_ARGS_RE,
+      );
+    });
+  });
+
+  describe("deriveScopeFromArgs dispatch", () => {
+    test("routes (number, string) to commerce_id resolution", () => {
+      const result = deriveScopeFromArgs([1, "website"], mockScopeTree);
+      expect(result.scopeId).toBe("idw");
+    });
+
+    test("still routes (string, string) to code+level resolution", () => {
+      const result = deriveScopeFromArgs(["base", "website"], mockScopeTree);
+      expect(result.scopeId).toBe("idw");
+    });
+  });
+
+  describe("areValidArgs", () => {
+    test("accepts (commerceId: number, level: string)", () => {
+      expect(areValidArgs([1, "website"])).toBe(true);
+    });
+
+    test("rejects (NaN, level)", () => {
+      expect(areValidArgs([Number.NaN, "website"])).toBe(false);
+    });
+
+    test("rejects (number, empty string)", () => {
+      expect(areValidArgs([1, ""])).toBe(false);
+    });
+
+    test("still accepts (code: string, level: string)", () => {
+      expect(areValidArgs(["base", "website"])).toBe(true);
     });
   });
 });

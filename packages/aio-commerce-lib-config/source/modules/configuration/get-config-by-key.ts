@@ -26,7 +26,7 @@ import type { ConfigContext } from "./types";
  *
  * @param context - Configuration context containing namespace and cache timeout.
  * @param configKey - The name of the configuration field to retrieve.
- * @param args - Scope identifier: either `(id: string)` or `(code: string, level: string)`.
+ * @param args - Scope identifier: `(id: string)`, `(code: string, level: string)`, or `(commerceId: number, level: string)`.
  * @returns Promise resolving to configuration response with scope information and single config value (or null if not found).
  *
  * @throws {Error} If the scope arguments are invalid or the scope is not found.

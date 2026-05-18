@@ -20,9 +20,13 @@ export {
   byCode,
   byCodeAndLevel,
   byScopeId,
+  byStoreId,
+  byStoreViewId,
+  byWebsiteId,
   type SelectorBy,
   type SelectorByCode,
   type SelectorByCodeAndLevel,
+  type SelectorByCommerceId,
   type SelectorByScopeId,
 } from "./config-utils";
 export { SchemaBusinessConfig } from "./modules/schema";

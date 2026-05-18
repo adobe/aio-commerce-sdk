@@ -85,7 +85,7 @@ export async function fetchRawConfiguration(
  * decrypted before being returned.
  *
  * @param context - Configuration context containing namespace and cache timeout.
- * @param args - Scope identifier: either `(id: string)` or `(code: string, level: string)`.
+ * @param args - Scope identifier: `(id: string)`, `(code: string, level: string)`, or `(commerceId: number, level: string)`.
  * @returns Promise resolving to configuration response with scope information and config values.
  *
  * @throws {Error} If the scope arguments are invalid or the scope is not found.
