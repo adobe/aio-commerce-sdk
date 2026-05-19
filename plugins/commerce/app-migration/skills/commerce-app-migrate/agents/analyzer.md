@@ -114,6 +114,23 @@ Example — given this `env.dist`:
 
 If `env.dist` does not exist, output `"envDistKeys": []`.
 
+### envDistDuplicates
+
+While processing the same `env.dist` lines for `envDistKeys`, count how many non-comment,
+non-blank lines contain each key name (i.e. how many times each key appears at the start
+of a non-comment line).
+
+For each key whose count is greater than 1, add an entry to `envDistDuplicates`:
+
+    { "<KEY>": <count> }
+
+If no key appears more than once, output `"envDistDuplicates": {}`.
+If `env.dist` does not exist, output `"envDistDuplicates": {}`.
+
+Example — given an `env.dist` where `COMMERCE_CONSUMER_KEY` appears on two separate lines:
+
+→ `"envDistDuplicates": { "COMMERCE_CONSUMER_KEY": 2 }`
+
 ---
 
 ### packageManager

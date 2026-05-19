@@ -89,6 +89,11 @@ interface ProjectSnapshot {
   // Empty array [] if env.dist does not exist.
   envDistKeys: string[];
 
+  // Keys that appear more than once in env.dist (duplicate entries).
+  // Only keys with count > 1 are included. Omitted or empty object means no duplicates.
+  // e.g. { "COMMERCE_CONSUMER_KEY": 2 }
+  envDistDuplicates?: Record<string, number>;
+
   confidence: {
     // "high": all data can be inferred statically
     // "medium": parseable but some fields missing
@@ -150,6 +155,7 @@ interface ProjectSnapshot {
     "AIO_EVENTS_PROVIDER_ID",
     "LOG_LEVEL"
   ],
+  "envDistDuplicates": {},
   "confidence": {
     "events": "high",
     "webhooks": "none",
