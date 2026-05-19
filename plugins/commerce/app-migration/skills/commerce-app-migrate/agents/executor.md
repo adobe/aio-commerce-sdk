@@ -686,6 +686,83 @@ If both categories are empty, omit the "Files that can be safely removed" sectio
 
 ---
 
+**Category D — env.dist entries that may no longer be needed:**
+
+Skip this category entirely if `ProjectSnapshot.envDistKeys` is an empty array.
+
+For each key in `envDistKeys`, apply these rules in order — **first match wins**. Keys matching no rule are not included in Category D.
+
+**Rule 1 — PaaS/OAuth1 auth credentials:**
+Keys matching any of: `COMMERCE_CONSUMER_KEY`, `COMMERCE_CONSUMER_SECRET`, `COMMERCE_ACCESS_TOKEN`, `COMMERCE_ACCESS_TOKEN_SECRET`, or any key starting with `AIO_COMMERCE_AUTH_INTEGRATION_`
+→ reason: `"OAuth1/PaaS auth credential managed by App Management; may still be needed for local development"`
+
+**Rule 2 — IMS/SaaS auth credentials:**
+Keys matching any of: `OAUTH_BASE_URL`, `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRETS`, `OAUTH_CLIENT_SECRET`, `OAUTH_TECHNICAL_ACCOUNT_ID`, `OAUTH_TECHNICAL_ACCOUNT_EMAIL`, `OAUTH_ORG_ID`, `OAUTH_IMS_ORG_ID`, `OAUTH_SCOPES`, `OAUTH_HOST`, or any key starting with `AIO_COMMERCE_AUTH_IMS_`
+→ reason: `"IMS/SaaS auth credential managed by App Management; may still be needed for local development"`
+
+**Rule 3 — Adobe I/O workspace credentials:**
+Keys matching any of: `IO_MANAGEMENT_BASE_URL`, `IO_CONSUMER_ID`, `IO_PROJECT_ID`, `IO_WORKSPACE_ID`
+→ reason: `"Adobe I/O workspace credentials used by onboarding scripts; App Management handles workspace setup"`
+
+**Rule 4 — Only referenced in removable scripts (Category A):**
+Read the content of each file in the Category A removable list. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/` or `actions-src/` (search with grep):
+→ reason: `"only referenced in <script-filename>, which is no longer needed after migration"`
+
+**Rule 5 — Only referenced in automated installation scripts:**
+Read the content of each script listed in `installation.customInstallationSteps` from the assembled config. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/` or `actions-src/`:
+→ reason: `"only used in automated installation steps — no longer needed as a standalone env.dist entry"`
+
+**Rule 6 — Event configuration variables** (apply only if the assembled config has an `eventing` section):
+Keys matching any of: `AIO_EVENTS_PROVIDER_ID`, `COMMERCE_ADOBE_IO_EVENTS_MERCHANT_ID`, `EVENT_PREFIX`, `FEED_GENERATOR_PROVIDER_ID`, `COMMERCE_PROVIDER_ID`, or any key matching `REGISTRATION_ID_*`, `*_REGISTRATION_ID`, or `EVENT_PROVIDER_*`
+→ reason: `"event configuration is now declared in app.commerce.config.ts"`
+
+**Rule 7 — Webhook variables** (apply only if the assembled config has an `installation.webhooks` section):
+Keys matching `COMMERCE_WEBHOOKS_PUBLIC_KEY` or any key matching `*_WEBHOOKS_*`
+→ reason: `"webhook registration is now declared in app.commerce.config.ts"`
+
+**Never flag these keys regardless of any rule above:**
+`COMMERCE_BASE_URL`, `LOG_LEVEL`, `ENABLE_TELEMETRY`, `NEW_RELIC_LICENSE_KEY`, `ENABLE_EXTRA_LOGGING`, `ENCRYPTION_KEY`, `ENCRYPTION_IV`, `APPBUILDER_ENCRYPTION_KEY`.
+Also never flag any key that is clearly a third-party service credential (Klaviyo, NetSuite, Salesforce, Adyen, OpenSearch, etc.) — recognisable by vendor-specific prefixes that do not match the patterns above.
+
+---
+
+**Category C — README.md sections that may be outdated:**
+
+Skip this category entirely if `README.md` does not exist in the project root.
+
+Read `README.md`. Build migration context from results already computed above:
+
+- `removableScriptPaths` — file paths from Category A
+- `automatedScriptPaths` — `script` values from `installation.customInstallationSteps` in the assembled config
+- `eventsDeclarative` — assembled config contains an `eventing` section
+- `webhooksDeclarative` — assembled config contains an `installation.webhooks` section
+- `redundantEnvKeys` — keys from Category D
+
+Scan README.md for content matching these patterns. For each match, record:
+
+- `location`: the nearest markdown heading above the matched content, plus a short description (e.g. `"## Setup > step 3 (npm run onboard)"`)
+- `reason`: why it may be outdated
+
+**Pattern 1 — References to removable or automated scripts:**
+Any text that mentions a script path or npm script name that appears in `removableScriptPaths` or `automatedScriptPaths` (e.g. `npm run onboard`, `scripts/onboarding/index.js`, `npm run commerce-event-subscribe`, `npm run create-shipping-carriers`, `npm run create-payment-methods`).
+→ reason: `"<script-name> is [no longer needed / now automated by App Management installation]"` (choose phrase based on whether the script is removable or automated)
+
+**Pattern 2 — Webhook manual setup steps** (skip if `webhooksDeclarative` is false):
+Content describing any of: enabling webhook signatures in Commerce Admin, copying a public key into `COMMERCE_WEBHOOKS_PUBLIC_KEY`, registering webhooks via CLI or Admin UI.
+→ reason: `"webhook registration is now handled declaratively in app.commerce.config.ts"`
+
+**Pattern 3 — Event subscription or workspace setup steps** (skip if `eventsDeclarative` is false):
+Content describing any of: `aio console org/project/workspace select`, `aio app use --merge`, setting up event providers or registrations in Adobe Developer Console, `npm run sync-oauth-credentials`.
+→ reason: `"event provider and subscription setup is now handled declaratively in app.commerce.config.ts"`
+
+**Pattern 4 — Documentation of redundant env vars:**
+Sections that list or describe variable names that appear in `redundantEnvKeys`.
+→ reason: `"documents <KEY> and related variables that may no longer be needed after migration"`
+
+**Do not flag** content that is inside a fenced code block showing the new App Management approach, or inside a "Changelog", "Migration notes", or "What changed" section that already describes the migration.
+
+---
+
 Print the following report, filling in actual results. Use ✓ / ✗ for command outcomes.
 
     ╔══════════════════════════════════════════════════════════════════╗
@@ -749,6 +826,30 @@ Print the following report, filling in actual results. Use ✓ / ✗ for command
       Document them in a comment in app.commerce.config.ts, or contact
       Adobe Commerce Marketplace for guidance.
     ← end conditional →
+
+    ← omit this entire block if Category C and Category D are both empty →
+    ── Documentation recommendations ─────────────────────────────────
+         ← include this subsection only if Category C is non-empty →
+      README.md sections that may be outdated:
+
+      [  <location> ]
+           └─ <reason>
+         ← one block per identified section →
+
+      Update or remove these sections once the migration is verified.
+         ← end Category C subsection →
+
+         ← include this subsection only if Category D is non-empty →
+      env.dist entries that may no longer be needed:
+
+      [  <KEY> ]
+           └─ <reason>
+         ← one block per identified entry →
+
+      Remove these from env.dist (and .env if present) once verified.
+      Note: auth credential entries may still be needed for local development.
+         ← end Category D subsection →
+    ← end conditional block →
 
     ── Next steps ─────────────────────────────────────────────────────
       [1. aio-commerce-lib-app generate all]   ← include ONLY if Step 5 failed

@@ -14,7 +14,7 @@ Read ALL of the following. Skip files that don't exist (do not error).
 
 1. `app.config.yaml` — packages, extensions block, included action configs
 2. `package.json` — dependencies and scripts
-3. `env.dist` — variable names for auth mode detection
+3. `env.dist` — variable names for auth mode detection and `envDistKeys` population
 4. `.env` — last resort; extract key names only via shell, do not read with Read tool
 5. Every file under `scripts/onboarding/` (list directory first, then read each file)
 6. Every `actions.config.yaml` under `actions/` (list directory recursively, read each)
@@ -88,6 +88,33 @@ Result:
 - `"paas"` — only PaaS signal found
 - `"saas"` — only SaaS signal found
 - `"unknown"` — neither found
+
+### envDistKeys
+
+Using the content of `env.dist` already read for `authMode` detection:
+
+For each line in `env.dist`:
+
+- Skip lines that start with `#` (comments) or are blank
+- Extract the portion of the line before the first `=` character; trim surrounding whitespace
+- If the line contains no `=`, use the entire trimmed line as the key name
+
+Store the resulting array of key names as `envDistKeys`.
+
+Example — given this `env.dist`:
+
+    # Auth
+    COMMERCE_CONSUMER_KEY=
+    OAUTH_CLIENT_ID=abc
+    # Events
+    AIO_EVENTS_PROVIDER_ID=xyz
+    LOG_LEVEL=debug
+
+→ `"envDistKeys": ["COMMERCE_CONSUMER_KEY", "OAUTH_CLIENT_ID", "AIO_EVENTS_PROVIDER_ID", "LOG_LEVEL"]`
+
+If `env.dist` does not exist, output `"envDistKeys": []`.
+
+---
 
 ### packageManager
 
@@ -303,6 +330,7 @@ Example output:
       "openWhiskTriggers": [],
       "hasMeshConfig": false,
       "hasApiGateway": false,
+      "envDistKeys": ["COMMERCE_CONSUMER_KEY", "OAUTH_CLIENT_ID", "AIO_EVENTS_PROVIDER_ID", "LOG_LEVEL"],
       "confidence": {
         "events": "high",
         "webhooks": "none",

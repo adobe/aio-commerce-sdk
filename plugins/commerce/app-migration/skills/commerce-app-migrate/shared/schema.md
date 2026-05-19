@@ -84,6 +84,11 @@ interface ProjectSnapshot {
   // null if no productDependencies block exists.
   productDependencies: { minVersion?: string; maxVersion?: string } | null;
 
+  // Variable names parsed from env.dist (key names only — values are never stored).
+  // Used by the Executor to identify obsolete env.dist entries after migration.
+  // Empty array [] if env.dist does not exist.
+  envDistKeys: string[];
+
   confidence: {
     // "high": all data can be inferred statically
     // "medium": parseable but some fields missing
@@ -139,6 +144,12 @@ interface ProjectSnapshot {
   "openWhiskTriggers": [],
   "hasMeshConfig": false,
   "hasApiGateway": false,
+  "envDistKeys": [
+    "COMMERCE_CONSUMER_KEY",
+    "OAUTH_CLIENT_ID",
+    "AIO_EVENTS_PROVIDER_ID",
+    "LOG_LEVEL"
+  ],
   "confidence": {
     "events": "high",
     "webhooks": "none",

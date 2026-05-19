@@ -26,7 +26,7 @@ Orchestrates the full migration workflow: project detection → domain analysis 
 3. **Domain agents** — runs specialized agents in parallel for each detected domain (events, webhooks, Admin UI SDK, business config)
 4. **Q&A** — asks targeted questions for anything that cannot be inferred automatically
 5. **Config assembly** — generates `app.commerce.config.ts` with `defineConfig(...)` from `@adobe/aio-commerce-lib-app/config`
-6. **Execute** — writes the config file and applies required project changes
+6. **Execute** — writes the config file and applies required project changes; identifies README.md sections and env.dist entries that may be outdated after migration and explains why each is no longer needed
 
 **Supported source projects:** Integration Starter Kit, Checkout Starter Kit, Admin UI SDK extensions.
 
