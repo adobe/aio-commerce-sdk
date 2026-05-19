@@ -176,6 +176,9 @@ import {
   byScopeId,
   byCode,
   byCodeAndLevel,
+  byWebsiteId,
+  byStoreId,
+  byStoreViewId,
 } from "@adobe/aio-commerce-lib-config";
 
 // Get configuration by scope ID
@@ -187,6 +190,13 @@ const config2 = await getConfiguration(byCode("us-east"));
 // Get configuration by scope code and level
 const config3 = await getConfiguration(byCodeAndLevel("us-west", "store"));
 console.log(config3.config);
+
+// Get configuration by the Commerce API ID of a system scope.
+// Each helper hard-codes its level so the same numeric ID can address
+// a website, store, or store view unambiguously.
+const websiteCfg = await getConfiguration(byWebsiteId(1));
+const storeCfg = await getConfiguration(byStoreId(1));
+const storeViewCfg = await getConfiguration(byStoreViewId(1));
 
 // Get a specific configuration value by key
 const {
