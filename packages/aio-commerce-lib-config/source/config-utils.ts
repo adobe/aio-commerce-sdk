@@ -91,17 +91,17 @@ function findScopeNodeById(tree: ScopeTree, id: string): ScopeNode | null {
  * and a store with id=1 can coexist), so the level is required to disambiguate.
  *
  * @param tree - The scope tree to search.
- * @param commerceId - The Commerce API ID of the scope node to find.
+ * @param commerceScopeId - The Commerce API ID of the scope node to find.
  * @param level - The level of the scope node to find.
  * @returns The found scope node or null if not found.
  */
-function findScopeNodeByCommerceId(
+function findScopeNodeByCommerceScopeId(
   tree: ScopeTree,
-  commerceId: number,
+  commerceScopeId: number,
   level: string,
 ): ScopeNode | null {
   const traverse = (node: ScopeNode): ScopeNode | null => {
-    if (node.commerce_id === commerceId && node.level === level) {
+    if (node.commerce_id === commerceScopeId && node.level === level) {
       return node;
     }
     if (node.children) {
@@ -168,13 +168,13 @@ export function deriveScopeFromCodeAndLevel(
 
 /**
  * Derives the scope information from a Commerce API ID and level.
- * @param commerceId - The Commerce API id of the scope to find.
+ * @param commerceScopeId - The Commerce API id of the scope to find.
  * @param level - The level of the scope to find.
  * @param tree - The scope tree to search.
  * @returns The derived scope information including code, level, id, and path.
  */
-export function deriveScopeFromCommerceId(
-  commerceId: unknown,
+export function deriveScopeFromCommerceScopeId(
+  commerceScopeId: unknown,
   level: unknown,
   tree: ScopeTree,
 ): {
@@ -183,21 +183,27 @@ export function deriveScopeFromCommerceId(
   scopeId: string;
   scopePath: ScopeNode[];
 } {
-  if (!(typeof commerceId === "number" && Number.isFinite(commerceId))) {
+  if (
+    !(typeof commerceScopeId === "number" && Number.isFinite(commerceScopeId))
+  ) {
     throw new Error(
-      "INVALID_ARGS: expected (commerceId: number, level: string)",
+      "INVALID_ARGS: expected (commerceScopeId: number, level: string)",
     );
   }
   if (!isNonEmptyString(level)) {
     throw new Error(
-      "INVALID_ARGS: expected (commerceId: number, level: string)",
+      "INVALID_ARGS: expected (commerceScopeId: number, level: string)",
     );
   }
   const trimmedLevel = level.trim();
-  const node = findScopeNodeByCommerceId(tree, commerceId, trimmedLevel);
+  const node = findScopeNodeByCommerceScopeId(
+    tree,
+    commerceScopeId,
+    trimmedLevel,
+  );
   if (!node) {
     throw new Error(
-      `INVALID_SCOPE: Unknown scope commerceId='${commerceId}' level='${trimmedLevel}'`,
+      `INVALID_SCOPE: Unknown scope commerceScopeId='${commerceScopeId}' level='${trimmedLevel}'`,
     );
   }
   const path = findScopePath(tree, node.code, node.level);
@@ -281,7 +287,7 @@ export function deriveScopeFromCodeWithOptionalLevel(
 export function deriveScopeFromArgs(args: unknown[], tree: ScopeTree) {
   if (args.length === 2) {
     if (typeof args[0] === "number") {
-      return deriveScopeFromCommerceId(args[0], args[1], tree);
+      return deriveScopeFromCommerceScopeId(args[0], args[1], tree);
     }
     return deriveScopeFromCodeAndLevel(args[0], args[1], tree);
   }
@@ -296,7 +302,7 @@ export function deriveScopeFromArgs(args: unknown[], tree: ScopeTree) {
     }
   }
   throw new Error(
-    "INVALID_ARGS: expected (id), (code), (code, level), or (commerceId, level)",
+    "INVALID_ARGS: expected (id), (code), (code, level), or (commerceScopeId, level)",
   );
 }
 
@@ -644,10 +650,10 @@ export type SelectorByCode = {
  * store can both have id=1), so the level is encoded by the factory used:
  * {@link byWebsiteId}, {@link byStoreId}, or {@link byStoreViewId}.
  */
-export type SelectorByCommerceId = {
+export type SelectorByCommerceScopeId = {
   by: {
-    _tag: "commerceId";
-    commerceId: number;
+    _tag: "commerceScopeId";
+    commerceScopeId: number;
     level: "website" | "store" | "store_view";
   };
 };
@@ -663,7 +669,7 @@ export type SelectorBy =
   | SelectorByScopeId
   | SelectorByCodeAndLevel
   | SelectorByCode
-  | SelectorByCommerceId;
+  | SelectorByCommerceScopeId;
 
 /**
  * Creates a scope selector that identifies a scope by its unique ID.
@@ -743,7 +749,7 @@ export function byCode(code: string): SelectorByCode {
  * numeric ID is matched against the `commerce_id` of website-level scopes in
  * the scope tree.
  *
- * @param commerceId - The Commerce API numeric ID of the website.
+ * @param commerceScopeId - The Commerce API numeric ID of the website.
  * @returns A selector that identifies the website scope.
  *
  * @example
@@ -753,8 +759,12 @@ export function byCode(code: string): SelectorByCode {
  * const config = await getConfiguration(byWebsiteId(1));
  * ```
  */
-export function byWebsiteId(commerceId: number): SelectorByCommerceId {
-  return { by: { _tag: "commerceId", commerceId, level: "website" } };
+export function byWebsiteId(
+  commerceScopeId: number,
+): SelectorByCommerceScopeId {
+  return {
+    by: { _tag: "commerceScopeId", commerceScopeId, level: "website" },
+  };
 }
 
 /**
@@ -764,7 +774,7 @@ export function byWebsiteId(commerceId: number): SelectorByCommerceId {
  * In the scope tree they live at the `"store"` level. The numeric ID is matched
  * against the `commerce_id` of store-level scopes.
  *
- * @param commerceId - The Commerce API numeric ID of the store group.
+ * @param commerceScopeId - The Commerce API numeric ID of the store group.
  * @returns A selector that identifies the store scope.
  *
  * @example
@@ -774,8 +784,8 @@ export function byWebsiteId(commerceId: number): SelectorByCommerceId {
  * const config = await getConfiguration(byStoreId(1));
  * ```
  */
-export function byStoreId(commerceId: number): SelectorByCommerceId {
-  return { by: { _tag: "commerceId", commerceId, level: "store" } };
+export function byStoreId(commerceScopeId: number): SelectorByCommerceScopeId {
+  return { by: { _tag: "commerceScopeId", commerceScopeId, level: "store" } };
 }
 
 /**
@@ -784,7 +794,7 @@ export function byStoreId(commerceId: number): SelectorByCommerceId {
  * Store views are returned by the Commerce REST endpoint `/V1/store/storeViews`.
  * The numeric ID is matched against the `commerce_id` of store_view-level scopes.
  *
- * @param commerceId - The Commerce API numeric ID of the store view.
+ * @param commerceScopeId - The Commerce API numeric ID of the store view.
  * @returns A selector that identifies the store view scope.
  *
  * @example
@@ -794,6 +804,10 @@ export function byStoreId(commerceId: number): SelectorByCommerceId {
  * const config = await getConfiguration(byStoreViewId(2));
  * ```
  */
-export function byStoreViewId(commerceId: number): SelectorByCommerceId {
-  return { by: { _tag: "commerceId", commerceId, level: "store_view" } };
+export function byStoreViewId(
+  commerceScopeId: number,
+): SelectorByCommerceScopeId {
+  return {
+    by: { _tag: "commerceScopeId", commerceScopeId, level: "store_view" },
+  };
 }

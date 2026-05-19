@@ -333,10 +333,10 @@ export async function getConfiguration(
     return await getConfigModule(context, selector.by.code, selector.by.level);
   }
 
-  if (selector.by._tag === "commerceId") {
+  if (selector.by._tag === "commerceScopeId") {
     return await getConfigModule(
       context,
-      selector.by.commerceId,
+      selector.by.commerceScopeId,
       selector.by.level,
     );
   }
@@ -398,11 +398,11 @@ export async function getConfigurationByKey(
     );
   }
 
-  if (selector.by._tag === "commerceId") {
+  if (selector.by._tag === "commerceScopeId") {
     return await getConfigByKeyModule(
       context,
       configKey,
-      selector.by.commerceId,
+      selector.by.commerceScopeId,
       selector.by.level,
     );
   }
@@ -477,11 +477,11 @@ export async function setConfiguration(
     );
   }
 
-  if (selector.by._tag === "commerceId") {
+  if (selector.by._tag === "commerceScopeId") {
     return await setConfigModule(
       context,
       request,
-      selector.by.commerceId,
+      selector.by.commerceScopeId,
       selector.by.level,
     );
   }

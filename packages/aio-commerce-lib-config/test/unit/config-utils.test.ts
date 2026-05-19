@@ -18,7 +18,7 @@ import {
   byStoreViewId,
   byWebsiteId,
   deriveScopeFromArgs,
-  deriveScopeFromCommerceId,
+  deriveScopeFromCommerceScopeId,
   mergeScopes,
   sanitizeRequestEntries,
 } from "#config-utils";
@@ -272,26 +272,34 @@ describe("config-utils", () => {
   describe("Commerce ID selectors", () => {
     test("byWebsiteId hard-codes level=website", () => {
       expect(byWebsiteId(1)).toEqual({
-        by: { _tag: "commerceId", commerceId: 1, level: "website" },
+        by: { _tag: "commerceScopeId", commerceScopeId: 1, level: "website" },
       });
     });
 
     test("byStoreId hard-codes level=store", () => {
       expect(byStoreId(1)).toEqual({
-        by: { _tag: "commerceId", commerceId: 1, level: "store" },
+        by: { _tag: "commerceScopeId", commerceScopeId: 1, level: "store" },
       });
     });
 
     test("byStoreViewId hard-codes level=store_view", () => {
       expect(byStoreViewId(1)).toEqual({
-        by: { _tag: "commerceId", commerceId: 1, level: "store_view" },
+        by: {
+          _tag: "commerceScopeId",
+          commerceScopeId: 1,
+          level: "store_view",
+        },
       });
     });
   });
 
-  describe("deriveScopeFromCommerceId", () => {
+  describe("deriveScopeFromCommerceScopeId", () => {
     test("resolves a website scope by commerce_id and level", () => {
-      const result = deriveScopeFromCommerceId(1, "website", mockScopeTree);
+      const result = deriveScopeFromCommerceScopeId(
+        1,
+        "website",
+        mockScopeTree,
+      );
 
       expect(result.scopeId).toBe("idw");
       expect(result.scopeCode).toBe("base");
@@ -305,8 +313,8 @@ describe("config-utils", () => {
 
     test("disambiguates by level when commerce_id is reused across levels", () => {
       // mockScopeTree has commerce_id=1 on website, store, and store_view
-      const store = deriveScopeFromCommerceId(1, "store", mockScopeTree);
-      const storeView = deriveScopeFromCommerceId(
+      const store = deriveScopeFromCommerceScopeId(1, "store", mockScopeTree);
+      const storeView = deriveScopeFromCommerceScopeId(
         1,
         "store_view",
         mockScopeTree,
@@ -320,29 +328,29 @@ describe("config-utils", () => {
 
     test("throws INVALID_SCOPE when commerce_id is unknown", () => {
       expect(() =>
-        deriveScopeFromCommerceId(999, "website", mockScopeTree),
+        deriveScopeFromCommerceScopeId(999, "website", mockScopeTree),
       ).toThrow(INVALID_SCOPE_RE);
     });
 
     test("throws INVALID_SCOPE when level does not match", () => {
       expect(() =>
-        deriveScopeFromCommerceId(1, "store_view", [
+        deriveScopeFromCommerceScopeId(1, "store_view", [
           // tree without commerce_id=1 at store_view level
           mockScopeTree[0],
         ]),
       ).toThrow(INVALID_SCOPE_RE);
     });
 
-    test("throws INVALID_ARGS for non-number commerceId", () => {
+    test("throws INVALID_ARGS for non-number commerceScopeId", () => {
       expect(() =>
-        deriveScopeFromCommerceId("1", "website", mockScopeTree),
+        deriveScopeFromCommerceScopeId("1", "website", mockScopeTree),
       ).toThrow(INVALID_ARGS_RE);
     });
 
     test("throws INVALID_ARGS for missing level", () => {
-      expect(() => deriveScopeFromCommerceId(1, "", mockScopeTree)).toThrow(
-        INVALID_ARGS_RE,
-      );
+      expect(() =>
+        deriveScopeFromCommerceScopeId(1, "", mockScopeTree),
+      ).toThrow(INVALID_ARGS_RE);
     });
   });
 
@@ -359,7 +367,7 @@ describe("config-utils", () => {
   });
 
   describe("areValidArgs", () => {
-    test("accepts (commerceId: number, level: string)", () => {
+    test("accepts (commerceScopeId: number, level: string)", () => {
       expect(areValidArgs([1, "website"])).toBe(true);
     });
 

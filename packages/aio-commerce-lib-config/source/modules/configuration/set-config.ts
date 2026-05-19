@@ -38,7 +38,7 @@ import type { ConfigContext, SetConfigValue } from "./types";
  *
  * @param context - Configuration context containing namespace and cache timeout.
  * @param request - Configuration set request containing the config values to set.
- * @param args - Scope identifier: `(id: string)`, `(code: string, level: string)`, or `(commerceId: number, level: string)`.
+ * @param args - Scope identifier: `(id: string)`, `(code: string, level: string)`, or `(commerceScopeId: number, level: string)`.
  * @returns Promise resolving to configuration response with updated scope and config values.
  *
  * @throws {Error} If the scope arguments are invalid or the scope is not found.

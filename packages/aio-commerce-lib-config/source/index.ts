@@ -26,7 +26,7 @@ export {
   type SelectorBy,
   type SelectorByCode,
   type SelectorByCodeAndLevel,
-  type SelectorByCommerceId,
+  type SelectorByCommerceScopeId,
   type SelectorByScopeId,
 } from "./config-utils";
 export { SchemaBusinessConfig } from "./modules/schema";
