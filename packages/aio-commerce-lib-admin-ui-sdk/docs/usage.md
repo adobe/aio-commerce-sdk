@@ -29,7 +29,7 @@ const permissions = getAdminUiSdkPermissionClient({ httpClient });
 // Returns true if granted, false if denied or on error (fail-closed by default)
 const allowed = await permissions.check("Vendor_Module::resource_name");
 
-// Throws AdminUiSdkPermissionDeniedError if denied (use in SPA contexts)
+// Throws AdminUiSdkPermissionDeniedError if denied, or AdminUiSdkPermissionError if the check fails
 await permissions.require("Vendor_Module::resource_name");
 
 // Invalidate a cached result (e.g. after a role change)
@@ -39,7 +39,7 @@ permissions.invalidate("Vendor_Module::resource_name");
 permissions.invalidate();
 ```
 
-To opt out of fail-closed behavior and receive the underlying error on network failures:
+By default, `check()` fails closed and returns `false` on network or response parsing errors. To opt out of fail-closed behavior for `check()` and receive the underlying error:
 
 ```typescript
 const permissions = getAdminUiSdkPermissionClient({
@@ -76,7 +76,7 @@ try {
   if (error instanceof AdminUiSdkPermissionDeniedError) {
     console.error(`Access denied for resource: ${error.resource}`);
   } else if (error instanceof AdminUiSdkPermissionError) {
-    // 401 or (when denyOnError: false) network/parse error
+    // Unauthorized, network, or response parsing error
     console.error("Permission check failed", error);
   }
 }
@@ -101,11 +101,11 @@ In install/uninstall actions where only a subset of operations is needed, prefer
 import {
   createCustomAdminUiSdkApiClient,
   registerExtension,
-  uninstallExtension,
+  unregisterExtension,
 } from "@adobe/aio-commerce-lib-admin-ui-sdk/api";
 
 const client = createCustomAdminUiSdkApiClient(params, {
   registerExtension,
-  uninstallExtension,
+  unregisterExtension,
 });
 ```

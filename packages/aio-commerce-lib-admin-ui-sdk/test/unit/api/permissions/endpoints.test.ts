@@ -64,4 +64,14 @@ describe("checkPermission", () => {
       }),
     ).rejects.toThrow();
   });
+
+  it("throws when the response shape is invalid", async () => {
+    const fetchMock = vi.fn(async () => Response.json({ allowed: "yes" }));
+
+    await expect(
+      checkPermission(makeHttpClient(fetchMock as typeof fetch), {
+        resource: "Acme_Promotions::dashboard",
+      }),
+    ).rejects.toThrow();
+  });
 });

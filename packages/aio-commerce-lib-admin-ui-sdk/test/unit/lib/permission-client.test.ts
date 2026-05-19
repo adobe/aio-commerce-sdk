@@ -276,6 +276,44 @@ describe("client.require", () => {
     ).rejects.toBeInstanceOf(AdminUiSdkPermissionDeniedError);
   });
 
+  it("throws AdminUiSdkPermissionError on 5xx with default denyOnError", async () => {
+    const fetchMock = vi.fn(async () => Response.json({}, { status: 500 }));
+    const client = getAdminUiSdkPermissionClient({
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
+      cacheTtlMs: 0,
+    });
+
+    await expect(
+      client.require("Acme_Promotions::dashboard"),
+    ).rejects.toBeInstanceOf(AdminUiSdkPermissionError);
+  });
+
+  it("throws AdminUiSdkPermissionError on network error with default denyOnError", async () => {
+    const fetchMock = vi.fn(() => {
+      throw new TypeError("Network error");
+    });
+    const client = getAdminUiSdkPermissionClient({
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
+      cacheTtlMs: 0,
+    });
+
+    await expect(
+      client.require("Acme_Promotions::dashboard"),
+    ).rejects.toBeInstanceOf(AdminUiSdkPermissionError);
+  });
+
+  it("throws AdminUiSdkPermissionError on schema mismatch with default denyOnError", async () => {
+    const fetchMock = vi.fn(async () => Response.json({ allowed: "yes" }));
+    const client = getAdminUiSdkPermissionClient({
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
+      cacheTtlMs: 0,
+    });
+
+    await expect(
+      client.require("Acme_Promotions::dashboard"),
+    ).rejects.toBeInstanceOf(AdminUiSdkPermissionError);
+  });
+
   it("throws AdminUiSdkPermissionError on 401", async () => {
     const fetchMock = vi.fn(async () =>
       Response.json({ message: "Unauthorized" }, { status: 401 }),

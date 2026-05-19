@@ -10,6 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
+import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
+
+import { permissionCheckResponseSchema } from "./schema";
+
 import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 import type { Options } from "ky";
 import type { PermissionCheckResponse } from "./schema";
@@ -34,10 +38,12 @@ export async function checkPermission(
   params: PermissionCheckParams,
   fetchOptions?: Options,
 ): Promise<PermissionCheckResponse> {
-  return httpClient
+  const raw = await httpClient
     .post("adminuisdk/permission/check", {
       ...fetchOptions,
       json: { resource: params.resource },
     })
-    .json<PermissionCheckResponse>();
+    .json<unknown>();
+
+  return parseOrThrow(permissionCheckResponseSchema, raw);
 }

@@ -11,9 +11,8 @@
  */
 
 import { HTTPError } from "ky";
-import * as v from "valibot";
 
-import { permissionCheckResponseSchema } from "#api/permissions/schema";
+import { checkPermission } from "#api/permissions/endpoints";
 import {
   AdminUiSdkPermissionDeniedError,
   AdminUiSdkPermissionError,
@@ -22,7 +21,6 @@ import {
 import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 
 const DEFAULT_CACHE_TTL_MS = 300_000;
-const CHECK_ENDPOINT = "adminuisdk/permission/check";
 
 /** Options used to create an Admin UI SDK permission client. */
 export interface AdminUiSdkPermissionClientOptions {
@@ -44,24 +42,26 @@ export interface AdminUiSdkPermissionClient {
   check(resource: string): Promise<boolean>;
   /**
    * Clears the cached result for `resource`. If called without an argument, clears
-   * all cached entries and cancels deduplication of any in-flight requests.
+   * all cached entries and in-flight tracking without aborting outstanding HTTP requests.
    */
   invalidate(resource?: string): void;
   /**
    * Resolves when the current user has the given resource granted.
    * Throws `AdminUiSdkPermissionDeniedError` if denied.
-   * Always throws `AdminUiSdkPermissionError` on 401, regardless of `denyOnError`.
-   * When `denyOnError: true` (default), network and parse errors also throw
-   * `AdminUiSdkPermissionDeniedError` (fail-closed). Set `denyOnError: false`
-   * to receive `AdminUiSdkPermissionError` instead.
+   * Throws `AdminUiSdkPermissionError` on 401, network, and parse errors.
    */
   require(resource: string): Promise<void>;
 }
 
-type PermissionCheckResult = {
-  allowed: boolean;
-  cacheable: boolean;
-};
+type PermissionCheckResult =
+  | {
+      allowed: boolean;
+      cacheable: true;
+    }
+  | {
+      error: AdminUiSdkPermissionError;
+      cacheable: false;
+    };
 
 function isUnauthorizedError(error: unknown) {
   return error instanceof HTTPError && error.response.status === 401;
@@ -89,19 +89,10 @@ export function getAdminUiSdkPermissionClient(
 
   async function fetchCheck(resource: string): Promise<PermissionCheckResult> {
     try {
-      const raw = await httpClient
-        .post(CHECK_ENDPOINT, {
-          json: { resource },
-        })
-        .json<unknown>();
-      const parsed = v.safeParse(permissionCheckResponseSchema, raw);
-
-      if (!parsed.success) {
-        throw new AdminUiSdkPermissionError("Unexpected response shape");
-      }
+      const result = await checkPermission(httpClient, { resource });
 
       return {
-        allowed: parsed.output.allowed,
+        allowed: result.allowed,
         cacheable: true,
       };
     } catch (error) {
@@ -111,7 +102,7 @@ export function getAdminUiSdkPermissionClient(
 
       if (denyOnError) {
         return {
-          allowed: false,
+          error: toPermissionError(error),
           cacheable: false,
         };
       }
@@ -167,10 +158,14 @@ export function getAdminUiSdkPermissionClient(
   return {
     async check(resource: string) {
       const result = await resolveCheck(resource);
-      return result.allowed;
+      return "error" in result ? false : result.allowed;
     },
     async require(resource: string) {
       const result = await resolveCheck(resource);
+
+      if ("error" in result) {
+        throw result.error;
+      }
 
       if (!result.allowed) {
         throw new AdminUiSdkPermissionDeniedError(resource);
