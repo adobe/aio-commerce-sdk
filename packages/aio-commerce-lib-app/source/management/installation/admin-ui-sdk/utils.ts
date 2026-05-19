@@ -11,10 +11,13 @@
  */
 
 import {
-  AdobeCommerceHttpClient,
-  resolveCommerceHttpClientParams,
-} from "@adobe/aio-commerce-lib-api";
+  createCustomAdminUiSdkApiClient,
+  registerExtension,
+  unregisterExtension,
+} from "@adobe/aio-commerce-lib-admin-ui-sdk/api";
+import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   ExecutionContext,
@@ -27,32 +30,45 @@ export type AdminUiSdkConfig = CommerceAppConfigOutputModel & {
   adminUiSdk: NonNullable<CommerceAppConfigOutputModel["adminUiSdk"]>;
 };
 
-/** Context shared across Admin UI SDK steps. */
+function createAdminUiSdkClient(params: RuntimeActionParams) {
+  const commerceClientParams = resolveCommerceHttpClientParams(params, {
+    tryForwardAuthProvider: true,
+  });
+
+  return createCustomAdminUiSdkApiClient(commerceClientParams, {
+    registerExtension,
+    unregisterExtension,
+  });
+}
+
+/** A custom Admin UI SDK API client with only the operations used during installation. */
+export type CustomAdminUiSdkApiClient = ReturnType<
+  typeof createAdminUiSdkClient
+>;
+
+/** Context shared across Admin UI SDK installation steps. */
 export interface AdminUiSdkStepContext extends Record<string, unknown> {
-  get commerceClient(): AdobeCommerceHttpClient;
+  get adminUiSdkClient(): CustomAdminUiSdkApiClient;
 }
 
 /** The execution context for Admin UI SDK leaf steps. */
 export type AdminUiSdkExecutionContext =
   ExecutionContext<AdminUiSdkStepContext>;
 
-/** Creates the Admin UI SDK step context with a lazy-initialized Commerce HTTP client. */
+/** Creates the Admin UI SDK step context with a lazy-initialized API client. */
 export const createAdminUiSdkStepContext: StepContextFactory<
   AdminUiSdkStepContext
 > = (installation: InstallationContext) => {
   const { params } = installation;
-  let commerceClient: AdobeCommerceHttpClient | null = null;
+  let adminUiSdkClient: CustomAdminUiSdkApiClient | null = null;
 
   return {
-    get commerceClient() {
-      if (commerceClient === null) {
-        const clientParams = resolveCommerceHttpClientParams(params, {
-          tryForwardAuthProvider: true,
-        });
-        commerceClient = new AdobeCommerceHttpClient(clientParams);
+    get adminUiSdkClient() {
+      if (adminUiSdkClient === null) {
+        adminUiSdkClient = createAdminUiSdkClient(params);
       }
 
-      return commerceClient;
+      return adminUiSdkClient;
     },
   };
 };

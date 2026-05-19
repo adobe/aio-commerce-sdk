@@ -16,34 +16,24 @@ import { throwHttpError } from "../utils/http-error";
 
 import type { AdminUiSdkExecutionContext } from "./utils";
 
-/** The response shape returned by POST /V1/adminuisdk/extension. */
-export type RegisterExtensionResponse = {
-  extensionId: string;
-};
-
 /**
  * Registers the extension with Commerce via POST /V1/adminuisdk/extension.
  *
- * @param context - The execution context providing the Commerce HTTP client and logger.
+ * @param context - The execution context providing the Admin UI SDK client and logger.
  * @returns The response from the Commerce API.
  */
 export async function registerExtension(context: AdminUiSdkExecutionContext) {
-  const { commerceClient, appData, logger } = context;
+  const { adminUiSdkClient, appData, logger } = context;
 
   logger.info(`Registering Admin UI SDK extension: ${appData.projectName}`);
 
-  const response = await commerceClient
-    .post("adminuisdk/extension", {
-      json: {
-        extension: {
-          extensionName: process.env.__OW_NAMESPACE,
-          extensionTitle: appData.projectTitle,
-          extensionUrl: `https://${process.env.__OW_NAMESPACE}.adobeio-static.net/index.html`,
-          extensionWorkspace: appData.workspaceName,
-        },
-      },
+  await adminUiSdkClient
+    .registerExtension({
+      extensionName: process.env.__OW_NAMESPACE ?? "",
+      extensionTitle: appData.projectTitle,
+      extensionUrl: `https://${process.env.__OW_NAMESPACE}.adobeio-static.net/index.html`,
+      extensionWorkspace: appData.workspaceName,
     })
-    .json<RegisterExtensionResponse>()
     .catch((error: unknown) =>
       throwHttpError(
         logger,
@@ -52,32 +42,30 @@ export async function registerExtension(context: AdminUiSdkExecutionContext) {
       ),
     );
 
-  logger.info(
-    `Admin UI SDK extension registered successfully: ${response.extensionId}`,
-  );
-
-  return response;
+  logger.info("Admin UI SDK extension registered successfully.");
 }
 
 /**
  * Unregisters the extension from Commerce via DELETE /V1/adminuisdk/extension/:workspace_name/:extension_name.
  * Best-effort: errors are logged as warnings and do not stop the uninstall workflow.
  *
- * @param context - The execution context providing the Commerce HTTP client and logger.
+ * @param context - The execution context providing the Admin UI SDK client and logger.
  */
-export async function uninstallExtension(
+export async function unregisterExtension(
   context: AdminUiSdkExecutionContext,
 ): Promise<void> {
-  const { commerceClient, appData, logger } = context;
-  const extensionName = process.env.__OW_NAMESPACE;
-  const endpoint = `adminuisdk/extension/${appData.workspaceName}/${extensionName}`;
+  const { adminUiSdkClient, appData, logger } = context;
+  const extensionName = process.env.__OW_NAMESPACE ?? "";
 
   logger.info(
     `Unregistering Admin UI SDK extension "${extensionName}" from workspace "${appData.workspaceName}"...`,
   );
 
   try {
-    await commerceClient.delete(endpoint);
+    await adminUiSdkClient.unregisterExtension({
+      workspaceName: appData.workspaceName,
+      extensionName,
+    });
     logger.info(
       `Admin UI SDK extension "${extensionName}" unregistered successfully.`,
     );

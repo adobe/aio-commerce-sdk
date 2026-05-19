@@ -219,6 +219,46 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
+  packages/aio-commerce-lib-admin-ui-sdk:
+    dependencies:
+      '@adobe/aio-commerce-lib-api':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-api
+      '@adobe/aio-commerce-lib-core':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-core
+      ky:
+        specifier: 'catalog:'
+        version: 1.14.3
+      valibot:
+        specifier: 'catalog:'
+        version: 1.4.0(typescript@6.0.3)
+    devDependencies:
+      '@aio-commerce-sdk/common-utils':
+        specifier: workspace:*
+        version: link:../../packages-private/common-utils
+      '@aio-commerce-sdk/config-tsdown':
+        specifier: workspace:*
+        version: link:../../configs/tsdown
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../../configs/typescript
+      '@aio-commerce-sdk/config-vitest':
+        specifier: workspace:*
+        version: link:../../configs/vitest
+      '@aio-commerce-sdk/scripting-utils':
+        specifier: workspace:*
+        version: link:../../packages-private/scripting-utils
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../scripts
+      msw:
+        specifier: 'catalog:'
+        version: 2.14.6(@types/node@24.12.4)(typescript@6.0.3)
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
   packages/aio-commerce-lib-api:
     dependencies:
       '@adobe/aio-commerce-lib-auth':
@@ -255,6 +295,9 @@ importers:
 
   packages/aio-commerce-lib-app:
     dependencies:
+      '@adobe/aio-commerce-lib-admin-ui-sdk':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-admin-ui-sdk
       '@adobe/aio-commerce-lib-api':
         specifier: workspace:*
         version: link:../aio-commerce-lib-api
@@ -570,6 +613,9 @@ importers:
 
   packages/aio-commerce-sdk:
     dependencies:
+      '@adobe/aio-commerce-lib-admin-ui-sdk':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-admin-ui-sdk
       '@adobe/aio-commerce-lib-api':
         specifier: workspace:*
         version: link:../aio-commerce-lib-api
@@ -670,6 +716,7 @@ packages:
   '@adobe/aio-lib-core-networking@5.1.0':
     resolution: {integrity: sha512-RZgA73yUHhikjIGy7k0DRobPbIXbtuI/0ixrBXOVqj19WTqFFrEuyHtzOuRsBAmu0OvVkf6slQHtDTL9oPLxfg==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-core-tvm@4.0.3':
     resolution: {integrity: sha512-zwl4GeU5CryZBozpub4jI9tnGW2ewD6mMLaXX8HhO8DqKzcjnjYr+MbUS0c/QzGd8gTzZWbikm4J7tfpCn3cAA==}
@@ -678,6 +725,7 @@ packages:
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-files@4.1.3':
     resolution: {integrity: sha512-OO0752wrKx57Uvu+OLkUA7UiU6OG3iQj5T0IjTqq1pflnG9wPk4fjjERj++0xv2tf/gtJouZGcUtfAD15p1vrg==}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
+
+  "root": false,
+  "extends": "//",
+
+  "overrides": [
+    {
+      "includes": ["source/**/endpoints.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            // Endpoint functions must be async for consistent error handling —
+            // sync throws would not be catchable via .catch() on the returned Promise.
+            "useAwait": "off"
+          }
+        }
+      }
+    }
+  ]
+}

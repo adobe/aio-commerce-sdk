@@ -247,7 +247,7 @@ describe("generateRegistrationActionFile", () => {
     expect(contentStr).toContain(
       "export const main = registrationRuntimeAction({ registration })",
     );
-    expect(contentStr).toContain('"my-app::first"');
+    expect(contentStr).toContain('"my_app::first"');
     expect(contentStr).toContain("selectionLimit: 1");
     expect(contentStr).toContain("productSelectLimit: 1");
     expect(contentStr).toContain("customerSelectLimit: 1");

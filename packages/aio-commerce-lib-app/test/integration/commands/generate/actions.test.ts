@@ -145,7 +145,7 @@ describe("commands/generate/actions", () => {
 
           const content = await readFile(registrationPath, "utf-8");
           expect(content).toContain("registrationRuntimeAction");
-          expect(content).toContain("my-app::first");
+          expect(content).toContain("my_app::first");
         },
       );
     });
