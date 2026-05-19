@@ -13,7 +13,7 @@
 import {
   createCustomAdminUiSdkApiClient,
   registerExtension,
-  uninstallExtension,
+  unregisterExtension,
 } from "@adobe/aio-commerce-lib-admin-ui-sdk/api";
 import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 
@@ -37,7 +37,7 @@ function createAdminUiSdkClient(params: RuntimeActionParams) {
 
   return createCustomAdminUiSdkApiClient(commerceClientParams, {
     registerExtension,
-    uninstallExtension,
+    unregisterExtension,
   });
 }
 

@@ -21,7 +21,7 @@ export const ExtensionRegistrationParamsSchema = v.object({
 });
 
 /** Parameters for DELETE /V1/adminuisdk/extension/{workspaceName}/{extensionName}. */
-export const UninstallExtensionParamsSchema = v.object({
+export const UnregisterExtensionParamsSchema = v.object({
   workspaceName: v.string(),
   extensionName: v.string(),
 });
@@ -32,6 +32,6 @@ export type ExtensionRegistrationParams = v.InferInput<
 >;
 
 /** The parameters accepted by DELETE /V1/adminuisdk/extension/{workspaceName}/{extensionName}. */
-export type UninstallExtensionParams = v.InferInput<
-  typeof UninstallExtensionParamsSchema
+export type UnregisterExtensionParams = v.InferInput<
+  typeof UnregisterExtensionParamsSchema
 >;

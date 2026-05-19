@@ -19,7 +19,7 @@ import type { AdminUiSdkExecutionContext } from "#management/installation/admin-
 /** Creates a mock AdminUiSdkExecutionContext with Admin UI SDK client methods. */
 export function createMockAdminUiSdkContext(overrides?: {
   registerExtensionImpl?: () => Promise<unknown>;
-  uninstallExtensionImpl?: () => Promise<unknown>;
+  unregisterExtensionImpl?: () => Promise<unknown>;
 }): AdminUiSdkExecutionContext {
   const mockInstallation = createMockInstallationContext();
 
@@ -29,13 +29,12 @@ export function createMockAdminUiSdkContext(overrides?: {
       registerExtension: vi
         .fn()
         .mockImplementation(
-          overrides?.registerExtensionImpl ??
-            (() => Promise.resolve({ extensionId: "ext-123" })),
+          overrides?.registerExtensionImpl ?? (() => Promise.resolve()),
         ),
-      uninstallExtension: vi
+      unregisterExtension: vi
         .fn()
         .mockImplementation(
-          overrides?.uninstallExtensionImpl ?? (() => Promise.resolve()),
+          overrides?.unregisterExtensionImpl ?? (() => Promise.resolve()),
         ),
     } as unknown as AdminUiSdkExecutionContext["adminUiSdkClient"],
   };

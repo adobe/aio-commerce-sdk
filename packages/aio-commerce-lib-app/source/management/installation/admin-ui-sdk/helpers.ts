@@ -27,7 +27,7 @@ export async function registerExtension(context: AdminUiSdkExecutionContext) {
 
   logger.info(`Registering Admin UI SDK extension: ${appData.projectName}`);
 
-  const response = await adminUiSdkClient
+  await adminUiSdkClient
     .registerExtension({
       extensionName: process.env.__OW_NAMESPACE ?? "",
       extensionTitle: appData.projectTitle,
@@ -42,11 +42,7 @@ export async function registerExtension(context: AdminUiSdkExecutionContext) {
       ),
     );
 
-  logger.info(
-    `Admin UI SDK extension registered successfully: ${response.extensionId}`,
-  );
-
-  return response;
+  logger.info("Admin UI SDK extension registered successfully.");
 }
 
 /**
@@ -55,7 +51,7 @@ export async function registerExtension(context: AdminUiSdkExecutionContext) {
  *
  * @param context - The execution context providing the Admin UI SDK client and logger.
  */
-export async function uninstallExtension(
+export async function unregisterExtension(
   context: AdminUiSdkExecutionContext,
 ): Promise<void> {
   const { adminUiSdkClient, appData, logger } = context;
@@ -66,7 +62,7 @@ export async function uninstallExtension(
   );
 
   try {
-    await adminUiSdkClient.uninstallExtension({
+    await adminUiSdkClient.unregisterExtension({
       workspaceName: appData.workspaceName,
       extensionName,
     });

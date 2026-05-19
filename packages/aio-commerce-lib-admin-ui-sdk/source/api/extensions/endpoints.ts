@@ -14,16 +14,15 @@ import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import {
   ExtensionRegistrationParamsSchema,
-  UninstallExtensionParamsSchema,
+  UnregisterExtensionParamsSchema,
 } from "./schema";
 
 import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 import type { Options } from "ky";
 import type {
   ExtensionRegistrationParams,
-  UninstallExtensionParams,
+  UnregisterExtensionParams,
 } from "./schema";
-import type { ExtensionRegistrationResult } from "./types";
 
 /**
  * Registers an Admin UI SDK extension with Commerce via POST /V1/adminuisdk/extension.
@@ -38,15 +37,13 @@ export async function registerExtension(
   httpClient: AdobeCommerceHttpClient,
   params: ExtensionRegistrationParams,
   fetchOptions?: Options,
-): Promise<ExtensionRegistrationResult> {
+): Promise<void> {
   const extension = parseOrThrow(ExtensionRegistrationParamsSchema, params);
 
-  return httpClient
-    .post("adminuisdk/extension", {
-      ...fetchOptions,
-      json: { extension },
-    })
-    .json<ExtensionRegistrationResult>();
+  await httpClient.post("adminuisdk/extension", {
+    ...fetchOptions,
+    json: { extension },
+  });
 }
 
 /**
@@ -58,13 +55,13 @@ export async function registerExtension(
  *
  * @throws An `HTTPError` if the status code is not 2XX.
  */
-export async function uninstallExtension(
+export async function unregisterExtension(
   httpClient: AdobeCommerceHttpClient,
-  params: UninstallExtensionParams,
+  params: UnregisterExtensionParams,
   fetchOptions?: Options,
 ): Promise<void> {
   const { workspaceName, extensionName } = parseOrThrow(
-    UninstallExtensionParamsSchema,
+    UnregisterExtensionParamsSchema,
     params,
   );
 

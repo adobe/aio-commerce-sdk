@@ -14,12 +14,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   registerExtension,
-  uninstallExtension,
+  unregisterExtension,
 } from "#api/extensions/endpoints";
 import { BASE_URL, makeHttpClient } from "#test/fixtures/http-client";
 
 const REGISTER_URL = `${BASE_URL}/rest/all/V1/adminuisdk/extension`;
-const UNINSTALL_URL = `${BASE_URL}/rest/all/V1/adminuisdk/extension/prod-workspace/my-namespace`;
+const UNREGISTER_URL = `${BASE_URL}/rest/all/V1/adminuisdk/extension/prod-workspace/my-namespace`;
 
 const PARAMS = {
   extensionName: "my-namespace",
@@ -29,14 +29,14 @@ const PARAMS = {
 };
 
 describe("registerExtension", () => {
-  it("POSTs to /V1/adminuisdk/extension with extension body and returns extensionId", async () => {
+  it("POSTs to /V1/adminuisdk/extension with extension body and resolves without reading a response body", async () => {
     let capturedBody: unknown;
     let capturedUrl = "";
 
     const fetchMock = vi.fn(async (input: Request) => {
       capturedUrl = input.url;
       capturedBody = await input.clone().json();
-      return Response.json({ extensionId: "ext-123" });
+      return new Response(null, { status: 204 });
     });
 
     const result = await registerExtension(
@@ -44,7 +44,7 @@ describe("registerExtension", () => {
       PARAMS,
     );
 
-    expect(result).toEqual({ extensionId: "ext-123" });
+    expect(result).toBeUndefined();
     expect(capturedUrl).toBe(REGISTER_URL);
     expect(capturedBody).toEqual({ extension: PARAMS });
   });
@@ -60,7 +60,7 @@ describe("registerExtension", () => {
   });
 });
 
-describe("uninstallExtension", () => {
+describe("unregisterExtension", () => {
   it("sends DELETE to /V1/adminuisdk/extension/{workspaceName}/{extensionName}", async () => {
     let capturedUrl = "";
     let capturedMethod = "";
@@ -71,13 +71,13 @@ describe("uninstallExtension", () => {
       return Promise.resolve(new Response(null, { status: 200 }));
     });
 
-    await uninstallExtension(makeHttpClient(fetchMock as typeof fetch), {
+    await unregisterExtension(makeHttpClient(fetchMock as typeof fetch), {
       workspaceName: "prod-workspace",
       extensionName: "my-namespace",
     });
 
     expect(capturedMethod).toBe("DELETE");
-    expect(capturedUrl).toBe(UNINSTALL_URL);
+    expect(capturedUrl).toBe(UNREGISTER_URL);
   });
 
   it("throws on non-2xx response", async () => {
@@ -86,7 +86,7 @@ describe("uninstallExtension", () => {
     );
 
     await expect(
-      uninstallExtension(makeHttpClient(fetchMock as typeof fetch), {
+      unregisterExtension(makeHttpClient(fetchMock as typeof fetch), {
         workspaceName: "prod-workspace",
         extensionName: "my-namespace",
       }),

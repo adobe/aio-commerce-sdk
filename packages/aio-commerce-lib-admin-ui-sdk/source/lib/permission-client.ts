@@ -30,6 +30,7 @@ export interface AdminUiSdkPermissionClientOptions {
   cacheTtlMs?: number;
   /** Return false instead of throwing when a network or parse error occurs. Default: true. */
   denyOnError?: boolean;
+  /** Commerce HTTP client used to call the Admin UI SDK permission endpoint. */
   httpClient: AdobeCommerceHttpClient;
 }
 

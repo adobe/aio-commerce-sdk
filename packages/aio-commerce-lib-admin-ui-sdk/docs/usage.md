@@ -18,10 +18,12 @@ For a complete list of all available types, functions, and classes, see the [API
 Use `getAdminUiSdkPermissionClient` to verify whether the current user has been granted a given ACL resource. Results are cached for 5 minutes by default, and concurrent requests for the same resource are deduplicated automatically.
 
 ```typescript
-import { createAdminUiSdkApiClient } from "@adobe/aio-commerce-lib-admin-ui-sdk/api";
+import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 import { getAdminUiSdkPermissionClient } from "@adobe/aio-commerce-lib-admin-ui-sdk/api";
 
-const httpClient = createAdminUiSdkApiClient({ /* CommerceHttpClientParams */ });
+const httpClient = new AdobeCommerceHttpClient({
+  /* CommerceHttpClientParams */
+});
 const permissions = getAdminUiSdkPermissionClient({ httpClient });
 
 // Returns true if granted, false if denied or on error (fail-closed by default)

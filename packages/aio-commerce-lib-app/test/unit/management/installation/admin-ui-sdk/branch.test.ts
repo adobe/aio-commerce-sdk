@@ -82,20 +82,22 @@ describe("admin-ui-sdk installation module", () => {
       expect(registerExtensionStep.meta.uninstall).toBeDefined();
     });
 
-    test("should call uninstallExtension with workspaceName and __OW_NAMESPACE", async () => {
+    test("should call unregisterExtension with workspaceName and __OW_NAMESPACE", async () => {
       const context = createMockAdminUiSdkContext();
 
       await registerExtensionStep.uninstall?.(configWithAdminUiSdk, context);
 
-      expect(context.adminUiSdkClient.uninstallExtension).toHaveBeenCalledWith({
-        workspaceName: context.appData.workspaceName,
-        extensionName: "test-namespace",
-      });
+      expect(context.adminUiSdkClient.unregisterExtension).toHaveBeenCalledWith(
+        {
+          workspaceName: context.appData.workspaceName,
+          extensionName: "test-namespace",
+        },
+      );
     });
 
     test("should not throw when the uninstall call fails (best-effort)", async () => {
       const context = createMockAdminUiSdkContext({
-        uninstallExtensionImpl: () =>
+        unregisterExtensionImpl: () =>
           Promise.reject(new Error("Commerce API error")),
       });
 
@@ -108,7 +110,7 @@ describe("admin-ui-sdk installation module", () => {
       const logger = createMockLogger();
       const context = {
         ...createMockAdminUiSdkContext({
-          uninstallExtensionImpl: () =>
+          unregisterExtensionImpl: () =>
             Promise.reject(new Error("Commerce API error")),
         }),
         logger,

@@ -16,7 +16,7 @@ import {
   defineLeafStep,
 } from "#management/installation/workflow/step";
 
-import { registerExtension, uninstallExtension } from "./helpers";
+import { registerExtension, unregisterExtension } from "./helpers";
 import { createAdminUiSdkStepContext } from "./utils";
 
 import type { InferStepOutput } from "#management/installation/workflow/step";
@@ -40,7 +40,7 @@ const registerExtensionStep = defineLeafStep({
     registerExtension(context),
 
   uninstall: (_: AdminUiSdkConfig, context: AdminUiSdkExecutionContext) =>
-    uninstallExtension(context),
+    unregisterExtension(context),
 });
 
 /** The output data of the register extension step (auto-inferred). */

@@ -16,5 +16,4 @@ export * from "./extensions/endpoints";
 export * from "./permissions/endpoints";
 
 export type * from "./extensions/schema";
-export type * from "./extensions/types";
 export type * from "./permissions/schema";
