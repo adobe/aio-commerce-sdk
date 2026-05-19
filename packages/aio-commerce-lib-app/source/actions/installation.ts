@@ -24,7 +24,7 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 import openwhisk from "openwhisk";
-import { object, string } from "valibot";
+import { object, picklist, string } from "valibot";
 
 import {
   createInitialInstallationState,
@@ -49,6 +49,7 @@ import type {
   InProgressInstallationState,
   InstallationState,
 } from "#management/installation/workflow/types";
+import type { CommerceSystemConfig } from "#runtime";
 
 // Action name for async invocation
 const DEFAULT_ACTION_NAME = "app-management/installation";
@@ -82,6 +83,12 @@ const InstallationRequestBodySchema = object({
   ioEventsEnv: string(),
 });
 
+/** Request body schema for POST /association. */
+const AssociationRequestBodySchema = object({
+  commerceBaseUrl: string(),
+  commerceEnv: picklist(["saas", "paas"]),
+});
+
 type WorkflowRequestBody = {
   appData: InstallationContext["appData"];
   commerceBaseUrl: string;
@@ -109,6 +116,43 @@ function createInstallationStore() {
 /** Creates the uninstallation state store. */
 function createUninstallationStore() {
   return createWorkflowStore("uninstallation");
+}
+
+const PARAM_COMMERCE_BASE_URL = "AIO_COMMERCE_BASE_URL";
+const PARAM_COMMERCE_ENV = "AIO_COMMERCE_ENV";
+
+/** Extracts the OpenWhisk package name from an action name. */
+function getPackageName(actionName: string): string {
+  const parts = actionName.split("/").filter(Boolean);
+  if (parts.length < 2) {
+    throw new Error(`Cannot determine package from action name: ${actionName}`);
+  }
+  return parts.at(-2) as string;
+}
+
+/**
+ * Merges the given key/value updates into the package's existing parameters,
+ * removing entries whose value is undefined.
+ */
+async function syncPackageParams(
+  packageName: string,
+  updates: Record<string, string | undefined>,
+): Promise<void> {
+  const ow = openwhisk();
+  const current = await ow.packages.get({ name: packageName });
+  const existing = (current.parameters ?? []) as Array<{
+    key: string;
+    value: string;
+  }>;
+  const updateKeys = Object.keys(updates);
+  const kept = existing.filter((p) => !updateKeys.includes(p.key));
+  const added = updateKeys
+    .filter((key) => updates[key] !== undefined)
+    .map((key) => ({ key, value: updates[key] as string }));
+  await ow.packages.update({
+    name: packageName,
+    package: { parameters: [...kept, ...added] },
+  });
 }
 
 /** Returns the storage key used to store the current installation ID. */
@@ -596,6 +640,56 @@ router.delete("/uninstallation", {
     const store = await createUninstallationStore();
     await store.delete(getStorageKey());
     logger.debug("Uninstallation state cleared");
+    return noContent();
+  },
+});
+
+/**
+ * POST /association - Store Commerce system config
+ *
+ * Called by commerce-app-management after associating the app with a Commerce instance.
+ * Stores the Base URL and env (PaaS/SaaS) for retrieval by runtime actions via
+ * getCommerceSystemConfig().
+ */
+router.post("/association", {
+  body: AssociationRequestBodySchema,
+
+  handler: async (req, { logger }) => {
+    const { commerceBaseUrl, commerceEnv } = req.body;
+    logger.debug(
+      `Storing Commerce system config: baseUrl=${commerceBaseUrl}, env=${commerceEnv}`,
+    );
+
+    const packageName = getPackageName(process.env.__OW_ACTION_NAME ?? "");
+    await syncPackageParams(packageName, {
+      [PARAM_COMMERCE_BASE_URL]: commerceBaseUrl,
+      [PARAM_COMMERCE_ENV]: commerceEnv,
+    });
+
+    const config: CommerceSystemConfig = {
+      baseUrl: commerceBaseUrl,
+      env: commerceEnv,
+    };
+    return ok({ body: config });
+  },
+});
+
+/**
+ * DELETE /association - Clear Commerce system config
+ *
+ * Called by commerce-app-management after unassociating the app from a Commerce instance.
+ * Removes the stored config so runtime actions no longer have access to stale data.
+ */
+router.delete("/association", {
+  handler: async (_req, { logger }) => {
+    logger.debug("Clearing Commerce system config");
+
+    const packageName = getPackageName(process.env.__OW_ACTION_NAME ?? "");
+    await syncPackageParams(packageName, {
+      [PARAM_COMMERCE_BASE_URL]: undefined,
+      [PARAM_COMMERCE_ENV]: undefined,
+    });
+
     return noContent();
   },
 });

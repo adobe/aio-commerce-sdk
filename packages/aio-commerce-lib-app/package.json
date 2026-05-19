@@ -63,6 +63,16 @@
           "default": "./dist/cjs/management/index.cjs"
         }
       },
+      "./runtime": {
+        "import": {
+          "types": "./dist/es/runtime.d.mts",
+          "default": "./dist/es/runtime.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/runtime.d.cts",
+          "default": "./dist/cjs/runtime.cjs"
+        }
+      },
       "./package.json": "./package.json"
     }
   },
@@ -70,6 +80,7 @@
     "./actions": "./source/actions/index.ts",
     "./config": "./source/config/index.ts",
     "./management": "./source/management/index.ts",
+    "./runtime": "./source/runtime.ts",
     "./package.json": "./package.json"
   },
   "imports": {

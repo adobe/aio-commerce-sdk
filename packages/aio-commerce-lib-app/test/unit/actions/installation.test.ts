@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
   invokeMock,
@@ -21,14 +21,22 @@ const {
   runInstallationMock,
   runUninstallationMock,
   runValidationMock,
+  mockPackagesGet,
+  mockPackagesUpdate,
 } = vi.hoisted(() => {
   const invokeMock = vi.fn();
+  const mockPackagesGet = vi.fn();
+  const mockPackagesUpdate = vi.fn();
 
   return {
     invokeMock,
     openwhiskMock: vi.fn(() => ({
       actions: {
         invoke: invokeMock,
+      },
+      packages: {
+        get: mockPackagesGet,
+        update: mockPackagesUpdate,
       },
     })),
     createCombinedStoreMock: vi.fn(),
@@ -37,6 +45,8 @@ const {
     runInstallationMock: vi.fn(),
     runUninstallationMock: vi.fn(),
     runValidationMock: vi.fn(),
+    mockPackagesGet,
+    mockPackagesUpdate,
   };
 });
 
@@ -782,6 +792,155 @@ describe("installationRuntimeAction", () => {
         type: "success",
         statusCode: 204,
       });
+    });
+  });
+
+  describe("POST /association", () => {
+    beforeEach(() => {
+      process.env.__OW_ACTION_NAME = "/namespace/test-package/installation";
+      mockPackagesGet.mockResolvedValue({ parameters: [] });
+      mockPackagesUpdate.mockResolvedValue({});
+    });
+
+    afterEach(() => {
+      delete process.env.__OW_ACTION_NAME;
+    });
+
+    test("stores config as package params and returns 200 with the stored config", async () => {
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          method: "post",
+          path: "/association",
+          body: {
+            commerceBaseUrl: "https://commerce.example.com",
+            commerceEnv: "saas",
+          },
+        }),
+      );
+
+      expect(result).toMatchObject({
+        type: "success",
+        statusCode: 200,
+        body: { baseUrl: "https://commerce.example.com", env: "saas" },
+      });
+      expect(mockPackagesUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "test-package",
+          package: expect.objectContaining({
+            parameters: expect.arrayContaining([
+              {
+                key: "AIO_COMMERCE_BASE_URL",
+                value: "https://commerce.example.com",
+              },
+              { key: "AIO_COMMERCE_ENV", value: "saas" },
+            ]),
+          }),
+        }),
+      );
+    });
+
+    test("accepts paas env", async () => {
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          method: "post",
+          path: "/association",
+          body: {
+            commerceBaseUrl: "https://commerce.example.com",
+            commerceEnv: "paas",
+          },
+        }),
+      );
+
+      expect(result).toMatchObject({
+        type: "success",
+        statusCode: 200,
+        body: { env: "paas" },
+      });
+    });
+
+    test("returns 400 when commerceBaseUrl is missing", async () => {
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          method: "post",
+          path: "/association",
+          body: { commerceEnv: "saas" },
+        }),
+      );
+
+      expect(result).toMatchObject({ error: { statusCode: 400 } });
+    });
+
+    test("returns 400 when commerceEnv is invalid", async () => {
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          method: "post",
+          path: "/association",
+          body: {
+            commerceBaseUrl: "https://commerce.example.com",
+            commerceEnv: "invalid-env",
+          },
+        }),
+      );
+
+      expect(result).toMatchObject({ error: { statusCode: 400 } });
+    });
+  });
+
+  describe("DELETE /association", () => {
+    beforeEach(() => {
+      process.env.__OW_ACTION_NAME = "/namespace/test-package/installation";
+      mockPackagesUpdate.mockResolvedValue({});
+    });
+
+    afterEach(() => {
+      delete process.env.__OW_ACTION_NAME;
+    });
+
+    test("removes package params and returns 204", async () => {
+      mockPackagesGet.mockResolvedValue({
+        parameters: [
+          {
+            key: "AIO_COMMERCE_BASE_URL",
+            value: "https://commerce.example.com",
+          },
+          { key: "AIO_COMMERCE_ENV", value: "saas" },
+          { key: "OTHER_PARAM", value: "keep-me" },
+        ],
+      });
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({ method: "delete", path: "/association" }),
+      );
+
+      expect(result).toMatchObject({ type: "success", statusCode: 204 });
+      expect(mockPackagesUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "test-package",
+          package: expect.objectContaining({
+            parameters: [{ key: "OTHER_PARAM", value: "keep-me" }],
+          }),
+        }),
+      );
     });
   });
 });
