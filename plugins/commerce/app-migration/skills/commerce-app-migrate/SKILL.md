@@ -1,6 +1,6 @@
 ---
 name: commerce-app-migrate
-description: Migrate an Adobe Commerce App Builder project from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach. Run from the root of the App Builder project to be migrated. Pass --auto to skip confirmation prompts (suitable for CI or batch use). Use when the user wants to migrate an App Builder project from the Integration Starter Kit or Checkout Starter Kit to the App Management approach, or mentions upgrading their Adobe Commerce extension architecture.
+description: Migrate an Adobe Commerce App Builder project from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach. Run from the root of the App Builder project to be migrated. Pass --auto to skip confirmation prompts (suitable for CI or batch use). Pass --doc-scan-only to scan README.md and env.dist for outdated content without modifying any files. Use when the user wants to migrate an App Builder project from the Integration Starter Kit or Checkout Starter Kit to the App Management approach, or mentions upgrading their Adobe Commerce extension architecture.
 ---
 
 # Migrate to App Management
@@ -20,6 +20,11 @@ and wait for the developer's reply before proceeding.
 **Autonomous mode:** If invoked with `--auto` or `--yes`, or the context indicates an
 automated pipeline (no interactive terminal), skip all **[await]** points and proceed
 directly to the next step.
+
+**Doc-scan-only mode:** If invoked with `--doc-scan-only`, skip all migration steps after
+the Analyzer. After Step 1 completes (Analyzer returns a `ProjectSnapshot`), apply any
+applicable Cross-cutting Warnings, then dispatch the Executor in doc-scan-only mode
+regardless of `alreadyMigrated` status. No files are modified. Do not proceed to Steps 2–5.
 
 ---
 
@@ -62,10 +67,21 @@ The Analyzer reads the current directory and returns a `ProjectSnapshot` JSON ob
     If you want to re-generate specific sections, please specify which
     section to update: metadata / eventing / installation / adminUiSdk / businessConfig
 
-Then apply any applicable Cross-cutting Warnings (see subsection below). Then stop.
+Then apply any applicable Cross-cutting Warnings (see subsection below).
 
-**Do not proceed further if alreadyMigrated is true unless the developer explicitly
-requests a specific section update.**
+Then dispatch the Executor agent (`${CLAUDE_SKILL_DIR}/agents/executor.md`) in
+**doc-scan-only mode** to produce documentation recommendations for the project:
+
+- Pass `mode = "doc-scan-only"` to the Executor
+- Pass the `ProjectSnapshot` JSON from the Analyzer
+- Pass `assembled config = null` (no new config to write)
+
+The Executor will scan `README.md` and `env.dist` against the existing
+`app.commerce.config.ts` and print the "Documentation recommendations" report
+without modifying any files.
+
+**Do not proceed to Steps 2–5 (domain agents, Q&A, config assembly, full execution)
+unless the developer explicitly requests a specific section update.**
 
 After the Analyzer returns, print a human-readable summary:
 

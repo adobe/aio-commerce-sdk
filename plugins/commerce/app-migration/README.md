@@ -16,7 +16,8 @@ Orchestrates the full migration workflow: project detection → domain analysis 
 
 ```
 /commerce-app-migrate
-/commerce-app-migrate --auto   # skip confirmation prompts (CI or batch use)
+/commerce-app-migrate --auto          # skip confirmation prompts (CI or batch use)
+/commerce-app-migrate --doc-scan-only # scan README.md and env.dist only, no files modified
 ```
 
 **What it does:**
@@ -26,11 +27,21 @@ Orchestrates the full migration workflow: project detection → domain analysis 
 3. **Domain agents** — runs specialized agents in parallel for each detected domain (events, webhooks, Admin UI SDK, business config)
 4. **Q&A** — asks targeted questions for anything that cannot be inferred automatically
 5. **Config assembly** — generates `app.commerce.config.ts` with `defineConfig(...)` from `@adobe/aio-commerce-lib-app/config`
-6. **Execute** — writes the config file and applies required project changes
+6. **Execute** — writes the config file, installs dependencies, generates extension scaffolding, and updates `app.config.yaml` and `install.yaml`
+7. **Documentation recommendations** — scans `README.md` and `env.dist` for content that is no longer needed after migration and explains why each item is obsolete; this analysis runs before `npm install` so recommendations are always produced even if the install step fails or is blocked
+
+**Already-migrated projects:** If the project already contains `app.commerce.config.ts`, the skill skips the migration and runs a **documentation scan only** — scanning `README.md` and `env.dist` against the existing config and printing recommendations without modifying any files.
+
+**Documentation recommendations cover:**
+
+- README sections referencing obsolete onboarding scripts (`npm run onboard`, `aio commerce:event:subscribe`, Adobe I/O Console setup steps), manual credential configuration, or webhook registration steps that are now handled declaratively
+- `env.dist` entries for credentials and configuration now managed by the App Management platform: IMS/SaaS auth (`OAUTH_*`), PaaS OAuth1 (`COMMERCE_CONSUMER_*`, `COMMERCE_ACCESS_TOKEN*`), Adobe I/O workspace vars (`AIO_RUNTIME_NAMESPACE`, `AIO_RUNTIME_AUTH`, `IO_MANAGEMENT_API_KEY`, `IO_*`), event config vars (`AIO_EVENTS_*`, `COMMERCE_ADOBE_IO_EVENTS_*`), and webhook vars (`COMMERCE_WEBHOOKS_PUBLIC_KEY`)
+- Duplicate `env.dist` keys flagged explicitly (e.g. a key that appears twice in the file)
+- An annotated README removal guide (inline `<!-- ✂ REMOVE -->` comments) for projects with 5 or more flagged sections
 
 **Supported source projects:** Integration Starter Kit, Checkout Starter Kit, Admin UI SDK extensions.
 
-**Output:** A ready-to-deploy `app.commerce.config.ts` in the project root, with all detected domains mapped to the App Management configuration schema.
+**Output:** A ready-to-deploy `app.commerce.config.ts` in the project root, with all detected domains mapped to the App Management configuration schema, plus a documentation cleanup report printed in the terminal.
 
 ## Installation
 
