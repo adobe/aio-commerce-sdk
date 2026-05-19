@@ -141,6 +141,57 @@ describe("events installation module", () => {
         mockContext.commerceEventsClient.getAllEventProviders,
       ).toHaveBeenCalled();
     });
+
+    test("should forward rules to createEventSubscription", async () => {
+      const mockCreateEventSubscription = vi.fn().mockResolvedValue({
+        name: "test-subscription",
+        enabled: true,
+      });
+
+      const mockContext = createMockEventingInstallationContext({
+        params: {
+          AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com",
+          AIO_COMMERCE_API_FLAVOR: "saas",
+        },
+        ioEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue({
+            _embedded: { providers: [] },
+          }),
+          getAllRegistrations: vi.fn().mockResolvedValue({
+            _embedded: { registrations: [] },
+          }),
+          createEventProvider: vi.fn().mockResolvedValue({
+            id: "provider-123",
+            provider_metadata: "dx_commerce_events",
+          }),
+          createEventMetadataForProvider: vi
+            .fn()
+            .mockResolvedValue({ event_code: "test-event-code" }),
+          createRegistration: vi
+            .fn()
+            .mockResolvedValue({ id: "registration-123" }),
+          deleteRegistration: vi.fn().mockResolvedValue(undefined),
+        },
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+          updateEventingConfiguration: vi.fn().mockResolvedValue({}),
+          createEventProvider: vi
+            .fn()
+            .mockResolvedValue({ id: "commerce-provider-123" }),
+          createEventSubscription: mockCreateEventSubscription,
+        },
+      });
+
+      await commerceEventsStep.install(configWithCommerceEventing, mockContext);
+
+      const [commerceSource] = configWithCommerceEventing.eventing.commerce;
+      const [event] = commerceSource.events;
+
+      expect(mockCreateEventSubscription).toHaveBeenCalledWith(
+        expect.objectContaining({ rules: event.rules }),
+      );
+    });
   });
 
   describe("externalEventsStep leaf step", () => {
