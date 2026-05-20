@@ -45,6 +45,34 @@ For each identified key, add an unresolved question:
       "default": "text"
     }
 
+**aio-lib-files path detection (single blob pattern):**
+If `filesLib.read(path)` is called with a whole file path (e.g. `filesLib.read("configs/my-config.json")`)
+rather than individual keyed values, this indicates the app stores config as a single opaque blob
+rather than named merchant fields. In this case:
+
+1. Generate a single schema field using the file path as the name (fallback behavior — kept for compatibility).
+2. Add `"_source": "aio-lib-files-path"` to the generated field object in the `configFragment` so the
+   Executor can detect and warn about this pattern. Example:
+   ```json
+   {
+     "name": "configs/my-config.json",
+     "type": "text",
+     "label": "Config",
+     "_source": "aio-lib-files-path"
+   }
+   ```
+3. ALSO add this unresolved question:
+   ```json
+   {
+     "id": "businessConfig.aioLibFiles.fieldNames",
+     "prompt": "The app stores config as a JSON blob at \"<path>\". For a better merchant experience, replace this with individual named fields. Provide field names and types as comma-separated pairs (e.g. \"api_key:password,sender_id:text\"), or press Enter to keep the file-path field as-is.",
+     "default": "keep-as-is"
+   }
+   ```
+
+Note: The `_source` property is for internal Executor use only. The Executor strips it before
+writing `app.commerce.config.ts` — it must NOT appear in the generated TypeScript output.
+
 ---
 
 ## Inference Rules

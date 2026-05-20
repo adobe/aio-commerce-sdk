@@ -76,6 +76,17 @@ Prepend this copyright header before the config content:
      * governing permissions and limitations under the License.
      */
 
+**Strip internal metadata fields before writing:**
+Before writing the file, remove any internal-use-only properties that domain agents may have
+added to the configFragment (these are for Executor use only and must NOT appear in the output):
+
+- `"_source"` — marks auto-generated fields (e.g. `"_source": "aio-lib-files-path"`)
+- `"_directionWarning"` — carries warning text for non-standard event provider keys (rendered as
+  a `// ⚠` comment before the provider object, then removed from the written TypeScript)
+
+For `_directionWarning`: emit `// ⚠ <warning text>` as an inline TypeScript comment on the line
+immediately before the `provider: {` key, then omit the `_directionWarning` property from the output.
+
 ---
 
 ## Step 3: Migrate custom installation scripts
@@ -810,7 +821,17 @@ Rule 8 is **not subject to the "Never flag" allowlist** below — a duplicate `L
 `ENCRYPTION_KEY` entry is still a duplicate and should be flagged. The allowlist prevents
 flagging keys as _obsolete_; it does not prevent flagging them as _malformed_.
 
-**Never flag these keys as obsolete (Rules 1–7 only):**
+**Rule 9 — Unreferenced variables (catch-all):**
+Apply ONLY to keys that matched NONE of Rules 1–8.
+For each such key NOT in the "Never flag" list below:
+Run: `grep -rl "<KEY>" actions/ actions-src/ src/ lib/ scripts/ app.config.yaml 2>/dev/null | head -1`
+If the grep returns NO match (zero files found), add the key to Category D with:
+→ reason: `"not referenced in any action file or configuration; likely unused — verify before removing"`
+
+Note: This rule fires last. A key already matched by Rules 1–8 is excluded from Rule 9 even
+if it also has no runtime references (Rules 1–8 provide the more specific, actionable reason).
+
+**Never flag these keys as obsolete (Rules 1–9 only):**
 `COMMERCE_BASE_URL`, `LOG_LEVEL`, `ENABLE_TELEMETRY`, `NEW_RELIC_LICENSE_KEY`, `ENABLE_EXTRA_LOGGING`, `ENCRYPTION_KEY`, `ENCRYPTION_IV`, `APPBUILDER_ENCRYPTION_KEY`.
 Also never flag any key that is clearly a third-party service credential (Klaviyo, NetSuite, Salesforce, Adyen, OpenSearch, etc.) — recognisable by vendor-specific prefixes that do not match the patterns above.
 
@@ -852,8 +873,24 @@ Content describing any of: `aio console org/project/workspace select`, `aio app 
 → reason: `"event provider and subscription setup is now handled declaratively in app.commerce.config.ts"`
 
 **Pattern 4 — Documentation of redundant env vars:**
-Sections that list or describe variable names that appear in `redundantEnvKeys`.
-→ reason: `"documents <KEY> and related variables that may no longer be needed after migration"`
+
+Match sections that contain ANY of the following:
+
+1. **Exact key names:** Any variable name that appears in `redundantEnvKeys` is mentioned literally in the section text.
+2. **IMS/SaaS credential family terms** (apply when `redundantEnvKeys` contains any Rule 2 key):
+   Match sections containing any of: `IMS OAuth`, `Server-to-Server`, `OAuth Server-to-Server`, `OAuth Client ID`, `Adobe Developer Console`, `OAUTH_CLIENT_ID`, `IMS credentials`, `IMS authentication`, `Service Account credentials`.
+3. **PaaS/OAuth1 credential family terms** (apply when `redundantEnvKeys` contains any Rule 1 key):
+   Match sections containing any of: `OAuth 1.0a`, `Commerce OAuth`, `Consumer Key`, `COMMERCE_CONSUMER_KEY`, `Commerce integration`, `OAuth integration credentials`.
+4. **Workspace credential family terms** (apply when `redundantEnvKeys` contains any Rule 3 key):
+   Match sections containing any of: `App Builder workspace`, `aio console org select`, `workspace.json`, `IO_CONSUMER_ID`, `workspace credentials`.
+
+→ reason: `"documents <key family or specific KEY> and related variables that may no longer be needed after migration"`
+
+**Pattern 5 — Environment setup boilerplate:**
+Content that describes copying the environment template: `cp env.dist .env`, `copy env.dist to .env`,
+or a numbered step saying "copy the environment template" or "configure environment variables from
+the template file".
+→ reason: `"environment setup instructions may need updating — many variables are now injected by App Management for deployed instances; local development setup may still be valid"`
 
 **Do not flag** content that is inside a fenced code block showing the new App Management approach, or inside a "Changelog", "Migration notes", or "What changed" section that already describes the migration.
 
@@ -867,7 +904,7 @@ flagged section heading with an inline removal comment. For each flagged section
 3. Prepend an inline comment based on which pattern matched:
    - **Pattern 1 match** → `<!-- ✂ REMOVE: <reason> -->`
      (the section is dedicated to a single removable/automated script and can be deleted)
-   - **Patterns 2–4 match** → `<!-- ✂ UPDATE: <reason> -->`
+   - **Patterns 2–5 match** → `<!-- ✂ UPDATE: <reason> -->`
      (the section may contain a mix of obsolete and still-valid content; review before removing)
 
 Assemble all flagged sections into a single fenced Markdown block and print it in the
@@ -969,6 +1006,20 @@ constraints, Next steps) when in doc-scan-only mode.
       Safe to remove that block manually — it is no longer used by App Management.
     ← end conditional →
 
+    ← include only if any field in businessConfig.schema has "_source": "aio-lib-files-path",
+       OR if reading app.commerce.config.ts reveals a schema field whose "name" contains "/" or ends in ".json" →
+    ── businessConfig schema may need refinement ──────────────────────
+      ⚠ One or more businessConfig fields were auto-generated from aio-lib-files path detection:
+
+      [  <field-name>
+              └─ field name is a file path, not a merchant-visible label — consider replacing with
+                 individual named fields (e.g. api_key, sender_id, account_token)  ]
+         ← one line per detected path-name field →
+
+      To update: edit businessConfig.schema in app.commerce.config.ts and replace the
+      file-path field with individual fields matching your app's actual configuration keys.
+    ← end conditional →
+
     ← include only if ProjectSnapshot.productDependencies is non-null →
     ── Commerce version constraints ───────────────────────────────────
       productDependencies:  minVersion <value>  ·  maxVersion <value>
@@ -988,12 +1039,18 @@ constraints, Next steps) when in doc-scan-only mode.
 
       Update or remove these sections once the migration is verified.
 
+         ← if Category C count is 1–4, append this note →
+      (Tip: run `/commerce-app-migrate --doc-scan-only` after adding more content to README.md
+      to regenerate recommendations. An annotated inline removal guide is shown when 5 or more
+      sections are identified.)
+         ← end note →
+
          ← include annotated removal guide only if Category C count ≥ 5 →
       ── README.md — annotated removal guide ──────────────────────────
       Each flagged section is marked below. Sections not listed are unaffected.
 
       ```markdown
-      [  <!-- ✂ REMOVE/UPDATE: <reason> -->   ← REMOVE for Pattern 1, UPDATE for Patterns 2–4
+      [  <!-- ✂ REMOVE/UPDATE: <reason> -->   ← REMOVE for Pattern 1, UPDATE for Patterns 2–5
          <heading line>
          <up to 3 body lines>  ]
          ← one block per flagged section, in document order →
@@ -1016,12 +1073,48 @@ constraints, Next steps) when in doc-scan-only mode.
          ← include only if Rules 1–7 found obsolete entries →
       Obsolete entries after migration:
 
-      [  <KEY> ]
-           └─ <reason>
-         ← one block per identified entry →
+      **Grouping rules for output:**
 
-      Remove these from env.dist (and .env if present) once verified.
-      Note: auth credential entries may still be needed for local development.
+      First, sort all Rule 1–7 findings (excluding Rule 8 duplicates) into three buckets:
+
+      **Bucket A — "App Management managed" (safe to remove after deployment):**
+      Entries where the rule's reason was NOT overridden by the runtime reference check
+      (i.e. the key was NOT found in any action/src/lib file). These are truly safe to remove.
+
+      **Bucket B — "Review manually" groups:**
+      Entries where the runtime reference override applied. Group ALL entries that reference
+      the SAME file together. For each unique referenced file, emit one group block.
+
+      **Bucket C — "Only in removable/automated scripts":**
+      Entries matched by Rule 4 or Rule 5. These reference scripts being removed — they are
+      safe to remove from env.dist once the scripts are removed.
+
+      Print in this order:
+
+      If Bucket A is non-empty:
+
+          ── App Management managed — safe to remove after verifying injection ─────────
+            <KEY1>, <KEY2>, <KEY3>
+            └─ These are managed by App Management for deployed instances.
+               They may still be needed in .env for local development.
+
+      For each unique file in Bucket B (sorted by file path):
+
+          ── Review manually — still referenced in <relative-file-path> ──────────────
+            <KEY1>, <KEY2>, <KEY3>
+            └─ Ensure App Management injects these values before removing.
+
+      If Bucket C is non-empty:
+
+          ── Onboarding/script-only — safe to remove with the scripts ─────────────────
+            <KEY1>, <KEY2>
+            └─ Only used in <script-name>, which is no longer needed after migration.
+
+      After all buckets:
+
+          Remove confirmed-safe entries from env.dist (and .env if present) once verified.
+          Note: Bucket B entries may still be needed for local development until App Management
+          credential injection is confirmed for your deployment.
          ← end obsolete block →
          ← end Category D subsection →
     ← end conditional block →
