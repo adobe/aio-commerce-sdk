@@ -131,7 +131,7 @@ actions:
 import {
   resolveCommerceHttpClientParams,
   AdobeCommerceHttpClient,
-} from "@adobe/aio-commerce-lib-api/commerce";
+} from "@adobe/aio-commerce-lib-api";
 
 export const main = async function (params) {
   const clientParams = resolveCommerceHttpClientParams(params);
@@ -165,7 +165,7 @@ actions:
 import {
   resolveCommerceHttpClientParams,
   AdobeCommerceHttpClient,
-} from "@adobe/aio-commerce-lib-api/commerce";
+} from "@adobe/aio-commerce-lib-api";
 
 export const main = async function (params) {
   const clientParams = resolveCommerceHttpClientParams(params);
@@ -237,7 +237,7 @@ actions:
 import {
   resolveCommerceHttpClientParams,
   AdobeCommerceHttpClient,
-} from "@adobe/aio-commerce-lib-api/commerce";
+} from "@adobe/aio-commerce-lib-api";
 
 export const main = async function (params) {
   // Use tryForwardAuthProvider to forward the pre-existing token
@@ -267,7 +267,7 @@ The same pattern works for I/O Events:
 import {
   resolveIoEventsHttpClientParams,
   AdobeIoEventsHttpClient,
-} from "@adobe/aio-commerce-lib-api/io-events";
+} from "@adobe/aio-commerce-lib-api";
 
 export const main = async function (params) {
   const clientParams = resolveIoEventsHttpClientParams(params, {
