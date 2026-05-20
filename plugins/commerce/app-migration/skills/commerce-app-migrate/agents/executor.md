@@ -36,8 +36,9 @@ from disk — `app.commerce.config.ts` if it exists, otherwise `app.commerce.con
 
 - `eventsDeclarative`: file content contains `"eventing:"`
 - `webhooksDeclarative`: file content contains `"webhooks:"`
-- `customInstallationSteps` script paths: scan for `.script` property patterns
-  in the file content; if none found, use `[]`
+- `customInstallationSteps` script paths: scan the file for `script:` key patterns —
+  look for lines matching `script: "./`, `script: "/`, `script: './`, or `script: '/`
+  and extract the quoted string value as a script path. If none found, use `[]`
 - `convertedYamlFiles`: `[]` (no YAML conversion happened in this mode)
 
 The Step 10 report header is also modified for doc-scan-only mode — see Step 10.
@@ -429,8 +430,8 @@ Steps 4–5 succeed, time out, or are blocked.
 In **doc-scan-only mode**, run this step using the modified inputs described in the
 "Operating Modes" section above. Skip Steps 1–3 entirely and begin here.
 
-Execute the computation described in Step 10's **"Before printing, compute"** section
-(all Category A, B, C, D rules).
+Apply all computation rules defined below in Step 10 (Categories A, B, C, D). Those rules
+are written in Step 10 for readability but execute here, before npm install.
 
 - `convertedYamlFiles` for Category B is the list built during Step 3
   (empty `[]` in doc-scan-only mode)
@@ -792,6 +793,13 @@ Keys matching any of: `AIO_EVENTS_PROVIDER_ID`, `AIO_EVENTS_REGISTRATION_ID`, `A
 Keys matching `COMMERCE_WEBHOOKS_PUBLIC_KEY` or any key matching `*_WEBHOOKS_*`
 → reason: `"webhook registration is now declared in app.commerce.config.ts"`
 
+**Runtime reference override (applies to Rules 1–3, 6, and 7):**
+After a key matches one of these rules, run:
+`grep -rl "<KEY>" actions/ actions-src/ src/ lib/ 2>/dev/null | head -1`
+If any matching file is found, downgrade the flag — replace the rule's default reason with:
+`"review manually: still referenced in <relative path> — ensure App Management injects this value before removing"`
+This check does not apply to Rule 4 or Rule 5 (which already check runtime references), or Rule 8.
+
 **Rule 8 — Duplicate entries** (checked before Rules 1–7, independent of the allowlist):
 For each entry in `ProjectSnapshot.envDistDuplicates` (keys with count > 1):
 → reason: `"appears <N> times in env.dist (duplicate entry — should appear only once)"`
@@ -856,7 +864,11 @@ flagged section heading with an inline removal comment. For each flagged section
 
 1. Find the heading line in `README.md` that matches the flagged `location`
 2. Extract that heading line + up to 3 body lines immediately following it
-3. Prepend: `<!-- ✂ REMOVE: <reason> -->`
+3. Prepend an inline comment based on which pattern matched:
+   - **Pattern 1 match** → `<!-- ✂ REMOVE: <reason> -->`
+     (the section is dedicated to a single removable/automated script and can be deleted)
+   - **Patterns 2–4 match** → `<!-- ✂ UPDATE: <reason> -->`
+     (the section may contain a mix of obsolete and still-valid content; review before removing)
 
 Assemble all flagged sections into a single fenced Markdown block and print it in the
 "Documentation recommendations" output under:
@@ -981,7 +993,7 @@ constraints, Next steps) when in doc-scan-only mode.
       Each flagged section is marked below. Sections not listed are unaffected.
 
       ```markdown
-      [  <!-- ✂ REMOVE: <reason> -->
+      [  <!-- ✂ REMOVE/UPDATE: <reason> -->   ← REMOVE for Pattern 1, UPDATE for Patterns 2–4
          <heading line>
          <up to 3 body lines>  ]
          ← one block per flagged section, in document order →
