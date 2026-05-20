@@ -98,8 +98,10 @@ For each line in `env.dist`:
 - Skip lines that start with `#` (comments) or are blank
 - Extract the portion of the line before the first `=` character; trim surrounding whitespace
 - If the line contains no `=`, use the entire trimmed line as the key name
+- Validate the candidate key name against the pattern `^[A-Z_][A-Z0-9_]*$`
+  - If the key does NOT match (e.g. contains lowercase letters, spaces, or shell metacharacters), skip the line silently — do not include it in `envDistKeys`
 
-Store the resulting array of key names as `envDistKeys`.
+Store the resulting array of validated key names as `envDistKeys`.
 
 Example — given this `env.dist`:
 

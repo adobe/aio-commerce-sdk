@@ -807,7 +807,9 @@ Read the content of each file in the Category A removable list. If the KEY strin
 
 **Rule 5 — Only referenced in automated installation scripts:**
 Read the content of each script listed in `installation.customInstallationSteps` from the assembled config. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/`, `actions-src/`, `src/`, or `lib/`:
-→ reason: `"only used in automated installation steps — no longer needed as a standalone env.dist entry"`
+→ reason: `"only referenced in <script-filename> (customInstallationStep) — verify App Management injects this value before removing"`
+
+Route Rule 5 findings to **Bucket B** (review manually), grouped by the customInstallationStep script path. Do NOT place them in Bucket C — these scripts are not removed; they run automatically during installation.
 
 **Rule 6 — Event configuration variables** (apply only if the assembled config has an `eventing` section):
 Keys matching any of: `AIO_EVENTS_PROVIDER_ID`, `AIO_EVENTS_REGISTRATION_ID`, `AIO_EVENTS_CONSUMER_ORG_ID`, `COMMERCE_ADOBE_IO_EVENTS_MERCHANT_ID`, `COMMERCE_ADOBE_IO_EVENTS_ENVIRONMENT_ID`, `EVENT_PREFIX`, `FEED_GENERATOR_PROVIDER_ID`, `COMMERCE_PROVIDER_ID`, or any key matching `REGISTRATION_ID_*`, `*_REGISTRATION_ID`, or `EVENT_PROVIDER_*`
@@ -819,10 +821,12 @@ Keys matching `COMMERCE_WEBHOOKS_PUBLIC_KEY` or any key matching `*_WEBHOOKS_*`
 
 **Runtime reference override (applies to Rules 1–3, 6, and 7):**
 After a key matches one of these rules, run:
-`grep -rl "<KEY>" actions/ actions-src/ src/ lib/ 2>/dev/null | head -1`
+`grep -rlF "<KEY>" actions/ actions-src/ src/ lib/ 2>/dev/null | head -1`
 If any matching file is found, downgrade the flag — replace the rule's default reason with:
 `"review manually: still referenced in <relative path> — ensure App Management injects this value before removing"`
 This check does not apply to Rule 4 or Rule 5 (which already check runtime references), or Rule 8.
+
+**grep flag note:** All grep commands in Rules 1–9 that search for a KEY string must use the `-F` (fixed-string) flag to prevent env var key names from being treated as regex patterns.
 
 **Rule 8 — Duplicate entries** (checked before Rules 1–7, independent of the allowlist):
 For each entry in `ProjectSnapshot.envDistDuplicates` (keys with count > 1):
@@ -837,9 +841,11 @@ flagging keys as _obsolete_; it does not prevent flagging them as _malformed_.
 **Rule 9 — Unreferenced variables (catch-all):**
 Apply ONLY to keys that matched NONE of Rules 1–8.
 For each such key NOT in the "Never flag" list below:
-Run: `grep -rl "<KEY>" actions/ actions-src/ src/ lib/ scripts/ app.config.yaml 2>/dev/null | head -1`
+Run: `grep -rlF "<KEY>" actions/ actions-src/ src/ lib/ scripts/ app.config.yaml 2>/dev/null | head -1`
 If the grep returns NO match (zero files found), add the key to Category D with:
 → reason: `"not referenced in any action file or configuration; likely unused — verify before removing"`
+
+Route Rule 9 findings to **Bucket D** in the output.
 
 Note: This rule fires last. A key already matched by Rules 1–8 is excluded from Rule 9 even
 if it also has no runtime references (Rules 1–8 provide the more specific, actionable reason).
@@ -1083,24 +1089,28 @@ constraints, Next steps) when in doc-scan-only mode.
       Remove duplicate occurrences, keeping exactly one entry per key.
          ← end duplicate block →
 
-         ← include only if Rules 1–7 found obsolete entries →
+         ← include only if Rules 1–7, Rule 9, or both found obsolete entries →
       Obsolete entries after migration:
 
       **Grouping rules for output:**
 
-      First, sort all Rule 1–7 findings (excluding Rule 8 duplicates) into three buckets:
+      First, sort all Rule 1–7 and Rule 9 findings (excluding Rule 8 duplicates) into four buckets:
 
       **Bucket A — "App Management managed" (safe to remove after deployment):**
-      Entries where the rule's reason was NOT overridden by the runtime reference check
-      (i.e. the key was NOT found in any action/src/lib file). These are truly safe to remove.
+      Entries from Rules 1–3, 6, 7 where the runtime reference check found NO match in
+      action/src/lib files (i.e. the runtime reference override did NOT apply).
 
       **Bucket B — "Review manually" groups:**
-      Entries where the runtime reference override applied. Group ALL entries that reference
-      the SAME file together. For each unique referenced file, emit one group block.
+      Entries where the runtime reference override applied (Rules 1–3, 6, 7), plus all
+      Rule 5 findings. Group ALL entries that reference the SAME file together.
+      For each unique referenced file, emit one group block.
 
-      **Bucket C — "Only in removable/automated scripts":**
-      Entries matched by Rule 4 or Rule 5. These reference scripts being removed — they are
-      safe to remove from env.dist once the scripts are removed.
+      **Bucket C — "Only in removable onboarding scripts":**
+      Entries matched by Rule 4 only. These reference onboarding scripts that are no longer
+      needed after migration — safe to remove from env.dist once those scripts are removed.
+
+      **Bucket D — "Likely unused":**
+      Entries matched by Rule 9 only (not referenced in any action file, config, or script).
 
       Print in this order:
 
@@ -1122,6 +1132,13 @@ constraints, Next steps) when in doc-scan-only mode.
           ── Onboarding/script-only — safe to remove with the scripts ─────────────────
             <KEY1>, <KEY2>
             └─ Only used in <script-name>, which is no longer needed after migration.
+
+      If Bucket D is non-empty:
+
+          ── Likely unused — not referenced anywhere ───────────────────────────────────
+            <KEY1>, <KEY2>
+            └─ Not found in any action source file or configuration.
+               Verify these are not needed before removing.
 
       After all buckets:
 
