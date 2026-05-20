@@ -708,7 +708,7 @@ Write the updated `package.json` back. Preserve all other fields exactly.
 
 ---
 
-## Step 9: Commit all changes
+## Step 9: Stage changes and ask to commit
 
 Stage all migration-related files. Use the detected install file extension from Step 7:
 
@@ -725,11 +725,24 @@ or:
 If `yarn.lock`, `pnpm-lock.yaml`, or `bun.lockb` was modified (based on `packageManager`
 from ProjectSnapshot), stage the appropriate lockfile instead of `package-lock.json`.
 
-    git commit -m "feat: migrate to App Management"
-
 Note: if `package-lock.json` (or the relevant lockfile) does not exist or was not modified
 (e.g. install was blocked), skip staging it — `git add` of a non-existent file is harmless
 but emits a warning.
+
+**In `--auto` mode:** run `git commit -m "feat: migrate to App Management"` immediately
+without prompting.
+
+**In interactive mode:** do NOT commit automatically. Instead, print:
+
+    Migration files have been staged. Review the changes with:
+
+      git diff --cached
+
+    When ready, commit with:
+
+      git commit -m "feat: migrate to App Management"
+
+Then proceed to Step 10. Do not wait for the developer to commit before printing the summary.
 
 ---
 
