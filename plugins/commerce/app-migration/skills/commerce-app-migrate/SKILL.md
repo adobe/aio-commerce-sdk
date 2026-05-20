@@ -94,6 +94,9 @@ without modifying any files.
 **Do not proceed to Steps 2–5 (domain agents, Q&A, config assembly, full execution)
 unless the developer explicitly requests a specific section update.**
 
+After the Executor prints the documentation recommendations, **stop**. Do not continue to
+the "Detected project:" summary block or the migration confirmation prompt below.
+
 After the Analyzer returns, print a human-readable summary:
 
     Detected project:
