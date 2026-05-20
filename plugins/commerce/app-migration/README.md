@@ -17,7 +17,7 @@ Orchestrates the full migration workflow: project detection → domain analysis 
 ```
 /commerce-app-migrate
 /commerce-app-migrate --auto          # skip confirmation prompts (CI or batch use)
-/commerce-app-migrate --doc-scan-only # scan README.md and env.dist only, no files modified
+/commerce-app-migrate --doc-scan-only # scan README.md and env.dist on an already-migrated project, no files modified
 ```
 
 **What it does:**

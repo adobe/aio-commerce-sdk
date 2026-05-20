@@ -30,11 +30,12 @@ Triggered when the orchestrating skill detects an already-migrated project.
 - **Run:** Step 10 with a restricted output (documentation recommendations only)
 
 In doc-scan-only mode the `assembled config` parameter is `null`. When Step 3a
-reads the config to build migration context, it reads the **existing**
-`app.commerce.config.ts` from disk using these string-presence checks:
+reads the config to build migration context, it reads the **existing config file**
+from disk — `app.commerce.config.ts` if it exists, otherwise `app.commerce.config.js`
+(whichever caused `alreadyMigrated === true`) — using these string-presence checks:
 
 - `eventsDeclarative`: file content contains `"eventing:"`
-- `webhooksDeclarative`: file content contains `"installation:"` **and** `"webhooks:"`
+- `webhooksDeclarative`: file content contains `"webhooks:"`
 - `customInstallationSteps` script paths: scan for `.script` property patterns
   in the file content; if none found, use `[]`
 - `convertedYamlFiles`: `[]` (no YAML conversion happened in this mode)
@@ -429,14 +430,29 @@ In **doc-scan-only mode**, run this step using the modified inputs described in 
 "Operating Modes" section above. Skip Steps 1–3 entirely and begin here.
 
 Execute the computation described in Step 10's **"Before printing, compute"** section
-(all Category A, B, C, D rules). **Store all results in memory. Do NOT print yet.**
+(all Category A, B, C, D rules).
 
 - `convertedYamlFiles` for Category B is the list built during Step 3
   (empty `[]` in doc-scan-only mode)
 - All other inputs are drawn from the assembled config and `ProjectSnapshot`
   as described in Step 10
 
-Proceed to Step 4 (or Step 10 in doc-scan-only mode) after storing results.
+Store all results in memory, then:
+
+- **Normal mode:** also print the "Documentation recommendations" block **immediately now**,
+  before Steps 4–9 run. Use the same format as defined in Step 10's
+  "── Documentation recommendations" section. Prefix the block with:
+
+      ── Documentation recommendations (computed before install) ────────
+
+  This ensures recommendations are visible if a later step (npm install, generate, commit)
+  blocks, hangs, or fails. Step 10 includes the same block again — that is intentional.
+
+- **Doc-scan-only mode:** store results only. Do **not** print here. There are no risky
+  commands between Step 3a and Step 10, so printing twice would be pure noise. Print once
+  in Step 10's abbreviated report.
+
+Proceed to Step 4 (or Step 10 in doc-scan-only mode) after storing.
 
 ---
 
@@ -761,28 +777,32 @@ Keys matching any of: `IO_MANAGEMENT_BASE_URL`, `IO_CONSUMER_ID`, `IO_PROJECT_ID
 → reason: `"Adobe I/O workspace credentials used by onboarding scripts; App Management handles workspace setup"`
 
 **Rule 4 — Only referenced in removable scripts (Category A):**
-Read the content of each file in the Category A removable list. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/` or `actions-src/` (search with grep):
+Read the content of each file in the Category A removable list. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/`, `actions-src/`, `src/`, or `lib/` (search with grep across all four directories):
 → reason: `"only referenced in <script-filename>, which is no longer needed after migration"`
 
 **Rule 5 — Only referenced in automated installation scripts:**
-Read the content of each script listed in `installation.customInstallationSteps` from the assembled config. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/` or `actions-src/`:
+Read the content of each script listed in `installation.customInstallationSteps` from the assembled config. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/`, `actions-src/`, `src/`, or `lib/`:
 → reason: `"only used in automated installation steps — no longer needed as a standalone env.dist entry"`
 
 **Rule 6 — Event configuration variables** (apply only if the assembled config has an `eventing` section):
 Keys matching any of: `AIO_EVENTS_PROVIDER_ID`, `AIO_EVENTS_REGISTRATION_ID`, `AIO_EVENTS_CONSUMER_ORG_ID`, `COMMERCE_ADOBE_IO_EVENTS_MERCHANT_ID`, `COMMERCE_ADOBE_IO_EVENTS_ENVIRONMENT_ID`, `EVENT_PREFIX`, `FEED_GENERATOR_PROVIDER_ID`, `COMMERCE_PROVIDER_ID`, or any key matching `REGISTRATION_ID_*`, `*_REGISTRATION_ID`, or `EVENT_PROVIDER_*`
 → reason: `"event configuration is now declared in app.commerce.config.ts"`
 
-**Rule 7 — Webhook variables** (apply only if the assembled config has an `installation.webhooks` section):
+**Rule 7 — Webhook variables** (apply only if the assembled config has a top-level `webhooks` section):
 Keys matching `COMMERCE_WEBHOOKS_PUBLIC_KEY` or any key matching `*_WEBHOOKS_*`
 → reason: `"webhook registration is now declared in app.commerce.config.ts"`
 
-**Rule 8 — Duplicate entries** (checked before Rules 1–7, regardless of other conditions):
+**Rule 8 — Duplicate entries** (checked before Rules 1–7, independent of the allowlist):
 For each entry in `ProjectSnapshot.envDistDuplicates` (keys with count > 1):
 → reason: `"appears <N> times in env.dist (duplicate entry — should appear only once)"`
 
 List these first in the Category D output, prefixed with `⚠ Duplicate entry:`. Then apply Rules 1–7 to the deduplicated key list (each key evaluated once).
 
-**Never flag these keys regardless of any rule above:**
+Rule 8 is **not subject to the "Never flag" allowlist** below — a duplicate `LOG_LEVEL` or
+`ENCRYPTION_KEY` entry is still a duplicate and should be flagged. The allowlist prevents
+flagging keys as _obsolete_; it does not prevent flagging them as _malformed_.
+
+**Never flag these keys as obsolete (Rules 1–7 only):**
 `COMMERCE_BASE_URL`, `LOG_LEVEL`, `ENABLE_TELEMETRY`, `NEW_RELIC_LICENSE_KEY`, `ENABLE_EXTRA_LOGGING`, `ENCRYPTION_KEY`, `ENCRYPTION_IV`, `APPBUILDER_ENCRYPTION_KEY`.
 Also never flag any key that is clearly a third-party service credential (Klaviyo, NetSuite, Salesforce, Adyen, OpenSearch, etc.) — recognisable by vendor-specific prefixes that do not match the patterns above.
 
@@ -797,8 +817,8 @@ Read `README.md`. Build migration context from pre-computed results (stored in S
 - `removableScriptPaths` — file paths from Category A
 - `automatedScriptPaths` — `script` values from `installation.customInstallationSteps` in the assembled config
 - `eventsDeclarative` — assembled config contains an `eventing` section
-- `webhooksDeclarative` — assembled config contains an `installation.webhooks` section
-- `redundantEnvKeys` — keys from Category D
+- `webhooksDeclarative` — assembled config has a top-level `webhooks` section
+- `redundantEnvKeys` — keys flagged by Category D Rules 1–7 only (obsolete after migration). Exclude Rule 8 (duplicate-only) findings — duplicates are a structural issue, not migration obsolescence, and must not trigger Pattern 4
 
 Scan README.md for content matching these patterns. For each match, record:
 
@@ -806,7 +826,13 @@ Scan README.md for content matching these patterns. For each match, record:
 - `reason`: why it may be outdated
 
 **Pattern 1 — References to removable or automated scripts:**
-Any text that mentions a script path or npm script name that appears in `removableScriptPaths` or `automatedScriptPaths` (e.g. `npm run onboard`, `scripts/onboarding/index.js`, `npm run commerce-event-subscribe`, `npm run create-shipping-carriers`, `npm run create-payment-methods`).
+Match README text against two sets of identifiers:
+
+1. **Direct path references** — any text that mentions a path in `removableScriptPaths` or `automatedScriptPaths`
+2. **npm script name references** — for each entry in `ProjectSnapshot.packageScripts`, if the command value contains a path from `removableScriptPaths` or `automatedScriptPaths`, add `npm run <name>` as an additional match pattern
+
+Example: if `packageScripts["onboard"] = "node scripts/onboarding/index.js"` and `scripts/onboarding/index.js` is in `removableScriptPaths`, then the pattern `npm run onboard` (and `npm run onboard --...`) is also matched in the README.
+
 → reason: `"<script-name> is [no longer needed / now automated by App Management installation]"` (choose phrase based on whether the script is removable or automated)
 
 **Pattern 2 — Webhook manual setup steps** (skip if `webhooksDeclarative` is false):
@@ -966,17 +992,25 @@ constraints, Next steps) when in doc-scan-only mode.
          ← include this subsection only if Category D is non-empty →
       env.dist entries that may no longer be needed:
 
-         ← list Rule 8 duplicate findings first, if any →
+         ← include only if Rule 8 found duplicates →
+      ⚠ Duplicate entries (keep one, remove extras):
+
       [  ⚠ Duplicate entry:  <KEY>
               └─ appears <N> times in env.dist (duplicate entry — should appear only once)  ]
 
-         ← then list Rule 1–7 findings →
+      Remove duplicate occurrences, keeping exactly one entry per key.
+         ← end duplicate block →
+
+         ← include only if Rules 1–7 found obsolete entries →
+      Obsolete entries after migration:
+
       [  <KEY> ]
            └─ <reason>
          ← one block per identified entry →
 
       Remove these from env.dist (and .env if present) once verified.
       Note: auth credential entries may still be needed for local development.
+         ← end obsolete block →
          ← end Category D subsection →
     ← end conditional block →
 

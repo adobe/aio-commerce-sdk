@@ -89,6 +89,12 @@ interface ProjectSnapshot {
   // Empty array [] if env.dist does not exist.
   envDistKeys: string[];
 
+  // npm scripts from package.json: script name → command string.
+  // Used by Category C to detect README references to removable/automated scripts
+  // via their npm alias (e.g. "npm run onboard" when "onboard" maps to a removable script).
+  // Empty object {} if package.json has no scripts section.
+  packageScripts: Record<string, string>;
+
   // Keys that appear more than once in env.dist (duplicate entries).
   // Only keys with count > 1 are included. Omitted or empty object means no duplicates.
   // e.g. { "COMMERCE_CONSUMER_KEY": 2 }
@@ -149,6 +155,9 @@ interface ProjectSnapshot {
   "openWhiskTriggers": [],
   "hasMeshConfig": false,
   "hasApiGateway": false,
+  "hasActionsSrcDir": false,
+  "hasSequences": false,
+  "productDependencies": null,
   "envDistKeys": [
     "COMMERCE_CONSUMER_KEY",
     "OAUTH_CLIENT_ID",
@@ -156,6 +165,9 @@ interface ProjectSnapshot {
     "LOG_LEVEL"
   ],
   "envDistDuplicates": {},
+  "packageScripts": {
+    "onboard": "node scripts/onboarding/index.js"
+  },
   "confidence": {
     "events": "high",
     "webhooks": "none",

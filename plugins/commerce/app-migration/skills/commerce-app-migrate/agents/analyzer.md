@@ -133,6 +133,25 @@ Example — given an `env.dist` where `COMMERCE_CONSUMER_KEY` appears on two sep
 
 ---
 
+### packageScripts
+
+Using the `package.json` content already read for `packageManager` and `starterKitType` detection:
+
+Extract the `scripts` object from `package.json`. Store each script name and its command
+string verbatim as `packageScripts`.
+
+Example — given this `package.json` scripts section:
+
+    "scripts": {
+      "onboard": "node scripts/onboarding/index.js",
+      "configure-events": "node scripts/onboarding/subscribe.js",
+      "build": "webpack"
+    }
+
+→ `"packageScripts": { "onboard": "node scripts/onboarding/index.js", "configure-events": "node scripts/onboarding/subscribe.js", "build": "webpack" }`
+
+If `package.json` has no `scripts` key, output `"packageScripts": {}`.
+
 ### packageManager
 
 Check root directory for lockfiles:
@@ -347,7 +366,15 @@ Example output:
       "openWhiskTriggers": [],
       "hasMeshConfig": false,
       "hasApiGateway": false,
+      "hasActionsSrcDir": false,
+      "hasSequences": false,
+      "productDependencies": null,
       "envDistKeys": ["COMMERCE_CONSUMER_KEY", "OAUTH_CLIENT_ID", "AIO_EVENTS_PROVIDER_ID", "LOG_LEVEL"],
+      "envDistDuplicates": {},
+      "packageScripts": {
+        "onboard": "node scripts/onboarding/index.js",
+        "commerce-event-subscribe": "node scripts/onboarding/subscribe.js"
+      },
       "confidence": {
         "events": "high",
         "webhooks": "none",

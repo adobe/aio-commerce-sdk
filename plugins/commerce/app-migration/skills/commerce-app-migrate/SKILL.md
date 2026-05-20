@@ -22,9 +22,20 @@ automated pipeline (no interactive terminal), skip all **[await]** points and pr
 directly to the next step.
 
 **Doc-scan-only mode:** If invoked with `--doc-scan-only`, skip all migration steps after
-the Analyzer. After Step 1 completes (Analyzer returns a `ProjectSnapshot`), apply any
-applicable Cross-cutting Warnings, then dispatch the Executor in doc-scan-only mode
-regardless of `alreadyMigrated` status. No files are modified. Do not proceed to Steps 2–5.
+the Analyzer. After Step 1 completes (Analyzer returns a `ProjectSnapshot`):
+
+- If `alreadyMigrated === false`, output:
+
+      --doc-scan-only requires the project to already be migrated to App Management.
+      No app.commerce.config.ts (or .js) was found.
+
+      Run /commerce-app-migrate (without --doc-scan-only) to perform the migration first.
+
+  Then stop.
+
+- If `alreadyMigrated === true`, apply any applicable Cross-cutting Warnings, then
+  dispatch the Executor in doc-scan-only mode. No files are modified.
+  Do not proceed to Steps 2–5.
 
 ---
 
