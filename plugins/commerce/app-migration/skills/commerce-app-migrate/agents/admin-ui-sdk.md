@@ -42,6 +42,28 @@ or more of these top-level keys:
 - `page` — object with `title` or page-level config (copy verbatim; add an unresolved
   question noting this key's validity is unconfirmed in the App Management schema)
 
+**Key normalization (apply before extracting):**
+If the source registration object uses non-standard key names, normalize them before
+extracting into the configFragment. Apply these transforms:
+
+| Source key (non-standard) | Normalized key | Action                                                      |
+| ------------------------- | -------------- | ----------------------------------------------------------- |
+| `menus` (array)           | `menuItems`    | Rename key; keep array value verbatim                       |
+| `menu` (object/array)     | `menuItems`    | Rename key; keep value verbatim                             |
+| `pages` (array)           | `pages`        | Keep as-is; add unresolved question (unconfirmed in schema) |
+
+When any normalization is applied (i.e. a source key was renamed), add this unresolved question:
+
+    {
+      "id": "adminUiSdk.registration.keyNormalized",
+      "prompt": "Non-standard key \"<original-key>\" was normalized to \"<normalized-key>\". Verify the generated config output matches your intended structure. Options: [confirmed / revert]",
+      "default": "confirmed"
+    }
+
+Also update the `adminUiSdk.registration.nonStandard` validation warning: only emit it for
+keys that are NOT in the normalization table above AND are not in the supported extension
+points list. Keys that were normalized via the table above do not need the non-standard warning.
+
 **Static registration:** If the file exports a static object (values are not
 computed from env vars, API calls, or runtime data), extract it directly.
 

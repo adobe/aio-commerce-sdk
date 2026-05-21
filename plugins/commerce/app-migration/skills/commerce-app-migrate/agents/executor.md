@@ -11,6 +11,40 @@ Execute all migration steps below in order. **Never delete existing files.**
 
 ---
 
+## Operating Modes
+
+The Executor is invoked with a `mode` parameter (default: `"normal"`).
+
+### Normal mode
+
+All steps run in sequence. The assembled `app.commerce.config.ts` content is
+provided as a string and written to disk.
+
+### doc-scan-only mode (`mode = "doc-scan-only"`)
+
+Triggered when the orchestrating skill detects an already-migrated project.
+
+- **Skip:** Steps 1–3 (no branch, no file writes, no script migration)
+- **Run:** Step 3a with modified inputs (see Step 3a for details)
+- **Skip:** Steps 4–9
+- **Run:** Step 10 with a restricted output (documentation recommendations only)
+
+In doc-scan-only mode the `assembled config` parameter is `null`. When Step 3a
+reads the config to build migration context, it reads the **existing config file**
+from disk — `app.commerce.config.ts` if it exists, otherwise `app.commerce.config.js`
+(whichever caused `alreadyMigrated === true`) — using these string-presence checks:
+
+- `eventsDeclarative`: file content contains `"eventing:"`
+- `webhooksDeclarative`: file content contains `"webhooks:"`
+- `customInstallationSteps` script paths: scan the file for `script:` key patterns —
+  look for lines matching `script: "./`, `script: "/`, `script: './`, or `script: '/`
+  and extract the quoted string value as a script path. If none found, use `[]`
+- `convertedYamlFiles`: `[]` (no YAML conversion happened in this mode)
+
+The Step 10 report header is also modified for doc-scan-only mode — see Step 10.
+
+---
+
 ## Step 1: Create git branch
 
 Run:
@@ -41,6 +75,17 @@ Prepend this copyright header before the config content:
      * OF ANY KIND, either express or implied. See the License for the specific language
      * governing permissions and limitations under the License.
      */
+
+**Strip internal metadata fields before writing:**
+Before writing the file, remove any internal-use-only properties that domain agents may have
+added to the configFragment (these are for Executor use only and must NOT appear in the output):
+
+- `"_source"` — marks auto-generated fields (e.g. `"_source": "aio-lib-files-path"`)
+- `"_directionWarning"` — carries warning text for non-standard event provider keys (rendered as
+  a `// ⚠` comment before the provider object, then removed from the written TypeScript)
+
+For `_directionWarning`: emit `// ⚠ <warning text>` as an inline TypeScript comment on the line
+immediately before the `provider: {` key, then omit the `_directionWarning` property from the output.
 
 ---
 
@@ -386,6 +431,43 @@ Private helpers (e.g. `formatErrorMessage`) are removed — errors now throw dir
 
 ---
 
+## Step 3a: Compute Documentation Recommendations
+
+**Run this step immediately after Step 3, before npm install.** Both Category C and
+Category D analyze static files that exist before any install command. Computing them
+now ensures the recommendations are always available in Step 10 regardless of whether
+Steps 4–5 succeed, time out, or are blocked.
+
+In **doc-scan-only mode**, run this step using the modified inputs described in the
+"Operating Modes" section above. Skip Steps 1–3 entirely and begin here.
+
+Apply all computation rules defined below in Step 10 (Categories A, B, C, D). Those rules
+are written in Step 10 for readability but execute here, before npm install.
+
+- `convertedYamlFiles` for Category B is the list built during Step 3
+  (empty `[]` in doc-scan-only mode)
+- All other inputs are drawn from the assembled config and `ProjectSnapshot`
+  as described in Step 10
+
+Store all results in memory, then:
+
+- **Normal mode:** also print the "Documentation recommendations" block **immediately now**,
+  before Steps 4–9 run. Use the same format as defined in Step 10's
+  "── Documentation recommendations" section. Prefix the block with:
+
+      ── Documentation recommendations (computed before install) ────────
+
+  This ensures recommendations are visible if a later step (npm install, generate, commit)
+  blocks, hangs, or fails. Step 10 includes the same block again — that is intentional.
+
+- **Doc-scan-only mode:** store results only. Do **not** print here. There are no risky
+  commands between Step 3a and Step 10, so printing twice would be pure noise. Print once
+  in Step 10's abbreviated report.
+
+Proceed to Step 4 (or Step 10 in doc-scan-only mode) after storing.
+
+---
+
 ## Step 4: Install dependencies
 
 Build the package list from the table below, then run one install command.
@@ -626,7 +708,7 @@ Write the updated `package.json` back. Preserve all other fields exactly.
 
 ---
 
-## Step 9: Commit all changes
+## Step 9: Stage changes and ask to commit
 
 Stage all migration-related files. Use the detected install file extension from Step 7:
 
@@ -643,17 +725,32 @@ or:
 If `yarn.lock`, `pnpm-lock.yaml`, or `bun.lockb` was modified (based on `packageManager`
 from ProjectSnapshot), stage the appropriate lockfile instead of `package-lock.json`.
 
-    git commit -m "feat: migrate to App Management"
-
 Note: if `package-lock.json` (or the relevant lockfile) does not exist or was not modified
 (e.g. install was blocked), skip staging it — `git add` of a non-existent file is harmless
 but emits a warning.
+
+**In `--auto` mode:** run `git commit -m "feat: migrate to App Management"` immediately
+without prompting.
+
+**In interactive mode:** do NOT commit automatically. Instead, print:
+
+    Migration files have been staged. Review the changes with:
+
+      git diff --cached
+
+    When ready, commit with:
+
+      git commit -m "feat: migrate to App Management"
+
+Then proceed to Step 10. Do not wait for the developer to commit before printing the summary.
 
 ---
 
 ## Step 10: Print migration summary
 
-**Before printing, compute the list of removable files.**
+**Use the pre-computed results stored in Step 3a. The computation rules for
+Categories A–D are defined below — they run in Step 3a, not here.
+Step 10 only assembles and prints the report.**
 
 **Category A — Onboarding scripts not in `customInstallationSteps`:**
 
@@ -686,7 +783,193 @@ If both categories are empty, omit the "Files that can be safely removed" sectio
 
 ---
 
+**Category D — env.dist entries that may no longer be needed:**
+
+Skip this category entirely if `ProjectSnapshot.envDistKeys` is an empty array.
+
+For each key in `envDistKeys`, apply these rules in order — **first match wins**. Keys matching no rule are not included in Category D.
+
+**Rule 1 — PaaS/OAuth1 auth credentials:**
+Keys matching any of: `COMMERCE_CONSUMER_KEY`, `COMMERCE_CONSUMER_SECRET`, `COMMERCE_ACCESS_TOKEN`, `COMMERCE_ACCESS_TOKEN_SECRET`, or any key starting with `AIO_COMMERCE_AUTH_INTEGRATION_`
+→ reason: `"OAuth1/PaaS auth credential managed by App Management; may still be needed for local development"`
+
+**Rule 2 — IMS/SaaS auth credentials:**
+Keys matching any of: `OAUTH_BASE_URL`, `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRETS`, `OAUTH_CLIENT_SECRET`, `OAUTH_TECHNICAL_ACCOUNT_ID`, `OAUTH_TECHNICAL_ACCOUNT_EMAIL`, `OAUTH_ORG_ID`, `OAUTH_IMS_ORG_ID`, `OAUTH_SCOPES`, `OAUTH_HOST`, or any key starting with `AIO_COMMERCE_AUTH_IMS_`
+→ reason: `"IMS/SaaS auth credential managed by App Management; may still be needed for local development"`
+
+**Rule 3 — Adobe I/O workspace credentials:**
+Keys matching any of: `IO_MANAGEMENT_BASE_URL`, `IO_CONSUMER_ID`, `IO_PROJECT_ID`, `IO_WORKSPACE_ID`, `IO_MANAGEMENT_API_KEY`, `AIO_RUNTIME_NAMESPACE`, `AIO_RUNTIME_AUTH`
+→ reason: `"Adobe I/O workspace credentials used by onboarding scripts; App Management handles workspace setup"`
+
+**Rule 4 — Only referenced in removable scripts (Category A):**
+Read the content of each file in the Category A removable list. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/`, `actions-src/`, `src/`, or `lib/` (search with grep across all four directories):
+→ reason: `"only referenced in <script-filename>, which is no longer needed after migration"`
+
+**Rule 5 — Only referenced in automated installation scripts:**
+Read the content of each script listed in `installation.customInstallationSteps` from the assembled config. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/`, `actions-src/`, `src/`, or `lib/`:
+→ reason: `"only referenced in <script-filename> (customInstallationStep) — verify App Management injects this value before removing"`
+
+Route Rule 5 findings to **Bucket B** (review manually), grouped by the customInstallationStep script path. Do NOT place them in Bucket C — these scripts are not removed; they run automatically during installation.
+
+**Rule 6 — Event configuration variables** (apply only if the assembled config has an `eventing` section):
+Keys matching any of: `AIO_EVENTS_PROVIDER_ID`, `AIO_EVENTS_REGISTRATION_ID`, `AIO_EVENTS_CONSUMER_ORG_ID`, `COMMERCE_ADOBE_IO_EVENTS_MERCHANT_ID`, `COMMERCE_ADOBE_IO_EVENTS_ENVIRONMENT_ID`, `EVENT_PREFIX`, `FEED_GENERATOR_PROVIDER_ID`, `COMMERCE_PROVIDER_ID`, or any key matching `REGISTRATION_ID_*`, `*_REGISTRATION_ID`, or `EVENT_PROVIDER_*`
+→ reason: `"event configuration is now declared in app.commerce.config.ts"`
+
+**Rule 7 — Webhook variables** (apply only if the assembled config has a top-level `webhooks` section):
+Keys matching `COMMERCE_WEBHOOKS_PUBLIC_KEY` or any key matching `*_WEBHOOKS_*`
+→ reason: `"webhook registration is now declared in app.commerce.config.ts"`
+
+**Runtime reference override (applies to Rules 1–3, 6, and 7):**
+After a key matches one of these rules, run:
+`grep -rlF "<KEY>" actions/ actions-src/ src/ lib/ 2>/dev/null | head -1`
+If any matching file is found, downgrade the flag — replace the rule's default reason with:
+`"review manually: still referenced in <relative path> — ensure App Management injects this value before removing"`
+This check does not apply to Rule 4 or Rule 5 (which already check runtime references), or Rule 8.
+
+**grep flag note:** All grep commands in Rules 1–9 that search for a KEY string must use the `-F` (fixed-string) flag to prevent env var key names from being treated as regex patterns.
+
+**Rule 8 — Duplicate entries** (checked before Rules 1–7, independent of the allowlist):
+For each entry in `ProjectSnapshot.envDistDuplicates` (keys with count > 1):
+→ reason: `"appears <N> times in env.dist (duplicate entry — should appear only once)"`
+
+List these first in the Category D output, prefixed with `⚠ Duplicate entry:`. Then apply Rules 1–7 to the deduplicated key list (each key evaluated once).
+
+Rule 8 is **not subject to the "Never flag" allowlist** below — a duplicate `LOG_LEVEL` or
+`ENCRYPTION_KEY` entry is still a duplicate and should be flagged. The allowlist prevents
+flagging keys as _obsolete_; it does not prevent flagging them as _malformed_.
+
+**Rule 9 — Unreferenced variables (catch-all):**
+Apply ONLY to keys that matched NONE of Rules 1–8.
+For each such key NOT in the "Never flag" list below:
+Run: `grep -rlF "<KEY>" actions/ actions-src/ src/ lib/ scripts/ app.config.yaml 2>/dev/null | head -1`
+If the grep returns NO match (zero files found), add the key to Category D with:
+→ reason: `"not referenced in any action file or configuration; likely unused — verify before removing"`
+
+Route Rule 9 findings to **Bucket D** in the output.
+
+Note: This rule fires last. A key already matched by Rules 1–8 is excluded from Rule 9 even
+if it also has no runtime references (Rules 1–8 provide the more specific, actionable reason).
+
+**Never flag these keys as obsolete (Rules 1–9 only):**
+`COMMERCE_BASE_URL`, `LOG_LEVEL`, `ENABLE_TELEMETRY`, `NEW_RELIC_LICENSE_KEY`, `ENABLE_EXTRA_LOGGING`, `ENCRYPTION_KEY`, `ENCRYPTION_IV`, `APPBUILDER_ENCRYPTION_KEY`.
+Also never flag any key that is clearly a third-party service credential (Klaviyo, NetSuite, Salesforce, Adyen, OpenSearch, etc.) — recognisable by vendor-specific prefixes that do not match the patterns above.
+
+---
+
+**Category C — README.md sections that may be outdated:**
+
+Skip this category entirely if `README.md` does not exist in the project root.
+
+Read `README.md`. Build migration context from pre-computed results (stored in Step 3a):
+
+- `removableScriptPaths` — file paths from Category A
+- `automatedScriptPaths` — `script` values from `installation.customInstallationSteps` in the assembled config
+- `eventsDeclarative` — assembled config contains an `eventing` section
+- `webhooksDeclarative` — assembled config has a top-level `webhooks` section
+- `redundantEnvKeys` — keys flagged by Category D Rules 1–7 only (obsolete after migration). Exclude Rule 8 (duplicate-only) findings — duplicates are a structural issue, not migration obsolescence, and must not trigger Pattern 4
+
+Scan README.md for content matching these patterns. For each match, record:
+
+- `location`: the nearest markdown heading above the matched content, plus a short description (e.g. `"## Setup > step 3 (npm run onboard)"`)
+- `reason`: why it may be outdated
+
+**Pattern 1 — References to removable or automated scripts:**
+Match README text against two sets of identifiers:
+
+1. **Direct path references** — any text that mentions a path in `removableScriptPaths` or `automatedScriptPaths`
+2. **npm script name references** — for each entry in `ProjectSnapshot.packageScripts`, if the command value contains a path from `removableScriptPaths` or `automatedScriptPaths`, add `npm run <name>` as an additional match pattern
+
+Example: if `packageScripts["onboard"] = "node scripts/onboarding/index.js"` and `scripts/onboarding/index.js` is in `removableScriptPaths`, then the pattern `npm run onboard` (and `npm run onboard --...`) is also matched in the README.
+
+→ reason: `"<script-name> is [no longer needed / now automated by App Management installation]"` (choose phrase based on whether the script is removable or automated)
+
+**Pattern 2 — Webhook manual setup steps** (skip if `webhooksDeclarative` is false):
+Content describing any of: enabling webhook signatures in Commerce Admin, copying a public key into `COMMERCE_WEBHOOKS_PUBLIC_KEY`, registering webhooks via CLI or Admin UI.
+→ reason: `"webhook registration is now handled declaratively in app.commerce.config.ts"`
+
+**Pattern 3 — Event subscription or workspace setup steps** (skip if `eventsDeclarative` is false):
+Content describing any of: `aio console org/project/workspace select`, `aio app use --merge`, setting up event providers or registrations in Adobe Developer Console, `npm run sync-oauth-credentials`.
+→ reason: `"event provider and subscription setup is now handled declaratively in app.commerce.config.ts"`
+
+**Pattern 4 — Documentation of redundant env vars:**
+
+Match sections that contain ANY of the following:
+
+1. **Exact key names:** Any variable name that appears in `redundantEnvKeys` is mentioned literally in the section text.
+2. **IMS/SaaS credential family terms** (apply when `redundantEnvKeys` contains any Rule 2 key):
+   Match sections containing any of: `IMS OAuth`, `Server-to-Server`, `OAuth Server-to-Server`, `OAuth Client ID`, `Adobe Developer Console`, `OAUTH_CLIENT_ID`, `IMS credentials`, `IMS authentication`, `Service Account credentials`.
+3. **PaaS/OAuth1 credential family terms** (apply when `redundantEnvKeys` contains any Rule 1 key):
+   Match sections containing any of: `OAuth 1.0a`, `Commerce OAuth`, `Consumer Key`, `COMMERCE_CONSUMER_KEY`, `Commerce integration`, `OAuth integration credentials`.
+4. **Workspace credential family terms** (apply when `redundantEnvKeys` contains any Rule 3 key):
+   Match sections containing any of: `App Builder workspace`, `aio console org select`, `workspace.json`, `IO_CONSUMER_ID`, `workspace credentials`.
+
+→ reason: `"documents <key family or specific KEY> and related variables that may no longer be needed after migration"`
+
+**Pattern 5 — Environment setup boilerplate:**
+Content that describes copying the environment template: `cp env.dist .env`, `copy env.dist to .env`,
+or a numbered step saying "copy the environment template" or "configure environment variables from
+the template file".
+→ reason: `"environment setup instructions may need updating — many variables are now injected by App Management for deployed instances; local development setup may still be valid"`
+
+**Do not flag** content that is inside a fenced code block showing the new App Management approach, or inside a "Changelog", "Migration notes", or "What changed" section that already describes the migration.
+
+**Annotated README guide — applies when Category C findings ≥ 5:**
+
+After the standard location+reason list, append an annotated excerpt that shows each
+flagged section heading with an inline removal comment. For each flagged section:
+
+1. Find the heading line in `README.md` that matches the flagged `location`
+2. Extract that heading line + up to 3 body lines immediately following it
+3. Prepend an inline comment based on which pattern matched:
+   - **Pattern 1 match** → `<!-- ✂ REMOVE: <reason> -->`
+     (the section is dedicated to a single removable/automated script and can be deleted)
+   - **Patterns 2–5 match** → `<!-- ✂ UPDATE: <reason> -->`
+     (the section may contain a mix of obsolete and still-valid content; review before removing)
+
+Assemble all flagged sections into a single fenced Markdown block and print it in the
+"Documentation recommendations" output under:
+
+    ── README.md — annotated removal guide ───────────────────────────
+    Each flagged section is marked below. Sections not listed are unaffected.
+
+    ```markdown
+    <!-- ✂ REMOVE: <reason for section 1> -->
+    ## <heading of section 1>
+    <up to 3 body lines>
+
+    <!-- ✂ REMOVE: <reason for section 2> -->
+    ## <heading of section 2>
+    <up to 3 body lines>
+    ```
+
+Do **not** write a modified README file — this block is printed in the terminal only.
+The developer decides what to actually delete. Omit this block entirely when the count
+is fewer than 5.
+
+---
+
 Print the following report, filling in actual results. Use ✓ / ✗ for command outcomes.
+
+**In doc-scan-only mode**, replace the standard report with this abbreviated form —
+omit all sections except "Documentation recommendations":
+
+    ╔══════════════════════════════════════════════════════════════════╗
+    ║       App Management Migration — Documentation Scan              ║
+    ╚══════════════════════════════════════════════════════════════════╝
+
+      This project is already migrated to App Management.
+      No files were modified.
+
+    ── Documentation recommendations ─────────────────────────────────
+    [Category C and D output — same format as below]
+
+Skip all other sections (Files written, Commands, Generated, Modified,
+Installation steps, Removable files, Schema cleanup, Commerce version
+constraints, Next steps) when in doc-scan-only mode.
+
+---
+
+**Normal mode report:**
 
     ╔══════════════════════════════════════════════════════════════════╗
     ║             App Management Migration — Complete                  ║
@@ -742,6 +1025,20 @@ Print the following report, filling in actual results. Use ✓ / ✗ for command
       Safe to remove that block manually — it is no longer used by App Management.
     ← end conditional →
 
+    ← include only if any field in businessConfig.schema has "_source": "aio-lib-files-path",
+       OR if reading app.commerce.config.ts reveals a schema field whose "name" contains "/" or ends in ".json" →
+    ── businessConfig schema may need refinement ──────────────────────
+      ⚠ One or more businessConfig fields were auto-generated from aio-lib-files path detection:
+
+      [  <field-name>
+              └─ field name is a file path, not a merchant-visible label — consider replacing with
+                 individual named fields (e.g. api_key, sender_id, account_token)  ]
+         ← one line per detected path-name field →
+
+      To update: edit businessConfig.schema in app.commerce.config.ts and replace the
+      file-path field with individual fields matching your app's actual configuration keys.
+    ← end conditional →
+
     ← include only if ProjectSnapshot.productDependencies is non-null →
     ── Commerce version constraints ───────────────────────────────────
       productDependencies:  minVersion <value>  ·  maxVersion <value>
@@ -749,6 +1046,108 @@ Print the following report, filling in actual results. Use ✓ / ✗ for command
       Document them in a comment in app.commerce.config.ts, or contact
       Adobe Commerce Marketplace for guidance.
     ← end conditional →
+
+    ← omit this entire block if Category C and Category D are both empty →
+    ── Documentation recommendations ─────────────────────────────────
+         ← include this subsection only if Category C is non-empty →
+      README.md sections that may be outdated:
+
+      [  <location> ]
+           └─ <reason>
+         ← one block per identified section →
+
+      Update or remove these sections once the migration is verified.
+
+         ← if Category C count is 1–4, append this note →
+      (Tip: run `/commerce-app-migrate --doc-scan-only` after adding more content to README.md
+      to regenerate recommendations. An annotated inline removal guide is shown when 5 or more
+      sections are identified.)
+         ← end note →
+
+         ← include annotated removal guide only if Category C count ≥ 5 →
+      ── README.md — annotated removal guide ──────────────────────────
+      Each flagged section is marked below. Sections not listed are unaffected.
+
+      ```markdown
+      [  <!-- ✂ REMOVE/UPDATE: <reason> -->   ← REMOVE for Pattern 1, UPDATE for Patterns 2–5
+         <heading line>
+         <up to 3 body lines>  ]
+         ← one block per flagged section, in document order →
+      ```
+         ← end annotated guide →
+         ← end Category C subsection →
+
+         ← include this subsection only if Category D is non-empty →
+      env.dist entries that may no longer be needed:
+
+         ← include only if Rule 8 found duplicates →
+      ⚠ Duplicate entries (keep one, remove extras):
+
+      [  ⚠ Duplicate entry:  <KEY>
+              └─ appears <N> times in env.dist (duplicate entry — should appear only once)  ]
+
+      Remove duplicate occurrences, keeping exactly one entry per key.
+         ← end duplicate block →
+
+         ← include only if Rules 1–7, Rule 9, or both found obsolete entries →
+      Obsolete entries after migration:
+
+      **Grouping rules for output:**
+
+      First, sort all Rule 1–7 and Rule 9 findings (excluding Rule 8 duplicates) into four buckets:
+
+      **Bucket A — "App Management managed" (safe to remove after deployment):**
+      Entries from Rules 1–3, 6, 7 where the runtime reference check found NO match in
+      action/src/lib files (i.e. the runtime reference override did NOT apply).
+
+      **Bucket B — "Review manually" groups:**
+      Entries where the runtime reference override applied (Rules 1–3, 6, 7), plus all
+      Rule 5 findings. Group ALL entries that reference the SAME file together.
+      For each unique referenced file, emit one group block.
+
+      **Bucket C — "Only in removable onboarding scripts":**
+      Entries matched by Rule 4 only. These reference onboarding scripts that are no longer
+      needed after migration — safe to remove from env.dist once those scripts are removed.
+
+      **Bucket D — "Likely unused":**
+      Entries matched by Rule 9 only (not referenced in any action file, config, or script).
+
+      Print in this order:
+
+      If Bucket A is non-empty:
+
+          ── App Management managed — safe to remove after verifying injection ─────────
+            <KEY1>, <KEY2>, <KEY3>
+            └─ These are managed by App Management for deployed instances.
+               They may still be needed in .env for local development.
+
+      For each unique file in Bucket B (sorted by file path):
+
+          ── Review manually — still referenced in <relative-file-path> ──────────────
+            <KEY1>, <KEY2>, <KEY3>
+            └─ Ensure App Management injects these values before removing.
+
+      If Bucket C is non-empty:
+
+          ── Onboarding/script-only — safe to remove with the scripts ─────────────────
+            <KEY1>, <KEY2>
+            └─ Only used in <script-name>, which is no longer needed after migration.
+
+      If Bucket D is non-empty:
+
+          ── Likely unused — not referenced anywhere ───────────────────────────────────
+            <KEY1>, <KEY2>
+            └─ Not found in any action source file or configuration.
+               Verify these are not needed before removing.
+
+      After all buckets:
+
+          Remove confirmed-safe entries from env.dist (and .env if present) once verified.
+          Note: Bucket B entries may still be needed for local development until App Management
+          credential injection is confirmed for your deployment.
+         ← end obsolete block →
+         ← end Category D subsection →
+    ← end conditional block →
 
     ── Next steps ─────────────────────────────────────────────────────
       [1. aio-commerce-lib-app generate all]   ← include ONLY if Step 5 failed
