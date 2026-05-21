@@ -1,6 +1,6 @@
 ---
 name: commerce-app-migrate
-description: Migrate an Adobe Commerce App Builder project from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach. Run from the root of the App Builder project to be migrated. Pass --auto to skip confirmation prompts (suitable for CI or batch use). Use when the user wants to migrate an App Builder project from the Integration Starter Kit or Checkout Starter Kit to the App Management approach, or mentions upgrading their Adobe Commerce extension architecture.
+description: Migrate an Adobe Commerce App Builder project from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach. Run from the root of the App Builder project to be migrated. Pass --auto to skip confirmation prompts (suitable for CI or batch use) — auto mode prints a summary of all Q&A questions answered with their defaults. Pass --doc-scan-only to scan README.md and env.dist for outdated content without modifying any files. The migration output includes documentation recommendations: README.md sections flagged by 5 patterns (including semantic credential-family matching and env setup boilerplate detection), and env.dist entries grouped by action status (safe-to-remove, app-management-managed, review-manually, or onboarding-only). productDependencies version constraints from extension-manifest.json are auto-inserted as comments in the generated app.commerce.config.ts. Use when the user wants to migrate an App Builder project from the Integration Starter Kit or Checkout Starter Kit to the App Management approach, or mentions upgrading their Adobe Commerce extension architecture.
 ---
 
 # Migrate to App Management
@@ -20,6 +20,22 @@ and wait for the developer's reply before proceeding.
 **Autonomous mode:** If invoked with `--auto` or `--yes`, or the context indicates an
 automated pipeline (no interactive terminal), skip all **[await]** points and proceed
 directly to the next step.
+
+**Doc-scan-only mode:** If invoked with `--doc-scan-only`, skip all migration steps after
+the Analyzer. After Step 1 completes (Analyzer returns a `ProjectSnapshot`):
+
+- If `alreadyMigrated === false`, output:
+
+      --doc-scan-only requires the project to already be migrated to App Management.
+      No app.commerce.config.ts (or .js) was found.
+
+      Run /commerce-app-migrate (without --doc-scan-only) to perform the migration first.
+
+  Then stop.
+
+- If `alreadyMigrated === true`, apply any applicable Cross-cutting Warnings, then
+  dispatch the Executor in doc-scan-only mode. No files are modified.
+  Do not proceed to Steps 2–5.
 
 ---
 
@@ -62,10 +78,24 @@ The Analyzer reads the current directory and returns a `ProjectSnapshot` JSON ob
     If you want to re-generate specific sections, please specify which
     section to update: metadata / eventing / installation / adminUiSdk / businessConfig
 
-Then apply any applicable Cross-cutting Warnings (see subsection below). Then stop.
+Then apply any applicable Cross-cutting Warnings (see subsection below).
 
-**Do not proceed further if alreadyMigrated is true unless the developer explicitly
-requests a specific section update.**
+Then dispatch the Executor agent (`${CLAUDE_SKILL_DIR}/agents/executor.md`) in
+**doc-scan-only mode** to produce documentation recommendations for the project:
+
+- Pass `mode = "doc-scan-only"` to the Executor
+- Pass the `ProjectSnapshot` JSON from the Analyzer
+- Pass `assembled config = null` (no new config to write)
+
+The Executor will scan `README.md` and `env.dist` against the existing
+`app.commerce.config.ts` and print the "Documentation recommendations" report
+without modifying any files.
+
+**Do not proceed to Steps 2–5 (domain agents, Q&A, config assembly, full execution)
+unless the developer explicitly requests a specific section update.**
+
+After the Executor prints the documentation recommendations, **stop**. Do not continue to
+the "Detected project:" summary block or the migration confirmation prompt below.
 
 After the Analyzer returns, print a human-readable summary:
 
@@ -211,6 +241,17 @@ deployed action package). Interpret the developer's reply as:
 - `"yes"` or any action string → add the section back; prompt for the runtime action name
   if not already specified in the reply, then apply it to the `configFragment`
 
+**Autonomous mode — auto-accepted defaults summary:**
+
+In `--auto` mode, after applying all question defaults, print:
+
+    ── Auto-accepted defaults ────────────────────────────────────────
+      The following questions were answered automatically (--auto mode):
+      [  <domain> : <question id> = "<default value>"  ]
+         ← one line per question that had an explicit default; omit entire section if no questions existed →
+
+Omit this section entirely if there were no unresolved questions across all domains.
+
 ---
 
 ## Step 4: Assemble app.commerce.config.ts
@@ -256,6 +297,20 @@ export default defineConfig({
   If the description exceeds 255 characters, truncate it to 252 characters and append `"..."`.
   If absent or empty, check `extension-manifest.json` `description` field (truncate to 255 if needed).
   If neither has a description: `"Commerce App Builder application"`.
+
+**productDependencies comment:**
+If `ProjectSnapshot.productDependencies` is non-null (has `minVersion` and/or `maxVersion`):
+Insert this comment block in the assembled TypeScript, immediately AFTER the copyright header
+and BEFORE the `import { defineConfig }` line:
+
+```typescript
+// Product version constraints (no App Management equivalent — for reference only):
+// Adobe Commerce compatibility: >= <minVersion>, < <maxVersion>
+// Contact Adobe Commerce Marketplace for guidance on version enforcement.
+```
+
+Omit the `< <maxVersion>` part if `maxVersion` is null. Omit the `>= <minVersion>` part if
+`minVersion` is null. If both are null or `productDependencies` is null, omit the comment entirely.
 
 Print the assembled TypeScript content to the terminal:
 
@@ -306,6 +361,14 @@ a rollback point (`git checkout main` to abandon the migration).
 - Domain agents (Step 2) run **in parallel** — dispatch all eligible agents in one Agent tool call
 - Analyzer (Step 1) and Executor (Step 5) are sequential — Analyzer first, Executor last
 - This skill runs in the **developer's project directory**, not the migration skill repository
+- **Documentation recommendations** are produced by the Executor and cover:
+  - README.md sections flagged by 5 patterns: ISK onboarding commands, old env var references, outdated architecture diagrams, credential-family semantic matching (IMS/SaaS, PaaS/OAuth1, workspace), and env setup boilerplate (`cp env.dist .env`)
+  - env.dist entries grouped into three buckets: safe-to-remove (managed by App Management), review-manually (referenced in action source files, grouped by file), and onboarding-only (used only in onboarding scripts)
+  - Rule 9 catches unreferenced env.dist variables not matched by any other rule and flags them for manual review
+  - Category C (README) requires ≥ 5 flagged sections to emit the recommendations block
+- **`--auto` mode** prints a summary of all Q&A questions answered automatically with their defaults (omitted if no questions existed)
+- **`productDependencies`** version constraints from `extension-manifest.json` are auto-inserted as a comment block immediately before the `import { defineConfig }` line in the generated `app.commerce.config.ts`
+- **Internal metadata fields** (`_directionWarning`, `_source`) may be added by domain agents to `configFragment` objects — the Executor strips these before writing files so they never appear in the output TypeScript
 
 ## Supporting Files
 
