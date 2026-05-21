@@ -88,6 +88,7 @@ afterEach(() => {
 describe("eventing installation", () => {
   let capture: {
     updateConfiguration: UpdateEventingConfigurationParams | null;
+    subscribeBody: unknown;
   };
 
   beforeEach(() => {
@@ -99,6 +100,7 @@ describe("eventing installation", () => {
 
     capture = {
       updateConfiguration: null,
+      subscribeBody: null,
     };
 
     apiServer.use(
@@ -221,8 +223,12 @@ describe("eventing installation", () => {
         },
       ),
 
-      http.post(`${COMMERCE_BASE_URL}/eventing/eventSubscribe`, () =>
-        HttpResponse.json([]),
+      http.post(
+        `${COMMERCE_BASE_URL}/eventing/eventSubscribe`,
+        async ({ request }) => {
+          capture.subscribeBody = await request.json();
+          return HttpResponse.json([]);
+        },
       ),
     );
   });
@@ -243,6 +249,12 @@ describe("eventing installation", () => {
         workspace_configuration: expect.any(String),
       }),
     });
+
+    expect(capture.subscribeBody).toEqual(
+      expect.objectContaining({
+        event: expect.objectContaining({ rules: commerceEvent.rules }),
+      }),
+    );
 
     expect(result.data).toMatchObject({
       installation: {
@@ -287,6 +299,7 @@ describe("eventing installation", () => {
                           name: `${config.metadata.id}.${commerceEvent.name}`.toLowerCase(),
                           provider_id: "io-provider-commerce",
                           parent: commerceEvent.name,
+                          rules: commerceEvent.rules,
                         },
                       },
                     },

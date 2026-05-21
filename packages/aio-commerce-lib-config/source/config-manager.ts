@@ -285,7 +285,15 @@ export async function unsyncCommerceScopes() {
  *
  * @example
  * ```typescript
- * import { getConfiguration, byScopeId, byCodeAndLevel, byCode } from "@adobe/aio-commerce-lib-config";
+ * import {
+ *   getConfiguration,
+ *   byScopeId,
+ *   byCodeAndLevel,
+ *   byCode,
+ *   byWebsiteId,
+ *   byStoreId,
+ *   byStoreViewId,
+ * } from "@adobe/aio-commerce-lib-config";
  *
  * // Get configuration by scope ID
  * const config1 = await getConfiguration(byScopeId("scope-123"));
@@ -300,6 +308,11 @@ export async function unsyncCommerceScopes() {
  *
  * // Get configuration by code (uses default level)
  * const config3 = await getConfiguration(byCode("website"));
+ *
+ * // Get configuration by Commerce API ID of a website, store, or store view
+ * const websiteCfg = await getConfiguration(byWebsiteId(1));
+ * const storeCfg = await getConfiguration(byStoreId(1));
+ * const storeViewCfg = await getConfiguration(byStoreViewId(1));
  * ```
  */
 export async function getConfiguration(
@@ -318,6 +331,14 @@ export async function getConfiguration(
 
   if (selector.by._tag === "codeAndLevel") {
     return await getConfigModule(context, selector.by.code, selector.by.level);
+  }
+
+  if (selector.by._tag === "commerceScopeId") {
+    return await getConfigModule(
+      context,
+      selector.by.commerceScopeId,
+      selector.by.level,
+    );
   }
 
   return await getConfigModule(context, selector.by.code);
@@ -373,6 +394,15 @@ export async function getConfigurationByKey(
       context,
       configKey,
       selector.by.code,
+      selector.by.level,
+    );
+  }
+
+  if (selector.by._tag === "commerceScopeId") {
+    return await getConfigByKeyModule(
+      context,
+      configKey,
+      selector.by.commerceScopeId,
       selector.by.level,
     );
   }
@@ -443,6 +473,15 @@ export async function setConfiguration(
       context,
       request,
       selector.by.code,
+      selector.by.level,
+    );
+  }
+
+  if (selector.by._tag === "commerceScopeId") {
+    return await setConfigModule(
+      context,
+      request,
+      selector.by.commerceScopeId,
       selector.by.level,
     );
   }

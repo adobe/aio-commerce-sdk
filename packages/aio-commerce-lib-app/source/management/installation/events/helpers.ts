@@ -452,6 +452,7 @@ async function createCommerceEventSubscription(
     name: eventName,
     parent: event.config.name,
     fields: event.config.fields,
+    rules: event.config.rules,
     provider_id: provider.id,
     destination: event.config.destination,
     hipaa_audit_required: event.config.hipaa_audit_required,

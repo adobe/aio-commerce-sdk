@@ -34,6 +34,9 @@ const commerceEventingPart = {
           name: "plugin.order_placed",
           label: "Order Placed",
           fields: [{ name: "order_id" }, { name: "customer_id" }],
+          rules: [
+            { field: "order_total", operator: "greaterThan", value: "100" },
+          ],
           runtimeActions: ["my-package/handle-order"],
           description: "Triggered when an order is placed",
         },
