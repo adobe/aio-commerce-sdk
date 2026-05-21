@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { rm, writeFile } from "node:fs/promises";
+import { access, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
@@ -39,11 +39,17 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   // JSON-serialized; generated actions read the config from the runtime ESM
   // module instead. Remove any stale JSON from a previous static run.
   if (hasDynamicAppConfig(appConfig)) {
-    await rm(join(await getProjectRootDirectory(), getManifestPath()), {
-      force: true,
-    });
+    const stalePath = join(await getProjectRootDirectory(), getManifestPath());
+    const staleExists = await access(stalePath).then(
+      () => true,
+      () => false,
+    );
 
-    consola.success(`Removed stale ${APP_MANIFEST_FILE}`);
+    if (staleExists) {
+      await rm(stalePath, { force: true });
+      consola.success(`Removed stale ${APP_MANIFEST_FILE}`);
+    }
+
     return;
   }
 

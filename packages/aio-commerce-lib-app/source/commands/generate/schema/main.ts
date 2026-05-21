@@ -11,7 +11,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { rm, writeFile } from "node:fs/promises";
+import { access, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
@@ -48,8 +48,6 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
     return;
   }
 
-  consola.info("Generating configuration schema...");
-
   const projectDir = await getProjectRootDirectory();
   const envPath = join(projectDir, ".env");
 
@@ -78,11 +76,21 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   // the app manifest module. Skip emitting a separate schema file and clean up
   // any stale JSON from a previous static run.
   if (hasDynamicAppConfig(appConfig)) {
-    await rm(join(projectDir, getSchemaPath()), { force: true });
-    consola.success(`Removed stale ${CONFIG_SCHEMA_FILE_NAME}`);
+    const stalePath = join(projectDir, getSchemaPath());
+    const staleExists = await access(stalePath).then(
+      () => true,
+      () => false,
+    );
+
+    if (staleExists) {
+      await rm(stalePath, { force: true });
+      consola.success(`Removed stale ${CONFIG_SCHEMA_FILE_NAME}`);
+    }
+
     return;
   }
 
+  consola.info("Generating configuration schema...");
   const outputDir = await makeOutputDirFor(
     getGeneratedDir(CONFIGURATION_EXTENSION_POINT_ID),
   );
