@@ -99,7 +99,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   const schemaPath = join(outputDir, CONFIG_SCHEMA_FILE_NAME);
   await writeFile(schemaPath, contents, "utf-8");
 
-  consola.success(`Generated ${CONFIG_SCHEMA_FILE_NAME}`);
+  consola.success(`Generated ${CONFIG_SCHEMA_FILE_NAME}\n`);
 }
 
 /** Run the generate schema command */

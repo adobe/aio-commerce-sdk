@@ -63,7 +63,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   const manifestPath = join(outputDir, APP_MANIFEST_FILE);
   await writeFile(manifestPath, contents, "utf-8");
 
-  consola.success(`Generated ${APP_MANIFEST_FILE}`);
+  consola.success(`Generated ${APP_MANIFEST_FILE}\n`);
 }
 
 /** Run the generate manifest command */
