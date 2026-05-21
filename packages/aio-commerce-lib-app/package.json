@@ -116,6 +116,7 @@
     "@npmcli/package-json": "^7.0.5",
     "camelcase": "catalog:",
     "consola": "catalog:",
+    "esbuild": "^0.25.12",
     "jiti": "^2.6.1",
     "ky": "catalog:",
     "openwhisk": "^3.21.8",
