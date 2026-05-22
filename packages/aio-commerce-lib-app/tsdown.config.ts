@@ -24,7 +24,6 @@ export default mergeConfig(baseConfig, {
     "./source/config/index.ts",
     "./source/commands/index.ts",
     "./source/management/index.ts",
-    "./source/runtime.ts",
   ],
   define: {
     __PKG_VERSION__: JSON.stringify(pkg.version),

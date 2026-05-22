@@ -705,47 +705,6 @@ try {
 }
 ```
 
-## Runtime Helpers
-
-The `@adobe/aio-commerce-lib-app/runtime` export provides helpers for use inside runtime actions.
-
-### Commerce System Configuration
-
-When `commerce-app-management` associates an app with a Commerce instance, the SDK automatically
-stores the Commerce system configuration. Use `getCommerceSystemConfig` to retrieve it from any
-runtime action — no custom storage setup is required.
-
-```ts
-import { getCommerceSystemConfig } from "@adobe/aio-commerce-lib-app/runtime";
-
-export async function main(params) {
-  const config = getCommerceSystemConfig(params);
-  if (!config) {
-    // App is not currently associated with a Commerce instance.
-    return {
-      statusCode: 400,
-      body: { error: "Not associated with a Commerce instance" },
-    };
-  }
-
-  // config.baseUrl — Commerce API base URL, e.g. "https://my-store.example.com"
-  // config.env  — "saas" | "paas"
-}
-```
-
-When `getCommerceSystemConfig` returns `null`, the app is either not currently associated with a
-Commerce instance, or the association predates this feature. Apps must handle this case explicitly.
-
-The configuration is cleared automatically when the app is unassociated, so runtime actions always
-reflect the current association state.
-
-#### Available fields
-
-| Field     | Type               | Description                              |
-| --------- | ------------------ | ---------------------------------------- |
-| `baseUrl` | `string`           | Commerce API base URL                    |
-| `env`     | `"saas" \| "paas"` | Deployment type of the Commerce instance |
-
 ## Best Practices
 
 1. **Use `defineConfig` for type safety** - Get autocompletion and type checking in your IDE
