@@ -8,12 +8,13 @@
 
 Add an `icon` field to `app.commerce.config.ts` so Commerce app developers can
 declare an icon for their app. The value is a relative path to a local image
-file; the `pre-app-build` hook encodes it to a base64 data URL and bundles it
-into the `app-config` action at build time, which exposes a dedicated
-`/app-config/icon` endpoint that returns the data URL with aggressive browser
-caching. The `app-config` response includes an `iconUrl` pointing to that endpoint,
-making the icon appear in Commerce App Management for all distribution models.
-For Exchange-listed apps that also declare an icon in their config, the
+file; the `pre-app-build` hook validates it and adds it to the action's
+`include` list in the generated `ext.config.yaml`, so App Builder deploys it
+as a file alongside the action code. The `app-config` action exposes a public
+`/app-config/icon` endpoint that reads and serves the file as binary. The
+`app-config` response includes an `iconUrl` pointing to that endpoint, making
+the icon appear in Commerce App Management for all distribution models. For
+Exchange-listed apps that also declare an icon in their config, the
 SDK-declared icon takes precedence over the icon sourced from App Registry.
 
 ## Motivation
@@ -44,8 +45,8 @@ The root cause is that the SDK offers no supported path to provide an icon. The
 **Non-goals:**
 
 - Supporting arbitrary external image hosting. The `icon` field accepts only a
-  relative path to a local file; the SDK encodes it at build time. Arbitrary
-  external URLs cannot be encoded by the SDK and introduce URL rot risk — the
+  relative path to a local file; the SDK deploys it at build time. Arbitrary
+  external URLs cannot be deployed by the SDK and introduce URL rot risk — the
   icon would silently break if the external host goes offline.
 - Icon resizing. Only PNG and JPG files under 1 MB and exactly 48×48 px are
   accepted, consistent with the minimum Adobe Exchange listing requirement.
@@ -71,11 +72,10 @@ export default defineConfig({
 ```
 
 The value is a path relative to the project root. The `pre-app-build` hook
-reads the file, validates it, and encodes it to a base64 data URL at build time.
-The data URL is bundled into the `app-config` action, which exposes a
-`/app-config/icon` endpoint that returns it on demand. The endpoint requires a
-valid IMS bearer token, consistent with all other SDK endpoints. The `app-config`
-response includes an `iconUrl` as part of every request:
+reads the file, validates it, and adds it to the `include` list of the
+`app-config` action in the generated `ext.config.yaml`. App Builder deploys it
+as a file alongside the action code. The `app-config` response includes an
+`iconUrl` as part of every request:
 
 ```json
 {
@@ -87,8 +87,8 @@ response includes an `iconUrl` as part of every request:
 }
 ```
 
-Commerce App Management fetches the icon URL and renders it during association.
-The icon appears for anyone who installs or views the app.
+Commerce App Management renders the icon directly from the URL during
+association. The icon appears for anyone who installs or views the app.
 
 **Validation errors**
 
@@ -159,9 +159,9 @@ The `pre-app-build` hook already reads `app.commerce.config.ts` to generate
 4. Reads the image dimensions using the `image-size` package (reads only the
    file header, supports PNG and JPEG) and checks they are exactly 48×48 px —
    fails with a clear error if not
-5. Encodes the file as a base64 data URL (`data:image/png;base64,...` or
-   `data:image/jpeg;base64,...`) and writes it to a well-known path that is
-   bundled into the `app-config` action at build time.
+5. Adds the icon file to the `include` list of the `app-config` action in the
+   generated `ext.config.yaml`, so App Builder deploys it as a file alongside
+   the action code.
 
 This runs before any build or deploy step, giving the developer immediate
 feedback without wasting a full build cycle. The icon is fully self-contained
@@ -169,16 +169,16 @@ in the deployed action — no CDN or external dependency at runtime.
 
 ### Icon endpoint
 
-The icon is encoded as a base64 data URL at build time; `pre-app-build` writes
-it to a well-known path and the action template imports it statically.
+The icon file is deployed alongside the `app-config` action code via the
+`include` mechanism in `ext.config.yaml`. At request time, the action reads it
+from the filesystem using the `fs` module and returns the binary content.
 
-The `app-config` action exposes a new `GET /icon` route (path:
-`/app-config/icon`) that returns the pre-computed base64 data URL as a plain
-text response with `Cache-Control: private, max-age=86400`. The route is
-protected by the same IMS authentication as all other SDK endpoints — a valid
-bearer token is required. This limits invocations to authenticated callers and
-allows the browser to cache the response for 24 hours, avoiding repeated
-runtime action calls for the same icon.
+The `app-config` action exposes a new public `GET /icon` route (path:
+`/app-config/icon`) that returns the binary image with the appropriate
+`Content-Type` (`image/png` or `image/jpeg`) and
+`Cache-Control: public, max-age=86400`. The route is a public web action — no
+auth is required, as icons are not sensitive, and `<img src>` cannot send
+authentication headers.
 
 The `app-config` response includes an `iconUrl` field whose value is the
 fully-qualified URL of this endpoint:
@@ -187,32 +187,27 @@ fully-qualified URL of this endpoint:
 https://{__OW_NAMESPACE}.adobeioruntime.net/api/v1/web/app-management/app-config/icon
 ```
 
-The URL is deterministic from the deployment namespace and package — no
-additional state is needed to construct it.
+The URL is deterministic from the deployment namespace — no additional state is
+needed to construct it.
 
-`Cache-Control: private, max-age=86400` (24 hours) allows the browser to cache
-the response for the authenticated user while preventing shared caches from
-storing an authenticated response. After the first fetch, subsequent requests
-within the TTL are served from the browser cache without invoking the runtime
-action. The URL has no cache-busting hash (the path is stable across deploys),
-so `immutable` would be incorrect.
+`Cache-Control: public, max-age=86400` (24 hours) allows the browser to cache
+the image across page navigations while ensuring a newly redeployed icon
+propagates within a day. The URL has no cache-busting hash (the path is stable
+across deploys), so `immutable` would be incorrect.
 
 ### Commerce App Management
 
-Commerce App Management needs to fetch the icon URL before rendering.
-`adobeioruntime.net` is not in Unified Shell's `img-src` CSP (verified from the
-live `Content-Security-Policy` header at `experience.adobe.com`, 2026-05-22),
-so the URL cannot be used directly as `<img src>`. The correct flow is:
+Commerce App Management renders the icon directly from `iconUrl`:
 
-```
-fetch(iconUrl, { headers: { Authorization: `Bearer ${imsToken}` } })
-  → response.text()     // returns the base64 data URL string
-  → <img src={dataUrl}> // data: is explicitly in img-src
+```html
+<img src="{iconUrl}" />
 ```
 
-The association flow already holds `iconUrl` from the `app-config` response.
-Commerce App Management performs this extra fetch before rendering; the returned
-data URL can be set directly as `src` with no blob URL lifecycle to manage.
+This requires `*.adobeioruntime.net` to be present in the `img-src` directive
+of the Commerce App Management SPA CSP configuration in the Adobe Experience
+Cloud Developer Portal. Commerce App Management already has
+`*.adobeioruntime.net` in `connect-src`; adding it to `img-src` is a one-time
+configuration change with no code impact.
 
 The association flow's icon precedence logic does need to be adjusted. The
 app's `AppConfig` (fetched from `app-config`) is already available at
@@ -225,27 +220,34 @@ that have an Exchange listing but have not yet declared an icon in their config.
 
 - **Icon field absent** — no `iconUrl` in the `app-config` response; App
   Management renders the existing gray placeholder.
-- **App redeployed with a different icon** — the new base64 data URL is bundled
-  into the action at build time; it is served immediately after redeployment.
-  Browsers that cached the previous endpoint response may continue to show the
-  old icon for up to 24 hours (the `max-age` TTL).
+- **App redeployed with a different icon** — the new file is deployed alongside
+  the action; it is served immediately after redeployment. Browsers that cached
+  the previous icon response may continue to show the old icon for up to 24
+  hours (the `max-age` TTL).
 
 ## Drawbacks
 
-- Changing the icon requires a full redeployment; the base64 data URL is
-  encoded at build time and does not take effect until the action is redeployed.
-- Commerce App Management requires an extra fetch to display the icon (a
-  rendering change).
+- Changing the icon requires a full redeployment; the icon file is deployed at
+  build time and does not take effect until the action is redeployed.
 - A newly redeployed icon may not propagate immediately to browsers that have a
   cached endpoint response within the 24-hour `max-age` TTL.
+- Commerce App Management requires a one-time CSP configuration update to add
+  `*.adobeioruntime.net` to its `img-src` directive in the Developer Portal.
 
 ## Rationale and alternatives
 
 **Why relative paths only?**
-Relative paths ensure the SDK can read and encode the file at build time.
-Arbitrary external URLs cannot be encoded by the SDK and introduce URL rot risk
-— external image hosts can go offline without warning, causing the icon to
+Relative paths ensure the SDK can resolve and deploy the file at build time.
+Arbitrary external URLs cannot be deployed by the SDK and introduce URL rot
+risk — external image hosts can go offline without warning, causing the icon to
 silently break in production.
+
+**Why not embed the icon in the action code?**
+Encoding the icon as base64 and bundling it into the action's JavaScript is the
+simplest build-time option, but it conflates code and assets. Binary assets
+should not be embedded in action code — the `include` mechanism is the
+supported App Builder path for deploying files alongside an action, and it
+keeps the action bundle lean and the icon in its natural binary form.
 
 **Why not base64 embedded in the app-config response?**
 Extension Manager persists the full `app-config` payload per associated app.
@@ -257,23 +259,12 @@ which the UI does not need until the user views a specific app. Storing only an
 of icon size.
 
 **Why not CDN?**
-The App Builder CDN (`adobeio-static.net`) was considered but was ruled out by
-two independent blockers:
-
-1. App Builder only deploys files from `web-src` to the CDN. Apps without web
-   assets (headless runtime-action-only apps) cannot push files to the CDN.
-   There is no supported mechanism to work around this — adding a minimal
-   `web-src` folder only to enable CDN uploads, or copying files into the build
-   output via a post-build hook, are unsupported hacks that the SDK cannot
-   impose on developers.
-
-2. `adobeio-static.net` is not in Unified Shell's `img-src` CSP. Verified from
-   the live `Content-Security-Policy` header at `experience.adobe.com`
-   (2026-05-22): `adobeio-static.net` appears only in `frame-src`, not in
-   `img-src`. An `<img>` tag pointing to the App Builder CDN would be silently
-   blocked by the browser. The chosen endpoint approach avoids this: the
-   `/app-config/icon` route returns a base64 data URL, which Commerce App
-   Management sets as `<img src>` directly — `data:` is explicitly in `img-src`.
+App Builder only deploys files from `web-src` to the CDN (`adobeio-static.net`).
+Apps without web assets (headless runtime-action-only apps) cannot push files
+to the CDN. There is no supported mechanism to work around this — adding a
+minimal `web-src` folder only to enable CDN uploads, or copying files into the
+build output via a post-build hook, are unsupported hacks that the SDK cannot
+impose on developers.
 
 **Impact of not doing this:**
 Directly-deployed apps have no supported path to provide an icon and will
@@ -282,11 +273,7 @@ can display an icon, through the Developer Distribution Portal listing flow.
 
 ## Unresolved questions
 
-- **`adobeioruntime.net` in `img-src`** — a request has been sent to the
-  Unified Shell/Experience team to add `https://*.adobeioruntime.net` to the
-  `img-src` CSP. If approved, Commerce App Management can use `iconUrl`
-  directly as `<img src>` without the fetch/data-URL workaround. The current
-  design works regardless of the outcome; this is a simplification opportunity.
+N/A
 
 ## Future possibilities
 
