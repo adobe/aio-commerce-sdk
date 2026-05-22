@@ -14,7 +14,10 @@ import { describe, expect, test } from "vitest";
 
 import { appConfigRuntimeAction } from "#actions/app-config";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
-import { minimalValidConfig } from "#test/fixtures/config";
+import {
+  configWithDynamicListOptions,
+  minimalValidConfig,
+} from "#test/fixtures/config";
 
 describe("appConfigRuntimeAction", () => {
   describe("GET /", () => {
@@ -42,6 +45,43 @@ describe("appConfigRuntimeAction", () => {
       expect(result).toMatchObject({
         type: "error",
         error: { statusCode: 500 },
+      });
+    });
+
+    test("returns a 500 error when the app config is missing", async () => {
+      const handler = appConfigRuntimeAction({
+        // @ts-expect-error - intentionally missing app config
+        appConfig: undefined,
+      });
+
+      const result = await handler(createRuntimeActionParams());
+      expect(result).toMatchObject({
+        type: "error",
+        error: { statusCode: 500 },
+      });
+    });
+
+    test("resolves dynamicList options in the response body", async () => {
+      const handler = appConfigRuntimeAction({
+        appConfig: configWithDynamicListOptions,
+      });
+
+      const result = await handler(createRuntimeActionParams());
+      expect(result).toMatchObject({
+        type: "success",
+        body: {
+          businessConfig: {
+            schema: [
+              expect.objectContaining({
+                name: "paymentMethod",
+                type: "list",
+                selectionMode: "single",
+                default: "braintree",
+                options: [{ label: "Braintree", value: "braintree" }],
+              }),
+            ],
+          },
+        },
       });
     });
   });

@@ -18,8 +18,8 @@ import type {
   SetConfigValue,
 } from "#modules/configuration/types";
 import type {
-  BusinessConfigSchema,
   BusinessConfigSchemaValue,
+  ResolvedBusinessConfigSchema,
 } from "#modules/schema/index";
 import type { ScopeNode, ScopeTree } from "#modules/scope-tree/index";
 
@@ -422,7 +422,7 @@ export function mergeScopes(
  * @param schema - The schema to build the defaults from.
  * @returns The default config entries.
  */
-export function getSchemaDefaults(schema: BusinessConfigSchema) {
+export function getSchemaDefaults(schema: ResolvedBusinessConfigSchema) {
   const defaults = schema
     .filter((field) => field.default !== undefined)
     .map((field) => ({
@@ -562,7 +562,7 @@ type MergeWithSchemaDefaultsParams = {
   loadScopeConfigFn: (
     code: string,
   ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>;
-  getSchemaFn: () => Promise<BusinessConfigSchema>;
+  getSchemaFn: () => Promise<ResolvedBusinessConfigSchema>;
   configData: { scope: ScopeNode; config: ConfigValue[] };
   scopeCode: string;
   scopeLevel: string;

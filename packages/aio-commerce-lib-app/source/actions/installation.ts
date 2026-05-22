@@ -26,6 +26,7 @@ import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 import openwhisk from "openwhisk";
 import { object, string } from "valibot";
 
+import { validateCommerceAppConfig } from "#config/lib/validate";
 import {
   createInitialInstallationState,
   createInitialUninstallationState,
@@ -42,7 +43,10 @@ import { AppDataSchema } from "#management/installation/schema";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type {
+  CommerceAppConfig,
+  CommerceAppConfigOutputModel,
+} from "#config/schema/app";
 import type { InstallationContext, ValidationContext } from "#management/index";
 import type { StepFailedEvent } from "#management/installation/workflow/hooks";
 import type {
@@ -60,13 +64,15 @@ type CustomScriptsLoader = (
 
 /** Arguments for the runtime action factory. */
 type RuntimeActionFactoryArgs = {
-  appConfig: CommerceAppConfigOutputModel;
+  appConfig: CommerceAppConfig;
   customScriptsLoader?: CustomScriptsLoader;
 };
 
 /** Params received by all handlers. */
-type RuntimeActionArgs = InstallationContext["params"] &
-  RuntimeActionFactoryArgs;
+type RuntimeActionArgs = InstallationContext["params"] & {
+  appConfig: CommerceAppConfig;
+  customScriptsLoader?: CustomScriptsLoader;
+};
 
 /** The context for the installation action. */
 interface InstallationActionContext extends BaseContext {
@@ -285,14 +291,15 @@ router.post("/", {
       logger.debug("Previous installation failed, allowing retry");
     }
 
-    const appConfig = rawParams.appConfig;
+    const rawAppConfig = rawParams.appConfig;
 
-    if (!appConfig) {
+    if (!rawAppConfig) {
       return internalServerError(
         "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
       );
     }
 
+    const appConfig = validateCommerceAppConfig(rawAppConfig);
     const initialState = createInitialInstallationState({ config: appConfig });
     logger.debug(`Created initial state: ${initialState.id}`);
 
@@ -338,17 +345,22 @@ router.post("/", {
 router.post("/execution", {
   handler: async (_req, { logger, rawParams }) => {
     const params = rawParams as ExecutionRouteParams;
-    const { initialState, appConfig, appData, AIO_COMMERCE_API_BASE_URL } =
-      params;
+    const {
+      initialState,
+      appConfig: rawAppConfig,
+      appData,
+      AIO_COMMERCE_API_BASE_URL,
+    } = params;
 
     if (!initialState) {
       return badRequest("initialState is required for execution");
     }
 
-    if (!appConfig) {
+    if (!rawAppConfig) {
       return badRequest("appConfig is required for execution");
     }
 
+    const appConfig = validateCommerceAppConfig(rawAppConfig);
     const store = await createInstallationStore();
     const hooks = createInstallationHooks(store, (msg) => logger.debug(msg));
     const installationContext = buildInstallationContext(
@@ -402,14 +414,15 @@ router.post("/validation", {
   handler: async (req, { logger, rawParams }) => {
     logger.debug("Running pre-installation validation...");
 
-    const appConfig = rawParams.appConfig;
+    const rawAppConfig = rawParams.appConfig;
 
-    if (!appConfig) {
+    if (!rawAppConfig) {
       return internalServerError(
         "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
       );
     }
 
+    const appConfig = validateCommerceAppConfig(rawAppConfig);
     const { appData, ...params } = buildWorkflowParams(
       req.body,
       rawParams as RuntimeActionArgs,
@@ -466,14 +479,15 @@ router.post("/uninstallation", {
       `Starting uninstallation for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${commerceBaseUrl}")`,
     );
 
-    const appConfig = rawParams.appConfig;
+    const rawAppConfig = rawParams.appConfig;
 
-    if (!appConfig) {
+    if (!rawAppConfig) {
       return internalServerError(
         "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
       );
     }
 
+    const appConfig = validateCommerceAppConfig(rawAppConfig);
     const store = await createUninstallationStore();
     const existingState = await store.get(getStorageKey());
 
@@ -531,17 +545,22 @@ router.post("/uninstallation", {
 router.post("/uninstallation/execution", {
   handler: async (_req, { logger, rawParams }) => {
     const params = rawParams as ExecutionRouteParams;
-    const { initialState, appConfig, appData, AIO_COMMERCE_API_BASE_URL } =
-      params;
+    const {
+      initialState,
+      appConfig: rawAppConfig,
+      appData,
+      AIO_COMMERCE_API_BASE_URL,
+    } = params;
 
     if (!initialState) {
       return badRequest("initialState is required for execution");
     }
 
-    if (!appConfig) {
+    if (!rawAppConfig) {
       return badRequest("appConfig is required for execution");
     }
 
+    const appConfig = validateCommerceAppConfig(rawAppConfig);
     const store = await createUninstallationStore();
     const hooks = createInstallationHooks(store, (msg) => logger.debug(msg));
     const installationContext = buildInstallationContext(

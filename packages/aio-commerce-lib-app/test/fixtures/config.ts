@@ -1,3 +1,5 @@
+import { schemaWithDynamicListOptions } from "#test/fixtures/business-config";
+
 import type { ApplicationMetadata } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
@@ -488,3 +490,9 @@ export function createConfigWithTwoCommerceEventingSources() {
     },
   } satisfies CommerceAppConfigOutputModel;
 }
+
+/** Config fixture with dynamic business config list options. */
+export const configWithDynamicListOptions = {
+  metadata: { ...mockMetadata, id: "dynamic-list-options-app" },
+  businessConfig: { schema: schemaWithDynamicListOptions },
+} satisfies CommerceAppConfigOutputModel;
