@@ -23,6 +23,7 @@ import { getRuntimeActions } from "#commands/generate/actions/config";
 import {
   generateActionFiles,
   generateRegistrationActionFile,
+  prepareRuntimeAppConfigModule,
   readExtConfig,
   TEMPLATES_DIR,
 } from "#commands/generate/actions/lib";
@@ -42,6 +43,7 @@ type Extension = "extensibility/1" | "configuration/1" | "backend-ui/1";
  */
 export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
   const appManifest = await loadAppManifest();
+  await prepareRuntimeAppConfigModule(appManifest);
 
   if (extension === "extensibility/1") {
     const { doc: extensibilityExtConfig } = await readExtConfig(

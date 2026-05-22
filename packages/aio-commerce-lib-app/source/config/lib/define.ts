@@ -26,7 +26,7 @@ import type { CommerceAppConfig } from "#config/schema/app";
  *   businessConfig: { ... }
  * });
  */
-export function defineConfig(config: CommerceAppConfig) {
+export function defineConfig<const T extends CommerceAppConfig>(config: T) {
   // This function does nothing, is only used for type-inference and autocompletion purposes.
   // It's a common pattern with configuration files. For example Vitest and TSDown,
   // two of the tools used in this repo, use this pattern for their config files.

@@ -12,6 +12,8 @@
 
 import * as v from "valibot";
 
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+
 const DEFAULT_BOOLEAN_VALUE = false as const;
 const DEFAULT_STRING_VALUE = "" as const;
 const DEFAULT_MULTIPLE_LIST_VALUE = [] as const;
@@ -55,21 +57,27 @@ const BaseOptionSchema = v.object({
 });
 
 /** Schema for a single option in a list field, containing a display label and a value */
-const ListOptionSchema = v.object({
+export const ListOptionSchema = v.object({
   label: v.string("Expected a string for the option label"),
   value: v.string("Expected a string for the option value"),
 });
 
-/** Schema for a list field that allows single selection from a list of options */
-const SingleListSchema = v.object({
+type ListOptionShape = v.InferInput<typeof ListOptionSchema>;
+
+/** Entries shared between the single- and multiple-selection list field schemas. */
+const ListEntriesCommon = {
   ...BaseOptionSchema.entries,
   type: v.literal("list", "Expected the type to be 'list'"),
+  options: v.array(ListOptionSchema, "Expected an array of list options"),
+};
 
+/** Schema for a list field that allows single selection from a list of options */
+const SingleListSchema = v.object({
+  ...ListEntriesCommon,
   selectionMode: v.literal(
     "single",
     "Expected the selectionMode to be 'single'",
   ),
-  options: v.array(ListOptionSchema, "Expected an array of list options"),
   default: v.pipe(
     v.string("Expected a string for the default value"),
     v.nonEmpty("The default value must not be empty"),
@@ -78,14 +86,11 @@ const SingleListSchema = v.object({
 
 /** Schema for a list field that allows multiple selections from a list of options */
 const MultipleListSchema = v.object({
-  ...BaseOptionSchema.entries,
-  type: v.literal("list", "Expected the type to be 'list'"),
-
+  ...ListEntriesCommon,
   selectionMode: v.literal(
     "multiple",
     "Expected the selectionMode to be 'multiple'",
   ),
-  options: v.array(ListOptionSchema, "Expected an array of list options"),
   default: v.optional(
     v.array(
       v.pipe(
@@ -99,7 +104,7 @@ const MultipleListSchema = v.object({
 });
 
 /** Schema for list fields supporting either single or multiple selection modes */
-const ListSchema = v.variant("selectionMode", [
+export const ListSchema = v.variant("selectionMode", [
   SingleListSchema,
   MultipleListSchema,
 ]);
@@ -188,9 +193,62 @@ const BooleanSchema = v.object({
   ),
 });
 
-/** Schema for a configuration field that can be one of various field types (list, text, password, email, url, or phone) */
+type OptionsFactory = (
+  params: RuntimeActionParams,
+) => ListOptionShape[] | Promise<ListOptionShape[]>;
+
+/** Entries shared between the single- and multiple-selection dynamic list field schemas. */
+const DynamicListEntriesCommon = {
+  ...BaseOptionSchema.entries,
+  type: v.literal("dynamicList", "Expected the type to be 'dynamicList'"),
+  options: v.custom<OptionsFactory>(
+    (input) => typeof input === "function",
+    'Expected a function for "options"',
+  ),
+};
+
+type SingleDefaultFactory = (resolvedOptions: ListOptionShape[]) => string;
+
+/** Schema for a dynamic list field that allows single selection. */
+const SingleDynamicListSchema = v.object({
+  ...DynamicListEntriesCommon,
+  selectionMode: v.literal(
+    "single",
+    "Expected the selectionMode to be 'single'",
+  ),
+  default: v.custom<SingleDefaultFactory>(
+    (input) => typeof input === "function",
+    'Expected a function for "default"',
+  ),
+});
+
+type MultipleDefaultFactory = (resolvedOptions: ListOptionShape[]) => string[];
+
+/** Schema for a dynamic list field that allows multiple selections. */
+const MultipleDynamicListSchema = v.object({
+  ...DynamicListEntriesCommon,
+  selectionMode: v.literal(
+    "multiple",
+    "Expected the selectionMode to be 'multiple'",
+  ),
+  default: v.optional(
+    v.custom<MultipleDefaultFactory>(
+      (input) => typeof input === "function",
+      'Expected a function for "default"',
+    ),
+  ),
+});
+
+/** Schema for dynamic list fields supporting either single or multiple selection modes. */
+export const DynamicListSchema = v.variant("selectionMode", [
+  SingleDynamicListSchema,
+  MultipleDynamicListSchema,
+]);
+
+/** Schema for a single configuration field. */
 export const FieldSchema = v.variant("type", [
   ListSchema,
+  DynamicListSchema,
   TextSchema,
   PasswordSchema,
   EmailSchema,
@@ -199,7 +257,7 @@ export const FieldSchema = v.variant("type", [
   BooleanSchema,
 ]);
 
-/** Schema for the schema of the business configuration, which is an array of configuration fields with at least one field required */
+/** Schema for the business configuration schema. */
 export const SchemaBusinessConfigSchema = v.pipe(
   v.array(FieldSchema, "Expected an array of configuration fields"),
   v.minLength(1, "At least one configuration parameter is required"),

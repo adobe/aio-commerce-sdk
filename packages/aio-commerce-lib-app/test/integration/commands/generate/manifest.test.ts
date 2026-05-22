@@ -23,6 +23,12 @@ import {
 } from "#commands/constants";
 import { exec, run } from "#commands/generate/manifest/main";
 import {
+  expectFileToExist,
+  expectFileToNotExist,
+} from "#test/assertions/filesystem";
+import {
+  configWithBusinessConfig,
+  configWithDynamicListOptions,
   fullConfig,
   minimalValidConfig,
   mockMetadata,
@@ -88,6 +94,22 @@ describe("commands/generate/manifest", () => {
 
           expect(hashA).toBe(hashB);
         });
+      });
+    });
+
+    test("does not emit a JSON manifest when schema is dynamic", async () => {
+      await withTempProject(EMPTY_PROJECT, async (tempDir) => {
+        await run(configWithDynamicListOptions);
+        await expectFileToNotExist(getManifestPath(tempDir));
+      });
+    });
+
+    test("removes a stale JSON manifest when regenerating as dynamic", async () => {
+      await withTempProject(EMPTY_PROJECT, async (tempDir) => {
+        await run(configWithBusinessConfig);
+        await expectFileToExist(getManifestPath(tempDir));
+        await run(configWithDynamicListOptions);
+        await expectFileToNotExist(getManifestPath(tempDir));
       });
     });
 
