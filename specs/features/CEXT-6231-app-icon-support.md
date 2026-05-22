@@ -11,9 +11,10 @@ declare an icon for their app. The value is a relative path to a local image
 file; the `pre-app-build` hook encodes it to a base64 data URL and bundles it
 into the `app-config` action at build time, which exposes a dedicated
 `/app-config/icon` endpoint that returns the data URL with aggressive browser
-caching. The `app-config` response includes an
-`iconUrl` pointing to that endpoint, making the icon appear in Commerce App
-Management for all distribution models.
+caching. The `app-config` response includes an `iconUrl` pointing to that endpoint,
+making the icon appear in Commerce App Management for all distribution models.
+For Exchange-listed apps that also declare an icon in their config, the
+SDK-declared icon takes precedence over the icon sourced from App Registry.
 
 ## Motivation
 
@@ -71,9 +72,10 @@ export default defineConfig({
 
 The value is a path relative to the project root. The `pre-app-build` hook
 reads the file, validates it, and encodes it to a base64 data URL at build time.
-The data URL is bundled into the `app-config` action, which exposes a public
-`/app-config/icon` endpoint that returns it on demand. The `app-config` response
-includes an `iconUrl` as part of every request:
+The data URL is bundled into the `app-config` action, which exposes a
+`/app-config/icon` endpoint that returns it on demand. The endpoint requires a
+valid IMS bearer token, consistent with all other SDK endpoints. The `app-config`
+response includes an `iconUrl` as part of every request:
 
 ```json
 {
@@ -170,10 +172,13 @@ in the deployed action — no CDN or external dependency at runtime.
 The icon is encoded as a base64 data URL at build time; `pre-app-build` writes
 it to a well-known path and the action template imports it statically.
 
-The `app-config` action exposes a new public `GET /icon` route (path:
+The `app-config` action exposes a new `GET /icon` route (path:
 `/app-config/icon`) that returns the pre-computed base64 data URL as a plain
-text response with `Cache-Control: public, max-age=86400`. The route is a
-public web action — no auth required, as icons are not sensitive.
+text response with `Cache-Control: private, max-age=86400`. The route is
+protected by the same IMS authentication as all other SDK endpoints — a valid
+bearer token is required. This limits invocations to authenticated callers and
+allows the browser to cache the response for 24 hours, avoiding repeated
+runtime action calls for the same icon.
 
 The `app-config` response includes an `iconUrl` field whose value is the
 fully-qualified URL of this endpoint:
@@ -185,10 +190,12 @@ https://{__OW_NAMESPACE}.adobeioruntime.net/api/v1/web/{package}/app-config/icon
 The URL is deterministic from the deployment namespace and package — no
 additional state is needed to construct it.
 
-`Cache-Control: public, max-age=86400` (24 hours) is chosen to enable browser
-caching across page navigations while ensuring a newly redeployed icon
-propagates within a day. The URL has no cache-busting hash (the path is stable
-across deploys), so `immutable` would be incorrect.
+`Cache-Control: private, max-age=86400` (24 hours) allows the browser to cache
+the response for the authenticated user while preventing shared caches from
+storing an authenticated response. After the first fetch, subsequent requests
+within the TTL are served from the browser cache without invoking the runtime
+action. The URL has no cache-busting hash (the path is stable across deploys),
+so `immutable` would be incorrect.
 
 ### Commerce App Management
 
@@ -198,8 +205,8 @@ live `Content-Security-Policy` header at `experience.adobe.com`, 2026-05-22),
 so the URL cannot be used directly as `<img src>`. The correct flow is:
 
 ```
-fetch(iconUrl)        // allowed: connect-src ends with * (wildcard)
-  → response.text()   // returns the base64 data URL string
+fetch(iconUrl, { headers: { Authorization: `Bearer ${imsToken}` } })
+  → response.text()     // returns the base64 data URL string
   → <img src={dataUrl}> // data: is explicitly in img-src
 ```
 
