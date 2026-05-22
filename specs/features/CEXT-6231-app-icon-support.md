@@ -32,6 +32,15 @@ The root cause is that the SDK offers no supported path to provide an icon. The
 `MetadataSchema` has `displayName`, `description`, `version`, and `id` — but no
 `icon` field. This is the primary gap.
 
+Commerce App Management does expose an icon field through the "Publish your app" flow available in
+the production workspace. However, this path has significant restrictions: it is limited to the
+production workspace — no equivalent exists for staging or development workspaces; for
+non-downloadable apps, the icon field is not editable through this flow and is currently broken (the
+app shows a generic puzzle-piece placeholder instead of the icon submitted via Exchange); and it ties
+icon management to the publication lifecycle rather than the deploy cycle. For downloadable apps
+published directly in the production workspace the flow does work, but it does not cover the general
+case.
+
 **Goals:**
 
 - Give developers a first-class, config-level way to declare an app icon that
@@ -235,6 +244,14 @@ that have an Exchange listing but have not yet declared an icon in their config.
   `*.adobeioruntime.net` to its `img-src` directive in the Developer Portal.
 
 ## Rationale and alternatives
+
+**Why not the workspace "Publish your app" flow?**
+Commerce App Management exposes an icon field through the "Publish your app" flow in the production
+workspace. This was considered but is insufficient: it is restricted to the production workspace —
+icons set through this path do not apply to staging or development workspaces; the icon field is not
+editable for non-downloadable apps and is currently broken for those apps; and it ties icon
+management to publication state rather than the deploy cycle, making it inaccessible during
+development and testing. The SDK approach works for any workspace status and any distribution model.
 
 **Why relative paths only?**
 Relative paths ensure the SDK can resolve and deploy the file at build time.
