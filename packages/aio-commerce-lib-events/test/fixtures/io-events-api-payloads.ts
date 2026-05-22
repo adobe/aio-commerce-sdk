@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type { Options } from "ky";
+import type { FetchOptions } from "@adobe/aio-commerce-lib-api";
 import type { createAdobeIoEventsApiClient } from "#io-events/index";
 
 type AdobeIoEventsApiClient = ReturnType<typeof createAdobeIoEventsApiClient>;
@@ -21,7 +21,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     method: "GET",
     pathname: "consumer-org-1/providers",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.getAllEventProviders(
         { consumerOrgId: "consumer-org-1" },
         fetchOptions,
@@ -35,7 +35,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     method: "GET",
     pathname: "providers/provider-1",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.getEventProviderById(
         {
           providerId: "provider-1",
@@ -51,7 +51,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     method: "POST",
     pathname: "consumer-org-1/project-1/workspace-1/providers",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.createEventProvider(
         {
           consumerOrgId: "consumer-org-1",
@@ -72,7 +72,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     method: "GET",
     pathname: "consumer-org-1/providers",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.getAllCommerceEventProviders(
         { consumerOrgId: "consumer-org-1" },
         fetchOptions,
@@ -86,7 +86,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     method: "GET",
     pathname: "consumer-org-1/providers",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.getAll3rdPartyCustomEventProviders(
         { consumerOrgId: "consumer-org-1" },
         fetchOptions,
@@ -100,7 +100,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     method: "POST",
     pathname: "consumer-org-1/project-1/workspace-1/providers",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.createCommerceEventProvider(
         {
           consumerOrgId: "consumer-org-1",
@@ -121,7 +121,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     method: "POST",
     pathname: "consumer-org-1/project-1/workspace-1/providers",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.create3rdPartyCustomEventProvider(
         {
           consumerOrgId: "consumer-org-1",
@@ -142,7 +142,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     method: "GET",
     pathname: "providers/provider-1/eventmetadata",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.getAllEventMetadataForProvider(
         { providerId: "provider-1" },
         fetchOptions,
@@ -156,7 +156,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     method: "GET",
     pathname: "providers/provider-1/eventmetadata/event-1",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.getEventMetadataForEventAndProvider(
         { providerId: "provider-1", eventCode: "event-1" },
         fetchOptions,
@@ -171,7 +171,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     pathname:
       "consumer-org-1/project-1/workspace-1/providers/provider-1/eventmetadata",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.createEventMetadataForProvider(
         {
           consumerOrgId: "consumer-org-1",
@@ -193,7 +193,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     method: "GET",
     pathname: "consumer-org-1/registrations",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.getAllRegistrationsByConsumerOrg(
         { consumerOrgId: "consumer-org-1" },
         fetchOptions,
@@ -207,7 +207,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     method: "GET",
     pathname: "consumer-org-1/project-1/workspace-1/registrations",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.getAllRegistrations(
         {
           consumerOrgId: "consumer-org-1",
@@ -226,7 +226,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     pathname:
       "consumer-org-1/project-1/workspace-1/registrations/registration-1",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.getRegistrationById(
         {
           consumerOrgId: "consumer-org-1",
@@ -245,7 +245,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     method: "POST",
     pathname: "consumer-org-1/project-1/workspace-1/registrations",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.createRegistration(
         {
           clientId: "client-1",
@@ -280,7 +280,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     method: "POST",
     pathname: "consumer-org-1/project-1/workspace-1/registrations",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.createRegistration(
         {
           clientId: "client-1",
@@ -312,7 +312,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     pathname:
       "consumer-org-1/project-1/workspace-1/registrations/registration-1",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.updateRegistration(
         {
           clientId: "client-1",
@@ -349,7 +349,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     pathname:
       "consumer-org-1/project-1/workspace-1/registrations/registration-1",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.updateRegistration(
         {
           clientId: "client-1",
@@ -382,7 +382,7 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     pathname:
       "consumer-org-1/project-1/workspace-1/registrations/registration-1",
 
-    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: FetchOptions) {
       return client.deleteRegistration(
         {
           consumerOrgId: "consumer-org-1",

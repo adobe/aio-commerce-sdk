@@ -10,27 +10,41 @@
  * governing permissions and limitations under the License.
  */
 
-import type { KyInstance, Options } from "ky";
+import { toKyOptions } from "#utils/http/fetch-options";
 
-type KyHttpClient = Omit<KyInstance, "extend" | "create">;
+import type { Input, KyInstance, ResponsePromise } from "ky";
+import type { FetchOptions } from "#utils/http/fetch-options";
+
+type HttpMethod = (url: Input, options?: FetchOptions) => ResponsePromise;
+
+type HttpClient = {
+  get: HttpMethod;
+  post: HttpMethod;
+  put: HttpMethod;
+  delete: HttpMethod;
+  patch: HttpMethod;
+  head: HttpMethod;
+  retry: KyInstance["retry"];
+  stop: KyInstance["stop"];
+};
 
 /**
  * Base class for HTTP clients.
  * @template T The type of the configuration object.
  */
-export class HttpClientBase<T> implements KyHttpClient {
+export class HttpClientBase<T> implements HttpClient {
   /** The actual HTTP client instance. */
   protected httpClient!: Readonly<KyInstance>;
 
   /** The configuration used by the HTTP client. */
   public readonly config: Readonly<T>;
 
-  public get!: KyInstance["get"];
-  public post!: KyInstance["post"];
-  public put!: KyInstance["put"];
-  public delete!: KyInstance["delete"];
-  public patch!: KyInstance["patch"];
-  public head!: KyInstance["head"];
+  public get!: HttpMethod;
+  public post!: HttpMethod;
+  public put!: HttpMethod;
+  public delete!: HttpMethod;
+  public patch!: HttpMethod;
+  public head!: HttpMethod;
   public retry!: KyInstance["retry"];
   public stop!: KyInstance["stop"];
 
@@ -50,12 +64,18 @@ export class HttpClientBase<T> implements KyHttpClient {
    */
   protected setHttpClient(httpClient: KyInstance) {
     this.httpClient = Object.freeze(httpClient);
-    this.get = this.httpClient.get.bind(this.httpClient);
-    this.post = this.httpClient.post.bind(this.httpClient);
-    this.put = this.httpClient.put.bind(this.httpClient);
-    this.delete = this.httpClient.delete.bind(this.httpClient);
-    this.patch = this.httpClient.patch.bind(this.httpClient);
-    this.head = this.httpClient.head.bind(this.httpClient);
+    this.get = (url, options?) =>
+      this.httpClient.get(url, options ? toKyOptions(options) : undefined);
+    this.post = (url, options?) =>
+      this.httpClient.post(url, options ? toKyOptions(options) : undefined);
+    this.put = (url, options?) =>
+      this.httpClient.put(url, options ? toKyOptions(options) : undefined);
+    this.delete = (url, options?) =>
+      this.httpClient.delete(url, options ? toKyOptions(options) : undefined);
+    this.patch = (url, options?) =>
+      this.httpClient.patch(url, options ? toKyOptions(options) : undefined);
+    this.head = (url, options?) =>
+      this.httpClient.head(url, options ? toKyOptions(options) : undefined);
     this.retry = this.httpClient.retry.bind(this.httpClient);
     this.stop = this.httpClient.stop;
   }
@@ -64,8 +84,16 @@ export class HttpClientBase<T> implements KyHttpClient {
    * Extends the current HTTP client instance with the given options.
    * @param options The options to extend the HTTP client with.
    */
-  public extend(options: Options | ((parentOptions: Options) => Options)) {
-    const client = Object.freeze(this.httpClient.extend(options));
+  public extend(
+    options: FetchOptions | ((parentOptions: FetchOptions) => FetchOptions),
+  ) {
+    const kyOptions =
+      typeof options === "function"
+        ? (parent: Parameters<KyInstance["extend"]>[0]) =>
+            toKyOptions(options(parent as FetchOptions))
+        : toKyOptions(options);
+
+    const client = Object.freeze(this.httpClient.extend(kyOptions));
     return new HttpClientBase(this.config, client);
   }
 }

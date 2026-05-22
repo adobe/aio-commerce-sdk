@@ -21,9 +21,12 @@ import {
   UpdateRegistrationParamsSchema,
 } from "./schema";
 
-import type { AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api";
+import type {
+  AdobeIoEventsHttpClient,
+  FetchOptions,
+} from "@adobe/aio-commerce-lib-api";
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import type { HTTPError, Options } from "ky";
+import type { HTTPError } from "ky";
 import type {
   CreateRegistrationParams,
   DeleteRegistrationParams,
@@ -44,7 +47,7 @@ import type {
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to get the registrations with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -52,7 +55,7 @@ import type {
 export async function getAllRegistrationsByConsumerOrg(
   httpClient: AdobeIoEventsHttpClient,
   params: GetAllRegistrationsByConsumerOrgParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = parseOrThrow(
     GetAllRegistrationsByConsumerOrgParamsSchema,
@@ -70,7 +73,7 @@ export async function getAllRegistrationsByConsumerOrg(
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to get the registrations with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -78,7 +81,7 @@ export async function getAllRegistrationsByConsumerOrg(
 export async function getAllRegistrations(
   httpClient: AdobeIoEventsHttpClient,
   params: GetAllRegistrationsParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = parseOrThrow(GetAllRegistrationsParamsSchema, params);
 
@@ -96,7 +99,7 @@ export async function getAllRegistrations(
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to get the registration with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -104,7 +107,7 @@ export async function getAllRegistrations(
 export async function getRegistrationById(
   httpClient: AdobeIoEventsHttpClient,
   params: GetRegistrationByIdParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = parseOrThrow(GetRegistrationByIdParamsSchema, params);
 
@@ -122,7 +125,7 @@ export async function getRegistrationById(
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to create the registration with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -130,7 +133,7 @@ export async function getRegistrationById(
 export async function createRegistration(
   httpClient: AdobeIoEventsHttpClient,
   params: CreateRegistrationParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = parseOrThrow(CreateRegistrationParamsSchema, params);
 
@@ -177,7 +180,7 @@ export async function createRegistration(
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to update the registration with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -185,7 +188,7 @@ export async function createRegistration(
 export async function updateRegistration(
   httpClient: AdobeIoEventsHttpClient,
   params: UpdateRegistrationParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = parseOrThrow(UpdateRegistrationParamsSchema, params);
 
@@ -231,7 +234,7 @@ export async function updateRegistration(
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to delete the registration with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -239,7 +242,7 @@ export async function updateRegistration(
 export async function deleteRegistration(
   httpClient: AdobeIoEventsHttpClient,
   params: DeleteRegistrationParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = parseOrThrow(DeleteRegistrationParamsSchema, params);
   return httpClient

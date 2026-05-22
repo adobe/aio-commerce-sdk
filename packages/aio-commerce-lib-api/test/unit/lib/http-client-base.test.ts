@@ -20,7 +20,7 @@ import {
 } from "#test/fixtures/http-clients";
 import { setupTestContext } from "#test/setup";
 
-import type { Options } from "ky";
+import type { FetchOptions } from "#index";
 
 describe("lib/http-client-base", () => {
   const context = setupTestContext(TestHttpClient, TEST_HTTP_CLIENT_PARAMS);
@@ -65,7 +65,7 @@ describe("lib/http-client-base", () => {
   });
 
   describe("extend method", () => {
-    const extendOptions: Options = {
+    const extendOptions: FetchOptions = {
       headers: { "X-Extended": "true" },
     };
 

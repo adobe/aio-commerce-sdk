@@ -15,8 +15,8 @@ import type {
   IntegrationAuthParams,
   IntegrationAuthProvider,
 } from "@adobe/aio-commerce-lib-auth";
-import type { Options } from "ky";
 import type { ImsAuthParamsWithOptionalScopes } from "#utils/auth/ims-scopes";
+import type { FetchOptions } from "#utils/http/fetch-options";
 
 /** Defines the base configuration required to build an Adobe Commerce HTTP client. */
 export type CommerceHttpClientConfigBase = {
@@ -60,7 +60,7 @@ export type CommerceFlavor = CommerceHttpClientConfig["flavor"];
 export type SaaSClientParams = {
   auth: ImsAuthProvider | ImsAuthParamsWithOptionalScopes; // We provide default scopes.
   config: CommerceHttpClientConfigSaaS;
-  fetchOptions?: Options;
+  fetchOptions?: FetchOptions;
 };
 
 /** Defines the configuration required to build an Adobe Commerce HTTP client for PaaS. */
@@ -72,7 +72,7 @@ export type PaaSClientParams = {
     | ImsAuthParamsWithOptionalScopes;
 
   config: CommerceHttpClientConfigPaaS;
-  fetchOptions?: Options;
+  fetchOptions?: FetchOptions;
 };
 
 /** Defines the parameters required to build an Adobe Commerce HTTP client (either SaaS or PaaS). */

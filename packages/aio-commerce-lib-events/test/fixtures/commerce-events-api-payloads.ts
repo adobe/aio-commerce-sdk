@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type { Options } from "ky";
+import type { FetchOptions } from "@adobe/aio-commerce-lib-api";
 import type { createCommerceEventsApiClient } from "#commerce/index";
 
 type CommerceEventsApiClient = ReturnType<typeof createCommerceEventsApiClient>;
@@ -21,7 +21,7 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     method: "GET",
     pathname: "eventing/eventProvider",
 
-    invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
+    invoke(client: CommerceEventsApiClient, fetchOptions?: FetchOptions) {
       return client.getAllEventProviders(fetchOptions);
     },
 
@@ -32,7 +32,7 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     method: "GET",
     pathname: "eventing/eventProvider/provider-1",
 
-    invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
+    invoke(client: CommerceEventsApiClient, fetchOptions?: FetchOptions) {
       return client.getEventProviderById(
         {
           provider_id: "provider-1",
@@ -48,7 +48,7 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     method: "POST",
     pathname: "eventing/eventProvider",
 
-    invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
+    invoke(client: CommerceEventsApiClient, fetchOptions?: FetchOptions) {
       return client.createEventProvider(
         {
           provider_id: "provider-1",
@@ -68,7 +68,7 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     method: "GET",
     pathname: "eventing/getEventSubscriptions",
 
-    invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
+    invoke(client: CommerceEventsApiClient, fetchOptions?: FetchOptions) {
       return client.getAllEventSubscriptions(fetchOptions);
     },
 
@@ -79,7 +79,7 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     method: "POST",
     pathname: "eventing/eventSubscribe",
 
-    invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
+    invoke(client: CommerceEventsApiClient, fetchOptions?: FetchOptions) {
       return client.createEventSubscription(
         {
           name: "subscription-1",
@@ -97,7 +97,7 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     method: "PUT",
     pathname: "eventing/updateConfiguration",
 
-    invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
+    invoke(client: CommerceEventsApiClient, fetchOptions?: FetchOptions) {
       return client.updateEventingConfiguration(
         {
           enabled: true,

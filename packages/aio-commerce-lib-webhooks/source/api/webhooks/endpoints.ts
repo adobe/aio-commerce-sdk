@@ -17,9 +17,12 @@ import {
   WebhookUnsubscribeParamsSchema,
 } from "./schema";
 
-import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
+import type {
+  AdobeCommerceHttpClient,
+  FetchOptions,
+} from "@adobe/aio-commerce-lib-api";
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import type { HTTPError, Options } from "ky";
+import type { HTTPError } from "ky";
 import type {
   WebhookSubscribeParams,
   WebhookUnsubscribeParams,
@@ -34,11 +37,11 @@ import type {
  * @see https://developer.adobe.com/commerce/extensibility/webhooks/api/#get-a-list-of-all-subscribed-webhooks
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  */
 export function getWebhookList(
   httpClient: AdobeCommerceHttpClient,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   return httpClient
     .get("webhooks/list", fetchOptions)
@@ -51,7 +54,7 @@ export function getWebhookList(
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
  * @param params - The webhook payload (webhook_method, webhook_type, batch_name, hook_name, url, etc.).
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -59,7 +62,7 @@ export function getWebhookList(
 export function subscribeWebhook(
   httpClient: AdobeCommerceHttpClient,
   params: WebhookSubscribeParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = v.parse(WebhookSubscribeParamsSchema, params);
 
@@ -77,7 +80,7 @@ export function subscribeWebhook(
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
  * @param params - The webhook identifiers (webhook_method, webhook_type, batch_name, hook_name).
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -85,7 +88,7 @@ export function subscribeWebhook(
 export function unsubscribeWebhook(
   httpClient: AdobeCommerceHttpClient,
   params: WebhookUnsubscribeParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = v.parse(WebhookUnsubscribeParamsSchema, params);
 
@@ -102,11 +105,11 @@ export function unsubscribeWebhook(
  * @see https://developer.adobe.com/commerce/extensibility/webhooks/api/#get-supported-webhooks-for-saas
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  */
 export function getSupportedWebhookList(
   httpClient: AdobeCommerceHttpClient,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   return httpClient
     .get("webhooks/supportedList", fetchOptions)

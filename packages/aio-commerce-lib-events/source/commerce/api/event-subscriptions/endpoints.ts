@@ -17,9 +17,12 @@ import {
   EventSubscriptionDeleteParamsSchema,
 } from "./schema";
 
-import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
+import type {
+  AdobeCommerceHttpClient,
+  FetchOptions,
+} from "@adobe/aio-commerce-lib-api";
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import type { HTTPError, Options } from "ky";
+import type { HTTPError } from "ky";
 import type {
   EventSubscriptionCreateParams,
   EventSubscriptionDeleteParams,
@@ -31,11 +34,11 @@ import type { CommerceEventSubscriptionManyResponse } from "./types";
  * @see https://developer.adobe.com/commerce/extensibility/events/api/#get-a-list-of-all-subscribed-events
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  */
 export async function getAllEventSubscriptions(
   httpClient: AdobeCommerceHttpClient,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   return httpClient
     .get("eventing/getEventSubscriptions", fetchOptions)
@@ -48,7 +51,7 @@ export async function getAllEventSubscriptions(
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
  * @param params - The parameters to create the event subscription with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -56,7 +59,7 @@ export async function getAllEventSubscriptions(
 export async function createEventSubscription(
   httpClient: AdobeCommerceHttpClient,
   params: EventSubscriptionCreateParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = parseOrThrow(
     EventSubscriptionCreateParamsSchema,
@@ -85,7 +88,7 @@ export async function createEventSubscription(
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
  * @param params - The parameters to delete the event subscription with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -93,7 +96,7 @@ export async function createEventSubscription(
 export async function deleteEventSubscription(
   httpClient: AdobeCommerceHttpClient,
   params: EventSubscriptionDeleteParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ): Promise<void> {
   const validatedParams = parseOrThrow(
     EventSubscriptionDeleteParamsSchema,

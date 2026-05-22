@@ -19,9 +19,12 @@ import {
   GetEventMetadataForEventAndProviderSchema,
 } from "./schema";
 
-import type { AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api";
+import type {
+  AdobeIoEventsHttpClient,
+  FetchOptions,
+} from "@adobe/aio-commerce-lib-api";
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import type { HTTPError, Options } from "ky";
+import type { HTTPError } from "ky";
 import type {
   CreateEventMetadataForProviderParams,
   DeleteEventMetadataForProviderParams,
@@ -39,7 +42,7 @@ import type {
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to get the event metadata with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -47,7 +50,7 @@ import type {
 export async function getAllEventMetadataForProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: GetAllEventMetadataForProviderParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = parseOrThrow(
     GetAllEventMetadataForProviderSchema,
@@ -65,7 +68,7 @@ export async function getAllEventMetadataForProvider(
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to get the event metadata with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -73,7 +76,7 @@ export async function getAllEventMetadataForProvider(
 export async function getEventMetadataForEventAndProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: GetEventMetadataForEventAndProviderParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = parseOrThrow(
     GetEventMetadataForEventAndProviderSchema,
@@ -94,7 +97,7 @@ export async function getEventMetadataForEventAndProvider(
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to create the event metadata with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -102,7 +105,7 @@ export async function getEventMetadataForEventAndProvider(
 export async function createEventMetadataForProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: CreateEventMetadataForProviderParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = parseOrThrow(
     CreateEventMetadataForProviderSchema,
@@ -131,7 +134,7 @@ export async function createEventMetadataForProvider(
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to delete the event metadata with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -139,7 +142,7 @@ export async function createEventMetadataForProvider(
 export async function deleteEventMetadataForProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: DeleteEventMetadataForProviderParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ): Promise<void> {
   const validatedParams = parseOrThrow(
     DeleteEventMetadataForProviderSchema,

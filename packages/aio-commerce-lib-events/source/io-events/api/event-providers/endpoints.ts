@@ -21,9 +21,12 @@ import {
   EventProviderListAllParamsSchema,
 } from "./schema";
 
-import type { AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api";
+import type {
+  AdobeIoEventsHttpClient,
+  FetchOptions,
+} from "@adobe/aio-commerce-lib-api";
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import type { HTTPError, Options } from "ky";
+import type { HTTPError } from "ky";
 import type {
   EventProviderCreateParams,
   EventProviderDeleteParams,
@@ -41,12 +44,12 @@ import type {
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to list the event providers with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  */
 export async function getAllEventProviders(
   httpClient: AdobeIoEventsHttpClient,
   params: EventProviderListAllParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = parseOrThrow(
     EventProviderListAllParamsSchema,
@@ -78,7 +81,7 @@ export async function getAllEventProviders(
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to get the event provider by.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -86,7 +89,7 @@ export async function getAllEventProviders(
 export async function getEventProviderById(
   httpClient: AdobeIoEventsHttpClient,
   params: EventProviderGetByIdParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = parseOrThrow(
     EventProviderGetByIdParamsSchema,
@@ -114,7 +117,7 @@ export async function getEventProviderById(
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to create the event provider with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -122,7 +125,7 @@ export async function getEventProviderById(
 export async function createEventProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: EventProviderCreateParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = parseOrThrow(EventProviderCreateParamsSchema, params);
 
@@ -150,7 +153,7 @@ export async function createEventProvider(
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to delete the event provider with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -158,7 +161,7 @@ export async function createEventProvider(
 export async function deleteEventProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: EventProviderDeleteParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ): Promise<void> {
   const validatedParams = parseOrThrow(EventProviderDeleteParamsSchema, params);
 

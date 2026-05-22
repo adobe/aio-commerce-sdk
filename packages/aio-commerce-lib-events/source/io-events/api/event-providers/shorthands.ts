@@ -12,9 +12,12 @@
 
 import { createEventProvider, getAllEventProviders } from "./endpoints";
 
-import type { AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api";
+import type {
+  AdobeIoEventsHttpClient,
+  FetchOptions,
+} from "@adobe/aio-commerce-lib-api";
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import type { HTTPError, Options } from "ky";
+import type { HTTPError } from "ky";
 import type { OmitDeep } from "type-fest";
 import type {
   EventProviderCreateParams,
@@ -27,7 +30,7 @@ import type {
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to list the event providers with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -35,7 +38,7 @@ import type {
 export async function getAllCommerceEventProviders(
   httpClient: AdobeIoEventsHttpClient,
   params: OmitDeep<EventProviderListAllParams, "filterBy.providerType">,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   return getAllEventProviders(
     httpClient,
@@ -56,7 +59,7 @@ export async function getAllCommerceEventProviders(
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to list the event providers with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -64,7 +67,7 @@ export async function getAllCommerceEventProviders(
 export async function getAll3rdPartyCustomEventProviders(
   httpClient: AdobeIoEventsHttpClient,
   params: OmitDeep<EventProviderListAllParams, "filterBy.providerType">,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   return getAllEventProviders(
     httpClient,
@@ -85,7 +88,7 @@ export async function getAll3rdPartyCustomEventProviders(
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to create the event provider with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -93,7 +96,7 @@ export async function getAll3rdPartyCustomEventProviders(
 export async function createCommerceEventProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: OmitDeep<EventProviderCreateParams, "providerType">,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   return createEventProvider(
     httpClient,
@@ -107,7 +110,7 @@ export async function createCommerceEventProvider(
  *
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
  * @param params - The parameters to create the event provider with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -115,7 +118,7 @@ export async function createCommerceEventProvider(
 export async function create3rdPartyCustomEventProvider(
   httpClient: AdobeIoEventsHttpClient,
   params: OmitDeep<EventProviderCreateParams, "providerType">,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   return createEventProvider(
     httpClient,

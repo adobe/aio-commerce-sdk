@@ -22,5 +22,13 @@ export function makeHttpError(
 ): HTTPError {
   const response = new Response(body, { status, statusText });
   const request = new Request("https://example.com");
-  return new HTTPError(response, request, {} as NormalizedOptions);
+  const error = new HTTPError(response, request, {} as NormalizedOptions);
+  if (body) {
+    try {
+      error.data = JSON.parse(body);
+    } catch {
+      error.data = body;
+    }
+  }
+  return error;
 }

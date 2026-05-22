@@ -14,9 +14,12 @@ import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import { UpdateEventingConfigurationParamsSchema } from "./schema";
 
-import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
+import type {
+  AdobeCommerceHttpClient,
+  FetchOptions,
+} from "@adobe/aio-commerce-lib-api";
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import type { HTTPError, Options } from "ky";
+import type { HTTPError } from "ky";
 import type { UpdateEventingConfigurationParams } from "./schema";
 
 /**
@@ -25,7 +28,7 @@ import type { UpdateEventingConfigurationParams } from "./schema";
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
  * @param params - The parameters to update the configuration with.
- * @param fetchOptions - The {@link Options} to use to make the request.
+ * @param fetchOptions - The {@link FetchOptions} to use to make the request.
  *
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
@@ -33,7 +36,7 @@ import type { UpdateEventingConfigurationParams } from "./schema";
 export async function updateEventingConfiguration(
   httpClient: AdobeCommerceHttpClient,
   params: UpdateEventingConfigurationParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ) {
   const validatedParams = parseOrThrow(
     UpdateEventingConfigurationParamsSchema,

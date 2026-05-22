@@ -21,3 +21,4 @@ export { AdobeIoEventsHttpClient } from "./lib/io-events/http-client";
 export type { ApiClientRecord, ApiFunction } from "./lib/api-client";
 export type * from "./lib/commerce/types";
 export type * from "./lib/io-events/types";
+export type { FetchOptions } from "./utils/http/fetch-options";
