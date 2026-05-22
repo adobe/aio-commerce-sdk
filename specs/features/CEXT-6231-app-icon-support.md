@@ -82,7 +82,7 @@ response includes an `iconUrl` as part of every request:
   "metadata": {
     "id": "my-commerce-app",
     "displayName": "My Commerce App",
-    "iconUrl": "https://{namespace}.adobeioruntime.net/api/v1/web/{package}/app-config/icon"
+    "iconUrl": "https://{namespace}.adobeioruntime.net/api/v1/web/app-management/app-config/icon"
   }
 }
 ```
@@ -184,7 +184,7 @@ The `app-config` response includes an `iconUrl` field whose value is the
 fully-qualified URL of this endpoint:
 
 ```
-https://{__OW_NAMESPACE}.adobeioruntime.net/api/v1/web/{package}/app-config/icon
+https://{__OW_NAMESPACE}.adobeioruntime.net/api/v1/web/app-management/app-config/icon
 ```
 
 The URL is deterministic from the deployment namespace and package — no
