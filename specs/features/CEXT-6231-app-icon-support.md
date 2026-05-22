@@ -279,3 +279,8 @@ N/A
 
 - Support for a `dark` icon variant (for dark-mode UIs) declared alongside the
   primary icon in `metadata`.
+- If App Builder adds native support for deploying static files to the CDN
+  without requiring `web-src` (e.g. a dedicated asset upload path in
+  `aio app deploy`), the `/app-config/icon` runtime action could be replaced
+  with a stable CDN URL. This would eliminate the runtime action invocation
+  entirely and remove the need for the Commerce App Management CSP update.
