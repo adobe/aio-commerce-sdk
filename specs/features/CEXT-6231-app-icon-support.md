@@ -170,7 +170,16 @@ The `pre-app-build` hook already reads `app.commerce.config.ts` to generate
    fails with a clear error if not
 5. Adds the icon file to the `include` list of the `app-config` action in the
    generated `ext.config.yaml`, so App Builder deploys it as a file alongside
-   the action code.
+   the action code:
+
+```yaml
+actions:
+  app-config:
+    function: actions/app-config/index.js
+    include:
+      - ["assets/icon.png", "assets/icon.png"]
+    web: "yes"
+```
 
 This runs before any build or deploy step, giving the developer immediate
 feedback without wasting a full build cycle. The icon is fully self-contained
