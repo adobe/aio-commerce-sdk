@@ -262,16 +262,30 @@ export const ExternalEventSourceSchema = v.object({
 /** Schema for eventing configuration with separate commerce and external arrays */
 export const EventingSchema = v.object({
   commerce: v.optional(
-    v.array(
-      CommerceEventSourceSchema,
-      "Expected an array of Commerce event sources",
+    v.pipe(
+      v.array(
+        CommerceEventSourceSchema,
+        "Expected an array of Commerce event sources",
+      ),
+      v.check(
+        (sources) =>
+          new Set(sources.map((s) => s.provider.label)).size === sources.length,
+        "Commerce provider labels must be unique",
+      ),
     ),
   ),
 
   external: v.optional(
-    v.array(
-      ExternalEventSourceSchema,
-      "Expected an array of external event sources",
+    v.pipe(
+      v.array(
+        ExternalEventSourceSchema,
+        "Expected an array of external event sources",
+      ),
+      v.check(
+        (sources) =>
+          new Set(sources.map((s) => s.provider.label)).size === sources.length,
+        "External provider labels must be unique",
+      ),
     ),
   ),
 });

@@ -978,6 +978,92 @@ describe("validateConfig", () => {
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
   });
 
+  test("should throw when two commerce providers share the same label", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        commerce: [
+          {
+            provider: { label: "Order Events", description: "First provider" },
+            events: [
+              {
+                name: "plugin.order_placed",
+                label: "Order Placed",
+                fields: [{ name: "order_id" }],
+                runtimeActions: ["my-package/handle-order"],
+                description: "An event",
+              },
+            ],
+          },
+          {
+            provider: { label: "Order Events", description: "Second provider" },
+            events: [
+              {
+                name: "plugin.order_cancelled",
+                label: "Order Cancelled",
+                fields: [{ name: "order_id" }],
+                runtimeActions: ["my-package/handle-order"],
+                description: "An event",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow();
+  });
+
+  test("should throw when two external providers share the same label", () => {
+    const config = {
+      metadata: {
+        id: "test-app",
+        displayName: "Test App",
+        description: "A test application",
+        version: "1.0.0",
+      },
+      eventing: {
+        external: [
+          {
+            provider: {
+              label: "External Events",
+              description: "First provider",
+            },
+            events: [
+              {
+                name: "event_one",
+                label: "Event One",
+                description: "An event",
+                runtimeActions: ["my-package/handle-event"],
+              },
+            ],
+          },
+          {
+            provider: {
+              label: "External Events",
+              description: "Second provider",
+            },
+            events: [
+              {
+                name: "event_two",
+                label: "Event Two",
+                description: "An event",
+                runtimeActions: ["my-package/handle-event"],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() => validateCommerceAppConfig(config)).toThrow();
+  });
+
   test("should throw when commerce event description exceeds max length", () => {
     const config = {
       metadata: {
