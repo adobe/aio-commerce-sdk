@@ -29,8 +29,10 @@ import type {
   ExecutionContext,
 } from "#management/installation/workflow/step";
 
-type CamelcaseFn = typeof camelcaseModule.default;
-type CamelcaseInterop = CamelcaseFn & { default?: CamelcaseFn };
+type CamelcaseInterop = typeof camelcaseModule.default & {
+  default?: typeof camelcaseModule.default;
+};
+
 const camelcase =
   (camelcaseModule.default as CamelcaseInterop).default ??
   camelcaseModule.default;

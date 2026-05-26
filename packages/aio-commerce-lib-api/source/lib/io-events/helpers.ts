@@ -14,25 +14,19 @@ import {
   forwardImsAuthProvider,
   resolveAuthParams,
 } from "@adobe/aio-commerce-lib-auth";
-import * as kyModule from "ky";
 
 import {
   buildImsAuthBeforeRequestHook,
   isAuthProvider,
 } from "#utils/auth/hooks";
 import { ensureImsScopes } from "#utils/auth/ims-scopes";
-import { optionallyExtendKy } from "#utils/http/ky";
+import { createKy, optionallyExtendKy } from "#utils/http/ky";
 
 import type { IoEventsHttpClientParamsWithRequiredConfig } from "./http-client";
 import type {
   IoEventsHttpClientParams,
   ResolveIoEventsHttpClientParamsOptions,
 } from "./types";
-
-type KyInterop = typeof kyModule.default & {
-  default?: typeof kyModule.default;
-};
-const ky = (kyModule.default as KyInterop).default ?? kyModule.default;
 
 const IO_EVENTS_IMS_REQUIRED_SCOPES = ["adobeio_api"];
 
@@ -51,7 +45,7 @@ export function buildIoEventsHttpClient(
       );
 
   const adobeIoBaseUrl = config.baseUrl;
-  const httpClient = ky.create({
+  const httpClient = createKy({
     prefixUrl: adobeIoBaseUrl,
     headers: {
       Accept: "application/hal+json",

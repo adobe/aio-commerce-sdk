@@ -10,8 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import * as camelcaseModule from "camelcase";
-
+import { camelcase } from "./camelcase";
 import { getHeader } from "./helpers";
 import { assertRequiredHeaders } from "./validation";
 
@@ -20,12 +19,6 @@ import type {
   HttpHeaderAccessorMap,
   HttpHeaders,
 } from "./types";
-
-type CamelcaseFn = typeof camelcaseModule.default;
-type CamelcaseInterop = CamelcaseFn & { default?: CamelcaseFn };
-const camelcase =
-  (camelcaseModule.default as CamelcaseInterop).default ??
-  camelcaseModule.default;
 
 const LEADING_UNDERSCORES = /^_+/;
 

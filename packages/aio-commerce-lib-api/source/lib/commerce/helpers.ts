@@ -16,7 +16,6 @@ import {
   resolveAuthParams,
 } from "@adobe/aio-commerce-lib-auth";
 import { allNonEmpty } from "@adobe/aio-commerce-lib-core/params";
-import * as kyModule from "ky";
 
 import {
   buildImsAuthBeforeRequestHook,
@@ -24,7 +23,7 @@ import {
   isAuthProvider,
 } from "#utils/auth/hooks";
 import { ensureImsScopes } from "#utils/auth/ims-scopes";
-import { optionallyExtendKy } from "#utils/http/ky";
+import { createKy, optionallyExtendKy } from "#utils/http/ky";
 
 import type {
   ImsAuthParams,
@@ -33,11 +32,6 @@ import type {
   IntegrationAuthProvider,
 } from "@adobe/aio-commerce-lib-auth";
 import type { ImsAuthParamsWithOptionalScopes } from "#utils/auth/ims-scopes";
-
-type KyInterop = typeof kyModule.default & {
-  default?: typeof kyModule.default;
-};
-const ky = (kyModule.default as KyInterop).default ?? kyModule.default;
 
 /** A regex matching a regular SaaS API URL, with a tenant ID and optional trailing slash. */
 const COMMERCE_API_URL_REGEX =
@@ -128,7 +122,7 @@ function buildCommerceHttpClientPaaS(
   const commerceUrl = getCommerceUrl(config);
 
   const beforeRequestAuthHook = buildAuthBeforeRequestHook("paas", auth);
-  const httpClient = ky.create({
+  const httpClient = createKy({
     prefixUrl: commerceUrl,
     hooks: {
       beforeRequest: [beforeRequestAuthHook],
@@ -149,7 +143,7 @@ function buildCommerceHttpClientSaaS(
   const commerceUrl = getCommerceUrl(config);
 
   const beforeRequestAuthHook = buildAuthBeforeRequestHook("saas", auth);
-  const httpClient = ky.create({
+  const httpClient = createKy({
     prefixUrl: commerceUrl,
     hooks: {
       beforeRequest: [
