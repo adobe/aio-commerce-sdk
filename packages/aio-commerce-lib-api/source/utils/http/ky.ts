@@ -10,9 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { toKyOptions } from "./fetch-options";
-
 import * as kyModule from "ky";
+
+import { toKyOptions } from "./fetch-options";
 
 import type { KyInstance, Options } from "ky";
 
