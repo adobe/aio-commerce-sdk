@@ -16,6 +16,10 @@ import * as v from "valibot";
 const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(((?:[^)(]|\([^)]*\))*)\)/g;
 const SAFE_URL_REGEX = /^https?:\/\//i;
 
+/**
+ * Returns true if every Markdown link in `text` uses an http(s) URL.
+ * Plain text with no links always passes.
+ */
 function validateMarkdownUrls(text: string): boolean {
   for (const match of text.matchAll(MARKDOWN_LINK_REGEX)) {
     if (!SAFE_URL_REGEX.test(match[2].trim())) {
@@ -66,7 +70,7 @@ const BaseOptionSchema = v.object({
       v.string("Expected a string for the field description"),
       v.check(
         validateMarkdownUrls,
-        "Field description contains a non valid markdown URL",
+        "Field description contains an invalid markdown URL.",
       ),
     ),
   ),

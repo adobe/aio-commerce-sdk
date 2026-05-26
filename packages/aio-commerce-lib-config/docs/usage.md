@@ -419,6 +419,19 @@ Multiple selection example:
 > [!NOTE]
 > For `selectionMode: "multiple"`, the `default` value must be an array of strings, even if only one option is selected by default.
 
+### Field Descriptions with Links
+
+All field types support an optional `description` property. Descriptions may include Markdown links using the `[label](url)` syntax. Only `http` and `https` URLs are allowed — any other scheme (e.g. `javascript:`) causes a validation error.
+
+```javascript
+{
+  name: "api_key",
+  label: "API Key",
+  type: "password",
+  description: "Your secret API key. See [how to generate an API key](https://docs.example.com/api-keys) for details."
+}
+```
+
 ### Conditional Fields by Commerce Environment
 
 Each schema field accepts an optional `env` property to scope it to specific Commerce environment. The value is an array of env (`"paas"`, `"saas"`) and accepts any combination of one or more.
