@@ -91,7 +91,7 @@ as a file alongside the action code. The `app-config` response includes an
   "metadata": {
     "id": "my-commerce-app",
     "displayName": "My Commerce App",
-    "iconUrl": "https://{namespace}.adobeioruntime.net/api/v1/web/app-management/app-config/icon"
+    "iconUrl": "https://{namespace}.adobeioruntime.net/api/v1/web/app-management/app-config/icon?v=a1b2c3d4"
   }
 }
 ```
@@ -181,6 +181,10 @@ actions:
     web: "yes"
 ```
 
+6. Computes a short content hash of the icon file (first 8 hex characters of
+   its SHA-256 digest) and stores it at a well-known path alongside the icon,
+   so the action can read it at startup to construct the versioned `iconUrl`.
+
 This runs before any build or deploy step, giving the developer immediate
 feedback without wasting a full build cycle. The icon is fully self-contained
 in the deployed action — no CDN or external dependency at runtime.
@@ -194,24 +198,26 @@ from the filesystem using the `fs` module and returns the binary content.
 The `app-config` action exposes a new public `GET /icon` route (path:
 `/app-config/icon`) that returns the binary image with the appropriate
 `Content-Type` (`image/png` or `image/jpeg`) and
-`Cache-Control: public, max-age=86400`. The route is a public web action — no
-auth is required, as icons are not sensitive, and `<img src>` cannot send
-authentication headers.
+`Cache-Control: public, max-age=31536000, immutable`. The route is a public web
+action — no auth is required, as icons are not sensitive, and `<img src>`
+cannot send authentication headers. The endpoint ignores any query parameters
+and serves the binary unconditionally.
 
 The `app-config` response includes an `iconUrl` field whose value is the
-fully-qualified URL of this endpoint:
+fully-qualified URL of this endpoint with a content hash appended:
 
 ```
-https://{__OW_NAMESPACE}.adobeioruntime.net/api/v1/web/app-management/app-config/icon
+https://{__OW_NAMESPACE}.adobeioruntime.net/api/v1/web/app-management/app-config/icon?v={hash}
 ```
 
-The URL is deterministic from the deployment namespace — no additional state is
-needed to construct it.
+The action reads the hash stored by `pre-app-build` at startup and appends it
+as `?v={hash}` when constructing `iconUrl`. The hash and the deployment
+namespace are the only inputs needed to construct it.
 
-`Cache-Control: public, max-age=86400` (24 hours) allows the browser to cache
-the image across page navigations while ensuring a newly redeployed icon
-propagates within a day. The URL has no cache-busting hash (the path is stable
-across deploys), so `immutable` would be incorrect.
+`Cache-Control: public, max-age=31536000, immutable` — the URL includes a
+content hash, so it changes whenever the icon changes. `immutable` is correct:
+the response at a given versioned URL will never change. A redeployed icon gets
+a new hash, a new URL, and is fetched fresh immediately — no stale period.
 
 ### Commerce App Management
 
@@ -238,17 +244,15 @@ that have an Exchange listing but have not yet declared an icon in their config.
 
 - **Icon field absent** — no `iconUrl` in the `app-config` response; App
   Management renders the existing gray placeholder.
-- **App redeployed with a different icon** — the new file is deployed alongside
-  the action; it is served immediately after redeployment. Browsers that cached
-  the previous icon response may continue to show the old icon for up to 24
-  hours (the `max-age` TTL).
+- **App redeployed with a different icon** — the new file is deployed with a
+  new content hash. The `app-config` response immediately returns the updated
+  `iconUrl` (new `?v=` param). Browsers that cached the previous URL will never
+  request it again; they fetch the new URL fresh.
 
 ## Drawbacks
 
 - Changing the icon requires a full redeployment; the icon file is deployed at
   build time and does not take effect until the action is redeployed.
-- A newly redeployed icon may not propagate immediately to browsers that have a
-  cached endpoint response within the 24-hour `max-age` TTL.
 - Commerce App Management requires a one-time CSP configuration update to add
   `*.adobeioruntime.net` to its `img-src` directive in the Developer Portal.
 
