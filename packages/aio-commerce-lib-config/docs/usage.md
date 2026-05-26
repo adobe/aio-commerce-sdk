@@ -446,6 +446,19 @@ Multiple selection example:
 > [!NOTE]
 > For `selectionMode: "multiple"`, the `default` value must be an array of strings, even if only one option is selected by default.
 
+### Field Descriptions with Links
+
+All field types support an optional `description` property. Descriptions may include Markdown links using the `[label](url)` syntax. Only `http` and `https` URLs are allowed — any other scheme (e.g. `javascript:`) causes a validation error.
+
+```javascript
+{
+  name: "api_key",
+  label: "API Key",
+  type: "password",
+  description: "Your secret API key. See [how to generate an API key](https://docs.example.com/api-keys) for details."
+}
+```
+
 **Dynamic List Field (Runtime-Resolved Options):**
 
 Use a `dynamicList` field when the options cannot be known at development time, for example, when they need to be fetched from an external API. Both `options` and `default` are factory functions; call `resolveBusinessConfigSchema(schema, params)` to resolve them.
