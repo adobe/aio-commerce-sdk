@@ -40,6 +40,12 @@ export const ADMIN_UI_SDK_ACTIONS_PATH = `${GENERATED_PATH}/actions/registration
 /** The name of the configuration schema file */
 export const APP_MANIFEST_FILE = "app.commerce.manifest.json";
 
+/** The name of the generated runtime-safe app config module (dynamic schemas only). */
+export const RUNTIME_APP_CONFIG_FILE = "app.commerce.config.js";
+
+/** Package import alias for the generated runtime-safe app config module. */
+export const APP_CONFIG_IMPORT_ALIAS = "#app.commerce.config";
+
 /** The name of the commerce app configuration file */
 export const COMMERCE_APP_CONFIG_FILE = "app.commerce.config";
 

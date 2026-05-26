@@ -5,12 +5,14 @@ const SchemaBusinessConfig: ObjectSchema<{
   schema: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<"type", [VariantSchema<"selectionMode", [ObjectSchema<..., ...>, ObjectSchema<..., ...>], undefined>, ObjectSchema<{
      default: OptionalSchema<..., ...>;
      description: OptionalSchema<..., ...>;
+     env: OptionalSchema<..., ...>;
      label: OptionalSchema<..., ...>;
      name: SchemaWithPipe<...>;
      type: LiteralSchema<..., ...>;
    }, undefined>, ObjectSchema<{
      default: OptionalSchema<..., ...>;
      description: OptionalSchema<..., ...>;
+     env: OptionalSchema<..., ...>;
      label: OptionalSchema<..., ...>;
      name: SchemaWithPipe<...>;
      type: LiteralSchema<..., ...>;
@@ -18,6 +20,7 @@ const SchemaBusinessConfig: ObjectSchema<{
      | {
      default: string;
      description?: string;
+     env?: ...[];
      label?: string;
      name: string;
      options: {
@@ -30,6 +33,7 @@ const SchemaBusinessConfig: ObjectSchema<{
      | {
      default: string[];
      description?: string;
+     env?: ...[];
      label?: string;
      name: string;
      options: {
@@ -42,6 +46,7 @@ const SchemaBusinessConfig: ObjectSchema<{
      | {
      default: string;
      description?: string;
+     env?: ...[];
      label?: string;
      name: string;
      type: "text";
@@ -49,6 +54,7 @@ const SchemaBusinessConfig: ObjectSchema<{
      | {
      default: "";
      description?: string;
+     env?: ...[];
      label?: string;
      name: string;
      type: "password";
@@ -56,6 +62,7 @@ const SchemaBusinessConfig: ObjectSchema<{
      | {
      default: string;
      description?: string;
+     env?: ...[];
      label?: string;
      name: string;
      type: "email";
@@ -63,6 +70,7 @@ const SchemaBusinessConfig: ObjectSchema<{
      | {
      default: string;
      description?: string;
+     env?: ...[];
      label?: string;
      name: string;
      type: "url";
@@ -70,13 +78,22 @@ const SchemaBusinessConfig: ObjectSchema<{
      | {
      default: string;
      description?: string;
+     env?: ...[];
      label?: string;
      name: string;
      type: "tel";
+   }
+     | {
+     default: boolean;
+     description?: string;
+     env?: ...[];
+     label?: string;
+     name: string;
+     type: "boolean";
   })[], 1, "At least one configuration parameter is required">]>, readonly []>;
 }, undefined>;
 ```
 
-Defined in: [modules/schema/index.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-config/source/modules/schema/index.ts#L18)
+Defined in: [modules/schema/index.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-config/source/modules/schema/index.ts#L18)
 
 The schema used to validate the the business configuration settings.

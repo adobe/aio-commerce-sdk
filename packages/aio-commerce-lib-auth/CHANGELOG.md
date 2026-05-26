@@ -1,5 +1,24 @@
 # @adobe/aio-commerce-lib-auth
 
+## 1.1.0
+
+### Minor Changes
+
+- [#345](https://github.com/adobe/aio-commerce-sdk/pull/345) [`38adb09`](https://github.com/adobe/aio-commerce-sdk/commit/38adb09e1e2bd1b8fa764ecc2e0d21ecc0071ca7) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Drop Node 20 support (EOL April 2026).
+
+### Patch Changes
+
+- Updated dependencies [[`38adb09`](https://github.com/adobe/aio-commerce-sdk/commit/38adb09e1e2bd1b8fa764ecc2e0d21ecc0071ca7)]:
+  - @adobe/aio-commerce-lib-core@1.1.0
+
+## 1.0.2
+
+### Patch Changes
+
+- [#405](https://github.com/adobe/aio-commerce-sdk/pull/405) [`775860b`](https://github.com/adobe/aio-commerce-sdk/commit/775860bdf654b2fedeffeaa328a110dfc10daa85) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Removed organization scope from the `bin` entrypoint.
+
+- [#430](https://github.com/adobe/aio-commerce-sdk/pull/430) [`3207ff2`](https://github.com/adobe/aio-commerce-sdk/commit/3207ff247b06c4889795d50f82e219eec70d6b16) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Fix `syncImsCredentials` crashing when `.env` file does not exist; warns with an actionable message when credentials cannot be synced
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,3 +1,5 @@
+import { schemaWithDynamicListOptions } from "#test/fixtures/business-config";
+
 import type { ApplicationMetadata } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
@@ -26,7 +28,7 @@ const commerceEventingPart = {
   commerce: [
     {
       provider: {
-        label: "Commerce Events Provider",
+        label: "Order Events Provider",
         description: "Provides commerce events",
       },
       events: [
@@ -34,6 +36,9 @@ const commerceEventingPart = {
           name: "plugin.order_placed",
           label: "Order Placed",
           fields: [{ name: "order_id" }, { name: "customer_id" }],
+          rules: [
+            { field: "order_total", operator: "greaterThan", value: "100" },
+          ],
           runtimeActions: ["my-package/handle-order"],
           description: "Triggered when an order is placed",
         },
@@ -47,7 +52,7 @@ const externalEventingPart = {
   external: [
     {
       provider: {
-        label: "External Events Provider",
+        label: "Third Party Events Provider",
         description: "Provides external events",
       },
       events: [
@@ -485,3 +490,9 @@ export function createConfigWithTwoCommerceEventingSources() {
     },
   } satisfies CommerceAppConfigOutputModel;
 }
+
+/** Config fixture with dynamic business config list options. */
+export const configWithDynamicListOptions = {
+  metadata: { ...mockMetadata, id: "dynamic-list-options-app" },
+  businessConfig: { schema: schemaWithDynamicListOptions },
+} satisfies CommerceAppConfigOutputModel;

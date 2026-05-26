@@ -14,7 +14,7 @@ Read ALL of the following. Skip files that don't exist (do not error).
 
 1. `app.config.yaml` — packages, extensions block, included action configs
 2. `package.json` — dependencies and scripts
-3. `env.dist` — variable names for auth mode detection
+3. `env.dist` — variable names for auth mode detection and `envDistKeys` population
 4. `.env` — last resort; extract key names only via shell, do not read with Read tool
 5. Every file under `scripts/onboarding/` (list directory first, then read each file)
 6. Every `actions.config.yaml` under `actions/` (list directory recursively, read each)
@@ -88,6 +88,71 @@ Result:
 - `"paas"` — only PaaS signal found
 - `"saas"` — only SaaS signal found
 - `"unknown"` — neither found
+
+### envDistKeys
+
+Using the content of `env.dist` already read for `authMode` detection:
+
+For each line in `env.dist`:
+
+- Skip lines that start with `#` (comments) or are blank
+- Extract the portion of the line before the first `=` character; trim surrounding whitespace
+- If the line contains no `=`, use the entire trimmed line as the key name
+- Validate the candidate key name against the pattern `^[A-Z_][A-Z0-9_]*$`
+  - If the key does NOT match (e.g. contains lowercase letters, spaces, or shell metacharacters), skip the line silently — do not include it in `envDistKeys`
+
+Store the resulting array of validated key names as `envDistKeys`.
+
+Example — given this `env.dist`:
+
+    # Auth
+    COMMERCE_CONSUMER_KEY=
+    OAUTH_CLIENT_ID=abc
+    # Events
+    AIO_EVENTS_PROVIDER_ID=xyz
+    LOG_LEVEL=debug
+
+→ `"envDistKeys": ["COMMERCE_CONSUMER_KEY", "OAUTH_CLIENT_ID", "AIO_EVENTS_PROVIDER_ID", "LOG_LEVEL"]`
+
+If `env.dist` does not exist, output `"envDistKeys": []`.
+
+### envDistDuplicates
+
+While processing the same `env.dist` lines for `envDistKeys`, count how many non-comment,
+non-blank lines contain each key name (i.e. how many times each key appears at the start
+of a non-comment line).
+
+For each key whose count is greater than 1, add an entry to `envDistDuplicates`:
+
+    { "<KEY>": <count> }
+
+If no key appears more than once, output `"envDistDuplicates": {}`.
+If `env.dist` does not exist, output `"envDistDuplicates": {}`.
+
+Example — given an `env.dist` where `COMMERCE_CONSUMER_KEY` appears on two separate lines:
+
+→ `"envDistDuplicates": { "COMMERCE_CONSUMER_KEY": 2 }`
+
+---
+
+### packageScripts
+
+Using the `package.json` content already read for `packageManager` and `starterKitType` detection:
+
+Extract the `scripts` object from `package.json`. Store each script name and its command
+string verbatim as `packageScripts`.
+
+Example — given this `package.json` scripts section:
+
+    "scripts": {
+      "onboard": "node scripts/onboarding/index.js",
+      "configure-events": "node scripts/onboarding/subscribe.js",
+      "build": "webpack"
+    }
+
+→ `"packageScripts": { "onboard": "node scripts/onboarding/index.js", "configure-events": "node scripts/onboarding/subscribe.js", "build": "webpack" }`
+
+If `package.json` has no `scripts` key, output `"packageScripts": {}`.
 
 ### packageManager
 
@@ -303,6 +368,15 @@ Example output:
       "openWhiskTriggers": [],
       "hasMeshConfig": false,
       "hasApiGateway": false,
+      "hasActionsSrcDir": false,
+      "hasSequences": false,
+      "productDependencies": null,
+      "envDistKeys": ["COMMERCE_CONSUMER_KEY", "OAUTH_CLIENT_ID", "AIO_EVENTS_PROVIDER_ID", "LOG_LEVEL"],
+      "envDistDuplicates": {},
+      "packageScripts": {
+        "onboard": "node scripts/onboarding/index.js",
+        "commerce-event-subscribe": "node scripts/onboarding/subscribe.js"
+      },
       "confidence": {
         "events": "high",
         "webhooks": "none",

@@ -24,11 +24,10 @@ import {
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import { validateCommerceAppConfigDomain } from "#config/index";
-
 import type {
   BusinessConfigSchema,
   ConfigValue,
+  ResolvedBusinessConfigSchema,
 } from "@adobe/aio-commerce-lib-config";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
@@ -79,7 +78,7 @@ function filterSchemaByEnv(
  * @returns The filtered values.
  */
 function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
-  schema: BusinessConfigSchema,
+  schema: ResolvedBusinessConfigSchema,
   values: T[],
 ) {
   return values.map((item) => {
@@ -104,21 +103,18 @@ router.get("/", {
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
-    const configSchema = rawParams.configSchema;
-
-    logger.debug("Validating configuration schema...");
-    const validatedSchema = validateCommerceAppConfigDomain(
-      configSchema,
-      "businessConfig.schema",
-    );
+    const { configSchema: rawConfigSchema } = rawParams;
 
     const env = req.query.commerceEnv;
+    const envFilteredSchema = env
+      ? filterSchemaByEnv(rawConfigSchema, env)
+      : rawConfigSchema;
 
-    const filteredSchema = env
-      ? filterSchemaByEnv(validatedSchema, env)
-      : validatedSchema;
-
-    initialize({ schema: filteredSchema });
+    logger.debug("Initializing configuration");
+    const { configSchema } = await initialize({
+      schema: envFilteredSchema,
+      params: rawParams,
+    });
 
     const { scopeId } = req.query;
     logger.debug(`Retrieving configuration with scope id: ${scopeId}`);
@@ -128,12 +124,12 @@ router.get("/", {
 
     logger.debug("Masking password values...");
     appConfiguration.config = filterPasswordFields(
-      filteredSchema,
+      configSchema,
       appConfiguration.config,
     );
 
     return ok({
-      body: { schema: filteredSchema, values: appConfiguration },
+      body: { schema: configSchema, values: appConfiguration },
     });
   },
 });
@@ -156,16 +152,14 @@ router.put("/", {
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
-    const { configSchema } = rawParams;
 
     logger.debug(`Setting configuration with scope id: ${req.body.scopeId}`);
     const { scopeId, config } = req.body;
 
-    const validatedSchema = validateCommerceAppConfigDomain(
-      configSchema,
-      "businessConfig.schema",
-    );
-    initialize({ schema: validatedSchema });
+    const { configSchema } = await initialize({
+      schema: rawParams.configSchema,
+      params: rawParams,
+    });
 
     // The UI sent it to us as a masked value, which means the user didn't update it.
     const updatedFields = config.filter(
@@ -208,16 +202,14 @@ router.patch("/", {
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
-    const { configSchema } = rawParams;
 
     logger.debug(`Patching configuration with scope id: ${req.body.scopeId}`);
     const { scopeId, config } = req.body;
 
-    const validatedSchema = validateCommerceAppConfigDomain(
-      configSchema,
-      "businessConfig.schema",
-    );
-    initialize({ schema: validatedSchema });
+    const { configSchema } = await initialize({
+      schema: rawParams.configSchema,
+      params: rawParams,
+    });
 
     const result = await setConfiguration({ config }, byScopeId(scopeId), {
       encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,

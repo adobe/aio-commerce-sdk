@@ -16,7 +16,7 @@
 import { appConfigRuntimeAction } from "@adobe/aio-commerce-lib-app/actions/app-config";
 
 // The manifest is always at this relative constant path from the action.
-import commerceAppManifest from "../../app.commerce.manifest.json" with { type: "json" };
+import appConfig from "../../app.commerce.manifest.json" with { type: "json" };
 
-const args = { appConfig: commerceAppManifest };
+const args = { appConfig };
 export const main = appConfigRuntimeAction(args);

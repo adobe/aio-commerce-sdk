@@ -1,4 +1,4 @@
-# `ApiFunction()\<TClient, TArgs, TResult\>`
+# `ApiFunction\<TClient, TArgs, TResult\>`
 
 ```ts
 type ApiFunction<TClient, TArgs, TResult> = (
@@ -7,7 +7,7 @@ type ApiFunction<TClient, TArgs, TResult> = (
 ) => TResult;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/api-client.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-api/source/lib/api-client.ts#L16)
+Defined in: [aio-commerce-lib-api/source/lib/api-client.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-api/source/lib/api-client.ts#L16)
 
 A generic function that takes an HTTP client and some other arguments and returns a result.
 

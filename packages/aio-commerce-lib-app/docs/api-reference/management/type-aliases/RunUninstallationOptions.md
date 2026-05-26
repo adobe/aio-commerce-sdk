@@ -9,7 +9,7 @@ type RunUninstallationOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:94](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L94)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:135](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L135)
 
 Options for running an uninstallation.
 
@@ -21,7 +21,7 @@ Options for running an uninstallation.
 config: CommerceAppConfigOutputModel;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:98](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L98)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:139](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L139)
 
 The app configuration.
 
@@ -33,7 +33,7 @@ The app configuration.
 optional hooks?: InstallationHooks;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:102](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L102)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:143](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L143)
 
 Lifecycle hooks for status change notifications.
 
@@ -45,7 +45,7 @@ Lifecycle hooks for status change notifications.
 initialState: InProgressInstallationState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:100](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L100)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:141](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L141)
 
 The initial uninstallation state (with all steps pending).
 
@@ -57,6 +57,6 @@ The initial uninstallation state (with all steps pending).
 installationContext: InstallationContext;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/ba56294e6fee942ca0bc3a4f2e8fc3b3953d1455/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L96)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:137](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L137)
 
 Shared installation context (params, logger, etc.).

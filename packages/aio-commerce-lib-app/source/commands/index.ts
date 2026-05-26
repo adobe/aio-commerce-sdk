@@ -52,9 +52,7 @@ Examples:
 /** Run all generate targets in sequence */
 async function generateAll() {
   await generateActionsCommand();
-  consola.log.raw("");
   await generateManifestCommand();
-  consola.log.raw("");
   await generateSchemaCommand();
 }
 

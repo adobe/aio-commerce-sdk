@@ -88,6 +88,7 @@ afterEach(() => {
 describe("eventing installation", () => {
   let capture: {
     updateConfiguration: UpdateEventingConfigurationParams | null;
+    subscribeBody: unknown;
   };
 
   beforeEach(() => {
@@ -99,6 +100,7 @@ describe("eventing installation", () => {
 
     capture = {
       updateConfiguration: null,
+      subscribeBody: null,
     };
 
     apiServer.use(
@@ -163,7 +165,9 @@ describe("eventing installation", () => {
             (await request.json()) as IoEventRegistrationRequestBody;
 
           const registration = createMockIoEventRegistration({
-            id: requestBody.name.startsWith("Commerce Event Registration:")
+            id: requestBody.name.startsWith(
+              "Commerce Event Registration: Order Events Provider -",
+            )
               ? "registration-1"
               : "registration-2",
 
@@ -219,8 +223,12 @@ describe("eventing installation", () => {
         },
       ),
 
-      http.post(`${COMMERCE_BASE_URL}/eventing/eventSubscribe`, () =>
-        HttpResponse.json([]),
+      http.post(
+        `${COMMERCE_BASE_URL}/eventing/eventSubscribe`,
+        async ({ request }) => {
+          capture.subscribeBody = await request.json();
+          return HttpResponse.json([]);
+        },
       ),
     );
   });
@@ -242,6 +250,12 @@ describe("eventing installation", () => {
       }),
     });
 
+    expect(capture.subscribeBody).toEqual(
+      expect.objectContaining({
+        event: expect.objectContaining({ rules: commerceEvent.rules }),
+      }),
+    );
+
     expect(result.data).toMatchObject({
       installation: {
         eventing: {
@@ -253,14 +267,14 @@ describe("eventing installation", () => {
                   ioEvents: {
                     id: "io-provider-commerce",
                     label: commerceSource.provider.label,
-                    instance_id: `${config.metadata.id}-commerce-events-provider-${workspaceId}`,
+                    instance_id: `${config.metadata.id}-order-events-provider-${workspaceId}`,
                     provider_metadata: "dx_commerce_events",
                   },
                   commerce: {
                     id: "commerce-provider-1",
                     provider_id: "io-provider-commerce",
                     label: commerceSource.provider.label,
-                    instance_id: `${config.metadata.id}-commerce-events-provider-${workspaceId}`,
+                    instance_id: `${config.metadata.id}-order-events-provider-${workspaceId}`,
                   },
                   events: [
                     {
@@ -278,13 +292,14 @@ describe("eventing installation", () => {
                         registrations: [
                           {
                             id: "registration-1",
-                            name: "Commerce Event Registration: Handle Order (My Package)",
+                            name: "Commerce Event Registration: Order Events Provider - Handle Order (My Package)",
                           },
                         ],
                         subscription: {
                           name: `${config.metadata.id}.${commerceEvent.name}`.toLowerCase(),
                           provider_id: "io-provider-commerce",
                           parent: commerceEvent.name,
+                          rules: commerceEvent.rules,
                         },
                       },
                     },
@@ -301,7 +316,7 @@ describe("eventing installation", () => {
                   ioEvents: {
                     id: "io-provider-external",
                     label: externalSource.provider.label,
-                    instance_id: `${config.metadata.id}-external-events-provider-${workspaceId}`,
+                    instance_id: `${config.metadata.id}-third-party-events-provider-${workspaceId}`,
                     provider_metadata: "3rd_party_custom_events",
                   },
                   events: {
@@ -322,7 +337,7 @@ describe("eventing installation", () => {
                           registrations: [
                             {
                               id: "registration-2",
-                              name: "External Event Registration: Handle External Event (My Package)",
+                              name: "External Event Registration: Third Party Events Provider - Handle External Event (My Package)",
                             },
                           ],
                         },

@@ -1,10 +1,10 @@
 {
   "name": "@aio-commerce-sdk/common-utils",
   "type": "module",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "engines": {
-    "node": ">=20 <=24"
+    "node": ">=22 <=24"
   },
   "license": "Apache-2.0",
   "description": "Description for @aio-commerce-sdk/common-utils",
