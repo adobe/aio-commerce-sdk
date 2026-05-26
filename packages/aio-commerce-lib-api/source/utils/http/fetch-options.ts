@@ -12,20 +12,41 @@
 
 import { HTTPError } from "ky";
 
-import type { BeforeRetryState, Options } from "ky";
+import type {
+  AfterResponseState,
+  BeforeErrorState,
+  BeforeRequestState,
+  BeforeRetryState,
+  NormalizedOptions,
+  Options,
+} from "ky";
 
 type BeforeRequestHook = (
   request: Request,
+  options: NormalizedOptions,
+  retryCount: number,
 ) => undefined | Request | Response | Promise<Request | Response | undefined>;
 
 type AfterResponseHook = (
   request: Request,
   response: Response,
+  options: NormalizedOptions,
+  retryCount: number,
 ) => undefined | Response | Promise<Response | undefined>;
 
-type BeforeErrorHook = (error: HTTPError) => HTTPError | Promise<HTTPError>;
+type BeforeErrorHook = (
+  error: HTTPError,
+  request: Request,
+  options: NormalizedOptions,
+  retryCount: number,
+) => HTTPError | Promise<HTTPError>;
 
-type BeforeRetryHook = (state: BeforeRetryState) => void | Promise<void>;
+type BeforeRetryHook = (
+  request: Request,
+  options: NormalizedOptions,
+  error: Error,
+  retryCount: number,
+) => void | Promise<void>;
 
 type Hooks = {
   beforeRequest?: BeforeRequestHook[];
@@ -37,10 +58,11 @@ type Hooks = {
 /**
  * Per-request fetch options accepted by SDK HTTP clients.
  *
- * A subset of ky's `Options` with SDK-owned hook signatures. The hook types use
- * v1-compatible positional-argument form so existing consumer code continues to work
- * after the ky v2 upgrade. URL-routing fields (`prefix`, `baseUrl`) are excluded —
- * the SDK manages those internally.
+ * A subset of ky's `Options` with SDK-owned hook signatures. Hook signatures use
+ * positional-argument form — each hook receives the primary subject (`request`,
+ * `response`, or `error`) followed by `options` (the normalized request options) and
+ * `retryCount`. URL-routing fields (`prefix`, `baseUrl`) are excluded — the SDK
+ * manages those internally.
  */
 export type FetchOptions = Omit<Options, "hooks" | "prefix" | "baseUrl"> & {
   hooks?: Hooks;
@@ -63,21 +85,25 @@ export function toKyOptions(fetchOptions: FetchOptions): Options {
     hooks: {
       beforeRequest: hooks.beforeRequest?.map(
         (hook) =>
-          ({ request }: { request: Request }) =>
-            hook(request),
+          ({ request, options, retryCount }: BeforeRequestState) =>
+            hook(request, options, retryCount),
       ),
       afterResponse: hooks.afterResponse?.map(
         (hook) =>
-          ({ request, response }: { request: Request; response: Response }) =>
-            hook(request, response),
+          ({ request, response, options, retryCount }: AfterResponseState) =>
+            hook(request, response, options, retryCount),
       ),
       beforeError: hooks.beforeError?.map(
         (hook) =>
-          ({ error }: { error: Error }) =>
-            error instanceof HTTPError ? hook(error) : error,
+          ({ error, request, options, retryCount }: BeforeErrorState) =>
+            error instanceof HTTPError
+              ? hook(error, request, options, retryCount)
+              : error,
       ),
       beforeRetry: hooks.beforeRetry?.map(
-        (hook) => (state: BeforeRetryState) => hook(state),
+        (hook) =>
+          ({ request, options, error, retryCount }: BeforeRetryState) =>
+            hook(request, options, error, retryCount),
       ),
     },
   } as Options;
