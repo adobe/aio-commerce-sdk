@@ -21,10 +21,27 @@ import { InstallationSchema } from "./installation";
 import { MetadataSchema } from "./metadata";
 import { WebhooksSchema } from "./webhooks";
 
+/**
+ * Supported Adobe I/O Runtime kinds for generated actions.
+ * Keep this in sync with the runtimes Adobe I/O Runtime exposes; the union
+ * gives consumers autocomplete and prevents typos in `app.commerce.config.*`.
+ */
+export const RuntimeKindSchema = v.union([
+  v.literal("nodejs:22"),
+  v.literal("nodejs:24"),
+]);
+
+/** The Adobe I/O Runtime kind used for generated runtime actions. */
+export type RuntimeKind = v.InferOutput<typeof RuntimeKindSchema>;
+
+/** Default runtime applied to generated actions when the config omits one. */
+export const DEFAULT_RUNTIME: RuntimeKind = "nodejs:22";
+
 /** The schema used to validate the commerce app config file. */
 export const CommerceAppConfigSchema = v.looseObject({
   // TEMP: use `looseObject` for testing purposes, remove when all subsections of the config schema are implemented
   metadata: MetadataSchema,
+  runtime: v.optional(RuntimeKindSchema),
   businessConfig: v.optional(SchemaBusinessConfig),
   eventing: v.optional(EventingSchema),
   adminUiSdk: v.optional(AdminUiSdkSchema),
