@@ -15,6 +15,7 @@ import * as kyModule from "ky";
 import { toKyOptions } from "./fetch-options";
 
 import type { KyInstance, Options } from "ky";
+import type { FetchOptions } from "./fetch-options";
 
 type KyInterop = KyInstance & { default?: KyInstance };
 const ky = (kyModule.default as KyInterop).default ?? kyModule.default;
