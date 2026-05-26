@@ -12,10 +12,14 @@
 
 import { writeFile } from "node:fs/promises";
 
-import { Document, YAMLMap, YAMLSeq } from "yaml";
+import { Document, isMap, YAMLMap, YAMLSeq } from "yaml";
 
 import { detectPackageManager, getExecCommand } from "#project";
-import { getOrCreateMap, getOrCreateSeq } from "#yaml/helpers";
+import {
+  getExistingInputs,
+  getOrCreateMap,
+  getOrCreateSeq,
+} from "#yaml/helpers";
 
 import type {
   ActionDefinition,
@@ -66,21 +70,33 @@ function buildWeb(extConfig: Document, web: string) {
 }
 
 /**
- * Build the definition for a runtime action
- * @param name - The name of the action
- * @param path - The path where the action is located
- * @param action - The action definition
+ * Build the definition for a runtime action.
+ *
+ * Developer-added `inputs` keys (anything not in the generator-managed set) on
+ * `existingAction` are preserved so that hand-written entries — for example
+ * factory credentials for `dynamicList` fields — survive regeneration.
+ *
+ * @param action - The action definition to build.
+ * @param existingAction - The action's previous YAML definition, if any.
  */
-function buildActionDefinition(action: ActionDefinition) {
+function buildActionDefinition(
+  action: ActionDefinition,
+  existingAction?: YAMLMap,
+) {
   const actionDef: YAMLMap = new YAMLMap();
-  const inputs = {
+  const existingInputs = getExistingInputs(existingAction);
+  const managedInputs = {
     LOG_LEVEL: "$LOG_LEVEL",
   };
 
   actionDef.set("function", action.function);
   actionDef.set("web", action.web ?? "yes");
   actionDef.set("runtime", action.runtime ?? "nodejs:22");
-  actionDef.set("inputs", { ...inputs, ...(action.inputs ?? {}) });
+  actionDef.set("inputs", {
+    ...existingInputs,
+    ...managedInputs,
+    ...(action.inputs ?? {}),
+  });
   actionDef.set("annotations", {
     ...(action.annotations ?? {
       "require-adobe-auth": true,
@@ -204,13 +220,22 @@ function buildRuntimeManifest(extConfig: Document, manifest: RuntimeManifest) {
       },
     );
 
+    const existingActions = packageDef.get("actions");
     const actions = new YAMLMap();
 
     packageDef.set("license", pkg.license ?? "Apache-2.0");
     packageDef.set("actions", actions);
 
     for (const [actionName, action] of Object.entries(pkg.actions ?? {})) {
-      const actionDef = buildActionDefinition(action);
+      const existingAction = isMap(existingActions)
+        ? existingActions.get(actionName)
+        : undefined;
+
+      const actionDef = buildActionDefinition(
+        action,
+        isMap(existingAction) ? existingAction : undefined,
+      );
+
       actions.set(actionName, actionDef);
     }
   }

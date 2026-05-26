@@ -11,7 +11,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { writeFile } from "node:fs/promises";
+import { access, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
@@ -29,7 +29,12 @@ import {
   CONFIG_SCHEMA_FILE_NAME,
   CONFIGURATION_EXTENSION_POINT_ID,
 } from "#commands/constants";
-import { getGeneratedDir, loadAppManifest } from "#commands/utils";
+import {
+  getGeneratedDir,
+  getSchemaPath,
+  hasDynamicAppConfig,
+  loadAppManifest,
+} from "#commands/utils";
 import { hasBusinessConfigSchema } from "#config/index";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -42,8 +47,6 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
 
     return;
   }
-
-  consola.info("Generating configuration schema...");
 
   const projectDir = await getProjectRootDirectory();
   const envPath = join(projectDir, ".env");
@@ -69,15 +72,34 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
     }
   }
 
-  const contents = stringify(appConfig.businessConfig.schema, null, 2);
+  // When dynamic, the generated `config` action sources its schema directly from
+  // the app manifest module. Skip emitting a separate schema file and clean up
+  // any stale JSON from a previous static run.
+  if (hasDynamicAppConfig(appConfig)) {
+    const stalePath = join(projectDir, getSchemaPath());
+    const staleExists = await access(stalePath).then(
+      () => true,
+      () => false,
+    );
+
+    if (staleExists) {
+      await rm(stalePath, { force: true });
+      consola.success(`Removed stale ${CONFIG_SCHEMA_FILE_NAME}`);
+    }
+
+    return;
+  }
+
+  consola.info("Generating configuration schema...");
   const outputDir = await makeOutputDirFor(
     getGeneratedDir(CONFIGURATION_EXTENSION_POINT_ID),
   );
 
-  const manifestPath = join(outputDir, CONFIG_SCHEMA_FILE_NAME);
-  await writeFile(manifestPath, contents, "utf-8");
+  const contents = stringify(appConfig.businessConfig.schema, null, 2);
+  const schemaPath = join(outputDir, CONFIG_SCHEMA_FILE_NAME);
+  await writeFile(schemaPath, contents, "utf-8");
 
-  consola.success(`Generated ${CONFIG_SCHEMA_FILE_NAME}`);
+  consola.success(`Generated ${CONFIG_SCHEMA_FILE_NAME}\n`);
 }
 
 /** Run the generate schema command */

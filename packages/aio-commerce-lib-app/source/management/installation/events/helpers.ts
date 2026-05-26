@@ -23,6 +23,7 @@ import {
   generateInstanceIdDeprecated,
   getCommerceEventingConfigurationUpdateParams,
   getIoEventCode,
+  getLegacyRegistrationName,
   getNamespacedEvent,
   getRegistrationDescription,
   getRegistrationName,
@@ -670,11 +671,17 @@ async function deleteIoEventRegistrations(
   // The getAllRegistrations list endpoint does not populate events_of_interest,
   // so we reconstruct the expected registration names the same way as during installation.
   const actionEventsMap = groupEventsByRuntimeActions(events);
-  const registrationNames = new Set(
-    Array.from(actionEventsMap.keys()).map((runtimeAction) =>
+  const runtimeActions = Array.from(actionEventsMap.keys());
+  const registrationNames = new Set([
+    ...runtimeActions.map((runtimeAction) =>
       getRegistrationName(providerData, runtimeAction),
     ),
-  );
+    // Also match registrations created by older SDK versions that used the generic
+    // provider type label ("Commerce" / "External") instead of the provider label.
+    ...runtimeActions.map((runtimeAction) =>
+      getLegacyRegistrationName(providerData, runtimeAction),
+    ),
+  ]);
   const providerRegistrations = registrations.filter(
     (reg) =>
       reg.client_id === runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID &&

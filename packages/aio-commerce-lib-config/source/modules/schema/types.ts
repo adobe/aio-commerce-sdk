@@ -11,7 +11,7 @@
  */
 
 import type * as v from "valibot";
-import type { FieldSchema, SchemaBusinessConfigSchema } from "./fields";
+import type { SchemaBusinessConfigSchema } from "./fields";
 
 /** Context needed for schema operations. */
 export type SchemaContext = {
@@ -22,32 +22,31 @@ export type SchemaContext = {
   cacheTimeout: number;
 };
 
-/**
- * The schema type for a configuration field.
- *
- * Represents a single field definition in the configuration schema, which can be
- * one of various types: list, text, password, email, url, phone, or boolean.
- */
-export type BusinessConfigSchemaField = v.InferInput<typeof FieldSchema>;
-
-/**
- * The schema type for the business configuration schema.
- *
- * Represents an array of configuration field definitions that make up the complete
- * business configuration schema. Must contain at least one field.
- */
+/** A business configuration schema as the developer writes it. */
 export type BusinessConfigSchema = v.InferInput<
   typeof SchemaBusinessConfigSchema
 >;
 
-/** The schema type for the business configuration schema. */
-export type BusinessConfigSchemaValue = BusinessConfigSchemaField["default"];
+/** A single static configuration field (one of: list, text, password, email, url, phone, boolean). */
+export type BusinessConfigSchemaField = Exclude<
+  BusinessConfigSchema[number],
+  { type: "dynamicList" }
+>;
 
-/**
- * The schema type for an option in a list configuration field.
- * Represents a single option that can be selected in a list-type configuration field.
- */
+/** A `dynamicList` configuration field — options (and optionally `default`) are resolved at runtime. */
+export type DynamicListField = Extract<
+  BusinessConfigSchema[number],
+  { type: "dynamicList" }
+>;
+
+/** A single option in a `list` configuration field. */
 export type BusinessConfigSchemaListOption = Extract<
   BusinessConfigSchemaField,
   { type: "list" }
 >["options"][number];
+
+/** Business configuration schema after dynamic resolution — only static field types. */
+export type ResolvedBusinessConfigSchema = BusinessConfigSchemaField[];
+
+/** Supported default value types across all business configuration schema fields. */
+export type BusinessConfigSchemaValue = BusinessConfigSchemaField["default"];
