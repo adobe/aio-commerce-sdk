@@ -18,6 +18,7 @@ export { AdobeCommerceHttpClient } from "./lib/commerce/http-client";
 export { resolveIoEventsHttpClientParams } from "./lib/io-events/helpers";
 export { AdobeIoEventsHttpClient } from "./lib/io-events/http-client";
 
+export type { HTTPError } from "ky";
 export type { ApiClientRecord, ApiFunction } from "./lib/api-client";
 export type * from "./lib/commerce/types";
 export type * from "./lib/io-events/types";

@@ -20,9 +20,9 @@ import {
 import type {
   AdobeCommerceHttpClient,
   FetchOptions,
+  HTTPError,
 } from "@adobe/aio-commerce-lib-api";
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import type { HTTPError } from "ky";
 import type {
   WebhookSubscribeParams,
   WebhookUnsubscribeParams,

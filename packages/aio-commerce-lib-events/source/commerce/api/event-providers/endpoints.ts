@@ -22,8 +22,8 @@ import {
 import type {
   AdobeCommerceHttpClient,
   FetchOptions,
+  HTTPError,
 } from "@adobe/aio-commerce-lib-api";
-import type { HTTPError } from "ky";
 import type {
   EventProviderCreateParams,
   EventProviderDeleteParams,
