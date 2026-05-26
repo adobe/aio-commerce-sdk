@@ -16,7 +16,7 @@ import {
   resolveAuthParams,
 } from "@adobe/aio-commerce-lib-auth";
 import { allNonEmpty } from "@adobe/aio-commerce-lib-core/params";
-import ky from "ky";
+import * as kyModule from "ky";
 
 import {
   buildImsAuthBeforeRequestHook,
@@ -33,6 +33,11 @@ import type {
   IntegrationAuthProvider,
 } from "@adobe/aio-commerce-lib-auth";
 import type { ImsAuthParamsWithOptionalScopes } from "#utils/auth/ims-scopes";
+
+type KyInterop = typeof kyModule.default & {
+  default?: typeof kyModule.default;
+};
+const ky = (kyModule.default as KyInterop).default ?? kyModule.default;
 
 /** A regex matching a regular SaaS API URL, with a tenant ID and optional trailing slash. */
 const COMMERCE_API_URL_REGEX =

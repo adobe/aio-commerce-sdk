@@ -14,7 +14,7 @@ import {
   forwardImsAuthProvider,
   resolveAuthParams,
 } from "@adobe/aio-commerce-lib-auth";
-import ky from "ky";
+import * as kyModule from "ky";
 
 import {
   buildImsAuthBeforeRequestHook,
@@ -28,6 +28,11 @@ import type {
   IoEventsHttpClientParams,
   ResolveIoEventsHttpClientParamsOptions,
 } from "./types";
+
+type KyInterop = typeof kyModule.default & {
+  default?: typeof kyModule.default;
+};
+const ky = (kyModule.default as KyInterop).default ?? kyModule.default;
 
 const IO_EVENTS_IMS_REQUIRED_SCOPES = ["adobeio_api"];
 
