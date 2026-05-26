@@ -138,6 +138,32 @@ describe("schema/utils", () => {
         ] satisfies BusinessConfigSchema),
       ).toThrow();
     });
+
+    test("rejects javascript: links in field description", () => {
+      expect(() =>
+        validateBusinessConfigSchema([
+          {
+            name: "my-field",
+            type: "text",
+            description: "See [docs](javascript:evil()) for details",
+          },
+        ]),
+      ).toThrow();
+    });
+
+    test("preserves valid https links in field description", () => {
+      const result = validateBusinessConfigSchema([
+        {
+          name: "my-field",
+          type: "text",
+          description: "Click [here](https://example.com) for more",
+        },
+      ]);
+
+      expect(result[0]?.description).toBe(
+        "Click [here](https://example.com) for more",
+      );
+    });
   });
 
   describe("hasDynamicSchema", () => {
