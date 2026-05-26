@@ -80,7 +80,7 @@ export default defineConfig({
 });
 ```
 
-The value is a path relative to the project root. The `pre-app-build` hook
+The value is a path relative to the `app.commerce.config` file. The `pre-app-build` hook
 reads the file, validates it, and adds it to the `include` list of the
 `app-config` action in the generated `ext.config.yaml`. App Builder deploys it
 as a file alongside the action code. The `app-config` response includes an
