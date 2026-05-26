@@ -12,8 +12,20 @@
 
 import { toKyOptions } from "./fetch-options";
 
-import type { KyInstance } from "ky";
-import type { FetchOptions } from "./fetch-options";
+import * as kyModule from "ky";
+
+import type { KyInstance, Options } from "ky";
+
+type KyInterop = KyInstance & { default?: KyInstance };
+const ky = (kyModule.default as KyInterop).default ?? kyModule.default;
+
+/**
+ * Creates a Ky instance with the provided options.
+ * @param options - The options for the Ky instance.
+ */
+export function createKy(options: Options): KyInstance {
+  return ky.create(options);
+}
 
 /**
  * Extends the given Ky instance with the provided options if they are provided.

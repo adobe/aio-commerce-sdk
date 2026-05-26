@@ -14,6 +14,23 @@ import * as v from "valibot";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 
+// Supports one level of nested parens in URLs (e.g. Wikipedia-style links).
+const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(((?:[^)(]|\([^)]*\))*)\)/g;
+const SAFE_URL_REGEX = /^https?:\/\//i;
+
+/**
+ * Returns true if every Markdown link in `text` is well-formed and uses an http(s) URL.
+ * Plain text with no links always passes.
+ */
+function validateMarkdownLink(text: string): boolean {
+  for (const match of text.matchAll(MARKDOWN_LINK_REGEX)) {
+    if (!SAFE_URL_REGEX.test(match[2].trim())) {
+      return false;
+    }
+  }
+  return true;
+}
+
 const DEFAULT_BOOLEAN_VALUE = false as const;
 const DEFAULT_STRING_VALUE = "" as const;
 const DEFAULT_MULTIPLE_LIST_VALUE = [] as const;
@@ -51,7 +68,13 @@ const BaseOptionSchema = v.object({
   ),
   label: v.optional(v.string("Expected a string for the field label")),
   description: v.optional(
-    v.string("Expected a string for the field description"),
+    v.pipe(
+      v.string("Expected a string for the field description"),
+      v.check(
+        validateMarkdownLink,
+        "Field description contains an invalid markdown URL.",
+      ),
+    ),
   ),
   env: v.optional(EnvSchema),
 });

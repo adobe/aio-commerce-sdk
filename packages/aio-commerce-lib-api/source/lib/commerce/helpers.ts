@@ -16,7 +16,6 @@ import {
   resolveAuthParams,
 } from "@adobe/aio-commerce-lib-auth";
 import { allNonEmpty } from "@adobe/aio-commerce-lib-core/params";
-import ky from "ky";
 
 import {
   buildImsAuthBeforeRequestHook,
@@ -24,7 +23,7 @@ import {
   isAuthProvider,
 } from "#utils/auth/hooks";
 import { ensureImsScopes } from "#utils/auth/ims-scopes";
-import { optionallyExtendKy } from "#utils/http/ky";
+import { createKy, optionallyExtendKy } from "#utils/http/ky";
 
 import type {
   ImsAuthParams,
@@ -123,8 +122,8 @@ function buildCommerceHttpClientPaaS(
   const commerceUrl = getCommerceUrl(config);
 
   const beforeRequestAuthHook = buildAuthBeforeRequestHook("paas", auth);
-  const httpClient = ky.create({
-    prefix: commerceUrl,
+  const httpClient = createKy({
+    prefixUrl: commerceUrl,
     hooks: {
       beforeRequest: [({ request }) => beforeRequestAuthHook(request)],
     },
@@ -144,8 +143,8 @@ function buildCommerceHttpClientSaaS(
   const commerceUrl = getCommerceUrl(config);
 
   const beforeRequestAuthHook = buildAuthBeforeRequestHook("saas", auth);
-  const httpClient = ky.create({
-    prefix: commerceUrl,
+  const httpClient = createKy({
+    prefixUrl: commerceUrl,
     hooks: {
       beforeRequest: [
         ({ request }) => beforeRequestAuthHook(request),
