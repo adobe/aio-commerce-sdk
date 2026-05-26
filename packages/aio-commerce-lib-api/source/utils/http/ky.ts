@@ -10,32 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import ky from "ky";
-
 import { toKyOptions } from "./fetch-options";
 
-import type { KyInstance, Options } from "ky";
+import type { KyInstance } from "ky";
 import type { FetchOptions } from "./fetch-options";
-
-type KyDefaultExport = KyInstance & {
-  default?: KyInstance;
-};
-
-/**
- * Resolves the Ky default export from direct and nested module interop shapes.
- * @param kyExport - The Ky export to resolve.
- */
-export function resolveKyDefaultExport(kyExport: KyDefaultExport): KyInstance {
-  return kyExport.default ?? kyExport;
-}
-
-/**
- * Creates a Ky instance with the provided options.
- * @param options - The options for the Ky instance.
- */
-export function createKy(options: Options): KyInstance {
-  return resolveKyDefaultExport(ky).create(options);
-}
 
 /**
  * Extends the given Ky instance with the provided options if they are provided.
