@@ -123,7 +123,7 @@ function buildCommerceHttpClientPaaS(
 
   const beforeRequestAuthHook = buildAuthBeforeRequestHook("paas", auth);
   const httpClient = createKy({
-    prefixUrl: commerceUrl,
+    prefix: commerceUrl,
     hooks: {
       beforeRequest: [({ request }) => beforeRequestAuthHook(request)],
     },
@@ -144,7 +144,7 @@ function buildCommerceHttpClientSaaS(
 
   const beforeRequestAuthHook = buildAuthBeforeRequestHook("saas", auth);
   const httpClient = createKy({
-    prefixUrl: commerceUrl,
+    prefix: commerceUrl,
     hooks: {
       beforeRequest: [
         ({ request }) => beforeRequestAuthHook(request),
