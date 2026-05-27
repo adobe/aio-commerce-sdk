@@ -106,6 +106,26 @@ function validateCommerceAppConfig(config: unknown): {
         type: "list";
       }
         | {
+        default: SingleDefaultFactory;
+        description?: string;
+        env?: ("paas" | "saas")[];
+        label?: string;
+        name: string;
+        options: OptionsFactory;
+        selectionMode: "single";
+        type: "dynamicList";
+      }
+        | {
+        default?: MultipleDefaultFactory;
+        description?: string;
+        env?: ("paas" | "saas")[];
+        label?: string;
+        name: string;
+        options: OptionsFactory;
+        selectionMode: "multiple";
+        type: "dynamicList";
+      }
+        | {
         default: string;
         description?: string;
         env?: ("paas" | "saas")[];
@@ -281,7 +301,7 @@ function validateCommerceAppConfig(config: unknown): {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L54)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L54)
 
 Validates a complete commerce app configuration object against the schema.
 
@@ -396,6 +416,26 @@ Validates a complete commerce app configuration object against the schema.
 \}[];
 `selectionMode`: `"multiple"`;
 `type`: `"list"`;
+\}
+\| \{
+`default`: `SingleDefaultFactory`;
+`description?`: `string`;
+`env?`: (`"paas"` \| `"saas"`)[];
+`label?`: `string`;
+`name`: `string`;
+`options`: `OptionsFactory`;
+`selectionMode`: `"single"`;
+`type`: `"dynamicList"`;
+\}
+\| \{
+`default?`: `MultipleDefaultFactory`;
+`description?`: `string`;
+`env?`: (`"paas"` \| `"saas"`)[];
+`label?`: `string`;
+`name`: `string`;
+`options`: `OptionsFactory`;
+`selectionMode`: `"multiple"`;
+`type`: `"dynamicList"`;
 \}
 \| \{
 `default`: `string`;

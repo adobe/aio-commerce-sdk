@@ -74,6 +74,26 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
         type: "list";
       }
         | {
+        default: SingleDefaultFactory;
+        description?: string;
+        env?: ...[];
+        label?: string;
+        name: string;
+        options: OptionsFactory;
+        selectionMode: "single";
+        type: "dynamicList";
+      }
+        | {
+        default?: MultipleDefaultFactory;
+        description?: string;
+        env?: ...[];
+        label?: string;
+        name: string;
+        options: OptionsFactory;
+        selectionMode: "multiple";
+        type: "dynamicList";
+      }
+        | {
         default: string;
         description?: string;
         env?: ...[];
@@ -226,7 +246,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
 }, T>>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L110)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L110)
 
 Validates a specific domain configuration within the commerce app config.
 
@@ -239,7 +259,7 @@ schema for that specific domain.
 
 | Type Parameter                                                                                                                                                                                                                                       | Description                                                |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `T` _extends_ \| `"metadata"` \| `"businessConfig"` \| `"eventing"` \| `"adminUiSdk"` \| `"installation"` \| `"webhooks"` \| `"businessConfig.schema"` \| `"eventing.commerce"` \| `"eventing.external"` \| `"installation.customInstallationSteps"` | The type of the domain, constrained to valid domain names. |
+| `T` _extends_ \| `"metadata"` \| `"businessConfig"` \| `"eventing"` \| `"adminUiSdk"` \| `"installation"` \| `"webhooks"` \| `"eventing.commerce"` \| `"eventing.external"` \| `"installation.customInstallationSteps"` \| `"businessConfig.schema"` | The type of the domain, constrained to valid domain names. |
 
 ## Parameters
 
@@ -321,6 +341,26 @@ schema for that specific domain.
 \}[];
 `selectionMode`: `"multiple"`;
 `type`: `"list"`;
+\}
+\| \{
+`default`: `SingleDefaultFactory`;
+`description?`: `string`;
+`env?`: ...[];
+`label?`: `string`;
+`name`: `string`;
+`options`: `OptionsFactory`;
+`selectionMode`: `"single"`;
+`type`: `"dynamicList"`;
+\}
+\| \{
+`default?`: `MultipleDefaultFactory`;
+`description?`: `string`;
+`env?`: ...[];
+`label?`: `string`;
+`name`: `string`;
+`options`: `OptionsFactory`;
+`selectionMode`: `"multiple"`;
+`type`: `"dynamicList"`;
 \}
 \| \{
 `default`: `string`;

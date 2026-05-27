@@ -8,7 +8,7 @@ function addOperation<TValue>(
 ): AddOperation<TValue>;
 ```
 
-Defined in: [responses/operations/presets.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L76)
+Defined in: [responses/operations/presets.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L76)
 
 Creates an add operation response
 Causes Commerce to add the provided value to the provided path in the triggered event arguments.
