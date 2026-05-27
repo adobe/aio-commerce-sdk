@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-webhooks`: `v1.0.0`
+# `@adobe/aio-commerce-lib-webhooks`: `v1.1.1`
 
 ## Modules
 

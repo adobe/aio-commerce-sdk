@@ -1,12 +1,17 @@
 # `SelectorBy`
 
 ```ts
-type SelectorBy = SelectorByScopeId | SelectorByCodeAndLevel | SelectorByCode;
+type SelectorBy =
+  | SelectorByScopeId
+  | SelectorByCodeAndLevel
+  | SelectorByCode
+  | SelectorByCommerceScopeId;
 ```
 
-Defined in: [config-utils.ts:552](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-config/source/config-utils.ts#L552)
+Defined in: [config-utils.ts:668](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-config/source/config-utils.ts#L668)
 
 Discriminated union type for selecting a scope by different methods.
 
-Use the helper functions [byScopeId](../functions/byScopeId.md), [byCodeAndLevel](../functions/byCodeAndLevel.md), or [byCode](../functions/byCode.md) to create
+Use the helper functions [byScopeId](../functions/byScopeId.md), [byCodeAndLevel](../functions/byCodeAndLevel.md), [byCode](../functions/byCode.md),
+[byWebsiteId](../functions/byWebsiteId.md), [byStoreId](../functions/byStoreId.md), or [byStoreViewId](../functions/byStoreViewId.md) to create
 selector objects instead of constructing them manually.

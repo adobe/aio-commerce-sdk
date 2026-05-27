@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-app`: `v1.4.0`
+# `@adobe/aio-commerce-lib-app`: `v1.6.0`
 
 ## Modules
 
