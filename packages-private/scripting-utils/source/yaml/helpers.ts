@@ -167,14 +167,14 @@ export function getExistingInputs(existingAction?: YAMLMap) {
 }
 
 /**
- * Read a scalar string field from an existing YAML action definition. Used by
- * codegen to preserve developer-set values (e.g. `runtime`) across
- * regeneration instead of overwriting them.
+ * Read a string field from an existing YAML action definition. Used by codegen
+ * to preserve developer-set values (e.g. `runtime`) across regeneration
+ * instead of overwriting them.
  *
  * @param key - The field to read.
  * @param existingAction - The YAML map representing the existing action.
  */
-export function getExistingScalar(key: string, existingAction?: YAMLMap) {
+export function getExistingString(key: string, existingAction?: YAMLMap) {
   const value = existingAction?.get(key);
   return typeof value === "string" ? value : undefined;
 }

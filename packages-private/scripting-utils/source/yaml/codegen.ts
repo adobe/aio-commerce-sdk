@@ -17,7 +17,7 @@ import { Document, isMap, YAMLMap, YAMLSeq } from "yaml";
 import { detectPackageManager, getExecCommand } from "#project";
 import {
   getExistingInputs,
-  getExistingScalar,
+  getExistingString,
   getOrCreateMap,
   getOrCreateSeq,
 } from "#yaml/helpers";
@@ -90,7 +90,7 @@ function buildActionDefinition(
 ) {
   const actionDef: YAMLMap = new YAMLMap();
   const existingInputs = getExistingInputs(existingAction);
-  const existingRuntime = getExistingScalar("runtime", existingAction);
+  const existingRuntime = getExistingString("runtime", existingAction);
   const managedInputs = {
     LOG_LEVEL: "$LOG_LEVEL",
   };
