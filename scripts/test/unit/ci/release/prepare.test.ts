@@ -23,10 +23,6 @@ import {
   createExecMock,
 } from "#test/fixtures/release";
 
-function stubPrepareEnv(releaseChannel: string) {
-  vi.stubEnv("RELEASE_CHANNEL", releaseChannel);
-}
-
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.clearAllMocks();
@@ -35,7 +31,6 @@ afterEach(() => {
 describe("release/prepare.ts", () => {
   test("prepares snapshot for an internal release", async () => {
     await withTempFiles({}, async (tempDir) => {
-      stubPrepareEnv("internal");
       vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
       const core = createCoreMock();
@@ -67,19 +62,8 @@ describe("release/prepare.ts", () => {
     });
   });
 
-  test("fails when the release channel is invalid", async () => {
-    stubPrepareEnv("beta");
-
-    const core = createCoreMock();
-    const exec = createExecMock();
-
-    await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
-    expect(exec.exec).not.toHaveBeenCalled();
-  });
-
   test("warns but continues when release branch fetch fails", async () => {
     await withTempFiles({}, async (tempDir) => {
-      stubPrepareEnv("internal");
       vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
       const core = createCoreMock();
@@ -101,7 +85,6 @@ describe("release/prepare.ts", () => {
 
   test("uses custom snapshot tag from SNAPSHOT_TAG env var", async () => {
     await withTempFiles({}, async (tempDir) => {
-      stubPrepareEnv("internal");
       vi.stubEnv("GITHUB_WORKSPACE", tempDir);
       vi.stubEnv("SNAPSHOT_TAG", "alpha");
 
@@ -118,21 +101,5 @@ describe("release/prepare.ts", () => {
         "alpha",
       ]);
     });
-  });
-
-  test("skips snapshot preparation for public releases", async () => {
-    stubPrepareEnv("public");
-
-    const core = createCoreMock();
-    const exec = createExecMock();
-
-    await prepare(asCore(core), asExec(exec));
-
-    // No git or changeset commands should run for public releases
-    expect(exec.exec).not.toHaveBeenCalledWith("git", expect.anything());
-    expect(exec.exec).not.toHaveBeenCalledWith(
-      "pnpm",
-      expect.arrayContaining(["changeset"]),
-    );
   });
 });

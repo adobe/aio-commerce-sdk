@@ -95,21 +95,28 @@ jobs:
   release:
     name: Publish Preview Packages
     needs: prepare
-    uses: ./.github/workflows/publish-shared.yml
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.snapshot.outputs.published }}
+      publishedPackages: ${{ steps.snapshot.outputs.publishedPackages }}
     permissions:
       contents: write
       pull-requests: write
       packages: write
       id-token: write
-    with:
-      channel: internal
-      ref: ${{ needs.prepare.outputs.head_sha }}
-      snapshot_tag: alpha
-      skip_github_releases: true
-      notify_slack: false
-    secrets:
-      REGISTRY_URL: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
-      REGISTRY_AUTH_TOKEN: ${{ secrets.ARTIFACTORY_API_TOKEN }}
+    steps:
+      - uses: ./.github/actions/setup-release
+        with:
+          registry-url: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
+          ref: ${{ needs.prepare.outputs.head_sha }}
+
+      - uses: ./.github/actions/publish-snapshot
+        id: snapshot
+        with:
+          snapshot-tag: alpha
+          skip-github-releases: "true"
+          registry-url: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
+          node-auth-token: ${{ secrets.ARTIFACTORY_API_TOKEN }}
 
   comment:
     name: Comment on PR

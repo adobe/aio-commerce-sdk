@@ -14,17 +14,30 @@ jobs:
   release:
     name: Release Internal
     if: github.repository == 'adobe/aio-commerce-sdk'
-    uses: ./.github/workflows/publish-shared.yml
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.snapshot.outputs.published }}
+      publishedPackages: ${{ steps.snapshot.outputs.publishedPackages }}
     permissions:
       contents: write
       pull-requests: write
       packages: write
       id-token: write
-    with:
-      channel: internal
-      notify_slack: ${{ inputs.notify_slack }}
-    secrets:
-      REGISTRY_PACKAGE_BASE_URL: ${{ secrets.ARTIFACTORY_PACKAGE_BASE_URL }}
-      REGISTRY_URL: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
-      REGISTRY_AUTH_TOKEN: ${{ secrets.ARTIFACTORY_API_TOKEN }}
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - uses: ./.github/actions/setup-release
+        with:
+          registry-url: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
+
+      - uses: ./.github/actions/publish-snapshot
+        id: snapshot
+        with:
+          registry-url: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
+          node-auth-token: ${{ secrets.ARTIFACTORY_API_TOKEN }}
+
+      - uses: ./.github/actions/notify-slack
+        if: inputs.notify_slack && steps.snapshot.outputs.published == 'true'
+        with:
+          published-packages: ${{ steps.snapshot.outputs.publishedPackages }}
+          registry-package-base-url: ${{ secrets.ARTIFACTORY_PACKAGE_BASE_URL }}
+          release-channel: internal
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -12,38 +12,68 @@ jobs:
   release:
     name: Release Public
     if: github.repository == 'adobe/aio-commerce-sdk'
-    uses: ./.github/workflows/publish-shared.yml
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
     permissions:
       contents: write
       pull-requests: write
       packages: write
       id-token: write
-    with:
-      channel: public
-      notify_slack: true
-    secrets:
-      REGISTRY_AUTH_TOKEN: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
-      REGISTRY_PACKAGE_BASE_URL: "https://npmx.dev/package"
-      REGISTRY_URL: "https://registry.npmjs.org"
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - uses: ./.github/actions/setup-release
+        with:
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Build packages
+        run: pnpm turbo build
+
+      - name: Create Release Pull Request or Publish
+        id: changesets
+        uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b # v1.8.0
+        with:
+          version: pnpm changeset version
+          publish: pnpm changeset publish
+          commit: "ci: release packages"
+          title: "[CI] Release Packages"
+          createGithubReleases: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          NPM_TOKEN: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
+
+      - name: Notify on Slack
+        if: steps.changesets.outputs.published == 'true'
+        uses: ./.github/actions/notify-slack
+        with:
+          published-packages: ${{ steps.changesets.outputs.publishedPackages }}
+          registry-package-base-url: "https://npmx.dev/package"
+          release-channel: public
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   mirror:
     name: Mirror to Artifactory
     needs: release
     if: needs.release.outputs.published == 'true'
-    uses: ./.github/workflows/publish-shared.yml
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
       packages: write
       id-token: write
-    with:
-      channel: internal
-      publish_only: true
-      notify_slack: false
-    secrets:
-      REGISTRY_URL: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
-      REGISTRY_AUTH_TOKEN: ${{ secrets.ARTIFACTORY_API_TOKEN }}
+    steps:
+      - uses: ./.github/actions/setup-release
+        with:
+          registry-url: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
+
+      - name: Build packages
+        run: pnpm turbo build
+
+      - name: Mirror packages to registry
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.ARTIFACTORY_API_TOKEN }}
+        run: pnpm changeset publish --no-git-tag
 
   back-sync:
     name: Back-sync to main

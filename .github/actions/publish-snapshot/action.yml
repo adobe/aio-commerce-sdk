@@ -1,0 +1,57 @@
+name: Publish Snapshot
+description: Apply snapshot versions, build packages, and publish them to an npm registry
+
+inputs:
+  snapshot-tag:
+    description: Tag to apply to snapshot versions (e.g. "beta", "alpha")
+    required: false
+    default: beta
+  skip-github-releases:
+    description: Skip creating GitHub pre-releases
+    required: false
+    default: "false"
+  registry-url:
+    description: npm registry URL for publishing
+    required: true
+  node-auth-token:
+    description: Auth token for the npm registry
+    required: true
+
+outputs:
+  published:
+    description: Whether packages were published
+    value: ${{ steps.snapshot.outputs.published }}
+  publishedPackages:
+    description: JSON array of published packages
+    value: ${{ steps.snapshot.outputs.publishedPackages }}
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare release context
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        SNAPSHOT_TAG: ${{ inputs.snapshot-tag }}
+        GITHUB_TOKEN: ${{ github.token }}
+      with:
+        script: |
+          const { default: execPrepare } = await import('${{ github.workspace }}/scripts/source/ci/release/prepare.ts');
+          await execPrepare(core, exec);
+
+    - name: Build packages
+      run: pnpm turbo build
+      shell: bash
+
+    - name: Publish snapshot packages
+      id: snapshot
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        SNAPSHOT_TAG: ${{ inputs.snapshot-tag }}
+        SKIP_GITHUB_RELEASES: ${{ inputs.skip-github-releases }}
+        REGISTRY_URL: ${{ inputs.registry-url }}
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+      with:
+        script: |
+          const { default: execSnapshot } = await import('${{ github.workspace }}/scripts/source/ci/release/snapshot.ts');
+          await execSnapshot(core, exec, github, context);

@@ -12,9 +12,9 @@
 
 import { join } from "node:path";
 
-import { parseReleaseChannel, runGitHubScript } from "./utils.ts";
+import { runGitHubScript } from "./utils.ts";
 
-import type { AsyncFunctionArguments, Environment } from "./types.ts";
+import type { AsyncFunctionArguments } from "./types.ts";
 
 const DEFAULT_SNAPSHOT_TAG = "beta";
 const STATUS_OUTPUT_FILE = "changeset-status.json";
@@ -23,22 +23,10 @@ export default async function main(
   core: AsyncFunctionArguments["core"],
   exec: AsyncFunctionArguments["exec"],
 ) {
-  return await runGitHubScript(core, async () => await prepare(core, exec));
-}
-
-/** Prepares the snapshot release context for internal releases. */
-async function prepare(
-  core: AsyncFunctionArguments["core"],
-  exec: AsyncFunctionArguments["exec"],
-) {
-  const { RELEASE_CHANNEL: releaseChannelValue } = process.env as Environment;
-
-  const releaseChannel = parseReleaseChannel(releaseChannelValue);
-  const publishOnly = process.env.PUBLISH_ONLY === "true";
-
-  if (releaseChannel === "internal" && !publishOnly) {
-    await prepareSnapshot(core, exec);
-  }
+  return await runGitHubScript(
+    core,
+    async () => await prepareSnapshot(core, exec),
+  );
 }
 
 /**
