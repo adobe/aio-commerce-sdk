@@ -8,6 +8,7 @@ This monorepo contains a collection of modular libraries that streamline the dev
   - [Quick Start](#quick-start)
   - [Packages](#packages)
   - [Architecture](#architecture)
+  - [Node.js Support](#nodejs-support)
   - [Contributing](#contributing)
   - [Resources](#resources)
   - [License](#license)
@@ -46,6 +47,24 @@ This project uses the following tools, find a detailed explanation/justification
 - **[TSDown](https://tsdown.dev/)** - Modern bundler specialized for TypeScript libraries.
 - **[Vitest](https://vitest.dev/)** - Fast TypeScript-compatible testing framework
 - **[Biome](https://biomejs.dev/)** - Fast formatter and linter
+
+## Node.js Support
+
+The SDK supports all Active LTS Node.js versions. The current supported range is **Node 22** and **Node 24**.
+
+| Version | LTS start    | EOL        |
+| ------- | ------------ | ---------- |
+| 22      | October 2024 | April 2027 |
+| 24      | October 2025 | April 2028 |
+
+- **Adding a version:** when a Node.js version enters Active LTS (October each year), it is added to the supported range in a `minor` release.
+- **Dropping a version:** when a Node.js version reaches EOL, it is removed in a dedicated `minor` release with a changelog entry noting the EOL date.
+
+See [`specs/features/CEXT-6221-node-version-policy.md`](./specs/features/CEXT-6221-node-version-policy.md) for the full policy rationale.
+
+### Codegen runtime default
+
+The `runtime` field written to generated `ext.config.yaml` files defaults to the latest App Builder Runtime version with prewarm support. Prewarms reduce cold-start latency; using a runtime version without prewarm support can degrade production performance. The default is updated when a newer version gains prewarm support in App Builder Runtime.
 
 ## Contributing
 

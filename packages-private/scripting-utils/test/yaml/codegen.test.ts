@@ -43,7 +43,7 @@ describe("createOrUpdateExtConfig", () => {
                 "my-action": {
                   function: "actions/my-action.js",
                   web: "yes",
-                  runtime: "nodejs:22",
+                  runtime: "nodejs:24",
                 },
               },
             },
@@ -581,7 +581,7 @@ runtimeManifest:
         test-action:
           function: old/actions/test.js
           web: yes
-          runtime: nodejs:22
+          runtime: nodejs:24
           inputs:
             LOG_LEVEL: custom-log-level
             AIO_COMMERCE_CONFIG_ENCRYPTION_KEY: custom-key
