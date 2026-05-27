@@ -53,6 +53,7 @@ describe("release/prepare.ts", () => {
       });
 
       vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+      vi.stubEnv("RUNNER_TEMP", tempDir);
 
       const core = createCoreMock();
       const exec = createExecMock();
@@ -90,6 +91,11 @@ describe("release/prepare.ts", () => {
         INTERNAL_REGISTRY_URL,
       ]);
 
+      expect(core.exportVariable).toHaveBeenCalledWith(
+        "NPM_CONFIG_USERCONFIG",
+        `${tempDir}/.npmrc`,
+      );
+
       const npmrc = readFileSync(join(tempDir, ".npmrc"), "utf8");
       expect(npmrc).toContain(
         `//artifactory.example.com/artifactory/api/npm/npm-internal/:_authToken=${INTERNAL_AUTH_TOKEN}`,
@@ -97,30 +103,21 @@ describe("release/prepare.ts", () => {
     });
   });
 
-  test("configures registry auth for a public release", async () => {
-    await withTempFiles({}, async (tempDir) => {
-      stubPrepareEnv({
-        registryAuthToken: PUBLIC_AUTH_TOKEN,
-        registryUrl: PUBLIC_REGISTRY_URL,
-        releaseChannel: "public",
-      });
-
-      vi.stubEnv("GITHUB_WORKSPACE", tempDir);
-
-      const core = createCoreMock();
-      const exec = createExecMock();
-      exec.exec.mockResolvedValue(0);
-
-      await prepare(asCore(core), asExec(exec));
-
-      expect(core.setFailed).not.toHaveBeenCalled();
-      expect(exec.exec).not.toHaveBeenCalled();
-
-      const npmrc = readFileSync(join(tempDir, ".npmrc"), "utf8");
-      expect(npmrc).toContain(
-        `//registry.npmjs.org/:_authToken=${PUBLIC_AUTH_TOKEN}`,
-      );
+  test("skips registry auth configuration for a public release", async () => {
+    stubPrepareEnv({
+      registryAuthToken: PUBLIC_AUTH_TOKEN,
+      registryUrl: PUBLIC_REGISTRY_URL,
+      releaseChannel: "public",
     });
+
+    const core = createCoreMock();
+    const exec = createExecMock();
+
+    await prepare(asCore(core), asExec(exec));
+
+    expect(core.setFailed).not.toHaveBeenCalled();
+    expect(exec.exec).not.toHaveBeenCalled();
+    expect(core.exportVariable).not.toHaveBeenCalled();
   });
 
   test("fails when the release channel is invalid", async () => {
@@ -146,6 +143,7 @@ describe("release/prepare.ts", () => {
       });
 
       vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+      vi.stubEnv("RUNNER_TEMP", tempDir);
 
       const core = createCoreMock();
       const exec = createExecMock();
@@ -169,6 +167,7 @@ describe("release/prepare.ts", () => {
       });
 
       vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+      vi.stubEnv("RUNNER_TEMP", tempDir);
 
       const core = createCoreMock();
       const exec = createExecMock();
@@ -187,6 +186,11 @@ describe("release/prepare.ts", () => {
         "--registry",
         registryUrl,
       ]);
+
+      expect(core.exportVariable).toHaveBeenCalledWith(
+        "NPM_CONFIG_USERCONFIG",
+        `${tempDir}/.npmrc`,
+      );
 
       // Also verifies snapshot preparation ran
       expect(exec.exec).toHaveBeenCalledWith("pnpm", [
@@ -207,6 +211,7 @@ describe("release/prepare.ts", () => {
       });
 
       vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+      vi.stubEnv("RUNNER_TEMP", tempDir);
 
       const core = createCoreMock();
       const exec = createExecMock();
@@ -234,6 +239,7 @@ describe("release/prepare.ts", () => {
       });
 
       vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+      vi.stubEnv("RUNNER_TEMP", tempDir);
 
       const core = createCoreMock();
       const exec = createExecMock();
@@ -261,6 +267,7 @@ describe("release/prepare.ts", () => {
       });
 
       vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+      vi.stubEnv("RUNNER_TEMP", tempDir);
 
       const core = createCoreMock();
       const exec = createExecMock();
@@ -289,6 +296,7 @@ describe("release/prepare.ts", () => {
       });
 
       vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+      vi.stubEnv("RUNNER_TEMP", tempDir);
       vi.stubEnv("SNAPSHOT_TAG", "alpha");
 
       const core = createCoreMock();
@@ -307,26 +315,22 @@ describe("release/prepare.ts", () => {
   });
 
   test("skips snapshot preparation for public releases", async () => {
-    await withTempFiles({}, async (tempDir) => {
-      stubPrepareEnv({
-        registryAuthToken: PUBLIC_AUTH_TOKEN,
-        registryUrl: PUBLIC_REGISTRY_URL,
-        releaseChannel: "public",
-      });
-
-      vi.stubEnv("GITHUB_WORKSPACE", tempDir);
-
-      const core = createCoreMock();
-      const exec = createExecMock();
-
-      await prepare(asCore(core), asExec(exec));
-
-      // No git or changeset commands should run for public releases
-      expect(exec.exec).not.toHaveBeenCalledWith("git", expect.anything());
-      expect(exec.exec).not.toHaveBeenCalledWith(
-        "pnpm",
-        expect.arrayContaining(["changeset"]),
-      );
+    stubPrepareEnv({
+      registryAuthToken: PUBLIC_AUTH_TOKEN,
+      registryUrl: PUBLIC_REGISTRY_URL,
+      releaseChannel: "public",
     });
+
+    const core = createCoreMock();
+    const exec = createExecMock();
+
+    await prepare(asCore(core), asExec(exec));
+
+    // No git or changeset commands should run for public releases
+    expect(exec.exec).not.toHaveBeenCalledWith("git", expect.anything());
+    expect(exec.exec).not.toHaveBeenCalledWith(
+      "pnpm",
+      expect.arrayContaining(["changeset"]),
+    );
   });
 });

@@ -46,6 +46,7 @@ export const INVALID_PACKAGES_JSON = "{not-valid-json}";
 
 export function createCoreMock() {
   return {
+    exportVariable: vi.fn<AsyncFunctionArguments["core"]["exportVariable"]>(),
     info: vi.fn<AsyncFunctionArguments["core"]["info"]>(),
     setFailed: vi.fn<AsyncFunctionArguments["core"]["setFailed"]>(),
     setOutput: vi.fn<AsyncFunctionArguments["core"]["setOutput"]>(),

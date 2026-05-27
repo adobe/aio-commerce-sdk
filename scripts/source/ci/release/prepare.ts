@@ -45,11 +45,12 @@ async function prepare(
     await prepareSnapshot(core, exec);
   }
 
-  await configureRegistryAuth(core, exec, {
-    registryUrl,
-    registryAuthToken,
-    releaseChannel,
-  });
+  if (releaseChannel !== "public") {
+    await configureRegistryAuth(core, exec, {
+      registryUrl,
+      registryAuthToken,
+    });
+  }
 }
 
 /**
@@ -101,7 +102,6 @@ async function configureRegistryAuth(
   data: {
     registryUrl: string;
     registryAuthToken: string;
-    releaseChannel: string;
   },
 ) {
   if (!(data.registryUrl && data.registryAuthToken)) {
@@ -110,8 +110,10 @@ async function configureRegistryAuth(
     );
   }
 
+  const npmrcPath = `${process.env.RUNNER_TEMP}/.npmrc`;
+
   appendFileSync(
-    `${process.env.GITHUB_WORKSPACE}/.npmrc`,
+    npmrcPath,
     [
       "",
       `@adobe:registry=${data.registryUrl}`,
@@ -119,20 +121,21 @@ async function configureRegistryAuth(
     ].join("\n"),
   );
 
-  if (data.releaseChannel === "internal") {
-    // Diagnostic: log the authenticated user to confirm auth is working before publish.
-    // Failure is intentionally swallowed — auth errors surface more clearly during publish.
-    try {
-      await exec.exec("pnpm whoami", [
-        "--userconfig",
-        `${process.env.GITHUB_WORKSPACE}/.npmrc`,
-        "--registry",
-        data.registryUrl,
-      ]);
-    } catch (error) {
-      core.warning(
-        `Registry auth check failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
+  // Export so all subsequent steps resolve npm auth from this file.
+  core.exportVariable("NPM_CONFIG_USERCONFIG", npmrcPath);
+
+  // Diagnostic: log the authenticated user to confirm auth is working before publish.
+  // Failure is intentionally swallowed — auth errors surface more clearly during publish.
+  try {
+    await exec.exec("pnpm whoami", [
+      "--userconfig",
+      npmrcPath,
+      "--registry",
+      data.registryUrl,
+    ]);
+  } catch (error) {
+    core.warning(
+      `Registry auth check failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
