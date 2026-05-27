@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { appendFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { parseReleaseChannel, runGitHubScript } from "./utils.ts";
@@ -27,29 +26,18 @@ export default async function main(
   return await runGitHubScript(core, async () => await prepare(core, exec));
 }
 
-/** Prepares the release by configuring the registry authentication. */
+/** Prepares the snapshot release context for internal releases. */
 async function prepare(
   core: AsyncFunctionArguments["core"],
   exec: AsyncFunctionArguments["exec"],
 ) {
-  const {
-    REGISTRY_URL: registryUrl,
-    REGISTRY_AUTH_TOKEN: registryAuthToken,
-    RELEASE_CHANNEL: releaseChannelValue,
-  } = process.env as Environment;
+  const { RELEASE_CHANNEL: releaseChannelValue } = process.env as Environment;
 
   const releaseChannel = parseReleaseChannel(releaseChannelValue);
   const publishOnly = process.env.PUBLISH_ONLY === "true";
 
   if (releaseChannel === "internal" && !publishOnly) {
     await prepareSnapshot(core, exec);
-  }
-
-  if (releaseChannel !== "public") {
-    await configureRegistryAuth(core, exec, {
-      registryUrl,
-      registryAuthToken,
-    });
   }
 }
 
@@ -83,59 +71,4 @@ async function prepareSnapshot(
 
   await exec.exec("pnpm", ["changeset", "version", "--snapshot", snapshotTag]);
   core.info(`Snapshot versions applied with tag "${snapshotTag}".`);
-}
-
-/** Normalizes the registry path by removing the protocol and trailing slashes. */
-function normalizeRegistryPath(registryUrl: string) {
-  const parsedUrl = new URL(registryUrl);
-  const normalizedPath = parsedUrl.pathname.endsWith("/")
-    ? parsedUrl.pathname.slice(0, -1)
-    : parsedUrl.pathname;
-
-  return `${parsedUrl.host}${normalizedPath}`;
-}
-
-/** Configures NPM authentication for the internal Artifactory registry */
-async function configureRegistryAuth(
-  core: AsyncFunctionArguments["core"],
-  exec: AsyncFunctionArguments["exec"],
-  data: {
-    registryUrl: string;
-    registryAuthToken: string;
-  },
-) {
-  if (!(data.registryUrl && data.registryAuthToken)) {
-    throw new Error(
-      "Missing required values for registry authentication configuration.",
-    );
-  }
-
-  const npmrcPath = `${process.env.RUNNER_TEMP}/.npmrc`;
-
-  appendFileSync(
-    npmrcPath,
-    [
-      "",
-      `@adobe:registry=${data.registryUrl}`,
-      `//${normalizeRegistryPath(data.registryUrl)}/:_authToken=${data.registryAuthToken}`,
-    ].join("\n"),
-  );
-
-  // Export so all subsequent steps resolve npm auth from this file.
-  core.exportVariable("NPM_CONFIG_USERCONFIG", npmrcPath);
-
-  // Diagnostic: log the authenticated user to confirm auth is working before publish.
-  // Failure is intentionally swallowed — auth errors surface more clearly during publish.
-  try {
-    await exec.exec("pnpm whoami", [
-      "--userconfig",
-      npmrcPath,
-      "--registry",
-      data.registryUrl,
-    ]);
-  } catch (error) {
-    core.warning(
-      `Registry auth check failed: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
 }

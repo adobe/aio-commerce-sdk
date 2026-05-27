@@ -73,18 +73,17 @@ jobs:
         with:
           node-version: lts/*
           cache: "pnpm"
-          registry-url: ${{ inputs.channel == 'public' && 'https://registry.npmjs.org' || '' }}
+          registry-url: ${{ secrets.REGISTRY_URL }}
           scope: "@adobe"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Prepare release context
+        if: inputs.channel == 'internal' && !inputs.publish_only
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         id: prepare
         env:
-          REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
-          REGISTRY_AUTH_TOKEN: ${{ secrets.REGISTRY_AUTH_TOKEN }}
           RELEASE_CHANNEL: ${{ inputs.channel }}
           SNAPSHOT_TAG: ${{ inputs.snapshot_tag }}
           PUBLISH_ONLY: ${{ inputs.publish_only }}
@@ -117,6 +116,7 @@ jobs:
           SNAPSHOT_TAG: ${{ inputs.snapshot_tag || '' }}
           SKIP_GITHUB_RELEASES: ${{ inputs.skip_github_releases }}
           REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
+          NODE_AUTH_TOKEN: ${{ secrets.REGISTRY_AUTH_TOKEN }}
         with:
           script: |
             const { default: execSnapshot } = await import('${{ github.workspace }}/scripts/source/ci/release/snapshot.ts');
