@@ -7,7 +7,7 @@
 ## Summary
 
 Store the Commerce instance details, Base URL and deployment type, when an app is associated
-with a Commerce instance, and expose a typed async helper so that any runtime action can retrieve them without custom storage setup.
+with a Commerce instance, and expose two typed async helpers: a low-level one that returns the raw instance data, and a higher-level one that returns a ready-to-use `AdobeCommerceHttpClient` — so that any runtime action can call the Commerce API without custom storage setup or client construction boilerplate.
 
 ## Motivation
 
@@ -23,13 +23,13 @@ This pattern has two problems:
    association state. If the app is re-associated with a different instance, or unassociated, the stored config is not updated or cleared.
 
 The SDK already receives `commerceBaseUrl` and `commerceEnv` at every association and
-unassociation event. The missing piece is a standard persistence mechanism tied to the association lifecycle and a typed helper for runtime actions to consume it.
+unassociation event. The missing piece is a standard persistence mechanism tied to the association lifecycle and typed helpers for runtime actions to consume it.
 
 **Goals:**
 
 - Store the Commerce Base URL and deployment type when an app is associated with an instance.
 - Clear the stored data when the app is unassociated.
-- Expose a typed async helper that any runtime action can use to retrieve the data.
+- Expose typed async helpers that any runtime action can use to retrieve the data and construct a ready-to-use Commerce HTTP client.
 - Work for all app types, including those without a custom installation flow.
 
 **Non-goals:**
@@ -41,8 +41,29 @@ unassociation event. The missing piece is a standard persistence mechanism tied 
 
 ## Developer experience
 
-After this feature ships, any runtime action can retrieve the associated Commerce instance
-details with a single async call:
+After this feature ships, any runtime action can call the Commerce API without custom storage
+setup or client construction boilerplate.
+
+**Primary pattern — get a ready-to-use client:**
+
+```ts
+import { getAssociatedCommerceClient } from "@adobe/aio-commerce-lib-app";
+
+export async function main(params) {
+  const client = await getAssociatedCommerceClient(params);
+
+  if (!client) {
+    return {
+      statusCode: 400,
+      body: { error: "App is not associated with a Commerce instance." },
+    };
+  }
+
+  const products = await client.get("rest/V1/products").json();
+}
+```
+
+**Low-level pattern — get the raw instance data:**
 
 ```ts
 import { getAssociatedCommerceInstance } from "@adobe/aio-commerce-lib-app";
@@ -59,20 +80,16 @@ export async function main(params) {
 
   // instance.baseUrl — e.g. "https://my-store.example.com"
   // instance.env     — "saas" | "paas"
-
-  const response = await fetch(`${instance.baseUrl}/rest/V1/products`, {
-    headers: { Authorization: `Bearer ${params.COMMERCE_API_TOKEN}` },
-  });
 }
 ```
 
 No custom storage setup is required. The SDK manages the data automatically during the
-association lifecycle. The helper works from any runtime action regardless of which OpenWhisk
+association lifecycle. Both helpers work from any runtime action regardless of which OpenWhisk
 package the action belongs to.
 
-**If `getAssociatedCommerceInstance` returns `null`**, the app is either not currently associated or was associated before this feature was introduced. Apps must handle this case explicitly.
+**If either helper returns `null`**, the app is either not currently associated or was associated before this feature was introduced. Apps must handle this case explicitly.
 
-**Available fields** on the returned object:
+**Available fields** on the `AssociatedCommerceInstance` object:
 
 | Field     | Type               | Description                              |
 | --------- | ------------------ | ---------------------------------------- |
@@ -92,6 +109,8 @@ A new module is added to `aio-commerce-lib-config` specifically for association 
 separate from the existing Business Configuration module. It uses the same `getSharedState()`
 client but stores under a dedicated reserved key (`association`) rather than the
 `configuration.{scopeCode}` keys used by Business Configuration.
+
+The data is stored with the maximum TTL of 1 year (31536000 seconds). The default TTL of 24 hours is not appropriate here — association data is long-lived and must not expire on its own. It should only be cleared explicitly on unassociation. Re-associating resets the TTL.
 
 This has two important properties for this use case:
 
@@ -126,6 +145,10 @@ added without a breaking change.
 A standalone `association` runtime action is added to `aio-commerce-lib-app`. It is always
 deployed alongside `app-config` — not gated on any feature, so all app types have a
 reachable endpoint regardless of which features they use.
+
+The action is protected with `require-adobe-auth: true`, the same as all other actions in
+`aio-commerce-lib-app`. Only requests carrying a valid Adobe IMS token can call it, preventing
+unauthorised writes or deletions of the stored association data.
 
 **`POST /`** — Store association data
 
@@ -172,6 +195,32 @@ export async function getAssociatedCommerceInstance(
 `getAssociationData` from the `aio-commerce-lib-config` association module. The function is
 async because the underlying Adobe I/O State read is a network call.
 
+### New `getAssociatedCommerceClient` helper
+
+A higher-level export from `@adobe/aio-commerce-lib-app` that builds on
+`getAssociatedCommerceInstance` and returns a ready-to-use `AdobeCommerceHttpClient` from
+`@adobe/aio-commerce-lib-api`:
+
+```ts
+/**
+ * Returns an initialised AdobeCommerceHttpClient for the Commerce instance this app is
+ * currently associated with, or null if the app is not associated or was associated before
+ * this feature was introduced.
+ */
+export async function getAssociatedCommerceClient(
+  params: RuntimeActionParams,
+): Promise<AdobeCommerceHttpClient | null>;
+```
+
+Internally it calls `getAssociatedCommerceInstance` and, if data is available, constructs an
+`AdobeCommerceHttpClient` using `baseUrl` and `env` from the stored association data combined
+with the auth credentials present in `params`. Returns `null` when no association data is
+found.
+
+This eliminates the repeated boilerplate of combining stored instance details with action
+params to construct the client — a pattern every action that calls Commerce would otherwise
+duplicate.
+
 ### Client integration
 
 Any client that manages the app association lifecycle is responsible for driving two calls
@@ -179,19 +228,22 @@ against the `association` endpoint. The endpoint URL is discoverable from the ap
 points metadata, registered in `workerProcess` alongside the existing `app-config` and
 `installation` hrefs.
 
-**On association** — after the app is successfully registered with the Extension Manager,
-the client calls `POST /` with the Commerce instance details. This step is best effort a failure does not roll back the registration.
+**On association** — after the app is registered with the Extension Manager, the client
+calls `POST /` with the Commerce instance details. If this call fails, the association
+fails entirely — the app cannot be marked as successfully associated if the Commerce
+configuration was not saved. The client is responsible for surfacing the failure to the
+developer (e.g. rolling back the Extension Manager registration or otherwise preventing
+the app from being shown as successfully associated).
 
 **On unassociation** — after unassociation completes, the client calls `DELETE /` to remove
-the stored data. This step is also best-effort.
+the stored data. This step is best-effort — a failure does not block the unassociation.
 
 ### Edge cases
 
 - **Apps associated before this feature.** No stored data exists; `getAssociatedCommerceInstance`
   returns `null`. Apps must handle this explicitly.
 - **Association endpoint unreachable.** If the runtime is not deployed or returns an unexpected
-  error, the calling client should log the failure and continue. The stored data will be absent
-  until the app is re-associated.
+  error, the association fails. The developer can retry once the endpoint is reachable.
 - **Concurrent associations.** The last write wins. No conflict detection is required.
 
 ## Drawbacks
@@ -200,6 +252,8 @@ the stored data. This step is also best-effort.
 - `getAssociatedCommerceInstance` is async. Callers must await it, unlike a direct `params` read.
 - Introduces a `aio-commerce-lib-config` network call on every action invocation that calls
   the helper.
+- Association fails entirely if the config storage endpoint is unreachable. A transient
+  failure blocks the whole association flow, requiring the developer to retry.
 
 ## Rationale and alternatives
 
@@ -234,8 +288,6 @@ storage and retrieval logic with no automatic cleanup on unassociation and no st
 
 ## Unresolved questions
 
-- **Reserved config key naming.** The exact key used to store the data in `aio-commerce-lib-config`
-  needs to be defined as a reserved SDK concern so that apps do not accidentally collide with it.
 - **Backfill for legacy apps.** A mechanism to backfill stored data for apps associated before
   this feature was introduced is out of scope but should be tracked.
 
@@ -243,5 +295,3 @@ storage and retrieval logic with no automatic cleanup on unassociation and no st
 
 - The stored shape can be extended with `projectId` and `workspaceId` at association time,
   providing data needed by other planned SDK features without requiring a new association step.
-- `getAssociatedCommerceInstance` could become the foundation for a higher-level helper that
-  initialises a ready-to-use Commerce HTTP client.
