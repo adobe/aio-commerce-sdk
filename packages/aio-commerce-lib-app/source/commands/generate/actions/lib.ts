@@ -310,12 +310,12 @@ export async function updateExtConfig(
     }
 
     case CONFIGURATION_EXTENSION_POINT_ID: {
-      extConfig = buildBusinessConfigurationExtConfig(appConfig.runtime);
+      extConfig = buildBusinessConfigurationExtConfig();
       break;
     }
 
     case BACKEND_UI_EXTENSION_POINT_ID: {
-      extConfig = buildAdminUiSdkExtConfig(appConfig.runtime);
+      extConfig = buildAdminUiSdkExtConfig();
       break;
     }
   }

@@ -18,7 +18,6 @@ import {
   GENERATED_ACTIONS_PATH,
   PACKAGE_NAME,
 } from "#commands/constants";
-import { DEFAULT_RUNTIME } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 import { getConfigDomains } from "#config/schema/domains";
 
@@ -26,10 +25,7 @@ import type {
   ActionDefinition,
   ExtConfig,
 } from "@aio-commerce-sdk/scripting-utils/yaml";
-import type {
-  CommerceAppConfigOutputModel,
-  RuntimeKind,
-} from "#config/schema/app";
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CommerceAppConfigDomain } from "#config/schema/domains";
 
 type ActionConfig = {
@@ -65,22 +61,19 @@ export const REGISTRATION_JSON_PLACEHOLDER = "// {{REGISTRATION_JSON}}";
 /**
  * Creates a runtime action configuration.
  * @param actionName - The name of the action.
- * @param config - Action-specific feature flags (e.g. requiresEncryptionKey).
  * @param options - Optional configuration options.
- * @param runtime - Adobe I/O Runtime kind for the generated action.
  */
 function createActionDefinition(
   actionName: string,
   config: ActionConfig = {},
   options: Omit<ActionDefinition, "function"> = {},
-  runtime: RuntimeKind = DEFAULT_RUNTIME,
 ) {
   const def: ActionDefinition = {
     ...options,
 
     function: `${GENERATED_ACTIONS_PATH}/${actionName}.js`,
     web: options.web ?? "yes",
-    runtime: options.runtime ?? runtime,
+    runtime: "nodejs:22",
     annotations: {
       "require-adobe-auth": true,
       final: true,
@@ -115,13 +108,12 @@ export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
 
 /**
  * Builds the ext.config.yaml configuration for the extensibility extension.
- * @param appConfig - The validated commerce app config.
+ * @param features - The features that are enabled for the app.
  */
 export function buildAppManagementExtConfig(
   appConfig: CommerceAppConfigOutputModel,
 ) {
   const features = getConfigDomains(appConfig);
-  const runtime = appConfig.runtime ?? DEFAULT_RUNTIME;
   const hasPasswordFieldsInSchema =
     hasBusinessConfigSchema(appConfig) &&
     appConfig.businessConfig.schema.some((field) => field.type === "password");
@@ -146,7 +138,7 @@ export function buildAppManagementExtConfig(
         [PACKAGE_NAME]: {
           license: "Apache-2.0",
           actions: {
-            "app-config": createActionDefinition("app-config", {}, {}, runtime),
+            "app-config": createActionDefinition("app-config"),
           } as Record<string, ActionDefinition>,
         },
       },
@@ -179,20 +171,14 @@ export function buildAppManagementExtConfig(
             timeout: 600_000,
           },
         },
-        runtime,
       );
   }
 
   return extConfig;
 }
 
-/**
- * Builds the ext.config.yaml configuration for the business configuration extension.
- * @param runtime - Adobe I/O Runtime kind for generated actions. Defaults to {@link DEFAULT_RUNTIME}.
- */
-export function buildBusinessConfigurationExtConfig(
-  runtime: RuntimeKind = DEFAULT_RUNTIME,
-) {
+/** Builds the ext.config.yaml configuration for the business configuration extension. */
+export function buildBusinessConfigurationExtConfig() {
   const actions = [
     {
       name: "config",
@@ -225,7 +211,7 @@ export function buildBusinessConfigurationExtConfig(
           actions: Object.fromEntries(
             actions.map((action) => [
               action.name,
-              createActionDefinition(action.name, action, {}, runtime),
+              createActionDefinition(action.name, action),
             ]),
           ),
         },
@@ -236,11 +222,8 @@ export function buildBusinessConfigurationExtConfig(
 
 /**
  * Builds the ext.config.yaml configuration for the Admin UI SDK backend-ui extension.
- * @param runtime - Adobe I/O Runtime kind for the registration action. Defaults to {@link DEFAULT_RUNTIME}.
  */
-export function buildAdminUiSdkExtConfig(
-  runtime: RuntimeKind = DEFAULT_RUNTIME,
-) {
+export function buildAdminUiSdkExtConfig() {
   return {
     hooks: {
       "pre-app-build":
@@ -260,7 +243,7 @@ export function buildAdminUiSdkExtConfig(
             registration: {
               function: `${ADMIN_UI_SDK_ACTIONS_PATH}/index.js`,
               web: "yes",
-              runtime,
+              runtime: "nodejs:22",
               annotations: {
                 "require-adobe-auth": true,
                 final: true,

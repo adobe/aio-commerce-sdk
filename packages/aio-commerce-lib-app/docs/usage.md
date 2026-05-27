@@ -104,6 +104,9 @@ This produces the following files, organized by extension point:
 - `src/commerce-backend-ui-1/.generated/actions/registration/index.js`: serves the Admin UI SDK registration object to Adobe Commerce
 - `src/commerce-backend-ui-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
+> [!NOTE]
+> Generated actions default to the `nodejs:22` runtime. To target a different runtime — for example `nodejs:24`, whose image supports `require()` of ES modules — set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration.
+
 4. In your `app.config.yaml`, reference the generated extension configurations. If you have multiple extension points, add each as a new entry:
 
 ```yaml
@@ -134,7 +137,6 @@ extensions:
 The current app configuration definition contains the following sections:
 
 - **metadata**: Application metadata
-- **runtime**: Adobe I/O Runtime kind for generated actions (optional)
 - **businessConfig**: Business configuration schema
 - **eventing**: Eventing configuration
 - **installation**: Installation configuration
@@ -162,23 +164,6 @@ Application metadata is required and identifies your application:
 - **displayName**: Maximum 50 characters
 - **description**: Maximum 255 characters
 - **version**: Must follow semantic versioning format (e.g., `1.0.0`, `2.1.3`)
-
-#### Runtime
-
-Use `runtime` to control the Adobe I/O Runtime kind written to every generated action in `ext.config.yaml`. Defaults to `nodejs:22`.
-
-```typescript
-{
-  runtime: "nodejs:24",
-}
-```
-
-Supported values:
-
-- `nodejs:22` (default)
-- `nodejs:24` — needed when generated actions use ESM `import` together with `require()` (the `nodejs:22` image predates `require(esm)` support).
-
-The setting is applied to all generated actions across the `commerce/extensibility/1`, `commerce/configuration/1`, and `commerce/backend-ui/1` extension manifests. The `runtime` field in generated `ext.config.yaml` files is rewritten on every codegen run, so manual edits there will not survive — set it in `app.commerce.config.*` instead.
 
 #### Business Configuration Schema
 
