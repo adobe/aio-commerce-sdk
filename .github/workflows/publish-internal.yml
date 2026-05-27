@@ -15,9 +15,6 @@ jobs:
     name: Release Internal
     if: github.repository == 'adobe/aio-commerce-sdk'
     runs-on: ubuntu-latest
-    outputs:
-      published: ${{ steps.snapshot.outputs.published }}
-      publishedPackages: ${{ steps.snapshot.outputs.publishedPackages }}
     permissions:
       contents: write
       pull-requests: write

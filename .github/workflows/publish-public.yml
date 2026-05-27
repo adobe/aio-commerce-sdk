@@ -58,10 +58,7 @@ jobs:
     if: needs.release.outputs.published == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
-      packages: write
-      id-token: write
+      contents: read
     steps:
       - uses: ./.github/actions/setup-release
         with:
