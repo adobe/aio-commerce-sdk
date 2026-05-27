@@ -61,6 +61,23 @@ custom brand names), add an unresolved question for each:
 Place the provider in `eventing.commerce[]` if the answer is `commerce`, or
 `eventing.external[]` if the answer is `external`.
 
+**Warning comment for non-standard providers placed in `eventing.external[]`:**
+When a non-standard provider key is placed into `eventing.external[]` (either by developer
+answer or by auto-accepting the default `"external"`), add a `_directionWarning` property
+to the provider object in the configFragment:
+
+    {
+      "provider": {
+        "key": "<key>",
+        "label": "<label>",
+        "_directionWarning": "Non-standard provider key \"<key>\" — direction defaulted to eventing.external. If this provider SENDS events from App Builder instead, move to eventing.commerce."
+      }
+    }
+
+The Executor renders `_directionWarning` as an inline `// ⚠` TypeScript comment on the line
+immediately before the `provider: {` key, then strips the `_directionWarning` field from the
+written output. It must NOT appear in the generated `app.commerce.config.ts`.
+
 If `providers.json` does not exist, derive providers from action package naming:
 
 - Packages named `*-commerce` → commerce provider (label: "Commerce Provider")

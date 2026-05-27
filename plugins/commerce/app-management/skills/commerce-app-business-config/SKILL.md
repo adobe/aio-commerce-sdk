@@ -82,6 +82,18 @@ businessConfig: {
 
     // Boolean toggle
     { name: "debug_mode", type: "boolean", label: "Enable Debug Mode", default: false },
+
+    // Dynamic list — options resolved at runtime via a factory that receives the action's params.
+    // Required `default` factory for single-select; optional for multiple (falls back to []).
+    {
+      name: "paymentMethod", type: "dynamicList", selectionMode: "single",
+      label: "Default Payment Method",
+      options: async (params) => {
+        const methods = await fetchPaymentMethods(params.SOME_API_KEY);
+        return methods.map((m) => ({ label: m.title, value: m.code }));
+      },
+      default: (resolvedOptions) => resolvedOptions[0].value,
+    },
   ],
 }
 ```

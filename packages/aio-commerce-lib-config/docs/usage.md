@@ -73,6 +73,23 @@ When you don't initialize the library with at least your `schema`, configuration
 Error: Schema not initialized. Call `initialize({ schema })` before using configuration functions.
 ```
 
+#### Initializing with a Dynamic Schema
+
+If your schema contains `dynamicList` fields (see [Dynamic List Field](#dynamic-list-field-runtime-resolved-options)), pass `params` alongside `schema` and `initialize` will resolve the factories for you. The call becomes async and the result includes the fully resolved schema:
+
+```typescript
+import { initialize } from "@adobe/aio-commerce-lib-config";
+
+const { configSchema } = await initialize({
+  schema: yourSchema,
+  params,
+});
+
+// `configSchema` is the resolved schema (all `dynamicList` fields replaced by static `list` fields).
+```
+
+This is equivalent to calling `resolveBusinessConfigSchema(schema, params)` and then `initialize({ schema: resolved })`, just in one step. When `params` is omitted and the schema contains any `dynamicList` field, `initialize` throws.
+
 #### Configuring the State Region
 
 By default, the library automatically selects the optimal `aio-lib-state` region based on the OpenWhisk region (`__OW_REGION`) where your action is running. You can override this with `libStateOptions.region`:
@@ -176,6 +193,9 @@ import {
   byScopeId,
   byCode,
   byCodeAndLevel,
+  byWebsiteId,
+  byStoreId,
+  byStoreViewId,
 } from "@adobe/aio-commerce-lib-config";
 
 // Get configuration by scope ID
@@ -187,6 +207,13 @@ const config2 = await getConfiguration(byCode("us-east"));
 // Get configuration by scope code and level
 const config3 = await getConfiguration(byCodeAndLevel("us-west", "store"));
 console.log(config3.config);
+
+// Get configuration by the Commerce API ID of a system scope.
+// Each helper hard-codes its level so the same numeric ID can address
+// a website, store, or store view unambiguously.
+const websiteCfg = await getConfiguration(byWebsiteId(1));
+const storeCfg = await getConfiguration(byStoreId(1));
+const storeViewCfg = await getConfiguration(byStoreViewId(1));
 
 // Get a specific configuration value by key
 const {
@@ -418,6 +445,73 @@ Multiple selection example:
 
 > [!NOTE]
 > For `selectionMode: "multiple"`, the `default` value must be an array of strings, even if only one option is selected by default.
+
+### Field Descriptions with Links
+
+All field types support an optional `description` property. Descriptions may include Markdown links using the `[label](url)` syntax. Only `http` and `https` URLs are allowed — any other scheme (e.g. `javascript:`) causes a validation error.
+
+```javascript
+{
+  name: "api_key",
+  label: "API Key",
+  type: "password",
+  description: "Your secret API key. See [how to generate an API key](https://docs.example.com/api-keys) for details."
+}
+```
+
+**Dynamic List Field (Runtime-Resolved Options):**
+
+Use a `dynamicList` field when the options cannot be known at development time, for example, when they need to be fetched from an external API. Both `options` and `default` are factory functions; call `resolveBusinessConfigSchema(schema, params)` to resolve them.
+
+The `options` factory receives a `params` object provided by the caller and must return an array of `{ label, value }`, synchronously or via a Promise.
+
+The `default` factory receives the resolved options and returns the default value. It is required for `selectionMode: "single"` and optional for `"multiple"` (falls back to `[]`).
+
+Single-select example:
+
+```javascript
+import { fetchPaymentMethods } from "../lib/commerce.js";
+
+{
+  name: "paymentMethod",
+  label: "Default Payment Method",
+  type: "dynamicList",
+  selectionMode: "single",
+  options: async (params) => {
+    const methods = await fetchPaymentMethods(params.SOME_API_KEY);
+    return methods.map((m) => ({ label: m.title, value: m.code }));
+  },
+  default: (resolvedOptions) => resolvedOptions[0].value,
+}
+```
+
+Multi-select example:
+
+```javascript
+{
+  name: "paymentMethods",
+  label: "Enabled Payment Methods",
+  type: "dynamicList",
+  selectionMode: "multiple",
+  options: async (params) => {
+    const methods = await fetchPaymentMethods(params.SOME_API_KEY);
+    return methods.map((m) => ({ label: m.title, value: m.code }));
+  },
+  // No default — falls back to []
+}
+```
+
+To resolve a schema that contains `dynamicList` fields, call:
+
+```javascript
+import { resolveBusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
+
+const resolved = await resolveBusinessConfigSchema(schema, params);
+```
+
+The returned schema contains only static field types.
+
+Alternatively, pass `params` directly to `initialize` and it will resolve the schema and store it in one step, see [Initializing with a Dynamic Schema](#initializing-with-a-dynamic-schema).
 
 ### Conditional Fields by Commerce Environment
 

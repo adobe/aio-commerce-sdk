@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import camelcase from "camelcase";
+import * as camelcaseModule from "camelcase";
 
 import { hasCustomInstallationSteps } from "#config/schema/installation";
 import { defineLeafStep } from "#management/installation/workflow/step";
@@ -28,6 +28,14 @@ import type {
   AnyStep,
   ExecutionContext,
 } from "#management/installation/workflow/step";
+
+type CamelcaseInterop = typeof camelcaseModule.default & {
+  default?: typeof camelcaseModule.default;
+};
+
+const camelcase =
+  (camelcaseModule.default as CamelcaseInterop).default ??
+  camelcaseModule.default;
 
 function isCustomInstallationStepDefinition(
   obj: unknown,

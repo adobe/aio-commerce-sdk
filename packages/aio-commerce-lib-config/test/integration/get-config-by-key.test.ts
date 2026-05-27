@@ -116,8 +116,8 @@ describe("getConfigurationByKey", () => {
   });
 
   test("throws error when schema not initialized", async () => {
-    // Clear the schema to simulate not calling initialize
-    setGlobalSchema(null as unknown as BusinessConfigSchema);
+    // @ts-expect-error Clear the schema to simulate not calling initialize
+    setGlobalSchema(null);
 
     await expect(
       getConfigurationByKey("currency", byCodeAndLevel("global", "global")),

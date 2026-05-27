@@ -10,8 +10,8 @@ import type { BusinessConfigSchema } from "#modules/schema/types";
 
 describe("schema/config-schema-repository", () => {
   beforeEach(() => {
-    // Reset global schema before each test
-    setGlobalSchema(null as unknown as BusinessConfigSchema);
+    // @ts-expect-error Reset global schema before each test
+    setGlobalSchema(null);
   });
 
   describe("setGlobalSchema", () => {

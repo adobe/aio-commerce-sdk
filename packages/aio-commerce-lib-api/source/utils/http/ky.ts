@@ -10,7 +10,20 @@
  * governing permissions and limitations under the License.
  */
 
+import * as kyModule from "ky";
+
 import type { KyInstance, Options } from "ky";
+
+type KyInterop = KyInstance & { default?: KyInstance };
+const ky = (kyModule.default as KyInterop).default ?? kyModule.default;
+
+/**
+ * Creates a Ky instance with the provided options.
+ * @param options - The options for the Ky instance.
+ */
+export function createKy(options: Options): KyInstance {
+  return ky.create(options);
+}
 
 /**
  * Extends the given Ky instance with the provided options if they are provided.
@@ -18,8 +31,8 @@ import type { KyInstance, Options } from "ky";
  * @param options - The options to extend the Ky instance with.
  */
 export function optionallyExtendKy<TKy extends KyInstance>(
-  ky: TKy,
+  kyInstance: TKy,
   options?: Options | ((parentOptions: Options) => Options),
 ): TKy {
-  return options ? (ky.extend(options) as TKy) : ky;
+  return options ? (kyInstance.extend(options) as TKy) : kyInstance;
 }
