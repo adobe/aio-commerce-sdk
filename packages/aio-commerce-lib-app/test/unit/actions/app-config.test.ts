@@ -12,7 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 
-import { appConfigRuntimeAction } from "#actions/app-config";
+import { appConfigRuntimeAction } from "#actions/app-config/index";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import {
   configWithDynamicListOptions,

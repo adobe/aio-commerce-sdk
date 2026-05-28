@@ -37,7 +37,7 @@ vi.mock("@adobe/aio-commerce-lib-config", () => ({
   unsyncCommerceScopes: unsyncCommerceScopesMock,
 }));
 
-import { scopeTreeRuntimeAction } from "#actions/scope-tree";
+import { scopeTreeRuntimeAction } from "#actions/scope-tree/index";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 
 const scopeTree = [{ id: "default", name: "Default Website" }];
