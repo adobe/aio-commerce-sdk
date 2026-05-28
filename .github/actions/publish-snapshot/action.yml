@@ -40,9 +40,12 @@ runs:
       env:
         REGISTRY_URL: ${{ inputs.registry-url }}
       run: |
-        pnpm --filter "./packages/*" pkg set \
-          "publishConfig.registry=$REGISTRY_URL" \
-          "publishConfig.access=restricted"
+        for dir in packages/*/; do
+          npm pkg set \
+            "publishConfig.registry=$REGISTRY_URL" \
+            "publishConfig.access=restricted" \
+            --prefix "$dir"
+        done
 
     - name: Build packages
       run: pnpm turbo build
