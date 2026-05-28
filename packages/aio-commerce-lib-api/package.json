@@ -33,6 +33,8 @@
   "module": "./dist/es/index.mjs",
   "types": "./dist/cjs/index.d.cts",
   "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public",
     "exports": {
       ".": {
         "import": {
