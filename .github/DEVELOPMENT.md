@@ -461,21 +461,18 @@ You can also request a snapshot from any open PR by commenting `/snapshot`. This
 
 #### Public stable flow (`release`)
 
-> [!IMPORTANT]
-> Both the promotion PR and the back-sync PR **must be merged via a merge commit** (not squash or rebase). This preserves commit SHAs across both branches so that git's merge-base tracking correctly identifies what is already on each branch. Squashing or rebasing creates new SHAs, causing git to treat already-merged commits as new changes and producing conflicts on subsequent syncs.
-
 When ready to publish to npm, use the **Promote to Release** workflow dispatch (`promote.yml`):
 
 1. Trigger it from GitHub Actions, optionally specifying a commit SHA on `main` to promote (defaults to latest).
-2. The workflow creates a branch from that commit and opens a PR into `release`. No config changes needed — changeset files come along unconsumed.
-3. After merging the promotion PR, Changesets creates/updates a `[CI] Release Packages` PR on `release`.
-4. Merging that release PR publishes stable versions to npm, writes changelogs, and automatically opens a back-sync PR from `release` → `main`.
+2. The workflow merges that commit directly into `release` via a merge commit. No config changes needed — changeset files come along unconsumed.
+3. Changesets creates/updates a `[CI] Release Packages` PR on `release`, including regenerated API reference docs.
+4. Merging that PR publishes stable versions to npm and writes changelogs.
 
 If there were snapshot versions like `1.2.5-beta-20260313T120000` on Artifactory, the resulting stable release is `1.2.5`.
 
 #### Back-sync
 
-After a public release, a back-sync PR from `release` → `main` is created automatically. Merging it brings version bumps, updated changelogs, and consumed changeset files back to `main`.
+After a public release, the back-sync is automatic — the workflow merges `release` directly into `main` via a merge commit. No manual step needed.
 
 #### Hotfixes
 

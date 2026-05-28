@@ -10,12 +10,11 @@ on:
 
 jobs:
   promote:
-    name: Create Promotion PR
+    name: Promote to Release
     if: github.repository == 'adobe/aio-commerce-sdk'
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -23,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create promotion PR
+      - name: Promote to release
         env:
           COMMIT_SHA: ${{ inputs.commit_sha }}
           GITHUB_TOKEN: ${{ github.token }}

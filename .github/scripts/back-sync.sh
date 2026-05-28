@@ -1,38 +1,19 @@
 #!/usr/bin/env bash
-# Creates a back-sync PR from release to main after a public release.
-# Skips if a back-sync PR already exists.
+# Merges the current release HEAD directly into main after a public release.
 
 set -euo pipefail
 
 SHA=$(git rev-parse HEAD)
-SHORT_SHA=$(echo "$SHA" | cut -c1-7)
-DATE=$(date +%Y%m%d)
-BRANCH="back-sync/release-to-main-${DATE}-${SHORT_SHA}"
 
-# Create a branch from current HEAD (release)
-git checkout -b "$BRANCH"
-git push origin "$BRANCH"
+# Extract the promoted SHA from the promotion merge commit so the back-sync message
+# references the same token as the corresponding promote commit.
+PROMOTE_COMMIT=$(git log origin/release --merges --grep="promote main to release" -1 --format="%H")
+SHORT_SHA=$(git rev-parse "${PROMOTE_COMMIT}^2" 2>/dev/null | cut -c1-7)
 
-EXISTING=$(gh pr list --base main --head "$BRANCH" --json number --jq '.[0].number' 2>/dev/null || echo "")
-if [ -n "$EXISTING" ]; then
-  echo "Back-sync PR #$EXISTING already exists for branch $BRANCH. Skipping."
-  exit 0
-fi
+git config user.email "github-actions[bot]@users.noreply.github.com"
+git config user.name "github-actions[bot]"
 
-gh pr create \
-  --base main \
-  --head "$BRANCH" \
-  --title "ci: sync versioning changes from release" \
-  --body "$(cat <<'EOF'
-## Summary
-
-Automated PR to sync version bumps and changelog updates from `release` back to `main`.
-
-This PR brings:
-- Updated package versions
-- Updated CHANGELOG.md files
-- Consumed changeset files
-
-> Created automatically after a public release.
-EOF
-)"
+git fetch origin main
+git checkout main
+git merge --no-ff "$SHA" -m "ci: sync versioning changes from release (${SHORT_SHA})"
+git push origin main

@@ -1,0 +1,2 @@
+# Collapse auto-generated API reference diffs in GitHub PRs (e.g. the Version Packages PR)
+packages/*/docs/api-reference/** linguist-generated=true
