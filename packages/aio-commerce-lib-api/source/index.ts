@@ -12,13 +12,14 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: This is the entrypoint of the package API */
 
+export { HTTPError } from "ky";
+
 export { ApiClient } from "./lib/api-client";
 export { resolveCommerceHttpClientParams } from "./lib/commerce/helpers";
 export { AdobeCommerceHttpClient } from "./lib/commerce/http-client";
 export { resolveIoEventsHttpClientParams } from "./lib/io-events/helpers";
 export { AdobeIoEventsHttpClient } from "./lib/io-events/http-client";
 
-export type { HTTPError } from "ky";
 export type { ApiClientRecord, ApiFunction } from "./lib/api-client";
 export type * from "./lib/commerce/types";
 export type * from "./lib/io-events/types";
