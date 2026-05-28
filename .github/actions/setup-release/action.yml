@@ -5,18 +5,10 @@ inputs:
   registry-url:
     description: npm registry URL to configure for @adobe scope packages
     required: true
-  ref:
-    description: Git ref to checkout (leave empty for default HEAD)
-    required: false
-    default: ""
 
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      with:
-        ref: ${{ inputs.ref }}
-
     # pnpm version will be read from packageManager field in package.json
     - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
 

@@ -105,10 +105,13 @@ jobs:
       packages: write
       id-token: write
     steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ needs.prepare.outputs.head_sha }}
+
       - uses: ./.github/actions/setup-release
         with:
           registry-url: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
-          ref: ${{ needs.prepare.outputs.head_sha }}
 
       - uses: ./.github/actions/publish-snapshot
         id: snapshot
