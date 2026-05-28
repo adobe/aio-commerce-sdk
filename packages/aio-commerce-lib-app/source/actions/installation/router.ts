@@ -70,7 +70,7 @@ type CustomScriptsLoader = (
 ) => Record<string, unknown>;
 
 /** Arguments for the runtime action factory. */
-type RuntimeActionFactoryArgs = {
+export type RuntimeActionFactoryArgs = {
   appConfig: CommerceAppConfig;
   customScriptsLoader?: CustomScriptsLoader;
 };

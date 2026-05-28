@@ -13,25 +13,17 @@
 import { router } from "./router";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { InstallationContext } from "#management/index";
+import type { RuntimeActionFactoryArgs } from "./router";
 
-type CustomScriptsLoader = (
-  config: CommerceAppConfigOutputModel,
-  logger: InstallationContext["logger"],
-) => Record<string, unknown>;
-
-/** Factory to create the route handler for the `installation` action. */
+/**
+ * Factory to create the route handler for the `installation` action.
+ * @param args - The arguments required to create the runtime action.
+ */
 export const installationRuntimeAction =
-  ({
-    appConfig,
-    customScriptsLoader,
-  }: {
-    appConfig: CommerceAppConfigOutputModel;
-    customScriptsLoader?: CustomScriptsLoader;
-  }) =>
-  async (params: RuntimeActionParams) => {
+  (args: RuntimeActionFactoryArgs) => async (params: RuntimeActionParams) => {
     const handler = router.handler();
+    const { appConfig, customScriptsLoader } = args;
+
     return await handler({
       ...params,
       appConfig,

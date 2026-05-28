@@ -17,7 +17,7 @@ import type { RuntimeActionFactoryArgs } from "./router";
 
 /**
  * Factory to create the route handler for the `app-config` action.
- * @param args - The arguments required to create the runtime action, including the app configuration.
+ * @param args - The arguments required to create the runtime action.
  */
 export const appConfigRuntimeAction =
   (args: RuntimeActionFactoryArgs) => async (params: RuntimeActionParams) => {

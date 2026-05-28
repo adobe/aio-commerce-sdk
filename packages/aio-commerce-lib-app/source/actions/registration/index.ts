@@ -17,7 +17,7 @@ import type { RuntimeActionFactoryArgs } from "./router";
 
 /**
  * Factory to create the route handler for the `registration` action.
- * @param args - The registration configuration to inline in the action.
+ * @param args - The arguments required to create the runtime action.
  * @experimental
  */
 export const registrationRuntimeAction =

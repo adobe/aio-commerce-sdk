@@ -15,7 +15,10 @@ import { router } from "./router";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { ConfigActionFactoryArgs } from "./router";
 
-/** Factory to create the route handler for the `config` action. */
+/**
+ * Factory to create the route handler for the `config` action.
+ * @param args - The arguments required to create the runtime action.
+ */
 export const configRuntimeAction =
   (args: ConfigActionFactoryArgs) => async (params: RuntimeActionParams) => {
     const handler = router.handler();
