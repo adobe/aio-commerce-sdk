@@ -448,6 +448,25 @@ This repository uses two release channels:
 - `release` is the public channel
   - Uses stable semver and publishes to NPM via the standard changesets flow.
 
+```mermaid
+flowchart TD
+    PR(["Feature PR"])
+    main(["main"])
+    release(["release"])
+    vpr["[CI] Release Packages PR"]
+    alpha["Artifactory · alpha snapshot"]
+    beta["Artifactory · beta snapshot"]
+    npm["npm · stable release"]
+
+    PR -->|"merge"| main
+    PR -. "/snapshot (on-demand)" .-> alpha
+    main -->|"publish-internal.yml (auto)"| beta
+    main -->|"promote.yml (manual)"| release
+    release -->|"publish-public.yml (auto)"| vpr
+    vpr -->|"merge"| npm
+    npm -->|"back-sync (auto)"| main
+```
+
 #### Internal snapshot flow (`main`)
 
 Once your feature PR is merged to `main`:
