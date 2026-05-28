@@ -1,0 +1,38 @@
+name: Notify Slack
+description: Generate a release announcement and post it to Slack
+
+inputs:
+  published-packages:
+    description: JSON array of published packages (from publish step outputs)
+    required: true
+  registry-package-base-url:
+    description: Base URL for linking to published packages
+    required: true
+  release-channel:
+    description: Release channel ("internal" or "public")
+    required: true
+  slack-webhook-url:
+    description: Slack incoming webhook URL
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Generate Slack Announcement
+      id: announcement
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        PUBLISHED_PACKAGES: ${{ inputs.published-packages }}
+        REGISTRY_PACKAGE_BASE_URL: ${{ inputs.registry-package-base-url }}
+        RELEASE_CHANNEL: ${{ inputs.release-channel }}
+      with:
+        script: |
+          const { default: execAnnouncement } = await import('${{ github.workspace }}/scripts/source/ci/release/announce.ts');
+          await execAnnouncement(core);
+
+    - name: Notify on Slack
+      uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
+      with:
+        webhook: ${{ inputs.slack-webhook-url }}
+        webhook-type: incoming-webhook
+        payload: ${{ steps.announcement.outputs.slackWebhookPayload }}

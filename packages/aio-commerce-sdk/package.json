@@ -122,5 +122,9 @@
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "typescript": "catalog:"
   },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
   "sideEffects": false
 }

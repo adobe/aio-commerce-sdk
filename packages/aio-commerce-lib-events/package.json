@@ -31,6 +31,8 @@
     "directory": "packages/aio-commerce-lib-events"
   },
   "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public",
     "exports": {
       "./commerce": {
         "import": {
