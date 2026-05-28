@@ -502,7 +502,4 @@ After a public release, the back-sync is automatic — the workflow merges `rele
 
 #### Hotfixes
 
-Urgent public fixes can be applied directly on `release` (patch changeset only), then:
-
-1. Publish through the `release` branch release PR flow.
-2. Merge the auto-created back-sync PR to keep `main` aligned.
+Urgent public fixes should be applied via a PR directly into `release` (patch changeset only) so the fix gets reviewed before going live. Once merged, changesets automatically opens a `[CI] Release Packages` PR — merge it to publish to npm. The back-sync to `main` runs automatically after publish.
