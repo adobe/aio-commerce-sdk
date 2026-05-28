@@ -18,5 +18,5 @@ git config user.email "github-actions[bot]@users.noreply.github.com"
 git config user.name "github-actions[bot]"
 
 git checkout release
-git merge --no-ff "$SHA" -m "chore: promote main to release (${SHORT_SHA})"
+git merge --no-ff "$SHA" -m "ci: promote main to release (${SHORT_SHA})"
 git push origin release
