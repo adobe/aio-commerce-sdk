@@ -26,7 +26,7 @@ jobs:
       - uses: ./.github/actions/setup-release
         with:
           registry-url: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
-          node-auth-token: ${{ secrets.ARTIFACTORY_API_TOKEN }}
+          token: ${{ secrets.ARTIFACTORY_API_TOKEN }}
 
       - uses: ./.github/actions/publish-snapshot
         id: snapshot

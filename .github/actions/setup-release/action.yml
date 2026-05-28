@@ -5,7 +5,7 @@ inputs:
   registry-url:
     description: npm registry URL to configure for @adobe scope packages
     required: true
-  node-auth-token:
+  token:
     description: Auth token for the npm registry
     required: true
 
@@ -23,7 +23,7 @@ runs:
         cache: "pnpm"
         registry-url: ${{ inputs.registry-url }}
         scope: "@adobe"
-        node-auth-token: ${{ inputs.node-auth-token }}
+        token: ${{ inputs.token }}
 
     - run: pnpm install --frozen-lockfile
       shell: bash
