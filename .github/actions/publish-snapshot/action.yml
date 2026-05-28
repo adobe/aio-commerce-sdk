@@ -13,9 +13,6 @@ inputs:
   registry-url:
     description: npm registry URL for publishing
     required: true
-  node-auth-token:
-    description: Auth token for the npm registry
-    required: true
 
 outputs:
   published:
@@ -50,7 +47,6 @@ runs:
         SNAPSHOT_TAG: ${{ inputs.snapshot-tag }}
         SKIP_GITHUB_RELEASES: ${{ inputs.skip-github-releases }}
         REGISTRY_URL: ${{ inputs.registry-url }}
-        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
       with:
         script: |
           const { default: execSnapshot } = await import('${{ github.workspace }}/scripts/source/ci/release/snapshot.ts');

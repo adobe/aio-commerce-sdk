@@ -120,7 +120,6 @@ jobs:
           snapshot-tag: alpha
           skip-github-releases: "true"
           registry-url: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
-          node-auth-token: ${{ secrets.ARTIFACTORY_API_TOKEN }}
 
   comment:
     name: Comment on PR

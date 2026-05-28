@@ -32,7 +32,6 @@ jobs:
         id: snapshot
         with:
           registry-url: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
-          node-auth-token: ${{ secrets.ARTIFACTORY_API_TOKEN }}
 
       - uses: ./.github/actions/notify-slack
         if: inputs.notify_slack && steps.snapshot.outputs.published == 'true'

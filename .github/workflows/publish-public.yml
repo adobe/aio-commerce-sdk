@@ -44,7 +44,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           NPM_TOKEN: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
 
       - name: Notify on Slack
         if: steps.changesets.outputs.published == 'true'
@@ -74,8 +73,6 @@ jobs:
         run: pnpm turbo build
 
       - name: Mirror packages to registry
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.ARTIFACTORY_API_TOKEN }}
         run: pnpm changeset publish --no-git-tag
 
   back-sync:
