@@ -51,6 +51,7 @@ type ConfigActionParams = RuntimeActionParams &
     AIO_COMMERCE_CONFIG_ENCRYPTION_KEY?: string;
   };
 
+/** The context for the config action. */
 interface ConfigActionContext extends BaseContext {
   rawParams: ConfigActionParams;
 }

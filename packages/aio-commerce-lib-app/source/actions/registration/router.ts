@@ -29,6 +29,8 @@ export type RuntimeActionFactoryArgs = {
 
 /** The arguments received by all the handlers in the registration action. */
 type RuntimeActionArgs = RuntimeActionParams & RuntimeActionFactoryArgs;
+
+/** The context for the registration action. */
 interface RegistrationActionContext extends BaseContext {
   rawParams: RuntimeActionArgs;
 }

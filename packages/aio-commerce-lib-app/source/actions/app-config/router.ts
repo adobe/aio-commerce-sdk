@@ -31,13 +31,16 @@ import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { CommerceAppConfig } from "#config/schema/app";
 
 /** The arguments required to create the runtime action for the app-config action. */
-export type RuntimeActionFactoryArgs = RuntimeActionParams & {
+export type RuntimeActionFactoryArgs = {
   appConfig: CommerceAppConfig;
 };
 
+/** The params received by all handlers. */
+type RuntimeActionArgs = RuntimeActionParams & RuntimeActionFactoryArgs;
+
 /** The context for the app-config action. */
 interface AppConfigActionContext extends BaseContext {
-  rawParams: RuntimeActionFactoryArgs;
+  rawParams: RuntimeActionArgs;
 }
 
 /**
