@@ -104,6 +104,9 @@ This produces the following files, organized by extension point:
 - `src/commerce-backend-ui-1/.generated/actions/registration/index.js`: serves the Admin UI SDK registration object to Adobe Commerce
 - `src/commerce-backend-ui-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
+> [!NOTE]
+> Generated actions default to the `nodejs:22` runtime. To target a different runtime (for example `nodejs:24`), set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration.
+
 4. In your `app.config.yaml`, reference the generated extension configurations. If you have multiple extension points, add each as a new entry:
 
 ```yaml

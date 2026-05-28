@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-sdk",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": false,
   "engines": {
     "node": ">=22 <=24"
@@ -121,6 +121,10 @@
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "typescript": "catalog:"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "sideEffects": false
 }
