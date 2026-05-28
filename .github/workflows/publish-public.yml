@@ -53,27 +53,6 @@ jobs:
           release-channel: public
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-  mirror:
-    name: Mirror to Artifactory
-    needs: release
-    if: needs.release.outputs.published == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - uses: ./.github/actions/setup-release
-        with:
-          registry-url: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
-          token: ${{ secrets.ARTIFACTORY_API_TOKEN }}
-
-      - name: Build packages
-        run: pnpm turbo build
-
-      - name: Mirror packages to registry
-        run: pnpm changeset publish --no-git-tag
-
   back-sync:
     name: Back-sync to main
     needs: release

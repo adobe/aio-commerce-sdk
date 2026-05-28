@@ -36,6 +36,8 @@
     "aio-commerce-lib-config": "./bin/cli.mjs"
   },
   "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public",
     "exports": {
       ".": {
         "import": {

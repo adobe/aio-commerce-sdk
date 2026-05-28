@@ -28,6 +28,8 @@
     "directory": "packages/aio-commerce-lib-core"
   },
   "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public",
     "exports": {
       "./*": {
         "import": {
