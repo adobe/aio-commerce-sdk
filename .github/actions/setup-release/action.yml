@@ -1,5 +1,5 @@
 name: Setup Release Environment
-description: Checkout, setup pnpm and Node.js with registry auth, and install dependencies
+description: Setup pnpm and Node.js with registry auth, and install dependencies
 
 inputs:
   registry-url:
