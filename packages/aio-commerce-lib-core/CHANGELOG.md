@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-core
 
+## 1.1.1
+
+### Patch Changes
+
+- [#470](https://github.com/adobe/aio-commerce-sdk/pull/470) [`ec2d426`](https://github.com/adobe/aio-commerce-sdk/commit/ec2d4262166bde68a434025667f38609313ad712) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix CJS interop for ESM-only dependencies (`camelcase`, `ky`) on Node.js 22+
+
 ## 1.1.0
 
 ### Minor Changes

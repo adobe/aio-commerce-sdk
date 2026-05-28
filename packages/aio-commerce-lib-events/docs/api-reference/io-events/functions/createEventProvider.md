@@ -18,7 +18,7 @@ function createEventProvider(
 ): Promise<IoEventProviderHalModel>;
 ```
 
-Defined in: [io-events/api/event-providers/endpoints.ts:122](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts#L122)
+Defined in: [io-events/api/event-providers/endpoints.ts:122](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts#L122)
 
 Creates an event provider.
 

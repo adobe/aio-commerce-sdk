@@ -2,41 +2,71 @@
 
 ```ts
 const EventingSchema: ObjectSchema<{
-  commerce: OptionalSchema<ArraySchema<ObjectSchema<{
+  commerce: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
      events: ArraySchema<ObjectSchema<{
-        description: SchemaWithPipe<readonly [..., ..., ...]>;
-        destination: OptionalSchema<SchemaWithPipe<...>, undefined>;
-        fields: SchemaWithPipe<readonly [..., ...]>;
-        force: OptionalSchema<BooleanSchema<...>, undefined>;
-        hipaa_audit_required: OptionalSchema<BooleanSchema<...>, undefined>;
-        label: SchemaWithPipe<readonly [..., ..., ...]>;
-        name: SchemaWithPipe<readonly [..., ..., ...]>;
-        priority: OptionalSchema<BooleanSchema<...>, undefined>;
-        rules: OptionalSchema<ArraySchema<..., ...>, undefined>;
-        runtimeActions: ArraySchema<SchemaWithPipe<...>, "Expected an array of runtime actions in the format <package>/<action>">;
+        description: ...;
+        destination: ...;
+        fields: ...;
+        force: ...;
+        hipaa_audit_required: ...;
+        label: ...;
+        name: ...;
+        priority: ...;
+        rules: ...;
+        runtimeActions: ...;
      }, undefined>, "Expected an array of Commerce events">;
      provider: ObjectSchema<{
-        description: SchemaWithPipe<readonly [SchemaWithPipe<...>, RegexAction<..., ...>, MaxLengthAction<..., ..., ...>]>;
-        key: OptionalSchema<SchemaWithPipe<readonly [..., ...]>, undefined>;
-        label: SchemaWithPipe<readonly [SchemaWithPipe<...>, RegexAction<..., ...>, MaxLengthAction<..., ..., ...>]>;
+        description: SchemaWithPipe<...>;
+        key: OptionalSchema<..., ...>;
+        label: SchemaWithPipe<...>;
      }, undefined>;
-  }, undefined>, "Expected an array of Commerce event sources">, undefined>;
-  external: OptionalSchema<ArraySchema<ObjectSchema<{
+   }, undefined>, "Expected an array of Commerce event sources">, CheckAction<{
+     events: {
+        description: string;
+        destination?: ... | ...;
+        fields: ...[];
+        force?: ... | ... | ...;
+        hipaa_audit_required?: ... | ... | ...;
+        label: string;
+        name: string;
+        priority?: ... | ... | ...;
+        rules?: ... | ...;
+        runtimeActions: ...[];
+     }[];
+     provider: {
+        description: string;
+        key?: string;
+        label: string;
+     };
+  }[], "Commerce provider labels must be unique">]>, undefined>;
+  external: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
      events: ArraySchema<ObjectSchema<{
-        description: SchemaWithPipe<readonly [..., ..., ...]>;
-        label: SchemaWithPipe<readonly [..., ..., ...]>;
-        name: SchemaWithPipe<readonly [..., ..., ...]>;
-        runtimeActions: ArraySchema<SchemaWithPipe<...>, "Expected an array of runtime actions in the format <package>/<action>">;
+        description: ...;
+        label: ...;
+        name: ...;
+        runtimeActions: ...;
      }, undefined>, "Expected an array of external events">;
      provider: ObjectSchema<{
-        description: SchemaWithPipe<readonly [SchemaWithPipe<...>, RegexAction<..., ...>, MaxLengthAction<..., ..., ...>]>;
-        key: OptionalSchema<SchemaWithPipe<readonly [..., ...]>, undefined>;
-        label: SchemaWithPipe<readonly [SchemaWithPipe<...>, RegexAction<..., ...>, MaxLengthAction<..., ..., ...>]>;
+        description: SchemaWithPipe<...>;
+        key: OptionalSchema<..., ...>;
+        label: SchemaWithPipe<...>;
      }, undefined>;
-  }, undefined>, "Expected an array of external event sources">, undefined>;
+   }, undefined>, "Expected an array of external event sources">, CheckAction<{
+     events: {
+        description: string;
+        label: string;
+        name: string;
+        runtimeActions: ...[];
+     }[];
+     provider: {
+        description: string;
+        key?: string;
+        label: string;
+     };
+  }[], "External provider labels must be unique">]>, undefined>;
 }, undefined>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/eventing.ts:263](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/config/schema/eventing.ts#L263)
+Defined in: [aio-commerce-lib-app/source/config/schema/eventing.ts:263](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-app/source/config/schema/eventing.ts#L263)
 
 Schema for eventing configuration with separate commerce and external arrays

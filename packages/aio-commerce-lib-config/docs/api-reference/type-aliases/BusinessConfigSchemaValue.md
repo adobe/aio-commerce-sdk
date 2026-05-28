@@ -4,6 +4,6 @@
 type BusinessConfigSchemaValue = BusinessConfigSchemaField["default"];
 ```
 
-Defined in: [modules/schema/types.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-config/source/modules/schema/types.ts#L44)
+Defined in: [modules/schema/types.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-config/source/modules/schema/types.ts#L52)
 
-The schema type for the business configuration schema.
+Supported default value types across all business configuration schema fields.

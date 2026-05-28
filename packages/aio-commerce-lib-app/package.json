@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-lib-app",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "private": false,
   "engines": {
     "node": ">=22 <=24"

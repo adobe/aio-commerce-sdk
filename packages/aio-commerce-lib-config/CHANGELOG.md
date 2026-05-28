@@ -1,5 +1,21 @@
 # @adobe/aio-commerce-lib-config
 
+## 1.5.0
+
+### Minor Changes
+
+- [#455](https://github.com/adobe/aio-commerce-sdk/pull/455) [`705b3b8`](https://github.com/adobe/aio-commerce-sdk/commit/705b3b89b2bb0f1cee421434be4bc92b71ddc0a9) Thanks [@asalloum5](https://github.com/asalloum5)! - Add `byWebsiteId(id)`, `byStoreId(id)`, and `byStoreViewId(id)` selectors for `getConfiguration`, `getConfigurationByKey`, and `setConfiguration`. Each helper looks up a configuration scope by the numeric ID returned by the Commerce REST API (`/V1/store/websites`, `/V1/store/storeGroups`, `/V1/store/storeViews`).
+
+- [#438](https://github.com/adobe/aio-commerce-sdk/pull/438) [`fbc70ea`](https://github.com/adobe/aio-commerce-sdk/commit/fbc70ea680e5f0f7da10fc1771e5327806aad4bc) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add `dynamicList` field type for business configuration schemas. List options (and an optional `default`) can be supplied as factory functions that receive the runtime action params. New `resolveBusinessConfigSchema` and `hasDynamicSchema` helpers, and a new `ResolvedBusinessConfigSchema` type for the post-resolution shape.
+
+### Patch Changes
+
+- [#453](https://github.com/adobe/aio-commerce-sdk/pull/453) [`fb28949`](https://github.com/adobe/aio-commerce-sdk/commit/fb2894915c6fa411ed24f3501a7fc600e4eb88ee) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Config field descriptions now support Markdown links (`[label](url)`). Links must use http(s) URLs; non-http(s) URLs cause a validation error.
+
+- Updated dependencies [[`ec2d426`](https://github.com/adobe/aio-commerce-sdk/commit/ec2d4262166bde68a434025667f38609313ad712)]:
+  - @adobe/aio-commerce-lib-api@1.2.1
+  - @adobe/aio-commerce-lib-core@1.1.1
+
 ## 1.4.0
 
 ### Minor Changes
