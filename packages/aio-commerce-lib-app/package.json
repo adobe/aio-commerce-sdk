@@ -98,9 +98,10 @@
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched && pnpm run lint:openapi",
-    "code:fix": "pnpm run lint:fix && pnpm run assist:apply && pnpm run format && pnpm run format:markdown",
+    "code:fix": "pnpm run lint:fix && pnpm run assist:apply && pnpm run format:openapi && pnpm run format && pnpm run format:markdown",
     "format": "biome format --write --no-errors-on-unmatched",
     "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
+    "format:openapi": "openapi-format docs/openapi.json -o docs/openapi.json -c openapi-format.json",
     "format:check": "biome format --no-errors-on-unmatched",
     "lint": "biome lint --no-errors-on-unmatched && pnpm run lint:openapi",
     "lint:openapi": "redocly lint --config ../../redocly.yaml",
@@ -141,6 +142,7 @@
     "@aio-commerce-sdk/scripts": "workspace:*",
     "@types/npmcli__package-json": "^4.0.4",
     "msw": "catalog:",
+    "openapi-format": "1.32.1",
     "typescript": "catalog:"
   },
   "sideEffects": false
