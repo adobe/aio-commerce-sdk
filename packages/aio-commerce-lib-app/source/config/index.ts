@@ -28,6 +28,7 @@ export {
   validateCommerceAppConfigDomain,
 } from "./lib/validate";
 export { hasAdminUiSdk } from "./schema/admin-ui-sdk";
+export { requiresInstallation } from "./schema/app";
 export {
   hasBusinessConfig,
   hasBusinessConfigSchema,

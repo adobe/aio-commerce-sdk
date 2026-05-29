@@ -21,6 +21,7 @@ import type {
   ParameterObject,
   RequestBodyObject,
   ResponseObject,
+  SecurityRequirementObject,
 } from "openapi3-ts/oas31";
 import type { CompiledRoute, RouteResponseMetadata } from "../types";
 import type {
@@ -131,6 +132,15 @@ function buildRequestBody(
   };
 }
 
+/** Returns whether a security requirement requires credentials. */
+function hasSecurityRequirement(
+  security: SecurityRequirementObject[] | undefined,
+): boolean {
+  return Boolean(
+    security?.some((requirement) => Object.keys(requirement).length > 0),
+  );
+}
+
 /** Returns a default description for an HTTP status code. */
 function defaultDescription(code: number): string {
   const exactDescription =
@@ -190,6 +200,7 @@ function buildOperationResponses(
   route: CompiledRoute,
   metadataResponses: Partial<Record<number, RouteResponseMetadata>> | undefined,
   context: SchemaConversionContext,
+  options: OpenAPIGenerationOptions,
 ): Record<string, ResponseObject> {
   const responses: Record<string, ResponseObject> = {};
   const setResponse = (
@@ -209,6 +220,16 @@ function buildOperationResponses(
     throw new Error("At least one response must be defined in route metadata");
   }
 
+  if (hasSecurityRequirement(route.metadata?.security ?? options.security)) {
+    for (const [code, metadata] of Object.entries(
+      options.securityResponses ?? {},
+    )) {
+      if (metadata && !responses[code]) {
+        setResponse(Number(code), metadata);
+      }
+    }
+  }
+
   for (const code of routerManagedResponseCodes(route)) {
     const statusCode = String(code);
     if (!responses[statusCode]) {
@@ -223,10 +244,12 @@ function buildOperationResponses(
 function routeToOperation(
   route: CompiledRoute,
   context: SchemaConversionContext,
+  options: OpenAPIGenerationOptions,
 ): OperationObject {
   const parameters = [
     ...buildPathParameters(route, context),
     ...buildQueryParameters(route, context),
+    ...(options.operationParameters ?? []),
   ];
 
   const requestBody = buildRequestBody(route, context);
@@ -236,6 +259,7 @@ function routeToOperation(
     route,
     metadata?.responses,
     context,
+    options,
   );
   const operation: OperationObject = {
     responses,
@@ -295,7 +319,7 @@ export function generateOpenAPISpec(
       }
 
       const pathItem = paths[openAPIPath];
-      pathItem[method] = routeToOperation(route, context);
+      pathItem[method] = routeToOperation(route, context, options);
     }
   }
 

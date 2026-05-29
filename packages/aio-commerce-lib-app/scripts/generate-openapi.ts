@@ -48,10 +48,34 @@ export async function generate() {
         },
       },
       {
+        operationParameters: [
+          {
+            description:
+              "Adobe IMS organization ID that identifies the organization for the request.",
+
+            in: "header",
+            name: "x-gw-ims-org-id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
         security: [{ imsOAuth: [] }],
+        securityResponses: {
+          401: {
+            description:
+              "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired.",
+          },
+          403: {
+            description:
+              "The access token is valid, but it is not allowed to access the requested organization or operation.",
+          },
+        },
         securitySchemes: {
           imsOAuth: {
             type: "oauth2",
+            description:
+              "Adobe IMS OAuth 2.0 access token. Send it as Authorization: Bearer <IMS access token>.",
+
             flows: {
               clientCredentials: {
                 scopes: {},

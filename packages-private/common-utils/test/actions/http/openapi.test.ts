@@ -94,6 +94,58 @@ describe("actions/http/openapi", () => {
     ]);
   });
 
+  it("should add global operation parameters and secured operation responses", () => {
+    const router = new HttpActionRouter();
+    router.get("/users", {
+      metadata: {
+        responses: { 200: { description: "Users listed." } },
+      },
+      handler: () => ok(),
+    });
+    router.get("/status", {
+      metadata: {
+        responses: { 200: { description: "Status returned." } },
+        security: [],
+      },
+      handler: () => ok(),
+    });
+
+    const spec = generateOpenAPISpec(
+      { router },
+      { title: "Test API", version: "1.0.0" },
+      {
+        operationParameters: [
+          {
+            description: "Adobe IMS organization ID.",
+            in: "header",
+            name: "x-gw-ims-org-id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        security: [{ imsOAuth: [] }],
+        securityResponses: {
+          401: { description: "Authorization failed." },
+          403: { description: "Access is forbidden." },
+        },
+      },
+    );
+
+    expect(spec.paths["/users"]?.get?.parameters).toContainEqual({
+      description: "Adobe IMS organization ID.",
+      in: "header",
+      name: "x-gw-ims-org-id",
+      required: true,
+      schema: { type: "string" },
+    });
+    expect(spec.paths["/users"]?.get?.responses).toMatchObject({
+      "401": { description: "Authorization failed." },
+      "403": { description: "Access is forbidden." },
+    });
+    expect(spec.paths["/status"]?.get?.responses).not.toHaveProperty("401");
+    expect(spec.paths["/status"]?.get?.responses).not.toHaveProperty("403");
+  });
+
   it("should add only operation-level router managed responses", () => {
     const router = new HttpActionRouter();
     router.get("/health", {

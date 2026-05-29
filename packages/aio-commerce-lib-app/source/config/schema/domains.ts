@@ -31,7 +31,10 @@ import {
 import { hasMetadata, MetadataSchema } from "./metadata";
 import { hasWebhooks, WebhooksSchema } from "./webhooks";
 
-import type { CommerceAppConfigOutputModel } from "./app";
+import type { CommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
+
+/** Any commerce app config — input contract or validated output. */
+type AnyCommerceAppConfig = CommerceAppConfig | CommerceAppConfigOutputModel;
 
 /** The individual validatable domains of the app config. */
 export const CommerceAppConfigSchemas = {
@@ -58,7 +61,7 @@ export type CommerceAppConfigDomain = keyof typeof CommerceAppConfigSchemas;
  * @param config - The configuration to check.
  */
 export function getConfigDomains(
-  config: CommerceAppConfigOutputModel,
+  config: AnyCommerceAppConfig,
 ): Set<CommerceAppConfigDomain> {
   const withCommerceEvents = hasCommerceEvents(config);
   const withExternalEvents = hasExternalEvents(config);
@@ -90,7 +93,7 @@ export function getConfigDomains(
  * @param domain - The domain to check.
  */
 export function hasConfigDomain(
-  config: CommerceAppConfigOutputModel,
+  config: AnyCommerceAppConfig,
   domain: CommerceAppConfigDomain,
 ): boolean {
   return getConfigDomains(config).has(domain);

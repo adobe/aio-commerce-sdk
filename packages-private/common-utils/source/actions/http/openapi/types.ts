@@ -14,13 +14,14 @@ import type { JsonSchema } from "@valibot/to-json-schema";
 import type {
   InfoObject,
   OpenAPIObject,
+  ParameterObject,
   ReferenceObject,
   SchemaObject,
   SecurityRequirementObject,
   ServerObject,
 } from "openapi3-ts/oas31";
 import type { HttpActionRouter } from "../router";
-import type { BaseContext } from "../types";
+import type { BaseContext, RouteResponseMetadata } from "../types";
 
 export type JsonSchemaDefinition = JsonSchema | boolean;
 export type OpenAPISchema = SchemaObject | ReferenceObject;
@@ -39,11 +40,17 @@ export interface OpenAPISpec extends OpenAPIObject {
 
 /** Options for OpenAPI generation. */
 export interface OpenAPIGenerationOptions {
+  /** Parameters added to every generated operation. */
+  operationParameters?: ParameterObject[];
+
   /** Whether unsupported schema conversions should be omitted or throw. */
   schemaErrorMode?: "omit" | "throw";
 
   /** Security requirements applied at the OpenAPI document root. */
   security?: SecurityRequirementObject[];
+
+  /** Responses added to every secured operation. */
+  securityResponses?: Partial<Record<number, RouteResponseMetadata>>;
 
   /** Security schemes added to `components.securitySchemes`. */
   securitySchemes?: NonNullable<
