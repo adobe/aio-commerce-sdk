@@ -21,10 +21,9 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
-import { hasAdminUiSdk } from "#config/schema/admin-ui-sdk";
-import { requiresInstallation } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
-import openAPISpec from "#openapi.json" with { type: "json" };
+
+import { buildOpenApiSpec } from "./openapi";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
@@ -91,42 +90,6 @@ router.get("/", {
 
 /** GET /openapi.json - Returns the OpenAPI spec for all SDK actions */
 router.get("/openapi.json", {
-  handler: (_req, { logger, rawParams }) => {
-    const spec = structuredClone(openAPISpec);
-    const deleteSpecPath = (path: keyof typeof openAPISpec.paths) => {
-      if (spec.paths[path]) {
-        logger.debug(`Stripping OpenAPI spec path: ${path}`);
-        delete spec.paths[path];
-      }
-    };
-
-    if (!hasBusinessConfigSchema(rawParams.appConfig)) {
-      logger.debug(
-        "Application doesn't define business configuration, stripping references...",
-      );
-
-      deleteSpecPath("/config");
-      deleteSpecPath("/scope-tree");
-      deleteSpecPath("/scope-tree/commerce");
-    }
-
-    if (!hasAdminUiSdk(rawParams.appConfig)) {
-      logger.debug(
-        "Application doesn't define Admin UI SDK registration, stripping references...",
-      );
-
-      deleteSpecPath("/registration");
-    }
-
-    if (!requiresInstallation(rawParams.appConfig)) {
-      logger.debug(
-        "Application doesn't require installation, stripping references...",
-      );
-
-      deleteSpecPath("/installation");
-    }
-
-    spec.servers[0].url = `https://${process.env.__OW_NAMESPACE}.adobeioruntime.net/api/v1/web/app-management`;
-    return ok({ body: spec });
-  },
+  handler: (_req, { logger, rawParams }) =>
+    ok({ body: buildOpenApiSpec(rawParams.appConfig, logger) }),
 });
