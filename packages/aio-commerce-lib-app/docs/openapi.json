@@ -2370,7 +2370,7 @@
             }
           },
           "400": {
-            "description": "The request body is invalid: the scopes array is missing or not an array, or a scope is missing a required field (code, label, is_editable, is_final) or has an invalid type.",
+            "description": "The request body is invalid: the scopes array is missing or not an array, a scope is missing a required field or has an invalid type, a scope uses a reserved code (commerce or global), or two scopes share the same code and level.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3773,16 +3773,21 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "pattern": ".*\\S.*"
           },
           "code": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^(?!\\s*(?:commerce|global)\\s*$).*\\S.*$"
           },
           "label": {
-            "type": "string"
+            "type": "string",
+            "pattern": ".*\\S.*"
           },
           "level": {
-            "type": "string"
+            "type": "string",
+            "pattern": ".*\\S.*",
+            "default": "base"
           },
           "is_editable": {
             "type": "boolean"

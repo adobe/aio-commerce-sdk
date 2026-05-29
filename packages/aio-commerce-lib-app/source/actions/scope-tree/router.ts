@@ -18,6 +18,7 @@ import {
   unsyncCommerceScopes,
 } from "@adobe/aio-commerce-lib-config";
 import {
+  badRequest,
   internalServerError,
   nonAuthoritativeInformation,
   ok,
@@ -86,9 +87,20 @@ router.put("/", {
       scopes: req.body.scopes,
     } satisfies SetCustomScopeTreeRequest;
 
+    let result: Awaited<ReturnType<typeof setCustomScopeTree>>;
     logger.debug(`Setting custom scope tree: ${inspect(request)}`);
 
-    const result = await setCustomScopeTree(request);
+    try {
+      result = await setCustomScopeTree(request);
+    } catch (err) {
+      if (err instanceof Error && "isValidationError" in err) {
+        logger.debug(`Custom scope tree validation failed: ${err.message}`);
+        return badRequest({ body: { message: err.message } });
+      }
+
+      throw err;
+    }
+
     logger.debug(`Successfully set custom scope tree: ${inspect(result)}`);
 
     return ok({
