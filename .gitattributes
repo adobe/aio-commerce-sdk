@@ -1,3 +1,4 @@
 # Collapse auto-generated API reference diffs in GitHub PRs (e.g. the Version Packages PR)
 packages/*/docs/api-reference/** linguist-generated=true
 packages-private/*/docs/api-reference/** linguist-generated=true
+packages/aio-commerce-lib-app/generated/** linguist-generated=true
