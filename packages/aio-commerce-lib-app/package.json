@@ -88,6 +88,7 @@
     "README.md"
   ],
   "scripts": {
+    "version": "pnpx tsx scripts/sync-openapi-version.ts",
     "build": "tsdown",
     "prepack": "sdk-prepack",
     "pack": "pnpm pack",
