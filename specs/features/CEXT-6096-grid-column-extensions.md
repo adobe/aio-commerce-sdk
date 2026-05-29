@@ -61,7 +61,7 @@ The config shape is the same across all three grids:
 ```ts
 // app-config.ts
 export default defineConfig({
-  adminUiSdk: {
+  adminUi: {
     registration: {
       order: {
         gridColumns: {
