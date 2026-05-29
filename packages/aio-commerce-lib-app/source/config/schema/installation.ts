@@ -13,8 +13,7 @@
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import type { SetRequiredDeep } from "type-fest";
-import type { CommerceAppConfigOutputModel } from "./app";
+import type { CommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
 const MAX_DESCRIPTION_LENGTH = 255;
 const MAX_NAME_LENGTH = 255;
@@ -115,23 +114,34 @@ export type CustomInstallationStep = v.InferInput<
   typeof CustomInstallationStepSchema
 >;
 
-export type InstallationConfig = CommerceAppConfigOutputModel & {
-  installation: NonNullable<CommerceAppConfigOutputModel["installation"]>;
+/** Any commerce app config — input contract or validated output. */
+type AnyCommerceAppConfig = CommerceAppConfig | CommerceAppConfigOutputModel;
+
+/** Config type when installation settings are present. */
+export type InstallationConfig<
+  T extends AnyCommerceAppConfig = CommerceAppConfigOutputModel,
+> = T & {
+  installation: NonNullable<T["installation"]>;
 };
 
 /** Config type when custom installation steps are present. */
-export type ConfigWithInstallationSteps = SetRequiredDeep<
-  InstallationConfig,
-  "installation.customInstallationSteps"
->;
+export type ConfigWithInstallationSteps<
+  T extends AnyCommerceAppConfig = CommerceAppConfigOutputModel,
+> = InstallationConfig<T> & {
+  installation: InstallationConfig<T>["installation"] & {
+    customInstallationSteps: NonNullable<
+      InstallationConfig<T>["installation"]["customInstallationSteps"]
+    >;
+  };
+};
 
 /**
  * Check if config has custom installation settings.
  * @param config - The configuration to check.
  */
-export function hasCustomInstallation(
-  config: CommerceAppConfigOutputModel,
-): config is InstallationConfig {
+export function hasCustomInstallation<T extends AnyCommerceAppConfig>(
+  config: T,
+): config is T & InstallationConfig<T> {
   return config.installation !== undefined;
 }
 
@@ -139,9 +149,9 @@ export function hasCustomInstallation(
  * Check if config has custom installation steps.
  * @param config - The configuration to check.
  */
-export function hasCustomInstallationSteps(
-  config: CommerceAppConfigOutputModel,
-): config is ConfigWithInstallationSteps {
+export function hasCustomInstallationSteps<T extends AnyCommerceAppConfig>(
+  config: T,
+): config is T & ConfigWithInstallationSteps<T> {
   return (
     Array.isArray(config?.installation?.customInstallationSteps) &&
     config.installation.customInstallationSteps.length > 0

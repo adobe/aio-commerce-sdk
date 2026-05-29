@@ -17,8 +17,7 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import type { AdminUiSdkConfig } from "#management/installation/admin-ui-sdk/utils";
-import type { CommerceAppConfigOutputModel } from "./app";
+import type { CommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
 const SANDBOX_VALUES = [
   "allow-downloads",
@@ -248,7 +247,7 @@ const MenuItemSchema = v.object({
  * Schema for the Admin UI SDK registration parameters (for the `adminUiSdk.registration` config section).
  * @see https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/ for more details.
  */
-const AdminUiSdkRegistrationSchema = v.object({
+export const AdminUiSdkRegistrationSchema = v.object({
   menuItems: v.optional(v.array(MenuItemSchema)),
   order: v.optional(OrderExtensionPointsSchema),
   product: v.optional(ProductExtensionPointsSchema),
@@ -326,13 +325,23 @@ export type BannerNotification = v.InferInput<typeof BannerNotificationSchema>;
  */
 export type MenuItem = v.InferInput<typeof MenuItemSchema>;
 
+/** Any commerce app config — input contract or validated output. */
+type AnyCommerceAppConfig = CommerceAppConfig | CommerceAppConfigOutputModel;
+
+/** Config type when Admin UI SDK registration is configured. */
+export type AppConfigWithAdminUiSdk<
+  T extends AnyCommerceAppConfig = CommerceAppConfigOutputModel,
+> = T & {
+  adminUiSdk: NonNullable<T["adminUiSdk"]>;
+};
+
 /**
  * Check if config has Admin UI SDK registration configuration.
  * @experimental
  */
-export function hasAdminUiSdk(
-  config: CommerceAppConfigOutputModel,
-): config is AdminUiSdkConfig {
+export function hasAdminUiSdk<T extends AnyCommerceAppConfig>(
+  config: T,
+): config is T & AppConfigWithAdminUiSdk<T> {
   return (
     config.adminUiSdk !== undefined &&
     config.adminUiSdk.registration !== undefined
