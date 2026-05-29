@@ -1,12 +1,37 @@
-# `AppConfigWithBusinessConfigSchema`
+# `AppConfigWithBusinessConfigSchema\<T\>`
 
 ```ts
-type AppConfigWithBusinessConfigSchema = SetRequiredDeep<
-  AppConfigWithBusinessConfig,
-  "businessConfig.schema"
->;
+type AppConfigWithBusinessConfigSchema<T> = T & {
+  businessConfig: NonNullable<T["businessConfig"]> & {
+    schema: NonNullable<NonNullable<T["businessConfig"]>["schema"]>;
+  };
+};
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/business-configuration.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L25)
+Defined in: [aio-commerce-lib-app/source/config/schema/business-configuration.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L27)
 
 Config type when business config schema is present.
+
+## Type Declaration
+
+### businessConfig
+
+```ts
+businessConfig: NonNullable<T["businessConfig"]> & {
+  schema: NonNullable<NonNullable<T["businessConfig"]>["schema"]>;
+};
+```
+
+#### Type Declaration
+
+##### schema
+
+```ts
+schema: NonNullable<NonNullable<T["businessConfig"]>["schema"]>;
+```
+
+## Type Parameters
+
+| Type Parameter                       |
+| ------------------------------------ |
+| `T` _extends_ `AnyCommerceAppConfig` |

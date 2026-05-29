@@ -7,7 +7,7 @@ function getConfiguration(
 ): Promise<GetConfigurationResponse>;
 ```
 
-Defined in: [config-manager.ts:305](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-config/source/config-manager.ts#L305)
+Defined in: [config-manager.ts:394](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-config/source/config-manager.ts#L394)
 
 Gets configuration for a scope.
 
@@ -36,6 +36,9 @@ import {
   byScopeId,
   byCodeAndLevel,
   byCode,
+  byWebsiteId,
+  byStoreId,
+  byStoreViewId,
 } from "@adobe/aio-commerce-lib-config";
 
 // Get configuration by scope ID
@@ -51,4 +54,9 @@ config2.config.forEach((item) => {
 
 // Get configuration by code (uses default level)
 const config3 = await getConfiguration(byCode("website"));
+
+// Get configuration by Commerce API ID of a website, store, or store view
+const websiteCfg = await getConfiguration(byWebsiteId(1));
+const storeCfg = await getConfiguration(byStoreId(1));
+const storeViewCfg = await getConfiguration(byStoreViewId(1));
 ```

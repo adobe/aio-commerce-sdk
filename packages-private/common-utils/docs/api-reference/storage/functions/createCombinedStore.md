@@ -6,7 +6,7 @@ function createCombinedStore<T>(
 ): Promise<KeyValueStore<T>>;
 ```
 
-Defined in: [storage/combined-store.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages-private/common-utils/source/storage/combined-store.ts#L57)
+Defined in: [storage/combined-store.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages-private/common-utils/source/storage/combined-store.ts#L57)
 
 Creates a combined key-value store that uses:
 
