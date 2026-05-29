@@ -503,3 +503,16 @@ After a public release, the back-sync is automatic — the workflow merges `rele
 #### Hotfixes
 
 Urgent public fixes should be applied via a PR directly into `release` (patch changeset only) so the fix gets reviewed before going live. Once merged, changesets automatically opens a `[CI] Release Packages` PR — merge it to publish to npm. The back-sync to `main` runs automatically after publish.
+
+#### Repository secrets and deploy key
+
+The promotion and back-sync workflows push directly to `main` and `release`, both of which are protected branches. To allow this without a full admin bypass, the repository uses an SSH **deploy key** with write access, stored as the `DEPLOY_KEY` Actions secret.
+
+The corresponding public key is registered as a repository deploy key. Its `actor_id` is added to the branch ruleset as a `DeployKey` bypass actor (with `bypass_mode: always`), so CI pushes can land on protected branches without going through a pull request.
+
+If the deploy key ever needs to be rotated:
+
+1. Generate a new ed25519 key pair: `ssh-keygen -t ed25519 -C "ci deploy key" -f /tmp/deploy-key -N ""`
+2. Add the public key under **Settings → Deploy keys** (enable write access) and note the new key ID.
+3. Update the `DEPLOY_KEY` Actions secret with the new private key.
+4. Update the ruleset bypass actor with the new key ID via `gh api`.
