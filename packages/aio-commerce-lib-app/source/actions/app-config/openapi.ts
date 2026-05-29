@@ -24,8 +24,7 @@ declare const __PKG_VERSION__: string;
  * Loads the committed OpenAPI spec via dynamic import so it
  * lands in its own chunk and is not parsed on every cold start.
  */
-const importOpenApi = () =>
-  import("../../../docs/openapi.json", { with: { type: "json" } });
+const importOpenApi = () => import("../../../docs/openapi.json");
 
 type OpenApiSpec = Awaited<ReturnType<typeof importOpenApi>>["default"];
 type SpecPath = keyof OpenApiSpec["paths"];
