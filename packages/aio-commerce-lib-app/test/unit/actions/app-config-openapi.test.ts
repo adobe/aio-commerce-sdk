@@ -36,8 +36,8 @@ const fullyCapableConfig = {
 const logger = createMockLogger();
 
 describe("buildOpenApiSpec", () => {
-  test("keeps every path and schema when all capabilities are present", () => {
-    const spec = buildOpenApiSpec(fullyCapableConfig, logger);
+  test("keeps every path and schema when all capabilities are present", async () => {
+    const spec = await buildOpenApiSpec(fullyCapableConfig, logger);
 
     expect(Object.keys(spec.paths).sort()).toEqual(
       Object.keys(openApiSpec.paths).sort(),
@@ -47,9 +47,9 @@ describe("buildOpenApiSpec", () => {
     );
   });
 
-  test("strips the paths for capabilities the app does not use", () => {
+  test("strips the paths for capabilities the app does not use", async () => {
     const paths = Object.keys(
-      buildOpenApiSpec(minimalValidConfig, logger).paths,
+      (await buildOpenApiSpec(minimalValidConfig, logger)).paths,
     );
 
     expect(paths).toContain("/app-config");
@@ -60,9 +60,9 @@ describe("buildOpenApiSpec", () => {
     expect(paths).not.toContain("/installation");
   });
 
-  test("prunes schemas left unreferenced by the stripped paths", () => {
+  test("prunes schemas left unreferenced by the stripped paths", async () => {
     const schemas = Object.keys(
-      buildOpenApiSpec(minimalValidConfig, logger).components.schemas,
+      (await buildOpenApiSpec(minimalValidConfig, logger)).components.schemas,
     );
 
     // With only `/app-config` surviving, the config, scope-tree and installation
@@ -98,8 +98,8 @@ describe("buildOpenApiSpec", () => {
     }
   });
 
-  test("does not mutate the shared spec import", () => {
-    buildOpenApiSpec(minimalValidConfig, logger);
+  test("does not mutate the shared spec import", async () => {
+    await buildOpenApiSpec(minimalValidConfig, logger);
 
     expect(Object.keys(openApiSpec.paths)).toContain("/config");
     expect(Object.keys(openApiSpec.components.schemas)).toContain(

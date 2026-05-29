@@ -90,6 +90,6 @@ router.get("/", {
 
 /** GET /openapi.json - Returns the OpenAPI spec for all SDK actions */
 router.get("/openapi.json", {
-  handler: (_req, { logger, rawParams }) =>
-    ok({ body: buildOpenApiSpec(rawParams.appConfig, logger) }),
+  handler: async (_req, { logger, rawParams }) =>
+    ok({ body: await buildOpenApiSpec(rawParams.appConfig, logger) }),
 });

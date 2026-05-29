@@ -13,12 +13,21 @@
 import { hasAdminUiSdk } from "#config/schema/admin-ui-sdk";
 import { requiresInstallation } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
-import openAPISpec from "#openapi.json" with { type: "json" };
 
 import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { CommerceAppConfig } from "#config/schema/app";
 
-type OpenApiSpec = typeof openAPISpec;
+/**
+ * Loads the committed OpenAPI spec.
+ *
+ * Relative path with no import attribute on purpose: that combination is what
+ * makes the bundler code-split the spec into its own lazily-loaded chunk. The
+ * `#openapi.json` alias leaves it as an unresolved runtime specifier, and a
+ * `with { type: "json" }` attribute makes it inline back into the action.
+ */
+const importOpenApi = () => import("../../../docs/openapi.json");
+
+type OpenApiSpec = Awaited<ReturnType<typeof importOpenApi>>["default"];
 type SpecPath = keyof OpenApiSpec["paths"];
 
 /** Matches component schema `$ref` strings, capturing the schema name. */
@@ -78,13 +87,18 @@ function pruneUnusedSchemas(spec: OpenApiSpec) {
  * Works on a fresh copy so the shared module import is never mutated. The
  * committed `docs/openapi.json` always describes the full surface.
  *
+ * The spec is loaded via dynamic import so it lands in its own chunk and is
+ * only parsed when this route is actually called, not on every cold start.
+ *
  * @param appConfig - The resolved app config whose capabilities drive trimming.
  * @param logger - Logger used to report which paths get stripped.
  */
-export function buildOpenApiSpec(
+export async function buildOpenApiSpec(
   appConfig: CommerceAppConfig,
   logger: ReturnType<typeof AioLogger>,
 ) {
+  const { default: openAPISpec } = await importOpenApi();
+
   const spec = structuredClone(openAPISpec);
   const stripPath = (path: SpecPath) => {
     if (spec.paths[path]) {
