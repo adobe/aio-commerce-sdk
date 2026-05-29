@@ -65,7 +65,7 @@ export default defineConfig({
     registration: {
       order: {
         gridColumns: {
-          data: { backend: "fetch-order-grid-data" },
+          runtimeAction: "fetch-order-grid-data",
           columns: [
             {
               key: "fulfillment_status",
@@ -84,7 +84,7 @@ export default defineConfig({
       },
       product: {
         gridColumns: {
-          data: { backend: "fetch-product-grid-data" },
+          runtimeAction: "fetch-product-grid-data",
           columns: [
             {
               key: "inventory_status",
@@ -100,7 +100,7 @@ export default defineConfig({
 });
 ```
 
-`data.backend` must match the name of a `workerProcess` operation declared on
+`runtimeAction` must match the name of a `workerProcess` operation declared on
 `commerce/backend-ui/2` in `app.config.yaml`. App Registry resolves the name to the deployed
 runtime action URL — developers never write a URL directly.
 
@@ -174,7 +174,7 @@ extensions:
 
 | v1                                       | v2                           | Notes                                                         |
 | ---------------------------------------- | ---------------------------- | ------------------------------------------------------------- |
-| `data.meshId`                            | `data.backend`               | Operation name declared in `app.config.yaml`, not a Mesh hash |
+| `data.meshId`                            | `runtimeAction`              | Operation name declared in `app.config.yaml`, not a Mesh hash |
 | `properties`                             | `columns`                    | Array of column declarations                                  |
 | `properties[].columnId`                  | `columns[].key`              | Doubles as the response data key — make them match            |
 | `properties[].type: "float"`             | `columns[].type: "decimal"`  | Renamed                                                       |
@@ -216,7 +216,7 @@ const GridColumnSchema = v.object({
 });
 
 const GridColumnsSchema = v.object({
-  data: v.object({ backend: nonEmptyStringValueSchema("backend operation") }),
+  runtimeAction: nonEmptyStringValueSchema("runtime action"),
   columns: v.pipe(
     v.array(GridColumnSchema),
     v.minLength(1, "At least one column is required"),
@@ -255,10 +255,12 @@ serialization path unchanged.
 
 ### Registration action generation
 
-No template change is needed. The registration action at
-`packages/aio-commerce-lib-app/source/commands/generate/actions/templates/admin-ui-sdk/registration.js.template`
-inlines the config as a JS object literal. The v2 object shape serializes correctly through the
-existing `stringify` call. App Registry resolves `data.backend` to the deployed URL at runtime.
+No template change is needed. Before serialization, the SDK transforms the developer-facing config
+into the Commerce-facing registration format: `runtimeAction` is mapped to `data.backend` for each
+grid type that declares `gridColumns`. This transform runs in `generateRegistrationActionFile`
+before the `stringify` call, so the generated registration action contains `data.backend` — the
+shape Commerce expects — while developers write `runtimeAction` in their app config, consistent
+with the rest of the SDK (webhooks, events).
 
 ### Changeset bump
 
@@ -299,8 +301,8 @@ contract remains undocumented. The multi-environment `meshId` problem has no SDK
 ## Unresolved questions
 
 **Single-operation constraint.**
-Can the same `backend` value appear in `order.gridColumns` and `customer.gridColumns`? The SDK
-imposes no uniqueness constraint — the same operation name can appear in multiple grid column
+Can the same `runtimeAction` value appear in `order.gridColumns` and `customer.gridColumns`? The
+SDK imposes no uniqueness constraint — the same operation name can appear in multiple grid column
 blocks. A single handler would then receive requests for both grid types and branch on `gridType`.
 Confirm this is correct and no constraint should be added.
 
