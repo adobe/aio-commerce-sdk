@@ -3,4 +3,4 @@ extends:
 
 apis:
   aio-commerce-lib-app:
-    root: packages/aio-commerce-lib-app/generated/openapi.gen.json
+    root: packages/aio-commerce-lib-app/docs/openapi.json

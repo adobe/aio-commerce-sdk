@@ -602,553 +602,7 @@
                       "type": "object",
                       "properties": {
                         "registration": {
-                          "type": "object",
-                          "properties": {
-                            "menuItems": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "title": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "parent": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "sortOrder": {
-                                    "type": "number"
-                                  },
-                                  "isSection": {
-                                    "type": "boolean"
-                                  },
-                                  "sandbox": {
-                                    "type": "string"
-                                  }
-                                },
-                                "required": ["id"]
-                              }
-                            },
-                            "order": {
-                              "type": "object",
-                              "properties": {
-                                "massActions": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "actionId": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "label": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "title": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "confirm": {
-                                        "type": "object",
-                                        "properties": {
-                                          "title": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "message": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          }
-                                        },
-                                        "required": []
-                                      },
-                                      "path": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "displayIframe": {
-                                        "type": "boolean"
-                                      },
-                                      "timeout": {
-                                        "type": "number",
-                                        "minimum": 0
-                                      },
-                                      "sandbox": {
-                                        "type": "string"
-                                      },
-                                      "selectionLimit": {
-                                        "type": "number",
-                                        "minimum": 0
-                                      }
-                                    },
-                                    "required": ["actionId", "label", "path"],
-                                    "additionalProperties": false
-                                  }
-                                },
-                                "gridColumns": {
-                                  "type": "object",
-                                  "properties": {
-                                    "data": {
-                                      "type": "object",
-                                      "properties": {
-                                        "meshId": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        }
-                                      },
-                                      "required": ["meshId"]
-                                    },
-                                    "properties": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "object",
-                                        "properties": {
-                                          "label": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "columnId": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "type": {
-                                            "enum": [
-                                              "boolean",
-                                              "date",
-                                              "float",
-                                              "integer",
-                                              "string"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "align": {
-                                            "enum": ["left", "right", "center"],
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "label",
-                                          "columnId",
-                                          "type",
-                                          "align"
-                                        ]
-                                      },
-                                      "minItems": 1
-                                    }
-                                  },
-                                  "required": ["data", "properties"]
-                                },
-                                "viewButtons": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "buttonId": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "label": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "confirm": {
-                                        "type": "object",
-                                        "properties": {
-                                          "message": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          }
-                                        },
-                                        "required": []
-                                      },
-                                      "path": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "level": {
-                                        "enum": [-1, 0, 1],
-                                        "type": "number"
-                                      },
-                                      "sortOrder": {
-                                        "type": "number",
-                                        "minimum": 0
-                                      },
-                                      "displayIframe": {
-                                        "type": "boolean"
-                                      },
-                                      "timeout": {
-                                        "type": "number",
-                                        "minimum": 0
-                                      },
-                                      "sandbox": {
-                                        "type": "string"
-                                      }
-                                    },
-                                    "required": ["buttonId", "label", "path"]
-                                  }
-                                },
-                                "customFees": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "id": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "label": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "value": {
-                                        "type": "number"
-                                      },
-                                      "orderMinimumAmount": {
-                                        "type": "number"
-                                      },
-                                      "applyFeeOnLastInvoice": {
-                                        "type": "boolean"
-                                      },
-                                      "applyFeeOnLastCreditMemo": {
-                                        "type": "boolean"
-                                      }
-                                    },
-                                    "required": ["id", "label", "value"]
-                                  }
-                                }
-                              },
-                              "required": []
-                            },
-                            "product": {
-                              "type": "object",
-                              "properties": {
-                                "massActions": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "actionId": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "label": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "title": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "confirm": {
-                                        "type": "object",
-                                        "properties": {
-                                          "title": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "message": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          }
-                                        },
-                                        "required": []
-                                      },
-                                      "path": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "displayIframe": {
-                                        "type": "boolean"
-                                      },
-                                      "timeout": {
-                                        "type": "number",
-                                        "minimum": 0
-                                      },
-                                      "sandbox": {
-                                        "type": "string"
-                                      },
-                                      "productSelectLimit": {
-                                        "type": "number",
-                                        "minimum": 0
-                                      }
-                                    },
-                                    "required": ["actionId", "label", "path"],
-                                    "additionalProperties": false
-                                  }
-                                },
-                                "gridColumns": {
-                                  "type": "object",
-                                  "properties": {
-                                    "data": {
-                                      "type": "object",
-                                      "properties": {
-                                        "meshId": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        }
-                                      },
-                                      "required": ["meshId"]
-                                    },
-                                    "properties": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "object",
-                                        "properties": {
-                                          "label": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "columnId": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "type": {
-                                            "enum": [
-                                              "boolean",
-                                              "date",
-                                              "float",
-                                              "integer",
-                                              "string"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "align": {
-                                            "enum": ["left", "right", "center"],
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "label",
-                                          "columnId",
-                                          "type",
-                                          "align"
-                                        ]
-                                      },
-                                      "minItems": 1
-                                    }
-                                  },
-                                  "required": ["data", "properties"]
-                                }
-                              },
-                              "required": []
-                            },
-                            "customer": {
-                              "type": "object",
-                              "properties": {
-                                "massActions": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "actionId": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "label": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "title": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "confirm": {
-                                        "type": "object",
-                                        "properties": {
-                                          "title": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "message": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          }
-                                        },
-                                        "required": []
-                                      },
-                                      "path": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "displayIframe": {
-                                        "type": "boolean"
-                                      },
-                                      "timeout": {
-                                        "type": "number",
-                                        "minimum": 0
-                                      },
-                                      "sandbox": {
-                                        "type": "string"
-                                      },
-                                      "customerSelectLimit": {
-                                        "type": "number",
-                                        "minimum": 0
-                                      }
-                                    },
-                                    "required": ["actionId", "label", "path"],
-                                    "additionalProperties": false
-                                  }
-                                },
-                                "gridColumns": {
-                                  "type": "object",
-                                  "properties": {
-                                    "data": {
-                                      "type": "object",
-                                      "properties": {
-                                        "meshId": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        }
-                                      },
-                                      "required": ["meshId"]
-                                    },
-                                    "properties": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "object",
-                                        "properties": {
-                                          "label": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "columnId": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "type": {
-                                            "enum": [
-                                              "boolean",
-                                              "date",
-                                              "float",
-                                              "integer",
-                                              "string"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "align": {
-                                            "enum": ["left", "right", "center"],
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "label",
-                                          "columnId",
-                                          "type",
-                                          "align"
-                                        ]
-                                      },
-                                      "minItems": 1
-                                    }
-                                  },
-                                  "required": ["data", "properties"]
-                                }
-                              },
-                              "required": []
-                            },
-                            "bannerNotification": {
-                              "type": "object",
-                              "properties": {
-                                "massActions": {
-                                  "type": "object",
-                                  "properties": {
-                                    "order": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "object",
-                                        "properties": {
-                                          "actionId": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "successMessage": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "errorMessage": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          }
-                                        },
-                                        "required": ["actionId"]
-                                      }
-                                    },
-                                    "product": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "object",
-                                        "properties": {
-                                          "actionId": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "successMessage": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "errorMessage": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          }
-                                        },
-                                        "required": ["actionId"]
-                                      }
-                                    },
-                                    "customer": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "object",
-                                        "properties": {
-                                          "actionId": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "successMessage": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "errorMessage": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          }
-                                        },
-                                        "required": ["actionId"]
-                                      }
-                                    }
-                                  },
-                                  "required": []
-                                },
-                                "orderViewButtons": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "buttonId": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "successMessage": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "errorMessage": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      }
-                                    },
-                                    "required": ["buttonId"]
-                                  }
-                                }
-                              },
-                              "required": []
-                            }
-                          },
-                          "required": []
+                          "$ref": "#/components/schemas/AdminUiSdkRegistration"
                         }
                       },
                       "required": ["registration"]
@@ -2109,7 +1563,7 @@
                 "description": "Date when the deprecated PUT configuration endpoint was marked deprecated.",
                 "schema": {
                   "type": "string",
-                  "format": "date-time"
+                  "pattern": "^[A-Z][a-z]{2}, \\d{2} [A-Z][a-z]{2} \\d{4} \\d{2}:\\d{2}:\\d{2} GMT$"
                 }
               }
             }
@@ -3779,602 +3233,10 @@
                   "type": "object",
                   "properties": {
                     "registration": {
-                      "type": "object",
-                      "properties": {
-                        "menuItems": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "title": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "parent": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "sortOrder": {
-                                "type": "number"
-                              },
-                              "isSection": {
-                                "type": "boolean"
-                              },
-                              "sandbox": {
-                                "type": "string",
-                                "pattern": "^(?:allow-downloads|allow-modals|allow-popups)(?: (?:allow-downloads|allow-modals|allow-popups))*$"
-                              }
-                            },
-                            "required": ["id"]
-                          }
-                        },
-                        "order": {
-                          "type": "object",
-                          "properties": {
-                            "massActions": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "actionId": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "label": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "title": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "confirm": {
-                                    "type": "object",
-                                    "properties": {
-                                      "title": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "message": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      }
-                                    },
-                                    "required": []
-                                  },
-                                  "path": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "displayIframe": {
-                                    "type": "boolean"
-                                  },
-                                  "timeout": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "sandbox": {
-                                    "type": "string",
-                                    "pattern": "^(?:allow-downloads|allow-modals|allow-popups)(?: (?:allow-downloads|allow-modals|allow-popups))*$"
-                                  },
-                                  "selectionLimit": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  }
-                                },
-                                "required": ["actionId", "label", "path"],
-                                "additionalProperties": false,
-                                "dependentSchemas": {
-                                  "sandbox": {
-                                    "required": ["displayIframe"],
-                                    "properties": {
-                                      "displayIframe": {
-                                        "const": true
-                                      }
-                                    }
-                                  }
-                                }
-                              }
-                            },
-                            "gridColumns": {
-                              "type": "object",
-                              "properties": {
-                                "data": {
-                                  "type": "object",
-                                  "properties": {
-                                    "meshId": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    }
-                                  },
-                                  "required": ["meshId"]
-                                },
-                                "properties": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "label": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "columnId": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "type": {
-                                        "enum": [
-                                          "boolean",
-                                          "date",
-                                          "float",
-                                          "integer",
-                                          "string"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "align": {
-                                        "enum": ["left", "right", "center"],
-                                        "type": "string"
-                                      }
-                                    },
-                                    "required": [
-                                      "label",
-                                      "columnId",
-                                      "type",
-                                      "align"
-                                    ]
-                                  },
-                                  "minItems": 1
-                                }
-                              },
-                              "required": ["data", "properties"]
-                            },
-                            "viewButtons": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "buttonId": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "label": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "confirm": {
-                                    "type": "object",
-                                    "properties": {
-                                      "message": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      }
-                                    },
-                                    "required": []
-                                  },
-                                  "path": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "level": {
-                                    "enum": [-1, 0, 1],
-                                    "type": "number"
-                                  },
-                                  "sortOrder": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "displayIframe": {
-                                    "type": "boolean"
-                                  },
-                                  "timeout": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "sandbox": {
-                                    "type": "string",
-                                    "pattern": "^(?:allow-downloads|allow-modals|allow-popups)(?: (?:allow-downloads|allow-modals|allow-popups))*$"
-                                  }
-                                },
-                                "required": ["buttonId", "label", "path"],
-                                "dependentSchemas": {
-                                  "sandbox": {
-                                    "required": ["displayIframe"],
-                                    "properties": {
-                                      "displayIframe": {
-                                        "const": true
-                                      }
-                                    }
-                                  }
-                                }
-                              }
-                            },
-                            "customFees": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "label": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "value": {
-                                    "type": "number"
-                                  },
-                                  "orderMinimumAmount": {
-                                    "type": "number"
-                                  },
-                                  "applyFeeOnLastInvoice": {
-                                    "type": "boolean"
-                                  },
-                                  "applyFeeOnLastCreditMemo": {
-                                    "type": "boolean"
-                                  }
-                                },
-                                "required": ["id", "label", "value"]
-                              }
-                            }
-                          },
-                          "required": []
-                        },
-                        "product": {
-                          "type": "object",
-                          "properties": {
-                            "massActions": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "actionId": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "label": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "title": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "confirm": {
-                                    "type": "object",
-                                    "properties": {
-                                      "title": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "message": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      }
-                                    },
-                                    "required": []
-                                  },
-                                  "path": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "displayIframe": {
-                                    "type": "boolean"
-                                  },
-                                  "timeout": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "sandbox": {
-                                    "type": "string",
-                                    "pattern": "^(?:allow-downloads|allow-modals|allow-popups)(?: (?:allow-downloads|allow-modals|allow-popups))*$"
-                                  },
-                                  "productSelectLimit": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  }
-                                },
-                                "required": ["actionId", "label", "path"],
-                                "additionalProperties": false,
-                                "dependentSchemas": {
-                                  "sandbox": {
-                                    "required": ["displayIframe"],
-                                    "properties": {
-                                      "displayIframe": {
-                                        "const": true
-                                      }
-                                    }
-                                  }
-                                }
-                              }
-                            },
-                            "gridColumns": {
-                              "type": "object",
-                              "properties": {
-                                "data": {
-                                  "type": "object",
-                                  "properties": {
-                                    "meshId": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    }
-                                  },
-                                  "required": ["meshId"]
-                                },
-                                "properties": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "label": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "columnId": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "type": {
-                                        "enum": [
-                                          "boolean",
-                                          "date",
-                                          "float",
-                                          "integer",
-                                          "string"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "align": {
-                                        "enum": ["left", "right", "center"],
-                                        "type": "string"
-                                      }
-                                    },
-                                    "required": [
-                                      "label",
-                                      "columnId",
-                                      "type",
-                                      "align"
-                                    ]
-                                  },
-                                  "minItems": 1
-                                }
-                              },
-                              "required": ["data", "properties"]
-                            }
-                          },
-                          "required": []
-                        },
-                        "customer": {
-                          "type": "object",
-                          "properties": {
-                            "massActions": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "actionId": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "label": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "title": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "confirm": {
-                                    "type": "object",
-                                    "properties": {
-                                      "title": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "message": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      }
-                                    },
-                                    "required": []
-                                  },
-                                  "path": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "displayIframe": {
-                                    "type": "boolean"
-                                  },
-                                  "timeout": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "sandbox": {
-                                    "type": "string",
-                                    "pattern": "^(?:allow-downloads|allow-modals|allow-popups)(?: (?:allow-downloads|allow-modals|allow-popups))*$"
-                                  },
-                                  "customerSelectLimit": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  }
-                                },
-                                "required": ["actionId", "label", "path"],
-                                "additionalProperties": false,
-                                "dependentSchemas": {
-                                  "sandbox": {
-                                    "required": ["displayIframe"],
-                                    "properties": {
-                                      "displayIframe": {
-                                        "const": true
-                                      }
-                                    }
-                                  }
-                                }
-                              }
-                            },
-                            "gridColumns": {
-                              "type": "object",
-                              "properties": {
-                                "data": {
-                                  "type": "object",
-                                  "properties": {
-                                    "meshId": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    }
-                                  },
-                                  "required": ["meshId"]
-                                },
-                                "properties": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "label": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "columnId": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "type": {
-                                        "enum": [
-                                          "boolean",
-                                          "date",
-                                          "float",
-                                          "integer",
-                                          "string"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "align": {
-                                        "enum": ["left", "right", "center"],
-                                        "type": "string"
-                                      }
-                                    },
-                                    "required": [
-                                      "label",
-                                      "columnId",
-                                      "type",
-                                      "align"
-                                    ]
-                                  },
-                                  "minItems": 1
-                                }
-                              },
-                              "required": ["data", "properties"]
-                            }
-                          },
-                          "required": []
-                        },
-                        "bannerNotification": {
-                          "type": "object",
-                          "properties": {
-                            "massActions": {
-                              "type": "object",
-                              "properties": {
-                                "order": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "actionId": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "successMessage": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "errorMessage": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      }
-                                    },
-                                    "required": ["actionId"]
-                                  }
-                                },
-                                "product": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "actionId": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "successMessage": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "errorMessage": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      }
-                                    },
-                                    "required": ["actionId"]
-                                  }
-                                },
-                                "customer": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "actionId": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "successMessage": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "errorMessage": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      }
-                                    },
-                                    "required": ["actionId"]
-                                  }
-                                }
-                              },
-                              "required": []
-                            },
-                            "orderViewButtons": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "buttonId": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "successMessage": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "errorMessage": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  }
-                                },
-                                "required": ["buttonId"]
-                              }
-                            }
-                          },
-                          "required": []
-                        }
-                      },
-                      "required": []
+                      "$ref": "#/components/schemas/AdminUiSdkRegistration"
                     }
                   },
-                  "required": ["registration"],
-                  "description": "Admin UI SDK registration configuration"
+                  "required": ["registration"]
                 }
               }
             }
@@ -4425,7 +3287,7 @@
       "get": {
         "responses": {
           "200": {
-            "description": "The current scope tree.",
+            "description": "The current scope tree, freshly fetched.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4434,49 +3296,7 @@
                     "scopes": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "code": {
-                            "type": "string"
-                          },
-                          "label": {
-                            "type": "string"
-                          },
-                          "level": {
-                            "type": "string"
-                          },
-                          "is_editable": {
-                            "type": "boolean"
-                          },
-                          "is_final": {
-                            "type": "boolean"
-                          },
-                          "is_removable": {
-                            "type": "boolean"
-                          },
-                          "commerce_id": {
-                            "type": "number"
-                          },
-                          "children": {
-                            "type": "array",
-                            "items": {
-                              "$ref": "#/components/schemas/ScopeNode"
-                            }
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "code",
-                          "label",
-                          "level",
-                          "is_editable",
-                          "is_final",
-                          "is_removable"
-                        ],
-                        "title": "ScopeNode"
+                        "$ref": "#/components/schemas/ScopeNode"
                       }
                     }
                   },
@@ -4486,7 +3306,7 @@
             }
           },
           "203": {
-            "description": "The cached scope tree returned when fresh scope data is not available.",
+            "description": "The scope tree returned from cache or persisted storage.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4609,7 +3429,7 @@
                       "type": "object",
                       "properties": {
                         "message": {
-                          "type": "string"
+                          "const": "Custom scope tree updated successfully"
                         },
                         "timestamp": {
                           "type": "string",
@@ -4674,7 +3494,7 @@
             }
           },
           "400": {
-            "description": "The request is invalid or could not be parsed.",
+            "description": "The request body is missing the required scopes array or it is not an array.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4733,6 +3553,7 @@
                 "properties": {
                   "scopes": {
                     "type": "array",
+                    "description": "Custom scopes to store. Each code+level combination must be unique across the entire recursive tree.",
                     "items": {
                       "$ref": "#/components/schemas/CustomScopeInput"
                     }
@@ -4816,7 +3637,7 @@
                       }
                     },
                     "synced": {
-                      "type": "boolean"
+                      "const": true
                     }
                   },
                   "required": ["scopes", "synced"]
@@ -4825,7 +3646,7 @@
             }
           },
           "203": {
-            "description": "The cached scope tree returned when Commerce scopes are not synchronized.",
+            "description": "The cached scope tree returned when Commerce scopes could not be freshly fetched.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4834,57 +3655,14 @@
                     "scopes": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "code": {
-                            "type": "string"
-                          },
-                          "label": {
-                            "type": "string"
-                          },
-                          "level": {
-                            "type": "string"
-                          },
-                          "is_editable": {
-                            "type": "boolean"
-                          },
-                          "is_final": {
-                            "type": "boolean"
-                          },
-                          "is_removable": {
-                            "type": "boolean"
-                          },
-                          "commerce_id": {
-                            "type": "number"
-                          },
-                          "children": {
-                            "type": "array",
-                            "items": {
-                              "$ref": "#/components/schemas/ScopeNode"
-                            }
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "code",
-                          "label",
-                          "level",
-                          "is_editable",
-                          "is_final",
-                          "is_removable"
-                        ],
-                        "title": "ScopeNode"
+                        "$ref": "#/components/schemas/ScopeNode"
                       }
                     },
                     "synced": {
-                      "type": "boolean"
+                      "const": false
                     }
                   },
-                  "required": ["scopes", "synced"],
-                  "description": "Cached scope tree"
+                  "required": ["scopes", "synced"]
                 }
               }
             },
@@ -4957,6 +3735,7 @@
                 "properties": {
                   "commerceBaseUrl": {
                     "type": "string",
+                    "format": "uri",
                     "minLength": 1
                   },
                   "commerceEnv": {
@@ -4992,7 +3771,10 @@
                   "type": "object",
                   "properties": {
                     "message": {
-                      "type": "string"
+                      "enum": [
+                        "Commerce scopes unsynced successfully",
+                        "No commerce scopes to unsync"
+                      ]
                     }
                   },
                   "required": ["message"]
@@ -5028,7 +3810,7 @@
         },
         "summary": "Unsync Commerce Scopes",
         "operationId": "unsyncCommerceScopes",
-        "description": "Removes the synchronized Commerce scope tree and returns the unsync result.",
+        "description": "Removes the synchronized Commerce scope tree and returns the unsync result (or a no-op message if no scopes were stored).",
         "parameters": [
           {
             "description": "Adobe IMS organization ID that identifies the organization for the request.",
@@ -5230,27 +4012,604 @@
         "required": ["id", "code", "label", "level", "is_editable", "is_final"],
         "title": "CustomScopeOutput"
       },
+      "AdminUiSdkRegistration": {
+        "type": "object",
+        "properties": {
+          "menuItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "parent": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sortOrder": {
+                  "type": "number"
+                },
+                "isSection": {
+                  "type": "boolean"
+                },
+                "sandbox": {
+                  "type": "string",
+                  "pattern": "^(?:allow-downloads|allow-modals|allow-popups)(?: (?:allow-downloads|allow-modals|allow-popups))*$"
+                }
+              },
+              "required": ["id"]
+            }
+          },
+          "order": {
+            "type": "object",
+            "properties": {
+              "massActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "actionId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "confirm": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": []
+                    },
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "displayIframe": {
+                      "type": "boolean"
+                    },
+                    "timeout": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "sandbox": {
+                      "type": "string",
+                      "pattern": "^(?:allow-downloads|allow-modals|allow-popups)(?: (?:allow-downloads|allow-modals|allow-popups))*$"
+                    },
+                    "selectionLimit": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": ["actionId", "label", "path"],
+                  "additionalProperties": false,
+                  "dependentSchemas": {
+                    "sandbox": {
+                      "required": ["displayIframe"],
+                      "properties": {
+                        "displayIframe": {
+                          "const": true
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "gridColumns": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "meshId": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": ["meshId"]
+                  },
+                  "properties": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "columnId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "type": {
+                          "enum": [
+                            "boolean",
+                            "date",
+                            "float",
+                            "integer",
+                            "string"
+                          ],
+                          "type": "string"
+                        },
+                        "align": {
+                          "enum": ["left", "right", "center"],
+                          "type": "string"
+                        }
+                      },
+                      "required": ["label", "columnId", "type", "align"]
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": ["data", "properties"]
+              },
+              "viewButtons": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "buttonId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "confirm": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": []
+                    },
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "level": {
+                      "enum": [-1, 0, 1],
+                      "type": "number"
+                    },
+                    "sortOrder": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "displayIframe": {
+                      "type": "boolean"
+                    },
+                    "timeout": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "sandbox": {
+                      "type": "string",
+                      "pattern": "^(?:allow-downloads|allow-modals|allow-popups)(?: (?:allow-downloads|allow-modals|allow-popups))*$"
+                    }
+                  },
+                  "required": ["buttonId", "label", "path"],
+                  "dependentSchemas": {
+                    "sandbox": {
+                      "required": ["displayIframe"],
+                      "properties": {
+                        "displayIframe": {
+                          "const": true
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "customFees": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "value": {
+                      "type": "number"
+                    },
+                    "orderMinimumAmount": {
+                      "type": "number"
+                    },
+                    "applyFeeOnLastInvoice": {
+                      "type": "boolean"
+                    },
+                    "applyFeeOnLastCreditMemo": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["id", "label", "value"]
+                }
+              }
+            },
+            "required": []
+          },
+          "product": {
+            "type": "object",
+            "properties": {
+              "massActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "actionId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "confirm": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": []
+                    },
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "displayIframe": {
+                      "type": "boolean"
+                    },
+                    "timeout": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "sandbox": {
+                      "type": "string",
+                      "pattern": "^(?:allow-downloads|allow-modals|allow-popups)(?: (?:allow-downloads|allow-modals|allow-popups))*$"
+                    },
+                    "productSelectLimit": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": ["actionId", "label", "path"],
+                  "additionalProperties": false,
+                  "dependentSchemas": {
+                    "sandbox": {
+                      "required": ["displayIframe"],
+                      "properties": {
+                        "displayIframe": {
+                          "const": true
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "gridColumns": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "meshId": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": ["meshId"]
+                  },
+                  "properties": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "columnId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "type": {
+                          "enum": [
+                            "boolean",
+                            "date",
+                            "float",
+                            "integer",
+                            "string"
+                          ],
+                          "type": "string"
+                        },
+                        "align": {
+                          "enum": ["left", "right", "center"],
+                          "type": "string"
+                        }
+                      },
+                      "required": ["label", "columnId", "type", "align"]
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": ["data", "properties"]
+              }
+            },
+            "required": []
+          },
+          "customer": {
+            "type": "object",
+            "properties": {
+              "massActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "actionId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "confirm": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": []
+                    },
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "displayIframe": {
+                      "type": "boolean"
+                    },
+                    "timeout": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "sandbox": {
+                      "type": "string",
+                      "pattern": "^(?:allow-downloads|allow-modals|allow-popups)(?: (?:allow-downloads|allow-modals|allow-popups))*$"
+                    },
+                    "customerSelectLimit": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": ["actionId", "label", "path"],
+                  "additionalProperties": false,
+                  "dependentSchemas": {
+                    "sandbox": {
+                      "required": ["displayIframe"],
+                      "properties": {
+                        "displayIframe": {
+                          "const": true
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "gridColumns": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "meshId": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": ["meshId"]
+                  },
+                  "properties": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "columnId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "type": {
+                          "enum": [
+                            "boolean",
+                            "date",
+                            "float",
+                            "integer",
+                            "string"
+                          ],
+                          "type": "string"
+                        },
+                        "align": {
+                          "enum": ["left", "right", "center"],
+                          "type": "string"
+                        }
+                      },
+                      "required": ["label", "columnId", "type", "align"]
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": ["data", "properties"]
+              }
+            },
+            "required": []
+          },
+          "bannerNotification": {
+            "type": "object",
+            "properties": {
+              "massActions": {
+                "type": "object",
+                "properties": {
+                  "order": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "actionId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "successMessage": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "errorMessage": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": ["actionId"]
+                    }
+                  },
+                  "product": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "actionId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "successMessage": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "errorMessage": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": ["actionId"]
+                    }
+                  },
+                  "customer": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "actionId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "successMessage": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "errorMessage": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": ["actionId"]
+                    }
+                  }
+                },
+                "required": []
+              },
+              "orderViewButtons": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "buttonId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "successMessage": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "errorMessage": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": ["buttonId"]
+                }
+              }
+            },
+            "required": []
+          }
+        },
+        "required": []
+      },
       "CustomScopeInput": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "minLength": 1
+            "pattern": ".*\\S.*"
           },
           "code": {
             "type": "string",
-            "minLength": 1,
-            "not": {
-              "enum": ["commerce", "global"]
-            }
+            "pattern": "^(?!\\s*(?:commerce|global)\\s*$).*\\S.*$"
           },
           "label": {
             "type": "string",
-            "minLength": 1
+            "pattern": ".*\\S.*"
           },
           "level": {
             "type": "string",
-            "minLength": 1
+            "pattern": ".*\\S.*",
+            "default": "base"
           },
           "is_editable": {
             "type": "boolean"
