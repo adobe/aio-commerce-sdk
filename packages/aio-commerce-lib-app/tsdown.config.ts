@@ -19,8 +19,9 @@ import { mergeConfig } from "tsdown";
 import pkg from "./package.json" with { type: "json" };
 
 export default mergeConfig(baseConfig, {
+  dts: { eager: true },
   entry: [
-    "./source/actions/*.ts",
+    "./source/actions/*/index.ts",
     "./source/config/index.ts",
     "./source/commands/index.ts",
     "./source/management/index.ts",

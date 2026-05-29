@@ -40,7 +40,7 @@ vi.mock("@adobe/aio-commerce-lib-config", async () => {
 
 import { resolveBusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
 
-import { configRuntimeAction } from "#actions/config";
+import { configRuntimeAction } from "#actions/config/index";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 
 import type { BusinessConfigSchema } from "@adobe/aio-commerce-lib-config";

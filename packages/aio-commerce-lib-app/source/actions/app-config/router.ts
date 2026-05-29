@@ -21,27 +21,36 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
+import { hasAdminUiSdk } from "#config/schema/admin-ui-sdk";
+import { requiresInstallation } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
+import openAPISpec from "#openapi.json" with { type: "json" };
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { CommerceAppConfig } from "#config/schema/app";
 
-/** Arguments for the runtime action factory. */
-type RuntimeActionFactoryArgs = {
+/** The arguments required to create the runtime action for the app-config action. */
+export type RuntimeActionFactoryArgs = {
   appConfig: CommerceAppConfig;
 };
 
-/** Params received by all handlers. */
+/** The params received by all handlers. */
 type RuntimeActionArgs = RuntimeActionParams & RuntimeActionFactoryArgs;
 
-/** The context for the config action. */
+/** The context for the app-config action. */
 interface AppConfigActionContext extends BaseContext {
   rawParams: RuntimeActionArgs;
 }
 
-/** Router for the app config actions. */
-const router = new HttpActionRouter<AppConfigActionContext>().use(
+/**
+ * App Config action router.
+ *
+ * Routes:
+ * - GET /               Retrieve the Commerce App configuration.
+ * - GET /openapi.json   Returns the OpenAPI spec for all SDK actions
+ */
+export const router = new HttpActionRouter<AppConfigActionContext>().use(
   logger({ name: () => "app-config" }),
 );
 
@@ -52,7 +61,7 @@ router.get("/", {
 
     if (!rawAppConfig) {
       return internalServerError(
-        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
+        "The app config is missing. Does the action receive it as a parameter?",
       );
     }
 
@@ -80,13 +89,44 @@ router.get("/", {
   },
 });
 
-/** Factory to create the route handler for the `app-config` action. */
-export const appConfigRuntimeAction =
-  ({ appConfig }: RuntimeActionFactoryArgs) =>
-  async (params: RuntimeActionParams) => {
-    const handler = router.handler();
-    return await handler({
-      ...params,
-      appConfig,
-    });
-  };
+/** GET /openapi.json - Returns the OpenAPI spec for all SDK actions */
+router.get("/openapi.json", {
+  handler: (_req, { logger, rawParams }) => {
+    const spec = structuredClone(openAPISpec);
+    const deleteSpecPath = (path: keyof typeof openAPISpec.paths) => {
+      if (spec.paths[path]) {
+        logger.debug(`Stripping OpenAPI spec path: ${path}`);
+        delete spec.paths[path];
+      }
+    };
+
+    if (!hasBusinessConfigSchema(rawParams.appConfig)) {
+      logger.debug(
+        "Application doesn't define business configuration, stripping references...",
+      );
+
+      deleteSpecPath("/config");
+      deleteSpecPath("/scope-tree");
+      deleteSpecPath("/scope-tree/commerce");
+    }
+
+    if (!hasAdminUiSdk(rawParams.appConfig)) {
+      logger.debug(
+        "Application doesn't define Admin UI SDK registration, stripping references...",
+      );
+
+      deleteSpecPath("/registration");
+    }
+
+    if (!requiresInstallation(rawParams.appConfig)) {
+      logger.debug(
+        "Application doesn't require installation, stripping references...",
+      );
+
+      deleteSpecPath("/installation");
+    }
+
+    spec.servers[0].url = `https://${process.env.__OW_NAMESPACE}.adobeioruntime.net/api/v1/web/app-management`;
+    return ok({ body: spec });
+  },
+});
