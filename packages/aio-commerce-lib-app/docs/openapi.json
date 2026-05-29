@@ -394,27 +394,7 @@
                             "type": "object",
                             "properties": {
                               "provider": {
-                                "type": "object",
-                                "properties": {
-                                  "label": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "pattern": "^[a-zA-Z0-9 _.:()\\-,@/]+$",
-                                    "maxLength": 100
-                                  },
-                                  "description": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "pattern": "^[a-zA-Z0-9 _.:()\\-,@/]+$",
-                                    "maxLength": 255
-                                  },
-                                  "key": {
-                                    "type": "string",
-                                    "pattern": "^[a-zA-Z0-9-]+$",
-                                    "maxLength": 50
-                                  }
-                                },
-                                "required": ["label", "description"]
+                                "$ref": "#/components/schemas/EventProvider"
                               },
                               "events": {
                                 "type": "array",
@@ -450,50 +430,14 @@
                                     "fields": {
                                       "type": "array",
                                       "items": {
-                                        "type": "object",
-                                        "properties": {
-                                          "name": {
-                                            "type": "string",
-                                            "minLength": 1,
-                                            "pattern": "^([a-zA-Z0-9_\\-.[\\]]+|\\*)$"
-                                          },
-                                          "source": {
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": ["name"]
+                                        "$ref": "#/components/schemas/CommerceEventField"
                                       },
                                       "minItems": 1
                                     },
                                     "rules": {
                                       "type": "array",
                                       "items": {
-                                        "type": "object",
-                                        "properties": {
-                                          "field": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          },
-                                          "operator": {
-                                            "enum": [
-                                              "greaterThan",
-                                              "lessThan",
-                                              "equal",
-                                              "regex",
-                                              "in",
-                                              "onChange"
-                                            ]
-                                          },
-                                          "value": {
-                                            "type": "string",
-                                            "minLength": 1
-                                          }
-                                        },
-                                        "required": [
-                                          "field",
-                                          "operator",
-                                          "value"
-                                        ]
+                                        "$ref": "#/components/schemas/CommerceEventRule"
                                       }
                                     },
                                     "destination": {
@@ -529,27 +473,7 @@
                             "type": "object",
                             "properties": {
                               "provider": {
-                                "type": "object",
-                                "properties": {
-                                  "label": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "pattern": "^[a-zA-Z0-9 _.:()\\-,@/]+$",
-                                    "maxLength": 100
-                                  },
-                                  "description": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "pattern": "^[a-zA-Z0-9 _.:()\\-,@/]+$",
-                                    "maxLength": 255
-                                  },
-                                  "key": {
-                                    "type": "string",
-                                    "pattern": "^[a-zA-Z0-9-]+$",
-                                    "maxLength": 50
-                                  }
-                                },
-                                "required": ["label", "description"]
+                                "$ref": "#/components/schemas/EventProvider"
                               },
                               "events": {
                                 "type": "array",
@@ -658,293 +582,10 @@
                       "items": {
                         "oneOf": [
                           {
-                            "type": "object",
-                            "properties": {
-                              "label": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "description": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "category": {
-                                "enum": [
-                                  "validation",
-                                  "append",
-                                  "modification"
-                                ],
-                                "type": "string"
-                              },
-                              "runtimeAction": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "requireAdobeAuth": {
-                                "type": "boolean"
-                              },
-                              "webhook": {
-                                "type": "object",
-                                "properties": {
-                                  "webhook_method": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "webhook_type": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "batch_name": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "pattern": "^[a-zA-Z0-9_]+$"
-                                  },
-                                  "batch_order": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "hook_name": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "pattern": "^[a-zA-Z0-9_]+$"
-                                  },
-                                  "priority": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "required": {
-                                    "type": "boolean"
-                                  },
-                                  "soft_timeout": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "timeout": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "method": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "fallback_error_message": {
-                                    "type": "string"
-                                  },
-                                  "ttl": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "fields": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "object",
-                                      "properties": {
-                                        "name": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        },
-                                        "source": {
-                                          "type": "string"
-                                        }
-                                      },
-                                      "required": ["name"]
-                                    }
-                                  },
-                                  "rules": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "object",
-                                      "properties": {
-                                        "field": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        },
-                                        "operator": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        },
-                                        "value": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        }
-                                      },
-                                      "required": ["field", "operator", "value"]
-                                    }
-                                  },
-                                  "headers": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "object",
-                                      "properties": {
-                                        "name": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        },
-                                        "value": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        }
-                                      },
-                                      "required": ["name", "value"]
-                                    }
-                                  }
-                                },
-                                "required": [
-                                  "webhook_method",
-                                  "webhook_type",
-                                  "batch_name",
-                                  "hook_name",
-                                  "method"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "label",
-                              "description",
-                              "runtimeAction",
-                              "webhook"
-                            ]
+                            "$ref": "#/components/schemas/RuntimeActionWebhookConfig"
                           },
                           {
-                            "type": "object",
-                            "properties": {
-                              "label": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "description": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "category": {
-                                "enum": [
-                                  "validation",
-                                  "append",
-                                  "modification"
-                                ],
-                                "type": "string"
-                              },
-                              "webhook": {
-                                "type": "object",
-                                "properties": {
-                                  "webhook_method": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "webhook_type": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "batch_name": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "pattern": "^[a-zA-Z0-9_]+$"
-                                  },
-                                  "batch_order": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "hook_name": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "pattern": "^[a-zA-Z0-9_]+$"
-                                  },
-                                  "priority": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "required": {
-                                    "type": "boolean"
-                                  },
-                                  "soft_timeout": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "timeout": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "method": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "fallback_error_message": {
-                                    "type": "string"
-                                  },
-                                  "ttl": {
-                                    "type": "number",
-                                    "minimum": 0
-                                  },
-                                  "fields": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "object",
-                                      "properties": {
-                                        "name": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        },
-                                        "source": {
-                                          "type": "string"
-                                        }
-                                      },
-                                      "required": ["name"]
-                                    }
-                                  },
-                                  "rules": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "object",
-                                      "properties": {
-                                        "field": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        },
-                                        "operator": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        },
-                                        "value": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        }
-                                      },
-                                      "required": ["field", "operator", "value"]
-                                    }
-                                  },
-                                  "headers": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "object",
-                                      "properties": {
-                                        "name": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        },
-                                        "value": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        }
-                                      },
-                                      "required": ["name", "value"]
-                                    }
-                                  },
-                                  "url": {
-                                    "type": "string",
-                                    "format": "uri"
-                                  }
-                                },
-                                "required": [
-                                  "webhook_method",
-                                  "webhook_type",
-                                  "batch_name",
-                                  "hook_name",
-                                  "method",
-                                  "url"
-                                ]
-                              }
-                            },
-                            "required": ["label", "description", "webhook"]
+                            "$ref": "#/components/schemas/ExternalUrlWebhookConfig"
                           }
                         ]
                       },
@@ -968,16 +609,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1341,58 +973,12 @@
                       "type": "object",
                       "properties": {
                         "scope": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string"
-                            },
-                            "code": {
-                              "type": "string"
-                            },
-                            "level": {
-                              "type": "string"
-                            }
-                          },
-                          "required": ["id", "code", "level"]
+                          "$ref": "#/components/schemas/ConfigScope"
                         },
                         "config": {
                           "type": "array",
                           "items": {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string"
-                              },
-                              "value": {
-                                "anyOf": [
-                                  {
-                                    "type": "boolean"
-                                  },
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string"
-                                    }
-                                  }
-                                ]
-                              },
-                              "origin": {
-                                "type": "object",
-                                "properties": {
-                                  "code": {
-                                    "type": "string"
-                                  },
-                                  "level": {
-                                    "type": "string"
-                                  }
-                                },
-                                "required": ["code", "level"]
-                              }
-                            },
-                            "required": ["name", "origin"]
+                            "$ref": "#/components/schemas/ConfigValue"
                           }
                         }
                       },
@@ -1410,20 +996,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "issues": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true
-                      }
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -1439,16 +1012,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1504,46 +1068,12 @@
                       "format": "date-time"
                     },
                     "scope": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "code": {
-                          "type": "string"
-                        },
-                        "level": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["id", "code", "level"]
+                      "$ref": "#/components/schemas/ConfigScope"
                     },
                     "config": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "value": {
-                            "anyOf": [
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                }
-                              }
-                            ]
-                          }
-                        },
-                        "required": ["name"]
+                        "$ref": "#/components/schemas/ConfigUpdateEntry"
                       }
                     }
                   },
@@ -1573,20 +1103,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "issues": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true
-                      }
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -1602,16 +1119,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1693,46 +1201,12 @@
                       "format": "date-time"
                     },
                     "scope": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "code": {
-                          "type": "string"
-                        },
-                        "level": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["id", "code", "level"]
+                      "$ref": "#/components/schemas/ConfigScope"
                     },
                     "config": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "value": {
-                            "anyOf": [
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                }
-                              }
-                            ]
-                          }
-                        },
-                        "required": ["name"]
+                        "$ref": "#/components/schemas/ConfigUpdateEntry"
                       }
                     }
                   },
@@ -1755,20 +1229,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "issues": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true
-                      }
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -1784,16 +1245,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1891,56 +1343,7 @@
                           "format": "date-time"
                         },
                         "step": {
-                          "type": "object",
-                          "properties": {
-                            "name": {
-                              "type": "string"
-                            },
-                            "id": {
-                              "type": "string"
-                            },
-                            "path": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "meta": {
-                              "type": "object",
-                              "properties": {
-                                "label": {
-                                  "type": "string"
-                                },
-                                "description": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": ["label"]
-                            },
-                            "status": {
-                              "enum": [
-                                "pending",
-                                "in-progress",
-                                "succeeded",
-                                "failed"
-                              ]
-                            },
-                            "children": {
-                              "type": "array",
-                              "items": {
-                                "$ref": "#/components/schemas/StepStatus"
-                              }
-                            }
-                          },
-                          "required": [
-                            "name",
-                            "id",
-                            "path",
-                            "meta",
-                            "status",
-                            "children"
-                          ],
-                          "title": "StepStatus"
+                          "$ref": "#/components/schemas/StepStatus"
                         },
                         "data": {
                           "anyOf": [
@@ -2107,16 +1510,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -2163,56 +1557,7 @@
                       "format": "date-time"
                     },
                     "step": {
-                      "type": "object",
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "id": {
-                          "type": "string"
-                        },
-                        "path": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "meta": {
-                          "type": "object",
-                          "properties": {
-                            "label": {
-                              "type": "string"
-                            },
-                            "description": {
-                              "type": "string"
-                            }
-                          },
-                          "required": ["label"]
-                        },
-                        "status": {
-                          "enum": [
-                            "pending",
-                            "in-progress",
-                            "succeeded",
-                            "failed"
-                          ]
-                        },
-                        "children": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/StepStatus"
-                          }
-                        }
-                      },
-                      "required": [
-                        "name",
-                        "id",
-                        "path",
-                        "meta",
-                        "status",
-                        "children"
-                      ],
-                      "title": "StepStatus"
+                      "$ref": "#/components/schemas/StepStatus"
                     },
                     "data": {
                       "anyOf": [
@@ -2247,20 +1592,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "issues": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true
-                      }
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -2292,16 +1624,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -2317,51 +1640,7 @@
                 "type": "object",
                 "properties": {
                   "appData": {
-                    "type": "object",
-                    "properties": {
-                      "consumerOrgId": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "orgName": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "projectId": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "projectName": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "projectTitle": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "workspaceId": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "workspaceName": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "workspaceTitle": {
-                        "type": "string",
-                        "minLength": 1
-                      }
-                    },
-                    "required": [
-                      "consumerOrgId",
-                      "orgName",
-                      "projectId",
-                      "projectName",
-                      "projectTitle",
-                      "workspaceId",
-                      "workspaceName",
-                      "workspaceTitle"
-                    ]
+                    "$ref": "#/components/schemas/AppData"
                   },
                   "commerceBaseUrl": {
                     "type": "string"
@@ -2430,69 +1709,7 @@
                       "required": ["totalIssues", "errors", "warnings"]
                     },
                     "result": {
-                      "type": "object",
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "path": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "meta": {
-                          "type": "object",
-                          "properties": {
-                            "label": {
-                              "type": "string"
-                            },
-                            "description": {
-                              "type": "string"
-                            }
-                          },
-                          "required": ["label"]
-                        },
-                        "issues": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "code": {
-                                "type": "string"
-                              },
-                              "message": {
-                                "type": "string"
-                              },
-                              "severity": {
-                                "enum": ["error", "warning", "info"]
-                              },
-                              "details": {
-                                "type": "object",
-                                "propertyNames": {
-                                  "type": "string"
-                                },
-                                "additionalProperties": {}
-                              }
-                            },
-                            "required": ["code", "message", "severity"]
-                          }
-                        },
-                        "children": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/StepValidationResult"
-                          }
-                        }
-                      },
-                      "required": [
-                        "name",
-                        "path",
-                        "meta",
-                        "issues",
-                        "children"
-                      ],
-                      "title": "StepValidationResult"
+                      "$ref": "#/components/schemas/StepValidationResult"
                     }
                   },
                   "required": ["valid", "summary", "result"]
@@ -2505,20 +1722,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "issues": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true
-                      }
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -2534,16 +1738,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -2559,51 +1754,7 @@
                 "type": "object",
                 "properties": {
                   "appData": {
-                    "type": "object",
-                    "properties": {
-                      "consumerOrgId": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "orgName": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "projectId": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "projectName": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "projectTitle": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "workspaceId": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "workspaceName": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "workspaceTitle": {
-                        "type": "string",
-                        "minLength": 1
-                      }
-                    },
-                    "required": [
-                      "consumerOrgId",
-                      "orgName",
-                      "projectId",
-                      "projectName",
-                      "projectTitle",
-                      "workspaceId",
-                      "workspaceName",
-                      "workspaceTitle"
-                    ]
+                    "$ref": "#/components/schemas/AppData"
                   },
                   "commerceBaseUrl": {
                     "type": "string"
@@ -2666,56 +1817,7 @@
                           "format": "date-time"
                         },
                         "step": {
-                          "type": "object",
-                          "properties": {
-                            "name": {
-                              "type": "string"
-                            },
-                            "id": {
-                              "type": "string"
-                            },
-                            "path": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "meta": {
-                              "type": "object",
-                              "properties": {
-                                "label": {
-                                  "type": "string"
-                                },
-                                "description": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": ["label"]
-                            },
-                            "status": {
-                              "enum": [
-                                "pending",
-                                "in-progress",
-                                "succeeded",
-                                "failed"
-                              ]
-                            },
-                            "children": {
-                              "type": "array",
-                              "items": {
-                                "$ref": "#/components/schemas/StepStatus"
-                              }
-                            }
-                          },
-                          "required": [
-                            "name",
-                            "id",
-                            "path",
-                            "meta",
-                            "status",
-                            "children"
-                          ],
-                          "title": "StepStatus"
+                          "$ref": "#/components/schemas/StepStatus"
                         },
                         "data": {
                           "anyOf": [
@@ -2882,16 +1984,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -2938,56 +2031,7 @@
                       "format": "date-time"
                     },
                     "step": {
-                      "type": "object",
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "id": {
-                          "type": "string"
-                        },
-                        "path": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "meta": {
-                          "type": "object",
-                          "properties": {
-                            "label": {
-                              "type": "string"
-                            },
-                            "description": {
-                              "type": "string"
-                            }
-                          },
-                          "required": ["label"]
-                        },
-                        "status": {
-                          "enum": [
-                            "pending",
-                            "in-progress",
-                            "succeeded",
-                            "failed"
-                          ]
-                        },
-                        "children": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/StepStatus"
-                          }
-                        }
-                      },
-                      "required": [
-                        "name",
-                        "id",
-                        "path",
-                        "meta",
-                        "status",
-                        "children"
-                      ],
-                      "title": "StepStatus"
+                      "$ref": "#/components/schemas/StepStatus"
                     },
                     "data": {
                       "anyOf": [
@@ -3022,20 +2066,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "issues": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true
-                      }
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -3067,16 +2098,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -3092,51 +2114,7 @@
                 "type": "object",
                 "properties": {
                   "appData": {
-                    "type": "object",
-                    "properties": {
-                      "consumerOrgId": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "orgName": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "projectId": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "projectName": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "projectTitle": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "workspaceId": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "workspaceName": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "workspaceTitle": {
-                        "type": "string",
-                        "minLength": 1
-                      }
-                    },
-                    "required": [
-                      "consumerOrgId",
-                      "orgName",
-                      "projectId",
-                      "projectName",
-                      "projectTitle",
-                      "workspaceId",
-                      "workspaceName",
-                      "workspaceTitle"
-                    ]
+                    "$ref": "#/components/schemas/AppData"
                   },
                   "commerceBaseUrl": {
                     "type": "string"
@@ -3191,16 +2169,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -3252,16 +2221,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -3386,16 +2346,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -3498,20 +2449,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "issues": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true
-                      }
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -3527,16 +2465,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -3680,20 +2609,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "issues": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true
-                      }
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -3709,16 +2625,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -3793,16 +2700,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"]
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -3837,6 +2735,441 @@
   ],
   "components": {
     "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": ["message"]
+      },
+      "ValidationErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": ["message"]
+      },
+      "AppData": {
+        "type": "object",
+        "properties": {
+          "consumerOrgId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "orgName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "projectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "projectName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "projectTitle": {
+            "type": "string",
+            "minLength": 1
+          },
+          "workspaceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "workspaceName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "workspaceTitle": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "consumerOrgId",
+          "orgName",
+          "projectId",
+          "projectName",
+          "projectTitle",
+          "workspaceId",
+          "workspaceName",
+          "workspaceTitle"
+        ]
+      },
+      "ConfigScope": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "code", "level"]
+      },
+      "ConfigOrigin": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          }
+        },
+        "required": ["code", "level"]
+      },
+      "ConfigValue": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "origin": {
+            "$ref": "#/components/schemas/ConfigOrigin"
+          }
+        },
+        "required": ["name", "origin"]
+      },
+      "ConfigUpdateEntry": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        },
+        "required": ["name"]
+      },
+      "StepMeta": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": ["label"]
+      },
+      "ValidationIssue": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": ["error", "warning", "info"]
+          },
+          "details": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          }
+        },
+        "required": ["code", "message", "severity"]
+      },
+      "EventProvider": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9 _.:()\\-,@/]+$",
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9 _.:()\\-,@/]+$",
+            "maxLength": 255
+          },
+          "key": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9-]+$",
+            "maxLength": 50
+          }
+        },
+        "required": ["label", "description"]
+      },
+      "CommerceEventField": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^([a-zA-Z0-9_\\-.[\\]]+|\\*)$"
+          },
+          "source": {
+            "type": "string"
+          }
+        },
+        "required": ["name"]
+      },
+      "CommerceEventRule": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "minLength": 1
+          },
+          "operator": {
+            "enum": [
+              "greaterThan",
+              "lessThan",
+              "equal",
+              "regex",
+              "in",
+              "onChange"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["field", "operator", "value"]
+      },
+      "WebhookField": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "type": "string"
+          }
+        },
+        "required": ["name"]
+      },
+      "WebhookRule": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "minLength": 1
+          },
+          "operator": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["field", "operator", "value"]
+      },
+      "WebhookHeader": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["name", "value"]
+      },
+      "WebhookDefinition": {
+        "type": "object",
+        "properties": {
+          "webhook_method": {
+            "type": "string",
+            "minLength": 1
+          },
+          "webhook_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "batch_name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9_]+$"
+          },
+          "batch_order": {
+            "type": "number",
+            "minimum": 0
+          },
+          "hook_name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9_]+$"
+          },
+          "priority": {
+            "type": "number",
+            "minimum": 0
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "soft_timeout": {
+            "type": "number",
+            "minimum": 0
+          },
+          "timeout": {
+            "type": "number",
+            "minimum": 0
+          },
+          "method": {
+            "type": "string",
+            "minLength": 1
+          },
+          "fallback_error_message": {
+            "type": "string"
+          },
+          "ttl": {
+            "type": "number",
+            "minimum": 0
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookField"
+            }
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookRule"
+            }
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookHeader"
+            }
+          }
+        },
+        "required": [
+          "webhook_method",
+          "webhook_type",
+          "batch_name",
+          "hook_name",
+          "method"
+        ]
+      },
+      "RuntimeActionWebhookConfig": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "enum": ["validation", "append", "modification"],
+            "type": "string"
+          },
+          "runtimeAction": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requireAdobeAuth": {
+            "type": "boolean"
+          },
+          "webhook": {
+            "$ref": "#/components/schemas/WebhookDefinition"
+          }
+        },
+        "required": ["label", "description", "runtimeAction", "webhook"]
+      },
+      "ExternalUrlWebhookConfig": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "enum": ["validation", "append", "modification"],
+            "type": "string"
+          },
+          "webhook": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WebhookDefinition"
+              },
+              {
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": ["url"]
+              }
+            ]
+          }
+        },
+        "required": ["label", "description", "webhook"]
+      },
       "StepStatus": {
         "type": "object",
         "properties": {
@@ -3853,16 +3186,7 @@
             }
           },
           "meta": {
-            "type": "object",
-            "properties": {
-              "label": {
-                "type": "string"
-              },
-              "description": {
-                "type": "string"
-              }
-            },
-            "required": ["label"]
+            "$ref": "#/components/schemas/StepMeta"
           },
           "status": {
             "enum": ["pending", "in-progress", "succeeded", "failed"]
@@ -3890,40 +3214,12 @@
             }
           },
           "meta": {
-            "type": "object",
-            "properties": {
-              "label": {
-                "type": "string"
-              },
-              "description": {
-                "type": "string"
-              }
-            },
-            "required": ["label"]
+            "$ref": "#/components/schemas/StepMeta"
           },
           "issues": {
             "type": "array",
             "items": {
-              "type": "object",
-              "properties": {
-                "code": {
-                  "type": "string"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "severity": {
-                  "enum": ["error", "warning", "info"]
-                },
-                "details": {
-                  "type": "object",
-                  "propertyNames": {
-                    "type": "string"
-                  },
-                  "additionalProperties": {}
-                }
-              },
-              "required": ["code", "message", "severity"]
+              "$ref": "#/components/schemas/ValidationIssue"
             }
           },
           "children": {
