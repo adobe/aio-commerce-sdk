@@ -10,8 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import camelcase from "camelcase";
-
+import { camelcase } from "./camelcase";
 import { getHeader } from "./helpers";
 import { assertRequiredHeaders } from "./validation";
 

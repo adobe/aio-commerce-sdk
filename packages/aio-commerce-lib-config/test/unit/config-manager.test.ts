@@ -22,7 +22,12 @@ import {
   syncCommerceScopes,
   unsyncCommerceScopes,
 } from "#config-manager";
-import { byCodeAndLevel, byScopeId } from "#config-utils";
+import {
+  byCodeAndLevel,
+  byScopeId,
+  byStoreViewId,
+  byWebsiteId,
+} from "#config-utils";
 import * as configRepository from "#modules/configuration/configuration-repository";
 import {
   getGlobalSchema,
@@ -35,8 +40,11 @@ import { createMockLibState } from "#test/mocks/lib-state";
 import * as repository from "#utils/repository";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BusinessConfigSchema, ConfigValue } from "#index";
 import type { ScopeTree } from "#modules/scope-tree/types";
+
+const INVALID_SCOPE_RE = /INVALID_SCOPE/;
 
 const MockState = createMockLibState();
 const MockFiles = createMockLibFiles();
@@ -116,9 +124,8 @@ describe("ConfigManager functions", () => {
   });
 
   test("throws error when schema not initialized", async () => {
-    // Clear the schema to simulate not calling initialize
-    setGlobalSchema(null as unknown as BusinessConfigSchema);
-
+    // @ts-expect-error Clear the schema to simulate not calling initialize
+    setGlobalSchema(null);
     await expect(
       getConfiguration(byCodeAndLevel("global", "global")),
     ).rejects.toThrow();
@@ -253,16 +260,56 @@ describe("ConfigManager functions", () => {
       byCodeAndLevel("base", "website"),
     );
     const resultById = await getConfiguration(byScopeId("idw"));
+    const resultByWebsiteId = await getConfiguration(byWebsiteId(1));
 
     expect(resultByCodeLevel).toEqual(resultById);
+    expect(resultByCodeLevel).toEqual(resultByWebsiteId);
     expect(resultByCodeLevel.scope.id).toBe("idw");
     expect(resultByCodeLevel.scope.code).toBe("base");
     expect(resultByCodeLevel.scope.level).toBe("website");
   });
 
+  test("byWebsiteId and byStoreViewId resolve different scopes that share commerce_id=1", async () => {
+    // mockScopeTree has commerce_id=1 on website, store, and store_view
+    await configRepository.saveConfig(
+      "base",
+      buildPayload("idw", "base", "website", [
+        {
+          name: "currency",
+          value: "EUR",
+          origin: { code: "base", level: "website" },
+        },
+      ]),
+    );
+    await configRepository.saveConfig(
+      "default",
+      buildPayload("idsv", "default", "store_view", [
+        {
+          name: "currency",
+          value: "JPY",
+          origin: { code: "default", level: "store_view" },
+        },
+      ]),
+    );
+
+    const website = await getConfiguration(byWebsiteId(1));
+    const storeView = await getConfiguration(byStoreViewId(1));
+
+    expect(website.scope.id).toBe("idw");
+    expect(website.scope.level).toBe("website");
+    expect(storeView.scope.id).toBe("idsv");
+    expect(storeView.scope.level).toBe("store_view");
+  });
+
+  test("Commerce ID selector throws when the id is unknown", async () => {
+    await expect(getConfiguration(byWebsiteId(999))).rejects.toThrow(
+      INVALID_SCOPE_RE,
+    );
+  });
+
   test("throws error when setting configuration without schema initialized", async () => {
-    // Clear the schema to simulate not calling initialize
-    setGlobalSchema(null as unknown as BusinessConfigSchema);
+    // @ts-expect-error Clear the schema to simulate not calling initialize
+    setGlobalSchema(null);
 
     await expect(
       setConfiguration(
@@ -423,8 +470,8 @@ describe("unsyncCommerceScopes", () => {
 describe("initialize", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset global schema before each test
-    setGlobalSchema(null as unknown as BusinessConfigSchema);
+    // @ts-expect-error Reset global schema before each test
+    setGlobalSchema(null);
   });
 
   test("should set global schema when schema is provided", () => {
@@ -467,6 +514,50 @@ describe("initialize", () => {
     initialize({ schema: testSchema });
 
     expect(repository.setGlobalStateOptions).not.toHaveBeenCalled();
+  });
+
+  test("should resolve dynamic list options when runtime params are provided", async () => {
+    const testSchema = [
+      {
+        name: "paymentMethod",
+        type: "dynamicList",
+        selectionMode: "single",
+        options: (params: RuntimeActionParams) => [
+          { label: String(params.PAYMENT_LABEL), value: "braintree" },
+        ],
+        default: (opts) => opts[0].value,
+      },
+    ] satisfies BusinessConfigSchema;
+
+    const result = await initialize({
+      schema: testSchema,
+      params: { PAYMENT_LABEL: "Braintree" },
+    });
+
+    expect(result.configSchema[0]).toMatchObject({
+      name: "paymentMethod",
+      type: "list",
+      selectionMode: "single",
+      options: [{ label: "Braintree", value: "braintree" }],
+      default: "braintree",
+    });
+    expect(getGlobalSchema()).toEqual(result.configSchema);
+  });
+
+  test("should reject dynamic list options when runtime params are missing", () => {
+    const testSchema = [
+      {
+        name: "paymentMethod",
+        type: "dynamicList",
+        selectionMode: "single",
+        options: () => [{ label: "Braintree", value: "braintree" }],
+        default: (opts) => opts[0].value,
+      },
+    ] satisfies BusinessConfigSchema;
+
+    expect(() => initialize({ schema: testSchema })).toThrow(
+      "Dynamic list options require runtime params",
+    );
   });
 
   test("should succeed when no schema provided but global schema already exists", () => {

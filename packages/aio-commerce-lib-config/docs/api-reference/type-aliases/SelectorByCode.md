@@ -9,7 +9,7 @@ type SelectorByCode = {
 };
 ```
 
-Defined in: [config-utils.ts:539](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-config/source/config-utils.ts#L539)
+Defined in: [config-utils.ts:639](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-config/source/config-utils.ts#L639)
 
 Selector type for identifying a scope by its code only.
 
@@ -24,7 +24,7 @@ by: {
 }
 ```
 
-Defined in: [config-utils.ts:540](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-config/source/config-utils.ts#L540)
+Defined in: [config-utils.ts:640](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-config/source/config-utils.ts#L640)
 
 #### \_tag
 

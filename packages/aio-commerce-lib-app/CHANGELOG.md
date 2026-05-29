@@ -1,5 +1,31 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.6.0
+
+### Minor Changes
+
+- [#438](https://github.com/adobe/aio-commerce-sdk/pull/438) [`fbc70ea`](https://github.com/adobe/aio-commerce-sdk/commit/fbc70ea680e5f0f7da10fc1771e5327806aad4bc) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Support `dynamicList` business configuration fields. The generated `config` and `app-config` actions will now resolve list options at request time.
+
+- [#469](https://github.com/adobe/aio-commerce-sdk/pull/469) [`ad3d980`](https://github.com/adobe/aio-commerce-sdk/commit/ad3d980f0370e21c61f34426ab2638fb682e008d) Thanks [@aligent-lturner](https://github.com/aligent-lturner)! - Preserve a manually-set `runtime` on generated actions. Codegen no longer overwrites the `runtime` field in `ext.config.yaml`, so you can pin a different Node runtime (e.g. `nodejs:24`) and it survives regeneration.
+
+### Patch Changes
+
+- [#470](https://github.com/adobe/aio-commerce-sdk/pull/470) [`ec2d426`](https://github.com/adobe/aio-commerce-sdk/commit/ec2d4262166bde68a434025667f38609313ad712) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix CJS interop for ESM-only dependencies (`camelcase`, `ky`) on Node.js 22+
+
+- [#456](https://github.com/adobe/aio-commerce-sdk/pull/456) [`dac5c04`](https://github.com/adobe/aio-commerce-sdk/commit/dac5c04bbb33cf4e42de819b21fb4a5bc932a586) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Add validation on unique event provider label.
+
+- [#456](https://github.com/adobe/aio-commerce-sdk/pull/456) [`dac5c04`](https://github.com/adobe/aio-commerce-sdk/commit/dac5c04bbb33cf4e42de819b21fb4a5bc932a586) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Fix only one I/O Events registration being created when multiple event providers share the same runtime action.
+
+- [#457](https://github.com/adobe/aio-commerce-sdk/pull/457) [`6bc80bc`](https://github.com/adobe/aio-commerce-sdk/commit/6bc80bcf6fb28219998c2f0f7ff0f66f5f4457c0) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Fix event subscription rules not being forwarded to Commerce when installing an app
+
+- Updated dependencies [[`ec2d426`](https://github.com/adobe/aio-commerce-sdk/commit/ec2d4262166bde68a434025667f38609313ad712), [`705b3b8`](https://github.com/adobe/aio-commerce-sdk/commit/705b3b89b2bb0f1cee421434be4bc92b71ddc0a9), [`fb28949`](https://github.com/adobe/aio-commerce-sdk/commit/fb2894915c6fa411ed24f3501a7fc600e4eb88ee), [`fbc70ea`](https://github.com/adobe/aio-commerce-sdk/commit/fbc70ea680e5f0f7da10fc1771e5327806aad4bc)]:
+  - @adobe/aio-commerce-lib-api@1.2.1
+  - @adobe/aio-commerce-lib-core@1.1.1
+  - @adobe/aio-commerce-lib-config@1.5.0
+  - @adobe/aio-commerce-lib-events@1.2.1
+  - @adobe/aio-commerce-lib-webhooks@1.1.1
+  - @adobe/aio-commerce-lib-auth@1.1.1
+
 ## 1.5.0
 
 ### Minor Changes

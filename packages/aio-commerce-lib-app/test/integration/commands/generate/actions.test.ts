@@ -18,15 +18,24 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
   BACKEND_UI_EXTENSION_POINT_ID,
+  CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   GENERATED_ACTIONS_PATH,
   getExtensionPointFolderPath,
 } from "#commands/constants";
 import { exec, run } from "#commands/generate/actions/main";
-import { getAdminUiSdkRegistrationActionPath } from "#commands/utils";
+import {
+  getAdminUiSdkRegistrationActionPath,
+  getRuntimeAppConfigPath,
+} from "#commands/utils";
+import {
+  dynamicOptionsConfigFile,
+  dynamicOptionsConfigFileTs,
+} from "#test/fixtures/business-config";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
   configWithBusinessConfig,
+  configWithDynamicListOptions,
   configWithFullAdminUiSdk,
   configWithOneScript,
   minimalValidConfig,
@@ -120,6 +129,152 @@ describe("commands/generate/actions", () => {
 
           const content = await readFile(installationPath, "utf-8");
           expect(content).toContain("customScriptsLoader");
+        },
+      );
+    });
+
+    test("uses static JSON imports when business config schema is static", async () => {
+      await withTempProject(
+        { ...EMPTY_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await run(configWithBusinessConfig, tempDir);
+
+          const configPath = join(
+            getActionsDir(tempDir, CONFIGURATION_EXTENSION_POINT_ID),
+            "config.js",
+          );
+          const appConfigPath = join(
+            getActionsDir(tempDir, EXTENSIBILITY_EXTENSION_POINT_ID),
+            "app-config.js",
+          );
+
+          const configContent = await readFile(configPath, "utf-8");
+          expect(configContent).toContain(
+            'import configSchema from "../../configuration-schema.json" with { type: "json" }',
+          );
+          expect(configContent).not.toContain("#app.commerce.config");
+
+          const appConfigContent = await readFile(appConfigPath, "utf-8");
+          expect(appConfigContent).toContain(
+            'import appConfig from "../../app.commerce.manifest.json" with { type: "json" }',
+          );
+          expect(appConfigContent).not.toContain("#app.commerce.config");
+        },
+      );
+    });
+
+    test("rewrites schema/manifest imports when business config schema is dynamic", async () => {
+      await withTempProject(
+        {
+          ...EMPTY_PROJECT,
+          ...makeTemplateFiles(),
+          "package.json": JSON.stringify({ type: "module" }),
+          "app.commerce.config.js": dynamicOptionsConfigFile,
+        },
+        async (tempDir) => {
+          await run(configWithDynamicListOptions, tempDir);
+
+          const configPath = join(
+            getActionsDir(tempDir, CONFIGURATION_EXTENSION_POINT_ID),
+            "config.js",
+          );
+          const appConfigPath = join(
+            getActionsDir(tempDir, EXTENSIBILITY_EXTENSION_POINT_ID),
+            "app-config.js",
+          );
+
+          const configContent = await readFile(configPath, "utf-8");
+          expect(configContent).toContain('"#app.commerce.config"');
+          expect(configContent).toContain(
+            "configSchema: appConfig.businessConfig.schema",
+          );
+          expect(configContent).not.toContain("configuration-schema.json");
+          expect(configContent).not.toContain("configuration-schema.js");
+
+          const appConfigContent = await readFile(appConfigPath, "utf-8");
+          expect(appConfigContent).toContain('"#app.commerce.config"');
+          expect(appConfigContent).not.toContain("app.commerce.manifest.json");
+          expect(appConfigContent).not.toContain(
+            '"../../app.commerce.manifest.js"',
+          );
+        },
+      );
+    });
+
+    test("generates a runtime app config module and #app.commerce.config alias for a JS config file", async () => {
+      await withTempProject(
+        {
+          "package.json": JSON.stringify({ type: "module" }),
+          "app.commerce.config.js": dynamicOptionsConfigFile,
+          ...makeTemplateFiles(),
+        },
+        async (tempDir) => {
+          await run(configWithDynamicListOptions, tempDir);
+
+          const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
+          expect(existsSync(runtimeConfigPath)).toBe(true);
+
+          // JS config files get a passthrough wrapper.
+          const moduleContents = await readFile(runtimeConfigPath, "utf-8");
+          expect(moduleContents).toContain("import appConfig from");
+          expect(moduleContents).toContain("export default appConfig");
+
+          const pkg = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
+          );
+          expect(pkg.imports["#app.commerce.config"]).toBe(
+            "./src/commerce-extensibility-1/.generated/app.commerce.config.js",
+          );
+        },
+      );
+    });
+
+    test("bundles a TypeScript app config file via esbuild", async () => {
+      await withTempProject(
+        {
+          "package.json": JSON.stringify({ type: "module" }),
+          "app.commerce.config.ts": dynamicOptionsConfigFileTs,
+          ...makeTemplateFiles(),
+        },
+        async (tempDir) => {
+          await run(configWithDynamicListOptions, tempDir);
+
+          const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
+          expect(existsSync(runtimeConfigPath)).toBe(true);
+
+          const mod = await import(runtimeConfigPath);
+          expect(mod.default.metadata.id).toBe("dynamic-options");
+          expect(typeof mod.default.businessConfig.schema[0].options).toBe(
+            "function",
+          );
+        },
+      );
+    });
+
+    test("removes the runtime app config module and alias when regenerating as static", async () => {
+      await withTempProject(
+        {
+          ...EMPTY_PROJECT,
+          ...makeTemplateFiles(),
+          "package.json": JSON.stringify({
+            type: "module",
+            imports: {
+              "#app.commerce.config":
+                "./src/commerce-extensibility-1/.generated/app.commerce.config.js",
+            },
+          }),
+          [getRuntimeAppConfigPath()]: "export default {};",
+        },
+        async (tempDir) => {
+          await run(minimalValidConfig, tempDir);
+          expect(existsSync(join(tempDir, getRuntimeAppConfigPath()))).toBe(
+            false,
+          );
+
+          const pkg = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
+          );
+          expect(pkg.imports?.["#app.commerce.config"]).toBeUndefined();
         },
       );
     });

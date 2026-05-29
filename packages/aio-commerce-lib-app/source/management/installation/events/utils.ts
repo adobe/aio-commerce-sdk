@@ -140,8 +140,20 @@ export function getIoEventCode(name: string, providerType: EventProviderType) {
     : name;
 }
 
+/** Maps a provider's metadata type to its human-readable label ("Commerce" or "External"). */
+function getProviderTypeLabel(provider: IoEventProvider) {
+  return PROVIDER_TYPE_TO_LABEL[
+    provider.provider_metadata as EventProviderType
+  ];
+}
+
 /**
- * Generates a registration name and description based on the provider, events, and runtime action.
+ * Generates a registration name based on the provider type, provider label, and runtime action.
+ *
+ * Prefixes with the provider type label ("Commerce" or "External") for readability, then the
+ * provider's own label to ensure uniqueness when multiple providers of the same type route
+ * events to the same runtime action.
+ *
  * @param provider - The provider this registration is associated to.
  * @param runtimeAction - The runtime action this registration points to.
  */
@@ -149,15 +161,32 @@ export function getRegistrationName(
   provider: IoEventProvider,
   runtimeAction: string,
 ) {
-  const providerType = provider.provider_metadata as EventProviderType;
-  const providerLabel = PROVIDER_TYPE_TO_LABEL[providerType];
-
-  // As per the schema, runtimeAction is always in the format "package-name/action-name".
   const [packageName, actionName] = runtimeAction
     .split("/")
     .map(kebabToTitleCase);
 
-  return `${providerLabel} Event Registration: ${actionName} (${packageName})`;
+  return `${getProviderTypeLabel(provider)} Event Registration: ${provider.label} - ${actionName} (${packageName})`;
+}
+
+/**
+ * Returns the registration name in the legacy format used by SDK versions that built
+ * the name from the generic provider type label ("Commerce" / "External") rather than
+ * the provider's own label. Used during uninstall to match registrations that were
+ * created before the naming change.
+ *
+ * @param provider - The provider this registration is associated to.
+ * @param runtimeAction - The runtime action this registration points to.
+ * @deprecated Use {@link getRegistrationName} for all new registrations.
+ */
+export function getLegacyRegistrationName(
+  provider: IoEventProvider,
+  runtimeAction: string,
+) {
+  const [packageName, actionName] = runtimeAction
+    .split("/")
+    .map(kebabToTitleCase);
+
+  return `${getProviderTypeLabel(provider)} Event Registration: ${actionName} (${packageName})`;
 }
 
 /**

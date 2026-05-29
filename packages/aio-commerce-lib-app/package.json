@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-lib-app",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "private": false,
   "engines": {
     "node": ">=22 <=24"
@@ -32,6 +32,8 @@
     "aio-commerce-lib-app": "./bin/cli.mjs"
   },
   "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public",
     "exports": {
       "./actions/*": {
         "import": {
@@ -114,9 +116,10 @@
     "@adobe/aio-commerce-lib-events": "workspace:*",
     "@adobe/aio-commerce-lib-webhooks": "workspace:*",
     "@adobe/aio-lib-core-logging": "catalog:",
-    "@npmcli/package-json": "^7.0.5",
+    "@npmcli/package-json": "^8.0.0",
     "camelcase": "catalog:",
     "consola": "catalog:",
+    "esbuild": "^0.28.0",
     "jiti": "^2.6.1",
     "ky": "catalog:",
     "openwhisk": "^3.21.8",
