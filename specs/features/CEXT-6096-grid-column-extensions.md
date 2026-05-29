@@ -183,6 +183,17 @@ extensions:
 
 ## Design
 
+### Config key rename
+
+The top-level config key changes from `adminUiSdk` to `adminUi`. This is a rename across the SDK:
+
+- The config property in `defineConfig()` — `adminUiSdk` → `adminUi`
+- `AdminUiSdkSchema` → `AdminUiSchema`
+- `AdminUiSdkConfiguration` → `AdminUiConfiguration`
+- `AdminUiSdkRegistration` → `AdminUiRegistration`
+- `hasAdminUiSdk()` → `hasAdminUi()`
+- All related exported types and guards in `packages/aio-commerce-lib-app`
+
 ### Schema changes
 
 `packages/aio-commerce-lib-app/source/config/schema/admin-ui-sdk.ts`
