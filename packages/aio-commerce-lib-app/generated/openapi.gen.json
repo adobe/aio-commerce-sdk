@@ -1,7 +1,2442 @@
 {
   "info": {
-    "title": "AIO Commerce SDK API",
-    "version": "1.3.0"
+    "title": "App Management API",
+    "version": "1.6.0",
+    "license": {
+      "identifier": "Apache-2.0",
+      "name": "Apache-2.0"
+    }
   },
-  "openapi": "3.1.0"
+  "openapi": "3.1.0",
+  "paths": {
+    "/app-config": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "The resolved and validated Commerce App configuration."
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Get Commerce App Configuration",
+        "operationId": "getAppConfig",
+        "description": "Returns the Commerce App configuration after resolving and validating it against the schema.",
+        "parameters": [
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/config": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "The configuration schema and the stored configuration values for the requested scope. Password fields are masked in the response."
+          },
+          "400": {
+            "description": "The request is invalid or could not be parsed."
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Get Configuration Values",
+        "operationId": "getConfiguration",
+        "description": "Returns the application configuration schema and the stored values for the requested scope.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scopeId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "commerceEnv",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paas",
+                "saas"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "put": {
+        "responses": {
+          "200": {
+            "description": "The configuration values were successfully updated. Returns the updated configuration with password fields masked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string"
+                    },
+                    "scope": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "level": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "code",
+                        "level"
+                      ]
+                    },
+                    "config": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "timestamp",
+                    "scope",
+                    "config"
+                  ],
+                  "description": "Configuration values updated. Use PATCH instead."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid or could not be parsed."
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Set Configuration Values (Deprecated)",
+        "operationId": "putConfiguration",
+        "deprecated": true,
+        "description": "Replaces all configuration values for a scope. This endpoint is deprecated in favor of PATCH.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "scopeId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "config": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "value": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "value"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "scopeId",
+                  "config"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "responses": {
+          "200": {
+            "description": "The configuration values were successfully updated. Returns the updated configuration with password fields masked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string"
+                    },
+                    "scope": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "level": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "code",
+                        "level"
+                      ]
+                    },
+                    "config": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "timestamp",
+                    "scope",
+                    "config"
+                  ],
+                  "description": "Configuration values updated for the given scope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid or could not be parsed."
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Patch Configuration Values",
+        "operationId": "patchConfiguration",
+        "description": "Partially updates configuration values for a scope. Unsets those values that are sent with a null value.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "scopeId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "config": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "value": {
+                          "anyOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "value"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "scopeId",
+                  "config"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/installation": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "The current installation workflow state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "const": "in-progress"
+                        },
+                        "startedAt": {
+                          "type": "string"
+                        },
+                        "step": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "path": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "meta": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "label"
+                              ]
+                            },
+                            "status": {
+                              "anyOf": [
+                                {
+                                  "const": "pending"
+                                },
+                                {
+                                  "const": "in-progress"
+                                },
+                                {
+                                  "const": "succeeded"
+                                },
+                                {
+                                  "const": "failed"
+                                }
+                              ]
+                            },
+                            "children": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/StepStatus"
+                              }
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "id",
+                            "path",
+                            "meta",
+                            "status",
+                            "children"
+                          ],
+                          "title": "StepStatus"
+                        },
+                        "data": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "status",
+                        "startedAt",
+                        "step",
+                        "data"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "const": "succeeded"
+                        },
+                        "startedAt": {
+                          "type": "string"
+                        },
+                        "completedAt": {
+                          "type": "string"
+                        },
+                        "step": {
+                          "$ref": "#/components/schemas/StepStatus"
+                        },
+                        "data": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "status",
+                        "startedAt",
+                        "completedAt",
+                        "step",
+                        "data"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "const": "failed"
+                        },
+                        "startedAt": {
+                          "type": "string"
+                        },
+                        "completedAt": {
+                          "type": "string"
+                        },
+                        "step": {
+                          "$ref": "#/components/schemas/StepStatus"
+                        },
+                        "data": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "error": {
+                          "type": "object",
+                          "properties": {
+                            "path": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "key": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "payload": {}
+                          },
+                          "required": [
+                            "path",
+                            "key"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "status",
+                        "startedAt",
+                        "completedAt",
+                        "step",
+                        "data",
+                        "error"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No installation workflow state has been stored yet."
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Get Installation State",
+        "operationId": "getInstallationState",
+        "description": "Returns the current installation workflow state if an installation has been started.",
+        "parameters": [
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "post": {
+        "responses": {
+          "202": {
+            "description": "The installation workflow was accepted and queued for asynchronous execution.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "activationId": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "const": "in-progress"
+                    },
+                    "startedAt": {
+                      "type": "string"
+                    },
+                    "step": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "path": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "label": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "label"
+                          ]
+                        },
+                        "status": {
+                          "anyOf": [
+                            {
+                              "const": "pending"
+                            },
+                            {
+                              "const": "in-progress"
+                            },
+                            {
+                              "const": "succeeded"
+                            },
+                            {
+                              "const": "failed"
+                            }
+                          ]
+                        },
+                        "children": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/StepStatus"
+                          }
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "id",
+                        "path",
+                        "meta",
+                        "status",
+                        "children"
+                      ],
+                      "title": "StepStatus"
+                    },
+                    "data": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "id",
+                    "status",
+                    "startedAt",
+                    "step",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid or could not be parsed."
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "409": {
+            "description": "The installation workflow is already running or has already completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Start Installation",
+        "operationId": "startInstallation",
+        "description": "Starts the installation workflow and stores the initial execution state.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appData": {
+                    "type": "object",
+                    "properties": {
+                      "consumerOrgId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "orgName": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "projectId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "projectName": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "projectTitle": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "workspaceId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "workspaceName": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "workspaceTitle": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "consumerOrgId",
+                      "orgName",
+                      "projectId",
+                      "projectName",
+                      "projectTitle",
+                      "workspaceId",
+                      "workspaceName",
+                      "workspaceTitle"
+                    ]
+                  },
+                  "commerceBaseUrl": {
+                    "type": "string"
+                  },
+                  "commerceEnv": {
+                    "type": "string"
+                  },
+                  "ioEventsUrl": {
+                    "type": "string"
+                  },
+                  "ioEventsEnv": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appData",
+                  "commerceBaseUrl",
+                  "commerceEnv",
+                  "ioEventsUrl",
+                  "ioEventsEnv"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/installation/validation": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "The validation result, including issue counts and per-step validation results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "valid": {
+                      "type": "boolean"
+                    },
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "totalIssues": {
+                          "type": "number"
+                        },
+                        "errors": {
+                          "type": "number"
+                        },
+                        "warnings": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "totalIssues",
+                        "errors",
+                        "warnings"
+                      ]
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "path": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "label": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "label"
+                          ]
+                        },
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "code": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "severity": {
+                                "anyOf": [
+                                  {
+                                    "const": "error"
+                                  },
+                                  {
+                                    "const": "warning"
+                                  },
+                                  {
+                                    "const": "info"
+                                  }
+                                ]
+                              },
+                              "details": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {}
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "message",
+                              "severity"
+                            ]
+                          }
+                        },
+                        "children": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/StepValidationResult"
+                          }
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "path",
+                        "meta",
+                        "issues",
+                        "children"
+                      ],
+                      "title": "StepValidationResult"
+                    }
+                  },
+                  "required": [
+                    "valid",
+                    "summary",
+                    "result"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid or could not be parsed."
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Validate Installation",
+        "operationId": "validateInstallation",
+        "description": "Validates the installation inputs and workflow steps without starting installation.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appData": {
+                    "type": "object",
+                    "properties": {
+                      "consumerOrgId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "orgName": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "projectId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "projectName": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "projectTitle": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "workspaceId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "workspaceName": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "workspaceTitle": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "consumerOrgId",
+                      "orgName",
+                      "projectId",
+                      "projectName",
+                      "projectTitle",
+                      "workspaceId",
+                      "workspaceName",
+                      "workspaceTitle"
+                    ]
+                  },
+                  "commerceBaseUrl": {
+                    "type": "string"
+                  },
+                  "commerceEnv": {
+                    "type": "string"
+                  },
+                  "ioEventsUrl": {
+                    "type": "string"
+                  },
+                  "ioEventsEnv": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appData",
+                  "commerceBaseUrl",
+                  "commerceEnv",
+                  "ioEventsUrl",
+                  "ioEventsEnv"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/installation/uninstallation": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "The current uninstallation workflow state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "const": "in-progress"
+                        },
+                        "startedAt": {
+                          "type": "string"
+                        },
+                        "step": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "path": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "meta": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "label"
+                              ]
+                            },
+                            "status": {
+                              "anyOf": [
+                                {
+                                  "const": "pending"
+                                },
+                                {
+                                  "const": "in-progress"
+                                },
+                                {
+                                  "const": "succeeded"
+                                },
+                                {
+                                  "const": "failed"
+                                }
+                              ]
+                            },
+                            "children": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/StepStatus"
+                              }
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "id",
+                            "path",
+                            "meta",
+                            "status",
+                            "children"
+                          ],
+                          "title": "StepStatus"
+                        },
+                        "data": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "status",
+                        "startedAt",
+                        "step",
+                        "data"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "const": "succeeded"
+                        },
+                        "startedAt": {
+                          "type": "string"
+                        },
+                        "completedAt": {
+                          "type": "string"
+                        },
+                        "step": {
+                          "$ref": "#/components/schemas/StepStatus"
+                        },
+                        "data": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "status",
+                        "startedAt",
+                        "completedAt",
+                        "step",
+                        "data"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "const": "failed"
+                        },
+                        "startedAt": {
+                          "type": "string"
+                        },
+                        "completedAt": {
+                          "type": "string"
+                        },
+                        "step": {
+                          "$ref": "#/components/schemas/StepStatus"
+                        },
+                        "data": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "error": {
+                          "type": "object",
+                          "properties": {
+                            "path": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "key": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "payload": {}
+                          },
+                          "required": [
+                            "path",
+                            "key"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "status",
+                        "startedAt",
+                        "completedAt",
+                        "step",
+                        "data",
+                        "error"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No uninstallation workflow state has been stored yet."
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Get Uninstallation State",
+        "operationId": "getUninstallationState",
+        "description": "Returns the current uninstallation workflow state if an uninstallation has been started.",
+        "parameters": [
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "post": {
+        "responses": {
+          "202": {
+            "description": "The uninstallation workflow was accepted and queued for asynchronous execution.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "activationId": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "const": "in-progress"
+                    },
+                    "startedAt": {
+                      "type": "string"
+                    },
+                    "step": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "path": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "label": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "label"
+                          ]
+                        },
+                        "status": {
+                          "anyOf": [
+                            {
+                              "const": "pending"
+                            },
+                            {
+                              "const": "in-progress"
+                            },
+                            {
+                              "const": "succeeded"
+                            },
+                            {
+                              "const": "failed"
+                            }
+                          ]
+                        },
+                        "children": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/StepStatus"
+                          }
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "id",
+                        "path",
+                        "meta",
+                        "status",
+                        "children"
+                      ],
+                      "title": "StepStatus"
+                    },
+                    "data": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "id",
+                    "status",
+                    "startedAt",
+                    "step",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid or could not be parsed."
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "409": {
+            "description": "The uninstallation workflow is already running.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Start Uninstallation",
+        "operationId": "startUninstallation",
+        "description": "Starts the uninstallation workflow and stores the initial execution state.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appData": {
+                    "type": "object",
+                    "properties": {
+                      "consumerOrgId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "orgName": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "projectId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "projectName": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "projectTitle": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "workspaceId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "workspaceName": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "workspaceTitle": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "consumerOrgId",
+                      "orgName",
+                      "projectId",
+                      "projectName",
+                      "projectTitle",
+                      "workspaceId",
+                      "workspaceName",
+                      "workspaceTitle"
+                    ]
+                  },
+                  "commerceBaseUrl": {
+                    "type": "string"
+                  },
+                  "commerceEnv": {
+                    "type": "string"
+                  },
+                  "ioEventsUrl": {
+                    "type": "string"
+                  },
+                  "ioEventsEnv": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appData",
+                  "commerceBaseUrl",
+                  "commerceEnv",
+                  "ioEventsUrl",
+                  "ioEventsEnv"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "The stored uninstallation workflow state was cleared."
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Clear Uninstallation State",
+        "operationId": "clearUninstallationState",
+        "description": "Clears the stored uninstallation workflow state without starting offboarding.",
+        "parameters": [
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/registration": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "The Admin UI SDK registration payload."
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Get Registration",
+        "operationId": "getRegistration",
+        "description": "Returns the Admin UI SDK registration object configured for this app.",
+        "parameters": [
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/scope-tree": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "The current scope tree.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "scopes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "code": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "level": {
+                            "type": "string"
+                          },
+                          "is_editable": {
+                            "type": "boolean"
+                          },
+                          "is_final": {
+                            "type": "boolean"
+                          },
+                          "is_removable": {
+                            "type": "boolean"
+                          },
+                          "commerce_id": {
+                            "type": "number"
+                          },
+                          "children": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/ScopeNode"
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "code",
+                          "label",
+                          "level",
+                          "is_editable",
+                          "is_final",
+                          "is_removable"
+                        ],
+                        "title": "ScopeNode"
+                      }
+                    }
+                  },
+                  "required": [
+                    "scopes"
+                  ]
+                }
+              }
+            }
+          },
+          "203": {
+            "description": "The cached scope tree returned when fresh scope data is not available.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "scopes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "code": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "level": {
+                            "type": "string"
+                          },
+                          "is_editable": {
+                            "type": "boolean"
+                          },
+                          "is_final": {
+                            "type": "boolean"
+                          },
+                          "is_removable": {
+                            "type": "boolean"
+                          },
+                          "commerce_id": {
+                            "type": "number"
+                          },
+                          "children": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/ScopeNode"
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "code",
+                          "label",
+                          "level",
+                          "is_editable",
+                          "is_final",
+                          "is_removable"
+                        ],
+                        "title": "ScopeNode"
+                      }
+                    }
+                  },
+                  "required": [
+                    "scopes"
+                  ],
+                  "description": "Cached scope tree"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Get Scope Tree",
+        "operationId": "getScopeTree",
+        "description": "Returns the scope tree used by Commerce configuration flows.",
+        "parameters": [
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "put": {
+        "responses": {
+          "200": {
+            "description": "The stored custom scope tree result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "timestamp": {
+                          "type": "string"
+                        },
+                        "scopes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "code": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "level": {
+                                "type": "string"
+                              },
+                              "is_editable": {
+                                "type": "boolean"
+                              },
+                              "is_final": {
+                                "type": "boolean"
+                              },
+                              "children": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/CustomScopeOutput"
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "code",
+                              "label",
+                              "level",
+                              "is_editable",
+                              "is_final"
+                            ],
+                            "title": "CustomScopeOutput"
+                          }
+                        }
+                      },
+                      "required": [
+                        "message",
+                        "timestamp",
+                        "scopes"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid or could not be parsed."
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Set Custom Scope Tree",
+        "operationId": "setCustomScopeTree",
+        "description": "Stores a custom scope tree to override the synchronized Commerce scope tree.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "scopes": {
+                    "type": "array",
+                    "items": {}
+                  }
+                },
+                "required": [
+                  "scopes"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/scope-tree/commerce": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "The synchronized Commerce scope tree.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "scopes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "code": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "level": {
+                            "type": "string"
+                          },
+                          "is_editable": {
+                            "type": "boolean"
+                          },
+                          "is_final": {
+                            "type": "boolean"
+                          },
+                          "is_removable": {
+                            "type": "boolean"
+                          },
+                          "commerce_id": {
+                            "type": "number"
+                          },
+                          "children": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/ScopeNode"
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "code",
+                          "label",
+                          "level",
+                          "is_editable",
+                          "is_final",
+                          "is_removable"
+                        ],
+                        "title": "ScopeNode"
+                      }
+                    },
+                    "synced": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "scopes",
+                    "synced"
+                  ]
+                }
+              }
+            }
+          },
+          "203": {
+            "description": "The cached scope tree returned when Commerce scopes are not synchronized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "scopes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "code": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "level": {
+                            "type": "string"
+                          },
+                          "is_editable": {
+                            "type": "boolean"
+                          },
+                          "is_final": {
+                            "type": "boolean"
+                          },
+                          "is_removable": {
+                            "type": "boolean"
+                          },
+                          "commerce_id": {
+                            "type": "number"
+                          },
+                          "children": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/ScopeNode"
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "code",
+                          "label",
+                          "level",
+                          "is_editable",
+                          "is_final",
+                          "is_removable"
+                        ],
+                        "title": "ScopeNode"
+                      }
+                    },
+                    "synced": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "scopes",
+                    "synced"
+                  ],
+                  "description": "Cached scope tree"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid or could not be parsed."
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Sync Commerce Scopes",
+        "operationId": "syncCommerceScopes",
+        "description": "Synchronizes scope data from Adobe Commerce and updates the local scope tree.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "commerceBaseUrl": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "commerceEnv": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "commerceBaseUrl"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "The result of removing synchronized Commerce scope data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "An unexpected server error occurred."
+          }
+        },
+        "summary": "Unsync Commerce Scopes",
+        "operationId": "unsyncCommerceScopes",
+        "description": "Removes the synchronized Commerce scope tree and returns the unsync result.",
+        "parameters": [
+          {
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "in": "header",
+            "name": "x-gw-ims-org-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "imsOAuth": []
+    }
+  ],
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "StepStatus": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label"
+            ]
+          },
+          "status": {
+            "anyOf": [
+              {
+                "const": "pending"
+              },
+              {
+                "const": "in-progress"
+              },
+              {
+                "const": "succeeded"
+              },
+              {
+                "const": "failed"
+              }
+            ]
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepStatus"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "id",
+          "path",
+          "meta",
+          "status",
+          "children"
+        ],
+        "title": "StepStatus"
+      },
+      "StepValidationResult": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label"
+            ]
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "severity": {
+                  "anyOf": [
+                    {
+                      "const": "error"
+                    },
+                    {
+                      "const": "warning"
+                    },
+                    {
+                      "const": "info"
+                    }
+                  ]
+                },
+                "details": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              },
+              "required": [
+                "code",
+                "message",
+                "severity"
+              ]
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepValidationResult"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "path",
+          "meta",
+          "issues",
+          "children"
+        ],
+        "title": "StepValidationResult"
+      },
+      "ScopeNode": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "is_editable": {
+            "type": "boolean"
+          },
+          "is_final": {
+            "type": "boolean"
+          },
+          "is_removable": {
+            "type": "boolean"
+          },
+          "commerce_id": {
+            "type": "number"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScopeNode"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "label",
+          "level",
+          "is_editable",
+          "is_final",
+          "is_removable"
+        ],
+        "title": "ScopeNode"
+      },
+      "CustomScopeOutput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "is_editable": {
+            "type": "boolean"
+          },
+          "is_final": {
+            "type": "boolean"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomScopeOutput"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "label",
+          "level",
+          "is_editable",
+          "is_final"
+        ],
+        "title": "CustomScopeOutput"
+      }
+    },
+    "securitySchemes": {
+      "imsOAuth": {
+        "type": "oauth2",
+        "description": "Adobe IMS OAuth 2.0 access token. Send it as Authorization: Bearer <IMS access token>.",
+        "flows": {
+          "clientCredentials": {
+            "scopes": {},
+            "tokenUrl": "https://ims-na1.adobelogin.com/ims/token/v3"
+          }
+        }
+      }
+    }
+  }
 }
