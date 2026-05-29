@@ -27,7 +27,7 @@ import pkg from "../package.json" with { type: "json" };
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-/** Generates the OpenAPI specification for the SDK actions */
+/** Generates the OpenAPI specification for the App Management actions */
 export async function generate() {
   try {
     const spec = generateOpenAPISpec(
@@ -38,7 +38,31 @@ export async function generate() {
         { prefix: "/registration", router: registrationRouter },
         { prefix: "/scope-tree", router: scopeTreeRouter },
       ],
-      { title: "AIO Commerce SDK API", version: pkg.version },
+      {
+        title: "App Management API",
+        version: pkg.version,
+
+        license: {
+          identifier: "Apache-2.0",
+          name: "Apache-2.0",
+        },
+      },
+      {
+        security: [{ imsOAuth: [] }],
+        securitySchemes: {
+          imsOAuth: {
+            type: "oauth2",
+            flows: {
+              clientCredentials: {
+                scopes: {},
+                tokenUrl: "https://ims-na1.adobelogin.com/ims/token/v3",
+              },
+            },
+          },
+        },
+
+        servers: [{ url: "/" }],
+      },
     );
 
     const outPath = join(__dirname, "../generated/openapi.gen.json");

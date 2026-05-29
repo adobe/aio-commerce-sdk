@@ -58,9 +58,22 @@ export const router = new HttpActionRouter().use(
 
 /** GET / - Get scope tree */
 router.get("/", {
-  responses: {
-    200: ScopeTreeResponseSchema,
-    203: CachedScopeTreeResponseSchema,
+  metadata: {
+    operationId: "getScopeTree",
+    summary: "Get Scope Tree",
+    description: "Returns the scope tree used by Commerce configuration flows.",
+
+    responses: {
+      200: {
+        schema: ScopeTreeResponseSchema,
+        description: "The current scope tree.",
+      },
+      203: {
+        schema: CachedScopeTreeResponseSchema,
+        description:
+          "The cached scope tree returned when fresh scope data is not available.",
+      },
+    },
   },
 
   handler: async (_req, ctx) => {
@@ -87,8 +100,18 @@ router.get("/", {
 /** PUT / - Set custom scope tree */
 router.put("/", {
   body: SetCustomScopeTreeBodySchema,
-  responses: {
-    200: SetCustomScopeTreeResponseSchema,
+  metadata: {
+    operationId: "setCustomScopeTree",
+    summary: "Set Custom Scope Tree",
+    description:
+      "Stores a custom scope tree to override the synchronized Commerce scope tree.",
+
+    responses: {
+      200: {
+        schema: SetCustomScopeTreeResponseSchema,
+        description: "The stored custom scope tree result.",
+      },
+    },
   },
 
   handler: async (req, ctx) => {
@@ -118,9 +141,23 @@ router.put("/", {
 /** POST /commerce - Sync commerce scopes */
 router.post("/commerce", {
   body: SyncCommerceScopesBodySchema,
-  responses: {
-    200: SyncedScopeTreeResponseSchema,
-    203: CachedSyncedScopeTreeResponseSchema,
+  metadata: {
+    operationId: "syncCommerceScopes",
+    summary: "Sync Commerce Scopes",
+    description:
+      "Synchronizes scope data from Adobe Commerce and updates the local scope tree.",
+
+    responses: {
+      200: {
+        schema: SyncedScopeTreeResponseSchema,
+        description: "The synchronized Commerce scope tree.",
+      },
+      203: {
+        schema: CachedSyncedScopeTreeResponseSchema,
+        description:
+          "The cached scope tree returned when Commerce scopes are not synchronized.",
+      },
+    },
   },
 
   handler: async (req, ctx) => {
@@ -182,7 +219,19 @@ router.post("/commerce", {
 
 /** DELETE /commerce - Unsync commerce scopes */
 router.delete("/commerce", {
-  responses: { 200: UnsyncScopeTreeResponseSchema },
+  metadata: {
+    operationId: "unsyncCommerceScopes",
+    summary: "Unsync Commerce Scopes",
+    description:
+      "Removes the synchronized Commerce scope tree and returns the unsync result.",
+
+    responses: {
+      200: {
+        schema: UnsyncScopeTreeResponseSchema,
+        description: "The result of removing synchronized Commerce scope data.",
+      },
+    },
+  },
   handler: async (_req, ctx) => {
     const { logger } = ctx;
     logger.debug("Unsyncing commerce scopes...");

@@ -26,7 +26,7 @@
   },
   "exports": {
     "./actions": "./source/actions/index.ts",
-    "./actions/openapi": "./source/actions/http/openapi.ts",
+    "./actions/openapi": "./source/actions/http/openapi/index.ts",
     "./storage": "./source/storage/index.ts",
     "./valibot": "./source/valibot/index.ts",
     "./logging": "./source/logging.ts",
@@ -52,6 +52,7 @@
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "@aio-commerce-sdk/config-vitest": "workspace:*",
+    "openapi3-ts": "^4.5.0",
     "typescript": "catalog:"
   },
   "sideEffects": false

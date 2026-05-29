@@ -113,7 +113,20 @@ export const router = new HttpActionRouter<ConfigActionContext>().use(
 /** GET / - Retrieve configuration */
 router.get("/", {
   query: GetConfigurationQuerySchema,
-  responses: { 200: GetConfigurationResponseSchema },
+  metadata: {
+    summary: "Get Configuration Values",
+    operationId: "getConfiguration",
+    description:
+      "Returns the application configuration schema and the stored values for the requested scope.",
+
+    responses: {
+      200: {
+        schema: GetConfigurationResponseSchema,
+        description:
+          "The configuration schema and the stored configuration values for the requested scope. Password fields are masked in the response.",
+      },
+    },
+  },
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
@@ -155,7 +168,21 @@ router.get("/", {
  */
 router.put("/", {
   body: PutConfigBodySchema,
-  responses: { 200: SetConfigurationResponseSchema },
+  metadata: {
+    deprecated: true,
+    operationId: "putConfiguration",
+    summary: "Set Configuration Values (Deprecated)",
+    description:
+      "Replaces all configuration values for a scope. This endpoint is deprecated in favor of PATCH.",
+
+    responses: {
+      200: {
+        schema: SetConfigurationResponseSchema,
+        description:
+          "The configuration values were successfully updated. Returns the updated configuration with password fields masked.",
+      },
+    },
+  },
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
@@ -195,7 +222,20 @@ router.put("/", {
 /** PATCH / - Partially update configuration */
 router.patch("/", {
   body: PatchConfigBodySchema,
-  responses: { 200: PatchConfigurationResponseSchema },
+  metadata: {
+    summary: "Patch Configuration Values",
+    operationId: "patchConfiguration",
+    description:
+      "Partially updates configuration values for a scope. Unsets those values that are sent with a null value.",
+
+    responses: {
+      200: {
+        schema: PatchConfigurationResponseSchema,
+        description:
+          "The configuration values were successfully updated. Returns the updated configuration with password fields masked.",
+      },
+    },
+  },
 
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;

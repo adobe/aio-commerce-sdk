@@ -18,28 +18,34 @@ import * as v from "valibot";
 // ---------------------------------------------------------------------------
 
 /** Mirrors `ScopeNode` from `@adobe/aio-commerce-lib-config`. */
-export const ScopeNodeSchema: v.GenericSchema = v.object({
-  id: v.string(),
-  code: v.string(),
-  label: v.string(),
-  level: v.string(),
-  is_editable: v.boolean(),
-  is_final: v.boolean(),
-  is_removable: v.boolean(),
-  commerce_id: v.optional(v.number()),
-  children: v.optional(v.lazy(() => v.array(ScopeNodeSchema))),
-});
+export const ScopeNodeSchema: v.GenericSchema = v.pipe(
+  v.object({
+    id: v.string(),
+    code: v.string(),
+    label: v.string(),
+    level: v.string(),
+    is_editable: v.boolean(),
+    is_final: v.boolean(),
+    is_removable: v.boolean(),
+    commerce_id: v.optional(v.number()),
+    children: v.optional(v.array(v.lazy(() => ScopeNodeSchema))),
+  }),
+  v.title("ScopeNode"),
+);
 
 /** Mirrors `CustomScopeOutput` from `@adobe/aio-commerce-lib-config`. */
-export const CustomScopeOutputSchema: v.GenericSchema = v.object({
-  id: v.string(),
-  code: v.string(),
-  label: v.string(),
-  level: v.string(),
-  is_editable: v.boolean(),
-  is_final: v.boolean(),
-  children: v.optional(v.lazy(() => v.array(CustomScopeOutputSchema))),
-});
+export const CustomScopeOutputSchema: v.GenericSchema = v.pipe(
+  v.object({
+    id: v.string(),
+    code: v.string(),
+    label: v.string(),
+    level: v.string(),
+    is_editable: v.boolean(),
+    is_final: v.boolean(),
+    children: v.optional(v.array(v.lazy(() => CustomScopeOutputSchema))),
+  }),
+  v.title("CustomScopeOutput"),
+);
 
 // ---------------------------------------------------------------------------
 // GET / — get scope tree

@@ -80,13 +80,13 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
     this.routes.push({
       path,
       method,
+      metadata: config.metadata,
       pattern,
       keys,
       // Cast needed because config.params type includes compile-time error type
       params: config.params as StandardSchemaV1 | undefined,
       body: config.body,
       query: config.query,
-      responses: config.responses,
       handler: config.handler,
     });
 

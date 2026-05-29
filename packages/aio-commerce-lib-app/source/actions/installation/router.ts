@@ -42,7 +42,6 @@ import {
 import {
   AcceptedBodySchema,
   ConflictBodySchema,
-  FailedExecutionBodySchema,
   InstallationRequestBodySchema,
   InstallationStateSchema,
   ValidationResultSchema,
@@ -240,7 +239,23 @@ export const router = new HttpActionRouter<InstallationActionContext>().use(
  * 3. If not found: return empty status
  */
 router.get("/", {
-  responses: { 200: InstallationStateSchema, 204: v.void() },
+  metadata: {
+    operationId: "getInstallationState",
+    summary: "Get Installation State",
+    description:
+      "Returns the current installation workflow state if an installation has been started.",
+
+    responses: {
+      200: {
+        schema: InstallationStateSchema,
+        description: "The current installation workflow state.",
+      },
+      204: {
+        schema: v.void(),
+        description: "No installation workflow state has been stored yet.",
+      },
+    },
+  },
   handler: async (_req, { logger }) => {
     logger.debug("Getting installation execution status...");
 
@@ -259,7 +274,25 @@ router.get("/", {
  */
 router.post("/", {
   body: InstallationRequestBodySchema,
-  responses: { 202: AcceptedBodySchema, 409: ConflictBodySchema },
+  metadata: {
+    operationId: "startInstallation",
+    summary: "Start Installation",
+    description:
+      "Starts the installation workflow and stores the initial execution state.",
+
+    responses: {
+      202: {
+        schema: AcceptedBodySchema,
+        description:
+          "The installation workflow was accepted and queued for asynchronous execution.",
+      },
+      409: {
+        schema: ConflictBodySchema,
+        description:
+          "The installation workflow is already running or has already completed successfully.",
+      },
+    },
+  },
 
   handler: async (req, { logger, rawParams }) => {
     const { appData, commerceBaseUrl } = req.body;
@@ -293,7 +326,7 @@ router.post("/", {
 
     if (!rawAppConfig) {
       return internalServerError(
-        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
+        "The app config is missing. Does the action receive it as a parameter?",
       );
     }
 
@@ -341,7 +374,9 @@ router.post("/", {
  * It runs the actual installation workflow and saves state.
  */
 router.post("/execution", {
-  responses: { 200: InstallationStateSchema, 500: FailedExecutionBodySchema },
+  metadata: {
+    internal: true,
+  },
   handler: async (_req, { logger, rawParams }) => {
     const params = rawParams as ExecutionRouteParams;
     const {
@@ -409,7 +444,20 @@ router.post("/execution", {
  */
 router.post("/validation", {
   body: InstallationRequestBodySchema,
-  responses: { 200: ValidationResultSchema },
+  metadata: {
+    operationId: "validateInstallation",
+    summary: "Validate Installation",
+    description:
+      "Validates the installation inputs and workflow steps without starting installation.",
+
+    responses: {
+      200: {
+        schema: ValidationResultSchema,
+        description:
+          "The validation result, including issue counts and per-step validation results.",
+      },
+    },
+  },
 
   handler: async (req, { logger, rawParams }) => {
     logger.debug("Running pre-installation validation...");
@@ -418,7 +466,7 @@ router.post("/validation", {
 
     if (!rawAppConfig) {
       return internalServerError(
-        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
+        "The app config is missing. Does the action receive it as a parameter?",
       );
     }
 
@@ -453,7 +501,23 @@ router.post("/validation", {
  * Returns 200 with state if an uninstallation has been started, 204 otherwise.
  */
 router.get("/uninstallation", {
-  responses: { 200: InstallationStateSchema, 204: v.void() },
+  metadata: {
+    operationId: "getUninstallationState",
+    summary: "Get Uninstallation State",
+    description:
+      "Returns the current uninstallation workflow state if an uninstallation has been started.",
+
+    responses: {
+      200: {
+        schema: InstallationStateSchema,
+        description: "The current uninstallation workflow state.",
+      },
+      204: {
+        schema: v.void(),
+        description: "No uninstallation workflow state has been stored yet.",
+      },
+    },
+  },
   handler: async (_req, { logger }) => {
     logger.debug("Getting uninstallation execution status...");
     const store = await createUninstallationStore();
@@ -473,7 +537,24 @@ router.get("/uninstallation", {
  */
 router.post("/uninstallation", {
   body: InstallationRequestBodySchema,
-  responses: { 202: AcceptedBodySchema, 409: ConflictBodySchema },
+  metadata: {
+    operationId: "startUninstallation",
+    summary: "Start Uninstallation",
+    description:
+      "Starts the uninstallation workflow and stores the initial execution state.",
+
+    responses: {
+      202: {
+        schema: AcceptedBodySchema,
+        description:
+          "The uninstallation workflow was accepted and queued for asynchronous execution.",
+      },
+      409: {
+        schema: ConflictBodySchema,
+        description: "The uninstallation workflow is already running.",
+      },
+    },
+  },
 
   handler: async (req, { logger, rawParams }) => {
     const { appData, commerceBaseUrl } = req.body;
@@ -485,7 +566,7 @@ router.post("/uninstallation", {
 
     if (!rawAppConfig) {
       return internalServerError(
-        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
+        "The app config is missing. Does the action receive it as a parameter?",
       );
     }
 
@@ -545,7 +626,9 @@ router.post("/uninstallation", {
  * 5. Return 200 on success, 500 on failure
  */
 router.post("/uninstallation/execution", {
-  responses: { 200: InstallationStateSchema, 500: FailedExecutionBodySchema },
+  metadata: {
+    internal: true,
+  },
   handler: async (_req, { logger, rawParams }) => {
     const params = rawParams as ExecutionRouteParams;
     const {
@@ -613,7 +696,19 @@ router.post("/uninstallation/execution", {
  * Removes the stored uninstallation state without triggering any offboarding.
  */
 router.delete("/uninstallation", {
-  responses: { 204: v.void() },
+  metadata: {
+    operationId: "clearUninstallationState",
+    summary: "Clear Uninstallation State",
+    description:
+      "Clears the stored uninstallation workflow state without starting offboarding.",
+
+    responses: {
+      204: {
+        schema: v.void(),
+        description: "The stored uninstallation workflow state was cleared.",
+      },
+    },
+  },
   handler: async (_req, { logger }) => {
     logger.debug("Clearing uninstallation state...");
     const store = await createUninstallationStore();

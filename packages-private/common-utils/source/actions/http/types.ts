@@ -16,6 +16,7 @@ import type {
 } from "@adobe/aio-commerce-lib-core/params";
 import type { ActionResponse } from "@adobe/aio-commerce-lib-core/responses";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { SecurityRequirementObject } from "openapi3-ts/oas31";
 import type { EmptyObject, Promisable, Simplify } from "type-fest";
 
 /**
@@ -101,6 +102,7 @@ export interface RouteRequest<TParams, TBody, TQuery> {
 
   /** HTTP method used for the request */
   method: HttpMethod;
+
   /** Route parameters extracted from the URL path */
   params: TParams;
 
@@ -126,6 +128,10 @@ export interface CompiledRoute {
 
   /** Extracted parameter names from the path */
   keys: string[];
+
+  /** Optional metadata used by documentation/introspection tooling. */
+  metadata?: RouteMetadata;
+
   /** HTTP method for this route */
   method: HttpMethod;
 
@@ -140,12 +146,42 @@ export interface CompiledRoute {
 
   /** Optional schema for validating query parameters */
   query?: StandardSchemaV1;
+}
 
-  /**
-   * Per-status-code response schemas (used for OpenAPI generation only, not validated at runtime).
-   * The 200 entry also constrains the handler return type at the `RouteConfig` level.
-   */
-  responses?: Partial<Record<number, StandardSchemaV1>>;
+/** Per-response metadata used by documentation/introspection tooling. */
+export interface RouteResponseMetadata {
+  /** Response description. */
+  description?: string;
+
+  /** Response schema used by documentation/introspection tooling. */
+  schema?: StandardSchemaV1;
+}
+
+/** Route metadata used by documentation/introspection tooling. */
+export interface RouteMetadata {
+  /** Whether this route should be marked as deprecated in generated docs. */
+  deprecated?: boolean;
+
+  /** Operation description. */
+  description?: string;
+
+  /** Whether this route should be omitted from generated public docs. */
+  internal?: boolean;
+
+  /** OpenAPI operation id. */
+  operationId?: string;
+
+  /** Per-response metadata keyed by HTTP status code. */
+  responses?: Partial<Record<number, RouteResponseMetadata>>;
+
+  /** OpenAPI security requirements for this route. Overrides root-level security. */
+  security?: SecurityRequirementObject[];
+
+  /** Operation summary. */
+  summary?: string;
+
+  /** OpenAPI tags. */
+  tags?: string[];
 }
 
 /**
@@ -211,21 +247,8 @@ export type RouteConfig<
   /** Optional schema for validating and typing query parameters */
   query?: TQuerySchema;
 
-  /**
-   * Per-status-code response schemas for OpenAPI generation (not validated at runtime).
-   *
-   * @example
-   * ```typescript
-   * router.get("/items", {
-   *   responses: {
-   *     200: object({ items: array(string()) }),
-   *     404: object({ message: string(), code: string() }),
-   *   },
-   *   handler: () => ok({ body: { items: [] } }),
-   * });
-   * ```
-   */
-  responses?: Partial<Record<number, StandardSchemaV1>>;
+  /** Optional metadata used by documentation/introspection tooling. */
+  metadata?: RouteMetadata;
 
   /** Route handler with properly typed request and context */
   handler: (

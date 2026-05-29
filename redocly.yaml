@@ -1,0 +1,6 @@
+extends:
+  - recommended
+
+apis:
+  aio-commerce-lib-app:
+    root: packages/aio-commerce-lib-app/generated/openapi.gen.json

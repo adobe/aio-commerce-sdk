@@ -10,14 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
-/**
- * This module exports core action utilities for the AIO Commerce SDK.
- * @packageDocumentation
- */
-
-// biome-ignore lint/performance/noBarrelFile: Public API entrypoint
-export * from "./http/middleware";
-export * from "./http/openapi/index";
-export { defineRoute, HttpActionRouter } from "./http/router";
-
-export type * from "./http/types";
+/** Assigns a property only when the provided value is defined. */
+export function assignIfDefined<T extends object, K extends keyof T>(
+  target: T,
+  key: K,
+  value: T[K] | undefined,
+) {
+  if (value !== undefined) {
+    target[key] = value;
+  }
+}

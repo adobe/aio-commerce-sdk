@@ -56,8 +56,18 @@ export const router = new HttpActionRouter<AppConfigActionContext>().use(
 
 /** GET / - Get app config */
 router.get("/", {
-  responses: {
-    200: AppConfigResponseSchema,
+  metadata: {
+    operationId: "getAppConfig",
+    summary: "Get Commerce App Configuration",
+    description:
+      "Returns the Commerce App configuration after resolving and validating it against the schema.",
+
+    responses: {
+      200: {
+        schema: AppConfigResponseSchema,
+        description: "The resolved and validated Commerce App configuration.",
+      },
+    },
   },
 
   handler: async (_req, { logger, rawParams }) => {
@@ -65,7 +75,7 @@ router.get("/", {
 
     if (!rawAppConfig) {
       return internalServerError(
-        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
+        "The app config is missing. Does the action receive it as a parameter?",
       );
     }
 
@@ -95,5 +105,6 @@ router.get("/", {
 
 /** GET /openapi.json - Returns the OpenAPI spec for all SDK actions */
 router.get("/openapi.json", {
+  metadata: { internal: true },
   handler: () => ok({ body: openAPISpec }),
 });

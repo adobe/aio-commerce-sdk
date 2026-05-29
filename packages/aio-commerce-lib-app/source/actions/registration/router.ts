@@ -47,7 +47,19 @@ export const router = new HttpActionRouter<RegistrationActionContext>().use(
 
 /** GET / - Return Admin UI SDK registration object */
 router.get("/", {
-  responses: { 200: RegistrationResponseSchema },
+  metadata: {
+    operationId: "getRegistration",
+    summary: "Get Registration",
+    description:
+      "Returns the Admin UI SDK registration object configured for this app.",
+
+    responses: {
+      200: {
+        schema: RegistrationResponseSchema,
+        description: "The Admin UI SDK registration payload.",
+      },
+    },
+  },
   handler: async (_req, { logger, rawParams }) => {
     logger.debug("Returning Admin UI SDK registration...");
     return ok({ body: { registration: rawParams.registration } });

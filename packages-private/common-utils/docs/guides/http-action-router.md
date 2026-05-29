@@ -17,7 +17,7 @@ The HTTP Action Router simplifies these common patterns with a fluent, Express-l
 
 ```typescript
 import { HttpActionRouter } from "@aio-commerce-sdk/common-utils/actions";
-import { ok, notFound } from "@adobe/aio-commerce-lib-core/responses";
+import { created, ok } from "@adobe/aio-commerce-lib-core/responses";
 
 const router = new HttpActionRouter();
 
@@ -144,6 +144,39 @@ router.get("/users", {
   },
 });
 ```
+
+## Route Metadata
+
+Routes can include `metadata` for documentation and introspection. The OpenAPI generator uses this metadata for operation fields and response descriptions. Set `internal: true` to omit a route from the generated public OpenAPI document.
+When metadata does not provide `summary` or `operationId`, the generator derives stable defaults from the HTTP method and OpenAPI path.
+
+```typescript
+router.get("/users/:id", {
+  metadata: {
+    summary: "Get user",
+    description: "Returns a user by id.",
+    operationId: "getUser",
+    tags: ["Users"],
+    responses: {
+      200: {
+        description: "User found.",
+        schema: userResponseSchema,
+      },
+    },
+    security: [{ imsOAuth: ["read:user"] }],
+  },
+  params: userIdSchema,
+  handler: (req) => ok({ body: { id: req.params.id } }),
+});
+
+router.get("/openapi.json", {
+  metadata: { internal: true },
+  handler: () => ok({ body: openAPISpec }),
+});
+```
+
+The generator also accepts document-level OpenAPI options for `servers`, `security`, and `securitySchemes` so generated specs can be validated by standard OpenAPI linters without post-processing.
+Route-level `metadata.security` overrides the document-level security requirements when an endpoint needs different OAuth scopes.
 
 ## Request Object
 

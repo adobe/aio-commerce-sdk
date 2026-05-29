@@ -49,14 +49,17 @@ export const InfoSeveritySchema = v.literal("info");
 export const ValidationIssueSeveritySchema: v.GenericSchema<ValidationIssueSeverity> =
   v.union([ErrorSeveritySchema, WarningSeveritySchema, InfoSeveritySchema]);
 
-export const StepStatusSchema: v.GenericSchema<StepStatus> = v.object({
-  name: v.string(),
-  id: v.string(),
-  path: v.array(v.string()),
-  meta: StepMetaInfoSchema,
-  status: ExecutionStatusSchema,
-  children: v.lazy(() => v.array(StepStatusSchema)),
-});
+export const StepStatusSchema: v.GenericSchema<StepStatus> = v.pipe(
+  v.object({
+    name: v.string(),
+    id: v.string(),
+    path: v.array(v.string()),
+    meta: StepMetaInfoSchema,
+    status: ExecutionStatusSchema,
+    children: v.array(v.lazy(() => StepStatusSchema)),
+  }),
+  v.title("StepStatus"),
+);
 
 export const InstallationDataSchema = v.nullable(
   v.record(v.string(), v.unknown()),
@@ -158,13 +161,16 @@ const ValidationIssueSchema = v.object({
 });
 
 export const StepValidationResultSchema: v.GenericSchema<StepValidationResult> =
-  v.object({
-    name: v.string(),
-    path: v.array(v.string()),
-    meta: StepMetaInfoSchema,
-    issues: v.array(ValidationIssueSchema),
-    children: v.lazy(() => v.array(StepValidationResultSchema)),
-  });
+  v.pipe(
+    v.object({
+      name: v.string(),
+      path: v.array(v.string()),
+      meta: StepMetaInfoSchema,
+      issues: v.array(ValidationIssueSchema),
+      children: v.array(v.lazy(() => StepValidationResultSchema)),
+    }),
+    v.title("StepValidationResult"),
+  );
 
 /** 200 response for POST /validation */
 export const ValidationResultSchema = v.object({
