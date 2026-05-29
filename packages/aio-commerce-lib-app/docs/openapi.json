@@ -620,7 +620,7 @@
             }
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
@@ -1041,7 +1041,7 @@
             }
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
@@ -1173,7 +1173,7 @@
             }
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
@@ -1309,7 +1309,7 @@
             }
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
@@ -1521,7 +1521,7 @@
             "description": "No installation workflow state has been stored yet."
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
@@ -1653,7 +1653,7 @@
             }
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
@@ -1783,7 +1783,7 @@
             }
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
@@ -1995,7 +1995,7 @@
             "description": "No uninstallation workflow state has been stored yet."
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
@@ -2127,7 +2127,7 @@
             }
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
@@ -2180,7 +2180,7 @@
             "description": "The stored uninstallation workflow state was cleared."
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
@@ -2232,7 +2232,7 @@
             }
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
@@ -2315,7 +2315,7 @@
             }
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
@@ -2419,7 +2419,7 @@
             }
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
@@ -2538,7 +2538,7 @@
             }
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
@@ -2591,7 +2591,7 @@
             }
           },
           "401": {
-            "description": "The required Authorization: Bearer <IMS access token> header is missing, invalid, or expired."
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."

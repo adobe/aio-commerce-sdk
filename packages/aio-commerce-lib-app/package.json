@@ -101,7 +101,7 @@
     "code:fix": "pnpm run lint:fix && pnpm run assist:apply && pnpm run format:openapi && pnpm run format && pnpm run format:markdown",
     "format": "biome format --write --no-errors-on-unmatched",
     "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
-    "format:openapi": "openapi-format docs/openapi.json -o docs/openapi.json -c openapi-format.json",
+    "format:openapi": "openapi-format docs/openapi.json -o docs/openapi.json -c openapi-format.json && biome format --write --no-errors-on-unmatched docs/openapi.json",
     "format:check": "biome format --no-errors-on-unmatched",
     "lint": "biome lint --no-errors-on-unmatched && pnpm run lint:openapi",
     "lint:openapi": "redocly lint --config ../../redocly.yaml",
