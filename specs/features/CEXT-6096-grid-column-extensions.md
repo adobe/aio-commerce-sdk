@@ -158,10 +158,6 @@ extensions:
 }
 ```
 
-On failure or timeout: all custom-column cells render empty. A single banner notification is
-surfaced on grid load: _"Could not load custom columns from `<app name>`."_ Defaults via `"*"` are
-not applied — they are for unmatched IDs inside a successful response, not for outages.
-
 ### Column types
 
 | `type` value | Description                          |
