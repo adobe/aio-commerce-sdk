@@ -232,6 +232,7 @@ router.delete("/commerce", {
       },
     },
   },
+
   handler: async (_req, ctx) => {
     const { logger } = ctx;
     logger.debug("Unsyncing commerce scopes...");

@@ -60,6 +60,7 @@ router.get("/", {
       },
     },
   },
+
   handler: async (_req, { logger, rawParams }) => {
     logger.debug("Returning Admin UI SDK registration...");
     return ok({ body: { registration: rawParams.registration } });

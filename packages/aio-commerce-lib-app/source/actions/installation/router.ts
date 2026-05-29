@@ -256,6 +256,7 @@ router.get("/", {
       },
     },
   },
+
   handler: async (_req, { logger }) => {
     logger.debug("Getting installation execution status...");
 
@@ -377,6 +378,7 @@ router.post("/execution", {
   metadata: {
     internal: true,
   },
+
   handler: async (_req, { logger, rawParams }) => {
     const params = rawParams as ExecutionRouteParams;
     const {
@@ -518,6 +520,7 @@ router.get("/uninstallation", {
       },
     },
   },
+
   handler: async (_req, { logger }) => {
     logger.debug("Getting uninstallation execution status...");
     const store = await createUninstallationStore();
@@ -629,6 +632,7 @@ router.post("/uninstallation/execution", {
   metadata: {
     internal: true,
   },
+
   handler: async (_req, { logger, rawParams }) => {
     const params = rawParams as ExecutionRouteParams;
     const {
@@ -709,6 +713,7 @@ router.delete("/uninstallation", {
       },
     },
   },
+
   handler: async (_req, { logger }) => {
     logger.debug("Clearing uninstallation state...");
     const store = await createUninstallationStore();
