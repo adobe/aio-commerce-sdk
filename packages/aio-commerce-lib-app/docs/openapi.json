@@ -1,6 +1,7 @@
 {
   "info": {
     "title": "App Management API",
+    "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation and uninstallation lifecycle, exposing the Admin UI SDK registration, and managing the scope tree.",
     "version": "1.6.0",
     "license": {
       "identifier": "Apache-2.0",
@@ -380,7 +381,7 @@
                               }
                             ]
                           },
-                          "default": []
+                          "minItems": 1
                         }
                       },
                       "required": []
@@ -593,6 +594,7 @@
                     }
                   },
                   "required": ["metadata"],
+                  "additionalProperties": true,
                   "description": "Current app configuration"
                 }
               }
@@ -2275,49 +2277,7 @@
                     "scopes": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "code": {
-                            "type": "string"
-                          },
-                          "label": {
-                            "type": "string"
-                          },
-                          "level": {
-                            "type": "string"
-                          },
-                          "is_editable": {
-                            "type": "boolean"
-                          },
-                          "is_final": {
-                            "type": "boolean"
-                          },
-                          "is_removable": {
-                            "type": "boolean"
-                          },
-                          "commerce_id": {
-                            "type": "number"
-                          },
-                          "children": {
-                            "type": "array",
-                            "items": {
-                              "$ref": "#/components/schemas/ScopeNode"
-                            }
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "code",
-                          "label",
-                          "level",
-                          "is_editable",
-                          "is_final",
-                          "is_removable"
-                        ],
-                        "title": "ScopeNode"
+                        "$ref": "#/components/schemas/ScopeNode"
                       }
                     }
                   },
@@ -2389,42 +2349,7 @@
                         "scopes": {
                           "type": "array",
                           "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string"
-                              },
-                              "code": {
-                                "type": "string"
-                              },
-                              "label": {
-                                "type": "string"
-                              },
-                              "level": {
-                                "type": "string"
-                              },
-                              "is_editable": {
-                                "type": "boolean"
-                              },
-                              "is_final": {
-                                "type": "boolean"
-                              },
-                              "children": {
-                                "type": "array",
-                                "items": {
-                                  "$ref": "#/components/schemas/CustomScopeOutput"
-                                }
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "code",
-                              "label",
-                              "level",
-                              "is_editable",
-                              "is_final"
-                            ],
-                            "title": "CustomScopeOutput"
+                            "$ref": "#/components/schemas/CustomScopeOutput"
                           }
                         }
                       },
@@ -2445,7 +2370,7 @@
             }
           },
           "400": {
-            "description": "The request body is missing the required scopes array or it is not an array.",
+            "description": "The request body is invalid: the scopes array is missing or not an array, or a scope is missing a required field (code, label, is_editable, is_final) or has an invalid type.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2520,49 +2445,7 @@
                     "scopes": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "code": {
-                            "type": "string"
-                          },
-                          "label": {
-                            "type": "string"
-                          },
-                          "level": {
-                            "type": "string"
-                          },
-                          "is_editable": {
-                            "type": "boolean"
-                          },
-                          "is_final": {
-                            "type": "boolean"
-                          },
-                          "is_removable": {
-                            "type": "boolean"
-                          },
-                          "commerce_id": {
-                            "type": "number"
-                          },
-                          "children": {
-                            "type": "array",
-                            "items": {
-                              "$ref": "#/components/schemas/ScopeNode"
-                            }
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "code",
-                          "label",
-                          "level",
-                          "is_editable",
-                          "is_final",
-                          "is_removable"
-                        ],
-                        "title": "ScopeNode"
+                        "$ref": "#/components/schemas/ScopeNode"
                       }
                     },
                     "synced": {
@@ -2642,7 +2525,6 @@
                 "properties": {
                   "commerceBaseUrl": {
                     "type": "string",
-                    "format": "uri",
                     "minLength": 1
                   },
                   "commerceEnv": {
@@ -2863,7 +2745,7 @@
             "$ref": "#/components/schemas/ConfigOrigin"
           }
         },
-        "required": ["name", "origin"]
+        "required": ["name", "value", "origin"]
       },
       "ConfigUpdateEntry": {
         "type": "object",
@@ -2888,9 +2770,9 @@
             ]
           }
         },
-        "required": ["name"]
+        "required": ["name", "value"]
       },
-      "StepMeta": {
+      "StepMetaInfo": {
         "type": "object",
         "properties": {
           "label": {
@@ -3186,7 +3068,7 @@
             }
           },
           "meta": {
-            "$ref": "#/components/schemas/StepMeta"
+            "$ref": "#/components/schemas/StepMetaInfo"
           },
           "status": {
             "enum": ["pending", "in-progress", "succeeded", "failed"]
@@ -3214,7 +3096,7 @@
             }
           },
           "meta": {
-            "$ref": "#/components/schemas/StepMeta"
+            "$ref": "#/components/schemas/StepMetaInfo"
           },
           "issues": {
             "type": "array",
@@ -3891,21 +3773,16 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "pattern": ".*\\S.*"
+            "type": "string"
           },
           "code": {
-            "type": "string",
-            "pattern": "^(?!\\s*(?:commerce|global)\\s*$).*\\S.*$"
+            "type": "string"
           },
           "label": {
-            "type": "string",
-            "pattern": ".*\\S.*"
+            "type": "string"
           },
           "level": {
-            "type": "string",
-            "pattern": ".*\\S.*",
-            "default": "base"
+            "type": "string"
           },
           "is_editable": {
             "type": "boolean"
