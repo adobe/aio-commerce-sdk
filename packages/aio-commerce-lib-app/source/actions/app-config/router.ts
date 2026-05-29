@@ -19,11 +19,13 @@ import {
   HttpActionRouter,
   logger,
 } from "@aio-commerce-sdk/common-utils/actions";
+import * as v from "valibot";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
+import { getConfigDomains } from "#config/schema/domains";
 
-import { buildOpenApiSpec } from "./openapi";
+import { buildOpenApiSpec, getOpenApiCacheKey, getServerUrl } from "./openapi";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
@@ -82,14 +84,39 @@ router.get("/", {
     const config = validateCommerceAppConfig(appConfig);
     logger.debug("Successfully validated the app config");
 
+    const domains = getConfigDomains(rawParams.appConfig);
+    const openApiSpecUrl = `${getServerUrl()}/app-config/openapi.json?v=${getOpenApiCacheKey(domains)}`;
+
     return ok({
-      body: config,
+      body: { ...config, openApiSpecUrl },
     });
   },
 });
 
-/** GET /openapi.json - Returns the OpenAPI spec for all SDK actions */
+/**
+ * GET /openapi.json - Returns the OpenAPI spec for all SDK actions
+ * @internal - Do not add to OpenAPI Spec.
+ */
 router.get("/openapi.json", {
-  handler: async (_req, { logger, rawParams }) =>
-    ok({ body: await buildOpenApiSpec(rawParams.appConfig, logger) }),
+  query: v.object({ v: v.optional(v.string()) }),
+  handler: async (req, { logger, rawParams }) => {
+    const { v } = req.query;
+    const domains = getConfigDomains(rawParams.appConfig);
+
+    if (v && getOpenApiCacheKey(domains) === v) {
+      logger.debug(
+        `Received request for OpenAPI spec with version query param: ${v}`,
+      );
+
+      return ok({
+        body: await buildOpenApiSpec(domains, logger),
+        headers: { "Cache-Control": "public, max-age=31536000, immutable" },
+      });
+    }
+
+    // Return without caching.
+    return ok({
+      body: await buildOpenApiSpec(domains, logger),
+    });
+  },
 });

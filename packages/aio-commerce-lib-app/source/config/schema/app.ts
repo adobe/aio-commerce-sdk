@@ -44,13 +44,12 @@ export type CommerceAppConfigOutputModel = v.InferOutput<
 >;
 
 /**
- * Returns true if the given config requires installation, false otherwise.
- * @param config - The commerce app config to check.
+ * Returns true if the given config domains require installation, false otherwise.
+ * @param domains - The config domains to check.
  */
-export function requiresInstallation<
-  T extends CommerceAppConfig | CommerceAppConfigOutputModel,
->(config: T) {
-  const features = getConfigDomains(config);
+export function requiresInstallationFromDomains(
+  domains: Set<CommerceAppConfigDomain>,
+) {
   const featuresRequiringInstallationAction: CommerceAppConfigDomain[] = [
     "installation.customInstallationSteps",
     "eventing.commerce",
@@ -60,6 +59,16 @@ export function requiresInstallation<
   ];
 
   return featuresRequiringInstallationAction.some((feature) =>
-    features.has(feature),
+    domains.has(feature),
   );
+}
+
+/**
+ * Returns true if the given config requires installation, false otherwise.
+ * @param config - The commerce app config to check.
+ */
+export function requiresInstallation<
+  T extends CommerceAppConfig | CommerceAppConfigOutputModel,
+>(config: T) {
+  return requiresInstallationFromDomains(getConfigDomains(config));
 }

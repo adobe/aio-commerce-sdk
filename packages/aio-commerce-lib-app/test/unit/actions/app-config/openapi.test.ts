@@ -13,6 +13,7 @@
 import { describe, expect, test } from "vitest";
 
 import { buildOpenApiSpec } from "#actions/app-config/openapi";
+import { getConfigDomains } from "#config/schema/domains";
 import openApiSpec from "#openapi.json" with { type: "json" };
 import {
   configWithBusinessConfig,
@@ -37,7 +38,10 @@ const logger = createMockLogger();
 
 describe("buildOpenApiSpec", () => {
   test("keeps every path and schema when all capabilities are present", async () => {
-    const spec = await buildOpenApiSpec(fullyCapableConfig, logger);
+    const spec = await buildOpenApiSpec(
+      getConfigDomains(fullyCapableConfig),
+      logger,
+    );
 
     expect(Object.keys(spec.paths).sort()).toEqual(
       Object.keys(openApiSpec.paths).sort(),
@@ -49,7 +53,8 @@ describe("buildOpenApiSpec", () => {
 
   test("strips the paths for capabilities the app does not use", async () => {
     const paths = Object.keys(
-      (await buildOpenApiSpec(minimalValidConfig, logger)).paths,
+      (await buildOpenApiSpec(getConfigDomains(minimalValidConfig), logger))
+        .paths,
     );
 
     expect(paths).toContain("/app-config");
@@ -62,7 +67,8 @@ describe("buildOpenApiSpec", () => {
 
   test("prunes schemas left unreferenced by the stripped paths", async () => {
     const schemas = Object.keys(
-      (await buildOpenApiSpec(minimalValidConfig, logger)).components.schemas,
+      (await buildOpenApiSpec(getConfigDomains(minimalValidConfig), logger))
+        .components.schemas,
     );
 
     // With only `/app-config` surviving, the config, scope-tree and installation
@@ -99,7 +105,7 @@ describe("buildOpenApiSpec", () => {
   });
 
   test("does not mutate the shared spec import", async () => {
-    await buildOpenApiSpec(minimalValidConfig, logger);
+    await buildOpenApiSpec(getConfigDomains(minimalValidConfig), logger);
 
     expect(Object.keys(openApiSpec.paths)).toContain("/config");
     expect(Object.keys(openApiSpec.components.schemas)).toContain(

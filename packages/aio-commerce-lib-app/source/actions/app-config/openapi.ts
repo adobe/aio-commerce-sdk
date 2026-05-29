@@ -10,12 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-import { hasAdminUiSdk } from "#config/schema/admin-ui-sdk";
-import { requiresInstallation } from "#config/schema/app";
-import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
+import { createHash } from "node:crypto";
+
+import { requiresInstallationFromDomains } from "#config/schema/app";
 
 import type AioLogger from "@adobe/aio-lib-core-logging";
-import type { CommerceAppConfig } from "#config/schema/app";
+import type { CommerceAppConfigDomain } from "#config/schema/domains";
+
+// __PKG_VERSION__ is injected and replaced at build time.
+declare const __PKG_VERSION__: string;
 
 /**
  * Loads the committed OpenAPI spec via dynamic import so it
@@ -77,6 +80,23 @@ function pruneUnusedSchemas(spec: OpenApiSpec) {
 }
 
 /**
+ * Computes a short hash identifying the spec served for the given config domains.
+ * Changes whenever the served spec would: with the package version (which tracks
+ * the committed spec's `info.version`) or with the domains that drive pruning.
+ *
+ * @param domains - The active config domains.
+ */
+export function getOpenApiCacheKey(domains: Set<CommerceAppConfigDomain>) {
+  const input = `${__PKG_VERSION__}:${[...domains].sort().join(",")}`;
+  return createHash("sha256").update(input).digest("hex").slice(0, 8);
+}
+
+/** Returns the server URL to be set in the OpenAPI spec, based on the current namespace. */
+export function getServerUrl() {
+  return `https://${process.env.__OW_NAMESPACE}.adobeioruntime.net/api/v1/web/app-management`;
+}
+
+/**
  * Builds the OpenAPI spec served by `GET /openapi.json`, tailored to the app's
  * capabilities: unused paths are stripped, along with the schemas they leave
  * unreferenced.
@@ -84,11 +104,11 @@ function pruneUnusedSchemas(spec: OpenApiSpec) {
  * Works on a fresh copy so the shared module import is never mutated. The
  * committed `docs/openapi.json` always describes the full surface.
  *
- * @param appConfig - The resolved app config whose capabilities drive trimming.
+ * @param domains - The active config domains that drive path trimming.
  * @param logger - Logger used to report which paths get stripped.
  */
 export async function buildOpenApiSpec(
-  appConfig: CommerceAppConfig,
+  domains: Set<CommerceAppConfigDomain>,
   logger: ReturnType<typeof AioLogger>,
 ) {
   const { default: openAPISpec } = await importOpenApi();
@@ -101,7 +121,7 @@ export async function buildOpenApiSpec(
     }
   };
 
-  if (!hasBusinessConfigSchema(appConfig)) {
+  if (!domains.has("businessConfig.schema")) {
     logger.debug(
       "Application doesn't define business configuration, stripping references...",
     );
@@ -111,7 +131,7 @@ export async function buildOpenApiSpec(
     stripPath("/scope-tree/commerce");
   }
 
-  if (!hasAdminUiSdk(appConfig)) {
+  if (!domains.has("adminUiSdk")) {
     logger.debug(
       "Application doesn't define Admin UI SDK registration, stripping references...",
     );
@@ -119,7 +139,7 @@ export async function buildOpenApiSpec(
     stripPath("/registration");
   }
 
-  if (!requiresInstallation(appConfig)) {
+  if (!requiresInstallationFromDomains(domains)) {
     logger.debug(
       "Application doesn't require installation, stripping references...",
     );
@@ -131,6 +151,6 @@ export async function buildOpenApiSpec(
 
   pruneUnusedSchemas(spec);
 
-  spec.servers[0].url = `https://${process.env.__OW_NAMESPACE}.adobeioruntime.net/api/v1/web/app-management`;
+  spec.servers[0].url = getServerUrl();
   return spec;
 }
