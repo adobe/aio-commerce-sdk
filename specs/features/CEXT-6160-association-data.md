@@ -7,7 +7,7 @@
 ## Summary
 
 Store the Commerce instance details, Base URL and deployment type, when an app is associated
-with a Commerce instance, and expose two typed async helpers: a low-level one that returns the raw instance data, and a higher-level one that returns a ready-to-use `AdobeCommerceHttpClient` — so that any runtime action can call the Commerce API without custom storage setup or client construction boilerplate.
+with a Commerce instance, and expose two typed async helpers: a low-level one that returns the raw instance data, and a higher-level one that returns a ready-to-use `AdobeCommerceHttpClient`, so that any runtime action can call the Commerce API without custom storage setup or client construction boilerplate.
 
 ## Motivation
 
@@ -110,7 +110,7 @@ separate from the existing Business Configuration module. It uses the same `getS
 client but stores under a dedicated reserved key (`association`) rather than the
 `configuration.{scopeCode}` keys used by Business Configuration.
 
-The data is stored with the maximum TTL of 1 year (31536000 seconds). The default TTL of 24 hours is not appropriate here — association data is long-lived and must not expire on its own. It should only be cleared explicitly on unassociation. Re-associating resets the TTL.
+The data is stored with the maximum TTL of 1 year (31536000 seconds). The default TTL of 24 hours is not appropriate here — association data is long-lived and must not expire on its own. It should only be cleared explicitly on unassociation. To keep the data alive, the TTL is refreshed on every read inside `getAssociationData`. So as long as any action reads the configuration at least once a year, the data won't expire.
 
 This has two important properties for this use case:
 
@@ -223,17 +223,19 @@ duplicate.
 
 ### Client integration
 
-Any client that manages the app association lifecycle is responsible for driving two calls
-against the `association` endpoint. The endpoint URL is discoverable from the app's extension
-points metadata, registered in `workerProcess` alongside the existing `app-config` and
-`installation` hrefs.
+Any client that manages the app association lifecycle is responsible for calling `POST /`
+when the app is associated and `DELETE /` when the app is unassociated. The endpoint URL is
+discoverable from the app's extension points metadata, registered in `workerProcess`
+alongside the existing `app-config` and `installation` hrefs.
 
-**On association** — after the app is registered with the Extension Manager, the client
-calls `POST /` with the Commerce instance details. If this call fails, the association
-fails entirely — the app cannot be marked as successfully associated if the Commerce
-configuration was not saved. The client is responsible for surfacing the failure to the
-developer (e.g. rolling back the Extension Manager registration or otherwise preventing
-the app from being shown as successfully associated).
+**On association** — the client calls `POST /` with the Commerce instance details first,
+and only registers the app with the Extension Manager if that call succeeds. This way, the
+app is never marked as associated unless the Commerce configuration was saved, and no
+rollback is needed.
+
+For older SDK versions where the `/association` endpoint isn't registered in the app's
+extension points metadata, the client should skip the `POST /` call and proceed with just
+the Extension Manager registration.
 
 **On unassociation** — after unassociation completes, the client calls `DELETE /` to remove
 the stored data. This step is best-effort — a failure does not block the unassociation.
