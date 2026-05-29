@@ -50,6 +50,7 @@ The v1 grid column design has four concrete problems that compound each other:
 - Adding grid targets beyond order, product, and customer.
 - Implementing mass action v2 (separate ticket).
 - Wrapping or managing the Commerce API Mesh service.
+- Creating app-management or app-migration plugin skills for scaffolding or migrating grid column extensions — handled in a separate scope.
 
 ## Developer experience
 
