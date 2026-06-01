@@ -619,7 +619,10 @@
                     "openApiSpecUrl": {
                       "description": "URL of the OpenAPI spec for this deployment, scoped to the active capabilities. Includes a content-addressed cache key as a query parameter.",
                       "type": "string",
-                      "format": "uri"
+                      "format": "uri",
+                      "examples": [
+                        "https://123456-projectname-workspacename.adobeioruntime.net/api/v1/web/app-management/app-config/openapi.json?ck=4f6a2b9c"
+                      ]
                     }
                   },
                   "additionalProperties": true,
