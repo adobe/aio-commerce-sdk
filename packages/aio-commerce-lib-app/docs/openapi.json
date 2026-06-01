@@ -615,10 +615,15 @@
                         ]
                       },
                       "minItems": 1
+                    },
+                    "openApiSpecUrl": {
+                      "description": "URL of the OpenAPI spec for this deployment, scoped to the active capabilities. Includes a content-addressed cache key as a query parameter.",
+                      "type": "string",
+                      "format": "uri"
                     }
                   },
                   "additionalProperties": true,
-                  "required": ["metadata"]
+                  "required": ["metadata", "openApiSpecUrl"]
                 }
               }
             }
