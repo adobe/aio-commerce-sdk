@@ -18,7 +18,7 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import type { CommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
+import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
 /** Schema for webhook field configuration (name and optional source). */
 const WebhookFieldSchema = v.object({
@@ -153,9 +153,6 @@ export type WebhookEntry = v.InferInput<typeof WebhookEntrySchema>;
 
 /** Webhooks configuration (array of webhook entries). */
 export type WebhooksConfiguration = v.InferInput<typeof WebhooksSchema>;
-
-/** Any commerce app config — input contract or validated output. */
-type AnyCommerceAppConfig = CommerceAppConfig | CommerceAppConfigOutputModel;
 
 /** Config type when webhooks are present (non-empty array). */
 export type WebhooksConfig<

@@ -13,7 +13,7 @@
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import type { CommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
+import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
 const MAX_DESCRIPTION_LENGTH = 255;
 const MAX_NAME_LENGTH = 255;
@@ -113,9 +113,6 @@ export type InstallationConfiguration = v.InferInput<typeof InstallationSchema>;
 export type CustomInstallationStep = v.InferInput<
   typeof CustomInstallationStepSchema
 >;
-
-/** Any commerce app config — input contract or validated output. */
-type AnyCommerceAppConfig = CommerceAppConfig | CommerceAppConfigOutputModel;
 
 /** Config type when installation settings are present. */
 export type InstallationConfig<

@@ -31,10 +31,7 @@ import {
 import { hasMetadata, MetadataSchema } from "./metadata";
 import { hasWebhooks, WebhooksSchema } from "./webhooks";
 
-import type { CommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
-
-/** Any commerce app config — input contract or validated output. */
-type AnyCommerceAppConfig = CommerceAppConfig | CommerceAppConfigOutputModel;
+import type { AnyCommerceAppConfig } from "./app";
 
 /** The individual validatable domains of the app config. */
 export const CommerceAppConfigSchemas = {

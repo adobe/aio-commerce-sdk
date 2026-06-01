@@ -17,7 +17,7 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import type { CommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
+import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
 const SANDBOX_VALUES = [
   "allow-downloads",
@@ -324,9 +324,6 @@ export type BannerNotification = v.InferInput<typeof BannerNotificationSchema>;
  * @experimental
  */
 export type MenuItem = v.InferInput<typeof MenuItemSchema>;
-
-/** Any commerce app config — input contract or validated output. */
-type AnyCommerceAppConfig = CommerceAppConfig | CommerceAppConfigOutputModel;
 
 /** Config type when Admin UI SDK registration is configured. */
 export type AppConfigWithAdminUiSdk<

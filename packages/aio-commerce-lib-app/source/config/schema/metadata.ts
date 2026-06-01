@@ -13,7 +13,7 @@
 import { alphaNumericOrHyphenSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import type { CommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
+import type { AnyCommerceAppConfig } from "./app";
 
 const MAX_ID_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 255;
@@ -70,9 +70,6 @@ export const MetadataSchema = v.object({
 
 /** The metadata associated to an Adobe Commerce application. */
 export type ApplicationMetadata = v.InferInput<typeof MetadataSchema>;
-
-/** Any commerce app config — input contract or validated output. */
-type AnyCommerceAppConfig = CommerceAppConfig | CommerceAppConfigOutputModel;
 
 /** Config type when metadata is present. */
 export type AppConfigWithMetadata<T extends AnyCommerceAppConfig> = T & {

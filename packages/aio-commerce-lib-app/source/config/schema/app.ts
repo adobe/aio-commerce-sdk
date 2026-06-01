@@ -43,6 +43,11 @@ export type CommerceAppConfigOutputModel = v.InferOutput<
   typeof CommerceAppConfigSchema
 >;
 
+/** @internal Any commerce app config, input contract or validated output. */
+export type AnyCommerceAppConfig =
+  | CommerceAppConfig
+  | CommerceAppConfigOutputModel;
+
 /**
  * Returns true if the given config domains require installation, false otherwise.
  * @param domains - The config domains to check.
@@ -67,8 +72,8 @@ export function requiresInstallationFromDomains(
  * Returns true if the given config requires installation, false otherwise.
  * @param config - The commerce app config to check.
  */
-export function requiresInstallation<
-  T extends CommerceAppConfig | CommerceAppConfigOutputModel,
->(config: T) {
+export function requiresInstallation<T extends AnyCommerceAppConfig>(
+  config: T,
+) {
   return requiresInstallationFromDomains(getConfigDomains(config));
 }

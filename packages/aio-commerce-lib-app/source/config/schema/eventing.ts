@@ -18,7 +18,7 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import type { CommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
+import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
 const MAX_DESCRIPTION_LENGTH = 255;
 const MAX_LABEL_LENGTH = 100;
@@ -313,9 +313,6 @@ export type AppEvent = CommerceEvent | ExternalEvent;
 
 /** Event provider configuration */
 export type EventProvider = v.InferInput<typeof ProviderSchema>;
-
-/** Any commerce app config — input contract or validated output. */
-type AnyCommerceAppConfig = CommerceAppConfig | CommerceAppConfigOutputModel;
 
 /** Config type when eventing is present. */
 export type EventsConfig<
