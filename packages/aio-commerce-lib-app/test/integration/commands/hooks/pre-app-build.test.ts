@@ -18,6 +18,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
   BACKEND_UI_EXTENSION_POINT_ID,
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
@@ -29,6 +30,7 @@ import {
 } from "#commands/utils";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
+  configWithAdminUi,
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithFullAdminUiSdk,
@@ -149,6 +151,50 @@ describe("commands/hooks/pre-app-build", () => {
       );
     });
 
+    test("generates backend-ui/2 registration action when adminUi is configured", async () => {
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithAdminUi),
+          ...makeTemplateFiles(),
+        },
+        async (tempDir) => {
+          await run("backend-ui/2");
+
+          const registrationPath = join(
+            tempDir,
+            getAdminUiSdkRegistrationActionPath(
+              BACKEND_UI_V2_EXTENSION_POINT_ID,
+            ),
+          );
+
+          expect(existsSync(registrationPath)).toBe(true);
+
+          const content = await readFile(registrationPath, "utf-8");
+          expect(content).toContain("registrationRuntimeAction");
+          expect(content).toContain("orders/fetch-order-grid-data");
+          expect(content).toContain("fulfillment_status");
+        },
+      );
+    });
+
+    test("does not generate backend-ui/2 registration action when adminUi is absent", async () => {
+      await withTempProject(
+        { ...MINIMAL_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await run("backend-ui/2");
+
+          const registrationPath = join(
+            tempDir,
+            getAdminUiSdkRegistrationActionPath(
+              BACKEND_UI_V2_EXTENSION_POINT_ID,
+            ),
+          );
+
+          expect(existsSync(registrationPath)).toBe(false);
+        },
+      );
+    });
+
     test("throws for unsupported extension", async () => {
       await withTempProject(MINIMAL_PROJECT, async () => {
         await expect(
@@ -217,6 +263,21 @@ describe("commands/hooks/pre-app-build", () => {
       await withTempProject(
         {
           ...makeProjectFiles(configWithFullAdminUiSdk),
+          ...makeTemplateFiles(),
+        },
+        async () => {
+          await exec();
+          expect(exitSpy).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("runs successfully for backend-ui/2", async () => {
+      vi.stubEnv("EXTENSION", "backend-ui/2");
+
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithAdminUi),
           ...makeTemplateFiles(),
         },
         async () => {
