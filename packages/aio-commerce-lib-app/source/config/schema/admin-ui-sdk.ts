@@ -39,15 +39,6 @@ const SandboxSchema = v.pipe(
   ),
 );
 
-const ColumnTypeSchema = v.picklist([
-  "boolean",
-  "date",
-  "datetime",
-  "decimal",
-  "integer",
-  "string",
-]);
-const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
 const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
 
 const MassActionConfirmSchema = v.object({
@@ -64,23 +55,6 @@ const iframeActionEntries = {
   timeout: v.optional(positiveNumberValueSchema("timeout")),
   sandbox: v.optional(SandboxSchema),
 };
-
-const GridColumnSchema = v.object({
-  key: nonEmptyStringValueSchema("column key"),
-  label: nonEmptyStringValueSchema("column label"),
-  type: ColumnTypeSchema,
-  align: ColumnAlignSchema,
-});
-
-const GridColumnsSchema = v.object({
-  label: nonEmptyStringValueSchema("grid columns label"),
-  description: nonEmptyStringValueSchema("grid columns description"),
-  runtimeAction: nonEmptyStringValueSchema("runtime action"),
-  columns: v.pipe(
-    v.array(GridColumnSchema),
-    v.minLength(1, "At least one grid column is required"),
-  ),
-});
 
 const massActionBaseEntries = {
   actionId: nonEmptyStringValueSchema("mass action ID"),
@@ -306,18 +280,6 @@ export type OrderViewButton = v.InferInput<typeof OrderViewButtonSchema>;
 export type CustomFee = v.InferInput<typeof CustomFeeSchema>;
 
 /**
- * Grid columns registration configuration.
- * @experimental
- */
-export type GridColumns = v.InferInput<typeof GridColumnsSchema>;
-
-/**
- * A single grid column definition.
- * @experimental
- */
-export type GridColumn = v.InferInput<typeof GridColumnSchema>;
-
-/**
  * Banner notification registration configuration.
  * @experimental
  */
@@ -353,6 +315,34 @@ export function hasAdminUiSdk<T extends AnyCommerceAppConfig>(
 // adminUi — grid column extensions on commerce/backend-ui/2
 // ---------------------------------------------------------------------------
 
+const ColumnTypeSchema = v.picklist([
+  "boolean",
+  "date",
+  "datetime",
+  "decimal",
+  "integer",
+  "string",
+]);
+
+const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
+
+const GridColumnSchema = v.object({
+  key: nonEmptyStringValueSchema("column key"),
+  label: nonEmptyStringValueSchema("column label"),
+  type: ColumnTypeSchema,
+  align: ColumnAlignSchema,
+});
+
+const GridColumnsSchema = v.object({
+  label: nonEmptyStringValueSchema("grid columns label"),
+  description: nonEmptyStringValueSchema("grid columns description"),
+  runtimeAction: nonEmptyStringValueSchema("runtime action"),
+  columns: v.pipe(
+    v.array(GridColumnSchema),
+    v.minLength(1, "At least one grid column is required"),
+  ),
+});
+
 const AdminUiOrderSchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
 });
@@ -380,6 +370,18 @@ export const AdminUiSchema = v.object({
  * @experimental
  */
 export type AdminUiConfiguration = v.InferInput<typeof AdminUiSchema>;
+
+/**
+ * Grid columns registration configuration.
+ * @experimental
+ */
+export type GridColumns = v.InferInput<typeof GridColumnsSchema>;
+
+/**
+ * A single grid column definition.
+ * @experimental
+ */
+export type GridColumn = v.InferInput<typeof GridColumnSchema>;
 
 /** Config type when `adminUi` grid column configuration is present. */
 export type AdminUiConfig = CommerceAppConfigOutputModel & {
