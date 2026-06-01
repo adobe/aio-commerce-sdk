@@ -13,7 +13,7 @@
 The SDK replaces the v1 Admin UI SDK grid column schema with a unified v2 schema covering order,
 product, and customer grids. Support for `commerce/backend-ui/1` and the mesh-based config
 (`data.meshId`, `properties`, `columnId`, `float` type) is removed. Apps must declare
-`commerce/backend-ui/2` and adopt the new shape: `data.backend` (a `workerProcess` operation name
+`commerce/backend-ui/2` and adopt the new shape: `runtimeAction` (a `workerProcess` operation name
 resolved by App Registry at runtime), `columns` (renamed from `properties`), and `key` (renamed
 from `columnId`). The wire contract between Commerce and the handler is formally standardized for
 the first time.
@@ -37,7 +37,7 @@ The v1 grid column design has four concrete problems that compound each other:
 
 **Goals**
 
-- Replace `data.meshId` with `data.backend` (a `workerProcess` operation name) in all three grids.
+- Replace `data.meshId` with `runtimeAction` (a `workerProcess` operation name) in all three grids.
 - Rename `properties` → `columns`, `columnId` → `key` for clarity.
 - Formally specify the request/response wire contract.
 - Remove `commerce/backend-ui/1` and all v1 schema artifacts from the SDK.
