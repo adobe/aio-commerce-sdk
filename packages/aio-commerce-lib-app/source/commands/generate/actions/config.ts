@@ -73,7 +73,7 @@ function createActionDefinition(
 
     function: `${GENERATED_ACTIONS_PATH}/${actionName}.js`,
     web: options.web ?? "yes",
-    runtime: "nodejs:22",
+    runtime: "nodejs:24",
     annotations: {
       "require-adobe-auth": true,
       final: true,
@@ -243,7 +243,7 @@ export function buildAdminUiSdkExtConfig() {
             registration: {
               function: `${ADMIN_UI_SDK_ACTIONS_PATH}/index.js`,
               web: "yes",
-              runtime: "nodejs:22",
+              runtime: "nodejs:24",
               annotations: {
                 "require-adobe-auth": true,
                 final: true,
