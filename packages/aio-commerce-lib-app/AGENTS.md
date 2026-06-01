@@ -13,5 +13,3 @@ The runtime actions under `source/actions/` expose REST endpoints. Their public 
 - `info.x-meta.packageVersion` is synced automatically — do not edit it by hand. It is updated by the `version` Turbo task during release.
 
 - Run `pnpm --filter @adobe/aio-commerce-lib-app run lint:openapi` to validate the spec with Redocly before committing.
-
-- `GET /app-config/openapi.json` strips paths based on the app's capabilities at runtime (see `source/actions/app-config/router.ts`). The spec should reflect the full set of possible paths — the stripping happens server-side, not in the file.
