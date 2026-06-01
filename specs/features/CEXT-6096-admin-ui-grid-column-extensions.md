@@ -5,12 +5,12 @@
 - [ ] **Implemented**
 
 > **Breaking change.** The v1 grid column schema (`commerce/backend-ui/1`, `data.meshId`,
-> `properties`, `columnId`) is removed. Existing apps must migrate to v2. See
-> [Migration from v1](#migration-from-v1) below.
+> `properties`, `columnId`) is removed, and the top-level config key is renamed from `adminUiSdk`
+> to `adminUi`. Existing apps must migrate to v2. See [Migration from v1](#migration-from-v1) below.
 
 ## Summary
 
-The SDK replaces the v1 Admin UI SDK grid column schema with a unified v2 schema covering order,
+The SDK replaces the v1 Admin UI grid column schema with a unified v2 schema covering order,
 product, and customer grids. Support for `commerce/backend-ui/1` and the mesh-based config
 (`data.meshId`, `properties`, `columnId`, `float` type) is removed. Apps must declare
 `commerce/backend-ui/2` and adopt the new shape: `runtimeAction` (a `workerProcess` operation name
@@ -39,8 +39,10 @@ The v1 grid column design has four concrete problems that compound each other:
 
 - Replace `data.meshId` with `runtimeAction` (a `workerProcess` operation name) in all three grids.
 - Rename `properties` → `columns`, `columnId` → `key` for clarity.
+- Add `label` and `description` to each `gridColumns` block for display during installation.
 - Formally specify the request/response wire contract.
 - Remove `commerce/backend-ui/1` and all v1 schema artifacts from the SDK.
+- Rename the top-level config key from `adminUiSdk` to `adminUi`.
 - Use a single unified column schema under `order.gridColumns`, `product.gridColumns`, and
   `customer.gridColumns`.
 
@@ -65,7 +67,10 @@ export default defineConfig({
     registration: {
       order: {
         gridColumns: {
-          runtimeAction: "fetch-order-grid-data",
+          label: "Order fulfillment data",
+          description:
+            "Adds fulfillment status and risk score to the order grid",
+          runtimeAction: "orders/fetch-order-grid-data",
           columns: [
             {
               key: "fulfillment_status",
@@ -84,11 +89,28 @@ export default defineConfig({
       },
       product: {
         gridColumns: {
-          runtimeAction: "fetch-product-grid-data",
+          label: "Product inventory data",
+          description: "Adds inventory status to the product grid",
+          runtimeAction: "products/fetch-product-grid-data",
           columns: [
             {
               key: "inventory_status",
               label: "Inventory",
+              type: "string",
+              align: "left",
+            },
+          ],
+        },
+      },
+      customer: {
+        gridColumns: {
+          label: "Customer loyalty data",
+          description: "Adds loyalty tier to the customer grid",
+          runtimeAction: "customers/fetch-customer-grid-data",
+          columns: [
+            {
+              key: "loyalty_tier",
+              label: "Loyalty Tier",
               type: "string",
               align: "left",
             },
@@ -164,11 +186,13 @@ runtime action URL when Commerce fetches the extension.
 
 | v1                                       | v2                           | Notes                                                         |
 | ---------------------------------------- | ---------------------------- | ------------------------------------------------------------- |
+| `adminUiSdk`                             | `adminUi`                    | Top-level config key rename in `defineConfig()`               |
 | `data.meshId`                            | `runtimeAction`              | Operation name declared in `app.config.yaml`, not a Mesh hash |
 | `properties`                             | `columns`                    | Array of column declarations                                  |
 | `properties[].columnId`                  | `columns[].key`              | Doubles as the response data key — make them match            |
 | `properties[].type: "float"`             | `columns[].type: "decimal"`  | Renamed                                                       |
 | _(absent)_                               | `columns[].type: "datetime"` | New type in v2                                                |
+| _(absent)_                               | `label`, `description`       | New block-level metadata for App Management installation UI   |
 | Extension point: `commerce/backend-ui/1` | `commerce/backend-ui/2`      | Required change in `app.config.yaml`                          |
 
 ## Design
@@ -206,6 +230,8 @@ const GridColumnSchema = v.object({
 });
 
 const GridColumnsSchema = v.object({
+  label: nonEmptyStringValueSchema("grid columns label"),
+  description: nonEmptyStringValueSchema("grid columns description"),
   runtimeAction: nonEmptyStringValueSchema("runtime action"),
   columns: v.pipe(
     v.array(GridColumnSchema),
@@ -262,6 +288,8 @@ operations:
       impl: orders/fetch-order-grid-data
     - type: action
       impl: products/fetch-product-grid-data
+    - type: action
+      impl: customers/fetch-customer-grid-data
 ```
 
 ### Registration action generation
