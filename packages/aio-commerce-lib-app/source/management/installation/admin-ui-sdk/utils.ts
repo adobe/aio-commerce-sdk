@@ -10,11 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  createCustomAdminUiSdkApiClient,
-  registerExtension,
-  unregisterExtension,
-} from "@adobe/aio-commerce-lib-admin-ui-sdk/api";
+import { createAdminUiSdkApiClient } from "@adobe/aio-commerce-lib-admin-ui-sdk/api";
 import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
@@ -35,20 +31,15 @@ function createAdminUiSdkClient(params: RuntimeActionParams) {
     tryForwardAuthProvider: true,
   });
 
-  return createCustomAdminUiSdkApiClient(commerceClientParams, {
-    registerExtension,
-    unregisterExtension,
-  });
+  return createAdminUiSdkApiClient(commerceClientParams);
 }
 
-/** A custom Admin UI SDK API client with only the operations used during installation. */
-export type CustomAdminUiSdkApiClient = ReturnType<
-  typeof createAdminUiSdkClient
->;
+/** The Admin UI SDK API client used during installation. */
+export type AdminUiSdkApiClient = ReturnType<typeof createAdminUiSdkClient>;
 
 /** Context shared across Admin UI SDK installation steps. */
 export interface AdminUiSdkStepContext extends Record<string, unknown> {
-  get adminUiSdkClient(): CustomAdminUiSdkApiClient;
+  get adminUiSdkClient(): AdminUiSdkApiClient;
 }
 
 /** The execution context for Admin UI SDK leaf steps. */
@@ -60,7 +51,7 @@ export const createAdminUiSdkStepContext: StepContextFactory<
   AdminUiSdkStepContext
 > = (installation: InstallationContext) => {
   const { params } = installation;
-  let adminUiSdkClient: CustomAdminUiSdkApiClient | null = null;
+  let adminUiSdkClient: AdminUiSdkApiClient | null = null;
 
   return {
     get adminUiSdkClient() {

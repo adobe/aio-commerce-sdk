@@ -1,5 +1,7 @@
 # `@adobe/aio-commerce-lib-admin-ui-sdk` Documentation
 
+> **Experimental:** This package is not yet production-ready. The API may change in future releases.
+
 ## Overview
 
 This package provides utilities for interacting with the Admin UI SDK API:
@@ -92,20 +94,5 @@ import { createAdminUiSdkApiClient } from "@adobe/aio-commerce-lib-admin-ui-sdk/
 const client = createAdminUiSdkApiClient({
   baseUrl: "https://commerce.example.com",
   // ...other CommerceHttpClientParams
-});
-```
-
-In install/uninstall actions where only a subset of operations is needed, prefer `createCustomAdminUiSdkApiClient` to keep the bundle lean:
-
-```typescript
-import {
-  createCustomAdminUiSdkApiClient,
-  registerExtension,
-  unregisterExtension,
-} from "@adobe/aio-commerce-lib-admin-ui-sdk/api";
-
-const client = createCustomAdminUiSdkApiClient(params, {
-  registerExtension,
-  unregisterExtension,
 });
 ```

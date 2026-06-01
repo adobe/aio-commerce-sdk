@@ -25,7 +25,6 @@ import type {
 
 /**
  * Creates a new API client for the Admin UI SDK API with all available operations.
- * Prefer {@link createCustomAdminUiSdkApiClient} for bundle-size-aware contexts.
  *
  * @param params - The parameters to build the Commerce HTTP client.
  */
@@ -36,13 +35,14 @@ export function createAdminUiSdkApiClient(params: CommerceHttpClientParams) {
   });
 }
 
-/** An API client for the Admin UI SDK API with all operations. */
+/**
+ * An API client for the Admin UI SDK API with all operations.
+ * @see {@link createAdminUiSdkApiClient}
+ */
 export type AdminUiSdkApiClient = ReturnType<typeof createAdminUiSdkApiClient>;
 
 /**
- * Creates a customized Admin UI SDK API client with only the specified operations.
- * Use this in install/uninstall contexts where only a subset of operations is needed.
- *
+ * Creates a customized Admin UI SDK API client with a user-specified set of endpoint functions.
  * @param params - The parameters to build the Commerce HTTP client.
  * @param functions - The API functions to include in the client.
  */

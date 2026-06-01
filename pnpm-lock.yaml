@@ -232,7 +232,7 @@ importers:
         version: 1.14.3
       valibot:
         specifier: 'catalog:'
-        version: 1.4.0(typescript@6.0.3)
+        version: 1.4.1(typescript@6.0.3)
     devDependencies:
       '@aio-commerce-sdk/common-utils':
         specifier: workspace:*
@@ -240,6 +240,9 @@ importers:
       '@aio-commerce-sdk/config-tsdown':
         specifier: workspace:*
         version: link:../../configs/tsdown
+      '@aio-commerce-sdk/config-typedoc':
+        specifier: workspace:*
+        version: link:../../configs/typedoc
       '@aio-commerce-sdk/config-typescript':
         specifier: workspace:*
         version: link:../../configs/typescript

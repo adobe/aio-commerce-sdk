@@ -354,6 +354,10 @@ export type MenuItem = v.InferInput<typeof MenuItemSchema>;
 
 /**
  * An ACL resource registration entry for Admin UI SDK menu items.
+ *
+ * `parent`, when set, must reference the `id` of another `aclResource` declared by the same app.
+ * Static Commerce ACL ids are not valid parents; a node with an unrecognized parent falls back
+ * under the Admin UI SDK extensions container.
  * @experimental
  */
 export type AclResource = v.InferInput<typeof AclResourceSchema>;
