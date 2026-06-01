@@ -50,6 +50,9 @@ See the ([spike](https://wiki.corp.adobe.com/spaces/DMSArchitecture/pages/387249
   today, so Commerce admin behavior is preserved.
 - Update fixtures and tests to use the v2 input shape; assertions on the generated wire-format
   remain unchanged.
+- Cross-file validation that `backend: "<name>"` actually matches a `workerProcess` operation
+  declared in `app.config.yaml`. The schema validates that `backend` is a non-empty string;
+  validating the reference is a follow-up.
 
 **Non-goals**
 
@@ -58,9 +61,6 @@ See the ([spike](https://wiki.corp.adobe.com/spaces/DMSArchitecture/pages/387249
   actions move.
 - Removing the standalone `bannerNotification.orderViewButtons` block — that belongs to a
   different chapter and is preserved unchanged.
-- Cross-file validation that `backend: "<name>"` actually matches a `workerProcess` operation
-  declared in `app.config.yaml`. The schema validates that `backend` is a non-empty string;
-  validating the reference is a follow-up.
 - Removing `commerce/backend-ui/1` support from Adobe Commerce admin. That is a separate
   decision owned by the Admin UI SDK team; this spec only covers SDK-side generation.
 
