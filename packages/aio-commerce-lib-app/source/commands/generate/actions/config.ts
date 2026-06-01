@@ -210,7 +210,56 @@ export function buildBusinessConfigurationExtConfig() {
 }
 
 /**
- * Builds the ext.config.yaml configuration for the Admin UI SDK backend-ui extension.
+ * Builds the ext.config.yaml for the Admin UI grid column v2 extension (`commerce/backend-ui/2`).
+ * Derives `workerProcess` declarations from the `runtimeAction` values in `adminUi` config.
+ */
+export function buildAdminUiV2ExtConfig(
+  appConfig: CommerceAppConfigOutputModel,
+) {
+  const adminUi = appConfig.adminUi;
+  const runtimeActions = [
+    ...new Set(
+      (["order", "product", "customer"] as const)
+        .map((gt) => adminUi?.[gt]?.gridColumns?.runtimeAction)
+        .filter((ra): ra is string => ra !== undefined),
+    ),
+  ];
+
+  return {
+    hooks: {
+      "pre-app-build":
+        "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build",
+    },
+    operations: {
+      view: [{ type: "web", impl: "index.html" }],
+      ...(runtimeActions.length > 0 && {
+        workerProcess: runtimeActions.map((impl) => ({ type: "action", impl })),
+      }),
+    },
+    web: "web-src",
+    runtimeManifest: {
+      packages: {
+        [ADMIN_UI_SDK_PACKAGE_NAME]: {
+          license: "Apache-2.0",
+          actions: {
+            registration: {
+              function: `${ADMIN_UI_SDK_ACTIONS_PATH}/index.js`,
+              web: "yes",
+              runtime: "nodejs:22",
+              annotations: {
+                "require-adobe-auth": true,
+                final: true,
+              },
+            },
+          } satisfies Record<string, ActionDefinition>,
+        },
+      },
+    },
+  } satisfies ExtConfig;
+}
+
+/**
+ * Builds the ext.config.yaml configuration for the Admin UI SDK backend-ui v1 extension.
  */
 export function buildAdminUiSdkExtConfig() {
   return {

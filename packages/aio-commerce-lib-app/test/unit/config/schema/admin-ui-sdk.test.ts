@@ -138,11 +138,12 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    test("registration with grid columns — all 5 type values", () => {
+    test("registration with grid columns — all 6 type values", () => {
       for (const type of [
         "boolean",
         "date",
-        "float",
+        "datetime",
+        "decimal",
         "integer",
         "string",
       ] as const) {
@@ -150,16 +151,34 @@ describe("AdminUiSdkSchema", () => {
           registration: {
             order: {
               gridColumns: {
-                data: { meshId: "mesh-1" },
-                properties: [
-                  { label: "Col", columnId: "col", type, align: "left" },
-                ],
+                label: "Order grid",
+                description: "Adds a column",
+                runtimeAction: "orders/fetch",
+                columns: [{ key: "col", label: "Col", type, align: "left" }],
               },
             },
           },
         });
         expect(result.success, `type "${type}" should be valid`).toBe(true);
       }
+    });
+
+    test("registration with grid columns — float is rejected in v2", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          order: {
+            gridColumns: {
+              label: "Order grid",
+              description: "Adds a column",
+              runtimeAction: "orders/fetch",
+              columns: [
+                { key: "col", label: "Col", type: "float", align: "left" },
+              ],
+            },
+          },
+        },
+      });
+      expect(result.success).toBe(false);
     });
 
     test("registration with view buttons — level -1, 0, 1", () => {

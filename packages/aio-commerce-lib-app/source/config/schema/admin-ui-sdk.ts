@@ -42,7 +42,8 @@ const SandboxSchema = v.pipe(
 const ColumnTypeSchema = v.picklist([
   "boolean",
   "date",
-  "float",
+  "datetime",
+  "decimal",
   "integer",
   "string",
 ]);
@@ -64,20 +65,20 @@ const iframeActionEntries = {
   sandbox: v.optional(SandboxSchema),
 };
 
-const GridColumnPropertySchema = v.object({
+const GridColumnSchema = v.object({
+  key: nonEmptyStringValueSchema("column key"),
   label: nonEmptyStringValueSchema("column label"),
-  columnId: nonEmptyStringValueSchema("column ID"),
   type: ColumnTypeSchema,
   align: ColumnAlignSchema,
 });
 
 const GridColumnsSchema = v.object({
-  data: v.object({
-    meshId: nonEmptyStringValueSchema("mesh ID"),
-  }),
-  properties: v.pipe(
-    v.array(GridColumnPropertySchema),
-    v.minLength(1, "At least one grid column property is required"),
+  label: nonEmptyStringValueSchema("grid columns label"),
+  description: nonEmptyStringValueSchema("grid columns description"),
+  runtimeAction: nonEmptyStringValueSchema("runtime action"),
+  columns: v.pipe(
+    v.array(GridColumnSchema),
+    v.minLength(1, "At least one grid column is required"),
   ),
 });
 
@@ -314,6 +315,12 @@ export type CustomFee = v.InferInput<typeof CustomFeeSchema>;
 export type GridColumns = v.InferInput<typeof GridColumnsSchema>;
 
 /**
+ * A single grid column definition.
+ * @experimental
+ */
+export type GridColumn = v.InferInput<typeof GridColumnSchema>;
+
+/**
  * Banner notification registration configuration.
  * @experimental
  */
@@ -343,4 +350,51 @@ export function hasAdminUiSdk<T extends AnyCommerceAppConfig>(
     config.adminUiSdk !== undefined &&
     config.adminUiSdk.registration !== undefined
   );
+}
+
+// ---------------------------------------------------------------------------
+// adminUi — grid column extensions on commerce/backend-ui/2
+// ---------------------------------------------------------------------------
+
+const AdminUiOrderSchema = v.object({
+  gridColumns: v.optional(GridColumnsSchema),
+});
+
+const AdminUiProductSchema = v.object({
+  gridColumns: v.optional(GridColumnsSchema),
+});
+
+const AdminUiCustomerSchema = v.object({
+  gridColumns: v.optional(GridColumnsSchema),
+});
+
+/**
+ * Schema for the `adminUi` config section (grid column extensions on `commerce/backend-ui/2`).
+ * @experimental
+ */
+export const AdminUiSchema = v.object({
+  order: v.optional(AdminUiOrderSchema),
+  product: v.optional(AdminUiProductSchema),
+  customer: v.optional(AdminUiCustomerSchema),
+});
+
+/**
+ * The Admin UI configuration for an Adobe Commerce application.
+ * @experimental
+ */
+export type AdminUiConfiguration = v.InferInput<typeof AdminUiSchema>;
+
+/** Config type when `adminUi` grid column configuration is present. */
+export type AdminUiConfig = CommerceAppConfigOutputModel & {
+  adminUi: NonNullable<CommerceAppConfigOutputModel["adminUi"]>;
+};
+
+/**
+ * Check if config has Admin UI grid column configuration.
+ * @experimental
+ */
+export function hasAdminUi(
+  config: CommerceAppConfigOutputModel,
+): config is AdminUiConfig {
+  return config.adminUi !== undefined;
 }

@@ -16,25 +16,32 @@ import consola from "consola";
 
 import {
   BACKEND_UI_EXTENSION_POINT_ID,
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
 import { getRuntimeActions } from "#commands/generate/actions/config";
 import {
   generateActionFiles,
+  generateGridColumnsRegistrationActionFile,
   generateRegistrationActionFile,
   prepareRuntimeAppConfigModule,
   readExtConfig,
   TEMPLATES_DIR,
+  updateExtConfig,
 } from "#commands/generate/actions/lib";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import { loadAppManifest } from "#commands/utils";
-import { hasAdminUiSdk } from "#config/index";
+import { hasAdminUi, hasAdminUiSdk } from "#config/index";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
 
-type Extension = "extensibility/1" | "configuration/1" | "backend-ui/1";
+type Extension =
+  | "extensibility/1"
+  | "configuration/1"
+  | "backend-ui/1"
+  | "backend-ui/2";
 
 /**
  * Runs the pre-app-build hook for the given extension.
@@ -91,6 +98,17 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
       await generateRegistrationActionFile(
         appManifest,
         BACKEND_UI_EXTENSION_POINT_ID,
+      );
+    }
+    return;
+  }
+
+  if (extension === "backend-ui/2") {
+    if (hasAdminUi(appManifest)) {
+      await updateExtConfig(appManifest, BACKEND_UI_V2_EXTENSION_POINT_ID);
+      await generateGridColumnsRegistrationActionFile(
+        appManifest,
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
       );
     }
     return;

@@ -27,7 +27,7 @@ export {
   validateCommerceAppConfig,
   validateCommerceAppConfigDomain,
 } from "./lib/validate";
-export { hasAdminUiSdk } from "./schema/admin-ui-sdk";
+export { hasAdminUi, hasAdminUiSdk } from "./schema/admin-ui-sdk";
 export {
   hasBusinessConfig,
   hasBusinessConfigSchema,
@@ -50,6 +50,7 @@ export { hasMetadata } from "./schema/metadata";
 export { hasWebhooks } from "./schema/webhooks";
 
 export type {
+  AdminUiConfiguration,
   AdminUiSdkConfiguration,
   AdminUiSdkRegistration,
   BannerNotification,

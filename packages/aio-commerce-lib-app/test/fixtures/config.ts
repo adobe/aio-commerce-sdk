@@ -147,14 +147,11 @@ export const configWithAdminUiSdk = {
           },
         ],
         gridColumns: {
-          data: { meshId: "mesh-123" },
-          properties: [
-            {
-              label: "Col 1",
-              columnId: "col_1",
-              type: "string",
-              align: "left",
-            },
+          label: "Order grid data",
+          description: "Adds col_1 to the order grid",
+          runtimeAction: "orders/fetch-order-grid-data",
+          columns: [
+            { key: "col_1", label: "Col 1", type: "string", align: "left" },
           ],
         },
         viewButtons: [
@@ -184,9 +181,11 @@ export const configWithAdminUiSdk = {
           },
         ],
         gridColumns: {
-          data: { meshId: "mesh-456" },
-          properties: [
-            { label: "Col", columnId: "col", type: "integer", align: "right" },
+          label: "Product grid data",
+          description: "Adds col to the product grid",
+          runtimeAction: "products/fetch-product-grid-data",
+          columns: [
+            { key: "col", label: "Col", type: "integer", align: "right" },
           ],
         },
       },
@@ -199,9 +198,11 @@ export const configWithAdminUiSdk = {
           },
         ],
         gridColumns: {
-          data: { meshId: "mesh-789" },
-          properties: [
-            { label: "Col", columnId: "col", type: "boolean", align: "center" },
+          label: "Customer grid data",
+          description: "Adds col to the customer grid",
+          runtimeAction: "customers/fetch-customer-grid-data",
+          columns: [
+            { key: "col", label: "Col", type: "boolean", align: "center" },
           ],
         },
       },
@@ -256,11 +257,13 @@ export const configWithFullAdminUiSdk = {
           },
         ],
         gridColumns: {
-          data: { meshId: "MESH_ID" },
-          properties: [
+          label: "Order fulfillment data",
+          description: "Adds column_id to the order grid",
+          runtimeAction: "orders/fetch-order-grid-data",
+          columns: [
             {
+              key: "column_id",
               label: "Column Name",
-              columnId: "column_id",
               type: "string" as const,
               align: "left" as const,
             },
@@ -300,11 +303,13 @@ export const configWithFullAdminUiSdk = {
           },
         ],
         gridColumns: {
-          data: { meshId: "MESH_ID" },
-          properties: [
+          label: "Product grid data",
+          description: "Adds col_id to the product grid",
+          runtimeAction: "products/fetch-product-grid-data",
+          columns: [
             {
+              key: "col_id",
               label: "Column",
-              columnId: "col_id",
               type: "string" as const,
               align: "left" as const,
             },
@@ -321,11 +326,13 @@ export const configWithFullAdminUiSdk = {
           },
         ],
         gridColumns: {
-          data: { meshId: "MESH_ID" },
-          properties: [
+          label: "Customer grid data",
+          description: "Adds col_id to the customer grid",
+          runtimeAction: "customers/fetch-customer-grid-data",
+          columns: [
             {
+              key: "col_id",
               label: "Column",
-              columnId: "col_id",
               type: "string" as const,
               align: "left" as const,
             },
