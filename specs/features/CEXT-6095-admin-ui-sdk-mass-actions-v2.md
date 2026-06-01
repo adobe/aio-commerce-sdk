@@ -118,7 +118,7 @@ notifications, and a `runtimeAction` reference instead of a hand-rolled path for
 
 ```ts
 // v2 — new shape
-adminUiSdk: {
+adminUi: {
   customer: {
     massActions: [
       {
@@ -158,10 +158,9 @@ adminUiSdk: {
 }
 ```
 
-> **Naming TBD:** the top-level block is shown as `adminUiSdk` here for continuity with v1.
-> #480 proposes renaming to `adminUi`; this spec will follow whatever lands there. The
-> `registration` wrapper present in v1 is dropped — entities live directly under the top-level
-> block.
+> **Renames from v1:** the top-level block is `adminUi` (renamed from `adminUiSdk`, aligning
+> with #480), and the `registration` wrapper present in v1 is dropped — entities live directly
+> under `adminUi`.
 
 Operations referenced from `runtimeAction` must be declared on `commerce/backend-ui/2` in
 `app.config.yaml`:
@@ -290,9 +289,9 @@ v2 by default.
 
 ## Drawbacks
 
-- Within a single `adminUiSdk` block, mass actions use the v2 shape while other chapters
-  (menu items, grid columns, view buttons, custom fees) still use the v1 shape. Inconsistent
-  until subsequent tickets migrate them.
+- Within a single `adminUi` block, mass actions use the v2 shape while other chapters (menu
+  items, grid columns, view buttons, custom fees) still use the v1 shape. Inconsistent until
+  subsequent tickets migrate them.
 - The generated `registration` JSON uses different field names than the developer writes
   (`actionId` not `id`, `displayIframe` not `type`). Mildly confusing when debugging the
   generated file.
