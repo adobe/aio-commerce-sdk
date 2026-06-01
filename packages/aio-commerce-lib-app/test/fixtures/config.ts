@@ -146,14 +146,6 @@ export const configWithAdminUiSdk = {
             confirm: { title: "Confirm", message: "Are you sure?" },
           },
         ],
-        gridColumns: {
-          label: "Order grid data",
-          description: "Adds col_1 to the order grid",
-          runtimeAction: "orders/fetch-order-grid-data",
-          columns: [
-            { key: "col_1", label: "Col 1", type: "string", align: "left" },
-          ],
-        },
         viewButtons: [
           {
             buttonId: "test-app::delete-order",
@@ -180,14 +172,6 @@ export const configWithAdminUiSdk = {
             path: "#/product-mass-action",
           },
         ],
-        gridColumns: {
-          label: "Product grid data",
-          description: "Adds col to the product grid",
-          runtimeAction: "products/fetch-product-grid-data",
-          columns: [
-            { key: "col", label: "Col", type: "integer", align: "right" },
-          ],
-        },
       },
       customer: {
         massActions: [
@@ -197,14 +181,6 @@ export const configWithAdminUiSdk = {
             path: "#/customer-mass-action",
           },
         ],
-        gridColumns: {
-          label: "Customer grid data",
-          description: "Adds col to the customer grid",
-          runtimeAction: "customers/fetch-customer-grid-data",
-          columns: [
-            { key: "col", label: "Col", type: "boolean", align: "center" },
-          ],
-        },
       },
       bannerNotification: {
         massActions: {
@@ -256,19 +232,6 @@ export const configWithFullAdminUiSdk = {
             sandbox: "allow-modals",
           },
         ],
-        gridColumns: {
-          label: "Order fulfillment data",
-          description: "Adds column_id to the order grid",
-          runtimeAction: "orders/fetch-order-grid-data",
-          columns: [
-            {
-              key: "column_id",
-              label: "Column Name",
-              type: "string" as const,
-              align: "left" as const,
-            },
-          ],
-        },
         viewButtons: [
           {
             buttonId: "my-app::delete-order",
@@ -302,19 +265,6 @@ export const configWithFullAdminUiSdk = {
             productSelectLimit: 1,
           },
         ],
-        gridColumns: {
-          label: "Product grid data",
-          description: "Adds col_id to the product grid",
-          runtimeAction: "products/fetch-product-grid-data",
-          columns: [
-            {
-              key: "col_id",
-              label: "Column",
-              type: "string" as const,
-              align: "left" as const,
-            },
-          ],
-        },
       },
       customer: {
         massActions: [
@@ -325,19 +275,6 @@ export const configWithFullAdminUiSdk = {
             customerSelectLimit: 1,
           },
         ],
-        gridColumns: {
-          label: "Customer grid data",
-          description: "Adds col_id to the customer grid",
-          runtimeAction: "customers/fetch-customer-grid-data",
-          columns: [
-            {
-              key: "col_id",
-              label: "Column",
-              type: "string" as const,
-              align: "left" as const,
-            },
-          ],
-        },
       },
       bannerNotification: {
         massActions: {

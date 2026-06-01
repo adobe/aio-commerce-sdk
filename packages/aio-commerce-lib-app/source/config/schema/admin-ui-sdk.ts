@@ -197,19 +197,16 @@ const CustomFeeSchema = v.object({
 
 const OrderExtensionPointsSchema = v.object({
   massActions: v.optional(v.array(OrderMassActionSchema)),
-  gridColumns: v.optional(GridColumnsSchema),
   viewButtons: v.optional(v.array(OrderViewButtonSchema)),
   customFees: v.optional(v.array(CustomFeeSchema)),
 });
 
 const ProductExtensionPointsSchema = v.object({
   massActions: v.optional(v.array(ProductMassActionSchema)),
-  gridColumns: v.optional(GridColumnsSchema),
 });
 
 const CustomerExtensionPointsSchema = v.object({
   massActions: v.optional(v.array(CustomerMassActionSchema)),
-  gridColumns: v.optional(GridColumnsSchema),
 });
 
 const MassActionBannerSchema = v.object({
