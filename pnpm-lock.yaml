@@ -20,7 +20,7 @@ catalogs:
       version: 5.3.1
     ansis:
       specifier: ^4.1.0
-      version: 4.3.0
+      version: 4.3.1
     camelcase:
       specifier: ^9.0.0
       version: 9.0.0
@@ -41,7 +41,7 @@ catalogs:
       version: 2.5.0
     type-fest:
       specifier: ^5.0.0
-      version: 5.6.0
+      version: 5.7.0
     typescript:
       specifier: ^6.0.0
       version: 6.0.3
@@ -158,7 +158,7 @@ importers:
         version: 3.0.0
       type-fest:
         specifier: 'catalog:'
-        version: 5.6.0
+        version: 5.7.0
       valibot:
         specifier: 'catalog:'
         version: 1.4.1(typescript@6.0.3)
@@ -198,7 +198,7 @@ importers:
         version: 1.6.0
       type-fest:
         specifier: 'catalog:'
-        version: 5.6.0
+        version: 5.7.0
       yaml:
         specifier: 'catalog:'
         version: 2.9.0
@@ -235,7 +235,7 @@ importers:
         version: 1.14.3
       type-fest:
         specifier: 'catalog:'
-        version: 5.6.0
+        version: 5.7.0
     devDependencies:
       '@aio-commerce-sdk/config-tsdown':
         specifier: workspace:*
@@ -305,7 +305,7 @@ importers:
         version: 2.5.0
       type-fest:
         specifier: 'catalog:'
-        version: 5.6.0
+        version: 5.7.0
       valibot:
         specifier: 'catalog:'
         version: 1.4.1(typescript@6.0.3)
@@ -354,7 +354,7 @@ importers:
         version: 8.1.2
       ansis:
         specifier: 'catalog:'
-        version: 4.3.0
+        version: 4.3.1
       consola:
         specifier: 'catalog:'
         version: 3.4.2
@@ -363,7 +363,7 @@ importers:
         version: 2.2.6
       type-fest:
         specifier: 'catalog:'
-        version: 5.6.0
+        version: 5.7.0
       valibot:
         specifier: 'catalog:'
         version: 1.4.1(typescript@6.0.3)
@@ -418,7 +418,7 @@ importers:
         version: 2.5.0
       type-fest:
         specifier: 'catalog:'
-        version: 5.6.0
+        version: 5.7.0
       uuid:
         specifier: ^14.0.0
         version: 14.0.0
@@ -461,13 +461,13 @@ importers:
     dependencies:
       ansis:
         specifier: 'catalog:'
-        version: 4.3.0
+        version: 4.3.1
       camelcase:
         specifier: 'catalog:'
         version: 9.0.0
       type-fest:
         specifier: 'catalog:'
-        version: 5.6.0
+        version: 5.7.0
       valibot:
         specifier: 'catalog:'
         version: 1.4.1(typescript@6.0.3)
@@ -504,7 +504,7 @@ importers:
         version: 1.14.3
       type-fest:
         specifier: 'catalog:'
-        version: 5.6.0
+        version: 5.7.0
       valibot:
         specifier: 'catalog:'
         version: 1.4.1(typescript@6.0.3)
@@ -590,7 +590,7 @@ importers:
         version: link:../aio-commerce-lib-webhooks
       type-fest:
         specifier: 'catalog:'
-        version: 5.6.0
+        version: 5.7.0
     devDependencies:
       '@aio-commerce-sdk/config-tsdown':
         specifier: workspace:*
@@ -630,7 +630,7 @@ importers:
         version: 1.5.0
       ansis:
         specifier: 'catalog:'
-        version: 4.3.0
+        version: 4.3.1
     devDependencies:
       '@aio-commerce-sdk/config-typescript':
         specifier: workspace:*
@@ -1972,8 +1972,8 @@ packages:
     resolution: {integrity: sha512-4Dj6M28JB+oAH8kFkTLUo+a2jwOFkuqb3yucU0CANcRRUbxS0cP0nZYCGjcc3BNXwRIsUVmDGgzawme7zvJHvg==}
     engines: {node: '>=12'}
 
-  ansis@4.3.0:
-    resolution: {integrity: sha512-44mvgtPvohuU/70DdY5Oz2AIrLJ9k6/5x4KmoSvPwO+5Moijo0+N9D0fKbbYZQWP1hNm5CpOf+E01jhxG/r8xg==}
+  ansis@4.3.1:
+    resolution: {integrity: sha512-BJ8/l4R5LRE7hW9WdSuGYrLSHi2ynxeFpDFbH0K/CgNeY/tyhk+vO6TYxXC5r5CpUhNVX310xzPsN/H9lCdfOA==}
     engines: {node: '>=14'}
 
   argparse@1.0.10:
@@ -3456,8 +3456,8 @@ packages:
     resolution: {integrity: sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w==}
     engines: {node: '>=10'}
 
-  type-fest@5.6.0:
-    resolution: {integrity: sha512-8ZiHFm91orbSAe2PSAiSVBVko18pbhbiB3U9GglSzF/zCGkR+rxpHx6sEMCUm4kxY4LjDIUGgCfUMtwfZfjfUA==}
+  type-fest@5.7.0:
+    resolution: {integrity: sha512-1URUxUqfHFM1c+zfSPsa3gnkO7Aq21qyH75SIduNYz4SzY964rn1X2vCMQaHSHhktiw+0kPa2iyb6PUpXqB6Vg==}
     engines: {node: '>=20'}
 
   typedoc-plugin-markdown@4.11.0:
@@ -5072,7 +5072,7 @@ snapshots:
 
   ansi-styles@6.2.3: {}
 
-  ansis@4.3.0: {}
+  ansis@4.3.1: {}
 
   argparse@1.0.10:
     dependencies:
@@ -5965,7 +5965,7 @@ snapshots:
       statuses: 2.0.2
       strict-event-emitter: 0.5.1
       tough-cookie: 6.0.1
-      type-fest: 5.6.0
+      type-fest: 5.7.0
       until-async: 3.0.2
       yargs: 17.7.2
     optionalDependencies:
@@ -6437,7 +6437,7 @@ snapshots:
 
   tsdown@0.22.1(publint@0.3.21)(typescript@6.0.3):
     dependencies:
-      ansis: 4.3.0
+      ansis: 4.3.1
       cac: 7.0.0
       defu: 6.1.7
       empathic: 2.0.1
@@ -6476,7 +6476,7 @@ snapshots:
 
   type-fest@0.21.3: {}
 
-  type-fest@5.6.0:
+  type-fest@5.7.0:
     dependencies:
       tagged-tag: 1.0.0
 
