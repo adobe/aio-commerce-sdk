@@ -10,14 +10,37 @@
  * governing permissions and limitations under the License.
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf-8"));
-const specPath = join(root, "docs/openapi.json");
-const spec = JSON.parse(readFileSync(specPath, "utf-8"));
+import { consola } from "consola";
 
-spec.info.version = pkg.version;
-writeFileSync(specPath, `${JSON.stringify(spec, null, 2)}\n`);
+import spec from "#openapi.json" with { type: "json" };
+
+const PACKAGE_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
+const SPEC_PATH = join(PACKAGE_DIR, "docs/openapi.json");
+
+/**
+ * This script syncs the version in the OpenAPI spec's info.x-meta.packageVersion field with the version in package.json.
+ * This allows us to track which version of the package the OpenAPI spec was generated with, which is useful for caching and debugging purposes.
+ */
+async function main() {
+  // Read the package.json to get the current version of the package
+  const pkg = JSON.parse(
+    await readFile(join(PACKAGE_DIR, "package.json"), "utf-8"),
+  );
+
+  // Update the OpenAPI spec with the current package version in the x-meta field
+  const clone = structuredClone(spec);
+  clone.info["x-meta"] = {
+    packageVersion: pkg.version,
+  };
+
+  await writeFile(SPEC_PATH, `${JSON.stringify(clone, null, 2)}\n`);
+}
+
+main().catch((error) => {
+  consola.error("Error syncing OpenAPI spec version:", error);
+  process.exit(1);
+});

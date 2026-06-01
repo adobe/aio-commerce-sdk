@@ -17,8 +17,9 @@ import { requiresInstallationFromDomains } from "#config/schema/app";
 import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { CommerceAppConfigDomain } from "#config/schema/domains";
 
-// __PKG_VERSION__ is injected and replaced at build time.
+// __PKG_VERSION__ and __OPENAPI_VERSION__ are injected and replaced at build time.
 declare const __PKG_VERSION__: string;
+declare const __OPENAPI_VERSION__: string;
 
 /**
  * Loads the committed OpenAPI spec via dynamic import so it
@@ -80,13 +81,13 @@ function pruneUnusedSchemas(spec: OpenApiSpec) {
 
 /**
  * Computes a short hash identifying the spec served for the given config domains.
- * Changes whenever the served spec would: with the package version (which tracks
- * the committed spec's `info.version`) or with the domains that drive pruning.
+ * Changes whenever the served spec would: with the OpenAPI spec version (`info.version`),
+ * the package version, or the domains that drive pruning.
  *
  * @param domains - The active config domains.
  */
 export function getOpenApiCacheKey(domains: Set<CommerceAppConfigDomain>) {
-  const input = `${__PKG_VERSION__}:${[...domains].sort().join(",")}`;
+  const input = `${__PKG_VERSION__}:${[...domains].sort().join(",")}:${__OPENAPI_VERSION__}`;
   return createHash("sha256").update(input).digest("hex").slice(0, 8);
 }
 
