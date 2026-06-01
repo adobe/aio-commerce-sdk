@@ -7,7 +7,8 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
-- **Admin UI SDK Configuration**: Generate and manage the runtime action that powers the `commerce/backend-ui/1` extension point.
+- **Admin UI SDK Configuration**: Generate and manage the runtime action that powers the `commerce/backend-ui/1` extension point (mass actions, menus, view buttons, custom fees).
+- **Admin UI Grid Columns**: Generate and manage the runtime action and `workerProcess` declarations for grid column extensions on `commerce/backend-ui/2`.
 
 ## Reference
 
@@ -104,6 +105,11 @@ This produces the following files, organized by extension point:
 - `src/commerce-backend-ui-1/.generated/actions/registration/index.js`: serves the Admin UI SDK registration object to Adobe Commerce
 - `src/commerce-backend-ui-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
+**`commerce/backend-ui/2`**: Admin UI grid columns (generated when `adminUi` is defined):
+
+- `src/commerce-backend-ui-2/.generated/actions/registration/index.js`: serves the grid column registration to Adobe Commerce
+- `src/commerce-backend-ui-2/ext.config.yaml`: extension manifest with the `pre-app-build` hook and `workerProcess` declarations derived from `runtimeAction` values
+
 > [!NOTE]
 > Generated actions default to the `nodejs:24` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration.
 
@@ -119,6 +125,9 @@ extensions:
   # Only include this if adminUiSdk.registration is defined in your app.commerce.config.*:
   commerce/backend-ui/1:
     $include: "src/commerce-backend-ui-1/ext.config.yaml"
+  # Only include this if adminUi is defined in your app.commerce.config.*:
+  commerce/backend-ui/2:
+    $include: "src/commerce-backend-ui-2/ext.config.yaml"
 ```
 
 5. In your `install.yaml`, add the extension point references. If you have multiple extension points, add each as a new entry:
@@ -130,6 +139,8 @@ extensions:
   - extensionPointId: commerce/configuration/1
   # Only include this if adminUiSdk.registration is defined in your app.commerce.config.*:
   - extensionPointId: commerce/backend-ui/1
+  # Only include this if adminUi is defined in your app.commerce.config.*:
+  - extensionPointId: commerce/backend-ui/2
 ```
 
 ### Defining Configuration
@@ -140,7 +151,8 @@ The current app configuration definition contains the following sections:
 - **businessConfig**: Business configuration schema
 - **eventing**: Eventing configuration
 - **installation**: Installation configuration
-- **adminUiSdk**: Admin UI SDK registration
+- **adminUiSdk**: Admin UI SDK registration (mass actions, menus, view buttons, custom fees)
+- **adminUi**: Admin UI grid column extensions
 
 #### Application Metadata
 
@@ -502,17 +514,6 @@ adminUiSdk: {
           sandbox: "allow-modals",
         },
       ],
-      gridColumns: {
-        data: { meshId: "MESH_ID" },
-        properties: [
-          {
-            label: "Column Name",
-            columnId: "column_id",
-            type: "string",
-            align: "left",
-          },
-        ],
-      },
       viewButtons: [
         {
           buttonId: "my-app::delete-order",
@@ -547,12 +548,6 @@ adminUiSdk: {
           productSelectLimit: 1,
         },
       ],
-      gridColumns: {
-        data: { meshId: "MESH_ID" },
-        properties: [
-          { label: "Column Name", columnId: "column_id", type: "string", align: "left" },
-        ],
-      },
     },
 
     customer: {
@@ -564,12 +559,6 @@ adminUiSdk: {
           customerSelectLimit: 1,
         },
       ],
-      gridColumns: {
-        data: { meshId: "MESH_ID" },
-        properties: [
-          { label: "Column Name", columnId: "column_id", type: "string", align: "left" },
-        ],
-      },
     },
 
     bannerNotification: {
@@ -607,19 +596,16 @@ adminUiSdk: {
 ##### Order Extension Points:
 
 - **massActions** (optional array): **`actionId`**, **`label`**, **`path`** required; `title` optional; `selectionLimit` optional positive number; `confirm.title` and `confirm.message` optional; `displayIframe` optional boolean; `timeout` optional positive number; `sandbox` optional (see above)
-- **gridColumns** (optional): `data.meshId` required; `properties` must contain at least one entry; each property requires `label`, `columnId`, `type` (`"boolean"`, `"date"`, `"float"`, `"integer"`, or `"string"`), and `align` (`"left"`, `"right"`, or `"center"`)
 - **viewButtons** (optional array): **`buttonId`**, **`label`**, **`path`** required; `level` optional (`-1`, `0`, or `1`); `sortOrder` optional; `confirm.message` optional; `displayIframe`, `timeout`, `sandbox` optional
 - **customFees** (optional array): **`id`**, **`label`** required; **`value`** required number; `orderMinimumAmount` optional number; `applyFeeOnLastInvoice`, `applyFeeOnLastCreditMemo` optional boolean
 
 ##### Product Extension Points:
 
 - **massActions** (optional array): same fields as order mass actions, but uses `productSelectLimit` instead of `selectionLimit`
-- **gridColumns** (optional): same shape as order grid columns
 
 ##### Customer Extension Points:
 
 - **massActions** (optional array): same fields as order mass actions, but uses `customerSelectLimit` instead of `selectionLimit`
-- **gridColumns** (optional): same shape as order grid columns
 
 ##### Banner Notifications:
 
@@ -631,6 +617,61 @@ adminUiSdk: {
 - `sandbox` is only relevant when `displayIframe` is set to `true`; this applies to all mass actions and view button entries
 
 Every field of `adminUiSdk.registration` is optional — configure only the extension points your application needs.
+
+#### Admin UI Grid Column Extensions
+
+> **Experimental:** Admin UI grid column support is not yet production-ready. The API may change in future releases.
+
+The `adminUi` field declares grid column extensions for the `commerce/backend-ui/2` extension point. When defined, `init` and `generate all` automatically wire up the extension, including the generated runtime action, the `pre-app-build` hook, and the `workerProcess` declarations in `ext.config.yaml`. The `workerProcess` entries are derived automatically from the `runtimeAction` values — you only need to provide the handler implementations.
+
+```javascript
+adminUi: {
+  order: {
+    gridColumns: {
+      label: "Order fulfillment data",
+      description: "Adds fulfillment status and risk score to the order grid",
+      runtimeAction: "orders/fetch-order-grid-data",
+      columns: [
+        { key: "fulfillment_status", label: "Fulfillment", type: "string", align: "left" },
+        { key: "risk_score", label: "Risk", type: "integer", align: "right" },
+      ],
+    },
+  },
+  product: {
+    gridColumns: {
+      label: "Product inventory data",
+      description: "Adds inventory status to the product grid",
+      runtimeAction: "products/fetch-product-grid-data",
+      columns: [
+        { key: "inventory_status", label: "Inventory", type: "string", align: "left" },
+      ],
+    },
+  },
+  customer: {
+    gridColumns: {
+      label: "Customer loyalty data",
+      description: "Adds loyalty tier to the customer grid",
+      runtimeAction: "customers/fetch-customer-grid-data",
+      columns: [
+        { key: "loyalty_tier", label: "Loyalty Tier", type: "string", align: "left" },
+      ],
+    },
+  },
+}
+```
+
+##### Grid Columns:
+
+- **label**: Required, non-empty string — displayed in App Management during installation
+- **description**: Required, non-empty string — displayed in App Management during installation
+- **runtimeAction**: Required — `<package>/<action>` path matching a handler you implement; the SDK registers it as a `workerProcess` operation automatically
+- **columns**: Required array (at least one entry); each column requires:
+  - **key**: non-empty string — used as the response data key and the stable column identifier
+  - **label**: non-empty string — column header displayed in the grid
+  - **type**: one of `"boolean"`, `"date"`, `"datetime"`, `"decimal"`, `"integer"`, `"string"`
+  - **align**: one of `"left"`, `"center"`, `"right"`
+
+Each of `order`, `product`, and `customer` is optional — configure only the grids your application extends.
 
 ### CLI Commands
 
