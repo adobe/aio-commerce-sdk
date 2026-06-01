@@ -10,9 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { appConfigRuntimeAction } from "#actions/app-config/index";
+import { getOpenApiCacheKey } from "#actions/app-config/openapi";
+import { getConfigDomains } from "#config/schema/domains";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import {
   configWithDynamicListOptions,
@@ -20,6 +22,11 @@ import {
 } from "#test/fixtures/config";
 
 describe("appConfigRuntimeAction", () => {
+  beforeEach(() => {
+    vi.unstubAllEnvs();
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+  });
+
   describe("GET /", () => {
     test("returns the validated app config", async () => {
       const handler = appConfigRuntimeAction({
@@ -82,6 +89,61 @@ describe("appConfigRuntimeAction", () => {
             ],
           },
         },
+      });
+    });
+
+    test("includes openApiSpecUrl in the response body", async () => {
+      const handler = appConfigRuntimeAction({ appConfig: minimalValidConfig });
+      const result = await handler(createRuntimeActionParams());
+
+      const domains = getConfigDomains(minimalValidConfig);
+      const ck = getOpenApiCacheKey(domains);
+
+      expect(result).toMatchObject({
+        type: "success",
+        body: {
+          openApiSpecUrl: `https://test-namespace.adobeioruntime.net/api/v1/web/app-management/app-config/openapi.json?ck=${ck}`,
+        },
+      });
+    });
+  });
+
+  describe("GET /openapi.json", () => {
+    test("returns the spec without Cache-Control when no cache key is given", async () => {
+      const handler = appConfigRuntimeAction({ appConfig: minimalValidConfig });
+      const result = await handler(
+        createRuntimeActionParams({ path: "/openapi.json" }),
+      );
+
+      expect.assert(result.type === "success");
+      expect(result.headers).toBeUndefined();
+    });
+
+    test("returns the spec without Cache-Control when the cache key does not match", async () => {
+      const handler = appConfigRuntimeAction({ appConfig: minimalValidConfig });
+      const result = await handler(
+        createRuntimeActionParams({
+          path: "/openapi.json",
+          query: "ck=wrongkey",
+        }),
+      );
+
+      expect.assert(result.type === "success");
+      expect(result.headers).toBeUndefined();
+    });
+
+    test("returns the spec with immutable Cache-Control when the cache key matches", async () => {
+      const domains = getConfigDomains(minimalValidConfig);
+      const ck = getOpenApiCacheKey(domains);
+
+      const handler = appConfigRuntimeAction({ appConfig: minimalValidConfig });
+      const result = await handler(
+        createRuntimeActionParams({ path: "/openapi.json", query: `ck=${ck}` }),
+      );
+
+      expect(result).toMatchObject({
+        type: "success",
+        headers: { "Cache-Control": "public, max-age=31536000, immutable" },
       });
     });
   });
