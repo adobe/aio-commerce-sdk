@@ -255,12 +255,9 @@ serialization path unchanged.
 
 ### Registration action generation
 
-No template change is needed. Before serialization, the SDK transforms the developer-facing config
-into the Commerce-facing registration format: `runtimeAction` is mapped to `data.backend` for each
-grid type that declares `gridColumns`. This transform runs in `generateRegistrationActionFile`
-before the `stringify` call, so the generated registration action contains `data.backend` — the
-shape Commerce expects — while developers write `runtimeAction` in their app config, consistent
-with the rest of the SDK (webhooks, events).
+No template change is needed. The registration action inlines the config as a JS object literal;
+`runtimeAction` is serialized as-is. Commerce reads `runtimeAction` directly from the registration
+JSON — no field mapping is required on either side.
 
 ### Changeset bump
 
