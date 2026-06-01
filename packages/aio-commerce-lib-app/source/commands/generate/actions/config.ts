@@ -245,7 +245,7 @@ export function buildAdminUiV2ExtConfig(
             registration: {
               function: `${ADMIN_UI_SDK_ACTIONS_PATH}/index.js`,
               web: "yes",
-              runtime: "nodejs:22",
+              runtime: "nodejs:24",
               annotations: {
                 "require-adobe-auth": true,
                 final: true,
