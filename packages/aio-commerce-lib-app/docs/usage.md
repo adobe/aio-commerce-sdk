@@ -100,7 +100,7 @@ This produces the following files, organized by extension point:
 > [!NOTE]
 > When the business config schema contains `dynamicList` fields, the manifest is emitted as an ESM module (`app.commerce.manifest.js`) instead of JSON, and no separate `configuration-schema.json` is generated. Generated actions resolve `dynamicList` fields on every request. Any external credentials a factory uses must be declared as `inputs` for each action that resolves the schema (in the corresponding `ext.config.yaml` of each action).
 
-**`commerce/backend-ui/1`**: Admin UI SDK (generated when `adminUiSdk.registration` is defined):
+**`commerce/backend-ui/1`**: Admin UI SDK — _deprecated, see `commerce/backend-ui/2`_ (generated when `adminUiSdk.registration` is defined):
 
 - `src/commerce-backend-ui-1/.generated/actions/registration/index.js`: serves the Admin UI SDK registration object to Adobe Commerce
 - `src/commerce-backend-ui-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
@@ -482,7 +482,9 @@ export default defineCustomInstallationStep(async (config, context) => {
 
 #### Admin UI SDK Configuration
 
-> **Experimental:** Admin UI SDK support is not yet production-ready. The API may change in future releases.
+> **Deprecated:** `adminUiSdk` and `commerce/backend-ui/1` are deprecated. The SDK will only support `commerce/backend-ui/2` going forward. Migrate to the `adminUi` config key and `commerce/backend-ui/2` extension point. Grid columns have already moved — see [Admin UI Grid Column Extensions](#admin-ui-grid-column-extensions) below. Support for migrating remaining extension points (mass actions, menus, view buttons, custom fees) to `commerce/backend-ui/2` will follow in subsequent releases.
+>
+> Requires `magento/commerce-backend-uix` version `<!-- TODO: minimum version supporting commerce/backend-ui/2 -->` or later.
 
 The `adminUiSdk.registration` field declares the registration payload served by the Admin UI SDK runtime action. When defined, `init` and `generate all` automatically wire up the `commerce/backend-ui/1` extension, including the generated runtime action and the `pre-app-build` hook that keeps it in sync with your config. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
