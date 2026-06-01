@@ -9,7 +9,7 @@
 Move the Admin UI SDK code generation from extension point `commerce/backend-ui/1` to the new
 `commerce/backend-ui/2`, and replace the mass-action input schema in `app.commerce.config.*` with
 a cleaner shape that uses an explicit `type` discriminator, an inlined `notifications` block, and
-a `backend` reference to a `workerProcess` operation. The wire-format JSON written to
+a `runtimeAction` reference to a `workerProcess` operation. The wire-format JSON written to
 `.generated/actions/registration/index.js` — the payload Adobe Commerce actually reads — remains
 unchanged, so existing Commerce admin behavior is preserved.
 
@@ -30,29 +30,30 @@ success/error messages for an action live in a separate top-level block
 is hard to read, hard to author correctly, and easy to break by renaming an `actionId` in one
 place but not the other.
 
-See the ([spike](https://wiki.corp.adobe.com/spaces/DMSArchitecture/pages/3872493513/Spike+Admin+UI+SDK+Specs))
-
 **Goals**
 
 - Generate code for `commerce/backend-ui/2` instead of `commerce/backend-ui/1`. This SDK no
   longer produces `commerce-backend-ui-1/`; existing folders in deployed apps keep working as
   static files.
 - Replace the mass-action input schema with the v2 shape:
-  - `id` (renamed from `actionId`).
-  - `type: "ui" | "worker"` discriminator (replaces the `displayIframe` boolean).
-  - `backend: "<operation-name>"` for `type: "worker"`, referencing a `workerProcess` operation
-    declared in `app.config.yaml`.
+  - `id` (renamed from `actionId`); developers write the bare name and the SDK
+    auto-prefixes with `${metadata.id}::` when generating the wire-format `actionId`.
+  - `type: "view" | "worker"` discriminator (replaces the `displayIframe` boolean). Naming
+    mirrors App Builder's `view` and `workerProcess` operation type names.
+  - `runtimeAction: "<operation-name>"` for `type: "worker"`, referencing a `workerProcess`
+    operation declared in `app.config.yaml`. Naming aligns with the `runtimeAction` field
+    already used in webhooks and events (see #480).
   - Inlined `notifications: { success?, error? }`, replacing the standalone
     `bannerNotification.massActions.<grid>[]` cross-reference.
-  - Field applicability enforced by the schema (e.g. `sandbox` only valid for `type: "ui"`,
+  - Field applicability enforced by the schema (e.g. `sandbox` only valid for `type: "view"`,
     `timeout` only valid for `type: "worker"`).
 - Keep the generated `registration` JSON wire-format identical to what Adobe Commerce reads
   today, so Commerce admin behavior is preserved.
 - Update fixtures and tests to use the v2 input shape; assertions on the generated wire-format
   remain unchanged.
-- Cross-file validation that `backend: "<name>"` actually matches a `workerProcess` operation
-  declared in `app.config.yaml`. The schema validates that `backend` is a non-empty string;
-  validating the reference is a follow-up.
+- Cross-file validation at `pre-app-build` time that `runtimeAction: "<name>"` matches a
+  `workerProcess` operation declared in `app.config.yaml`. A typo should fail the build, not
+  produce a runtime 404 from Adobe Commerce.
 
 **Non-goals**
 
@@ -68,7 +69,7 @@ See the ([spike](https://wiki.corp.adobe.com/spaces/DMSArchitecture/pages/387249
 
 ### Authoring a mass action
 
-Before this feature, both UI and backend mass actions share one shape, with `displayIframe`
+Before this feature, both UI and worker mass actions share one shape, with `displayIframe`
 flipping the behavior:
 
 ```ts
@@ -113,45 +114,56 @@ adminUiSdk: {
 ```
 
 With this feature, the same two actions are authored with an explicit `type`, inlined
-notifications, and a `backend` reference instead of a hand-rolled path for the worker case:
+notifications, and a `runtimeAction` reference instead of a hand-rolled path for the worker case:
 
 ```ts
 // v2 — new shape
 adminUiSdk: {
-  registration: {
-    customer: {
-      massActions: [
-        {
-          id: "my-app::tag-customers",
-          label: "Tag selected customers",
-          type: "ui",
-          path: "#/tag-customers",
-          sandbox: "allow-modals",
-          selectionLimit: 100,
-          notifications: {
-            success: "Customers tagged successfully",
-            error: "Could not tag the selected customers",
-          },
+  customer: {
+    massActions: [
+      {
+        id: "tag-customers", // SDK prepends `${metadata.id}::` automatically
+        label: "Tag selected customers",
+        type: "view",
+        path: "#/tag-customers",
+        sandbox: "allow-modals",
+        selectionLimit: 100,
+        installation: {
+          label: "Tag customers",
+          description: "Adds a bulk action to tag selected customers from the grid.",
         },
-        {
-          id: "my-app::export-customers",
-          label: "Export selected customers",
-          type: "worker",
-          backend: "export-customers", // matches the workerProcess operation name
-          timeout: 30,
-          selectionLimit: 1000,
-          notifications: {
-            success: "Customers exported successfully",
-            error: "Could not export customers",
-          },
+        notifications: {
+          success: "Customers tagged successfully",
+          error: "Could not tag the selected customers",
         },
-      ],
-    },
+      },
+      {
+        id: "export-customers",
+        label: "Export selected customers",
+        type: "worker",
+        runtimeAction: "export-customers", // matches the workerProcess operation name
+        timeout: 30,
+        selectionLimit: 1000,
+        installation: {
+          label: "Export customers",
+          description: "Adds a bulk action to export selected customers as CSV.",
+        },
+        notifications: {
+          success: "Customers exported successfully",
+          error: "Could not export customers",
+        },
+      },
+    ],
   },
 }
 ```
 
-Operations referenced from `backend` must be declared on `commerce/backend-ui/2` in
+> **Naming TBD:** the top-level block is shown as `adminUiSdk` here for continuity with v1.
+> #480 proposes renaming to `adminUi`; this spec will follow whatever lands there. The
+> `registration` wrapper present in v1 is dropped — entities live directly under the top-level
+> block.
+
+Operations referenced from `runtimeAction` must be declared on `commerce/backend-ui/2` in
 `app.config.yaml`:
 
 ```yaml
@@ -170,24 +182,25 @@ extensions:
 
 The schema enforces which fields apply to which `type`:
 
-| Field            | `type: "ui"` | `type: "worker"` |
-| ---------------- | ------------ | ---------------- |
-| `id`             | required     | required         |
-| `label`          | required     | required         |
-| `title`          | optional     | optional         |
-| `confirm`        | optional     | optional         |
-| `notifications`  | optional     | optional         |
-| `selectionLimit` | optional     | optional         |
-| `path`           | **required** | rejected         |
-| `sandbox`        | optional     | rejected         |
-| `backend`        | rejected     | **required**     |
-| `timeout`        | rejected     | optional         |
+| Field            | `type: "view"` | `type: "worker"` |
+| ---------------- | -------------- | ---------------- |
+| `id`             | required       | required         |
+| `label`          | required       | required         |
+| `title`          | optional       | optional         |
+| `confirm`        | optional       | optional         |
+| `notifications`  | optional       | optional         |
+| `installation`   | optional       | optional         |
+| `selectionLimit` | optional       | optional         |
+| `path`           | **required**   | rejected         |
+| `sandbox`        | optional       | rejected         |
+| `runtimeAction`  | rejected       | **required**     |
+| `timeout`        | rejected       | optional         |
 
 Misuse produces a clear validation error at build time, e.g.:
 
 ```
-Field "backend" is not allowed when type is "ui"
-Field "path" is required when type is "ui"
+Field "runtimeAction" is not allowed when type is "view"
+Field "path" is required when type is "view"
 ```
 
 ### `selectionLimit` rename
@@ -223,20 +236,21 @@ transformation lives in the generation pipeline, not in the runtime action.
 
 ### Mapping v2 input → wire-format
 
-| v2 input field                     | Wire-format mapping                                                  |
-| ---------------------------------- | -------------------------------------------------------------------- |
-| `id`                               | `actionId`                                                           |
-| `type: "ui"`                       | `displayIframe: true` (default in v1, kept explicit for clarity)     |
-| `type: "worker"`                   | `displayIframe: false`                                               |
-| `path` (under `type: "ui"`)        | `path` (passed through)                                              |
-| `backend` (under `type: "worker"`) | **Open question — see Unresolved questions**                         |
-| `sandbox`                          | `sandbox`                                                            |
-| `timeout`                          | `timeout`                                                            |
-| `selectionLimit` (order grid)      | `orderSelectLimit`                                                   |
-| `selectionLimit` (product grid)    | `productSelectLimit`                                                 |
-| `selectionLimit` (customer grid)   | `customerSelectLimit`                                                |
-| `notifications.success`            | `bannerNotification.massActions.<grid>[].successMessage` (collected) |
-| `notifications.error`              | `bannerNotification.massActions.<grid>[].errorMessage` (collected)   |
+| v2 input field                           | Wire-format mapping                                                  |
+| ---------------------------------------- | -------------------------------------------------------------------- |
+| `id`                                     | `actionId` (with `${metadata.id}::` prepended by the SDK)            |
+| `type: "view"`                           | `displayIframe: true` (default in v1, kept explicit for clarity)     |
+| `type: "worker"`                         | `displayIframe: false`                                               |
+| `path` (under `type: "view"`)            | `path` (passed through)                                              |
+| `runtimeAction` (under `type: "worker"`) | **Open question — see Unresolved questions**                         |
+| `sandbox`                                | `sandbox`                                                            |
+| `timeout`                                | `timeout`                                                            |
+| `selectionLimit` (order grid)            | `orderSelectLimit`                                                   |
+| `selectionLimit` (product grid)          | `productSelectLimit`                                                 |
+| `selectionLimit` (customer grid)         | `customerSelectLimit`                                                |
+| `notifications.success`                  | `bannerNotification.massActions.<grid>[].successMessage` (collected) |
+| `notifications.error`                    | `bannerNotification.massActions.<grid>[].errorMessage` (collected)   |
+| `installation`                           | not in wire-format — consumed by App Management installation UI only |
 
 `notifications` is inlined on the action in v2; the wire-format still expects it under
 `bannerNotification.massActions.<grid>` cross-referenced by `actionId`. The generator walks each
@@ -276,23 +290,23 @@ v2 by default.
 
 ## Drawbacks
 
-- Within a single `adminUiSdk.registration` block, mass actions use the v2 shape while other
-  chapters (menu items, grid columns, view buttons, custom fees) still use the v1 shape.
-  Inconsistent until subsequent tickets migrate them.
+- Within a single `adminUiSdk` block, mass actions use the v2 shape while other chapters
+  (menu items, grid columns, view buttons, custom fees) still use the v1 shape. Inconsistent
+  until subsequent tickets migrate them.
 - The generated `registration` JSON uses different field names than the developer writes
   (`actionId` not `id`, `displayIframe` not `type`). Mildly confusing when debugging the
   generated file.
 
 ## Unresolved questions
 
-Given this mass action input when is type worker:
+Given this mass action input when `type` is `"worker"`:
 
 ```ts
 {
-  id: `${extensionId}::export-customers`,
+  id: "export-customers",
   label: "Export selected customers",
   type: "worker",
-  backend: "export-customers", // references a workerProcess operation
+  runtimeAction: "export-customers", // references a workerProcess operation
   selectionLimit: 1000,
   timeout: 30, // seconds; optional; default 10
   confirm: { title: "Export", message: "Export to CSV?" },
@@ -311,15 +325,15 @@ extensions:
     operations:
       view:
         - type: web
-          impl: index.html # SPA used by type:'ui' mass actions
+          impl: index.html # SPA used by type:'view' mass actions
       workerProcess:
         - type: action
           impl: customers/export-customers # runtime action; codegen scaffolds this
 ```
 
-How is the wire-format `path` generated? There is no field linking `backend: "export-customers"`
-to `impl: customers/export-customers` — App Builder's `workerProcess` operations have no `name`
-or `id` field.
+How is the wire-format `path` generated? There is no field linking
+`runtimeAction: "export-customers"` to `impl: customers/export-customers` — App Builder's
+`workerProcess` operations have no `name` or `id` field.
 
 ## Future possibilities
 
