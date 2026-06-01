@@ -100,21 +100,11 @@ export default defineConfig({
 });
 ```
 
-`runtimeAction` must match the name of a `workerProcess` operation declared on
-`commerce/backend-ui/2` in `app.config.yaml`. App Registry resolves the name to the deployed
-runtime action URL — developers never write a URL directly.
-
-```yaml
-# app.config.yaml
-extensions:
-  commerce/backend-ui/2:
-    operations:
-      workerProcess:
-        - type: action
-          impl: orders/fetch-order-grid-data
-        - type: action
-          impl: products/fetch-product-grid-data
-```
+The SDK generates the `workerProcess` operation declarations in `ext.config.yaml` automatically
+from the `runtimeAction` values — developers do not write them by hand. The only thing the
+developer needs to provide alongside the config is the handler implementation itself (e.g.
+`orders/fetch-order-grid-data.js`). App Registry resolves the operation name to the deployed
+runtime action URL when Commerce fetches the extension.
 
 ### Wire contract
 
@@ -248,10 +238,31 @@ The constant name is preserved so callsites do not change. Only the value change
 
 `packages/aio-commerce-lib-app/source/commands/hooks/pre-app-build.ts`
 
-Remove `"backend-ui/1"` from the `Extension` union and replace with `"backend-ui/2"`. The hook
-continues to call `generateRegistrationActionFile` when `hasAdminUiSdk` is true — no structural
-change needed. The v2 config shape (with `backend` and `columns`) passes through the existing
-serialization path unchanged.
+Remove `"backend-ui/1"` from the `Extension` union and replace with `"backend-ui/2"`. When
+`hasAdminUi` is true, the hook now performs two generation steps:
+
+1. **Registration action** — unchanged from v1: generates the JS file that returns the
+   registration config when Commerce calls the extension.
+
+2. **`ext.config.yaml` workerProcess declarations** — new in v2: collects all unique
+   `runtimeAction` values across `order`, `product`, and `customer` grid column configs,
+   then writes them as `workerProcess` entries in `ext.config.yaml` for
+   `commerce/backend-ui/2`. Developers do not declare these manually; the SDK derives them
+   from `app.commerce.config.ts` and keeps `ext.config.yaml` in sync on every build.
+
+Example generated `ext.config.yaml` fragment for the config above:
+
+```yaml
+operations:
+  view:
+    - type: web
+      impl: index.html
+  workerProcess:
+    - type: action
+      impl: orders/fetch-order-grid-data
+    - type: action
+      impl: products/fetch-product-grid-data
+```
 
 ### Registration action generation
 
