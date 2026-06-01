@@ -18,10 +18,7 @@ import {
 import * as extensionEndpoints from "#api/extensions/endpoints";
 import * as permissionEndpoints from "#api/permissions/endpoints";
 
-import type {
-  ApiFunction,
-  CommerceHttpClientParams,
-} from "@adobe/aio-commerce-lib-api";
+import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 
 /**
  * Creates a new API client for the Admin UI SDK API with all available operations.
@@ -40,18 +37,3 @@ export function createAdminUiSdkApiClient(params: CommerceHttpClientParams) {
  * @see {@link createAdminUiSdkApiClient}
  */
 export type AdminUiSdkApiClient = ReturnType<typeof createAdminUiSdkApiClient>;
-
-/**
- * Creates a customized Admin UI SDK API client with a user-specified set of endpoint functions.
- * @param params - The parameters to build the Commerce HTTP client.
- * @param functions - The API functions to include in the client.
- */
-export function createCustomAdminUiSdkApiClient<
-  TFunctions extends Record<
-    string,
-    // biome-ignore lint/suspicious/noExplicitAny: We can't know the type of the argument/return type.
-    ApiFunction<AdobeCommerceHttpClient, any[], any>
-  >,
->(params: CommerceHttpClientParams, functions: TFunctions) {
-  return ApiClient.create(new AdobeCommerceHttpClient(params), functions);
-}
