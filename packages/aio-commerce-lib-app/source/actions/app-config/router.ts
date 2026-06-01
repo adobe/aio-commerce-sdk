@@ -85,7 +85,7 @@ router.get("/", {
     logger.debug("Successfully validated the app config");
 
     const domains = getConfigDomains(rawParams.appConfig);
-    const openApiSpecUrl = `${getServerUrl()}/app-config/openapi.json?v=${getOpenApiCacheKey(domains)}`;
+    const openApiSpecUrl = `${getServerUrl()}/app-config/openapi.json?ck=${getOpenApiCacheKey(domains)}`;
 
     return ok({
       body: { ...config, openApiSpecUrl },
@@ -98,14 +98,14 @@ router.get("/", {
  * @internal - Do not add to OpenAPI Spec.
  */
 router.get("/openapi.json", {
-  query: v.object({ v: v.optional(v.string()) }),
+  query: v.object({ ck: v.optional(v.string()) }),
   handler: async (req, { logger, rawParams }) => {
-    const { v } = req.query;
+    const { ck } = req.query;
     const domains = getConfigDomains(rawParams.appConfig);
 
-    if (v && getOpenApiCacheKey(domains) === v) {
+    if (ck && getOpenApiCacheKey(domains) === ck) {
       logger.debug(
-        `Received request for OpenAPI spec with version query param: ${v}`,
+        `Received request for OpenAPI spec with cache key query param: ${ck}`,
       );
 
       return ok({
