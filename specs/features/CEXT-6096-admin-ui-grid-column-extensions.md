@@ -1,4 +1,4 @@
-# Grid column extensions (v2)
+# Admin UI grid column extensions (v2)
 
 - **Ticket:** [CEXT-6096](https://jira.corp.adobe.com/browse/CEXT-6096)
 - **Created:** 2026-05-29
