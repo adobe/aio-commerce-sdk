@@ -37,6 +37,8 @@ import {
 import {
   getActionPath,
   getActionsDir,
+  getAdminUiActionsDir,
+  getAdminUiRegistrationActionPath,
   getAdminUiSdkActionsDir,
   getAdminUiSdkRegistrationActionPath,
   getExtConfigPath,
@@ -485,7 +487,7 @@ export async function generateGridColumnsRegistrationActionFile(
 ) {
   consola.start("Generating Admin UI grid columns registration action...");
 
-  await makeOutputDirFor(getAdminUiSdkActionsDir(extensionPointId));
+  await makeOutputDirFor(getAdminUiActionsDir(extensionPointId));
   const projectRoot = await getProjectRootDirectory();
   const templatePath = join(
     templatesDir,
@@ -505,7 +507,7 @@ export async function generateGridColumnsRegistrationActionFile(
 
   const actionPath = join(
     projectRoot,
-    getAdminUiSdkRegistrationActionPath(extensionPointId),
+    getAdminUiRegistrationActionPath(extensionPointId),
   );
   const content = template.replace(
     REGISTRATION_JSON_PLACEHOLDER,

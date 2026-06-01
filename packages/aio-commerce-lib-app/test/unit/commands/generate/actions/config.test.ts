@@ -193,7 +193,7 @@ describe("buildAdminUiV2ExtConfig", () => {
   test("registration action has web: yes", () => {
     const config = buildAdminUiV2ExtConfig(configWithAdminUi);
     const action =
-      config.runtimeManifest?.packages?.["admin-ui-sdk"]?.actions?.registration;
+      config.runtimeManifest?.packages?.["admin-ui"]?.actions?.registration;
     expect(action?.web).toBe("yes");
   });
 
