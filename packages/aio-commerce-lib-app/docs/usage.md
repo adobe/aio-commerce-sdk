@@ -7,8 +7,8 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
-- **Admin UI SDK Configuration**: Generate and manage the runtime action that powers the `commerce/backend-ui/1` extension point (mass actions, menus, view buttons, custom fees).
-- **Admin UI Grid Columns**: Generate and manage the runtime action and `workerProcess` declarations for grid column extensions on `commerce/backend-ui/2`.
+- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions. Currently supports grid column extensions; mass actions, menus, view buttons, and custom fees will follow.
+- **Admin UI SDK Configuration** (`commerce/backend-ui/1`, _deprecated_): Generate and manage the runtime action for the legacy extension point. Use `adminUi` and `commerce/backend-ui/2` for new apps.
 
 ## Reference
 
