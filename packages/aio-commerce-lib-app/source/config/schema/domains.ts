@@ -12,12 +12,8 @@
 
 import * as v from "valibot";
 
-import {
-  AdminUiSchema,
-  AdminUiSdkSchema,
-  hasAdminUi,
-  hasAdminUiSdk,
-} from "./admin-ui-sdk";
+import { AdminUiSchema, hasAdminUi } from "./admin-ui";
+import { AdminUiSdkSchema, hasAdminUiSdk } from "./admin-ui-sdk";
 import {
   hasBusinessConfig,
   hasBusinessConfigSchema,

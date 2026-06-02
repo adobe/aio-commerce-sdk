@@ -63,7 +63,7 @@ import {
 } from "./config";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
-import type { AdminUiConfig } from "#config/schema/admin-ui-sdk";
+import type { AdminUiConfig } from "#config/schema/admin-ui";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
 import type { AdminUiSdkConfig } from "#management/installation/admin-ui-sdk/utils";

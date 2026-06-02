@@ -3,15 +3,21 @@ import { consola } from "consola";
 
 import {
   BACKEND_UI_EXTENSION_POINT_ID,
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
 import { loadAppManifest } from "#commands/utils";
-import { hasAdminUiSdk, hasBusinessConfigSchema } from "#config/index";
+import {
+  hasAdminUi,
+  hasAdminUiSdk,
+  hasBusinessConfigSchema,
+} from "#config/index";
 
 import { getRuntimeActions } from "./config";
 import {
   generateActionFiles,
+  generateGridColumnsRegistrationActionFile,
   generateRegistrationActionFile,
   prepareRuntimeAppConfigModule,
   TEMPLATES_DIR,
@@ -62,6 +68,15 @@ export async function run(
     await generateRegistrationActionFile(
       appManifest,
       BACKEND_UI_EXTENSION_POINT_ID,
+      templatesDir,
+    );
+  }
+
+  if (hasAdminUi(appManifest)) {
+    await updateExtConfig(appManifest, BACKEND_UI_V2_EXTENSION_POINT_ID);
+    await generateGridColumnsRegistrationActionFile(
+      appManifest,
+      BACKEND_UI_V2_EXTENSION_POINT_ID,
       templatesDir,
     );
   }

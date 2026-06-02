@@ -13,14 +13,8 @@
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 
+import { AdminUiSdkSchema, hasAdminUiSdk } from "#config/schema/admin-ui-sdk";
 import {
-  AdminUiSchema,
-  AdminUiSdkSchema,
-  hasAdminUi,
-  hasAdminUiSdk,
-} from "#config/schema/admin-ui-sdk";
-import {
-  configWithAdminUi,
   configWithAdminUiSdk,
   configWithFullAdminUiSdk,
   minimalValidConfig,
@@ -201,6 +195,30 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(true);
     });
 
+    test("registration with grid columns — all 5 type values", () => {
+      for (const type of [
+        "boolean",
+        "date",
+        "float",
+        "integer",
+        "string",
+      ] as const) {
+        const result = v.safeParse(AdminUiSdkSchema, {
+          registration: {
+            order: {
+              gridColumns: {
+                data: { meshId: "mesh-1" },
+                properties: [
+                  { label: "Col", columnId: "col", type, align: "left" },
+                ],
+              },
+            },
+          },
+        });
+        expect(result.success, `type "${type}" should be valid`).toBe(true);
+      }
+    });
+
     test("full config from configWithAdminUiSdk fixture", () => {
       const result = v.safeParse(
         AdminUiSdkSchema,
@@ -379,172 +397,52 @@ describe("AdminUiSdkSchema", () => {
         expect(result.success).toBe(false);
       }
     });
-  });
-});
 
-describe("hasAdminUi", () => {
-  test("returns true for configWithAdminUi", () => {
-    expect(hasAdminUi(configWithAdminUi)).toBe(true);
-  });
-
-  test("returns false for minimalValidConfig", () => {
-    expect(hasAdminUi(minimalValidConfig)).toBe(false);
-  });
-
-  test("returns false for configWithAdminUiSdk (different key)", () => {
-    expect(hasAdminUi(configWithAdminUiSdk)).toBe(false);
-  });
-});
-
-describe("AdminUiSchema", () => {
-  describe("valid cases", () => {
-    test("grid columns with all 6 column types", () => {
-      for (const type of [
-        "boolean",
-        "date",
-        "datetime",
-        "decimal",
-        "integer",
-        "string",
-      ] as const) {
-        const result = v.safeParse(AdminUiSchema, {
+    test("grid column type not in allowed list — parse fails", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
           order: {
             gridColumns: {
-              label: "Order grid",
-              description: "Adds a column",
-              runtimeAction: "orders/fetch",
-              columns: [{ key: "col", label: "Col", type, align: "left" }],
+              data: { meshId: "mesh-1" },
+              properties: [
+                { label: "Col", columnId: "col", type: "text", align: "left" },
+              ],
             },
           },
-        });
-        expect(result.success, `type "${type}" should be valid`).toBe(true);
-      }
-    });
-
-    test("all three grids configured", () => {
-      const result = v.safeParse(AdminUiSchema, configWithAdminUi.adminUi);
-      expect(result.success).toBe(true);
-    });
-
-    test("only one grid configured (others absent)", () => {
-      const result = v.safeParse(AdminUiSchema, {
-        order: {
-          gridColumns: {
-            label: "Order grid",
-            description: "Adds a column",
-            runtimeAction: "orders/fetch",
-            columns: [
-              { key: "col", label: "Col", type: "string", align: "left" },
-            ],
-          },
         },
       });
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
     });
 
-    test("multiple columns per grid", () => {
-      const result = v.safeParse(AdminUiSchema, {
-        order: {
-          gridColumns: {
-            label: "Order grid",
-            description: "Adds columns",
-            runtimeAction: "orders/fetch",
-            columns: [
-              { key: "col_a", label: "Col A", type: "string", align: "left" },
-              { key: "col_b", label: "Col B", type: "integer", align: "right" },
-            ],
-          },
-        },
-      });
-      expect(result.success).toBe(true);
-    });
-  });
-
-  describe("invalid cases", () => {
-    test("float type is rejected", () => {
-      const result = v.safeParse(AdminUiSchema, {
-        order: {
-          gridColumns: {
-            label: "Order grid",
-            description: "Adds a column",
-            runtimeAction: "orders/fetch",
-            columns: [
-              { key: "col", label: "Col", type: "float", align: "left" },
-            ],
+    test("grid column align not in allowed list — parse fails", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          order: {
+            gridColumns: {
+              data: { meshId: "mesh-1" },
+              properties: [
+                {
+                  label: "Col",
+                  columnId: "col",
+                  type: "string",
+                  align: "justify",
+                },
+              ],
+            },
           },
         },
       });
       expect(result.success).toBe(false);
     });
 
-    test("invalid align value is rejected", () => {
-      const result = v.safeParse(AdminUiSchema, {
-        order: {
-          gridColumns: {
-            label: "Order grid",
-            description: "Adds a column",
-            runtimeAction: "orders/fetch",
-            columns: [
-              { key: "col", label: "Col", type: "string", align: "justify" },
-            ],
-          },
-        },
-      });
-      expect(result.success).toBe(false);
-    });
-
-    test("empty columns array is rejected (minLength 1)", () => {
-      const result = v.safeParse(AdminUiSchema, {
-        order: {
-          gridColumns: {
-            label: "Order grid",
-            description: "Adds a column",
-            runtimeAction: "orders/fetch",
-            columns: [],
-          },
-        },
-      });
-      expect(result.success).toBe(false);
-    });
-
-    test("missing label on gridColumns is rejected", () => {
-      const result = v.safeParse(AdminUiSchema, {
-        order: {
-          gridColumns: {
-            description: "Adds a column",
-            runtimeAction: "orders/fetch",
-            columns: [
-              { key: "col", label: "Col", type: "string", align: "left" },
-            ],
-          },
-        },
-      });
-      expect(result.success).toBe(false);
-    });
-
-    test("missing runtimeAction is rejected", () => {
-      const result = v.safeParse(AdminUiSchema, {
-        order: {
-          gridColumns: {
-            label: "Order grid",
-            description: "Adds a column",
-            columns: [
-              { key: "col", label: "Col", type: "string", align: "left" },
-            ],
-          },
-        },
-      });
-      expect(result.success).toBe(false);
-    });
-
-    test("missing key on column is rejected", () => {
-      const result = v.safeParse(AdminUiSchema, {
-        order: {
-          gridColumns: {
-            label: "Order grid",
-            description: "Adds a column",
-            runtimeAction: "orders/fetch",
-            columns: [{ label: "Col", type: "string", align: "left" }],
+    test("grid columns with empty properties array — parse fails (minLength 1)", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          order: {
+            gridColumns: {
+              data: { meshId: "mesh-1" },
+              properties: [],
+            },
           },
         },
       });
