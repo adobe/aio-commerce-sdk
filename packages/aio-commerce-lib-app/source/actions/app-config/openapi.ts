@@ -80,6 +80,30 @@ function pruneUnusedSchemas(spec: OpenApiSpec) {
 }
 
 /**
+ * Removes top-level tags no longer referenced by any remaining path operation, in place.
+ * @param spec - The spec to prune, after paths have been stripped.
+ */
+function pruneUnusedTags(spec: OpenApiSpec) {
+  const usedTags = new Set<string>();
+
+  for (const pathItem of Object.values(spec.paths)) {
+    for (const operation of Object.values(
+      pathItem as Record<string, { tags?: string[] }>,
+    )) {
+      for (const tag of operation.tags ?? []) {
+        usedTags.add(tag);
+      }
+    }
+  }
+
+  for (let i = spec.tags.length - 1; i >= 0; i--) {
+    if (!usedTags.has(spec.tags[i].name)) {
+      spec.tags.splice(i, 1);
+    }
+  }
+}
+
+/**
  * Computes a short hash identifying the spec served for the given config domains.
  * Changes whenever the served spec would: with the OpenAPI spec version (`info.version`),
  * the package version, or the domains that drive pruning.
@@ -150,6 +174,7 @@ export async function buildOpenApiSpec(
   }
 
   pruneUnusedSchemas(spec);
+  pruneUnusedTags(spec);
 
   spec.servers[0].url = getServerUrl();
   return spec;

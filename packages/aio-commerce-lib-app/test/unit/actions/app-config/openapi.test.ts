@@ -104,6 +104,34 @@ describe("buildOpenApiSpec", () => {
     }
   });
 
+  test("keeps all tags when all capabilities are present", async () => {
+    const spec = await buildOpenApiSpec(
+      getConfigDomains(fullyCapableConfig),
+      logger,
+    );
+
+    const tagNames = spec.tags.map((t) => t.name);
+
+    expect(tagNames).toContain("App Metadata");
+    expect(tagNames).toContain("Business Configuration");
+    expect(tagNames).toContain("Management");
+    expect(tagNames).toContain("Admin UI");
+  });
+
+  test("prunes tags left unreferenced by the stripped paths", async () => {
+    const spec = await buildOpenApiSpec(
+      getConfigDomains(minimalValidConfig),
+      logger,
+    );
+
+    const tagNames = spec.tags.map((t) => t.name);
+
+    expect(tagNames).toContain("App Metadata");
+    expect(tagNames).not.toContain("Business Configuration");
+    expect(tagNames).not.toContain("Management");
+    expect(tagNames).not.toContain("Admin UI");
+  });
+
   test("does not mutate the shared spec import", async () => {
     await buildOpenApiSpec(getConfigDomains(minimalValidConfig), logger);
 
