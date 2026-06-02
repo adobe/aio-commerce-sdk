@@ -138,6 +138,30 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(true);
     });
 
+    test("registration with grid columns — all 5 type values", () => {
+      for (const type of [
+        "boolean",
+        "date",
+        "float",
+        "integer",
+        "string",
+      ] as const) {
+        const result = v.safeParse(AdminUiSdkSchema, {
+          registration: {
+            order: {
+              gridColumns: {
+                data: { meshId: "mesh-1" },
+                properties: [
+                  { label: "Col", columnId: "col", type, align: "left" },
+                ],
+              },
+            },
+          },
+        });
+        expect(result.success, `type "${type}" should be valid`).toBe(true);
+      }
+    });
+
     test("registration with view buttons — level -1, 0, 1", () => {
       for (const level of [-1, 0, 1] as const) {
         const result = v.safeParse(AdminUiSdkSchema, {
@@ -195,30 +219,6 @@ describe("AdminUiSdkSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    test("registration with grid columns — all 5 type values", () => {
-      for (const type of [
-        "boolean",
-        "date",
-        "float",
-        "integer",
-        "string",
-      ] as const) {
-        const result = v.safeParse(AdminUiSdkSchema, {
-          registration: {
-            order: {
-              gridColumns: {
-                data: { meshId: "mesh-1" },
-                properties: [
-                  { label: "Col", columnId: "col", type, align: "left" },
-                ],
-              },
-            },
-          },
-        });
-        expect(result.success, `type "${type}" should be valid`).toBe(true);
-      }
-    });
-
     test("full config from configWithAdminUiSdk fixture", () => {
       const result = v.safeParse(
         AdminUiSdkSchema,
@@ -264,6 +264,57 @@ describe("AdminUiSdkSchema", () => {
         registration: {
           order: {
             massActions: [{ actionId: "app::action", label: "Action" }],
+          },
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("grid column type not in allowed list — parse fails", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          order: {
+            gridColumns: {
+              data: { meshId: "mesh-1" },
+              properties: [
+                { label: "Col", columnId: "col", type: "text", align: "left" },
+              ],
+            },
+          },
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("grid column align not in allowed list — parse fails", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          order: {
+            gridColumns: {
+              data: { meshId: "mesh-1" },
+              properties: [
+                {
+                  label: "Col",
+                  columnId: "col",
+                  type: "string",
+                  align: "justify",
+                },
+              ],
+            },
+          },
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("grid columns with empty properties array — parse fails (minLength 1)", () => {
+      const result = v.safeParse(AdminUiSdkSchema, {
+        registration: {
+          order: {
+            gridColumns: {
+              data: { meshId: "mesh-1" },
+              properties: [],
+            },
           },
         },
       });
@@ -396,57 +447,6 @@ describe("AdminUiSdkSchema", () => {
 
         expect(result.success).toBe(false);
       }
-    });
-
-    test("grid column type not in allowed list — parse fails", () => {
-      const result = v.safeParse(AdminUiSdkSchema, {
-        registration: {
-          order: {
-            gridColumns: {
-              data: { meshId: "mesh-1" },
-              properties: [
-                { label: "Col", columnId: "col", type: "text", align: "left" },
-              ],
-            },
-          },
-        },
-      });
-      expect(result.success).toBe(false);
-    });
-
-    test("grid column align not in allowed list — parse fails", () => {
-      const result = v.safeParse(AdminUiSdkSchema, {
-        registration: {
-          order: {
-            gridColumns: {
-              data: { meshId: "mesh-1" },
-              properties: [
-                {
-                  label: "Col",
-                  columnId: "col",
-                  type: "string",
-                  align: "justify",
-                },
-              ],
-            },
-          },
-        },
-      });
-      expect(result.success).toBe(false);
-    });
-
-    test("grid columns with empty properties array — parse fails (minLength 1)", () => {
-      const result = v.safeParse(AdminUiSdkSchema, {
-        registration: {
-          order: {
-            gridColumns: {
-              data: { meshId: "mesh-1" },
-              properties: [],
-            },
-          },
-        },
-      });
-      expect(result.success).toBe(false);
     });
   });
 });

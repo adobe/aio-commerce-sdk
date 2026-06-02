@@ -146,6 +146,17 @@ export const configWithAdminUiSdk = {
             confirm: { title: "Confirm", message: "Are you sure?" },
           },
         ],
+        gridColumns: {
+          data: { meshId: "mesh-123" },
+          properties: [
+            {
+              label: "Col 1",
+              columnId: "col_1",
+              type: "string",
+              align: "left",
+            },
+          ],
+        },
         viewButtons: [
           {
             buttonId: "test-app::delete-order",
@@ -172,6 +183,12 @@ export const configWithAdminUiSdk = {
             path: "#/product-mass-action",
           },
         ],
+        gridColumns: {
+          data: { meshId: "mesh-456" },
+          properties: [
+            { label: "Col", columnId: "col", type: "integer", align: "right" },
+          ],
+        },
       },
       customer: {
         massActions: [
@@ -181,6 +198,12 @@ export const configWithAdminUiSdk = {
             path: "#/customer-mass-action",
           },
         ],
+        gridColumns: {
+          data: { meshId: "mesh-789" },
+          properties: [
+            { label: "Col", columnId: "col", type: "boolean", align: "center" },
+          ],
+        },
       },
       bannerNotification: {
         massActions: {
@@ -232,6 +255,17 @@ export const configWithFullAdminUiSdk = {
             sandbox: "allow-modals",
           },
         ],
+        gridColumns: {
+          data: { meshId: "MESH_ID" },
+          properties: [
+            {
+              label: "Column Name",
+              columnId: "column_id",
+              type: "string" as const,
+              align: "left" as const,
+            },
+          ],
+        },
         viewButtons: [
           {
             buttonId: "my-app::delete-order",
@@ -265,6 +299,17 @@ export const configWithFullAdminUiSdk = {
             productSelectLimit: 1,
           },
         ],
+        gridColumns: {
+          data: { meshId: "MESH_ID" },
+          properties: [
+            {
+              label: "Column",
+              columnId: "col_id",
+              type: "string" as const,
+              align: "left" as const,
+            },
+          ],
+        },
       },
       customer: {
         massActions: [
@@ -275,6 +320,17 @@ export const configWithFullAdminUiSdk = {
             customerSelectLimit: 1,
           },
         ],
+        gridColumns: {
+          data: { meshId: "MESH_ID" },
+          properties: [
+            {
+              label: "Column",
+              columnId: "col_id",
+              type: "string" as const,
+              align: "left" as const,
+            },
+          ],
+        },
       },
       bannerNotification: {
         massActions: {
