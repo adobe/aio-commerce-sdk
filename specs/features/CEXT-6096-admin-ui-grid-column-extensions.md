@@ -4,19 +4,20 @@
 - **Created:** 2026-05-29
 - [ ] **Implemented**
 
-> **Breaking change.** The v1 grid column schema (`commerce/backend-ui/1`, `data.meshId`,
-> `properties`, `columnId`) is removed, and the top-level config key is renamed from `adminUiSdk`
-> to `adminUi`. Existing apps must migrate to v2. See [Migration from v1](#migration-from-v1) below.
+> **Deprecation notice.** The v1 grid column schema (`commerce/backend-ui/1`, `data.meshId`,
+> `properties`, `columnId`) is deprecated and will be removed from the SDK in a future release.
+> New apps must use `adminUi` and `commerce/backend-ui/2`. Existing apps should migrate —
+> see [Migration from v1](#migration-from-v1) below.
 
 ## Summary
 
-The SDK replaces the v1 Admin UI grid column schema with a unified v2 schema covering order,
-product, and customer grids. Support for `commerce/backend-ui/1` and the mesh-based config
-(`data.meshId`, `properties`, `columnId`, `float` type) is removed. Apps must declare
-`commerce/backend-ui/2` and adopt the new shape: `runtimeAction` (a `workerProcess` operation name
-resolved by App Registry at runtime), `columns` (renamed from `properties`), and `key` (renamed
-from `columnId`). The wire contract between Commerce and the handler is formally standardized for
-the first time.
+The SDK introduces a v2 Admin UI grid column schema under the new `adminUi` config key, covering
+order, product, and customer grids on `commerce/backend-ui/2`. The v1 schema (`adminUiSdk`,
+`commerce/backend-ui/1`, `data.meshId`, `properties`, `columnId`, `float` type) is deprecated and
+will be removed in a future release — it remains functional for now. The v2 shape introduces
+`runtimeAction` (a `workerProcess` operation name resolved by App Registry at runtime), `columns`
+(replacing `properties`), and `key` (replacing `columnId`). The wire contract between Commerce and
+the handler is formally standardized for the first time.
 
 ## Motivation
 
@@ -37,18 +38,19 @@ The v1 grid column design has four concrete problems that compound each other:
 
 **Goals**
 
+- Introduce `adminUi` as the new top-level config key for `commerce/backend-ui/2` registrations.
 - Replace `data.meshId` with `runtimeAction` (a `workerProcess` operation name) in all three grids.
 - Rename `properties` → `columns`, `columnId` → `key` for clarity.
 - Add `label` and `description` to each `gridColumns` block for display during installation.
 - Formally specify the request/response wire contract.
-- Remove `commerce/backend-ui/1` and all v1 schema artifacts from the SDK.
-- Rename the top-level config key from `adminUiSdk` to `adminUi`.
+- Deprecate `adminUiSdk`/`commerce/backend-ui/1` grid columns; keep them functional until removal.
 - Use a single unified column schema under `order.gridColumns`, `product.gridColumns`, and
   `customer.gridColumns`.
 
 **Non-goals**
 
-- Supporting v1 in any compatibility mode or deprecation window.
+- Removing `commerce/backend-ui/1` or `adminUiSdk` in this release — removal is deferred to a future
+  breaking release.
 - Adding grid targets beyond order, product, and customer.
 - Implementing mass action v2 (separate ticket).
 - Wrapping or managing the Commerce API Mesh service.
@@ -61,66 +63,66 @@ The v1 grid column design has four concrete problems that compound each other:
 The config shape is the same across all three grids:
 
 ```ts
-// app-config.ts
+// app.commerce.config.ts
 export default defineConfig({
   adminUi: {
-    registration: {
-      order: {
-        gridColumns: {
-          label: "Order fulfillment data",
-          description:
-            "Adds fulfillment status and risk score to the order grid",
-          runtimeAction: "orders/fetch-order-grid-data",
-          columns: [
-            {
-              key: "fulfillment_status",
-              label: "Fulfillment",
-              type: "string",
-              align: "left",
-            },
-            {
-              key: "risk_score",
-              label: "Risk",
-              type: "integer",
-              align: "right",
-            },
-          ],
-        },
+    order: {
+      gridColumns: {
+        label: "Order fulfillment data",
+        description: "Adds fulfillment status and risk score to the order grid",
+        runtimeAction: "orders/fetch-order-grid-data",
+        columns: [
+          {
+            key: "fulfillment_status",
+            label: "Fulfillment",
+            type: "string",
+            align: "left",
+          },
+          {
+            key: "risk_score",
+            label: "Risk",
+            type: "integer",
+            align: "right",
+          },
+        ],
       },
-      product: {
-        gridColumns: {
-          label: "Product inventory data",
-          description: "Adds inventory status to the product grid",
-          runtimeAction: "products/fetch-product-grid-data",
-          columns: [
-            {
-              key: "inventory_status",
-              label: "Inventory",
-              type: "string",
-              align: "left",
-            },
-          ],
-        },
+    },
+    product: {
+      gridColumns: {
+        label: "Product inventory data",
+        description: "Adds inventory status to the product grid",
+        runtimeAction: "products/fetch-product-grid-data",
+        columns: [
+          {
+            key: "inventory_status",
+            label: "Inventory",
+            type: "string",
+            align: "left",
+          },
+        ],
       },
-      customer: {
-        gridColumns: {
-          label: "Customer loyalty data",
-          description: "Adds loyalty tier to the customer grid",
-          runtimeAction: "customers/fetch-customer-grid-data",
-          columns: [
-            {
-              key: "loyalty_tier",
-              label: "Loyalty Tier",
-              type: "string",
-              align: "left",
-            },
-          ],
-        },
+    },
+    customer: {
+      gridColumns: {
+        label: "Customer loyalty data",
+        description: "Adds loyalty tier to the customer grid",
+        runtimeAction: "customers/fetch-customer-grid-data",
+        columns: [
+          {
+            key: "loyalty_tier",
+            label: "Loyalty Tier",
+            type: "string",
+            align: "left",
+          },
+        ],
       },
     },
   },
 });
 ```
+
+Note: unlike `adminUiSdk`, the `adminUi` key does **not** have a `registration` wrapper. Grid
+column blocks are declared directly under `order`, `product`, and `customer`.
 
 The SDK generates the `workerProcess` operation declarations in `ext.config.yaml` automatically
 from the `runtimeAction` values — developers do not write them by hand. The only thing the
@@ -186,33 +188,39 @@ runtime action URL when Commerce fetches the extension.
 
 | v1                                       | v2                           | Notes                                                         |
 | ---------------------------------------- | ---------------------------- | ------------------------------------------------------------- |
-| `adminUiSdk`                             | `adminUi`                    | Top-level config key rename in `defineConfig()`               |
+| `adminUiSdk.registration.order`          | `adminUi.order`              | No `registration` wrapper in v2                               |
 | `data.meshId`                            | `runtimeAction`              | Operation name declared in `app.config.yaml`, not a Mesh hash |
 | `properties`                             | `columns`                    | Array of column declarations                                  |
 | `properties[].columnId`                  | `columns[].key`              | Doubles as the response data key — make them match            |
 | `properties[].type: "float"`             | `columns[].type: "decimal"`  | Renamed                                                       |
 | _(absent)_                               | `columns[].type: "datetime"` | New type in v2                                                |
 | _(absent)_                               | `label`, `description`       | New block-level metadata for App Management installation UI   |
-| Extension point: `commerce/backend-ui/1` | `commerce/backend-ui/2`      | Required change in `app.config.yaml`                          |
+| Extension point: `commerce/backend-ui/1` | `commerce/backend-ui/2`      | Required change in `app.config.yaml` and `install.yaml`       |
+
+v1 continues to work after migration — both keys can coexist in the same config during transition.
+Once all grid columns have been migrated to `adminUi`, the `adminUiSdk` grid column config can be
+removed. `adminUiSdk` itself (mass actions, menus, view buttons, custom fees) remains functional
+until those extension points are ported to `commerce/backend-ui/2` in a subsequent release.
 
 ## Design
 
-### Config key rename
+### Two config keys, two extension points
 
-The top-level config key changes from `adminUiSdk` to `adminUi`. This is a rename across the SDK:
+`adminUiSdk` and `adminUi` are independent top-level keys in `defineConfig()`. They map to separate
+extension points and separate generated artifacts:
 
-- The config property in `defineConfig()` — `adminUiSdk` → `adminUi`
-- `AdminUiSdkSchema` → `AdminUiSchema`
-- `AdminUiSdkConfiguration` → `AdminUiConfiguration`
-- `AdminUiSdkRegistration` → `AdminUiRegistration`
-- `hasAdminUiSdk()` → `hasAdminUi()`
-- All related exported types and guards in `packages/aio-commerce-lib-app`
+| Config key   | Extension point         | Status                       |
+| ------------ | ----------------------- | ---------------------------- |
+| `adminUiSdk` | `commerce/backend-ui/1` | Deprecated — will be removed |
+| `adminUi`    | `commerce/backend-ui/2` | Current                      |
 
-### Schema changes
+Both keys are optional and can coexist. The SDK generates artifacts for whichever are present.
 
-`packages/aio-commerce-lib-app/source/config/schema/admin-ui-sdk.ts`
+### Schema
 
-Remove `GridColumnPropertySchema` (v1) and `GridColumnsSchema` (v1). Add:
+The v2 schema lives in a dedicated file:
+
+`packages/aio-commerce-lib-app/source/config/schema/admin-ui.ts`
 
 ```ts
 const GridColumnSchema = v.object({
@@ -226,7 +234,7 @@ const GridColumnSchema = v.object({
     "integer",
     "string",
   ]),
-  align: ColumnAlignSchema, // 'left' | 'center' | 'right' — unchanged
+  align: v.picklist(["left", "right", "center"]),
 });
 
 const GridColumnsSchema = v.object({
@@ -238,43 +246,51 @@ const GridColumnsSchema = v.object({
     v.minLength(1, "At least one column is required"),
   ),
 });
+
+export const AdminUiSchema = v.object({
+  order: v.optional(v.object({ gridColumns: v.optional(GridColumnsSchema) })),
+  product: v.optional(v.object({ gridColumns: v.optional(GridColumnsSchema) })),
+  customer: v.optional(
+    v.object({ gridColumns: v.optional(GridColumnsSchema) }),
+  ),
+});
 ```
 
-`OrderExtensionPointsSchema`, `ProductExtensionPointsSchema`, and
-`CustomerExtensionPointsSchema` continue to reference `GridColumnsSchema` by name — the reference
-is unchanged, the schema it points to is replaced.
+The v1 schema in `admin-ui-sdk.ts` is unchanged. Its `GridColumnsSchema` (with `data.meshId` and
+`properties`) and the `gridColumns` field on `OrderExtensionPointsSchema`,
+`ProductExtensionPointsSchema`, and `CustomerExtensionPointsSchema` remain in place. The exported
+v1 type is `AdminUiSdkGridColumns` (marked `@deprecated`).
 
-The exported `GridColumns` type is updated automatically via `v.InferInput<typeof GridColumnsSchema>`.
-
-### Extension point constant
+### Extension point constants
 
 `packages/aio-commerce-lib-app/source/commands/constants.ts`
 
+Both constants coexist:
+
 ```ts
-// before
-export const BACKEND_UI_EXTENSION_POINT_ID = "commerce/backend-ui/1";
-
-// after
-export const BACKEND_UI_EXTENSION_POINT_ID = "commerce/backend-ui/2";
+export const BACKEND_UI_EXTENSION_POINT_ID = "commerce/backend-ui/1"; // v1, deprecated
+export const BACKEND_UI_V2_EXTENSION_POINT_ID = "commerce/backend-ui/2"; // v2
 ```
-
-The constant name is preserved so callsites do not change. Only the value changes.
 
 ### Pre-app-build hook
 
 `packages/aio-commerce-lib-app/source/commands/hooks/pre-app-build.ts`
 
-Remove `"backend-ui/1"` from the `Extension` union and replace with `"backend-ui/2"`. When
-`hasAdminUi` is true, the hook now performs two generation steps:
+The `Extension` union includes both values. Each routes to its own handler:
 
-1. **Registration action** — unchanged from v1: generates the JS file that returns the
-   registration config when Commerce calls the extension.
+- `"backend-ui/1"` → `generateRegistrationActionFile` (v1, unchanged behavior)
+- `"backend-ui/2"` → `updateExtConfig` + `generateGridColumnsRegistrationActionFile` (v2)
 
-2. **`ext.config.yaml` workerProcess declarations** — new in v2: collects all unique
-   `runtimeAction` values across `order`, `product`, and `customer` grid column configs,
-   then writes them as `workerProcess` entries in `ext.config.yaml` for
-   `commerce/backend-ui/2`. Developers do not declare these manually; the SDK derives them
-   from `app.commerce.config.ts` and keeps `ext.config.yaml` in sync on every build.
+When `hasAdminUi` is true, the v2 path performs two generation steps:
+
+1. **Registration action** — generates the JS file that returns the registration config when
+   Commerce calls the extension.
+
+2. **`ext.config.yaml` workerProcess declarations** — collects all unique `runtimeAction` values
+   across `order`, `product`, and `customer` grid column configs, then writes them as `workerProcess`
+   entries in `ext.config.yaml` for `commerce/backend-ui/2`. Developers do not declare these
+   manually; the SDK derives them from `app.commerce.config.ts` and keeps `ext.config.yaml` in sync
+   on every build.
 
 Example generated `ext.config.yaml` fragment for the config above:
 
@@ -306,19 +322,27 @@ do not constitute a semver-major change under the SDK's stability policy.
 ## Drawbacks
 
 - Apps that genuinely need API Mesh federation must wire it inside the handler themselves. The SDK
-  no longer manages the Mesh reference. This is intentional — Mesh is now a handler implementation
-  detail, not a config-level concern.
+  no longer manages the Mesh reference in v2. This is intentional — Mesh is now a handler
+  implementation detail, not a config-level concern.
 - `key` doing double duty (response data key and column identifier) is explicit by design, but
   developers used to v1's separate `columnId` field may find it surprising at first.
-- Dropping v1 requires migration for any existing app using grid columns. There is no deprecation
-  window.
+- Keeping v1 functional alongside v2 means the SDK ships two schemas for the same concept during
+  the deprecation window. This is intentional — removing v1 immediately would be a breaking change
+  for existing apps.
 
 ## Rationale and alternatives
 
-**Keep v1 alongside v2.**
-Rejected. A compatibility shim would preserve exactly the problem being solved: the undocumented
-Mesh coupling and the opaque `meshId`. There is no scenario in which both schemas would be
-simultaneously correct.
+**Keep v1 alongside v2 during a deprecation window (adopted).**
+Removing v1 immediately would be a breaking change for apps that depend on
+`adminUiSdk.registration.order.gridColumns`. The deprecation window lets existing apps migrate at
+their own pace while new apps adopt v2 from the start. v1 will be removed in a future major or
+minor release once the migration path is established and adoption of v2 is confirmed.
+
+**Remove v1 immediately.**
+Considered and rejected for this release. All grid column types under `adminUiSdk` are marked
+`@experimental`, so a removal is not semver-major under the SDK's stability policy — but forcing
+an immediate migration adds friction with no compensating benefit at this stage. Deferral costs
+nothing and preserves optionality.
 
 **Make `meshId` optional in v1.**
 Rejected. This does not solve the multi-environment problem (the ID is still environment-specific),
@@ -344,6 +368,9 @@ Confirm this is correct and no constraint should be added.
 
 ## Future possibilities
 
+- Removal of `adminUiSdk` grid columns and `commerce/backend-ui/1` once migration is complete.
 - Additional grid targets (invoice, shipment grids) following the same unified schema pattern.
+- Porting remaining `adminUiSdk` extension points (mass actions, menus, view buttons, custom fees)
+  to `commerce/backend-ui/2` under `adminUi`.
 - Handler scaffolding: `aio commerce generate handler --type grid-columns` to generate a typed
   handler stub that implements the wire contract.
