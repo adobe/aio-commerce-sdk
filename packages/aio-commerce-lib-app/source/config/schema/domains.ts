@@ -12,7 +12,7 @@
 
 import * as v from "valibot";
 
-import { AdminUiSdkSchema, hasAdminUiSdk } from "./admin-ui-sdk";
+import { AdminUiSchema, hasAdminUi } from "./admin-ui-sdk";
 import {
   hasBusinessConfig,
   hasBusinessConfigSchema,
@@ -47,7 +47,7 @@ export const CommerceAppConfigSchemas = {
   "installation.customInstallationSteps": v.unwrap(
     InstallationSchema.entries.customInstallationSteps,
   ),
-  adminUiSdk: AdminUiSdkSchema,
+  adminUi: AdminUiSchema,
 } as const;
 
 /** Individual validatable domains of the commerce app config. */
@@ -69,7 +69,7 @@ export function getConfigDomains(
     eventing: withCommerceEvents || withExternalEvents,
     installation: hasCustomInstallation(config),
     webhooks: hasWebhooks(config),
-    adminUiSdk: hasAdminUiSdk(config),
+    adminUi: hasAdminUi(config),
 
     "businessConfig.schema": hasBusinessConfigSchema(config),
     "eventing.commerce": withCommerceEvents,
