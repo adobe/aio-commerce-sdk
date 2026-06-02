@@ -17,7 +17,9 @@ order, product, and customer grids on `commerce/backend-ui/2`. The v1 schema (`a
 will be removed in a future release — it remains functional for now. The v2 shape introduces
 `runtimeAction` (a `workerProcess` operation name resolved by App Registry at runtime), `columns`
 (replacing `properties`), and `key` (replacing `columnId`). The wire contract between Commerce and
-the handler is formally standardized for the first time.
+the handler is formally standardized for the first time. No separate registration action is
+generated for `commerce/backend-ui/2` — Commerce reads the `adminUi` config directly from the
+existing `app-config` endpoint on `commerce/extensibility/1`.
 
 ## Motivation
 
@@ -130,6 +132,11 @@ developer needs to provide alongside the config is the handler implementation it
 `orders/fetch-order-grid-data.js`). App Registry resolves the operation name to the deployed
 runtime action URL when Commerce fetches the extension.
 
+Commerce reads the `adminUi` registration config from the `app-config` endpoint on
+`commerce/extensibility/1` — no additional runtime action is needed on `commerce/backend-ui/2`.
+The only artifact generated for `commerce/backend-ui/2` is the `ext.config.yaml` that declares
+the `workerProcess` operations.
+
 ### Wire contract
 
 **Request** (sent by Commerce to the handler):
@@ -207,14 +214,16 @@ until those extension points are ported to `commerce/backend-ui/2` in a subseque
 ### Two config keys, two extension points
 
 `adminUiSdk` and `adminUi` are independent top-level keys in `defineConfig()`. They map to separate
-extension points and separate generated artifacts:
+extension points with different generated artifacts:
 
-| Config key   | Extension point         | Status                       |
-| ------------ | ----------------------- | ---------------------------- |
-| `adminUiSdk` | `commerce/backend-ui/1` | Deprecated — will be removed |
-| `adminUi`    | `commerce/backend-ui/2` | Current                      |
+| Config key   | Extension point         | Generated artifact                                       | Status                       |
+| ------------ | ----------------------- | -------------------------------------------------------- | ---------------------------- |
+| `adminUiSdk` | `commerce/backend-ui/1` | `registration/index.js` + `ext.config.yaml`              | Deprecated — will be removed |
+| `adminUi`    | `commerce/backend-ui/2` | `ext.config.yaml` with `workerProcess` declarations only | Current                      |
 
-Both keys are optional and can coexist. The SDK generates artifacts for whichever are present.
+For `adminUi`, no registration action is generated. Commerce reads the `adminUi` config directly
+from the `app-config` endpoint on `commerce/extensibility/1`, which already includes the full app
+manifest. Both keys are optional and can coexist.
 
 ### Schema
 
@@ -279,22 +288,22 @@ export const BACKEND_UI_V2_EXTENSION_POINT_ID = "commerce/backend-ui/2"; // v2
 The `Extension` union includes both values. Each routes to its own handler:
 
 - `"backend-ui/1"` → `generateRegistrationActionFile` (v1, unchanged behavior)
-- `"backend-ui/2"` → `updateExtConfig` + `generateGridColumnsRegistrationActionFile` (v2)
+- `"backend-ui/2"` → `updateExtConfig` (v2)
 
-When `hasAdminUi` is true, the v2 path performs two generation steps:
+When `hasAdminUi` is true, the v2 path performs one generation step:
 
-1. **Registration action** — generates the JS file that returns the registration config when
-   Commerce calls the extension.
+**`ext.config.yaml` workerProcess declarations** — collects all unique `runtimeAction` values
+across `order`, `product`, and `customer` grid column configs, then writes them as `workerProcess`
+entries in `ext.config.yaml` for `commerce/backend-ui/2`. No registration action is generated;
+Commerce reads the `adminUi` config directly from the `app-config` endpoint on
+`commerce/extensibility/1`. Developers do not declare `workerProcess` entries manually; the SDK
+derives them from `app.commerce.config.ts` and keeps `ext.config.yaml` in sync on every build.
 
-2. **`ext.config.yaml` workerProcess declarations** — collects all unique `runtimeAction` values
-   across `order`, `product`, and `customer` grid column configs, then writes them as `workerProcess`
-   entries in `ext.config.yaml` for `commerce/backend-ui/2`. Developers do not declare these
-   manually; the SDK derives them from `app.commerce.config.ts` and keeps `ext.config.yaml` in sync
-   on every build.
-
-Example generated `ext.config.yaml` fragment for the config above:
+Example generated `ext.config.yaml` for the config above:
 
 ```yaml
+hooks:
+  pre-app-build: "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build"
 operations:
   view:
     - type: web
@@ -306,13 +315,8 @@ operations:
       impl: products/fetch-product-grid-data
     - type: action
       impl: customers/fetch-customer-grid-data
+web: web-src
 ```
-
-### Registration action generation
-
-No template change is needed. The registration action inlines the config as a JS object literal;
-`runtimeAction` is serialized as-is. Commerce reads `runtimeAction` directly from the registration
-JSON — no field mapping is required on either side.
 
 ### Changeset bump
 
