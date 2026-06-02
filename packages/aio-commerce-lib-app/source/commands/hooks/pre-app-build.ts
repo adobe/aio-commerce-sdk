@@ -15,14 +15,12 @@ import { syncImsCredentials } from "@aio-commerce-sdk/scripting-utils/env";
 import consola from "consola";
 
 import {
-  BACKEND_UI_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
 import { getRuntimeActions } from "#commands/generate/actions/config";
 import {
   generateActionFiles,
-  generateRegistrationActionFile,
   prepareRuntimeAppConfigModule,
   readExtConfig,
   TEMPLATES_DIR,
@@ -30,11 +28,13 @@ import {
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import { loadAppManifest } from "#commands/utils";
-import { hasAdminUiSdk } from "#config/index";
+import { hasAdminUi } from "#config/index";
+
+import { validateRuntimeActionReferences } from "./validate-runtime-actions";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
 
-type Extension = "extensibility/1" | "configuration/1" | "backend-ui/1";
+type Extension = "extensibility/1" | "configuration/1" | "backend-ui/2";
 
 /**
  * Runs the pre-app-build hook for the given extension.
@@ -86,12 +86,9 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
     return;
   }
 
-  if (extension === "backend-ui/1") {
-    if (hasAdminUiSdk(appManifest)) {
-      await generateRegistrationActionFile(
-        appManifest,
-        BACKEND_UI_EXTENSION_POINT_ID,
-      );
+  if (extension === "backend-ui/2") {
+    if (hasAdminUi(appManifest)) {
+      await validateRuntimeActionReferences(appManifest);
     }
     return;
   }
