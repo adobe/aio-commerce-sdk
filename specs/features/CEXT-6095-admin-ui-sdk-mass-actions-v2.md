@@ -9,9 +9,10 @@
 Move the Admin UI SDK code generation from extension point `commerce/backend-ui/1` to the new
 `commerce/backend-ui/2`, and replace the mass-action input schema in `app.commerce.config.*` with
 a cleaner shape that uses an explicit `type` discriminator, an inlined `notifications` block, and
-a `runtimeAction` reference to a `workerProcess` operation. The generated `registration` JSON
-uses this same v2 shape — the new Admin UI SDK extension reads it directly without an
-intermediate v1 wire-format transformation.
+a `runtimeAction` reference to a `workerProcess` operation. The mass-action payload flows through
+the existing `app-management/app-config.js` (which already serves the app config); no dedicated
+`registration` action is generated. The Admin UI SDK extension at `commerce/backend-ui/2` reads
+the `adminUi` block from `app-config.js` directly.
 
 **This SDK removes `commerce/backend-ui/1` generation entirely.** From this release on, the
 SDK only emits `commerce-backend-ui-2/`. Apps already deployed with a `commerce-backend-ui-1/`
@@ -32,9 +33,10 @@ place but not the other.
 
 **Goals**
 
-- Generate code for `commerce/backend-ui/2` instead of `commerce/backend-ui/1`. This SDK no
-  longer produces `commerce-backend-ui-1/`; existing folders in deployed apps keep working as
-  static files.
+- Generate `commerce-backend-ui-2/ext.config.yaml` with operations (`view` for the SPA,
+  `workerProcess` for the developer's worker handlers) and the matching runtime-action
+  declarations — but no `registration` action. This SDK no longer produces
+  `commerce-backend-ui-1/`; existing folders in deployed apps keep working as static files.
 - Replace the mass-action input schema with the v2 shape:
   - `id` (renamed from `actionId`); developers write the bare name and the SDK
     auto-prefixes with `${metadata.id}::` to produce the final `actionId` in the generated
@@ -217,11 +219,16 @@ The order, product, and customer grids each used a differently named limit field
 
 ## Design
 
-The SDK serializes the v2 input verbatim into
-`src/commerce-backend-ui-2/.generated/actions/registration/index.js`, with one small
-transform: `id` is prefixed with `${metadata.id}::` to produce the final `actionId` consumed
-by the Admin UI SDK extension. No other field renames or structural changes — the new
-extension reads the v2 shape directly.
+The v2 `adminUi` block flows through the existing `app-management/app-config.js`, which
+already serves the full app config — the Admin UI SDK extension at `commerce/backend-ui/2`
+reads `adminUi` from that response. No dedicated `registration` action is generated.
+
+`src/commerce-backend-ui-2/ext.config.yaml` contains only the operations (`view` for the SPA,
+`workerProcess` for the developer's worker handlers) and the matching runtime-action
+declarations.
+
+The only SDK-side transform on the `adminUi` payload is prefixing `id` with `${metadata.id}::`
+to produce the final `actionId`. Every other field is serialized verbatim.
 
 ### Tests
 
@@ -233,8 +240,9 @@ extension reads the v2 shape directly.
 - `test/unit/commands/generate/actions/config.test.ts` — `BACKEND_UI_EXTENSION_MATCHER`
   updated to `/EXTENSION=backend-ui\/2/`.
 - `test/integration/commands/hooks/pre-app-build.test.ts` — `"backend-ui/1"` → `"backend-ui/2"`,
-  plus an assertion that the generated JSON contains the v2 shape with the `${metadata.id}::`
-  prefix applied to `actionId`.
+  plus assertions that (a) the `adminUi` block in the generated `app-management/app-config.js`
+  reflects the v2 mass actions with the `${metadata.id}::` prefix applied to `actionId`, and
+  (b) no `registration` action is declared in `commerce-backend-ui-2/ext.config.yaml`.
 
 ### Documentation
 
