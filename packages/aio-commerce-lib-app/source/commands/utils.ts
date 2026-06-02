@@ -19,7 +19,6 @@ import * as prettier from "prettier";
 import { parseCommerceAppConfig } from "#config/index";
 
 import {
-  ADMIN_UI_ACTIONS_PATH,
   ADMIN_UI_SDK_ACTIONS_PATH,
   APP_MANIFEST_FILE,
   CONFIG_SCHEMA_FILE_NAME,
@@ -120,25 +119,6 @@ export function getAdminUiSdkActionsDir(extensionPointId: string) {
  */
 export function getAdminUiSdkRegistrationActionPath(extensionPointId: string) {
   return join(getAdminUiSdkActionsDir(extensionPointId), "index.js");
-}
-
-/**
- * Path to the generated Admin UI actions directory, relative to the project root (v2).
- * @param extensionPointId - The extension point ID, e.g. "commerce/backend-ui/2"
- */
-export function getAdminUiActionsDir(extensionPointId: string) {
-  return join(
-    getExtensionPointFolderPath(extensionPointId),
-    ADMIN_UI_ACTIONS_PATH,
-  );
-}
-
-/**
- * Path to the generated Admin UI registration action file, relative to the project root (v2).
- * @param extensionPointId - The extension point ID, e.g. "commerce/backend-ui/2"
- */
-export function getAdminUiRegistrationActionPath(extensionPointId: string) {
-  return join(getAdminUiActionsDir(extensionPointId), "index.js");
 }
 
 /** Path to the generated app manifest JSON file, relative to the project root. */

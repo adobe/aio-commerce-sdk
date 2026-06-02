@@ -18,7 +18,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   BACKEND_UI_EXTENSION_POINT_ID,
-  BACKEND_UI_V2_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
 import {
@@ -29,14 +28,11 @@ import {
 import {
   applyCustomScripts,
   generateCustomScriptsTemplate,
-  generateGridColumnsRegistrationActionFile,
   generateRegistrationActionFile,
   readExtConfig,
 } from "#commands/generate/actions/lib";
 import { templates } from "#test/fixtures/commands";
 import {
-  configWithAdminUi,
-  configWithAdminUiSingleGrid,
   configWithCustomInstallationSteps,
   configWithFullAdminUiSdk,
   minimalValidConfig,
@@ -269,76 +265,5 @@ describe("generateRegistrationActionFile", () => {
 
     const [filePath] = mockWriteFile.mock.calls[0];
     expect(String(filePath)).toContain("index.js");
-  });
-});
-
-describe("generateGridColumnsRegistrationActionFile", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(readFile).mockResolvedValue(templates.registration);
-  });
-
-  test("writes to registration/index.js", async () => {
-    const mockWriteFile = vi.mocked(writeFile);
-
-    await generateGridColumnsRegistrationActionFile(
-      configWithAdminUi,
-      BACKEND_UI_V2_EXTENSION_POINT_ID,
-    );
-
-    const [filePath] = mockWriteFile.mock.calls[0];
-    expect(String(filePath)).toContain("index.js");
-  });
-
-  test("generated content contains registrationRuntimeAction import", async () => {
-    const mockWriteFile = vi.mocked(writeFile);
-
-    await generateGridColumnsRegistrationActionFile(
-      configWithAdminUi,
-      BACKEND_UI_V2_EXTENSION_POINT_ID,
-    );
-
-    const [, content] = mockWriteFile.mock.calls[0];
-    const contentStr = content as string;
-
-    expect(contentStr).toContain(
-      'import { registrationRuntimeAction } from "@adobe/aio-commerce-lib-app/actions/registration"',
-    );
-    expect(contentStr).toContain("const registration =");
-  });
-
-  test("wraps all three grids in registration object", async () => {
-    const mockWriteFile = vi.mocked(writeFile);
-
-    await generateGridColumnsRegistrationActionFile(
-      configWithAdminUi,
-      BACKEND_UI_V2_EXTENSION_POINT_ID,
-    );
-
-    const [, content] = mockWriteFile.mock.calls[0];
-    const contentStr = content as string;
-
-    expect(contentStr).toContain("registration:");
-    expect(contentStr).toContain("order:");
-    expect(contentStr).toContain("product:");
-    expect(contentStr).toContain("customer:");
-    expect(contentStr).toContain("orders/fetch-order-grid-data");
-    expect(contentStr).toContain("fulfillment_status");
-  });
-
-  test("only includes configured grids (single-grid config)", async () => {
-    const mockWriteFile = vi.mocked(writeFile);
-
-    await generateGridColumnsRegistrationActionFile(
-      configWithAdminUiSingleGrid,
-      BACKEND_UI_V2_EXTENSION_POINT_ID,
-    );
-
-    const [, content] = mockWriteFile.mock.calls[0];
-    const contentStr = content as string;
-
-    expect(contentStr).toContain("order:");
-    expect(contentStr).not.toContain("product:");
-    expect(contentStr).not.toContain("customer:");
   });
 });

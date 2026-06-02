@@ -37,8 +37,6 @@ import {
 import {
   getActionPath,
   getActionsDir,
-  getAdminUiActionsDir,
-  getAdminUiRegistrationActionPath,
   getAdminUiSdkActionsDir,
   getAdminUiSdkRegistrationActionPath,
   getExtConfigPath,
@@ -63,7 +61,6 @@ import {
 } from "./config";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
-import type { AdminUiConfig } from "#config/schema/admin-ui";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
 import type { AdminUiSdkConfig } from "#management/installation/admin-ui-sdk/utils";
@@ -470,55 +467,6 @@ export async function generateCustomScriptsTemplate(
   // Inject imports and function into template
   const result = template.replace(CUSTOM_IMPORTS_PLACEHOLDER, importStatements);
   return result.replace(CUSTOM_SCRIPTS_MAP_PLACEHOLDER, scriptMap);
-}
-
-/**
- * Generates `registration/index.js` for the Admin UI grid column v2 extension
- * (`commerce/backend-ui/2`). The registration JSON contains only grid columns,
- * wrapped in `{ registration: { order?, product?, customer? } }`.
- * @param appManifest - The validated app config; must satisfy `hasAdminUi`.
- * @param extensionPointId - Must be `BACKEND_UI_V2_EXTENSION_POINT_ID`.
- * @param templatesDir - The root directory containing the action templates.
- */
-export async function generateGridColumnsRegistrationActionFile(
-  appManifest: AdminUiConfig,
-  extensionPointId: typeof BACKEND_UI_V2_EXTENSION_POINT_ID,
-  templatesDir = TEMPLATES_DIR,
-) {
-  consola.start("Generating Admin UI grid columns registration action...");
-
-  await makeOutputDirFor(getAdminUiActionsDir(extensionPointId));
-  const projectRoot = await getProjectRootDirectory();
-  const templatePath = join(
-    templatesDir,
-    "admin-ui-sdk",
-    "registration.js.template",
-  );
-  const template = await readFile(templatePath, "utf-8");
-
-  const { adminUi } = appManifest;
-  const registration: Record<string, unknown> = {};
-  for (const gt of ["order", "product", "customer"] as const) {
-    const gridColumns = adminUi[gt]?.gridColumns;
-    if (gridColumns !== undefined) {
-      registration[gt] = { gridColumns };
-    }
-  }
-
-  const actionPath = join(
-    projectRoot,
-    getAdminUiRegistrationActionPath(extensionPointId),
-  );
-  const content = template.replace(
-    REGISTRATION_JSON_PLACEHOLDER,
-    `const registration = ${stringify({ registration })};`,
-  );
-
-  const formattedContent = await prettierFormat(content, actionPath);
-  await writeFile(actionPath, formattedContent, "utf-8");
-  consola.success(
-    `Generated grid columns registration action at ${relative(process.cwd(), actionPath)}`,
-  );
 }
 
 /**

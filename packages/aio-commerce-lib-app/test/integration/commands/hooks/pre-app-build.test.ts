@@ -25,6 +25,7 @@ import {
 import { exec, run } from "#commands/hooks/pre-app-build";
 import {
   getAdminUiSdkRegistrationActionPath,
+  getExtConfigPath,
   getManifestPath,
   getSchemaPath,
 } from "#commands/utils";
@@ -151,48 +152,37 @@ describe("commands/hooks/pre-app-build", () => {
       );
     });
 
-    test("generates backend-ui/2 registration action when adminUi is configured", async () => {
+    test("writes ext.config.yaml with workerProcess entries for backend-ui/2 when adminUi is configured", async () => {
       await withTempProject(
-        {
-          ...makeProjectFiles(configWithAdminUi),
-          ...makeTemplateFiles(),
-        },
+        makeProjectFiles(configWithAdminUi),
         async (tempDir) => {
           await run("backend-ui/2");
 
-          const registrationPath = join(
+          const extConfigPath = join(
             tempDir,
-            getAdminUiSdkRegistrationActionPath(
-              BACKEND_UI_V2_EXTENSION_POINT_ID,
-            ),
+            getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
           );
 
-          expect(existsSync(registrationPath)).toBe(true);
+          expect(existsSync(extConfigPath)).toBe(true);
 
-          const content = await readFile(registrationPath, "utf-8");
-          expect(content).toContain("registrationRuntimeAction");
+          const content = await readFile(extConfigPath, "utf-8");
           expect(content).toContain("orders/fetch-order-grid-data");
-          expect(content).toContain("fulfillment_status");
+          expect(content).toContain("workerProcess");
         },
       );
     });
 
-    test("does not generate backend-ui/2 registration action when adminUi is absent", async () => {
-      await withTempProject(
-        { ...MINIMAL_PROJECT, ...makeTemplateFiles() },
-        async (tempDir) => {
-          await run("backend-ui/2");
+    test("does not write ext.config.yaml for backend-ui/2 when adminUi is absent", async () => {
+      await withTempProject(MINIMAL_PROJECT, async (tempDir) => {
+        await run("backend-ui/2");
 
-          const registrationPath = join(
-            tempDir,
-            getAdminUiSdkRegistrationActionPath(
-              BACKEND_UI_V2_EXTENSION_POINT_ID,
-            ),
-          );
+        const extConfigPath = join(
+          tempDir,
+          getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+        );
 
-          expect(existsSync(registrationPath)).toBe(false);
-        },
-      );
+        expect(existsSync(extConfigPath)).toBe(false);
+      });
     });
 
     test("throws for unsupported extension", async () => {

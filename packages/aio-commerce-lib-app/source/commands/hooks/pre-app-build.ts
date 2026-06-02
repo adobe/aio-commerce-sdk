@@ -23,7 +23,6 @@ import {
 import { getRuntimeActions } from "#commands/generate/actions/config";
 import {
   generateActionFiles,
-  generateGridColumnsRegistrationActionFile,
   generateRegistrationActionFile,
   prepareRuntimeAppConfigModule,
   readExtConfig,
@@ -106,10 +105,6 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
   if (extension === "backend-ui/2") {
     if (hasAdminUi(appManifest)) {
       await updateExtConfig(appManifest, BACKEND_UI_V2_EXTENSION_POINT_ID);
-      await generateGridColumnsRegistrationActionFile(
-        appManifest,
-        BACKEND_UI_V2_EXTENSION_POINT_ID,
-      );
     }
     return;
   }

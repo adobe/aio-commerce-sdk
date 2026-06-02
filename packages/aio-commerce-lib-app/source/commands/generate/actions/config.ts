@@ -13,8 +13,6 @@
 import { join } from "node:path";
 
 import {
-  ADMIN_UI_ACTIONS_PATH,
-  ADMIN_UI_PACKAGE_NAME,
   ADMIN_UI_SDK_ACTIONS_PATH,
   ADMIN_UI_SDK_PACKAGE_NAME,
   GENERATED_ACTIONS_PATH,
@@ -239,24 +237,6 @@ export function buildAdminUiV2ExtConfig(
       }),
     },
     web: "web-src",
-    runtimeManifest: {
-      packages: {
-        [ADMIN_UI_PACKAGE_NAME]: {
-          license: "Apache-2.0",
-          actions: {
-            registration: {
-              function: `${ADMIN_UI_ACTIONS_PATH}/index.js`,
-              web: "yes",
-              runtime: "nodejs:24",
-              annotations: {
-                "require-adobe-auth": true,
-                final: true,
-              },
-            },
-          } satisfies Record<string, ActionDefinition>,
-        },
-      },
-    },
   } satisfies ExtConfig;
 }
 

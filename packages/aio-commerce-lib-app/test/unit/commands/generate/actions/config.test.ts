@@ -190,13 +190,6 @@ describe("buildAdminUiV2ExtConfig", () => {
     expect(config.web).toBe("web-src");
   });
 
-  test("registration action has web: yes", () => {
-    const config = buildAdminUiV2ExtConfig(configWithAdminUi);
-    const action =
-      config.runtimeManifest?.packages?.["admin-ui"]?.actions?.registration;
-    expect(action?.web).toBe("yes");
-  });
-
   test("pre-app-build hook uses backend-ui/2", () => {
     const config = buildAdminUiV2ExtConfig(configWithAdminUi);
     const preBuildHook = config.hooks?.["pre-app-build"] ?? "";

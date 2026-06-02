@@ -107,7 +107,6 @@ This produces the following files, organized by extension point:
 
 **`commerce/backend-ui/2`**: Admin UI registration (generated when `adminUi` is defined):
 
-- `src/commerce-backend-ui-2/.generated/actions/registration/index.js`: serves the Admin UI registration to Adobe Commerce
 - `src/commerce-backend-ui-2/ext.config.yaml`: extension manifest with the `pre-app-build` hook and `workerProcess` declarations derived from `runtimeAction` values
 
 > [!NOTE]

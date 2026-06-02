@@ -17,7 +17,6 @@ import {
 import { getRuntimeActions } from "./config";
 import {
   generateActionFiles,
-  generateGridColumnsRegistrationActionFile,
   generateRegistrationActionFile,
   prepareRuntimeAppConfigModule,
   TEMPLATES_DIR,
@@ -74,11 +73,6 @@ export async function run(
 
   if (hasAdminUi(appManifest)) {
     await updateExtConfig(appManifest, BACKEND_UI_V2_EXTENSION_POINT_ID);
-    await generateGridColumnsRegistrationActionFile(
-      appManifest,
-      BACKEND_UI_V2_EXTENSION_POINT_ID,
-      templatesDir,
-    );
   }
 }
 
