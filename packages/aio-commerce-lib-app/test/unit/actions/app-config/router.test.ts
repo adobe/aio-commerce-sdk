@@ -219,6 +219,7 @@ describe("appConfigRuntimeAction", () => {
               gridColumns?: unknown;
               massActions?: Record<string, unknown>[];
             };
+            product?: { massActions?: Record<string, unknown>[] };
             customer?: { massActions?: Record<string, unknown>[] };
           };
         };
@@ -245,6 +246,11 @@ describe("appConfigRuntimeAction", () => {
           "test-app-full-admin-ui-sdk::order-mass-action",
         );
         expect(orderMassAction).not.toHaveProperty("id");
+
+        const productMassAction = body.adminUi?.product?.massActions?.[0];
+        expect(productMassAction?.actionId).toBe(
+          "test-app-full-admin-ui-sdk::product-mass-action",
+        );
 
         const customerMassAction = body.adminUi?.customer?.massActions?.[0];
         expect(customerMassAction?.actionId).toBe(

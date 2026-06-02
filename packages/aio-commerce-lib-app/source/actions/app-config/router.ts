@@ -29,6 +29,7 @@ import { buildOpenApiSpec, getOpenApiCacheKey, getServerUrl } from "./openapi";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
+import type { MassAction } from "#config/schema/admin-ui-sdk";
 import type {
   CommerceAppConfig,
   CommerceAppConfigOutputModel,
@@ -46,19 +47,13 @@ function withMassActionActionIds(config: CommerceAppConfigOutputModel) {
   }
 
   const prefix = `${config.metadata.id}::`;
-  const prefixEntity = <T extends { massActions?: { id: string }[] }>(
+  const prefixEntity = <T extends { massActions?: MassAction[] }>(
     entity: T | undefined,
   ) =>
     entity?.massActions
       ? {
           ...entity,
-          // Cast required: the union variant narrowing on id is safe at runtime
-          // since every MassAction carries `id` in both branches.
-          massActions: (
-            entity.massActions as Array<
-              { id: string } & Record<string, unknown>
-            >
-          ).map(({ id, ...rest }) => ({
+          massActions: entity.massActions.map(({ id, ...rest }) => ({
             actionId: `${prefix}${id}`,
             ...rest,
           })),
