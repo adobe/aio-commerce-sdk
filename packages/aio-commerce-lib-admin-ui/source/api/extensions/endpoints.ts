@@ -31,6 +31,7 @@ import type {
  * @param params - The extension registration parameters.
  * @param fetchOptions - Optional Ky fetch options.
  *
+ * @throws A `CommerceSdkValidationError` if the parameters are invalid.
  * @throws An `HTTPError` if the status code is not 2XX.
  */
 export async function registerExtension(
@@ -57,6 +58,7 @@ export async function registerExtension(
  * @param params - The workspace and extension names.
  * @param fetchOptions - Optional Ky fetch options.
  *
+ * @throws A `CommerceSdkValidationError` if the parameters are invalid.
  * @throws An `HTTPError` if the status code is not 2XX.
  */
 export async function unregisterExtension(

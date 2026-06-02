@@ -62,7 +62,10 @@ export async function unregisterExtension(
   const extensionName = process.env.__OW_NAMESPACE;
 
   if (!extensionName) {
-    throw new Error("__OW_NAMESPACE environment variable is not set");
+    logger.warn(
+      "__OW_NAMESPACE environment variable is not set; skipping Admin UI SDK extension unregistration. Continuing uninstall.",
+    );
+    return;
   }
 
   logger.info(

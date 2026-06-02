@@ -101,6 +101,19 @@ describe("unregisterExtension", () => {
     vi.unstubAllEnvs();
   });
 
+  test("warns and returns without calling the client when __OW_NAMESPACE is not set", async () => {
+    vi.unstubAllEnvs();
+    const logger = createMockLogger();
+    const context = { ...createMockAdminUiSdkContext({}), logger };
+
+    await expect(unregisterExtension(context)).resolves.toBeUndefined();
+
+    expect(context.adminUiSdkClient.unregisterExtension).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Continuing uninstall."),
+    );
+  });
+
   test("warns with enriched error message when unregisterExtension call fails", async () => {
     const logger = createMockLogger();
     const httpError = makeHttpError(

@@ -23,8 +23,13 @@ Use `createAdminUiSdkApiClient` to register and unregister Admin UI SDK extensio
 import { createAdminUiSdkApiClient } from "@adobe/aio-commerce-lib-admin-ui/api";
 
 const client = createAdminUiSdkApiClient({
-  baseUrl: "https://commerce.example.com",
-  // ...other CommerceHttpClientParams
+  config: {
+    baseUrl: "https://my-commerce-instance.com",
+    flavor: "paas", // or "saas"
+  },
+  auth: {
+    /* IMS or Integration auth params */
+  },
 });
 
 // Register an extension
