@@ -3819,7 +3819,10 @@
         "description": "Adobe IMS OAuth 2.0 access token. Send it as Authorization: Bearer <IMS access token>.",
         "flows": {
           "clientCredentials": {
-            "scopes": {},
+            "scopes": {
+              "AdobeID": "Identifies the user with their Adobe ID",
+              "openid": "Authenticates the user via OpenID Connect"
+            },
             "tokenUrl": "https://ims-na1.adobelogin.com/ims/token/v3"
           }
         }
@@ -3828,7 +3831,7 @@
   },
   "security": [
     {
-      "imsOAuth": []
+      "imsOAuth": ["AdobeID", "openid"]
     }
   ]
 }
