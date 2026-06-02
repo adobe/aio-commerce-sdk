@@ -37,10 +37,19 @@ vi.mock("@adobe/aio-commerce-lib-config", () => ({
   unsyncCommerceScopes: unsyncCommerceScopesMock,
 }));
 
-import { scopeTreeRuntimeAction } from "#actions/scope-tree";
+import { scopeTreeRuntimeAction } from "#actions/scope-tree/index";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 
 const scopeTree = [{ id: "default", name: "Default Website" }];
+
+const customScopes = [
+  {
+    code: "store-a",
+    label: "Store A",
+    is_editable: true,
+    is_final: false,
+  },
+];
 
 describe("scopeTreeRuntimeAction", () => {
   beforeEach(() => {
@@ -108,12 +117,12 @@ describe("scopeTreeRuntimeAction", () => {
       await scopeTreeRuntimeAction(
         createRuntimeActionParams({
           method: "put",
-          body: { scopes: scopeTree },
+          body: { scopes: customScopes },
         }),
       );
 
       expect(setCustomScopeTreeMock).toHaveBeenCalledWith({
-        scopes: scopeTree,
+        scopes: customScopes,
       });
     });
 
@@ -123,12 +132,56 @@ describe("scopeTreeRuntimeAction", () => {
       const result = await scopeTreeRuntimeAction(
         createRuntimeActionParams({
           method: "put",
-          body: { scopes: scopeTree },
+          body: { scopes: customScopes },
         }),
       );
 
       expect(result).toMatchObject({
         headers: { "Cache-Control": "no-store" },
+      });
+    });
+
+    test("returns a 400 when scope validation fails", async () => {
+      const validationError = Object.assign(
+        new Error(
+          "Scope code 'commerce' is reserved and cannot be used in custom scopes",
+        ),
+        { isValidationError: true },
+      );
+      setCustomScopeTreeMock.mockRejectedValue(validationError);
+
+      const result = await scopeTreeRuntimeAction(
+        createRuntimeActionParams({
+          method: "put",
+          body: { scopes: customScopes },
+        }),
+      );
+
+      expect(result).toMatchObject({
+        type: "error",
+        error: {
+          statusCode: 400,
+          body: {
+            message:
+              "Scope code 'commerce' is reserved and cannot be used in custom scopes",
+          },
+        },
+      });
+    });
+
+    test("propagates non-validation errors as a 500", async () => {
+      setCustomScopeTreeMock.mockRejectedValue(new Error("unexpected failure"));
+
+      const result = await scopeTreeRuntimeAction(
+        createRuntimeActionParams({
+          method: "put",
+          body: { scopes: customScopes },
+        }),
+      );
+
+      expect(result).toMatchObject({
+        type: "error",
+        error: { statusCode: 500 },
       });
     });
   });

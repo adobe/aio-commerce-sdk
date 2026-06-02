@@ -56,6 +56,11 @@
     "publint": {
       "dependsOn": ["build"],
       "cache": false
+    },
+
+    "version": {
+      "dependsOn": [],
+      "cache": false
     }
   }
 }

@@ -16,17 +16,20 @@ import libConfigPkg from "@adobe/aio-commerce-lib-config/package.json" with {
 import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
 import { mergeConfig } from "tsdown";
 
+import spec from "./docs/openapi.json" with { type: "json" };
 import pkg from "./package.json" with { type: "json" };
 
 export default mergeConfig(baseConfig, {
+  dts: { eager: true },
   entry: [
-    "./source/actions/*.ts",
+    "./source/actions/*/index.ts",
     "./source/config/index.ts",
     "./source/commands/index.ts",
     "./source/management/index.ts",
   ],
   define: {
     __PKG_VERSION__: JSON.stringify(pkg.version),
+    __OPENAPI_VERSION__: JSON.stringify(spec.info.version),
     __LIB_CONFIG_RANGE__: JSON.stringify(`^${libConfigPkg.version}`),
   },
   copy: [
