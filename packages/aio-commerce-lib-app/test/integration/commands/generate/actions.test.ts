@@ -24,10 +24,7 @@ import {
   getExtensionPointFolderPath,
 } from "#commands/constants";
 import { exec, run } from "#commands/generate/actions/main";
-import {
-  getAdminUiSdkRegistrationActionPath,
-  getRuntimeAppConfigPath,
-} from "#commands/utils";
+import { getRuntimeAppConfigPath } from "#commands/utils";
 import {
   dynamicOptionsConfigFile,
   dynamicOptionsConfigFileTs,
@@ -279,28 +276,31 @@ describe("commands/generate/actions", () => {
       );
     });
 
-    test("generates backend-ui registration action when adminUiSdk is configured", async () => {
+    test("generates ext.config.yaml for backend-ui/2 when adminUi is configured", async () => {
       await withTempProject(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
           await run(configWithFullAdminUiSdk, tempDir);
 
-          const registrationPath = join(
-            tempDir,
-            getAdminUiSdkRegistrationActionPath(BACKEND_UI_EXTENSION_POINT_ID),
-          );
           const extConfigPath = join(
             tempDir,
             getExtensionPointFolderPath(BACKEND_UI_EXTENSION_POINT_ID),
             "ext.config.yaml",
           );
 
-          expect(existsSync(registrationPath)).toBe(true);
           expect(existsSync(extConfigPath)).toBe(true);
 
-          const content = await readFile(registrationPath, "utf-8");
-          expect(content).toContain("registrationRuntimeAction");
-          expect(content).toContain("my-app::first");
+          // No registration action should be generated
+          const legacyRegistrationPath = join(
+            tempDir,
+            "src/commerce-backend-ui-2/.generated/actions/registration/index.js",
+          );
+          expect(existsSync(legacyRegistrationPath)).toBe(false);
+
+          const content = await readFile(extConfigPath, "utf-8");
+          expect(content).toContain("backend-ui/2");
+          expect(content).toContain("index.html");
+          expect(content).not.toContain("registration");
         },
       );
     });

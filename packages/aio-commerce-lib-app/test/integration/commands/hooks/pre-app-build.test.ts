@@ -17,16 +17,11 @@ import { join } from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
-  BACKEND_UI_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
 import { exec, run } from "#commands/hooks/pre-app-build";
-import {
-  getAdminUiSdkRegistrationActionPath,
-  getManifestPath,
-  getSchemaPath,
-} from "#commands/utils";
+import { getManifestPath, getSchemaPath } from "#commands/utils";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
   configWithBusinessConfig,
@@ -110,41 +105,46 @@ describe("commands/hooks/pre-app-build", () => {
       });
     });
 
-    test("generates backend-ui registration action for backend-ui/1", async () => {
+    test("runs successfully for backend-ui/2 when worker runtimeAction is declared", async () => {
+      const appConfigYaml = [
+        "extensions:",
+        "  commerce/backend-ui/2:",
+        "    operations:",
+        "      workerProcess:",
+        "        - type: action",
+        "          impl: customers/export-customers",
+      ].join("\n");
+
       await withTempProject(
-        {
-          ...makeProjectFiles(configWithFullAdminUiSdk),
+        makeProjectFiles(configWithFullAdminUiSdk, "esm", {
+          "app.config.yaml": appConfigYaml,
           ...makeTemplateFiles(),
-        },
-        async (tempDir) => {
-          await run("backend-ui/1");
-
-          const registrationPath = join(
-            tempDir,
-            getAdminUiSdkRegistrationActionPath(BACKEND_UI_EXTENSION_POINT_ID),
-          );
-
-          expect(existsSync(registrationPath)).toBe(true);
-
-          const content = await readFile(registrationPath, "utf-8");
-          expect(content).toContain("registrationRuntimeAction");
-          expect(content).toContain("my-app::first");
+        }),
+        async () => {
+          await expect(run("backend-ui/2")).resolves.toBeUndefined();
         },
       );
     });
 
-    test("does not generate backend-ui registration action when adminUiSdk is absent", async () => {
+    test("throws CommerceSdkValidationError for backend-ui/2 when worker runtimeAction is not declared", async () => {
+      const appConfigYaml = [
+        "extensions:",
+        "  commerce/backend-ui/2:",
+        "    operations:",
+        "      workerProcess:",
+        "        - type: action",
+        "          impl: customers/other",
+      ].join("\n");
+
       await withTempProject(
-        { ...MINIMAL_PROJECT, ...makeTemplateFiles() },
-        async (tempDir) => {
-          await run("backend-ui/1");
-
-          const registrationPath = join(
-            tempDir,
-            getAdminUiSdkRegistrationActionPath(BACKEND_UI_EXTENSION_POINT_ID),
+        makeProjectFiles(configWithFullAdminUiSdk, "esm", {
+          "app.config.yaml": appConfigYaml,
+          ...makeTemplateFiles(),
+        }),
+        async () => {
+          await expect(run("backend-ui/2")).rejects.toThrow(
+            "customers/export-customers",
           );
-
-          expect(existsSync(registrationPath)).toBe(false);
         },
       );
     });
@@ -211,14 +211,23 @@ describe("commands/hooks/pre-app-build", () => {
       );
     });
 
-    test("runs successfully for backend-ui/1", async () => {
-      vi.stubEnv("EXTENSION", "backend-ui/1");
+    test("runs successfully for backend-ui/2", async () => {
+      vi.stubEnv("EXTENSION", "backend-ui/2");
+
+      const appConfigYaml = [
+        "extensions:",
+        "  commerce/backend-ui/2:",
+        "    operations:",
+        "      workerProcess:",
+        "        - type: action",
+        "          impl: customers/export-customers",
+      ].join("\n");
 
       await withTempProject(
-        {
-          ...makeProjectFiles(configWithFullAdminUiSdk),
+        makeProjectFiles(configWithFullAdminUiSdk, "esm", {
+          "app.config.yaml": appConfigYaml,
           ...makeTemplateFiles(),
-        },
+        }),
         async () => {
           await exec();
           expect(exitSpy).not.toHaveBeenCalled();

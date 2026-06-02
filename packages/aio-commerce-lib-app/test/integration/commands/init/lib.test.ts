@@ -198,11 +198,11 @@ describe("commands/init/lib", () => {
       );
     });
 
-    test("adds backend-ui extension point when adminUiSdk is in domains", async () => {
+    test("adds backend-ui extension point when adminUi is in domains", async () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
         async (tempDir) => {
-          await ensureAppConfig(new Set(["adminUiSdk"]), tempDir);
+          await ensureAppConfig(new Set(["adminUi"]), tempDir);
 
           const content = await readFile(
             join(tempDir, APP_CONFIG_FILE),
@@ -280,11 +280,11 @@ describe("commands/init/lib", () => {
       );
     });
 
-    test("adds backend-ui extension point when adminUiSdk is in domains", async () => {
+    test("adds backend-ui extension point when adminUi is in domains", async () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
         async (tempDir) => {
-          await ensureInstallYaml(new Set(["adminUiSdk"]), tempDir);
+          await ensureInstallYaml(new Set(["adminUi"]), tempDir);
           const content = await readFile(
             join(tempDir, INSTALL_YAML_FILE),
             "utf-8",
