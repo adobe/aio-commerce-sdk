@@ -15,4 +15,4 @@
 export { adminUiSdkStep } from "./branch";
 
 export type { RegisterExtensionStepData } from "./branch";
-export type { AdminUiSdkConfig } from "./utils";
+export type { AdminUiConfig } from "./utils";

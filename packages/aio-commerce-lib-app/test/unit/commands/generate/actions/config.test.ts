@@ -55,7 +55,7 @@ describe("buildAppManagementExtConfig", () => {
       config: configWithCustomInstallationSteps,
     },
     { label: "webhooks", config: configWithWebhooks },
-    { label: "adminUiSdk", config: configWithAdminUiSdk },
+    { label: "adminUi", config: configWithAdminUiSdk },
   ])("includes installation action when $label is configured", ({ config }) => {
     const result = buildAppManagementExtConfig(config);
 
@@ -71,7 +71,7 @@ describe("buildAppManagementExtConfig", () => {
       config: configWithCustomInstallationSteps,
     },
     { label: "webhooks", config: configWithWebhooks },
-    { label: "adminUiSdk", config: configWithAdminUiSdk },
+    { label: "adminUi", config: configWithAdminUiSdk },
   ])("includes installation workerProcess entry when $label is configured", ({
     config,
   }) => {

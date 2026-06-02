@@ -22,9 +22,9 @@ import type {
   StepContextFactory,
 } from "#management/installation/workflow/step";
 
-/** Config type when Admin UI SDK registration is configured. */
-export type AdminUiSdkConfig = CommerceAppConfigOutputModel & {
-  adminUiSdk: NonNullable<CommerceAppConfigOutputModel["adminUiSdk"]>;
+/** Config type when Admin UI configuration is present. */
+export type AdminUiConfig = CommerceAppConfigOutputModel & {
+  adminUi: NonNullable<CommerceAppConfigOutputModel["adminUi"]>;
 };
 
 /** Context shared across Admin UI SDK steps. */

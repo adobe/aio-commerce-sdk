@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { hasAdminUiSdk } from "#config/schema/admin-ui-sdk";
+import { hasAdminUi } from "#config/schema/admin-ui-sdk";
 import {
   defineBranchStep,
   defineLeafStep,
@@ -20,7 +20,7 @@ import { registerExtension, uninstallExtension } from "./helpers";
 import { createAdminUiSdkStepContext } from "./utils";
 
 import type { InferStepOutput } from "#management/installation/workflow/step";
-import type { AdminUiSdkConfig, AdminUiSdkExecutionContext } from "./utils";
+import type { AdminUiConfig, AdminUiSdkExecutionContext } from "./utils";
 
 /** Leaf step that calls POST /V1/adminuisdk/extension to register the extension. */
 const registerExtensionStep = defineLeafStep({
@@ -36,10 +36,10 @@ const registerExtensionStep = defineLeafStep({
     },
   },
 
-  install: (_: AdminUiSdkConfig, context: AdminUiSdkExecutionContext) =>
+  install: (_: AdminUiConfig, context: AdminUiSdkExecutionContext) =>
     registerExtension(context),
 
-  uninstall: (_: AdminUiSdkConfig, context: AdminUiSdkExecutionContext) =>
+  uninstall: (_: AdminUiConfig, context: AdminUiSdkExecutionContext) =>
     uninstallExtension(context),
 });
 
@@ -62,7 +62,7 @@ export const adminUiSdkStep = defineBranchStep({
     },
   },
 
-  when: hasAdminUiSdk,
+  when: hasAdminUi,
   context: createAdminUiSdkStepContext,
   children: [registerExtensionStep],
 });

@@ -228,7 +228,7 @@ export async function ensureAppConfig(
     );
   }
 
-  if (domains.has("adminUiSdk")) {
+  if (domains.has("adminUi")) {
     await addExtensionPointToAppConfig(
       BACKEND_UI_EXTENSION_POINT_ID,
       rootDirectory,
@@ -351,7 +351,7 @@ export async function ensureInstallYaml(
     );
   }
 
-  if (domains.has("adminUiSdk")) {
+  if (domains.has("adminUi")) {
     await addExtensionPointToInstallYaml(
       BACKEND_UI_EXTENSION_POINT_ID,
       rootDirectory,

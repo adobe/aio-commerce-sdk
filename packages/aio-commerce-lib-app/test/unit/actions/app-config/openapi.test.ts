@@ -30,7 +30,7 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 const fullyCapableConfig = {
   metadata: mockMetadata,
   businessConfig: configWithBusinessConfig.businessConfig,
-  adminUiSdk: configWithFullAdminUiSdk.adminUiSdk,
+  adminUi: configWithFullAdminUiSdk.adminUi,
   installation: configWithOneScript.installation,
 } satisfies CommerceAppConfigOutputModel;
 
