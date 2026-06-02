@@ -47,7 +47,6 @@ const ColumnTypeSchema = v.picklist([
   "string",
 ]);
 const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
-
 const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
 
 const MassActionConfirmSchema = v.object({
@@ -332,6 +331,7 @@ export type AppConfigWithAdminUiSdk<
  * @deprecated Use {@link GridColumns} with the `adminUi` config key and `commerce/backend-ui/2` instead.
  * @experimental
  */
+// Prefixed to avoid a naming conflict with the v2 GridColumns type exported from admin-ui.ts.
 export type AdminUiSdkGridColumns = v.InferInput<typeof GridColumnsSchema>;
 
 /**
