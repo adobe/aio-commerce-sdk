@@ -7,7 +7,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
-- **Admin UI SDK Configuration**: Generate and manage the runtime action that powers the `commerce/backend-ui/1` extension point.
+- **Admin UI SDK Configuration**: Generate and manage the extension that powers the `commerce/backend-ui/2` extension point.
 
 ## Reference
 
@@ -99,10 +99,9 @@ This produces the following files, organized by extension point:
 > [!NOTE]
 > When the business config schema contains `dynamicList` fields, the manifest is emitted as an ESM module (`app.commerce.manifest.js`) instead of JSON, and no separate `configuration-schema.json` is generated. Generated actions resolve `dynamicList` fields on every request. Any external credentials a factory uses must be declared as `inputs` for each action that resolves the schema (in the corresponding `ext.config.yaml` of each action).
 
-**`commerce/backend-ui/1`**: Admin UI SDK (generated when `adminUiSdk.registration` is defined):
+**`commerce/backend-ui/2`**: Admin UI SDK (generated when `adminUi` is defined):
 
-- `src/commerce-backend-ui-1/.generated/actions/registration/index.js`: serves the Admin UI SDK registration object to Adobe Commerce
-- `src/commerce-backend-ui-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
+- `src/commerce-backend-ui-2/ext.config.yaml`: extension manifest with the `view` operation (SPA) and the `pre-app-build` hook. The `adminUi` block is served directly by the `app-management/app-config` action (no separate registration action is generated).
 
 > [!NOTE]
 > Generated actions default to the `nodejs:24` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration.
@@ -116,9 +115,9 @@ extensions:
   # Only include this if businessConfig is defined in your app.commerce.config.*:
   commerce/configuration/1:
     $include: "src/commerce-configuration-1/ext.config.yaml"
-  # Only include this if adminUiSdk.registration is defined in your app.commerce.config.*:
-  commerce/backend-ui/1:
-    $include: "src/commerce-backend-ui-1/ext.config.yaml"
+  # Only include this if adminUi is defined in your app.commerce.config.*:
+  commerce/backend-ui/2:
+    $include: "src/commerce-backend-ui-2/ext.config.yaml"
 ```
 
 5. In your `install.yaml`, add the extension point references. If you have multiple extension points, add each as a new entry:
@@ -128,8 +127,8 @@ extensions:
   - extensionPointId: commerce/extensibility/1
   # Only include this if businessConfig is defined in your app.commerce.config.*:
   - extensionPointId: commerce/configuration/1
-  # Only include this if adminUiSdk.registration is defined in your app.commerce.config.*:
-  - extensionPointId: commerce/backend-ui/1
+  # Only include this if adminUi is defined in your app.commerce.config.*:
+  - extensionPointId: commerce/backend-ui/2
 ```
 
 ### Defining Configuration
@@ -140,7 +139,7 @@ The current app configuration definition contains the following sections:
 - **businessConfig**: Business configuration schema
 - **eventing**: Eventing configuration
 - **installation**: Installation configuration
-- **adminUiSdk**: Admin UI SDK registration
+- **adminUi**: Admin UI SDK configuration
 
 #### Application Metadata
 
@@ -472,126 +471,185 @@ export default defineCustomInstallationStep(async (config, context) => {
 
 > **Experimental:** Admin UI SDK support is not yet production-ready. The API may change in future releases.
 
-The `adminUiSdk.registration` field declares the registration payload served by the Admin UI SDK runtime action. When defined, `init` and `generate all` automatically wire up the `commerce/backend-ui/1` extension, including the generated runtime action and the `pre-app-build` hook that keeps it in sync with your config. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
+The `adminUi` field declares the extension payload served to the Admin UI SDK. When defined, `init` and `generate all` automatically wire up the `commerce/backend-ui/2` extension, including the `pre-app-build` hook that validates worker mass actions and keeps everything in sync with your config. The `adminUi` block is served directly by the `app-management/app-config` action — no separate registration action is generated. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
+
+##### Authoring a mass action
+
+Mass actions are declared with an explicit `type` field that determines which variant applies:
+
+- `type: "view"` — renders an iframe at the given `path` (optional `sandbox` attribute).
+- `type: "worker"` — invokes a runtime action specified by `runtimeAction` (optional `timeout`).
+
+The `id` field is authored as a bare name (e.g. `"export-orders"`). The SDK automatically prefixes it with the app metadata `id` to produce the final `actionId` (`${metadata.id}::export-orders`) in the `app-config` response served to the Admin UI SDK.
+
+For worker mass actions, the referenced `runtimeAction` must be declared as a `workerProcess` operation under `commerce/backend-ui/2` in your `app.config.yaml` (or the included ext config). The `pre-app-build` hook validates this at build time.
+
+```yaml
+# app.config.yaml
+extensions:
+  commerce/backend-ui/2:
+    $include: "src/commerce-backend-ui-2/ext.config.yaml"
+```
+
+```yaml
+# src/commerce-backend-ui-2/ext.config.yaml (excerpt — maintained by codegen)
+operations:
+  view:
+    - type: web
+      impl: index.html
+  workerProcess:
+    - type: action
+      impl: my-package/export-orders
+```
+
+##### Field applicability by variant
+
+| Field            | Common | `view` only | `worker` only |
+| ---------------- | :----: | :---------: | :-----------: |
+| `id`             |   x    |             |               |
+| `label`          |   x    |             |               |
+| `title`          |   x    |             |               |
+| `confirm`        |   x    |             |               |
+| `notifications`  |   x    |             |               |
+| `installation`   |   x    |             |               |
+| `selectionLimit` |   x    |             |               |
+| `path`           |        |      x      |               |
+| `sandbox`        |        |      x      |               |
+| `runtimeAction`  |        |             |       x       |
+| `timeout`        |        |             |       x       |
+
+The `view` and `worker` variants are strict: `path`/`sandbox` on a `worker` action and `runtimeAction`/`timeout` on a `view` action are rejected at validation time.
+
+##### Example configuration
 
 ```javascript
-adminUiSdk: {
-  registration: {
-    menuItems: [
+adminUi: {
+  menuItems: [
+    {
+      id: "my-app::menu",
+      title: "My App",
+      parent: "my-app::apps",
+      sortOrder: 1,
+      isSection: false,
+      sandbox: "allow-modals",
+    },
+  ],
+
+  order: {
+    massActions: [
+      // view variant — renders an iframe
       {
-        id: "my-app::menu",
-        title: "My App",
-        parent: "my-app::apps",
-        sortOrder: 1,
-        isSection: false,
+        id: "export-orders",
+        type: "view",
+        label: "Export Orders",
+        title: "Export",
+        path: "#/export-orders",
+        selectionLimit: 100,
+        confirm: { title: "Confirm", message: "Export selected orders?" },
+        notifications: {
+          success: "Orders exported successfully.",
+          error: "Export failed.",
+        },
+        installation: {
+          label: "Export Orders",
+          description: "Exports selected orders to CSV.",
+        },
+        sandbox: "allow-modals",
+      },
+      // worker variant — invokes a runtime action
+      {
+        id: "archive-orders",
+        type: "worker",
+        label: "Archive Orders",
+        runtimeAction: "my-package/archive-orders",
+        timeout: 30,
+        selectionLimit: 50,
+        notifications: {
+          success: "Orders archived.",
+          error: "Archiving failed.",
+        },
+      },
+    ],
+    gridColumns: {
+      data: { meshId: "MESH_ID" },
+      properties: [
+        {
+          label: "Column Name",
+          columnId: "column_id",
+          type: "string",
+          align: "left",
+        },
+      ],
+    },
+    viewButtons: [
+      {
+        buttonId: "my-app::delete-order",
+        label: "Delete",
+        path: "#/delete-order",
+        level: 0,
+        sortOrder: 80,
+        confirm: { message: "Are you sure?" },
+        displayIframe: true,
+        timeout: 10,
         sandbox: "allow-modals",
       },
     ],
-
-    order: {
-      massActions: [
-        {
-          actionId: "my-app::order-mass-action",
-          label: "Order Mass Action",
-          title: "Page Title",
-          path: "#/order-mass-action",
-          selectionLimit: 1,
-          confirm: { title: "Confirm", message: "Are you sure?" },
-          displayIframe: true,
-          timeout: 10,
-          sandbox: "allow-modals",
-        },
-      ],
-      gridColumns: {
-        data: { meshId: "MESH_ID" },
-        properties: [
-          {
-            label: "Column Name",
-            columnId: "column_id",
-            type: "string",
-            align: "left",
-          },
-        ],
+    customFees: [
+      {
+        id: "fee-1",
+        label: "My Custom Fee",
+        value: 1.0,
+        orderMinimumAmount: 0,
+        applyFeeOnLastInvoice: false,
+        applyFeeOnLastCreditMemo: true,
       },
-      viewButtons: [
-        {
-          buttonId: "my-app::delete-order",
-          label: "Delete",
-          path: "#/delete-order",
-          level: 0,
-          sortOrder: 80,
-          confirm: { message: "Are you sure?" },
-          displayIframe: true,
-          timeout: 10,
-          sandbox: "allow-modals",
-        },
-      ],
-      customFees: [
-        {
-          id: "fee-1",
-          label: "My Custom Fee",
-          value: 1.0,
-          orderMinimumAmount: 0,
-          applyFeeOnLastInvoice: false,
-          applyFeeOnLastCreditMemo: true,
-        },
+    ],
+  },
+
+  product: {
+    massActions: [
+      {
+        id: "export-products",
+        type: "view",
+        label: "Export Products",
+        path: "#/export-products",
+        selectionLimit: 100,
+      },
+    ],
+    gridColumns: {
+      data: { meshId: "MESH_ID" },
+      properties: [
+        { label: "Column Name", columnId: "column_id", type: "string", align: "left" },
       ],
     },
+  },
 
-    product: {
-      massActions: [
-        {
-          actionId: "my-app::product-mass-action",
-          label: "Product Mass Action",
-          path: "#/product-mass-action",
-          productSelectLimit: 1,
-        },
-      ],
-      gridColumns: {
-        data: { meshId: "MESH_ID" },
-        properties: [
-          { label: "Column Name", columnId: "column_id", type: "string", align: "left" },
-        ],
+  customer: {
+    massActions: [
+      {
+        id: "export-customers",
+        type: "worker",
+        label: "Export Customers",
+        runtimeAction: "my-package/export-customers",
+        selectionLimit: 100,
       },
-    },
-
-    customer: {
-      massActions: [
-        {
-          actionId: "my-app::customer-mass-action",
-          label: "Customer Mass Action",
-          path: "#/customer-mass-action",
-          customerSelectLimit: 1,
-        },
-      ],
-      gridColumns: {
-        data: { meshId: "MESH_ID" },
-        properties: [
-          { label: "Column Name", columnId: "column_id", type: "string", align: "left" },
-        ],
-      },
-    },
-
-    bannerNotification: {
-      massActions: {
-        order: [
-          {
-            actionId: "my-app::order-mass-action",
-            successMessage: "Order action completed.",
-            errorMessage: "Order action failed.",
-          },
-        ],
-        product: [{ actionId: "my-app::product-mass-action" }],
-        customer: [{ actionId: "my-app::customer-mass-action" }],
-      },
-      orderViewButtons: [
-        {
-          buttonId: "my-app::delete-order",
-          successMessage: "Order deleted.",
-          errorMessage: "Delete failed.",
-        },
+    ],
+    gridColumns: {
+      data: { meshId: "MESH_ID" },
+      properties: [
+        { label: "Column Name", columnId: "column_id", type: "string", align: "left" },
       ],
     },
+  },
+
+  bannerNotification: {
+    orderViewButtons: [
+      {
+        buttonId: "my-app::delete-order",
+        successMessage: "Order deleted.",
+        errorMessage: "Delete failed.",
+      },
+    ],
   },
 }
 ```
@@ -606,31 +664,26 @@ adminUiSdk: {
 
 ##### Order Extension Points:
 
-- **massActions** (optional array): **`actionId`**, **`label`**, **`path`** required; `title` optional; `selectionLimit` optional positive number; `confirm.title` and `confirm.message` optional; `displayIframe` optional boolean; `timeout` optional positive number; `sandbox` optional (see above)
+- **massActions** (optional array): see [Field applicability by variant](#field-applicability-by-variant) above; `id`, `label`, and `type` are always required
 - **gridColumns** (optional): `data.meshId` required; `properties` must contain at least one entry; each property requires `label`, `columnId`, `type` (`"boolean"`, `"date"`, `"float"`, `"integer"`, or `"string"`), and `align` (`"left"`, `"right"`, or `"center"`)
 - **viewButtons** (optional array): **`buttonId`**, **`label`**, **`path`** required; `level` optional (`-1`, `0`, or `1`); `sortOrder` optional; `confirm.message` optional; `displayIframe`, `timeout`, `sandbox` optional
 - **customFees** (optional array): **`id`**, **`label`** required; **`value`** required number; `orderMinimumAmount` optional number; `applyFeeOnLastInvoice`, `applyFeeOnLastCreditMemo` optional boolean
 
 ##### Product Extension Points:
 
-- **massActions** (optional array): same fields as order mass actions, but uses `productSelectLimit` instead of `selectionLimit`
+- **massActions** (optional array): same v2 shape as order mass actions; unified `selectionLimit` applies
 - **gridColumns** (optional): same shape as order grid columns
 
 ##### Customer Extension Points:
 
-- **massActions** (optional array): same fields as order mass actions, but uses `customerSelectLimit` instead of `selectionLimit`
+- **massActions** (optional array): same v2 shape as order mass actions; unified `selectionLimit` applies
 - **gridColumns** (optional): same shape as order grid columns
 
 ##### Banner Notifications:
 
-- **massActions.order**, **massActions.product**, **massActions.customer** (optional arrays): each entry requires **`actionId`**; `successMessage` and `errorMessage` are optional non-empty strings
 - **orderViewButtons** (optional array): each entry requires **`buttonId`**; `successMessage` and `errorMessage` are optional non-empty strings
 
-##### Cross-Field Rules:
-
-- `sandbox` is only relevant when `displayIframe` is set to `true`; this applies to all mass actions and view button entries
-
-Every field of `adminUiSdk.registration` is optional — configure only the extension points your application needs.
+Every field of `adminUi` is optional — configure only the extension points your application needs.
 
 ### CLI Commands
 

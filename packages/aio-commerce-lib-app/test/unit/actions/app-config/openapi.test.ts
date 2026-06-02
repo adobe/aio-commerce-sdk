@@ -93,6 +93,7 @@ describe("buildOpenApiSpec", () => {
 
     // Still reachable from `/app-config` (its error response and the
     // eventing / Admin UI SDK / webhook payloads it documents).
+    // "AdminUiSdkRegistration" is an OpenAPI schema/contract identifier, not a TS type.
     for (const retained of [
       "ErrorResponse",
       "AdminUiSdkRegistration",
