@@ -499,7 +499,7 @@ operations:
       impl: index.html
   workerProcess:
     - type: action
-      impl: my-package/export-orders
+      impl: my-package/archive-orders
 ```
 
 ##### Field applicability by variant
@@ -519,6 +519,8 @@ operations:
 | `timeout`        |        |             |       x       |
 
 The `view` and `worker` variants are strict: `path`/`sandbox` on a `worker` action and `runtimeAction`/`timeout` on a `view` action are rejected at validation time.
+
+When `installation` is provided, `installation.label` is required and `installation.description` is optional. `notifications` accepts optional `success` and `error` strings.
 
 ##### Example configuration
 
@@ -666,7 +668,7 @@ adminUi: {
 
 - **massActions** (optional array): see [Field applicability by variant](#field-applicability-by-variant) above; `id`, `label`, and `type` are always required
 - **gridColumns** (optional): `data.meshId` required; `properties` must contain at least one entry; each property requires `label`, `columnId`, `type` (`"boolean"`, `"date"`, `"float"`, `"integer"`, or `"string"`), and `align` (`"left"`, `"right"`, or `"center"`)
-- **viewButtons** (optional array): **`buttonId`**, **`label`**, **`path`** required; `level` optional (`-1`, `0`, or `1`); `sortOrder` optional; `confirm.message` optional; `displayIframe`, `timeout`, `sandbox` optional
+- **viewButtons** (optional array): **`buttonId`**, **`label`**, **`path`** required; `level` optional (`-1`, `0`, or `1`); `sortOrder` optional; `confirm.message` optional; `displayIframe`, `timeout`, `sandbox` optional. `sandbox` is only valid when `displayIframe` is `true`.
 - **customFees** (optional array): **`id`**, **`label`** required; **`value`** required number; `orderMinimumAmount` optional number; `applyFeeOnLastInvoice`, `applyFeeOnLastCreditMemo` optional boolean
 
 ##### Product Extension Points:

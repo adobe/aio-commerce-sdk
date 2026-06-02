@@ -3402,10 +3402,7 @@
                       },
                       "required": ["actionId", "label", "type", "runtimeAction"]
                     }
-                  ],
-                  "discriminator": {
-                    "propertyName": "type"
-                  }
+                  ]
                 }
               },
               "gridColumns": {
@@ -3709,10 +3706,7 @@
                       },
                       "required": ["actionId", "label", "type", "runtimeAction"]
                     }
-                  ],
-                  "discriminator": {
-                    "propertyName": "type"
-                  }
+                  ]
                 }
               },
               "gridColumns": {
@@ -3927,10 +3921,7 @@
                       },
                       "required": ["actionId", "label", "type", "runtimeAction"]
                     }
-                  ],
-                  "discriminator": {
-                    "propertyName": "type"
-                  }
+                  ]
                 }
               },
               "gridColumns": {
