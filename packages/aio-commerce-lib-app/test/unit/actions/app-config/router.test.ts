@@ -18,8 +18,11 @@ import { getConfigDomains } from "#config/schema/domains";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import {
   configWithDynamicListOptions,
+  configWithFullAdminUiSdk,
   minimalValidConfig,
 } from "#test/fixtures/config";
+
+import type { CommerceAppConfig } from "#config/schema/app";
 
 describe("appConfigRuntimeAction", () => {
   beforeEach(() => {
@@ -104,6 +107,152 @@ describe("appConfigRuntimeAction", () => {
         body: {
           openApiSpecUrl: `https://test-namespace.adobeioruntime.net/api/v1/web/app-management/app-config/openapi.json?ck=${ck}`,
         },
+      });
+    });
+
+    describe("mass action id -> actionId transform", () => {
+      test("rewrites a view mass action id to actionId with metadata prefix", async () => {
+        const config: CommerceAppConfig = {
+          metadata: {
+            id: "my-app",
+            displayName: "My App",
+            description: "Test",
+            version: "1.0.0",
+          },
+          adminUi: {
+            order: {
+              massActions: [
+                {
+                  id: "tag-customers",
+                  type: "view",
+                  path: "#/x",
+                  label: "L",
+                },
+              ],
+            },
+          },
+        };
+        const handler = appConfigRuntimeAction({ appConfig: config });
+        const result = await handler(createRuntimeActionParams());
+
+        expect.assert(result.type === "success");
+        // Cast required: the response body is typed as `{}` by the action handler infrastructure
+        type AdminUiBody = {
+          adminUi?: { order?: { massActions?: Record<string, unknown>[] } };
+        };
+        const body = result.body as AdminUiBody;
+        const massAction = body.adminUi?.order?.massActions?.[0];
+        expect(massAction).toBeDefined();
+        expect(massAction?.actionId).toBe("my-app::tag-customers");
+        expect(massAction).not.toHaveProperty("id");
+        expect(massAction?.type).toBe("view");
+        expect(massAction?.path).toBe("#/x");
+        expect(massAction?.label).toBe("L");
+      });
+
+      test("rewrites a worker mass action id to actionId and preserves runtimeAction", async () => {
+        const config: CommerceAppConfig = {
+          metadata: {
+            id: "my-app",
+            displayName: "My App",
+            description: "Test",
+            version: "1.0.0",
+          },
+          adminUi: {
+            customer: {
+              massActions: [
+                {
+                  id: "export-customers",
+                  type: "worker",
+                  runtimeAction: "customers/export-customers",
+                  label: "Export",
+                },
+              ],
+            },
+          },
+        };
+        const handler = appConfigRuntimeAction({ appConfig: config });
+        const result = await handler(createRuntimeActionParams());
+
+        expect.assert(result.type === "success");
+        // Cast required: the response body is typed as `{}` by the action handler infrastructure
+        type AdminUiBody = {
+          adminUi?: { customer?: { massActions?: Record<string, unknown>[] } };
+        };
+        const body = result.body as AdminUiBody;
+        const massAction = body.adminUi?.customer?.massActions?.[0];
+        expect(massAction).toBeDefined();
+        expect(massAction?.actionId).toBe("my-app::export-customers");
+        expect(massAction).not.toHaveProperty("id");
+        expect(massAction?.runtimeAction).toBe("customers/export-customers");
+      });
+
+      test("returns the config unchanged when adminUi is absent", async () => {
+        const handler = appConfigRuntimeAction({
+          appConfig: minimalValidConfig,
+        });
+        const result = await handler(createRuntimeActionParams());
+
+        expect(result).toMatchObject({
+          type: "success",
+          body: minimalValidConfig,
+        });
+        expect.assert(result.type === "success");
+        expect(result.body as Record<string, unknown>).not.toHaveProperty(
+          "adminUi",
+        );
+      });
+
+      test("passes through other adminUi fields (menuItems, gridColumns) untouched", async () => {
+        const handler = appConfigRuntimeAction({
+          appConfig: configWithFullAdminUiSdk,
+        });
+        const result = await handler(createRuntimeActionParams());
+
+        expect.assert(result.type === "success");
+        // Cast required: the response body is typed as `{}` by the action handler infrastructure
+        type AdminUiBody = {
+          adminUi?: {
+            menuItems?: unknown;
+            bannerNotification?: unknown;
+            order?: {
+              gridColumns?: unknown;
+              massActions?: Record<string, unknown>[];
+            };
+            customer?: { massActions?: Record<string, unknown>[] };
+          };
+        };
+        const body = result.body as AdminUiBody;
+
+        // menuItems pass through verbatim
+        expect(body.adminUi?.menuItems).toEqual(
+          configWithFullAdminUiSdk.adminUi?.menuItems,
+        );
+
+        // gridColumns pass through verbatim
+        expect(body.adminUi?.order?.gridColumns).toEqual(
+          configWithFullAdminUiSdk.adminUi?.order?.gridColumns,
+        );
+
+        // bannerNotification passes through verbatim
+        expect(body.adminUi?.bannerNotification).toEqual(
+          configWithFullAdminUiSdk.adminUi?.bannerNotification,
+        );
+
+        // Mass actions are transformed with the correct prefix
+        const orderMassAction = body.adminUi?.order?.massActions?.[0];
+        expect(orderMassAction?.actionId).toBe(
+          "test-app-full-admin-ui-sdk::order-mass-action",
+        );
+        expect(orderMassAction).not.toHaveProperty("id");
+
+        const customerMassAction = body.adminUi?.customer?.massActions?.[0];
+        expect(customerMassAction?.actionId).toBe(
+          "test-app-full-admin-ui-sdk::export-customers",
+        );
+        expect(customerMassAction?.runtimeAction).toBe(
+          "customers/export-customers",
+        );
       });
     });
   });
