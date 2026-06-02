@@ -1,6 +1,8 @@
-# Codebase
+# `@adobe/aio-commerce-sdk` Monorepo
 
-## Project Structure
+## Codebase
+
+### Project Structure
 
 - pnpm monorepo managed with Turborepo; workspace packages in `packages/`, `packages-private/`, `configs/`, `turbo/`
 - `packages/aio-commerce-sdk` — meta-package that re-exports all public libraries
@@ -9,7 +11,7 @@
 - `scripts/` (`@aio-commerce-sdk/scripts`) — workspace-wide scripting utilities (e.g. prepack/postpack hooks); private, not published
 - Each package is self-contained: its own `package.json`, `tsconfig.json`, tests, and build output in `dist/`
 
-## Commands
+### Commands
 
 - `pnpm test` — run all tests (Vitest, with coverage)
 - `pnpm typecheck` — TypeScript type-check across all packages
@@ -20,14 +22,14 @@
 - Clear Turbo cache: `pnpm clean:turbo` (run before build if cached results look stale)
 - Clean build artifacts: `pnpm clean:dist` — removes all `dist/` folders; `pnpm clean:all` — full reset (dist + node_modules)
 
-## Testing
+### Testing
 
 - Test framework: Vitest
 - Tests live in `test/unit/` and `test/integration/` within each package; fixtures in `test/fixtures/`
 - HTTP mocking: msw
 - Run all: `pnpm test`; scoped: `pnpm --filter <package> test`
 
-## Code Style
+### Code Style
 
 - Linter/formatter: Biome (replaces ESLint + Prettier)
 - Validation: valibot
@@ -35,7 +37,7 @@
 - TypeScript strict mode; run `pnpm typecheck` to verify
 - Auto-fixed on commit via lint-staged (`pnpm check:ci`)
 
-## Package Conventions
+### Package Conventions
 
 - Source is ESM only (`import/export`); build output ships both ESM and CJS (generated automatically by TSDown — don't modify format settings)
 - Build tool: TSDown; each package has a `tsdown.config.ts` extending `baseConfig` from `@aio-commerce-sdk/config-tsdown` via `mergeConfig`
@@ -46,9 +48,9 @@
 - `package.json` has two exports configs: `exports` (source paths, for local dev) and `publishConfig.exports` (dist paths, for consumers)
 - Format Markdown with `pnpm format:markdown` (Prettier)
 
-# Workflow
+## Workflow
 
-## Files
+### Files
 
 - Every source file **that supports comments** needs to include the following header, where <current_year> is the current calendar year.
 
@@ -66,7 +68,7 @@
    */
   ```
 
-## Documentation
+### Documentation
 
 Each package has its own documentation under a `docs` folder (except for the meta-package). This includes a general `usage.md` guide and an auto-generated API reference produced by Typedoc (`pnpm run docs`) from the JSDoc comments in the source. When making changes, follow these rules:
 
@@ -77,7 +79,7 @@ Each package has its own documentation under a `docs` folder (except for the met
 - Keep documentation in sync on every change: the README (if applicable), `usage.md` (along with any supporting docs when documentation is fragmented across files), and the API reference (updated indirectly via JSDoc).
 - Document all public APIs with proper JSDoc. Use `@example` for non-obvious usage, and keep comments concise — don't restate what the types already convey.
 
-### Comments
+#### Comments
 
 For source code comments, follow these rules:
 
@@ -86,32 +88,32 @@ For source code comments, follow these rules:
 - Don't let documentation go stale (e.g. a `@param` left behind after the parameter was removed). Audit this actively, not only when touching the surrounding code.
 - Don't justify changes in JSDoc, even for internal helpers. Rationale behind a decision belongs either as an inline comment in the code or in the PR description — not in JSDoc.
 
-## Commits
+### Commits
 
 - Keep commit messages terse (e.g. `fix auth token refresh`)
 
-## Branches
+### Branches
 
 - Prefix with the Jira ticket (e.g. `CEXT-1234/short-description`)
 
-## Git push
+### Git push
 
 - Always run `pnpm test` and `pnpm typecheck` before pushing (`pnpm check:ci` already runs on commit via lint-staged)
 - Always ask before pushing code
 
-## Pull requests
+### Pull requests
 
 - Always ask before creating a PR
 - Prefix the PR title with the Jira ticket (e.g. `CEXT-1234: short description`)
 - Always follow `.github/PULL_REQUEST_TEMPLATE.md` when writing PR descriptions
 
-## Specs
+### Specs
 
 - Specs live in `specs/features/`, named with the Jira ticket prefix (e.g. `CEXT-6138-capability-discovery.md`)
 - Use `specs/features/_template.md` as the starting point
 - See `specs/conventions.md` for when a spec is required and authoring guidelines
 
-## Agentic Tooling
+### Agentic Tooling
 
 Agentic tooling lives under `plugins/`. Each subdirectory is a self-contained plugin with its own `.claude-plugin/plugin.json` manifest and installable content (skills, MCP configs, etc.).
 
@@ -119,7 +121,7 @@ Agentic tooling lives under `plugins/`. Each subdirectory is a self-contained pl
 
 When making changes to the SDK that affect a plugin's domain (e.g. changes to config schemas, CLI flags, installation APIs), update the relevant plugin content in the same PR. Plugin content must stay in sync with the SDK it describes — stale plugin content is treated the same as stale documentation.
 
-## Changesets
+### Changesets
 
 - Every code change that requires a release must include a changeset (test-only changes do not need one)
 - Create one with `pnpm changeset add --empty`, then edit the generated `.changeset/<name>.md` file

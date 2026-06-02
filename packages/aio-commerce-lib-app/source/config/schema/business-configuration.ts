@@ -10,13 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import type { CommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
+import type { AnyCommerceAppConfig } from "./app";
 
 // biome-ignore lint/performance/noBarrelFile: The business config schema lives in a separate package.
 export { SchemaBusinessConfig } from "@adobe/aio-commerce-lib-config";
-
-/** Any commerce app config — input contract or validated output. */
-type AnyCommerceAppConfig = CommerceAppConfig | CommerceAppConfigOutputModel;
 
 /** Config type when business config is present. */
 export type AppConfigWithBusinessConfig<T extends AnyCommerceAppConfig> = T & {
