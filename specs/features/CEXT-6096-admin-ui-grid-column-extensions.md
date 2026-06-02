@@ -2,7 +2,7 @@
 
 - **Ticket:** [CEXT-6096](https://jira.corp.adobe.com/browse/CEXT-6096)
 - **Created:** 2026-05-29
-- [ ] **Implemented**
+- [x] **Implemented**
 
 > **Deprecation notice.** The v1 grid column schema (`commerce/backend-ui/1`, `data.meshId`,
 > `properties`, `columnId`) is deprecated and will be removed from the SDK in a future release.
