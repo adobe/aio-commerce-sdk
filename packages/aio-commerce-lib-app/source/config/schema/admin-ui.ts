@@ -13,7 +13,7 @@
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import type { CommerceAppConfigOutputModel } from "./app";
+import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
 const ColumnTypeSchema = v.picklist([
   "boolean",
@@ -83,17 +83,19 @@ export type GridColumns = v.InferInput<typeof GridColumnsSchema>;
  */
 export type GridColumn = v.InferInput<typeof GridColumnSchema>;
 
-/** Config type when `adminUi` grid column configuration is present. */
-export type AdminUiConfig = CommerceAppConfigOutputModel & {
-  adminUi: NonNullable<CommerceAppConfigOutputModel["adminUi"]>;
+/** Config type when `adminUi` configuration is present. */
+export type AdminUiConfig<
+  T extends AnyCommerceAppConfig = CommerceAppConfigOutputModel,
+> = T & {
+  adminUi: NonNullable<T["adminUi"]>;
 };
 
 /**
- * Check if config has Admin UI grid column configuration.
+ * Check if config has Admin UI configuration.
  * @experimental
  */
-export function hasAdminUi(
-  config: CommerceAppConfigOutputModel,
-): config is AdminUiConfig {
+export function hasAdminUi<T extends AnyCommerceAppConfig>(
+  config: T,
+): config is AdminUiConfig<T> {
   return config.adminUi !== undefined;
 }
