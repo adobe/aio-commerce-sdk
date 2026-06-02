@@ -166,10 +166,9 @@ const WorkerMassActionSchema = v.strictObject({
 });
 
 /**
- * A mass action registration entry. Discriminated by `type`:
- * `"view"` renders an iframe (`path`, optional `sandbox`); `"worker"` invokes a
- * runtime action (`runtimeAction`, optional `timeout`). `strictObject` rejects
- * fields that belong to the other variant.
+ * A mass action registration entry. Discriminated by `type`: `"view"` renders an
+ * iframe (`path`, optional `sandbox`); `"worker"` invokes a runtime action
+ * (`runtimeAction`, optional `timeout`).
  */
 const MassActionSchema = v.variant(
   "type",

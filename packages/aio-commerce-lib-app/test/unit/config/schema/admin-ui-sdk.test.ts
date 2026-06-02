@@ -205,7 +205,7 @@ describe("AdminUiSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    test("registration with grid columns — all 5 type values", () => {
+    test("grid columns — all 5 type values", () => {
       for (const type of [
         "boolean",
         "date",
@@ -327,6 +327,24 @@ describe("AdminUiSchema", () => {
               type: "worker",
               runtimeAction: "pkg/action",
               path: "#/action",
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("view with displayIframe — fails (v1 field removed from mass actions)", () => {
+      const result = parse({
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "view",
+              path: "#/action",
+              displayIframe: false,
+              sandbox: "allow-modals",
             },
           ],
         },
