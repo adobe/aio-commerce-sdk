@@ -18,15 +18,14 @@ import {
   GENERATED_ACTIONS_PATH,
   PACKAGE_NAME,
 } from "#commands/constants";
+import { requiresInstallation } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
-import { getConfigDomains } from "#config/schema/domains";
 
 import type {
   ActionDefinition,
   ExtConfig,
 } from "@aio-commerce-sdk/scripting-utils/yaml";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { CommerceAppConfigDomain } from "#config/schema/domains";
 
 type ActionConfig = {
   requiresSchema?: boolean;
@@ -113,11 +112,6 @@ export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
 export function buildAppManagementExtConfig(
   appConfig: CommerceAppConfigOutputModel,
 ) {
-  const features = getConfigDomains(appConfig);
-  const hasPasswordFieldsInSchema =
-    hasBusinessConfigSchema(appConfig) &&
-    appConfig.businessConfig.schema.some((field) => field.type === "password");
-
   const extConfig = {
     hooks: {
       "pre-app-build":
@@ -145,17 +139,12 @@ export function buildAppManagementExtConfig(
     },
   } satisfies ExtConfig;
 
-  const featuresRequiringInstallationAction: CommerceAppConfigDomain[] = [
-    "installation.customInstallationSteps",
-    "eventing.commerce",
-    "eventing.external",
-    "webhooks",
-    "adminUiSdk",
-  ];
+  const needsInstallAction = requiresInstallation(appConfig);
+  const hasPasswordFieldsInSchema =
+    hasBusinessConfigSchema(appConfig) &&
+    appConfig.businessConfig.schema.some((field) => field.type === "password");
 
-  if (
-    featuresRequiringInstallationAction.some((feature) => features.has(feature))
-  ) {
+  if (needsInstallAction) {
     extConfig.operations.workerProcess.push({
       type: "action",
       impl: `${PACKAGE_NAME}/installation`,

@@ -20,21 +20,26 @@ import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { AdminUiSdkRegistration } from "#config/schema/admin-ui-sdk";
 
-/** Arguments for the registration runtime action factory. */
-type RegistrationActionArgs = {
+/** The arguments required to create the runtime action for the registration action. */
+export type RuntimeActionFactoryArgs = {
   registration: AdminUiSdkRegistration;
 };
 
-/** Params received by all handlers. */
-type RuntimeActionArgs = RuntimeActionParams & RegistrationActionArgs;
+/** The arguments received by all the handlers in the registration action. */
+type RuntimeActionArgs = RuntimeActionParams & RuntimeActionFactoryArgs;
 
 /** The context for the registration action. */
 interface RegistrationActionContext extends BaseContext {
   rawParams: RuntimeActionArgs;
 }
 
-/** Router for the registration action. */
-const router = new HttpActionRouter<RegistrationActionContext>().use(
+/**
+ * Registration action router.
+ *
+ * Routes:
+ * - GET /   Retrieve the Admin UI SDK registration.
+ */
+export const router = new HttpActionRouter<RegistrationActionContext>().use(
   logger({ name: () => "registration" }),
 );
 
@@ -45,15 +50,3 @@ router.get("/", {
     return ok({ body: { registration: rawParams.registration } });
   },
 });
-
-/**
- * Factory to create the route handler for the `registration` action.
- * @param args - The registration configuration to inline in the action.
- * @experimental
- */
-export const registrationRuntimeAction =
-  ({ registration }: RegistrationActionArgs) =>
-  async (params: RuntimeActionParams) => {
-    const handler = router.handler();
-    return await handler({ ...params, registration });
-  };

@@ -24,7 +24,6 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 import openwhisk from "openwhisk";
-import { object, string } from "valibot";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import {
@@ -38,9 +37,9 @@ import {
   runUninstallation,
   runValidation,
 } from "#management/index";
-import { AppDataSchema } from "#management/installation/schema";
 
-import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+import { InstallationRequestBodySchema } from "./schema";
+
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type {
@@ -63,30 +62,19 @@ type CustomScriptsLoader = (
 ) => Record<string, unknown>;
 
 /** Arguments for the runtime action factory. */
-type RuntimeActionFactoryArgs = {
+export type RuntimeActionFactoryArgs = {
   appConfig: CommerceAppConfig;
   customScriptsLoader?: CustomScriptsLoader;
 };
 
 /** Params received by all handlers. */
-type RuntimeActionArgs = InstallationContext["params"] & {
-  appConfig: CommerceAppConfig;
-  customScriptsLoader?: CustomScriptsLoader;
-};
+type RuntimeActionArgs = InstallationContext["params"] &
+  RuntimeActionFactoryArgs;
 
 /** The context for the installation action. */
 interface InstallationActionContext extends BaseContext {
   rawParams: RuntimeActionArgs;
 }
-
-/** Request body schema shared by POST / and POST /validation. */
-const InstallationRequestBodySchema = object({
-  appData: AppDataSchema,
-  commerceBaseUrl: string(),
-  commerceEnv: string(),
-  ioEventsUrl: string(),
-  ioEventsEnv: string(),
-});
 
 type WorkflowRequestBody = {
   appData: InstallationContext["appData"];
@@ -222,16 +210,16 @@ function createInstallationHooks(
  * Installation action router.
  *
  * Routes:
- * - GET /installation             - Get current installation status
- * - POST /installation            - Start installation (creates plan, invokes execution async)
- * - POST /installation/execution  - Execute installation (internal, called async)
- * - POST /installation/validation - Pre-installation validation
- * - POST /installation/uninstallation           - Start uninstallation (async)
- * - GET /installation/uninstallation            - Get current uninstallation status
- * - POST /installation/uninstallation/execution - Execute uninstallation (internal, called async)
- * - DELETE /installation/uninstallation         - Clear uninstallation state only (no offboarding)
+ * - GET /                            Get current installation status
+ * - POST /                           Start installation (creates plan, invokes execution async)
+ * - POST /execution                  Execute installation (internal, called async)
+ * - POST /validation                 Pre-installation validation
+ * - POST /uninstallation             Start uninstallation (creates plan, invokes execution async)
+ * - GET /uninstallation              Get current uninstallation status
+ * - POST /uninstallation/execution   Execute uninstallation (internal, called async)
+ * - DELETE /uninstallation           Clear uninstallation state only (no offboarding)
  */
-const router = new HttpActionRouter<InstallationActionContext>().use(
+export const router = new HttpActionRouter<InstallationActionContext>().use(
   logger({ name: () => "installation" }),
 );
 
@@ -295,7 +283,7 @@ router.post("/", {
 
     if (!rawAppConfig) {
       return internalServerError(
-        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
+        "The app config is missing. Does the action receive it as a parameter?",
       );
     }
 
@@ -337,7 +325,8 @@ router.post("/", {
 });
 
 /**
- * POST /installation/execution - Execute installation (internal)
+ * POST /installation/execution - Execute installation
+ * @internal - Do not add to OpenAPI Spec.
  *
  * This endpoint is called asynchronously by POST /installation.
  * It runs the actual installation workflow and saves state.
@@ -418,7 +407,7 @@ router.post("/validation", {
 
     if (!rawAppConfig) {
       return internalServerError(
-        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
+        "The app config is missing. Does the action receive it as a parameter?",
       );
     }
 
@@ -483,7 +472,7 @@ router.post("/uninstallation", {
 
     if (!rawAppConfig) {
       return internalServerError(
-        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
+        "The app config is missing. Does the action receive it as a parameter?",
       );
     }
 
@@ -533,7 +522,8 @@ router.post("/uninstallation", {
 });
 
 /**
- * POST /uninstallation/execution - Execute uninstallation (internal, called async by POST /uninstallation)
+ * POST /uninstallation/execution - Execute uninstallation
+ * @internal - Do not add to OpenAPI Spec.
  *
  * Flow:
  * 1. Build InstallationContext from params
@@ -618,15 +608,3 @@ router.delete("/uninstallation", {
     return noContent();
   },
 });
-
-/** Factory to create the route handler for the `installation` action. */
-export const installationRuntimeAction =
-  ({ appConfig, customScriptsLoader }: RuntimeActionFactoryArgs) =>
-  async (params: RuntimeActionParams) => {
-    const handler = router.handler();
-    return await handler({
-      ...params,
-      appConfig,
-      customScriptsLoader,
-    });
-  };
