@@ -515,6 +515,17 @@ adminUiSdk: {
           sandbox: "allow-modals",
         },
       ],
+      gridColumns: {
+        data: { meshId: "MESH_ID" },
+        properties: [
+          {
+            label: "Column Name",
+            columnId: "column_id",
+            type: "string",
+            align: "left",
+          },
+        ],
+      },
       viewButtons: [
         {
           buttonId: "my-app::delete-order",
@@ -549,6 +560,12 @@ adminUiSdk: {
           productSelectLimit: 1,
         },
       ],
+      gridColumns: {
+        data: { meshId: "MESH_ID" },
+        properties: [
+          { label: "Column Name", columnId: "column_id", type: "string", align: "left" },
+        ],
+      },
     },
 
     customer: {
@@ -560,6 +577,12 @@ adminUiSdk: {
           customerSelectLimit: 1,
         },
       ],
+      gridColumns: {
+        data: { meshId: "MESH_ID" },
+        properties: [
+          { label: "Column Name", columnId: "column_id", type: "string", align: "left" },
+        ],
+      },
     },
 
     bannerNotification: {
@@ -597,16 +620,19 @@ adminUiSdk: {
 ##### Order Extension Points:
 
 - **massActions** (optional array): **`actionId`**, **`label`**, **`path`** required; `title` optional; `selectionLimit` optional positive number; `confirm.title` and `confirm.message` optional; `displayIframe` optional boolean; `timeout` optional positive number; `sandbox` optional (see above)
+- **gridColumns** (optional): `data.meshId` required; `properties` must contain at least one entry; each property requires `label`, `columnId`, `type` (`"boolean"`, `"date"`, `"float"`, `"integer"`, or `"string"`), and `align` (`"left"`, `"right"`, or `"center"`)
 - **viewButtons** (optional array): **`buttonId`**, **`label`**, **`path`** required; `level` optional (`-1`, `0`, or `1`); `sortOrder` optional; `confirm.message` optional; `displayIframe`, `timeout`, `sandbox` optional
 - **customFees** (optional array): **`id`**, **`label`** required; **`value`** required number; `orderMinimumAmount` optional number; `applyFeeOnLastInvoice`, `applyFeeOnLastCreditMemo` optional boolean
 
 ##### Product Extension Points:
 
 - **massActions** (optional array): same fields as order mass actions, but uses `productSelectLimit` instead of `selectionLimit`
+- **gridColumns** (optional): same shape as order grid columns
 
 ##### Customer Extension Points:
 
 - **massActions** (optional array): same fields as order mass actions, but uses `customerSelectLimit` instead of `selectionLimit`
+- **gridColumns** (optional): same shape as order grid columns
 
 ##### Banner Notifications:
 
