@@ -647,7 +647,8 @@
               }
             }
           }
-        }
+        },
+        "tags": ["App Metadata"]
       }
     },
     "/config": {
@@ -1068,7 +1069,8 @@
               }
             }
           }
-        }
+        },
+        "tags": ["Business Configuration"]
       },
       "put": {
         "operationId": "putConfiguration",
@@ -1201,7 +1203,8 @@
             }
           }
         },
-        "deprecated": true
+        "deprecated": true,
+        "tags": ["Business Configuration"]
       },
       "patch": {
         "operationId": "patchConfiguration",
@@ -1336,7 +1339,8 @@
               }
             }
           }
-        }
+        },
+        "tags": ["Business Configuration"]
       }
     },
     "/installation": {
@@ -1548,7 +1552,8 @@
               }
             }
           }
-        }
+        },
+        "tags": ["Management"]
       },
       "post": {
         "operationId": "startInstallation",
@@ -1696,7 +1701,8 @@
               }
             }
           }
-        }
+        },
+        "tags": ["Management"]
       }
     },
     "/installation/validation": {
@@ -1810,7 +1816,8 @@
               }
             }
           }
-        }
+        },
+        "tags": ["Management"]
       }
     },
     "/installation/uninstallation": {
@@ -2022,7 +2029,8 @@
               }
             }
           }
-        }
+        },
+        "tags": ["Management"]
       },
       "post": {
         "operationId": "startUninstallation",
@@ -2170,7 +2178,8 @@
               }
             }
           }
-        }
+        },
+        "tags": ["Management"]
       },
       "delete": {
         "operationId": "clearUninstallationState",
@@ -2207,7 +2216,8 @@
               }
             }
           }
-        }
+        },
+        "tags": ["Management"]
       }
     },
     "/registration": {
@@ -2259,7 +2269,8 @@
               }
             }
           }
-        }
+        },
+        "tags": ["Admin UI"]
       }
     },
     "/scope-tree": {
@@ -2342,7 +2353,8 @@
               }
             }
           }
-        }
+        },
+        "tags": ["Business Configuration"]
       },
       "put": {
         "operationId": "setCustomScopeTree",
@@ -2446,7 +2458,8 @@
               }
             }
           }
-        }
+        },
+        "tags": ["Business Configuration"]
       }
     },
     "/scope-tree/commerce": {
@@ -2565,7 +2578,8 @@
               }
             }
           }
-        }
+        },
+        "tags": ["Business Configuration"]
       },
       "delete": {
         "operationId": "unsyncCommerceScopes",
@@ -2618,7 +2632,8 @@
               }
             }
           }
-        }
+        },
+        "tags": ["Business Configuration"]
       }
     }
   },
@@ -3829,6 +3844,40 @@
       }
     }
   },
+  "tags": [
+    {
+      "name": "App Metadata",
+      "description": "Resolve and inspect the Commerce App configuration.",
+      "externalDocs": {
+        "description": "Documentation",
+        "url": "https://developer.adobe.com/commerce/extensibility/app-management/define-app"
+      }
+    },
+    {
+      "name": "Business Configuration",
+      "description": "Manage app configuration values and the Commerce scope tree.",
+      "externalDocs": {
+        "description": "Documentation",
+        "url": "https://developer.adobe.com/commerce/extensibility/app-management/configuration-schema"
+      }
+    },
+    {
+      "name": "Management",
+      "description": "Installation and uninstallation lifecycle.",
+      "externalDocs": {
+        "description": "Documentation",
+        "url": "https://developer.adobe.com/commerce/extensibility/app-management/installation/"
+      }
+    },
+    {
+      "name": "Admin UI",
+      "description": "Admin UI SDK registration.",
+      "externalDocs": {
+        "description": "Documentation",
+        "url": "https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/"
+      }
+    }
+  ],
   "security": [
     {
       "imsOAuth": ["AdobeID", "openid"]
