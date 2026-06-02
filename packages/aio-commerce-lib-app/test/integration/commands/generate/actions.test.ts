@@ -293,7 +293,8 @@ describe("commands/generate/actions", () => {
           // No registration action should be generated
           const legacyRegistrationPath = join(
             tempDir,
-            "src/commerce-backend-ui-2/.generated/actions/registration/index.js",
+            getExtensionPointFolderPath(BACKEND_UI_EXTENSION_POINT_ID),
+            ".generated/actions/registration/index.js",
           );
           expect(existsSync(legacyRegistrationPath)).toBe(false);
 

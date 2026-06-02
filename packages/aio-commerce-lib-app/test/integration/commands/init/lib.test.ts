@@ -496,7 +496,7 @@ describe("commands/init/lib", () => {
       { domain: "eventing.commerce", config: configWithCommerceEventing },
       { domain: "eventing.external", config: configWithExternalEventing },
       { domain: "webhooks", config: configWithWebhooks },
-      { domain: "adminUiSdk", config: configWithAdminUiSdk },
+      { domain: "adminUi", config: configWithAdminUiSdk },
     ])("generates the installation action when $domain is configured", async ({
       config,
     }) => {
