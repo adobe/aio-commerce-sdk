@@ -30,7 +30,7 @@ import {
 
 const EXTENSIBILITY_EXTENSION_MATCHER = /EXTENSION=extensibility\/1/;
 const CONFIGURATION_EXTENSION_MATCHER = /EXTENSION=configuration\/1/;
-const BACKEND_UI_EXTENSION_MATCHER = /EXTENSION=backend-ui\/1/;
+const BACKEND_UI_EXTENSION_MATCHER = /EXTENSION=backend-ui\/2/;
 
 describe("buildAppManagementExtConfig", () => {
   test("app-config action is included with minimal config", () => {
@@ -157,15 +157,7 @@ describe("buildAdminUiSdkExtConfig", () => {
     expect(config.web).toBe("web-src");
   });
 
-  test("registration action has web: yes", () => {
-    const config = buildAdminUiSdkExtConfig();
-    const action =
-      config.runtimeManifest?.packages?.["admin-ui-sdk"]?.actions?.registration;
-
-    expect(action?.web).toBe("yes");
-  });
-
-  test("pre-app-build hook uses backend-ui/1", () => {
+  test("pre-app-build hook uses backend-ui/2", () => {
     const result = buildAdminUiSdkExtConfig();
     const preBuildHook = result.hooks?.["pre-app-build"] ?? "";
 

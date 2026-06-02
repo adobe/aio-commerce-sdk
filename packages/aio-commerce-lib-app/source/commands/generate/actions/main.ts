@@ -7,12 +7,11 @@ import {
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
 import { loadAppManifest } from "#commands/utils";
-import { hasAdminUiSdk, hasBusinessConfigSchema } from "#config/index";
+import { hasAdminUi, hasBusinessConfigSchema } from "#config/index";
 
 import { getRuntimeActions } from "./config";
 import {
   generateActionFiles,
-  generateRegistrationActionFile,
   prepareRuntimeAppConfigModule,
   TEMPLATES_DIR,
   updateExtConfig,
@@ -57,13 +56,8 @@ export async function run(
     );
   }
 
-  if (hasAdminUiSdk(appManifest)) {
+  if (hasAdminUi(appManifest)) {
     await updateExtConfig(appManifest, BACKEND_UI_EXTENSION_POINT_ID);
-    await generateRegistrationActionFile(
-      appManifest,
-      BACKEND_UI_EXTENSION_POINT_ID,
-      templatesDir,
-    );
   }
 }
 
