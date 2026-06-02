@@ -48,23 +48,6 @@ const ColumnTypeSchema = v.picklist([
 ]);
 const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
 
-const GridColumnPropertySchema = v.object({
-  label: nonEmptyStringValueSchema("column label"),
-  columnId: nonEmptyStringValueSchema("column ID"),
-  type: ColumnTypeSchema,
-  align: ColumnAlignSchema,
-});
-
-const GridColumnsSchema = v.object({
-  data: v.object({
-    meshId: nonEmptyStringValueSchema("mesh ID"),
-  }),
-  properties: v.pipe(
-    v.array(GridColumnPropertySchema),
-    v.minLength(1, "At least one grid column property is required"),
-  ),
-});
-
 const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
 
 const MassActionConfirmSchema = v.object({
@@ -81,6 +64,23 @@ const iframeActionEntries = {
   timeout: v.optional(positiveNumberValueSchema("timeout")),
   sandbox: v.optional(SandboxSchema),
 };
+
+const GridColumnPropertySchema = v.object({
+  label: nonEmptyStringValueSchema("column label"),
+  columnId: nonEmptyStringValueSchema("column ID"),
+  type: ColumnTypeSchema,
+  align: ColumnAlignSchema,
+});
+
+const GridColumnsSchema = v.object({
+  data: v.object({
+    meshId: nonEmptyStringValueSchema("mesh ID"),
+  }),
+  properties: v.pipe(
+    v.array(GridColumnPropertySchema),
+    v.minLength(1, "At least one grid column property is required"),
+  ),
+});
 
 const massActionBaseEntries = {
   actionId: nonEmptyStringValueSchema("mass action ID"),
