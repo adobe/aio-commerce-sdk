@@ -206,8 +206,7 @@ the `workerProcess` operations.
 
 v1 continues to work after migration — both keys can coexist in the same config during transition.
 Once all grid columns have been migrated to `adminUi`, the `adminUiSdk` grid column config can be
-removed. `adminUiSdk` itself (mass actions, menus, view buttons, custom fees) remains functional
-until those extension points are ported to `commerce/backend-ui/2` in a subsequent release.
+removed.
 
 ## Design
 
