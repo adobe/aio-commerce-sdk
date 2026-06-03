@@ -663,8 +663,8 @@ adminUi: {
       description: "Adds fulfillment status and risk score to the order grid",
       runtimeAction: "orders/fetch-order-grid-data",
       columns: [
-        { key: "fulfillment_status", label: "Fulfillment", type: "string", align: "left" },
-        { key: "risk_score", label: "Risk", type: "integer", align: "right" },
+        { columnId: "fulfillment_status", label: "Fulfillment", type: "string", align: "left" },
+        { columnId: "risk_score", label: "Risk", type: "integer", align: "right" },
       ],
     },
   },
@@ -674,7 +674,7 @@ adminUi: {
       description: "Adds inventory status to the product grid",
       runtimeAction: "products/fetch-product-grid-data",
       columns: [
-        { key: "inventory_status", label: "Inventory", type: "string", align: "left" },
+        { columnId: "inventory_status", label: "Inventory", type: "string", align: "left" },
       ],
     },
   },
@@ -684,7 +684,7 @@ adminUi: {
       description: "Adds loyalty tier to the customer grid",
       runtimeAction: "customers/fetch-customer-grid-data",
       columns: [
-        { key: "loyalty_tier", label: "Loyalty Tier", type: "string", align: "left" },
+        { columnId: "loyalty_tier", label: "Loyalty Tier", type: "string", align: "left" },
       ],
     },
   },
@@ -697,7 +697,7 @@ adminUi: {
 - **description**: Required, non-empty string — displayed in App Management during installation
 - **runtimeAction**: Required — `<package>/<action>` path matching a handler you implement; the SDK registers it as a `workerProcess` operation automatically
 - **columns**: Required array (at least one entry); each column requires:
-  - **key**: non-empty string — used as the response data key and the stable column identifier
+  - **columnId**: non-empty string — stable column identifier, also used as the response data key
   - **label**: non-empty string — column header displayed in the grid
   - **type**: one of `"boolean"`, `"date"`, `"datetime"`, `"decimal"`, `"integer"`, `"string"`
   - **align**: one of `"left"`, `"center"`, `"right"`

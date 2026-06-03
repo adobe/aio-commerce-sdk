@@ -27,7 +27,7 @@ const ColumnTypeSchema = v.picklist([
 const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
 
 const GridColumnSchema = v.object({
-  key: nonEmptyStringValueSchema("column key"),
+  columnId: nonEmptyStringValueSchema("column ID"),
   label: nonEmptyStringValueSchema("column label"),
   type: ColumnTypeSchema,
   align: ColumnAlignSchema,

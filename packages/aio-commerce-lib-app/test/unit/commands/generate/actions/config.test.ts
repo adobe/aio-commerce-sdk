@@ -178,18 +178,6 @@ describe("buildAdminUiSdkExtConfig", () => {
 });
 
 describe("buildAdminUiV2ExtConfig", () => {
-  test("declares operations.view entry for the SPA", () => {
-    const config = buildAdminUiV2ExtConfig(configWithAdminUi);
-    expect(config.operations?.view).toEqual([
-      { type: "web", impl: "index.html" },
-    ]);
-  });
-
-  test("declares top-level web source directory", () => {
-    const config = buildAdminUiV2ExtConfig(configWithAdminUi);
-    expect(config.web).toBe("web-src");
-  });
-
   test("pre-app-build hook uses backend-ui/2", () => {
     const config = buildAdminUiV2ExtConfig(configWithAdminUi);
     const preBuildHook = config.hooks?.["pre-app-build"] ?? "";
@@ -226,7 +214,9 @@ describe("buildAdminUiV2ExtConfig", () => {
             label: "L",
             description: "D",
             runtimeAction: sharedRuntimeAction,
-            columns: [{ key: "k", label: "K", type: "string", align: "left" }],
+            columns: [
+              { columnId: "k", label: "K", type: "string", align: "left" },
+            ],
           },
         },
         customer: {
@@ -234,7 +224,9 @@ describe("buildAdminUiV2ExtConfig", () => {
             label: "L",
             description: "D",
             runtimeAction: sharedRuntimeAction,
-            columns: [{ key: "k", label: "K", type: "string", align: "left" }],
+            columns: [
+              { columnId: "k", label: "K", type: "string", align: "left" },
+            ],
           },
         },
       },

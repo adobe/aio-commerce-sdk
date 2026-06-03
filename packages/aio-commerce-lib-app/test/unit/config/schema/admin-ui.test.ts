@@ -51,7 +51,7 @@ describe("AdminUiSchema", () => {
               label: "Order grid",
               description: "Adds a column",
               runtimeAction: "orders/fetch",
-              columns: [{ key: "col", label: "Col", type, align: "left" }],
+              columns: [{ columnId: "col", label: "Col", type, align: "left" }],
             },
           },
         });
@@ -72,7 +72,7 @@ describe("AdminUiSchema", () => {
             description: "Adds a column",
             runtimeAction: "orders/fetch",
             columns: [
-              { key: "col", label: "Col", type: "string", align: "left" },
+              { columnId: "col", label: "Col", type: "string", align: "left" },
             ],
           },
         },
@@ -88,8 +88,18 @@ describe("AdminUiSchema", () => {
             description: "Adds columns",
             runtimeAction: "orders/fetch",
             columns: [
-              { key: "col_a", label: "Col A", type: "string", align: "left" },
-              { key: "col_b", label: "Col B", type: "integer", align: "right" },
+              {
+                columnId: "col_a",
+                label: "Col A",
+                type: "string",
+                align: "left",
+              },
+              {
+                columnId: "col_b",
+                label: "Col B",
+                type: "integer",
+                align: "right",
+              },
             ],
           },
         },
@@ -107,7 +117,7 @@ describe("AdminUiSchema", () => {
             description: "Adds a column",
             runtimeAction: "orders/fetch",
             columns: [
-              { key: "col", label: "Col", type: "float", align: "left" },
+              { columnId: "col", label: "Col", type: "float", align: "left" },
             ],
           },
         },
@@ -123,7 +133,12 @@ describe("AdminUiSchema", () => {
             description: "Adds a column",
             runtimeAction: "orders/fetch",
             columns: [
-              { key: "col", label: "Col", type: "string", align: "justify" },
+              {
+                columnId: "col",
+                label: "Col",
+                type: "string",
+                align: "justify",
+              },
             ],
           },
         },
@@ -152,7 +167,7 @@ describe("AdminUiSchema", () => {
             description: "Adds a column",
             runtimeAction: "orders/fetch",
             columns: [
-              { key: "col", label: "Col", type: "string", align: "left" },
+              { columnId: "col", label: "Col", type: "string", align: "left" },
             ],
           },
         },
@@ -167,7 +182,7 @@ describe("AdminUiSchema", () => {
             label: "Order grid",
             description: "Adds a column",
             columns: [
-              { key: "col", label: "Col", type: "string", align: "left" },
+              { columnId: "col", label: "Col", type: "string", align: "left" },
             ],
           },
         },
@@ -175,7 +190,7 @@ describe("AdminUiSchema", () => {
       expect(result.success).toBe(false);
     });
 
-    test("missing key on column is rejected", () => {
+    test("missing columnId on column is rejected", () => {
       const result = v.safeParse(AdminUiSchema, {
         order: {
           gridColumns: {

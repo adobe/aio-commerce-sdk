@@ -502,7 +502,7 @@ export const configWithAdminUi = {
         runtimeAction: "orders/fetch-order-grid-data",
         columns: [
           {
-            key: "fulfillment_status",
+            columnId: "fulfillment_status",
             label: "Fulfillment",
             type: "string" as const,
             align: "left" as const,
@@ -517,7 +517,7 @@ export const configWithAdminUi = {
         runtimeAction: "products/fetch-product-grid-data",
         columns: [
           {
-            key: "inventory_status",
+            columnId: "inventory_status",
             label: "Inventory",
             type: "string" as const,
             align: "left" as const,
@@ -532,7 +532,7 @@ export const configWithAdminUi = {
         runtimeAction: "customers/fetch-customer-grid-data",
         columns: [
           {
-            key: "loyalty_tier",
+            columnId: "loyalty_tier",
             label: "Loyalty Tier",
             type: "string" as const,
             align: "left" as const,
@@ -554,7 +554,7 @@ export const configWithAdminUiSingleGrid = {
         runtimeAction: "orders/fetch-order-grid-data",
         columns: [
           {
-            key: "fulfillment_status",
+            columnId: "fulfillment_status",
             label: "Fulfillment",
             type: "string" as const,
             align: "left" as const,
