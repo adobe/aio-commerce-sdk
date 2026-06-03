@@ -42,6 +42,7 @@ export async function getCachedConfig(scopeCode: string) {
  *
  * @param scopeCode - Scope code identifier.
  * @param payload - Configuration payload as JSON string.
+ * @param ttlSeconds - Time to live for the cached configuration value.
  */
 export async function setCachedConfig(
   scopeCode: string,
