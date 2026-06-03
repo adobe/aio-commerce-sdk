@@ -66,7 +66,10 @@ export async function setConfiguration(
     context.encryptionKey,
   );
 
-  const existingPersisted = await configRepository.loadConfig(scopeCode);
+  const existingPersisted = await configRepository.loadConfig(
+    scopeCode,
+    context.cacheTimeout,
+  );
   const existingEntries = Array.isArray(existingPersisted?.config)
     ? (existingPersisted?.config ?? [])
     : [];
@@ -83,7 +86,11 @@ export async function setConfiguration(
     config: mergedScopeConfig,
   };
 
-  await configRepository.persistConfig(scopeCode, payload);
+  await configRepository.persistConfig(
+    scopeCode,
+    payload,
+    context.cacheTimeout,
+  );
 
   return {
     message: "Configuration values updated successfully",

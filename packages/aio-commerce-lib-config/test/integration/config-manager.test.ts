@@ -128,6 +128,7 @@ describe("config-manager", () => {
           origin: { code: "global", level: "global" },
         },
       ]),
+      300,
     );
 
     const result = await getConfiguration(byCodeAndLevel("global", "global"));

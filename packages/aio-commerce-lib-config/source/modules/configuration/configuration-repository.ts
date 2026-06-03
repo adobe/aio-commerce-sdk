@@ -43,14 +43,20 @@ export async function getCachedConfig(scopeCode: string) {
  * @param scopeCode - Scope code identifier.
  * @param payload - Configuration payload as JSON string.
  */
-export async function setCachedConfig(scopeCode: string, payload: string) {
+export async function setCachedConfig(
+  scopeCode: string,
+  payload: string,
+  ttlSeconds: number,
+) {
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
   );
   try {
     const state = await getSharedState();
     const key = getConfigStateKey(scopeCode);
-    await state.put(key, stringify({ data: payload }) as string);
+    await state.put(key, stringify({ data: payload }) as string, {
+      ttl: ttlSeconds,
+    });
   } catch (error) {
     logger.debug(
       "Failed to cache configuration:",
@@ -102,7 +108,11 @@ export async function saveConfig(scopeCode: string, payload: string) {
  * @param scopeCode - The scope code to persist configuration for.
  * @param payload - The configuration payload object.
  */
-export async function persistConfig(scopeCode: string, payload: unknown) {
+export async function persistConfig(
+  scopeCode: string,
+  payload: unknown,
+  ttlSeconds: number,
+) {
   const payloadString = stringify(payload) as string;
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
@@ -113,7 +123,7 @@ export async function persistConfig(scopeCode: string, payload: unknown) {
 
   // Try to cache in state for faster reads
   try {
-    await setCachedConfig(scopeCode, payloadString);
+    await setCachedConfig(scopeCode, payloadString, ttlSeconds);
   } catch (e) {
     logger.debug("Failed to cache configuration in state", {
       scopeCode,
@@ -152,7 +162,7 @@ async function loadFromStateCache(scopeCode: string) {
  * @param scopeCode - The scope code to load configuration for.
  * @returns Promise resolving to parsed configuration or null if not found.
  */
-async function loadFromPersistedFiles(scopeCode: string) {
+async function loadFromPersistedFiles(scopeCode: string, ttlSeconds: number) {
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
   );
@@ -164,7 +174,7 @@ async function loadFromPersistedFiles(scopeCode: string) {
 
     // Try to cache the file data for future reads
     try {
-      await setCachedConfig(scopeCode, filePayload);
+      await setCachedConfig(scopeCode, filePayload, ttlSeconds);
     } catch (err) {
       logger.debug("Failed to cache configuration in state", {
         scopeCode,
@@ -194,13 +204,13 @@ async function loadFromPersistedFiles(scopeCode: string) {
  * @param scopeCode - The scope code to load configuration for.
  * @returns Promise resolving to configuration payload or null if not found.
  */
-export async function loadConfig(scopeCode: string) {
+export async function loadConfig(scopeCode: string, ttlSeconds: number) {
   const fromState = await loadFromStateCache(scopeCode);
   if (fromState) {
     return fromState;
   }
 
-  const fromFiles = await loadFromPersistedFiles(scopeCode);
+  const fromFiles = await loadFromPersistedFiles(scopeCode, ttlSeconds);
   if (fromFiles) {
     return fromFiles;
   }

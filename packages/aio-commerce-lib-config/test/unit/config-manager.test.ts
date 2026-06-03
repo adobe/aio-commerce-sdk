@@ -148,6 +148,7 @@ describe("ConfigManager functions", () => {
           origin: { code: "global", level: "global" },
         },
       ]),
+      300,
     );
 
     const result = await getConfiguration(byCodeAndLevel("global", "global"));
