@@ -92,8 +92,10 @@ Adobe I/O State client shared across the SDK.
 
 A new module is added to `aio-commerce-lib-config` specifically for association data,
 separate from the existing Business Configuration module. It uses the same `getSharedState()`
-client but stores under a dedicated reserved key (`association`) rather than the
-`configuration.{scopeCode}` keys used by Business Configuration.
+client but stores under a dedicated reserved key (`system.association`) rather than the
+`configuration.{scopeCode}` keys used by Business Configuration. The `system.*` namespace
+keeps SDK-managed config (e.g. `system.association`, future `system.events`) cleanly
+separated from app-defined `configuration.*` keys.
 
 The data is stored with the maximum TTL of 1 year (31536000 seconds). The default TTL of 24 hours is not appropriate here — association data is long-lived and must not expire on its own. It should only be cleared explicitly on unassociation. To keep the data alive, the TTL is refreshed on every read inside `getAssociationData`. So as long as any action reads the configuration at least once a year, the data won't expire.
 
@@ -258,8 +260,8 @@ same application regardless of package boundaries.
 The existing `setConfiguration`/`getConfiguration` API in `aio-commerce-lib-config` is
 designed for Business Configuration — scope-tree based values keyed by Commerce scope codes.
 Association data is app-level metadata, not scope-specific. A dedicated module with its own
-reserved key (`association`) keeps the two concerns clearly separated while reusing the same
-underlying storage infrastructure.
+reserved key (`system.association`) keeps the two concerns clearly separated while reusing the
+same underlying storage infrastructure.
 
 **Why a standalone `association` action?**
 The `installation` action is conditionally deployed, apps without custom install steps,
