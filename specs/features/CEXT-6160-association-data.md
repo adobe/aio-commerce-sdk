@@ -163,14 +163,14 @@ Request body:
 ```
 
 The handler validates the body and calls `setAssociationData` from the new
-`aio-commerce-lib-config` association module. The operation is idempotent — re-associating
+`aio-commerce-lib-app` association module. The operation is idempotent — re-associating
 with a different instance overwrites the previous values.
 
 Response: `200 OK`.
 
 **`DELETE /`** — Clear association data
 
-Calls `clearAssociationData` from the `aio-commerce-lib-config` association module.
+Calls `clearAssociationData` from the `aio-commerce-lib-app` association module.
 
 Response: `204 No Content`.
 
@@ -194,8 +194,9 @@ export async function getCommerceInstance(
 ```
 
 `params` is the standard params object every runtime action receives. Internally it calls
-`getAssociationData` from the `aio-commerce-lib-config` association module. The function is
-async because the underlying Adobe I/O State read is a network call.
+`getAssociationData` from the `aio-commerce-lib-app` association module, which in turn calls
+the generic `getSystemConfigByKey("system.association")` from `aio-commerce-lib-config`. The
+function is async because the underlying Adobe I/O State read is a network call.
 
 ### New `getCommerceClient` helper
 
