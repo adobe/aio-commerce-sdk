@@ -47,10 +47,10 @@ setup or client construction boilerplate.
 **Primary pattern — get a ready-to-use client:**
 
 ```ts
-import { getAssociatedCommerceClient } from "@adobe/aio-commerce-lib-app";
+import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
 
 export async function main(params) {
-  const client = await getAssociatedCommerceClient(params);
+  const client = await getCommerceClient(params);
 
   if (!client) {
     return {
@@ -66,10 +66,10 @@ export async function main(params) {
 **Low-level pattern — get the raw instance data:**
 
 ```ts
-import { getAssociatedCommerceInstance } from "@adobe/aio-commerce-lib-app";
+import { getCommerceInstance } from "@adobe/aio-commerce-lib-app";
 
 export async function main(params) {
-  const instance = await getAssociatedCommerceInstance(params);
+  const instance = await getCommerceInstance(params);
 
   if (!instance) {
     return {
@@ -176,7 +176,7 @@ Response: `204 No Content`.
 Both routes use the `HttpActionRouter` with the `logger` middleware, consistent with the
 patterns used across other runtime actions in `aio-commerce-lib-app`.
 
-### New `getAssociatedCommerceInstance` helper
+### New `getCommerceInstance` helper
 
 A new export is added to the root entrypoint of `@adobe/aio-commerce-lib-app`:
 
@@ -186,7 +186,7 @@ A new export is added to the root entrypoint of `@adobe/aio-commerce-lib-app`:
  * or null if the app is not associated or was associated before this
  * feature was introduced.
  */
-export async function getAssociatedCommerceInstance(
+export async function getCommerceInstance(
   params: RuntimeActionParams,
 ): Promise<AssociatedCommerceInstance | null>;
 ```
@@ -195,10 +195,10 @@ export async function getAssociatedCommerceInstance(
 `getAssociationData` from the `aio-commerce-lib-config` association module. The function is
 async because the underlying Adobe I/O State read is a network call.
 
-### New `getAssociatedCommerceClient` helper
+### New `getCommerceClient` helper
 
 A higher-level export from `@adobe/aio-commerce-lib-app` that builds on
-`getAssociatedCommerceInstance` and returns a ready-to-use `AdobeCommerceHttpClient` from
+`getCommerceInstance` and returns a ready-to-use `AdobeCommerceHttpClient` from
 `@adobe/aio-commerce-lib-api`:
 
 ```ts
@@ -207,12 +207,12 @@ A higher-level export from `@adobe/aio-commerce-lib-app` that builds on
  * currently associated with, or null if the app is not associated or was associated before
  * this feature was introduced.
  */
-export async function getAssociatedCommerceClient(
+export async function getCommerceClient(
   params: RuntimeActionParams,
 ): Promise<AdobeCommerceHttpClient | null>;
 ```
 
-Internally it calls `getAssociatedCommerceInstance` and, if data is available, constructs an
+Internally it calls `getCommerceInstance` and, if data is available, constructs an
 `AdobeCommerceHttpClient` using `baseUrl` and `env` from the stored association data combined
 with the auth credentials present in `params`. Returns `null` when no association data is
 found.
@@ -242,7 +242,7 @@ the stored data. This step is best-effort — a failure does not block the unass
 
 ### Edge cases
 
-- **Apps associated before this feature.** No stored data exists; `getAssociatedCommerceInstance`
+- **Apps associated before this feature.** No stored data exists; `getCommerceInstance`
   returns `null`. Apps must handle this explicitly.
 - **Association endpoint unreachable.** If the runtime is not deployed or returns an unexpected
   error, the association fails. The developer can retry once the endpoint is reachable.
@@ -251,7 +251,7 @@ the stored data. This step is best-effort — a failure does not block the unass
 ## Drawbacks
 
 - Adds a new runtime action to every app.
-- `getAssociatedCommerceInstance` is async. Callers must await it, unlike a direct `params` read.
+- `getCommerceInstance` is async. Callers must await it, unlike a direct `params` read.
 - Introduces a `aio-commerce-lib-config` network call on every action invocation that calls
   the helper.
 - Association fails entirely if the config storage endpoint is unreachable. A transient
