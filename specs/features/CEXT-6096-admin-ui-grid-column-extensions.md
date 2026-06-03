@@ -16,7 +16,7 @@ order, product, and customer grids on `commerce/backend-ui/2`. The v1 schema (`a
 `commerce/backend-ui/1`, `data.meshId`, `properties`, `columnId`, `float` type) is deprecated and
 will be removed in a future release — it remains functional for now. The v2 shape introduces
 `runtimeAction` (a `workerProcess` operation name resolved by App Registry at runtime), `columns`
-(replacing `properties`), and `key` (replacing `columnId`). The wire contract between Commerce and
+(replacing `properties`), and `columnId` (unchanged from v1). The wire contract between Commerce and
 the handler is formally standardized for the first time. No separate registration action is
 generated for `commerce/backend-ui/2` — Commerce reads the `adminUi` config directly from the
 existing `app-config` endpoint on `commerce/extensibility/1`.
@@ -42,7 +42,7 @@ The v1 grid column design has four concrete problems that compound each other:
 
 - Introduce `adminUi` as the new top-level config key for `commerce/backend-ui/2` registrations.
 - Replace `data.meshId` with `runtimeAction` (a `workerProcess` operation name) in all three grids.
-- Rename `properties` → `columns`, `columnId` → `key` for clarity.
+- Rename `properties` → `columns`; keep `columnId` unchanged from v1.
 - Add `label` and `description` to each `gridColumns` block for display during installation.
 - Formally specify the request/response wire contract.
 - Deprecate `adminUiSdk`/`commerce/backend-ui/1` grid columns; keep them functional until removal.
@@ -75,13 +75,13 @@ export default defineConfig({
         runtimeAction: "orders/fetch-order-grid-data",
         columns: [
           {
-            key: "fulfillment_status",
+            columnId: "fulfillment_status",
             label: "Fulfillment",
             type: "string",
             align: "left",
           },
           {
-            key: "risk_score",
+            columnId: "risk_score",
             label: "Risk",
             type: "integer",
             align: "right",
@@ -96,7 +96,7 @@ export default defineConfig({
         runtimeAction: "products/fetch-product-grid-data",
         columns: [
           {
-            key: "inventory_status",
+            columnId: "inventory_status",
             label: "Inventory",
             type: "string",
             align: "left",
@@ -111,7 +111,7 @@ export default defineConfig({
         runtimeAction: "customers/fetch-customer-grid-data",
         columns: [
           {
-            key: "loyalty_tier",
+            columnId: "loyalty_tier",
             label: "Loyalty Tier",
             type: "string",
             align: "left",
@@ -180,6 +180,12 @@ the `workerProcess` operations.
 }
 ```
 
+### columnId uniqueness
+
+`columnId` values are declared by the developer as plain identifiers (e.g. `external_id`). The
+`app-config` endpoint serves them as-is; no SDK-side prefixing is applied. `columnId` collision
+handling across multiple installed apps is Commerce's responsibility.
+
 ### Column types
 
 | `type` value | Description                          |
@@ -198,7 +204,7 @@ the `workerProcess` operations.
 | `adminUiSdk.registration.order`          | `adminUi.order`              | No `registration` wrapper in v2                               |
 | `data.meshId`                            | `runtimeAction`              | Operation name declared in `app.config.yaml`, not a Mesh hash |
 | `properties`                             | `columns`                    | Array of column declarations                                  |
-| `properties[].columnId`                  | `columns[].key`              | Doubles as the response data key — make them match            |
+| `properties[].columnId`                  | `columns[].columnId`         | Unchanged from v1                                             |
 | `properties[].type: "float"`             | `columns[].type: "decimal"`  | Renamed                                                       |
 | _(absent)_                               | `columns[].type: "datetime"` | New type in v2                                                |
 | _(absent)_                               | `label`, `description`       | New block-level metadata for App Management installation UI   |
@@ -232,7 +238,7 @@ The v2 schema lives in a dedicated file:
 
 ```ts
 const GridColumnSchema = v.object({
-  key: nonEmptyStringValueSchema("column key"),
+  columnId: nonEmptyStringValueSchema("column ID"),
   label: nonEmptyStringValueSchema("column label"),
   type: v.picklist([
     "boolean",
@@ -304,9 +310,6 @@ Example generated `ext.config.yaml` for the config above:
 hooks:
   pre-app-build: "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build"
 operations:
-  view:
-    - type: web
-      impl: index.html
   workerProcess:
     - type: action
       impl: orders/fetch-order-grid-data
@@ -314,7 +317,6 @@ operations:
       impl: products/fetch-product-grid-data
     - type: action
       impl: customers/fetch-customer-grid-data
-web: web-src
 ```
 
 ### Changeset bump
@@ -327,8 +329,6 @@ do not constitute a semver-major change under the SDK's stability policy.
 - Apps that genuinely need API Mesh federation must wire it inside the handler themselves. The SDK
   no longer manages the Mesh reference in v2. This is intentional — Mesh is now a handler
   implementation detail, not a config-level concern.
-- `key` doing double duty (response data key and column identifier) is explicit by design, but
-  developers used to v1's separate `columnId` field may find it surprising at first.
 - Keeping v1 functional alongside v2 means the SDK ships two schemas for the same concept during
   the deprecation window. This is intentional — removing v1 immediately would be a breaking change
   for existing apps.
@@ -360,14 +360,6 @@ enforce separation.
 **Impact of not doing this.**
 Grid columns remain coupled to API Mesh, blocking apps that don't need federation, and the wire
 contract remains undocumented. The multi-environment `meshId` problem has no SDK-level solution.
-
-## Unresolved questions
-
-**Single-operation constraint.**
-Can the same `runtimeAction` value appear in `order.gridColumns` and `customer.gridColumns`? The
-SDK imposes no uniqueness constraint — the same operation name can appear in multiple grid column
-blocks. A single handler would then receive requests for both grid types and branch on `gridType`.
-Confirm this is correct and no constraint should be added.
 
 ## Future possibilities
 
