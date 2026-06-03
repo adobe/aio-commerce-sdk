@@ -51,14 +51,6 @@ import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
 
 export async function main(params) {
   const client = await getCommerceClient(params);
-
-  if (!client) {
-    return {
-      statusCode: 400,
-      body: { error: "App is not associated with a Commerce instance." },
-    };
-  }
-
   const products = await client.get("rest/V1/products").json();
 }
 ```
@@ -71,13 +63,6 @@ import { getCommerceInstance } from "@adobe/aio-commerce-lib-app";
 export async function main(params) {
   const instance = await getCommerceInstance(params);
 
-  if (!instance) {
-    return {
-      statusCode: 400,
-      body: { error: "App is not associated with a Commerce instance." },
-    };
-  }
-
   // instance.baseUrl — e.g. "https://my-store.example.com"
   // instance.env     — "saas" | "paas"
 }
@@ -87,7 +72,7 @@ No custom storage setup is required. The SDK manages the data automatically duri
 association lifecycle. Both helpers work from any runtime action regardless of which OpenWhisk
 package the action belongs to.
 
-**If either helper returns `null`**, the app is either not currently associated or was associated before this feature was introduced. Apps must handle this case explicitly.
+**If the app is not associated**, both helpers throw an `AppNotAssociatedError`. This applies to apps that have never been associated, were unassociated, or were associated by an older SDK that didn't store this data. Re-associating the app resolves the error. Apps that need to handle this case gracefully should wrap the call in a `try/catch`.
 
 **Available fields** on the `AssociatedCommerceInstance` object:
 
@@ -182,13 +167,14 @@ A new export is added to the root entrypoint of `@adobe/aio-commerce-lib-app`:
 
 ```ts
 /**
- * Returns the Commerce instance this app is currently associated with,
- * or null if the app is not associated or was associated before this
- * feature was introduced.
+ * Returns the Commerce instance this app is currently associated with.
+ *
+ * @throws {AppNotAssociatedError} If the app is not associated, was unassociated,
+ *   or was associated by an older SDK that didn't store this data.
  */
 export async function getCommerceInstance(
   params: RuntimeActionParams,
-): Promise<AssociatedCommerceInstance | null>;
+): Promise<AssociatedCommerceInstance>;
 ```
 
 `params` is the standard params object every runtime action receives. Internally it calls
@@ -203,19 +189,20 @@ A higher-level export from `@adobe/aio-commerce-lib-app` that builds on
 
 ```ts
 /**
- * Returns an initialised AdobeCommerceHttpClient for the Commerce instance this app is
- * currently associated with, or null if the app is not associated or was associated before
- * this feature was introduced.
+ * Returns an initialised AdobeCommerceHttpClient for the Commerce instance this app
+ * is currently associated with.
+ *
+ * @throws {AppNotAssociatedError} If the app is not associated, was unassociated,
+ *   or was associated by an older SDK that didn't store this data.
  */
 export async function getCommerceClient(
   params: RuntimeActionParams,
-): Promise<AdobeCommerceHttpClient | null>;
+): Promise<AdobeCommerceHttpClient>;
 ```
 
-Internally it calls `getCommerceInstance` and, if data is available, constructs an
-`AdobeCommerceHttpClient` using `baseUrl` and `env` from the stored association data combined
-with the auth credentials present in `params`. Returns `null` when no association data is
-found.
+Internally it calls `getCommerceInstance` and constructs an `AdobeCommerceHttpClient` using
+`baseUrl` and `env` from the stored association data combined with the auth credentials
+present in `params`. If `getCommerceInstance` throws, the error propagates to the caller.
 
 This eliminates the repeated boilerplate of combining stored instance details with action
 params to construct the client — a pattern every action that calls Commerce would otherwise
@@ -243,7 +230,7 @@ the stored data. This step is best-effort — a failure does not block the unass
 ### Edge cases
 
 - **Apps associated before this feature.** No stored data exists; `getCommerceInstance`
-  returns `null`. Apps must handle this explicitly.
+  throws `AppNotAssociatedError`. Re-associating the app resolves it.
 - **Association endpoint unreachable.** If the runtime is not deployed or returns an unexpected
   error, the association fails. The developer can retry once the endpoint is reachable.
 - **Concurrent associations.** The last write wins. No conflict detection is required.
