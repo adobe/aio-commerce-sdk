@@ -304,9 +304,6 @@ Example generated `ext.config.yaml` for the config above:
 hooks:
   pre-app-build: "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build"
 operations:
-  view:
-    - type: web
-      impl: index.html
   workerProcess:
     - type: action
       impl: orders/fetch-order-grid-data
@@ -314,7 +311,6 @@ operations:
       impl: products/fetch-product-grid-data
     - type: action
       impl: customers/fetch-customer-grid-data
-web: web-src
 ```
 
 ### Changeset bump
