@@ -86,15 +86,18 @@ package the action belongs to.
 ### Storage
 
 The association data is stored using the infrastructure already established in
-**`aio-commerce-lib-config`** — specifically, the shared `getSharedState()` utility from
-`aio-commerce-lib-config/source/utils/repository.ts`, which provides a lazy-initialized
-Adobe I/O State client shared across the SDK.
+**`aio-commerce-lib-config`** — specifically, the shared `getSharedState()` and
+`getSharedFiles()` utilities from `aio-commerce-lib-config/source/utils/repository.ts`.
+`lib-config` uses a two-layer storage pattern: `lib-files` for persistent storage (source of
+truth, no TTL) and `lib-state` as a performance cache (with TTL). When a cached value
+expires, `lib-config` falls back to `lib-files` and re-caches automatically — so the data
+is not lost when the cache entry expires.
 
 A new generic `system-config` module is added to `aio-commerce-lib-config` for any
 SDK-managed system data, separate from the existing Business Configuration module. It uses
-the same `getSharedState()` client but stores under `system.{key}` keys (e.g.
-`system.association`, future `system.events`) rather than the `configuration.{scopeCode}`
-keys used by Business Configuration. The `system.*` namespace keeps SDK-managed config
+the same shared storage (`getSharedState()` and `getSharedFiles()`) but stores under
+`system.{key}` keys (e.g. `system.association`, future `system.events`) rather than the
+`configuration.{scopeCode}` keys used by Business Configuration. The `system.*` namespace keeps SDK-managed config
 cleanly separated from app-defined `configuration.*` keys. The module is fully
 domain-agnostic — it has no knowledge of "association" or any App Management concept; the
 association-aware logic lives in `aio-commerce-lib-app` and uses this generic module
@@ -104,13 +107,11 @@ System config does not participate in the Commerce scope tree — `getSystemConf
 performs a direct key lookup with no inheritance or fallback chain. The `system.*` and
 `configuration.*` namespaces are parallel, not nested.
 
-The data is stored with the maximum TTL of 1 year (31536000 seconds). The default TTL of 24 hours is not appropriate here — association data is long-lived and must not expire on its own. It should only be cleared explicitly on unassociation. To keep the data alive, the TTL is refreshed on every read inside `getAssociationData`. So as long as any action reads the configuration at least once a year, the data won't expire.
-
 This has two important properties for this use case:
 
-- **Package-agnostic.** Adobe I/O State is shared across all actions within the same App
-  Builder application, regardless of which OpenWhisk package they belong to.
-- **No parameter drilling.** The helper reads directly from state. Callers do not need to
+- **Package-agnostic.** The shared storage is accessible from all actions within the same
+  App Builder application, regardless of which OpenWhisk package they belong to.
+- **No parameter drilling.** The helper reads directly from storage. Callers do not need to
   pass the data through every layer of the call stack.
 
 The storage uses a two-layered design:
@@ -207,7 +208,8 @@ export async function getCommerceInstance(
 `params` is the standard params object every runtime action receives. Internally it calls
 `getAssociationData` from the `aio-commerce-lib-app` association module, which in turn calls
 the generic `getSystemConfigByKey("system.association")` from `aio-commerce-lib-config`. The
-function is async because the underlying Adobe I/O State read is a network call.
+function is async because the underlying storage read (lib-state cache with lib-files
+fallback) is a network call.
 
 ### New `getCommerceClient` helper
 
@@ -278,9 +280,10 @@ the stored data. This step is best-effort — a failure does not block the unass
 OpenWhisk package parameters are scoped to a single package. Writing params to the
 `app-management` package makes them available only to `app-management` actions. Developer
 runtime actions in other packages never receive them, making the feature ineffective for
-the primary use case. Adobe I/O State — accessed via the shared `getSharedState()` utility
-already established in `aio-commerce-lib-config` — is accessible to all actions within the
-same application regardless of package boundaries.
+the primary use case. `aio-commerce-lib-config`'s shared storage (lib-files for persistence
+
+- lib-state as a cache) is accessible to all actions within the same application regardless
+  of package boundaries, and gives us persistence without expiry as a side effect.
 
 **Why a new generic `system-config` module in `aio-commerce-lib-config` rather than using `setConfiguration` directly?**
 The existing `setConfiguration`/`getConfiguration` API in `aio-commerce-lib-config` is
