@@ -93,15 +93,16 @@ truth, no TTL) and `lib-state` as a performance cache (with TTL). When a cached 
 expires, `lib-config` falls back to `lib-files` and re-caches automatically — so the data
 is not lost when the cache entry expires.
 
-A new generic `system-config` module is added to `aio-commerce-lib-config` for any
-SDK-managed system data, separate from the existing Business Configuration module. It uses
-the same shared storage (`getSharedState()` and `getSharedFiles()`) but stores under
-`system.{key}` keys (e.g. `system.association`, future `system.events`) rather than the
-`configuration.{scopeCode}` keys used by Business Configuration. The `system.*` namespace keeps SDK-managed config
-cleanly separated from app-defined `configuration.*` keys. The module is fully
-domain-agnostic — it has no knowledge of "association" or any App Management concept; the
-association-aware logic lives in `aio-commerce-lib-app` and uses this generic module
-underneath.
+A new generic `system` submodule is added inside `aio-commerce-lib-config`'s existing
+`configuration` module (at `modules/configuration/system/`) for any SDK-managed system
+data. Grouping it under `configuration/` keeps related storage logic together while
+preserving distinct lookup semantics. It uses the same shared storage (`getSharedState()`
+and `getSharedFiles()`) but stores under `system.{key}` keys (e.g. `system.association`,
+future `system.events`) rather than the `configuration.{scopeCode}` keys used by Business
+Configuration. The `system.*` namespace keeps SDK-managed config cleanly separated from
+app-defined `configuration.*` keys. The submodule is fully domain-agnostic — it operates
+purely on opaque keys and values; domain-aware logic that uses it lives in
+`aio-commerce-lib-app`.
 
 System config does not participate in the Commerce scope tree — `getSystemConfigByKey`
 performs a direct key lookup with no inheritance or fallback chain. The `system.*` and
@@ -116,12 +117,12 @@ This has two important properties for this use case:
 
 The storage uses a two-layered design:
 
-**`aio-commerce-lib-config`** exposes generic, domain-agnostic primitives. No knowledge of
-App Management or "association" — just key-value access for any SDK-managed system config.
-Setting the value to `null` clears the entry, so there is no separate delete operation:
+**`aio-commerce-lib-config`** exposes generic, domain-agnostic primitives — just key-value
+access for any SDK-managed system config, with no knowledge of what's being stored. Setting
+the value to `null` clears the entry, so there is no separate delete operation:
 
 ```ts
-// aio-commerce-lib-config (generic system config module)
+// aio-commerce-lib-config (generic system submodule under configuration/)
 setSystemConfigByKey(key: string, value: unknown | null): Promise<void>
 getSystemConfigByKey<T>(key: string): Promise<T | null>
 ```
@@ -285,15 +286,15 @@ the primary use case. `aio-commerce-lib-config`'s shared storage (lib-files for 
 - lib-state as a cache) is accessible to all actions within the same application regardless
   of package boundaries, and gives us persistence without expiry as a side effect.
 
-**Why a new generic `system-config` module in `aio-commerce-lib-config` rather than using `setConfiguration` directly?**
+**Why a new generic `system` submodule inside `configuration/` rather than using `setConfiguration` directly?**
 The existing `setConfiguration`/`getConfiguration` API in `aio-commerce-lib-config` is
 designed for Business Configuration — scope-tree based values keyed by Commerce scope codes
-with inheritance. Association data is app-level metadata, not scope-specific, and doesn't
-need inheritance. A generic `system-config` module with `setSystemConfigByKey` /
-`getSystemConfigByKey` primitives keeps the two concerns clearly separated while reusing the
-same underlying storage infrastructure. The module is domain-agnostic — no knowledge of
-"association" or any App Management concept — so it can be reused for other SDK-managed
-data in the future (`system.events`, etc.).
+with inheritance. The data we want to store is app-level metadata, not scope-specific, and
+doesn't need inheritance. A generic `system` submodule with `setSystemConfigByKey` /
+`getSystemConfigByKey` primitives keeps the two concerns clearly separated while reusing
+the same underlying storage infrastructure. The submodule is domain-agnostic — it operates
+purely on opaque keys and values — so it can be reused for other SDK-managed data in the
+future (`system.events`, etc.).
 
 **Why a standalone `association` action?**
 The `installation` action is conditionally deployed, apps without custom install steps,
@@ -308,11 +309,6 @@ directly keeps the import consistent with how the rest of the SDK is consumed.
 **What is the impact of not doing this?**
 Every app that needs the Commerce Base URL in runtime actions continues to implement its own
 storage and retrieval logic with no automatic cleanup on unassociation and no standardised API.
-
-## Unresolved questions
-
-- **Backfill for legacy apps.** A mechanism to backfill stored data for apps associated before
-  this feature was introduced is out of scope but should be tracked.
 
 ## Future possibilities
 
