@@ -222,6 +222,46 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
+  packages/aio-commerce-lib-admin-ui:
+    dependencies:
+      '@adobe/aio-commerce-lib-api':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-api
+      '@adobe/aio-commerce-lib-core':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-core
+      ky:
+        specifier: 'catalog:'
+        version: 1.14.3
+      valibot:
+        specifier: 'catalog:'
+        version: 1.4.1(typescript@6.0.3)
+    devDependencies:
+      '@aio-commerce-sdk/common-utils':
+        specifier: workspace:*
+        version: link:../../packages-private/common-utils
+      '@aio-commerce-sdk/config-tsdown':
+        specifier: workspace:*
+        version: link:../../configs/tsdown
+      '@aio-commerce-sdk/config-typedoc':
+        specifier: workspace:*
+        version: link:../../configs/typedoc
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../../configs/typescript
+      '@aio-commerce-sdk/config-vitest':
+        specifier: workspace:*
+        version: link:../../configs/vitest
+      '@aio-commerce-sdk/scripting-utils':
+        specifier: workspace:*
+        version: link:../../packages-private/scripting-utils
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../scripts
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
   packages/aio-commerce-lib-api:
     dependencies:
       '@adobe/aio-commerce-lib-auth':
@@ -258,6 +298,9 @@ importers:
 
   packages/aio-commerce-lib-app:
     dependencies:
+      '@adobe/aio-commerce-lib-admin-ui':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-admin-ui
       '@adobe/aio-commerce-lib-api':
         specifier: workspace:*
         version: link:../aio-commerce-lib-api
@@ -579,6 +622,9 @@ importers:
 
   packages/aio-commerce-sdk:
     dependencies:
+      '@adobe/aio-commerce-lib-admin-ui':
+        specifier: workspace:*
+        version: link:../aio-commerce-lib-admin-ui
       '@adobe/aio-commerce-lib-api':
         specifier: workspace:*
         version: link:../aio-commerce-lib-api
@@ -679,6 +725,7 @@ packages:
   '@adobe/aio-lib-core-networking@5.1.0':
     resolution: {integrity: sha512-RZgA73yUHhikjIGy7k0DRobPbIXbtuI/0ixrBXOVqj19WTqFFrEuyHtzOuRsBAmu0OvVkf6slQHtDTL9oPLxfg==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-core-tvm@4.0.3':
     resolution: {integrity: sha512-zwl4GeU5CryZBozpub4jI9tnGW2ewD6mMLaXX8HhO8DqKzcjnjYr+MbUS0c/QzGd8gTzZWbikm4J7tfpCn3cAA==}
@@ -687,6 +734,7 @@ packages:
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-files@4.1.4':
     resolution: {integrity: sha512-YhUu5YV4hnFm6arsMYhl96bjbxnOpmMgE5WiwUvLlm9Dh4PGNGAaY52nED5xnbI+ODbj0vSd9s6KwC3kTmo6tQ==}
@@ -6950,7 +6998,7 @@ snapshots:
       oas-kit-common: 1.0.8
       reftools: 1.1.9
       yaml: 1.10.3
-      yargs: 17.0.1
+      yargs: 17.7.2
 
   oas-schema-walker@1.1.5: {}
 
@@ -7500,7 +7548,7 @@ snapshots:
       oas-validator: 5.0.8
       reftools: 1.1.9
       yaml: 1.10.3
-      yargs: 17.0.1
+      yargs: 17.7.2
     transitivePeerDependencies:
       - encoding
 
