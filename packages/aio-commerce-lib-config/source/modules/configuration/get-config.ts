@@ -47,7 +47,10 @@ export async function fetchRawConfiguration(
     scopeTree,
   );
 
-  let configData = await configRepository.loadConfig(scopeCode);
+  let configData = await configRepository.loadConfig(
+    scopeCode,
+    context.cacheTimeout,
+  );
   if (!configData) {
     const defaults = getSchemaDefaults(schema);
     configData = {
@@ -65,7 +68,8 @@ export async function fetchRawConfiguration(
       scopeLevel,
       scopePath,
 
-      loadScopeConfigFn: (code: string) => configRepository.loadConfig(code),
+      loadScopeConfigFn: (code: string) =>
+        configRepository.loadConfig(code, context.cacheTimeout),
       getSchemaFn: async () => Promise.resolve(schema),
     });
   } catch {

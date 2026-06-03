@@ -76,6 +76,16 @@
         "default": "./dist/cjs/webhooks/*.cjs"
       }
     },
+    "./admin-ui/*": {
+      "import": {
+        "types": "./dist/es/admin-ui/*.d.mts",
+        "default": "./dist/es/admin-ui/*.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/admin-ui/*.d.cts",
+        "default": "./dist/cjs/admin-ui/*.cjs"
+      }
+    },
     "./*": {
       "import": {
         "types": "./dist/es/*.d.mts",
@@ -113,6 +123,7 @@
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-api": "workspace:*",
+    "@adobe/aio-commerce-lib-admin-ui": "workspace:*",
     "@adobe/aio-commerce-lib-events": "workspace:*",
     "@adobe/aio-commerce-lib-webhooks": "workspace:*",
     "type-fest": "catalog:"
