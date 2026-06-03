@@ -162,17 +162,17 @@ describe("appConfigRuntimeAction", () => {
       );
 
       const orderMassAction = body.adminUi?.order?.massActions?.[0];
-      expect(orderMassAction?.actionId).toBe(
+      expect(orderMassAction?.id).toBe(
         "test-app-full-admin-ui-sdk::order-mass-action",
       );
 
       const productMassAction = body.adminUi?.product?.massActions?.[0];
-      expect(productMassAction?.actionId).toBe(
+      expect(productMassAction?.id).toBe(
         "test-app-full-admin-ui-sdk::product-mass-action",
       );
 
       const customerMassAction = body.adminUi?.customer?.massActions?.[0];
-      expect(customerMassAction?.actionId).toBe(
+      expect(customerMassAction?.id).toBe(
         "test-app-full-admin-ui-sdk::export-customers",
       );
       expect(customerMassAction?.runtimeAction).toBe(

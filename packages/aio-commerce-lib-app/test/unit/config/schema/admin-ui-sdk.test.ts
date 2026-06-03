@@ -60,7 +60,7 @@ describe("AdminUiSchema", () => {
         order: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "view",
               path: "#/action",
@@ -77,7 +77,7 @@ describe("AdminUiSchema", () => {
         order: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "worker",
               runtimeAction: "my-pkg/my-action",
@@ -94,7 +94,7 @@ describe("AdminUiSchema", () => {
         order: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "view",
               path: "#/action",
@@ -111,7 +111,7 @@ describe("AdminUiSchema", () => {
         product: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "view",
               path: "#/action",
@@ -128,7 +128,7 @@ describe("AdminUiSchema", () => {
         customer: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "worker",
               runtimeAction: "pkg/action",
@@ -145,7 +145,7 @@ describe("AdminUiSchema", () => {
         order: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "worker",
               runtimeAction: "pkg/action",
@@ -162,7 +162,7 @@ describe("AdminUiSchema", () => {
         order: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "view",
               path: "#/action",
@@ -182,7 +182,7 @@ describe("AdminUiSchema", () => {
         order: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "view",
               path: "#/action",
@@ -279,7 +279,7 @@ describe("AdminUiSchema", () => {
         order: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "view",
               path: "#/action",
@@ -294,7 +294,7 @@ describe("AdminUiSchema", () => {
     test("view without path — fails (required field)", () => {
       const result = parse({
         order: {
-          massActions: [{ actionId: "action", label: "Action", type: "view" }],
+          massActions: [{ id: "action", label: "Action", type: "view" }],
         },
       });
       expect(result.success).toBe(false);
@@ -305,7 +305,7 @@ describe("AdminUiSchema", () => {
         order: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "view",
               path: "#/action",
@@ -322,7 +322,7 @@ describe("AdminUiSchema", () => {
         order: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "worker",
               runtimeAction: "pkg/action",
@@ -339,7 +339,7 @@ describe("AdminUiSchema", () => {
         order: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "view",
               path: "#/action",
@@ -357,7 +357,7 @@ describe("AdminUiSchema", () => {
         order: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "worker",
               runtimeAction: "pkg/action",
@@ -372,9 +372,7 @@ describe("AdminUiSchema", () => {
     test("worker without runtimeAction — fails (required field)", () => {
       const result = parse({
         order: {
-          massActions: [
-            { actionId: "action", label: "Action", type: "worker" },
-          ],
+          massActions: [{ id: "action", label: "Action", type: "worker" }],
         },
       });
       expect(result.success).toBe(false);
@@ -383,9 +381,7 @@ describe("AdminUiSchema", () => {
     test("missing type — fails", () => {
       const result = parse({
         order: {
-          massActions: [
-            { actionId: "action", label: "Action", path: "#/action" },
-          ],
+          massActions: [{ id: "action", label: "Action", path: "#/action" }],
         },
       });
       expect(result.success).toBe(false);
@@ -396,7 +392,7 @@ describe("AdminUiSchema", () => {
         product: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "view",
               path: "#/action",
@@ -413,7 +409,7 @@ describe("AdminUiSchema", () => {
         customer: {
           massActions: [
             {
-              actionId: "action",
+              id: "action",
               label: "Action",
               type: "worker",
               runtimeAction: "pkg/action",
@@ -425,7 +421,7 @@ describe("AdminUiSchema", () => {
       expect(result.success).toBe(false);
     });
 
-    test("missing actionId — fails", () => {
+    test("missing id — fails", () => {
       const result = parse({
         order: {
           massActions: [{ label: "Action", type: "view", path: "#/action" }],
@@ -437,7 +433,7 @@ describe("AdminUiSchema", () => {
     test("missing label — fails", () => {
       const result = parse({
         order: {
-          massActions: [{ actionId: "action", type: "view", path: "#/action" }],
+          massActions: [{ id: "action", type: "view", path: "#/action" }],
         },
       });
       expect(result.success).toBe(false);

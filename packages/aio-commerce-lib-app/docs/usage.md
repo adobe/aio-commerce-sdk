@@ -480,7 +480,7 @@ Mass actions are declared with an explicit `type` field that determines which va
 - `type: "view"` — renders an iframe at the given `path` (optional `sandbox` attribute).
 - `type: "worker"` — invokes a runtime action specified by `runtimeAction` (optional `timeout`).
 
-The `actionId` field is the full identifier served to the Admin UI SDK. By convention, use the format `${metadata.id}::${name}` (e.g. `"my-app::export-orders"`).
+The `id` field is the full identifier served to the Admin UI SDK. By convention, use the format `${metadata.id}::${name}` (e.g. `"my-app::export-orders"`).
 
 For worker mass actions, `generate` automatically adds the corresponding `workerProcess` entries to the `commerce/backend-ui/2` ext.config.yaml based on the `runtimeAction` fields. The `pre-app-build` hook validates the generated entries at build time.
 
@@ -499,7 +499,7 @@ operations:
 
 | Field            | Common | `view` only | `worker` only |
 | ---------------- | :----: | :---------: | :-----------: |
-| `actionId`       |   x    |             |               |
+| `id`             |   x    |             |               |
 | `label`          |   x    |             |               |
 | `title`          |   x    |             |               |
 | `confirm`        |   x    |             |               |
@@ -534,7 +534,7 @@ adminUi: {
     massActions: [
       // view variant — renders an iframe
       {
-        actionId: "my-app::export-orders",
+        id: "my-app::export-orders",
         type: "view",
         label: "Export Orders",
         title: "Export",
@@ -553,7 +553,7 @@ adminUi: {
       },
       // worker variant — invokes a runtime action
       {
-        actionId: "my-app::archive-orders",
+        id: "my-app::archive-orders",
         type: "worker",
         label: "Archive Orders",
         runtimeAction: "my-app/archive-orders",
@@ -604,7 +604,7 @@ adminUi: {
   product: {
     massActions: [
       {
-        actionId: "my-app::export-products",
+        id: "my-app::export-products",
         type: "view",
         label: "Export Products",
         path: "#/export-products",
@@ -622,7 +622,7 @@ adminUi: {
   customer: {
     massActions: [
       {
-        actionId: "my-app::export-customers",
+        id: "my-app::export-customers",
         type: "worker",
         label: "Export Customers",
         runtimeAction: "my-app/export-customers",
@@ -659,7 +659,7 @@ adminUi: {
 
 ##### Order Extension Points:
 
-- **massActions** (optional array): see [Field applicability by variant](#field-applicability-by-variant) above; `actionId`, `label`, and `type` are always required
+- **massActions** (optional array): see [Field applicability by variant](#field-applicability-by-variant) above; `id`, `label`, and `type` are always required
 - **gridColumns** (optional): `data.meshId` required; `properties` must contain at least one entry; each property requires `label`, `columnId`, `type` (`"boolean"`, `"date"`, `"float"`, `"integer"`, or `"string"`), and `align` (`"left"`, `"right"`, or `"center"`)
 - **viewButtons** (optional array): **`buttonId`**, **`label`**, **`path`** required; `level` optional (`-1`, `0`, or `1`); `sortOrder` optional; `confirm.message` optional; `displayIframe`, `timeout`, `sandbox` optional. `sandbox` is only valid when `displayIframe` is `true`.
 - **customFees** (optional array): **`id`**, **`label`** required; **`value`** required number; `orderMinimumAmount` optional number; `applyFeeOnLastInvoice`, `applyFeeOnLastCreditMemo` optional boolean

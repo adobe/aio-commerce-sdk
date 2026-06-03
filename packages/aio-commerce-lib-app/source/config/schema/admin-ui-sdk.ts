@@ -140,7 +140,7 @@ const MassActionInstallationSchema = v.object({
 
 /** Fields shared by both mass-action variants. */
 const massActionCommonEntries = {
-  actionId: nonEmptyStringValueSchema("mass action actionId"),
+  id: nonEmptyStringValueSchema("mass action ID"),
   label: nonEmptyStringValueSchema("mass action label"),
   title: v.optional(nonEmptyStringValueSchema("mass action page title")),
   confirm: v.optional(MassActionConfirmSchema),

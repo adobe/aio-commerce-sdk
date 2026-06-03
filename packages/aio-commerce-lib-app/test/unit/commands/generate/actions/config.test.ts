@@ -194,7 +194,7 @@ describe("buildAdminUiSdkExtConfig", () => {
         order: {
           massActions: [
             {
-              actionId: "app::export",
+              id: "app::export",
               label: "Export",
               type: "worker",
               runtimeAction: "pkg/export",
@@ -204,7 +204,7 @@ describe("buildAdminUiSdkExtConfig", () => {
         customer: {
           massActions: [
             {
-              actionId: "app::export-c",
+              id: "app::export-c",
               label: "Export",
               type: "worker",
               runtimeAction: "pkg/export",

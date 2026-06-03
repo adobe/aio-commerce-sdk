@@ -3,7 +3,7 @@
   "info": {
     "title": "App Management API",
     "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation and uninstallation lifecycle, exposing the Admin UI SDK registration, and managing the scope tree.",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
@@ -3252,7 +3252,7 @@
                       "description": "view variant — renders an iframe at `path`",
                       "type": "object",
                       "properties": {
-                        "actionId": {
+                        "id": {
                           "type": "string",
                           "minLength": 1
                         },
@@ -3323,13 +3323,13 @@
                           "pattern": "^(?:allow-downloads|allow-modals|allow-popups)(?: (?:allow-downloads|allow-modals|allow-popups))*$"
                         }
                       },
-                      "required": ["actionId", "label", "type", "path"]
+                      "required": ["id", "label", "type", "path"]
                     },
                     {
                       "description": "worker variant — invokes a runtime action",
                       "type": "object",
                       "properties": {
-                        "actionId": {
+                        "id": {
                           "type": "string",
                           "minLength": 1
                         },
@@ -3400,7 +3400,7 @@
                           "minimum": 0
                         }
                       },
-                      "required": ["actionId", "label", "type", "runtimeAction"]
+                      "required": ["id", "label", "type", "runtimeAction"]
                     }
                   ]
                 }
@@ -3556,7 +3556,7 @@
                       "description": "view variant — renders an iframe at `path`",
                       "type": "object",
                       "properties": {
-                        "actionId": {
+                        "id": {
                           "type": "string",
                           "minLength": 1
                         },
@@ -3627,13 +3627,13 @@
                           "pattern": "^(?:allow-downloads|allow-modals|allow-popups)(?: (?:allow-downloads|allow-modals|allow-popups))*$"
                         }
                       },
-                      "required": ["actionId", "label", "type", "path"]
+                      "required": ["id", "label", "type", "path"]
                     },
                     {
                       "description": "worker variant — invokes a runtime action",
                       "type": "object",
                       "properties": {
-                        "actionId": {
+                        "id": {
                           "type": "string",
                           "minLength": 1
                         },
@@ -3704,7 +3704,7 @@
                           "minimum": 0
                         }
                       },
-                      "required": ["actionId", "label", "type", "runtimeAction"]
+                      "required": ["id", "label", "type", "runtimeAction"]
                     }
                   ]
                 }
@@ -3771,7 +3771,7 @@
                       "description": "view variant — renders an iframe at `path`",
                       "type": "object",
                       "properties": {
-                        "actionId": {
+                        "id": {
                           "type": "string",
                           "minLength": 1
                         },
@@ -3842,13 +3842,13 @@
                           "pattern": "^(?:allow-downloads|allow-modals|allow-popups)(?: (?:allow-downloads|allow-modals|allow-popups))*$"
                         }
                       },
-                      "required": ["actionId", "label", "type", "path"]
+                      "required": ["id", "label", "type", "path"]
                     },
                     {
                       "description": "worker variant — invokes a runtime action",
                       "type": "object",
                       "properties": {
-                        "actionId": {
+                        "id": {
                           "type": "string",
                           "minLength": 1
                         },
@@ -3919,7 +3919,7 @@
                           "minimum": 0
                         }
                       },
-                      "required": ["actionId", "label", "type", "runtimeAction"]
+                      "required": ["id", "label", "type", "runtimeAction"]
                     }
                   ]
                 }
