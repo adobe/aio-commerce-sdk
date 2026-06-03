@@ -21,6 +21,7 @@ import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 import type { Options } from "ky";
 import type {
   ExtensionRegistrationParams,
+  RegisterExtensionResponse,
   UnregisterExtensionParams,
 } from "./schema";
 
@@ -38,7 +39,7 @@ export async function registerExtension(
   httpClient: AdobeCommerceHttpClient,
   params: ExtensionRegistrationParams,
   fetchOptions?: Options,
-): Promise<void> {
+): Promise<RegisterExtensionResponse> {
   const extension = parseOrThrow(ExtensionRegistrationParamsSchema, params);
 
   return httpClient
@@ -46,9 +47,7 @@ export async function registerExtension(
       ...fetchOptions,
       json: { extension },
     })
-    .then((_res) => {
-      // We set this `then` to make the response type `void`
-    });
+    .json<RegisterExtensionResponse>();
 }
 
 /**

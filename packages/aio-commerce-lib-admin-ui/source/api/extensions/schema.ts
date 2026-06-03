@@ -35,3 +35,8 @@ export type ExtensionRegistrationParams = v.InferInput<
 export type UnregisterExtensionParams = v.InferInput<
   typeof UnregisterExtensionParamsSchema
 >;
+
+/** The response returned by POST /V1/adminuisdk/extension. */
+export type RegisterExtensionResponse = {
+  extensionId: string;
+};

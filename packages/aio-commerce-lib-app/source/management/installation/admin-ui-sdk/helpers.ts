@@ -31,7 +31,7 @@ export async function registerExtension(context: AdminUiSdkExecutionContext) {
 
   logger.info(`Registering Admin UI SDK extension: ${appData.projectName}`);
 
-  await adminUiSdkClient
+  const { extensionId } = await adminUiSdkClient
     .registerExtension({
       extensionName,
       extensionTitle: appData.projectTitle,
@@ -46,7 +46,7 @@ export async function registerExtension(context: AdminUiSdkExecutionContext) {
       ),
     );
 
-  logger.info("Admin UI SDK extension registered successfully.");
+  logger.info(`Admin UI SDK extension registered successfully: ${extensionId}`);
 }
 
 /**

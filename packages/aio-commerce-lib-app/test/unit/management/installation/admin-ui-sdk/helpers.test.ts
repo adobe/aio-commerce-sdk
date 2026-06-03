@@ -32,11 +32,12 @@ describe("registerExtension", () => {
     vi.unstubAllEnvs();
   });
 
-  test("logs success when registerExtension call resolves without a response body", async () => {
+  test("logs success with extensionId when registerExtension call resolves", async () => {
     const logger = createMockLogger();
     const context = {
       ...createMockAdminUiSdkContext({
-        registerExtensionImpl: () => Promise.resolve(),
+        registerExtensionImpl: () =>
+          Promise.resolve({ extensionId: "ext-123" }),
       }),
       logger,
     };
@@ -50,7 +51,7 @@ describe("registerExtension", () => {
       extensionWorkspace: context.appData.workspaceName,
     });
     expect(logger.info).toHaveBeenCalledWith(
-      "Admin UI SDK extension registered successfully.",
+      expect.stringContaining("registered successfully: ext-123"),
     );
   });
 
