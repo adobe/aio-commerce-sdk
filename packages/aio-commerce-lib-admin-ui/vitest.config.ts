@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,17 +10,20 @@
  * governing permissions and limitations under the License.
  */
 
-export * from "./api";
-export * from "./commerce";
+import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
+import { defineConfig, mergeConfig } from "vitest/config";
 
-/** Options for controlling operations of the configuration library. */
-export type OperationOptions = {
-  /** Optional cache timeout in seconds. */
-  cacheTimeout?: number;
-};
+const BARREL_FILES = ["./source/index.ts"];
 
-/** Options for controlling configuration operations. */
-export type ConfigOptions = OperationOptions & {
-  /** Optional encryption key for encrypting/decrypting password fields. */
-  encryptionKey?: string;
-};
+export default mergeConfig(
+  baseConfig,
+  defineConfig({
+    plugins: [],
+    test: {
+      passWithNoTests: true,
+      coverage: {
+        exclude: [...BARREL_FILES, "./source/**/types.ts"],
+      },
+    },
+  }),
+);

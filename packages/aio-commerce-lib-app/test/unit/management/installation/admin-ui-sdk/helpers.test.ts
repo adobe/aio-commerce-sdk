@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   registerExtension,
-  uninstallExtension,
+  unregisterExtension,
 } from "#management/installation/admin-ui-sdk/helpers";
 import { createMockAdminUiSdkContext } from "#test/fixtures/admin-ui-sdk";
 import { makeHttpError } from "#test/fixtures/http-error";
@@ -32,14 +32,37 @@ describe("registerExtension", () => {
     vi.unstubAllEnvs();
   });
 
-  test("throws enriched error when POST fails", async () => {
+  test("logs success with extensionId when registerExtension call resolves", async () => {
+    const logger = createMockLogger();
+    const context = {
+      ...createMockAdminUiSdkContext({
+        registerExtensionImpl: () =>
+          Promise.resolve({ extensionId: "ext-123" }),
+      }),
+      logger,
+    };
+
+    await expect(registerExtension(context)).resolves.toBeUndefined();
+
+    expect(context.adminUiClient.registerExtension).toHaveBeenCalledWith({
+      extensionName: "test-ns",
+      extensionTitle: context.appData.projectTitle,
+      extensionUrl: "https://test-ns.adobeio-static.net/index.html",
+      extensionWorkspace: context.appData.workspaceName,
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining("registered successfully: ext-123"),
+    );
+  });
+
+  test("throws enriched error when registerExtension call fails", async () => {
     const httpError = makeHttpError(
       403,
       "Forbidden",
       JSON.stringify({ message: "Insufficient permissions" }),
     );
     const context = createMockAdminUiSdkContext({
-      postImpl: () => Promise.reject(httpError),
+      registerExtensionImpl: () => Promise.reject(httpError),
     });
 
     await expect(registerExtension(context)).rejects.toThrow(
@@ -56,7 +79,7 @@ describe("registerExtension", () => {
     );
     const context = {
       ...createMockAdminUiSdkContext({
-        postImpl: () => Promise.reject(httpError),
+        registerExtensionImpl: () => Promise.reject(httpError),
       }),
       logger,
     };
@@ -70,7 +93,7 @@ describe("registerExtension", () => {
   });
 });
 
-describe("uninstallExtension", () => {
+describe("unregisterExtension", () => {
   beforeEach(() => {
     vi.stubEnv("__OW_NAMESPACE", "test-ns");
   });
@@ -79,7 +102,20 @@ describe("uninstallExtension", () => {
     vi.unstubAllEnvs();
   });
 
-  test("warns with enriched error message when DELETE fails", async () => {
+  test("warns and returns without calling the client when __OW_NAMESPACE is not set", async () => {
+    vi.unstubAllEnvs();
+    const logger = createMockLogger();
+    const context = { ...createMockAdminUiSdkContext({}), logger };
+
+    await expect(unregisterExtension(context)).resolves.toBeUndefined();
+
+    expect(context.adminUiClient.unregisterExtension).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Continuing uninstall."),
+    );
+  });
+
+  test("warns with enriched error message when unregisterExtension call fails", async () => {
     const logger = createMockLogger();
     const httpError = makeHttpError(
       500,
@@ -88,12 +124,12 @@ describe("uninstallExtension", () => {
     );
     const context = {
       ...createMockAdminUiSdkContext({
-        deleteImpl: () => Promise.reject(httpError),
+        unregisterExtensionImpl: () => Promise.reject(httpError),
       }),
       logger,
     };
 
-    await uninstallExtension(context);
+    await unregisterExtension(context);
 
     expect(logger.warn).toHaveBeenCalledWith(
       expect.stringContaining("test-ns"),
