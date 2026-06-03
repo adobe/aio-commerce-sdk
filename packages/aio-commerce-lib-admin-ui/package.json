@@ -81,6 +81,7 @@
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-api": "workspace:*",
+    "@adobe/aio-commerce-lib-core": "workspace:*",
     "ky": "catalog:",
     "valibot": "catalog:"
   },
