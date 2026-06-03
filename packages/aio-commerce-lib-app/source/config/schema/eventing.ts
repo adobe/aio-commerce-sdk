@@ -18,8 +18,7 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import type { SetRequiredDeep } from "type-fest";
-import type { CommerceAppConfigOutputModel } from "./app";
+import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
 const MAX_DESCRIPTION_LENGTH = 255;
 const MAX_LABEL_LENGTH = 100;
@@ -262,16 +261,30 @@ export const ExternalEventSourceSchema = v.object({
 /** Schema for eventing configuration with separate commerce and external arrays */
 export const EventingSchema = v.object({
   commerce: v.optional(
-    v.array(
-      CommerceEventSourceSchema,
-      "Expected an array of Commerce event sources",
+    v.pipe(
+      v.array(
+        CommerceEventSourceSchema,
+        "Expected an array of Commerce event sources",
+      ),
+      v.check(
+        (sources) =>
+          new Set(sources.map((s) => s.provider.label)).size === sources.length,
+        "Commerce provider labels must be unique",
+      ),
     ),
   ),
 
   external: v.optional(
-    v.array(
-      ExternalEventSourceSchema,
-      "Expected an array of external event sources",
+    v.pipe(
+      v.array(
+        ExternalEventSourceSchema,
+        "Expected an array of external event sources",
+      ),
+      v.check(
+        (sources) =>
+          new Set(sources.map((s) => s.provider.label)).size === sources.length,
+        "External provider labels must be unique",
+      ),
     ),
   ),
 });
@@ -302,29 +315,37 @@ export type AppEvent = CommerceEvent | ExternalEvent;
 export type EventProvider = v.InferInput<typeof ProviderSchema>;
 
 /** Config type when eventing is present. */
-export type EventsConfig = CommerceAppConfigOutputModel & {
-  eventing: NonNullable<CommerceAppConfigOutputModel["eventing"]>;
+export type EventsConfig<
+  T extends AnyCommerceAppConfig = CommerceAppConfigOutputModel,
+> = T & {
+  eventing: NonNullable<T["eventing"]>;
 };
 
 /** Config type when commerce event sources are present. */
-export type CommerceEventsConfig = SetRequiredDeep<
-  EventsConfig,
-  "eventing.commerce"
->;
+export type CommerceEventsConfig<
+  T extends AnyCommerceAppConfig = CommerceAppConfigOutputModel,
+> = EventsConfig<T> & {
+  eventing: EventsConfig<T>["eventing"] & {
+    commerce: NonNullable<EventsConfig<T>["eventing"]["commerce"]>;
+  };
+};
 
 /** Config type when external event sources are present. */
-export type ExternalEventsConfig = SetRequiredDeep<
-  EventsConfig,
-  "eventing.external"
->;
+export type ExternalEventsConfig<
+  T extends AnyCommerceAppConfig = CommerceAppConfigOutputModel,
+> = EventsConfig<T> & {
+  eventing: EventsConfig<T>["eventing"] & {
+    external: NonNullable<EventsConfig<T>["eventing"]["external"]>;
+  };
+};
 
 /**
  * Check if config has commerce event sources.
  * @param config - The configuration to check.
  */
-export function hasCommerceEvents(
-  config: CommerceAppConfigOutputModel,
-): config is CommerceEventsConfig {
+export function hasCommerceEvents<T extends AnyCommerceAppConfig>(
+  config: T,
+): config is T & CommerceEventsConfig<T> {
   return (
     Array.isArray(config?.eventing?.commerce) &&
     config.eventing.commerce.length > 0
@@ -335,9 +356,9 @@ export function hasCommerceEvents(
  * Check if config has external event sources.
  * @param config - The configuration to check.
  */
-export function hasExternalEvents(
-  config: CommerceAppConfigOutputModel,
-): config is ExternalEventsConfig {
+export function hasExternalEvents<T extends AnyCommerceAppConfig>(
+  config: T,
+): config is T & ExternalEventsConfig<T> {
   return (
     Array.isArray(config?.eventing?.external) &&
     config.eventing.external.length > 0
@@ -348,8 +369,8 @@ export function hasExternalEvents(
  * Check if config has any eventing configuration.
  * @param config - The configuration to check.
  */
-export function hasEventing(
-  config: CommerceAppConfigOutputModel,
-): config is EventsConfig {
+export function hasEventing<T extends AnyCommerceAppConfig>(
+  config: T,
+): config is T & EventsConfig<T> {
   return config.eventing !== undefined;
 }

@@ -11,7 +11,7 @@ const badRequest: (
 ) => ErrorResponse<BodyRecordWithMessage, HeadersRecord>;
 ```
 
-Defined in: [responses/presets.ts:88](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-core/source/responses/presets.ts#L88)
+Defined in: [responses/presets.ts:88](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-core/source/responses/presets.ts#L88)
 
 Creates an error response with the HTTP status code 400.
 See [buildErrorResponse](../functions/buildErrorResponse.md) for details on the response payload.

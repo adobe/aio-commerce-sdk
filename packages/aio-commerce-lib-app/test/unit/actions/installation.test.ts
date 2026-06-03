@@ -64,7 +64,7 @@ vi.mock("#management/index", async () => {
   };
 });
 
-import { installationRuntimeAction } from "#actions/installation";
+import { installationRuntimeAction } from "#actions/installation/index";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import { minimalValidConfig } from "#test/fixtures/config";
 import {

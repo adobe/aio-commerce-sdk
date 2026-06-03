@@ -96,10 +96,16 @@ This produces the following files, organized by extension point:
 - `src/commerce-configuration-1/.generated/actions/business-configuration/scope-tree.js`: handles scope hierarchy management for both Adobe Commerce and custom external scopes
 - `src/commerce-configuration-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
+> [!NOTE]
+> When the business config schema contains `dynamicList` fields, the manifest is emitted as an ESM module (`app.commerce.manifest.js`) instead of JSON, and no separate `configuration-schema.json` is generated. Generated actions resolve `dynamicList` fields on every request. Any external credentials a factory uses must be declared as `inputs` for each action that resolves the schema (in the corresponding `ext.config.yaml` of each action).
+
 **`commerce/backend-ui/1`**: Admin UI SDK (generated when `adminUiSdk.registration` is defined):
 
 - `src/commerce-backend-ui-1/.generated/actions/registration/index.js`: serves the Admin UI SDK registration object to Adobe Commerce
 - `src/commerce-backend-ui-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
+
+> [!NOTE]
+> Generated actions default to the `nodejs:24` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration.
 
 4. In your `app.config.yaml`, reference the generated extension configurations. If you have multiple extension points, add each as a new entry:
 

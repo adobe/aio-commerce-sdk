@@ -38,10 +38,13 @@ vi.mock("@adobe/aio-commerce-lib-config", async () => {
   };
 });
 
-import { configRuntimeAction } from "#actions/config";
+import { resolveBusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
+
+import { configRuntimeAction } from "#actions/config/index";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 
 import type { BusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 
 const configSchema = [
   {
@@ -70,6 +73,19 @@ describe("configRuntimeAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     byScopeIdMock.mockImplementation((scopeId: string) => ({ scopeId }));
+    initializeMock.mockImplementation(
+      async ({
+        schema,
+        params,
+      }: {
+        schema: BusinessConfigSchema;
+        params?: RuntimeActionParams;
+      }) => ({
+        configSchema: params
+          ? await resolveBusinessConfigSchema(schema, params)
+          : schema,
+      }),
+    );
   });
 
   describe("GET /", () => {
@@ -142,6 +158,7 @@ describe("configRuntimeAction", () => {
           expect.objectContaining({ name: "paasOnly" }),
           expect.objectContaining({ name: "saasOnly" }),
         ]),
+        params: expect.anything(),
       });
     });
 
@@ -174,6 +191,7 @@ describe("configRuntimeAction", () => {
           expect.objectContaining({ name: "shared" }),
           expect.objectContaining({ name: "paasOnly" }),
         ]),
+        params: expect.anything(),
       });
     });
 
@@ -214,6 +232,61 @@ describe("configRuntimeAction", () => {
       expect(result).toMatchObject({
         type: "error",
         error: { statusCode: 400 },
+      });
+    });
+
+    test("resolves dynamicList options before responding", async () => {
+      getConfigurationMock.mockResolvedValue({
+        scopeId: "store-1",
+        config: [],
+      });
+
+      const dynamicSchema = [
+        {
+          name: "paymentMethod",
+          label: "Payment Method",
+          type: "dynamicList",
+          selectionMode: "single",
+          options: () => [
+            { label: "Braintree", value: "braintree" },
+            { label: "PayPal", value: "paypal" },
+          ],
+          default: (opts) => opts[0].value,
+        },
+      ] satisfies BusinessConfigSchema;
+
+      const handler = configRuntimeAction({ configSchema: dynamicSchema });
+
+      const result = await handler(
+        createRuntimeActionParams({ query: "scopeId=store-1" }),
+      );
+
+      expect(result).toMatchObject({ type: "success", statusCode: 200 });
+      expect.assert(result.type === "success");
+      expect.assert(result.body);
+
+      const responseSchema = result.body.schema as BusinessConfigSchema;
+      expect(responseSchema[0]).toMatchObject({
+        name: "paymentMethod",
+        type: "list",
+        selectionMode: "single",
+        default: "braintree",
+        options: [
+          { label: "Braintree", value: "braintree" },
+          { label: "PayPal", value: "paypal" },
+        ],
+      });
+
+      // The handler passes the unresolved schema to initialize; resolution
+      // happens inside initialize itself.
+      expect(initializeMock).toHaveBeenCalledWith({
+        schema: expect.arrayContaining([
+          expect.objectContaining({
+            type: "dynamicList",
+            name: "paymentMethod",
+          }),
+        ]),
+        params: expect.anything(),
       });
     });
   });

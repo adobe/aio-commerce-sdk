@@ -18,7 +18,7 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import type { CommerceAppConfigOutputModel } from "./app";
+import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
 /** Schema for webhook field configuration (name and optional source). */
 const WebhookFieldSchema = v.object({
@@ -155,16 +155,18 @@ export type WebhookEntry = v.InferInput<typeof WebhookEntrySchema>;
 export type WebhooksConfiguration = v.InferInput<typeof WebhooksSchema>;
 
 /** Config type when webhooks are present (non-empty array). */
-export type WebhooksConfig = CommerceAppConfigOutputModel & {
-  webhooks: NonNullable<CommerceAppConfigOutputModel["webhooks"]>;
+export type WebhooksConfig<
+  T extends AnyCommerceAppConfig = CommerceAppConfigOutputModel,
+> = T & {
+  webhooks: NonNullable<T["webhooks"]>;
 };
 
 /**
  * Check if config has webhooks (non-empty array).
  * @param config - The configuration to check.
  */
-export function hasWebhooks(
-  config: CommerceAppConfigOutputModel,
-): config is WebhooksConfig {
+export function hasWebhooks<T extends AnyCommerceAppConfig>(
+  config: T,
+): config is T & WebhooksConfig<T> {
   return Array.isArray(config?.webhooks) && config.webhooks.length > 0;
 }

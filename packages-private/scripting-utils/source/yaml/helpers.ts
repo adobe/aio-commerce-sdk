@@ -14,7 +14,15 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
-import { Document, isMap, isSeq, parseDocument, YAMLMap, YAMLSeq } from "yaml";
+import {
+  Document,
+  isMap,
+  isPair,
+  isSeq,
+  parseDocument,
+  YAMLMap,
+  YAMLSeq,
+} from "yaml";
 
 import type { Node, Pair } from "yaml";
 
@@ -131,4 +139,42 @@ export function getOrCreateMap(
     createNode: () => new YAMLMap(),
     typeName: "map",
   });
+}
+
+/**
+ * Read the `inputs` map from an existing YAML action definition into a plain
+ * object. Used by codegen to merge developer-added inputs with the ones the
+ * generator manages, so regeneration does not strip user-added entries.
+ *
+ * @param existingAction - The YAML map representing the existing action.
+ */
+export function getExistingInputs(existingAction?: YAMLMap) {
+  const inputs = existingAction?.get("inputs");
+
+  if (!isMap(inputs)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    inputs.items.map((item) => {
+      if (!isPair(item)) {
+        return [];
+      }
+
+      return [String(item.key), item.value];
+    }),
+  );
+}
+
+/**
+ * Read a string field from an existing YAML action definition. Used by codegen
+ * to preserve developer-set values (e.g. `runtime`) across regeneration
+ * instead of overwriting them.
+ *
+ * @param key - The field to read.
+ * @param existingAction - The YAML map representing the existing action.
+ */
+export function getExistingString(key: string, existingAction?: YAMLMap) {
+  const value = existingAction?.get(key);
+  return typeof value === "string" ? value : undefined;
 }

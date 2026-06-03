@@ -43,7 +43,7 @@ describe("createOrUpdateExtConfig", () => {
                 "my-action": {
                   function: "actions/my-action.js",
                   web: "yes",
-                  runtime: "nodejs:22",
+                  runtime: "nodejs:24",
                 },
               },
             },
@@ -567,6 +567,155 @@ operations:
           expect(fileContent).not.toContain("impl: index.html");
         },
       );
+    });
+  });
+
+  describe("preserves custom action inputs", () => {
+    test("preserves developer-added inputs when regenerating runtime manifest", async () => {
+      const existingConfig = `
+runtimeManifest:
+  packages:
+    test-package:
+      license: Apache-2.0
+      actions:
+        test-action:
+          function: old/actions/test.js
+          web: yes
+          runtime: nodejs:24
+          inputs:
+            LOG_LEVEL: custom-log-level
+            AIO_COMMERCE_CONFIG_ENCRYPTION_KEY: custom-key
+            PAYMENT_API_KEY: $PAYMENT_API_KEY
+`;
+
+      await withTempFiles(
+        { "ext.config.yaml": existingConfig },
+        async (tempDir) => {
+          const configPath = join(tempDir, "ext.config.yaml");
+          const existingDoc = parseDocument(existingConfig);
+          const config = {
+            runtimeManifest: {
+              packages: {
+                "test-package": {
+                  actions: {
+                    "test-action": {
+                      function: "actions/test.js",
+                      inputs: {
+                        AIO_COMMERCE_CONFIG_ENCRYPTION_KEY:
+                          "$AIO_COMMERCE_CONFIG_ENCRYPTION_KEY",
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          };
+
+          await createOrUpdateExtConfig(configPath, config, existingDoc);
+          const fileContent = await readFile(configPath, "utf-8");
+
+          expect(fileContent).toContain("PAYMENT_API_KEY: $PAYMENT_API_KEY");
+          expect(fileContent).toContain("LOG_LEVEL: $LOG_LEVEL");
+          expect(fileContent).toContain(
+            "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY: $AIO_COMMERCE_CONFIG_ENCRYPTION_KEY",
+          );
+          expect(fileContent).not.toContain("custom-log-level");
+          expect(fileContent).not.toContain("custom-key");
+        },
+      );
+    });
+  });
+
+  describe("preserves the runtime field", () => {
+    test("keeps a developer-set runtime when regenerating", async () => {
+      const existingConfig = `
+runtimeManifest:
+  packages:
+    test-package:
+      license: Apache-2.0
+      actions:
+        test-action:
+          function: old/actions/test.js
+          web: yes
+          runtime: nodejs:24
+`;
+
+      await withTempFiles(
+        { "ext.config.yaml": existingConfig },
+        async (tempDir) => {
+          const configPath = join(tempDir, "ext.config.yaml");
+          const existingDoc = parseDocument(existingConfig);
+          const config = {
+            runtimeManifest: {
+              packages: {
+                "test-package": {
+                  actions: {
+                    "test-action": {
+                      function: "actions/test.js",
+                      runtime: "nodejs:22",
+                    },
+                  },
+                },
+              },
+            },
+          };
+
+          await createOrUpdateExtConfig(configPath, config, existingDoc);
+          const fileContent = await readFile(configPath, "utf-8");
+
+          expect(fileContent).toContain("runtime: nodejs:24");
+          expect(fileContent).not.toContain("runtime: nodejs:22");
+        },
+      );
+    });
+
+    test("uses the action's runtime when there is no existing manifest", async () => {
+      await withTempFiles({}, async (tempDir) => {
+        const configPath = join(tempDir, "ext.config.yaml");
+        const config = {
+          runtimeManifest: {
+            packages: {
+              "test-package": {
+                actions: {
+                  "test-action": {
+                    function: "actions/test.js",
+                    runtime: "nodejs:24",
+                  },
+                },
+              },
+            },
+          },
+        };
+
+        await createOrUpdateExtConfig(configPath, config);
+        const fileContent = await readFile(configPath, "utf-8");
+
+        expect(fileContent).toContain("runtime: nodejs:24");
+      });
+    });
+
+    test("falls back to nodejs:24 when neither existing nor action runtime is set", async () => {
+      await withTempFiles({}, async (tempDir) => {
+        const configPath = join(tempDir, "ext.config.yaml");
+        const config = {
+          runtimeManifest: {
+            packages: {
+              "test-package": {
+                actions: {
+                  "test-action": {
+                    function: "actions/test.js",
+                  },
+                },
+              },
+            },
+          },
+        };
+
+        await createOrUpdateExtConfig(configPath, config);
+        const fileContent = await readFile(configPath, "utf-8");
+
+        expect(fileContent).toContain("runtime: nodejs:24");
+      });
     });
   });
 

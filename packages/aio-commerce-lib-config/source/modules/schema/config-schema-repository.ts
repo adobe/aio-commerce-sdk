@@ -10,17 +10,18 @@
  * governing permissions and limitations under the License.
  */
 
-import type { BusinessConfigSchema } from "./types";
+import type { ResolvedBusinessConfigSchema } from "./types";
 
-// Global in-memory schema storage
-let __globalSchema: BusinessConfigSchema | null = null;
+// Global in-memory schema storage. The stored schema is always fully resolved
+// (no `dynamicList` fields) because `initialize` refuses unresolved schemas.
+let __globalSchema: ResolvedBusinessConfigSchema | null = null;
 
 /**
  * Sets the global schema in memory.
  *
  * @param schema - Schema to store in memory.
  */
-export function setGlobalSchema(schema: BusinessConfigSchema): void {
+export function setGlobalSchema(schema: ResolvedBusinessConfigSchema): void {
   __globalSchema = schema;
 }
 
@@ -29,7 +30,7 @@ export function setGlobalSchema(schema: BusinessConfigSchema): void {
  *
  * @returns The schema stored in memory or null if not set.
  */
-export function getGlobalSchema(): BusinessConfigSchema | null {
+export function getGlobalSchema(): ResolvedBusinessConfigSchema | null {
   return __globalSchema;
 }
 
@@ -39,7 +40,7 @@ export function getGlobalSchema(): BusinessConfigSchema | null {
  * @returns The schema stored in memory.
  * @throws Error if schema has not been initialized.
  */
-export function requireGlobalSchema(): BusinessConfigSchema {
+export function requireGlobalSchema(): ResolvedBusinessConfigSchema {
   const schema = __globalSchema;
 
   if (!schema) {

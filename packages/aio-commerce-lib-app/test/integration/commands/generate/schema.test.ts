@@ -22,8 +22,11 @@ import {
   getExtensionPointFolderPath,
 } from "#commands/constants";
 import { exec, run } from "#commands/generate/schema/main";
+import { expectFileToNotExist } from "#test/assertions/filesystem";
+import { dynamicOptionsConfigFile } from "#test/fixtures/business-config";
 import {
   configWithBusinessConfig,
+  configWithDynamicListOptions,
   minimalValidConfig,
 } from "#test/fixtures/config";
 import {
@@ -154,6 +157,20 @@ describe("commands/generate/schema", () => {
           );
         },
       );
+    });
+
+    test("does not emit a schema file when schema is dynamic", async () => {
+      const projectFiles = {
+        "package.json": JSON.stringify({ type: "module" }),
+        "app.commerce.config.js": dynamicOptionsConfigFile,
+      };
+
+      await withTempProject(projectFiles, async (tempDir) => {
+        await run(configWithDynamicListOptions);
+
+        const jsonPath = getSchemaPath(tempDir);
+        await expectFileToNotExist(jsonPath);
+      });
     });
 
     test("runs encryption setup when password fields exist but no key", async () => {

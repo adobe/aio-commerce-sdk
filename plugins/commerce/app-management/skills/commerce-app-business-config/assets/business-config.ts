@@ -81,6 +81,23 @@ export default defineConfig({
         label: "Enable Debug Mode",
         default: false, // optional boolean; defaults to false
       },
+      // Dynamic list — options resolved at runtime via a factory.
+      // Use when option values depend on merchant-specific data (e.g. payment
+      // methods enabled in the merchant's Commerce store). Any credentials the
+      // factory uses must be declared as `inputs` for the action that resolves
+      // the schema in that action's `ext.config.yaml`.
+      {
+        name: "default_payment_method",
+        type: "dynamicList",
+        selectionMode: "single",
+        label: "Default Payment Method",
+        // Receives the action's runtime params; may be sync or async.
+        // Example: `await fetchPaymentMethods(params.PAYMENT_API_KEY)` then
+        // map each entry to `{ label, value }`.
+        options: () => [{ label: "Credit Card", value: "cc" }],
+        // Required for single-select; optional for "multiple" (defaults to []).
+        default: (resolvedOptions) => resolvedOptions[0].value,
+      },
     ],
   },
 });

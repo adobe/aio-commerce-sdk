@@ -2,14 +2,7 @@
 
 ```ts
 const SchemaBusinessConfig: ObjectSchema<{
-  schema: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<"type", [VariantSchema<"selectionMode", [ObjectSchema<..., ...>, ObjectSchema<..., ...>], undefined>, ObjectSchema<{
-     default: OptionalSchema<..., ...>;
-     description: OptionalSchema<..., ...>;
-     env: OptionalSchema<..., ...>;
-     label: OptionalSchema<..., ...>;
-     name: SchemaWithPipe<...>;
-     type: LiteralSchema<..., ...>;
-   }, undefined>, ObjectSchema<{
+  schema: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<"type", [VariantSchema<"selectionMode", [ObjectSchema<..., ...>, ObjectSchema<..., ...>], undefined>, VariantSchema<"selectionMode", [ObjectSchema<..., ...>, ObjectSchema<..., ...>], undefined>, ObjectSchema<{
      default: OptionalSchema<..., ...>;
      description: OptionalSchema<..., ...>;
      env: OptionalSchema<..., ...>;
@@ -42,6 +35,26 @@ const SchemaBusinessConfig: ObjectSchema<{
      }[];
      selectionMode: "multiple";
      type: "list";
+   }
+     | {
+     default: SingleDefaultFactory;
+     description?: string;
+     env?: ...[];
+     label?: string;
+     name: string;
+     options: OptionsFactory;
+     selectionMode: "single";
+     type: "dynamicList";
+   }
+     | {
+     default?: MultipleDefaultFactory;
+     description?: string;
+     env?: ...[];
+     label?: string;
+     name: string;
+     options: OptionsFactory;
+     selectionMode: "multiple";
+     type: "dynamicList";
    }
      | {
      default: string;
@@ -94,6 +107,6 @@ const SchemaBusinessConfig: ObjectSchema<{
 }, undefined>;
 ```
 
-Defined in: [modules/schema/index.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-config/source/modules/schema/index.ts#L18)
+Defined in: [modules/schema/index.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-config/source/modules/schema/index.ts#L18)
 
-The schema used to validate the the business configuration settings.
+The schema used to validate the business configuration settings.

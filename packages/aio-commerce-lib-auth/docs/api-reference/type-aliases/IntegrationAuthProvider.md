@@ -9,7 +9,7 @@ type IntegrationAuthProvider = {
 };
 ```
 
-Defined in: [integration-auth/provider.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-auth/source/lib/integration-auth/provider.ts#L32)
+Defined in: [integration-auth/provider.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-auth/source/lib/integration-auth/provider.ts#L32)
 
 Defines an authentication provider for Adobe Commerce integrations.
 
@@ -22,7 +22,7 @@ getHeaders: (method: HttpMethodInput, url: AdobeCommerceUrl) =>
   IntegrationAuthHeaders;
 ```
 
-Defined in: [integration-auth/provider.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/a1c40b4c686e35858326a0a3cc4809a13e756e8b/packages/aio-commerce-lib-auth/source/lib/integration-auth/provider.ts#L33)
+Defined in: [integration-auth/provider.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-auth/source/lib/integration-auth/provider.ts#L33)
 
 #### Parameters
 

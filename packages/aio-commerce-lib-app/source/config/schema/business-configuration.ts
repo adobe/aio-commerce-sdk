@@ -10,30 +10,31 @@
  * governing permissions and limitations under the License.
  */
 
-import type { SetRequiredDeep } from "type-fest";
-import type { CommerceAppConfigOutputModel } from "./app";
+import type { AnyCommerceAppConfig } from "./app";
 
 // biome-ignore lint/performance/noBarrelFile: The business config schema lives in a separate package.
 export { SchemaBusinessConfig } from "@adobe/aio-commerce-lib-config";
 
 /** Config type when business config is present. */
-export type AppConfigWithBusinessConfig = CommerceAppConfigOutputModel & {
-  businessConfig: NonNullable<CommerceAppConfigOutputModel["businessConfig"]>;
+export type AppConfigWithBusinessConfig<T extends AnyCommerceAppConfig> = T & {
+  businessConfig: NonNullable<T["businessConfig"]>;
 };
 
 /** Config type when business config schema is present. */
-export type AppConfigWithBusinessConfigSchema = SetRequiredDeep<
-  AppConfigWithBusinessConfig,
-  "businessConfig.schema"
->;
+export type AppConfigWithBusinessConfigSchema<T extends AnyCommerceAppConfig> =
+  T & {
+    businessConfig: NonNullable<T["businessConfig"]> & {
+      schema: NonNullable<NonNullable<T["businessConfig"]>["schema"]>;
+    };
+  };
 
 /**
  * Check if config has business config.
  * @param config - The configuration to check.
  */
-export function hasBusinessConfig(
-  config: CommerceAppConfigOutputModel,
-): config is AppConfigWithBusinessConfig {
+export function hasBusinessConfig<T extends AnyCommerceAppConfig>(
+  config: T,
+): config is T & AppConfigWithBusinessConfig<T> {
   return config.businessConfig !== undefined;
 }
 
@@ -41,9 +42,9 @@ export function hasBusinessConfig(
  * Check if config has business config schema.
  * @param config - The configuration to check.
  */
-export function hasBusinessConfigSchema(
-  config: CommerceAppConfigOutputModel,
-): config is AppConfigWithBusinessConfigSchema {
+export function hasBusinessConfigSchema<T extends AnyCommerceAppConfig>(
+  config: T,
+): config is T & AppConfigWithBusinessConfigSchema<T> {
   return (
     config.businessConfig?.schema !== undefined &&
     config.businessConfig.schema.length > 0
