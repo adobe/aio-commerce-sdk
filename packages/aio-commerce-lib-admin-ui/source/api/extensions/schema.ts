@@ -14,16 +14,16 @@ import * as v from "valibot";
 
 /** Parameters for POST /V1/adminuisdk/extension. */
 export const ExtensionRegistrationParamsSchema = v.object({
-  extensionName: v.string(),
-  extensionTitle: v.string(),
-  extensionUrl: v.string(),
-  extensionWorkspace: v.string(),
+  extensionName: v.pipe(v.string(), v.minLength(1)),
+  extensionTitle: v.pipe(v.string(), v.minLength(1)),
+  extensionUrl: v.pipe(v.string(), v.url()),
+  extensionWorkspace: v.pipe(v.string(), v.minLength(1)),
 });
 
 /** Parameters for DELETE /V1/adminuisdk/extension/{workspaceName}/{extensionName}. */
 export const UnregisterExtensionParamsSchema = v.object({
-  workspaceName: v.string(),
-  extensionName: v.string(),
+  workspaceName: v.pipe(v.string(), v.minLength(1)),
+  extensionName: v.pipe(v.string(), v.minLength(1)),
 });
 
 /** The parameters accepted by POST /V1/adminuisdk/extension. */
@@ -35,3 +35,8 @@ export type ExtensionRegistrationParams = v.InferInput<
 export type UnregisterExtensionParams = v.InferInput<
   typeof UnregisterExtensionParamsSchema
 >;
+
+/** The response returned by POST /V1/adminuisdk/extension. */
+export type RegisterExtensionResponse = {
+  extensionId: string;
+};

@@ -1,5 +1,5 @@
 {
-  "name": "@adobe/aio-commerce-lib-admin-ui-sdk",
+  "name": "@adobe/aio-commerce-lib-admin-ui",
   "type": "module",
   "author": "Adobe Inc.",
   "version": "0.0.0",
@@ -25,9 +25,11 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/adobe/aio-commerce-sdk.git",
-    "directory": "packages/aio-commerce-lib-admin-ui-sdk"
+    "directory": "packages/aio-commerce-lib-admin-ui"
   },
   "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public",
     "exports": {
       "./api": {
         "import": {

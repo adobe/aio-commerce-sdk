@@ -32,25 +32,26 @@ describe("registerExtension", () => {
     vi.unstubAllEnvs();
   });
 
-  test("logs success when registerExtension call resolves without a response body", async () => {
+  test("logs success with extensionId when registerExtension call resolves", async () => {
     const logger = createMockLogger();
     const context = {
       ...createMockAdminUiSdkContext({
-        registerExtensionImpl: () => Promise.resolve(),
+        registerExtensionImpl: () =>
+          Promise.resolve({ extensionId: "ext-123" }),
       }),
       logger,
     };
 
     await expect(registerExtension(context)).resolves.toBeUndefined();
 
-    expect(context.adminUiSdkClient.registerExtension).toHaveBeenCalledWith({
+    expect(context.adminUiClient.registerExtension).toHaveBeenCalledWith({
       extensionName: "test-ns",
       extensionTitle: context.appData.projectTitle,
       extensionUrl: "https://test-ns.adobeio-static.net/index.html",
       extensionWorkspace: context.appData.workspaceName,
     });
     expect(logger.info).toHaveBeenCalledWith(
-      "Admin UI SDK extension registered successfully.",
+      expect.stringContaining("registered successfully: ext-123"),
     );
   });
 
@@ -99,6 +100,19 @@ describe("unregisterExtension", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
+  });
+
+  test("warns and returns without calling the client when __OW_NAMESPACE is not set", async () => {
+    vi.unstubAllEnvs();
+    const logger = createMockLogger();
+    const context = { ...createMockAdminUiSdkContext({}), logger };
+
+    await expect(unregisterExtension(context)).resolves.toBeUndefined();
+
+    expect(context.adminUiClient.unregisterExtension).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Continuing uninstall."),
+    );
   });
 
   test("warns with enriched error message when unregisterExtension call fails", async () => {

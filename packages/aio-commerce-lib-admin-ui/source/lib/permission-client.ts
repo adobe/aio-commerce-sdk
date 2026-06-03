@@ -13,17 +13,14 @@
 import { HTTPError } from "ky";
 
 import { checkPermission } from "#api/permissions/endpoints";
-import {
-  AdminUiSdkPermissionDeniedError,
-  AdminUiSdkPermissionError,
-} from "#errors";
+import { AdminUiPermissionDeniedError, AdminUiPermissionError } from "#errors";
 
 import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 
 const DEFAULT_CACHE_TTL_MS = 300_000;
 
 /** Options used to create an Admin UI SDK permission client. */
-export interface AdminUiSdkPermissionClientOptions {
+export interface AdminUiPermissionClientOptions {
   /** Milliseconds to cache a permission result. Default: 300_000 (5 minutes). Set to 0 to disable caching. */
   cacheTtlMs?: number;
   /** Return false instead of throwing when a network or parse error occurs. Default: true. */
@@ -33,11 +30,11 @@ export interface AdminUiSdkPermissionClientOptions {
 }
 
 /** Client for checking the current user's Admin UI SDK resource permissions. */
-export interface AdminUiSdkPermissionClient {
+export interface AdminUiPermissionClient {
   /**
    * Returns `true` if the current user has the given resource granted, `false` if denied.
    * Returns `false` on network or parse errors when `denyOnError: true` (default).
-   * Always throws `AdminUiSdkPermissionError` on 401, regardless of `denyOnError`.
+   * Always throws `AdminUiPermissionError` on 401, regardless of `denyOnError`.
    */
   check(resource: string): Promise<boolean>;
   /**
@@ -47,8 +44,8 @@ export interface AdminUiSdkPermissionClient {
   invalidate(resource?: string): void;
   /**
    * Resolves when the current user has the given resource granted.
-   * Throws `AdminUiSdkPermissionDeniedError` if denied.
-   * Throws `AdminUiSdkPermissionError` on 401, network, and parse errors.
+   * Throws `AdminUiPermissionDeniedError` if denied.
+   * Throws `AdminUiPermissionError` on 401, network, and parse errors.
    */
   require(resource: string): Promise<void>;
 }
@@ -59,7 +56,7 @@ type PermissionCheckResult =
       cacheable: true;
     }
   | {
-      error: AdminUiSdkPermissionError;
+      error: AdminUiPermissionError;
       cacheable: false;
     };
 
@@ -68,17 +65,17 @@ function isUnauthorizedError(error: unknown) {
 }
 
 function toPermissionError(error: unknown) {
-  return error instanceof AdminUiSdkPermissionError
+  return error instanceof AdminUiPermissionError
     ? error
-    : new AdminUiSdkPermissionError("Permission check failed", {
+    : new AdminUiPermissionError("Permission check failed", {
         cause: error,
       });
 }
 
 /** Creates a client for checking Admin UI SDK ACL resources. */
-export function getAdminUiSdkPermissionClient(
-  options: AdminUiSdkPermissionClientOptions,
-): AdminUiSdkPermissionClient {
+export function getAdminUiPermissionClient(
+  options: AdminUiPermissionClientOptions,
+): AdminUiPermissionClient {
   const {
     httpClient,
     cacheTtlMs = DEFAULT_CACHE_TTL_MS,
@@ -97,7 +94,7 @@ export function getAdminUiSdkPermissionClient(
       };
     } catch (error) {
       if (isUnauthorizedError(error)) {
-        throw new AdminUiSdkPermissionError("Unauthorized", { cause: error });
+        throw new AdminUiPermissionError("Unauthorized", { cause: error });
       }
 
       if (denyOnError) {
@@ -168,7 +165,7 @@ export function getAdminUiSdkPermissionClient(
       }
 
       if (!result.allowed) {
-        throw new AdminUiSdkPermissionDeniedError(resource);
+        throw new AdminUiPermissionDeniedError(resource);
       }
     },
     invalidate(resource?: string) {

@@ -15,7 +15,7 @@ export * from "./commerce";
 
 /** Options for controlling operations of the configuration library. */
 export type OperationOptions = {
-  /** Optional cache timeout in milliseconds. */
+  /** Optional cache timeout in seconds. */
   cacheTimeout?: number;
 };
 

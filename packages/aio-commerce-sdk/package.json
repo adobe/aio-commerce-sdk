@@ -76,14 +76,14 @@
         "default": "./dist/cjs/webhooks/*.cjs"
       }
     },
-    "./admin-ui-sdk/*": {
+    "./admin-ui/*": {
       "import": {
-        "types": "./dist/es/admin-ui-sdk/*.d.mts",
-        "default": "./dist/es/admin-ui-sdk/*.mjs"
+        "types": "./dist/es/admin-ui/*.d.mts",
+        "default": "./dist/es/admin-ui/*.mjs"
       },
       "require": {
-        "types": "./dist/cjs/admin-ui-sdk/*.d.cts",
-        "default": "./dist/cjs/admin-ui-sdk/*.cjs"
+        "types": "./dist/cjs/admin-ui/*.d.cts",
+        "default": "./dist/cjs/admin-ui/*.cjs"
       }
     },
     "./*": {
@@ -123,7 +123,7 @@
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-api": "workspace:*",
-    "@adobe/aio-commerce-lib-admin-ui-sdk": "workspace:*",
+    "@adobe/aio-commerce-lib-admin-ui": "workspace:*",
     "@adobe/aio-commerce-lib-events": "workspace:*",
     "@adobe/aio-commerce-lib-webhooks": "workspace:*",
     "type-fest": "catalog:"

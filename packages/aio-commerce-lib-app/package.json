@@ -112,7 +112,7 @@
     "test:ui": "vitest --ui --coverage"
   },
   "dependencies": {
-    "@adobe/aio-commerce-lib-admin-ui-sdk": "workspace:*",
+    "@adobe/aio-commerce-lib-admin-ui": "workspace:*",
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-config": "workspace:*",

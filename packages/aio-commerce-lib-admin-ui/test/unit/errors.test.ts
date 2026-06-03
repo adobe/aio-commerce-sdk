@@ -13,22 +13,19 @@
 import { CommerceSdkErrorBase } from "@adobe/aio-commerce-lib-core/error";
 import { describe, expect, it } from "vitest";
 
-import {
-  AdminUiSdkPermissionDeniedError,
-  AdminUiSdkPermissionError,
-} from "#errors";
+import { AdminUiPermissionDeniedError, AdminUiPermissionError } from "#errors";
 
-describe("AdminUiSdkPermissionError", () => {
+describe("AdminUiPermissionError", () => {
   it("extends CommerceSdkErrorBase", () => {
-    const error = new AdminUiSdkPermissionError("something went wrong");
+    const error = new AdminUiPermissionError("something went wrong");
 
     expect(error).toBeInstanceOf(CommerceSdkErrorBase);
-    expect(error).toBeInstanceOf(AdminUiSdkPermissionError);
+    expect(error).toBeInstanceOf(AdminUiPermissionError);
     expect(error.message).toBe("something went wrong");
   });
 
   it("forwards traceId", () => {
-    const error = new AdminUiSdkPermissionError("err", {
+    const error = new AdminUiPermissionError("err", {
       traceId: "trace-abc",
     });
 
@@ -37,23 +34,23 @@ describe("AdminUiSdkPermissionError", () => {
 
   it("is recognised by CommerceSdkErrorBase.isSdkError", () => {
     expect(
-      CommerceSdkErrorBase.isSdkError(new AdminUiSdkPermissionError("err")),
+      CommerceSdkErrorBase.isSdkError(new AdminUiPermissionError("err")),
     ).toBe(true);
   });
 });
 
-describe("AdminUiSdkPermissionDeniedError", () => {
-  it("extends AdminUiSdkPermissionError", () => {
-    const error = new AdminUiSdkPermissionDeniedError(
+describe("AdminUiPermissionDeniedError", () => {
+  it("extends AdminUiPermissionError", () => {
+    const error = new AdminUiPermissionDeniedError(
       "Acme_Promotions::dashboard",
     );
 
-    expect(error).toBeInstanceOf(AdminUiSdkPermissionError);
-    expect(error).toBeInstanceOf(AdminUiSdkPermissionDeniedError);
+    expect(error).toBeInstanceOf(AdminUiPermissionError);
+    expect(error).toBeInstanceOf(AdminUiPermissionDeniedError);
   });
 
   it("includes the resource in the message", () => {
-    const error = new AdminUiSdkPermissionDeniedError(
+    const error = new AdminUiPermissionDeniedError(
       "Acme_Promotions::dashboard",
     );
 
@@ -61,7 +58,7 @@ describe("AdminUiSdkPermissionDeniedError", () => {
   });
 
   it("exposes the resource property", () => {
-    const error = new AdminUiSdkPermissionDeniedError(
+    const error = new AdminUiPermissionDeniedError(
       "Acme_Promotions::dashboard",
     );
 

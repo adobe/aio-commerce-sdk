@@ -222,7 +222,7 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
-  packages/aio-commerce-lib-admin-ui-sdk:
+  packages/aio-commerce-lib-admin-ui:
     dependencies:
       '@adobe/aio-commerce-lib-api':
         specifier: workspace:*
@@ -301,9 +301,9 @@ importers:
 
   packages/aio-commerce-lib-app:
     dependencies:
-      '@adobe/aio-commerce-lib-admin-ui-sdk':
+      '@adobe/aio-commerce-lib-admin-ui':
         specifier: workspace:*
-        version: link:../aio-commerce-lib-admin-ui-sdk
+        version: link:../aio-commerce-lib-admin-ui
       '@adobe/aio-commerce-lib-api':
         specifier: workspace:*
         version: link:../aio-commerce-lib-api
@@ -625,9 +625,9 @@ importers:
 
   packages/aio-commerce-sdk:
     dependencies:
-      '@adobe/aio-commerce-lib-admin-ui-sdk':
+      '@adobe/aio-commerce-lib-admin-ui':
         specifier: workspace:*
-        version: link:../aio-commerce-lib-admin-ui-sdk
+        version: link:../aio-commerce-lib-admin-ui
       '@adobe/aio-commerce-lib-api':
         specifier: workspace:*
         version: link:../aio-commerce-lib-api
@@ -7001,7 +7001,7 @@ snapshots:
       oas-kit-common: 1.0.8
       reftools: 1.1.9
       yaml: 1.10.3
-      yargs: 17.0.1
+      yargs: 17.7.2
 
   oas-schema-walker@1.1.5: {}
 
@@ -7551,7 +7551,7 @@ snapshots:
       oas-validator: 5.0.8
       reftools: 1.1.9
       yaml: 1.10.3
-      yargs: 17.0.1
+      yargs: 17.7.2
     transitivePeerDependencies:
       - encoding
 

@@ -21,38 +21,43 @@ import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 import type { Options } from "ky";
 import type {
   ExtensionRegistrationParams,
+  RegisterExtensionResponse,
   UnregisterExtensionParams,
 } from "./schema";
 
 /**
- * Registers an Admin UI SDK extension with Commerce via POST /V1/adminuisdk/extension.
+ * Registers an Admin UI extension with Commerce via POST /V1/adminuisdk/extension.
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
  * @param params - The extension registration parameters.
  * @param fetchOptions - Optional Ky fetch options.
  *
+ * @throws A `CommerceSdkValidationError` if the parameters are invalid.
  * @throws An `HTTPError` if the status code is not 2XX.
  */
 export async function registerExtension(
   httpClient: AdobeCommerceHttpClient,
   params: ExtensionRegistrationParams,
   fetchOptions?: Options,
-): Promise<void> {
+): Promise<RegisterExtensionResponse> {
   const extension = parseOrThrow(ExtensionRegistrationParamsSchema, params);
 
-  await httpClient.post("adminuisdk/extension", {
-    ...fetchOptions,
-    json: { extension },
-  });
+  return httpClient
+    .post("adminuisdk/extension", {
+      ...fetchOptions,
+      json: { extension },
+    })
+    .json<RegisterExtensionResponse>();
 }
 
 /**
- * Unregisters an Admin UI SDK extension from Commerce via DELETE /V1/adminuisdk/extension/{workspaceName}/{extensionName}.
+ * Unregisters an Admin UI extension from Commerce via DELETE /V1/adminuisdk/extension/{workspaceName}/{extensionName}.
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
  * @param params - The workspace and extension names.
  * @param fetchOptions - Optional Ky fetch options.
  *
+ * @throws A `CommerceSdkValidationError` if the parameters are invalid.
  * @throws An `HTTPError` if the status code is not 2XX.
  */
 export async function unregisterExtension(
@@ -65,8 +70,12 @@ export async function unregisterExtension(
     params,
   );
 
-  await httpClient.delete(
-    `adminuisdk/extension/${workspaceName}/${extensionName}`,
-    fetchOptions,
-  );
+  return httpClient
+    .delete(
+      `adminuisdk/extension/${workspaceName}/${extensionName}`,
+      fetchOptions,
+    )
+    .then((_res) => {
+      // We set this `then` to make the response type `void`
+    });
 }

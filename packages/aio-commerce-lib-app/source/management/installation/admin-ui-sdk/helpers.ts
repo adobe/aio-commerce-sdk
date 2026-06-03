@@ -20,18 +20,22 @@ import type { AdminUiSdkExecutionContext } from "./utils";
  * Registers the extension with Commerce via POST /V1/adminuisdk/extension.
  *
  * @param context - The execution context providing the Admin UI SDK client and logger.
- * @returns The response from the Commerce API.
  */
 export async function registerExtension(context: AdminUiSdkExecutionContext) {
-  const { adminUiSdkClient, appData, logger } = context;
+  const { adminUiClient, appData, logger } = context;
+  const extensionName = process.env.__OW_NAMESPACE;
+
+  if (!extensionName) {
+    throw new Error("__OW_NAMESPACE environment variable is not set");
+  }
 
   logger.info(`Registering Admin UI SDK extension: ${appData.projectName}`);
 
-  await adminUiSdkClient
+  const { extensionId } = await adminUiClient
     .registerExtension({
-      extensionName: process.env.__OW_NAMESPACE ?? "",
+      extensionName,
       extensionTitle: appData.projectTitle,
-      extensionUrl: `https://${process.env.__OW_NAMESPACE}.adobeio-static.net/index.html`,
+      extensionUrl: `https://${extensionName}.adobeio-static.net/index.html`,
       extensionWorkspace: appData.workspaceName,
     })
     .catch((error: unknown) =>
@@ -42,7 +46,7 @@ export async function registerExtension(context: AdminUiSdkExecutionContext) {
       ),
     );
 
-  logger.info("Admin UI SDK extension registered successfully.");
+  logger.info(`Admin UI SDK extension registered successfully: ${extensionId}`);
 }
 
 /**
@@ -54,15 +58,22 @@ export async function registerExtension(context: AdminUiSdkExecutionContext) {
 export async function unregisterExtension(
   context: AdminUiSdkExecutionContext,
 ): Promise<void> {
-  const { adminUiSdkClient, appData, logger } = context;
-  const extensionName = process.env.__OW_NAMESPACE ?? "";
+  const { adminUiClient, appData, logger } = context;
+  const extensionName = process.env.__OW_NAMESPACE;
+
+  if (!extensionName) {
+    logger.warn(
+      "__OW_NAMESPACE environment variable is not set; skipping Admin UI SDK extension unregistration. Continuing uninstall.",
+    );
+    return;
+  }
 
   logger.info(
     `Unregistering Admin UI SDK extension "${extensionName}" from workspace "${appData.workspaceName}"...`,
   );
 
   try {
-    await adminUiSdkClient.unregisterExtension({
+    await adminUiClient.unregisterExtension({
       workspaceName: appData.workspaceName,
       extensionName,
     });

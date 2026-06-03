@@ -22,7 +22,7 @@ import { createAdminUiSdkStepContext } from "./utils";
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { AdminUiSdkConfig, AdminUiSdkExecutionContext } from "./utils";
 
-/** Leaf step that calls POST /V1/adminuisdk/extension to register the extension. */
+/** Leaf step that registers the extension (POST) on install and unregisters it (DELETE) on uninstall. */
 const registerExtensionStep = defineLeafStep({
   name: "register-extension",
   meta: {

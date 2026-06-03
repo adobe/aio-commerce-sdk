@@ -10,6 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Public API for the admin-ui-sdk/api entrypoint */
+/** biome-ignore-all lint/performance/noBarrelFile: Public API for the admin-ui/api entrypoint */
 
-export * from "@adobe/aio-commerce-lib-admin-ui-sdk/api";
+export * from "@adobe/aio-commerce-lib-admin-ui/api";

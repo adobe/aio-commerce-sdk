@@ -25,7 +25,7 @@ type PermissionCheckParams = {
 
 /**
  * Checks whether the current user has the given ACL resource granted via POST /V1/adminuisdk/permission/check.
- * This is the raw HTTP call — prefer {@link getAdminUiSdkPermissionClient} for caching and deduplication.
+ * This is the raw HTTP call — prefer {@link getAdminUiPermissionClient} for caching and deduplication.
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
  * @param params - The resource to check.

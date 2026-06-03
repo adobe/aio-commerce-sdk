@@ -10,17 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { CommerceSdkErrorBase } from "@adobe/aio-commerce-lib-core/error";
+/** biome-ignore-all lint/performance/noBarrelFile: This is the `@adobe/aio-commerce-lib-admin-ui/api` entrypoint. */
 
-/** Base error for Admin UI SDK permission helper failures. */
-export class AdminUiSdkPermissionError extends CommerceSdkErrorBase {}
+export * from "./errors";
+export * from "./lib/api-client";
+export * from "./lib/permission-client";
 
-/** Error thrown when the current user is denied access to an Admin UI SDK ACL resource. */
-export class AdminUiSdkPermissionDeniedError extends AdminUiSdkPermissionError {
-  public readonly resource: string;
-
-  public constructor(resource: string, options?: { traceId?: string }) {
-    super(`Admin UI SDK permission denied for resource: ${resource}`, options);
-    this.resource = resource;
-  }
-}
+export type * from "./api/extensions/schema";
+export type * from "./api/permissions/schema";

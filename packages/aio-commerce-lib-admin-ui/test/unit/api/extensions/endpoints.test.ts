@@ -29,14 +29,14 @@ const PARAMS = {
 };
 
 describe("registerExtension", () => {
-  it("POSTs to /V1/adminuisdk/extension with extension body and resolves without reading a response body", async () => {
+  it("POSTs to /V1/adminuisdk/extension and returns the extensionId from the response", async () => {
     let capturedBody: unknown;
     let capturedUrl = "";
 
     const fetchMock = vi.fn(async (input: Request) => {
       capturedUrl = input.url;
       capturedBody = await input.clone().json();
-      return new Response(null, { status: 204 });
+      return Response.json({ extensionId: "ext-123" }, { status: 200 });
     });
 
     const result = await registerExtension(
@@ -44,7 +44,7 @@ describe("registerExtension", () => {
       PARAMS,
     );
 
-    expect(result).toBeUndefined();
+    expect(result).toEqual({ extensionId: "ext-123" });
     expect(capturedUrl).toBe(REGISTER_URL);
     expect(capturedBody).toEqual({ extension: PARAMS });
   });
@@ -91,5 +91,33 @@ describe("unregisterExtension", () => {
         extensionName: "my-namespace",
       }),
     ).rejects.toThrow();
+  });
+});
+
+describe("registerExtension — validation", () => {
+  it("throws when extensionUrl is not a valid URL", async () => {
+    const fetchMock = vi.fn();
+
+    await expect(
+      registerExtension(makeHttpClient(fetchMock as typeof fetch), {
+        ...PARAMS,
+        extensionUrl: "not-a-url",
+      }),
+    ).rejects.toThrow();
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("throws when extensionName is empty", async () => {
+    const fetchMock = vi.fn();
+
+    await expect(
+      registerExtension(makeHttpClient(fetchMock as typeof fetch), {
+        ...PARAMS,
+        extensionName: "",
+      }),
+    ).rejects.toThrow();
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
