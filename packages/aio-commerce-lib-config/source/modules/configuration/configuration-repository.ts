@@ -108,6 +108,7 @@ export async function saveConfig(scopeCode: string, payload: string) {
  *
  * @param scopeCode - The scope code to persist configuration for.
  * @param payload - The configuration payload object.
+ * @param ttlSeconds - Time to live for the cached configuration value.
  */
 export async function persistConfig(
   scopeCode: string,
@@ -161,6 +162,8 @@ async function loadFromStateCache(scopeCode: string) {
  * Tries to load configuration from persisted files.
  *
  * @param scopeCode - The scope code to load configuration for.
+ * @param ttlSeconds - Time to live for the cached configuration value.
+
  * @returns Promise resolving to parsed configuration or null if not found.
  */
 async function loadFromPersistedFiles(scopeCode: string, ttlSeconds: number) {
@@ -203,6 +206,8 @@ async function loadFromPersistedFiles(scopeCode: string, ttlSeconds: number) {
  * Loads configuration with smart fallback strategy (state -> files -> cache).
  *
  * @param scopeCode - The scope code to load configuration for.
+ * @param ttlSeconds - Time to live for the cached configuration value.
+
  * @returns Promise resolving to configuration payload or null if not found.
  */
 export async function loadConfig(scopeCode: string, ttlSeconds: number) {
