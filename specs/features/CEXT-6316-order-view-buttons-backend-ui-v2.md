@@ -95,7 +95,8 @@ export default defineConfig({
         {
           buttonId: "delete-order",
           label: "Delete",
-          description: "Permanently removes the order and its associated records.",
+          description:
+            "Permanently removes the order and its associated records.",
           type: "view",
           path: "#/delete-order",
           level: 0,
@@ -107,7 +108,8 @@ export default defineConfig({
         {
           buttonId: "sync-inventory",
           label: "Sync inventory",
-          description: "Pushes the latest stock counts for this order's items to the ERP.",
+          description:
+            "Pushes the latest stock counts for this order's items to the ERP.",
           type: "worker",
           runtimeAction: "orders/sync-inventory",
           timeout: 15,
@@ -230,20 +232,20 @@ adopting the convention is left to the developer.
 
 ### Migration from v1
 
-| v1                                                                          | v2                          | Notes                                                                          |
-| --------------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------ |
-| `adminUiSdk.registration.order.viewButtons`                                 | `adminUi.order.viewButtons` | No `registration` wrapper in v2                                                |
-| `displayIframe: true` (or omitted)                                          | `type: "view"`              | Explicit discriminator; `view` aligns with App Builder operation naming        |
-| `displayIframe: false`                                                      | `type: "worker"`            | Explicit discriminator; `worker` aligns with `workerProcess` operations        |
-| `path` (under `displayIframe: false`)                                       | `runtimeAction`             | Operation name resolved by App Registry, not a URL                             |
-| `path` (under `displayIframe: true`)                                        | `path`                      | Unchanged — still the in-app iframe URL                                        |
-| `buttonId`, `label`, `level`, `sortOrder`                                   | _(same)_                    | Unchanged from v1                                                              |
-| `confirm.message`, `timeout`                                                | _(same)_                    | Unchanged from v1; `timeout` only valid on `type: "worker"`                    |
-| `sandbox`                                                                   | `sandbox`                   | Unchanged — only valid on `type: "view"`                                       |
-| `bannerNotification.orderViewButtons[*].successMessage` (keyed by buttonId) | `notifications.success`     | Inlined on the button entry; cross-reference removed                           |
-| `bannerNotification.orderViewButtons[*].errorMessage` (keyed by buttonId)   | `notifications.error`       | Inlined on the button entry; cross-reference removed                           |
-| _(none)_                                                                    | `description`               | New optional field; surfaced to install tooling alongside `label`              |
-| Extension point: `commerce/backend-ui/1`                                    | `commerce/backend-ui/2`     | Required change in `app.config.yaml` and `install.yaml`                        |
+| v1                                                                          | v2                          | Notes                                                                   |
+| --------------------------------------------------------------------------- | --------------------------- | ----------------------------------------------------------------------- |
+| `adminUiSdk.registration.order.viewButtons`                                 | `adminUi.order.viewButtons` | No `registration` wrapper in v2                                         |
+| `displayIframe: true` (or omitted)                                          | `type: "view"`              | Explicit discriminator; `view` aligns with App Builder operation naming |
+| `displayIframe: false`                                                      | `type: "worker"`            | Explicit discriminator; `worker` aligns with `workerProcess` operations |
+| `path` (under `displayIframe: false`)                                       | `runtimeAction`             | Operation name resolved by App Registry, not a URL                      |
+| `path` (under `displayIframe: true`)                                        | `path`                      | Unchanged — still the in-app iframe URL                                 |
+| `buttonId`, `label`, `level`, `sortOrder`                                   | _(same)_                    | Unchanged from v1                                                       |
+| `confirm.message`, `timeout`                                                | _(same)_                    | Unchanged from v1; `timeout` only valid on `type: "worker"`             |
+| `sandbox`                                                                   | `sandbox`                   | Unchanged — only valid on `type: "view"`                                |
+| `bannerNotification.orderViewButtons[*].successMessage` (keyed by buttonId) | `notifications.success`     | Inlined on the button entry; cross-reference removed                    |
+| `bannerNotification.orderViewButtons[*].errorMessage` (keyed by buttonId)   | `notifications.error`       | Inlined on the button entry; cross-reference removed                    |
+| _(none)_                                                                    | `description`               | New optional field; surfaced to install tooling alongside `label`       |
+| Extension point: `commerce/backend-ui/1`                                    | `commerce/backend-ui/2`     | Required change in `app.config.yaml` and `install.yaml`                 |
 
 Both keys can coexist during transition. Once all order view buttons have moved to `adminUi`,
 both the `adminUiSdk.registration.order.viewButtons` block and the corresponding
@@ -268,7 +270,9 @@ const OrderViewButtonSchema = v.variant("type", [
     type: v.literal("view"),
     buttonId: nonEmptyStringValueSchema("view button ID"),
     label: nonEmptyStringValueSchema("view button label"),
-    description: v.optional(nonEmptyStringValueSchema("view button description")),
+    description: v.optional(
+      nonEmptyStringValueSchema("view button description"),
+    ),
     path: nonEmptyStringValueSchema("view button path"),
     level: v.optional(ViewButtonLevelSchema),
     sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
@@ -280,7 +284,9 @@ const OrderViewButtonSchema = v.variant("type", [
     type: v.literal("worker"),
     buttonId: nonEmptyStringValueSchema("view button ID"),
     label: nonEmptyStringValueSchema("view button label"),
-    description: v.optional(nonEmptyStringValueSchema("view button description")),
+    description: v.optional(
+      nonEmptyStringValueSchema("view button description"),
+    ),
     runtimeAction: nonEmptyStringValueSchema("runtime action"),
     level: v.optional(ViewButtonLevelSchema),
     sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
