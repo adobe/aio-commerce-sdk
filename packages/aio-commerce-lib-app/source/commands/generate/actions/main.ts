@@ -2,7 +2,7 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { consola } from "consola";
 
 import {
-  BACKEND_UI_EXTENSION_POINT_ID,
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
@@ -57,7 +57,7 @@ export async function run(
   }
 
   if (hasAdminUi(appManifest)) {
-    await updateExtConfig(appManifest, BACKEND_UI_EXTENSION_POINT_ID);
+    await updateExtConfig(appManifest, BACKEND_UI_V2_EXTENSION_POINT_ID);
   }
 }
 

@@ -27,7 +27,7 @@ import { build } from "esbuild";
 
 import {
   APP_CONFIG_IMPORT_ALIAS,
-  BACKEND_UI_EXTENSION_POINT_ID,
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   getExtensionPointFolderPath,
@@ -67,7 +67,7 @@ export const TEMPLATES_DIR = join(__dirname, "templates");
 type ValidExtensionPointId =
   | typeof EXTENSIBILITY_EXTENSION_POINT_ID
   | typeof CONFIGURATION_EXTENSION_POINT_ID
-  | typeof BACKEND_UI_EXTENSION_POINT_ID;
+  | typeof BACKEND_UI_V2_EXTENSION_POINT_ID;
 
 const TYPESCRIPT_CONFIG_EXTENSIONS = new Set([".ts", ".mts", ".cts"]);
 const LEADING_DOT_SLASH_PATTERN = /^\.\//u;
@@ -308,7 +308,7 @@ export async function updateExtConfig(
       break;
     }
 
-    case BACKEND_UI_EXTENSION_POINT_ID: {
+    case BACKEND_UI_V2_EXTENSION_POINT_ID: {
       extConfig = buildAdminUiSdkExtConfig(appConfig);
       break;
     }

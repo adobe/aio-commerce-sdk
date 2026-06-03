@@ -15,7 +15,7 @@ import { syncImsCredentials } from "@aio-commerce-sdk/scripting-utils/env";
 import consola from "consola";
 
 import {
-  BACKEND_UI_EXTENSION_POINT_ID,
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
@@ -88,7 +88,7 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
 
   if (extension === "backend-ui/2") {
     if (hasAdminUi(appManifest)) {
-      await updateExtConfig(appManifest, BACKEND_UI_EXTENSION_POINT_ID);
+      await updateExtConfig(appManifest, BACKEND_UI_V2_EXTENSION_POINT_ID);
     }
     return;
   }

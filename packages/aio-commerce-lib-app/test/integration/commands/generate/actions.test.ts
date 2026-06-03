@@ -17,7 +17,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
-  BACKEND_UI_EXTENSION_POINT_ID,
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   GENERATED_ACTIONS_PATH,
@@ -284,7 +284,7 @@ describe("commands/generate/actions", () => {
 
           const extConfigPath = join(
             tempDir,
-            getExtensionPointFolderPath(BACKEND_UI_EXTENSION_POINT_ID),
+            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
             "ext.config.yaml",
           );
 
@@ -303,7 +303,7 @@ describe("commands/generate/actions", () => {
 
           const extConfigPath = join(
             tempDir,
-            getExtensionPointFolderPath(BACKEND_UI_EXTENSION_POINT_ID),
+            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
             "ext.config.yaml",
           );
 
@@ -312,7 +312,7 @@ describe("commands/generate/actions", () => {
           // No registration action should be generated
           const legacyRegistrationPath = join(
             tempDir,
-            getExtensionPointFolderPath(BACKEND_UI_EXTENSION_POINT_ID),
+            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
             ".generated/actions/registration/index.js",
           );
           expect(existsSync(legacyRegistrationPath)).toBe(false);

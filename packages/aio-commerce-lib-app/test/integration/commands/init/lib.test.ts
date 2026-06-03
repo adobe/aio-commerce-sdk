@@ -20,7 +20,7 @@ import { describe, expect, test, vi } from "vitest";
 
 import {
   APP_CONFIG_FILE,
-  BACKEND_UI_EXTENSION_POINT_ID,
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   INSTALL_YAML_FILE,
@@ -208,7 +208,7 @@ describe("commands/init/lib", () => {
             join(tempDir, APP_CONFIG_FILE),
             "utf-8",
           );
-          expect(content).toContain(BACKEND_UI_EXTENSION_POINT_ID);
+          expect(content).toContain(BACKEND_UI_V2_EXTENSION_POINT_ID);
           expect(content).toContain(EXTENSIBILITY_EXTENSION_POINT_ID);
         },
       );
@@ -290,7 +290,7 @@ describe("commands/init/lib", () => {
             "utf-8",
           );
 
-          expect(content).toContain(BACKEND_UI_EXTENSION_POINT_ID);
+          expect(content).toContain(BACKEND_UI_V2_EXTENSION_POINT_ID);
           expect(content).toContain(EXTENSIBILITY_EXTENSION_POINT_ID);
         },
       );
