@@ -29,48 +29,7 @@ import { buildOpenApiSpec, getOpenApiCacheKey, getServerUrl } from "./openapi";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
-import type { MassAction } from "#config/schema/admin-ui-sdk";
-import type {
-  CommerceAppConfig,
-  CommerceAppConfigOutputModel,
-} from "#config/schema/app";
-
-/**
- * Produces the response-shape adminUi block: each mass action's bare `id` is
- * replaced with the final `actionId` (`${metadata.id}::<id>`); all other fields
- * pass through unchanged. The stored config keeps `id`; only the served payload
- * carries `actionId`.
- */
-function withMassActionActionIds(config: CommerceAppConfigOutputModel) {
-  if (!config.adminUi) {
-    return config;
-  }
-
-  const prefix = `${config.metadata.id}::`;
-  const prefixEntity = <T extends { massActions?: MassAction[] }>(
-    entity: T | undefined,
-  ) =>
-    entity?.massActions
-      ? {
-          ...entity,
-          massActions: entity.massActions.map(({ id, ...rest }) => ({
-            actionId: `${prefix}${id}`,
-            ...rest,
-          })),
-        }
-      : entity;
-
-  const { order, product, customer, ...adminUiRest } = config.adminUi;
-  return {
-    ...config,
-    adminUi: {
-      ...adminUiRest,
-      ...(order ? { order: prefixEntity(order) } : {}),
-      ...(product ? { product: prefixEntity(product) } : {}),
-      ...(customer ? { customer: prefixEntity(customer) } : {}),
-    },
-  };
-}
+import type { CommerceAppConfig } from "#config/schema/app";
 
 /** The arguments required to create the runtime action for the app-config action. */
 export type RuntimeActionFactoryArgs = {
@@ -129,7 +88,7 @@ router.get("/", {
     const openApiSpecUrl = `${getServerUrl()}/app-config/openapi.json?ck=${getOpenApiCacheKey(domains)}`;
 
     return ok({
-      body: { ...withMassActionActionIds(config), openApiSpecUrl },
+      body: { ...config, openApiSpecUrl },
     });
   },
 });
