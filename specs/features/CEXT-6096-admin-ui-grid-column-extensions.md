@@ -180,6 +180,12 @@ the `workerProcess` operations.
 }
 ```
 
+### columnId uniqueness
+
+`columnId` values are declared by the developer as plain identifiers (e.g. `external_id`). The
+`app-config` endpoint serves them as-is; no SDK-side prefixing is applied. `columnId` collision
+handling across multiple installed apps is Commerce's responsibility.
+
 ### Column types
 
 | `type` value | Description                          |
