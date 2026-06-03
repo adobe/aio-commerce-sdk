@@ -44,7 +44,7 @@ describe("registerExtension", () => {
 
     await expect(registerExtension(context)).resolves.toBeUndefined();
 
-    expect(context.adminUiSdkClient.registerExtension).toHaveBeenCalledWith({
+    expect(context.adminUiClient.registerExtension).toHaveBeenCalledWith({
       extensionName: "test-ns",
       extensionTitle: context.appData.projectTitle,
       extensionUrl: "https://test-ns.adobeio-static.net/index.html",
@@ -109,7 +109,7 @@ describe("unregisterExtension", () => {
 
     await expect(unregisterExtension(context)).resolves.toBeUndefined();
 
-    expect(context.adminUiSdkClient.unregisterExtension).not.toHaveBeenCalled();
+    expect(context.adminUiClient.unregisterExtension).not.toHaveBeenCalled();
     expect(logger.warn).toHaveBeenCalledWith(
       expect.stringContaining("Continuing uninstall."),
     );

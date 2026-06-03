@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { createAdminUiSdkApiClient } from "@adobe/aio-commerce-lib-admin-ui/api";
+import { createAdminUiApiClient } from "@adobe/aio-commerce-lib-admin-ui/api";
 import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
@@ -26,20 +26,20 @@ export type AdminUiSdkConfig = CommerceAppConfigOutputModel & {
   adminUiSdk: NonNullable<CommerceAppConfigOutputModel["adminUiSdk"]>;
 };
 
-function createAdminUiSdkClient(params: RuntimeActionParams) {
+function createAdminUiClient(params: RuntimeActionParams) {
   const commerceClientParams = resolveCommerceHttpClientParams(params, {
     tryForwardAuthProvider: true,
   });
 
-  return createAdminUiSdkApiClient(commerceClientParams);
+  return createAdminUiApiClient(commerceClientParams);
 }
 
 /** The Admin UI SDK API client used during installation. */
-export type AdminUiSdkApiClient = ReturnType<typeof createAdminUiSdkClient>;
+export type AdminUiApiClient = ReturnType<typeof createAdminUiClient>;
 
 /** Context shared across Admin UI SDK installation steps. */
 export interface AdminUiSdkStepContext extends Record<string, unknown> {
-  get adminUiSdkClient(): AdminUiSdkApiClient;
+  get adminUiClient(): AdminUiApiClient;
 }
 
 /** The execution context for Admin UI SDK leaf steps. */
@@ -51,15 +51,15 @@ export const createAdminUiSdkStepContext: StepContextFactory<
   AdminUiSdkStepContext
 > = (installation: InstallationContext) => {
   const { params } = installation;
-  let adminUiSdkClient: AdminUiSdkApiClient | null = null;
+  let adminUiClient: AdminUiApiClient | null = null;
 
   return {
-    get adminUiSdkClient() {
-      if (adminUiSdkClient === null) {
-        adminUiSdkClient = createAdminUiSdkClient(params);
+    get adminUiClient() {
+      if (adminUiClient === null) {
+        adminUiClient = createAdminUiClient(params);
       }
 
-      return adminUiSdkClient;
+      return adminUiClient;
     },
   };
 };

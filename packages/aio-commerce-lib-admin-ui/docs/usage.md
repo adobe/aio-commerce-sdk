@@ -17,12 +17,12 @@ For a complete list of all available types, functions, and classes, see the [API
 
 ### API Client
 
-Use `createAdminUiSdkApiClient` to register and unregister Admin UI SDK extensions with Commerce:
+Use `createAdminUiApiClient` to register and unregister Admin UI SDK extensions with Commerce:
 
 ```typescript
-import { createAdminUiSdkApiClient } from "@adobe/aio-commerce-lib-admin-ui/api";
+import { createAdminUiApiClient } from "@adobe/aio-commerce-lib-admin-ui/api";
 
-const client = createAdminUiSdkApiClient({
+const client = createAdminUiApiClient({
   config: {
     baseUrl: "https://my-commerce-instance.com",
     flavor: "paas", // or "saas"

@@ -25,7 +25,7 @@ export function createMockAdminUiSdkContext(overrides?: {
 
   return {
     ...mockInstallation,
-    adminUiSdkClient: {
+    adminUiClient: {
       registerExtension: vi
         .fn()
         .mockImplementation(
@@ -37,6 +37,6 @@ export function createMockAdminUiSdkContext(overrides?: {
         .mockImplementation(
           overrides?.unregisterExtensionImpl ?? (() => Promise.resolve()),
         ),
-    } as unknown as AdminUiSdkExecutionContext["adminUiSdkClient"],
+    } as unknown as AdminUiSdkExecutionContext["adminUiClient"],
   };
 }

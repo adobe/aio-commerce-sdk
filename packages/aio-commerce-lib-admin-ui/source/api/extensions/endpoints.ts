@@ -26,7 +26,7 @@ import type {
 } from "./schema";
 
 /**
- * Registers an Admin UI SDK extension with Commerce via POST /V1/adminuisdk/extension.
+ * Registers an Admin UI extension with Commerce via POST /V1/adminuisdk/extension.
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
  * @param params - The extension registration parameters.
@@ -51,7 +51,7 @@ export async function registerExtension(
 }
 
 /**
- * Unregisters an Admin UI SDK extension from Commerce via DELETE /V1/adminuisdk/extension/{workspaceName}/{extensionName}.
+ * Unregisters an Admin UI extension from Commerce via DELETE /V1/adminuisdk/extension/{workspaceName}/{extensionName}.
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
  * @param params - The workspace and extension names.

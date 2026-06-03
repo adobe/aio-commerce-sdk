@@ -87,12 +87,10 @@ describe("admin-ui-sdk installation module", () => {
 
       await registerExtensionStep.uninstall?.(configWithAdminUiSdk, context);
 
-      expect(context.adminUiSdkClient.unregisterExtension).toHaveBeenCalledWith(
-        {
-          workspaceName: context.appData.workspaceName,
-          extensionName: "test-namespace",
-        },
-      );
+      expect(context.adminUiClient.unregisterExtension).toHaveBeenCalledWith({
+        workspaceName: context.appData.workspaceName,
+        extensionName: "test-namespace",
+      });
     });
 
     test("should not throw when the uninstall call fails (best-effort)", async () => {

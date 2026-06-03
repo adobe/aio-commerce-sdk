@@ -20,18 +20,18 @@ import * as extensionEndpoints from "#api/extensions/endpoints";
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 
 /**
- * Creates a new API client for the Admin UI SDK API with all available operations.
+ * Creates a new API client for the Admin UI API with all available operations.
  *
  * @param params - The parameters to build the Commerce HTTP client.
  */
-export function createAdminUiSdkApiClient(params: CommerceHttpClientParams) {
+export function createAdminUiApiClient(params: CommerceHttpClientParams) {
   return ApiClient.create(new AdobeCommerceHttpClient(params), {
     ...extensionEndpoints,
   });
 }
 
 /**
- * An API client for the Admin UI SDK API with all operations.
- * @see {@link createAdminUiSdkApiClient}
+ * An API client for the Admin UI API with all operations.
+ * @see {@link createAdminUiApiClient}
  */
-export type AdminUiSdkApiClient = ReturnType<typeof createAdminUiSdkApiClient>;
+export type AdminUiApiClient = ReturnType<typeof createAdminUiApiClient>;
