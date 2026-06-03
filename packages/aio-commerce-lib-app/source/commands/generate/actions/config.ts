@@ -13,6 +13,7 @@
 import { join } from "node:path";
 
 import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
+import { hasAdminUi } from "#config/schema/admin-ui-sdk";
 import { requiresInstallation } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
@@ -204,7 +205,24 @@ export function buildBusinessConfigurationExtConfig() {
 }
 
 /** Builds the ext.config.yaml configuration for the Admin UI SDK backend-ui extension. */
-export function buildAdminUiSdkExtConfig() {
+export function buildAdminUiSdkExtConfig(
+  appConfig: CommerceAppConfigOutputModel,
+) {
+  const workerRuntimeActions = hasAdminUi(appConfig)
+    ? [
+        ...new Set(
+          [
+            appConfig.adminUi.order,
+            appConfig.adminUi.product,
+            appConfig.adminUi.customer,
+          ]
+            .flatMap((entity) => entity?.massActions ?? [])
+            .filter((action) => action.type === "worker")
+            .map((action) => action.runtimeAction),
+        ),
+      ]
+    : [];
+
   return {
     hooks: {
       "pre-app-build":
@@ -212,6 +230,14 @@ export function buildAdminUiSdkExtConfig() {
     },
     operations: {
       view: [{ type: "web", impl: "index.html" }],
+      ...(workerRuntimeActions.length > 0
+        ? {
+            workerProcess: workerRuntimeActions.map((impl) => ({
+              type: "action" as const,
+              impl,
+            })),
+          }
+        : {}),
     },
     web: "web-src",
   } satisfies ExtConfig;

@@ -24,6 +24,7 @@ import {
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
   configWithExternalEventing,
+  configWithFullAdminUiSdk,
   configWithWebhooks,
   minimalValidConfig,
 } from "#test/fixtures/config";
@@ -146,22 +147,34 @@ describe("buildAppManagementExtConfig", () => {
 
 describe("buildAdminUiSdkExtConfig", () => {
   test("declares operations.view entry for the admin UI iframe", () => {
-    const config = buildAdminUiSdkExtConfig();
+    const config = buildAdminUiSdkExtConfig(minimalValidConfig);
     expect(config.operations?.view).toEqual([
       { type: "web", impl: "index.html" },
     ]);
   });
 
   test("declares top-level web source directory", () => {
-    const config = buildAdminUiSdkExtConfig();
+    const config = buildAdminUiSdkExtConfig(minimalValidConfig);
     expect(config.web).toBe("web-src");
   });
 
   test("pre-app-build hook uses backend-ui/2", () => {
-    const result = buildAdminUiSdkExtConfig();
+    const result = buildAdminUiSdkExtConfig(minimalValidConfig);
     const preBuildHook = result.hooks?.["pre-app-build"] ?? "";
 
     expect(preBuildHook).toMatch(BACKEND_UI_EXTENSION_MATCHER);
+  });
+
+  test("includes workerProcess entries for worker mass actions", () => {
+    const config = buildAdminUiSdkExtConfig(configWithFullAdminUiSdk);
+    expect(config.operations?.workerProcess).toEqual([
+      { type: "action", impl: "customers/export-customers" },
+    ]);
+  });
+
+  test("omits workerProcess when no worker mass actions are configured", () => {
+    const config = buildAdminUiSdkExtConfig(minimalValidConfig);
+    expect(config.operations?.workerProcess).toBeUndefined();
   });
 });
 

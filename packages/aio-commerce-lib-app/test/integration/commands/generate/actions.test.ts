@@ -276,6 +276,25 @@ describe("commands/generate/actions", () => {
       );
     });
 
+    test("includes workerProcess for worker mass actions in backend-ui/2 ext.config.yaml", async () => {
+      await withTempProject(
+        { ...EMPTY_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await run(configWithFullAdminUiSdk, tempDir);
+
+          const extConfigPath = join(
+            tempDir,
+            getExtensionPointFolderPath(BACKEND_UI_EXTENSION_POINT_ID),
+            "ext.config.yaml",
+          );
+
+          const content = await readFile(extConfigPath, "utf-8");
+          expect(content).toContain("workerProcess");
+          expect(content).toContain("customers/export-customers");
+        },
+      );
+    });
+
     test("generates ext.config.yaml for backend-ui/2 when adminUi is configured", async () => {
       await withTempProject(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },

@@ -309,7 +309,7 @@ export async function updateExtConfig(
     }
 
     case BACKEND_UI_EXTENSION_POINT_ID: {
-      extConfig = buildAdminUiSdkExtConfig();
+      extConfig = buildAdminUiSdkExtConfig(appConfig);
       break;
     }
   }
