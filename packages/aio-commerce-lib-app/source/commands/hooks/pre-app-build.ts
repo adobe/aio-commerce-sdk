@@ -15,6 +15,7 @@ import { syncImsCredentials } from "@aio-commerce-sdk/scripting-utils/env";
 import consola from "consola";
 
 import {
+  BACKEND_UI_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
@@ -24,10 +25,12 @@ import {
   prepareRuntimeAppConfigModule,
   readExtConfig,
   TEMPLATES_DIR,
+  updateExtConfig,
 } from "#commands/generate/actions/lib";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import { loadAppManifest } from "#commands/utils";
+import { hasAdminUi } from "#config/index";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
 
@@ -84,6 +87,9 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
   }
 
   if (extension === "backend-ui/2") {
+    if (hasAdminUi(appManifest)) {
+      await updateExtConfig(appManifest, BACKEND_UI_EXTENSION_POINT_ID);
+    }
     return;
   }
 
