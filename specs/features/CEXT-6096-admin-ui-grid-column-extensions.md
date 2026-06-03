@@ -361,14 +361,6 @@ enforce separation.
 Grid columns remain coupled to API Mesh, blocking apps that don't need federation, and the wire
 contract remains undocumented. The multi-environment `meshId` problem has no SDK-level solution.
 
-## Unresolved questions
-
-**Single-operation constraint.**
-Can the same `runtimeAction` value appear in `order.gridColumns` and `customer.gridColumns`? The
-SDK imposes no uniqueness constraint — the same operation name can appear in multiple grid column
-blocks. A single handler would then receive requests for both grid types and branch on `gridType`.
-Confirm this is correct and no constraint should be added.
-
 ## Future possibilities
 
 - Removal of `adminUiSdk` grid columns and `commerce/backend-ui/1` once migration is complete.
