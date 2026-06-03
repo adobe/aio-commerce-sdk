@@ -176,6 +176,47 @@ describe("buildAdminUiSdkExtConfig", () => {
     const config = buildAdminUiSdkExtConfig(minimalValidConfig);
     expect(config.operations?.workerProcess).toBeUndefined();
   });
+
+  test("omits workerProcess when adminUi has only view mass actions", () => {
+    const config = buildAdminUiSdkExtConfig(configWithAdminUiSdk);
+    expect(config.operations?.workerProcess).toBeUndefined();
+  });
+
+  test("deduplicates workerProcess entries when the same runtimeAction appears on multiple entities", () => {
+    const config = buildAdminUiSdkExtConfig({
+      metadata: {
+        id: "app",
+        displayName: "App",
+        description: "App",
+        version: "1.0.0",
+      },
+      adminUi: {
+        order: {
+          massActions: [
+            {
+              actionId: "app::export",
+              label: "Export",
+              type: "worker",
+              runtimeAction: "pkg/export",
+            },
+          ],
+        },
+        customer: {
+          massActions: [
+            {
+              actionId: "app::export-c",
+              label: "Export",
+              type: "worker",
+              runtimeAction: "pkg/export",
+            },
+          ],
+        },
+      },
+    });
+    expect(config.operations?.workerProcess).toEqual([
+      { type: "action", impl: "pkg/export" },
+    ]);
+  });
 });
 
 describe("buildBusinessConfigurationExtConfig", () => {
