@@ -482,8 +482,6 @@ export default defineCustomInstallationStep(async (config, context) => {
 #### Admin UI SDK Configuration
 
 > **Deprecated:** `adminUiSdk` and `commerce/backend-ui/1` will be removed from the SDK. Migrate to the `adminUi` config key and `commerce/backend-ui/2` extension point. Grid columns are already supported — see [Admin UI Configuration](#admin-ui-configuration) below. Support for migrating remaining extension points (mass actions, menus, view buttons, custom fees) to `commerce/backend-ui/2` will follow in subsequent releases.
->
-> Requires `magento/commerce-backend-uix` version `<!-- TODO: minimum version supporting commerce/backend-ui/2 -->` or later.
 
 The `adminUiSdk.registration` field declares the registration payload served by the Admin UI SDK runtime action. When defined, `init` and `generate all` automatically wire up the `commerce/backend-ui/1` extension, including the generated runtime action and the `pre-app-build` hook that keeps it in sync with your config. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
@@ -648,6 +646,8 @@ Every field of `adminUiSdk.registration` is optional — configure only the exte
 #### Admin UI Configuration
 
 > **Experimental:** Admin UI support on `commerce/backend-ui/2` is not yet production-ready. The API may change in future releases.
+>
+> Requires `magento/commerce-backend-uix` version `<!-- TODO: minimum version supporting commerce/backend-ui/2 -->` or later.
 
 The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. When defined, `init` and `generate all` automatically wire up the extension, including the generated runtime action, the `pre-app-build` hook, and the `workerProcess` declarations in `ext.config.yaml`. Currently supported: grid column extensions. Mass actions, menus, view buttons, and custom fees will follow.
 
