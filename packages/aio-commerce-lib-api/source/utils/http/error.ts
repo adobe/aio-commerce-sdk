@@ -28,10 +28,14 @@ import { HTTPError } from "ky";
  *
  * @example
  * // Commerce returns { "message": "Provider already exists" } with status 400
- * unwrapHttpError(err)
+ * await unwrapHttpError(err)
  * // → "HTTP 400 Bad Request — Provider already exists"
  */
-export function unwrapHttpError(error: unknown): string {
+export function unwrapHttpError(error: unknown): Promise<string> {
+  return Promise.resolve(formatHttpError(error));
+}
+
+function formatHttpError(error: unknown): string {
   if (!(error instanceof HTTPError)) {
     return error instanceof Error ? error.message : String(error);
   }

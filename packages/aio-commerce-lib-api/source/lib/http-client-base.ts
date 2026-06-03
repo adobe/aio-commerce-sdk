@@ -10,9 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { toKyOptions } from "#utils/http/fetch-options";
+import { toFetchOptions, toKyOptions } from "#utils/http/fetch-options";
 
-import type { Input, KyInstance, ResponsePromise } from "ky";
+import type { Input, KyInstance, Options, ResponsePromise } from "ky";
 import type { FetchOptions } from "#utils/http/fetch-options";
 
 type HttpMethod = (url: Input, options?: FetchOptions) => ResponsePromise;
@@ -27,6 +27,66 @@ type HttpClient = {
   retry: KyInstance["retry"];
   stop: KyInstance["stop"];
 };
+
+function omitLeadingHooks<THook>(
+  parentHooks: THook[] | undefined,
+  hooks: THook[] | undefined,
+) {
+  if (!(hooks && parentHooks)) {
+    return hooks;
+  }
+
+  let offset = 0;
+  while (offset < parentHooks.length && hooks[offset] === parentHooks[offset]) {
+    offset += 1;
+  }
+
+  return hooks.slice(offset);
+}
+
+function omitInheritedHooks(
+  parentOptions: FetchOptions,
+  options: FetchOptions,
+): FetchOptions {
+  const { hooks, ...rest } = options;
+
+  if (!hooks) {
+    return options;
+  }
+
+  const parentHooks = parentOptions.hooks;
+  const nextHooks: NonNullable<FetchOptions["hooks"]> = {};
+
+  if ("beforeRequest" in hooks) {
+    nextHooks.beforeRequest = omitLeadingHooks(
+      parentHooks?.beforeRequest,
+      hooks.beforeRequest,
+    );
+  }
+
+  if ("afterResponse" in hooks) {
+    nextHooks.afterResponse = omitLeadingHooks(
+      parentHooks?.afterResponse,
+      hooks.afterResponse,
+    );
+  }
+
+  if ("beforeError" in hooks) {
+    nextHooks.beforeError = omitLeadingHooks(
+      parentHooks?.beforeError,
+      hooks.beforeError,
+    );
+  }
+
+  if ("beforeRetry" in hooks) {
+    nextHooks.beforeRetry = omitLeadingHooks(
+      parentHooks?.beforeRetry,
+      hooks.beforeRetry,
+    );
+  }
+
+  return { ...rest, hooks: nextHooks };
+}
 
 /**
  * Base class for HTTP clients.
@@ -89,8 +149,15 @@ export class HttpClientBase<T> implements HttpClient {
   ) {
     const kyOptions =
       typeof options === "function"
-        ? (parent: Parameters<KyInstance["extend"]>[0]) =>
-            toKyOptions(options(parent as FetchOptions))
+        ? (parent: Options) => {
+            const parentFetchOptions = toFetchOptions(parent);
+            return toKyOptions(
+              omitInheritedHooks(
+                parentFetchOptions,
+                options(parentFetchOptions),
+              ),
+            );
+          }
         : toKyOptions(options);
 
     const client = Object.freeze(this.httpClient.extend(kyOptions));

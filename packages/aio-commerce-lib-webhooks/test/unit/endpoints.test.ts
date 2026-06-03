@@ -75,22 +75,23 @@ describe("Webhook endpoints", () => {
 
   describe("subscribeWebhook", () => {
     test("calls POST webhooks/subscribe with { webhook: params }", async () => {
-      const { client, postMock } = makeHttpClient(null);
+      const { client, postMock, jsonFn } = makeHttpClient(null);
       await subscribeWebhook(client, VALID_SUBSCRIBE_PARAMS);
       expect(postMock).toHaveBeenCalledWith(
         "webhooks/subscribe",
         expect.objectContaining({ json: { webhook: VALID_SUBSCRIBE_PARAMS } }),
       );
+      expect(jsonFn).not.toHaveBeenCalled();
     });
 
-    test("throws on invalid params (missing required field)", () => {
+    test("throws on invalid params (missing required field)", async () => {
       const { client } = makeHttpClient(null);
-      expect(() =>
+      await expect(
         subscribeWebhook(client, {
           // missing webhook_type, batch_name, hook_name, url
           webhook_method: "observer.catalog_product_save_after",
         } as Parameters<typeof subscribeWebhook>[1]),
-      ).toThrow();
+      ).rejects.toThrow();
     });
 
     test("includes optional fields in the request body when provided", async () => {
@@ -119,7 +120,7 @@ describe("Webhook endpoints", () => {
     };
 
     test("calls POST webhooks/unsubscribe with { webhook: params }", async () => {
-      const { client, postMock } = makeHttpClient(null);
+      const { client, postMock, jsonFn } = makeHttpClient(null);
       await unsubscribeWebhook(client, VALID_UNSUBSCRIBE_PARAMS);
       expect(postMock).toHaveBeenCalledWith(
         "webhooks/unsubscribe",
@@ -127,18 +128,19 @@ describe("Webhook endpoints", () => {
           json: { webhook: VALID_UNSUBSCRIBE_PARAMS },
         }),
       );
+      expect(jsonFn).not.toHaveBeenCalled();
     });
 
-    test("throws on invalid params (missing hook_name)", () => {
+    test("throws on invalid params (missing hook_name)", async () => {
       const { client } = makeHttpClient(null);
-      expect(() =>
+      await expect(
         unsubscribeWebhook(client, {
           webhook_method: "observer.catalog_product_save_after",
           webhook_type: "after",
           batch_name: "my_batch",
           // missing hook_name
         } as Parameters<typeof unsubscribeWebhook>[1]),
-      ).toThrow();
+      ).rejects.toThrow();
     });
   });
 

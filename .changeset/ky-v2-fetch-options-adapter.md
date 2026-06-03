@@ -4,4 +4,4 @@
 "@adobe/aio-commerce-lib-webhooks": minor
 ---
 
-Upgrade ky to v2. Introduces `FetchOptions`, an SDK-owned type that replaces ky's `Options` in all public APIs. Hook signatures use positional-argument form and expose all ky v2 state fields (`options: NormalizedOptions`, `retryCount`) — existing `(request) => ...` hooks continue to work unchanged. `HTTPError` is now exported from `@adobe/aio-commerce-lib-api` so consumers no longer need to import it directly from ky. The ky upgrade is now an internal implementation detail.
+Introduce SDK-owned fetch option types for HTTP clients and export `HTTPError` from `@adobe/aio-commerce-lib-api`, so consumers can use stable SDK imports for request options and HTTP errors.

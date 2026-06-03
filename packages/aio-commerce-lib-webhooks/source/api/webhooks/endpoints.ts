@@ -59,19 +59,17 @@ export function getWebhookList(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function subscribeWebhook(
+export async function subscribeWebhook(
   httpClient: AdobeCommerceHttpClient,
   params: WebhookSubscribeParams,
   fetchOptions?: FetchOptions,
-) {
+): Promise<void> {
   const validatedParams = v.parse(WebhookSubscribeParamsSchema, params);
 
-  return httpClient
-    .post("webhooks/subscribe", {
-      ...fetchOptions,
-      json: { webhook: validatedParams },
-    })
-    .json<void>();
+  await httpClient.post("webhooks/subscribe", {
+    ...fetchOptions,
+    json: { webhook: validatedParams },
+  });
 }
 
 /**
@@ -85,19 +83,17 @@ export function subscribeWebhook(
  * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
  * @throws An {@link HTTPError} If the status code is not 2XX.
  */
-export function unsubscribeWebhook(
+export async function unsubscribeWebhook(
   httpClient: AdobeCommerceHttpClient,
   params: WebhookUnsubscribeParams,
   fetchOptions?: FetchOptions,
-) {
+): Promise<void> {
   const validatedParams = v.parse(WebhookUnsubscribeParamsSchema, params);
 
-  return httpClient
-    .post("webhooks/unsubscribe", {
-      ...fetchOptions,
-      json: { webhook: validatedParams },
-    })
-    .json<void>();
+  await httpClient.post("webhooks/unsubscribe", {
+    ...fetchOptions,
+    json: { webhook: validatedParams },
+  });
 }
 
 /**

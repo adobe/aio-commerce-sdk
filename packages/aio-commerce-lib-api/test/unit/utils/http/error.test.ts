@@ -16,6 +16,12 @@ import { makeHttpError } from "#test/fixtures/http-error";
 import { unwrapHttpError } from "#utils/http/error";
 
 describe("unwrapHttpError", () => {
+  test("keeps Promise-returning API for callers using .then", async () => {
+    await unwrapHttpError(new Error("plain error")).then((result) => {
+      expect(result).toBe("plain error");
+    });
+  });
+
   test("falls back to error.message for a plain Error", async () => {
     const result = await unwrapHttpError(new Error("plain error"));
     expect(result).toBe("plain error");

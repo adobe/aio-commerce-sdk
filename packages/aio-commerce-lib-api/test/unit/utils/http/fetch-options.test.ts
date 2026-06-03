@@ -13,7 +13,7 @@
 import { assert, describe, expect, test, vi } from "vitest";
 
 import { makeHttpError } from "#test/fixtures/http-error";
-import { toKyOptions } from "#utils/http/fetch-options";
+import { toFetchOptions, toKyOptions } from "#utils/http/fetch-options";
 
 import type { KyRequest, KyResponse, NormalizedOptions } from "ky";
 
@@ -47,6 +47,41 @@ describe("utils/http/fetch-options", () => {
         timeout: 5000,
       });
       expect(result.hooks).toBeDefined();
+    });
+
+    test("maps legacy prefixUrl to ky v2 prefix", () => {
+      const result = toKyOptions({
+        prefixUrl: "https://example.com/api",
+      });
+
+      expect(result.prefix).toBe("https://example.com/api");
+      expect("prefixUrl" in result).toBe(false);
+    });
+
+    test("maps ky v2 prefix to legacy prefixUrl", () => {
+      const result = toFetchOptions({
+        prefix: "https://example.com/api",
+      });
+
+      expect(result.prefixUrl).toBe("https://example.com/api");
+      expect("prefix" in result).toBe(false);
+    });
+
+    test("wraps ky v2 hooks into SDK positional hooks", () => {
+      const kyHook = vi.fn();
+      const result = toFetchOptions({
+        hooks: { beforeRequest: [kyHook] },
+      });
+      const sdkHook = result.hooks?.beforeRequest?.[0];
+      assert(sdkHook !== undefined);
+
+      sdkHook(mockRequest, mockOptions, 0);
+
+      expect(kyHook).toHaveBeenCalledWith({
+        request: mockRequest,
+        options: mockOptions,
+        retryCount: 0,
+      });
     });
 
     describe("beforeRequest adapter", () => {

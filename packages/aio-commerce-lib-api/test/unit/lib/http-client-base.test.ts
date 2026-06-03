@@ -113,5 +113,41 @@ describe("lib/http-client-base", () => {
         },
       });
     });
+
+    it("should preserve inherited hooks when function-based options spread parent options", async () => {
+      const { testClient } = context;
+      let inheritedHookCalls = 0;
+
+      const clientWithHook = testClient.extend({
+        hooks: {
+          beforeRequest: [
+            (request) => {
+              inheritedHookCalls += 1;
+              request.headers.set("X-Inherited", "true");
+            },
+          ],
+        },
+      });
+
+      const extendedClient = clientWithHook.extend((parentOptions) => ({
+        ...parentOptions,
+        headers: {
+          "X-Extended": "true",
+        },
+      }));
+
+      await extendedClient.get("test", {
+        hooks: {
+          beforeRequest: [
+            (request) => {
+              expect(request.headers.get("X-Inherited")).toBe("true");
+              expect(request.headers.get("X-Extended")).toBe("true");
+            },
+          ],
+        },
+      });
+
+      expect(inheritedHookCalls).toBe(1);
+    });
   });
 });

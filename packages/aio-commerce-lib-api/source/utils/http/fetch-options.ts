@@ -55,6 +55,15 @@ type Hooks = {
   beforeRetry?: BeforeRetryHook[];
 };
 
+type LegacyFetchOptions = {
+  /**
+   * Legacy ky v1 URL prefix option.
+   *
+   * This is mapped to ky v2's `prefix` option at the SDK boundary.
+   */
+  prefixUrl?: Options["prefix"];
+};
+
 /**
  * Per-request fetch options accepted by SDK HTTP clients.
  *
@@ -62,11 +71,13 @@ type Hooks = {
  * positional-argument form — each hook receives the primary subject (`request`,
  * `response`, or `error`) followed by `options` (the normalized request options) and
  * `retryCount`. URL-routing fields (`prefix`, `baseUrl`) are excluded — the SDK
- * manages those internally.
+ * manages those internally. The legacy ky v1 `prefixUrl` field is accepted for
+ * compatibility and mapped internally.
  */
-export type FetchOptions = Omit<Options, "hooks" | "prefix" | "baseUrl"> & {
-  hooks?: Hooks;
-};
+export type FetchOptions = Omit<Options, "hooks" | "prefix" | "baseUrl"> &
+  LegacyFetchOptions & {
+    hooks?: Hooks;
+  };
 
 /**
  * Converts SDK-facing `FetchOptions` into ky v2 `Options` by wrapping
@@ -74,14 +85,18 @@ export type FetchOptions = Omit<Options, "hooks" | "prefix" | "baseUrl"> & {
  * @param fetchOptions - The fetch options to convert.
  */
 export function toKyOptions(fetchOptions: FetchOptions): Options {
-  const { hooks, ...rest } = fetchOptions;
+  const { hooks, prefixUrl, ...rest } = fetchOptions;
+  const kyOptions = {
+    ...rest,
+    ...(prefixUrl === undefined ? {} : { prefix: prefixUrl }),
+  };
 
   if (!hooks) {
-    return rest as Options;
+    return kyOptions as Options;
   }
 
   return {
-    ...rest,
+    ...kyOptions,
     hooks: {
       beforeRequest: hooks.beforeRequest?.map(
         (hook) =>
@@ -107,4 +122,61 @@ export function toKyOptions(fetchOptions: FetchOptions): Options {
       ),
     },
   } as Options;
+}
+
+/**
+ * Converts ky v2 `Options` into SDK-facing `FetchOptions`.
+ * @param kyOptions - The ky options to convert.
+ */
+export function toFetchOptions(kyOptions: Options): FetchOptions {
+  const { hooks, prefix, baseUrl: _baseUrl, ...rest } = kyOptions;
+  const fetchOptions = {
+    ...rest,
+    ...(prefix === undefined ? {} : { prefixUrl: prefix }),
+  } as FetchOptions;
+
+  if (!hooks) {
+    return fetchOptions;
+  }
+
+  return {
+    ...fetchOptions,
+    hooks: {
+      beforeRequest: hooks.beforeRequest?.map(
+        (hook) => (request, options, retryCount) =>
+          hook({
+            request: request as BeforeRequestState["request"],
+            options,
+            retryCount: retryCount as BeforeRequestState["retryCount"],
+          }) as ReturnType<BeforeRequestHook>,
+      ),
+      afterResponse: hooks.afterResponse?.map(
+        (hook) => (request, response, options, retryCount) =>
+          hook({
+            request: request as AfterResponseState["request"],
+            response: response as AfterResponseState["response"],
+            options,
+            retryCount,
+          }) as ReturnType<AfterResponseHook>,
+      ),
+      beforeError: hooks.beforeError?.map(
+        (hook) => (error, request, options, retryCount) =>
+          hook({
+            error,
+            request: request as BeforeErrorState["request"],
+            options,
+            retryCount,
+          }) as ReturnType<BeforeErrorHook>,
+      ),
+      beforeRetry: hooks.beforeRetry?.map(
+        (hook) => (request, options, error, retryCount) =>
+          hook({
+            request: request as BeforeRetryState["request"],
+            options,
+            error,
+            retryCount,
+          }) as ReturnType<BeforeRetryHook>,
+      ),
+    },
+  };
 }
