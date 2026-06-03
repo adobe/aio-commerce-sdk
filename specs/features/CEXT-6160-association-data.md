@@ -100,6 +100,10 @@ domain-agnostic — it has no knowledge of "association" or any App Management c
 association-aware logic lives in `aio-commerce-lib-app` and uses this generic module
 underneath.
 
+System config does not participate in the Commerce scope tree — `getSystemConfigByKey`
+performs a direct key lookup with no inheritance or fallback chain. The `system.*` and
+`configuration.*` namespaces are parallel, not nested.
+
 The data is stored with the maximum TTL of 1 year (31536000 seconds). The default TTL of 24 hours is not appropriate here — association data is long-lived and must not expire on its own. It should only be cleared explicitly on unassociation. To keep the data alive, the TTL is refreshed on every read inside `getAssociationData`. So as long as any action reads the configuration at least once a year, the data won't expire.
 
 This has two important properties for this use case:
