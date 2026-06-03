@@ -90,12 +90,15 @@ The association data is stored using the infrastructure already established in
 `aio-commerce-lib-config/source/utils/repository.ts`, which provides a lazy-initialized
 Adobe I/O State client shared across the SDK.
 
-A new module is added to `aio-commerce-lib-config` specifically for association data,
-separate from the existing Business Configuration module. It uses the same `getSharedState()`
-client but stores under a dedicated reserved key (`system.association`) rather than the
-`configuration.{scopeCode}` keys used by Business Configuration. The `system.*` namespace
-keeps SDK-managed config (e.g. `system.association`, future `system.events`) cleanly
-separated from app-defined `configuration.*` keys.
+A new generic `system-config` module is added to `aio-commerce-lib-config` for any
+SDK-managed system data, separate from the existing Business Configuration module. It uses
+the same `getSharedState()` client but stores under `system.{key}` keys (e.g.
+`system.association`, future `system.events`) rather than the `configuration.{scopeCode}`
+keys used by Business Configuration. The `system.*` namespace keeps SDK-managed config
+cleanly separated from app-defined `configuration.*` keys. The module is fully
+domain-agnostic — it has no knowledge of "association" or any App Management concept; the
+association-aware logic lives in `aio-commerce-lib-app` and uses this generic module
+underneath.
 
 The data is stored with the maximum TTL of 1 year (31536000 seconds). The default TTL of 24 hours is not appropriate here — association data is long-lived and must not expire on its own. It should only be cleared explicitly on unassociation. To keep the data alive, the TTL is refreshed on every read inside `getAssociationData`. So as long as any action reads the configuration at least once a year, the data won't expire.
 
@@ -128,6 +131,10 @@ setAssociationData(data: AssociatedCommerceInstance): Promise<void>
 getAssociationData(): Promise<AssociatedCommerceInstance | null>
 clearAssociationData(): Promise<void> // calls setSystemConfigByKey("system.association", null)
 ```
+
+These typed helpers are internal — used by the `association` runtime action handlers and by
+the public-facing helpers. The public exports developers use are `getCommerceInstance` and
+`getCommerceClient`, which throw `AppNotAssociatedError` instead of returning null.
 
 The stored type is:
 
@@ -271,12 +278,15 @@ the primary use case. Adobe I/O State — accessed via the shared `getSharedStat
 already established in `aio-commerce-lib-config` — is accessible to all actions within the
 same application regardless of package boundaries.
 
-**Why a new module in `aio-commerce-lib-config` rather than using `setConfiguration` directly?**
+**Why a new generic `system-config` module in `aio-commerce-lib-config` rather than using `setConfiguration` directly?**
 The existing `setConfiguration`/`getConfiguration` API in `aio-commerce-lib-config` is
-designed for Business Configuration — scope-tree based values keyed by Commerce scope codes.
-Association data is app-level metadata, not scope-specific. A dedicated module with its own
-reserved key (`system.association`) keeps the two concerns clearly separated while reusing the
-same underlying storage infrastructure.
+designed for Business Configuration — scope-tree based values keyed by Commerce scope codes
+with inheritance. Association data is app-level metadata, not scope-specific, and doesn't
+need inheritance. A generic `system-config` module with `setSystemConfigByKey` /
+`getSystemConfigByKey` primitives keeps the two concerns clearly separated while reusing the
+same underlying storage infrastructure. The module is domain-agnostic — no knowledge of
+"association" or any App Management concept — so it can be reused for other SDK-managed
+data in the future (`system.events`, etc.).
 
 **Why a standalone `association` action?**
 The `installation` action is conditionally deployed, apps without custom install steps,
