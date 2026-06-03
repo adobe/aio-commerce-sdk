@@ -4,7 +4,7 @@
 
 The `@adobe/aio-commerce-lib-api` package provides:
 
-- **HTTP Clients**: Pre-configured Ky-based HTTP clients for Adobe Commerce and Adobe I/O Events
+- **HTTP Clients**: Pre-configured HTTP clients for Adobe Commerce and Adobe I/O Events
 - **API Client Builder**: A flexible system for binding API functions to HTTP clients
 - **Authentication Support**: Built-in integration with `@adobe/aio-commerce-lib-auth` for both IMS and OAuth authentication
 - **Transformation Utilities**: Response transformation hooks for data normalization
@@ -302,7 +302,7 @@ const client = new AdobeIoEventsHttpClient({
 
 ### Unwrapping HTTP Errors
 
-When a request fails with a non-2xx status, `ky` throws an `HTTPError` whose `message` looks like `Request failed with status code 400: POST https://.../adminuisdk/extension`. The actual reason from the API lives in the response body and is not surfaced.
+When a request fails with a non-2xx status, the HTTP client throws an `HTTPError` whose `message` looks like `Request failed with status code 400: POST https://.../adminuisdk/extension`. The actual reason from the API lives in the response body and is not surfaced.
 
 `unwrapHttpError` returns a human-readable string that includes the HTTP status and the message extracted from the response body. For non-`HTTPError` inputs it falls back to `error.message` (for `Error` instances) or `String(error)`.
 
@@ -334,6 +334,20 @@ Commerce's parameterized-message shape is handled automatically:
 
 ```
 HTTP 400 Bad Request — The event provider id "918d1e28-bc6c-4303-8a3e-827b42b30795" is not configured. Configured: [abc, xyz]
+```
+
+To branch on the error type, import `HTTPError` from the package entrypoint:
+
+```typescript
+import { HTTPError } from "@adobe/aio-commerce-lib-api";
+
+try {
+  await commerceClient.get("products").json();
+} catch (error) {
+  if (error instanceof HTTPError) {
+    // Inspect error.response and error.data
+  }
+}
 ```
 
 ### Advanced Usage
@@ -380,4 +394,15 @@ const client = new AdobeCommerceHttpClient({
     },
   },
 });
+```
+
+These options are described by the exported `FetchOptions` type, the SDK-owned request-options type accepted by every HTTP client method (`get`, `post`, `extend`, and so on) and by the API functions in `@adobe/aio-commerce-lib-events` and `@adobe/aio-commerce-lib-webhooks`. Import it to type your own helpers:
+
+```typescript
+import type { FetchOptions } from "@adobe/aio-commerce-lib-api";
+
+const fetchOptions: FetchOptions = {
+  timeout: 30000,
+  headers: { "X-Custom-Header": "value" },
+};
 ```

@@ -90,8 +90,7 @@
   "dependencies": {
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
-    "valibot": "catalog:",
-    "ky": "catalog:"
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
@@ -99,8 +98,8 @@
     "@aio-commerce-sdk/config-vitest": "workspace:*",
     "@aio-commerce-sdk/scripting-utils": "workspace:*",
     "@aio-commerce-sdk/scripts": "workspace:*",
-    "typescript": "catalog:",
-    "msw": "catalog:"
+    "msw": "catalog:",
+    "typescript": "catalog:"
   },
   "sideEffects": false
 }

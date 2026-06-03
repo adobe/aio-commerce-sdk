@@ -97,16 +97,15 @@
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
-    "ky": "catalog:",
     "type-fest": "catalog:",
     "valibot": "catalog:"
   },
   "devDependencies": {
+    "@aio-commerce-sdk/common-utils": "workspace:*",
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "@aio-commerce-sdk/config-vitest": "workspace:*",
-    "@aio-commerce-sdk/common-utils": "workspace:*",
     "@aio-commerce-sdk/scripts": "workspace:*",
     "msw": "^2.11.1",
     "typescript": "catalog:"

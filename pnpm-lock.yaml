@@ -499,9 +499,6 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
-      ky:
-        specifier: 'catalog:'
-        version: 2.0.2
       type-fest:
         specifier: 'catalog:'
         version: 5.6.0
@@ -542,9 +539,6 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
-      ky:
-        specifier: 'catalog:'
-        version: 2.0.2
       valibot:
         specifier: 'catalog:'
         version: 1.4.1(typescript@6.0.3)
