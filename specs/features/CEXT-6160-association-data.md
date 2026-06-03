@@ -106,13 +106,27 @@ This has two important properties for this use case:
 - **No parameter drilling.** The helper reads directly from state. Callers do not need to
   pass the data through every layer of the call stack.
 
-The new module exposes three internal functions used by `aio-commerce-lib-app`:
+The storage uses a two-layered design:
+
+**`aio-commerce-lib-config`** exposes generic, domain-agnostic primitives. No knowledge of
+App Management or "association" — just key-value access for any SDK-managed system config.
+Setting the value to `null` clears the entry, so there is no separate delete operation:
 
 ```ts
-// aio-commerce-lib-config (new internal module)
+// aio-commerce-lib-config (generic system config module)
+setSystemConfigByKey(key: string, value: unknown | null): Promise<void>
+getSystemConfigByKey<T>(key: string): Promise<T | null>
+```
+
+**`aio-commerce-lib-app`** exposes typed, domain-aware wrappers on top of those primitives —
+they encode the `system.association` key and the `AssociatedCommerceInstance` type so
+runtime actions get a strongly-typed API:
+
+```ts
+// aio-commerce-lib-app (association module)
 setAssociationData(data: AssociatedCommerceInstance): Promise<void>
 getAssociationData(): Promise<AssociatedCommerceInstance | null>
-clearAssociationData(): Promise<void>
+clearAssociationData(): Promise<void> // calls setSystemConfigByKey("system.association", null)
 ```
 
 The stored type is:
