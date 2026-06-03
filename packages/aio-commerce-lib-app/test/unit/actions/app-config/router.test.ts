@@ -124,7 +124,7 @@ describe("appConfigRuntimeAction", () => {
       );
     });
 
-    test("passes through adminUi fields (menuItems, gridColumns, massActions) untouched", async () => {
+    test("prefixes mass action id with metadata.id and passes other adminUi fields through untouched", async () => {
       const handler = appConfigRuntimeAction({
         appConfig: configWithFullAdminUiSdk,
       });

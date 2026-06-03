@@ -480,7 +480,7 @@ Mass actions are declared with an explicit `type` field that determines which va
 - `type: "view"` — renders an iframe at the given `path` (optional `sandbox` attribute).
 - `type: "worker"` — invokes a runtime action specified by `runtimeAction` (optional `timeout`).
 
-The `id` field is the full identifier served to the Admin UI SDK. By convention, use the format `${metadata.id}::${name}` (e.g. `"my-app::export-orders"`).
+The `id` field is authored as a bare name (e.g. `"export-orders"`). The SDK automatically prefixes it with the app metadata `id` to produce the full identifier (`${metadata.id}::export-orders`) in the `app-config` response served to the Admin UI SDK.
 
 For worker mass actions, `generate` automatically adds the corresponding `workerProcess` entries to the `commerce/backend-ui/2` ext.config.yaml based on the `runtimeAction` fields. The `pre-app-build` hook validates the generated entries at build time.
 
@@ -534,7 +534,7 @@ adminUi: {
     massActions: [
       // view variant — renders an iframe
       {
-        id: "my-app::export-orders",
+        id: "export-orders",
         type: "view",
         label: "Export Orders",
         title: "Export",
@@ -553,7 +553,7 @@ adminUi: {
       },
       // worker variant — invokes a runtime action
       {
-        id: "my-app::archive-orders",
+        id: "archive-orders",
         type: "worker",
         label: "Archive Orders",
         runtimeAction: "my-app/archive-orders",
@@ -604,7 +604,7 @@ adminUi: {
   product: {
     massActions: [
       {
-        id: "my-app::export-products",
+        id: "export-products",
         type: "view",
         label: "Export Products",
         path: "#/export-products",
@@ -622,7 +622,7 @@ adminUi: {
   customer: {
     massActions: [
       {
-        id: "my-app::export-customers",
+        id: "export-customers",
         type: "worker",
         label: "Export Customers",
         runtimeAction: "my-app/export-customers",

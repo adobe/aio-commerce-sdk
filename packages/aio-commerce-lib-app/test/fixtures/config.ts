@@ -138,7 +138,7 @@ export const configWithAdminUiSdk = {
     order: {
       massActions: [
         {
-          id: "test-app-admin-ui-sdk::order-mass-action",
+          id: "order-mass-action",
           label: "Order Mass Action",
           type: "view",
           path: "#/order-mass-action",
@@ -174,7 +174,7 @@ export const configWithAdminUiSdk = {
     product: {
       massActions: [
         {
-          id: "test-app-admin-ui-sdk::product-mass-action",
+          id: "product-mass-action",
           label: "Product Mass Action",
           type: "view",
           path: "#/product-mass-action",
@@ -190,7 +190,7 @@ export const configWithAdminUiSdk = {
     customer: {
       massActions: [
         {
-          id: "test-app-admin-ui-sdk::customer-mass-action",
+          id: "customer-mass-action",
           label: "Customer Mass Action",
           type: "view",
           path: "#/customer-mass-action",
@@ -232,7 +232,7 @@ export const configWithFullAdminUiSdk = {
     order: {
       massActions: [
         {
-          id: "test-app-full-admin-ui-sdk::order-mass-action",
+          id: "order-mass-action",
           label: "Order Mass Action",
           title: "Page Title",
           type: "view",
@@ -285,7 +285,7 @@ export const configWithFullAdminUiSdk = {
     product: {
       massActions: [
         {
-          id: "test-app-full-admin-ui-sdk::product-mass-action",
+          id: "product-mass-action",
           label: "Product Mass Action",
           type: "view",
           path: "#/mass-action",
@@ -307,7 +307,7 @@ export const configWithFullAdminUiSdk = {
     customer: {
       massActions: [
         {
-          id: "test-app-full-admin-ui-sdk::export-customers",
+          id: "export-customers",
           label: "Customer Mass Action",
           type: "worker",
           runtimeAction: "customers/export-customers",
