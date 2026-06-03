@@ -646,8 +646,6 @@ Every field of `adminUiSdk.registration` is optional — configure only the exte
 #### Admin UI Configuration
 
 > **Experimental:** Admin UI support on `commerce/backend-ui/2` is not yet production-ready. The API may change in future releases.
->
-> Requires `magento/commerce-backend-uix` version `<!-- TODO: minimum version supporting commerce/backend-ui/2 -->` or later.
 
 The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. When defined, `init` and `generate all` automatically wire up the extension, including the generated runtime action, the `pre-app-build` hook, and the `workerProcess` declarations in `ext.config.yaml`. Currently supported: grid column extensions. Mass actions, menus, view buttons, and custom fees will follow.
 

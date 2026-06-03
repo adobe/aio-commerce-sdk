@@ -3,7 +3,7 @@
   "info": {
     "title": "App Management API",
     "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation and uninstallation lifecycle, exposing the Admin UI SDK registration, and managing the scope tree.",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
@@ -555,6 +555,9 @@
                         }
                       },
                       "required": ["registration"]
+                    },
+                    "adminUi": {
+                      "$ref": "#/components/schemas/AdminUiRegistration"
                     },
                     "installation": {
                       "type": "object",
@@ -3790,6 +3793,90 @@
           }
         },
         "required": []
+      },
+      "AdminUiRegistration": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "object",
+            "properties": {
+              "gridColumns": {
+                "$ref": "#/components/schemas/AdminUiGridColumns"
+              }
+            },
+            "required": []
+          },
+          "product": {
+            "type": "object",
+            "properties": {
+              "gridColumns": {
+                "$ref": "#/components/schemas/AdminUiGridColumns"
+              }
+            },
+            "required": []
+          },
+          "customer": {
+            "type": "object",
+            "properties": {
+              "gridColumns": {
+                "$ref": "#/components/schemas/AdminUiGridColumns"
+              }
+            },
+            "required": []
+          }
+        },
+        "required": []
+      },
+      "AdminUiGridColumns": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "runtimeAction": {
+            "type": "string",
+            "minLength": 1
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "columnId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "boolean",
+                    "date",
+                    "datetime",
+                    "decimal",
+                    "integer",
+                    "string"
+                  ]
+                },
+                "align": {
+                  "type": "string",
+                  "enum": ["left", "right", "center"]
+                }
+              },
+              "required": ["columnId", "label", "type", "align"]
+            },
+            "minItems": 1
+          }
+        },
+        "required": ["label", "description", "runtimeAction", "columns"]
       },
       "CustomScopeInput": {
         "type": "object",
