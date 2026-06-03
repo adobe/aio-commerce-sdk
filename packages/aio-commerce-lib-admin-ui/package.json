@@ -28,6 +28,8 @@
     "directory": "packages/aio-commerce-lib-admin-ui"
   },
   "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public",
     "exports": {
       "./api": {
         "import": {
