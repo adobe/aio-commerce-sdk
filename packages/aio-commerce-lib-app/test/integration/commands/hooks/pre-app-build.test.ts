@@ -26,7 +26,6 @@ import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
   configWithBusinessConfig,
   configWithCommerceEventing,
-  configWithFullAdminUiSdk,
 } from "#test/fixtures/config";
 import {
   businessConfigActionFile,
@@ -43,21 +42,6 @@ import {
 vi.mock("@aio-commerce-sdk/scripting-utils/env", () => ({
   syncImsCredentials: vi.fn(),
 }));
-
-/** The worker `runtimeAction` declared by the `configWithFullAdminUiSdk` fixture. */
-const WORKER_RUNTIME_ACTION = "customers/export-customers";
-
-/** Builds an app.config.yaml declaring a single backend-ui/2 workerProcess `impl`. */
-function backendUiAppConfigYaml(impl: string) {
-  return [
-    "extensions:",
-    "  commerce/backend-ui/2:",
-    "    operations:",
-    "      workerProcess:",
-    "        - type: action",
-    `          impl: ${impl}`,
-  ].join("\n");
-}
 
 describe("commands/hooks/pre-app-build", () => {
   afterEach(() => {
@@ -120,32 +104,10 @@ describe("commands/hooks/pre-app-build", () => {
       });
     });
 
-    test("runs successfully for backend-ui/2 when worker runtimeAction is declared", async () => {
-      await withTempProject(
-        makeProjectFiles(configWithFullAdminUiSdk, "esm", {
-          "app.config.yaml": backendUiAppConfigYaml(WORKER_RUNTIME_ACTION),
-          ...makeTemplateFiles(),
-        }),
-        async () => {
-          await expect(run("backend-ui/2")).resolves.toBeUndefined();
-        },
-      );
-    });
-
-    test("throws CommerceSdkValidationError for backend-ui/2 when worker runtimeAction is not declared", async () => {
-      await withTempProject(
-        makeProjectFiles(configWithFullAdminUiSdk, "esm", {
-          // Declares a different impl, so the fixture's worker runtimeAction is unmatched.
-          "app.config.yaml": backendUiAppConfigYaml("customers/other"),
-          ...makeTemplateFiles(),
-        }),
-        async () => {
-          // The error names the unmatched runtimeAction, not the declared impl.
-          await expect(run("backend-ui/2")).rejects.toThrow(
-            WORKER_RUNTIME_ACTION,
-          );
-        },
-      );
+    test("runs successfully for backend-ui/2", async () => {
+      await withTempProject(MINIMAL_PROJECT, async () => {
+        await expect(run("backend-ui/2")).resolves.toBeUndefined();
+      });
     });
 
     test("throws for unsupported extension", async () => {
@@ -213,31 +175,10 @@ describe("commands/hooks/pre-app-build", () => {
     test("runs successfully for backend-ui/2", async () => {
       vi.stubEnv("EXTENSION", "backend-ui/2");
 
-      await withTempProject(
-        makeProjectFiles(configWithFullAdminUiSdk, "esm", {
-          "app.config.yaml": backendUiAppConfigYaml(WORKER_RUNTIME_ACTION),
-          ...makeTemplateFiles(),
-        }),
-        async () => {
-          await exec();
-          expect(exitSpy).not.toHaveBeenCalled();
-        },
-      );
-    });
-
-    test("exits with 1 for backend-ui/2 when worker runtimeAction is not declared", async () => {
-      vi.stubEnv("EXTENSION", "backend-ui/2");
-
-      await withTempProject(
-        makeProjectFiles(configWithFullAdminUiSdk, "esm", {
-          "app.config.yaml": backendUiAppConfigYaml("customers/other"),
-          ...makeTemplateFiles(),
-        }),
-        async () => {
-          await exec();
-          expect(exitSpy).toHaveBeenCalledWith(1);
-        },
-      );
+      await withTempProject(MINIMAL_PROJECT, async () => {
+        await exec();
+        expect(exitSpy).not.toHaveBeenCalled();
+      });
     });
 
     test("exits with 1 when config file is invalid", async () => {

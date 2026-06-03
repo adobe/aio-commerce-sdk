@@ -28,9 +28,6 @@ import {
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import { loadAppManifest } from "#commands/utils";
-import { hasAdminUi } from "#config/index";
-
-import { validateRuntimeActionReferences } from "./validate-runtime-actions";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
 
@@ -87,9 +84,6 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
   }
 
   if (extension === "backend-ui/2") {
-    if (hasAdminUi(appManifest)) {
-      await validateRuntimeActionReferences(appManifest);
-    }
     return;
   }
 
