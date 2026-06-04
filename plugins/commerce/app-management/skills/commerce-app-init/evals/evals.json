@@ -36,6 +36,17 @@
         "Agent suggests using commerce-app-eventing skill for the event source setup",
         "aio app build completes without errors"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "My project already has an app.commerce.config.ts at the root, but it was never initialized — there's no src/commerce-extensibility-1/ directory and no node_modules. Get the project ready to build.",
+      "expected_output": "The agent detects the existing config, does not overwrite it, and runs npx @adobe/aio-commerce-lib-app init to install dependencies and generate the project files. It notes that re-running init is safe because a config is present (it skips the interactive prompts), and confirms with aio app build.",
+      "assertions": [
+        "The existing app.commerce.config.ts is not overwritten",
+        "The agent runs npx @adobe/aio-commerce-lib-app init",
+        "The agent explains init is idempotent / safe to re-run when a config exists",
+        "aio app build completes without errors"
+      ]
     }
   ]
 }
