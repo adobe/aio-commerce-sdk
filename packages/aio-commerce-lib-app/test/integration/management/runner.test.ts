@@ -240,7 +240,7 @@ describe("runInstallation - custom installation scripts", () => {
     });
 
     expect.assert(isFailedState(result));
-    expect(result.error.message).toContain("default export must be a function");
+    expect(result.error.message).toContain("Invalid script module format");
   });
 });
 
