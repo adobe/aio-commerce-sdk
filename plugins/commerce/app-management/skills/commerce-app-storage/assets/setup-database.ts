@@ -9,6 +9,10 @@
 //   It runs exactly once when the app is installed from the Commerce Admin,
 //   and the uninstall handler lets the app clean up after itself.
 //
+// Custom installation scripts must be plain JS for now: App Management only wires
+// up .js step scripts. This .ts file works only if you compile it yourself and
+// point `script` at the emitted .js — otherwise author the step directly in JS.
+//
 // Wiring (in app.commerce.config.ts) — the script path is the COMPILED .js:
 //   installation: {
 //     customInstallationSteps: [

@@ -43,9 +43,10 @@ application:
       region: emea # amer | apac | emea | aus — the single source of truth for the region
 ```
 
-For **local development**, declarative auto-provisioning does **not** run during `aio app run` / `aio app dev`. Provision once up front with the CLI fallback (self-service, no special permissions):
+For **local development**, declarative auto-provisioning does **not** run during `aio app run` / `aio app dev`. Provision once up front with the CLI fallback (self-service, no special permissions). The `aio app db …` commands are only available once the [storage CLI plugin](https://github.com/adobe/aio-cli-plugin-app-storage) is installed:
 
 ```sh
+aio plugins install @adobe/aio-cli-plugin-app-storage
 aio app db provision --region <amer|apac|emea|aus>
 ```
 
@@ -192,6 +193,8 @@ export default defineCustomInstallationStep({
 });
 ```
 
+> **Custom installation scripts must be plain JavaScript for now.** App Management only wires up `.js` step scripts; a `.ts` file works only if you compile it yourself and point `script` at the emitted `.js`. Author the step in JS directly, or treat the `.ts` reference as source and ship its compiled output.
+
 Register the step in `app.commerce.config.ts` under `installation.customInstallationSteps`. The `script` path points at the compiled `.js` output:
 
 ```ts
@@ -207,11 +210,11 @@ installation: {
 },
 ```
 
-| Field         | Constraint                                                                   |
-| ------------- | ---------------------------------------------------------------------------- |
-| `script`      | Path relative to the project root; must end in `.js` (the compiled step)     |
-| `name`        | Non-empty string, ≤ 255 characters; **unique** across all installation steps |
-| `description` | Non-empty string, ≤ 255 characters                                           |
+| Field         | Constraint                                                                                                     |
+| ------------- | -------------------------------------------------------------------------------------------------------------- |
+| `script`      | Path relative to the project root; must be plain JS ending in `.js` (TS only works if you compile it yourself) |
+| `name`        | Non-empty string, ≤ 255 characters; **unique** across all installation steps                                   |
+| `description` | Non-empty string, ≤ 255 characters                                                                             |
 
 See [assets/setup-database.ts](assets/setup-database.ts) for the full annotated install/uninstall reference.
 
