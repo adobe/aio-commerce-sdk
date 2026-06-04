@@ -6,20 +6,18 @@
 
 ## Summary
 
-Move the Admin UI SDK code generation from extension point `commerce/backend-ui/1` to the new
-`commerce/backend-ui/2`, and replace the mass-action input schema in `app.commerce.config.*` with
-a cleaner shape that uses an explicit `type` discriminator, an inlined `notifications` block, and
-a `runtimeAction` reference to a `workerProcess` operation. The mass-action payload flows through
-the existing `app-management/app-config.js` (which already serves the app config); no dedicated
-`registration` action is generated. The Admin UI SDK extension at `commerce/backend-ui/2` reads
-the `adminUi` block from `app-config.js` directly.
+Add `commerce/backend-ui/2` support alongside the existing `commerce/backend-ui/1`, introducing a
+new `adminUi` config section with a cleaner mass-action shape that uses an explicit `type`
+discriminator, an inlined `notifications` block, and a `runtimeAction` reference to a
+`workerProcess` operation. The mass-action payload flows through the existing
+`app-management/app-config.js` (which already serves the app config); no dedicated `registration`
+action is generated for v2. The Admin UI SDK extension at `commerce/backend-ui/2` reads the
+`adminUi` block from `app-config.js` directly.
 
-**This SDK removes `commerce/backend-ui/1` generation entirely.** From this release on, the
-SDK only emits `commerce-backend-ui-2/`. Apps already deployed with a `commerce-backend-ui-1/`
-folder continue to function in Adobe Commerce admin because the generated files are static and
-do not depend on this SDK at runtime — but any subsequent `aio app build` or
-`pre-app-build` run on those projects with a newer SDK version will produce
-`commerce-backend-ui-2/` instead.
+**`commerce/backend-ui/1` is kept in place.** A dedicated ticket will remove it once the
+migration is complete. Both extension points coexist: `backend-ui/1` continues to generate the
+registration action for apps that still use `adminUiSdk`; `backend-ui/2` generates the new
+`ext.config.yaml` with `workerProcess` entries for apps that adopt `adminUi`.
 
 ## Motivation
 
@@ -35,8 +33,8 @@ place but not the other.
 
 - Generate `commerce-backend-ui-2/ext.config.yaml` with operations (`view` for the SPA,
   `workerProcess` for the developer's worker handlers) and the matching runtime-action
-  declarations — but no `registration` action. This SDK no longer produces
-  `commerce-backend-ui-1/`; existing folders in deployed apps keep working as static files.
+  declarations — but no `registration` action. `commerce/backend-ui/1` continues to be generated
+  unchanged for apps still using `adminUiSdk`.
 - Replace the mass-action input schema with the v2 shape:
   - `id` (renamed from `actionId`); developers write the bare name and the SDK
     auto-prefixes with `${metadata.id}::` to produce the final `actionId` in the generated
@@ -53,7 +51,8 @@ place but not the other.
     `bannerNotification.massActions.<grid>[]` cross-reference.
   - Field applicability enforced by the schema (e.g. `sandbox` only valid for `type: "view"`,
     `timeout` only valid for `type: "worker"`).
-- Update fixtures and tests to use the v2 input shape.
+- Add v2 fixtures and tests alongside the existing v1 ones — do not remove or modify v1 fixtures
+  or tests.
 - Cross-file validation at `pre-app-build` time that `runtimeAction` matches the `impl` of a
   `workerProcess` operation declared in `app.config.yaml`. A typo should fail the build, not
   produce a runtime 404 from Adobe Commerce.
@@ -127,14 +126,11 @@ adminUi: {
       {
         id: "tag-customers", // SDK prepends `${metadata.id}::` automatically
         label: "Tag selected customers",
+        description: "Adds a bulk action to tag selected customers from the grid.",
         type: "view",
         path: "#/tag-customers",
         sandbox: "allow-modals",
         selectionLimit: 100,
-        installation: {
-          label: "Tag customers",
-          description: "Adds a bulk action to tag selected customers from the grid.",
-        },
         notifications: {
           success: "Customers tagged successfully",
           error: "Could not tag the selected customers",
@@ -143,14 +139,11 @@ adminUi: {
       {
         id: "export-customers",
         label: "Export selected customers",
+        description: "Adds a bulk action to export selected customers as CSV.",
         type: "worker",
         runtimeAction: "customers/export-customers", // matches the workerProcess `impl` verbatim
         timeout: 30,
         selectionLimit: 1000,
-        installation: {
-          label: "Export customers",
-          description: "Adds a bulk action to export selected customers as CSV.",
-        },
         notifications: {
           success: "Customers exported successfully",
           error: "Could not export customers",
@@ -190,8 +183,8 @@ The schema enforces which fields apply to which `type`:
 | `label`          | required       | required         |
 | `title`          | optional       | optional         |
 | `confirm`        | optional       | optional         |
+| `description`    | optional       | optional         |
 | `notifications`  | optional       | optional         |
-| `installation`   | optional       | optional         |
 | `selectionLimit` | optional       | optional         |
 | `path`           | required       | rejected         |
 | `sandbox`        | optional       | rejected         |
@@ -210,6 +203,67 @@ Field "path" is required when type is "view"
 The order, product, and customer grids each used a differently named limit field today
 (`selectionLimit`, `productSelectLimit`, `customerSelectLimit`). In v2 they unify to
 `selectionLimit` across all three grids — same field name in input and generated JSON.
+
+### Wire contract
+
+#### `type: "view"` — iframe
+
+Commerce opens the `path` URL in a modal iframe overlay. The selected entity IDs are appended to
+the URL as a JSON-encoded query parameter:
+
+```
+{path}?selection={"ids":["000000001","000000002"],"gridType":"customer"}
+```
+
+- `ids` — array of selected entity IDs (strings).
+- `gridType` — `"order" | "product" | "customer"`, matching the extension point that declared the
+  action.
+
+The iframe (the App Builder SPA at `web-src`) is responsible for reading these parameters,
+executing the bulk operation, and closing the modal when done.
+
+> **Open question:** Exact query-parameter name and serialization format to be confirmed against
+> the Admin UI SDK v2 implementation. The shape above is the expected v2 format; v1 passed IDs
+> differently. Update this section once confirmed.
+
+#### `type: "worker"` — runtime action
+
+Commerce invokes the runtime action declared in `runtimeAction` with the following request body:
+
+```json
+{
+  "requestId": "550e8400-e29b-41d4-a716-446655440000",
+  "gridType": "customer",
+  "ids": ["000000001", "000000002", "000000003"]
+}
+```
+
+- `ids` — array of selected entity IDs.
+- `gridType` — `"order" | "product" | "customer"`, matching the extension point.
+- `requestId` — unique identifier for this invocation; use it for idempotency.
+- Commerce chunks to a maximum of 1000 IDs per request. Handlers do not need to implement chunking.
+
+**Success response:**
+
+```json
+{
+  "status": "success",
+  "message": "3 customers exported."
+}
+```
+
+**Failure response:**
+
+```json
+{
+  "status": "error",
+  "message": "Could not reach export service."
+}
+```
+
+- A non-2xx HTTP response or a body without `"status": "success"` is treated as a failure.
+- `message` is surfaced to the user via the `notifications.error` string defined in the config, if
+  present; the response `message` is used only for logging.
 
 ### What does not change
 
@@ -232,17 +286,19 @@ to produce the final `actionId`. Every other field is serialized verbatim.
 
 ### Tests
 
-- `test/unit/config/schema/admin-ui-sdk.test.ts` — rewritten to assert the variant behavior
-  (each `type` accepts its own fields and rejects the other's) and the unified
-  `selectionLimit` rename.
-- `test/fixtures/config.ts` — `configWithAdminUiSdk` and `configWithFullAdminUiSdk` rewritten
-  in v2 input shape.
-- `test/unit/commands/generate/actions/config.test.ts` — `BACKEND_UI_EXTENSION_MATCHER`
-  updated to `/EXTENSION=backend-ui\/2/`.
-- `test/integration/commands/hooks/pre-app-build.test.ts` — `"backend-ui/1"` → `"backend-ui/2"`,
-  plus assertions that (a) the `adminUi` block in the generated `app-management/app-config.js`
-  reflects the v2 mass actions with the `${metadata.id}::` prefix applied to `actionId`, and
-  (b) no `registration` action is declared in `commerce-backend-ui-2/ext.config.yaml`.
+- `test/unit/config/schema/admin-ui-sdk.test.ts` — v1 tests kept unchanged. New `AdminUiSchema`
+  (v2) tests added in a separate describe block: variant behavior (each `type` accepts its own
+  fields and rejects the other's), unified `selectionLimit`, flat `description`, rejection of the
+  old `installation` nesting.
+- `test/fixtures/config.ts` — existing v1 fixtures (`configWithAdminUiSdk`,
+  `configWithFullAdminUiSdk`) kept unchanged. New v2 fixtures added alongside:
+  `configWithAdminUiV2` and `configWithFullAdminUiV2`, using the v2 input shape with flat
+  `description`.
+- `test/unit/commands/generate/actions/config.test.ts` — v1 tests kept. New describe block added
+  for `buildAdminUiV2ExtConfig` asserting `backend-ui/2` hook string and `workerProcess` entries.
+- `test/integration/commands/hooks/pre-app-build.test.ts` — v1 `"backend-ui/1"` tests kept.
+  New tests added for `"backend-ui/2"`: assertions that (a) `updateExtConfig` is called when
+  `adminUi` is present, (b) the hook succeeds silently when `adminUi` is absent.
 
 ### Documentation
 
