@@ -14,17 +14,17 @@ import { describe, expect, test } from "vitest";
 
 import { PACKAGE_NAME } from "#commands/constants";
 import {
-  buildAdminUiV2ExtConfig,
+  buildAdminUiExtConfigV2,
   buildAppManagementExtConfig,
   buildBusinessConfigurationExtConfig,
   getRuntimeActions,
 } from "#commands/generate/actions/config";
 import {
-  configWithAdminUiSdk,
+  configWithAdminUiV2,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
   configWithExternalEventing,
-  configWithFullAdminUiSdk,
+  configWithFullAdminUiV2,
   configWithWebhooks,
   minimalValidConfig,
 } from "#test/fixtures/config";
@@ -56,7 +56,7 @@ describe("buildAppManagementExtConfig", () => {
       config: configWithCustomInstallationSteps,
     },
     { label: "webhooks", config: configWithWebhooks },
-    { label: "adminUi", config: configWithAdminUiSdk },
+    { label: "adminUi", config: configWithAdminUiV2 },
   ])("includes installation action when $label is configured", ({ config }) => {
     const result = buildAppManagementExtConfig(config);
 
@@ -72,7 +72,7 @@ describe("buildAppManagementExtConfig", () => {
       config: configWithCustomInstallationSteps,
     },
     { label: "webhooks", config: configWithWebhooks },
-    { label: "adminUi", config: configWithAdminUiSdk },
+    { label: "adminUi", config: configWithAdminUiV2 },
   ])("includes installation workerProcess entry when $label is configured", ({
     config,
   }) => {
@@ -145,45 +145,45 @@ describe("buildAppManagementExtConfig", () => {
   });
 });
 
-describe("buildAdminUiV2ExtConfig", () => {
+describe("buildAdminUiExtConfigV2", () => {
   test("declares operations.view entry for the admin UI iframe", () => {
-    const config = buildAdminUiV2ExtConfig(minimalValidConfig);
+    const config = buildAdminUiExtConfigV2(minimalValidConfig);
     expect(config.operations?.view).toEqual([
       { type: "web", impl: "index.html" },
     ]);
   });
 
   test("declares top-level web source directory", () => {
-    const config = buildAdminUiV2ExtConfig(minimalValidConfig);
+    const config = buildAdminUiExtConfigV2(minimalValidConfig);
     expect(config.web).toBe("web-src");
   });
 
   test("pre-app-build hook uses backend-ui/2", () => {
-    const result = buildAdminUiV2ExtConfig(minimalValidConfig);
+    const result = buildAdminUiExtConfigV2(minimalValidConfig);
     const preBuildHook = result.hooks?.["pre-app-build"] ?? "";
 
     expect(preBuildHook).toMatch(BACKEND_UI_EXTENSION_MATCHER);
   });
 
   test("includes workerProcess entries for worker mass actions", () => {
-    const config = buildAdminUiV2ExtConfig(configWithFullAdminUiSdk);
+    const config = buildAdminUiExtConfigV2(configWithFullAdminUiV2);
     expect(config.operations?.workerProcess).toEqual([
       { type: "action", impl: "customers/export-customers" },
     ]);
   });
 
   test("omits workerProcess when no worker mass actions are configured", () => {
-    const config = buildAdminUiV2ExtConfig(minimalValidConfig);
+    const config = buildAdminUiExtConfigV2(minimalValidConfig);
     expect(config.operations?.workerProcess).toBeUndefined();
   });
 
   test("omits workerProcess when adminUi has only view mass actions", () => {
-    const config = buildAdminUiV2ExtConfig(configWithAdminUiSdk);
+    const config = buildAdminUiExtConfigV2(configWithAdminUiV2);
     expect(config.operations?.workerProcess).toBeUndefined();
   });
 
   test("deduplicates workerProcess entries when the same runtimeAction appears on multiple entities", () => {
-    const config = buildAdminUiV2ExtConfig({
+    const config = buildAdminUiExtConfigV2({
       metadata: {
         id: "app",
         displayName: "App",

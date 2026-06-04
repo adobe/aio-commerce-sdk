@@ -15,8 +15,8 @@ import { describe, expect, test } from "vitest";
 
 import { AdminUiSchema, hasAdminUi } from "#config/schema/admin-ui-sdk";
 import {
-  configWithAdminUiSdk,
-  configWithFullAdminUiSdk,
+  configWithAdminUiV2,
+  configWithFullAdminUiV2,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
@@ -28,7 +28,7 @@ function parse(adminUi: unknown) {
 
 describe("hasAdminUi", () => {
   test("returns true for configWithAdminUiSdk", () => {
-    expect(hasAdminUi(configWithAdminUiSdk)).toBe(true);
+    expect(hasAdminUi(configWithAdminUiV2)).toBe(true);
   });
 
   test("returns false for minimalValidConfig", () => {
@@ -210,12 +210,12 @@ describe("AdminUiSchema", () => {
     });
 
     test("configWithAdminUiSdk.adminUi fixture parses", () => {
-      const result = parse(configWithAdminUiSdk.adminUi);
+      const result = parse(configWithAdminUiV2.adminUi);
       expect(result.success).toBe(true);
     });
 
     test("configWithFullAdminUiSdk.adminUi fixture parses", () => {
-      const result = parse(configWithFullAdminUiSdk.adminUi);
+      const result = parse(configWithFullAdminUiV2.adminUi);
       expect(result.success).toBe(true);
     });
 

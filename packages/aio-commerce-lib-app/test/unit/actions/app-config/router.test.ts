@@ -18,7 +18,7 @@ import { getConfigDomains } from "#config/schema/domains";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import {
   configWithDynamicListOptions,
-  configWithFullAdminUiSdk,
+  configWithFullAdminUiV2,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
@@ -126,7 +126,7 @@ describe("appConfigRuntimeAction", () => {
 
     test("prefixes mass action id with metadata.id and passes other adminUi fields through untouched", async () => {
       const handler = appConfigRuntimeAction({
-        appConfig: configWithFullAdminUiSdk,
+        appConfig: configWithFullAdminUiV2,
       });
       const result = await handler(createRuntimeActionParams());
 
@@ -148,32 +148,32 @@ describe("appConfigRuntimeAction", () => {
 
       // menuItems pass through verbatim
       expect(body.adminUi?.menuItems).toEqual(
-        configWithFullAdminUiSdk.adminUi?.menuItems,
+        configWithFullAdminUiV2.adminUi?.menuItems,
       );
 
       // gridColumns pass through verbatim
       expect(body.adminUi?.order?.gridColumns).toEqual(
-        configWithFullAdminUiSdk.adminUi?.order?.gridColumns,
+        configWithFullAdminUiV2.adminUi?.order?.gridColumns,
       );
 
       // bannerNotification passes through verbatim
       expect(body.adminUi?.bannerNotification).toEqual(
-        configWithFullAdminUiSdk.adminUi?.bannerNotification,
+        configWithFullAdminUiV2.adminUi?.bannerNotification,
       );
 
       const orderMassAction = body.adminUi?.order?.massActions?.[0];
       expect(orderMassAction?.id).toBe(
-        "test-app-full-admin-ui-sdk::order-mass-action",
+        "test-app-full-admin-ui-sdk-v2::order-mass-action",
       );
 
       const productMassAction = body.adminUi?.product?.massActions?.[0];
       expect(productMassAction?.id).toBe(
-        "test-app-full-admin-ui-sdk::product-mass-action",
+        "test-app-full-admin-ui-sdk-v2::product-mass-action",
       );
 
       const customerMassAction = body.adminUi?.customer?.massActions?.[0];
       expect(customerMassAction?.id).toBe(
-        "test-app-full-admin-ui-sdk::export-customers",
+        "test-app-full-admin-ui-sdk-v2::export-customers",
       );
       expect(customerMassAction?.runtimeAction).toBe(
         "customers/export-customers",

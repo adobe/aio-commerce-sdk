@@ -213,19 +213,19 @@ const CustomerMassActionSchema = createMassActionSchema({
   ),
 });
 
-const V1OrderExtensionPointsSchema = v.object({
+const OrderExtensionPointsSchema = v.object({
   massActions: v.optional(v.array(OrderMassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
   viewButtons: v.optional(v.array(OrderViewButtonSchema)),
   customFees: v.optional(v.array(CustomFeeSchema)),
 });
 
-const V1ProductExtensionPointsSchema = v.object({
+const ProductExtensionPointsSchema = v.object({
   massActions: v.optional(v.array(ProductMassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
 });
 
-const V1CustomerExtensionPointsSchema = v.object({
+const CustomerExtensionPointsSchema = v.object({
   massActions: v.optional(v.array(CustomerMassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
 });
@@ -236,7 +236,7 @@ const MassActionBannerSchema = v.object({
   errorMessage: v.optional(nonEmptyStringValueSchema("error message")),
 });
 
-const V1BannerNotificationSchema = v.object({
+const BannerNotificationSchema = v.object({
   massActions: v.optional(
     v.object({
       order: v.optional(v.array(MassActionBannerSchema)),
@@ -253,10 +253,10 @@ const V1BannerNotificationSchema = v.object({
  */
 export const AdminUiSdkRegistrationSchema = v.object({
   menuItems: v.optional(v.array(MenuItemSchema)),
-  order: v.optional(V1OrderExtensionPointsSchema),
-  product: v.optional(V1ProductExtensionPointsSchema),
-  customer: v.optional(V1CustomerExtensionPointsSchema),
-  bannerNotification: v.optional(V1BannerNotificationSchema),
+  order: v.optional(OrderExtensionPointsSchema),
+  product: v.optional(ProductExtensionPointsSchema),
+  customer: v.optional(CustomerExtensionPointsSchema),
+  bannerNotification: v.optional(BannerNotificationSchema),
 });
 
 /**
@@ -321,9 +321,7 @@ export type GridColumns = v.InferInput<typeof GridColumnsSchema>;
  * Banner notification registration configuration.
  * @experimental
  */
-export type BannerNotification = v.InferInput<
-  typeof V1BannerNotificationSchema
->;
+export type BannerNotification = v.InferInput<typeof BannerNotificationSchema>;
 
 /**
  * A menu item registration entry.
@@ -356,7 +354,7 @@ const MassActionNotificationsSchema = v.object({
 });
 
 /** Fields shared by both v2 mass-action variants. `description` is flat — no `installation` nesting. */
-const massActionV2CommonEntries = {
+const massActionCommonEntriesV2 = {
   id: nonEmptyStringValueSchema("mass action ID"),
   label: nonEmptyStringValueSchema("mass action label"),
   description: v.optional(nonEmptyStringValueSchema("mass action description")),
@@ -368,7 +366,7 @@ const massActionV2CommonEntries = {
 
 /** `type: "view"` mass action — renders an iframe at `path`. */
 const ViewMassActionSchema = v.strictObject({
-  ...massActionV2CommonEntries,
+  ...massActionCommonEntriesV2,
   type: v.literal("view"),
   path: nonEmptyStringValueSchema("mass action path"),
   sandbox: v.optional(SandboxSchema),
@@ -376,7 +374,7 @@ const ViewMassActionSchema = v.strictObject({
 
 /** `type: "worker"` mass action — invokes a workerProcess runtime action. */
 const WorkerMassActionSchema = v.strictObject({
-  ...massActionV2CommonEntries,
+  ...massActionCommonEntriesV2,
   type: v.literal("worker"),
   runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
   timeout: v.optional(positiveNumberValueSchema("timeout")),
@@ -392,24 +390,24 @@ const MassActionSchema = v.variant(
   'mass action "type" must be either "view" or "worker"',
 );
 
-const V2OrderExtensionPointsSchema = v.object({
+const OrderExtensionPointsSchemaV2 = v.object({
   massActions: v.optional(v.array(MassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
   viewButtons: v.optional(v.array(OrderViewButtonSchema)),
   customFees: v.optional(v.array(CustomFeeSchema)),
 });
 
-const V2ProductExtensionPointsSchema = v.object({
+const ProductExtensionPointsSchemaV2 = v.object({
   massActions: v.optional(v.array(MassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
 });
 
-const V2CustomerExtensionPointsSchema = v.object({
+const CustomerExtensionPointsSchemaV2 = v.object({
   massActions: v.optional(v.array(MassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
 });
 
-const V2BannerNotificationSchema = v.object({
+const BannerNotificationSchemaV2 = v.object({
   orderViewButtons: v.optional(v.array(OrderViewButtonBannerSchema)),
 });
 
@@ -420,10 +418,10 @@ const V2BannerNotificationSchema = v.object({
  */
 export const AdminUiSchema = v.object({
   menuItems: v.optional(v.array(MenuItemSchema)),
-  order: v.optional(V2OrderExtensionPointsSchema),
-  product: v.optional(V2ProductExtensionPointsSchema),
-  customer: v.optional(V2CustomerExtensionPointsSchema),
-  bannerNotification: v.optional(V2BannerNotificationSchema),
+  order: v.optional(OrderExtensionPointsSchemaV2),
+  product: v.optional(ProductExtensionPointsSchemaV2),
+  customer: v.optional(CustomerExtensionPointsSchemaV2),
+  bannerNotification: v.optional(BannerNotificationSchemaV2),
 });
 
 /**

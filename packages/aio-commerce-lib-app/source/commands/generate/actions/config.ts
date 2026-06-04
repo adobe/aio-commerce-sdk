@@ -211,7 +211,7 @@ export function buildBusinessConfigurationExtConfig() {
 }
 
 /** Builds the ext.config.yaml configuration for the v2 Admin UI SDK backend-ui extension. */
-export function buildAdminUiV2ExtConfig(
+export function buildAdminUiExtConfigV2(
   appConfig: CommerceAppConfigOutputModel,
 ) {
   const workerRuntimeActions = hasAdminUi(appConfig)

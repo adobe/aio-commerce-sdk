@@ -33,7 +33,7 @@ import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
   configWithBusinessConfig,
   configWithDynamicListOptions,
-  configWithFullAdminUiSdk,
+  configWithFullAdminUiV2,
   configWithOneScript,
   minimalValidConfig,
 } from "#test/fixtures/config";
@@ -280,7 +280,7 @@ describe("commands/generate/actions", () => {
       await withTempProject(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await run(configWithFullAdminUiSdk, tempDir);
+          await run(configWithFullAdminUiV2, tempDir);
 
           const extConfigPath = join(
             tempDir,
@@ -299,7 +299,7 @@ describe("commands/generate/actions", () => {
       await withTempProject(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await run(configWithFullAdminUiSdk, tempDir);
+          await run(configWithFullAdminUiV2, tempDir);
 
           const extConfigPath = join(
             tempDir,

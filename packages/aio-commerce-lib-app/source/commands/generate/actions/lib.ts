@@ -50,8 +50,8 @@ import {
 } from "#config/index";
 
 import {
+  buildAdminUiExtConfigV2,
   buildAdminUiSdkExtConfig,
-  buildAdminUiV2ExtConfig,
   buildAppManagementExtConfig,
   buildBusinessConfigurationExtConfig,
   CUSTOM_IMPORTS_PLACEHOLDER,
@@ -61,9 +61,9 @@ import {
 } from "./config";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
-import type { AppConfigWithAdminUiSdk } from "#config/schema/admin-ui-sdk";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
+import type { AdminUiSdkConfig } from "#management/installation/admin-ui-sdk/utils";
 import type { TemplateAction } from "./config";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -323,7 +323,7 @@ export async function updateExtConfig(
     }
 
     case BACKEND_UI_V2_EXTENSION_POINT_ID: {
-      extConfig = buildAdminUiV2ExtConfig(appConfig);
+      extConfig = buildAdminUiExtConfigV2(appConfig);
       break;
     }
   }
@@ -477,7 +477,7 @@ export async function generateCustomScriptsTemplate(
  * @param templatesDir - The root directory containing the action templates.
  */
 export async function generateRegistrationActionFile(
-  appManifest: AppConfigWithAdminUiSdk,
+  appManifest: AdminUiSdkConfig,
   extensionPointId: typeof BACKEND_UI_EXTENSION_POINT_ID,
   templatesDir = TEMPLATES_DIR,
 ) {
