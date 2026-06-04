@@ -10,7 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
+import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 import * as camelcaseModule from "camelcase";
+import * as v from "valibot";
 
 import { hasCustomInstallationSteps } from "#config/schema/installation";
 import { defineLeafStep } from "#management/installation/workflow/step";
@@ -42,15 +44,26 @@ type ScriptModule =
   | CustomInstallationStepDefinition
   | CustomInstallationStepHandler;
 
+const ScriptModuleSchema = v.union([
+  v.function(),
+  v.object({
+    install: v.function(),
+    uninstall: v.optional(v.function()),
+  }),
+]);
+
+/**
+ * Validates that a loaded script export can be executed as a custom installation step.
+ *
+ * @param module - The loaded script export to validate.
+ * @throws If the export is not a function or an object with an `install` function.
+ */
 function assertScriptModule(module: unknown): asserts module is ScriptModule {
-  if (
-    typeof module !== "function" &&
-    (typeof module !== "object" || module === null)
-  ) {
-    throw new Error(
-      "Invalid script module format. Expected a function or an object with an `install` method.",
-    );
-  }
+  parseOrThrow(
+    ScriptModuleSchema,
+    module,
+    "Invalid script module format. Expected a function or an object with an `install` method.",
+  );
 }
 
 /**
@@ -64,7 +77,7 @@ function getScriptModule(
   customScripts: Record<string, unknown>,
   script: string,
 ): ScriptModule {
-  let scriptModule = customScripts[script] as WithDefault<ScriptModule>;
+  let scriptModule = customScripts[script] as WithDefault<unknown>;
 
   if (!scriptModule) {
     throw new Error(
@@ -87,19 +100,31 @@ function getScriptModule(
  * @param scriptModule - The loaded module
  * @param handler - The handler to resolve
  */
+
+// Overload for `install` (should always return something).
+function resolveCustomScriptHandler(
+  scriptModule: ScriptModule,
+  handler: "install",
+): CustomInstallationStepHandler;
+
+// Overload for `uninstall` (may return null if uninstall is not defined).
+function resolveCustomScriptHandler(
+  scriptModule: ScriptModule,
+  handler: "uninstall",
+): CustomInstallationStepHandler | null;
+
 function resolveCustomScriptHandler(
   scriptModule: ScriptModule,
   handler: "install" | "uninstall",
 ) {
   // For export default / module.exports = defineCustomInstallationStep(() => {})
   if (typeof scriptModule === "function") {
-    // This can only be the install handler, since uninstall requires an object with methods
     return handler === "install" ? scriptModule : null;
   }
 
   // For export default / module.exports = defineCustomInstallationStep({ install, uninstall })
   if (handler in scriptModule && typeof scriptModule[handler] === "function") {
-    return scriptModule[handler] as CustomInstallationStepHandler;
+    return scriptModule[handler];
   }
 
   return null;
@@ -140,12 +165,6 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
 
       const scriptModule = getScriptModule(customScripts, script);
       const install = resolveCustomScriptHandler(scriptModule, "install");
-
-      if (!install) {
-        throw new Error(
-          "Invalid script module format. Expected a function or an object with an `install` method.",
-        );
-      }
 
       const scriptResult = await install(config, context);
       logger.info(`Successfully executed script: ${name}`);
