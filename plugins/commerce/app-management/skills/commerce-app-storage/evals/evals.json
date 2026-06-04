@@ -1,0 +1,55 @@
+{
+  "skill_name": "commerce-app-storage",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I want to persist customer feedback in my Commerce app. Add a web runtime action that stores a feedback document in App Builder Database Storage and returns the result.",
+      "expected_output": "The agent installs @adobe/aio-lib-db, registers a web action (web: \"yes\") under a user package (not app-management) in src/commerce-extensibility-1/ext.config.yaml with include-ims-credentials: true, and creates a handler that generates an IMS token, calls init then connect, inserts into a collection, and closes the client in a finally block. It notes the workspace database must be provisioned and the App Builder Data Services API subscribed.",
+      "assertions": [
+        "The action is registered with include-ims-credentials: true",
+        "The action package name is not 'app-management'",
+        "The handler calls init() then connect() and obtains a collection",
+        "The handler closes the client in a finally block",
+        "An IMS access token is generated via generateAccessToken and passed to init()",
+        "The action is registered with web: \"yes\"",
+        "Provisioning (aio app db provision) and the App Builder Data Services API are mentioned"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "When an order is placed in Commerce, I want to record it in our database. The order event handler already needs to be created. Scaffold the event action and have it write the order to a collection.",
+      "expected_output": "The agent scaffolds an event/webhook action (web: \"no\") registered with include-ims-credentials: true, reading the payload from params.data, and writing to a collection using the init/connect/close lifecycle. After build passes it suggests commerce-app-eventing to wire the action to the order event via runtimeActions.",
+      "assertions": [
+        "The action is registered with include-ims-credentials: true",
+        "The handler reads the event payload from params.data",
+        "The handler uses init() -> connect() -> collection write -> close() in finally",
+        "The action is registered with web: \"no\"",
+        "Agent mentions commerce-app-eventing (or runtimeActions) to wire the action to the event"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Our workspace database is in emea. Add a runtime action that looks up a product by SKU from a 'products' collection, and make sure queries are efficient.",
+      "expected_output": "The agent creates a handler that initializes the library with region 'emea' (matching provisioning), connects, queries the products collection by sku, and closes the client. It promotes best practices: creating an index on the queried field, using projections, and iterating cursors for large result sets.",
+      "assertions": [
+        "init() is called with region: \"emea\"",
+        "The handler queries the products collection filtering by sku",
+        "The client is closed in a finally block",
+        "The agent recommends an index on the queried field and/or projections for efficiency",
+        "aio app build completes without errors"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "When my Commerce app installs, create a 'held_orders' collection with a unique index on order_id so duplicate holds are rejected. Set it up as part of the app installation, not on first request.",
+      "expected_output": "The agent authors a custom installation step with defineCustomInstallationStep (install handler, ideally with an uninstall that drops the collection), generates the IMS token from context.params (not config), connects, gets the collection object and calls createIndex({ order_id: 1 }, { unique: true }) on it, and closes the client in a finally block. It wires the script into app.commerce.config.ts under installation.customInstallationSteps with a .js script path, a unique name, and a description.",
+      "assertions": [
+        "The step is defined with defineCustomInstallationStep from @adobe/aio-commerce-lib-app/management",
+        "The IMS token is generated from context.params, not from config",
+        "createIndex is called on a collection object with { order_id: 1 } and { unique: true }",
+        "The client is closed in a finally block",
+        "The step is registered under installation.customInstallationSteps in app.commerce.config.ts with a .js script path, a name, and a description"
+      ]
+    }
+  ]
+}
