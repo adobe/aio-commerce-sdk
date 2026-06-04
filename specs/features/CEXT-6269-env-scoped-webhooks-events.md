@@ -150,11 +150,10 @@ the lib-app eventing and webhook _config_ schemas this change edits
 - `commerceEnvSchema` — a picklist over `COMMERCE_ENVS`
 - `commerceEnvArraySchema` — a non-empty `v.array(commerceEnvSchema)`
 
-These are exported as **bare schema constants** (camelCase), not as `name`-parameterized
-factories like the existing `xxxValueSchema(name)` helpers. The value-schema helpers take a
-`name` to build per-field error messages; the env validators instead carry fixed messages
-("Expected one of: …", "must contain at least one commerce environment"), so there is no
-`name` to thread through. The call sites apply the optional wrapper themselves:
+These are exported as **bare camelCase schema constants**, not `name`-parameterized factories
+like the `xxxValueSchema(name)` helpers: env validators carry fixed messages ("Expected one
+of: …", "must contain at least one commerce environment"), so there is no field `name` to
+thread through. Call sites apply the optional wrapper themselves:
 `env: v.optional(commerceEnvArraySchema)`.
 
 `COMMERCE_ENVS` is currently duplicated in two places — lib-config's `BaseOptionSchema.env`
@@ -326,8 +325,8 @@ What changes in App Management:
 - Install-time filtering introduces a dependency on Commerce environment resolution; installs
   that cannot resolve an environment fall back to "apply to all", which is a soft, possibly
   surprising default.
-- Uninstall vs. install asymmetry (below) needs to be reasoned about carefully to avoid
-  orphaned resources.
+- Install filters by `env` but uninstall does not (see Uninstall), an asymmetry that must be
+  reasoned about carefully to avoid orphaned resources.
 
 ## Rationale and alternatives
 
@@ -351,10 +350,7 @@ What changes in App Management:
 
 ## Unresolved questions
 
-None. The design decisions are settled: `env` reuses lib-config's shape; events are scoped
-per-event with empty providers skipped; an unresolvable environment falls back to apply-to-all
-(with a warning); uninstall does not filter; and the shared `env` schema is consolidated in
-common-utils as part of this PR.
+None — every design decision is settled in the sections above.
 
 ## Future possibilities
 
