@@ -37,21 +37,72 @@ const camelcase =
   (camelcaseModule.default as CamelcaseInterop).default ??
   camelcaseModule.default;
 
-function isCustomInstallationStepDefinition(
-  obj: unknown,
-): obj is CustomInstallationStepDefinition {
-  return (
-    typeof obj === "object" &&
-    obj !== null &&
-    "install" in obj &&
-    typeof obj.install === "function"
-  );
+type WithDefault<T> = T | { default: T };
+type ScriptModule =
+  | CustomInstallationStepDefinition
+  | CustomInstallationStepHandler;
+
+function assertScriptModule(module: unknown): asserts module is ScriptModule {
+  if (
+    typeof module !== "function" &&
+    (typeof module !== "object" || module === null)
+  ) {
+    throw new Error(
+      "Invalid script module format. Expected a function or an object with an `install` method.",
+    );
+  }
 }
 
-function isCustomInstallationStepHandler(
-  obj: unknown,
-): obj is CustomInstallationStepHandler {
-  return typeof obj === "function";
+/**
+ * Parses and validates a custom script module from the provided customScripts context.
+ * It supports both direct function exports and default exports.
+ *
+ * @param customScripts - The customScripts context containing the loaded modules
+ * @param script - The script path to resolve the module for
+ */
+function getScriptModule(
+  customScripts: Record<string, unknown>,
+  script: string,
+): ScriptModule {
+  let scriptModule = customScripts[script] as WithDefault<ScriptModule>;
+
+  if (!scriptModule) {
+    throw new Error(
+      `Script ${script} not found in customScripts context. Make sure the script is defined in the configuration and the action was generated with custom scripts support.`,
+    );
+  }
+
+  if (typeof scriptModule === "object" && "default" in scriptModule) {
+    scriptModule = scriptModule.default;
+  }
+
+  assertScriptModule(scriptModule);
+  return scriptModule;
+}
+
+/**
+ * Resolves the desired handler function from a custom script module. The module can either export
+ * a single function (for install) or an object with install/uninstall methods.
+ *
+ * @param scriptModule - The loaded module
+ * @param handler - The handler to resolve
+ */
+function resolveCustomScriptHandler(
+  scriptModule: ScriptModule,
+  handler: "install" | "uninstall",
+) {
+  // For export default / module.exports = defineCustomInstallationStep(() => {})
+  if (typeof scriptModule === "function") {
+    // This can only be the install handler, since uninstall requires an object with methods
+    return handler === "install" ? scriptModule : null;
+  }
+
+  // For export default / module.exports = defineCustomInstallationStep({ install, uninstall })
+  if (handler in scriptModule && typeof scriptModule[handler] === "function") {
+    return scriptModule[handler] as CustomInstallationStepHandler;
+  }
+
+  return null;
 }
 
 /** Result of executing a single custom installation script. */
@@ -87,37 +138,16 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
       logger.info(`Executing custom installation script: ${name}`);
       logger.debug(`Script path: ${script}`);
 
-      const scriptModule = customScripts[script];
+      const scriptModule = getScriptModule(customScripts, script);
+      const install = resolveCustomScriptHandler(scriptModule, "install");
 
-      if (!scriptModule) {
+      if (!install) {
         throw new Error(
-          `Script ${script} not found in customScripts context. Make sure the script is defined in the configuration and the action was generated with custom scripts support.`,
+          "Invalid script module format. Expected a function or an object with an `install` method.",
         );
       }
 
-      // Only support default export
-      if (typeof scriptModule !== "object" || !("default" in scriptModule)) {
-        throw new Error(
-          `Script ${script} must export a default function or object. Use defineCustomInstallationStep helper.`,
-        );
-      }
-
-      const defaultExport = scriptModule.default;
-      let runFunction: CustomInstallationStepHandler | null = null;
-
-      if (isCustomInstallationStepHandler(defaultExport)) {
-        runFunction = defaultExport;
-      } else if (isCustomInstallationStepDefinition(defaultExport)) {
-        runFunction = defaultExport.install;
-      }
-
-      if (runFunction === null) {
-        throw new Error(
-          `Script ${script} default export must be a function or an object with an install method. Use defineCustomInstallationStep helper.`,
-        );
-      }
-
-      const scriptResult = await runFunction(config, context);
+      const scriptResult = await install(config, context);
       logger.info(`Successfully executed script: ${name}`);
 
       return {
@@ -132,32 +162,16 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
     ): Promise<void> => {
       const { logger } = context;
       const customScripts = context.customScripts || {};
-
       logger.debug(`Uninstalling custom script: ${name}`);
 
-      const scriptModule = customScripts[script];
-
-      if (!scriptModule) {
-        throw new Error(
-          `Script ${script} not found in customScripts context. Make sure the script is defined in the configuration and the action was generated with custom scripts support.`,
-        );
-      }
-
-      const defaultExport = (scriptModule as Record<string, unknown>).default;
-
-      if (!isCustomInstallationStepDefinition(defaultExport)) {
-        logger.debug(
-          `Script ${script} does not export an uninstall function, skipping uninstall.`,
-        );
-        return;
-      }
-
-      const { uninstall } = defaultExport;
+      const scriptModule = getScriptModule(customScripts, script);
+      const uninstall = resolveCustomScriptHandler(scriptModule, "uninstall");
 
       if (!uninstall) {
         logger.debug(
           `Script ${script} does not export an uninstall function, skipping uninstall.`,
         );
+
         return;
       }
 
