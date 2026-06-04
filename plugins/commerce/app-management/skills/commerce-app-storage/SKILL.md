@@ -13,7 +13,7 @@ compatibility: >
   in the Adobe Developer Console. Requires a base app initialized with commerce-app-init.
 metadata:
   author: adobe
-  sdk-package: "@adobe/aio-lib-db"
+  sdk-package: "@adobe/aio-commerce-lib-app"
   version: "0.0.1"
 ---
 
@@ -47,7 +47,7 @@ application:
       region: emea # amer | apac | emea | aus — the single source of truth for the region
 ```
 
-**Extension-only apps need a workaround.** Declarative auto-provision only runs when the `application` runtime manifest has at least one package with a runtime action. Apps built purely with `extensions` (the recommended layout per the submission guidelines) have no `application` actions, so `aio app deploy` silently skips provisioning. Make the `application` block "real enough" for provisioning to run by adding an empty packages map and a `post-app-build` hook that creates the directory the provisioning step expects:
+**Extension-only apps need a workaround.** Due to a bug in the `aio app` CLI plugin (not `aio-lib-db`), `aio app deploy` only runs declarative auto-provision when the `application` runtime manifest has at least one package with a runtime action. Apps built purely with `extensions` (the recommended layout per the submission guidelines) have no `application` actions, so deploy silently skips provisioning. Make the `application` block "real enough" for provisioning to run by adding an empty packages map and a `post-app-build` hook that creates the directory the provisioning step expects:
 
 ```yaml
 application:
@@ -85,7 +85,9 @@ Gather from the user:
 
 ## Step 4 — Register the action
 
-Add the action to a user-defined package in `src/commerce-extensibility-1/ext.config.yaml` (any name except `app-management`, which is reserved). The `include-ims-credentials: true` annotation is **required** — `aio-lib-db` authenticates with the IMS token it injects.
+Add the action to a user-defined package in `src/commerce-extensibility-1/ext.config.yaml` (any name except `app-management`, which is reserved).
+
+> **`include-ims-credentials: true` is required on every DB action.** Without it, `aio-lib-db` has no IMS token to authenticate with and the connection fails at runtime (and the app installation fails if the action runs during install). Do not omit this annotation.
 
 ```yaml
 # src/commerce-extensibility-1/ext.config.yaml
@@ -256,7 +258,7 @@ A build failure points directly to the offending config field. To exercise the a
 ## Common Issues
 
 - **Connection fails despite a valid token**: the action is missing `include-ims-credentials: true`, or the **App Builder Data Services** API has not been added to the project in the Adobe Developer Console (see Prerequisites).
-- **DB not provisioned after `aio app deploy` (extension-only app)**: declarative auto-provision is skipped when the `application` runtime manifest has no runtime action. Apply the extension-only workaround from Step 1 — add `packages: {}` and a `post-app-build: "mkdir -p dist/application/actions"` hook under `application` — or provision once with the CLI fallback for local dev.
+- **DB not provisioned after `aio app deploy` (extension-only app)**: a bug in the `aio app` CLI plugin (not `aio-lib-db`) skips declarative auto-provision when the `application` runtime manifest has no runtime action. Apply the extension-only workaround from Step 1 — add `packages: {}` and a `post-app-build: "mkdir -p dist/application/actions"` hook under `application` — or provision once with the CLI fallback for local dev.
 - **Connection fails after a region change**: the library region doesn't match the manifest `database.region`. Moving regions is destructive — `aio app db delete`, update `database.region` in the manifest, then re-provision (`aio app deploy`, or the CLI fallback for local dev).
 - **Querying by `_id` from a string returns nothing**: convert it first — `new ObjectId(idString)` from `bson`. A raw string never matches the stored `ObjectId`.
 - **`DbError` vs unexpected error**: errors thrown by the service have `name === "DbError"`; branch on it to separate database failures from application bugs.
@@ -266,6 +268,7 @@ A build failure points directly to the offending config field. To exercise the a
 ## Quality Bar
 
 - `aio app build` completes without errors
+- Every user-authored DB action declares `include-ims-credentials: true` in its annotations
 - The action closes the client in a `finally` block and initializes the library in the region declared in the manifest `database` block
 
 ## Chaining
