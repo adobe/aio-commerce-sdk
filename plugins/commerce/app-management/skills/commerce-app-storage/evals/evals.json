@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "I want to persist customer feedback in my Commerce app. Add a web runtime action that stores a feedback document in App Builder Database Storage and returns the result.",
-      "expected_output": "The agent installs @adobe/aio-lib-db, registers a web action (web: \"yes\") under a user package (not app-management) in src/commerce-extensibility-1/ext.config.yaml with include-ims-credentials: true, and creates a handler that generates an IMS token, calls init then connect, inserts into a collection, and closes the client in a finally block. It notes the workspace database must be provisioned and the App Builder Data Services API subscribed.",
+      "expected_output": "The agent installs @adobe/aio-lib-db, registers a web action (web: \"yes\") under a user package (not app-management) in src/commerce-extensibility-1/ext.config.yaml with include-ims-credentials: true, and creates a handler that generates an IMS token, calls init then connect, inserts into a collection, and closes the client in a finally block. It notes the workspace database must be provisioned (declaratively via the app.config.yaml database block on deploy, with the aio app db provision CLI as a local-dev fallback) and that the App Builder Data Services API must be added to the project in the Adobe Developer Console.",
       "assertions": [
         "The action is registered with include-ims-credentials: true",
         "The action package name is not 'app-management'",
@@ -12,7 +12,7 @@
         "The handler closes the client in a finally block",
         "An IMS access token is generated via generateAccessToken and passed to init()",
         "The action is registered with web: \"yes\"",
-        "Provisioning (aio app db provision) and the App Builder Data Services API are mentioned"
+        "Provisioning (declarative auto-provision in app.config.yaml as primary, aio app db provision CLI as local-dev fallback) and the App Builder Data Services API are mentioned"
       ]
     },
     {

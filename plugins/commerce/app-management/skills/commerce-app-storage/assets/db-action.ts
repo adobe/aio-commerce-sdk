@@ -7,8 +7,11 @@
 // Registration requirements (in src/commerce-extensibility-1/ext.config.yaml):
 //   - include-ims-credentials: true   (REQUIRED — provides the IMS token below)
 //   - web: "yes" for an HTTP-invokable web action; "no" for an event/webhook handler
-//   - the "App Builder Data Services" API must be subscribed in the workspace
-//   - the workspace database must be provisioned (aio app db provision --region <r>)
+//   - the "App Builder Data Services" API must be added to the project in the
+//     Adobe Developer Console (every workspace that uses the database)
+//   - the workspace database must be provisioned: declaratively via the
+//     app.config.yaml database block on `aio app deploy` (CLI `aio app db
+//     provision --region <r>` is the local-dev fallback)
 
 import { init as initDb } from "@adobe/aio-lib-db";
 import { Core } from "@adobe/aio-sdk";
@@ -37,7 +40,7 @@ export async function main(params: Record<string, unknown>) {
     // 1. IMS token — injected because include-ims-credentials is true.
     const token = await Core.AuthClient.generateAccessToken(params);
 
-    // 2. Initialize. region MUST match the provisioned region.
+    // 2. Initialize. region MUST match the manifest database.region.
     //    Omit it to use AIO_DB_REGION or the "amer" default.
     const db = await initDb({
       token: token.access_token,

@@ -9,8 +9,8 @@ description: >
 license: Apache-2.0
 compatibility: >
   Requires Node.js 22+, aio CLI, @adobe/aio-commerce-lib-app, and a provisioned
-  workspace database with the App Builder Data Services API subscribed.
-  Requires a base app initialized with commerce-app-init.
+  workspace database with the App Builder Data Services API added to the project
+  in the Adobe Developer Console. Requires a base app initialized with commerce-app-init.
 metadata:
   author: adobe
   sdk-package: "@adobe/aio-lib-db"
@@ -29,17 +29,27 @@ The db-access code is identical regardless of action type — what differs is ho
 ## Prerequisites
 
 - Verify `app.commerce.config.ts` exists in the project root. If it doesn't, stop and invoke `commerce-app-init` first.
-- The **App Builder Data Services** API must be subscribed in the Developer Console workspace (no special license beyond App Builder). This API authenticates runtime actions to the database service.
+- The **App Builder Data Services** API must be **added to the project in the Adobe Developer Console** — in every workspace that uses the database (no special license beyond App Builder). Without it, runtime actions cannot authenticate to the database service.
 
 ## Step 1 — Provision the workspace database
 
-There is a strict one-to-one relationship between an AIO project workspace and a workspace database. Provision it (self-service, no special permissions):
+There is a strict one-to-one relationship between an AIO project workspace and a workspace database. The recommended way to provision it is **declaratively** in `app.config.yaml` — the database is provisioned (if not already present) on `aio app deploy`:
+
+```yaml
+application:
+  runtimeManifest:
+    database:
+      auto-provision: true
+      region: emea # amer | apac | emea | aus — the single source of truth for the region
+```
+
+For **local development**, declarative auto-provisioning does **not** run during `aio app run` / `aio app dev`. Provision once up front with the CLI fallback (self-service, no special permissions):
 
 ```sh
 aio app db provision --region <amer|apac|emea|aus>
 ```
 
-This provisions the database and writes a `database` entry to `app.config.yaml`. **Note the region** — the library must be initialized in the same region the database was provisioned in.
+> **Region is a single source of truth.** The `region` in the manifest `database` block must match the `region` passed to every `initDb({ region })` call (or `AIO_DB_REGION`) — in every action **and** in the install step (Step 6). A mismatch fails the connection. Changing region is destructive: `aio app db delete`, update `database.region` in the manifest, then re-provision.
 
 ## Step 2 — Install the library
 
@@ -53,7 +63,7 @@ Gather from the user:
 
 - **Action type**: web action or event/webhook action (see the two shapes above).
 - **Collection name** and the **operations** needed (insert / find / update / delete).
-- **Region**: must match Step 1. Pass it to `init()` or set `AIO_DB_REGION`.
+- **Region**: must match the manifest `database.region` (see the region callout in Step 1). Pass it to `init()` or set `AIO_DB_REGION`.
 
 ## Step 4 — Register the action
 
@@ -82,7 +92,7 @@ runtimeManifest:
 | `include-ims-credentials` | Must be `true` — without it `init()` has no IMS token and the connection fails    |
 | `web`                     | `"yes"` for HTTP-invokable web actions; `"no"` for event/webhook handlers         |
 | Collection name           | Non-empty string; created on first write if it doesn't exist                      |
-| Region                    | Must match the provisioned region (`amer` \| `apac` \| `emea` \| `aus`)           |
+| Region                    | Must match the manifest `database.region` (`amer` \| `apac` \| `emea` \| `aus`)   |
 
 ## Step 5 — Implement the handler
 
@@ -97,7 +107,7 @@ export async function main(params: Record<string, unknown>) {
   let client;
   try {
     const token = await Core.AuthClient.generateAccessToken(params); // IMS token
-    const db = await initDb({ token: token.access_token, region: "emea" }); // region must match provisioning
+    const db = await initDb({ token: token.access_token, region: "emea" }); // must match the manifest database.region
     client = await db.connect();
     const records = client.collection("records");
 
@@ -158,7 +168,7 @@ export default defineCustomInstallationStep({
     try {
       // context.params carries the injected IMS credentials — NOT config.
       const token = await Core.AuthClient.generateAccessToken(context.params);
-      const db = await initDb({ token: token.access_token, region: "emea" }); // region must match provisioning
+      const db = await initDb({ token: token.access_token, region: "emea" }); // must match the manifest database.region
       client = await db.connect();
 
       const orders = client.collection("held_orders"); // get the collection object first
@@ -216,7 +226,7 @@ A build failure points directly to the offending config field. To exercise the a
 ## Best practices
 
 - **Always close connections** in a `finally` block — leaked connections exhaust resources.
-- **Match the region** between provisioning and `init()`; a mismatch fails the connection silently from the caller's view.
+- **Match the region** — the manifest `database.region` is the single source of truth; every `init()` call and the install step must use it (see the region callout in Step 1). A mismatch fails the connection silently from the caller's view.
 - **Use projections** (`.project({ field: 1 })`) and **indexes** (`createIndex`) for frequently queried fields; index fields must total ≤ 2048 bytes.
 - **Iterate large result sets with cursors** (`for await (const doc of collection.find(...))`) instead of `toArray()` to bound memory.
 - **Don't hardcode the region or secrets** — prefer `AIO_DB_REGION` and the injected IMS token over inline values.
@@ -224,8 +234,8 @@ A build failure points directly to the offending config field. To exercise the a
 
 ## Common Issues
 
-- **Connection fails despite a valid token**: the action is missing `include-ims-credentials: true`, or the **App Builder Data Services** API is not subscribed in the workspace.
-- **Connection fails after a region change**: the library region doesn't match where the database was provisioned. To move regions you must `aio app db delete`, update the region, then re-provision.
+- **Connection fails despite a valid token**: the action is missing `include-ims-credentials: true`, or the **App Builder Data Services** API has not been added to the project in the Adobe Developer Console (see Prerequisites).
+- **Connection fails after a region change**: the library region doesn't match the manifest `database.region`. Moving regions is destructive — `aio app db delete`, update `database.region` in the manifest, then re-provision (`aio app deploy`, or the CLI fallback for local dev).
 - **Querying by `_id` from a string returns nothing**: convert it first — `new ObjectId(idString)` from `bson`. A raw string never matches the stored `ObjectId`.
 - **`DbError` vs unexpected error**: errors thrown by the service have `name === "DbError"`; branch on it to separate database failures from application bugs.
 - **Auth fails inside an installation step**: the token must be generated from `context.params` (which carries the injected IMS credentials), not from `config`. `config` is the app configuration and holds no credentials.
@@ -234,7 +244,7 @@ A build failure points directly to the offending config field. To exercise the a
 ## Quality Bar
 
 - `aio app build` completes without errors
-- The action closes the client in a `finally` block and initializes the library in the provisioned region
+- The action closes the client in a `finally` block and initializes the library in the region declared in the manifest `database` block
 
 ## Chaining
 

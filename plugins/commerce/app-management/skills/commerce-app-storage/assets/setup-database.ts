@@ -39,7 +39,7 @@ async function openClient(context: { params: Record<string, unknown> }) {
   const token = await Core.AuthClient.generateAccessToken(context.params);
   const db = await initDb({
     token: token.access_token,
-    // region MUST match the provisioned region. Omit to use AIO_DB_REGION.
+    // region MUST match the manifest database.region. Omit to use AIO_DB_REGION.
     region: (context.params.DB_REGION as string) || "amer", // "amer" | "apac" | "emea" | "aus"
   });
   return db.connect();
