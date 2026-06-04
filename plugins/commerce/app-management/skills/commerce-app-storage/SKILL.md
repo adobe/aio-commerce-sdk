@@ -116,19 +116,24 @@ runtimeManifest:
 
 ## Step 5 — Implement the handler
 
-Every handler follows the same lifecycle: generate token → `init` → `connect` → use a collection → **always `close` in `finally`**.
+Every handler follows the same lifecycle: resolve IMS auth → mint token → `init` → `connect` → use a collection → **always `close` in `finally`**.
 
 ```ts
 // Web action — src/commerce-extensibility-1/actions/store-record/index.ts
 import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
-import { generateAccessToken } from "@adobe/aio-lib-core-auth";
+import {
+  getImsAuthProvider,
+  resolveImsAuthParams,
+} from "@adobe/aio-commerce-lib-auth";
 import { init as initDb } from "@adobe/aio-lib-db";
 
 export async function main(params: Record<string, unknown>) {
   let client;
   try {
-    const token = await generateAccessToken(params); // IMS token
-    const db = await initDb({ token: token.access_token, region: "emea" }); // must match the manifest database.region
+    // Resolve the injected AIO_COMMERCE_AUTH_IMS_* params, then mint a raw token string.
+    const authProvider = getImsAuthProvider(resolveImsAuthParams(params));
+    const token = await authProvider.getAccessToken();
+    const db = await initDb({ token, region: "emea" }); // must match the manifest database.region
     client = await db.connect();
     const records = client.collection("records");
 
@@ -155,8 +160,9 @@ export async function main(params: Record<string, unknown>) {
   const data = params.data as Record<string, unknown>;
   let client;
   try {
-    const token = await generateAccessToken(params);
-    const db = await initDb({ token: token.access_token, region: "emea" });
+    const authProvider = getImsAuthProvider(resolveImsAuthParams(params));
+    const token = await authProvider.getAccessToken();
+    const db = await initDb({ token, region: "emea" });
     client = await db.connect();
     await client
       .collection("orders")
@@ -174,12 +180,15 @@ See [assets/db-action.ts](assets/db-action.ts) for the full annotated reference 
 
 For an App Management app, create collections and indexes with a **custom installation step** — a script that runs once when the app is installed from the Commerce Admin, and can be reversed on uninstall. Prefer this over creating them ad-hoc on the first request.
 
-Author the step with `defineCustomInstallationStep` (an `install` handler plus an optional `uninstall`). Inside it, generate the IMS token from **`context.params`** — _not_ `config` — then follow the same init → connect → `close` lifecycle as Step 5, and call `createIndex` **on the collection object**:
+Author the step with `defineCustomInstallationStep` (an `install` handler plus an optional `uninstall`). Inside it, resolve the IMS auth params from **`context.params`** — _not_ `config` — then follow the same init → connect → `close` lifecycle as Step 5, and call `createIndex` **on the collection object**:
 
 ```ts
 // ./scripts/setup-database.ts — referenced from config as ./scripts/setup-database.js
 import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
-import { generateAccessToken } from "@adobe/aio-lib-core-auth";
+import {
+  getImsAuthProvider,
+  resolveImsAuthParams,
+} from "@adobe/aio-commerce-lib-auth";
 import { init as initDb } from "@adobe/aio-lib-db";
 
 export default defineCustomInstallationStep({
@@ -187,8 +196,11 @@ export default defineCustomInstallationStep({
     let client;
     try {
       // context.params carries the injected IMS credentials — NOT config.
-      const token = await generateAccessToken(context.params);
-      const db = await initDb({ token: token.access_token, region: "emea" }); // must match the manifest database.region
+      const authProvider = getImsAuthProvider(
+        resolveImsAuthParams(context.params),
+      );
+      const token = await authProvider.getAccessToken();
+      const db = await initDb({ token, region: "emea" }); // must match the manifest database.region
       client = await db.connect();
 
       const orders = client.collection("held_orders"); // get the collection object first
@@ -201,8 +213,11 @@ export default defineCustomInstallationStep({
   uninstall: async (config, context) => {
     let client;
     try {
-      const token = await generateAccessToken(context.params);
-      const db = await initDb({ token: token.access_token, region: "emea" });
+      const authProvider = getImsAuthProvider(
+        resolveImsAuthParams(context.params),
+      );
+      const token = await authProvider.getAccessToken();
+      const db = await initDb({ token, region: "emea" });
       client = await db.connect();
       await client.collection("held_orders").drop();
     } finally {
@@ -212,7 +227,7 @@ export default defineCustomInstallationStep({
 });
 ```
 
-> **Custom installation scripts must be plain JavaScript for now.** App Management only wires up `.js` step scripts; a `.ts` file works only if you compile it yourself and point `script` at the emitted `.js`. Author the step in JS directly, or treat the `.ts` reference as source and ship its compiled output.
+> **Author the install script as an ES module with `export default` — never `module.exports`.** The installation action loads each step via `import * as step from "<script>"` and reads `step.default`, so the script must default-export the `defineCustomInstallationStep(...)` result. CommonJS breaks this: `module.exports.default` surfaces as `step.default.default` and validation fails. The `script` path must end in `.js`; if you author in TypeScript, compile it and keep the emitted `.js` an ES module.
 
 Register the step in `app.commerce.config.ts` under `installation.customInstallationSteps`. The `script` path points at the compiled `.js` output:
 
@@ -229,11 +244,11 @@ installation: {
 },
 ```
 
-| Field         | Constraint                                                                                                     |
-| ------------- | -------------------------------------------------------------------------------------------------------------- |
-| `script`      | Path relative to the project root; must be plain JS ending in `.js` (TS only works if you compile it yourself) |
-| `name`        | Non-empty string, ≤ 255 characters; **unique** across all installation steps                                   |
-| `description` | Non-empty string, ≤ 255 characters                                                                             |
+| Field         | Constraint                                                                                                                             |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `script`      | Path relative to the project root; must be an ES module (`export default`) ending in `.js` (compile from TS if you author it that way) |
+| `name`        | Non-empty string, ≤ 255 characters; **unique** across all installation steps                                                           |
+| `description` | Non-empty string, ≤ 255 characters                                                                                                     |
 
 See [assets/setup-database.ts](assets/setup-database.ts) for the full annotated install/uninstall reference.
 
@@ -252,7 +267,7 @@ A build failure points directly to the offending config field. To exercise the a
 - **Use projections** (`.project({ field: 1 })`) and **indexes** (`createIndex`) for frequently queried fields; index fields must total ≤ 2048 bytes.
 - **Iterate large result sets with cursors** (`for await (const doc of collection.find(...))`) instead of `toArray()` to bound memory.
 - **Don't hardcode the region or secrets** — prefer `AIO_DB_REGION` and the injected IMS token over inline values.
-- **Prefer the most specific Adobe I/O library** in runtime actions over the `@adobe/aio-sdk` umbrella — e.g. `@adobe/aio-lib-core-auth` for `generateAccessToken` and `@adobe/aio-lib-core-logging` for the logger — to keep action bundles small.
+- **Prefer the most specific Adobe I/O library** in runtime actions over the `@adobe/aio-sdk` umbrella — e.g. `@adobe/aio-commerce-lib-auth` for IMS auth and `@adobe/aio-lib-core-logging` for the logger — to keep action bundles small.
 - **Set up collections and indexes during installation** with a custom installation step (`defineCustomInstallationStep`, see Step 6) rather than ad-hoc on the first request — it runs once when the app is installed from the Commerce Admin and is reversible on uninstall. A generic App Builder `post-app-deploy` hook is only an alternative when the app is not installed through App Management.
 
 ## Common Issues
@@ -262,7 +277,8 @@ A build failure points directly to the offending config field. To exercise the a
 - **Connection fails after a region change**: the library region doesn't match the manifest `database.region`. Moving regions is destructive — `aio app db delete`, update `database.region` in the manifest, then re-provision (`aio app deploy`, or the CLI fallback for local dev).
 - **Querying by `_id` from a string returns nothing**: convert it first — `new ObjectId(idString)` from `bson`. A raw string never matches the stored `ObjectId`.
 - **`DbError` vs unexpected error**: errors thrown by the service have `name === "DbError"`; branch on it to separate database failures from application bugs.
-- **Auth fails inside an installation step**: the token must be generated from `context.params` (which carries the injected IMS credentials), not from `config`. `config` is the app configuration and holds no credentials.
+- **Auth fails inside an installation step**: resolve the IMS auth params from `context.params` (`resolveImsAuthParams(context.params)`) — which carries the injected `AIO_COMMERCE_AUTH_IMS_*` credentials — not from `config`, which holds no credentials. Use `@adobe/aio-commerce-lib-auth`, not `@adobe/aio-lib-core-auth`: the latter's `generateAccessToken` expects `clientId`/`clientSecret` directly and cannot consume the injected params.
+- **Installation step fails to load (`must export a default function or object`)**: the script was authored as CommonJS. Author it as an ES module with `export default`; `module.exports` (or `module.exports.default`) surfaces through the framework's `import * as` loader as `.default.default` and fails validation.
 - **`createIndex` errors or has no effect**: it must be called on a collection object (`client.collection("name").createIndex({ field: 1 })`), not with a collection-name string. Get the collection first, then call `createIndex` on it.
 
 ## Quality Bar

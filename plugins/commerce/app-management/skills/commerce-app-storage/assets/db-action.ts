@@ -2,7 +2,7 @@
 // App Builder Database Storage (@adobe/aio-lib-db).
 //
 // Lifecycle (identical for web actions and event/webhook handlers):
-//   generateAccessToken -> init -> connect -> use collection -> ALWAYS close.
+//   resolveImsAuthParams -> getAccessToken -> init -> connect -> use collection -> ALWAYS close.
 //
 // Registration requirements (in src/commerce-extensibility-1/ext.config.yaml):
 //   - include-ims-credentials: true   (REQUIRED — provides the IMS token below)
@@ -13,8 +13,11 @@
 //     app.config.yaml database block on `aio app deploy` (CLI `aio app db
 //     provision --region <r>` is the local-dev fallback)
 
+import {
+  getImsAuthProvider,
+  resolveImsAuthParams,
+} from "@adobe/aio-commerce-lib-auth";
 import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
-import { generateAccessToken } from "@adobe/aio-lib-core-auth";
 import AioLogger from "@adobe/aio-lib-core-logging";
 import { init as initDb } from "@adobe/aio-lib-db";
 
@@ -34,13 +37,15 @@ export async function main(params: Record<string, unknown>) {
   let client: DbClient | undefined;
 
   try {
-    // 1. IMS token — injected because include-ims-credentials is true.
-    const token = await generateAccessToken(params);
+    // 1. Resolve the AIO_COMMERCE_AUTH_IMS_* params injected because
+    //    include-ims-credentials is true, then mint a raw access token string.
+    const authProvider = getImsAuthProvider(resolveImsAuthParams(params));
+    const token = await authProvider.getAccessToken();
 
     // 2. Initialize. region MUST match the manifest database.region.
     //    Omit it to use AIO_DB_REGION or the "amer" default.
     const db = await initDb({
-      token: token.access_token,
+      token,
       region: (params.DB_REGION as string) || "amer", // "amer" | "apac" | "emea" | "aus"
     });
 

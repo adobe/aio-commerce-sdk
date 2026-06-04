@@ -9,9 +9,12 @@
 //   It runs exactly once when the app is installed from the Commerce Admin,
 //   and the uninstall handler lets the app clean up after itself.
 //
-// Custom installation scripts must be plain JS for now: App Management only wires
-// up .js step scripts. This .ts file works only if you compile it yourself and
-// point `script` at the emitted .js — otherwise author the step directly in JS.
+// Author the install script as an ES module with `export default` — never
+// `module.exports`. The installation action loads each step via
+// `import * as step from "<script>"` and reads `step.default`, so the script
+// must default-export the defineCustomInstallationStep(...) result. The `script`
+// path must end in .js; if you author in TypeScript, compile it and keep the
+// emitted .js an ES module.
 //
 // Wiring (in app.commerce.config.ts) — the script path is the COMPILED .js:
 //   installation: {
@@ -25,13 +28,17 @@
 //   }
 //
 // Two easy mistakes this file avoids:
-//   1. Generate the IMS token from context.params — NOT config. config is the app
-//      configuration and carries no credentials; context.params carries the injected
-//      IMS credentials (AIO_COMMERCE_AUTH_IMS_*).
+//   1. Resolve the IMS auth params from context.params — NOT config. config is the
+//      app configuration and carries no credentials; context.params carries the
+//      injected IMS credentials (AIO_COMMERCE_AUTH_IMS_*) read by
+//      @adobe/aio-commerce-lib-auth.
 //   2. createIndex is called ON A COLLECTION OBJECT, not with a collection-name string.
 
 import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
-import { generateAccessToken } from "@adobe/aio-lib-core-auth";
+import {
+  getImsAuthProvider,
+  resolveImsAuthParams,
+} from "@adobe/aio-commerce-lib-auth";
 import { init as initDb } from "@adobe/aio-lib-db";
 
 const COLLECTION = "held_orders";
@@ -39,10 +46,12 @@ const COLLECTION = "held_orders";
 // Open a DB client using the credentials on context.params. The caller is
 // responsible for closing it (see the finally blocks below).
 async function openClient(context: { params: Record<string, unknown> }) {
-  // include-ims-credentials makes these credentials available on context.params.
-  const token = await generateAccessToken(context.params);
+  // include-ims-credentials makes the AIO_COMMERCE_AUTH_IMS_* credentials available
+  // on context.params; resolve them and mint a raw access token string.
+  const authProvider = getImsAuthProvider(resolveImsAuthParams(context.params));
+  const token = await authProvider.getAccessToken();
   const db = await initDb({
-    token: token.access_token,
+    token,
     // region MUST match the manifest database.region. Omit to use AIO_DB_REGION.
     region: (context.params.DB_REGION as string) || "amer", // "amer" | "apac" | "emea" | "aus"
   });
