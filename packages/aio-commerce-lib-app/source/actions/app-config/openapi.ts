@@ -155,9 +155,9 @@ export async function buildOpenApiSpec(
     stripPath("/scope-tree/commerce");
   }
 
-  if (!domains.has("adminUi")) {
+  if (!(domains.has("adminUiSdk") || domains.has("adminUi"))) {
     logger.debug(
-      "Application doesn't define Admin UI configuration, stripping references...",
+      "Application doesn't define Admin UI SDK registration, stripping references...",
     );
 
     stripPath("/registration");
