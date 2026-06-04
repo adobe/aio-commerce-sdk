@@ -289,19 +289,17 @@ with `pnpm --filter @adobe/aio-commerce-lib-app run lint:openapi`.
 
 ### Documentation
 
-Per the AGENTS.md doc-sync rule, the same PR updates `packages/aio-commerce-lib-app/docs/usage.md`:
-the webhooks and events sections gain an environment-scoping subsection that explains the
-`env` field, lists the supported values (`"paas"`, `"saas"`), states the omitted-means-all
-default, and shows config examples — mirroring lib-config's "Conditional Fields by Commerce
-Environment". The new schema entries also carry JSDoc so the auto-generated API reference picks
-them up (the reference itself is not regenerated in this PR). The lib-webhooks API package is
-unchanged, so its docs are not affected. A changeset is included; the bump is minor (additive
-optional fields and an additive optional query param; no public surface removed — see Shared
-`env` schema).
+The same PR updates `packages/aio-commerce-lib-app/docs/usage.md`: the webhooks and events
+sections gain an environment-scoping subsection that explains the `env` field, lists the
+supported values (`"paas"`, `"saas"`), states the omitted-means-all default, and shows config
+examples — mirroring lib-config's "Conditional Fields by Commerce Environment". The new schema
+entries also carry JSDoc so the auto-generated API reference picks them up (the reference
+itself is not regenerated in this PR). The lib-webhooks API package is unchanged, so its docs
+are not affected. A changeset is included; the bump is minor (additive optional fields and an
+additive optional query param; no public surface removed — see Shared `env` schema).
 
-Per the AGENTS.md plugin-sync rule, also verify whether any `plugins/` migration or
-scaffolding skill references the webhook/event config shape; if so, reflect the new `env` field
-there in the same PR.
+If any `plugins/` migration or scaffolding skill references the webhook/event config shape, it
+is updated to reflect the new `env` field in the same PR.
 
 ### Uninstall
 
