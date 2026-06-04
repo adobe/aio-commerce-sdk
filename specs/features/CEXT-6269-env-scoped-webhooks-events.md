@@ -145,9 +145,17 @@ the lib-app eventing and webhook _config_ schemas this change edits
 (`config/schema/eventing.ts`, `config/schema/webhooks.ts`):
 
 - `COMMERCE_ENVS = ["paas", "saas"] as const`
-- `commerceEnvSchema()` — picklist over `COMMERCE_ENVS`
-- `envSchema()` — optional non-empty array of `commerceEnvSchema()`
-- `type CommerceEnv = "paas" | "saas"`
+- `type CommerceEnv = (typeof COMMERCE_ENVS)[number]` (same name/shape the config action
+  already exports)
+- `commerceEnvSchema` — a picklist over `COMMERCE_ENVS`
+- `commerceEnvArraySchema` — a non-empty `v.array(commerceEnvSchema)`
+
+These are exported as **bare schema constants** (camelCase), not as `name`-parameterized
+factories like the existing `xxxValueSchema(name)` helpers. The value-schema helpers take a
+`name` to build per-field error messages; the env validators instead carry fixed messages
+("Expected one of: …", "must contain at least one commerce environment"), so there is no
+`name` to thread through. The call sites apply the optional wrapper themselves:
+`env: v.optional(commerceEnvArraySchema)`.
 
 `COMMERCE_ENVS` is currently duplicated in two places — lib-config's `BaseOptionSchema.env`
 (`source/modules/schema/fields.ts`) and the config action's query schema
@@ -161,12 +169,12 @@ live in common-utils and the assertion lives where both are visible.
 
 ### Schema placement
 
-- **Events (per-event):** add `env: v.optional(envSchema())` to `BaseEventSchema` in
-  `packages/aio-commerce-lib-app/source/config/schema/eventing.ts`, so both
+- **Events (per-event):** add `env: v.optional(commerceEnvArraySchema)` to `BaseEventSchema`
+  in `packages/aio-commerce-lib-app/source/config/schema/eventing.ts`, so both
   `CommerceEventSchema` and `ExternalEventSchema` inherit it. The inferred `CommerceEvent`,
   `ExternalEvent`, and `AppEvent` types pick up `env?` automatically.
-- **Webhooks (per-entry):** add `env: v.optional(envSchema())` to both webhook entry
-  schemas in `packages/aio-commerce-lib-app/source/config/schema/webhooks.ts`
+- **Webhooks (per-entry):** add `env: v.optional(commerceEnvArraySchema)` to both webhook
+  entry schemas in `packages/aio-commerce-lib-app/source/config/schema/webhooks.ts`
   (`WebhookEntryWithRuntimeActionSchema`, `WebhookEntryWithUrlSchema`), alongside the
   existing `label` / `description` / `category` fields.
 
@@ -176,13 +184,25 @@ metadata and is never sent to Commerce.
 
 ### Detecting the target environment at install time
 
-The Commerce environment is derived from the installation params via lib-api's
-`resolveCommerceHttpClientParams(params)`, which yields a `CommerceFlavor` (`"paas"` /
-`"saas"`) — resolved from `AIO_COMMERCE_API_FLAVOR` or inferred from
-`AIO_COMMERCE_API_BASE_URL` (see
-`packages/aio-commerce-lib-api/source/lib/commerce/helpers.ts`). The auth strategy (IMS vs
-Integration) is **not** a valid proxy for the environment — PaaS may use either, so only the
-API URL or explicit environment param is authoritative.
+The target environment is resolved from the installation params by a dedicated,
+**non-throwing** helper added to lib-api — sketch: `resolveCommerceEnvironment(params):
+CommerceFlavor | null`. It returns the explicit `AIO_COMMERCE_API_FLAVOR` when valid,
+otherwise infers `"paas"` / `"saas"` from `AIO_COMMERCE_API_BASE_URL`, and returns `null` when
+neither is available. lib-api already has the internal pieces (`isFlavor`,
+`resolveCommerceFlavorFromApiUrl` in
+`packages/aio-commerce-lib-api/source/lib/commerce/helpers.ts`); the helper exposes them as a
+small public function.
+
+This must **not** reuse the existing `resolveCommerceHttpClientParams`: that function returns
+a full `CommerceHttpClientParams` (the value is nested at `config.flavor`, not returned
+directly), **throws** when `AIO_COMMERCE_API_BASE_URL` is absent, and additionally validates
+auth — throwing for SaaS with non-IMS auth. Using it for environment detection would crash the
+exact apply-to-all case this spec relies on (e.g. an external-events-only install with no base
+URL) and would couple environment resolution to unrelated auth validation. The new helper is
+the producer of the `null` (unresolved) branch the filtering predicate depends on.
+
+The auth strategy (IMS vs Integration) is **not** a valid proxy for the environment — PaaS may
+use either, so only the API URL or explicit environment param is authoritative.
 
 The resolved environment is surfaced on the events and webhooks step contexts
 (`management/installation/events/context.ts`, `management/installation/webhooks/context.ts`),
@@ -270,7 +290,7 @@ subscriptions.
 
 ### Edge cases
 
-- **Empty `env` array** — rejected at validation by `envSchema()`'s non-empty check.
+- **Empty `env` array** — rejected at validation by `commerceEnvArraySchema`'s non-empty check.
 - **Unknown env value** — rejected by the picklist.
 - **Provider with all events filtered out** — skipped: no provider, no registration, no
   subscriptions.
