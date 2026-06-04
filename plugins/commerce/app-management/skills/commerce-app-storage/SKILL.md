@@ -43,6 +43,19 @@ application:
       region: emea # amer | apac | emea | aus — the single source of truth for the region
 ```
 
+**Extension-only apps need a workaround.** Declarative auto-provision only runs when the `application` runtime manifest has at least one package with a runtime action. Apps built purely with `extensions` (the recommended layout per the submission guidelines) have no `application` actions, so `aio app deploy` silently skips provisioning. Make the `application` block "real enough" for provisioning to run by adding an empty packages map and a `post-app-build` hook that creates the directory the provisioning step expects:
+
+```yaml
+application:
+  hooks:
+    post-app-build: "mkdir -p dist/application/actions" # provisioning expects this dir to exist
+  runtimeManifest:
+    packages: {} # empty map — required by the config schema so the application block validates with no actions
+    database:
+      auto-provision: true
+      region: emea # single source of truth — see the region callout below
+```
+
 For **local development**, declarative auto-provisioning does **not** run during `aio app run` / `aio app dev`. Provision once up front with the CLI fallback (self-service, no special permissions). The `aio app db …` commands are only available once the [storage CLI plugin](https://github.com/adobe/aio-cli-plugin-app-storage) is installed:
 
 ```sh
@@ -239,6 +252,7 @@ A build failure points directly to the offending config field. To exercise the a
 ## Common Issues
 
 - **Connection fails despite a valid token**: the action is missing `include-ims-credentials: true`, or the **App Builder Data Services** API has not been added to the project in the Adobe Developer Console (see Prerequisites).
+- **DB not provisioned after `aio app deploy` (extension-only app)**: declarative auto-provision is skipped when the `application` runtime manifest has no runtime action. Apply the extension-only workaround from Step 1 — add `packages: {}` and a `post-app-build: "mkdir -p dist/application/actions"` hook under `application` — or provision once with the CLI fallback for local dev.
 - **Connection fails after a region change**: the library region doesn't match the manifest `database.region`. Moving regions is destructive — `aio app db delete`, update `database.region` in the manifest, then re-provision (`aio app deploy`, or the CLI fallback for local dev).
 - **Querying by `_id` from a string returns nothing**: convert it first — `new ObjectId(idString)` from `bson`. A raw string never matches the stored `ObjectId`.
 - **`DbError` vs unexpected error**: errors thrown by the service have `name === "DbError"`; branch on it to separate database failures from application bugs.

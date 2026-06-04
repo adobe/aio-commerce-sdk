@@ -50,6 +50,18 @@
         "The client is closed in a finally block",
         "The step is registered under installation.customInstallationSteps in app.commerce.config.ts with a .js script path, a name, and a description"
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "My Commerce app is extension-only (no application runtime actions) and uses App Builder Database Storage. After aio app deploy the workspace database isn't provisioned. Configure it so the database is auto-provisioned on deploy.",
+      "expected_output": "The agent explains that declarative auto-provision is skipped for extension-only apps because the application runtime manifest has no runtime action, and applies the workaround in app.config.yaml: an empty packages map (packages: {}) under application.runtimeManifest plus a post-app-build hook running mkdir -p dist/application/actions, alongside the database auto-provision block with a region. It may also mention the aio app db provision CLI as a local-dev fallback.",
+      "assertions": [
+        "Identifies that auto-provision is skipped because the app has no application runtime action",
+        "Adds packages: {} under application.runtimeManifest",
+        "Adds a post-app-build hook running mkdir -p dist/application/actions",
+        "Keeps the database auto-provision block with a region",
+        "References the aio app db provision CLI as a local-dev fallback"
+      ]
     }
   ]
 }
