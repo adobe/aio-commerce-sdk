@@ -23,7 +23,7 @@ Integrates App Builder Database Storage into an existing Commerce app and scaffo
 
 The db-access code is identical regardless of action type — what differs is how the action is registered and what its handler returns:
 
-- **Web action** — HTTP-invokable (`web: "yes"`); returns `{ statusCode, body }`.
+- **Web action** — HTTP-invokable (`web: "yes"`); returns a response built with the `responses` helpers from `@adobe/aio-commerce-lib-core`.
 - **Event/webhook action** — invoked by a Commerce event or webhook; referenced from `app.commerce.config.ts` via `commerce-app-eventing` (`runtimeActions`) or `commerce-app-webhooks` (`runtimeAction`).
 
 ## Prerequisites
@@ -100,6 +100,7 @@ Every handler follows the same lifecycle: generate token → `init` → `connect
 
 ```ts
 // Web action — src/commerce-extensibility-1/actions/store-record/index.ts
+import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
 import { Core } from "@adobe/aio-sdk";
 import { init as initDb } from "@adobe/aio-lib-db";
 
@@ -115,12 +116,11 @@ export async function main(params: Record<string, unknown>) {
       ...(params.document as object),
       createdAt: new Date().toISOString(),
     });
-    return { statusCode: 200, body: { ok: true, result } };
+    return ok({ body: { result } });
   } catch (error: any) {
-    return {
-      statusCode: error.statusCode || 500,
-      body: { error: error.message },
-    };
+    return buildErrorResponse(error.statusCode || 500, {
+      body: { message: error.message },
+    });
   } finally {
     if (client) await client.close(); // always close — avoids connection leaks
   }
@@ -141,7 +141,7 @@ export async function main(params: Record<string, unknown>) {
     await client
       .collection("orders")
       .insertOne({ orderId: data.order_id, receivedAt: new Date() });
-    return { statusCode: 200, body: { processed: true } };
+    return ok({ body: { processed: true } });
   } finally {
     if (client) await client.close();
   }

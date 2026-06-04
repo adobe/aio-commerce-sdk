@@ -13,6 +13,7 @@
 //     app.config.yaml database block on `aio app deploy` (CLI `aio app db
 //     provision --region <r>` is the local-dev fallback)
 
+import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
 import { init as initDb } from "@adobe/aio-lib-db";
 import { Core } from "@adobe/aio-sdk";
 
@@ -20,11 +21,6 @@ import { Core } from "@adobe/aio-sdk";
 type DbClient = Awaited<
   ReturnType<Awaited<ReturnType<typeof initDb>>["connect"]>
 >;
-
-// Web actions return an HTTP-shaped response.
-function jsonResponse(statusCode: number, body: unknown) {
-  return { statusCode, headers: { "Content-Type": "application/json" }, body };
-}
 
 export async function main(params: Record<string, unknown>) {
   const logger = Core.Logger("commerce-app-storage", {
@@ -100,7 +96,7 @@ export async function main(params: Record<string, unknown>) {
     //   import { ObjectId } from "bson";
     //   await records.findOne({ _id: new ObjectId(idString) });
 
-    return jsonResponse(200, { ok: true, inserted, one });
+    return ok({ body: { inserted, one } });
   } catch (error) {
     // Database errors surface with name === "DbError".
     const dbError = error as {
@@ -113,7 +109,9 @@ export async function main(params: Record<string, unknown>) {
     } else {
       logger.error("Unexpected error", error);
     }
-    return jsonResponse(dbError.statusCode ?? 500, { error: dbError.message });
+    return buildErrorResponse(dbError.statusCode ?? 500, {
+      body: { message: dbError.message ?? "Unexpected error" },
+    });
   } finally {
     // 5. ALWAYS close — leaked connections exhaust resources.
     if (client) {
