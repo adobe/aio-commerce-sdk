@@ -62,6 +62,17 @@
         "Keeps the database auto-provision block with a region",
         "References the aio app db provision CLI as a local-dev fallback"
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "Add a web action that stores records in App Builder Database Storage. My repo has an app.commerce.config.ts at the root, but I haven't initialized the project yet — there's no src/commerce-extensibility-1/ directory and no node_modules.",
+      "expected_output": "The agent recognizes that although the config exists, the project is not initialized (no src/commerce-extensibility-1/ or node_modules), so it runs npx @adobe/aio-commerce-lib-app init before proceeding — without overwriting the existing config. Only after the project is initialized does it install @adobe/aio-lib-db and scaffold the storage web action.",
+      "assertions": [
+        "The agent detects the project is not initialized despite the config being present",
+        "The agent runs npx @adobe/aio-commerce-lib-app init before doing storage work",
+        "The existing app.commerce.config.ts is not overwritten",
+        "Storage work (installing @adobe/aio-lib-db, scaffolding the action) proceeds only after initialization"
+      ]
     }
   ]
 }
