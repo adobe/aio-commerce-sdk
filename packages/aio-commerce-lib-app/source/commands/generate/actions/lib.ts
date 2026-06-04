@@ -24,9 +24,11 @@ import NpmPackageJson from "@npmcli/package-json";
 import { consola } from "consola";
 import { formatTree } from "consola/utils";
 import { build } from "esbuild";
+import stringify from "safe-stable-stringify";
 
 import {
   APP_CONFIG_IMPORT_ALIAS,
+  BACKEND_UI_EXTENSION_POINT_ID,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -35,9 +37,12 @@ import {
 import {
   getActionPath,
   getActionsDir,
+  getAdminUiSdkActionsDir,
+  getAdminUiSdkRegistrationActionPath,
   getExtConfigPath,
   getRuntimeAppConfigPath,
   hasDynamicAppConfig,
+  prettierFormat,
 } from "#commands/utils";
 import {
   hasCustomInstallationSteps,
@@ -46,14 +51,17 @@ import {
 
 import {
   buildAdminUiSdkExtConfig,
+  buildAdminUiV2ExtConfig,
   buildAppManagementExtConfig,
   buildBusinessConfigurationExtConfig,
   CUSTOM_IMPORTS_PLACEHOLDER,
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
   CUSTOM_SCRIPTS_MAP_PLACEHOLDER,
+  REGISTRATION_JSON_PLACEHOLDER,
 } from "./config";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
+import type { AppConfigWithAdminUiSdk } from "#config/schema/admin-ui-sdk";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
 import type { TemplateAction } from "./config";
@@ -67,6 +75,7 @@ export const TEMPLATES_DIR = join(__dirname, "templates");
 type ValidExtensionPointId =
   | typeof EXTENSIBILITY_EXTENSION_POINT_ID
   | typeof CONFIGURATION_EXTENSION_POINT_ID
+  | typeof BACKEND_UI_EXTENSION_POINT_ID
   | typeof BACKEND_UI_V2_EXTENSION_POINT_ID;
 
 const TYPESCRIPT_CONFIG_EXTENSIONS = new Set([".ts", ".mts", ".cts"]);
@@ -308,8 +317,13 @@ export async function updateExtConfig(
       break;
     }
 
+    case BACKEND_UI_EXTENSION_POINT_ID: {
+      extConfig = buildAdminUiSdkExtConfig();
+      break;
+    }
+
     case BACKEND_UI_V2_EXTENSION_POINT_ID: {
-      extConfig = buildAdminUiSdkExtConfig(appConfig);
+      extConfig = buildAdminUiV2ExtConfig(appConfig);
       break;
     }
   }
@@ -453,4 +467,45 @@ export async function generateCustomScriptsTemplate(
   // Inject imports and function into template
   const result = template.replace(CUSTOM_IMPORTS_PLACEHOLDER, importStatements);
   return result.replace(CUSTOM_SCRIPTS_MAP_PLACEHOLDER, scriptMap);
+}
+
+/**
+ * Generates `registration/index.js` with the Admin UI SDK registration config
+ * inlined as a JS object literal.
+ * @param appManifest - The validated app config; must satisfy `hasAdminUiSdk`.
+ * @param extensionPointId - The extension point ID that owns the registration action.
+ * @param templatesDir - The root directory containing the action templates.
+ */
+export async function generateRegistrationActionFile(
+  appManifest: AppConfigWithAdminUiSdk,
+  extensionPointId: typeof BACKEND_UI_EXTENSION_POINT_ID,
+  templatesDir = TEMPLATES_DIR,
+) {
+  consola.start("Generating Admin UI SDK registration action...");
+
+  await makeOutputDirFor(getAdminUiSdkActionsDir(extensionPointId));
+  const projectRoot = await getProjectRootDirectory();
+  const templatePath = join(
+    templatesDir,
+    "admin-ui-sdk",
+    "registration.js.template",
+  );
+  const template = await readFile(templatePath, "utf-8");
+
+  const { registration } = appManifest.adminUiSdk;
+  const actionPath = join(
+    projectRoot,
+    getAdminUiSdkRegistrationActionPath(extensionPointId),
+  );
+  const content = template.replace(
+    REGISTRATION_JSON_PLACEHOLDER,
+    `const registration = ${stringify(registration)};`,
+  );
+
+  const formattedContent = await prettierFormat(content, actionPath);
+
+  await writeFile(actionPath, formattedContent, "utf-8");
+  consola.success(
+    `Generated registration action at ${relative(process.cwd(), actionPath)}`,
+  );
 }

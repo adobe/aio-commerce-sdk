@@ -234,6 +234,7 @@ export const configWithFullAdminUiSdk = {
         {
           id: "order-mass-action",
           label: "Order Mass Action",
+          description: "Registers the order mass action",
           title: "Page Title",
           type: "view",
           path: "#/order-mass-action",
@@ -241,10 +242,6 @@ export const configWithFullAdminUiSdk = {
           confirm: { title: "Confirm", message: "Are you sure?" },
           notifications: { success: "Done!", error: "Failed!" },
           sandbox: "allow-modals",
-          installation: {
-            label: "Install Order Mass Action",
-            description: "Registers the order mass action",
-          },
         },
       ],
       gridColumns: {
@@ -309,6 +306,7 @@ export const configWithFullAdminUiSdk = {
         {
           id: "export-customers",
           label: "Customer Mass Action",
+          description: "Registers the customer export action",
           type: "worker",
           runtimeAction: "customers/export-customers",
           timeout: 30,
@@ -316,10 +314,6 @@ export const configWithFullAdminUiSdk = {
           notifications: {
             success: "Export complete!",
             error: "Export failed!",
-          },
-          installation: {
-            label: "Install Export Customers",
-            description: "Registers the customer export action",
           },
         },
       ],
@@ -481,6 +475,105 @@ export function createConfigWithTwoCommerceEventingSources() {
     },
   } satisfies CommerceAppConfigOutputModel;
 }
+
+/** v2 Admin UI config fixture with view and worker mass actions (flat description, no installation nesting). */
+export const configWithAdminUiV2 = {
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-sdk-v2" },
+  adminUi: {
+    menuItems: [
+      {
+        id: "test-app-admin-ui-sdk-v2::menu",
+        title: "Test App",
+        sortOrder: 1,
+        isSection: false,
+      },
+    ],
+    order: {
+      massActions: [
+        {
+          id: "order-mass-action",
+          label: "Order Mass Action",
+          description: "Adds a bulk order action.",
+          type: "view" as const,
+          path: "#/order-mass-action",
+          selectionLimit: 1,
+          confirm: { title: "Confirm", message: "Are you sure?" },
+          notifications: { success: "Done!" },
+        },
+      ],
+    },
+    product: {
+      massActions: [
+        {
+          id: "product-mass-action",
+          label: "Product Mass Action",
+          type: "view" as const,
+          path: "#/product-mass-action",
+        },
+      ],
+    },
+    customer: {
+      massActions: [
+        {
+          id: "customer-mass-action",
+          label: "Customer Mass Action",
+          type: "view" as const,
+          path: "#/customer-mass-action",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Full v2 Admin UI config fixture covering all extension points including a worker mass action. */
+export const configWithFullAdminUiV2 = {
+  metadata: { ...mockMetadata, id: "test-app-full-admin-ui-sdk-v2" },
+  adminUi: {
+    order: {
+      massActions: [
+        {
+          id: "order-mass-action",
+          label: "Order Mass Action",
+          description: "Registers an order bulk action.",
+          type: "view" as const,
+          path: "#/order-mass-action",
+          selectionLimit: 1,
+          confirm: { title: "Confirm", message: "Are you sure?" },
+          notifications: { success: "Done!", error: "Failed!" },
+          sandbox: "allow-modals",
+        },
+      ],
+    },
+    product: {
+      massActions: [
+        {
+          id: "product-mass-action",
+          label: "Product Mass Action",
+          type: "view" as const,
+          path: "#/mass-action",
+          selectionLimit: 1,
+        },
+      ],
+    },
+    customer: {
+      massActions: [
+        {
+          id: "export-customers",
+          label: "Customer Mass Action",
+          description: "Exports selected customers.",
+          type: "worker" as const,
+          runtimeAction: "customers/export-customers",
+          timeout: 30,
+          selectionLimit: 1,
+          notifications: {
+            success: "Export complete!",
+            error: "Export failed!",
+          },
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
 
 /** Config fixture with dynamic business config list options. */
 export const configWithDynamicListOptions = {

@@ -157,7 +157,7 @@ describe("AdminUiSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    test("optional installation field parses", () => {
+    test("optional description field parses (flat, no installation nesting)", () => {
       const result = parse({
         order: {
           massActions: [
@@ -166,15 +166,29 @@ describe("AdminUiSchema", () => {
               label: "Action",
               type: "view",
               path: "#/action",
-              installation: {
-                label: "Install it",
-                description: "Installs the action",
-              },
+              description: "Installs the action",
             },
           ],
         },
       });
       expect(result.success).toBe(true);
+    });
+
+    test("installation nesting — fails (rejected in v2; use flat description)", () => {
+      const result = parse({
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "view",
+              path: "#/action",
+              installation: { label: "Install it" },
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
     });
 
     test("optional confirm and title fields parse", () => {

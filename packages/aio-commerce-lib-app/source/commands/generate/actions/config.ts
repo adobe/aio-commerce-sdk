@@ -12,7 +12,12 @@
 
 import { join } from "node:path";
 
-import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
+import {
+  ADMIN_UI_SDK_ACTIONS_PATH,
+  ADMIN_UI_SDK_PACKAGE_NAME,
+  GENERATED_ACTIONS_PATH,
+  PACKAGE_NAME,
+} from "#commands/constants";
 import { hasAdminUi } from "#config/schema/admin-ui-sdk";
 import { requiresInstallation } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
@@ -51,6 +56,7 @@ export const COMMERCE_ACTION_INPUTS = Object.fromEntries(
 export const CUSTOM_IMPORTS_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_IMPORTS}}";
 export const CUSTOM_SCRIPTS_MAP_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_MAP}}";
 export const CUSTOM_SCRIPTS_LOADER_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_LOADER}}";
+export const REGISTRATION_JSON_PLACEHOLDER = "// {{REGISTRATION_JSON}}";
 
 /**
  * Creates a runtime action configuration.
@@ -204,8 +210,8 @@ export function buildBusinessConfigurationExtConfig() {
   } satisfies ExtConfig;
 }
 
-/** Builds the ext.config.yaml configuration for the Admin UI SDK backend-ui extension. */
-export function buildAdminUiSdkExtConfig(
+/** Builds the ext.config.yaml configuration for the v2 Admin UI SDK backend-ui extension. */
+export function buildAdminUiV2ExtConfig(
   appConfig: CommerceAppConfigOutputModel,
 ) {
   const workerRuntimeActions = hasAdminUi(appConfig)
@@ -240,5 +246,37 @@ export function buildAdminUiSdkExtConfig(
         : {}),
     },
     web: "web-src",
+  } satisfies ExtConfig;
+}
+
+/** Builds the ext.config.yaml configuration for the v1 Admin UI SDK backend-ui extension. */
+export function buildAdminUiSdkExtConfig() {
+  return {
+    hooks: {
+      "pre-app-build":
+        "EXTENSION=backend-ui/1 $packageExec aio-commerce-lib-app hooks pre-app-build",
+    },
+    operations: {
+      view: [{ type: "web", impl: "index.html" }],
+    },
+    web: "web-src",
+    runtimeManifest: {
+      packages: {
+        [ADMIN_UI_SDK_PACKAGE_NAME]: {
+          license: "Apache-2.0",
+          actions: {
+            registration: {
+              function: `${ADMIN_UI_SDK_ACTIONS_PATH}/index.js`,
+              web: "yes",
+              runtime: "nodejs:24",
+              annotations: {
+                "require-adobe-auth": true,
+                final: true,
+              },
+            },
+          } satisfies Record<string, ActionDefinition>,
+        },
+      },
+    },
   } satisfies ExtConfig;
 }

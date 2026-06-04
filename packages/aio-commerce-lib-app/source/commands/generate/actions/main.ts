@@ -2,16 +2,22 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { consola } from "consola";
 
 import {
+  BACKEND_UI_EXTENSION_POINT_ID,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
 import { loadAppManifest } from "#commands/utils";
-import { hasAdminUi, hasBusinessConfigSchema } from "#config/index";
+import {
+  hasAdminUi,
+  hasAdminUiSdk,
+  hasBusinessConfigSchema,
+} from "#config/index";
 
 import { getRuntimeActions } from "./config";
 import {
   generateActionFiles,
+  generateRegistrationActionFile,
   prepareRuntimeAppConfigModule,
   TEMPLATES_DIR,
   updateExtConfig,
@@ -52,6 +58,15 @@ export async function run(
       appManifest,
       getRuntimeActions(businessConfigExtConfig, "business-configuration"),
       CONFIGURATION_EXTENSION_POINT_ID,
+      templatesDir,
+    );
+  }
+
+  if (hasAdminUiSdk(appManifest)) {
+    await updateExtConfig(appManifest, BACKEND_UI_EXTENSION_POINT_ID);
+    await generateRegistrationActionFile(
+      appManifest,
+      BACKEND_UI_EXTENSION_POINT_ID,
       templatesDir,
     );
   }

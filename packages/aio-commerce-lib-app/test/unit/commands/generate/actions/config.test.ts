@@ -14,7 +14,7 @@ import { describe, expect, test } from "vitest";
 
 import { PACKAGE_NAME } from "#commands/constants";
 import {
-  buildAdminUiSdkExtConfig,
+  buildAdminUiV2ExtConfig,
   buildAppManagementExtConfig,
   buildBusinessConfigurationExtConfig,
   getRuntimeActions,
@@ -145,45 +145,45 @@ describe("buildAppManagementExtConfig", () => {
   });
 });
 
-describe("buildAdminUiSdkExtConfig", () => {
+describe("buildAdminUiV2ExtConfig", () => {
   test("declares operations.view entry for the admin UI iframe", () => {
-    const config = buildAdminUiSdkExtConfig(minimalValidConfig);
+    const config = buildAdminUiV2ExtConfig(minimalValidConfig);
     expect(config.operations?.view).toEqual([
       { type: "web", impl: "index.html" },
     ]);
   });
 
   test("declares top-level web source directory", () => {
-    const config = buildAdminUiSdkExtConfig(minimalValidConfig);
+    const config = buildAdminUiV2ExtConfig(minimalValidConfig);
     expect(config.web).toBe("web-src");
   });
 
   test("pre-app-build hook uses backend-ui/2", () => {
-    const result = buildAdminUiSdkExtConfig(minimalValidConfig);
+    const result = buildAdminUiV2ExtConfig(minimalValidConfig);
     const preBuildHook = result.hooks?.["pre-app-build"] ?? "";
 
     expect(preBuildHook).toMatch(BACKEND_UI_EXTENSION_MATCHER);
   });
 
   test("includes workerProcess entries for worker mass actions", () => {
-    const config = buildAdminUiSdkExtConfig(configWithFullAdminUiSdk);
+    const config = buildAdminUiV2ExtConfig(configWithFullAdminUiSdk);
     expect(config.operations?.workerProcess).toEqual([
       { type: "action", impl: "customers/export-customers" },
     ]);
   });
 
   test("omits workerProcess when no worker mass actions are configured", () => {
-    const config = buildAdminUiSdkExtConfig(minimalValidConfig);
+    const config = buildAdminUiV2ExtConfig(minimalValidConfig);
     expect(config.operations?.workerProcess).toBeUndefined();
   });
 
   test("omits workerProcess when adminUi has only view mass actions", () => {
-    const config = buildAdminUiSdkExtConfig(configWithAdminUiSdk);
+    const config = buildAdminUiV2ExtConfig(configWithAdminUiSdk);
     expect(config.operations?.workerProcess).toBeUndefined();
   });
 
   test("deduplicates workerProcess entries when the same runtimeAction appears on multiple entities", () => {
-    const config = buildAdminUiSdkExtConfig({
+    const config = buildAdminUiV2ExtConfig({
       metadata: {
         id: "app",
         displayName: "App",
