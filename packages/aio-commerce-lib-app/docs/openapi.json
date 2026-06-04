@@ -3,7 +3,7 @@
   "info": {
     "title": "App Management API",
     "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation and uninstallation lifecycle, exposing the Admin UI SDK registration, and managing the scope tree.",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
@@ -2634,6 +2634,121 @@
           }
         },
         "tags": ["Business Configuration"]
+      }
+    },
+    "/association": {
+      "post": {
+        "operationId": "setAssociation",
+        "summary": "Store Commerce Association",
+        "description": "Persists the Commerce instance the app is associated with so runtime actions can later retrieve it via the SDK helpers.",
+        "parameters": [
+          {
+            "name": "x-gw-ims-org-id",
+            "in": "header",
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "commerceBaseUrl": {
+                    "description": "Commerce API base URL of the associated instance.",
+                    "type": "string"
+                  },
+                  "commerceEnv": {
+                    "description": "Deployment type of the associated Commerce instance.",
+                    "type": "string",
+                    "enum": ["saas", "paas"]
+                  }
+                },
+                "required": ["commerceBaseUrl", "commerceEnv"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Association data stored successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "baseUrl": {
+                      "type": "string"
+                    },
+                    "env": {
+                      "type": "string",
+                      "enum": ["saas", "paas"]
+                    }
+                  },
+                  "required": ["baseUrl", "env"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, the request body is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error while storing the association data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Association"]
+      },
+      "delete": {
+        "operationId": "clearAssociation",
+        "summary": "Clear Commerce Association",
+        "description": "Removes the stored Commerce instance details. Called when the app is unassociated.",
+        "parameters": [
+          {
+            "name": "x-gw-ims-org-id",
+            "in": "header",
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Association data cleared successfully."
+          },
+          "500": {
+            "description": "Internal server error while clearing the association data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Association"]
       }
     }
   },
