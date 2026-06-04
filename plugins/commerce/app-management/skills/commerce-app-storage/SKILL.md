@@ -29,7 +29,7 @@ The db-access code is identical regardless of action type — what differs is ho
 ## Prerequisites
 
 - Verify `app.commerce.config.ts` exists in the project root. If it doesn't, stop and invoke `commerce-app-init` first.
-- The **App Builder Data Services** API must be **added to the project in the Adobe Developer Console** — in every workspace that uses the database (no special license beyond App Builder). Without it, runtime actions cannot authenticate to the database service.
+- The **App Builder Data Services** API (API code `AppBuilderDataServicesSDK`) must be **added to the project in the Adobe Developer Console** — in every workspace that uses the database (no special license beyond App Builder). Without it, runtime actions cannot authenticate to the database service.
 
 ## Step 1 — Provision the workspace database
 
