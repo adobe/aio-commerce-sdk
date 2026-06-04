@@ -17,6 +17,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
+  BACKEND_UI_EXTENSION_POINT_ID,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -24,7 +25,10 @@ import {
   getExtensionPointFolderPath,
 } from "#commands/constants";
 import { exec, run } from "#commands/generate/actions/main";
-import { getRuntimeAppConfigPath } from "#commands/utils";
+import {
+  getAdminUiSdkRegistrationActionPath,
+  getRuntimeAppConfigPath,
+} from "#commands/utils";
 import {
   dynamicOptionsConfigFile,
   dynamicOptionsConfigFileTs,
@@ -33,6 +37,7 @@ import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
   configWithBusinessConfig,
   configWithDynamicListOptions,
+  configWithFullAdminUiSdk,
   configWithFullAdminUiV2,
   configWithOneScript,
   minimalValidConfig,
@@ -272,6 +277,32 @@ describe("commands/generate/actions", () => {
             await readFile(join(tempDir, "package.json"), "utf-8"),
           );
           expect(pkg.imports?.["#app.commerce.config"]).toBeUndefined();
+        },
+      );
+    });
+
+    test("generates backend-ui registration action when adminUiSdk is configured", async () => {
+      await withTempProject(
+        { ...EMPTY_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await run(configWithFullAdminUiSdk, tempDir);
+
+          const registrationPath = join(
+            tempDir,
+            getAdminUiSdkRegistrationActionPath(BACKEND_UI_EXTENSION_POINT_ID),
+          );
+          const extConfigPath = join(
+            tempDir,
+            getExtensionPointFolderPath(BACKEND_UI_EXTENSION_POINT_ID),
+            "ext.config.yaml",
+          );
+
+          expect(existsSync(registrationPath)).toBe(true);
+          expect(existsSync(extConfigPath)).toBe(true);
+
+          const content = await readFile(registrationPath, "utf-8");
+          expect(content).toContain("registrationRuntimeAction");
+          expect(content).toContain("my-app::first");
         },
       );
     });

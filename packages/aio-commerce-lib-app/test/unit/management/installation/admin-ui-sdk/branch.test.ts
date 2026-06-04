@@ -43,7 +43,7 @@ describe("admin-ui-sdk installation module", () => {
       });
     });
 
-    test("should only run if adminUi is defined", () => {
+    test("should only run if adminUiSdk is defined", () => {
       expect.assert(adminUiSdkStep.when);
 
       expect(adminUiSdkStep.when(configWithAdminUiSdk)).toBe(true);

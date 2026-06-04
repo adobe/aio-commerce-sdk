@@ -20,6 +20,7 @@ import { describe, expect, test, vi } from "vitest";
 
 import {
   APP_CONFIG_FILE,
+  BACKEND_UI_EXTENSION_POINT_ID,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -198,6 +199,22 @@ describe("commands/init/lib", () => {
       );
     });
 
+    test("adds backend-ui extension point when adminUiSdk is in domains", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
+        async (tempDir) => {
+          await ensureAppConfig(new Set(["adminUiSdk"]), tempDir);
+
+          const content = await readFile(
+            join(tempDir, APP_CONFIG_FILE),
+            "utf-8",
+          );
+          expect(content).toContain(BACKEND_UI_EXTENSION_POINT_ID);
+          expect(content).toContain(EXTENSIBILITY_EXTENSION_POINT_ID);
+        },
+      );
+    });
+
     test("adds backend-ui extension point when adminUi is in domains", async () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
@@ -275,6 +292,22 @@ describe("commands/init/lib", () => {
           );
 
           expect(content).toContain(CONFIGURATION_EXTENSION_POINT_ID);
+          expect(content).toContain(EXTENSIBILITY_EXTENSION_POINT_ID);
+        },
+      );
+    });
+
+    test("adds backend-ui extension point when adminUiSdk is in domains", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
+        async (tempDir) => {
+          await ensureInstallYaml(new Set(["adminUiSdk"]), tempDir);
+          const content = await readFile(
+            join(tempDir, INSTALL_YAML_FILE),
+            "utf-8",
+          );
+
+          expect(content).toContain(BACKEND_UI_EXTENSION_POINT_ID);
           expect(content).toContain(EXTENSIBILITY_EXTENSION_POINT_ID);
         },
       );
@@ -496,6 +529,7 @@ describe("commands/init/lib", () => {
       { domain: "eventing.commerce", config: configWithCommerceEventing },
       { domain: "eventing.external", config: configWithExternalEventing },
       { domain: "webhooks", config: configWithWebhooks },
+      { domain: "adminUiSdk", config: configWithAdminUiSdk },
       { domain: "adminUi", config: configWithAdminUiSdk },
     ])("generates the installation action when $domain is configured", async ({
       config,
