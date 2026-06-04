@@ -65,7 +65,8 @@ webhooks and events.
 Environment scoping is declared with an optional `env` array on each webhook entry and each
 event, exactly like a Business Configuration field. The accepted values are `"paas"` and
 `"saas"`, and one or more may be listed. Omitting `env` keeps today's behavior — the item
-applies to every environment — so existing configs are unaffected.
+applies to every environment — so adding `env` to an existing app is fully backward
+compatible; existing configs are unaffected until a developer opts in.
 
 **Webhooks** — scope an individual webhook entry:
 
@@ -124,12 +125,9 @@ scoped to environments that don't match the target, the whole provider is skippe
 Events provider is created, and no registration is made. On a SaaS installation, both
 events are created.
 
-Because `env` is optional and defaults to "all environments", adding it to an existing app
-is fully backward compatible — nothing changes until a developer opts in.
-
 Invalid declarations are rejected at config-validation time with the same messages as
-lib-config: an empty `env` array ("must contain at least one commerce environment") or an
-unknown value ("Expected one of: \"paas\", \"saas\"").
+lib-config: an empty `env` array (`'The "env" array must contain at least one commerce
+environment'`) or an unknown value (`'Expected one of: "paas", "saas"'`).
 
 ## Design
 
@@ -145,8 +143,10 @@ the lib-app eventing and webhook _config_ schemas this change edits
 (`config/schema/eventing.ts`, `config/schema/webhooks.ts`):
 
 - `COMMERCE_ENVS = ["paas", "saas"] as const`
-- `type CommerceEnv = (typeof COMMERCE_ENVS)[number]` (same name/shape the config action
-  already exports)
+- `type CommerceEnv = (typeof COMMERCE_ENVS)[number]` — the environment-domain name for the
+  same `"paas" | "saas"` union lib-api calls `CommerceFlavor` (they are kept separate because
+  common-utils must not depend on lib-api; see below). It is also the name the config action
+  already exports.
 - `commerceEnvSchema` — a picklist over `COMMERCE_ENVS`
 - `commerceEnvArraySchema` — a non-empty `v.array(commerceEnvSchema)`
 
@@ -161,10 +161,16 @@ thread through. Call sites apply the optional wrapper themselves:
 (`aio-commerce-lib-app/source/actions/config/schema.ts`, which also exports a `CommerceEnv`
 type). Adding the literal to the webhook/event schemas would make it a third copy; instead,
 this PR consolidates all of them onto the shared common-utils definitions and removes the
-private copies, so the feature ships with a single source of truth. The `COMMERCE_ENVS`
-literals must stay in sync with lib-api's `CommerceFlavor` (`"paas" | "saas"`); a type-level
-assertion test guards against drift. common-utils must not depend on lib-api, so the literals
-live in common-utils and the assertion lives where both are visible.
+private copies, so the feature ships with a single source of truth. To keep the change
+additive (and the changeset `minor`), the config action continues to export `CommerceEnv` —
+now an alias to the common-utils type — so nothing is removed from the public surface.
+
+The common-utils `CommerceEnv` must stay in sync with lib-api's `CommerceFlavor`. lib-api has
+no `COMMERCE_ENVS` array to compare against (its `CommerceFlavor` is derived from the Commerce
+client config union), so drift is guarded by a **type-equality assertion** (`CommerceEnv` ⟺
+`CommerceFlavor`) rather than a value comparison. common-utils must not depend on lib-api, so
+the literals live in common-utils and the assertion lives where both types are visible (e.g.
+lib-api or lib-app).
 
 ### Schema placement
 
@@ -190,15 +196,23 @@ otherwise infers `"paas"` / `"saas"` from `AIO_COMMERCE_API_BASE_URL`, and retur
 neither is available. lib-api already has the internal pieces (`isFlavor`,
 `resolveCommerceFlavorFromApiUrl` in
 `packages/aio-commerce-lib-api/source/lib/commerce/helpers.ts`); the helper exposes them as a
-small public function.
+small public function, re-exported from lib-api's main entry (`source/index.ts`, alongside
+`resolveCommerceHttpClientParams`) — lib-api has no `./commerce` subpath export.
 
-This must **not** reuse the existing `resolveCommerceHttpClientParams`: that function returns
-a full `CommerceHttpClientParams` (the value is nested at `config.flavor`, not returned
-directly), **throws** when `AIO_COMMERCE_API_BASE_URL` is absent, and additionally validates
-auth — throwing for SaaS with non-IMS auth. Using it for environment detection would crash the
-exact apply-to-all case this spec relies on (e.g. an external-events-only install with no base
-URL) and would couple environment resolution to unrelated auth validation. The new helper is
-the producer of the `null` (unresolved) branch the filtering predicate depends on.
+This must **not** reuse the existing `resolveCommerceHttpClientParams` for environment
+detection, for three reasons:
+
+- It returns a full `CommerceHttpClientParams` (the environment is nested at `config.flavor`),
+  not the value directly.
+- It **throws** when `AIO_COMMERCE_API_BASE_URL` is absent — which would crash the apply-to-all
+  case this spec relies on instead of yielding `null`.
+- It additionally validates auth (throwing for SaaS with non-IMS auth), coupling environment
+  resolution to unrelated concerns.
+
+The new helper is the producer of the `null` (unresolved) branch the filtering predicate
+depends on. Note that branch is only genuinely reachable for an **external-events-only**
+install: webhook and Commerce-event installs build a Commerce client (which requires
+`AIO_COMMERCE_API_BASE_URL`), so they always have a resolvable environment.
 
 The auth strategy (IMS vs Integration) is **not** a valid proxy for the environment — PaaS may
 use either, so only the API URL or explicit environment param is authoritative.
@@ -210,23 +224,29 @@ re-deriving.
 
 ### Install-time filtering
 
-The filtering predicate, applied uniformly: keep an item when its `env` is `undefined`, OR
-the environment could not be resolved (`null`), OR `env` includes the resolved environment.
+An item is kept unless its `env` excludes the resolved environment; items with no `env`, and
+all items when the environment is unresolved, are kept. (The display path in the `app-config`
+action uses the same rule minus the unresolved-environment case, which is unreachable there —
+see "app-config action: serving environment-filtered config".)
 
 - **Webhooks** — `management/installation/webhooks/helpers.ts`: filter in
   `createWebhookSubscriptions` so non-matching webhooks are not subscribed, and in
   `validateWebhookConflicts` so a webhook scoped to the other environment does not raise a
   spurious conflict. If the filtered list is empty, the step is a successful no-op.
 - **Commerce events** — `management/installation/events/commerce.ts`: filter each provider's
-  `events[]` before onboarding. If the applicable list is empty, skip the provider entirely
-  (`continue`), which means no `onboardIoEvents`, no provider, and no registration —
-  satisfying the AC. Pass the filtered list (not the full one) into onboarding. The current
-  once-only `configureCommerceEventing` guard keyed on the loop index (`i === 0`) must be
-  replaced with a "first non-skipped provider" flag, so skipping the first provider does not
-  drop the one-time eventing-module configuration.
+  events before onboarding, and skip any provider with no applicable events so that no
+  provider and no registration are created for it. The existing one-time
+  eventing-module configuration must still run even when the first provider is skipped — today
+  it is tied to the first loop iteration, which no longer holds once providers can be skipped.
 - **External events** — `management/installation/events/external.ts`: same per-provider
   filter and skip-empty-provider logic. External events never touch Commerce, so when the
   environment is unresolved they all apply.
+
+When the environment cannot be resolved, the install proceeds in apply-to-all mode. In that
+case a warning is emitted for any **webhook or Commerce event** that declares `env` (their
+scope genuinely depends on the Commerce environment and was not enforced); external events are
+not warned about, since they legitimately apply to all environments and an unresolved
+environment is their normal case.
 
 The existing `hasCommerceEvents` / `hasExternalEvents` / `hasWebhooks` `when` predicates are
 config-shape checks that run before filtering and are unchanged. Empty-after-filter handling
@@ -234,7 +254,7 @@ lives inside the leaf-step install functions; a provider that exists in config b
 filtered out causes the branch `when` to be true and the step to run, then produce empty
 step data — which is acceptable.
 
-### Serving environment-filtered config to App Management
+### app-config action: serving environment-filtered config
 
 App Management renders its webhook/event summaries from the configuration returned by the
 `app-config` action (`GET /app-config/`,
@@ -254,19 +274,18 @@ adopts the same pattern:
   behavior or response shape. This matches the `config` action, which returns the unfiltered
   schema when the param is omitted.
 
-The per-item predicate is `env === undefined || env.includes(commerceEnv)`. This is the
-install-time predicate without its "environment unresolved (`null`)" branch: on the display
-path that branch is unreachable, because an absent `commerceEnv` param returns the full,
-unfiltered config (so filtering only ever runs with a concrete `"paas"` / `"saas"` value).
-`filterSchemaByEnv` is not reused directly: webhooks are a flat array (filtered like the
-schema), while `eventing` requires filtering each provider's `events[]` and then dropping any
-provider with no remaining events. Two small filter helpers cover this.
+This applies the same keep rule as install, minus the unresolved-environment case: on the
+display path it is unreachable, because an absent `commerceEnv` returns the full, unfiltered
+config, so filtering only ever runs with a concrete `"paas"` / `"saas"` value. `filterSchemaByEnv`
+is not reused directly: webhooks are a flat array (filtered like the schema), while `eventing`
+requires filtering each provider's events and then dropping any provider with no remaining
+events.
 
 This keeps the entire enforcement and display surface server-side and consistent with
 Business Configurations. Because `GET /app-config/` gains a query parameter, the hand-
 maintained `docs/openapi.json` and its `info.version` must be updated in the same PR (per the
-lib-app package conventions), and validated with `pnpm --filter @adobe/aio-commerce-lib-app
-run lint:openapi`.
+lib-app package conventions; the bump is `minor`, an additive optional param) and validated
+with `pnpm --filter @adobe/aio-commerce-lib-app run lint:openapi`.
 
 ### Documentation
 
@@ -277,7 +296,12 @@ default, and shows config examples — mirroring lib-config's "Conditional Field
 Environment". The new schema entries also carry JSDoc so the auto-generated API reference picks
 them up (the reference itself is not regenerated in this PR). The lib-webhooks API package is
 unchanged, so its docs are not affected. A changeset is included; the bump is minor (additive
-optional fields and an additive optional query param).
+optional fields and an additive optional query param; no public surface removed — see Shared
+`env` schema).
+
+Per the AGENTS.md plugin-sync rule, also verify whether any `plugins/` migration or
+scaffolding skill references the webhook/event config shape; if so, reflect the new `env` field
+there in the same PR.
 
 ### Uninstall
 
@@ -289,34 +313,28 @@ subscriptions.
 
 ### Edge cases
 
-- **Empty `env` array** — rejected at validation by `commerceEnvArraySchema`'s non-empty check.
-- **Unknown env value** — rejected by the picklist.
+- **Invalid `env` (empty array or unknown value)** — rejected at config validation (see
+  Developer experience for the exact messages).
 - **Provider with all events filtered out** — skipped: no provider, no registration, no
   subscriptions.
-- **All webhooks filtered out** — `createWebhookSubscriptions` returns an empty result;
-  no conflicts; step succeeds as a no-op.
-- **Environment cannot be resolved** (e.g. an external-events-only install with no
-  `AIO_COMMERCE_API_BASE_URL`) — apply to all: every item is installed regardless of its
-  `env`, preserving current behavior. A warning is emitted only when a **webhook or Commerce
-  event** declares `env` while the environment is unresolvable, since those genuinely depend
-  on the Commerce environment and their scope was not enforced. External events are not warned
-  about: they never touch Commerce and legitimately apply to all environments when Commerce is
-  absent (see Install-time filtering), so an unresolved environment is their normal case, not a
-  degraded fallback.
+- **All webhooks filtered out for the resolved environment** — the subscription step returns
+  an empty result; no conflicts; step succeeds as a no-op.
+- **Environment cannot be resolved** (an external-events-only install with no
+  `AIO_COMMERCE_API_BASE_URL`) — apply-to-all, with a warning for any webhook or Commerce event
+  that declared `env` (see Install-time filtering for the full policy).
 
-### App Management UI
+### App Management UI (consumer repo)
 
-App Management adds **no filtering logic** — the action returns the already-scoped config and
-the existing summary components render it unchanged. It does, however, need one small change.
-This is a cross-repo work item that must not be missed (per AGENTS.md, consumer content stays
-in sync with the SDK).
-
-What changes in App Management:
+App Management needs one small change — a cross-repo work item that must not be missed (per
+AGENTS.md, consumer content stays in sync with the SDK):
 
 - Forward the current `commerceEnv` as a query param on the app-config request, exactly as it
   already does for the business-config request. The value already exists in App Management —
   read from the active Commerce instance, the same source and value used for business-config —
-  so the change is purely to pass it through. No client-side filtering, no new badge or label.
+  so the change is purely to pass it through.
+
+The existing summary components then render the already-scoped config unchanged: no
+client-side filtering, no new badge or label.
 
 ## Drawbacks
 
@@ -332,25 +350,38 @@ What changes in App Management:
 
 - **`env` array vs. a single `environment` string.** The array matches lib-config exactly
   and supports multi-environment scoping (`["paas", "saas"]`); a single string would diverge
-  from the established pattern and the consistency AC. Rejected the single string.
-- **Per-event vs. per-provider scoping for events.** The AC requires that a provider with no
-  applicable events is not created, which is naturally expressed by per-event scoping plus a
-  skip-empty-provider rule. Per-provider scoping is coarser and cannot express "this provider
-  has both PaaS-only and SaaS-only events". Chose per-event.
+  from the established pattern and the goal of cross-component consistency. Rejected the single
+  string.
+- **Per-event vs. per-provider scoping for events.** Per-event scoping plus a
+  skip-empty-provider rule naturally expresses "create no provider or registration when nothing
+  applies". Per-provider scoping is coarser and cannot express "this provider has both
+  PaaS-only and SaaS-only events". Chose per-event.
 - **Detecting the environment from auth strategy.** Rejected — PaaS can use IMS or
   Integration auth, so auth strategy does not determine the environment. Only the API URL or
   explicit environment param does.
 - **Leaving filtering to consumers (as lib-config does).** lib-config is purely declarative
-  and relies on consumers to filter. Here the AC explicitly requires the SDK to skip
-  provider/registration creation at install, so the SDK must filter. Rejected the
-  consumer-only approach.
+  and relies on consumers to filter. Here the SDK must skip provider/registration creation at
+  install, so the SDK itself must filter. Rejected the consumer-only approach.
+- **Consistency of copy and behavior.** Achieved by _not_ introducing any new UI surface:
+  filtering is silent across Business Configurations, webhooks, and events (no badge or label),
+  exactly as Business Configurations behaves today. The only shared "copy" is the validation
+  messaging, reused verbatim from lib-config.
 - **Impact of not doing this.** Developers cannot scope extensibility components; irrelevant
   providers, registrations, and subscriptions continue to be created on every environment,
   and the experience stays inconsistent with Business Configurations.
 
 ## Unresolved questions
 
-None — every design decision is settled in the sections above.
+The core design is settled (env shape, per-event scoping with empty-provider skip,
+apply-to-all fallback, no uninstall filtering, shared schema consolidated with `CommerceEnv`
+re-exported to stay additive). Two implementation-time items remain:
+
+- **Warning copy and log level** for the unresolved-environment case — the behavior is decided
+  (warn for env-declaring webhooks/Commerce events; skip external events), but the exact
+  message and level are not.
+- **Cross-repo rollout coordination** — the `commerceEnv` query param is forward-compatible
+  (App Management can adopt it before or after the SDK ships, since an absent param returns the
+  full config), so this is a sequencing question, not a blocking dependency.
 
 ## Future possibilities
 
