@@ -14,8 +14,9 @@
 //     provision --region <r>` is the local-dev fallback)
 
 import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
+import { generateAccessToken } from "@adobe/aio-lib-core-auth";
+import AioLogger from "@adobe/aio-lib-core-logging";
 import { init as initDb } from "@adobe/aio-lib-db";
-import { Core } from "@adobe/aio-sdk";
 
 // The connected client returned by db.connect().
 type DbClient = Awaited<
@@ -23,7 +24,7 @@ type DbClient = Awaited<
 >;
 
 export async function main(params: Record<string, unknown>) {
-  const logger = Core.Logger("commerce-app-storage", {
+  const logger = AioLogger("commerce-app-storage", {
     level: (params.LOG_LEVEL as string) || "info",
   });
 
@@ -34,7 +35,7 @@ export async function main(params: Record<string, unknown>) {
 
   try {
     // 1. IMS token — injected because include-ims-credentials is true.
-    const token = await Core.AuthClient.generateAccessToken(params);
+    const token = await generateAccessToken(params);
 
     // 2. Initialize. region MUST match the manifest database.region.
     //    Omit it to use AIO_DB_REGION or the "amer" default.

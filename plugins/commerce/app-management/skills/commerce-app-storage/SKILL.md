@@ -101,13 +101,13 @@ Every handler follows the same lifecycle: generate token → `init` → `connect
 ```ts
 // Web action — src/commerce-extensibility-1/actions/store-record/index.ts
 import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
-import { Core } from "@adobe/aio-sdk";
+import { generateAccessToken } from "@adobe/aio-lib-core-auth";
 import { init as initDb } from "@adobe/aio-lib-db";
 
 export async function main(params: Record<string, unknown>) {
   let client;
   try {
-    const token = await Core.AuthClient.generateAccessToken(params); // IMS token
+    const token = await generateAccessToken(params); // IMS token
     const db = await initDb({ token: token.access_token, region: "emea" }); // must match the manifest database.region
     client = await db.connect();
     const records = client.collection("records");
@@ -135,7 +135,7 @@ export async function main(params: Record<string, unknown>) {
   const data = params.data as Record<string, unknown>;
   let client;
   try {
-    const token = await Core.AuthClient.generateAccessToken(params);
+    const token = await generateAccessToken(params);
     const db = await initDb({ token: token.access_token, region: "emea" });
     client = await db.connect();
     await client
@@ -159,7 +159,7 @@ Author the step with `defineCustomInstallationStep` (an `install` handler plus a
 ```ts
 // ./scripts/setup-database.ts — referenced from config as ./scripts/setup-database.js
 import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
-import { Core } from "@adobe/aio-sdk";
+import { generateAccessToken } from "@adobe/aio-lib-core-auth";
 import { init as initDb } from "@adobe/aio-lib-db";
 
 export default defineCustomInstallationStep({
@@ -167,7 +167,7 @@ export default defineCustomInstallationStep({
     let client;
     try {
       // context.params carries the injected IMS credentials — NOT config.
-      const token = await Core.AuthClient.generateAccessToken(context.params);
+      const token = await generateAccessToken(context.params);
       const db = await initDb({ token: token.access_token, region: "emea" }); // must match the manifest database.region
       client = await db.connect();
 
@@ -181,7 +181,7 @@ export default defineCustomInstallationStep({
   uninstall: async (config, context) => {
     let client;
     try {
-      const token = await Core.AuthClient.generateAccessToken(context.params);
+      const token = await generateAccessToken(context.params);
       const db = await initDb({ token: token.access_token, region: "emea" });
       client = await db.connect();
       await client.collection("held_orders").drop();
@@ -230,6 +230,7 @@ A build failure points directly to the offending config field. To exercise the a
 - **Use projections** (`.project({ field: 1 })`) and **indexes** (`createIndex`) for frequently queried fields; index fields must total ≤ 2048 bytes.
 - **Iterate large result sets with cursors** (`for await (const doc of collection.find(...))`) instead of `toArray()` to bound memory.
 - **Don't hardcode the region or secrets** — prefer `AIO_DB_REGION` and the injected IMS token over inline values.
+- **Prefer the most specific Adobe I/O library** in runtime actions over the `@adobe/aio-sdk` umbrella — e.g. `@adobe/aio-lib-core-auth` for `generateAccessToken` and `@adobe/aio-lib-core-logging` for the logger — to keep action bundles small.
 - **Set up collections and indexes during installation** with a custom installation step (`defineCustomInstallationStep`, see Step 6) rather than ad-hoc on the first request — it runs once when the app is installed from the Commerce Admin and is reversible on uninstall. A generic App Builder `post-app-deploy` hook is only an alternative when the app is not installed through App Management.
 
 ## Common Issues

@@ -27,8 +27,8 @@
 //   2. createIndex is called ON A COLLECTION OBJECT, not with a collection-name string.
 
 import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
+import { generateAccessToken } from "@adobe/aio-lib-core-auth";
 import { init as initDb } from "@adobe/aio-lib-db";
-import { Core } from "@adobe/aio-sdk";
 
 const COLLECTION = "held_orders";
 
@@ -36,7 +36,7 @@ const COLLECTION = "held_orders";
 // responsible for closing it (see the finally blocks below).
 async function openClient(context: { params: Record<string, unknown> }) {
   // include-ims-credentials makes these credentials available on context.params.
-  const token = await Core.AuthClient.generateAccessToken(context.params);
+  const token = await generateAccessToken(context.params);
   const db = await initDb({
     token: token.access_token,
     // region MUST match the manifest database.region. Omit to use AIO_DB_REGION.
