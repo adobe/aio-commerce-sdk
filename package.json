@@ -27,7 +27,7 @@
     "prepare": "husky",
     "publint": "turbo run publint",
     "release:publish": "changeset publish",
-    "release:version": "changeset version && turbo version && turbo docs",
+    "release:version": "changeset version && turbo run version && turbo run docs",
     "test": "turbo test",
     "turbo": "turbo",
     "typecheck": "turbo typecheck"
