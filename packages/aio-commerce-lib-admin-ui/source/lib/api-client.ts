@@ -16,6 +16,7 @@ import {
 } from "@adobe/aio-commerce-lib-api";
 
 import * as extensionEndpoints from "#api/extensions/endpoints";
+import * as permissionEndpoints from "#api/permissions/endpoints";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 
@@ -27,6 +28,7 @@ import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 export function createAdminUiApiClient(params: CommerceHttpClientParams) {
   return ApiClient.create(new AdobeCommerceHttpClient(params), {
     ...extensionEndpoints,
+    ...permissionEndpoints,
   });
 }
 

@@ -50,6 +50,7 @@ export { hasMetadata } from "./schema/metadata";
 export { hasWebhooks } from "./schema/webhooks";
 
 export type {
+  AclResource,
   AdminUiSdkConfiguration,
   AdminUiSdkRegistration,
   BannerNotification,

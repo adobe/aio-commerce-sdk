@@ -479,19 +479,23 @@ adminUiSdk: {
   registration: {
     menuItems: [
       {
-        id: "my-app::menu",
+        id: "my_app::menu",
         title: "My App",
-        parent: "my-app::apps",
+        parent: "my_app::apps",
         sortOrder: 1,
         isSection: false,
         sandbox: "allow-modals",
+        aclResource: {
+          id: "Acme_Promotions::dashboard",
+          title: "Promotions Dashboard",
+        },
       },
     ],
 
     order: {
       massActions: [
         {
-          actionId: "my-app::order-mass-action",
+          actionId: "my_app::order-mass-action",
           label: "Order Mass Action",
           title: "Page Title",
           path: "#/order-mass-action",
@@ -515,7 +519,7 @@ adminUiSdk: {
       },
       viewButtons: [
         {
-          buttonId: "my-app::delete-order",
+          buttonId: "my_app::delete-order",
           label: "Delete",
           path: "#/delete-order",
           level: 0,
@@ -541,7 +545,7 @@ adminUiSdk: {
     product: {
       massActions: [
         {
-          actionId: "my-app::product-mass-action",
+          actionId: "my_app::product-mass-action",
           label: "Product Mass Action",
           path: "#/product-mass-action",
           productSelectLimit: 1,
@@ -558,7 +562,7 @@ adminUiSdk: {
     customer: {
       massActions: [
         {
-          actionId: "my-app::customer-mass-action",
+          actionId: "my_app::customer-mass-action",
           label: "Customer Mass Action",
           path: "#/customer-mass-action",
           customerSelectLimit: 1,
@@ -576,17 +580,17 @@ adminUiSdk: {
       massActions: {
         order: [
           {
-            actionId: "my-app::order-mass-action",
+            actionId: "my_app::order-mass-action",
             successMessage: "Order action completed.",
             errorMessage: "Order action failed.",
           },
         ],
-        product: [{ actionId: "my-app::product-mass-action" }],
-        customer: [{ actionId: "my-app::customer-mass-action" }],
+        product: [{ actionId: "my_app::product-mass-action" }],
+        customer: [{ actionId: "my_app::customer-mass-action" }],
       },
       orderViewButtons: [
         {
-          buttonId: "my-app::delete-order",
+          buttonId: "my_app::delete-order",
           successMessage: "Order deleted.",
           errorMessage: "Delete failed.",
         },
@@ -603,6 +607,26 @@ adminUiSdk: {
 - **sortOrder**: Optional number
 - **isSection**: Optional boolean
 - **sandbox**: Optional; space-separated combination of `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
+- **aclResource**: Optional Admin UI SDK ACL resource; both `id` and `title` are required. `id` must follow the `Vendor_Module::resource_name` format. Optional: `parent` (same format) must reference the `id` of another `aclResource` declared by this same app — static Commerce ACL ids are not valid parents, and a node with an unrecognized parent falls back under the Admin UI SDK extensions container; `sortOrder` controls display order. Commerce uses this resource to decide whether the menu item is visible to the current admin user. The same resource can also gate a SPA route or runtime action in the app itself — see the [`@adobe/aio-commerce-lib-admin-ui` permission helper](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-checking).
+
+Minimal menu item ACL example:
+
+```javascript
+adminUiSdk: {
+  registration: {
+    menuItems: [
+      {
+        id: "promotions/dashboard",
+        title: "Promotions",
+        aclResource: {
+          id: "Acme_Promotions::dashboard",
+          title: "Promotions Dashboard",
+        },
+      },
+    ],
+  },
+}
+```
 
 ##### Order Extension Points:
 

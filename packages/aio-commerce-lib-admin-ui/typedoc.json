@@ -15,7 +15,8 @@
     },
 
     "ky": {
-      "Options": "https://github.com/sindresorhus/ky?tab=readme-ov-file#options"
+      "Options": "https://github.com/sindresorhus/ky?tab=readme-ov-file#options",
+      "HTTPError": "https://github.com/sindresorhus/ky?tab=readme-ov-file#httperror"
     }
   }
 }

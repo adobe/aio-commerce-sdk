@@ -10,11 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the `@adobe/aio-commerce-lib-admin-ui/api` entrypoint. */
+import * as v from "valibot";
 
-export * from "./errors";
-export * from "./lib/api-client";
-export * from "./lib/permission-client";
+/** Response shape returned by the Admin UI SDK permission check endpoint. */
+export const permissionCheckResponseSchema = v.object({
+  allowed: v.boolean(),
+});
 
-export type * from "./api/extensions/schema";
-export type * from "./api/permissions/schema";
+/** Parsed Admin UI SDK permission check response. */
+export type PermissionCheckResponse = v.InferOutput<
+  typeof permissionCheckResponseSchema
+>;
