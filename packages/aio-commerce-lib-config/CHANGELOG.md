@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-config
 
+## 1.5.1
+
+### Patch Changes
+
+- [#490](https://github.com/adobe/aio-commerce-sdk/pull/490) [`9b41376`](https://github.com/adobe/aio-commerce-sdk/commit/9b413761fd857a2e75c3f5210efb83ce2b1b4b6e) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix an issue where the configured cache was not being set when caching values in `@adobe/aio-lib-state`. Also, correct an annotation that was mistakenly affirming that the cache timeout needs to be specified in milliseconds, while it must be in seconds.
+
 ## 1.5.0
 
 ### Minor Changes
