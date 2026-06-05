@@ -557,7 +557,37 @@
                       "required": ["registration"]
                     },
                     "adminUi": {
-                      "$ref": "#/components/schemas/AdminUiRegistration"
+                      "type": "object",
+                      "properties": {
+                        "order": {
+                          "type": "object",
+                          "properties": {
+                            "gridColumns": {
+                              "$ref": "#/components/schemas/AdminUiGridColumns"
+                            }
+                          },
+                          "required": []
+                        },
+                        "product": {
+                          "type": "object",
+                          "properties": {
+                            "gridColumns": {
+                              "$ref": "#/components/schemas/AdminUiGridColumns"
+                            }
+                          },
+                          "required": []
+                        },
+                        "customer": {
+                          "type": "object",
+                          "properties": {
+                            "gridColumns": {
+                              "$ref": "#/components/schemas/AdminUiGridColumns"
+                            }
+                          },
+                          "required": []
+                        }
+                      },
+                      "required": []
                     },
                     "installation": {
                       "type": "object",
@@ -3787,39 +3817,6 @@
                   },
                   "required": ["buttonId"]
                 }
-              }
-            },
-            "required": []
-          }
-        },
-        "required": []
-      },
-      "AdminUiRegistration": {
-        "type": "object",
-        "properties": {
-          "order": {
-            "type": "object",
-            "properties": {
-              "gridColumns": {
-                "$ref": "#/components/schemas/AdminUiGridColumns"
-              }
-            },
-            "required": []
-          },
-          "product": {
-            "type": "object",
-            "properties": {
-              "gridColumns": {
-                "$ref": "#/components/schemas/AdminUiGridColumns"
-              }
-            },
-            "required": []
-          },
-          "customer": {
-            "type": "object",
-            "properties": {
-              "gridColumns": {
-                "$ref": "#/components/schemas/AdminUiGridColumns"
               }
             },
             "required": []

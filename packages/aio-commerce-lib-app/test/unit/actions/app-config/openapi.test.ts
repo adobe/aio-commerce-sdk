@@ -98,7 +98,6 @@ describe("buildOpenApiSpec", () => {
     for (const retained of [
       "ErrorResponse",
       "AdminUiSdkRegistration",
-      "AdminUiRegistration",
       "AdminUiGridColumns",
       "EventProvider",
       "RuntimeActionWebhookConfig",
