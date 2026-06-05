@@ -146,19 +146,19 @@ by hand.
 
 The schema enforces which fields apply to which `type`:
 
-| Field           | `type: "view"` | `type: "worker"` |
-| --------------- | -------------- | ---------------- |
-| `id`            | required       | required         |
-| `label`         | required       | required         |
-| `description`   | optional       | optional         |
-| `level`         | optional       | optional         |
-| `sortOrder`     | optional       | optional         |
-| `confirm`       | optional       | optional         |
-| `notifications` | optional       | optional         |
-| `path`          | required       | rejected         |
-| `sandbox`       | optional       | rejected         |
-| `runtimeAction` | rejected       | required         |
-| `timeout`       | rejected       | optional         |
+| Field                | `type: "view"` | `type: "worker"` |
+| -------------------- | -------------- | ---------------- |
+| `id`                 | required       | required         |
+| `label`              | required       | required         |
+| `description`        | optional       | optional         |
+| `level`              | optional       | optional         |
+| `sortOrder`          | optional       | optional         |
+| `confirm`            | optional       | optional         |
+| `notifications`      | optional       | optional         |
+| `path`               | required       | rejected         |
+| `sandboxPermissions` | optional       | rejected         |
+| `runtimeAction`      | rejected       | required         |
+| `timeout`            | rejected       | optional         |
 
 `label` is the on-button text Commerce renders in the admin. `description` is a free-form
 sentence that is not rendered on the button itself; it is exposed via `app-config` so
@@ -241,7 +241,7 @@ adopting the convention is left to the developer.
 | `path` (under `displayIframe: true`)                                        | `path`                              | Unchanged — still the in-app iframe URL                                 |
 | `buttonId`, `label`, `level`, `sortOrder`                                   | `id`, `label`, `level`, `sortOrder` | `buttonId` renamed to `id` in v2; others unchanged                      |
 | `confirm.message`, `timeout`                                                | _(same)_                            | Unchanged from v1; `timeout` only valid on `type: "worker"`             |
-| `sandbox`                                                                   | `sandbox`                           | Unchanged — only valid on `type: "view"`                                |
+| `sandbox` (string, space-separated)                                         | `sandboxPermissions` (string array) | Renamed and typed; Commerce reads the array directly from `app-config`  |
 | `bannerNotification.orderViewButtons[*].successMessage` (keyed by buttonId) | `notifications.success`             | Inlined on the button entry; cross-reference removed                    |
 | `bannerNotification.orderViewButtons[*].errorMessage` (keyed by buttonId)   | `notifications.error`               | Inlined on the button entry; cross-reference removed                    |
 | _(none)_                                                                    | `description`                       | New optional field; surfaced to install tooling alongside `label`       |
@@ -265,6 +265,12 @@ const ViewButtonNotificationsSchema = v.object({
   error: v.optional(nonEmptyStringValueSchema("error notification")),
 });
 
+const SandboxPermissionSchema = v.picklist([
+  "allow-downloads",
+  "allow-modals",
+  "allow-popups",
+]);
+
 const OrderViewButtonSchema = v.variant("type", [
   v.object({
     type: v.literal("view"),
@@ -277,7 +283,7 @@ const OrderViewButtonSchema = v.variant("type", [
     level: v.optional(ViewButtonLevelSchema),
     sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
     confirm: v.optional(ViewButtonConfirmSchema),
-    sandbox: v.optional(SandboxSchema),
+    sandboxPermissions: v.optional(v.array(SandboxPermissionSchema)),
     notifications: v.optional(ViewButtonNotificationsSchema),
   }),
   v.object({
@@ -299,10 +305,12 @@ const OrderViewButtonSchema = v.variant("type", [
 
 `ViewButtonNotificationsSchema` mirrors the shape introduced for mass actions in CEXT-6095
 (see `specs/features/CEXT-6095-admin-ui-sdk-mass-actions-v2.md`); the implementation should lift
-it into a shared module so both surfaces share one definition. The `ViewButtonLevelSchema`,
-`ViewButtonConfirmSchema`, and `SandboxSchema` helpers already exist in `admin-ui-sdk.ts` and
-are reused. The v1 `withSandboxDisplayIframeCheck` wrapper is _not_
-reused — v2 enforces the sandbox/path/runtimeAction split structurally via the variant, so the
+it into a shared module so both surfaces share one definition. The `ViewButtonLevelSchema` and
+`ViewButtonConfirmSchema` helpers already exist in `admin-ui-sdk.ts` and are reused.
+`SandboxPermissionSchema` is new — the v1 `SandboxSchema` accepted a raw string, while v2 uses
+a typed array validated against the three allowed values. The v1 `withSandboxDisplayIframeCheck`
+wrapper is _not_ reused — v2 enforces the sandboxPermissions/path/runtimeAction split structurally
+via the variant, so the
 post-parse guard is no longer needed. If lifting the reused helpers into a shared module is
 preferable, that is an implementation detail — the public shape is what this spec pins down.
 
@@ -356,9 +364,10 @@ operations:
 ### Validation rules
 
 - `type: "view"` requires `path`; `runtimeAction` and `timeout` are rejected.
-- `type: "worker"` requires `runtimeAction`; `path` and `sandbox` are rejected.
-- `sandbox` is only valid on `type: "view"` — structurally enforced by the variant, not by a
-  post-parse check.
+- `type: "worker"` requires `runtimeAction`; `path` and `sandboxPermissions` are rejected.
+- `sandboxPermissions` is only valid on `type: "view"` — structurally enforced by the variant,
+  not by a post-parse check. Allowed values are `"allow-downloads"`, `"allow-modals"`, and
+  `"allow-popups"`.
 - `notifications` is allowed on both variants. Inner `success` / `error` strings, when present,
   must be non-empty (empty strings fail validation rather than slipping through silently).
 
