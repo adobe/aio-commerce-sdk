@@ -47,6 +47,7 @@ This creates avoidable authoring problems:
 - Replace v1 `menuItems[]` with one menu declaration per app.
 - Rename `title` to `label`.
 - Add `description` for installation and permission review surfaces.
+- Validate `id` against the Commerce menu ID character set.
 - Replace `parent` / `parentMenuId` with `commerceMenuId`, an optional reference to an existing
   Commerce menu where the app menu should be attached.
 - Flatten page metadata into `pageTitle`; no nested `page` object is exposed in v2.
@@ -93,7 +94,7 @@ export default defineConfig({
   },
   adminUi: {
     menu: {
-      id: "approval-dashboard",
+      id: "approval_dashboard",
       label: "Approval Dashboard",
       description: "Review and approve purchase requests from Commerce Admin.",
       pageTitle: "Purchase Approval Dashboard",
@@ -107,6 +108,12 @@ export default defineConfig({
 This creates one Commerce Admin entry for the app and attaches it to the existing
 `Magento_Sales::sales` Commerce menu. When the merchant clicks the entry, the app's registered web
 view is loaded and `pageTitle` is displayed as the Admin page title.
+
+`id` is a unique app-local ID to identify the application menu in Adobe Commerce Admin. The input
+allowed is uppercase and lowercase letters (`a-z`, `A-Z`), digits (`0-9`), forward slash (`/`),
+colons (`:`), and underscores (`_`). The SDK validates this character set, but does not require
+developers to include the extension ID prefix in app config; Commerce/App Management qualifies the
+ID for the final Commerce registration as needed.
 
 `description` is a short explanation of what the menu entry does. It is not rendered as the menu
 label; it is exposed through app config and OpenAPI so installation and permission-review surfaces
@@ -154,18 +161,18 @@ menu declaration is read from the `app-config` endpoint on `commerce/extensibili
 
 ### Migration from v1
 
-| v1                                       | v2                      | Notes                                                          |
-| ---------------------------------------- | ----------------------- | -------------------------------------------------------------- |
-| `adminUiSdk.registration.menuItems[]`    | `adminUi.menu`          | Singular object; one menu per app                              |
-| `menuItems[].id`                         | `id`                    | Unchanged meaning; app-declared menu identifier                |
-| `menuItems[].title`                      | `label`                 | Menu label rendered in Commerce Admin                          |
-| _(absent)_                               | `description`           | Human-readable menu summary for installation and permissions   |
-| `page.title`                             | `pageTitle`             | Flattened into the menu declaration                            |
-| `menuItems[].parent` / `parentMenuId`    | `commerceMenuId`        | Optional existing Commerce menu where the app menu is attached |
-| `menuItems[].sandbox`                    | `sandboxPermissions`    | Same permission values, now expressed as a string array        |
-| `menuItems[].isSection`                  | _(removed)_             | Omit `commerceMenuId` to use an app-specific generated section |
-| `menuItems[].sortOrder`                  | _(removed)_             | Ordering is owned by Commerce/App Management                   |
-| Extension point: `commerce/backend-ui/1` | `commerce/backend-ui/2` | Required change in `app.config.yaml` and `install.yaml`        |
+| v1                                       | v2                      | Notes                                                                     |
+| ---------------------------------------- | ----------------------- | ------------------------------------------------------------------------- |
+| `adminUiSdk.registration.menuItems[]`    | `adminUi.menu`          | Singular object; one menu per app                                         |
+| `menuItems[].id`                         | `id`                    | Same Commerce character set; extension ID prefix is not authored manually |
+| `menuItems[].title`                      | `label`                 | Menu label rendered in Commerce Admin                                     |
+| _(absent)_                               | `description`           | Human-readable menu summary for installation and permissions              |
+| `page.title`                             | `pageTitle`             | Flattened into the menu declaration                                       |
+| `menuItems[].parent` / `parentMenuId`    | `commerceMenuId`        | Optional existing Commerce menu where the app menu is attached            |
+| `menuItems[].sandbox`                    | `sandboxPermissions`    | Same permission values, now expressed as a string array                   |
+| `menuItems[].isSection`                  | _(removed)_             | Omit `commerceMenuId` to use an app-specific generated section            |
+| `menuItems[].sortOrder`                  | _(removed)_             | Ordering is owned by Commerce/App Management                              |
+| Extension point: `commerce/backend-ui/1` | `commerce/backend-ui/2` | Required change in `app.config.yaml` and `install.yaml`                   |
 
 During migration, developers identify the v1 non-section menu item and move its user-facing title
 to `adminUi.menu.label`. The v1 section item is not migrated. If the v1 app used a custom parent
@@ -186,7 +193,7 @@ The v2 schema introduced in CEXT-6096 lives in
 
 ```ts
 const MenuSchema = v.object({
-  id: nonEmptyStringValueSchema("menu ID"),
+  id: MenuIdSchema,
   label: nonEmptyStringValueSchema("menu label"),
   description: nonEmptyStringValueSchema("menu description"),
   pageTitle: nonEmptyStringValueSchema("menu page title"),
@@ -202,6 +209,18 @@ export const AdminUiSchema = v.object({
     v.object({ gridColumns: v.optional(GridColumnsSchema) }),
   ),
 });
+```
+
+`MenuIdSchema` enforces the Commerce menu ID character set:
+
+```ts
+const MenuIdSchema = v.pipe(
+  nonEmptyStringValueSchema("menu ID"),
+  v.regex(
+    /^[A-Za-z0-9_/:]+$/,
+    'Menu ID may contain only letters, digits, "/", ":", and "_"',
+  ),
+);
 ```
 
 `SandboxPermissionsSchema` validates the same values as the v1 `SandboxSchema`, but accepts them as
@@ -240,7 +259,7 @@ Example payload excerpt:
   },
   "adminUi": {
     "menu": {
-      "id": "approval-dashboard",
+      "id": "approval_dashboard",
       "label": "Approval Dashboard",
       "description": "Review and approve purchase requests from Commerce Admin.",
       "pageTitle": "Purchase Approval Dashboard",
@@ -255,10 +274,10 @@ Example payload excerpt:
 
 The OpenAPI document generated for the `app-config` endpoint must include the `adminUi.menu` schema
 in the same implementation change. The schema marks `id`, `label`, `description`, and `pageTitle`
-as required strings, exposes `commerceMenuId` as an optional string, and exposes
-`sandboxPermissions` as an optional array whose items are limited to the supported sandbox
-permission values. The implementation PR is not complete unless the OpenAPI generation code and
-its relevant tests or fixtures are updated with this schema.
+as required strings, exposes `commerceMenuId` as an optional string, constrains `id` to the Commerce
+menu ID character set, and exposes `sandboxPermissions` as an optional array whose items are limited
+to the supported sandbox permission values. The implementation PR is not complete unless the
+OpenAPI generation code and its relevant tests or fixtures are updated with this schema.
 
 ### Pre-app-build hook
 
@@ -281,6 +300,8 @@ endpoint.
 
 - `menu` must be an object, not an array.
 - `id`, `label`, `description`, and `pageTitle` are required non-empty strings.
+- `id` must be a unique app-local ID using only uppercase and lowercase letters (`a-z`, `A-Z`),
+  digits (`0-9`), forward slash (`/`), colons (`:`), and underscores (`_`).
 - `commerceMenuId` is optional, but when present must be a non-empty string. When omitted, the
   Commerce-side registration uses a generated app-specific section as the parent menu ID.
 - `sandboxPermissions` is optional, but when present must be an array containing only sandbox values
