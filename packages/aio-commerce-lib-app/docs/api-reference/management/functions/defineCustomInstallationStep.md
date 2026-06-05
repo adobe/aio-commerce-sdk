@@ -10,7 +10,7 @@ function defineCustomInstallationStep<TResult>(
   | CustomInstallationStepDefinition<TResult>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/custom-installation/define.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-app/source/management/installation/custom-installation/define.ts#L74)
+Defined in: [aio-commerce-lib-app/source/management/installation/custom-installation/define.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/custom-installation/define.ts#L74)
 
 Define a custom installation step with type-safe parameters.
 

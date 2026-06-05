@@ -116,6 +116,6 @@ const WebhooksSchema: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionS
 })[], 1, "webhooks array must contain at least one webhook when present">]>, undefined>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/webhooks.ts:127](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-app/source/config/schema/webhooks.ts#L127)
+Defined in: [aio-commerce-lib-app/source/config/schema/webhooks.ts:127](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/config/schema/webhooks.ts#L127)
 
 Schema for the optional webhooks array (when present, must have at least one item).
