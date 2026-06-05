@@ -73,21 +73,21 @@ export async function main(params: unknown) {
 
 #### Building a success response
 
-`okGridResponse` wraps your rows in the envelope Commerce expects, optionally including a `defaults` bag (serialized as the `"*"` key):
+`okGridResponse` wraps your data in the envelope Commerce expects, optionally including a `defaults` bag (serialized as the `"*"` key):
 
 ```typescript
 import { okGridResponse } from "@adobe/aio-commerce-lib-admin-ui/grid-columns";
 
-return okGridResponse({
-  rows: {
+return okGridResponse(
+  {
     "000000001": { fulfillment_status: "shipped", risk_score: 12 },
     "000000002": { fulfillment_status: "pending", risk_score: 47 },
   },
-  defaults: { fulfillment_status: "unknown", risk_score: 0 },
-});
+  { fulfillment_status: "unknown", risk_score: 0 },
+);
 ```
 
-Commerce applies `defaults` to IDs missing from `rows` and to individual cells whose value does not satisfy the declared `type` on the column registration. Omit `defaults` if you do not need fallback values.
+Commerce applies the second argument (defaults) to IDs missing from `data` and to individual cells whose value does not satisfy the declared `type` on the column registration. Omit it if you do not need fallback values.
 
 The column keys inside each row must match the `id` values declared in the corresponding `adminUi.<grid>.gridColumns.columns[].id` configuration.
 

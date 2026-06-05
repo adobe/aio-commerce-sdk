@@ -10,50 +10,38 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  buildSuccessResponse,
-  HTTP_OK,
-} from "@adobe/aio-commerce-lib-core/responses";
+import { ok } from "@adobe/aio-commerce-lib-core/responses";
 
 import type { SuccessResponse } from "@adobe/aio-commerce-lib-core/responses";
 import type { GridErrorBody, GridRow, GridSuccessBody } from "./types";
-
-/** Input shape for {@link okGridResponse}. */
-export type GridResponseInput = {
-  /** Per-row cell values, keyed by ID. */
-  rows: Record<string, GridRow>;
-
-  /**
-   * Default cell values applied by Commerce to IDs missing from `rows` and to
-   * cells whose value does not satisfy the declared `type` on the registration.
-   */
-  defaults?: GridRow;
-};
 
 /**
  * Builds an HTTP 200 success response carrying the grid column data envelope
  * Commerce expects on the `commerce/backend-ui/2` wire contract.
  *
+ * @param data - Per-row cell values, keyed by entity ID.
+ * @param defaults - Default cell values applied by Commerce to IDs missing from
+ *   `data` and to cells whose value does not satisfy the declared `type` on the
+ *   registration.
+ *
  * @example
  * ```ts
- * return okGridResponse({
- *   rows: {
+ * return okGridResponse(
+ *   {
  *     "000000001": { fulfillment_status: "shipped", risk_score: 12 },
  *     "000000002": { fulfillment_status: "pending", risk_score: 47 },
  *   },
- *   defaults: { fulfillment_status: "unknown", risk_score: 0 },
- * });
+ *   { fulfillment_status: "unknown", risk_score: 0 },
+ * );
  * ```
  */
 export function okGridResponse(
-  input: GridResponseInput,
+  data: Record<string, GridRow>,
+  defaults?: GridRow,
 ): SuccessResponse<GridSuccessBody> {
-  const data: GridSuccessBody["data"] = { ...input.rows };
-  if (input.defaults) {
-    data["*"] = input.defaults;
-  }
-
-  return buildSuccessResponse<GridSuccessBody>(HTTP_OK, { body: { data } });
+  return ok<GridSuccessBody>({
+    body: { data: defaults ? { ...data, "*": defaults } : data },
+  });
 }
 
 /**
@@ -77,5 +65,5 @@ export function errorGridResponse(
       ? { errorStatus }
       : { errorStatus, errorMessage };
 
-  return buildSuccessResponse<GridErrorBody>(HTTP_OK, { body });
+  return ok<GridErrorBody>({ body });
 }

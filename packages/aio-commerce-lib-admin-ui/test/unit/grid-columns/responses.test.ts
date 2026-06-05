@@ -12,15 +12,16 @@
 
 import { describe, expect, it } from "vitest";
 
-import { errorGridResponse, okGridResponse } from "#grid-columns/responses";
+import {
+  errorGridResponse,
+  okGridResponse,
+} from "#grid-columns/responses/presets";
 
 describe("okGridResponse", () => {
   it("wraps rows in the data envelope with statusCode 200", () => {
     const result = okGridResponse({
-      rows: {
-        "000000001": { fulfillment_status: "shipped", risk_score: 12 },
-        "000000002": { fulfillment_status: "pending", risk_score: 47 },
-      },
+      "000000001": { fulfillment_status: "shipped", risk_score: 12 },
+      "000000002": { fulfillment_status: "pending", risk_score: 47 },
     });
 
     expect(result).toEqual({
@@ -36,15 +37,12 @@ describe("okGridResponse", () => {
   });
 
   it("does not include the wildcard key when defaults are omitted", () => {
-    const result = okGridResponse({ rows: { "1": { col: "a" } } });
+    const result = okGridResponse({ "1": { col: "a" } });
     expect(result.body?.data).not.toHaveProperty("*");
   });
 
   it("adds the wildcard key when defaults are provided", () => {
-    const result = okGridResponse({
-      rows: { "1": { col: "a" } },
-      defaults: { col: "default" },
-    });
+    const result = okGridResponse({ "1": { col: "a" } }, { col: "default" });
 
     expect(result.body?.data).toEqual({
       "1": { col: "a" },
@@ -53,15 +51,12 @@ describe("okGridResponse", () => {
   });
 
   it("emits an empty data object when rows is empty", () => {
-    const result = okGridResponse({ rows: {} });
+    const result = okGridResponse({});
     expect(result.body).toEqual({ data: {} });
   });
 
   it("emits only the wildcard key when rows is empty and defaults are provided", () => {
-    const result = okGridResponse({
-      rows: {},
-      defaults: { col: "fallback" },
-    });
+    const result = okGridResponse({}, { col: "fallback" });
     expect(result.body?.data).toEqual({ "*": { col: "fallback" } });
   });
 });

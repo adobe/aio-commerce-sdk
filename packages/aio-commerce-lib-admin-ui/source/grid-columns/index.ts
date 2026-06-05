@@ -21,15 +21,13 @@
  * @packageDocumentation
  */
 
-export { parseGridRequest } from "./requests";
-export { errorGridResponse, okGridResponse } from "./responses";
-export { GridRequestSchema, GridTypeSchema } from "./schema";
+export { parseGridRequest } from "./requests/presets";
+export { GridRequestSchema, GridTypeSchema } from "./requests/schema";
+export { errorGridResponse, okGridResponse } from "./responses/presets";
 
-export type { GridResponseInput } from "./responses";
+export type { GridRequest, GridType } from "./requests/types";
 export type {
   GridErrorBody,
-  GridRequest,
   GridRow,
   GridSuccessBody,
-  GridType,
-} from "./types";
+} from "./responses/types";

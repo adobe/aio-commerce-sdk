@@ -18,23 +18,3 @@ export type GridType = v.InferOutput<typeof GridTypeSchema>;
 
 /** Parsed request body sent by Commerce to a grid column handler. */
 export type GridRequest = v.InferOutput<typeof GridRequestSchema>;
-
-/** Cell values returned for a single row, keyed by `id`. */
-export type GridRow = Record<string, unknown>;
-
-/**
- * Success body returned to Commerce.
- *
- * The `"*"` entry supplies default cell values that Commerce applies to IDs
- * missing from `data` and to cells whose returned value does not satisfy the
- * declared `type` on the registration.
- */
-export type GridSuccessBody = {
-  data: Record<string, GridRow> & { "*"?: GridRow };
-};
-
-/** Failure body returned to Commerce. */
-export type GridErrorBody = {
-  errorStatus: string;
-  errorMessage?: string;
-};

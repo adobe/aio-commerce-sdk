@@ -13,9 +13,9 @@
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { describe, expect, it } from "vitest";
 
-import { parseGridRequest } from "#grid-columns/requests";
+import { parseGridRequest } from "#grid-columns/requests/presets";
 
-import type { GridType } from "#grid-columns/types";
+import type { GridType } from "#grid-columns/requests/types";
 
 const VALID_REQUEST = {
   requestId: "550e8400-e29b-41d4-a716-446655440000",
