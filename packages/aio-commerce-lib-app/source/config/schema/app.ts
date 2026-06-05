@@ -14,7 +14,8 @@
 
 import * as v from "valibot";
 
-import { AdminUiSchema, AdminUiSdkSchema } from "./admin-ui-sdk";
+import { AdminUiSchema } from "./admin-ui";
+import { AdminUiSdkSchema } from "./admin-ui-sdk";
 import { SchemaBusinessConfig } from "./business-configuration";
 import { getConfigDomains } from "./domains";
 import { EventingSchema } from "./eventing";

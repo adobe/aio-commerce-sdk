@@ -18,7 +18,7 @@ import {
   GENERATED_ACTIONS_PATH,
   PACKAGE_NAME,
 } from "#commands/constants";
-import { hasAdminUi } from "#config/schema/admin-ui-sdk";
+import { hasAdminUi } from "#config/schema/admin-ui";
 import { requiresInstallation } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
@@ -236,14 +236,12 @@ export function buildAdminUiExtConfigV2(
     },
     operations: {
       view: [{ type: "web", impl: "index.html" }],
-      ...(workerRuntimeActions.length > 0
-        ? {
-            workerProcess: workerRuntimeActions.map((impl) => ({
-              type: "action" as const,
-              impl,
-            })),
-          }
-        : {}),
+      ...(workerRuntimeActions.length > 0 && {
+        workerProcess: workerRuntimeActions.map((impl) => ({
+          type: "action" as const,
+          impl,
+        })),
+      }),
     },
     web: "web-src",
   } satisfies ExtConfig;

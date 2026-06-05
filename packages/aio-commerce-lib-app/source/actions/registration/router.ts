@@ -18,11 +18,11 @@ import {
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
-import type { AdminUiConfiguration } from "#config/schema/admin-ui-sdk";
+import type { AdminUiSdkRegistration } from "#config/schema/admin-ui-sdk";
 
 /** The arguments required to create the runtime action for the registration action. */
 export type RuntimeActionFactoryArgs = {
-  registration: AdminUiConfiguration;
+  registration: AdminUiSdkRegistration;
 };
 
 /** The arguments received by all the handlers in the registration action. */

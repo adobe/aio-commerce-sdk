@@ -495,14 +495,6 @@ export function createConfigWithTwoCommerceEventingSources() {
 export const configWithAdminUiV2 = {
   metadata: { ...mockMetadata, id: "test-app-admin-ui-sdk-v2" },
   adminUi: {
-    menuItems: [
-      {
-        id: "test-app-admin-ui-sdk-v2::menu",
-        title: "Test App",
-        sortOrder: 1,
-        isSection: false,
-      },
-    ],
     order: {
       massActions: [
         {
@@ -544,16 +536,6 @@ export const configWithAdminUiV2 = {
 export const configWithFullAdminUiV2 = {
   metadata: { ...mockMetadata, id: "test-app-full-admin-ui-sdk-v2" },
   adminUi: {
-    menuItems: [
-      {
-        id: "my-app::first",
-        title: "App on App Builder",
-        parent: "my-app::apps",
-        sortOrder: 1,
-        isSection: false,
-        sandbox: "allow-modals",
-      },
-    ],
     order: {
       massActions: [
         {
@@ -565,7 +547,7 @@ export const configWithFullAdminUiV2 = {
           selectionLimit: 1,
           confirm: { title: "Confirm", message: "Are you sure?" },
           notifications: { success: "Done!", error: "Failed!" },
-          sandbox: "allow-modals",
+          sandboxPermissions: "allow-modals",
         },
       ],
       gridColumns: {

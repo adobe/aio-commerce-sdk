@@ -13,12 +13,8 @@
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 
-import {
-  AdminUiSchema,
-  AdminUiSdkSchema,
-  hasAdminUi,
-  hasAdminUiSdk,
-} from "#config/schema/admin-ui-sdk";
+import { AdminUiSchema, hasAdminUi } from "#config/schema/admin-ui";
+import { AdminUiSdkSchema, hasAdminUiSdk } from "#config/schema/admin-ui-sdk";
 import {
   configWithAdminUiSdk,
   configWithAdminUiV2,
@@ -484,14 +480,7 @@ describe("AdminUiSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    test("only menuItems", () => {
-      const result = parse({
-        menuItems: [{ id: "app::item", title: "Item" }],
-      });
-      expect(result.success).toBe(true);
-    });
-
-    test("view mass action with path and sandbox", () => {
+    test("view mass action with path and sandboxPermissions", () => {
       const result = parse({
         order: {
           massActions: [
@@ -500,7 +489,7 @@ describe("AdminUiSchema", () => {
               label: "Action",
               type: "view",
               path: "#/action",
-              sandbox: "allow-modals",
+              sandboxPermissions: "allow-modals",
             },
           ],
         },
@@ -958,13 +947,6 @@ describe("AdminUiSchema", () => {
             },
           ],
         },
-      });
-      expect(result.success).toBe(false);
-    });
-
-    test("menu item with empty id string — fails", () => {
-      const result = parse({
-        menuItems: [{ id: "", title: "Item" }],
       });
       expect(result.success).toBe(false);
     });

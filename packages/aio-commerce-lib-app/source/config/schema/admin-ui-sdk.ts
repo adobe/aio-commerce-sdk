@@ -33,7 +33,7 @@ function isSandboxValue(value: string): value is SandboxValue {
   return SANDBOX_VALUES.includes(value as SandboxValue);
 }
 
-const SandboxSchema = v.pipe(
+export const SandboxSchema = v.pipe(
   v.string('Expected a string value for "sandbox"'),
   v.check(
     (val) => val.split(" ").every(isSandboxValue),
@@ -51,7 +51,7 @@ const ColumnTypeSchema = v.picklist([
 const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
 const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
 
-const MassActionConfirmSchema = v.object({
+export const MassActionConfirmSchema = v.object({
   title: v.optional(nonEmptyStringValueSchema("confirm title")),
   message: v.optional(nonEmptyStringValueSchema("confirm message")),
 });
@@ -73,7 +73,7 @@ const GridColumnPropertySchema = v.object({
   align: ColumnAlignSchema,
 });
 
-const GridColumnsSchema = v.object({
+export const GridColumnsSchema = v.object({
   data: v.object({
     meshId: nonEmptyStringValueSchema("mesh ID"),
   }),
@@ -128,7 +128,7 @@ function withSandboxDisplayIframeCheck<
   );
 }
 
-const OrderViewButtonSchema = withSandboxDisplayIframeCheck(
+export const OrderViewButtonSchema = withSandboxDisplayIframeCheck(
   v.object({
     buttonId: nonEmptyStringValueSchema("view button ID"),
     label: nonEmptyStringValueSchema("view button label"),
@@ -140,7 +140,7 @@ const OrderViewButtonSchema = withSandboxDisplayIframeCheck(
   }),
 );
 
-const CustomFeeSchema = v.object({
+export const CustomFeeSchema = v.object({
   id: nonEmptyStringValueSchema("custom fee ID"),
   label: nonEmptyStringValueSchema("custom fee label"),
   value: v.number("Custom fee value must be a number"),
@@ -155,7 +155,7 @@ const CustomFeeSchema = v.object({
   ),
 });
 
-const MenuItemSchema = v.object({
+export const MenuItemSchema = v.object({
   id: nonEmptyStringValueSchema("menu item ID"),
   title: v.optional(nonEmptyStringValueSchema("menu item title")),
   parent: v.optional(nonEmptyStringValueSchema("menu item parent")),
@@ -164,7 +164,7 @@ const MenuItemSchema = v.object({
   sandbox: v.optional(SandboxSchema),
 });
 
-const OrderViewButtonBannerSchema = v.object({
+export const OrderViewButtonBannerSchema = v.object({
   buttonId: nonEmptyStringValueSchema("view button ID"),
   successMessage: v.optional(nonEmptyStringValueSchema("success message")),
   errorMessage: v.optional(nonEmptyStringValueSchema("error message")),
@@ -344,121 +344,4 @@ export function hasAdminUiSdk<T extends AnyCommerceAppConfig>(
   config: T,
 ): config is T & AppConfigWithAdminUiSdk<T> {
   return config.adminUiSdk?.registration !== undefined;
-}
-
-// ─── v2 schemas (`adminUi`) ───────────────────────────────────────────────────
-
-const MassActionNotificationsSchema = v.object({
-  success: v.optional(nonEmptyStringValueSchema("notifications.success")),
-  error: v.optional(nonEmptyStringValueSchema("notifications.error")),
-});
-
-/** Fields shared by both v2 mass-action variants. `description` is flat — no `installation` nesting. */
-const massActionCommonEntriesV2 = {
-  id: nonEmptyStringValueSchema("mass action ID"),
-  label: nonEmptyStringValueSchema("mass action label"),
-  description: v.optional(nonEmptyStringValueSchema("mass action description")),
-  title: v.optional(nonEmptyStringValueSchema("mass action page title")),
-  confirm: v.optional(MassActionConfirmSchema),
-  notifications: v.optional(MassActionNotificationsSchema),
-  selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
-};
-
-/** `type: "view"` mass action — renders an iframe at `path`. */
-const ViewMassActionSchema = v.strictObject({
-  ...massActionCommonEntriesV2,
-  type: v.literal("view"),
-  path: nonEmptyStringValueSchema("mass action path"),
-  sandbox: v.optional(SandboxSchema),
-});
-
-/** `type: "worker"` mass action — invokes a workerProcess runtime action. */
-const WorkerMassActionSchema = v.strictObject({
-  ...massActionCommonEntriesV2,
-  type: v.literal("worker"),
-  runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
-  timeout: v.optional(positiveNumberValueSchema("timeout")),
-});
-
-/**
- * A v2 mass action entry. Discriminated by `type`: `"view"` renders an iframe;
- * `"worker"` invokes a runtime action.
- */
-const MassActionSchema = v.variant(
-  "type",
-  [ViewMassActionSchema, WorkerMassActionSchema],
-  'mass action "type" must be either "view" or "worker"',
-);
-
-const OrderExtensionPointsSchemaV2 = v.object({
-  massActions: v.optional(v.array(MassActionSchema)),
-  gridColumns: v.optional(GridColumnsSchema),
-  viewButtons: v.optional(v.array(OrderViewButtonSchema)),
-  customFees: v.optional(v.array(CustomFeeSchema)),
-});
-
-const ProductExtensionPointsSchemaV2 = v.object({
-  massActions: v.optional(v.array(MassActionSchema)),
-  gridColumns: v.optional(GridColumnsSchema),
-});
-
-const CustomerExtensionPointsSchemaV2 = v.object({
-  massActions: v.optional(v.array(MassActionSchema)),
-  gridColumns: v.optional(GridColumnsSchema),
-});
-
-const BannerNotificationSchemaV2 = v.object({
-  orderViewButtons: v.optional(v.array(OrderViewButtonBannerSchema)),
-});
-
-/**
- * Schema for the v2 Admin UI configuration (the `adminUi` config section).
- * No `registration` wrapper — entities live directly under `adminUi`.
- * @experimental
- */
-export const AdminUiSchema = v.object({
-  menuItems: v.optional(v.array(MenuItemSchema)),
-  order: v.optional(OrderExtensionPointsSchemaV2),
-  product: v.optional(ProductExtensionPointsSchemaV2),
-  customer: v.optional(CustomerExtensionPointsSchemaV2),
-  bannerNotification: v.optional(BannerNotificationSchemaV2),
-});
-
-/**
- * The v2 Admin UI configuration for an Adobe Commerce application.
- * @experimental
- */
-export type AdminUiConfiguration = v.InferInput<typeof AdminUiSchema>;
-
-/**
- * A v2 mass action registration entry (view or worker variant).
- * @experimental
- */
-export type MassAction = v.InferInput<typeof MassActionSchema>;
-
-/**
- * A view-type v2 mass action.
- * @experimental
- */
-export type ViewMassAction = v.InferInput<typeof ViewMassActionSchema>;
-
-/**
- * A worker-type v2 mass action.
- * @experimental
- */
-export type WorkerMassAction = v.InferInput<typeof WorkerMassActionSchema>;
-
-/** Config type when v2 Admin UI configuration is present. */
-export type AppConfigWithAdminUi<
-  T extends AnyCommerceAppConfig = CommerceAppConfigOutputModel,
-> = T & { adminUi: NonNullable<T["adminUi"]> };
-
-/**
- * Check if config has v2 Admin UI configuration.
- * @experimental
- */
-export function hasAdminUi<T extends AnyCommerceAppConfig>(
-  config: T,
-): config is T & AppConfigWithAdminUi<T> {
-  return config.adminUi !== undefined;
 }

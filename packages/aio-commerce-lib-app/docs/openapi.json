@@ -558,7 +558,7 @@
                     },
                     "adminUi": {
                       "description": "The Admin UI SDK v2 configuration block (served as the `adminUi` property of the app-config response).",
-                      "$ref": "#/components/schemas/AdminUiSdkRegistration"
+                      "$ref": "#/components/schemas/AdminUiConfiguration"
                     },
                     "installation": {
                       "type": "object",
@@ -3793,6 +3793,143 @@
             "required": []
           }
         },
+        "required": []
+      },
+      "AdminUiConfiguration": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "object",
+            "properties": {
+              "massActions": {
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "type": {
+                          "const": "view"
+                        },
+                        "path": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "title": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "confirm": {
+                          "type": "object"
+                        },
+                        "notifications": {
+                          "type": "object"
+                        },
+                        "selectionLimit": {
+                          "type": "number",
+                          "minimum": 1
+                        },
+                        "sandboxPermissions": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["id", "label", "type", "path"],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "type": {
+                          "const": "worker"
+                        },
+                        "runtimeAction": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "title": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "confirm": {
+                          "type": "object"
+                        },
+                        "notifications": {
+                          "type": "object"
+                        },
+                        "selectionLimit": {
+                          "type": "number",
+                          "minimum": 1
+                        },
+                        "timeout": {
+                          "type": "number",
+                          "minimum": 1
+                        }
+                      },
+                      "required": ["id", "label", "type", "runtimeAction"],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "gridColumns": {
+                "type": "object"
+              },
+              "viewButtons": {
+                "type": "array"
+              },
+              "customFees": {
+                "type": "array"
+              }
+            }
+          },
+          "product": {
+            "type": "object",
+            "properties": {
+              "massActions": {
+                "type": "array"
+              },
+              "gridColumns": {
+                "type": "object"
+              }
+            }
+          },
+          "customer": {
+            "type": "object",
+            "properties": {
+              "massActions": {
+                "type": "array"
+              },
+              "gridColumns": {
+                "type": "object"
+              }
+            }
+          },
+          "bannerNotification": {
+            "type": "object",
+            "properties": {
+              "orderViewButtons": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        "additionalProperties": false,
         "required": []
       },
       "CustomScopeInput": {

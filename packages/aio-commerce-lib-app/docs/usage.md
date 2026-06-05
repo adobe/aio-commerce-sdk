@@ -107,7 +107,7 @@ This produces the following files, organized by extension point:
 
 **`commerce/backend-ui/2`**: Admin UI SDK v2 (generated when `adminUi` is defined):
 
-- `src/commerce-backend-ui-2/ext.config.yaml`: extension manifest with the `view` operation (SPA) and the `pre-app-build` hook. The `adminUi` block is served directly by the `app-management/app-config` action (no separate registration action is generated).
+- Extension manifest with the `pre-app-build` hook for Admin UI configuration.
 
 > [!NOTE]
 > Generated actions default to the `nodejs:24` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration.
@@ -647,13 +647,13 @@ Every field of `adminUiSdk.registration` is optional — configure only the exte
 
 > **Experimental:** Admin UI SDK v2 support is not yet production-ready. The API may change in future releases.
 
-The `adminUi` field declares the extension payload served to the Admin UI SDK via the `app-management/app-config` action. When defined, `init` and `generate all` automatically wire up the `commerce/backend-ui/2` extension. No separate registration action is generated — the `adminUi` block is served directly. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
+The `adminUi` field configures Admin UI extension points for orders, products, and customers. The SDK automatically generates the necessary extension when defined. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ##### Authoring a mass action
 
 Mass actions are declared with an explicit `type` field that determines which variant applies:
 
-- `type: "view"` — renders an iframe at the given `path` (optional `sandbox` attribute).
+- `type: "view"` — renders an iframe at the given `path` (optional `sandboxPermissions` attribute).
 - `type: "worker"` — invokes a runtime action specified by `runtimeAction` (optional `timeout`).
 
 The `id` field is authored as a bare name (e.g. `"export-orders"`). The SDK serves the bare `id` as-is in the `app-config` response; the Commerce backend extension handles prefixing and collision resolution when rendering the final Admin UI configuration.
@@ -673,20 +673,20 @@ operations:
 
 ##### Field applicability by variant
 
-| Field            | Common | `view` only | `worker` only |
-| ---------------- | :----: | :---------: | :-----------: |
-| `id`             |   x    |             |               |
-| `label`          |   x    |             |               |
-| `title`          |   x    |             |               |
-| `confirm`        |   x    |             |               |
-| `notifications`  |   x    |             |               |
-| `selectionLimit` |   x    |             |               |
-| `path`           |        |      x      |               |
-| `sandbox`        |        |      x      |               |
-| `runtimeAction`  |        |             |       x       |
-| `timeout`        |        |             |       x       |
+| Field                | Common | `view` only | `worker` only |
+| -------------------- | :----: | :---------: | :-----------: |
+| `id`                 |   x    |             |               |
+| `label`              |   x    |             |               |
+| `title`              |   x    |             |               |
+| `confirm`            |   x    |             |               |
+| `notifications`      |   x    |             |               |
+| `selectionLimit`     |   x    |             |               |
+| `path`               |        |      x      |               |
+| `sandboxPermissions` |        |      x      |               |
+| `runtimeAction`      |        |             |       x       |
+| `timeout`            |        |             |       x       |
 
-The `view` and `worker` variants are strict: `path`/`sandbox` on a `worker` action and `runtimeAction`/`timeout` on a `view` action are rejected at validation time.
+The `view` and `worker` variants are strict: `path`/`sandboxPermissions` on a `worker` action and `runtimeAction`/`timeout` on a `view` action are rejected at validation time.
 
 Every field of `adminUi` is optional — configure only the extension points your application needs.
 
