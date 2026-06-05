@@ -217,13 +217,12 @@ export function buildAdminUiV2ExtConfig(
   appConfig: CommerceAppConfigOutputModel,
 ) {
   const adminUi = appConfig.adminUi;
-  const runtimeActions = [
-    ...new Set(
-      (["order", "product", "customer"] as const)
-        .map((gt) => adminUi?.[gt]?.gridColumns?.runtimeAction)
-        .filter((ra): ra is string => ra !== undefined),
-    ),
-  ];
+  const referencedActions = (["order", "product", "customer"] as const)
+    .map((gridType) => adminUi?.[gridType]?.gridColumns?.runtimeAction)
+    .filter(
+      (runtimeAction): runtimeAction is string => runtimeAction !== undefined,
+    );
+  const runtimeActions = [...new Set(referencedActions)];
 
   return {
     hooks: {
