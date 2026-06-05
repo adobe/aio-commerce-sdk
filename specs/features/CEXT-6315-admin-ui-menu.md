@@ -11,10 +11,10 @@ Adds `menu` support to the v2 Admin UI schema under `adminUi`, on
 single `adminUi.menu` object. A per-app section is created automatically from app metadata when no
 explicit Commerce menu is configured; developers only describe the app's menu entry and target
 page. The v2 shape intentionally breaks from v1 by renaming `title` to `label`, replacing parent
-menu configuration with `commerceMenuId`, flattening `page.title` to `pageTitle`, removing
-developer-defined sections, and renaming `sandbox` to `sandboxPermissions`. No registration action
-is generated for `commerce/backend-ui/2`; the `adminUi` config is read from the existing
-`app-config` endpoint on `commerce/extensibility/1`.
+menu configuration with `commerceMenuId`, adding `description`, flattening `page.title` to
+`pageTitle`, removing developer-defined sections, and renaming `sandbox` to `sandboxPermissions`.
+No registration action is generated for `commerce/backend-ui/2`; the `adminUi` config is read from
+the existing `app-config` endpoint on `commerce/extensibility/1`.
 
 ## Motivation
 
@@ -46,6 +46,7 @@ This creates avoidable authoring problems:
 - Add a singular `adminUi.menu` object for `commerce/backend-ui/2`.
 - Replace v1 `menuItems[]` with one menu declaration per app.
 - Rename `title` to `label`.
+- Add `description` for installation and permission review surfaces.
 - Replace `parent` / `parentMenuId` with `commerceMenuId`, an optional reference to an existing
   Commerce menu where the app menu should be attached.
 - Flatten page metadata into `pageTitle`; no nested `page` object is exposed in v2.
@@ -53,8 +54,12 @@ This creates avoidable authoring problems:
   automatically using the app's metadata ID and display name, and that section becomes the default
   parent for the app menu.
 - Rename `sandbox` to `sandboxPermissions` to make the field's purpose explicit.
+- Express `sandboxPermissions` as an array of allowed string values instead of a space-separated
+  string.
 - Remove `sortOrder` from the developer config; Commerce/App Management owns menu ordering.
 - Ensure a `view` operation is declared in `ext.config.yaml` when `adminUi.menu` is present.
+- Update the generated OpenAPI schema so `adminUi.menu` is documented in the `app-config`
+  contract.
 - Deprecate `adminUiSdk.registration.menuItems`; keep it functional until the v1 Admin UI SDK
   removal window.
 
@@ -87,9 +92,10 @@ export default defineConfig({
     menu: {
       id: "approval-dashboard",
       label: "Approval Dashboard",
+      description: "Review and approve purchase requests from Commerce Admin.",
       pageTitle: "Purchase Approval Dashboard",
       commerceMenuId: "Magento_Sales::sales",
-      sandboxPermissions: "allow-popups allow-downloads",
+      sandboxPermissions: ["allow-popups", "allow-downloads"],
     },
   },
 });
@@ -98,6 +104,10 @@ export default defineConfig({
 This creates one Commerce Admin entry for the app and attaches it to the existing
 `Magento_Sales::sales` Commerce menu. When the merchant clicks the entry, the app's registered web
 view is loaded and `pageTitle` is displayed as the Admin page title.
+
+`description` is a short explanation of what the menu entry does. It is not rendered as the menu
+label; it is exposed through app config and OpenAPI so installation and permission-review surfaces
+can describe the menu entry before it is enabled.
 
 `commerceMenuId` is optional. When present, it references an existing Commerce menu item under which
 the app menu should be attached; this lets an app appear under Commerce menus such as Sales,
@@ -108,8 +118,8 @@ The SDK validates that `commerceMenuId`, when provided, is a non-empty string, b
 validate that the referenced Commerce menu ID exists; that check belongs to Commerce/App Management
 because the available menu tree is Commerce-version and installation dependent.
 
-`sandboxPermissions` uses the same space-separated iframe sandbox permission string accepted by v1
-`sandbox`, but the field name makes the value's purpose clearer. Valid values remain
+`sandboxPermissions` uses the same iframe sandbox permission values accepted by v1 `sandbox`, but
+the values are declared as an array instead of a space-separated string. Valid values remain
 `allow-downloads`, `allow-modals`, and `allow-popups`.
 
 ### Generated extension config
@@ -139,9 +149,10 @@ menu declaration is read from the `app-config` endpoint on `commerce/extensibili
 | `adminUiSdk.registration.menuItems[]`    | `adminUi.menu`          | Singular object; one menu per app                              |
 | `menuItems[].id`                         | `id`                    | Unchanged meaning; app-declared menu identifier                |
 | `menuItems[].title`                      | `label`                 | Menu label rendered in Commerce Admin                          |
+| _(absent)_                               | `description`           | Human-readable menu summary for installation and permissions   |
 | `page.title`                             | `pageTitle`             | Flattened into the menu declaration                            |
 | `menuItems[].parent` / `parentMenuId`    | `commerceMenuId`        | Optional existing Commerce menu where the app menu is attached |
-| `menuItems[].sandbox`                    | `sandboxPermissions`    | Same permission string, clearer field name                     |
+| `menuItems[].sandbox`                    | `sandboxPermissions`    | Same permission values, now expressed as a string array        |
 | `menuItems[].isSection`                  | _(removed)_             | Omit `commerceMenuId` to use an app-specific generated section |
 | `menuItems[].sortOrder`                  | _(removed)_             | Ordering is owned by Commerce/App Management                   |
 | Extension point: `commerce/backend-ui/1` | `commerce/backend-ui/2` | Required change in `app.config.yaml` and `install.yaml`        |
@@ -167,6 +178,7 @@ The v2 schema introduced in CEXT-6096 lives in
 const MenuSchema = v.object({
   id: nonEmptyStringValueSchema("menu ID"),
   label: nonEmptyStringValueSchema("menu label"),
+  description: nonEmptyStringValueSchema("menu description"),
   pageTitle: nonEmptyStringValueSchema("menu page title"),
   commerceMenuId: v.optional(nonEmptyStringValueSchema("Commerce menu ID")),
   sandboxPermissions: v.optional(SandboxPermissionsSchema),
@@ -182,17 +194,17 @@ export const AdminUiSchema = v.object({
 });
 ```
 
-`SandboxPermissionsSchema` validates the same values as the v1 `SandboxSchema`, but reports errors
-against `sandboxPermissions`:
+`SandboxPermissionsSchema` validates the same values as the v1 `SandboxSchema`, but accepts them as
+array entries and reports errors against `sandboxPermissions`:
 
 ```ts
-const SandboxPermissionsSchema = v.pipe(
-  v.string('Expected a string value for "sandboxPermissions"'),
-  v.check(
-    (value) => value.split(" ").every(isSandboxValue),
-    `sandboxPermissions must contain only single-space-separated values from: "allow-downloads", "allow-modals", "allow-popups"`,
-  ),
-);
+const SandboxPermissionSchema = v.picklist([
+  "allow-downloads",
+  "allow-modals",
+  "allow-popups",
+]);
+
+const SandboxPermissionsSchema = v.array(SandboxPermissionSchema);
 ```
 
 The v1 `MenuItemSchema` in `admin-ui-sdk.ts` remains functional, but its exported `MenuItem` type is
@@ -220,13 +232,23 @@ Example payload excerpt:
     "menu": {
       "id": "approval-dashboard",
       "label": "Approval Dashboard",
+      "description": "Review and approve purchase requests from Commerce Admin.",
       "pageTitle": "Purchase Approval Dashboard",
       "commerceMenuId": "Magento_Sales::sales",
-      "sandboxPermissions": "allow-popups allow-downloads"
+      "sandboxPermissions": ["allow-popups", "allow-downloads"]
     }
   }
 }
 ```
+
+### OpenAPI
+
+The OpenAPI document generated for the `app-config` endpoint must include the `adminUi.menu` schema
+in the same implementation change. The schema marks `id`, `label`, `description`, and `pageTitle`
+as required strings, exposes `commerceMenuId` as an optional string, and exposes
+`sandboxPermissions` as an optional array whose items are limited to the supported sandbox
+permission values. The implementation PR is not complete unless the OpenAPI generation code and
+its relevant tests or fixtures are updated with this schema.
 
 ### Pre-app-build hook
 
@@ -245,11 +267,11 @@ endpoint.
 ### Validation rules
 
 - `menu` must be an object, not an array.
-- `id`, `label`, and `pageTitle` are required non-empty strings.
+- `id`, `label`, `description`, and `pageTitle` are required non-empty strings.
 - `commerceMenuId` is optional, but when present must be a non-empty string. When omitted, the
   Commerce-side registration uses a generated app-specific section as the parent menu ID.
-- `sandboxPermissions` is optional, but when present must contain only single-space-separated
-  sandbox values from the supported allowlist.
+- `sandboxPermissions` is optional, but when present must be an array containing only sandbox values
+  from the supported allowlist.
 - `isSection`, `parent`, `parentMenuId`, `title`, `page`, `sandbox`, and `sortOrder` are not valid
   under `adminUi.menu`.
 
@@ -305,10 +327,6 @@ only one field. `pageTitle` is flatter and removes an unnecessary wrapper.
 Rejected. With one app section and one menu entry, app-local ordering is redundant. Ordering among
 multiple installed apps is not something one app can decide safely in isolation, especially across
 Commerce editions and deployments. Commerce/App Management should own that policy.
-
-**Rename `sandbox` to `sandboxPermissions` but keep the value format.**
-Accepted. The space-separated string maps directly to the iframe sandbox attribute and preserves
-the existing Commerce contract, while the new field name is clearer in app config.
 
 **Impact of not doing this.**
 The v2 Admin UI migration remains incomplete: apps that need an Admin menu must keep
