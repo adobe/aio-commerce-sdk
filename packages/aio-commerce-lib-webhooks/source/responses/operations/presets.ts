@@ -52,7 +52,7 @@ export const exceptionOperation = (
 ): ExceptionOperation => ({
   op: "exception",
   ...(message && { message }),
-  ...(exceptionClass && { class: exceptionClass }),
+  ...(exceptionClass && { type: exceptionClass }),
 });
 
 /**

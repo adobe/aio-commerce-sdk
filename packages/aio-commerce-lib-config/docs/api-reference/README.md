@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-config`: `v1.5.0`
+# `@adobe/aio-commerce-lib-config`: `v1.5.1`
 
 This module exports configuration management utilities for the AIO Commerce SDK.
 
