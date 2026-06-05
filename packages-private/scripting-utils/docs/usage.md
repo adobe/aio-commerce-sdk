@@ -130,7 +130,7 @@ await createOrUpdateExtConfig("ext.config.yaml", {
           "my-action": {
             function: "dist/actions/my-action.js",
             web: "yes",
-            runtime: "nodejs:22",
+            runtime: "nodejs:24",
           },
         },
       },

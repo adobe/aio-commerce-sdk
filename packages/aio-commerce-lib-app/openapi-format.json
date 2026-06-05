@@ -1,0 +1,7 @@
+{
+  "sort": true,
+  "filterSet": {
+    "unusedComponents": ["schemas"],
+    "preserveEmptyObjects": true
+  }
+}

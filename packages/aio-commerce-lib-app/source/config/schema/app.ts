@@ -16,10 +16,13 @@ import * as v from "valibot";
 
 import { AdminUiSdkSchema } from "./admin-ui-sdk";
 import { SchemaBusinessConfig } from "./business-configuration";
+import { getConfigDomains } from "./domains";
 import { EventingSchema } from "./eventing";
 import { InstallationSchema } from "./installation";
 import { MetadataSchema } from "./metadata";
 import { WebhooksSchema } from "./webhooks";
+
+import type { CommerceAppConfigDomain } from "./domains";
 
 /** The schema used to validate the commerce app config file. */
 export const CommerceAppConfigSchema = v.looseObject({
@@ -39,3 +42,38 @@ export type CommerceAppConfig = v.InferInput<typeof CommerceAppConfigSchema>;
 export type CommerceAppConfigOutputModel = v.InferOutput<
   typeof CommerceAppConfigSchema
 >;
+
+/** @internal Any commerce app config, input contract or validated output. */
+export type AnyCommerceAppConfig =
+  | CommerceAppConfig
+  | CommerceAppConfigOutputModel;
+
+/**
+ * Returns true if the given config domains require installation, false otherwise.
+ * @param domains - The config domains to check.
+ */
+export function requiresInstallationFromDomains(
+  domains: Set<CommerceAppConfigDomain>,
+) {
+  const featuresRequiringInstallationAction: CommerceAppConfigDomain[] = [
+    "installation.customInstallationSteps",
+    "eventing.commerce",
+    "eventing.external",
+    "webhooks",
+    "adminUiSdk",
+  ];
+
+  return featuresRequiringInstallationAction.some((feature) =>
+    domains.has(feature),
+  );
+}
+
+/**
+ * Returns true if the given config requires installation, false otherwise.
+ * @param config - The commerce app config to check.
+ */
+export function requiresInstallation<T extends AnyCommerceAppConfig>(
+  config: T,
+) {
+  return requiresInstallationFromDomains(getConfigDomains(config));
+}

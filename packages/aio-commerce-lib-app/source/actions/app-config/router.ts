@@ -19,29 +19,39 @@ import {
   HttpActionRouter,
   logger,
 } from "@aio-commerce-sdk/common-utils/actions";
+import * as v from "valibot";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
+import { getConfigDomains } from "#config/schema/domains";
+
+import { buildOpenApiSpec, getOpenApiCacheKey, getServerUrl } from "./openapi";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { CommerceAppConfig } from "#config/schema/app";
 
-/** Arguments for the runtime action factory. */
-type RuntimeActionFactoryArgs = {
+/** The arguments required to create the runtime action for the app-config action. */
+export type RuntimeActionFactoryArgs = {
   appConfig: CommerceAppConfig;
 };
 
-/** Params received by all handlers. */
+/** The params received by all handlers. */
 type RuntimeActionArgs = RuntimeActionParams & RuntimeActionFactoryArgs;
 
-/** The context for the config action. */
+/** The context for the app-config action. */
 interface AppConfigActionContext extends BaseContext {
   rawParams: RuntimeActionArgs;
 }
 
-/** Router for the app config actions. */
-const router = new HttpActionRouter<AppConfigActionContext>().use(
+/**
+ * App Config action router.
+ *
+ * Routes:
+ * - GET /               Retrieve the Commerce App configuration.
+ * - GET /openapi.json   Returns the OpenAPI spec for all SDK actions
+ */
+export const router = new HttpActionRouter<AppConfigActionContext>().use(
   logger({ name: () => "app-config" }),
 );
 
@@ -52,7 +62,7 @@ router.get("/", {
 
     if (!rawAppConfig) {
       return internalServerError(
-        "Could not find or parse the app.commerce.manifest.json file, is it present and valid?",
+        "The app config is missing. Does the action receive it as a parameter?",
       );
     }
 
@@ -74,19 +84,39 @@ router.get("/", {
     const config = validateCommerceAppConfig(appConfig);
     logger.debug("Successfully validated the app config");
 
+    const domains = getConfigDomains(rawParams.appConfig);
+    const openApiSpecUrl = `${getServerUrl()}/app-config/openapi.json?ck=${getOpenApiCacheKey(domains)}`;
+
     return ok({
-      body: config,
+      body: { ...config, openApiSpecUrl },
     });
   },
 });
 
-/** Factory to create the route handler for the `app-config` action. */
-export const appConfigRuntimeAction =
-  ({ appConfig }: RuntimeActionFactoryArgs) =>
-  async (params: RuntimeActionParams) => {
-    const handler = router.handler();
-    return await handler({
-      ...params,
-      appConfig,
+/**
+ * GET /openapi.json - Returns the OpenAPI spec for all SDK actions
+ * @internal - Do not add to OpenAPI Spec.
+ */
+router.get("/openapi.json", {
+  query: v.object({ ck: v.optional(v.string()) }),
+  handler: async (req, { logger, rawParams }) => {
+    const { ck } = req.query;
+    const domains = getConfigDomains(rawParams.appConfig);
+
+    if (ck && getOpenApiCacheKey(domains) === ck) {
+      logger.debug(
+        `Received request for OpenAPI spec with cache key query param: ${ck}`,
+      );
+
+      return ok({
+        body: await buildOpenApiSpec(domains, logger),
+        headers: { "Cache-Control": "public, max-age=31536000, immutable" },
+      });
+    }
+
+    // Return without caching.
+    return ok({
+      body: await buildOpenApiSpec(domains, logger),
     });
-  };
+  },
+});

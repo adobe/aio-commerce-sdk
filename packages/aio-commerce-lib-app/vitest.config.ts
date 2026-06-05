@@ -16,6 +16,7 @@ import libConfigPkg from "@adobe/aio-commerce-lib-config/package.json" with {
 import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
 import { defineConfig, mergeConfig } from "vitest/config";
 
+import spec from "./docs/openapi.json" with { type: "json" };
 import pkg from "./package.json" with { type: "json" };
 
 const TEMPLATE_FILES = ["./source/commands/generate/actions/templates/**"];
@@ -27,6 +28,7 @@ export default mergeConfig(
     plugins: [],
     define: {
       __PKG_VERSION__: JSON.stringify(pkg.version),
+      __OPENAPI_VERSION__: JSON.stringify(spec.info.version),
       __LIB_CONFIG_RANGE__: JSON.stringify(`^${libConfigPkg.version}`),
     },
     test: {
