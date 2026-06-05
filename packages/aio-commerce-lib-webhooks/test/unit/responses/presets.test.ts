@@ -63,7 +63,7 @@ describe("responses/presets", () => {
         body: {
           op: "exception",
           message: "Payment validation failed",
-          class: "Magento\\Payment\\Exception\\PaymentException",
+          type: "Magento\\Payment\\Exception\\PaymentException",
         },
       });
     });
