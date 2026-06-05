@@ -89,7 +89,7 @@ return okGridResponse({
 
 Commerce applies `defaults` to IDs missing from `rows` and to individual cells whose value does not satisfy the declared `type` on the column registration. Omit `defaults` if you do not need fallback values.
 
-The column keys inside each row must match the `columnId` values declared in the corresponding `adminUi.<grid>.gridColumns.columns[].columnId` configuration.
+The column keys inside each row must match the `id` values declared in the corresponding `adminUi.<grid>.gridColumns.columns[].id` configuration.
 
 #### Building an error response
 

@@ -19,7 +19,7 @@ export type GridType = v.InferOutput<typeof GridTypeSchema>;
 /** Parsed request body sent by Commerce to a grid column handler. */
 export type GridRequest = v.InferOutput<typeof GridRequestSchema>;
 
-/** Cell values returned for a single row, keyed by `columnId`. */
+/** Cell values returned for a single row, keyed by `id`. */
 export type GridRow = Record<string, unknown>;
 
 /**

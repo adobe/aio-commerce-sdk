@@ -214,9 +214,7 @@ describe("buildAdminUiV2ExtConfig", () => {
             label: "L",
             description: "D",
             runtimeAction: sharedRuntimeAction,
-            columns: [
-              { columnId: "k", label: "K", type: "string", align: "left" },
-            ],
+            columns: [{ id: "k", label: "K", type: "string", align: "left" }],
           },
         },
         customer: {
@@ -224,9 +222,7 @@ describe("buildAdminUiV2ExtConfig", () => {
             label: "L",
             description: "D",
             runtimeAction: sharedRuntimeAction,
-            columns: [
-              { columnId: "k", label: "K", type: "string", align: "left" },
-            ],
+            columns: [{ id: "k", label: "K", type: "string", align: "left" }],
           },
         },
       },

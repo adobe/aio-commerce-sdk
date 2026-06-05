@@ -3847,7 +3847,7 @@
             "items": {
               "type": "object",
               "properties": {
-                "columnId": {
+                "id": {
                   "type": "string",
                   "minLength": 1
                 },
@@ -3871,7 +3871,7 @@
                   "enum": ["left", "right", "center"]
                 }
               },
-              "required": ["columnId", "label", "type", "align"]
+              "required": ["id", "label", "type", "align"]
             },
             "minItems": 1
           }
