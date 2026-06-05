@@ -80,7 +80,7 @@ opportunity to fix in v2:
   actions migration (CEXT-6095) and is preserved unchanged here.
 - Removing v1 view buttons in this release — deferred to the same future release that removes the
   rest of `adminUiSdk`.
-- Detecting `buttonId` collisions across installed apps. Handled by Commerce per CEXT-6322.
+- Detecting `id` collisions across installed apps. Handled by Commerce per CEXT-6322.
 
 ## Developer experience
 
@@ -93,7 +93,7 @@ export default defineConfig({
     order: {
       viewButtons: [
         {
-          buttonId: "delete-order",
+          id: "delete-order",
           label: "Delete",
           description:
             "Permanently removes the order and its associated records.",
@@ -106,7 +106,7 @@ export default defineConfig({
           },
         },
         {
-          buttonId: "sync-inventory",
+          id: "sync-inventory",
           label: "Sync inventory",
           description:
             "Pushes the latest stock counts for this order's items to the ERP.",
@@ -148,7 +148,7 @@ The schema enforces which fields apply to which `type`:
 
 | Field           | `type: "view"` | `type: "worker"` |
 | --------------- | -------------- | ---------------- |
-| `buttonId`      | required       | required         |
+| `id`            | required       | required         |
 | `label`         | required       | required         |
 | `description`   | optional       | optional         |
 | `level`         | optional       | optional         |
@@ -188,14 +188,14 @@ Field "path" is required when type is "view"
 ```json
 {
   "requestId": "550e8400-e29b-41d4-a716-446655440000",
-  "buttonId": "sync-inventory",
+  "id": "sync-inventory",
   "orderId": "000000001"
 }
 ```
 
 - `orderId` is a single ID. View buttons act on the order currently being viewed; chunking does
   not apply.
-- `buttonId` lets a single handler serve multiple buttons by branching on it.
+- `id` lets a single handler serve multiple buttons by branching on it.
 
 **Success response:**
 
@@ -223,29 +223,29 @@ Field "path" is required when type is "view"
 - Per the v1 Commerce contract, Commerce additionally exposes failure details on
   `GET /V1/adminuisdk/orderviewbutton/<requestId>` — unchanged in v2.
 
-### buttonId uniqueness
+### id uniqueness
 
-`buttonId` is a plain identifier declared by the developer. The SDK serves it as-is; collision
+`id` is a plain identifier declared by the developer. The SDK serves it as-is; collision
 handling across installed apps is Commerce's responsibility (CEXT-6322). Unlike the v1 sample
 code, the SDK does not prescribe the `<extensionId>::<buttonName>` format — adopting or not
 adopting the convention is left to the developer.
 
 ### Migration from v1
 
-| v1                                                                          | v2                          | Notes                                                                   |
-| --------------------------------------------------------------------------- | --------------------------- | ----------------------------------------------------------------------- |
-| `adminUiSdk.registration.order.viewButtons`                                 | `adminUi.order.viewButtons` | No `registration` wrapper in v2                                         |
-| `displayIframe: true` (or omitted)                                          | `type: "view"`              | Explicit discriminator; `view` aligns with App Builder operation naming |
-| `displayIframe: false`                                                      | `type: "worker"`            | Explicit discriminator; `worker` aligns with `workerProcess` operations |
-| `path` (under `displayIframe: false`)                                       | `runtimeAction`             | Operation name resolved by App Registry, not a URL                      |
-| `path` (under `displayIframe: true`)                                        | `path`                      | Unchanged — still the in-app iframe URL                                 |
-| `buttonId`, `label`, `level`, `sortOrder`                                   | _(same)_                    | Unchanged from v1                                                       |
-| `confirm.message`, `timeout`                                                | _(same)_                    | Unchanged from v1; `timeout` only valid on `type: "worker"`             |
-| `sandbox`                                                                   | `sandbox`                   | Unchanged — only valid on `type: "view"`                                |
-| `bannerNotification.orderViewButtons[*].successMessage` (keyed by buttonId) | `notifications.success`     | Inlined on the button entry; cross-reference removed                    |
-| `bannerNotification.orderViewButtons[*].errorMessage` (keyed by buttonId)   | `notifications.error`       | Inlined on the button entry; cross-reference removed                    |
-| _(none)_                                                                    | `description`               | New optional field; surfaced to install tooling alongside `label`       |
-| Extension point: `commerce/backend-ui/1`                                    | `commerce/backend-ui/2`     | Required change in `app.config.yaml` and `install.yaml`                 |
+| v1                                                                          | v2                                  | Notes                                                                   |
+| --------------------------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------- |
+| `adminUiSdk.registration.order.viewButtons`                                 | `adminUi.order.viewButtons`         | No `registration` wrapper in v2                                         |
+| `displayIframe: true` (or omitted)                                          | `type: "view"`                      | Explicit discriminator; `view` aligns with App Builder operation naming |
+| `displayIframe: false`                                                      | `type: "worker"`                    | Explicit discriminator; `worker` aligns with `workerProcess` operations |
+| `path` (under `displayIframe: false`)                                       | `runtimeAction`                     | Operation name resolved by App Registry, not a URL                      |
+| `path` (under `displayIframe: true`)                                        | `path`                              | Unchanged — still the in-app iframe URL                                 |
+| `buttonId`, `label`, `level`, `sortOrder`                                   | `id`, `label`, `level`, `sortOrder` | `buttonId` renamed to `id` in v2; others unchanged                      |
+| `confirm.message`, `timeout`                                                | _(same)_                            | Unchanged from v1; `timeout` only valid on `type: "worker"`             |
+| `sandbox`                                                                   | `sandbox`                           | Unchanged — only valid on `type: "view"`                                |
+| `bannerNotification.orderViewButtons[*].successMessage` (keyed by buttonId) | `notifications.success`             | Inlined on the button entry; cross-reference removed                    |
+| `bannerNotification.orderViewButtons[*].errorMessage` (keyed by buttonId)   | `notifications.error`               | Inlined on the button entry; cross-reference removed                    |
+| _(none)_                                                                    | `description`                       | New optional field; surfaced to install tooling alongside `label`       |
+| Extension point: `commerce/backend-ui/1`                                    | `commerce/backend-ui/2`             | Required change in `app.config.yaml` and `install.yaml`                 |
 
 Both keys can coexist during transition. Once all order view buttons have moved to `adminUi`,
 both the `adminUiSdk.registration.order.viewButtons` block and the corresponding
@@ -268,7 +268,7 @@ const ViewButtonNotificationsSchema = v.object({
 const OrderViewButtonSchema = v.variant("type", [
   v.object({
     type: v.literal("view"),
-    buttonId: nonEmptyStringValueSchema("view button ID"),
+    id: nonEmptyStringValueSchema("view button ID"),
     label: nonEmptyStringValueSchema("view button label"),
     description: v.optional(
       nonEmptyStringValueSchema("view button description"),
@@ -282,7 +282,7 @@ const OrderViewButtonSchema = v.variant("type", [
   }),
   v.object({
     type: v.literal("worker"),
-    buttonId: nonEmptyStringValueSchema("view button ID"),
+    id: nonEmptyStringValueSchema("view button ID"),
     label: nonEmptyStringValueSchema("view button label"),
     description: v.optional(
       nonEmptyStringValueSchema("view button description"),
