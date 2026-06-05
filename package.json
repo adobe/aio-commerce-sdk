@@ -26,6 +26,8 @@
     "pack": "turbo run pack",
     "prepare": "husky",
     "publint": "turbo run publint",
+    "release:publish": "changeset publish",
+    "release:version": "changeset version && turbo version && turbo docs",
     "test": "turbo test",
     "turbo": "turbo",
     "typecheck": "turbo typecheck"
