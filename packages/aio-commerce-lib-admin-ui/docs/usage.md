@@ -69,7 +69,7 @@ export async function main(params: unknown) {
 }
 ```
 
-`parseGridRequest` throws a `CommerceSdkValidationError` when the input is malformed. Use `safeParseGridRequest` if you prefer an explicit `SafeParseResult` over a thrown error.
+`parseGridRequest` throws a `CommerceSdkValidationError` when the input is malformed.
 
 #### Building a success response
 

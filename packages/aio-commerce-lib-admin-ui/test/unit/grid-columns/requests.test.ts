@@ -13,7 +13,7 @@
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { describe, expect, it } from "vitest";
 
-import { parseGridRequest, safeParseGridRequest } from "#grid-columns/requests";
+import { parseGridRequest } from "#grid-columns/requests";
 
 import type { GridType } from "#grid-columns/types";
 
@@ -74,31 +74,5 @@ describe("parseGridRequest", () => {
 
   it("throws when the input is not an object", () => {
     expect(() => parseGridRequest("nope")).toThrow(CommerceSdkValidationError);
-  });
-});
-
-describe("safeParseGridRequest", () => {
-  it("returns success=true and the parsed output for valid input", () => {
-    const result = safeParseGridRequest(VALID_REQUEST);
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.output).toEqual(VALID_REQUEST);
-    }
-  });
-
-  it("returns success=false with issues for invalid input", () => {
-    const result = safeParseGridRequest({ ...VALID_REQUEST, ids: [] });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.issues.length).toBeGreaterThan(0);
-    }
-  });
-
-  it("returns success=false for an unknown gridType", () => {
-    const result = safeParseGridRequest({
-      ...VALID_REQUEST,
-      gridType: "unknown",
-    });
-    expect(result.success).toBe(false);
   });
 });

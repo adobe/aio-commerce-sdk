@@ -11,7 +11,6 @@
  */
 
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
-import * as v from "valibot";
 
 import { GridRequestSchema } from "./schema";
 
@@ -34,12 +33,4 @@ import type { GridRequest } from "./types";
  */
 export function parseGridRequest(input: unknown): GridRequest {
   return parseOrThrow(GridRequestSchema, input, "Invalid grid column request");
-}
-
-/**
- * Non-throwing variant of {@link parseGridRequest} that returns a Valibot
- * `SafeParseResult` instead of throwing on invalid input.
- */
-export function safeParseGridRequest(input: unknown) {
-  return v.safeParse(GridRequestSchema, input);
 }

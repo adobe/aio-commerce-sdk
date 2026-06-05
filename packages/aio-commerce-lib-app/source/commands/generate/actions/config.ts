@@ -230,11 +230,9 @@ export function buildAdminUiV2ExtConfig(
       "pre-app-build":
         "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build",
     },
-    ...(runtimeActions.length > 0 && {
-      operations: {
-        workerProcess: runtimeActions.map((impl) => ({ type: "action", impl })),
-      },
-    }),
+    operations: {
+      workerProcess: runtimeActions.map((impl) => ({ type: "action", impl })),
+    },
   } satisfies ExtConfig;
 }
 

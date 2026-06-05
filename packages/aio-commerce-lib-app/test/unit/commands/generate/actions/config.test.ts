@@ -234,9 +234,9 @@ describe("buildAdminUiV2ExtConfig", () => {
     expect(workerImpls).toContain(sharedRuntimeAction);
   });
 
-  test("no workerProcess when adminUi has no grids", () => {
+  test("workerProcess is empty when adminUi has no grids", () => {
     const config = buildAdminUiV2ExtConfig(minimalValidConfig);
-    expect(config.operations?.workerProcess).toBeUndefined();
+    expect(config.operations?.workerProcess).toHaveLength(0);
   });
 });
 

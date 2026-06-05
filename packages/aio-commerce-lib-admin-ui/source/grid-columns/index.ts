@@ -21,7 +21,7 @@
  * @packageDocumentation
  */
 
-export { parseGridRequest, safeParseGridRequest } from "./requests";
+export { parseGridRequest } from "./requests";
 export { errorGridResponse, okGridResponse } from "./responses";
 export { GridRequestSchema, GridTypeSchema } from "./schema";
 
