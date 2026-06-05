@@ -11,10 +11,10 @@ Adds `menu` support to the v2 Admin UI schema under `adminUi`, on
 single `adminUi.menu` object. A per-app section is created automatically from app metadata when no
 explicit Commerce menu is configured; developers only describe the app's menu entry and target
 page. The v2 shape intentionally breaks from v1 by renaming `title` to `label`, replacing parent
-menu configuration with `commerceMenuId`, adding `description`, flattening `page.title` to
-`pageTitle`, removing developer-defined sections, and renaming `sandbox` to `sandboxPermissions`.
-No registration action is generated for `commerce/backend-ui/2`; the `adminUi` config is read from
-the existing `app-config` endpoint on `commerce/extensibility/1`.
+menu configuration with `commerceMenuId`, adding `description`, flattening the optional
+`page.title` to `pageTitle`, removing developer-defined sections, and renaming `sandbox` to
+`sandboxPermissions`. No registration action is generated for `commerce/backend-ui/2`; the
+`adminUi` config is read from the existing `app-config` endpoint on `commerce/extensibility/1`.
 
 ## Motivation
 
@@ -50,7 +50,7 @@ This creates avoidable authoring problems:
 - Validate `id` against the Commerce menu ID character set.
 - Replace `parent` / `parentMenuId` with `commerceMenuId`, an optional reference to an existing
   Commerce menu where the app menu should be attached.
-- Flatten page metadata into `pageTitle`; no nested `page` object is exposed in v2.
+- Flatten optional page metadata into `pageTitle`; no nested `page` object is exposed in v2.
 - Remove developer-defined sections. When `commerceMenuId` is omitted, a per-app section is created
   automatically using the app's metadata ID and display name, and that section becomes the default
   parent for the app menu.
@@ -97,7 +97,6 @@ export default defineConfig({
       id: "approval_dashboard",
       label: "Approval Dashboard",
       description: "Review and approve purchase requests from Commerce Admin.",
-      pageTitle: "Purchase Approval Dashboard",
       commerceMenuId: "Magento_Sales::sales",
       sandboxPermissions: ["allow-popups", "allow-downloads"],
     },
@@ -107,7 +106,7 @@ export default defineConfig({
 
 This creates one Commerce Admin entry for the app and attaches it to the existing
 `Magento_Sales::sales` Commerce menu. When the merchant clicks the entry, the app's registered web
-view is loaded and `pageTitle` is displayed as the Admin page title.
+view is loaded.
 
 `id` is a unique app-local ID to identify the application menu in Adobe Commerce Admin. The input
 allowed is uppercase and lowercase letters (`a-z`, `A-Z`), digits (`0-9`), forward slash (`/`),
@@ -127,6 +126,9 @@ absent, a dedicated section is created automatically using `metadata.id` and
 The SDK validates that `commerceMenuId`, when provided, is a non-empty string, but does not
 validate that the referenced Commerce menu ID exists; that check belongs to Commerce/App Management
 because the available menu tree is Commerce-version and installation dependent.
+
+`pageTitle` is optional. When omitted, no page title is declared by the app config and title handling
+is left to Commerce.
 
 `sandboxPermissions` uses the same iframe sandbox permission values accepted by v1 `sandbox`, but
 the values are declared as an array instead of a space-separated string. Valid values remain
@@ -167,7 +169,7 @@ menu declaration is read from the `app-config` endpoint on `commerce/extensibili
 | `menuItems[].id`                         | `id`                    | Same Commerce character set; extension ID prefix is not authored manually |
 | `menuItems[].title`                      | `label`                 | Menu label rendered in Commerce Admin                                     |
 | _(absent)_                               | `description`           | Human-readable menu summary for installation and permissions              |
-| `page.title`                             | `pageTitle`             | Flattened into the menu declaration                                       |
+| `page.title`                             | `pageTitle`             | Optional; flattened into the menu declaration                             |
 | `menuItems[].parent` / `parentMenuId`    | `commerceMenuId`        | Optional existing Commerce menu where the app menu is attached            |
 | `menuItems[].sandbox`                    | `sandboxPermissions`    | Same permission values, now expressed as a string array                   |
 | `menuItems[].isSection`                  | _(removed)_             | Omit `commerceMenuId` to use an app-specific generated section            |
@@ -196,7 +198,7 @@ const MenuSchema = v.object({
   id: MenuIdSchema,
   label: nonEmptyStringValueSchema("menu label"),
   description: nonEmptyStringValueSchema("menu description"),
-  pageTitle: nonEmptyStringValueSchema("menu page title"),
+  pageTitle: v.optional(nonEmptyStringValueSchema("menu page title")),
   commerceMenuId: v.optional(nonEmptyStringValueSchema("Commerce menu ID")),
   sandboxPermissions: v.optional(SandboxPermissionsSchema),
 });
@@ -262,7 +264,6 @@ Example payload excerpt:
       "id": "approval_dashboard",
       "label": "Approval Dashboard",
       "description": "Review and approve purchase requests from Commerce Admin.",
-      "pageTitle": "Purchase Approval Dashboard",
       "commerceMenuId": "Magento_Sales::sales",
       "sandboxPermissions": ["allow-popups", "allow-downloads"]
     }
@@ -273,11 +274,11 @@ Example payload excerpt:
 ### OpenAPI
 
 The OpenAPI document generated for the `app-config` endpoint must include the `adminUi.menu` schema
-in the same implementation change. The schema marks `id`, `label`, `description`, and `pageTitle`
-as required strings, exposes `commerceMenuId` as an optional string, constrains `id` to the Commerce
-menu ID character set, and exposes `sandboxPermissions` as an optional array whose items are limited
-to the supported sandbox permission values. The implementation PR is not complete unless the
-OpenAPI generation code and its relevant tests or fixtures are updated with this schema.
+in the same implementation change. The schema marks `id`, `label`, and `description` as required
+strings, exposes `pageTitle` and `commerceMenuId` as optional strings, constrains `id` to the
+Commerce menu ID character set, and exposes `sandboxPermissions` as an optional array whose items
+are limited to the supported sandbox permission values. The implementation PR is not complete
+unless the OpenAPI generation code and its relevant tests or fixtures are updated with this schema.
 
 ### Pre-app-build hook
 
@@ -299,9 +300,10 @@ endpoint.
 ### Validation rules
 
 - `menu` must be an object, not an array.
-- `id`, `label`, `description`, and `pageTitle` are required non-empty strings.
+- `id`, `label`, and `description` are required non-empty strings.
 - `id` must be a unique app-local ID using only uppercase and lowercase letters (`a-z`, `A-Z`),
   digits (`0-9`), forward slash (`/`), colons (`:`), and underscores (`_`).
+- `pageTitle` is optional, but when present must be a non-empty string.
 - `commerceMenuId` is optional, but when present must be a non-empty string. When omitted, the
   Commerce-side registration uses a generated app-specific section as the parent menu ID.
 - `sandboxPermissions` is optional, but when present must be an array containing only sandbox values
@@ -314,6 +316,7 @@ Misuse produces build-time validation errors, e.g.:
 ```text
 Field "menu" must be an object
 Field "label" is required for adminUi.menu
+Field "pageTitle" must not be empty when provided
 Field "sortOrder" is not allowed under adminUi.menu
 ```
 
@@ -355,7 +358,7 @@ omitted, the parent menu ID is the generated app-specific section.
 
 **Keep a nested `page: { title }` object.**
 Rejected. The v2 menu is the only place where page metadata is configured, and the page object has
-only one field. `pageTitle` is flatter and removes an unnecessary wrapper.
+only one optional field. `pageTitle` is flatter and removes an unnecessary wrapper.
 
 **Keep `sortOrder`.**
 Rejected. With one app section and one menu entry, app-local ordering is redundant. Ordering among
