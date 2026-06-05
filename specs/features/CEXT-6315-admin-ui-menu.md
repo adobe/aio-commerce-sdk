@@ -58,6 +58,9 @@ This creates avoidable authoring problems:
   string.
 - Remove `sortOrder` from the developer config; Commerce/App Management owns menu ordering.
 - Ensure a `view` operation is declared in `ext.config.yaml` when `adminUi.menu` is present.
+- Scaffold the React web entry needed for the menu page rendered in Commerce, including Experience
+  Cloud shell bootstrap, Admin UI SDK registration, shared-context attachment, and routing to the
+  app page.
 - Update the generated OpenAPI schema so `adminUi.menu` is documented in the `app-config`
   contract.
 - Deprecate `adminUiSdk.registration.menuItems`; keep it functional until the v1 Admin UI SDK
@@ -138,6 +141,13 @@ operations:
     - type: web
       impl: index.html
 ```
+
+The SDK also scaffolds the React web code needed for the menu page rendered in Commerce. The
+scaffold follows the pattern from the Commerce menu sample: the web entry bootstraps the Experience
+Cloud shell, routes to an Admin UI SDK registration component, registers the extension, attaches to
+the shared context to read Commerce-provided IMS data when needed, and then renders the app page.
+Developers should not have to copy the sample `App.js`, `ExtensionRegistration`, and shared-context
+attachment wiring by hand for a generated SDK app.
 
 No `workerProcess` operation is generated for the menu. No registration action is generated. The
 menu declaration is read from the `app-config` endpoint on `commerce/extensibility/1`.
@@ -257,6 +267,9 @@ features. This change adds one generation rule:
 
 - If `adminUi.menu` is present, ensure the extension declares a `view` operation pointing at the
   app's web entry (`index.html` by default).
+- If `adminUi.menu` is present, ensure the generated React web scaffold bootstraps the Experience
+  Cloud shell, registers with the Admin UI SDK, attaches to the shared context, and routes to the
+  app page that Commerce renders after the menu item is clicked.
 
 If a `view` operation already exists, the SDK leaves it untouched. If other v2 features also need a
 `view` operation, they share the same operation.
