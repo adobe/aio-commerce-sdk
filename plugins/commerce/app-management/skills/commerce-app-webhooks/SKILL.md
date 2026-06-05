@@ -23,7 +23,11 @@ Other extensibility domains (events, business config) are added separately via t
 
 ## Prerequisites
 
-Verify `app.commerce.config.ts` exists in the project root. If it doesn't, stop and invoke `commerce-app-init` first.
+- Verify the app is **scaffolded and initialized**, not merely that the config exists. Require **both**:
+  - `app.commerce.config.ts` present in the project root, **and**
+  - the project initialized — signalled by the generated `src/commerce-extensibility-1/` directory and installed `node_modules` (the `@adobe/aio-commerce-lib-app` dependency).
+- If `app.commerce.config.ts` is **missing**, stop and invoke `commerce-app-init` first (it writes the config, then runs init).
+- If the config is **present but the project is not initialized** (no `src/commerce-extensibility-1/` or `node_modules`), run `npx @adobe/aio-commerce-lib-app init` before continuing. Init is idempotent — it finds the existing config, skips the interactive prompts, installs dependencies, and generates the project files.
 
 ## Step 1 — Understand intent
 

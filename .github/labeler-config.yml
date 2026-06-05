@@ -28,6 +28,10 @@
   - changed-files:
       - any-glob-to-any-file: "packages/aio-commerce-lib-app/**"
 
+"pkg: aio-commerce-lib-admin-ui":
+  - changed-files:
+      - any-glob-to-any-file: "packages/aio-commerce-lib-admin-ui/**"
+      
 "private-pkg: scripting-utils":
   - changed-files:
       - any-glob-to-any-file: "packages-private/scripting-utils/**"
@@ -43,6 +47,10 @@
 "generator":
   - changed-files:
       - any-glob-to-any-file: "turbo/generators/**"
+
+"spec":
+  - changed-files:
+      - any-glob-to-any-file: "specs/features/**"
 
 "cfg: tsdown":
   - changed-files:
