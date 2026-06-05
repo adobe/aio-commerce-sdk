@@ -101,6 +101,7 @@ export default defineConfig({
           path: "#/delete-order",
           level: 0,
           sortOrder: 80,
+          sandboxPermissions: ["allow-modals", "allow-popups"],
           confirm: {
             message: "Are you sure you want to delete this order?",
           },
