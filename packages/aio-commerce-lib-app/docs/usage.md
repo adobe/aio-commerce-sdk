@@ -8,6 +8,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
 - **Admin UI SDK Configuration**: Generate and manage the runtime action that powers the `commerce/backend-ui/1` extension point.
+- **Association Helpers**: Retrieve the Commerce instance the app is associated with from any runtime action via `getCommerceClient` and `getCommerceInstance`.
 
 ## Reference
 
@@ -710,6 +711,84 @@ try {
   console.error("Validation failed:", error.message);
 }
 ```
+
+### Accessing the Associated Commerce Instance from Runtime Actions
+
+After an app is associated with a Commerce instance via App Management, the SDK stores the
+Commerce base URL and deployment type (`saas` or `paas`) so any runtime action can retrieve
+them — without custom storage setup or threading parameters through every layer of the call
+stack.
+
+Two helpers are exposed from the root entrypoint:
+
+- `getCommerceClient(params)` — returns a ready-to-use
+  [`AdobeCommerceHttpClient`](../../aio-commerce-lib-api/docs/usage.md). Use this when you
+  need to call the Commerce API.
+- `getCommerceInstance(params)` — returns the raw `{ baseUrl, env }`. Use this when you only
+  need the metadata (e.g. for logging or building a custom client).
+
+Both helpers throw `AppNotAssociatedError` if the app is not currently associated, was
+unassociated, or was associated by an older SDK that did not store this data. Re-associating
+the app resolves the error.
+
+#### Primary pattern — get a ready-to-use client
+
+```ts
+import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
+
+export async function main(params) {
+  const client = await getCommerceClient(params);
+  const products = await client.get("rest/V1/products").json();
+}
+```
+
+#### Low-level pattern — get the raw instance data
+
+```ts
+import { getCommerceInstance } from "@adobe/aio-commerce-lib-app";
+
+export async function main(params) {
+  const instance = await getCommerceInstance(params);
+
+  // instance.baseUrl — Commerce API base URL
+  // instance.env     — "saas" | "paas"
+}
+```
+
+#### Handling the unassociated state
+
+If your action needs to gracefully handle the case where the app is not associated yet, wrap
+the call in `try/catch`:
+
+```ts
+import {
+  AppNotAssociatedError,
+  getCommerceClient,
+} from "@adobe/aio-commerce-lib-app";
+
+export async function main(params) {
+  try {
+    const client = await getCommerceClient(params);
+    return {
+      statusCode: 200,
+      body: await client.get("rest/V1/products").json(),
+    };
+  } catch (error) {
+    if (error instanceof AppNotAssociatedError) {
+      return {
+        statusCode: 400,
+        body: { error: "App is not associated with a Commerce instance." },
+      };
+    }
+    throw error;
+  }
+}
+```
+
+The data is managed automatically by the SDK during the app association lifecycle: a
+standalone `association` runtime action (always deployed alongside `app-config`) stores it
+on association and clears it on unassociation. You do not need to deploy or wire anything
+extra.
 
 ## Best Practices
 
