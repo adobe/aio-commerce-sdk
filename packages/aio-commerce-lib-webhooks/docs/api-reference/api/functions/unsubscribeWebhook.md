@@ -13,7 +13,7 @@ function unsubscribeWebhook(
 ): Promise<void>;
 ```
 
-Defined in: [api/webhooks/endpoints.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-webhooks/source/api/webhooks/endpoints.ts#L85)
+Defined in: [api/webhooks/endpoints.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-webhooks/source/api/webhooks/endpoints.ts#L85)
 
 Unsubscribes a webhook from the Commerce instance.
 

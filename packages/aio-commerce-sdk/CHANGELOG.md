@@ -1,5 +1,17 @@
 # @adobe/aio-commerce-sdk
 
+## 1.3.0
+
+### Minor Changes
+
+- [#489](https://github.com/adobe/aio-commerce-sdk/pull/489) [`d227e47`](https://github.com/adobe/aio-commerce-sdk/commit/d227e475ec0b513ca06e4e7950497b2a20ee4674) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Add Admin UI SDK API exports via `@adobe/aio-commerce-sdk/admin-ui/api`.
+
+### Patch Changes
+
+- Updated dependencies [[`f6aec01`](https://github.com/adobe/aio-commerce-sdk/commit/f6aec01a22ed185fe130170751353fae881c0f2d), [`d227e47`](https://github.com/adobe/aio-commerce-sdk/commit/d227e475ec0b513ca06e4e7950497b2a20ee4674)]:
+  - @adobe/aio-commerce-lib-webhooks@1.1.2
+  - @adobe/aio-commerce-lib-admin-ui@0.1.0
+
 ## 1.2.1
 
 ### Patch Changes

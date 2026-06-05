@@ -10,7 +10,7 @@ function buildErrorResponse<TBody, THeaders>(
 ): ErrorResponse<TBody, THeaders>;
 ```
 
-Defined in: [responses/helpers.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-core/source/responses/helpers.ts#L104)
+Defined in: [responses/helpers.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-core/source/responses/helpers.ts#L104)
 
 Creates a standardized error response for runtime actions
 
