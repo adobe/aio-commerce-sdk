@@ -656,7 +656,7 @@ Mass actions are declared with an explicit `type` field that determines which va
 - `type: "view"` — renders an iframe at the given `path` (optional `sandbox` attribute).
 - `type: "worker"` — invokes a runtime action specified by `runtimeAction` (optional `timeout`).
 
-The `id` field is authored as a bare name (e.g. `"export-orders"`). The SDK automatically prefixes it with the app metadata `id` to produce the full identifier (`${metadata.id}::export-orders`) in the `app-config` response served to the Admin UI SDK.
+The `id` field is authored as a bare name (e.g. `"export-orders"`). The SDK serves the bare `id` as-is in the `app-config` response; the Commerce backend extension handles prefixing and collision resolution when rendering the final Admin UI configuration.
 
 For worker mass actions, `generate` automatically adds the corresponding `workerProcess` entries to the `commerce/backend-ui/2` ext.config.yaml based on the `runtimeAction` fields. The `pre-app-build` hook keeps them in sync at build time.
 

@@ -124,7 +124,7 @@ describe("appConfigRuntimeAction", () => {
       );
     });
 
-    test("prefixes mass action id with metadata.id and passes other adminUi fields through untouched", async () => {
+    test("passes adminUi config through untouched to the response", async () => {
       const handler = appConfigRuntimeAction({
         appConfig: configWithFullAdminUiV2,
       });
@@ -146,35 +146,18 @@ describe("appConfigRuntimeAction", () => {
       };
       const body = result.body as AdminUiBody;
 
-      // menuItems pass through verbatim
-      expect(body.adminUi?.menuItems).toEqual(
-        configWithFullAdminUiV2.adminUi?.menuItems,
-      );
+      // All adminUi content passes through verbatim — no transformations
+      expect(body.adminUi).toEqual(configWithFullAdminUiV2.adminUi);
 
-      // gridColumns pass through verbatim
-      expect(body.adminUi?.order?.gridColumns).toEqual(
-        configWithFullAdminUiV2.adminUi?.order?.gridColumns,
-      );
-
-      // bannerNotification passes through verbatim
-      expect(body.adminUi?.bannerNotification).toEqual(
-        configWithFullAdminUiV2.adminUi?.bannerNotification,
-      );
-
+      // Verify bare mass action IDs are served as-is (no app metadata prefix)
       const orderMassAction = body.adminUi?.order?.massActions?.[0];
-      expect(orderMassAction?.id).toBe(
-        "test-app-full-admin-ui-sdk-v2::order-mass-action",
-      );
+      expect(orderMassAction?.id).toBe("order-mass-action");
 
       const productMassAction = body.adminUi?.product?.massActions?.[0];
-      expect(productMassAction?.id).toBe(
-        "test-app-full-admin-ui-sdk-v2::product-mass-action",
-      );
+      expect(productMassAction?.id).toBe("product-mass-action");
 
       const customerMassAction = body.adminUi?.customer?.massActions?.[0];
-      expect(customerMassAction?.id).toBe(
-        "test-app-full-admin-ui-sdk-v2::export-customers",
-      );
+      expect(customerMassAction?.id).toBe("export-customers");
       expect(customerMassAction?.runtimeAction).toBe(
         "customers/export-customers",
       );
