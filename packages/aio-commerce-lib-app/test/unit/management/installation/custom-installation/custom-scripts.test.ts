@@ -186,6 +186,98 @@ describe("createCustomScriptStep - run function", () => {
   });
 });
 
+describe("createCustomScriptStep - run function (CJS module.exports forms)", () => {
+  test("should execute CJS function form (module.exports = fn) without .default wrapper", async () => {
+    const mockScriptResult = { status: "success", data: "cjs-fn" };
+    const mockScript = vi.fn().mockResolvedValue(mockScriptResult);
+
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": mockScript, // CJS: module.exports = fn
+    };
+
+    const result = await step.install(
+      configWithCustomInstallationSteps,
+      mockContext,
+    );
+
+    expect(mockScript).toHaveBeenCalledWith(
+      configWithCustomInstallationSteps,
+      mockContext,
+    );
+    expect(result).toEqual({
+      script: "./demo-success.js",
+      data: mockScriptResult,
+    });
+  });
+
+  test("should execute CJS object form (module.exports = { install }) without .default wrapper", async () => {
+    const mockInstallResult = { status: "success", data: "cjs-obj" };
+    const mockInstall = vi.fn().mockResolvedValue(mockInstallResult);
+
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": { install: mockInstall }, // CJS: module.exports = { install }
+    };
+
+    const result = await step.install(
+      configWithCustomInstallationSteps,
+      mockContext,
+    );
+
+    expect(mockInstall).toHaveBeenCalledWith(
+      configWithCustomInstallationSteps,
+      mockContext,
+    );
+    expect(result).toEqual({
+      script: "./demo-success.js",
+      data: mockInstallResult,
+    });
+  });
+
+  test("should call uninstall from CJS object form without .default wrapper", async () => {
+    const mockUninstall = vi.fn().mockResolvedValue(undefined);
+    const mockInstall = vi.fn().mockResolvedValue({ status: "success" });
+
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": { install: mockInstall, uninstall: mockUninstall },
+    };
+
+    await step.uninstall?.(configWithCustomInstallationSteps, mockContext);
+
+    expect(mockUninstall).toHaveBeenCalledWith(
+      configWithCustomInstallationSteps,
+      mockContext,
+    );
+  });
+
+  test("should skip uninstall gracefully for CJS function form (no uninstall to call)", async () => {
+    const mockScript = vi.fn().mockResolvedValue({ status: "success" });
+
+    const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
+    const step = steps?.[0] as LeafStep;
+
+    const mockContext = createMockInstallationContext();
+    mockContext.customScripts = {
+      "./demo-success.js": mockScript, // CJS function: no uninstall
+    };
+
+    await expect(
+      step.uninstall?.(configWithCustomInstallationSteps, mockContext),
+    ).resolves.toBeUndefined();
+  });
+});
+
 describe("createCustomScriptStep - run function (object form)", () => {
   test("should execute install handler from object form and return result", async () => {
     const mockInstallResult = { status: "success", data: "object-form" };

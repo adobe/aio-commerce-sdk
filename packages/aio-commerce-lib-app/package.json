@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-lib-app",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "private": false,
   "engines": {
     "node": ">=22 <=24"
@@ -123,6 +123,7 @@
     "test:ui": "vitest --ui --coverage"
   },
   "dependencies": {
+    "@adobe/aio-commerce-lib-admin-ui": "workspace:*",
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-config": "workspace:*",
