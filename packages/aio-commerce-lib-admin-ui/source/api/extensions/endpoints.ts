@@ -17,8 +17,10 @@ import {
   UnregisterExtensionParamsSchema,
 } from "./schema";
 
-import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
-import type { Options } from "ky";
+import type {
+  AdobeCommerceHttpClient,
+  FetchOptions,
+} from "@adobe/aio-commerce-lib-api";
 import type {
   ExtensionRegistrationParams,
   RegisterExtensionResponse,
@@ -30,7 +32,7 @@ import type {
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
  * @param params - The extension registration parameters.
- * @param fetchOptions - Optional Ky fetch options.
+ * @param fetchOptions - Optional fetch options.
  *
  * @throws A `CommerceSdkValidationError` if the parameters are invalid.
  * @throws An `HTTPError` if the status code is not 2XX.
@@ -38,7 +40,7 @@ import type {
 export async function registerExtension(
   httpClient: AdobeCommerceHttpClient,
   params: ExtensionRegistrationParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ): Promise<RegisterExtensionResponse> {
   const extension = parseOrThrow(ExtensionRegistrationParamsSchema, params);
 
@@ -55,7 +57,7 @@ export async function registerExtension(
  *
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
  * @param params - The workspace and extension names.
- * @param fetchOptions - Optional Ky fetch options.
+ * @param fetchOptions - Optional fetch options.
  *
  * @throws A `CommerceSdkValidationError` if the parameters are invalid.
  * @throws An `HTTPError` if the status code is not 2XX.
@@ -63,7 +65,7 @@ export async function registerExtension(
 export async function unregisterExtension(
   httpClient: AdobeCommerceHttpClient,
   params: UnregisterExtensionParams,
-  fetchOptions?: Options,
+  fetchOptions?: FetchOptions,
 ): Promise<void> {
   const { workspaceName, extensionName } = parseOrThrow(
     UnregisterExtensionParamsSchema,
