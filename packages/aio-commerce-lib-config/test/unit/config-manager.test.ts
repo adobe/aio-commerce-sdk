@@ -148,6 +148,7 @@ describe("ConfigManager functions", () => {
           origin: { code: "global", level: "global" },
         },
       ]),
+      300,
     );
 
     const result = await getConfiguration(byCodeAndLevel("global", "global"));
@@ -177,6 +178,49 @@ describe("ConfigManager functions", () => {
     expect(
       cached.config.find((e: ConfigValue) => e.name === "currency")?.value,
     ).toBe("£");
+  });
+
+  test("passes default cacheTimeout as TTL when caching on file fallback", async () => {
+    await configRepository.saveConfig(
+      "global",
+      buildPayload("id1", "global", "global", []),
+    );
+
+    await getConfiguration(byCodeAndLevel("global", "global"));
+
+    const putCalls = mockStateInstance.put.mock.calls;
+    expect(putCalls.length).toBeGreaterThan(0);
+    const ttlValues = putCalls.map((call) => call[2]?.ttl);
+    expect(ttlValues.every((ttl) => ttl === 300)).toBe(true);
+  });
+
+  test("passes custom cacheTimeout as TTL when caching on file fallback", async () => {
+    await configRepository.saveConfig(
+      "global",
+      buildPayload("id1", "global", "global", []),
+    );
+
+    await getConfiguration(byCodeAndLevel("global", "global"), {
+      cacheTimeout: 600,
+    });
+
+    const putCalls = mockStateInstance.put.mock.calls;
+    expect(putCalls.length).toBeGreaterThan(0);
+    const ttlValues = putCalls.map((call) => call[2]?.ttl);
+    expect(ttlValues.every((ttl) => ttl === 600)).toBe(true);
+  });
+
+  test("passes cacheTimeout as TTL when persisting via setConfiguration", async () => {
+    await setConfiguration(
+      { config: [{ name: "currency", value: "JPY" }] },
+      byCodeAndLevel("global", "global"),
+      { cacheTimeout: 120 },
+    );
+
+    const putCalls = mockStateInstance.put.mock.calls;
+    expect(putCalls.length).toBeGreaterThan(0);
+    const ttlValues = putCalls.map((call) => call[2]?.ttl);
+    expect(ttlValues.every((ttl) => ttl === 120)).toBe(true);
   });
 
   test("merges inherited values from parent scopes", async () => {

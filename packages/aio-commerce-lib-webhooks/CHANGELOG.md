@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-webhooks
 
+## 1.1.2
+
+### Patch Changes
+
+- [#498](https://github.com/adobe/aio-commerce-sdk/pull/498) [`f6aec01`](https://github.com/adobe/aio-commerce-sdk/commit/f6aec01a22ed185fe130170751353fae881c0f2d) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Fix the webhook exception operation to emit the exception class under the `type` field instead of `class`, matching the Adobe Commerce webhook response spec. Previously the supplied exception class was ignored by Commerce.
+
 ## 1.1.1
 
 ### Patch Changes

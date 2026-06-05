@@ -1,1 +1,8 @@
+# Sort/filter the OpenAPI spec before Biome formats it (lint-staged runs Biome).
+# Guarded so it only fires when the spec is actually staged.
+if git diff --cached --name-only | grep -q '^packages/aio-commerce-lib-app/docs/openapi.json$'; then
+  pnpm --filter @adobe/aio-commerce-lib-app run format:openapi
+  git add packages/aio-commerce-lib-app/docs/openapi.json
+fi
+
 pnpm exec lint-staged

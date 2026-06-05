@@ -36,8 +36,8 @@ jobs:
         id: changesets
         uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b # v1.8.0
         with:
-          version: pnpm changeset version
-          publish: pnpm changeset publish
+          version: pnpm release:version
+          publish: pnpm release:publish
           commit: "ci: release packages"
           title: "[CI] Release Packages"
           createGithubReleases: true
@@ -60,12 +60,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
 
-      - name: Create back-sync PR
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Merge release into main
         run: ./.github/scripts/back-sync.sh
