@@ -3888,7 +3888,7 @@
                 }
               },
               "gridColumns": {
-                "type": "object"
+                "$ref": "#/components/schemas/AdminUiGridColumns"
               },
               "viewButtons": {
                 "type": "array"
@@ -3905,7 +3905,7 @@
                 "type": "array"
               },
               "gridColumns": {
-                "type": "object"
+                "$ref": "#/components/schemas/AdminUiGridColumns"
               }
             }
           },
@@ -3916,7 +3916,7 @@
                 "type": "array"
               },
               "gridColumns": {
-                "type": "object"
+                "$ref": "#/components/schemas/AdminUiGridColumns"
               }
             }
           },
@@ -3931,6 +3931,57 @@
         },
         "additionalProperties": false,
         "required": []
+      },
+      "AdminUiGridColumns": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "runtimeAction": {
+            "type": "string",
+            "minLength": 1
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "boolean",
+                    "date",
+                    "datetime",
+                    "decimal",
+                    "integer",
+                    "string"
+                  ]
+                },
+                "align": {
+                  "type": "string",
+                  "enum": ["left", "right", "center"]
+                }
+              },
+              "required": ["id", "label", "type", "align"]
+            },
+            "minItems": 1
+          }
+        },
+        "required": ["label", "description", "runtimeAction", "columns"]
       },
       "CustomScopeInput": {
         "type": "object",

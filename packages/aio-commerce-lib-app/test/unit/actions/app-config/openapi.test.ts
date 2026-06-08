@@ -16,9 +16,9 @@ import { buildOpenApiSpec } from "#actions/app-config/openapi";
 import { getConfigDomains } from "#config/schema/domains";
 import openApiSpec from "#openapi.json" with { type: "json" };
 import {
+  configWithAdminUi,
   configWithBusinessConfig,
   configWithFullAdminUiSdk,
-  configWithFullAdminUiV2,
   configWithOneScript,
   minimalValidConfig,
   mockMetadata,
@@ -32,7 +32,7 @@ const fullyCapableConfig = {
   metadata: mockMetadata,
   businessConfig: configWithBusinessConfig.businessConfig,
   adminUiSdk: configWithFullAdminUiSdk.adminUiSdk,
-  adminUi: configWithFullAdminUiV2.adminUi,
+  adminUi: configWithAdminUi.adminUi,
   installation: configWithOneScript.installation,
 } satisfies CommerceAppConfigOutputModel;
 
@@ -94,11 +94,11 @@ describe("buildOpenApiSpec", () => {
     }
 
     // Still reachable from `/app-config` (its error response and the
-    // eventing / Admin UI SDK / webhook payloads it documents).
-    // "AdminUiSdkRegistration" is an OpenAPI schema/contract identifier, not a TS type.
+    // eventing / Admin UI SDK / Admin UI / webhook payloads it documents).
     for (const retained of [
       "ErrorResponse",
       "AdminUiSdkRegistration",
+      "AdminUiGridColumns",
       "EventProvider",
       "RuntimeActionWebhookConfig",
       "WebhookDefinition",

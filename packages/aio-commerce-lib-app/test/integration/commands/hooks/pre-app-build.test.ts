@@ -21,16 +21,17 @@ import {
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
-  getExtensionPointFolderPath,
 } from "#commands/constants";
 import { exec, run } from "#commands/hooks/pre-app-build";
 import {
   getAdminUiSdkRegistrationActionPath,
+  getExtConfigPath,
   getManifestPath,
   getSchemaPath,
 } from "#commands/utils";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
+  configWithAdminUi,
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithFullAdminUiSdk,
@@ -152,13 +153,27 @@ describe("commands/hooks/pre-app-build", () => {
       );
     });
 
-    test("runs successfully for backend-ui/2 when adminUi is absent", async () => {
-      await withTempProject(MINIMAL_PROJECT, async () => {
-        await expect(run("backend-ui/2")).resolves.toBeUndefined();
-      });
+    test("writes ext.config.yaml with workerProcess entries for backend-ui/2 when adminUi (grid columns) is configured", async () => {
+      await withTempProject(
+        makeProjectFiles(configWithAdminUi),
+        async (tempDir) => {
+          await run("backend-ui/2");
+
+          const extConfigPath = join(
+            tempDir,
+            getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+          );
+
+          expect(existsSync(extConfigPath)).toBe(true);
+
+          const content = await readFile(extConfigPath, "utf-8");
+          expect(content).toContain("orders/fetch-order-grid-data");
+          expect(content).toContain("workerProcess");
+        },
+      );
     });
 
-    test("generates ext.config.yaml with workerProcess for backend-ui/2 when adminUi is configured", async () => {
+    test("generates ext.config.yaml with workerProcess for backend-ui/2 when adminUi has worker mass actions", async () => {
       await withTempProject(
         {
           ...makeProjectFiles(configWithFullAdminUiV2),
@@ -169,8 +184,7 @@ describe("commands/hooks/pre-app-build", () => {
 
           const extConfigPath = join(
             tempDir,
-            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
-            "ext.config.yaml",
+            getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
           );
 
           expect(existsSync(extConfigPath)).toBe(true);
@@ -179,6 +193,19 @@ describe("commands/hooks/pre-app-build", () => {
           expect(content).toContain("customers/export-customers");
         },
       );
+    });
+
+    test("does not write ext.config.yaml for backend-ui/2 when adminUi is absent", async () => {
+      await withTempProject(MINIMAL_PROJECT, async (tempDir) => {
+        await run("backend-ui/2");
+
+        const extConfigPath = join(
+          tempDir,
+          getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+        );
+
+        expect(existsSync(extConfigPath)).toBe(false);
+      });
     });
 
     test("throws for unsupported extension", async () => {
@@ -261,10 +288,16 @@ describe("commands/hooks/pre-app-build", () => {
     test("runs successfully for backend-ui/2", async () => {
       vi.stubEnv("EXTENSION", "backend-ui/2");
 
-      await withTempProject(MINIMAL_PROJECT, async () => {
-        await exec();
-        expect(exitSpy).not.toHaveBeenCalled();
-      });
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithAdminUi),
+          ...makeTemplateFiles(),
+        },
+        async () => {
+          await exec();
+          expect(exitSpy).not.toHaveBeenCalled();
+        },
+      );
     });
 
     test("exits with 1 when config file is invalid", async () => {

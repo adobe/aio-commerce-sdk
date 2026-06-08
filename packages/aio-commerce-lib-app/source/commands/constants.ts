@@ -31,7 +31,7 @@ export const CONFIGURATION_EXTENSION_POINT_ID = "commerce/configuration/1";
 /** The name of the extension point for Admin UI SDK (backend-ui v1). */
 export const BACKEND_UI_EXTENSION_POINT_ID = "commerce/backend-ui/1";
 
-/** The name of the extension point for Admin UI SDK (backend-ui v2). */
+/** The name of the extension point for Admin UI. */
 export const BACKEND_UI_V2_EXTENSION_POINT_ID = "commerce/backend-ui/2";
 
 /** The name of the package containing the admin UI SDK generated actions */

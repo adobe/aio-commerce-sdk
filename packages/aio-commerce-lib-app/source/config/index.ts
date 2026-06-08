@@ -51,20 +51,22 @@ export { hasMetadata } from "./schema/metadata";
 export { hasWebhooks } from "./schema/webhooks";
 
 export type {
+  AdminUiConfig,
   AdminUiConfiguration,
-  AppConfigWithAdminUi,
+  GridColumn,
+  GridColumns,
   MassAction,
   ViewMassAction,
   WorkerMassAction,
 } from "./schema/admin-ui";
 export type {
   AdminUiSdkConfiguration,
+  AdminUiSdkGridColumns,
   AdminUiSdkRegistration,
   AppConfigWithAdminUiSdk,
   BannerNotification,
   CustomerMassAction,
   CustomFee,
-  GridColumns,
   MenuItem,
   OrderMassAction,
   OrderViewButton,

@@ -18,7 +18,6 @@ import {
   GENERATED_ACTIONS_PATH,
   PACKAGE_NAME,
 } from "#commands/constants";
-import { hasAdminUi } from "#config/schema/admin-ui";
 import { requiresInstallation } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
@@ -210,24 +209,35 @@ export function buildBusinessConfigurationExtConfig() {
   } satisfies ExtConfig;
 }
 
-/** Builds the ext.config.yaml configuration for the v2 Admin UI SDK backend-ui extension. */
-export function buildAdminUiExtConfigV2(
+/**
+ * Builds the ext.config.yaml for the Admin UI v2 extension (`commerce/backend-ui/2`).
+ * Collects `workerProcess` entries from grid column `runtimeAction` values and worker mass actions.
+ * Adds a `view` operation and `web` source only when view-type mass actions are configured.
+ */
+export function buildAdminUiV2ExtConfig(
   appConfig: CommerceAppConfigOutputModel,
 ) {
-  const workerRuntimeActions = hasAdminUi(appConfig)
-    ? [
-        ...new Set(
-          [
-            appConfig.adminUi.order,
-            appConfig.adminUi.product,
-            appConfig.adminUi.customer,
-          ]
-            .flatMap((entity) => entity?.massActions ?? [])
-            .filter((action) => action.type === "worker")
-            .map((action) => action.runtimeAction),
-        ),
-      ]
-    : [];
+  const adminUi = appConfig.adminUi;
+  const entities = (["order", "product", "customer"] as const).map(
+    (key) => adminUi?.[key],
+  );
+
+  const gridRuntimeActions = entities
+    .map((entity) => entity?.gridColumns?.runtimeAction)
+    .filter((action): action is string => action !== undefined);
+
+  const massActionRuntimeActions = entities
+    .flatMap((entity) => entity?.massActions ?? [])
+    .filter((action) => action.type === "worker")
+    .map((action) => action.runtimeAction);
+
+  const runtimeActions = [
+    ...new Set([...gridRuntimeActions, ...massActionRuntimeActions]),
+  ];
+
+  const hasViewMassActions = entities
+    .flatMap((entity) => entity?.massActions ?? [])
+    .some((action) => action.type === "view");
 
   return {
     hooks: {
@@ -235,19 +245,19 @@ export function buildAdminUiExtConfigV2(
         "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build",
     },
     operations: {
-      view: [{ type: "web", impl: "index.html" }],
-      ...(workerRuntimeActions.length > 0 && {
-        workerProcess: workerRuntimeActions.map((impl) => ({
-          type: "action" as const,
-          impl,
-        })),
+      ...(hasViewMassActions && {
+        view: [{ type: "web" as const, impl: "index.html" }],
       }),
+      workerProcess: runtimeActions.map((impl) => ({
+        type: "action" as const,
+        impl,
+      })),
     },
-    web: "web-src",
+    ...(hasViewMassActions && { web: "web-src" }),
   } satisfies ExtConfig;
 }
 
-/** Builds the ext.config.yaml configuration for the v1 Admin UI SDK backend-ui extension. */
+/** Builds the ext.config.yaml configuration for the Admin UI SDK backend-ui v1 extension. */
 export function buildAdminUiSdkExtConfig() {
   return {
     hooks: {

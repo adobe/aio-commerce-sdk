@@ -50,8 +50,8 @@ import {
 } from "#config/index";
 
 import {
-  buildAdminUiExtConfigV2,
   buildAdminUiSdkExtConfig,
+  buildAdminUiV2ExtConfig,
   buildAppManagementExtConfig,
   buildBusinessConfigurationExtConfig,
   CUSTOM_IMPORTS_PLACEHOLDER,
@@ -323,7 +323,7 @@ export async function updateExtConfig(
     }
 
     case BACKEND_UI_V2_EXTENSION_POINT_ID: {
-      extConfig = buildAdminUiExtConfigV2(appConfig);
+      extConfig = buildAdminUiV2ExtConfig(appConfig);
       break;
     }
   }

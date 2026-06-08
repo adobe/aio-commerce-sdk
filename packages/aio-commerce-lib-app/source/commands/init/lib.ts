@@ -241,7 +241,7 @@ export async function ensureAppConfig(
     await addExtensionPointToAppConfig(
       BACKEND_UI_V2_EXTENSION_POINT_ID,
       rootDirectory,
-      " This extension is required for Admin UI SDK. Do not remove.",
+      " This extension is required for Admin UI. Do not remove.",
     );
   }
 
@@ -372,7 +372,7 @@ export async function ensureInstallYaml(
     await addExtensionPointToInstallYaml(
       BACKEND_UI_V2_EXTENSION_POINT_ID,
       rootDirectory,
-      " This extension is required for Admin UI SDK. Do not remove.",
+      " This extension is required for Admin UI. Do not remove.",
     );
   }
 
