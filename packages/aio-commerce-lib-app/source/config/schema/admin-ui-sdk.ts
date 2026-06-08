@@ -296,10 +296,14 @@ export type ProductMassAction = v.InferInput<typeof ProductMassActionSchema>;
 export type CustomerMassAction = v.InferInput<typeof CustomerMassActionSchema>;
 
 /**
- * An order view button registration entry.
+ * An order view button registration entry (v1, `adminUiSdk`).
+ * @deprecated Use {@link OrderViewButton} with the `adminUi` config key and `commerce/backend-ui/2`.
  * @experimental
  */
-export type OrderViewButton = v.InferInput<typeof OrderViewButtonSchema>;
+// Prefixed to avoid a naming conflict with the v2 OrderViewButton type exported from admin-ui.ts.
+export type AdminUiSdkOrderViewButton = v.InferInput<
+  typeof OrderViewButtonSchema
+>;
 
 /**
  * A custom fee registration entry.

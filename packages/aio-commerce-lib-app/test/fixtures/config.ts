@@ -565,6 +565,63 @@ export const configWithAdminUiSingleGrid = {
   },
 } satisfies CommerceAppConfigOutputModel;
 
+/** Config fixture with order view buttons of type "view". */
+export const configWithOrderViewTypeButtons = {
+  metadata: { ...mockMetadata, id: "test-app-view-buttons-view" },
+  adminUi: {
+    order: {
+      viewButtons: [
+        {
+          type: "view" as const,
+          id: "delete-order",
+          label: "Delete",
+          path: "#/delete-order",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with order view buttons of type "worker". */
+export const configWithOrderWorkerTypeButtons = {
+  metadata: { ...mockMetadata, id: "test-app-view-buttons-worker" },
+  adminUi: {
+    order: {
+      viewButtons: [
+        {
+          type: "worker" as const,
+          id: "sync-inventory",
+          label: "Sync inventory",
+          runtimeAction: "orders/sync-inventory",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with both view and worker order view buttons. */
+export const configWithOrderViewButtons = {
+  metadata: { ...mockMetadata, id: "test-app-view-buttons-mixed" },
+  adminUi: {
+    order: {
+      viewButtons: [
+        {
+          type: "view" as const,
+          id: "delete-order",
+          label: "Delete",
+          path: "#/delete-order",
+        },
+        {
+          type: "worker" as const,
+          id: "sync-inventory",
+          label: "Sync inventory",
+          runtimeAction: "orders/sync-inventory",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 /** Config fixture with dynamic business config list options. */
 export const configWithDynamicListOptions = {
   metadata: { ...mockMetadata, id: "dynamic-list-options-app" },

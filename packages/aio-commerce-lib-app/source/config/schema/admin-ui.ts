@@ -10,7 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
+import {
+  nonEmptyStringValueSchema,
+  positiveNumberValueSchema,
+} from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
@@ -43,8 +46,57 @@ const GridColumnsSchema = v.object({
   ),
 });
 
+const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
+
+const ViewButtonConfirmSchema = v.object({
+  message: v.optional(nonEmptyStringValueSchema("confirm message")),
+});
+
+const NotificationsSchema = v.object({
+  success: v.optional(nonEmptyStringValueSchema("success notification")),
+  error: v.optional(nonEmptyStringValueSchema("error notification")),
+});
+
+const SandboxPermissionSchema = v.picklist([
+  "allow-downloads",
+  "allow-modals",
+  "allow-popups",
+]);
+
+const OrderViewButtonSchema = v.variant("type", [
+  v.strictObject({
+    type: v.literal("view"),
+    id: nonEmptyStringValueSchema("view button ID"),
+    label: nonEmptyStringValueSchema("view button label"),
+    description: v.optional(
+      nonEmptyStringValueSchema("view button description"),
+    ),
+    path: nonEmptyStringValueSchema("view button path"),
+    level: v.optional(ViewButtonLevelSchema),
+    sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
+    confirm: v.optional(ViewButtonConfirmSchema),
+    sandboxPermissions: v.optional(v.array(SandboxPermissionSchema)),
+    notifications: v.optional(NotificationsSchema),
+  }),
+  v.strictObject({
+    type: v.literal("worker"),
+    id: nonEmptyStringValueSchema("view button ID"),
+    label: nonEmptyStringValueSchema("view button label"),
+    description: v.optional(
+      nonEmptyStringValueSchema("view button description"),
+    ),
+    runtimeAction: nonEmptyStringValueSchema("runtime action"),
+    level: v.optional(ViewButtonLevelSchema),
+    sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
+    confirm: v.optional(ViewButtonConfirmSchema),
+    timeout: v.optional(positiveNumberValueSchema("timeout")),
+    notifications: v.optional(NotificationsSchema),
+  }),
+]);
+
 const AdminUiOrderSchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
+  viewButtons: v.optional(v.array(OrderViewButtonSchema)),
 });
 
 const AdminUiProductSchema = v.object({
@@ -56,7 +108,7 @@ const AdminUiCustomerSchema = v.object({
 });
 
 /**
- * Schema for the `adminUi` config section (grid column extensions on `commerce/backend-ui/2`).
+ * Schema for the `adminUi` config section (grid column extensions and order view buttons on `commerce/backend-ui/2`).
  * @experimental
  */
 export const AdminUiSchema = v.object({
@@ -82,6 +134,18 @@ export type GridColumns = v.InferInput<typeof GridColumnsSchema>;
  * @experimental
  */
 export type GridColumn = v.InferInput<typeof GridColumnSchema>;
+
+/**
+ * An order view button registration entry (v2, `adminUi`).
+ * @experimental
+ */
+export type OrderViewButton = v.InferInput<typeof OrderViewButtonSchema>;
+
+/**
+ * Inlined notification strings on an `adminUi` registration entry.
+ * @experimental
+ */
+export type Notifications = v.InferInput<typeof NotificationsSchema>;
 
 /** Config type when `adminUi` configuration is present. */
 export type AdminUiConfig<

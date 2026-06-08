@@ -10,13 +10,18 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
+import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
+import * as v from "valibot";
 
-export default mergeConfig(baseConfig, {
-  entry: [
-    "./source/index.ts",
-    "./source/grid-columns/index.ts",
-    "./source/order-view-buttons/index.ts",
-  ],
+/**
+ * Schema for the JSON body Commerce POSTs to an order view button handler.
+ *
+ * `id` identifies the specific button that was clicked, letting a single
+ * handler serve multiple buttons by branching on it. `orderId` is the
+ * single order currently being viewed.
+ */
+export const OrderViewButtonRequestSchema = v.object({
+  requestId: nonEmptyStringValueSchema("requestId"),
+  id: nonEmptyStringValueSchema("id"),
+  orderId: nonEmptyStringValueSchema("orderId"),
 });

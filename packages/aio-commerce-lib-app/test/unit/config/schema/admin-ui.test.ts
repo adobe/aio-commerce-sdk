@@ -108,6 +108,217 @@ describe("AdminUiSchema", () => {
     });
   });
 
+  describe("order.viewButtons", () => {
+    const viewBase = {
+      type: "view" as const,
+      id: "delete-order",
+      label: "Delete",
+      path: "#/delete-order",
+    };
+
+    const workerBase = {
+      type: "worker" as const,
+      id: "sync-inventory",
+      label: "Sync inventory",
+      runtimeAction: "orders/sync-inventory",
+    };
+
+    describe("valid cases", () => {
+      test("type: view with required fields only", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: { viewButtons: [viewBase] },
+        });
+        expect(result.success).toBe(true);
+      });
+
+      test("type: worker with required fields only", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: { viewButtons: [workerBase] },
+        });
+        expect(result.success).toBe(true);
+      });
+
+      test("type: view with all optional fields", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [
+              {
+                ...viewBase,
+                description: "Permanently removes the order.",
+                level: 0,
+                sortOrder: 80,
+                sandboxPermissions: ["allow-modals", "allow-popups"],
+                confirm: { message: "Are you sure?" },
+                notifications: {
+                  success: "Done.",
+                  error: "Failed.",
+                },
+              },
+            ],
+          },
+        });
+        expect(result.success).toBe(true);
+      });
+
+      test("type: worker with all optional fields", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [
+              {
+                ...workerBase,
+                description: "Pushes stock counts.",
+                level: 1,
+                sortOrder: 10,
+                timeout: 15,
+                confirm: { message: "Sync now?" },
+                notifications: {
+                  success: "Synced.",
+                  error: "Sync failed.",
+                },
+              },
+            ],
+          },
+        });
+        expect(result.success).toBe(true);
+      });
+
+      test("all three sandboxPermissions values are valid", () => {
+        for (const perm of [
+          "allow-downloads",
+          "allow-modals",
+          "allow-popups",
+        ] as const) {
+          const result = v.safeParse(AdminUiSchema, {
+            order: {
+              viewButtons: [{ ...viewBase, sandboxPermissions: [perm] }],
+            },
+          });
+          expect(result.success, `"${perm}" should be valid`).toBe(true);
+        }
+      });
+
+      test("notifications with only success", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [
+              { ...workerBase, notifications: { success: "Done." } },
+            ],
+          },
+        });
+        expect(result.success).toBe(true);
+      });
+
+      test("notifications with only error", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [
+              { ...workerBase, notifications: { error: "Failed." } },
+            ],
+          },
+        });
+        expect(result.success).toBe(true);
+      });
+
+      test("gridColumns and viewButtons can coexist on order", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            gridColumns: {
+              label: "Order grid",
+              description: "Adds a column",
+              runtimeAction: "orders/fetch",
+              columns: [
+                { id: "col", label: "Col", type: "string", align: "left" },
+              ],
+            },
+            viewButtons: [workerBase],
+          },
+        });
+        expect(result.success).toBe(true);
+      });
+    });
+
+    describe("invalid cases", () => {
+      test("type: view with runtimeAction is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [{ ...viewBase, runtimeAction: "orders/delete" }],
+          },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("type: view with timeout is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: { viewButtons: [{ ...viewBase, timeout: 10 }] },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("type: view missing path is rejected", () => {
+        const { path: _, ...withoutPath } = viewBase;
+        const result = v.safeParse(AdminUiSchema, {
+          order: { viewButtons: [withoutPath] },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("type: worker with path is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [{ ...workerBase, path: "#/something" }],
+          },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("type: worker with sandboxPermissions is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [
+              { ...workerBase, sandboxPermissions: ["allow-modals"] },
+            ],
+          },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("type: worker missing runtimeAction is rejected", () => {
+        const { runtimeAction: _, ...withoutAction } = workerBase;
+        const result = v.safeParse(AdminUiSchema, {
+          order: { viewButtons: [withoutAction] },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("empty notifications.success string is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [{ ...workerBase, notifications: { success: "" } }],
+          },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("invalid sandboxPermissions value is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [
+              { ...viewBase, sandboxPermissions: ["allow-scripts"] },
+            ],
+          },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("invalid level value is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: { viewButtons: [{ ...viewBase, level: 2 }] },
+        });
+        expect(result.success).toBe(false);
+      });
+    });
+  });
+
   describe("invalid cases", () => {
     test("float type is rejected", () => {
       const result = v.safeParse(AdminUiSchema, {

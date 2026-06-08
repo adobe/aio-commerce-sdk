@@ -7,7 +7,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
-- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions; mass actions, menus, view buttons, and custom fees will follow.
+- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions and order view buttons. Mass actions, menus, and custom fees will follow.
 - **Admin UI SDK Configuration** (`commerce/backend-ui/1`, _deprecated_): Generate and manage the runtime action for the legacy Admin UI SDK extension point. Will be removed from the SDK — use `adminUi` and `commerce/backend-ui/2` for new apps.
 
 ## Reference
@@ -647,7 +647,7 @@ Every field of `adminUiSdk.registration` is optional — configure only the exte
 
 > **Experimental:** Admin UI support on `commerce/backend-ui/2` is not yet production-ready. The API may change in future releases.
 
-The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. When defined, `init` and `generate all` automatically wire up the extension, including the generated runtime action, the `pre-app-build` hook, and the `workerProcess` declarations in `ext.config.yaml`. Currently supported: grid column extensions. Mass actions, menus, view buttons, and custom fees will follow.
+The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`. No registration action is generated — Commerce reads the registration directly from the `app-config` endpoint. Currently supported: grid column extensions and order view buttons. Mass actions, menus, and custom fees will follow.
 
 ##### Grid Columns
 
@@ -701,6 +701,71 @@ adminUi: {
   - **align**: one of `"left"`, `"center"`, `"right"`
 
 Each of `order`, `product`, and `customer` is optional — configure only the grids your application extends.
+
+##### Order View Buttons
+
+`adminUi.order.viewButtons` declares buttons that appear on the order detail page in Commerce Admin. Each entry has a `type` discriminator:
+
+- **`type: "view"`** — loads the in-app URL given by `path` inside an iframe. The SDK automatically adds a `view` operation pointing at `index.html` when at least one view button is present.
+- **`type: "worker"`** — invokes the `workerProcess` operation named by `runtimeAction`, resolved by App Registry at runtime. The SDK registers the `workerProcess` entry automatically.
+
+```javascript
+adminUi: {
+  order: {
+    viewButtons: [
+      {
+        type: "view",
+        id: "delete-order",
+        label: "Delete",
+        description: "Permanently removes the order and its associated records.",
+        path: "#/delete-order",
+        level: 0,
+        sortOrder: 80,
+        sandboxPermissions: ["allow-modals", "allow-popups"],
+        confirm: { message: "Are you sure you want to delete this order?" },
+      },
+      {
+        type: "worker",
+        id: "sync-inventory",
+        label: "Sync inventory",
+        description: "Pushes the latest stock counts for this order's items to the ERP.",
+        runtimeAction: "orders/sync-inventory",
+        timeout: 15,
+        level: 1,
+        sortOrder: 10,
+        notifications: {
+          success: "Inventory synced successfully.",
+          error: "Inventory sync failed. Check the runtime logs.",
+        },
+      },
+    ],
+  },
+}
+```
+
+###### Field Reference:
+
+Shared fields (both types):
+
+- **id**: Required — stable button identifier served to Commerce as-is
+- **label**: Required — on-button text rendered in Admin
+- **description**: Optional — human-readable summary exposed via `app-config` for installation tooling
+- **level**: Optional — `-1`, `0`, or `1`
+- **sortOrder**: Optional — positive number controlling display order
+- **confirm**: Optional — `{ message? }` confirmation dialog before the handler runs
+- **notifications**: Optional — `{ success?, error? }` toast strings displayed after the handler returns
+
+`type: "view"` specific:
+
+- **path**: Required — in-app iframe URL (e.g. `#/delete-order`)
+- **sandboxPermissions**: Optional — array of `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
+
+`type: "worker"` specific:
+
+- **runtimeAction**: Required — `<package>/<action>` path; the SDK registers it as a `workerProcess` operation automatically
+- **timeout**: Optional — positive number (seconds)
+
+For the handler wire contract (request/response shapes), see `@adobe/aio-commerce-lib-admin-ui/order-view-buttons`.
 
 ### CLI Commands
 

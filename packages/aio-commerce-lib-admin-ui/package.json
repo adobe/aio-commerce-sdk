@@ -51,12 +51,23 @@
           "default": "./dist/cjs/grid-columns/index.cjs"
         }
       },
+      "./order-view-buttons": {
+        "import": {
+          "types": "./dist/es/order-view-buttons/index.d.mts",
+          "default": "./dist/es/order-view-buttons/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/order-view-buttons/index.d.cts",
+          "default": "./dist/cjs/order-view-buttons/index.cjs"
+        }
+      },
       "./package.json": "./package.json"
     }
   },
   "exports": {
     "./api": "./source/index.ts",
     "./grid-columns": "./source/grid-columns/index.ts",
+    "./order-view-buttons": "./source/order-view-buttons/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {

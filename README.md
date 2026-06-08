@@ -29,6 +29,7 @@ npm install @adobe/aio-commerce-lib-auth
 - **[`@adobe/aio-commerce-sdk`](./packages/aio-commerce-sdk)** - Unified meta-package providing convenient access to all SDK libraries through a single import
 - **[`@adobe/aio-commerce-lib-auth`](./packages/aio-commerce-lib-auth)** - Handles authentication flows for Adobe IMS and Adobe Commerce, including token management and credential validation
 - **[`@adobe/aio-commerce-lib-api`](./packages/aio-commerce-lib-api)** - Provides utilities for building HTTP/API clients for Adobe Commerce and Adobe I/O Events APIs
+- **[`@adobe/aio-commerce-lib-admin-ui`](./packages/aio-commerce-lib-admin-ui)** - Provides utilities for Commerce Admin UI App Builder extensions
 - **[`@adobe/aio-commerce-lib-app`](./packages/aio-commerce-lib-app)** - Manages app configurations and orchestrates installation workflows (eventing and custom scripts) for Adobe Commerce applications
 - **[`@adobe/aio-commerce-lib-config`](./packages/aio-commerce-lib-config)** - Manages hierarchical business configuration with scope inheritance for Adobe Commerce applications
 - **[`@adobe/aio-commerce-lib-core`](./packages/aio-commerce-lib-core)** - Provides foundational utilities and shared functionality used across all `@adobe/aio-commerce-sdk` libraries

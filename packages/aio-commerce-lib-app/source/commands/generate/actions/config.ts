@@ -209,20 +209,45 @@ export function buildBusinessConfigurationExtConfig() {
   } satisfies ExtConfig;
 }
 
+/** Recursively collects unique `runtimeAction` string values from an `adminUi` config subtree. */
+export function collectUniqueRuntimeActions(value: unknown): string[] {
+  if (value === null || typeof value !== "object") {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return [...new Set(value.flatMap(collectUniqueRuntimeActions))];
+  }
+  const obj = value as Record<string, unknown>;
+  return [
+    ...new Set([
+      ...(typeof obj.runtimeAction === "string" ? [obj.runtimeAction] : []),
+      ...Object.values(obj).flatMap(collectUniqueRuntimeActions),
+    ]),
+  ];
+}
+
+/** Returns true if any object in an `adminUi` config subtree has `type: "view"`. */
+export function hasViewType(value: unknown): boolean {
+  if (value === null || typeof value !== "object") {
+    return false;
+  }
+  if (Array.isArray(value)) {
+    return value.some(hasViewType);
+  }
+  const obj = value as Record<string, unknown>;
+  return obj.type === "view" || Object.values(obj).some(hasViewType);
+}
+
 /**
- * Builds the ext.config.yaml for the Admin UI grid column v2 extension (`commerce/backend-ui/2`).
- * Derives `workerProcess` declarations from the `runtimeAction` values in `adminUi` config.
+ * Builds the ext.config.yaml for the Admin UI v2 extension (`commerce/backend-ui/2`).
+ * Derives `workerProcess` and `view` operation declarations from `adminUi` config.
  */
 export function buildAdminUiV2ExtConfig(
   appConfig: CommerceAppConfigOutputModel,
 ) {
   const adminUi = appConfig.adminUi;
-  const referencedActions = (["order", "product", "customer"] as const)
-    .map((gridType) => adminUi?.[gridType]?.gridColumns?.runtimeAction)
-    .filter(
-      (runtimeAction): runtimeAction is string => runtimeAction !== undefined,
-    );
-  const runtimeActions = [...new Set(referencedActions)];
+  const runtimeActions = collectUniqueRuntimeActions(adminUi);
+  const hasViewOperation = hasViewType(adminUi);
 
   return {
     hooks: {
@@ -230,7 +255,17 @@ export function buildAdminUiV2ExtConfig(
         "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build",
     },
     operations: {
-      workerProcess: runtimeActions.map((impl) => ({ type: "action", impl })),
+      ...(hasViewOperation
+        ? { view: [{ type: "web", impl: "index.html" }] }
+        : {}),
+      ...(runtimeActions.length > 0
+        ? {
+            workerProcess: runtimeActions.map((impl) => ({
+              type: "action",
+              impl,
+            })),
+          }
+        : {}),
     },
   } satisfies ExtConfig;
 }
