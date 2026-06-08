@@ -1,6 +1,7 @@
 # Breaking Changes
 
-> All unreleased changes are planned for the next major release together with other accumulated breaking changes.
+> [!IMPORTANT]
+> All unreleased changes are planned for the next major release.
 
 ## [Unreleased]
 

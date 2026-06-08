@@ -140,4 +140,5 @@ Each package that has deprecated symbols or planned breaking changes maintains a
   - `major` — breaking changes (removed exports, required fields added to input/write types, renamed types)
 - If the bump type is ambiguous, ask before proceeding
 - Major changesets must include migration guidance in the changeset body: a link to an external migration guide if one exists, or inline before/after code snippets otherwise
+- When a package receives a major bump, also include `packages/aio-commerce-sdk` in the same changeset with a major bump — it re-exports every public library and must version in lockstep
 - Before each commit, check if the changeset message still accurately describes the change
