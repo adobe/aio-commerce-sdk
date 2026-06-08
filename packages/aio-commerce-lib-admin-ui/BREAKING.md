@@ -8,6 +8,8 @@
 
 #### ky v2
 
+<!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6336 -->
+
 The SDK uses [ky](https://github.com/sindresorhus/ky) as its HTTP client. ky v2 introduces several breaking changes. See the [ky v2 release notes](https://github.com/sindresorhus/ky/releases/tag/v2.0.0) for the full migration guide. The following affect this package's public API surface:
 
 - **Hook signatures:** all hooks now receive a single state object instead of separate positional arguments. Any `hooks` key passed via `fetchOptions` to an endpoint function will need to be updated.
