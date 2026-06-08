@@ -1,12 +1,12 @@
-# `EventsConfig`
+# `EventsConfig\<T\>`
 
 ```ts
-type EventsConfig = CommerceAppConfigOutputModel & {
-  eventing: NonNullable<CommerceAppConfigOutputModel["eventing"]>;
+type EventsConfig<T> = T & {
+  eventing: NonNullable<T["eventing"]>;
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/eventing.ts:319](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-app/source/config/schema/eventing.ts#L319)
+Defined in: [aio-commerce-lib-app/source/config/schema/eventing.ts:318](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/config/schema/eventing.ts#L318)
 
 Config type when eventing is present.
 
@@ -15,5 +15,11 @@ Config type when eventing is present.
 ### eventing
 
 ```ts
-eventing: NonNullable<CommerceAppConfigOutputModel["eventing"]>;
+eventing: NonNullable<T["eventing"]>;
 ```
+
+## Type Parameters
+
+| Type Parameter                       | Default type                   |
+| ------------------------------------ | ------------------------------ |
+| `T` _extends_ `AnyCommerceAppConfig` | `CommerceAppConfigOutputModel` |
