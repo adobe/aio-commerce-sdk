@@ -1,5 +1,28 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.7.0
+
+### Minor Changes
+
+- [#481](https://github.com/adobe/aio-commerce-sdk/pull/481) [`cffcc6a`](https://github.com/adobe/aio-commerce-sdk/commit/cffcc6af58c734486de4447c1f1eaa7a4784a4e2) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Introduce a new `GET /openapi.json` for `lib-app` in `app-config`.
+
+- [#471](https://github.com/adobe/aio-commerce-sdk/pull/471) [`82adf80`](https://github.com/adobe/aio-commerce-sdk/commit/82adf8002e693166fe0d285f9b901750dbad2f5e) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Default generated actions to `nodejs:24`, the latest App Builder Runtime version with prewarm support.
+
+### Patch Changes
+
+- [#489](https://github.com/adobe/aio-commerce-sdk/pull/489) [`d227e47`](https://github.com/adobe/aio-commerce-sdk/commit/d227e475ec0b513ca06e4e7950497b2a20ee4674) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Refactor Admin UI SDK extension registration and unregistration to use `@adobe/aio-commerce-lib-admin-ui` client instead of raw HTTP calls.
+
+- [#481](https://github.com/adobe/aio-commerce-sdk/pull/481) [`cffcc6a`](https://github.com/adobe/aio-commerce-sdk/commit/cffcc6af58c734486de4447c1f1eaa7a4784a4e2) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix `scopes` body validation in the scope tree action to use the proper recursive `CustomScopeInput` schema instead of `v.any()`.
+
+- [#495](https://github.com/adobe/aio-commerce-sdk/pull/495) [`c8d8c3a`](https://github.com/adobe/aio-commerce-sdk/commit/c8d8c3a1f1279493d12bd1403e5fd71f18ee9dc1) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix an issue where developers could not define custom installation scripts via `module.exports` when using CJS.
+
+- [#481](https://github.com/adobe/aio-commerce-sdk/pull/481) [`cffcc6a`](https://github.com/adobe/aio-commerce-sdk/commit/cffcc6af58c734486de4447c1f1eaa7a4784a4e2) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Return `400` instead of `500` when a custom scope tree fails validation (reserved or duplicate scope codes, invalid fields).
+
+- Updated dependencies [[`f6aec01`](https://github.com/adobe/aio-commerce-sdk/commit/f6aec01a22ed185fe130170751353fae881c0f2d), [`9b41376`](https://github.com/adobe/aio-commerce-sdk/commit/9b413761fd857a2e75c3f5210efb83ce2b1b4b6e), [`d227e47`](https://github.com/adobe/aio-commerce-sdk/commit/d227e475ec0b513ca06e4e7950497b2a20ee4674)]:
+  - @adobe/aio-commerce-lib-webhooks@1.1.2
+  - @adobe/aio-commerce-lib-config@1.5.1
+  - @adobe/aio-commerce-lib-admin-ui@0.1.0
+
 ## 1.6.0
 
 ### Minor Changes

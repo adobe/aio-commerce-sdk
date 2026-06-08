@@ -10,7 +10,7 @@ function deleteEventSubscription(
 ): Promise<void>;
 ```
 
-Defined in: [commerce/api/event-subscriptions/endpoints.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/endpoints.ts#L93)
+Defined in: [commerce/api/event-subscriptions/endpoints.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/endpoints.ts#L93)
 
 Unsubscribes from an event in the Commerce instance bound to the given [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md).
 

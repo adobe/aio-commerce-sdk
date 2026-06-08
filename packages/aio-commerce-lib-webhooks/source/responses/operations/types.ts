@@ -25,7 +25,7 @@ export type SuccessOperation = {
 export type ExceptionOperation = {
   op: "exception";
   /** Specifies the exception class. If not set, \Magento\Framework\Exception\LocalizedException will be thrown. */
-  class?: string;
+  type?: string;
   /** Specifies the exception message. If not set, fallbackErrorMessage or system default will be used. */
   message?: string;
 };

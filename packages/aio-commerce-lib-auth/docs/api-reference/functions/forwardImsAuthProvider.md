@@ -6,7 +6,7 @@ function forwardImsAuthProvider(
 ): ImsAuthProvider;
 ```
 
-Defined in: [ims-auth/forwarding.ts:305](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-auth/source/lib/ims-auth/forwarding.ts#L305)
+Defined in: [ims-auth/forwarding.ts:305](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-auth/source/lib/ims-auth/forwarding.ts#L305)
 
 Creates an [ImsAuthProvider](../type-aliases/ImsAuthProvider.md) by forwarding authentication credentials from runtime action parameters.
 

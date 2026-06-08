@@ -6,7 +6,7 @@ type IoEventMetadataManyResponse = {
 };
 ```
 
-Defined in: [io-events/api/event-metadata/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L47)
+Defined in: [io-events/api/event-metadata/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L47)
 
 Defines the fields of many event metadata entities returned by the Adobe I/O Events API.
 
@@ -18,4 +18,4 @@ Defines the fields of many event metadata entities returned by the Adobe I/O Eve
 _embedded: IoEventMetadataHalModel[];
 ```
 
-Defined in: [io-events/api/event-metadata/types.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L48)
+Defined in: [io-events/api/event-metadata/types.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/types.ts#L48)

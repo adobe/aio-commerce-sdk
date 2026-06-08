@@ -15,6 +15,9 @@
     },
     "commerce-app-business-config": {
       "path": "skills/commerce-app-business-config/SKILL.md"
+    },
+    "commerce-app-storage": {
+      "path": "skills/commerce-app-storage/SKILL.md"
     }
   }
 }

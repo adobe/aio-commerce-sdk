@@ -50,6 +50,15 @@ Success responses spread the body properties directly into the response object, 
 
 **String Shorthand:** For convenience, you can pass a string directly to any preset function. It will be automatically converted to `{ body: { message: yourString } }`.
 
+**Typed responses:** Pass a type argument to narrow the return type:
+
+```typescript
+type UserBody = { id: string; name: string };
+
+return ok<UserBody>({ body: { id: "123", name: "John" } });
+// return type is SuccessResponse<UserBody>
+```
+
 ## Creating Error Responses
 
 Use `buildErrorResponse` or the convenient presets like `badRequest`, `notFound`, etc.:
@@ -112,19 +121,30 @@ return internalServerError({
 });
 ```
 
+**Typed responses:** Pass a type argument to narrow the return type. The body type must include `message`:
+
+```typescript
+type ValidationErrorBody = { message: string; field: string; code: string };
+
+return badRequest<ValidationErrorBody>({
+  body: { message: "Invalid input", field: "email", code: "INVALID_FORMAT" },
+});
+// return type is ErrorResponse<ValidationErrorBody>
+```
+
 ## Available Response Presets
 
 The library provides the following convenience functions:
 
-- `ok(payload?)` - HTTP 200 (Success)
-- `created(payload?)` - HTTP 201 (Created)
-- `accepted(payload?)` - HTTP 202 (Accepted)
-- `badRequest(payload)` - HTTP 400 (Bad Request)
-- `unauthorized(payload)` - HTTP 401 (Unauthorized)
-- `forbidden(payload)` - HTTP 403 (Forbidden)
-- `notFound(payload)` - HTTP 404 (Not Found)
-- `methodNotAllowed(payload)` - HTTP 405 (Method Not Allowed)
-- `internalServerError(payload)` - HTTP 500 (Internal Server Error)
+- `ok<TBody>(payload?)` - HTTP 200 (Success)
+- `created<TBody>(payload?)` - HTTP 201 (Created)
+- `accepted<TBody>(payload?)` - HTTP 202 (Accepted)
+- `badRequest<TBody>(payload)` - HTTP 400 (Bad Request)
+- `unauthorized<TBody>(payload)` - HTTP 401 (Unauthorized)
+- `forbidden<TBody>(payload)` - HTTP 403 (Forbidden)
+- `notFound<TBody>(payload)` - HTTP 404 (Not Found)
+- `methodNotAllowed<TBody>(payload)` - HTTP 405 (Method Not Allowed)
+- `internalServerError<TBody>(payload)` - HTTP 500 (Internal Server Error)
 
 ### Payload Options
 

@@ -7,7 +7,8 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
-- **Admin UI SDK Configuration**: Generate and manage the runtime action that powers the `commerce/backend-ui/1` extension point.
+- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions; mass actions, menus, view buttons, and custom fees will follow.
+- **Admin UI SDK Configuration** (`commerce/backend-ui/1`, _deprecated_): Generate and manage the runtime action for the legacy Admin UI SDK extension point. Will be removed from the SDK — use `adminUi` and `commerce/backend-ui/2` for new apps.
 
 ## Reference
 
@@ -99,10 +100,14 @@ This produces the following files, organized by extension point:
 > [!NOTE]
 > When the business config schema contains `dynamicList` fields, the manifest is emitted as an ESM module (`app.commerce.manifest.js`) instead of JSON, and no separate `configuration-schema.json` is generated. Generated actions resolve `dynamicList` fields on every request. Any external credentials a factory uses must be declared as `inputs` for each action that resolves the schema (in the corresponding `ext.config.yaml` of each action).
 
-**`commerce/backend-ui/1`**: Admin UI SDK (generated when `adminUiSdk.registration` is defined):
+**`commerce/backend-ui/1`**: Admin UI SDK registration — _deprecated, will be removed from the SDK_ (generated when `adminUiSdk.registration` is defined):
 
 - `src/commerce-backend-ui-1/.generated/actions/registration/index.js`: serves the Admin UI SDK registration object to Adobe Commerce
 - `src/commerce-backend-ui-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
+
+**`commerce/backend-ui/2`**: Admin UI registration (generated when `adminUi` is defined):
+
+- `src/commerce-backend-ui-2/ext.config.yaml`: extension manifest with the `pre-app-build` hook and `workerProcess` declarations derived from `runtimeAction` values
 
 > [!NOTE]
 > Generated actions default to the `nodejs:24` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration.
@@ -119,6 +124,9 @@ extensions:
   # Only include this if adminUiSdk.registration is defined in your app.commerce.config.*:
   commerce/backend-ui/1:
     $include: "src/commerce-backend-ui-1/ext.config.yaml"
+  # Only include this if adminUi is defined in your app.commerce.config.*:
+  commerce/backend-ui/2:
+    $include: "src/commerce-backend-ui-2/ext.config.yaml"
 ```
 
 5. In your `install.yaml`, add the extension point references. If you have multiple extension points, add each as a new entry:
@@ -130,6 +138,8 @@ extensions:
   - extensionPointId: commerce/configuration/1
   # Only include this if adminUiSdk.registration is defined in your app.commerce.config.*:
   - extensionPointId: commerce/backend-ui/1
+  # Only include this if adminUi is defined in your app.commerce.config.*:
+  - extensionPointId: commerce/backend-ui/2
 ```
 
 ### Defining Configuration
@@ -140,7 +150,8 @@ The current app configuration definition contains the following sections:
 - **businessConfig**: Business configuration schema
 - **eventing**: Eventing configuration
 - **installation**: Installation configuration
-- **adminUiSdk**: Admin UI SDK registration
+- **adminUiSdk**: Admin UI SDK registration on `commerce/backend-ui/1` (deprecated, will be removed from the SDK)
+- **adminUi**: Admin UI registration on `commerce/backend-ui/2`
 
 #### Application Metadata
 
@@ -470,7 +481,7 @@ export default defineCustomInstallationStep(async (config, context) => {
 
 #### Admin UI SDK Configuration
 
-> **Experimental:** Admin UI SDK support is not yet production-ready. The API may change in future releases.
+> **Deprecated:** `adminUiSdk` and `commerce/backend-ui/1` will be removed from the SDK. Migrate to the `adminUi` config key and `commerce/backend-ui/2` extension point. Grid columns are already supported — see [Admin UI Configuration](#admin-ui-configuration) below. Support for migrating remaining extension points (mass actions, menus, view buttons, custom fees) to `commerce/backend-ui/2` will follow in subsequent releases.
 
 The `adminUiSdk.registration` field declares the registration payload served by the Admin UI SDK runtime action. When defined, `init` and `generate all` automatically wire up the `commerce/backend-ui/1` extension, including the generated runtime action and the `pre-app-build` hook that keeps it in sync with your config. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
@@ -631,6 +642,65 @@ adminUiSdk: {
 - `sandbox` is only relevant when `displayIframe` is set to `true`; this applies to all mass actions and view button entries
 
 Every field of `adminUiSdk.registration` is optional — configure only the extension points your application needs.
+
+#### Admin UI Configuration
+
+> **Experimental:** Admin UI support on `commerce/backend-ui/2` is not yet production-ready. The API may change in future releases.
+
+The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. When defined, `init` and `generate all` automatically wire up the extension, including the generated runtime action, the `pre-app-build` hook, and the `workerProcess` declarations in `ext.config.yaml`. Currently supported: grid column extensions. Mass actions, menus, view buttons, and custom fees will follow.
+
+##### Grid Columns
+
+The `workerProcess` entries are derived automatically from the `runtimeAction` values — you only need to provide the handler implementations.
+
+```javascript
+adminUi: {
+  order: {
+    gridColumns: {
+      label: "Order fulfillment data",
+      description: "Adds fulfillment status and risk score to the order grid",
+      runtimeAction: "orders/fetch-order-grid-data",
+      columns: [
+        { columnId: "fulfillment_status", label: "Fulfillment", type: "string", align: "left" },
+        { columnId: "risk_score", label: "Risk", type: "integer", align: "right" },
+      ],
+    },
+  },
+  product: {
+    gridColumns: {
+      label: "Product inventory data",
+      description: "Adds inventory status to the product grid",
+      runtimeAction: "products/fetch-product-grid-data",
+      columns: [
+        { columnId: "inventory_status", label: "Inventory", type: "string", align: "left" },
+      ],
+    },
+  },
+  customer: {
+    gridColumns: {
+      label: "Customer loyalty data",
+      description: "Adds loyalty tier to the customer grid",
+      runtimeAction: "customers/fetch-customer-grid-data",
+      columns: [
+        { columnId: "loyalty_tier", label: "Loyalty Tier", type: "string", align: "left" },
+      ],
+    },
+  },
+}
+```
+
+###### Field Reference:
+
+- **label**: Required, non-empty string — displayed in App Management during installation
+- **description**: Required, non-empty string — displayed in App Management during installation
+- **runtimeAction**: Required — `<package>/<action>` path matching a handler you implement; the SDK registers it as a `workerProcess` operation automatically
+- **columns**: Required array (at least one entry); each column requires:
+  - **columnId**: non-empty string — stable column identifier, also used as the response data key
+  - **label**: non-empty string — column header displayed in the grid
+  - **type**: one of `"boolean"`, `"date"`, `"datetime"`, `"decimal"`, `"integer"`, `"string"`
+  - **align**: one of `"left"`, `"center"`, `"right"`
+
+Each of `order`, `product`, and `customer` is optional — configure only the grids your application extends.
 
 ### CLI Commands
 
