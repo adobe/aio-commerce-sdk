@@ -665,15 +665,6 @@ export const configWithFullAdminUiV2 = {
         },
       ],
     },
-    bannerNotification: {
-      orderViewButtons: [
-        {
-          buttonId: "my-app::delete-order",
-          successMessage: "Done!",
-          errorMessage: "Failed!",
-        },
-      ],
-    },
   },
 } satisfies CommerceAppConfigOutputModel;
 

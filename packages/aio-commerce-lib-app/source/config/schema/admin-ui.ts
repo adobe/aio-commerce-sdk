@@ -16,13 +16,7 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import {
-  CustomFeeSchema,
-  MassActionConfirmSchema,
-  OrderViewButtonBannerSchema,
-  OrderViewButtonSchema,
-  SandboxSchema,
-} from "./admin-ui-sdk";
+import { MassActionConfirmSchema } from "./admin-ui-sdk";
 
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
@@ -74,12 +68,20 @@ const massActionCommonEntries = {
   selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
 };
 
+const SANDBOX_PERMISSION_VALUES = [
+  "allow-downloads",
+  "allow-modals",
+  "allow-popups",
+] as const satisfies string[];
+
 /** `type: "view"` mass action — renders an iframe at `path`. */
 const ViewMassActionSchema = v.strictObject({
   ...massActionCommonEntries,
   type: v.literal("view"),
   path: nonEmptyStringValueSchema("mass action path"),
-  sandboxPermissions: v.optional(SandboxSchema),
+  sandboxPermissions: v.optional(
+    v.array(v.picklist(SANDBOX_PERMISSION_VALUES)),
+  ),
 });
 
 /** `type: "worker"` mass action — invokes a workerProcess runtime action. */
@@ -105,8 +107,6 @@ const MassActionSchema = v.variant(
 const AdminUiOrderSchema = v.object({
   massActions: v.optional(v.array(MassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
-  viewButtons: v.optional(v.array(OrderViewButtonSchema)),
-  customFees: v.optional(v.array(CustomFeeSchema)),
 });
 
 const AdminUiProductSchema = v.object({
@@ -117,10 +117,6 @@ const AdminUiProductSchema = v.object({
 const AdminUiCustomerSchema = v.object({
   massActions: v.optional(v.array(MassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
-});
-
-const BannerNotificationSchema = v.object({
-  orderViewButtons: v.optional(v.array(OrderViewButtonBannerSchema)),
 });
 
 // ─── Top-level schema ─────────────────────────────────────────────────────────
@@ -134,7 +130,6 @@ export const AdminUiSchema = v.object({
   order: v.optional(AdminUiOrderSchema),
   product: v.optional(AdminUiProductSchema),
   customer: v.optional(AdminUiCustomerSchema),
-  bannerNotification: v.optional(BannerNotificationSchema),
 });
 
 // ─── Types ────────────────────────────────────────────────────────────────────

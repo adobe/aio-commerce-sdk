@@ -3795,6 +3795,141 @@
         },
         "required": []
       },
+      "AdminUiMassAction": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "const": "view"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "confirm": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "notifications": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "error": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "selectionLimit": {
+                "type": "number",
+                "minimum": 1
+              },
+              "sandboxPermissions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["allow-downloads", "allow-modals", "allow-popups"]
+                }
+              }
+            },
+            "required": ["id", "label", "type", "path"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "const": "worker"
+              },
+              "runtimeAction": {
+                "type": "string",
+                "minLength": 1
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "confirm": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "notifications": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "error": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "selectionLimit": {
+                "type": "number",
+                "minimum": 1
+              },
+              "timeout": {
+                "type": "number",
+                "minimum": 1
+              }
+            },
+            "required": ["id", "label", "type", "runtimeAction"],
+            "additionalProperties": false
+          }
+        ]
+      },
       "AdminUiConfiguration": {
         "type": "object",
         "properties": {
@@ -3804,97 +3939,11 @@
               "massActions": {
                 "type": "array",
                 "items": {
-                  "oneOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "label": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "type": {
-                          "const": "view"
-                        },
-                        "path": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "title": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "confirm": {
-                          "type": "object"
-                        },
-                        "notifications": {
-                          "type": "object"
-                        },
-                        "selectionLimit": {
-                          "type": "number",
-                          "minimum": 1
-                        },
-                        "sandboxPermissions": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["id", "label", "type", "path"],
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "label": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "type": {
-                          "const": "worker"
-                        },
-                        "runtimeAction": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "title": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "confirm": {
-                          "type": "object"
-                        },
-                        "notifications": {
-                          "type": "object"
-                        },
-                        "selectionLimit": {
-                          "type": "number",
-                          "minimum": 1
-                        },
-                        "timeout": {
-                          "type": "number",
-                          "minimum": 1
-                        }
-                      },
-                      "required": ["id", "label", "type", "runtimeAction"],
-                      "additionalProperties": false
-                    }
-                  ]
+                  "$ref": "#/components/schemas/AdminUiMassAction"
                 }
               },
               "gridColumns": {
                 "$ref": "#/components/schemas/AdminUiGridColumns"
-              },
-              "viewButtons": {
-                "type": "array"
-              },
-              "customFees": {
-                "type": "array"
               }
             }
           },
@@ -3902,7 +3951,10 @@
             "type": "object",
             "properties": {
               "massActions": {
-                "type": "array"
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AdminUiMassAction"
+                }
               },
               "gridColumns": {
                 "$ref": "#/components/schemas/AdminUiGridColumns"
@@ -3913,18 +3965,13 @@
             "type": "object",
             "properties": {
               "massActions": {
-                "type": "array"
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AdminUiMassAction"
+                }
               },
               "gridColumns": {
                 "$ref": "#/components/schemas/AdminUiGridColumns"
-              }
-            }
-          },
-          "bannerNotification": {
-            "type": "object",
-            "properties": {
-              "orderViewButtons": {
-                "type": "array"
               }
             }
           }

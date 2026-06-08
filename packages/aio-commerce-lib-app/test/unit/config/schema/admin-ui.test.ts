@@ -27,6 +27,10 @@ describe("hasAdminUi", () => {
     expect(hasAdminUi(configWithAdminUi)).toBe(true);
   });
 
+  test("returns true for configWithAdminUiV2", () => {
+    expect(hasAdminUi(configWithAdminUiV2)).toBe(true);
+  });
+
   test("returns false for minimalValidConfig", () => {
     expect(hasAdminUi(minimalValidConfig)).toBe(false);
   });
@@ -219,7 +223,7 @@ describe("AdminUiSchema — mass actions", () => {
               label: "Action",
               type: "view",
               path: "#/action",
-              sandboxPermissions: "allow-modals",
+              sandboxPermissions: ["allow-modals"],
             },
           ],
         },
@@ -236,21 +240,6 @@ describe("AdminUiSchema — mass actions", () => {
               label: "Action",
               type: "worker",
               runtimeAction: "my-pkg/my-action",
-            },
-          ],
-        },
-      });
-      expect(result.success).toBe(true);
-    });
-
-    test("bannerNotification with orderViewButtons parses successfully", () => {
-      const result = v.safeParse(AdminUiSchema, {
-        bannerNotification: {
-          orderViewButtons: [
-            {
-              buttonId: "app::btn",
-              successMessage: "Done!",
-              errorMessage: "Failed!",
             },
           ],
         },

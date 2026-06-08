@@ -33,7 +33,7 @@ function isSandboxValue(value: string): value is SandboxValue {
   return SANDBOX_VALUES.includes(value as SandboxValue);
 }
 
-export const SandboxSchema = v.pipe(
+const SandboxSchema = v.pipe(
   v.string('Expected a string value for "sandbox"'),
   v.check(
     (val) => val.split(" ").every(isSandboxValue),
@@ -128,7 +128,7 @@ function withSandboxDisplayIframeCheck<
   );
 }
 
-export const OrderViewButtonSchema = withSandboxDisplayIframeCheck(
+const OrderViewButtonSchema = withSandboxDisplayIframeCheck(
   v.object({
     buttonId: nonEmptyStringValueSchema("view button ID"),
     label: nonEmptyStringValueSchema("view button label"),
@@ -140,7 +140,7 @@ export const OrderViewButtonSchema = withSandboxDisplayIframeCheck(
   }),
 );
 
-export const CustomFeeSchema = v.object({
+const CustomFeeSchema = v.object({
   id: nonEmptyStringValueSchema("custom fee ID"),
   label: nonEmptyStringValueSchema("custom fee label"),
   value: v.number("Custom fee value must be a number"),
@@ -155,7 +155,7 @@ export const CustomFeeSchema = v.object({
   ),
 });
 
-export const MenuItemSchema = v.object({
+const MenuItemSchema = v.object({
   id: nonEmptyStringValueSchema("menu item ID"),
   title: v.optional(nonEmptyStringValueSchema("menu item title")),
   parent: v.optional(nonEmptyStringValueSchema("menu item parent")),
@@ -164,7 +164,7 @@ export const MenuItemSchema = v.object({
   sandbox: v.optional(SandboxSchema),
 });
 
-export const OrderViewButtonBannerSchema = v.object({
+const OrderViewButtonBannerSchema = v.object({
   buttonId: nonEmptyStringValueSchema("view button ID"),
   successMessage: v.optional(nonEmptyStringValueSchema("success message")),
   errorMessage: v.optional(nonEmptyStringValueSchema("error message")),

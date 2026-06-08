@@ -13,11 +13,9 @@
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 
-import { hasAdminUi } from "#config/schema/admin-ui";
 import { AdminUiSdkSchema, hasAdminUiSdk } from "#config/schema/admin-ui-sdk";
 import {
   configWithAdminUiSdk,
-  configWithAdminUiV2,
   configWithFullAdminUiSdk,
   minimalValidConfig,
 } from "#test/fixtures/config";
@@ -48,21 +46,6 @@ describe("hasAdminUiSdk", () => {
       adminUiSdk: {},
     } as CommerceAppConfigOutputModel;
     expect(hasAdminUiSdk(config)).toBe(false);
-  });
-});
-
-describe("hasAdminUi", () => {
-  test("returns true for configWithAdminUiSdk", () => {
-    expect(hasAdminUi(configWithAdminUiV2)).toBe(true);
-  });
-
-  test("returns false for minimalValidConfig", () => {
-    expect(hasAdminUi(minimalValidConfig)).toBe(false);
-  });
-
-  test("returns false when adminUi is undefined", () => {
-    const config: CommerceAppConfigOutputModel = { ...minimalValidConfig };
-    expect(hasAdminUi(config)).toBe(false);
   });
 });
 
