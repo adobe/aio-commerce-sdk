@@ -16,8 +16,6 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import { MassActionConfirmSchema } from "./admin-ui-sdk";
-
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
 // ─── Grid columns ─────────────────────────────────────────────────────────────
@@ -51,6 +49,11 @@ const GridColumnsSchema = v.object({
 });
 
 // ─── Mass actions ─────────────────────────────────────────────────────────────
+
+const MassActionConfirmSchema = v.object({
+  title: v.optional(nonEmptyStringValueSchema("confirm title")),
+  message: v.optional(nonEmptyStringValueSchema("confirm message")),
+});
 
 const MassActionNotificationsSchema = v.object({
   success: v.optional(nonEmptyStringValueSchema("notifications.success")),

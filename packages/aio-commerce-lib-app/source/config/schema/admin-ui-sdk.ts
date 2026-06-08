@@ -51,7 +51,7 @@ const ColumnTypeSchema = v.picklist([
 const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
 const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
 
-export const MassActionConfirmSchema = v.object({
+const MassActionConfirmSchema = v.object({
   title: v.optional(nonEmptyStringValueSchema("confirm title")),
   message: v.optional(nonEmptyStringValueSchema("confirm message")),
 });
@@ -73,7 +73,7 @@ const GridColumnPropertySchema = v.object({
   align: ColumnAlignSchema,
 });
 
-export const GridColumnsSchema = v.object({
+const GridColumnsSchema = v.object({
   data: v.object({
     meshId: nonEmptyStringValueSchema("mesh ID"),
   }),
