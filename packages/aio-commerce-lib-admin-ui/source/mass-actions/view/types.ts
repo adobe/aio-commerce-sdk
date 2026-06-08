@@ -10,13 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
+import type * as v from "valibot";
+import type { MassActionSelectionSchema } from "./schema";
 
-export default mergeConfig(baseConfig, {
-  entry: [
-    "./source/index.ts",
-    "./source/grid-columns/index.ts",
-    "./source/mass-actions/index.ts",
-  ],
-});
+/** Parsed `selection` query parameter appended by Commerce to the iframe URL. */
+export type MassActionSelection = v.InferOutput<
+  typeof MassActionSelectionSchema
+>;
