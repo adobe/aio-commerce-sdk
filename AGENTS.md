@@ -121,6 +121,13 @@ Agentic tooling lives under `plugins/`. Each subdirectory is a self-contained pl
 
 When making changes to the SDK that affect a plugin's domain (e.g. changes to config schemas, CLI flags, installation APIs), update the relevant plugin content in the same PR. Plugin content must stay in sync with the SDK it describes — stale plugin content is treated the same as stale documentation.
 
+### Changelog
+
+`CHANGELOG.md` at the repo root tracks deprecations and planned breaking changes. Keep it in sync:
+
+- Any time you add a `@deprecated` JSDoc tag to a public symbol, add a corresponding entry under `[Unreleased] > Deprecated` in `CHANGELOG.md` — include the package name, the symbol being deprecated, its replacement, and why it was deprecated.
+- Any time a breaking change is planned but deferred (e.g. pending a future major), document it under `[Unreleased] > Breaking Changes (planned)` with enough context for consumers to prepare: what changes, why, and what they will need to update.
+
 ### Changesets
 
 - Every code change that requires a release must include a changeset (test-only changes do not need one)
