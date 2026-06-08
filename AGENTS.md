@@ -125,7 +125,7 @@ When making changes to the SDK that affect a plugin's domain (e.g. changes to co
 
 Each package that has deprecated symbols or planned breaking changes maintains a `BREAKING.md` in its root. Keep it in sync:
 
-- Any time you add a `@deprecated` JSDoc tag to a public symbol, add a corresponding entry under `[Unreleased] > Deprecated` in the package's `BREAKING.md` — include the symbol being deprecated, its replacement, and why it was deprecated.
+- Any time you add a `@deprecated` JSDoc tag to a public symbol, add a corresponding entry under `[Unreleased] > Deprecated` in the package's `BREAKING.md` — include the symbol being deprecated, its replacement, and why it was deprecated. Non-exported symbols do not qualify, even if tagged `@deprecated`.
 - Any time a breaking change is planned but deferred (e.g. pending a future major), document it under `[Unreleased] > Breaking Changes (planned)` with enough context for consumers to prepare: what changes, why, and what they will need to update.
 - Create `BREAKING.md` if it does not exist yet in the package.
 
