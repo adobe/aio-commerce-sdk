@@ -175,20 +175,16 @@ metadata and is never sent to Commerce.
 
 ### The target environment at install time
 
-No environment detection is needed at install: the install action already receives the
+Nothing is resolved or inferred at install: the install action already receives the
 environment from its caller. `InstallationRequestBodySchema`
 (`packages/aio-commerce-lib-app/source/actions/installation/schema.ts`) requires a
 `commerceEnv` field, App Management sends it (derived from the active Commerce instance), and
 the router maps it onto the workflow params as `AIO_COMMERCE_API_FLAVOR`
-(`buildWorkflowParams` in `actions/installation/router.ts`). Install steps therefore read the
-environment directly from the params — either as `AIO_COMMERCE_API_FLAVOR`, or via the
-`CommerceFlavor` the step contexts already compute when they build the Commerce client through
-`resolveCommerceHttpClientParams(params).config.flavor`
-(`management/installation/events/context.ts`, `management/installation/webhooks/context.ts`).
+(`buildWorkflowParams` in `actions/installation/router.ts`). Install steps read it directly
+from the params (`AIO_COMMERCE_API_FLAVOR`).
 
-Because `commerceEnv` is a required install input (and a Commerce base URL is required
-regardless, to build the Commerce client), the environment is always known at install time —
-there is no unresolved/`null` case to handle here.
+Because `commerceEnv` is a required install input, the environment is always known at install
+time — there is no unresolved/`null` case to handle here.
 
 ### Install-time filtering
 
@@ -308,9 +304,6 @@ client-side filtering, no new badge or label.
   skip-empty-provider rule naturally expresses "create no provider or registration when nothing
   applies". Per-provider scoping is coarser and cannot express "this provider has both
   PaaS-only and SaaS-only events". Chose per-event.
-- **Detecting the environment from auth strategy.** Rejected — PaaS can use IMS or
-  Integration auth, so auth strategy does not determine the environment. Only the API URL or
-  explicit environment param does.
 - **Leaving filtering to consumers (as lib-config does).** lib-config is purely declarative
   and relies on consumers to filter. Here the SDK must skip provider/registration creation at
   install, so the SDK itself must filter. Rejected the consumer-only approach.
