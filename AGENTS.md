@@ -121,6 +121,14 @@ Agentic tooling lives under `plugins/`. Each subdirectory is a self-contained pl
 
 When making changes to the SDK that affect a plugin's domain (e.g. changes to config schemas, CLI flags, installation APIs), update the relevant plugin content in the same PR. Plugin content must stay in sync with the SDK it describes — stale plugin content is treated the same as stale documentation.
 
+### Breaking changes
+
+Each package that has deprecated symbols or planned breaking changes maintains a `BREAKING.md` in its root. Keep it in sync:
+
+- Any time you add a `@deprecated` JSDoc tag to a public symbol, add a corresponding entry under `[Unreleased] > Deprecated` in the package's `BREAKING.md` — include the symbol being deprecated, its replacement, and why it was deprecated. Non-exported symbols do not qualify, even if tagged `@deprecated`.
+- Any time a breaking change is planned but deferred (e.g. pending a future major), document it under `[Unreleased] > Breaking Changes (planned)` with enough context for consumers to prepare: what changes, why, and what they will need to update.
+- Create `BREAKING.md` if it does not exist yet in the package.
+
 ### Changesets
 
 - Every code change that requires a release must include a changeset (test-only changes do not need one)
@@ -131,4 +139,6 @@ When making changes to the SDK that affect a plugin's domain (e.g. changes to co
   - `minor` — additive non-breaking changes (new exports, new optional fields, enriched responses)
   - `major` — breaking changes (removed exports, required fields added to input/write types, renamed types)
 - If the bump type is ambiguous, ask before proceeding
+- Major changesets must include migration guidance in the changeset body: a link to an external migration guide if one exists, or inline before/after code snippets otherwise
+- When a package receives a major bump, also include `packages/aio-commerce-sdk` in the same changeset with a major bump — it re-exports every public library and must version in lockstep
 - Before each commit, check if the changeset message still accurately describes the change
