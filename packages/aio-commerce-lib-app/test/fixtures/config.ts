@@ -491,6 +491,80 @@ export function createConfigWithTwoCommerceEventingSources() {
   } satisfies CommerceAppConfigOutputModel;
 }
 
+/** Config fixture with all three adminUi grid column extensions configured. */
+export const configWithAdminUi = {
+  metadata: { ...mockMetadata, id: "test-app-admin-ui" },
+  adminUi: {
+    order: {
+      gridColumns: {
+        label: "Order fulfillment data",
+        description: "Adds fulfillment status to the order grid",
+        runtimeAction: "orders/fetch-order-grid-data",
+        columns: [
+          {
+            id: "fulfillment_status",
+            label: "Fulfillment",
+            type: "string" as const,
+            align: "left" as const,
+          },
+        ],
+      },
+    },
+    product: {
+      gridColumns: {
+        label: "Product inventory data",
+        description: "Adds inventory status to the product grid",
+        runtimeAction: "products/fetch-product-grid-data",
+        columns: [
+          {
+            id: "inventory_status",
+            label: "Inventory",
+            type: "string" as const,
+            align: "left" as const,
+          },
+        ],
+      },
+    },
+    customer: {
+      gridColumns: {
+        label: "Customer loyalty data",
+        description: "Adds loyalty tier to the customer grid",
+        runtimeAction: "customers/fetch-customer-grid-data",
+        columns: [
+          {
+            id: "loyalty_tier",
+            label: "Loyalty Tier",
+            type: "string" as const,
+            align: "left" as const,
+          },
+        ],
+      },
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with only order adminUi grid columns configured. */
+export const configWithAdminUiSingleGrid = {
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-single-grid" },
+  adminUi: {
+    order: {
+      gridColumns: {
+        label: "Order fulfillment data",
+        description: "Adds fulfillment status to the order grid",
+        runtimeAction: "orders/fetch-order-grid-data",
+        columns: [
+          {
+            id: "fulfillment_status",
+            label: "Fulfillment",
+            type: "string" as const,
+            align: "left" as const,
+          },
+        ],
+      },
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 /** Config fixture with dynamic business config list options. */
 export const configWithDynamicListOptions = {
   metadata: { ...mockMetadata, id: "dynamic-list-options-app" },

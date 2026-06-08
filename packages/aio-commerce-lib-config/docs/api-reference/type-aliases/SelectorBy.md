@@ -8,7 +8,7 @@ type SelectorBy =
   | SelectorByCommerceScopeId;
 ```
 
-Defined in: [config-utils.ts:668](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-config/source/config-utils.ts#L668)
+Defined in: [config-utils.ts:668](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-config/source/config-utils.ts#L668)
 
 Discriminated union type for selecting a scope by different methods.
 

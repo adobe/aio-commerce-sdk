@@ -246,7 +246,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
 }, T>>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L110)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L110)
 
 Validates a specific domain configuration within the commerce app config.
 
@@ -259,7 +259,7 @@ schema for that specific domain.
 
 | Type Parameter                                                                                                                                                                                                                                       | Description                                                |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `T` _extends_ \| `"metadata"` \| `"businessConfig"` \| `"eventing"` \| `"adminUiSdk"` \| `"installation"` \| `"webhooks"` \| `"eventing.commerce"` \| `"eventing.external"` \| `"installation.customInstallationSteps"` \| `"businessConfig.schema"` | The type of the domain, constrained to valid domain names. |
+| `T` _extends_ \| `"metadata"` \| `"businessConfig"` \| `"eventing"` \| `"adminUiSdk"` \| `"installation"` \| `"webhooks"` \| `"businessConfig.schema"` \| `"eventing.commerce"` \| `"eventing.external"` \| `"installation.customInstallationSteps"` | The type of the domain, constrained to valid domain names. |
 
 ## Parameters
 
