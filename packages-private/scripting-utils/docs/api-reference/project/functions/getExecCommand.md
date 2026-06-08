@@ -6,7 +6,7 @@ function getExecCommand(
 ): string;
 ```
 
-Defined in: [project.ts:187](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages-private/scripting-utils/source/project.ts#L187)
+Defined in: [project.ts:187](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages-private/scripting-utils/source/project.ts#L187)
 
 Get the exec command that runs a **locally installed** binary from
 `node_modules/.bin` for the given package manager.

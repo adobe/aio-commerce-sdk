@@ -14,6 +14,7 @@ import { describe, expect, test } from "vitest";
 
 import { getConfigDomains, hasConfigDomain } from "#config/schema/domains";
 import {
+  configWithAdminUi,
   configWithAdminUiSdk,
   configWithBusinessConfig,
   configWithCommerceEventing,
@@ -87,6 +88,14 @@ describe.concurrent("domains schema helpers", () => {
       expect(domains.has("eventing")).toBe(false);
     });
 
+    test("should include adminUi domain when adminUi grid columns are present", () => {
+      const domains = getConfigDomains(configWithAdminUi);
+
+      expect(domains.has("metadata")).toBe(true);
+      expect(domains.has("adminUi")).toBe(true);
+      expect(domains.has("adminUiSdk")).toBe(false);
+    });
+
     test("should include multiple domains when config has multiple features", () => {
       const domains = getConfigDomains(configWithEventingAndWebhooks);
 
@@ -142,6 +151,7 @@ describe.concurrent("domains schema helpers", () => {
         domain: "installation.customInstallationSteps",
       },
       { config: configWithAdminUiSdk, domain: "adminUiSdk" },
+      { config: configWithAdminUi, domain: "adminUi" },
     ] as const)('should return true for domain "$domain" when config with "$domain" domain is present', ({
       config,
       domain,

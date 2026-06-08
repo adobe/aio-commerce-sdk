@@ -28,7 +28,7 @@ Extensibility domains (events, webhooks, business config) are added separately v
 
 ## Step 1 — Create the config
 
-Derive values for the following fields from the user's intent, confirm, and write the file to the project root:
+If `app.commerce.config.ts` already exists in the project root, do **not** overwrite it — skip straight to Step 2 (this skill is safe to re-invoke on an app that already has a config). Otherwise, derive values for the following fields from the user's intent, confirm, and write the file to the project root:
 
 ```ts
 // app.commerce.config.ts
@@ -48,13 +48,13 @@ See [assets/app.commerce.config.ts](assets/app.commerce.config.ts) for the full 
 
 ## Step 2 — Initialize the project
 
-Run init — it finds the existing config, validates it, and handles project setup:
+Always run init — it finds the existing config, validates it, and handles project setup:
 
 ```sh
 npx @adobe/aio-commerce-lib-app init
 ```
 
-Since `app.commerce.config.ts` already exists, init skips the interactive prompts.
+Since `app.commerce.config.ts` already exists, init skips the interactive prompts. Re-running is safe: when a config is present it installs dependencies and (re)generates the project files — the `app-management` package is regenerated, while user packages under `src/commerce-extensibility-1/actions/` are preserved (see Project structure below).
 
 ### Project structure
 

@@ -27,6 +27,7 @@ export {
   validateCommerceAppConfig,
   validateCommerceAppConfigDomain,
 } from "./lib/validate";
+export { hasAdminUi } from "./schema/admin-ui";
 export { hasAdminUiSdk } from "./schema/admin-ui-sdk";
 export {
   hasBusinessConfig,
@@ -50,12 +51,18 @@ export { hasMetadata } from "./schema/metadata";
 export { hasWebhooks } from "./schema/webhooks";
 
 export type {
+  AdminUiConfig,
+  AdminUiConfiguration,
+  GridColumn,
+  GridColumns,
+} from "./schema/admin-ui";
+export type {
   AdminUiSdkConfiguration,
+  AdminUiSdkGridColumns,
   AdminUiSdkRegistration,
   BannerNotification,
   CustomerMassAction,
   CustomFee,
-  GridColumns,
   MenuItem,
   OrderMassAction,
   OrderViewButton,

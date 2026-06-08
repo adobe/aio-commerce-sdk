@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-lib-admin-ui",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": false,
   "engines": {
     "node": ">=22 <=24"
@@ -41,11 +41,22 @@
           "default": "./dist/cjs/index.cjs"
         }
       },
+      "./grid-columns": {
+        "import": {
+          "types": "./dist/es/grid-columns/index.d.mts",
+          "default": "./dist/es/grid-columns/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/grid-columns/index.d.cts",
+          "default": "./dist/cjs/grid-columns/index.cjs"
+        }
+      },
       "./package.json": "./package.json"
     }
   },
   "exports": {
     "./api": "./source/index.ts",
+    "./grid-columns": "./source/grid-columns/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {

@@ -8,7 +8,7 @@ function replaceOperation<TValue>(
 ): ReplaceOperation<TValue>;
 ```
 
-Defined in: [responses/operations/presets.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/40732fdfa3764f9a9793fdba8984c173c9e0ef32/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L101)
+Defined in: [responses/operations/presets.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L101)
 
 Creates a replace operation response
 Causes Commerce to replace a value in triggered event arguments for the provided path.
