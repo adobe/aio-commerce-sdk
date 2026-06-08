@@ -177,9 +177,10 @@ metadata and is never sent to Commerce.
 
 The target environment is resolved from the installation params by a dedicated,
 **non-throwing** helper added to lib-api — sketch: `resolveCommerceEnvironment(params):
-CommerceFlavor | null`. It returns the explicit `AIO_COMMERCE_API_FLAVOR` when valid,
-otherwise infers `"paas"` / `"saas"` from `AIO_COMMERCE_API_BASE_URL`, and returns `null` when
-neither is available. lib-api already has the internal pieces (`isFlavor`,
+CommerceFlavor | null` (and since `CommerceFlavor` now aliases lib-core's `CommerceEnv`, the
+resolver's return type and the schema's type are one and the same — no reconciliation needed).
+It returns the explicit `AIO_COMMERCE_API_FLAVOR` when valid, otherwise infers `"paas"` /
+`"saas"` from `AIO_COMMERCE_API_BASE_URL`, and returns `null` when neither is available. lib-api already has the internal pieces (`isFlavor`,
 `resolveCommerceFlavorFromApiUrl` in
 `packages/aio-commerce-lib-api/source/lib/commerce/helpers.ts`); the helper exposes them as a
 small public function, re-exported from lib-api's main entry (`source/index.ts`, alongside
@@ -369,8 +370,8 @@ re-exported to stay additive). Two implementation-time items remain:
 
 ## Future possibilities
 
-- Apply the same `env` scoping to any future extensibility component, using the shared
-  common-utils schema.
+- Apply the same `env` scoping to any future extensibility component, using the shared lib-core
+  schema.
 - A shared "environment-scoped item" filter helper if more components adopt the pattern.
 - If Business Configurations later renders the environment scope visually, webhooks and
   events could adopt the same badge for full UI parity.
