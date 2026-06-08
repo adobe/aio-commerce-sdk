@@ -308,12 +308,6 @@ export type OrderViewButton = v.InferInput<typeof OrderViewButtonSchema>;
 export type CustomFee = v.InferInput<typeof CustomFeeSchema>;
 
 /**
- * Grid columns registration configuration.
- * @experimental
- */
-export type GridColumns = v.InferInput<typeof GridColumnsSchema>;
-
-/**
  * Banner notification registration configuration.
  * @experimental
  */
@@ -331,6 +325,14 @@ export type AppConfigWithAdminUiSdk<
 > = T & {
   adminUiSdk: NonNullable<T["adminUiSdk"]>;
 };
+
+/**
+ * Grid columns registration configuration for the Admin UI SDK (`adminUiSdk`).
+ * @deprecated Use {@link GridColumns} with the `adminUi` config key and `commerce/backend-ui/2` instead.
+ * @experimental
+ */
+// Prefixed to avoid a naming conflict with the v2 GridColumns type exported from admin-ui.ts.
+export type AdminUiSdkGridColumns = v.InferInput<typeof GridColumnsSchema>;
 
 /**
  * Check if config has Admin UI SDK registration configuration.

@@ -18,17 +18,20 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
   BACKEND_UI_EXTENSION_POINT_ID,
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
 import { exec, run } from "#commands/hooks/pre-app-build";
 import {
   getAdminUiSdkRegistrationActionPath,
+  getExtConfigPath,
   getManifestPath,
   getSchemaPath,
 } from "#commands/utils";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
+  configWithAdminUi,
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithFullAdminUiSdk,
@@ -149,6 +152,39 @@ describe("commands/hooks/pre-app-build", () => {
       );
     });
 
+    test("writes ext.config.yaml with workerProcess entries for backend-ui/2 when adminUi is configured", async () => {
+      await withTempProject(
+        makeProjectFiles(configWithAdminUi),
+        async (tempDir) => {
+          await run("backend-ui/2");
+
+          const extConfigPath = join(
+            tempDir,
+            getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+          );
+
+          expect(existsSync(extConfigPath)).toBe(true);
+
+          const content = await readFile(extConfigPath, "utf-8");
+          expect(content).toContain("orders/fetch-order-grid-data");
+          expect(content).toContain("workerProcess");
+        },
+      );
+    });
+
+    test("does not write ext.config.yaml for backend-ui/2 when adminUi is absent", async () => {
+      await withTempProject(MINIMAL_PROJECT, async (tempDir) => {
+        await run("backend-ui/2");
+
+        const extConfigPath = join(
+          tempDir,
+          getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+        );
+
+        expect(existsSync(extConfigPath)).toBe(false);
+      });
+    });
+
     test("throws for unsupported extension", async () => {
       await withTempProject(MINIMAL_PROJECT, async () => {
         await expect(
@@ -217,6 +253,21 @@ describe("commands/hooks/pre-app-build", () => {
       await withTempProject(
         {
           ...makeProjectFiles(configWithFullAdminUiSdk),
+          ...makeTemplateFiles(),
+        },
+        async () => {
+          await exec();
+          expect(exitSpy).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("runs successfully for backend-ui/2", async () => {
+      vi.stubEnv("EXTENSION", "backend-ui/2");
+
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithAdminUi),
           ...makeTemplateFiles(),
         },
         async () => {
