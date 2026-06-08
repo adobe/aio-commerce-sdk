@@ -10,9 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
+import type * as v from "valibot";
+import type { GridRequestSchema, GridTypeSchema } from "./schema";
 
-export default mergeConfig(baseConfig, {
-  entry: ["./source/index.ts", "./source/grid-columns/index.ts"],
-});
+/** Grid identifier sent on the wire. */
+export type GridType = v.InferOutput<typeof GridTypeSchema>;
+
+/** Parsed request body sent by Commerce to a grid column handler. */
+export type GridRequest = v.InferOutput<typeof GridRequestSchema>;

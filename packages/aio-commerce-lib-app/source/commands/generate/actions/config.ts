@@ -210,7 +210,33 @@ export function buildBusinessConfigurationExtConfig() {
 }
 
 /**
- * Builds the ext.config.yaml configuration for the Admin UI SDK backend-ui extension.
+ * Builds the ext.config.yaml for the Admin UI grid column v2 extension (`commerce/backend-ui/2`).
+ * Derives `workerProcess` declarations from the `runtimeAction` values in `adminUi` config.
+ */
+export function buildAdminUiV2ExtConfig(
+  appConfig: CommerceAppConfigOutputModel,
+) {
+  const adminUi = appConfig.adminUi;
+  const referencedActions = (["order", "product", "customer"] as const)
+    .map((gridType) => adminUi?.[gridType]?.gridColumns?.runtimeAction)
+    .filter(
+      (runtimeAction): runtimeAction is string => runtimeAction !== undefined,
+    );
+  const runtimeActions = [...new Set(referencedActions)];
+
+  return {
+    hooks: {
+      "pre-app-build":
+        "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build",
+    },
+    operations: {
+      workerProcess: runtimeActions.map((impl) => ({ type: "action", impl })),
+    },
+  } satisfies ExtConfig;
+}
+
+/**
+ * Builds the ext.config.yaml configuration for the Admin UI SDK backend-ui v1 extension.
  */
 export function buildAdminUiSdkExtConfig() {
   return {

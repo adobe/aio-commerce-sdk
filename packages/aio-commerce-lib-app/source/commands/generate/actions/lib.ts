@@ -29,6 +29,7 @@ import stringify from "safe-stable-stringify";
 import {
   APP_CONFIG_IMPORT_ALIAS,
   BACKEND_UI_EXTENSION_POINT_ID,
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   getExtensionPointFolderPath,
@@ -50,6 +51,7 @@ import {
 
 import {
   buildAdminUiSdkExtConfig,
+  buildAdminUiV2ExtConfig,
   buildAppManagementExtConfig,
   buildBusinessConfigurationExtConfig,
   CUSTOM_IMPORTS_PLACEHOLDER,
@@ -73,7 +75,8 @@ export const TEMPLATES_DIR = join(__dirname, "templates");
 type ValidExtensionPointId =
   | typeof EXTENSIBILITY_EXTENSION_POINT_ID
   | typeof CONFIGURATION_EXTENSION_POINT_ID
-  | typeof BACKEND_UI_EXTENSION_POINT_ID;
+  | typeof BACKEND_UI_EXTENSION_POINT_ID
+  | typeof BACKEND_UI_V2_EXTENSION_POINT_ID;
 
 const TYPESCRIPT_CONFIG_EXTENSIONS = new Set([".ts", ".mts", ".cts"]);
 const LEADING_DOT_SLASH_PATTERN = /^\.\//u;
@@ -316,6 +319,11 @@ export async function updateExtConfig(
 
     case BACKEND_UI_EXTENSION_POINT_ID: {
       extConfig = buildAdminUiSdkExtConfig();
+      break;
+    }
+
+    case BACKEND_UI_V2_EXTENSION_POINT_ID: {
+      extConfig = buildAdminUiV2ExtConfig(appConfig);
       break;
     }
   }
