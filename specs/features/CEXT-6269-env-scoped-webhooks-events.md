@@ -133,44 +133,30 @@ environment'`) or an unknown value (`'Expected one of: "paas", "saas"'`).
 
 ### Shared `env` schema
 
-lib-config currently defines `COMMERCE_ENVS`, `CommerceEnvSchema`, and `EnvSchema`
-privately in
-`packages/aio-commerce-lib-config/source/modules/schema/fields.ts` and exports none of
-them. To keep a single source of truth across components, extract the env primitives into
-`@aio-commerce-sdk/common-utils` (`packages-private/common-utils/source/valibot/`), which is
-already the home for shared valibot helpers (e.g. `nonEmptyStringValueSchema`) consumed by
-the lib-app eventing and webhook _config_ schemas this change edits
-(`config/schema/eventing.ts`, `config/schema/webhooks.ts`):
+The Commerce environment is already a first-class concept in `@adobe/aio-commerce-lib-core`'s
+dependency tree: lib-api defines the `"paas" | "saas"` union as `CommerceFlavor`, and
+lib-config privately re-defines the same literals as `COMMERCE_ENVS`/`CommerceEnvSchema`/
+`EnvSchema` (`packages/aio-commerce-lib-config/source/modules/schema/fields.ts`), as does the
+config action (`aio-commerce-lib-app/source/actions/config/schema.ts`). Rather than add a
+fourth copy, this PR establishes a single canonical home in **lib-core** — the lowest-level
+public package, which every consumer (lib-config, lib-app, lib-webhooks) already depends on and
+which already uses valibot. A new additive subpath export (e.g. `./commerce`) provides:
 
 - `COMMERCE_ENVS = ["paas", "saas"] as const`
-- `type CommerceEnv = (typeof COMMERCE_ENVS)[number]` — the environment-domain name for the
-  same `"paas" | "saas"` union lib-api calls `CommerceFlavor` (they are kept separate because
-  common-utils must not depend on lib-api; see below). It is also the name the config action
-  already exports.
+- `type CommerceEnv = (typeof COMMERCE_ENVS)[number]`
 - `commerceEnvSchema` — a picklist over `COMMERCE_ENVS`
 - `commerceEnvArraySchema` — a non-empty `v.array(commerceEnvSchema)`
 
-These are exported as **bare camelCase schema constants**, not `name`-parameterized factories
-like the `xxxValueSchema(name)` helpers: env validators carry fixed messages ("Expected one
-of: …", "must contain at least one commerce environment"), so there is no field `name` to
-thread through. Call sites apply the optional wrapper themselves:
-`env: v.optional(commerceEnvArraySchema)`.
+`commerceEnvSchema`/`commerceEnvArraySchema` are exported as **bare schema constants** (env
+validators carry fixed messages — "Expected one of: …", "must contain at least one commerce
+environment" — so there is no field `name` to parameterize). Call sites apply the optional
+wrapper themselves: `env: v.optional(commerceEnvArraySchema)`.
 
-`COMMERCE_ENVS` is currently duplicated in two places — lib-config's `BaseOptionSchema.env`
-(`source/modules/schema/fields.ts`) and the config action's query schema
-(`aio-commerce-lib-app/source/actions/config/schema.ts`, which also exports a `CommerceEnv`
-type). Adding the literal to the webhook/event schemas would make it a third copy; instead,
-this PR consolidates all of them onto the shared common-utils definitions and removes the
-private copies, so the feature ships with a single source of truth. To keep the change
-additive (and the changeset `minor`), the config action continues to export `CommerceEnv` —
-now an alias to the common-utils type — so nothing is removed from the public surface.
-
-The common-utils `CommerceEnv` must stay in sync with lib-api's `CommerceFlavor`. lib-api has
-no `COMMERCE_ENVS` array to compare against (its `CommerceFlavor` is derived from the Commerce
-client config union), so drift is guarded by a **type-equality assertion** (`CommerceEnv` ⟺
-`CommerceFlavor`) rather than a value comparison. common-utils must not depend on lib-api, so
-the literals live in common-utils and the assertion lives where both types are visible (e.g.
-lib-api or lib-app).
+Because lib-api depends on lib-core, `CommerceFlavor` becomes an **alias** of lib-core's
+`CommerceEnv` — so there is one type, not two kept in sync, and no drift-assertion is needed.
+lib-config's private definitions and the config action's `COMMERCE_ENVS`/`CommerceEnv` are
+refactored to consume lib-core; the config action keeps exporting `CommerceEnv` (now re-exported
+from lib-core) so nothing is removed from the public surface and the bump stays `minor`.
 
 ### Schema placement
 
