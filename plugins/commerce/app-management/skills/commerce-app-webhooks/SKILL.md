@@ -96,6 +96,8 @@ webhooks: [
 ];
 ```
 
+Each entry also accepts an optional `env` array (`"paas"` / `"saas"`) to scope it to specific Commerce environments; when omitted, the webhook applies to all environments and is only subscribed at install time on the listed ones.
+
 See [assets/webhooks-config.ts](assets/webhooks-config.ts) for the full annotated reference.
 
 ## Creating the handler action

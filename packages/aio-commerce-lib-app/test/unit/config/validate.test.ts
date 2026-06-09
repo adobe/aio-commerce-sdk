@@ -1531,6 +1531,118 @@ describe("validateConfigDomain", () => {
 
       expect(() => validateCommerceAppConfig(config)).toThrow();
     });
+
+    test.each([
+      ["paas"],
+      ["saas"],
+      ["paas", "saas"],
+    ])("should accept entry scoped to env %j", (...env) => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            env,
+            runtimeAction: "my-package/handle-webhook",
+            webhook: baseWebhookDefinition,
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).not.toThrow();
+      const validated = validateCommerceAppConfig(config);
+      expect(validated.webhooks?.[0]?.env).toEqual(env);
+    });
+
+    test("should reject an empty env array", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            env: [],
+            runtimeAction: "my-package/handle-webhook",
+            webhook: baseWebhookDefinition,
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).toThrow();
+    });
+
+    test("should reject an unknown env value", () => {
+      const config = {
+        metadata: {
+          id: "test-app",
+          displayName: "Test",
+          description: "Test",
+          version: "1.0.0",
+        },
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            env: ["onprem"],
+            runtimeAction: "my-package/handle-webhook",
+            webhook: baseWebhookDefinition,
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).toThrow();
+    });
+  });
+
+  describe("event env scoping", () => {
+    const makeEventConfig = (env: unknown) => ({
+      metadata: minimalValidConfig.metadata,
+      eventing: {
+        commerce: [
+          {
+            provider: { label: "Commerce Provider", description: "Events" },
+            events: [
+              {
+                name: "plugin.my_event",
+                label: "My Event",
+                description: "Plugin event",
+                fields: [{ name: "field" }],
+                runtimeActions: ["my-package/action"],
+                env,
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    test("should accept a commerce event scoped to an environment", () => {
+      const config = makeEventConfig(["saas"]);
+
+      expect(() => validateCommerceAppConfig(config)).not.toThrow();
+      const validated = validateCommerceAppConfig(config);
+      expect(validated.eventing?.commerce?.[0]?.events?.[0]?.env).toEqual([
+        "saas",
+      ]);
+    });
+
+    test("should reject a commerce event with an empty env array", () => {
+      expect(() => validateCommerceAppConfig(makeEventConfig([]))).toThrow();
+    });
+
+    test("should reject a commerce event with an unknown env value", () => {
+      expect(() =>
+        validateCommerceAppConfig(makeEventConfig(["onprem"])),
+      ).toThrow();
+    });
   });
 
   test("should validate commerce event with fields that have optional source", () => {

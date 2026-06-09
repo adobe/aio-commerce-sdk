@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { commerceEnvArraySchema } from "@adobe/aio-commerce-lib-core/commerce";
 import {
   booleanValueSchema,
   nonEmptyStringValueSchema,
@@ -19,6 +20,13 @@ import {
 import * as v from "valibot";
 
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
+
+/**
+ * Optional list of Commerce environments a webhook entry applies to. When omitted,
+ * the webhook applies to all environments; when set, it is only subscribed on the
+ * listed environments at install time.
+ */
+const webhookEnvSchema = v.optional(commerceEnvArraySchema);
 
 /** Schema for webhook field configuration (name and optional source). */
 const WebhookFieldSchema = v.object({
@@ -104,6 +112,7 @@ const WebhookEntryWithRuntimeActionSchema = v.object({
   label: nonEmptyStringValueSchema("webhook label"),
   description: nonEmptyStringValueSchema("webhook description"),
   category: v.optional(CategorySchema),
+  env: webhookEnvSchema,
   runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
   requireAdobeAuth: v.optional(booleanValueSchema("requireAdobeAuth")),
   webhook: WebhookDefinitionBaseSchema,
@@ -114,6 +123,7 @@ const WebhookEntryWithUrlSchema = v.object({
   label: nonEmptyStringValueSchema("webhook label"),
   description: nonEmptyStringValueSchema("webhook description"),
   category: v.optional(CategorySchema),
+  env: webhookEnvSchema,
   webhook: WebhookDefinitionWithUrlSchema,
 });
 

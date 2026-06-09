@@ -93,6 +93,42 @@ describe("createWebhookSubscriptions", () => {
     expect(result.subscribedWebhooks).toHaveLength(config.webhooks.length);
   });
 
+  test("skips webhooks scoped to a different environment", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+    const context = makeContext(
+      subscribeWebhook,
+      vi.fn().mockResolvedValue([]),
+      {
+        ...DEFAULT_PARAMS,
+        AIO_COMMERCE_API_FLAVOR: "saas",
+      },
+    );
+
+    const config = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          label: "PaaS only",
+          env: ["paas"],
+          webhook: { hook_name: "paas_only" },
+        }),
+        createMockRuntimeWebhookEntry({
+          label: "All envs",
+          webhook: { hook_name: "all_envs" },
+        }),
+      ],
+    });
+
+    const result = await createWebhookSubscriptions(config, context);
+
+    expect(subscribeWebhook).toHaveBeenCalledTimes(1);
+    expect(result.subscribedWebhooks).toHaveLength(1);
+    expect(subscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hook_name: expect.stringContaining("all_envs"),
+      }),
+    );
+  });
+
   test("passes webhook.url directly when it is explicitly set", async () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
     const context = makeContext(subscribeWebhook);

@@ -13,6 +13,7 @@ export default defineConfig({
       label: "Validate Product Save", // required, non-empty
       description: "Validates product data before saving.", // required, non-empty
       category: "validation", // optional: "validation" | "append" | "modification"
+      // env: ["paas"],                  // optional: scope to Commerce environments ("paas" | "saas"); omitted = all
       runtimeAction: "my-package/validate-product", // <package>/<action>; mutually exclusive with webhook.url
       webhook: {
         webhook_method: "plugin.magento.catalog_product.save", // Commerce operation to intercept

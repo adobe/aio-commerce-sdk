@@ -11,6 +11,7 @@
  */
 
 import { resolveBusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
+import { commerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import {
   internalServerError,
   ok,
@@ -21,6 +22,7 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 import * as v from "valibot";
 
+import { filterAppConfigByEnv } from "#config/env-filter";
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 import { getConfigDomains } from "#config/schema/domains";
@@ -57,7 +59,8 @@ export const router = new HttpActionRouter<AppConfigActionContext>().use(
 
 /** GET / - Get app config */
 router.get("/", {
-  handler: async (_req, { logger, rawParams }) => {
+  query: v.object({ commerceEnv: v.optional(commerceEnvSchema) }),
+  handler: async (req, { logger, rawParams }) => {
     const rawAppConfig = rawParams.appConfig;
 
     if (!rawAppConfig) {
@@ -81,8 +84,13 @@ router.get("/", {
     }
 
     logger.debug("Validating app config...");
-    const config = validateCommerceAppConfig(appConfig);
+    const validatedConfig = validateCommerceAppConfig(appConfig);
     logger.debug("Successfully validated the app config");
+
+    const { commerceEnv } = req.query;
+    const config = commerceEnv
+      ? filterAppConfigByEnv(validatedConfig, commerceEnv)
+      : validatedConfig;
 
     const domains = getConfigDomains(rawParams.appConfig);
     const openApiSpecUrl = `${getServerUrl()}/app-config/openapi.json?ck=${getOpenApiCacheKey(domains)}`;

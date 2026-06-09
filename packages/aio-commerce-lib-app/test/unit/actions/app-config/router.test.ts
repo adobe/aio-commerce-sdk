@@ -92,6 +92,106 @@ describe("appConfigRuntimeAction", () => {
       });
     });
 
+    test("filters webhooks and events to the commerceEnv query param", async () => {
+      const appConfig = {
+        metadata: minimalValidConfig.metadata,
+        webhooks: [
+          {
+            label: "PaaS only",
+            description: "PaaS-only webhook",
+            runtimeAction: "my-package/paas",
+            env: ["paas"],
+            webhook: {
+              webhook_method: "observer.catalog_product_save_after",
+              webhook_type: "after",
+              batch_name: "paas_batch",
+              hook_name: "paas_hook",
+              method: "POST",
+            },
+          },
+          {
+            label: "All envs",
+            description: "Webhook for all environments",
+            runtimeAction: "my-package/all",
+            webhook: {
+              webhook_method: "observer.catalog_product_save_after",
+              webhook_type: "after",
+              batch_name: "all_batch",
+              hook_name: "all_hook",
+              method: "POST",
+            },
+          },
+        ],
+        eventing: {
+          commerce: [
+            {
+              provider: { label: "Orders", description: "Order events" },
+              events: [
+                {
+                  name: "plugin.order_placed",
+                  label: "Order Placed",
+                  description: "Order placed",
+                  fields: [{ name: "order_id" }],
+                  runtimeActions: ["my-package/on-order"],
+                  env: ["paas"],
+                },
+              ],
+            },
+          ],
+        },
+      } as const;
+
+      const handler = appConfigRuntimeAction({
+        // @ts-expect-error - inline test config matches the schema shape
+        appConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({ query: "commerceEnv=saas" }),
+      );
+
+      expect.assert(result.type === "success");
+      const body = result.body as {
+        webhooks: { label: string }[];
+        eventing: { commerce: unknown[] };
+      };
+      expect(body.webhooks.map((w) => w.label)).toEqual(["All envs"]);
+      // The single commerce provider has only a PaaS event, so it is dropped on SaaS.
+      expect(body.eventing.commerce).toHaveLength(0);
+    });
+
+    test("returns the full config when commerceEnv is omitted", async () => {
+      const appConfig = {
+        metadata: minimalValidConfig.metadata,
+        webhooks: [
+          {
+            label: "PaaS only",
+            description: "PaaS-only webhook",
+            runtimeAction: "my-package/paas",
+            env: ["paas"],
+            webhook: {
+              webhook_method: "observer.catalog_product_save_after",
+              webhook_type: "after",
+              batch_name: "paas_batch",
+              hook_name: "paas_hook",
+              method: "POST",
+            },
+          },
+        ],
+      } as const;
+
+      const handler = appConfigRuntimeAction({
+        // @ts-expect-error - inline test config matches the schema shape
+        appConfig,
+      });
+
+      const result = await handler(createRuntimeActionParams());
+
+      expect.assert(result.type === "success");
+      const body = result.body as { webhooks: { label: string }[] };
+      expect(body.webhooks).toHaveLength(1);
+    });
+
     test("includes openApiSpecUrl in the response body", async () => {
       const handler = appConfigRuntimeAction({ appConfig: minimalValidConfig });
       const result = await handler(createRuntimeActionParams());

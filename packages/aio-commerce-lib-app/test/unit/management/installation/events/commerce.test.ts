@@ -177,4 +177,55 @@ describe("commerceEventsStep orchestration", () => {
 
     expect(helperMocks.onboardCommerceEventing).toHaveBeenCalledTimes(2);
   });
+
+  test("should skip a provider whose events are all scoped to another environment and still configure eventing once on the surviving provider", async () => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+    const context = createMockEventingInstallationContext({
+      appData: {
+        orgName: "Test Org! #42",
+        projectName: "Test Project! #7",
+      },
+      params: { AIO_COMMERCE_API_FLAVOR: "saas" },
+    });
+
+    const { commerceEventsStep, helperMocks, utilsMocks } =
+      await importCommerceStepWithMocks();
+
+    utilsMocks.makeWorkspaceConfig.mockReturnValue(
+      createMockWorkspaceConfiguration(),
+    );
+    utilsMocks.getIoEventsExistingData.mockResolvedValue(
+      createMockExistingIoEventsData(),
+    );
+    utilsMocks.getCommerceEventingExistingData.mockResolvedValue(
+      createMockExistingCommerceEventingData(),
+    );
+
+    helperMocks.onboardIoEvents.mockResolvedValue({
+      eventsData: [],
+      providerData: {
+        instance_id:
+          "test-app-second-commerce-events-provider-test-workspace-id",
+      },
+    });
+    helperMocks.configureCommerceEventing.mockResolvedValue(undefined);
+    helperMocks.onboardCommerceEventing.mockResolvedValue({
+      commerceProvider: {},
+      subscriptions: [],
+    });
+
+    // First provider is entirely PaaS-scoped, so it is skipped on a SaaS install;
+    // the second (un-scoped) provider survives and drives the one-time config.
+    const config = createConfigWithTwoCommerceEventingSources();
+    for (const event of config.eventing.commerce[0].events) {
+      (event as { env?: string[] }).env = ["paas"];
+    }
+
+    const result = await commerceEventsStep.install(config, context);
+
+    expect(result).toHaveLength(1);
+    expect(helperMocks.onboardIoEvents).toHaveBeenCalledTimes(1);
+    expect(helperMocks.configureCommerceEventing).toHaveBeenCalledTimes(1);
+    expect(helperMocks.onboardCommerceEventing).toHaveBeenCalledTimes(1);
+  });
 });

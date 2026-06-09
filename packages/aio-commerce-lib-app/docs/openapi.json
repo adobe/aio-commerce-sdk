@@ -3,7 +3,7 @@
   "info": {
     "title": "App Management API",
     "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation and uninstallation lifecycle, exposing the Admin UI SDK registration, and managing the scope tree.",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
@@ -23,8 +23,18 @@
       "get": {
         "operationId": "getAppConfig",
         "summary": "Get Commerce App Configuration",
-        "description": "Returns the Commerce App configuration after resolving and validating it against the schema.",
+        "description": "Returns the Commerce App configuration after resolving and validating it against the schema. When `commerceEnv` is provided, webhooks and events are filtered to that Commerce environment; when omitted, the full, unfiltered configuration is returned.",
         "parameters": [
+          {
+            "name": "commerceEnv",
+            "in": "query",
+            "description": "When provided, filters the returned webhooks and events to those applicable to this Commerce environment. When omitted, the full configuration is returned.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["paas", "saas"]
+            }
+          },
           {
             "name": "x-gw-ims-org-id",
             "in": "header",

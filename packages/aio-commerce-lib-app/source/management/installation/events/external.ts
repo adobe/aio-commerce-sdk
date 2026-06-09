@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { appliesToEnv, getInstallCommerceEnv } from "#config/env-filter";
 import { hasExternalEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
@@ -56,9 +57,18 @@ async function createExternalEvents(
 
   // biome-ignore lint/suspicious/noEvolvingTypes: We want the type to be auto-inferred
   const stepData = [];
+  const env = getInstallCommerceEnv(context.params);
   const existingIoEventsData = await getIoEventsExistingData(context);
 
-  for (const { provider, events } of config.eventing.external) {
+  for (const { provider, events: providerEvents } of config.eventing.external) {
+    const events = providerEvents.filter((event) => appliesToEnv(event, env));
+    if (events.length === 0) {
+      logger.debug(
+        `Skipping external event provider "${provider.label}": no events apply to environment "${env}".`,
+      );
+      continue;
+    }
+
     const { providerData, eventsData } = await onboardIoEvents(
       {
         context,
