@@ -321,8 +321,8 @@ export const configWithAdminUi = {
         ],
       },
     },
+    menu: adminUiMenuPart,
   },
-  menu: adminUiMenuPart,
 } satisfies CommerceAppConfigOutputModel;
 
 /** Config fixture with only order adminUi grid columns configured. */
