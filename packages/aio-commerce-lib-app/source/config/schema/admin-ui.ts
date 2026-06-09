@@ -159,7 +159,6 @@ const MenuSchema = v.object({
 
 /**
  * Schema for the `adminUi` config section.
- * Supports grid column extensions and mass actions on `commerce/backend-ui/2`.
  * @experimental
  */
 export const AdminUiSchema = v.object({
