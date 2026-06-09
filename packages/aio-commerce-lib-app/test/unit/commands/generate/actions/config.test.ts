@@ -143,6 +143,7 @@ describe("buildAppManagementExtConfig", () => {
 
     expect(workerImpls).toEqual([
       { type: "action", impl: "app-management/app-config" },
+      { type: "action", impl: "app-management/association" },
       { type: "action", impl: "app-management/installation" },
     ]);
   });

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,13 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
+import * as v from "valibot";
 
-export default mergeConfig(baseConfig, {
-  entry: [
-    "./source/index.ts",
-    "./source/commands/index.ts",
-    "./source/modules/configuration/system/index.ts",
-  ],
+/** Request body for POST / — store association data. */
+export const AssociationRequestBodySchema = v.object({
+  commerceBaseUrl: v.string(),
+  commerceEnv: v.picklist(["saas", "paas"]),
 });
