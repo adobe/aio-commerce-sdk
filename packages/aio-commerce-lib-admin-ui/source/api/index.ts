@@ -14,4 +14,4 @@
 
 export * from "./lib/api-client";
 
-export type * from "./api/extensions/schema";
+export type * from "./extensions/schema";
