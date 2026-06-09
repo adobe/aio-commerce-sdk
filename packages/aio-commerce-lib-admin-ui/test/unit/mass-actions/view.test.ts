@@ -44,6 +44,18 @@ describe("parseMassActionSelection", () => {
     expect(result.ids).toEqual(["000000001"]);
   });
 
+  it("throws with a clear message when input is null", () => {
+    expect(() => parseMassActionSelection(null)).toThrow(
+      "selection query parameter is missing",
+    );
+  });
+
+  it("throws with a clear message when input is undefined", () => {
+    expect(() => parseMassActionSelection(undefined)).toThrow(
+      "selection query parameter is missing",
+    );
+  });
+
   it("throws when input is not valid JSON", () => {
     expect(() => parseMassActionSelection("not-json")).toThrow(Error);
   });

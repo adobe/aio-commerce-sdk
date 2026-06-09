@@ -14,7 +14,6 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { describe, expect, it } from "vitest";
 
 import {
-  errorMassActionResponse,
   okMassActionResponse,
   parseMassActionRequest,
 } from "#mass-actions/worker/presets";
@@ -79,23 +78,15 @@ describe("parseMassActionRequest", () => {
 });
 
 describe("okMassActionResponse", () => {
-  it("returns a 200 response with status success", () => {
-    const response = okMassActionResponse("3 customers exported.");
+  it("returns a 200 response with an empty body by default", () => {
+    const response = okMassActionResponse();
     expect(response.type).toBe("success");
-    expect(response.body).toEqual({
-      status: "success",
-      message: "3 customers exported.",
-    });
+    expect(response.body).toEqual({});
   });
-});
 
-describe("errorMassActionResponse", () => {
-  it("returns a 200 response with status error", () => {
-    const response = errorMassActionResponse("Could not reach export service.");
+  it("returns a 200 response with a custom body when provided", () => {
+    const response = okMassActionResponse({ exported: 3 });
     expect(response.type).toBe("success");
-    expect(response.body).toEqual({
-      status: "error",
-      message: "Could not reach export service.",
-    });
+    expect(response.body).toEqual({ exported: 3 });
   });
 });

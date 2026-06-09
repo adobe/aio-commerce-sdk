@@ -22,14 +22,5 @@ export type MassActionGridType = v.InferOutput<typeof MassActionGridTypeSchema>;
 /** Parsed request body sent by Commerce to a worker mass action handler. */
 export type MassActionRequest = v.InferOutput<typeof MassActionRequestSchema>;
 
-/** Success body returned to Commerce after a worker mass action completes. */
-export type MassActionSuccessBody = {
-  status: "success";
-  message: string;
-};
-
-/** Failure body returned to Commerce when a worker mass action fails. */
-export type MassActionErrorBody = {
-  status: "error";
-  message: string;
-};
+/** Response body returned to Commerce after a worker mass action completes. */
+export type MassActionResponseBody = Record<string, unknown>;

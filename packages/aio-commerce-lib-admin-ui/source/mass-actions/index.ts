@@ -26,11 +26,7 @@
 
 export { parseMassActionSelection } from "./view/presets";
 export { MassActionSelectionSchema } from "./view/schema";
-export {
-  errorMassActionResponse,
-  okMassActionResponse,
-  parseMassActionRequest,
-} from "./worker/presets";
+export { okMassActionResponse, parseMassActionRequest } from "./worker/presets";
 export {
   MassActionGridTypeSchema,
   MassActionRequestSchema,
@@ -38,8 +34,7 @@ export {
 
 export type { MassActionSelection } from "./view/types";
 export type {
-  MassActionErrorBody,
   MassActionGridType,
   MassActionRequest,
-  MassActionSuccessBody,
+  MassActionResponseBody,
 } from "./worker/types";

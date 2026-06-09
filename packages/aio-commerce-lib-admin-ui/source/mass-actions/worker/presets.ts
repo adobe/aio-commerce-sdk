@@ -16,11 +16,7 @@ import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 import { MassActionRequestSchema } from "./schema";
 
 import type { SuccessResponse } from "@adobe/aio-commerce-lib-core/responses";
-import type {
-  MassActionErrorBody,
-  MassActionRequest,
-  MassActionSuccessBody,
-} from "./types";
+import type { MassActionRequest, MassActionResponseBody } from "./types";
 
 /**
  * Parses and validates the JSON body Commerce POSTs to a worker mass action handler.
@@ -48,35 +44,17 @@ export function parseMassActionRequest(input: unknown): MassActionRequest {
 /**
  * Builds an HTTP 200 success response for a worker mass action.
  *
- * @param message - Human-readable message surfaced to the user.
+ * Commerce determines success from the HTTP status code. You may optionally
+ * include any fields in `body` for your own logging or auditing purposes.
  *
  * @example
  * ```ts
- * return okMassActionResponse("3 customers exported.");
+ * return okMassActionResponse();
+ * return okMassActionResponse({ exported: ids.length });
  * ```
  */
 export function okMassActionResponse(
-  message: string,
-): SuccessResponse<MassActionSuccessBody> {
-  return ok<MassActionSuccessBody>({ body: { status: "success", message } });
-}
-
-/**
- * Builds an HTTP 200 response carrying a handler-level failure.
- *
- * Commerce treats any body with `"status": "error"` as a failure regardless of
- * HTTP status. The `message` is used for logging; the user sees the
- * `notifications.error` string defined in the config instead.
- *
- * @param message - Error message for logging purposes.
- *
- * @example
- * ```ts
- * return errorMassActionResponse("Could not reach export service.");
- * ```
- */
-export function errorMassActionResponse(
-  message: string,
-): SuccessResponse<MassActionErrorBody> {
-  return ok<MassActionErrorBody>({ body: { status: "error", message } });
+  body: MassActionResponseBody = {},
+): SuccessResponse<MassActionResponseBody> {
+  return ok<MassActionResponseBody>({ body });
 }
