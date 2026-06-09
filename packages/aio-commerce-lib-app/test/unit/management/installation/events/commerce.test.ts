@@ -216,10 +216,9 @@ describe("commerceEventsStep orchestration", () => {
 
     // First provider is entirely PaaS-scoped, so it is skipped on a SaaS install;
     // the second (un-scoped) provider survives and drives the one-time config.
-    const config = createConfigWithTwoCommerceEventingSources();
-    for (const event of config.eventing.commerce[0].events) {
-      (event as { env?: string[] }).env = ["paas"];
-    }
+    const config = createConfigWithTwoCommerceEventingSources({
+      firstSourceEnv: ["paas"],
+    });
 
     const result = await commerceEventsStep.install(config, context);
 

@@ -20,6 +20,10 @@ import {
   configWithDynamicListOptions,
   minimalValidConfig,
 } from "#test/fixtures/config";
+import {
+  createMockAllEnvsWebhookEntry,
+  createMockPaasWebhookEntry,
+} from "#test/fixtures/webhooks";
 
 describe("appConfigRuntimeAction", () => {
   beforeEach(() => {
@@ -96,31 +100,8 @@ describe("appConfigRuntimeAction", () => {
       const appConfig = {
         metadata: minimalValidConfig.metadata,
         webhooks: [
-          {
-            label: "PaaS only",
-            description: "PaaS-only webhook",
-            runtimeAction: "my-package/paas",
-            env: ["paas"],
-            webhook: {
-              webhook_method: "observer.catalog_product_save_after",
-              webhook_type: "after",
-              batch_name: "paas_batch",
-              hook_name: "paas_hook",
-              method: "POST",
-            },
-          },
-          {
-            label: "All envs",
-            description: "Webhook for all environments",
-            runtimeAction: "my-package/all",
-            webhook: {
-              webhook_method: "observer.catalog_product_save_after",
-              webhook_type: "after",
-              batch_name: "all_batch",
-              hook_name: "all_hook",
-              method: "POST",
-            },
-          },
+          createMockPaasWebhookEntry(),
+          createMockAllEnvsWebhookEntry(),
         ],
         eventing: {
           commerce: [
@@ -203,21 +184,7 @@ describe("appConfigRuntimeAction", () => {
     test("returns the full config when commerceEnv is omitted", async () => {
       const appConfig = {
         metadata: minimalValidConfig.metadata,
-        webhooks: [
-          {
-            label: "PaaS only",
-            description: "PaaS-only webhook",
-            runtimeAction: "my-package/paas",
-            env: ["paas"],
-            webhook: {
-              webhook_method: "observer.catalog_product_save_after",
-              webhook_type: "after",
-              batch_name: "paas_batch",
-              hook_name: "paas_hook",
-              method: "POST",
-            },
-          },
-        ],
+        webhooks: [createMockPaasWebhookEntry()],
       } as const;
 
       const handler = appConfigRuntimeAction({

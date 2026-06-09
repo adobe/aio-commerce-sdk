@@ -61,11 +61,27 @@ export function createMockRuntimeWebhookEntry(
   return {
     ...defaultEntry,
     ...overrides,
-    webhook: createMockWebhookDefinition({
-      ...defaultEntry.webhook,
-      ...(overrides.webhook ?? {}),
-    }),
+    webhook: createMockWebhookDefinition(overrides.webhook ?? {}),
   };
+}
+
+/** Runtime webhook entry scoped to the PaaS environment (app-config env-filter tests). */
+export function createMockPaasWebhookEntry(): RuntimeWebhookEntry {
+  return createMockRuntimeWebhookEntry({
+    label: "PaaS only",
+    description: "PaaS-only webhook",
+    runtimeAction: "my-package/paas",
+    env: ["paas"],
+  });
+}
+
+/** Runtime webhook entry that applies to all environments (no `env`). */
+export function createMockAllEnvsWebhookEntry(): RuntimeWebhookEntry {
+  return createMockRuntimeWebhookEntry({
+    label: "All envs",
+    description: "Webhook for all environments",
+    runtimeAction: "my-package/all",
+  });
 }
 
 export function createMockUrlWebhookEntry(
@@ -168,10 +184,10 @@ export function createMockWebhooksContext(
 
   return {
     ...mockInstallation,
-    commerceWebhooksClient: {
-      getWebhookList: getWebhookListFn,
+    commerceWebhooksClient: createMockCommerceWebhooksClient({
       subscribeWebhook: subscribeWebhookFn,
+      getWebhookList: getWebhookListFn,
       unsubscribeWebhook: unsubscribeWebhookFn,
-    },
+    }),
   };
 }

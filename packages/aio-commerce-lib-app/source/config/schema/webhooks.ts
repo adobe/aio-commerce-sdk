@@ -107,12 +107,17 @@ const WebhookDefinitionWithUrlSchema = v.object({
   ),
 });
 
-/** Schema for a webhook entry that resolves its URL from a runtime action. */
-const WebhookEntryWithRuntimeActionSchema = v.object({
+/** Fields shared by every webhook entry, regardless of how its URL is resolved. */
+const WebhookEntryBaseSchema = v.object({
   label: nonEmptyStringValueSchema("webhook label"),
   description: nonEmptyStringValueSchema("webhook description"),
   category: v.optional(CategorySchema),
   env: webhookEnvSchema,
+});
+
+/** Schema for a webhook entry that resolves its URL from a runtime action. */
+const WebhookEntryWithRuntimeActionSchema = v.object({
+  ...WebhookEntryBaseSchema.entries,
   runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
   requireAdobeAuth: v.optional(booleanValueSchema("requireAdobeAuth")),
   webhook: WebhookDefinitionBaseSchema,
@@ -120,10 +125,7 @@ const WebhookEntryWithRuntimeActionSchema = v.object({
 
 /** Schema for a webhook entry that provides an explicit URL. */
 const WebhookEntryWithUrlSchema = v.object({
-  label: nonEmptyStringValueSchema("webhook label"),
-  description: nonEmptyStringValueSchema("webhook description"),
-  category: v.optional(CategorySchema),
-  env: webhookEnvSchema,
+  ...WebhookEntryBaseSchema.entries,
   webhook: WebhookDefinitionWithUrlSchema,
 });
 

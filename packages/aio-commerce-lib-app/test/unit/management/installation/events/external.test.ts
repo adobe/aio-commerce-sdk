@@ -17,6 +17,7 @@ import { isLeafStep } from "#management/installation/workflow/step";
 import {
   configWithCommerceEventing,
   configWithExternalEventing,
+  createExternalEventConfig,
   minimalValidConfig,
 } from "#test/fixtures/config";
 import {
@@ -101,25 +102,12 @@ describe("externalEventsStep orchestration", () => {
       providerData: {},
     });
 
-    const config = {
-      ...configWithExternalEventing,
-      eventing: {
-        external: [
-          {
-            provider: { label: "SaaS Only", description: "SaaS provider" },
-            events: [
-              {
-                name: "ext.saas_event",
-                label: "SaaS Event",
-                description: "SaaS-only external event",
-                runtimeActions: ["my-package/on-saas"],
-                env: ["saas"] as ("paas" | "saas")[],
-              },
-            ],
-          },
-        ],
-      },
-    };
+    const config = createExternalEventConfig("ext.saas_event", {
+      label: "SaaS Event",
+      description: "SaaS-only external event",
+      runtimeActions: ["my-package/on-saas"],
+      env: ["saas"],
+    });
 
     const result = await externalEventsStep.install(config, context);
 

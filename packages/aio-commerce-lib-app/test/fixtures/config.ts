@@ -1,5 +1,6 @@
 import { schemaWithDynamicListOptions } from "#test/fixtures/business-config";
 
+import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
 import type { ApplicationMetadata } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
@@ -465,12 +466,61 @@ export function createCommerceEventConfig(
   };
 }
 
-export function createConfigWithTwoCommerceEventingSources() {
+export function createExternalEventConfig(
+  name: string,
+  overrides?: Partial<{
+    label: string;
+    description: string;
+    runtimeActions: string[];
+    env: CommerceEnv[];
+  }>,
+) {
+  return {
+    metadata: minimalValidConfig.metadata,
+    eventing: {
+      external: [
+        {
+          provider: {
+            label: "External Provider",
+            description: "External events",
+          },
+          events: [
+            {
+              name,
+              label: overrides?.label ?? "External Event",
+              description: overrides?.description ?? "An external event",
+              runtimeActions: overrides?.runtimeActions ?? [
+                "my-package/action",
+              ],
+              ...(overrides?.env && { env: overrides.env }),
+            },
+          ],
+        },
+      ],
+    },
+  };
+}
+
+export function createConfigWithTwoCommerceEventingSources(options?: {
+  firstSourceEnv?: CommerceEnv[];
+}) {
+  const [firstSource] = configWithCommerceEventing.eventing.commerce;
+  const firstSourceEnv = options?.firstSourceEnv;
+  const scopedFirstSource = firstSourceEnv
+    ? {
+        ...firstSource,
+        events: firstSource.events.map((event) => ({
+          ...event,
+          env: firstSourceEnv,
+        })),
+      }
+    : firstSource;
+
   return {
     ...configWithCommerceEventing,
     eventing: {
       commerce: [
-        ...configWithCommerceEventing.eventing.commerce,
+        scopedFirstSource,
         {
           provider: {
             label: "Second Commerce Events Provider",
