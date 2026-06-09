@@ -10,9 +10,22 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
+/** Cell values returned for a single row, keyed by `id`. */
+export type GridRow = Record<string, unknown>;
 
-export default mergeConfig(baseConfig, {
-  entry: ["./source/index.ts", "./source/grid-columns/index.ts"],
-});
+/**
+ * Success body returned to Commerce.
+ *
+ * The `"*"` entry supplies default cell values that Commerce applies to IDs
+ * missing from `data` and to cells whose returned value does not satisfy the
+ * declared `type` on the registration.
+ */
+export type GridSuccessBody = {
+  data: Record<string, GridRow> & { "*"?: GridRow };
+};
+
+/** Failure body returned to Commerce. */
+export type GridErrorBody = {
+  errorStatus: string;
+  errorMessage?: string;
+};

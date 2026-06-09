@@ -15,12 +15,15 @@ import { describe, expect, test } from "vitest";
 import { PACKAGE_NAME } from "#commands/constants";
 import {
   buildAdminUiSdkExtConfig,
+  buildAdminUiV2ExtConfig,
   buildAppManagementExtConfig,
   buildBusinessConfigurationExtConfig,
   getRuntimeActions,
 } from "#commands/generate/actions/config";
 import {
+  configWithAdminUi,
   configWithAdminUiSdk,
+  configWithAdminUiSingleGrid,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
   configWithExternalEventing,
@@ -31,6 +34,7 @@ import {
 const EXTENSIBILITY_EXTENSION_MATCHER = /EXTENSION=extensibility\/1/;
 const CONFIGURATION_EXTENSION_MATCHER = /EXTENSION=configuration\/1/;
 const BACKEND_UI_EXTENSION_MATCHER = /EXTENSION=backend-ui\/1/;
+const BACKEND_UI_V2_EXTENSION_MATCHER = /EXTENSION=backend-ui\/2/;
 
 describe("buildAppManagementExtConfig", () => {
   test("app-config action is included with minimal config", () => {
@@ -171,6 +175,69 @@ describe("buildAdminUiSdkExtConfig", () => {
     const preBuildHook = result.hooks?.["pre-app-build"] ?? "";
 
     expect(preBuildHook).toMatch(BACKEND_UI_EXTENSION_MATCHER);
+  });
+});
+
+describe("buildAdminUiV2ExtConfig", () => {
+  test("pre-app-build hook uses backend-ui/2", () => {
+    const config = buildAdminUiV2ExtConfig(configWithAdminUi);
+    const preBuildHook = config.hooks?.["pre-app-build"] ?? "";
+    expect(preBuildHook).toMatch(BACKEND_UI_V2_EXTENSION_MATCHER);
+  });
+
+  test("declares one workerProcess entry per unique runtimeAction (3 grids)", () => {
+    const config = buildAdminUiV2ExtConfig(configWithAdminUi);
+    const workerImpls =
+      config.operations?.workerProcess?.map((op) => op.impl) ?? [];
+
+    expect(workerImpls).toHaveLength(3);
+    expect(workerImpls).toContain("orders/fetch-order-grid-data");
+    expect(workerImpls).toContain("products/fetch-product-grid-data");
+    expect(workerImpls).toContain("customers/fetch-customer-grid-data");
+  });
+
+  test("declares one workerProcess entry for single-grid config", () => {
+    const config = buildAdminUiV2ExtConfig(configWithAdminUiSingleGrid);
+    const workerImpls =
+      config.operations?.workerProcess?.map((op) => op.impl) ?? [];
+
+    expect(workerImpls).toHaveLength(1);
+    expect(workerImpls).toContain("orders/fetch-order-grid-data");
+  });
+
+  test("deduplicates workerProcess when multiple grids share the same runtimeAction", () => {
+    const sharedRuntimeAction = "shared/fetch-grid-data";
+    const config = buildAdminUiV2ExtConfig({
+      ...minimalValidConfig,
+      adminUi: {
+        order: {
+          gridColumns: {
+            label: "L",
+            description: "D",
+            runtimeAction: sharedRuntimeAction,
+            columns: [{ id: "k", label: "K", type: "string", align: "left" }],
+          },
+        },
+        customer: {
+          gridColumns: {
+            label: "L",
+            description: "D",
+            runtimeAction: sharedRuntimeAction,
+            columns: [{ id: "k", label: "K", type: "string", align: "left" }],
+          },
+        },
+      },
+    });
+    const workerImpls =
+      config.operations?.workerProcess?.map((op) => op.impl) ?? [];
+
+    expect(workerImpls).toHaveLength(1);
+    expect(workerImpls).toContain(sharedRuntimeAction);
+  });
+
+  test("workerProcess is empty when adminUi has no grids", () => {
+    const config = buildAdminUiV2ExtConfig(minimalValidConfig);
+    expect(config.operations?.workerProcess).toHaveLength(0);
   });
 });
 
