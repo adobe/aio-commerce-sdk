@@ -67,6 +67,11 @@ const commerceClient = new AdobeCommerceHttpClient({
 
 **With IMS Auth:**
 
+> [!IMPORTANT]
+> Using IMS authentication with PaaS requires a one-time manual setup in the Commerce Admin. The S2S token issued for your technical account is treated as a user token, so the technical account must exist as an admin user with the appropriate permissions.
+>
+> To set this up, follow the [Admin User Creation Guide](https://experienceleague.adobe.com/en/docs/commerce-admin/systems/user-accounts/permissions-users-all#create-a-user) and use the technical account email from your OAuth S2S credentials in the Adobe Developer Console workspace (format: `<technical-account>@techacct.adobe.com`) in the Email field — this must match the value of `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL` exactly. On the User Role tab, assign the **Integrations** role.
+
 ```typescript
 const commerceClient = new AdobeCommerceHttpClient({
   config: {
