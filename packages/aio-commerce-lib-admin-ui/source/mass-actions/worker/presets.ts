@@ -73,13 +73,14 @@ export function okMassActionResponse(
   return ok<MassActionResponseBody>({ body });
 }
 
-// lib-core's BodyRecordWithMessage requires a `message` field; Commerce's wire contract
-// for mass action errors uses `error` instead. Including both satisfies the constraint
-// without a cast.
+/**
+ * Creates the error body using error message provided as parameter.
+ * @param errorMessage
+ */
 function errorBody(
   errorMessage: string,
 ): MassActionErrorBody & { message: string } {
-  return { error: errorMessage, message: errorMessage };
+  return { error: errorMessage } as MassActionErrorBody & { message: string };
 }
 
 /**
