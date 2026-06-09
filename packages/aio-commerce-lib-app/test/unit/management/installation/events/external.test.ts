@@ -113,7 +113,7 @@ describe("externalEventsStep orchestration", () => {
                 label: "SaaS Event",
                 description: "SaaS-only external event",
                 runtimeActions: ["my-package/on-saas"],
-                env: ["saas"],
+                env: ["saas"] as ("paas" | "saas")[],
               },
             ],
           },

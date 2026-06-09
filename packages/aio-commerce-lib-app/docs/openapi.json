@@ -1627,7 +1627,8 @@
                     "type": "string"
                   },
                   "commerceEnv": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": ["paas", "saas"]
                   },
                   "ioEventsUrl": {
                     "type": "string"
@@ -1778,7 +1779,8 @@
                     "type": "string"
                   },
                   "commerceEnv": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": ["paas", "saas"]
                   },
                   "ioEventsUrl": {
                     "type": "string"
@@ -2104,7 +2106,8 @@
                     "type": "string"
                   },
                   "commerceEnv": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": ["paas", "saas"]
                   },
                   "ioEventsUrl": {
                     "type": "string"
