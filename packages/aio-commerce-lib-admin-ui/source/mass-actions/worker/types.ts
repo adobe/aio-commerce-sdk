@@ -24,3 +24,6 @@ export type MassActionRequest = v.InferOutput<typeof MassActionRequestSchema>;
 
 /** Response body returned to Commerce after a worker mass action completes. */
 export type MassActionResponseBody = Record<string, unknown>;
+
+/** Error body returned to Commerce when a worker mass action fails. */
+export type MassActionErrorBody = { error: string };
