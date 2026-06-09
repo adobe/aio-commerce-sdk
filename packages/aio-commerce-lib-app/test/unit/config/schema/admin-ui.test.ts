@@ -319,6 +319,17 @@ describe("AdminUiSchema", () => {
       expect(result.success).toBe(false);
     });
 
+    test("duplicate sandboxPermissions values are rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: {
+          ...configWithAdminUiMenu.adminUi.menu,
+          sandboxPermissions: ["allow-popups", "allow-popups"],
+        },
+      });
+
+      expect(result.success).toBe(false);
+    });
+
     test("empty sandboxPermissions array is rejected", () => {
       const result = v.safeParse(AdminUiSchema, {
         menu: { ...configWithAdminUiMenu.adminUi.menu, sandboxPermissions: [] },
