@@ -156,6 +156,13 @@ export async function createWebhookSubscriptions(
   const env = getInstallCommerceEnv(params);
   const webhooks = config.webhooks.filter((entry) => appliesToEnv(entry, env));
 
+  if (webhooks.length === 0) {
+    logger.info(
+      "No webhooks apply to this environment, skipping subscription.",
+    );
+    return { subscribedWebhooks: [] };
+  }
+
   logger.info(`Subscribing ${webhooks.length} webhook(s) to Commerce...`);
 
   const idPrefix = buildWebhookIdPrefix(config.metadata.id);

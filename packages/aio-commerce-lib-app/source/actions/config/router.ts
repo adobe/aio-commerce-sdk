@@ -22,6 +22,8 @@ import {
   logger,
 } from "@aio-commerce-sdk/common-utils/actions";
 
+import { appliesToEnv } from "#config/env-filter";
+
 import {
   GetConfigurationQuerySchema,
   PatchConfigBodySchema,
@@ -68,9 +70,7 @@ function filterSchemaByEnv(
   schema: BusinessConfigSchema,
   env: CommerceEnv,
 ): BusinessConfigSchema {
-  return schema.filter(
-    (field) => field.env === undefined || field.env.includes(env),
-  );
+  return schema.filter((field) => appliesToEnv(field, env));
 }
 
 /**
