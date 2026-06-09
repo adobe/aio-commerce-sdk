@@ -3363,7 +3363,31 @@
           },
           "commerceMenuId": {
             "type": "string",
-            "minLength": 1
+            "enum": [
+              "sales",
+              "catalog",
+              "customers",
+              "marketing",
+              "marketing.communications",
+              "marketing.promotions",
+              "marketing.seoAndSearch",
+              "content",
+              "reports",
+              "reports.marketing",
+              "reports.sales",
+              "reports.customers",
+              "reports.products",
+              "stores",
+              "stores.settings",
+              "stores.inventory",
+              "stores.taxes",
+              "stores.currency",
+              "stores.attributes",
+              "stores.otherSettings",
+              "system",
+              "system.otherSettings",
+              "system.permissions"
+            ]
           },
           "sandboxPermissions": {
             "type": "array",

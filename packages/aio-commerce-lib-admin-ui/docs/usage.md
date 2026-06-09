@@ -181,32 +181,22 @@ import {
 } from "@adobe/aio-commerce-lib-admin-ui/menu";
 ```
 
-#### Collections
+#### Collection
 
-`COMMERCE_MENUS` is a readonly tuple of all menu IDs available across Adobe Commerce. `ACCS_MENUS` is the subset available in Adobe Commerce as a Cloud Service:
+`COMMERCE_MENUS` is a readonly tuple of all supported Commerce Admin menu IDs:
 
 ```typescript
-import {
-  COMMERCE_MENUS,
-  ACCS_MENUS,
-} from "@adobe/aio-commerce-lib-admin-ui/menu";
+import { COMMERCE_MENUS } from "@adobe/aio-commerce-lib-admin-ui/menu";
 ```
 
-#### Type guards
+#### Type guard
 
-`isCommerceMenu` and `isAccsMenu` narrow an arbitrary string to `CommerceMenu` or `AccsMenu` respectively:
+`isCommerceMenu` narrows an arbitrary string to the `CommerceMenu` type:
 
 ```typescript
-import {
-  isCommerceMenu,
-  isAccsMenu,
-} from "@adobe/aio-commerce-lib-admin-ui/menu";
+import { isCommerceMenu } from "@adobe/aio-commerce-lib-admin-ui/menu";
 
 if (isCommerceMenu(id)) {
   // id is CommerceMenu
-}
-
-if (isAccsMenu(id)) {
-  // id is AccsMenu (also a CommerceMenu)
 }
 ```

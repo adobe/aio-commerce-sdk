@@ -268,7 +268,7 @@ const adminUiMenuMinimalPart = {
 /** Full adminUi menu object with all fields populated. */
 const adminUiMenuPart = {
   ...adminUiMenuMinimalPart,
-  commerceMenuId: "magento-sales-sales",
+  commerceMenuId: "sales",
   sandboxPermissions: ["allow-popups", "allow-downloads"] as const,
 } satisfies NonNullable<CommerceAppConfigOutputModel["adminUi"]>["menu"];
 

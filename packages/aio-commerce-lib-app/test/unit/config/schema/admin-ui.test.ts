@@ -299,9 +299,12 @@ describe("AdminUiSchema", () => {
       expect(result.success).toBe(false);
     });
 
-    test("empty commerceMenuId is rejected when provided", () => {
+    test("unknown commerceMenuId is rejected", () => {
       const result = v.safeParse(AdminUiSchema, {
-        menu: { ...configWithAdminUiMenu.adminUi.menu, commerceMenuId: "" },
+        menu: {
+          ...configWithAdminUiMenu.adminUi.menu,
+          commerceMenuId: "unknown.menu",
+        },
       });
       expect(result.success).toBe(false);
     });

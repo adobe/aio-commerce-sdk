@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { COMMERCE_MENUS } from "@adobe/aio-commerce-lib-admin-ui/menu";
 import {
   nonEmptyStringValueSchema,
   positiveNumberValueSchema,
@@ -145,7 +146,12 @@ const MenuSchema = v.object({
   label: nonEmptyStringValueSchema("menu label"),
   description: nonEmptyStringValueSchema("menu description"),
   pageTitle: v.optional(nonEmptyStringValueSchema("menu page title")),
-  commerceMenuId: v.optional(nonEmptyStringValueSchema("Commerce menu ID")),
+  commerceMenuId: v.optional(
+    v.picklist(
+      COMMERCE_MENUS,
+      "commerceMenuId must be a known Commerce Admin menu ID",
+    ),
+  ),
   sandboxPermissions: v.optional(SandboxPermissionsSchema),
 });
 

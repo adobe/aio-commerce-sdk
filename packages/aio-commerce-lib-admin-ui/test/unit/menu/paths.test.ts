@@ -29,23 +29,12 @@ describe("COMMERCE_MENUS", () => {
   });
 });
 
-describe("ACCS_MENUS", () => {
-  test("is a strict subset of COMMERCE_MENUS", () => {
-    const commerceSet = new Set<string>(paths.COMMERCE_MENUS);
-    const accsSet = new Set<string>(paths.ACCS_MENUS);
-    const diff = accsSet.difference(commerceSet);
-
-    expect([...diff]).toEqual([]);
-  });
-});
-
 describe("isCommerceMenu", () => {
   test("returns true for every value in COMMERCE_MENUS", () => {
     for (const id of paths.COMMERCE_MENUS) {
-      expect(
-        paths.isCommerceMenu(id),
-        `"${id}" should be a Commerce menu`,
-      ).toBe(true);
+      expect(paths.isCommerceMenu(id), `"${id}" should be a known menu`).toBe(
+        true,
+      );
     }
   });
 
@@ -55,29 +44,5 @@ describe("isCommerceMenu", () => {
 
   test("returns false for an empty string", () => {
     expect(paths.isCommerceMenu("")).toBe(false);
-  });
-});
-
-describe("isAccsMenu", () => {
-  test("returns true for every value in ACCS_MENUS", () => {
-    for (const id of paths.ACCS_MENUS) {
-      expect(paths.isAccsMenu(id), `"${id}" should be an ACCS menu`).toBe(true);
-    }
-  });
-
-  test("returns false for Commerce menu IDs not in ACCS_MENUS", () => {
-    const commerceOnlyMenus = paths.COMMERCE_MENUS.filter(
-      (id) => !paths.isAccsMenu(id),
-    );
-
-    for (const id of commerceOnlyMenus) {
-      expect(paths.isAccsMenu(id), `"${id}" should not be an ACCS menu`).toBe(
-        false,
-      );
-    }
-  });
-
-  test("returns false for an unknown menu ID", () => {
-    expect(paths.isAccsMenu("unknown::menu")).toBe(false);
   });
 });
