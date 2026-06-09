@@ -3292,6 +3292,9 @@
       "AdminUiConfiguration": {
         "type": "object",
         "properties": {
+          "menu": {
+            "$ref": "#/components/schemas/AdminUiMenu"
+          },
           "order": {
             "type": "object",
             "properties": {
@@ -3337,6 +3340,41 @@
         },
         "additionalProperties": false,
         "required": []
+      },
+      "AdminUiMenu": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_/:]+$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pageTitle": {
+            "type": "string",
+            "minLength": 1
+          },
+          "commerceMenuId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sandboxPermissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["allow-downloads", "allow-modals", "allow-popups"]
+            },
+            "minItems": 1
+          }
+        },
+        "required": ["id", "label", "description"]
       },
       "AdminUiGridColumns": {
         "type": "object",

@@ -82,9 +82,7 @@ const ViewMassActionSchema = v.strictObject({
   ...massActionCommonEntries,
   type: v.literal("view"),
   path: nonEmptyStringValueSchema("mass action path"),
-  sandboxPermissions: v.optional(
-    v.array(v.picklist(SANDBOX_PERMISSION_VALUES)),
-  ),
+  sandboxPermissions: v.optional(SandboxPermissionsSchema),
 });
 
 /** `type: "worker"` mass action — invokes a workerProcess runtime action. */
@@ -122,6 +120,35 @@ const AdminUiCustomerSchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
 });
 
+const SandboxPermissionsSchema = v.pipe(
+  v.array(v.picklist(SANDBOX_PERMISSION_VALUES)),
+  v.minLength(
+    1,
+    "sandboxPermissions must contain at least one permission when it's defined",
+  ),
+  v.check((permissions) => {
+    const uniquePermissions = new Set(permissions);
+    return uniquePermissions.size === permissions.length;
+  }, "Duplicate permissions are not allowed in sandboxPermissions"),
+);
+
+const MenuIdSchema = v.pipe(
+  nonEmptyStringValueSchema("menu ID"),
+  v.regex(
+    /^[A-Za-z0-9_/:]+$/,
+    'Menu ID may contain only letters, digits, "/", ":", and "_"',
+  ),
+);
+
+const MenuSchema = v.object({
+  id: MenuIdSchema,
+  label: nonEmptyStringValueSchema("menu label"),
+  description: nonEmptyStringValueSchema("menu description"),
+  pageTitle: v.optional(nonEmptyStringValueSchema("menu page title")),
+  commerceMenuId: v.optional(nonEmptyStringValueSchema("Commerce menu ID")),
+  sandboxPermissions: v.optional(SandboxPermissionsSchema),
+});
+
 // ─── Top-level schema ─────────────────────────────────────────────────────────
 
 /**
@@ -130,6 +157,7 @@ const AdminUiCustomerSchema = v.object({
  * @experimental
  */
 export const AdminUiSchema = v.object({
+  menu: v.optional(MenuSchema),
   order: v.optional(AdminUiOrderSchema),
   product: v.optional(AdminUiProductSchema),
   customer: v.optional(AdminUiCustomerSchema),
@@ -172,6 +200,12 @@ export type ViewMassAction = v.InferInput<typeof ViewMassActionSchema>;
  * @experimental
  */
 export type WorkerMassAction = v.InferInput<typeof WorkerMassActionSchema>;
+
+/**
+ * Admin UI menu registration configuration.
+ * @experimental
+ */
+export type Menu = v.InferInput<typeof MenuSchema>;
 
 /** Config type when `adminUi` configuration is present. */
 export type AdminUiConfig<

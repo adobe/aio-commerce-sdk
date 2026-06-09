@@ -21,6 +21,7 @@ import {
 } from "#commands/generate/actions/config";
 import {
   configWithAdminUi,
+  configWithAdminUiMenu,
   configWithAdminUiSingleGrid,
   configWithAdminUiV2,
   configWithCommerceEventing,
@@ -264,6 +265,26 @@ describe("buildAdminUiV2ExtConfig", () => {
     expect(workerImpls).toEqual(
       [{ type: "action", impl: "pkg/export" }].map((e) => e.impl),
     );
+  });
+
+  test("declares view operation when adminUi.menu is present", () => {
+    const config = buildAdminUiV2ExtConfig(configWithAdminUiMenu);
+    expect(config.operations?.view).toEqual([
+      { type: "web", impl: "index.html" },
+    ]);
+  });
+
+  test("no view operation when adminUi.menu is absent", () => {
+    const config = buildAdminUiV2ExtConfig(configWithAdminUiSingleGrid);
+    expect(config.operations?.view).toBeUndefined();
+  });
+
+  test("view and workerProcess coexist when multiple extension points are configured", () => {
+    const config = buildAdminUiV2ExtConfig(configWithFullAdminUiV2);
+    expect(config.operations?.workerProcess).toHaveLength(2);
+    expect(config.operations?.view).toEqual([
+      { type: "web", impl: "index.html" },
+    ]);
   });
 });
 

@@ -7,7 +7,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
-- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the extension that powers the `commerce/backend-ui/2` extension point. Supports grid column extensions and mass actions.
+- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the extension that powers the `commerce/backend-ui/2` extension point. Supports grid column extensions, mass actions, and menu declarations.
 
 ## Reference
 
@@ -471,7 +471,7 @@ export default defineCustomInstallationStep(async (config, context) => {
 
 > **Experimental:** Admin UI support on `commerce/backend-ui/2` is not yet production-ready. The API may change in future releases.
 
-The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
+The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`. Supports grid column extensions, mass actions, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ##### Grid Columns
 
@@ -583,6 +583,31 @@ operations:
 The `view` and `worker` variants are strict: `path`/`sandboxPermissions` on a `worker` action and `runtimeAction`/`timeout` on a `view` action are rejected at validation time.
 
 Every field of `adminUi` is optional — configure only the extension points your application needs.
+
+##### Menu
+
+Declare a single Commerce Admin menu entry for the application. When `adminUi.menu` is present, the SDK automatically adds a `view` operation pointing at `index.html` to `ext.config.yaml`.
+
+```javascript
+adminUi: {
+  menu: {
+    id: "approval_dashboard",
+    label: "Approval Dashboard",
+    description: "Review and approve purchase requests from Commerce Admin.",
+    commerceMenuId: "magento-sales-sales",
+    sandboxPermissions: ["allow-popups", "allow-downloads"],
+  },
+}
+```
+
+###### Field Reference:
+
+- **id**: Required — app-local menu identifier; allowed characters: `a-z`, `A-Z`, `0-9`, `/`, `:`, `_`
+- **label**: Required, non-empty string — menu label rendered in Commerce Admin
+- **description**: Required, non-empty string — summary shown in installation and permission-review surfaces
+- **pageTitle** (optional): non-empty string — page title for the menu entry
+- **commerceMenuId** (optional): non-empty string — existing Commerce menu ID under which the app menu is attached (e.g. `"magento-sales-sales"`); when omitted, a per-app section is generated automatically from the information in the `metadata`.
+- **sandboxPermissions** (optional): array of iframe sandbox permissions; allowed values: `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
 
 ### CLI Commands
 

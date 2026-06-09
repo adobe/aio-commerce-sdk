@@ -16,6 +16,7 @@ import { describe, expect, test } from "vitest";
 import { AdminUiSchema, hasAdminUi } from "#config/schema/admin-ui";
 import {
   configWithAdminUi,
+  configWithAdminUiMenu,
   configWithAdminUiV2,
   configWithFullAdminUiV2,
   minimalValidConfig,
@@ -28,6 +29,10 @@ describe("hasAdminUi", () => {
 
   test("returns true for configWithAdminUiV2", () => {
     expect(hasAdminUi(configWithAdminUiV2)).toBe(true);
+  });
+
+  test("returns true for configWithAdminUiMenu", () => {
+    expect(hasAdminUi(configWithAdminUiMenu)).toBe(true);
   });
 
   test("returns false for minimalValidConfig", () => {
@@ -106,6 +111,37 @@ describe("AdminUiSchema", () => {
         },
       });
       expect(result.success).toBe(true);
+    });
+
+    test("menu with required fields only", () => {
+      const { id, label, description } = configWithAdminUiMenu.adminUi.menu;
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { id, label, description },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    test("menu with all optional fields", () => {
+      const result = v.safeParse(AdminUiSchema, configWithAdminUiMenu.adminUi);
+      expect(result.success).toBe(true);
+    });
+
+    test("different extension points coexist", () => {
+      const result = v.safeParse(AdminUiSchema, configWithAdminUi.adminUi);
+      expect(result.success).toBe(true);
+    });
+
+    test.each([
+      "letters_only",
+      "with/slash",
+      "with:colon",
+      "With_Mixed/Case:123",
+    ])("valid menu id %s is accepted", (id) => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, id },
+      });
+      expect(result.success, `id "${id}" should be valid`).toBe(true);
     });
   });
 
@@ -201,6 +237,88 @@ describe("AdminUiSchema", () => {
             columns: [{ label: "Col", type: "string", align: "left" }],
           },
         },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("missing menu id is rejected", () => {
+      const { id: _, ...noId } = configWithAdminUiMenu.adminUi.menu;
+      const result = v.safeParse(AdminUiSchema, { menu: noId });
+      expect(result.success).toBe(false);
+    });
+
+    test("missing menu label is rejected", () => {
+      const { label: _, ...noLabel } = configWithAdminUiMenu.adminUi.menu;
+      const result = v.safeParse(AdminUiSchema, { menu: noLabel });
+      expect(result.success).toBe(false);
+    });
+
+    test("missing menu description is rejected", () => {
+      const { description: _, ...noDesc } = configWithAdminUiMenu.adminUi.menu;
+      const result = v.safeParse(AdminUiSchema, { menu: noDesc });
+      expect(result.success).toBe(false);
+    });
+
+    test.each([
+      "with space",
+      "with-dash",
+      "with@at",
+      "with.dot",
+    ])("invalid menu id %s is rejected", (id) => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, id },
+      });
+      expect(result.success, `id "${id}" should be rejected`).toBe(false);
+    });
+
+    test("empty menu id is rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, id: "" },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("empty menu label is rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, label: "" },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("empty menu description is rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, description: "" },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("empty pageTitle is rejected when provided", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, pageTitle: "" },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("empty commerceMenuId is rejected when provided", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, commerceMenuId: "" },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("invalid sandboxPermissions value is rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: {
+          ...configWithAdminUiMenu.adminUi.menu,
+          sandboxPermissions: ["allow-scripts"],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("empty sandboxPermissions array is rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, sandboxPermissions: [] },
       });
       expect(result.success).toBe(false);
     });

@@ -258,6 +258,20 @@ export function createConfigWithTwoCommerceEventingSources() {
   } satisfies CommerceAppConfigOutputModel;
 }
 
+/** Minimal valid adminUi menu object (required fields only). */
+const adminUiMenuMinimalPart = {
+  id: "approval_dashboard",
+  label: "Approval Dashboard",
+  description: "Review and approve purchase requests from Commerce Admin.",
+} satisfies NonNullable<CommerceAppConfigOutputModel["adminUi"]>["menu"];
+
+/** Full adminUi menu object with all fields populated. */
+const adminUiMenuPart = {
+  ...adminUiMenuMinimalPart,
+  commerceMenuId: "magento-sales-sales",
+  sandboxPermissions: ["allow-popups", "allow-downloads"] as const,
+} satisfies NonNullable<CommerceAppConfigOutputModel["adminUi"]>["menu"];
+
 /** Config fixture with all three adminUi grid column extensions configured. */
 export const configWithAdminUi = {
   metadata: { ...mockMetadata, id: "test-app-admin-ui" },
@@ -308,6 +322,7 @@ export const configWithAdminUi = {
       },
     },
   },
+  menu: adminUiMenuPart,
 } satisfies CommerceAppConfigOutputModel;
 
 /** Config fixture with only order adminUi grid columns configured. */
@@ -432,6 +447,14 @@ export const configWithFullAdminUiV2 = {
         },
       ],
     },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with an adminUi menu declaration (no grid columns). */
+export const configWithAdminUiMenu = {
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-menu" },
+  adminUi: {
+    menu: adminUiMenuPart,
   },
 } satisfies CommerceAppConfigOutputModel;
 
