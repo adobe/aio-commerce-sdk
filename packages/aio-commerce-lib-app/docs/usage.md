@@ -606,7 +606,23 @@ adminUi: {
 - **label**: Required, non-empty string — menu label rendered in Commerce Admin
 - **description**: Required, non-empty string — summary shown in installation and permission-review surfaces
 - **pageTitle** (optional): non-empty string — page title for the menu entry
-- **commerceMenuId** (optional): non-empty string — existing Commerce menu ID under which the app menu is attached (e.g. `"magento-sales-sales"`); when omitted, a per-app section is generated automatically from the information in the `metadata`.
+- **commerceMenuId** (optional): non-empty string — existing Commerce menu ID under which the app menu is attached; when omitted, a per-app section is generated automatically from the information in the `metadata`. Use the named constants from `@adobe/aio-commerce-lib-admin-ui/menu` instead of raw strings:
+
+  ```typescript
+  import { MENU_SALES } from "@adobe/aio-commerce-lib-admin-ui/menu";
+
+  export default defineConfig({
+    adminUi: {
+      menu: {
+        id: "approval_dashboard",
+        label: "Approval Dashboard",
+        description: "Review and approve purchase requests.",
+        commerceMenuId: MENU_SALES,
+      },
+    },
+  });
+  ```
+
 - **sandboxPermissions** (optional): array of iframe sandbox permissions; allowed values: `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
 
 ### CLI Commands
