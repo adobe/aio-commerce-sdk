@@ -299,11 +299,11 @@ describe("AdminUiSchema", () => {
       expect(result.success).toBe(false);
     });
 
-    test("unknown commerceMenuId is rejected", () => {
+    test("unknown parentMenu is rejected", () => {
       const result = v.safeParse(AdminUiSchema, {
         menu: {
           ...configWithAdminUiMenu.adminUi.menu,
-          commerceMenuId: "unknown.menu",
+          parentMenu: "unknown.menu",
         },
       });
       expect(result.success).toBe(false);

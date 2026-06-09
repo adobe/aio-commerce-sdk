@@ -594,7 +594,7 @@ adminUi: {
     id: "approval_dashboard",
     label: "Approval Dashboard",
     description: "Review and approve purchase requests from Commerce Admin.",
-    commerceMenuId: "magento-sales-sales",
+    parentMenu: "catalog",
     sandboxPermissions: ["allow-popups", "allow-downloads"],
   },
 }
@@ -606,7 +606,7 @@ adminUi: {
 - **label**: Required, non-empty string — menu label rendered in Commerce Admin
 - **description**: Required, non-empty string — summary shown in installation and permission-review surfaces
 - **pageTitle** (optional): non-empty string — page title for the menu entry
-- **commerceMenuId** (optional): existing Commerce menu ID under which the app menu is attached; when omitted, a per-app section is generated automatically from the information in the `metadata`. Use the named constants from `@adobe/aio-commerce-lib-admin-ui/menu` instead of raw strings:
+- **parentMenu** (optional): existing Commerce menu ID under which the app menu is attached; when omitted, a per-app section is generated automatically from the information in the `metadata`. Use the named constants from `@adobe/aio-commerce-lib-admin-ui/menu` instead of raw strings:
 
   ```typescript
   import { MENU_SALES } from "@adobe/aio-commerce-lib-admin-ui/menu";
@@ -617,7 +617,7 @@ adminUi: {
         id: "approval_dashboard",
         label: "Approval Dashboard",
         description: "Review and approve purchase requests.",
-        commerceMenuId: MENU_SALES,
+        parentMenu: MENU_SALES,
       },
     },
   });

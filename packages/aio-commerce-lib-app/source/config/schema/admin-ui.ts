@@ -146,10 +146,10 @@ const MenuSchema = v.object({
   label: nonEmptyStringValueSchema("menu label"),
   description: nonEmptyStringValueSchema("menu description"),
   pageTitle: v.optional(nonEmptyStringValueSchema("menu page title")),
-  commerceMenuId: v.optional(
+  parentMenu: v.optional(
     v.picklist(
       COMMERCE_MENUS,
-      "commerceMenuId must be a known Commerce Admin menu ID",
+      "parentMenu must be a known Commerce Admin menu ID",
     ),
   ),
   sandboxPermissions: v.optional(SandboxPermissionsSchema),

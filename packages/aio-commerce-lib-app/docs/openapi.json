@@ -3361,7 +3361,7 @@
             "type": "string",
             "minLength": 1
           },
-          "commerceMenuId": {
+          "parentMenu": {
             "type": "string",
             "enum": [
               "sales",
