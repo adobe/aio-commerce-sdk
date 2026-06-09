@@ -60,10 +60,11 @@ function filterProvidersByEnv<P extends ProviderEntry>(
 
 /**
  * Returns a copy of a validated app config scoped to the given Commerce environment:
- * webhooks not applicable to the environment are removed, each event provider keeps
- * only its applicable events, and providers left with no events are dropped. Used by
- * the `app-config` action so App Management renders the same scoped set that install
- * creates.
+ * business-config fields and webhooks not applicable to the environment are removed,
+ * each event provider keeps only its applicable events, and providers left with no
+ * events are dropped. Uses the same `appliesToEnv` keep-rule as the `config` action,
+ * so the `app-config` action renders the same scoped set that the rest of the SDK
+ * (install and `config`) applies.
  *
  * @param config - The validated app config.
  * @param env - The target Commerce environment (e.g. `"paas"` or `"saas"`).
@@ -73,6 +74,18 @@ export function filterAppConfigByEnv(
   env: string,
 ): CommerceAppConfigOutputModel {
   const filtered = { ...config };
+
+  if (
+    filtered.businessConfig &&
+    Array.isArray(filtered.businessConfig.schema)
+  ) {
+    filtered.businessConfig = {
+      ...filtered.businessConfig,
+      schema: filtered.businessConfig.schema.filter((field) =>
+        appliesToEnv(field, env),
+      ),
+    };
+  }
 
   if (Array.isArray(filtered.webhooks)) {
     filtered.webhooks = filtered.webhooks.filter((webhook) =>

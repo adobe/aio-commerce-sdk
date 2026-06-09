@@ -299,7 +299,7 @@ eventing: {
 - **prioritary**: Optional boolean value to indicate if the event is prioritary.
 - **force**: Optional boolean value to indicate if the event should be forced.
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
-- **env**: Optional array of Commerce environments the event applies to. See [Environment Scoping](#environment-scoping).
+- **env**: Optional array of Commerce environments the event applies to. See [Environment Scoping (Events)](#environment-scoping-events).
 
 ##### External Events:
 
@@ -307,7 +307,7 @@ eventing: {
 - **label**: Display name for the event (max 100 characters)
 - **description**: Description of the event (max 255 characters)
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
-- **env**: Optional array of Commerce environments the event applies to. See [Environment Scoping](#environment-scoping).
+- **env**: Optional array of Commerce environments the event applies to. See [Environment Scoping (Events)](#environment-scoping-events).
 
 ##### Provider Configuration:
 
@@ -317,7 +317,7 @@ eventing: {
 
 Both `commerce` and `external` arrays are optional, you can configure one, both, or neither depending on your application's needs.
 
-##### Environment Scoping
+##### Environment Scoping (Events)
 
 Each event accepts an optional `env` property to scope it to specific Commerce environments. The value is an array of environments (`"paas"`, `"saas"`) and accepts any combination of one or more. This mirrors the [environment scoping available for Business Configuration fields](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-config/docs/usage.md).
 
@@ -392,9 +392,9 @@ Each webhook entry supports:
 - **runtimeAction**: The runtime action that resolves the webhook URL, in the format `<package>/<action>`. Mutually exclusive with `webhook.url`.
 - **requireAdobeAuth**: Optional boolean (runtime-action webhooks only). When not `false`, the webhook is registered with Adobe OAuth credentials.
 - **webhook**: The webhook payload sent to Commerce (`webhook_method`, `webhook_type`, `batch_name`, `hook_name`, `method`, and optional `url`, `fields`, `rules`, `headers`, `priority`, `required`, timeouts, and `ttl`).
-- **env**: Optional array of Commerce environments the webhook applies to. See [Environment Scoping](#environment-scoping-1).
+- **env**: Optional array of Commerce environments the webhook applies to. See [Environment Scoping (Webhooks)](#environment-scoping-webhooks).
 
-##### Environment Scoping
+##### Environment Scoping (Webhooks)
 
 Like events, each webhook entry accepts an optional `env` property (`"paas"`, `"saas"`) to scope it to specific Commerce environments. When omitted, the webhook applies to all environments; when set, it is only subscribed at install time on the listed environments.
 

@@ -2537,7 +2537,7 @@
                   },
                   "commerceEnv": {
                     "type": "string",
-                    "minLength": 1
+                    "enum": ["paas", "saas"]
                   }
                 },
                 "required": ["commerceBaseUrl"]

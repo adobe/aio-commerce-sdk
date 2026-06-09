@@ -860,6 +860,29 @@ describe("validateWebhookConflicts", () => {
     );
     expect(getWebhookList).not.toHaveBeenCalled();
   });
+
+  test("ignores modification webhooks scoped to a different environment", async () => {
+    const getWebhookList = vi.fn().mockResolvedValue([]);
+    const context = makeContext(vi.fn(), getWebhookList, {
+      ...DEFAULT_PARAMS,
+      AIO_COMMERCE_API_FLAVOR: "saas",
+    });
+
+    const config = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          label: "PaaS only modification",
+          category: "modification",
+          env: ["paas"],
+        }),
+      ],
+    });
+
+    await expect(validateWebhookConflicts(config, context)).resolves.toEqual(
+      [],
+    );
+    expect(getWebhookList).not.toHaveBeenCalled();
+  });
 });
 
 /** Minimal valid IMS params shared across resolveDeveloperConsoleOAuthCredentials tests. */
@@ -998,6 +1021,35 @@ describe("deleteWebhookSubscriptions", () => {
         hook_name: "test_app_webhooks_order_created",
       }),
     );
+    expect(result.unsubscribedWebhooks).toHaveLength(1);
+  });
+
+  test("does not filter by environment (offboards items scoped to other environments)", async () => {
+    const unsubscribeWebhook = vi.fn().mockResolvedValue(null);
+    const existingWebhook = createMockExistingCommerceWebhook();
+    const getWebhookList = vi.fn().mockResolvedValue([existingWebhook]);
+    // Install ran against "saas" but the webhook is scoped to "paas"; uninstall must
+    // still offboard it (offboarding is environment-agnostic and idempotent).
+    const context = makeContext(
+      vi.fn(),
+      getWebhookList,
+      { ...DEFAULT_PARAMS, AIO_COMMERCE_API_FLAVOR: "saas" },
+      unsubscribeWebhook,
+    );
+
+    const config = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          label: "PaaS only",
+          category: "modification",
+          env: ["paas"],
+        }),
+      ],
+    });
+
+    const result = await deleteWebhookSubscriptions(config, context);
+
+    expect(unsubscribeWebhook).toHaveBeenCalledTimes(1);
     expect(result.unsubscribedWebhooks).toHaveLength(1);
   });
 

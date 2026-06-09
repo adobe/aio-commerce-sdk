@@ -160,6 +160,46 @@ describe("appConfigRuntimeAction", () => {
       expect(body.eventing.commerce).toHaveLength(0);
     });
 
+    test("filters business-config fields to the commerceEnv query param", async () => {
+      const appConfig = {
+        metadata: minimalValidConfig.metadata,
+        businessConfig: {
+          schema: [
+            {
+              name: "paasField",
+              label: "PaaS Field",
+              type: "text",
+              default: "paas",
+              env: ["paas"],
+            },
+            {
+              name: "sharedField",
+              label: "Shared Field",
+              type: "text",
+              default: "shared",
+            },
+          ],
+        },
+      } as const;
+
+      const handler = appConfigRuntimeAction({
+        // @ts-expect-error - inline test config matches the schema shape
+        appConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({ query: "commerceEnv=saas" }),
+      );
+
+      expect.assert(result.type === "success");
+      const body = result.body as {
+        businessConfig: { schema: { name: string }[] };
+      };
+      expect(body.businessConfig.schema.map((field) => field.name)).toEqual([
+        "sharedField",
+      ]);
+    });
+
     test("returns the full config when commerceEnv is omitted", async () => {
       const appConfig = {
         metadata: minimalValidConfig.metadata,
