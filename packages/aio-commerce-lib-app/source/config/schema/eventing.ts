@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { commerceEnvArraySchema } from "@adobe/aio-commerce-lib-core/commerce";
+import { CommerceEnvArraySchema } from "@adobe/aio-commerce-lib-core/commerce";
 import {
   alphaNumericOrHyphenSchema,
   booleanValueSchema,
@@ -193,7 +193,7 @@ const BaseEventSchema = v.object({
    * the event applies to all environments; when set, it is only created on the
    * listed environments at install time.
    */
-  env: v.optional(commerceEnvArraySchema),
+  env: v.optional(CommerceEnvArraySchema),
 });
 
 /**

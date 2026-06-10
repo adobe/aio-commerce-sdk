@@ -20,6 +20,6 @@
 export {
   COMMERCE_ENVS,
   type CommerceEnv,
-  commerceEnvArraySchema,
-  commerceEnvSchema,
+  CommerceEnvArraySchema,
+  CommerceEnvSchema,
 } from "./env";

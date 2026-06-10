@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { commerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
+import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
@@ -26,7 +26,7 @@ const AcceptedConfigurationValuesSchema = v.union([
 /** Query parameters for GET / */
 export const GetConfigurationQuerySchema = v.object({
   scopeId: nonEmptyStringValueSchema("scopeId"),
-  commerceEnv: v.optional(commerceEnvSchema),
+  commerceEnv: v.optional(CommerceEnvSchema),
 });
 
 /** Request body for PUT / */

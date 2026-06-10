@@ -19,7 +19,7 @@ export const COMMERCE_ENVS = ["paas", "saas"] as const;
 export type CommerceEnv = (typeof COMMERCE_ENVS)[number];
 
 /** Schema for a single Commerce environment an item can be scoped to. */
-export const commerceEnvSchema = v.picklist(
+export const CommerceEnvSchema = v.picklist(
   COMMERCE_ENVS,
   `Expected one of: ${COMMERCE_ENVS.map((e) => `"${e}"`).join(", ")}`,
 );
@@ -28,12 +28,12 @@ export const commerceEnvSchema = v.picklist(
  * Schema for a non-empty array of Commerce environments, used to scope an item
  * (a configuration field, webhook, or event) to specific environments.
  *
- * Apply the optional wrapper at the call site (`v.optional(commerceEnvArraySchema)`);
+ * Apply the optional wrapper at the call site (`v.optional(CommerceEnvArraySchema)`);
  * when omitted, the item applies to all environments.
  */
-export const commerceEnvArraySchema = v.pipe(
+export const CommerceEnvArraySchema = v.pipe(
   v.array(
-    commerceEnvSchema,
+    CommerceEnvSchema,
     'Expected an array of commerce environments for the field "env"',
   ),
   v.nonEmpty('The "env" array must contain at least one commerce environment'),

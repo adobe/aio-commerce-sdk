@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { commerceEnvArraySchema } from "@adobe/aio-commerce-lib-core/commerce";
+import { CommerceEnvArraySchema } from "@adobe/aio-commerce-lib-core/commerce";
 import * as v from "valibot";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
@@ -56,7 +56,7 @@ const BaseOptionSchema = v.object({
       ),
     ),
   ),
-  env: v.optional(commerceEnvArraySchema),
+  env: v.optional(CommerceEnvArraySchema),
 });
 
 /** Schema for a single option in a list field, containing a display label and a value */

@@ -98,8 +98,8 @@ function main(params) {
 ```typescript
 import {
   COMMERCE_ENVS,
-  commerceEnvSchema,
-  commerceEnvArraySchema,
+  CommerceEnvSchema,
+  CommerceEnvArraySchema,
 } from "@adobe/aio-commerce-lib-core/commerce";
 import * as v from "valibot";
 
@@ -107,8 +107,8 @@ import * as v from "valibot";
 COMMERCE_ENVS;
 
 // Validate a single environment value.
-v.parse(commerceEnvSchema, "paas");
+v.parse(CommerceEnvSchema, "paas");
 
 // Validate a non-empty array of environments (e.g. to scope a field or resource).
-v.parse(commerceEnvArraySchema, ["paas", "saas"]);
+v.parse(CommerceEnvArraySchema, ["paas", "saas"]);
 ```

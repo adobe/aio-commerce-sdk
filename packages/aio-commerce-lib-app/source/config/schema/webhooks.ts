@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { commerceEnvArraySchema } from "@adobe/aio-commerce-lib-core/commerce";
+import { CommerceEnvArraySchema } from "@adobe/aio-commerce-lib-core/commerce";
 import {
   booleanValueSchema,
   nonEmptyStringValueSchema,
@@ -26,7 +26,7 @@ import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
  * the webhook applies to all environments; when set, it is only subscribed on the
  * listed environments at install time.
  */
-const webhookEnvSchema = v.optional(commerceEnvArraySchema);
+const webhookEnvSchema = v.optional(CommerceEnvArraySchema);
 
 /** Schema for webhook field configuration (name and optional source). */
 const WebhookFieldSchema = v.object({

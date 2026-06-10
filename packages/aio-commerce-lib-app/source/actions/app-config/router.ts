@@ -11,7 +11,7 @@
  */
 
 import { resolveBusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
-import { commerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
+import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import {
   internalServerError,
   ok,
@@ -59,7 +59,7 @@ export const router = new HttpActionRouter<AppConfigActionContext>().use(
 
 /** GET / - Get app config */
 router.get("/", {
-  query: v.object({ commerceEnv: v.optional(commerceEnvSchema) }),
+  query: v.object({ commerceEnv: v.optional(CommerceEnvSchema) }),
   handler: async (req, { logger, rawParams }) => {
     const rawAppConfig = rawParams.appConfig;
 

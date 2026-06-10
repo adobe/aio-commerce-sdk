@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { commerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
+import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
@@ -34,5 +34,5 @@ export const SetCustomScopeTreeBodySchema = v.object({
 /** Request body for POST /commerce */
 export const SyncCommerceScopesBodySchema = v.object({
   commerceBaseUrl: nonEmptyStringValueSchema("commerceBaseUrl"),
-  commerceEnv: v.optional(commerceEnvSchema),
+  commerceEnv: v.optional(CommerceEnvSchema),
 });
