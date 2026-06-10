@@ -860,8 +860,30 @@ export async function main(params) {
 
 The data is managed automatically by the SDK during the app association lifecycle: a
 standalone `association` runtime action (always deployed alongside `app-config`) stores it
-on association and clears it on unassociation. You do not need to deploy or wire anything
-extra.
+on association and clears it on unassociation. Apps scaffolded with a version of the SDK
+that includes this feature have the `association` action wired in from the start — no extra
+setup beyond your normal deploy.
+
+#### Adopting association in an existing app
+
+Apps scaffolded before this feature was introduced do not have the `association` action yet.
+After upgrading `@adobe/aio-commerce-lib-app`, regenerate the runtime actions and redeploy so
+the `/association` endpoint exists:
+
+```bash
+npx @adobe/aio-commerce-lib-app generate actions
+aio app deploy
+```
+
+A plain `aio app deploy` on its own does not add the action: the `pre-app-build` hook only
+regenerates actions already declared in `ext.config.yaml`. Only `generate actions` (or
+`generate all`) rebuilds the manifest to pick up newly added SDK actions. Until the app is
+redeployed with the endpoint, the App Management client skips the store call and the helpers
+throw `AppNotAssociatedError`.
+
+For an app that was already associated under the older SDK, re-associate it after redeploying
+so the store call runs and backfills the instance data — a redeploy alone does not populate
+data for an existing association.
 
 ## Best Practices
 
