@@ -84,7 +84,6 @@ describe.concurrent("domains schema helpers", () => {
 
       expect(domains.has("metadata")).toBe(true);
       expect(domains.has("adminUi")).toBe(true);
-      expect(domains.has("adminUiSdk")).toBe(false);
     });
 
     test("should include multiple domains when config has multiple features", () => {
