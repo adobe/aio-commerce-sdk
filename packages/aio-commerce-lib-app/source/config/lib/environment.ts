@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { COMMERCE_ENVS } from "@adobe/aio-commerce-lib-core/commerce";
+
 import type { BusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
 import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
@@ -35,13 +37,22 @@ export function appliesToEnv(item: EnvScopedItem, env: CommerceEnv): boolean {
 }
 
 /**
- * Reads the target Commerce environment from the install workflow params, where the
- * router maps the request's `commerceEnv` onto `AIO_COMMERCE_API_FLAVOR`.
+ * Reads and validates the target Commerce environment from the install workflow params,
+ * where the router maps the request's `commerceEnv` onto `AIO_COMMERCE_API_FLAVOR`.
+ * Throws if the value is absent or not a recognised Commerce environment.
  *
  * @param params - The runtime action params available to install steps.
  */
-export function getInstallCommerceEnv(params: RuntimeActionParams): string {
-  return String(params.AIO_COMMERCE_API_FLAVOR ?? "");
+export function getInstallCommerceEnv(
+  params: RuntimeActionParams,
+): CommerceEnv {
+  const flavor = params.AIO_COMMERCE_API_FLAVOR;
+  if (!COMMERCE_ENVS.includes(flavor as CommerceEnv)) {
+    throw new Error(
+      `Missing or unknown commerce environment: "${flavor ?? ""}". Expected one of: ${COMMERCE_ENVS.map((e) => `"${e}"`).join(", ")}.`,
+    );
+  }
+  return flavor as CommerceEnv;
 }
 
 /**

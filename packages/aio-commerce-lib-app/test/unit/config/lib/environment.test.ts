@@ -20,6 +20,8 @@ import {
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
+const MISSING_OR_UNKNOWN_ENV = /Missing or unknown/;
+
 describe("appliesToEnv", () => {
   test("keeps an item without env on any environment", () => {
     expect(appliesToEnv({}, "paas")).toBe(true);
@@ -38,14 +40,23 @@ describe("appliesToEnv", () => {
 });
 
 describe("getInstallCommerceEnv", () => {
-  test("reads AIO_COMMERCE_API_FLAVOR from params", () => {
+  test("returns the CommerceEnv when AIO_COMMERCE_API_FLAVOR is valid", () => {
     expect(getInstallCommerceEnv({ AIO_COMMERCE_API_FLAVOR: "saas" })).toBe(
       "saas",
     );
+    expect(getInstallCommerceEnv({ AIO_COMMERCE_API_FLAVOR: "paas" })).toBe(
+      "paas",
+    );
   });
 
-  test("returns an empty string when the flavor is absent", () => {
-    expect(getInstallCommerceEnv({})).toBe("");
+  test("throws when AIO_COMMERCE_API_FLAVOR is absent", () => {
+    expect(() => getInstallCommerceEnv({})).toThrow(MISSING_OR_UNKNOWN_ENV);
+  });
+
+  test("throws when AIO_COMMERCE_API_FLAVOR is an unrecognised value", () => {
+    expect(() =>
+      getInstallCommerceEnv({ AIO_COMMERCE_API_FLAVOR: "onprem" }),
+    ).toThrow(MISSING_OR_UNKNOWN_ENV);
   });
 });
 
