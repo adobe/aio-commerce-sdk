@@ -21,13 +21,6 @@ import * as v from "valibot";
 
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
-/**
- * Optional list of Commerce environments a webhook entry applies to. When omitted,
- * the webhook applies to all environments; when set, it is only subscribed on the
- * listed environments at install time.
- */
-const webhookEnvSchema = v.optional(CommerceEnvArraySchema);
-
 /** Schema for webhook field configuration (name and optional source). */
 const WebhookFieldSchema = v.object({
   name: nonEmptyStringValueSchema("field name"),
@@ -112,7 +105,7 @@ const WebhookEntryBaseSchema = v.object({
   label: nonEmptyStringValueSchema("webhook label"),
   description: nonEmptyStringValueSchema("webhook description"),
   category: v.optional(CategorySchema),
-  env: webhookEnvSchema,
+  env: v.optional(CommerceEnvArraySchema),
 });
 
 /** Schema for a webhook entry that resolves its URL from a runtime action. */

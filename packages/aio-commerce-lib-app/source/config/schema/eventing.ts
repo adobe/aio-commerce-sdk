@@ -188,11 +188,6 @@ const BaseEventSchema = v.object({
     "Expected an array of runtime actions in the format <package>/<action>",
   ),
 
-  /**
-   * Optional list of Commerce environments this event applies to. When omitted,
-   * the event applies to all environments; when set, it is only created on the
-   * listed environments at install time.
-   */
   env: v.optional(CommerceEnvArraySchema),
 });
 
