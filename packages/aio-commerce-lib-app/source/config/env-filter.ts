@@ -10,14 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
+import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** An item (webhook or event) that may be scoped to specific Commerce environments. */
-type EnvScopedItem = { env?: readonly string[] };
+type EnvScopedItem = { env?: string[] };
 
 /** A provider entry whose events may each be scoped to specific environments. */
-type ProviderEntry = { events: readonly EnvScopedItem[] };
+type ProviderEntry = { events: EnvScopedItem[] };
 
 /**
  * Returns true when an item applies to the given Commerce environment: either it
@@ -28,7 +29,7 @@ type ProviderEntry = { events: readonly EnvScopedItem[] };
  * @param item - The webhook or event entry, which may carry an optional `env` array.
  * @param env - The target Commerce environment (e.g. `"paas"` or `"saas"`).
  */
-export function appliesToEnv(item: EnvScopedItem, env: string): boolean {
+export function appliesToEnv(item: EnvScopedItem, env: CommerceEnv): boolean {
   return item.env === undefined || item.env.includes(env);
 }
 
@@ -48,7 +49,7 @@ export function getInstallCommerceEnv(params: RuntimeActionParams): string {
  */
 function filterProvidersByEnv<P extends ProviderEntry>(
   providers: readonly P[],
-  env: string,
+  env: CommerceEnv,
 ): P[] {
   return providers
     .map((provider) => ({
@@ -71,7 +72,7 @@ function filterProvidersByEnv<P extends ProviderEntry>(
  */
 export function filterAppConfigByEnv(
   config: CommerceAppConfigOutputModel,
-  env: string,
+  env: CommerceEnv,
 ): CommerceAppConfigOutputModel {
   const filtered = { ...config };
 

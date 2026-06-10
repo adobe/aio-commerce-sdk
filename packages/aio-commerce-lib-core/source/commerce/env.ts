@@ -13,7 +13,7 @@
 import * as v from "valibot";
 
 /** The list of supported Commerce environments an item can be scoped to. */
-export const COMMERCE_ENVS = ["paas", "saas"] as const;
+export const COMMERCE_ENVS = ["paas", "saas"] as const satisfies string[];
 
 /** A single Commerce environment an item can be scoped to. */
 export type CommerceEnv = (typeof COMMERCE_ENVS)[number];
