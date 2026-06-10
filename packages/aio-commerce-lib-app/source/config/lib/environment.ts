@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import type { BusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
 import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -107,4 +108,19 @@ export function filterAppConfigByEnv(
   }
 
   return filtered;
+}
+
+/**
+ * Filters a business configuration schema to the fields applicable to the
+ * given Commerce environment. Fields without an `env` property apply to all
+ * environments and are always included.
+ *
+ * @param schema - The business configuration schema to filter.
+ * @param env - The Commerce environment to filter by.
+ */
+export function filterSchemaByEnv(
+  schema: BusinessConfigSchema,
+  env: CommerceEnv,
+): BusinessConfigSchema {
+  return schema.filter((field) => appliesToEnv(field, env));
 }
