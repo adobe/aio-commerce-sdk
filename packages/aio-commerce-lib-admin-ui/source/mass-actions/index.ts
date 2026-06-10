@@ -30,6 +30,7 @@ export {
   badRequestMassActionResponse,
   forbiddenMassActionResponse,
   internalServerErrorMassActionResponse,
+  massActionErrorResponse,
   notFoundMassActionResponse,
   okMassActionResponse,
   parseMassActionRequest,

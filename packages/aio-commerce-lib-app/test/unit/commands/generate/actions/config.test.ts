@@ -268,12 +268,7 @@ describe("buildAdminUiV2ExtConfig", () => {
 
   test("deduplicates workerProcess entries when the same runtimeAction appears on multiple entities", () => {
     const config = buildAdminUiV2ExtConfig({
-      metadata: {
-        id: "app",
-        displayName: "App",
-        description: "App",
-        version: "1.0.0",
-      },
+      ...minimalValidConfig,
       adminUi: {
         order: {
           massActions: [

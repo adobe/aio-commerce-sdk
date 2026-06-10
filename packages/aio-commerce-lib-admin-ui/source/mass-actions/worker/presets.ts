@@ -10,14 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  badRequest,
-  forbidden,
-  internalServerError,
-  notFound,
-  ok,
-  unauthorized,
-} from "@adobe/aio-commerce-lib-core/responses";
+import { ok } from "@adobe/aio-commerce-lib-core/responses";
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import { MassActionRequestSchema } from "./schema";
@@ -26,11 +19,7 @@ import type {
   ErrorResponse,
   SuccessResponse,
 } from "@adobe/aio-commerce-lib-core/responses";
-import type {
-  MassActionErrorBody,
-  MassActionRequest,
-  MassActionResponseBody,
-} from "./types";
+import type { MassActionRequest, MassActionResponseBody } from "./types";
 
 /**
  * Parses and validates the JSON body Commerce POSTs to a worker mass action handler.
@@ -74,13 +63,28 @@ export function okMassActionResponse(
 }
 
 /**
- * Creates the error body using error message provided as parameter.
- * @param errorMessage
+ * Builds an error response for a worker mass action with the given HTTP status code.
+ *
+ * Use this when none of the typed helpers (`badRequestMassActionResponse`, etc.) match
+ * your use case.
+ *
+ * @param statusCode - The HTTP status code to return.
+ * @param errorMessage - Error message included in the response body as `{ error }`.
+ *
+ * @example
+ * ```ts
+ * return massActionErrorResponse(422, "Request entity is unprocessable");
+ * ```
  */
-function errorBody(
+export function massActionErrorResponse(
+  statusCode: number,
   errorMessage: string,
-): MassActionErrorBody & { message: string } {
-  return { error: errorMessage } as MassActionErrorBody & { message: string };
+): ErrorResponse {
+  // @ts-expect-error — Commerce's wire contract uses `{ error }` only; lib-core requires `message`, which is not part of this format.
+  return {
+    type: "error",
+    error: { statusCode, body: { error: errorMessage } },
+  };
 }
 
 /**
@@ -96,7 +100,7 @@ function errorBody(
 export function badRequestMassActionResponse(
   errorMessage: string,
 ): ErrorResponse {
-  return badRequest({ body: errorBody(errorMessage) });
+  return massActionErrorResponse(400, errorMessage);
 }
 
 /**
@@ -112,7 +116,7 @@ export function badRequestMassActionResponse(
 export function unauthorizedMassActionResponse(
   errorMessage: string,
 ): ErrorResponse {
-  return unauthorized({ body: errorBody(errorMessage) });
+  return massActionErrorResponse(401, errorMessage);
 }
 
 /**
@@ -128,7 +132,7 @@ export function unauthorizedMassActionResponse(
 export function forbiddenMassActionResponse(
   errorMessage: string,
 ): ErrorResponse {
-  return forbidden({ body: errorBody(errorMessage) });
+  return massActionErrorResponse(403, errorMessage);
 }
 
 /**
@@ -144,7 +148,7 @@ export function forbiddenMassActionResponse(
 export function notFoundMassActionResponse(
   errorMessage: string,
 ): ErrorResponse {
-  return notFound({ body: errorBody(errorMessage) });
+  return massActionErrorResponse(404, errorMessage);
 }
 
 /**
@@ -160,5 +164,5 @@ export function notFoundMassActionResponse(
 export function internalServerErrorMassActionResponse(
   errorMessage: string,
 ): ErrorResponse {
-  return internalServerError({ body: errorBody(errorMessage) });
+  return massActionErrorResponse(500, errorMessage);
 }

@@ -188,6 +188,8 @@ describe.concurrent("domains schema helpers", () => {
       { config: fullConfig, domain: "webhooks" },
       { config: fullConfig, domain: "installation" },
       { config: fullConfig, domain: "installation.customInstallationSteps" },
+      { config: configWithAdminUiSdk, domain: "adminUiSdk" },
+      { config: configWithAdminUi, domain: "adminUi" },
     ] as const)("should work with all domain types", ({ config, domain }) => {
       expect(hasConfigDomain(config, domain)).toBe(true);
     });

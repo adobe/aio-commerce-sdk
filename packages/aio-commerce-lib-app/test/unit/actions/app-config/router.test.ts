@@ -130,37 +130,10 @@ describe("appConfigRuntimeAction", () => {
       });
       const result = await handler(createRuntimeActionParams());
 
-      expect.assert(result.type === "success");
-      // Cast required: the response body is typed as `{}` by the action handler infrastructure
-      type AdminUiBody = {
-        adminUi?: {
-          menuItems?: unknown;
-          bannerNotification?: unknown;
-          order?: {
-            gridColumns?: unknown;
-            massActions?: Record<string, unknown>[];
-          };
-          product?: { massActions?: Record<string, unknown>[] };
-          customer?: { massActions?: Record<string, unknown>[] };
-        };
-      };
-      const body = result.body as AdminUiBody;
-
-      // All adminUi content passes through verbatim — no transformations
-      expect(body.adminUi).toEqual(configWithFullAdminUiV2.adminUi);
-
-      // Verify bare mass action IDs are served as-is (no app metadata prefix)
-      const orderMassAction = body.adminUi?.order?.massActions?.[0];
-      expect(orderMassAction?.id).toBe("order-mass-action");
-
-      const productMassAction = body.adminUi?.product?.massActions?.[0];
-      expect(productMassAction?.id).toBe("product-mass-action");
-
-      const customerMassAction = body.adminUi?.customer?.massActions?.[0];
-      expect(customerMassAction?.id).toBe("export-customers");
-      expect(customerMassAction?.runtimeAction).toBe(
-        "customers/export-customers",
-      );
+      expect(result).toMatchObject({
+        type: "success",
+        body: { adminUi: configWithFullAdminUiV2.adminUi },
+      });
     });
   });
 

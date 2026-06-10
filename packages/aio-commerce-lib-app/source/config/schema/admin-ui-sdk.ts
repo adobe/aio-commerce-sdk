@@ -19,8 +19,6 @@ import * as v from "valibot";
 
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
-// ─── Shared primitives (used by both v1 and v2) ───────────────────────────────
-
 const SANDBOX_VALUES = [
   "allow-downloads",
   "allow-modals",
@@ -83,6 +81,15 @@ const GridColumnsSchema = v.object({
   ),
 });
 
+const massActionBaseEntries = {
+  actionId: nonEmptyStringValueSchema("mass action ID"),
+  label: nonEmptyStringValueSchema("mass action label"),
+  title: v.optional(nonEmptyStringValueSchema("mass action page title")),
+  confirm: v.optional(MassActionConfirmSchema),
+  path: nonEmptyStringValueSchema("mass action path"),
+  ...iframeActionEntries,
+};
+
 const SANDBOX_DISPLAY_IFRAME_MESSAGE =
   "sandbox is only relevant when displayIframe is set to true";
 
@@ -128,59 +135,6 @@ function withSandboxDisplayIframeCheck<
   );
 }
 
-const OrderViewButtonSchema = withSandboxDisplayIframeCheck(
-  v.object({
-    buttonId: nonEmptyStringValueSchema("view button ID"),
-    label: nonEmptyStringValueSchema("view button label"),
-    confirm: v.optional(ViewButtonConfirmSchema),
-    path: nonEmptyStringValueSchema("view button path"),
-    level: v.optional(ViewButtonLevelSchema),
-    sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
-    ...iframeActionEntries,
-  }),
-);
-
-const CustomFeeSchema = v.object({
-  id: nonEmptyStringValueSchema("custom fee ID"),
-  label: nonEmptyStringValueSchema("custom fee label"),
-  value: v.number("Custom fee value must be a number"),
-  orderMinimumAmount: v.optional(
-    v.number("orderMinimumAmount must be a number"),
-  ),
-  applyFeeOnLastInvoice: v.optional(
-    booleanValueSchema("applyFeeOnLastInvoice"),
-  ),
-  applyFeeOnLastCreditMemo: v.optional(
-    booleanValueSchema("applyFeeOnLastCreditMemo"),
-  ),
-});
-
-const MenuItemSchema = v.object({
-  id: nonEmptyStringValueSchema("menu item ID"),
-  title: v.optional(nonEmptyStringValueSchema("menu item title")),
-  parent: v.optional(nonEmptyStringValueSchema("menu item parent")),
-  sortOrder: v.optional(v.number()),
-  isSection: v.optional(booleanValueSchema("isSection")),
-  sandbox: v.optional(SandboxSchema),
-});
-
-const OrderViewButtonBannerSchema = v.object({
-  buttonId: nonEmptyStringValueSchema("view button ID"),
-  successMessage: v.optional(nonEmptyStringValueSchema("success message")),
-  errorMessage: v.optional(nonEmptyStringValueSchema("error message")),
-});
-
-// ─── v1 schemas (`adminUiSdk`) ────────────────────────────────────────────────
-
-const massActionBaseEntries = {
-  actionId: nonEmptyStringValueSchema("mass action ID"),
-  label: nonEmptyStringValueSchema("mass action label"),
-  title: v.optional(nonEmptyStringValueSchema("mass action page title")),
-  confirm: v.optional(MassActionConfirmSchema),
-  path: nonEmptyStringValueSchema("mass action path"),
-  ...iframeActionEntries,
-};
-
 type SchemaEntries = Record<
   string,
   v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>
@@ -213,6 +167,33 @@ const CustomerMassActionSchema = createMassActionSchema({
   ),
 });
 
+const OrderViewButtonSchema = withSandboxDisplayIframeCheck(
+  v.object({
+    buttonId: nonEmptyStringValueSchema("view button ID"),
+    label: nonEmptyStringValueSchema("view button label"),
+    confirm: v.optional(ViewButtonConfirmSchema),
+    path: nonEmptyStringValueSchema("view button path"),
+    level: v.optional(ViewButtonLevelSchema),
+    sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
+    ...iframeActionEntries,
+  }),
+);
+
+const CustomFeeSchema = v.object({
+  id: nonEmptyStringValueSchema("custom fee ID"),
+  label: nonEmptyStringValueSchema("custom fee label"),
+  value: v.number("Custom fee value must be a number"),
+  orderMinimumAmount: v.optional(
+    v.number("orderMinimumAmount must be a number"),
+  ),
+  applyFeeOnLastInvoice: v.optional(
+    booleanValueSchema("applyFeeOnLastInvoice"),
+  ),
+  applyFeeOnLastCreditMemo: v.optional(
+    booleanValueSchema("applyFeeOnLastCreditMemo"),
+  ),
+});
+
 const OrderExtensionPointsSchema = v.object({
   massActions: v.optional(v.array(OrderMassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
@@ -236,6 +217,12 @@ const MassActionBannerSchema = v.object({
   errorMessage: v.optional(nonEmptyStringValueSchema("error message")),
 });
 
+const OrderViewButtonBannerSchema = v.object({
+  buttonId: nonEmptyStringValueSchema("view button ID"),
+  successMessage: v.optional(nonEmptyStringValueSchema("success message")),
+  errorMessage: v.optional(nonEmptyStringValueSchema("error message")),
+});
+
 const BannerNotificationSchema = v.object({
   massActions: v.optional(
     v.object({
@@ -245,6 +232,15 @@ const BannerNotificationSchema = v.object({
     }),
   ),
   orderViewButtons: v.optional(v.array(OrderViewButtonBannerSchema)),
+});
+
+const MenuItemSchema = v.object({
+  id: nonEmptyStringValueSchema("menu item ID"),
+  title: v.optional(nonEmptyStringValueSchema("menu item title")),
+  parent: v.optional(nonEmptyStringValueSchema("menu item parent")),
+  sortOrder: v.optional(v.number()),
+  isSection: v.optional(booleanValueSchema("isSection")),
+  sandbox: v.optional(SandboxSchema),
 });
 
 /**
@@ -345,5 +341,8 @@ export type AdminUiSdkGridColumns = v.InferInput<typeof GridColumnsSchema>;
 export function hasAdminUiSdk<T extends AnyCommerceAppConfig>(
   config: T,
 ): config is T & AppConfigWithAdminUiSdk<T> {
-  return config.adminUiSdk?.registration !== undefined;
+  return (
+    config.adminUiSdk !== undefined &&
+    config.adminUiSdk.registration !== undefined
+  );
 }
