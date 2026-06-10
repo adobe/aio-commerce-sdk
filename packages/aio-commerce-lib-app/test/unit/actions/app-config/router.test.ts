@@ -17,13 +17,14 @@ import { getOpenApiCacheKey } from "#actions/app-config/openapi";
 import { getConfigDomains } from "#config/schema/domains";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import {
+  configWithEnvScopedBusinessConfig,
+  configWithEnvScopedEventingAndWebhooks,
+  configWithPaasOnlyWebhook,
+} from "#test/fixtures/app-config-router";
+import {
   configWithDynamicListOptions,
   minimalValidConfig,
 } from "#test/fixtures/config";
-import {
-  createMockAllEnvsWebhookEntry,
-  createMockPaasWebhookEntry,
-} from "#test/fixtures/webhooks";
 
 describe("appConfigRuntimeAction", () => {
   beforeEach(() => {
@@ -97,34 +98,8 @@ describe("appConfigRuntimeAction", () => {
     });
 
     test("filters webhooks and events to the commerceEnv query param", async () => {
-      const appConfig = {
-        metadata: minimalValidConfig.metadata,
-        webhooks: [
-          createMockPaasWebhookEntry(),
-          createMockAllEnvsWebhookEntry(),
-        ],
-        eventing: {
-          commerce: [
-            {
-              provider: { label: "Orders", description: "Order events" },
-              events: [
-                {
-                  name: "plugin.order_placed",
-                  label: "Order Placed",
-                  description: "Order placed",
-                  fields: [{ name: "order_id" }],
-                  runtimeActions: ["my-package/on-order"],
-                  env: ["paas"],
-                },
-              ],
-            },
-          ],
-        },
-      } as const;
-
       const handler = appConfigRuntimeAction({
-        // @ts-expect-error - inline test config matches the schema shape
-        appConfig,
+        appConfig: configWithEnvScopedEventingAndWebhooks,
       });
 
       const result = await handler(
@@ -142,30 +117,8 @@ describe("appConfigRuntimeAction", () => {
     });
 
     test("filters business-config fields to the commerceEnv query param", async () => {
-      const appConfig = {
-        metadata: minimalValidConfig.metadata,
-        businessConfig: {
-          schema: [
-            {
-              name: "paasField",
-              label: "PaaS Field",
-              type: "text",
-              default: "paas",
-              env: ["paas"],
-            },
-            {
-              name: "sharedField",
-              label: "Shared Field",
-              type: "text",
-              default: "shared",
-            },
-          ],
-        },
-      } as const;
-
       const handler = appConfigRuntimeAction({
-        // @ts-expect-error - inline test config matches the schema shape
-        appConfig,
+        appConfig: configWithEnvScopedBusinessConfig,
       });
 
       const result = await handler(
@@ -182,14 +135,8 @@ describe("appConfigRuntimeAction", () => {
     });
 
     test("returns the full config when commerceEnv is omitted", async () => {
-      const appConfig = {
-        metadata: minimalValidConfig.metadata,
-        webhooks: [createMockPaasWebhookEntry()],
-      } as const;
-
       const handler = appConfigRuntimeAction({
-        // @ts-expect-error - inline test config matches the schema shape
-        appConfig,
+        appConfig: configWithPaasOnlyWebhook,
       });
 
       const result = await handler(createRuntimeActionParams());
