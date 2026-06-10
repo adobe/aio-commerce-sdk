@@ -14,6 +14,8 @@ import { describe, expect, test } from "vitest";
 
 import { getConfigDomains, hasConfigDomain } from "#config/schema/domains";
 import {
+  configWithAdminUiAllGrids,
+  configWithAdminUiMenu,
   configWithAdminUiSingleGrid,
   configWithBusinessConfig,
   configWithCommerceEventing,
@@ -21,7 +23,9 @@ import {
   configWithEventingAndWebhooks,
   configWithExternalEventing,
   configWithFullEventing,
+  configWithViewMassActions,
   configWithWebhooks,
+  configWithWorkerMassActions,
   fullConfig,
   minimalValidConfig,
 } from "#test/fixtures/config";
@@ -79,10 +83,20 @@ describe.concurrent("domains schema helpers", () => {
       expect(domains.has("installation.customInstallationSteps")).toBe(true);
     });
 
-    test("should include adminUi domain when adminUi grid columns are present", () => {
-      const domains = getConfigDomains(configWithAdminUiSingleGrid);
+    test.each([
+      { config: configWithAdminUiSingleGrid, label: "grid columns" },
+      {
+        config: configWithAdminUiAllGrids,
+        label: "grid columns for all entities",
+      },
+      { config: configWithAdminUiMenu, label: "menu only" },
+      { config: configWithViewMassActions, label: "view mass actions" },
+      { config: configWithWorkerMassActions, label: "worker mass actions" },
+    ])("should include adminUi domain when adminUi has $label", ({
+      config,
+    }) => {
+      const domains = getConfigDomains(config);
 
-      expect(domains.has("metadata")).toBe(true);
       expect(domains.has("adminUi")).toBe(true);
     });
 
@@ -156,6 +170,8 @@ describe.concurrent("domains schema helpers", () => {
       { config: minimalValidConfig, domain: "webhooks" },
       { config: minimalValidConfig, domain: "installation" },
       { config: minimalValidConfig, domain: "adminUi" },
+      { config: configWithAdminUiSdk, domain: "adminUi" },
+      { config: configWithAdminUiSingleGrid, domain: "adminUiSdk" },
       { config: configWithCommerceEventing, domain: "eventing.external" },
       { config: configWithExternalEventing, domain: "eventing.commerce" },
     ] as const)('should return false for domain "$domain" when config with "$domain" domain is not present', ({

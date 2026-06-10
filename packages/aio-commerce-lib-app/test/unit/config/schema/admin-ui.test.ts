@@ -141,6 +141,25 @@ describe("AdminUiSchema", () => {
       expect(result.success).toBe(true);
     });
 
+    test("grid columns and mass actions coexist on the same entity", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          gridColumns: {
+            label: "Order grid",
+            description: "Adds a column",
+            runtimeAction: "orders/fetch",
+            columns: [
+              { id: "col", label: "Col", type: "string", align: "left" },
+            ],
+          },
+          massActions: [
+            { id: "action", label: "Action", type: "view", path: "#/action" },
+          ],
+        },
+      });
+      expect(result.success).toBe(true);
+    });
+
     test.each([
       "letters_only",
       "with/slash",
@@ -458,6 +477,123 @@ describe("AdminUiSchema — mass actions", () => {
         order: {
           massActions: [{ id: "action", label: "Action", path: "#/action" }],
         },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("view mass action with timeout field is rejected (strict)", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "view",
+              path: "#/action",
+              timeout: 30,
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test.each([
+      { value: ["allow-scripts"], label: "invalid permission value" },
+      {
+        value: ["allow-popups", "allow-popups"],
+        label: "duplicate permissions",
+      },
+      { value: [], label: "empty permissions array" },
+    ])("view mass action sandboxPermissions rejected when $label", ({
+      value,
+    }) => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "view",
+              path: "#/action",
+              sandboxPermissions: value,
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("worker mass action with sandboxPermissions is rejected (strict)", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "worker",
+              runtimeAction: "pkg/action",
+              sandboxPermissions: ["allow-popups"],
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test.each([
+      { timeout: -1, label: "negative" },
+    ])("worker mass action with $label timeout is rejected", ({ timeout }) => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "worker",
+              runtimeAction: "pkg/action",
+              timeout,
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test.each([
+      {
+        massAction: {
+          id: "a",
+          label: "A",
+          type: "view" as const,
+          path: "#/a",
+          confirm: { message: "" },
+        },
+        label: "empty confirm.message",
+      },
+      {
+        massAction: {
+          id: "a",
+          label: "A",
+          type: "view" as const,
+          path: "#/a",
+          notifications: { success: "" },
+        },
+        label: "empty notifications.success",
+      },
+      {
+        massAction: {
+          id: "a",
+          label: "A",
+          type: "view" as const,
+          path: "#/a",
+          selectionLimit: -1,
+        },
+        label: "negative selectionLimit",
+      },
+    ])("mass action with $label is rejected", ({ massAction }) => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: { massActions: [massAction] },
       });
       expect(result.success).toBe(false);
     });

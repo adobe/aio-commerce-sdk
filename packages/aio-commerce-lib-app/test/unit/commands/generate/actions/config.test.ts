@@ -27,6 +27,7 @@ import {
   configWithCustomInstallationSteps,
   configWithExternalEventing,
   configWithFullAdminUiV2,
+  configWithMultipleWorkerMassActions,
   configWithViewMassActions,
   configWithWebhooks,
   minimalValidConfig,
@@ -231,6 +232,53 @@ describe("buildAdminUiV2ExtConfig", () => {
       { type: "web", impl: "index.html" },
     ]);
     expect(config.web).toBe("web-src");
+  });
+
+  test("all worker mass action runtimeActions from multiple entities appear in workerProcess", () => {
+    const config = buildAdminUiV2ExtConfig(configWithMultipleWorkerMassActions);
+    const workerImpls =
+      config.operations?.workerProcess?.map((op) => op.impl) ?? [];
+
+    expect(workerImpls).toHaveLength(2);
+    expect(workerImpls).toContain("orders/export-orders");
+    expect(workerImpls).toContain("customers/export-customers");
+  });
+
+  test("deduplicates workerProcess when a grid runtimeAction matches a worker mass action runtimeAction", () => {
+    const sharedAction = "orders/fetch-order-data";
+    const config = buildAdminUiV2ExtConfig({
+      ...minimalValidConfig,
+      adminUi: {
+        order: {
+          gridColumns: {
+            label: "L",
+            description: "D",
+            runtimeAction: sharedAction,
+            columns: [
+              {
+                id: "k",
+                label: "K",
+                type: "string" as const,
+                align: "left" as const,
+              },
+            ],
+          },
+          massActions: [
+            {
+              id: "fetch",
+              label: "Fetch",
+              type: "worker" as const,
+              runtimeAction: sharedAction,
+            },
+          ],
+        },
+      },
+    });
+    const workerImpls =
+      config.operations?.workerProcess?.map((op) => op.impl) ?? [];
+
+    expect(workerImpls).toHaveLength(1);
+    expect(workerImpls).toContain(sharedAction);
   });
 
   test("deduplicates workerProcess entries when the same runtimeAction appears on multiple entities", () => {

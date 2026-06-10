@@ -14,14 +14,17 @@ import { describe, expect, test } from "vitest";
 
 import { requiresInstallation } from "#config/schema/app";
 import {
-  configWithAdminUi,
+  configWithAdminUiMenu,
+  configWithAdminUiSingleGrid,
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
   configWithEventingAndWebhooks,
   configWithExternalEventing,
   configWithFullEventing,
+  configWithViewMassActions,
   configWithWebhooks,
+  configWithWorkerMassActions,
   fullConfig,
   minimalValidConfig,
   mockMetadata,
@@ -43,7 +46,13 @@ describe.concurrent("app schema helpers", () => {
       { config: configWithExternalEventing, name: "external eventing" },
       { config: configWithFullEventing, name: "full eventing" },
       { config: configWithWebhooks, name: "webhooks" },
-      { config: configWithAdminUi, name: "Admin UI" },
+      { config: configWithAdminUiSingleGrid, name: "Admin UI grid columns" },
+      { config: configWithAdminUiMenu, name: "Admin UI menu" },
+      { config: configWithViewMassActions, name: "Admin UI view mass actions" },
+      {
+        config: configWithWorkerMassActions,
+        name: "Admin UI worker mass actions",
+      },
       {
         config: configWithEventingAndWebhooks,
         name: "multiple installable features",

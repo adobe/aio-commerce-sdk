@@ -371,6 +371,33 @@ export const configWithWorkerMassActions = {
   },
 } satisfies CommerceAppConfigOutputModel;
 
+/** Config fixture with worker mass actions on two different entities with distinct runtimeActions. */
+export const configWithMultipleWorkerMassActions = {
+  metadata: { ...mockMetadata, id: "test-app-multiple-worker-mass-actions" },
+  adminUi: {
+    order: {
+      massActions: [
+        {
+          id: "export-orders",
+          label: "Export Orders",
+          type: "worker" as const,
+          runtimeAction: "orders/export-orders",
+        },
+      ],
+    },
+    customer: {
+      massActions: [
+        {
+          id: "export-customers",
+          label: "Export Customers",
+          type: "worker" as const,
+          runtimeAction: "customers/export-customers",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 /** v2 Admin UI config fixture with view mass actions and no worker. */
 export const configWithViewMassActions = {
   metadata: { ...mockMetadata, id: "test-app-admin-ui-sdk-v2" },
