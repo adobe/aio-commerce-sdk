@@ -233,13 +233,15 @@ export function buildAdminUiV2ExtConfig(
   const hasViewMassActions = entities
     .flatMap((entity) => entity?.massActions ?? [])
     .some((action) => action.type === "view");
+
+  const requiresWeb = hasViewMassActions || hasAdminUiMenu;
   return {
     hooks: {
       "pre-app-build":
         "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build",
     },
     operations: {
-      ...((hasViewMassActions || hasAdminUiMenu) && {
+      ...(requiresWeb && {
         view: [{ type: "web" as const, impl: "index.html" }],
       }),
       workerProcess: runtimeActions.map((impl) => ({
@@ -247,7 +249,7 @@ export function buildAdminUiV2ExtConfig(
         impl,
       })),
     },
-    ...((hasViewMassActions || hasAdminUiMenu) && {
+    ...(requiresWeb && {
       web: "web-src",
     }),
   } satisfies ExtConfig;

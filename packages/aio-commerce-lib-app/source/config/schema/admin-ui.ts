@@ -28,7 +28,12 @@ const SANDBOX_PERMISSION_VALUES = [
 ] as const satisfies string[];
 
 const SandboxPermissionsSchema = v.pipe(
-  v.array(v.picklist(SANDBOX_PERMISSION_VALUES)),
+  v.array(
+    v.picklist(
+      SANDBOX_PERMISSION_VALUES,
+      `Invalid sandbox permission. Accepted values are: ${SANDBOX_PERMISSION_VALUES.join(", ")}`,
+    ),
+  ),
   v.minLength(
     1,
     "sandboxPermissions must contain at least one permission when it's defined",
