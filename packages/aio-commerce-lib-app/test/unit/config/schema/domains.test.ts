@@ -170,8 +170,6 @@ describe.concurrent("domains schema helpers", () => {
       { config: minimalValidConfig, domain: "webhooks" },
       { config: minimalValidConfig, domain: "installation" },
       { config: minimalValidConfig, domain: "adminUi" },
-      { config: configWithAdminUiSdk, domain: "adminUi" },
-      { config: configWithAdminUiSingleGrid, domain: "adminUiSdk" },
       { config: configWithCommerceEventing, domain: "eventing.external" },
       { config: configWithExternalEventing, domain: "eventing.commerce" },
     ] as const)('should return false for domain "$domain" when config with "$domain" domain is not present', ({

@@ -19,6 +19,26 @@ import * as v from "valibot";
 
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
+// ─── Shared ─────────────────────────────────────────────────────────────
+
+const SANDBOX_PERMISSION_VALUES = [
+  "allow-downloads",
+  "allow-modals",
+  "allow-popups",
+] as const satisfies string[];
+
+const SandboxPermissionsSchema = v.pipe(
+  v.array(v.picklist(SANDBOX_PERMISSION_VALUES)),
+  v.minLength(
+    1,
+    "sandboxPermissions must contain at least one permission when it's defined",
+  ),
+  v.check((permissions) => {
+    const uniquePermissions = new Set(permissions);
+    return uniquePermissions.size === permissions.length;
+  }, "Duplicate permissions are not allowed in sandboxPermissions"),
+);
+
 // ─── Grid columns ─────────────────────────────────────────────────────────────
 
 const ColumnTypeSchema = v.picklist([
@@ -72,12 +92,6 @@ const massActionCommonEntries = {
   selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
 };
 
-const SANDBOX_PERMISSION_VALUES = [
-  "allow-downloads",
-  "allow-modals",
-  "allow-popups",
-] as const satisfies string[];
-
 /** `type: "view"` mass action — renders an iframe at `path`. */
 const ViewMassActionSchema = v.strictObject({
   ...massActionCommonEntries,
@@ -120,18 +134,6 @@ const AdminUiCustomerSchema = v.object({
   massActions: v.optional(v.array(MassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
 });
-
-const SandboxPermissionsSchema = v.pipe(
-  v.array(v.picklist(SANDBOX_PERMISSION_VALUES)),
-  v.minLength(
-    1,
-    "sandboxPermissions must contain at least one permission when it's defined",
-  ),
-  v.check((permissions) => {
-    const uniquePermissions = new Set(permissions);
-    return uniquePermissions.size === permissions.length;
-  }, "Duplicate permissions are not allowed in sandboxPermissions"),
-);
 
 const MenuIdSchema = v.pipe(
   nonEmptyStringValueSchema("menu ID"),
