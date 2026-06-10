@@ -565,6 +565,109 @@ export const configWithAdminUiSingleGrid = {
   },
 } satisfies CommerceAppConfigOutputModel;
 
+/** v2 Admin UI config fixture with view mass actions and no worker. */
+export const configWithAdminUiV2 = {
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-sdk-v2" },
+  adminUi: {
+    order: {
+      massActions: [
+        {
+          id: "order-mass-action",
+          label: "Order Mass Action",
+          description: "Adds a bulk order action.",
+          type: "view" as const,
+          path: "#/order-mass-action",
+          selectionLimit: 1,
+          confirm: { title: "Confirm", message: "Are you sure?" },
+          notifications: { success: "Done!" },
+        },
+      ],
+    },
+    product: {
+      massActions: [
+        {
+          id: "product-mass-action",
+          label: "Product Mass Action",
+          type: "view" as const,
+          path: "#/product-mass-action",
+        },
+      ],
+    },
+    customer: {
+      massActions: [
+        {
+          id: "customer-mass-action",
+          label: "Customer Mass Action",
+          type: "view" as const,
+          path: "#/customer-mass-action",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Full v2 Admin UI config fixture covering all extension points including a worker mass action. */
+export const configWithFullAdminUiV2 = {
+  metadata: { ...mockMetadata, id: "test-app-full-admin-ui-sdk-v2" },
+  adminUi: {
+    order: {
+      massActions: [
+        {
+          id: "order-mass-action",
+          label: "Order Mass Action",
+          description: "Registers an order bulk action.",
+          type: "view" as const,
+          path: "#/order-mass-action",
+          selectionLimit: 1,
+          confirm: { title: "Confirm", message: "Are you sure?" },
+          notifications: { success: "Done!", error: "Failed!" },
+        },
+      ],
+      gridColumns: {
+        label: "Order fulfillment data",
+        description: "Adds fulfillment status to the order grid",
+        runtimeAction: "orders/fetch-order-data",
+        columns: [
+          {
+            id: "poc_status",
+            label: "PoC Status",
+            type: "string" as const,
+            align: "left" as const,
+          },
+        ],
+      },
+    },
+    product: {
+      massActions: [
+        {
+          id: "product-mass-action",
+          label: "Product Mass Action",
+          type: "view" as const,
+          path: "#/mass-action",
+          selectionLimit: 1,
+        },
+      ],
+    },
+    customer: {
+      massActions: [
+        {
+          id: "export-customers",
+          label: "Customer Mass Action",
+          description: "Exports selected customers.",
+          type: "worker" as const,
+          runtimeAction: "customers/export-customers",
+          timeout: 30,
+          selectionLimit: 1,
+          notifications: {
+            success: "Export complete!",
+            error: "Export failed!",
+          },
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 /** Config fixture with dynamic business config list options. */
 export const configWithDynamicListOptions = {
   metadata: { ...mockMetadata, id: "dynamic-list-options-app" },

@@ -18,6 +18,7 @@ import { getConfigDomains } from "#config/schema/domains";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import {
   configWithDynamicListOptions,
+  configWithFullAdminUiV2,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
@@ -104,6 +105,34 @@ describe("appConfigRuntimeAction", () => {
         body: {
           openApiSpecUrl: `https://test-namespace.adobeioruntime.net/api/v1/web/app-management/app-config/openapi.json?ck=${ck}`,
         },
+      });
+    });
+
+    test("returns the config unchanged when adminUi is absent", async () => {
+      const handler = appConfigRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+      const result = await handler(createRuntimeActionParams());
+
+      expect(result).toMatchObject({
+        type: "success",
+        body: minimalValidConfig,
+      });
+      expect.assert(result.type === "success");
+      expect(result.body as Record<string, unknown>).not.toHaveProperty(
+        "adminUi",
+      );
+    });
+
+    test("passes adminUi config through untouched to the response", async () => {
+      const handler = appConfigRuntimeAction({
+        appConfig: configWithFullAdminUiV2,
+      });
+      const result = await handler(createRuntimeActionParams());
+
+      expect(result).toMatchObject({
+        type: "success",
+        body: { adminUi: configWithFullAdminUiV2.adminUi },
       });
     });
   });

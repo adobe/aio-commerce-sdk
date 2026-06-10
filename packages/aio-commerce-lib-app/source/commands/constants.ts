@@ -28,7 +28,7 @@ export const EXTENSIBILITY_EXTENSION_POINT_ID = "commerce/extensibility/1";
 /** The name of the extension point for configuration. */
 export const CONFIGURATION_EXTENSION_POINT_ID = "commerce/configuration/1";
 
-/** The name of the extension point for Admin UI SDK. */
+/** The name of the extension point for Admin UI SDK (backend-ui v1). */
 export const BACKEND_UI_EXTENSION_POINT_ID = "commerce/backend-ui/1";
 
 /** The name of the extension point for Admin UI. */

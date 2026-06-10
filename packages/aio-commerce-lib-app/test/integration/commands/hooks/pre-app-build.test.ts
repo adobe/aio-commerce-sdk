@@ -35,6 +35,7 @@ import {
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithFullAdminUiSdk,
+  configWithFullAdminUiV2,
 } from "#test/fixtures/config";
 import {
   businessConfigActionFile,
@@ -152,7 +153,7 @@ describe("commands/hooks/pre-app-build", () => {
       );
     });
 
-    test("writes ext.config.yaml with workerProcess entries for backend-ui/2 when adminUi is configured", async () => {
+    test("writes ext.config.yaml with workerProcess entries for backend-ui/2 when adminUi (grid columns) is configured", async () => {
       await withTempProject(
         makeProjectFiles(configWithAdminUi),
         async (tempDir) => {
@@ -168,6 +169,28 @@ describe("commands/hooks/pre-app-build", () => {
           const content = await readFile(extConfigPath, "utf-8");
           expect(content).toContain("orders/fetch-order-grid-data");
           expect(content).toContain("workerProcess");
+        },
+      );
+    });
+
+    test("generates ext.config.yaml with workerProcess for backend-ui/2 when adminUi has worker mass actions", async () => {
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithFullAdminUiV2),
+          ...makeTemplateFiles(),
+        },
+        async (tempDir) => {
+          await run("backend-ui/2");
+
+          const extConfigPath = join(
+            tempDir,
+            getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+          );
+
+          expect(existsSync(extConfigPath)).toBe(true);
+          const content = await readFile(extConfigPath, "utf-8");
+          expect(content).toContain("workerProcess");
+          expect(content).toContain("customers/export-customers");
         },
       );
     });

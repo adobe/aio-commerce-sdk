@@ -557,37 +557,8 @@
                       "required": ["registration"]
                     },
                     "adminUi": {
-                      "type": "object",
-                      "properties": {
-                        "order": {
-                          "type": "object",
-                          "properties": {
-                            "gridColumns": {
-                              "$ref": "#/components/schemas/AdminUiGridColumns"
-                            }
-                          },
-                          "required": []
-                        },
-                        "product": {
-                          "type": "object",
-                          "properties": {
-                            "gridColumns": {
-                              "$ref": "#/components/schemas/AdminUiGridColumns"
-                            }
-                          },
-                          "required": []
-                        },
-                        "customer": {
-                          "type": "object",
-                          "properties": {
-                            "gridColumns": {
-                              "$ref": "#/components/schemas/AdminUiGridColumns"
-                            }
-                          },
-                          "required": []
-                        }
-                      },
-                      "required": []
+                      "description": "The Admin UI SDK v2 configuration block (served as the `adminUi` property of the app-config response).",
+                      "$ref": "#/components/schemas/AdminUiConfiguration"
                     },
                     "installation": {
                       "type": "object",
@@ -3822,6 +3793,190 @@
             "required": []
           }
         },
+        "required": []
+      },
+      "AdminUiMassAction": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "const": "view"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "confirm": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "notifications": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "error": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "selectionLimit": {
+                "type": "number",
+                "minimum": 1
+              },
+              "sandboxPermissions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["allow-downloads", "allow-modals", "allow-popups"]
+                }
+              }
+            },
+            "required": ["id", "label", "type", "path"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "const": "worker"
+              },
+              "runtimeAction": {
+                "type": "string",
+                "minLength": 1
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "confirm": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "notifications": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "error": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "selectionLimit": {
+                "type": "number",
+                "minimum": 1
+              },
+              "timeout": {
+                "type": "number",
+                "minimum": 1
+              }
+            },
+            "required": ["id", "label", "type", "runtimeAction"],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "AdminUiConfiguration": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "object",
+            "properties": {
+              "massActions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AdminUiMassAction"
+                }
+              },
+              "gridColumns": {
+                "$ref": "#/components/schemas/AdminUiGridColumns"
+              }
+            }
+          },
+          "product": {
+            "type": "object",
+            "properties": {
+              "massActions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AdminUiMassAction"
+                }
+              },
+              "gridColumns": {
+                "$ref": "#/components/schemas/AdminUiGridColumns"
+              }
+            }
+          },
+          "customer": {
+            "type": "object",
+            "properties": {
+              "massActions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AdminUiMassAction"
+                }
+              },
+              "gridColumns": {
+                "$ref": "#/components/schemas/AdminUiGridColumns"
+              }
+            }
+          }
+        },
+        "additionalProperties": false,
         "required": []
       },
       "AdminUiGridColumns": {

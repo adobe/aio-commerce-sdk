@@ -63,6 +63,7 @@ export function requiresInstallationFromDomains(
     "eventing.external",
     "webhooks",
     "adminUiSdk",
+    "adminUi",
   ];
 
   return featuresRequiringInstallationAction.some((feature) =>

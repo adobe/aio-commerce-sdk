@@ -10,13 +10,20 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
+import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
+import * as v from "valibot";
 
-export default mergeConfig(baseConfig, {
-  entry: [
-    "./source/index.ts",
-    "./source/grid-columns/index.ts",
-    "./source/mass-actions/index.ts",
-  ],
+/**
+ * Schema for the `selection` query parameter Commerce appends to the iframe URL
+ * of a view mass action.
+ *
+ * Commerce serializes the selection as a JSON-encoded string:
+ * `?selection={"ids":["000000001"],"gridType":"customer"}`
+ */
+export const MassActionSelectionSchema = v.object({
+  ids: v.pipe(
+    v.array(nonEmptyStringValueSchema("id")),
+    v.minLength(1, 'The value of "ids" must contain at least one entry'),
+  ),
+  gridType: v.picklist(["order", "product", "customer"]),
 });

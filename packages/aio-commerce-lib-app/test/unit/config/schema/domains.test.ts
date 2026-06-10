@@ -167,6 +167,7 @@ describe.concurrent("domains schema helpers", () => {
       { config: minimalValidConfig, domain: "webhooks" },
       { config: minimalValidConfig, domain: "installation" },
       { config: minimalValidConfig, domain: "adminUiSdk" },
+      { config: minimalValidConfig, domain: "adminUi" },
       { config: configWithCommerceEventing, domain: "eventing.external" },
       { config: configWithExternalEventing, domain: "eventing.commerce" },
     ] as const)('should return false for domain "$domain" when config with "$domain" domain is not present', ({
@@ -187,6 +188,8 @@ describe.concurrent("domains schema helpers", () => {
       { config: fullConfig, domain: "webhooks" },
       { config: fullConfig, domain: "installation" },
       { config: fullConfig, domain: "installation.customInstallationSteps" },
+      { config: configWithAdminUiSdk, domain: "adminUiSdk" },
+      { config: configWithAdminUi, domain: "adminUi" },
     ] as const)("should work with all domain types", ({ config, domain }) => {
       expect(hasConfigDomain(config, domain)).toBe(true);
     });
