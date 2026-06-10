@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { ok } from "@adobe/aio-commerce-lib-core/responses";
+import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import { MassActionRequestSchema } from "./schema";
@@ -81,10 +81,7 @@ export function massActionErrorResponse(
   errorMessage: string,
 ): ErrorResponse {
   // @ts-expect-error — Commerce's wire contract uses `{ error }` only; lib-core requires `message`, which is not part of this format.
-  return {
-    type: "error",
-    error: { statusCode, body: { error: errorMessage } },
-  };
+  return buildErrorResponse(statusCode, { body: { error: errorMessage } });
 }
 
 /**
