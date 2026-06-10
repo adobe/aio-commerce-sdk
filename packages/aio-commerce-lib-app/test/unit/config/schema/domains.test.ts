@@ -15,7 +15,6 @@ import { describe, expect, test } from "vitest";
 import { getConfigDomains, hasConfigDomain } from "#config/schema/domains";
 import {
   configWithAdminUi,
-  configWithAdminUiSdk,
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
@@ -80,14 +79,6 @@ describe.concurrent("domains schema helpers", () => {
       expect(domains.has("installation.customInstallationSteps")).toBe(true);
     });
 
-    test("should include adminUiSdk domain when admin UI SDK is present", () => {
-      const domains = getConfigDomains(configWithAdminUiSdk);
-
-      expect(domains.has("metadata")).toBe(true);
-      expect(domains.has("adminUiSdk")).toBe(true);
-      expect(domains.has("eventing")).toBe(false);
-    });
-
     test("should include adminUi domain when adminUi grid columns are present", () => {
       const domains = getConfigDomains(configWithAdminUi);
 
@@ -150,7 +141,6 @@ describe.concurrent("domains schema helpers", () => {
         config: configWithCustomInstallationSteps,
         domain: "installation.customInstallationSteps",
       },
-      { config: configWithAdminUiSdk, domain: "adminUiSdk" },
       { config: configWithAdminUi, domain: "adminUi" },
     ] as const)('should return true for domain "$domain" when config with "$domain" domain is present', ({
       config,
@@ -166,7 +156,6 @@ describe.concurrent("domains schema helpers", () => {
       { config: minimalValidConfig, domain: "eventing" },
       { config: minimalValidConfig, domain: "webhooks" },
       { config: minimalValidConfig, domain: "installation" },
-      { config: minimalValidConfig, domain: "adminUiSdk" },
       { config: minimalValidConfig, domain: "adminUi" },
       { config: configWithCommerceEventing, domain: "eventing.external" },
       { config: configWithExternalEventing, domain: "eventing.commerce" },
@@ -188,7 +177,6 @@ describe.concurrent("domains schema helpers", () => {
       { config: fullConfig, domain: "webhooks" },
       { config: fullConfig, domain: "installation" },
       { config: fullConfig, domain: "installation.customInstallationSteps" },
-      { config: configWithAdminUiSdk, domain: "adminUiSdk" },
       { config: configWithAdminUi, domain: "adminUi" },
     ] as const)("should work with all domain types", ({ config, domain }) => {
       expect(hasConfigDomain(config, domain)).toBe(true);

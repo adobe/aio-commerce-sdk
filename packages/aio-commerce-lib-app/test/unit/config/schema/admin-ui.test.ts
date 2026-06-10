@@ -16,7 +16,6 @@ import { describe, expect, test } from "vitest";
 import { AdminUiSchema, hasAdminUi } from "#config/schema/admin-ui";
 import {
   configWithAdminUi,
-  configWithAdminUiSdk,
   configWithAdminUiV2,
   configWithFullAdminUiV2,
   minimalValidConfig,
@@ -33,10 +32,6 @@ describe("hasAdminUi", () => {
 
   test("returns false for minimalValidConfig", () => {
     expect(hasAdminUi(minimalValidConfig)).toBe(false);
-  });
-
-  test("returns false for configWithAdminUiSdk (different key)", () => {
-    expect(hasAdminUi(configWithAdminUiSdk)).toBe(false);
   });
 });
 
