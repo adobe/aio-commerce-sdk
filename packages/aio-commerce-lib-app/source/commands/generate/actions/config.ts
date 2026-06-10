@@ -229,6 +229,7 @@ export function buildAdminUiV2ExtConfig(
     ...new Set([...gridRuntimeActions, ...massActionRuntimeActions]),
   ];
 
+  const hasAdminUiMenu = adminUi?.menu !== undefined;
   const hasViewMassActions = entities
     .flatMap((entity) => entity?.massActions ?? [])
     .some((action) => action.type === "view");
@@ -238,7 +239,7 @@ export function buildAdminUiV2ExtConfig(
         "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build",
     },
     operations: {
-      ...((hasViewMassActions || adminUi?.menu !== undefined) && {
+      ...((hasViewMassActions || hasAdminUiMenu) && {
         view: [{ type: "web" as const, impl: "index.html" }],
       }),
       workerProcess: runtimeActions.map((impl) => ({
@@ -246,7 +247,7 @@ export function buildAdminUiV2ExtConfig(
         impl,
       })),
     },
-    ...((hasViewMassActions || adminUi?.menu !== undefined) && {
+    ...((hasViewMassActions || hasAdminUiMenu) && {
       web: "web-src",
     }),
   } satisfies ExtConfig;
