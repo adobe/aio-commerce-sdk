@@ -22,7 +22,7 @@ import {
   logger,
 } from "@aio-commerce-sdk/common-utils/actions";
 
-import { appliesToEnv } from "#config/env-filter";
+import { appliesToEnv } from "#config/lib/environment";
 
 import {
   GetConfigurationQuerySchema,

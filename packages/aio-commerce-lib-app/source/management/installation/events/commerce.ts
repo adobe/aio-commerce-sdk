@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { appliesToEnv, getInstallCommerceEnv } from "#config/env-filter";
+import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
 import { hasCommerceEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 

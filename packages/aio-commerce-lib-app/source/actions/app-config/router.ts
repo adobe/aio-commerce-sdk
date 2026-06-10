@@ -22,7 +22,7 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 import * as v from "valibot";
 
-import { filterAppConfigByEnv } from "#config/env-filter";
+import { filterAppConfigByEnv } from "#config/lib/environment";
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 import { getConfigDomains } from "#config/schema/domains";

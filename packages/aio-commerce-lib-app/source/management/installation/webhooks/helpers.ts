@@ -14,7 +14,7 @@ import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 
-import { appliesToEnv, getInstallCommerceEnv } from "#config/env-filter";
+import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
 
 import type {
   CommerceWebhook,

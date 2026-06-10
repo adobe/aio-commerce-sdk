@@ -16,7 +16,7 @@ import {
   appliesToEnv,
   filterAppConfigByEnv,
   getInstallCommerceEnv,
-} from "#config/env-filter";
+} from "#config/lib/environment";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
