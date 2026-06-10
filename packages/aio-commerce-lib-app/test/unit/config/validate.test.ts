@@ -19,8 +19,9 @@ import {
 import {
   configWithCustomInstallationSteps,
   createCommerceEventConfig,
-  minimalValidConfig,
 } from "#test/fixtures/config";
+
+import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
 
 const MAX_ID_LENGTH = 100;
 const MAX_DISPLAY_NAME_LENGTH = 50;
@@ -558,33 +559,12 @@ describe("validateConfig", () => {
   });
 
   test("should validate config with eventing - commerce type", () => {
-    const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
-      eventing: {
-        commerce: [
-          {
-            provider: {
-              label: "Commerce Events Provider",
-              description: "Provides commerce events",
-            },
-            events: [
-              {
-                name: "plugin.order_placed",
-                label: "Order Placed",
-                fields: [{ name: "order_id" }, { name: "customer_id" }],
-                runtimeActions: ["my-package/handle-order"],
-                description: "Triggered when an order is placed",
-              },
-            ],
-          },
-        ],
-      },
-    };
+    const config = createCommerceEventConfig("plugin.order_placed", {
+      label: "Order Placed",
+      fields: [{ name: "order_id" }, { name: "customer_id" }],
+      runtimeActions: ["my-package/handle-order"],
+      description: "Triggered when an order is placed",
+    });
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
     const validated = validateCommerceAppConfig(config);
@@ -1065,33 +1045,9 @@ describe("validateConfig", () => {
   });
 
   test("should throw when commerce event description exceeds max length", () => {
-    const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
-      eventing: {
-        commerce: [
-          {
-            provider: {
-              label: "Commerce Provider",
-              description: "Commerce events",
-            },
-            events: [
-              {
-                name: "plugin.my_event",
-                label: "My Event",
-                fields: [{ name: "field" }],
-                runtimeActions: ["my-package/action"],
-                description: "A".repeat(256), // Max is 255
-              },
-            ],
-          },
-        ],
-      },
-    };
+    const config = createCommerceEventConfig("plugin.my_event", {
+      description: "A".repeat(256), // Max is 255
+    });
 
     expect(() => validateCommerceAppConfig(config)).toThrow();
   });
@@ -1132,27 +1088,14 @@ describe("validateConfig", () => {
       "THE-PACKAGE/THE-ACTION",
     ]; // Mixed case, but valid format
 
+    const base = createCommerceEventConfig("plugin.my_event", {
+      description: "Event description",
+      runtimeActions,
+    });
     const config = {
-      ...minimalValidConfig,
+      ...base,
       eventing: {
-        commerce: [
-          {
-            provider: {
-              label: "Commerce Provider",
-              description: "Commerce events",
-            },
-            events: [
-              {
-                name: "plugin.my_event",
-                label: "My Event",
-                fields: [{ name: "field" }],
-                description: "Event description",
-                runtimeActions,
-              },
-            ],
-          },
-        ],
-
+        ...base.eventing,
         external: [
           {
             provider: {
@@ -1176,33 +1119,9 @@ describe("validateConfig", () => {
   });
 
   test("should throw when commerce event runtimeAction is not in package/action format", () => {
-    const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
-      eventing: {
-        commerce: [
-          {
-            provider: {
-              label: "Commerce Provider",
-              description: "Commerce events",
-            },
-            events: [
-              {
-                name: "plugin.my_event",
-                label: "My Event",
-                fields: [{ name: "field" }],
-                runtimeActions: ["invalid-action"], // Missing package/ prefix
-                description: "Event description",
-              },
-            ],
-          },
-        ],
-      },
-    };
+    const config = createCommerceEventConfig("plugin.my_event", {
+      runtimeActions: ["invalid-action"], // Missing package/ prefix
+    });
 
     expect(() => validateCommerceAppConfig(config)).toThrow();
   });
@@ -1603,29 +1522,10 @@ describe("validateConfigDomain", () => {
   });
 
   describe("event env scoping", () => {
-    const makeEventConfig = (env: unknown) => ({
-      metadata: minimalValidConfig.metadata,
-      eventing: {
-        commerce: [
-          {
-            provider: { label: "Commerce Provider", description: "Events" },
-            events: [
-              {
-                name: "plugin.my_event",
-                label: "My Event",
-                description: "Plugin event",
-                fields: [{ name: "field" }],
-                runtimeActions: ["my-package/action"],
-                env,
-              },
-            ],
-          },
-        ],
-      },
-    });
-
     test("should accept a commerce event scoped to an environment", () => {
-      const config = makeEventConfig(["saas"]);
+      const config = createCommerceEventConfig("plugin.my_event", {
+        env: ["saas"],
+      });
 
       expect(() => validateCommerceAppConfig(config)).not.toThrow();
       const validated = validateCommerceAppConfig(config);
@@ -1635,13 +1535,15 @@ describe("validateConfigDomain", () => {
     });
 
     test("should reject a commerce event with an empty env array", () => {
-      expect(() => validateCommerceAppConfig(makeEventConfig([]))).toThrow();
+      const config = createCommerceEventConfig("plugin.my_event", { env: [] });
+      expect(() => validateCommerceAppConfig(config)).toThrow();
     });
 
     test("should reject a commerce event with an unknown env value", () => {
-      expect(() =>
-        validateCommerceAppConfig(makeEventConfig(["onprem"])),
-      ).toThrow();
+      const config = createCommerceEventConfig("plugin.my_event", {
+        env: ["onprem"] as unknown as CommerceEnv[],
+      });
+      expect(() => validateCommerceAppConfig(config)).toThrow();
     });
   });
 

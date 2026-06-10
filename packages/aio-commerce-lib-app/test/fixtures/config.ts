@@ -438,6 +438,7 @@ export function createCommerceEventConfig(
     description: string;
     runtimeActions: string[];
     fields: Array<{ name: string }>;
+    env: CommerceEnv[];
   }>,
 ) {
   return {
@@ -458,6 +459,7 @@ export function createCommerceEventConfig(
                 "my-package/action",
               ],
               description: overrides?.description ?? "Plugin event",
+              ...(overrides?.env !== undefined && { env: overrides.env }),
             },
           ],
         },
