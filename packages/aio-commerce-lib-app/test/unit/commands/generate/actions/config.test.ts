@@ -226,6 +226,16 @@ describe("buildAdminUiV2ExtConfig", () => {
     expect(config.web).toBeUndefined();
   });
 
+  test("declares web property when adminUi.menu is present", () => {
+    const config = buildAdminUiV2ExtConfig(configWithAdminUiMenu);
+    expect(config.web).toBe("web-src");
+  });
+
+  test("workerProcess is empty when adminUi has only menu (no grids or worker mass actions)", () => {
+    const config = buildAdminUiV2ExtConfig(configWithAdminUiMenu);
+    expect(config.operations?.workerProcess).toHaveLength(0);
+  });
+
   test("includes view and web when view mass actions are configured", () => {
     const config = buildAdminUiV2ExtConfig(configWithViewMassActions);
     expect(config.operations?.view).toEqual([

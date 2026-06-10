@@ -29,6 +29,7 @@ import {
 } from "#commands/utils";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
+  configWithAdminUiMenu,
   configWithAdminUiSingleGrid,
   configWithBusinessConfig,
   configWithCommerceEventing,
@@ -149,6 +150,27 @@ describe("commands/hooks/pre-app-build", () => {
           const content = await readFile(extConfigPath, "utf-8");
           expect(content).toContain("workerProcess");
           expect(content).toContain("customers/export-customers");
+        },
+      );
+    });
+
+    test("writes ext.config.yaml with view and web but no workerProcess for backend-ui/2 when only adminUi.menu is configured", async () => {
+      await withTempProject(
+        makeProjectFiles(configWithAdminUiMenu),
+        async (tempDir) => {
+          await run("backend-ui/2");
+
+          const extConfigPath = join(
+            tempDir,
+            getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+          );
+
+          expect(existsSync(extConfigPath)).toBe(true);
+
+          const content = await readFile(extConfigPath, "utf-8");
+          expect(content).toContain("index.html");
+          expect(content).toContain("web-src");
+          expect(content).not.toContain("workerProcess");
         },
       );
     });
