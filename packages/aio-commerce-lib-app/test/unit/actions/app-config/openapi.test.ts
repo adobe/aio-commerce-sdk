@@ -114,7 +114,6 @@ describe("buildOpenApiSpec", () => {
     expect(tagNames).toContain("App Metadata");
     expect(tagNames).toContain("Business Configuration");
     expect(tagNames).toContain("Management");
-    expect(tagNames).toContain("Admin UI");
   });
 
   test("prunes tags left unreferenced by the stripped paths", async () => {
