@@ -76,15 +76,13 @@
   },
   "exports": {
     "./api": "./source/api/index.ts",
-    "./menu": "./source/menu/index.ts",
     "./grid-columns": "./source/grid-columns/index.ts",
     "./mass-actions": "./source/mass-actions/index.ts",
+    "./menu": "./source/menu/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {
     "#*": "./source/*.ts",
-    "#grid-columns/*": "./source/grid-columns/*.ts",
-    "#mass-actions/*": "./source/mass-actions/*.ts",
     "#test/*": "./test/*.ts"
   },
   "files": [

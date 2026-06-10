@@ -586,7 +586,7 @@ Every field of `adminUi` is optional — configure only the extension points you
 
 ##### Menu
 
-Declare a single Commerce Admin menu entry for the application. When `adminUi.menu` is present, the SDK automatically adds a `view` operation pointing at `index.html` to `ext.config.yaml`.
+Declare a single Commerce Admin menu entry for the application. Similarly to mass actions of `type: "view"`, when `adminUi.menu` is present the SDK automatically adds a `view` operation pointing at `index.html` to `ext.config.yaml`.
 
 ```javascript
 adminUi: {
