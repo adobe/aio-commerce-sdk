@@ -25,7 +25,6 @@ import NpmPackageJson from "@npmcli/package-json";
 import { consola } from "consola";
 
 import {
-  BACKEND_UI_EXTENSION_POINT_ID,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   COMMERCE_APP_CONFIG_FILE,
   CONFIGURATION_EXTENSION_POINT_ID,
@@ -229,14 +228,6 @@ export async function ensureAppConfig(
     );
   }
 
-  if (domains.has("adminUiSdk")) {
-    await addExtensionPointToAppConfig(
-      BACKEND_UI_EXTENSION_POINT_ID,
-      rootDirectory,
-      " This extension is required for Admin UI SDK. Do not remove.",
-    );
-  }
-
   if (domains.has("adminUi")) {
     await addExtensionPointToAppConfig(
       BACKEND_UI_V2_EXTENSION_POINT_ID,
@@ -357,14 +348,6 @@ export async function ensureInstallYaml(
       CONFIGURATION_EXTENSION_POINT_ID,
       rootDirectory,
       " This extension is required for business configuration. Do not remove.",
-    );
-  }
-
-  if (domains.has("adminUiSdk")) {
-    await addExtensionPointToInstallYaml(
-      BACKEND_UI_EXTENSION_POINT_ID,
-      rootDirectory,
-      " This extension is required for Admin UI SDK. Do not remove.",
     );
   }
 
