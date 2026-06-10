@@ -29,7 +29,7 @@ import {
 } from "#commands/utils";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
-  configWithAdminUi,
+  configWithAdminUiSingleGrid,
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithFullAdminUiV2,
@@ -113,7 +113,7 @@ describe("commands/hooks/pre-app-build", () => {
 
     test("writes ext.config.yaml with workerProcess entries for backend-ui/2 when adminUi (grid columns) is configured", async () => {
       await withTempProject(
-        makeProjectFiles(configWithAdminUi),
+        makeProjectFiles(configWithAdminUiSingleGrid),
         async (tempDir) => {
           await run("backend-ui/2");
 
@@ -233,7 +233,7 @@ describe("commands/hooks/pre-app-build", () => {
 
       await withTempProject(
         {
-          ...makeProjectFiles(configWithAdminUi),
+          ...makeProjectFiles(configWithAdminUiSingleGrid),
           ...makeTemplateFiles(),
         },
         async () => {

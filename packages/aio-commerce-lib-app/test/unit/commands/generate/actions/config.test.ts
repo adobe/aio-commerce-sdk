@@ -20,14 +20,14 @@ import {
   getRuntimeActions,
 } from "#commands/generate/actions/config";
 import {
-  configWithAdminUi,
+  configWithAdminUiAllGrids,
   configWithAdminUiMenu,
   configWithAdminUiSingleGrid,
-  configWithAdminUiV2,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
   configWithExternalEventing,
   configWithFullAdminUiV2,
+  configWithViewMassActions,
   configWithWebhooks,
   minimalValidConfig,
 } from "#test/fixtures/config";
@@ -59,7 +59,7 @@ describe("buildAppManagementExtConfig", () => {
       config: configWithCustomInstallationSteps,
     },
     { label: "webhooks", config: configWithWebhooks },
-    { label: "adminUi", config: configWithAdminUiV2 },
+    { label: "adminUi", config: configWithViewMassActions },
   ])("includes installation action when $label is configured", ({ config }) => {
     const result = buildAppManagementExtConfig(config);
 
@@ -75,7 +75,7 @@ describe("buildAppManagementExtConfig", () => {
       config: configWithCustomInstallationSteps,
     },
     { label: "webhooks", config: configWithWebhooks },
-    { label: "adminUi", config: configWithAdminUiV2 },
+    { label: "adminUi", config: configWithViewMassActions },
   ])("includes installation workerProcess entry when $label is configured", ({
     config,
   }) => {
@@ -150,13 +150,13 @@ describe("buildAppManagementExtConfig", () => {
 
 describe("buildAdminUiV2ExtConfig", () => {
   test("pre-app-build hook uses backend-ui/2", () => {
-    const config = buildAdminUiV2ExtConfig(configWithAdminUi);
+    const config = buildAdminUiV2ExtConfig(configWithFullAdminUiV2);
     const preBuildHook = config.hooks?.["pre-app-build"] ?? "";
     expect(preBuildHook).toMatch(BACKEND_UI_V2_EXTENSION_MATCHER);
   });
 
   test("declares one workerProcess entry per unique runtimeAction (3 grids)", () => {
-    const config = buildAdminUiV2ExtConfig(configWithAdminUi);
+    const config = buildAdminUiV2ExtConfig(configWithAdminUiAllGrids);
     const workerImpls =
       config.operations?.workerProcess?.map((op) => op.impl) ?? [];
 
@@ -226,7 +226,7 @@ describe("buildAdminUiV2ExtConfig", () => {
   });
 
   test("includes view and web when view mass actions are configured", () => {
-    const config = buildAdminUiV2ExtConfig(configWithAdminUiV2);
+    const config = buildAdminUiV2ExtConfig(configWithViewMassActions);
     expect(config.operations?.view).toEqual([
       { type: "web", impl: "index.html" },
     ]);

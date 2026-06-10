@@ -15,28 +15,31 @@ import { describe, expect, test } from "vitest";
 
 import { AdminUiSchema, hasAdminUi } from "#config/schema/admin-ui";
 import {
-  configWithAdminUi,
+  configWithAdminUiAllGrids,
   configWithAdminUiMenu,
-  configWithAdminUiV2,
   configWithFullAdminUiV2,
+  configWithViewMassActions,
+  configWithWorkerMassActions,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
 describe("hasAdminUi", () => {
-  test("returns true for configWithAdminUi", () => {
-    expect(hasAdminUi(configWithAdminUi)).toBe(true);
+  test.each([
+    {
+      config: configWithAdminUiAllGrids,
+      label: "grid columns for all entities",
+    },
+    { config: configWithAdminUiMenu, label: "menu only" },
+    { config: configWithViewMassActions, label: "view mass actions" },
+    { config: configWithWorkerMassActions, label: "worker mass actions" },
+  ])("returns true when adminUi has $label", ({ config }) => {
+    expect(hasAdminUi(config)).toBe(true);
   });
 
-  test("returns true for configWithAdminUiV2", () => {
-    expect(hasAdminUi(configWithAdminUiV2)).toBe(true);
-  });
-
-  test("returns true for configWithAdminUiMenu", () => {
-    expect(hasAdminUi(configWithAdminUiMenu)).toBe(true);
-  });
-
-  test("returns false for minimalValidConfig", () => {
-    expect(hasAdminUi(minimalValidConfig)).toBe(false);
+  test.each([
+    { config: minimalValidConfig, label: "no adminUi property" },
+  ])("returns false when config has $label", ({ config }) => {
+    expect(hasAdminUi(config)).toBe(false);
   });
 });
 
@@ -66,7 +69,10 @@ describe("AdminUiSchema", () => {
     });
 
     test("all three grids configured", () => {
-      const result = v.safeParse(AdminUiSchema, configWithAdminUi.adminUi);
+      const result = v.safeParse(
+        AdminUiSchema,
+        configWithAdminUiAllGrids.adminUi,
+      );
       expect(result.success).toBe(true);
     });
 
@@ -128,7 +134,10 @@ describe("AdminUiSchema", () => {
     });
 
     test("different extension points coexist", () => {
-      const result = v.safeParse(AdminUiSchema, configWithAdminUi.adminUi);
+      const result = v.safeParse(
+        AdminUiSchema,
+        configWithFullAdminUiV2.adminUi,
+      );
       expect(result.success).toBe(true);
     });
 
@@ -375,7 +384,10 @@ describe("AdminUiSchema — mass actions", () => {
     });
 
     test("configWithAdminUiV2 fixture parses", () => {
-      const result = v.safeParse(AdminUiSchema, configWithAdminUiV2.adminUi);
+      const result = v.safeParse(
+        AdminUiSchema,
+        configWithViewMassActions.adminUi,
+      );
       expect(result.success).toBe(true);
     });
 

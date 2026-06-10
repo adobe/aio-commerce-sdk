@@ -14,7 +14,7 @@ import { describe, expect, test } from "vitest";
 
 import { getConfigDomains, hasConfigDomain } from "#config/schema/domains";
 import {
-  configWithAdminUi,
+  configWithAdminUiSingleGrid,
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
@@ -80,7 +80,7 @@ describe.concurrent("domains schema helpers", () => {
     });
 
     test("should include adminUi domain when adminUi grid columns are present", () => {
-      const domains = getConfigDomains(configWithAdminUi);
+      const domains = getConfigDomains(configWithAdminUiSingleGrid);
 
       expect(domains.has("metadata")).toBe(true);
       expect(domains.has("adminUi")).toBe(true);
@@ -140,7 +140,7 @@ describe.concurrent("domains schema helpers", () => {
         config: configWithCustomInstallationSteps,
         domain: "installation.customInstallationSteps",
       },
-      { config: configWithAdminUi, domain: "adminUi" },
+      { config: configWithAdminUiSingleGrid, domain: "adminUi" },
     ] as const)('should return true for domain "$domain" when config with "$domain" domain is present', ({
       config,
       domain,
@@ -176,7 +176,7 @@ describe.concurrent("domains schema helpers", () => {
       { config: fullConfig, domain: "webhooks" },
       { config: fullConfig, domain: "installation" },
       { config: fullConfig, domain: "installation.customInstallationSteps" },
-      { config: configWithAdminUi, domain: "adminUi" },
+      { config: configWithAdminUiSingleGrid, domain: "adminUi" },
     ] as const)("should work with all domain types", ({ config, domain }) => {
       expect(hasConfigDomain(config, domain)).toBe(true);
     });
