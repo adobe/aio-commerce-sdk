@@ -55,8 +55,11 @@ export type {
   AdminUiConfiguration,
   GridColumn,
   GridColumns,
+  MassAction,
   Notifications,
   OrderViewButton,
+  ViewMassAction,
+  WorkerMassAction,
 } from "./schema/admin-ui";
 export type {
   AdminUiSdkConfiguration,

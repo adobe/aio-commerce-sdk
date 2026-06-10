@@ -14,7 +14,6 @@ import { describe, expect, test } from "vitest";
 
 import { PACKAGE_NAME } from "#commands/constants";
 import {
-  buildAdminUiSdkExtConfig,
   buildAdminUiV2ExtConfig,
   buildAppManagementExtConfig,
   buildBusinessConfigurationExtConfig,
@@ -24,11 +23,12 @@ import {
 } from "#commands/generate/actions/config";
 import {
   configWithAdminUi,
-  configWithAdminUiSdk,
   configWithAdminUiSingleGrid,
+  configWithAdminUiV2,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
   configWithExternalEventing,
+  configWithFullAdminUiV2,
   configWithOrderViewButtons,
   configWithOrderViewTypeButtons,
   configWithOrderWorkerTypeButtons,
@@ -38,7 +38,6 @@ import {
 
 const EXTENSIBILITY_EXTENSION_MATCHER = /EXTENSION=extensibility\/1/;
 const CONFIGURATION_EXTENSION_MATCHER = /EXTENSION=configuration\/1/;
-const BACKEND_UI_EXTENSION_MATCHER = /EXTENSION=backend-ui\/1/;
 const BACKEND_UI_V2_EXTENSION_MATCHER = /EXTENSION=backend-ui\/2/;
 
 describe("buildAppManagementExtConfig", () => {
@@ -64,7 +63,7 @@ describe("buildAppManagementExtConfig", () => {
       config: configWithCustomInstallationSteps,
     },
     { label: "webhooks", config: configWithWebhooks },
-    { label: "adminUiSdk", config: configWithAdminUiSdk },
+    { label: "adminUi", config: configWithAdminUiV2 },
   ])("includes installation action when $label is configured", ({ config }) => {
     const result = buildAppManagementExtConfig(config);
 
@@ -80,7 +79,7 @@ describe("buildAppManagementExtConfig", () => {
       config: configWithCustomInstallationSteps,
     },
     { label: "webhooks", config: configWithWebhooks },
-    { label: "adminUiSdk", config: configWithAdminUiSdk },
+    { label: "adminUi", config: configWithAdminUiV2 },
   ])("includes installation workerProcess entry when $label is configured", ({
     config,
   }) => {
@@ -150,35 +149,6 @@ describe("buildAppManagementExtConfig", () => {
       { type: "action", impl: "app-management/app-config" },
       { type: "action", impl: "app-management/installation" },
     ]);
-  });
-});
-
-describe("buildAdminUiSdkExtConfig", () => {
-  test("declares operations.view entry for the admin UI iframe", () => {
-    const config = buildAdminUiSdkExtConfig();
-    expect(config.operations?.view).toEqual([
-      { type: "web", impl: "index.html" },
-    ]);
-  });
-
-  test("declares top-level web source directory", () => {
-    const config = buildAdminUiSdkExtConfig();
-    expect(config.web).toBe("web-src");
-  });
-
-  test("registration action has web: yes", () => {
-    const config = buildAdminUiSdkExtConfig();
-    const action =
-      config.runtimeManifest?.packages?.["admin-ui-sdk"]?.actions?.registration;
-
-    expect(action?.web).toBe("yes");
-  });
-
-  test("pre-app-build hook uses backend-ui/1", () => {
-    const result = buildAdminUiSdkExtConfig();
-    const preBuildHook = result.hooks?.["pre-app-build"] ?? "";
-
-    expect(preBuildHook).toMatch(BACKEND_UI_EXTENSION_MATCHER);
   });
 });
 
@@ -427,6 +397,63 @@ describe("hasViewType", () => {
 
   test("returns false for a grid-only adminUi config", () => {
     expect(hasViewType(configWithAdminUi.adminUi)).toBe(false);
+  });
+
+  test("includes workerProcess entries for worker mass actions", () => {
+    const config = buildAdminUiV2ExtConfig(configWithFullAdminUiV2);
+    const workerImpls =
+      config.operations?.workerProcess?.map((op) => op.impl) ?? [];
+
+    expect(workerImpls).toContain("customers/export-customers");
+    expect(workerImpls).toContain("orders/fetch-order-data");
+  });
+
+  test("omits view and web when adminUi has only worker mass actions (no view mass actions)", () => {
+    const config = buildAdminUiV2ExtConfig(minimalValidConfig);
+    expect(config.operations?.view).toBeUndefined();
+    expect(config.web).toBeUndefined();
+  });
+
+  test("includes view and web when view mass actions are configured", () => {
+    const config = buildAdminUiV2ExtConfig(configWithAdminUiV2);
+    expect(config.operations?.view).toEqual([
+      { type: "web", impl: "index.html" },
+    ]);
+    expect(config.web).toBe("web-src");
+  });
+
+  test("deduplicates workerProcess entries when the same runtimeAction appears on multiple entities", () => {
+    const config = buildAdminUiV2ExtConfig({
+      ...minimalValidConfig,
+      adminUi: {
+        order: {
+          massActions: [
+            {
+              id: "app::export",
+              label: "Export",
+              type: "worker",
+              runtimeAction: "pkg/export",
+            },
+          ],
+        },
+        customer: {
+          massActions: [
+            {
+              id: "app::export-c",
+              label: "Export",
+              type: "worker",
+              runtimeAction: "pkg/export",
+            },
+          ],
+        },
+      },
+    });
+    const workerImpls =
+      config.operations?.workerProcess?.map((op) => op.impl) ?? [];
+
+    expect(workerImpls).toEqual(
+      [{ type: "action", impl: "pkg/export" }].map((e) => e.impl),
+    );
   });
 });
 

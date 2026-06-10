@@ -10,20 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { router } from "./router";
+/** biome-ignore-all lint/performance/noBarrelFile: Public API for the admin-ui/mass-actions entrypoint */
 
-import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
-import type { RuntimeActionFactoryArgs } from "./router";
-
-/**
- * Factory to create the route handler for the `registration` action.
- * @param args - The arguments required to create the runtime action.
- * @experimental
- */
-export const registrationRuntimeAction =
-  (args: RuntimeActionFactoryArgs) => async (params: RuntimeActionParams) => {
-    const handler = router.handler();
-    const { registration } = args;
-
-    return await handler({ ...params, registration });
-  };
+export * from "@adobe/aio-commerce-lib-admin-ui/mass-actions";

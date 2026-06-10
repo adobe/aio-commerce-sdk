@@ -55,7 +55,6 @@ export const COMMERCE_ACTION_INPUTS = Object.fromEntries(
 export const CUSTOM_IMPORTS_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_IMPORTS}}";
 export const CUSTOM_SCRIPTS_MAP_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_MAP}}";
 export const CUSTOM_SCRIPTS_LOADER_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_LOADER}}";
-export const REGISTRATION_JSON_PLACEHOLDER = "// {{REGISTRATION_JSON}}";
 
 /**
  * Creates a runtime action configuration.
@@ -267,6 +266,7 @@ export function buildAdminUiV2ExtConfig(
           }
         : {}),
     },
+    ...(hasViewOperation && { web: "web-src" }),
   } satisfies ExtConfig;
 }
 

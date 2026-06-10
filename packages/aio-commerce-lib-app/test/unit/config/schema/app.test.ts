@@ -14,7 +14,7 @@ import { describe, expect, test } from "vitest";
 
 import { requiresInstallation } from "#config/schema/app";
 import {
-  configWithAdminUiSdk,
+  configWithAdminUi,
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
@@ -43,7 +43,7 @@ describe.concurrent("app schema helpers", () => {
       { config: configWithExternalEventing, name: "external eventing" },
       { config: configWithFullEventing, name: "full eventing" },
       { config: configWithWebhooks, name: "webhooks" },
-      { config: configWithAdminUiSdk, name: "Admin UI SDK" },
+      { config: configWithAdminUi, name: "Admin UI" },
       {
         config: configWithEventingAndWebhooks,
         name: "multiple installable features",

@@ -16,7 +16,8 @@ import { describe, expect, test } from "vitest";
 import { AdminUiSchema, hasAdminUi } from "#config/schema/admin-ui";
 import {
   configWithAdminUi,
-  configWithAdminUiSdk,
+  configWithAdminUiV2,
+  configWithFullAdminUiV2,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
@@ -25,12 +26,12 @@ describe("hasAdminUi", () => {
     expect(hasAdminUi(configWithAdminUi)).toBe(true);
   });
 
-  test("returns false for minimalValidConfig", () => {
-    expect(hasAdminUi(minimalValidConfig)).toBe(false);
+  test("returns true for configWithAdminUiV2", () => {
+    expect(hasAdminUi(configWithAdminUiV2)).toBe(true);
   });
 
-  test("returns false for configWithAdminUiSdk (different key)", () => {
-    expect(hasAdminUi(configWithAdminUiSdk)).toBe(false);
+  test("returns false for minimalValidConfig", () => {
+    expect(hasAdminUi(minimalValidConfig)).toBe(false);
   });
 });
 
@@ -410,6 +411,119 @@ describe("AdminUiSchema", () => {
             runtimeAction: "orders/fetch",
             columns: [{ label: "Col", type: "string", align: "left" }],
           },
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+});
+
+describe("AdminUiSchema — mass actions", () => {
+  describe("valid cases", () => {
+    test("view mass action with path and sandboxPermissions parses successfully", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "view",
+              path: "#/action",
+              sandboxPermissions: ["allow-modals"],
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("worker mass action with runtimeAction parses successfully", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "worker",
+              runtimeAction: "my-pkg/my-action",
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("configWithAdminUiV2 fixture parses", () => {
+      const result = v.safeParse(AdminUiSchema, configWithAdminUiV2.adminUi);
+      expect(result.success).toBe(true);
+    });
+
+    test("configWithFullAdminUiV2 fixture parses", () => {
+      const result = v.safeParse(
+        AdminUiSchema,
+        configWithFullAdminUiV2.adminUi,
+      );
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("invalid cases", () => {
+    test("view mass action with runtimeAction fails (strict, wrong variant)", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "view",
+              path: "#/action",
+              runtimeAction: "pkg/action",
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("worker mass action with path fails (strict, wrong variant)", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "worker",
+              runtimeAction: "pkg/action",
+              path: "#/action",
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("view mass action missing path fails", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [{ id: "action", label: "Action", type: "view" }],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("worker mass action missing runtimeAction fails", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [{ id: "action", label: "Action", type: "worker" }],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("mass action missing type fails", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [{ id: "action", label: "Action", path: "#/action" }],
         },
       });
       expect(result.success).toBe(false);

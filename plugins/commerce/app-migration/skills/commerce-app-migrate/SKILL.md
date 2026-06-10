@@ -77,7 +77,7 @@ The Analyzer reads the current directory and returns a `ProjectSnapshot` JSON ob
 
     Re-running migration would overwrite your existing configuration.
     If you want to re-generate specific sections, please specify which
-    section to update: metadata / eventing / installation / adminUiSdk / businessConfig
+    section to update: metadata / eventing / installation / adminUi / businessConfig
 
 Then apply any applicable Cross-cutting Warnings (see subsection below).
 
@@ -132,9 +132,9 @@ Then ask:
 **Handle unknown starterKitType:**
 If `starterKitType === "unknown"`, check `extensionPointsInUse`:
 
-- If `"commerce/backend-ui/1"` is present → this is an **Admin UI SDK extension**, not a
-  Starter Kit. Proceed with `starterKitType = "unknown"` — the domain agents will handle it.
-  Print a note: "Detected an Admin UI SDK extension project. Proceeding with adminUiSdk migration."
+- If `"commerce/backend-ui/1"` is present → this is an **Admin UI SDK v1 extension**. Print
+  a note: "Detected Admin UI SDK v1 (commerce/backend-ui/1). Migrating to v2 (commerce/backend-ui/2)."
+  Proceed with `starterKitType = "unknown"` — the admin-ui-sdk domain agent will handle the migration.
 - If all confidence values are `"none"` AND `extensionPointsInUse` is empty:
   Output:
 
@@ -151,7 +151,7 @@ If `starterKitType === "unknown"`, check `extensionPointsInUse`:
 
       I couldn't determine which starter kit this project is based on.
       Is this an Integration Starter Kit or a Checkout Starter Kit?
-      Options: [integration / checkout / adminUiSdk / custom]
+      Options: [integration / checkout / custom]
 
       Not sure? See the documentation:
         • Integration Starter Kit: https://developer.adobe.com/commerce/extensibility/starter-kit/integration/
@@ -274,7 +274,7 @@ export default defineConfig({
   },
   // eventing: { ... }          ← from events DomainResult, if present
   // installation: { ... }      ← from webhooks DomainResult, if present
-  // adminUiSdk: { ... }        ← from admin-ui-sdk DomainResult, if present
+  // adminUi: { ... }           ← from admin-ui-sdk DomainResult (migrated from v1), if present
   // businessConfig: { ... }    ← from business-config DomainResult, if present
 });
 ```
@@ -332,7 +332,7 @@ Print the assembled TypeScript content to the terminal:
 
 **Handle rejection:**
 If the developer says no, ask: "Which section needs updating? (metadata / eventing /
-installation / adminUiSdk / businessConfig)"
+installation / adminUi / businessConfig)"
 
 Then ask the specific corrective question for that section, update the assembled
 config accordingly, re-print, and ask for confirmation again.
@@ -378,7 +378,7 @@ Agent files dispatched by this skill:
 - [Analyzer](agents/analyzer.md)
 - [Events](agents/events.md)
 - [Webhooks](agents/webhooks.md)
-- [Admin UI SDK](agents/admin-ui-sdk.md)
+- [Admin UI SDK (v1→v2 migration)](agents/admin-ui-sdk.md)
 - [Business Config](agents/business-config.md)
 - [Executor](agents/executor.md)
 

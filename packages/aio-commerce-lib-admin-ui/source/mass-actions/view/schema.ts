@@ -10,9 +10,20 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the admin-ui-sdk module */
+import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
+import * as v from "valibot";
 
-export { adminUiSdkStep } from "./branch";
-
-export type { RegisterExtensionStepData } from "./branch";
-export type { AdminUiSdkConfig } from "./utils";
+/**
+ * Schema for the `selection` query parameter Commerce appends to the iframe URL
+ * of a view mass action.
+ *
+ * Commerce serializes the selection as a JSON-encoded string:
+ * `?selection={"ids":["000000001"],"gridType":"customer"}`
+ */
+export const MassActionSelectionSchema = v.object({
+  ids: v.pipe(
+    v.array(nonEmptyStringValueSchema("id")),
+    v.minLength(1, 'The value of "ids" must contain at least one entry'),
+  ),
+  gridType: v.picklist(["order", "product", "customer"]),
+});
