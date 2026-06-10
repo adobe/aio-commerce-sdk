@@ -319,7 +319,7 @@ Both `commerce` and `external` arrays are optional, you can configure one, both,
 
 ##### Environment Scoping (Events)
 
-Each event accepts an optional `env` property to scope it to specific Commerce environments. The value is an array of environments (`"paas"`, `"saas"`) and accepts any combination of one or more. This mirrors the [environment scoping available for Business Configuration fields](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-config/docs/usage.md).
+Each event accepts an optional `env` property to scope it to specific Commerce environments. The value is an array of environments (`"paas"`, `"saas"`) and accepts any combination of one or more. This mirrors the [environment scoping available for Business Configuration fields](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-config/docs/usage.md#conditional-fields-by-commerce-environment).
 
 When `env` is omitted, the event applies to all Commerce environments. When `env` is set, the event is only created at install time on the listed environments. If every event in a provider is scoped to environments that do not match the target, the whole provider is skipped: no I/O Events provider is created, and no registration is made.
 
@@ -389,10 +389,18 @@ Each webhook entry supports:
 - **label**: Display name for the webhook.
 - **description**: Description of what the webhook does.
 - **category**: Optional conflict-detection category. One of `"validation"`, `"append"`, `"modification"`.
-- **runtimeAction**: The runtime action that resolves the webhook URL, in the format `<package>/<action>`. Mutually exclusive with `webhook.url`.
+- **runtimeAction**: The runtime action that resolves the webhook URL, in the format `<package>/<action>`. The SDK derives the public action URL at install time and injects it into the webhook payload. **Mutually exclusive with `webhook.url`** — use one or the other, never both.
 - **requireAdobeAuth**: Optional boolean (runtime-action webhooks only). When not `false`, the webhook is registered with Adobe OAuth credentials.
-- **webhook**: The webhook payload sent to Commerce (`webhook_method`, `webhook_type`, `batch_name`, `hook_name`, `method`, and optional `url`, `fields`, `rules`, `headers`, `priority`, `required`, timeouts, and `ttl`).
+- **webhook**: The webhook payload sent to Commerce (`webhook_method`, `webhook_type`, `batch_name`, `hook_name`, `method`, and optional `url`, `fields`, `rules`, `headers`, `priority`, `required`, timeouts, and `ttl`). When `runtimeAction` is omitted, `webhook.url` is required and must be an explicit HTTPS URL pointing to your handler endpoint.
 - **env**: Optional array of Commerce environments the webhook applies to. See [Environment Scoping (Webhooks)](#environment-scoping-webhooks).
+
+##### `runtimeAction` vs `webhook.url`
+
+These two properties are the mutually exclusive ways to specify where Commerce sends the webhook request:
+
+- **`runtimeAction`** — use this when the handler lives inside your App Builder app. Provide the action path (`<package>/<action>`), and the SDK resolves the public Runtime URL automatically at install time. This is the recommended approach for logic you own and deploy alongside the app.
+
+- **`webhook.url`** — use this when the handler is an external endpoint: a third-party service, a middleware platform, or any HTTPS URL outside of App Builder. The URL is passed to Commerce as-is; the SDK does not validate or modify it.
 
 ##### Environment Scoping (Webhooks)
 
