@@ -3188,15 +3188,18 @@
             ]
           },
           "sandboxPermissions": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": ["allow-downloads", "allow-modals", "allow-popups"]
-            },
-            "minItems": 1
+            "$ref": "#/components/schemas/AdminUiSandboxPermissions"
           }
         },
         "required": ["id", "label", "description"]
+      },
+      "AdminUiSandboxPermissions": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["allow-downloads", "allow-modals", "allow-popups"]
+        },
+        "minItems": 1
       },
       "AdminUiMassAction": {
         "oneOf": [
@@ -3385,7 +3388,6 @@
         "additionalProperties": false,
         "required": []
       },
-
       "AdminUiGridColumns": {
         "type": "object",
         "properties": {
