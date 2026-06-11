@@ -48,16 +48,24 @@ const GridColumnsSchema = v.object({
   ),
 });
 
+// ─── Shared ───────────────────────────────────────────────────────────────────
+
+const NotificationsSchema = v.object({
+  success: v.optional(nonEmptyStringValueSchema("success notification")),
+  error: v.optional(nonEmptyStringValueSchema("error notification")),
+});
+
+const SandboxPermissionSchema = v.picklist([
+  "allow-downloads",
+  "allow-modals",
+  "allow-popups",
+]);
+
 // ─── Mass actions ─────────────────────────────────────────────────────────────
 
 const MassActionConfirmSchema = v.object({
   title: v.optional(nonEmptyStringValueSchema("confirm title")),
   message: v.optional(nonEmptyStringValueSchema("confirm message")),
-});
-
-const MassActionNotificationsSchema = v.object({
-  success: v.optional(nonEmptyStringValueSchema("notifications.success")),
-  error: v.optional(nonEmptyStringValueSchema("notifications.error")),
 });
 
 /** Fields shared by both mass-action variants. `description` is flat — no `installation` nesting. */
@@ -67,24 +75,16 @@ const massActionCommonEntries = {
   description: v.optional(nonEmptyStringValueSchema("mass action description")),
   title: v.optional(nonEmptyStringValueSchema("mass action page title")),
   confirm: v.optional(MassActionConfirmSchema),
-  notifications: v.optional(MassActionNotificationsSchema),
+  notifications: v.optional(NotificationsSchema),
   selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
 };
-
-const SANDBOX_PERMISSION_VALUES = [
-  "allow-downloads",
-  "allow-modals",
-  "allow-popups",
-] as const satisfies string[];
 
 /** `type: "view"` mass action — renders an iframe at `path`. */
 const ViewMassActionSchema = v.strictObject({
   ...massActionCommonEntries,
   type: v.literal("view"),
   path: nonEmptyStringValueSchema("mass action path"),
-  sandboxPermissions: v.optional(
-    v.array(v.picklist(SANDBOX_PERMISSION_VALUES)),
-  ),
+  sandboxPermissions: v.optional(v.array(SandboxPermissionSchema)),
 });
 
 /** `type: "worker"` mass action — invokes a workerProcess runtime action. */
@@ -112,17 +112,6 @@ const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
 const ViewButtonConfirmSchema = v.object({
   message: v.optional(nonEmptyStringValueSchema("confirm message")),
 });
-
-const NotificationsSchema = v.object({
-  success: v.optional(nonEmptyStringValueSchema("success notification")),
-  error: v.optional(nonEmptyStringValueSchema("error notification")),
-});
-
-const SandboxPermissionSchema = v.picklist([
-  "allow-downloads",
-  "allow-modals",
-  "allow-popups",
-]);
 
 const OrderViewButtonSchema = v.variant("type", [
   v.strictObject({

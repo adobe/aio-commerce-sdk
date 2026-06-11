@@ -3196,28 +3196,14 @@
                 }
               },
               "notifications": {
-                "type": "object",
-                "properties": {
-                  "success": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "error": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                }
+                "$ref": "#/components/schemas/AdminUiNotifications"
               },
               "selectionLimit": {
                 "type": "number",
                 "minimum": 1
               },
               "sandboxPermissions": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "enum": ["allow-downloads", "allow-modals", "allow-popups"]
-                }
+                "$ref": "#/components/schemas/AdminUiSandboxPermissions"
               }
             },
             "required": ["id", "label", "type", "path"],
@@ -3263,17 +3249,7 @@
                 }
               },
               "notifications": {
-                "type": "object",
-                "properties": {
-                  "success": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "error": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                }
+                "$ref": "#/components/schemas/AdminUiNotifications"
               },
               "selectionLimit": {
                 "type": "number",
@@ -3442,25 +3418,10 @@
                 "required": []
               },
               "sandboxPermissions": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "enum": ["allow-downloads", "allow-modals", "allow-popups"]
-                }
+                "$ref": "#/components/schemas/AdminUiSandboxPermissions"
               },
               "notifications": {
-                "type": "object",
-                "properties": {
-                  "success": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "error": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": []
+                "$ref": "#/components/schemas/AdminUiNotifications"
               }
             },
             "required": ["type", "id", "label", "path"]
@@ -3511,23 +3472,32 @@
                 "minimum": 1
               },
               "notifications": {
-                "type": "object",
-                "properties": {
-                  "success": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "error": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": []
+                "$ref": "#/components/schemas/AdminUiNotifications"
               }
             },
             "required": ["type", "id", "label", "runtimeAction"]
           }
         ]
+      },
+      "AdminUiNotifications": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "string",
+            "minLength": 1
+          },
+          "error": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "AdminUiSandboxPermissions": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["allow-downloads", "allow-modals", "allow-popups"]
+        }
       },
       "CustomScopeInput": {
         "type": "object",
