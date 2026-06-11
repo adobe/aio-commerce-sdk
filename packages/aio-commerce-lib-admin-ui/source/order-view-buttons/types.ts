@@ -21,8 +21,5 @@ export type OrderViewButtonRequest = v.InferOutput<
 /** Success body returned to Commerce — an empty object signals success. */
 export type OrderViewButtonSuccessBody = Record<string, never>;
 
-/** Failure body returned to Commerce. */
-export type OrderViewButtonErrorBody = {
-  errorStatus: string;
-  errorMessage?: string;
-};
+/** Failure body returned to Commerce when a worker order view button handler fails. */
+export type OrderViewButtonErrorBody = { error: string };

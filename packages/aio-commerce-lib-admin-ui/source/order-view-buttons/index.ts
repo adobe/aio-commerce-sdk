@@ -22,8 +22,8 @@
  */
 
 export {
-  errorOrderViewButtonResponse,
   okOrderViewButtonResponse,
+  orderViewButtonErrorResponse,
   parseOrderViewButtonRequest,
 } from "./presets";
 export { OrderViewButtonRequestSchema } from "./schema";

@@ -151,18 +151,13 @@ Commerce renders `notifications.success` from the registration as the toast body
 
 ##### Building an error response
 
-`errorOrderViewButtonResponse` produces the `{ errorStatus, errorMessage }` envelope Commerce recognises as a handler-level failure:
+`orderViewButtonErrorResponse` returns an HTTP error response with a `{ error }` body. Commerce uses the HTTP status code to distinguish success from failure.
 
 ```typescript
-import { errorOrderViewButtonResponse } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
+import { orderViewButtonErrorResponse } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
 
-return errorOrderViewButtonResponse(
-  "INTERNAL_ERROR",
-  "Could not reach inventory service",
-);
+return orderViewButtonErrorResponse(500, "Could not reach inventory service");
 ```
-
-Commerce renders `notifications.error` from the registration as the toast body when present; if absent it falls back to `errorMessage`, and to a generic error message if neither is provided.
 
 ### Mass Action Worker Contract
 

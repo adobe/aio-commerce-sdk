@@ -10,14 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
-import { ok } from "@adobe/aio-commerce-lib-core/responses";
+import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import { OrderViewButtonRequestSchema } from "./schema";
 
-import type { SuccessResponse } from "@adobe/aio-commerce-lib-core/responses";
 import type {
-  OrderViewButtonErrorBody,
+  ErrorResponse,
+  SuccessResponse,
+} from "@adobe/aio-commerce-lib-core/responses";
+import type {
   OrderViewButtonRequest,
   OrderViewButtonSuccessBody,
 } from "./types";
@@ -65,26 +67,22 @@ export function okOrderViewButtonResponse(): SuccessResponse<OrderViewButtonSucc
 }
 
 /**
- * Builds an HTTP 200 response carrying a handler-level failure envelope.
+ * Builds an error response for a worker order view button handler with the given HTTP status code.
  *
- * Commerce treats any decoded body containing `errorStatus` as a failure
- * regardless of HTTP status. Commerce renders `notifications.error` from
- * the registration as the toast body when present; if absent it falls back
- * to `errorMessage`, and to a generic error message if neither is provided.
+ * Commerce uses the HTTP status code to distinguish success from failure.
+ *
+ * @param statusCode - The HTTP status code to return.
+ * @param errorMessage - Error message included in the response body as `{ error }`.
  *
  * @example
  * ```ts
- * return errorOrderViewButtonResponse("INTERNAL_ERROR", "Could not reach inventory service");
+ * return orderViewButtonErrorResponse(500, "Could not reach inventory service");
  * ```
  */
-export function errorOrderViewButtonResponse(
-  errorStatus: string,
-  errorMessage?: string,
-): SuccessResponse<OrderViewButtonErrorBody> {
-  const body: OrderViewButtonErrorBody =
-    errorMessage === undefined
-      ? { errorStatus }
-      : { errorStatus, errorMessage };
-
-  return ok<OrderViewButtonErrorBody>({ body });
+export function orderViewButtonErrorResponse(
+  statusCode: number,
+  errorMessage: string,
+): ErrorResponse {
+  // @ts-expect-error — Commerce's wire contract uses `{ error }` only; lib-core requires `message`, which is not part of this format.
+  return buildErrorResponse(statusCode, { body: { error: errorMessage } });
 }

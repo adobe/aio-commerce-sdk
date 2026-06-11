@@ -14,8 +14,8 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { describe, expect, it } from "vitest";
 
 import {
-  errorOrderViewButtonResponse,
   okOrderViewButtonResponse,
+  orderViewButtonErrorResponse,
   parseOrderViewButtonRequest,
 } from "#order-view-buttons/presets";
 
@@ -86,29 +86,28 @@ describe("okOrderViewButtonResponse", () => {
   });
 });
 
-describe("errorOrderViewButtonResponse", () => {
-  it("produces a 200 response carrying errorStatus only when no message is given", () => {
-    const result = errorOrderViewButtonResponse("INTERNAL_ERROR");
-    expect(result).toEqual({
-      type: "success",
-      statusCode: 200,
-      body: { errorStatus: "INTERNAL_ERROR" },
-    });
-  });
-
-  it("includes errorMessage when provided", () => {
-    const result = errorOrderViewButtonResponse(
-      "INTERNAL_ERROR",
+describe("orderViewButtonErrorResponse", () => {
+  it("returns an error response with the given status code", () => {
+    const response = orderViewButtonErrorResponse(
+      500,
       "Could not reach inventory service",
     );
-    expect(result.body).toEqual({
-      errorStatus: "INTERNAL_ERROR",
-      errorMessage: "Could not reach inventory service",
+    expect(response.type).toBe("error");
+    expect(response.error.statusCode).toBe(500);
+  });
+
+  it("puts the error message in the error field of the body", () => {
+    const response = orderViewButtonErrorResponse(
+      500,
+      "Could not reach inventory service",
+    );
+    expect(response.error.body).toMatchObject({
+      error: "Could not reach inventory service",
     });
   });
 
-  it("preserves an explicit empty errorMessage", () => {
-    const result = errorOrderViewButtonResponse("X", "");
-    expect(result.body).toEqual({ errorStatus: "X", errorMessage: "" });
+  it("forwards the status code unchanged", () => {
+    const response = orderViewButtonErrorResponse(400, "Bad input");
+    expect(response.error.statusCode).toBe(400);
   });
 });
