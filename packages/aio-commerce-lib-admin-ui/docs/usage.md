@@ -5,11 +5,12 @@
 
 ## Overview
 
-This package provides utilities for interacting with the Admin UI SDK API and the Admin UI grid column extension points:
+This package provides utilities for interacting with the Admin UI SDK API and the Admin UI `commerce/backend-ui/2` extension points:
 
 - **[API Client](#api-client)**: Create typed HTTP clients for the Admin UI SDK API
 - **[Grid Column Wire Contract](#grid-column-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` grid column extensions
 - **[Menu Constants](#menu-constants)**: Named constants and type guards for Commerce Admin menu IDs
+- **[Order View Button Wire Contract](#order-view-button-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` order view button extensions
 
 ## API Reference
 
@@ -100,6 +101,65 @@ The column keys inside each row must match the `id` values declared in the corre
 import { errorGridResponse } from "@adobe/aio-commerce-lib-admin-ui/grid-columns";
 
 return errorGridResponse("INTERNAL_ERROR", "Could not reach inventory service");
+```
+
+### Order View Button Wire Contract
+
+Apps that expose a runtime action handler for `commerce/backend-ui/2` order view buttons receive a POST from Commerce when the button is clicked. This package provides typed builders for that JSON wire contract.
+
+#### Iframe buttons
+
+Commerce does not call a server-side handler. Instead, it opens an iframe pointing at the app's web entry with the button `path` appended and `orderId` as a query parameter:
+
+```
+https://<extension-host>/index.html<path>?orderId=<orderId>
+```
+
+The app signals completion to Commerce through the UIX Host connection — calling `close()` to indicate success or `onError()` to indicate failure. Commerce then redirects back to the order view page and renders the appropriate banner notification from the registration. No SDK builders are needed for this variant.
+
+#### Runtime action buttons
+
+When Commerce POSTs to the app's runtime action handler, this package provides typed builders for that JSON wire contract.
+
+##### Parsing the incoming request
+
+Commerce POSTs a body of the shape `{ requestId, id, orderId }` to the handler. Use `parseOrderViewButtonRequest` to validate and narrow it:
+
+```typescript
+import { parseOrderViewButtonRequest } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
+
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+
+export async function main(params: RuntimeActionParams) {
+  const { requestId, id, orderId } = parseOrderViewButtonRequest(params);
+  // id identifies which button was clicked — useful when one handler serves multiple buttons
+  // orderId is the order currently being viewed
+  // ...
+}
+```
+
+`parseOrderViewButtonRequest` throws a `CommerceSdkValidationError` when the input is malformed.
+
+##### Building a success response
+
+`okOrderViewButtonResponse` returns the empty-object body Commerce expects on success:
+
+```typescript
+import { okOrderViewButtonResponse } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
+
+return okOrderViewButtonResponse();
+```
+
+Commerce renders `notifications.success` from the registration as the toast body when present, and a default success toast otherwise.
+
+##### Building an error response
+
+`orderViewButtonErrorResponse` returns an HTTP error response with a `{ error }` body. Commerce uses the HTTP status code to distinguish success from failure.
+
+```typescript
+import { orderViewButtonErrorResponse } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
+
+return orderViewButtonErrorResponse(500, "Could not reach inventory service");
 ```
 
 ### Mass Action Worker Contract
