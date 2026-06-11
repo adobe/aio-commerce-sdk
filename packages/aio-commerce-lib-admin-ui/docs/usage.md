@@ -174,7 +174,6 @@ Each top-level menu and its sub-menus are available as named exports:
 ```typescript
 import {
   MENU_SALES,
-  MENU_SALES_OPERATIONS,
   MENU_CATALOG,
   MENU_CUSTOMERS,
   MENU_MARKETING,
