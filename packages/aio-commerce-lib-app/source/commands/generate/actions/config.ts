@@ -256,7 +256,7 @@ export function buildAdminUiV2ExtConfig(
       ...(requiresWeb && {
         view: [{ type: "web" as const, impl: "index.html" }],
       }),
-      ...(adminUi !== undefined && {
+      ...(runtimeActions.length > 0 && {
         workerProcess: runtimeActions.map((impl) => ({
           type: "action" as const,
           impl,
