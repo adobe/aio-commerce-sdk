@@ -10,14 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
+/** biome-ignore-all lint/performance/noBarrelFile: This is the `@adobe/aio-commerce-lib-admin-ui/api` entrypoint. */
 
-export default mergeConfig(baseConfig, {
-  entry: [
-    "./source/api/index.ts",
-    "./source/grid-columns/index.ts",
-    "./source/mass-actions/index.ts",
-    "./source/menu/index.ts",
-  ],
-});
+export * from "./lib/api-client";
+
+export type * from "./extensions/schema";

@@ -9,6 +9,7 @@ This package provides utilities for interacting with the Admin UI SDK API and th
 
 - **[API Client](#api-client)**: Create typed HTTP clients for the Admin UI SDK API
 - **[Grid Column Wire Contract](#grid-column-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` grid column extensions
+- **[Menu Constants](#menu-constants)**: Named constants and type guards for Commerce Admin menu IDs
 
 ## API Reference
 
@@ -160,4 +161,41 @@ return notFoundMassActionResponse("No records matched the given IDs");
 return internalServerErrorMassActionResponse(
   "Could not reach the export service",
 );
+```
+
+### Menu Constants
+
+The `./menu` entrypoint provides named constants for Commerce Admin menu IDs, typed collections of those IDs, and type guards for distinguishing menu IDs at runtime.
+
+#### Named constants
+
+Each top-level menu and its sub-menus are available as named exports:
+
+```typescript
+import {
+  MENU_SALES,
+  MENU_CATALOG,
+  MENU_CUSTOMERS,
+  MENU_MARKETING,
+} from "@adobe/aio-commerce-lib-admin-ui/menu";
+```
+
+#### Collection
+
+`COMMERCE_MENUS` is a readonly tuple of all supported Commerce Admin menu IDs:
+
+```typescript
+import { COMMERCE_MENUS } from "@adobe/aio-commerce-lib-admin-ui/menu";
+```
+
+#### Type guard
+
+`isCommerceMenu` narrows an arbitrary string to the `CommerceMenu` type:
+
+```typescript
+import { isCommerceMenu } from "@adobe/aio-commerce-lib-admin-ui/menu";
+
+if (isCommerceMenu(id)) {
+  // id is CommerceMenu
+}
 ```

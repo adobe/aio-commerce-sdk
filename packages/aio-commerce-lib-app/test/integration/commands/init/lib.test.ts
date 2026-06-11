@@ -38,7 +38,7 @@ import {
 } from "#commands/init/lib";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
-  configWithAdminUi,
+  configWithAdminUiSingleGrid,
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
@@ -496,7 +496,7 @@ describe("commands/init/lib", () => {
       { domain: "eventing.commerce", config: configWithCommerceEventing },
       { domain: "eventing.external", config: configWithExternalEventing },
       { domain: "webhooks", config: configWithWebhooks },
-      { domain: "adminUi", config: configWithAdminUi },
+      { domain: "adminUi", config: configWithAdminUiSingleGrid },
     ])("generates the installation action when $domain is configured", async ({
       config,
     }) => {

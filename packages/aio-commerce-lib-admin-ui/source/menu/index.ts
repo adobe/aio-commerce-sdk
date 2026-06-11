@@ -10,8 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the `@adobe/aio-commerce-lib-admin-ui/api` entrypoint. */
+/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the menu entrypoint. */
 
-export * from "./lib/api-client";
+/**
+ * Helpers and constants for working with the Adobe Commerce admin menu.
+ *
+ * Provides named constants for many menu IDs in the Adobe Commerce Admin,
+ * as well as type guards for distinguishing menu IDs at runtime.
+ *
+ * @packageDocumentation
+ */
 
-export type * from "./api/extensions/schema";
+export * from "./paths";
