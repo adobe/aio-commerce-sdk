@@ -61,12 +61,12 @@ const SandboxPermissionSchema = v.picklist([
   "allow-popups",
 ]);
 
-// ─── Mass actions ─────────────────────────────────────────────────────────────
-
-const MassActionConfirmSchema = v.object({
+const ConfirmSchema = v.object({
   title: v.optional(nonEmptyStringValueSchema("confirm title")),
   message: v.optional(nonEmptyStringValueSchema("confirm message")),
 });
+
+// ─── Mass actions ─────────────────────────────────────────────────────────────
 
 /** Fields shared by both mass-action variants. `description` is flat — no `installation` nesting. */
 const massActionCommonEntries = {
@@ -74,7 +74,7 @@ const massActionCommonEntries = {
   label: nonEmptyStringValueSchema("mass action label"),
   description: v.optional(nonEmptyStringValueSchema("mass action description")),
   title: v.optional(nonEmptyStringValueSchema("mass action page title")),
-  confirm: v.optional(MassActionConfirmSchema),
+  confirm: v.optional(ConfirmSchema),
   notifications: v.optional(NotificationsSchema),
   selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
 };
@@ -109,10 +109,6 @@ const MassActionSchema = v.variant(
 
 const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
 
-const ViewButtonConfirmSchema = v.object({
-  message: v.optional(nonEmptyStringValueSchema("confirm message")),
-});
-
 const OrderViewButtonSchema = v.variant("type", [
   v.strictObject({
     type: v.literal("view"),
@@ -124,7 +120,7 @@ const OrderViewButtonSchema = v.variant("type", [
     path: nonEmptyStringValueSchema("view button path"),
     level: v.optional(ViewButtonLevelSchema),
     sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
-    confirm: v.optional(ViewButtonConfirmSchema),
+    confirm: v.optional(ConfirmSchema),
     sandboxPermissions: v.optional(v.array(SandboxPermissionSchema)),
     notifications: v.optional(NotificationsSchema),
   }),
@@ -138,7 +134,7 @@ const OrderViewButtonSchema = v.variant("type", [
     runtimeAction: nonEmptyStringValueSchema("runtime action"),
     level: v.optional(ViewButtonLevelSchema),
     sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
-    confirm: v.optional(ViewButtonConfirmSchema),
+    confirm: v.optional(ConfirmSchema),
     timeout: v.optional(positiveNumberValueSchema("timeout")),
     notifications: v.optional(NotificationsSchema),
   }),

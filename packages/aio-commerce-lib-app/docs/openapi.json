@@ -3183,17 +3183,7 @@
                 "minLength": 1
               },
               "confirm": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "message": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                }
+                "$ref": "#/components/schemas/AdminUiConfirm"
               },
               "notifications": {
                 "$ref": "#/components/schemas/AdminUiNotifications"
@@ -3236,17 +3226,7 @@
                 "minLength": 1
               },
               "confirm": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "message": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                }
+                "$ref": "#/components/schemas/AdminUiConfirm"
               },
               "notifications": {
                 "$ref": "#/components/schemas/AdminUiNotifications"
@@ -3408,14 +3388,7 @@
                 "minimum": 1
               },
               "confirm": {
-                "type": "object",
-                "properties": {
-                  "message": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": []
+                "$ref": "#/components/schemas/AdminUiConfirm"
               },
               "sandboxPermissions": {
                 "$ref": "#/components/schemas/AdminUiSandboxPermissions"
@@ -3458,14 +3431,7 @@
                 "minimum": 1
               },
               "confirm": {
-                "type": "object",
-                "properties": {
-                  "message": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": []
+                "$ref": "#/components/schemas/AdminUiConfirm"
               },
               "timeout": {
                 "type": "number",
@@ -3478,6 +3444,19 @@
             "required": ["type", "id", "label", "runtimeAction"]
           }
         ]
+      },
+      "AdminUiConfirm": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       },
       "AdminUiNotifications": {
         "type": "object",
