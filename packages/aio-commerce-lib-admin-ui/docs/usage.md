@@ -128,7 +128,9 @@ Commerce POSTs a body of the shape `{ requestId, id, orderId }` to the handler. 
 ```typescript
 import { parseOrderViewButtonRequest } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
 
-export async function main(params: unknown) {
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+
+export async function main(params: RuntimeActionParams) {
   const { requestId, id, orderId } = parseOrderViewButtonRequest(params);
   // id identifies which button was clicked — useful when one handler serves multiple buttons
   // orderId is the order currently being viewed
