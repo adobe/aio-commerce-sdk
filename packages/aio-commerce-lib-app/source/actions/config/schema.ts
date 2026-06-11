@@ -14,8 +14,6 @@ import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-export type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
-
 // Shared primitives used by multiple response schemas below.
 const AcceptedConfigurationValuesSchema = v.union([
   v.boolean(),
