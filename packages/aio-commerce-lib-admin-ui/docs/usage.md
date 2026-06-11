@@ -10,7 +10,7 @@ This package provides utilities for interacting with the Admin UI SDK API and th
 - **[API Client](#api-client)**: Create typed HTTP clients for the Admin UI SDK API
 - **[Grid Column Wire Contract](#grid-column-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` grid column extensions
 - **[Menu Constants](#menu-constants)**: Named constants and type guards for Commerce Admin menu IDs
-- **[Order View Button Wire Contract](#order-view-button-wire-contract)**: Runtime model for `commerce/backend-ui/2` order view buttons — iframe navigation contract for `type: "view"` and request/response builders for `type: "worker"` handlers
+- **[Order View Button Wire Contract](#order-view-button-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` order view button extensions
 
 ## API Reference
 
@@ -105,9 +105,9 @@ return errorGridResponse("INTERNAL_ERROR", "Could not reach inventory service");
 
 ### Order View Button Wire Contract
 
-`adminUi.order.viewButtons` supports two variants with different runtime models. The registration side (declaring buttons and their configuration) is handled through `@adobe/aio-commerce-lib-app`.
+Apps that expose a runtime action handler for `commerce/backend-ui/2` order view buttons receive a POST from Commerce when the button is clicked. This package provides typed builders for that JSON wire contract.
 
-#### type: "view" — iframe buttons
+#### Iframe buttons
 
 Commerce does not call a server-side handler. Instead, it opens an iframe pointing at the app's web entry with the button `path` appended and `orderId` as a query parameter:
 
@@ -117,9 +117,9 @@ https://<extension-host>/index.html<path>?orderId=<orderId>
 
 The app signals completion to Commerce through the UIX Host connection — calling `close()` to indicate success or `onError()` to indicate failure. Commerce then redirects back to the order view page and renders the appropriate banner notification from the registration. No SDK builders are needed for this variant.
 
-#### type: "worker" — runtime action buttons
+#### Runtime action buttons
 
-Apps that declare `type: "worker"` entries expose a runtime action that Commerce POSTs to when the button is clicked. This package provides typed builders for that JSON wire contract.
+When Commerce POSTs to the app's runtime action handler, this package provides typed builders for that JSON wire contract.
 
 ##### Parsing the incoming request
 
