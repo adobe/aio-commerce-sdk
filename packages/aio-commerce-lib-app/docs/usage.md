@@ -650,6 +650,28 @@ The `view` and `worker` variants are strict: `path`/`sandboxPermissions` on a `w
 
 When a mass action of `type: "view"` is present, the SDK automatically adds a `view` operation pointing at `index.html` to `ext.config.yaml`.
 
+###### Field Reference:
+
+Shared fields (both types):
+
+- **id**: Required — stable action identifier served to Commerce as-is
+- **label**: Required — action label rendered in the Admin UI
+- **description**: Optional — human-readable summary exposed via `app-config` for installation tooling
+- **title**: Optional — page title rendered in the iframe (view) or confirmation surface (worker)
+- **confirm**: Optional — `{ title?, message? }` confirmation dialog shown before the action runs
+- **notifications**: Optional — `{ success?, error? }` toast strings displayed after the action completes
+- **selectionLimit**: Optional — positive number capping how many records may be selected at once
+
+`type: "view"` specific:
+
+- **path**: Required — in-app iframe URL (e.g. `#/export-orders`)
+- **sandboxPermissions**: Optional — non-empty array of one or more of `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
+
+`type: "worker"` specific:
+
+- **runtimeAction**: Required — `<package>/<action>` path; the SDK registers it as a `workerProcess` operation automatically
+- **timeout**: Optional — positive number (seconds)
+
 ##### Menu
 
 Declare a single Commerce Admin menu entry for the application. Similarly to mass actions of `type: "view"`, when `adminUi.menu` is present the SDK automatically adds a `view` operation pointing at `index.html` to `ext.config.yaml`.
