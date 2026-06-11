@@ -17,7 +17,7 @@ import {
   okOrderViewButtonResponse,
   orderViewButtonErrorResponse,
   parseOrderViewButtonRequest,
-} from "#order-view-buttons/presets";
+} from "../../../source/order-view-buttons/presets";
 
 const VALID_REQUEST = {
   requestId: "550e8400-e29b-41d4-a716-446655440000",
