@@ -589,6 +589,7 @@ After this command completes successfully, check which directories were created:
 
 - `src/commerce-extensibility-1/` — always expected
 - `src/commerce-configuration-1/` — present only if `businessConfig` was defined
+- `src/commerce-backend-ui-1/` — present only if `adminUiSdk.registration` was defined
 
 Note which directories exist — you will need this in Steps 6 and 7.
 
@@ -611,6 +612,9 @@ exist (from Step 5):
       # Include below only if src/commerce-configuration-1/ was generated:
       commerce/configuration/1:
         $include: "src/commerce-configuration-1/ext.config.yaml"
+      # Include below only if src/commerce-backend-ui-1/ was generated:
+      commerce/backend-ui/1:
+        $include: "src/commerce-backend-ui-1/ext.config.yaml"
 
 **Case B — `extensions:` block already exists:**
 
@@ -634,11 +638,6 @@ Add the new entries below the existing ones:
 Do not duplicate entries that are already present.
 
 **Do not modify or remove any other existing content in `app.config.yaml`.**
-
-**Note:** If the existing `app.config.yaml` contains a `commerce/backend-ui/1` entry and the
-assembled config includes `adminUi` (migrated from v1), replace the old `commerce/backend-ui/1`
-entry with `commerce/backend-ui/2` and update its `$include` path to the new generated directory
-(if one was created by `generate all`). Otherwise leave it as-is for the developer to update manually.
 
 ---
 
@@ -670,9 +669,10 @@ extension points whose directories exist (from Step 5):
     extensions:
       - extensionPointId: commerce/extensibility/1
 
-Add the following line if `src/commerce-configuration-1/` was generated:
+Add additional lines if generated:
 
       - extensionPointId: commerce/configuration/1
+      - extensionPointId: commerce/backend-ui/1
 
 **Never create both `install.yml` and `install.yaml` — use whichever already
 exists, or create `install.yaml` if neither exists.**
