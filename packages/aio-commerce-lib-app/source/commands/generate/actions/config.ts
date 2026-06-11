@@ -12,12 +12,7 @@
 
 import { join } from "node:path";
 
-import {
-  ADMIN_UI_SDK_ACTIONS_PATH,
-  ADMIN_UI_SDK_PACKAGE_NAME,
-  GENERATED_ACTIONS_PATH,
-  PACKAGE_NAME,
-} from "#commands/constants";
+import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
 import { requiresInstallation } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
@@ -55,7 +50,6 @@ export const COMMERCE_ACTION_INPUTS = Object.fromEntries(
 export const CUSTOM_IMPORTS_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_IMPORTS}}";
 export const CUSTOM_SCRIPTS_MAP_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_MAP}}";
 export const CUSTOM_SCRIPTS_LOADER_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_LOADER}}";
-export const REGISTRATION_JSON_PLACEHOLDER = "// {{REGISTRATION_JSON}}";
 
 /**
  * Creates a runtime action configuration.
@@ -210,19 +204,34 @@ export function buildBusinessConfigurationExtConfig() {
 }
 
 /**
- * Builds the ext.config.yaml for the Admin UI grid column v2 extension (`commerce/backend-ui/2`).
- * Derives `workerProcess` declarations from the `runtimeAction` values in `adminUi` config.
+ * Builds the ext.config.yaml for the Admin UI v2 extension (`commerce/backend-ui/2`).
+ * Collects `workerProcess` entries from grid column `runtimeAction` values and worker mass actions.
+ * Adds a `view` operation and `web` source only when view-type mass actions are configured.
  */
 export function buildAdminUiV2ExtConfig(
   appConfig: CommerceAppConfigOutputModel,
 ) {
   const adminUi = appConfig.adminUi;
-  const referencedActions = (["order", "product", "customer"] as const)
-    .map((gridType) => adminUi?.[gridType]?.gridColumns?.runtimeAction)
-    .filter(
-      (runtimeAction): runtimeAction is string => runtimeAction !== undefined,
-    );
-  const runtimeActions = [...new Set(referencedActions)];
+  const entities = (["order", "product", "customer"] as const).map(
+    (key) => adminUi?.[key],
+  );
+
+  const gridRuntimeActions = entities
+    .map((entity) => entity?.gridColumns?.runtimeAction)
+    .filter((action): action is string => action !== undefined);
+
+  const massActionRuntimeActions = entities
+    .flatMap((entity) => entity?.massActions ?? [])
+    .filter((action) => action.type === "worker")
+    .map((action) => action.runtimeAction);
+
+  const runtimeActions = [
+    ...new Set([...gridRuntimeActions, ...massActionRuntimeActions]),
+  ];
+
+  const hasViewMassActions = entities
+    .flatMap((entity) => entity?.massActions ?? [])
+    .some((action) => action.type === "view");
 
   return {
     hooks: {
@@ -230,43 +239,14 @@ export function buildAdminUiV2ExtConfig(
         "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build",
     },
     operations: {
-      workerProcess: runtimeActions.map((impl) => ({ type: "action", impl })),
+      ...(hasViewMassActions && {
+        view: [{ type: "web" as const, impl: "index.html" }],
+      }),
+      workerProcess: runtimeActions.map((impl) => ({
+        type: "action" as const,
+        impl,
+      })),
     },
-  } satisfies ExtConfig;
-}
-
-/**
- * Builds the ext.config.yaml configuration for the Admin UI SDK backend-ui v1 extension.
- */
-export function buildAdminUiSdkExtConfig() {
-  return {
-    hooks: {
-      "pre-app-build":
-        "EXTENSION=backend-ui/1 $packageExec aio-commerce-lib-app hooks pre-app-build",
-    },
-
-    operations: {
-      view: [{ type: "web", impl: "index.html" }],
-    },
-
-    web: "web-src",
-    runtimeManifest: {
-      packages: {
-        [ADMIN_UI_SDK_PACKAGE_NAME]: {
-          license: "Apache-2.0",
-          actions: {
-            registration: {
-              function: `${ADMIN_UI_SDK_ACTIONS_PATH}/index.js`,
-              web: "yes",
-              runtime: "nodejs:24",
-              annotations: {
-                "require-adobe-auth": true,
-                final: true,
-              },
-            },
-          } satisfies Record<string, ActionDefinition>,
-        },
-      },
-    },
+    ...(hasViewMassActions && { web: "web-src" }),
   } satisfies ExtConfig;
 }

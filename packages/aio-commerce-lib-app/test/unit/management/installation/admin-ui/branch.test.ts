@@ -12,59 +12,58 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-import { adminUiSdkStep } from "#management/installation/admin-ui-sdk/branch";
+import { adminUiStep } from "#management/installation/admin-ui/branch";
 import {
   isBranchStep,
   isLeafStep,
 } from "#management/installation/workflow/step";
-import { createMockAdminUiSdkContext } from "#test/fixtures/admin-ui-sdk";
+import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
 import {
-  configWithAdminUiSdk,
+  configWithAdminUi,
   configWithWebhooks,
   minimalValidConfig,
 } from "#test/fixtures/config";
 import { createMockLogger } from "#test/fixtures/installation";
 
-describe("admin-ui-sdk installation module", () => {
-  describe("adminUiSdkStep branch step", () => {
+describe("admin-ui installation module", () => {
+  describe("adminUiStep branch step", () => {
     test("should be a branch step with correct name and meta", () => {
-      expect(isBranchStep(adminUiSdkStep)).toBe(true);
-      expect(adminUiSdkStep.name).toBe("admin-ui-sdk");
-      expect(adminUiSdkStep.meta).toEqual({
+      expect(isBranchStep(adminUiStep)).toBe(true);
+      expect(adminUiStep.name).toBe("admin-ui");
+      expect(adminUiStep.meta).toEqual({
         install: {
-          label: "Admin UI SDK",
-          description:
-            "Registers the extension with Adobe Commerce Admin UI SDK",
+          label: "Admin UI",
+          description: "Registers the extension with Adobe Commerce Admin UI",
         },
         uninstall: {
-          label: "Admin UI SDK",
-          description: "Removes the extension from Adobe Commerce Admin UI SDK",
+          label: "Admin UI",
+          description: "Removes the extension from Adobe Commerce Admin UI",
         },
       });
     });
 
-    test("should only run if adminUiSdk is defined", () => {
-      expect.assert(adminUiSdkStep.when);
+    test("should only run if adminUi is defined", () => {
+      expect.assert(adminUiStep.when);
 
-      expect(adminUiSdkStep.when(configWithAdminUiSdk)).toBe(true);
+      expect(adminUiStep.when(configWithAdminUi)).toBe(true);
 
-      expect(adminUiSdkStep.when(minimalValidConfig)).toBe(false);
-      expect(adminUiSdkStep.when(configWithWebhooks)).toBe(false);
+      expect(adminUiStep.when(minimalValidConfig)).toBe(false);
+      expect(adminUiStep.when(configWithWebhooks)).toBe(false);
     });
 
     test("should have meta.uninstall defined", () => {
-      expect(adminUiSdkStep.meta.uninstall).toBeDefined();
+      expect(adminUiStep.meta.uninstall).toBeDefined();
     });
 
     test("should have one leaf child: register-extension", () => {
-      expect(adminUiSdkStep.children).toHaveLength(1);
-      expect(adminUiSdkStep.children[0].name).toBe("register-extension");
-      expect(isLeafStep(adminUiSdkStep.children[0])).toBe(true);
+      expect(adminUiStep.children).toHaveLength(1);
+      expect(adminUiStep.children[0].name).toBe("register-extension");
+      expect(isLeafStep(adminUiStep.children[0])).toBe(true);
     });
   });
 
   describe("registerExtensionStep uninstall handler", () => {
-    const registerExtensionStep = adminUiSdkStep.children[0];
+    const registerExtensionStep = adminUiStep.children[0];
 
     beforeEach(() => {
       vi.stubEnv("__OW_NAMESPACE", "test-namespace");
@@ -83,9 +82,9 @@ describe("admin-ui-sdk installation module", () => {
     });
 
     test("should call unregisterExtension with workspaceName and __OW_NAMESPACE", async () => {
-      const context = createMockAdminUiSdkContext();
+      const context = createMockAdminUiContext();
 
-      await registerExtensionStep.uninstall?.(configWithAdminUiSdk, context);
+      await registerExtensionStep.uninstall?.(configWithAdminUi, context);
 
       expect(context.adminUiClient.unregisterExtension).toHaveBeenCalledWith({
         workspaceName: context.appData.workspaceName,
@@ -94,27 +93,27 @@ describe("admin-ui-sdk installation module", () => {
     });
 
     test("should not throw when the uninstall call fails (best-effort)", async () => {
-      const context = createMockAdminUiSdkContext({
+      const context = createMockAdminUiContext({
         unregisterExtensionImpl: () =>
           Promise.reject(new Error("Commerce API error")),
       });
 
       await expect(
-        registerExtensionStep.uninstall?.(configWithAdminUiSdk, context),
+        registerExtensionStep.uninstall?.(configWithAdminUi, context),
       ).resolves.toBeUndefined();
     });
 
     test("should log a warning when the uninstall call fails", async () => {
       const logger = createMockLogger();
       const context = {
-        ...createMockAdminUiSdkContext({
+        ...createMockAdminUiContext({
           unregisterExtensionImpl: () =>
             Promise.reject(new Error("Commerce API error")),
         }),
         logger,
       };
 
-      await registerExtensionStep.uninstall?.(configWithAdminUiSdk, context);
+      await registerExtensionStep.uninstall?.(configWithAdminUi, context);
 
       expect(logger.warn).toHaveBeenCalled();
     });

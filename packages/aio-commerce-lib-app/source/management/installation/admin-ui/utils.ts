@@ -14,17 +14,13 @@ import { createAdminUiApiClient } from "@adobe/aio-commerce-lib-admin-ui/api";
 import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   ExecutionContext,
   InstallationContext,
   StepContextFactory,
 } from "#management/installation/workflow/step";
 
-/** Config type when Admin UI SDK registration is configured. */
-export type AdminUiSdkConfig = CommerceAppConfigOutputModel & {
-  adminUiSdk: NonNullable<CommerceAppConfigOutputModel["adminUiSdk"]>;
-};
+export type { AdminUiConfig } from "#config/schema/admin-ui";
 
 function createAdminUiClient(params: RuntimeActionParams) {
   const commerceClientParams = resolveCommerceHttpClientParams(params, {
@@ -34,21 +30,20 @@ function createAdminUiClient(params: RuntimeActionParams) {
   return createAdminUiApiClient(commerceClientParams);
 }
 
-/** The Admin UI SDK API client used during installation. */
+/** The Admin UI API client used during installation. */
 export type AdminUiApiClient = ReturnType<typeof createAdminUiClient>;
 
-/** Context shared across Admin UI SDK installation steps. */
-export interface AdminUiSdkStepContext extends Record<string, unknown> {
+/** Context shared across Admin UI installation steps. */
+export interface AdminUiStepContext extends Record<string, unknown> {
   get adminUiClient(): AdminUiApiClient;
 }
 
-/** The execution context for Admin UI SDK leaf steps. */
-export type AdminUiSdkExecutionContext =
-  ExecutionContext<AdminUiSdkStepContext>;
+/** The execution context for Admin UI leaf steps. */
+export type AdminUiExecutionContext = ExecutionContext<AdminUiStepContext>;
 
-/** Creates the Admin UI SDK step context with a lazy-initialized API client. */
-export const createAdminUiSdkStepContext: StepContextFactory<
-  AdminUiSdkStepContext
+/** Creates the Admin UI step context with a lazy-initialized API client. */
+export const createAdminUiStepContext: StepContextFactory<
+  AdminUiStepContext
 > = (installation: InstallationContext) => {
   const { params } = installation;
   let adminUiClient: AdminUiApiClient | null = null;

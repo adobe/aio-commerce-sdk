@@ -51,16 +51,29 @@
           "default": "./dist/cjs/grid-columns/index.cjs"
         }
       },
+      "./mass-actions": {
+        "import": {
+          "types": "./dist/es/mass-actions/index.d.mts",
+          "default": "./dist/es/mass-actions/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/mass-actions/index.d.cts",
+          "default": "./dist/cjs/mass-actions/index.cjs"
+        }
+      },
       "./package.json": "./package.json"
     }
   },
   "exports": {
     "./api": "./source/index.ts",
     "./grid-columns": "./source/grid-columns/index.ts",
+    "./mass-actions": "./source/mass-actions/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {
     "#*": "./source/*.ts",
+    "#grid-columns/*": "./source/grid-columns/*.ts",
+    "#mass-actions/*": "./source/mass-actions/*.ts",
     "#test/*": "./test/*.ts"
   },
   "files": [

@@ -12,7 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 
-import { adminUiSdkStep } from "#management/installation/admin-ui-sdk/branch";
+import { adminUiStep } from "#management/installation/admin-ui/branch";
 import { eventingStep } from "#management/installation/events/branch";
 import {
   createRootInstallationStep,
@@ -35,7 +35,7 @@ describe("createRootInstallationStep", () => {
     expect(result.children.length).toBe(4);
     expect(result.children[0]).toBe(eventingStep);
     expect(result.children[1]).toBe(webhooksStep);
-    expect(result.children[2]).toBe(adminUiSdkStep);
+    expect(result.children[2]).toBe(adminUiStep);
     expect(result.children[3].name).toBe("customInstallationSteps");
   });
 
@@ -70,7 +70,7 @@ describe("createRootUninstallationStep", () => {
     expect(result.children.length).toBe(4);
     expect(result.children[0]).toBe(eventingStep);
     expect(result.children[1]).toBe(webhooksStep);
-    expect(result.children[2]).toBe(adminUiSdkStep);
+    expect(result.children[2]).toBe(adminUiStep);
     expect(result.children[3].name).toBe("customInstallationSteps");
   });
 

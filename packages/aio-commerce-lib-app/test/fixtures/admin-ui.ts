@@ -14,13 +14,13 @@ import { vi } from "vitest";
 
 import { createMockInstallationContext } from "#test/fixtures/installation";
 
-import type { AdminUiSdkExecutionContext } from "#management/installation/admin-ui-sdk/utils";
+import type { AdminUiExecutionContext } from "#management/installation/admin-ui/utils";
 
-/** Creates a mock AdminUiSdkExecutionContext with Admin UI SDK client methods. */
-export function createMockAdminUiSdkContext(overrides?: {
+/** Creates a mock AdminUiExecutionContext with Admin UI client methods. */
+export function createMockAdminUiContext(overrides?: {
   registerExtensionImpl?: () => Promise<{ extensionId: string }>;
   unregisterExtensionImpl?: () => Promise<unknown>;
-}): AdminUiSdkExecutionContext {
+}): AdminUiExecutionContext {
   const mockInstallation = createMockInstallationContext();
 
   return {
@@ -37,6 +37,6 @@ export function createMockAdminUiSdkContext(overrides?: {
         .mockImplementation(
           overrides?.unregisterExtensionImpl ?? (() => Promise.resolve()),
         ),
-    } as unknown as AdminUiSdkExecutionContext["adminUiClient"],
+    } as unknown as AdminUiExecutionContext["adminUiClient"],
   };
 }

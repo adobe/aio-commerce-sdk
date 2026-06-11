@@ -14,14 +14,14 @@ import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 
 import { throwHttpError } from "../utils/http-error";
 
-import type { AdminUiSdkExecutionContext } from "./utils";
+import type { AdminUiExecutionContext } from "./utils";
 
 /**
  * Registers the extension with Commerce via POST /V1/adminuisdk/extension.
  *
- * @param context - The execution context providing the Admin UI SDK client and logger.
+ * @param context - The execution context providing the Admin UI client and logger.
  */
-export async function registerExtension(context: AdminUiSdkExecutionContext) {
+export async function registerExtension(context: AdminUiExecutionContext) {
   const { adminUiClient, appData, logger } = context;
   const extensionName = process.env.__OW_NAMESPACE;
 
@@ -29,7 +29,7 @@ export async function registerExtension(context: AdminUiSdkExecutionContext) {
     throw new Error("__OW_NAMESPACE environment variable is not set");
   }
 
-  logger.info(`Registering Admin UI SDK extension: ${appData.projectName}`);
+  logger.info(`Registering Admin UI extension: ${appData.projectName}`);
 
   const { extensionId } = await adminUiClient
     .registerExtension({
@@ -39,37 +39,33 @@ export async function registerExtension(context: AdminUiSdkExecutionContext) {
       extensionWorkspace: appData.workspaceName,
     })
     .catch((error: unknown) =>
-      throwHttpError(
-        logger,
-        error,
-        "Failed to register Admin UI SDK extension",
-      ),
+      throwHttpError(logger, error, "Failed to register Admin UI extension"),
     );
 
-  logger.info(`Admin UI SDK extension registered successfully: ${extensionId}`);
+  logger.info(`Admin UI extension registered successfully: ${extensionId}`);
 }
 
 /**
  * Unregisters the extension from Commerce via DELETE /V1/adminuisdk/extension/:workspace_name/:extension_name.
  * Best-effort: errors are logged as warnings and do not stop the uninstall workflow.
  *
- * @param context - The execution context providing the Admin UI SDK client and logger.
+ * @param context - The execution context providing the Admin UI client and logger.
  */
 export async function unregisterExtension(
-  context: AdminUiSdkExecutionContext,
+  context: AdminUiExecutionContext,
 ): Promise<void> {
   const { adminUiClient, appData, logger } = context;
   const extensionName = process.env.__OW_NAMESPACE;
 
   if (!extensionName) {
     logger.warn(
-      "__OW_NAMESPACE environment variable is not set; skipping Admin UI SDK extension unregistration. Continuing uninstall.",
+      "__OW_NAMESPACE environment variable is not set; skipping Admin UI extension unregistration. Continuing uninstall.",
     );
     return;
   }
 
   logger.info(
-    `Unregistering Admin UI SDK extension "${extensionName}" from workspace "${appData.workspaceName}"...`,
+    `Unregistering Admin UI extension "${extensionName}" from workspace "${appData.workspaceName}"...`,
   );
 
   try {
@@ -78,12 +74,12 @@ export async function unregisterExtension(
       extensionName,
     });
     logger.info(
-      `Admin UI SDK extension "${extensionName}" unregistered successfully.`,
+      `Admin UI extension "${extensionName}" unregistered successfully.`,
     );
   } catch (error: unknown) {
     const msg = await unwrapHttpError(error);
     logger.warn(
-      `Failed to unregister Admin UI SDK extension "${extensionName}": ${msg}. Continuing uninstall.`,
+      `Failed to unregister Admin UI extension "${extensionName}": ${msg}. Continuing uninstall.`,
     );
   }
 }

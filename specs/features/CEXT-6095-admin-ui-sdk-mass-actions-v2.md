@@ -2,7 +2,7 @@
 
 - **Ticket:** [CEXT-6095](https://jira.corp.adobe.com/browse/CEXT-6095)
 - **Created:** 2026-05-29
-- [ ] **Implemented**
+- [x] **Implemented**
 
 ## Summary
 
