@@ -206,7 +206,7 @@ export function buildBusinessConfigurationExtConfig() {
 /**
  * Builds the ext.config.yaml for the Admin UI v2 extension (`commerce/backend-ui/2`).
  * Collects `workerProcess` entries from grid column `runtimeAction` values and worker mass actions.
- * Adds a `view` operation and `web` source only when view-type mass actions are configured.
+ * Adds a `view` operation and `web` source when view-type mass actions or `adminUi.menu` is configured.
  */
 export function buildAdminUiV2ExtConfig(
   appConfig: CommerceAppConfigOutputModel,
@@ -229,17 +229,19 @@ export function buildAdminUiV2ExtConfig(
     ...new Set([...gridRuntimeActions, ...massActionRuntimeActions]),
   ];
 
+  const hasAdminUiMenu = adminUi?.menu !== undefined;
   const hasViewMassActions = entities
     .flatMap((entity) => entity?.massActions ?? [])
     .some((action) => action.type === "view");
 
+  const requiresWeb = hasViewMassActions || hasAdminUiMenu;
   return {
     hooks: {
       "pre-app-build":
         "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build",
     },
     operations: {
-      ...(hasViewMassActions && {
+      ...(requiresWeb && {
         view: [{ type: "web" as const, impl: "index.html" }],
       }),
       workerProcess: runtimeActions.map((impl) => ({
@@ -247,6 +249,8 @@ export function buildAdminUiV2ExtConfig(
         impl,
       })),
     },
-    ...(hasViewMassActions && { web: "web-src" }),
+    ...(requiresWeb && {
+      web: "web-src",
+    }),
   } satisfies ExtConfig;
 }
