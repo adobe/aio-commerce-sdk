@@ -10,7 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import { COMMERCE_ENVS } from "@adobe/aio-commerce-lib-core/commerce";
+import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
+import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
 import type { BusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
 import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
@@ -46,13 +47,11 @@ export function appliesToEnv(item: EnvScopedItem, env: CommerceEnv): boolean {
 export function getInstallCommerceEnv(
   params: RuntimeActionParams,
 ): CommerceEnv {
-  const flavor = params.AIO_COMMERCE_API_FLAVOR;
-  if (!COMMERCE_ENVS.includes(flavor as CommerceEnv)) {
-    throw new Error(
-      `Missing or unknown commerce environment: "${flavor ?? ""}". Expected one of: ${COMMERCE_ENVS.map((e) => `"${e}"`).join(", ")}.`,
-    );
-  }
-  return flavor as CommerceEnv;
+  return parseOrThrow(
+    CommerceEnvSchema,
+    params.AIO_COMMERCE_API_FLAVOR,
+    "Missing or unknown commerce environment",
+  );
 }
 
 /**
