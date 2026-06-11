@@ -12,12 +12,7 @@
 
 import { join } from "node:path";
 
-import {
-  ADMIN_UI_SDK_ACTIONS_PATH,
-  ADMIN_UI_SDK_PACKAGE_NAME,
-  GENERATED_ACTIONS_PATH,
-  PACKAGE_NAME,
-} from "#commands/constants";
+import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
 import { requiresInstallation } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
@@ -267,41 +262,5 @@ export function buildAdminUiV2ExtConfig(
         : {}),
     },
     ...(hasViewOperation && { web: "web-src" }),
-  } satisfies ExtConfig;
-}
-
-/**
- * Builds the ext.config.yaml configuration for the Admin UI SDK backend-ui v1 extension.
- */
-export function buildAdminUiSdkExtConfig() {
-  return {
-    hooks: {
-      "pre-app-build":
-        "EXTENSION=backend-ui/1 $packageExec aio-commerce-lib-app hooks pre-app-build",
-    },
-
-    operations: {
-      view: [{ type: "web", impl: "index.html" }],
-    },
-
-    web: "web-src",
-    runtimeManifest: {
-      packages: {
-        [ADMIN_UI_SDK_PACKAGE_NAME]: {
-          license: "Apache-2.0",
-          actions: {
-            registration: {
-              function: `${ADMIN_UI_SDK_ACTIONS_PATH}/index.js`,
-              web: "yes",
-              runtime: "nodejs:24",
-              annotations: {
-                "require-adobe-auth": true,
-                final: true,
-              },
-            },
-          } satisfies Record<string, ActionDefinition>,
-        },
-      },
-    },
   } satisfies ExtConfig;
 }
