@@ -7,7 +7,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
-- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the extension that powers the `commerce/backend-ui/2` extension point. Supports grid column extensions, mass actions, and menu declarations; view buttons and custom fees will follow.
+- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order view buttons, and menu declarations.
 
 ## Reference
 
@@ -595,7 +595,7 @@ export default defineCustomInstallationStep(async (config, context) => {
 > [!WARNING]
 > **Experimental:** Admin UI support on `commerce/backend-ui/2` is not yet production-ready. The API may change in future releases.
 
-The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension. Currently supported: grid column extensions, mass actions and menu declarations. View buttons, and custom fees will follow. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
+The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ##### Grid Columns
 
@@ -667,6 +667,71 @@ export default defineConfig({
 
 Each of `order`, `product`, and `customer` is optional — configure only the grids your application extends.
 
+##### Order View Buttons
+
+`adminUi.order.viewButtons` declares buttons that appear on the order detail page in Commerce Admin. Each entry has a `type` discriminator:
+
+- **`type: "view"`** — loads the in-app URL given by `path` inside an iframe. The SDK automatically adds a `view` operation pointing at `index.html` when at least one view button is present.
+- **`type: "worker"`** — invokes the `workerProcess` operation named by `runtimeAction`, resolved by App Registry at runtime. The SDK registers the `workerProcess` entry automatically.
+
+```javascript
+adminUi: {
+  order: {
+    viewButtons: [
+      {
+        type: "view",
+        id: "delete-order",
+        label: "Delete",
+        description: "Permanently removes the order and its associated records.",
+        path: "#/delete-order",
+        level: 0,
+        sortOrder: 80,
+        sandboxPermissions: ["allow-modals", "allow-popups"],
+        confirm: { message: "Are you sure you want to delete this order?" },
+      },
+      {
+        type: "worker",
+        id: "sync-inventory",
+        label: "Sync inventory",
+        description: "Pushes the latest stock counts for this order's items to the ERP.",
+        runtimeAction: "orders/sync-inventory",
+        timeout: 15,
+        level: 1,
+        sortOrder: 10,
+        notifications: {
+          success: "Inventory synced successfully.",
+          error: "Inventory sync failed. Check the runtime logs.",
+        },
+      },
+    ],
+  },
+}
+```
+
+###### Field Reference:
+
+Shared fields (both types):
+
+- **id**: Required — stable button identifier served to Commerce as-is
+- **label**: Required — on-button text rendered in Admin
+- **description**: Optional — human-readable summary exposed via `app-config` for installation tooling
+- **level**: Optional — `-1`, `0`, or `1`
+- **sortOrder**: Optional — positive number controlling display order
+- **confirm**: Optional — `{ title?, message? }` confirmation dialog before the handler runs
+- **notifications**: Optional — `{ success?, error? }` toast strings displayed after the handler returns
+
+`type: "view"` specific:
+
+- **path**: Required — in-app iframe URL (e.g. `#/delete-order`)
+- **sandboxPermissions**: Optional — array of `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
+
+`type: "worker"` specific:
+
+- **runtimeAction**: Required — `<package>/<action>` path; the SDK registers it as a `workerProcess` operation automatically
+- **timeout**: Optional — positive number (seconds)
+
+For the handler wire contract (request/response shapes), see `@adobe/aio-commerce-lib-admin-ui/order-view-buttons`.
+
 ##### Mass Actions
 
 Mass actions are declared with an explicit `type` field that determines which variant applies:
@@ -707,6 +772,28 @@ operations:
 The `view` and `worker` variants are strict: `path`/`sandboxPermissions` on a `worker` action and `runtimeAction`/`timeout` on a `view` action are rejected at validation time.
 
 When a mass action of `type: "view"` is present, the SDK automatically adds a `view` operation pointing at `index.html` to `ext.config.yaml`.
+
+###### Field Reference:
+
+Shared fields (both types):
+
+- **id**: Required — stable action identifier served to Commerce as-is
+- **label**: Required — action label rendered in the Admin UI
+- **description**: Optional — human-readable summary exposed via `app-config` for installation tooling
+- **title**: Optional — page title rendered in the iframe (view) or confirmation surface (worker)
+- **confirm**: Optional — `{ title?, message? }` confirmation dialog shown before the action runs
+- **notifications**: Optional — `{ success?, error? }` toast strings displayed after the action completes
+- **selectionLimit**: Optional — positive number capping how many records may be selected at once
+
+`type: "view"` specific:
+
+- **path**: Required — in-app iframe URL (e.g. `#/export-orders`)
+- **sandboxPermissions**: Optional — non-empty array of one or more of `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
+
+`type: "worker"` specific:
+
+- **runtimeAction**: Required — `<package>/<action>` path; the SDK registers it as a `workerProcess` operation automatically
+- **timeout**: Optional — positive number (seconds)
 
 ##### Menu
 
