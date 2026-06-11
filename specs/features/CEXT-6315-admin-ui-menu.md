@@ -94,7 +94,7 @@ export default defineConfig({
       id: "approval_dashboard",
       label: "Approval Dashboard",
       description: "Review and approve purchase requests from Commerce Admin.",
-      parentMenu: "Magento_Sales::sales",
+      parentMenu: "sales",
       sandboxPermissions: ["allow-popups", "allow-downloads"],
     },
   },
@@ -102,7 +102,7 @@ export default defineConfig({
 ```
 
 This creates one Commerce Admin entry for the app and attaches it to the existing
-`Magento_Sales::sales` Commerce menu. When the merchant clicks the entry, the app's registered web
+`Sales` Commerce menu. When the merchant clicks the entry, the app's registered web
 view is loaded.
 
 `id` is a unique app-local ID to identify the application menu in Adobe Commerce Admin. The input
@@ -254,7 +254,7 @@ Example payload excerpt:
       "id": "approval_dashboard",
       "label": "Approval Dashboard",
       "description": "Review and approve purchase requests from Commerce Admin.",
-      "parentMenu": "Magento_Sales::sales",
+      "parentMenu": "sales",
       "sandboxPermissions": ["allow-popups", "allow-downloads"]
     }
   }
