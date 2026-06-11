@@ -14,6 +14,11 @@ import * as v from "valibot";
 
 /** Request body for POST / — store association data. */
 export const AssociationRequestBodySchema = v.object({
-  commerceBaseUrl: v.string(),
+  commerceBaseUrl: v.pipe(
+    v.string(),
+    v.url(
+      "The 'commerceBaseUrl' field must be a valid absolute URL (e.g., 'https://my-store.example.com')",
+    ),
+  ),
   commerceEnv: v.picklist(["saas", "paas"]),
 });

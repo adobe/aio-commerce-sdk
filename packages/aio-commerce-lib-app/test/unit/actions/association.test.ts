@@ -101,6 +101,26 @@ describe("associationRuntimeAction", () => {
       expect(mockSetAssociationData).not.toHaveBeenCalled();
     });
 
+    test("returns 400 when commerceBaseUrl is not a valid URL", async () => {
+      const action = associationRuntimeAction();
+      const params = createRuntimeActionParams({
+        method: "post",
+        path: "/",
+        body: {
+          commerceBaseUrl: "not-a-url",
+          commerceEnv: "paas",
+        },
+      });
+
+      const result = await action(params);
+
+      expect(result).toMatchObject({
+        type: "error",
+        error: { statusCode: 400 },
+      });
+      expect(mockSetAssociationData).not.toHaveBeenCalled();
+    });
+
     test("returns 400 when the body is missing required fields", async () => {
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
