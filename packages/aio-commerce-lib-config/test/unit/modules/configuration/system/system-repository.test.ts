@@ -103,9 +103,6 @@ describe("system-repository", () => {
     test("falls back to files when cache miss, then re-caches", async () => {
       const data = { baseUrl: "https://example.com", env: "paas" };
       mockState.get.mockResolvedValue({ value: null });
-      mockFiles.list.mockResolvedValue([
-        { name: "system/system.association.json" },
-      ]);
       mockFiles.read.mockResolvedValue(Buffer.from(JSON.stringify(data)));
 
       const { getSystemConfigByKey } = await import(
@@ -126,7 +123,7 @@ describe("system-repository", () => {
 
     test("returns null when not found in cache or files", async () => {
       mockState.get.mockResolvedValue({ value: null });
-      mockFiles.list.mockResolvedValue([]);
+      mockFiles.read.mockRejectedValue(new Error("file not found"));
 
       const { getSystemConfigByKey } = await import(
         "#modules/configuration/system/system-repository"
@@ -153,7 +150,7 @@ describe("system-repository", () => {
 
     test("returns null when files read throws", async () => {
       mockState.get.mockResolvedValue({ value: null });
-      mockFiles.list.mockRejectedValue(new Error("files error"));
+      mockFiles.read.mockRejectedValue(new Error("files error"));
 
       const { getSystemConfigByKey } = await import(
         "#modules/configuration/system/system-repository"

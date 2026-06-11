@@ -17,10 +17,15 @@ import { getSharedFiles, getSharedState } from "#utils/repository";
 
 const SYSTEM_FILES_PREFIX = "system/";
 
+/** Maps a system config key to its path in `aio-lib-files`. */
 function getSystemFilePath(key: string): string {
   return `${SYSTEM_FILES_PREFIX}${key}.json`;
 }
 
+/**
+ * Reads a raw payload from the `aio-lib-state` cache. Returns `null` on a cache
+ * miss or any read failure, so callers can transparently fall back to files.
+ */
 async function readFromCache(key: string): Promise<string | null> {
   try {
     const state = await getSharedState();
@@ -31,6 +36,10 @@ async function readFromCache(key: string): Promise<string | null> {
   }
 }
 
+/**
+ * Writes a payload to the `aio-lib-state` cache. Cache failures are swallowed
+ * (logged at debug) since `aio-lib-files` remains the source of truth.
+ */
 async function writeToCache(key: string, payload: string): Promise<void> {
   const logger = getLogger("@adobe/aio-commerce-lib-config:system-repository");
   try {
@@ -44,6 +53,10 @@ async function writeToCache(key: string, payload: string): Promise<void> {
   }
 }
 
+/**
+ * Removes a key from the `aio-lib-state` cache. Failures are swallowed (logged
+ * at debug) since the entry is also cleared from `aio-lib-files`.
+ */
 async function deleteFromCache(key: string): Promise<void> {
   const logger = getLogger("@adobe/aio-commerce-lib-config:system-repository");
   try {
@@ -57,17 +70,14 @@ async function deleteFromCache(key: string): Promise<void> {
   }
 }
 
+/**
+ * Reads a raw payload from `aio-lib-files`, the persistent source of truth.
+ * Returns `null` when the file does not exist or cannot be read.
+ */
 async function readFromFiles(key: string): Promise<string | null> {
   try {
     const files = await getSharedFiles();
     const filePath = getSystemFilePath(key);
-    const filesList = await files.list(SYSTEM_FILES_PREFIX);
-    const fileObject = filesList.find((file) => file.name === filePath);
-
-    if (!fileObject) {
-      return null;
-    }
-
     const content = await files.read(filePath);
     return content ? content.toString("utf8") : null;
   } catch {
@@ -75,12 +85,20 @@ async function readFromFiles(key: string): Promise<string | null> {
   }
 }
 
+/**
+ * Writes a payload to `aio-lib-files`, the persistent source of truth. Failures
+ * propagate so the caller can surface a failed write.
+ */
 async function writeToFiles(key: string, payload: string): Promise<void> {
   const files = await getSharedFiles();
   const filePath = getSystemFilePath(key);
   await files.write(filePath, payload);
 }
 
+/**
+ * Removes a key's file from `aio-lib-files`. Failures are swallowed (logged at
+ * debug) so clearing a non-existent entry is a no-op.
+ */
 async function deleteFromFiles(key: string): Promise<void> {
   const logger = getLogger("@adobe/aio-commerce-lib-config:system-repository");
   try {
