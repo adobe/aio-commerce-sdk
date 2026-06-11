@@ -7,11 +7,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
-  <<<<<<< HEAD
-- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions and order view buttons. Mass actions, menus, and custom fees will follow.
-- # **Admin UI SDK Configuration** (`commerce/backend-ui/1`, _deprecated_): Generate and manage the runtime action for the legacy Admin UI SDK extension point. Will be removed from the SDK — use `adminUi` and `commerce/backend-ui/2` for new apps.
-- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the extension that powers the `commerce/backend-ui/2` extension point. Supports grid column extensions and mass actions.
-  > > > > > > > origin/main
+- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, and order view buttons.
 
 ## Reference
 
@@ -475,12 +471,7 @@ export default defineCustomInstallationStep(async (config, context) => {
 
 > **Experimental:** Admin UI support on `commerce/backend-ui/2` is not yet production-ready. The API may change in future releases.
 
-<<<<<<< HEAD
-The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`. No registration action is generated — Commerce reads the registration directly from the `app-config` endpoint. Currently supported: grid column extensions and order view buttons. Mass actions, menus, and custom fees will follow.
-=======
-The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
-
-> > > > > > > origin/main
+The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`. No registration action is generated — Commerce reads the registration directly from the `app-config` endpoint. Currently supported: grid column extensions, mass actions, and order view buttons.
 
 ##### Grid Columns
 
@@ -552,8 +543,6 @@ export default defineConfig({
 
 Each of `order`, `product`, and `customer` is optional — configure only the grids your application extends.
 
-<<<<<<< HEAD
-
 ##### Order View Buttons
 
 `adminUi.order.viewButtons` declares buttons that appear on the order detail page in Commerce Admin. Each entry has a `type` discriminator:
@@ -604,7 +593,7 @@ Shared fields (both types):
 - **description**: Optional — human-readable summary exposed via `app-config` for installation tooling
 - **level**: Optional — `-1`, `0`, or `1`
 - **sortOrder**: Optional — positive number controlling display order
-- **confirm**: Optional — `{ message? }` confirmation dialog before the handler runs
+- **confirm**: Optional — `{ title?, message? }` confirmation dialog before the handler runs
 - **notifications**: Optional — `{ success?, error? }` toast strings displayed after the handler returns
 
 `type: "view"` specific:
@@ -617,7 +606,7 @@ Shared fields (both types):
 - **runtimeAction**: Required — `<package>/<action>` path; the SDK registers it as a `workerProcess` operation automatically
 - **timeout**: Optional — positive number (seconds)
 
-# For the handler wire contract (request/response shapes), see `@adobe/aio-commerce-lib-admin-ui/order-view-buttons`.
+For the handler wire contract (request/response shapes), see `@adobe/aio-commerce-lib-admin-ui/order-view-buttons`.
 
 ##### Authoring a mass action
 
@@ -659,8 +648,6 @@ operations:
 The `view` and `worker` variants are strict: `path`/`sandboxPermissions` on a `worker` action and `runtimeAction`/`timeout` on a `view` action are rejected at validation time.
 
 Every field of `adminUi` is optional — configure only the extension points your application needs.
-
-> > > > > > > origin/main
 
 ### CLI Commands
 
