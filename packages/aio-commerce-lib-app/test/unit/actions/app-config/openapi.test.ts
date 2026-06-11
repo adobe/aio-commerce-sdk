@@ -16,7 +16,7 @@ import { buildOpenApiSpec } from "#actions/app-config/openapi";
 import { getConfigDomains } from "#config/schema/domains";
 import openApiSpec from "#openapi.json" with { type: "json" };
 import {
-  configWithAdminUi,
+  configWithAdminUiAllGrids,
   configWithBusinessConfig,
   configWithOneScript,
   minimalValidConfig,
@@ -30,7 +30,7 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 const fullyCapableConfig = {
   metadata: mockMetadata,
   businessConfig: configWithBusinessConfig.businessConfig,
-  adminUi: configWithAdminUi.adminUi,
+  adminUi: configWithAdminUiAllGrids.adminUi,
   installation: configWithOneScript.installation,
 } satisfies CommerceAppConfigOutputModel;
 

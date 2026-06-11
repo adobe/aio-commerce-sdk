@@ -19,7 +19,7 @@ import {
 } from "#management/installation/workflow/step";
 import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
 import {
-  configWithAdminUi,
+  configWithFullAdminUiV2,
   configWithWebhooks,
   minimalValidConfig,
 } from "#test/fixtures/config";
@@ -45,8 +45,7 @@ describe("admin-ui installation module", () => {
     test("should only run if adminUi is defined", () => {
       expect.assert(adminUiStep.when);
 
-      expect(adminUiStep.when(configWithAdminUi)).toBe(true);
-
+      expect(adminUiStep.when(configWithFullAdminUiV2)).toBe(true);
       expect(adminUiStep.when(minimalValidConfig)).toBe(false);
       expect(adminUiStep.when(configWithWebhooks)).toBe(false);
     });
@@ -83,8 +82,7 @@ describe("admin-ui installation module", () => {
 
     test("should call unregisterExtension with workspaceName and __OW_NAMESPACE", async () => {
       const context = createMockAdminUiContext();
-
-      await registerExtensionStep.uninstall?.(configWithAdminUi, context);
+      await registerExtensionStep.uninstall?.(configWithFullAdminUiV2, context);
 
       expect(context.adminUiClient.unregisterExtension).toHaveBeenCalledWith({
         workspaceName: context.appData.workspaceName,
@@ -99,7 +97,7 @@ describe("admin-ui installation module", () => {
       });
 
       await expect(
-        registerExtensionStep.uninstall?.(configWithAdminUi, context),
+        registerExtensionStep.uninstall?.(configWithFullAdminUiV2, context),
       ).resolves.toBeUndefined();
     });
 
@@ -113,8 +111,7 @@ describe("admin-ui installation module", () => {
         logger,
       };
 
-      await registerExtensionStep.uninstall?.(configWithAdminUi, context);
-
+      await registerExtensionStep.uninstall?.(configWithFullAdminUiV2, context);
       expect(logger.warn).toHaveBeenCalled();
     });
   });

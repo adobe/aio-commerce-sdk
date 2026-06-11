@@ -235,6 +235,7 @@ export function hasViewType(value: unknown): boolean {
 /**
  * Builds the ext.config.yaml for the Admin UI v2 extension (`commerce/backend-ui/2`).
  * Derives `workerProcess` and `view` operation declarations from `adminUi` config.
+ * Adds a `view` operation and `web` source when view-type entries or `adminUi.menu` is configured.
  */
 export function buildAdminUiV2ExtConfig(
   appConfig: CommerceAppConfigOutputModel,
@@ -243,24 +244,27 @@ export function buildAdminUiV2ExtConfig(
   const runtimeActions = collectUniqueRuntimeActions(adminUi);
   const hasViewOperation = hasViewType(adminUi);
 
+  const hasAdminUiMenu = adminUi?.menu !== undefined;
+
+  const requiresWeb = hasViewOperation || hasAdminUiMenu;
   return {
     hooks: {
       "pre-app-build":
         "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build",
     },
     operations: {
-      ...(hasViewOperation
-        ? { view: [{ type: "web", impl: "index.html" }] }
-        : {}),
-      ...(runtimeActions.length > 0
-        ? {
-            workerProcess: runtimeActions.map((impl) => ({
-              type: "action",
-              impl,
-            })),
-          }
-        : {}),
+      ...(requiresWeb && {
+        view: [{ type: "web" as const, impl: "index.html" }],
+      }),
+      ...(adminUi !== undefined && {
+        workerProcess: runtimeActions.map((impl) => ({
+          type: "action" as const,
+          impl,
+        })),
+      }),
     },
-    ...(hasViewOperation && { web: "web-src" }),
+    ...(requiresWeb && {
+      web: "web-src",
+    }),
   } satisfies ExtConfig;
 }

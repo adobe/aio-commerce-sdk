@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { COMMERCE_MENUS } from "@adobe/aio-commerce-lib-admin-ui/menu";
 import {
   nonEmptyStringValueSchema,
   positiveNumberValueSchema,
@@ -17,6 +18,31 @@ import {
 import * as v from "valibot";
 
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
+
+// ─── Shared ─────────────────────────────────────────────────────────────
+
+const SANDBOX_PERMISSION_VALUES = [
+  "allow-downloads",
+  "allow-modals",
+  "allow-popups",
+] as const satisfies string[];
+
+const SandboxPermissionsSchema = v.pipe(
+  v.array(
+    v.picklist(
+      SANDBOX_PERMISSION_VALUES,
+      `Invalid sandbox permission. Accepted values are: ${SANDBOX_PERMISSION_VALUES.join(", ")}`,
+    ),
+  ),
+  v.minLength(
+    1,
+    "sandboxPermissions must contain at least one permission when it's defined",
+  ),
+  v.check((permissions) => {
+    const uniquePermissions = new Set(permissions);
+    return uniquePermissions.size === permissions.length;
+  }, "Duplicate permissions are not allowed in sandboxPermissions"),
+);
 
 // ─── Grid columns ─────────────────────────────────────────────────────────────
 
@@ -84,7 +110,7 @@ const ViewMassActionSchema = v.strictObject({
   ...massActionCommonEntries,
   type: v.literal("view"),
   path: nonEmptyStringValueSchema("mass action path"),
-  sandboxPermissions: v.optional(v.array(SandboxPermissionSchema)),
+  sandboxPermissions: v.optional(SandboxPermissionsSchema),
 });
 
 /** `type: "worker"` mass action — invokes a workerProcess runtime action. */
@@ -158,14 +184,37 @@ const AdminUiCustomerSchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
 });
 
+const MenuIdSchema = v.pipe(
+  nonEmptyStringValueSchema("menu ID"),
+  v.regex(
+    /^[A-Za-z0-9_/:]+$/,
+    'Menu ID may contain only letters, digits, "/", ":", and "_"',
+  ),
+);
+
+const MenuSchema = v.object({
+  id: MenuIdSchema,
+  label: nonEmptyStringValueSchema("menu label"),
+  description: nonEmptyStringValueSchema("menu description"),
+  pageTitle: v.optional(nonEmptyStringValueSchema("menu page title")),
+  parentMenu: v.optional(
+    v.picklist(
+      COMMERCE_MENUS,
+      "parentMenu must be a known Commerce Admin menu ID",
+    ),
+  ),
+  sandboxPermissions: v.optional(SandboxPermissionsSchema),
+});
+
 // ─── Top-level schema ─────────────────────────────────────────────────────────
 
 /**
  * Schema for the `adminUi` config section.
- * Supports grid column extensions, mass actions, and order view buttons on `commerce/backend-ui/2`.
+ * Supports grid column extensions, mass actions, order view buttons, and menu on `commerce/backend-ui/2`.
  * @experimental
  */
 export const AdminUiSchema = v.object({
+  menu: v.optional(MenuSchema),
   order: v.optional(AdminUiOrderSchema),
   product: v.optional(AdminUiProductSchema),
   customer: v.optional(AdminUiCustomerSchema),
@@ -220,6 +269,12 @@ export type OrderViewButton = v.InferInput<typeof OrderViewButtonSchema>;
  * @experimental
  */
 export type Notifications = v.InferInput<typeof NotificationsSchema>;
+
+/**
+ * Admin UI menu registration configuration.
+ * @experimental
+ */
+export type Menu = v.InferInput<typeof MenuSchema>;
 
 /** Config type when `adminUi` configuration is present. */
 export type AdminUiConfig<

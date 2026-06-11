@@ -55,6 +55,7 @@ export type {
   GridColumn,
   GridColumns,
   MassAction,
+  Menu,
   Notifications,
   OrderViewButton,
   ViewMassAction,
