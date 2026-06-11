@@ -56,6 +56,8 @@ export type {
   GridColumns,
   MassAction,
   Menu,
+  Notifications,
+  OrderViewButton,
   ViewMassAction,
   WorkerMassAction,
 } from "./schema/admin-ui";

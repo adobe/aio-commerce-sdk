@@ -20,6 +20,7 @@ import type {
   ActionDefinition,
   ExtConfig,
 } from "@aio-commerce-sdk/scripting-utils/yaml";
+import type { AdminUi } from "#config/schema/admin-ui";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 type ActionConfig = {
@@ -203,38 +204,61 @@ export function buildBusinessConfigurationExtConfig() {
   } satisfies ExtConfig;
 }
 
+/** Collects unique `runtimeAction` strings from all worker entries in an `adminUi` config. */
+export function collectUniqueRuntimeActions(
+  adminUi: AdminUi | undefined,
+): string[] {
+  const entities = (["order", "product", "customer"] as const).map(
+    (key) => adminUi?.[key],
+  );
+  const gridRuntimeActions = entities
+    .map((entity) => entity?.gridColumns?.runtimeAction)
+    .filter((action): action is string => action !== undefined);
+  const massActionRuntimeActions = entities
+    .flatMap((entity) => entity?.massActions ?? [])
+    .filter((action) => action.type === "worker")
+    .map((action) => action.runtimeAction);
+  const viewButtonRuntimeActions = (adminUi?.order?.viewButtons ?? [])
+    .filter((button) => button.type === "worker")
+    .map((button) => button.runtimeAction);
+  return [
+    ...new Set([
+      ...gridRuntimeActions,
+      ...massActionRuntimeActions,
+      ...viewButtonRuntimeActions,
+    ]),
+  ];
+}
+
+/** Returns true if the `adminUi` config requires a `view` operation and `web` source in ext.config.yaml. */
+export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
+  if (adminUi?.menu !== undefined) {
+    return true;
+  }
+  if (
+    (adminUi?.order?.viewButtons ?? []).some((button) => button.type === "view")
+  ) {
+    return true;
+  }
+  const entities = (["order", "product", "customer"] as const).map(
+    (key) => adminUi?.[key],
+  );
+  return entities
+    .flatMap((entity) => entity?.massActions ?? [])
+    .some((action) => action.type === "view");
+}
+
 /**
  * Builds the ext.config.yaml for the Admin UI v2 extension (`commerce/backend-ui/2`).
- * Collects `workerProcess` entries from grid column `runtimeAction` values and worker mass actions.
- * Adds a `view` operation and `web` source when view-type mass actions or `adminUi.menu` is configured.
+ * Derives `workerProcess` and `view` operation declarations from `adminUi` config.
+ * Adds a `view` operation and `web` source when view-type entries or `adminUi.menu` is configured.
  */
 export function buildAdminUiV2ExtConfig(
   appConfig: CommerceAppConfigOutputModel,
 ) {
   const adminUi = appConfig.adminUi;
-  const entities = (["order", "product", "customer"] as const).map(
-    (key) => adminUi?.[key],
-  );
-
-  const gridRuntimeActions = entities
-    .map((entity) => entity?.gridColumns?.runtimeAction)
-    .filter((action): action is string => action !== undefined);
-
-  const massActionRuntimeActions = entities
-    .flatMap((entity) => entity?.massActions ?? [])
-    .filter((action) => action.type === "worker")
-    .map((action) => action.runtimeAction);
-
-  const runtimeActions = [
-    ...new Set([...gridRuntimeActions, ...massActionRuntimeActions]),
-  ];
-
-  const hasAdminUiMenu = adminUi?.menu !== undefined;
-  const hasViewMassActions = entities
-    .flatMap((entity) => entity?.massActions ?? [])
-    .some((action) => action.type === "view");
-
-  const requiresWeb = hasViewMassActions || hasAdminUiMenu;
+  const runtimeActions = collectUniqueRuntimeActions(adminUi);
+  const requiresWeb = requiresWebSource(adminUi);
   return {
     hooks: {
       "pre-app-build":
@@ -244,10 +268,12 @@ export function buildAdminUiV2ExtConfig(
       ...(requiresWeb && {
         view: [{ type: "web" as const, impl: "index.html" }],
       }),
-      workerProcess: runtimeActions.map((impl) => ({
-        type: "action" as const,
-        impl,
-      })),
+      ...(runtimeActions.length > 0 && {
+        workerProcess: runtimeActions.map((impl) => ({
+          type: "action" as const,
+          impl,
+        })),
+      }),
     },
     ...(requiresWeb && {
       web: "web-src",
