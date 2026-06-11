@@ -3193,13 +3193,6 @@
         },
         "required": ["id", "label", "description"]
       },
-      "AdminUiSandboxPermissions": {
-        "type": "array",
-        "items": {
-          "type": "string",
-          "enum": ["allow-downloads", "allow-modals", "allow-popups"]
-        }
-      },
       "AdminUiMassAction": {
         "oneOf": [
           {
@@ -3519,6 +3512,14 @@
             "minLength": 1
           }
         }
+      },
+      "AdminUiSandboxPermissions": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["allow-downloads", "allow-modals", "allow-popups"]
+        },
+        "minItems": 1
       },
       "CustomScopeInput": {
         "type": "object",
