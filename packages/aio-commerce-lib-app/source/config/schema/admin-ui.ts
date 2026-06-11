@@ -19,31 +19,6 @@ import * as v from "valibot";
 
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
-// ─── Shared ─────────────────────────────────────────────────────────────
-
-const SANDBOX_PERMISSION_VALUES = [
-  "allow-downloads",
-  "allow-modals",
-  "allow-popups",
-] as const satisfies string[];
-
-const SandboxPermissionsSchema = v.pipe(
-  v.array(
-    v.picklist(
-      SANDBOX_PERMISSION_VALUES,
-      `Invalid sandbox permission. Accepted values are: ${SANDBOX_PERMISSION_VALUES.join(", ")}`,
-    ),
-  ),
-  v.minLength(
-    1,
-    "sandboxPermissions must contain at least one permission when it's defined",
-  ),
-  v.check((permissions) => {
-    const uniquePermissions = new Set(permissions);
-    return uniquePermissions.size === permissions.length;
-  }, "Duplicate permissions are not allowed in sandboxPermissions"),
-);
-
 // ─── Grid columns ─────────────────────────────────────────────────────────────
 
 const ColumnTypeSchema = v.picklist([
@@ -76,16 +51,33 @@ const GridColumnsSchema = v.object({
 
 // ─── Shared ───────────────────────────────────────────────────────────────────
 
+const SANDBOX_PERMISSION_VALUES = [
+  "allow-downloads",
+  "allow-modals",
+  "allow-popups",
+] as const satisfies string[];
+
+const SandboxPermissionsSchema = v.pipe(
+  v.array(
+    v.picklist(
+      SANDBOX_PERMISSION_VALUES,
+      `Invalid sandbox permission. Accepted values are: ${SANDBOX_PERMISSION_VALUES.join(", ")}`,
+    ),
+  ),
+  v.minLength(
+    1,
+    "sandboxPermissions must contain at least one permission when it's defined",
+  ),
+  v.check((permissions) => {
+    const uniquePermissions = new Set(permissions);
+    return uniquePermissions.size === permissions.length;
+  }, "Duplicate permissions are not allowed in sandboxPermissions"),
+);
+
 const NotificationsSchema = v.object({
   success: v.optional(nonEmptyStringValueSchema("success notification")),
   error: v.optional(nonEmptyStringValueSchema("error notification")),
 });
-
-const SandboxPermissionSchema = v.picklist([
-  "allow-downloads",
-  "allow-modals",
-  "allow-popups",
-]);
 
 const ConfirmSchema = v.object({
   title: v.optional(nonEmptyStringValueSchema("confirm title")),
@@ -147,7 +139,7 @@ const OrderViewButtonSchema = v.variant("type", [
     level: v.optional(ViewButtonLevelSchema),
     sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
     confirm: v.optional(ConfirmSchema),
-    sandboxPermissions: v.optional(v.array(SandboxPermissionSchema)),
+    sandboxPermissions: v.optional(SandboxPermissionsSchema),
     notifications: v.optional(NotificationsSchema),
   }),
   v.strictObject({
