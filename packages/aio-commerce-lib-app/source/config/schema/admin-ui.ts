@@ -19,36 +19,6 @@ import * as v from "valibot";
 
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
-// ─── Grid columns ─────────────────────────────────────────────────────────────
-
-const ColumnTypeSchema = v.picklist([
-  "boolean",
-  "date",
-  "datetime",
-  "decimal",
-  "integer",
-  "string",
-]);
-
-const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
-
-const GridColumnSchema = v.object({
-  id: nonEmptyStringValueSchema("column ID"),
-  label: nonEmptyStringValueSchema("column label"),
-  type: ColumnTypeSchema,
-  align: ColumnAlignSchema,
-});
-
-const GridColumnsSchema = v.object({
-  label: nonEmptyStringValueSchema("grid columns label"),
-  description: nonEmptyStringValueSchema("grid columns description"),
-  runtimeAction: nonEmptyStringValueSchema("runtime action"),
-  columns: v.pipe(
-    v.array(GridColumnSchema),
-    v.minLength(1, "At least one grid column is required"),
-  ),
-});
-
 // ─── Shared ───────────────────────────────────────────────────────────────────
 
 const SANDBOX_PERMISSION_VALUES = [
@@ -82,6 +52,36 @@ const NotificationsSchema = v.object({
 const ConfirmSchema = v.object({
   title: v.optional(nonEmptyStringValueSchema("confirm title")),
   message: v.optional(nonEmptyStringValueSchema("confirm message")),
+});
+
+// ─── Grid columns ─────────────────────────────────────────────────────────────
+
+const ColumnTypeSchema = v.picklist([
+  "boolean",
+  "date",
+  "datetime",
+  "decimal",
+  "integer",
+  "string",
+]);
+
+const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
+
+const GridColumnSchema = v.object({
+  id: nonEmptyStringValueSchema("column ID"),
+  label: nonEmptyStringValueSchema("column label"),
+  type: ColumnTypeSchema,
+  align: ColumnAlignSchema,
+});
+
+const GridColumnsSchema = v.object({
+  label: nonEmptyStringValueSchema("grid columns label"),
+  description: nonEmptyStringValueSchema("grid columns description"),
+  runtimeAction: nonEmptyStringValueSchema("runtime action"),
+  columns: v.pipe(
+    v.array(GridColumnSchema),
+    v.minLength(1, "At least one grid column is required"),
+  ),
 });
 
 // ─── Mass actions ─────────────────────────────────────────────────────────────
