@@ -15,6 +15,10 @@ import { describe, expect, test } from "vitest";
 
 import { AdminUiSchema, hasAdminUi } from "#config/schema/admin-ui";
 import {
+  viewButtonViewBase,
+  viewButtonWorkerBase,
+} from "#test/fixtures/admin-ui";
+import {
   configWithAdminUi,
   configWithAdminUiV2,
   configWithFullAdminUiV2,
@@ -110,31 +114,17 @@ describe("AdminUiSchema", () => {
   });
 
   describe("order.viewButtons", () => {
-    const viewBase = {
-      type: "view" as const,
-      id: "delete-order",
-      label: "Delete",
-      path: "#/delete-order",
-    };
-
-    const workerBase = {
-      type: "worker" as const,
-      id: "sync-inventory",
-      label: "Sync inventory",
-      runtimeAction: "orders/sync-inventory",
-    };
-
     describe("valid cases", () => {
       test("type: view with required fields only", () => {
         const result = v.safeParse(AdminUiSchema, {
-          order: { viewButtons: [viewBase] },
+          order: { viewButtons: [viewButtonViewBase] },
         });
         expect(result.success).toBe(true);
       });
 
       test("type: worker with required fields only", () => {
         const result = v.safeParse(AdminUiSchema, {
-          order: { viewButtons: [workerBase] },
+          order: { viewButtons: [viewButtonWorkerBase] },
         });
         expect(result.success).toBe(true);
       });
@@ -144,7 +134,7 @@ describe("AdminUiSchema", () => {
           order: {
             viewButtons: [
               {
-                ...viewBase,
+                ...viewButtonViewBase,
                 description: "Permanently removes the order.",
                 level: 0,
                 sortOrder: 80,
@@ -166,7 +156,7 @@ describe("AdminUiSchema", () => {
           order: {
             viewButtons: [
               {
-                ...workerBase,
+                ...viewButtonWorkerBase,
                 description: "Pushes stock counts.",
                 level: 1,
                 sortOrder: 10,
@@ -191,7 +181,9 @@ describe("AdminUiSchema", () => {
         ] as const) {
           const result = v.safeParse(AdminUiSchema, {
             order: {
-              viewButtons: [{ ...viewBase, sandboxPermissions: [perm] }],
+              viewButtons: [
+                { ...viewButtonViewBase, sandboxPermissions: [perm] },
+              ],
             },
           });
           expect(result.success, `"${perm}" should be valid`).toBe(true);
@@ -202,7 +194,7 @@ describe("AdminUiSchema", () => {
         const result = v.safeParse(AdminUiSchema, {
           order: {
             viewButtons: [
-              { ...workerBase, notifications: { success: "Done." } },
+              { ...viewButtonWorkerBase, notifications: { success: "Done." } },
             ],
           },
         });
@@ -213,7 +205,7 @@ describe("AdminUiSchema", () => {
         const result = v.safeParse(AdminUiSchema, {
           order: {
             viewButtons: [
-              { ...workerBase, notifications: { error: "Failed." } },
+              { ...viewButtonWorkerBase, notifications: { error: "Failed." } },
             ],
           },
         });
@@ -231,7 +223,7 @@ describe("AdminUiSchema", () => {
                 { id: "col", label: "Col", type: "string", align: "left" },
               ],
             },
-            viewButtons: [workerBase],
+            viewButtons: [viewButtonWorkerBase],
           },
         });
         expect(result.success).toBe(true);
@@ -242,7 +234,9 @@ describe("AdminUiSchema", () => {
       test("type: view with runtimeAction is rejected", () => {
         const result = v.safeParse(AdminUiSchema, {
           order: {
-            viewButtons: [{ ...viewBase, runtimeAction: "orders/delete" }],
+            viewButtons: [
+              { ...viewButtonViewBase, runtimeAction: "orders/delete" },
+            ],
           },
         });
         expect(result.success).toBe(false);
@@ -250,13 +244,13 @@ describe("AdminUiSchema", () => {
 
       test("type: view with timeout is rejected", () => {
         const result = v.safeParse(AdminUiSchema, {
-          order: { viewButtons: [{ ...viewBase, timeout: 10 }] },
+          order: { viewButtons: [{ ...viewButtonViewBase, timeout: 10 }] },
         });
         expect(result.success).toBe(false);
       });
 
       test("type: view missing path is rejected", () => {
-        const { path: _, ...withoutPath } = viewBase;
+        const { path: _, ...withoutPath } = viewButtonViewBase;
         const result = v.safeParse(AdminUiSchema, {
           order: { viewButtons: [withoutPath] },
         });
@@ -266,7 +260,7 @@ describe("AdminUiSchema", () => {
       test("type: worker with path is rejected", () => {
         const result = v.safeParse(AdminUiSchema, {
           order: {
-            viewButtons: [{ ...workerBase, path: "#/something" }],
+            viewButtons: [{ ...viewButtonWorkerBase, path: "#/something" }],
           },
         });
         expect(result.success).toBe(false);
@@ -276,7 +270,7 @@ describe("AdminUiSchema", () => {
         const result = v.safeParse(AdminUiSchema, {
           order: {
             viewButtons: [
-              { ...workerBase, sandboxPermissions: ["allow-modals"] },
+              { ...viewButtonWorkerBase, sandboxPermissions: ["allow-modals"] },
             ],
           },
         });
@@ -284,7 +278,7 @@ describe("AdminUiSchema", () => {
       });
 
       test("type: worker missing runtimeAction is rejected", () => {
-        const { runtimeAction: _, ...withoutAction } = workerBase;
+        const { runtimeAction: _, ...withoutAction } = viewButtonWorkerBase;
         const result = v.safeParse(AdminUiSchema, {
           order: { viewButtons: [withoutAction] },
         });
@@ -294,7 +288,9 @@ describe("AdminUiSchema", () => {
       test("empty notifications.success string is rejected", () => {
         const result = v.safeParse(AdminUiSchema, {
           order: {
-            viewButtons: [{ ...workerBase, notifications: { success: "" } }],
+            viewButtons: [
+              { ...viewButtonWorkerBase, notifications: { success: "" } },
+            ],
           },
         });
         expect(result.success).toBe(false);
@@ -304,7 +300,7 @@ describe("AdminUiSchema", () => {
         const result = v.safeParse(AdminUiSchema, {
           order: {
             viewButtons: [
-              { ...viewBase, sandboxPermissions: ["allow-scripts"] },
+              { ...viewButtonViewBase, sandboxPermissions: ["allow-scripts"] },
             ],
           },
         });
@@ -313,7 +309,7 @@ describe("AdminUiSchema", () => {
 
       test("invalid level value is rejected", () => {
         const result = v.safeParse(AdminUiSchema, {
-          order: { viewButtons: [{ ...viewBase, level: 2 }] },
+          order: { viewButtons: [{ ...viewButtonViewBase, level: 2 }] },
         });
         expect(result.success).toBe(false);
       });
