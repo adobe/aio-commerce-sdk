@@ -19,7 +19,7 @@ import {
   buildBusinessConfigurationExtConfig,
   collectUniqueRuntimeActions,
   getRuntimeActions,
-  hasViewType,
+  requiresWebSource,
 } from "#commands/generate/actions/config";
 import {
   configWithAdminUiAllGrids,
@@ -276,132 +276,6 @@ describe("buildAdminUiV2ExtConfig", () => {
     expect(workerImpls).toHaveLength(1);
     expect(workerImpls).toContain(sharedAction);
   });
-});
-
-describe("collectUniqueRuntimeActions", () => {
-  test("returns empty array for null", () => {
-    expect(collectUniqueRuntimeActions(null)).toEqual([]);
-  });
-
-  test("returns empty array for primitives", () => {
-    expect(collectUniqueRuntimeActions("string")).toEqual([]);
-    expect(collectUniqueRuntimeActions(42)).toEqual([]);
-  });
-
-  test("returns empty array for object with no runtimeAction", () => {
-    expect(collectUniqueRuntimeActions({ foo: "bar" })).toEqual([]);
-  });
-
-  test("collects runtimeAction from a flat object", () => {
-    expect(collectUniqueRuntimeActions({ runtimeAction: "my/action" })).toEqual(
-      ["my/action"],
-    );
-  });
-
-  test("ignores runtimeAction when not a string", () => {
-    expect(collectUniqueRuntimeActions({ runtimeAction: 42 })).toEqual([]);
-  });
-
-  test("collects runtimeAction from a nested object", () => {
-    expect(
-      collectUniqueRuntimeActions({
-        gridColumns: { runtimeAction: "orders/action" },
-      }),
-    ).toEqual(["orders/action"]);
-  });
-
-  test("collects runtimeAction from all items in an array", () => {
-    expect(
-      collectUniqueRuntimeActions([
-        { runtimeAction: "action/a" },
-        { runtimeAction: "action/b" },
-      ]),
-    ).toEqual(["action/a", "action/b"]);
-  });
-
-  test("deduplicates runtimeActions across sibling nodes", () => {
-    const result = collectUniqueRuntimeActions({
-      order: { gridColumns: { runtimeAction: "shared/action" } },
-      customer: { gridColumns: { runtimeAction: "shared/action" } },
-    });
-    expect(result).toEqual(["shared/action"]);
-  });
-
-  test("collects all runtimeActions from a realistic adminUi config", () => {
-    const result = collectUniqueRuntimeActions(
-      configWithAdminUiAllGrids.adminUi,
-    );
-    expect(result).toContain("orders/fetch-order-grid-data");
-    expect(result).toContain("products/fetch-product-grid-data");
-    expect(result).toContain("customers/fetch-customer-grid-data");
-  });
-
-  test("collects runtimeAction from worker view buttons", () => {
-    const result = collectUniqueRuntimeActions(
-      configWithOrderWorkerTypeButtons.adminUi,
-    );
-    expect(result).toContain("orders/sync-inventory");
-  });
-
-  test("does not collect from view type buttons (no runtimeAction field)", () => {
-    const result = collectUniqueRuntimeActions(
-      configWithOrderViewTypeButtons.adminUi,
-    );
-    expect(result).toEqual([]);
-  });
-});
-
-describe("hasViewType", () => {
-  test("returns false for null", () => {
-    expect(hasViewType(null)).toBe(false);
-  });
-
-  test("returns false for primitives", () => {
-    expect(hasViewType("view")).toBe(false);
-    expect(hasViewType(42)).toBe(false);
-  });
-
-  test("returns false for object with no type", () => {
-    expect(hasViewType({ foo: "bar" })).toBe(false);
-  });
-
-  test("returns true for object with type: view", () => {
-    expect(hasViewType({ type: "view" })).toBe(true);
-  });
-
-  test("returns false for object with type: worker", () => {
-    expect(hasViewType({ type: "worker" })).toBe(false);
-  });
-
-  test("returns true when a nested object has type: view", () => {
-    expect(
-      hasViewType({
-        order: { viewButtons: [{ type: "view", path: "#/test" }] },
-      }),
-    ).toBe(true);
-  });
-
-  test("returns false when all nested objects have type: worker", () => {
-    expect(
-      hasViewType({
-        order: {
-          viewButtons: [{ type: "worker", runtimeAction: "orders/action" }],
-        },
-      }),
-    ).toBe(false);
-  });
-
-  test("returns true for a realistic adminUi config with view type buttons", () => {
-    expect(hasViewType(configWithOrderViewTypeButtons.adminUi)).toBe(true);
-  });
-
-  test("returns false for a realistic adminUi config with only worker type buttons", () => {
-    expect(hasViewType(configWithOrderWorkerTypeButtons.adminUi)).toBe(false);
-  });
-
-  test("returns false for a grid-only adminUi config", () => {
-    expect(hasViewType(configWithAdminUiAllGrids.adminUi)).toBe(false);
-  });
 
   test("includes workerProcess entries for worker mass actions", () => {
     const config = buildAdminUiV2ExtConfig(configWithFullAdminUiV2);
@@ -535,6 +409,68 @@ describe("hasViewType", () => {
     expect(config.operations?.view).toEqual([
       { type: "web", impl: "index.html" },
     ]);
+  });
+});
+
+describe("collectUniqueRuntimeActions", () => {
+  test("returns empty array for undefined", () => {
+    expect(collectUniqueRuntimeActions(undefined)).toEqual([]);
+  });
+
+  test("deduplicates runtimeActions across entities", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiAllGrids.adminUi,
+    );
+    expect(new Set(result).size).toBe(result.length);
+  });
+
+  test("collects all runtimeActions from a realistic adminUi config", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiAllGrids.adminUi,
+    );
+    expect(result).toContain("orders/fetch-order-grid-data");
+    expect(result).toContain("products/fetch-product-grid-data");
+    expect(result).toContain("customers/fetch-customer-grid-data");
+  });
+
+  test("collects runtimeAction from worker view buttons", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithOrderWorkerTypeButtons.adminUi,
+    );
+    expect(result).toContain("orders/sync-inventory");
+  });
+
+  test("does not collect from view type buttons (no runtimeAction field)", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithOrderViewTypeButtons.adminUi,
+    );
+    expect(result).toEqual([]);
+  });
+});
+
+describe("requiresWebSource", () => {
+  test("returns false for undefined", () => {
+    expect(requiresWebSource(undefined)).toBe(false);
+  });
+
+  test("returns true when adminUi has a menu", () => {
+    expect(requiresWebSource(configWithAdminUiMenu.adminUi)).toBe(true);
+  });
+
+  test("returns true for a realistic adminUi config with view type buttons", () => {
+    expect(requiresWebSource(configWithOrderViewTypeButtons.adminUi)).toBe(
+      true,
+    );
+  });
+
+  test("returns false for a realistic adminUi config with only worker type buttons", () => {
+    expect(requiresWebSource(configWithOrderWorkerTypeButtons.adminUi)).toBe(
+      false,
+    );
+  });
+
+  test("returns false for a grid-only adminUi config", () => {
+    expect(requiresWebSource(configWithAdminUiAllGrids.adminUi)).toBe(false);
   });
 });
 

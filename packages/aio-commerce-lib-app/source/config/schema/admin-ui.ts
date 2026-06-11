@@ -221,6 +221,12 @@ export const AdminUiSchema = v.object({
 export type AdminUiConfiguration = v.InferInput<typeof AdminUiSchema>;
 
 /**
+ * The validated Admin UI configuration for an Adobe Commerce application.
+ * @experimental
+ */
+export type AdminUi = v.InferOutput<typeof AdminUiSchema>;
+
+/**
  * Grid columns registration configuration.
  * @experimental
  */

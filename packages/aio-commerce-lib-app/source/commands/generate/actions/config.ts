@@ -20,6 +20,7 @@ import type {
   ActionDefinition,
   ExtConfig,
 } from "@aio-commerce-sdk/scripting-utils/yaml";
+import type { AdminUi } from "#config/schema/admin-ui";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 type ActionConfig = {
@@ -203,33 +204,48 @@ export function buildBusinessConfigurationExtConfig() {
   } satisfies ExtConfig;
 }
 
-/** Recursively collects unique `runtimeAction` string values from an `adminUi` config subtree. */
-export function collectUniqueRuntimeActions(value: unknown): string[] {
-  if (value === null || typeof value !== "object") {
-    return [];
-  }
-  if (Array.isArray(value)) {
-    return [...new Set(value.flatMap(collectUniqueRuntimeActions))];
-  }
-  const obj = value as Record<string, unknown>;
+/** Collects unique `runtimeAction` strings from all worker entries in an `adminUi` config. */
+export function collectUniqueRuntimeActions(
+  adminUi: AdminUi | undefined,
+): string[] {
+  const entities = (["order", "product", "customer"] as const).map(
+    (key) => adminUi?.[key],
+  );
+  const gridRuntimeActions = entities
+    .map((entity) => entity?.gridColumns?.runtimeAction)
+    .filter((action): action is string => action !== undefined);
+  const massActionRuntimeActions = entities
+    .flatMap((entity) => entity?.massActions ?? [])
+    .filter((action) => action.type === "worker")
+    .map((action) => action.runtimeAction);
+  const viewButtonRuntimeActions = (adminUi?.order?.viewButtons ?? [])
+    .filter((button) => button.type === "worker")
+    .map((button) => button.runtimeAction);
   return [
     ...new Set([
-      ...(typeof obj.runtimeAction === "string" ? [obj.runtimeAction] : []),
-      ...Object.values(obj).flatMap(collectUniqueRuntimeActions),
+      ...gridRuntimeActions,
+      ...massActionRuntimeActions,
+      ...viewButtonRuntimeActions,
     ]),
   ];
 }
 
-/** Returns true if any object in an `adminUi` config subtree has `type: "view"`. */
-export function hasViewType(value: unknown): boolean {
-  if (value === null || typeof value !== "object") {
-    return false;
+/** Returns true if the `adminUi` config requires a `view` operation and `web` source in ext.config.yaml. */
+export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
+  if (adminUi?.menu !== undefined) {
+    return true;
   }
-  if (Array.isArray(value)) {
-    return value.some(hasViewType);
+  if (
+    (adminUi?.order?.viewButtons ?? []).some((button) => button.type === "view")
+  ) {
+    return true;
   }
-  const obj = value as Record<string, unknown>;
-  return obj.type === "view" || Object.values(obj).some(hasViewType);
+  const entities = (["order", "product", "customer"] as const).map(
+    (key) => adminUi?.[key],
+  );
+  return entities
+    .flatMap((entity) => entity?.massActions ?? [])
+    .some((action) => action.type === "view");
 }
 
 /**
@@ -242,11 +258,7 @@ export function buildAdminUiV2ExtConfig(
 ) {
   const adminUi = appConfig.adminUi;
   const runtimeActions = collectUniqueRuntimeActions(adminUi);
-  const hasViewOperation = hasViewType(adminUi);
-
-  const hasAdminUiMenu = adminUi?.menu !== undefined;
-
-  const requiresWeb = hasViewOperation || hasAdminUiMenu;
+  const requiresWeb = requiresWebSource(adminUi);
   return {
     hooks: {
       "pre-app-build":
