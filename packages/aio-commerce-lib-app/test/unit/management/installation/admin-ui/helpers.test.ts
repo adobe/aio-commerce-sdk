@@ -15,13 +15,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   registerExtension,
   unregisterExtension,
-} from "#management/installation/admin-ui-sdk/helpers";
-import { createMockAdminUiSdkContext } from "#test/fixtures/admin-ui-sdk";
+} from "#management/installation/admin-ui/helpers";
+import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
 import { makeHttpError } from "#test/fixtures/http-error";
 import { createMockLogger } from "#test/fixtures/installation";
 
 const REGISTER_EXTENSION_COMBINED_PATTERN =
-  /Failed to register Admin UI SDK extension.*Insufficient permissions/;
+  /Failed to register Admin UI extension.*Insufficient permissions/;
 
 describe("registerExtension", () => {
   beforeEach(() => {
@@ -35,7 +35,7 @@ describe("registerExtension", () => {
   test("logs success with extensionId when registerExtension call resolves", async () => {
     const logger = createMockLogger();
     const context = {
-      ...createMockAdminUiSdkContext({
+      ...createMockAdminUiContext({
         registerExtensionImpl: () =>
           Promise.resolve({ extensionId: "ext-123" }),
       }),
@@ -61,7 +61,7 @@ describe("registerExtension", () => {
       "Forbidden",
       JSON.stringify({ message: "Insufficient permissions" }),
     );
-    const context = createMockAdminUiSdkContext({
+    const context = createMockAdminUiContext({
       registerExtensionImpl: () => Promise.reject(httpError),
     });
 
@@ -78,7 +78,7 @@ describe("registerExtension", () => {
       JSON.stringify({ message: "Insufficient permissions" }),
     );
     const context = {
-      ...createMockAdminUiSdkContext({
+      ...createMockAdminUiContext({
         registerExtensionImpl: () => Promise.reject(httpError),
       }),
       logger,
@@ -105,7 +105,7 @@ describe("unregisterExtension", () => {
   test("warns and returns without calling the client when __OW_NAMESPACE is not set", async () => {
     vi.unstubAllEnvs();
     const logger = createMockLogger();
-    const context = { ...createMockAdminUiSdkContext({}), logger };
+    const context = { ...createMockAdminUiContext({}), logger };
 
     await expect(unregisterExtension(context)).resolves.toBeUndefined();
 
@@ -123,7 +123,7 @@ describe("unregisterExtension", () => {
       JSON.stringify({ message: "Service unavailable" }),
     );
     const context = {
-      ...createMockAdminUiSdkContext({
+      ...createMockAdminUiContext({
         unregisterExtensionImpl: () => Promise.reject(httpError),
       }),
       logger,

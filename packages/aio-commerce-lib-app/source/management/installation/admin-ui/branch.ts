@@ -10,17 +10,17 @@
  * governing permissions and limitations under the License.
  */
 
-import { hasAdminUiSdk } from "#config/schema/admin-ui-sdk";
+import { hasAdminUi } from "#config/schema/admin-ui";
 import {
   defineBranchStep,
   defineLeafStep,
 } from "#management/installation/workflow/step";
 
 import { registerExtension, unregisterExtension } from "./helpers";
-import { createAdminUiSdkStepContext } from "./utils";
+import { createAdminUiStepContext } from "./utils";
 
 import type { InferStepOutput } from "#management/installation/workflow/step";
-import type { AdminUiSdkConfig, AdminUiSdkExecutionContext } from "./utils";
+import type { AdminUiConfig, AdminUiExecutionContext } from "./utils";
 
 /** Leaf step that registers the extension (POST) on install and unregisters it (DELETE) on uninstall. */
 const registerExtensionStep = defineLeafStep({
@@ -28,18 +28,18 @@ const registerExtensionStep = defineLeafStep({
   meta: {
     install: {
       label: "Register Extension",
-      description: "Registers the Admin UI SDK extension in Adobe Commerce",
+      description: "Registers the Admin UI extension in Adobe Commerce",
     },
     uninstall: {
       label: "Unregister Extension",
-      description: "Removes the Admin UI SDK extension from Adobe Commerce",
+      description: "Removes the Admin UI extension from Adobe Commerce",
     },
   },
 
-  install: (_: AdminUiSdkConfig, context: AdminUiSdkExecutionContext) =>
+  install: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
     registerExtension(context),
 
-  uninstall: (_: AdminUiSdkConfig, context: AdminUiSdkExecutionContext) =>
+  uninstall: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
     unregisterExtension(context),
 });
 
@@ -48,21 +48,21 @@ export type RegisterExtensionStepData = InferStepOutput<
   typeof registerExtensionStep
 >;
 
-/** Branch step for setting up the Admin UI SDK extension registration. */
-export const adminUiSdkStep = defineBranchStep({
-  name: "admin-ui-sdk",
+/** Branch step for setting up the Admin UI extension registration. */
+export const adminUiStep = defineBranchStep({
+  name: "admin-ui",
   meta: {
     install: {
-      label: "Admin UI SDK",
-      description: "Registers the extension with Adobe Commerce Admin UI SDK",
+      label: "Admin UI",
+      description: "Registers the extension with Adobe Commerce Admin UI",
     },
     uninstall: {
-      label: "Admin UI SDK",
-      description: "Removes the extension from Adobe Commerce Admin UI SDK",
+      label: "Admin UI",
+      description: "Removes the extension from Adobe Commerce Admin UI",
     },
   },
 
-  when: hasAdminUiSdk,
-  context: createAdminUiSdkStepContext,
+  when: hasAdminUi,
+  context: createAdminUiStepContext,
   children: [registerExtensionStep],
 });

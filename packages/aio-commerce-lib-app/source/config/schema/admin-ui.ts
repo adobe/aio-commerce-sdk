@@ -10,10 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
+import {
+  nonEmptyStringValueSchema,
+  positiveNumberValueSchema,
+} from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
+
+// ─── Grid columns ─────────────────────────────────────────────────────────────
 
 const ColumnTypeSchema = v.picklist([
   "boolean",
@@ -43,20 +48,85 @@ const GridColumnsSchema = v.object({
   ),
 });
 
+// ─── Mass actions ─────────────────────────────────────────────────────────────
+
+const MassActionConfirmSchema = v.object({
+  title: v.optional(nonEmptyStringValueSchema("confirm title")),
+  message: v.optional(nonEmptyStringValueSchema("confirm message")),
+});
+
+const MassActionNotificationsSchema = v.object({
+  success: v.optional(nonEmptyStringValueSchema("notifications.success")),
+  error: v.optional(nonEmptyStringValueSchema("notifications.error")),
+});
+
+/** Fields shared by both mass-action variants. `description` is flat — no `installation` nesting. */
+const massActionCommonEntries = {
+  id: nonEmptyStringValueSchema("mass action ID"),
+  label: nonEmptyStringValueSchema("mass action label"),
+  description: v.optional(nonEmptyStringValueSchema("mass action description")),
+  title: v.optional(nonEmptyStringValueSchema("mass action page title")),
+  confirm: v.optional(MassActionConfirmSchema),
+  notifications: v.optional(MassActionNotificationsSchema),
+  selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
+};
+
+const SANDBOX_PERMISSION_VALUES = [
+  "allow-downloads",
+  "allow-modals",
+  "allow-popups",
+] as const satisfies string[];
+
+/** `type: "view"` mass action — renders an iframe at `path`. */
+const ViewMassActionSchema = v.strictObject({
+  ...massActionCommonEntries,
+  type: v.literal("view"),
+  path: nonEmptyStringValueSchema("mass action path"),
+  sandboxPermissions: v.optional(
+    v.array(v.picklist(SANDBOX_PERMISSION_VALUES)),
+  ),
+});
+
+/** `type: "worker"` mass action — invokes a workerProcess runtime action. */
+const WorkerMassActionSchema = v.strictObject({
+  ...massActionCommonEntries,
+  type: v.literal("worker"),
+  runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
+  timeout: v.optional(positiveNumberValueSchema("timeout")),
+});
+
+/**
+ * A mass action entry discriminated by `type`: `"view"` renders an iframe;
+ * `"worker"` invokes a runtime action.
+ */
+const MassActionSchema = v.variant(
+  "type",
+  [ViewMassActionSchema, WorkerMassActionSchema],
+  'mass action "type" must be either "view" or "worker"',
+);
+
+// ─── Entity extension points ──────────────────────────────────────────────────
+
 const AdminUiOrderSchema = v.object({
+  massActions: v.optional(v.array(MassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
 });
 
 const AdminUiProductSchema = v.object({
+  massActions: v.optional(v.array(MassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
 });
 
 const AdminUiCustomerSchema = v.object({
+  massActions: v.optional(v.array(MassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
 });
 
+// ─── Top-level schema ─────────────────────────────────────────────────────────
+
 /**
- * Schema for the `adminUi` config section (grid column extensions on `commerce/backend-ui/2`).
+ * Schema for the `adminUi` config section.
+ * Supports grid column extensions and mass actions on `commerce/backend-ui/2`.
  * @experimental
  */
 export const AdminUiSchema = v.object({
@@ -64,6 +134,8 @@ export const AdminUiSchema = v.object({
   product: v.optional(AdminUiProductSchema),
   customer: v.optional(AdminUiCustomerSchema),
 });
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 /**
  * The Admin UI configuration for an Adobe Commerce application.
@@ -82,6 +154,24 @@ export type GridColumns = v.InferInput<typeof GridColumnsSchema>;
  * @experimental
  */
 export type GridColumn = v.InferInput<typeof GridColumnSchema>;
+
+/**
+ * A mass action registration entry (view or worker variant).
+ * @experimental
+ */
+export type MassAction = v.InferInput<typeof MassActionSchema>;
+
+/**
+ * A view-type mass action.
+ * @experimental
+ */
+export type ViewMassAction = v.InferInput<typeof ViewMassActionSchema>;
+
+/**
+ * A worker-type mass action.
+ * @experimental
+ */
+export type WorkerMassAction = v.InferInput<typeof WorkerMassActionSchema>;
 
 /** Config type when `adminUi` configuration is present. */
 export type AdminUiConfig<

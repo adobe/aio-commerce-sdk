@@ -10,9 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the admin-ui-sdk module */
+/** biome-ignore-all lint/performance/noBarrelFile: Public API for the admin-ui/mass-actions entrypoint */
 
-export { adminUiSdkStep } from "./branch";
-
-export type { RegisterExtensionStepData } from "./branch";
-export type { AdminUiSdkConfig } from "./utils";
+export * from "@adobe/aio-commerce-lib-admin-ui/mass-actions";

@@ -100,3 +100,64 @@ import { errorGridResponse } from "@adobe/aio-commerce-lib-admin-ui/grid-columns
 
 return errorGridResponse("INTERNAL_ERROR", "Could not reach inventory service");
 ```
+
+### Mass Action Worker Contract
+
+Apps that declare `adminUi.<entity>.massActions` with `type: "worker"` expose a runtime
+action that Commerce calls when the user triggers the action on a selection of records.
+Commerce POSTs a JSON body and uses the HTTP status code to distinguish success from
+failure. This section covers the handler side.
+
+#### Parsing the incoming request
+
+Use `parseMassActionRequest` to validate and narrow the incoming body:
+
+```typescript
+import { parseMassActionRequest } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+
+export async function main(params: unknown) {
+  const { requestId, gridType, ids } = parseMassActionRequest(params);
+  // gridType is "order" | "product" | "customer"
+  // ids is string[] with at least one entry
+}
+```
+
+Throws `CommerceSdkValidationError` when the input is malformed.
+
+#### Building a success response
+
+Return `okMassActionResponse` when the action completes. Commerce treats HTTP 200 as
+success. Optionally include any fields you need for logging:
+
+```typescript
+import { okMassActionResponse } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+
+return okMassActionResponse();
+return okMassActionResponse({ exported: ids.length });
+```
+
+#### Building an error response
+
+Return one of the typed error builders when the action fails. Commerce treats any
+non-2xx status as failure and surfaces the `notifications.error` message from the app
+config to the user. The response body is always `{ error: string }`.
+
+| Builder                                 | Status |
+| --------------------------------------- | ------ |
+| `badRequestMassActionResponse`          | 400    |
+| `unauthorizedMassActionResponse`        | 401    |
+| `forbiddenMassActionResponse`           | 403    |
+| `notFoundMassActionResponse`            | 404    |
+| `internalServerErrorMassActionResponse` | 500    |
+
+```typescript
+import {
+  internalServerErrorMassActionResponse,
+  notFoundMassActionResponse,
+} from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+
+return notFoundMassActionResponse("No records matched the given IDs");
+return internalServerErrorMassActionResponse(
+  "Could not reach the export service",
+);
+```

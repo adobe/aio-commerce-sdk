@@ -10,20 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { router } from "./router";
+import type * as v from "valibot";
+import type { MassActionSelectionSchema } from "./schema";
 
-import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
-import type { RuntimeActionFactoryArgs } from "./router";
-
-/**
- * Factory to create the route handler for the `registration` action.
- * @param args - The arguments required to create the runtime action.
- * @experimental
- */
-export const registrationRuntimeAction =
-  (args: RuntimeActionFactoryArgs) => async (params: RuntimeActionParams) => {
-    const handler = router.handler();
-    const { registration } = args;
-
-    return await handler({ ...params, registration });
-  };
+/** Parsed `selection` query parameter appended by Commerce to the iframe URL. */
+export type MassActionSelection = v.InferOutput<
+  typeof MassActionSelectionSchema
+>;
