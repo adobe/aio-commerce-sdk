@@ -19,7 +19,7 @@ import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** An item (webhook or event) that may be scoped to specific Commerce environments. */
-type EnvScopedItem = { env?: string[] };
+type EnvScopedItem = { env?: CommerceEnv[] };
 
 /** A provider entry whose events may each be scoped to specific environments. */
 type ProviderEntry = { events: EnvScopedItem[] };
