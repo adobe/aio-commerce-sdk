@@ -3,7 +3,7 @@
   "info": {
     "title": "App Management API",
     "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation and uninstallation lifecycle, exposing the Admin UI SDK registration, and managing the scope tree.",
-    "version": "1.1.1",
+    "version": "1.1.0",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
@@ -2739,6 +2739,12 @@
               }
             }
           },
+          "401": {
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
           "500": {
             "description": "Internal server error while storing the association data.",
             "content": {
@@ -2770,6 +2776,12 @@
         "responses": {
           "204": {
             "description": "Association data cleared successfully."
+          },
+          "401": {
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
           },
           "500": {
             "description": "Internal server error while clearing the association data.",
