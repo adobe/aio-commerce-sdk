@@ -539,7 +539,7 @@ export default defineConfig({
 - **columns**: Required array (at least one entry); each column requires:
   - **id**: non-empty string — stable column identifier, also used as the response data key
   - **label**: non-empty string — column header displayed in the grid
-  - **type**: one of `"boolean"`, `"date"`, `"datetime"`, `"decimal"`, `"integer"`, `"string"`
+  - **type**: one of `"boolean"`, `"date"`, `"datetime"`, `"float"`, `"integer"`, `"string"`
   - **align**: one of `"left"`, `"center"`, `"right"`
 
 Each of `order`, `product`, and `customer` is optional — configure only the grids your application extends.
