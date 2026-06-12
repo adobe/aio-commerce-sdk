@@ -12,6 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 
+import { adminUiStep } from "#management/installation/admin-ui/branch";
 import { eventingStep } from "#management/installation/events/branch";
 import {
   createRootInstallationStep,
@@ -31,10 +32,11 @@ describe("createRootInstallationStep", () => {
     expect(result.type).toBe("branch");
     expect(result.name).toBe("installation");
 
-    expect(result.children.length).toBe(3);
+    expect(result.children.length).toBe(4);
     expect(result.children[0]).toBe(eventingStep);
     expect(result.children[1]).toBe(webhooksStep);
-    expect(result.children[2].name).toBe("customInstallationSteps");
+    expect(result.children[2]).toBe(adminUiStep);
+    expect(result.children[3].name).toBe("customInstallationSteps");
   });
 
   test("should create custom installation step with dynamic children when config has custom steps", () => {
@@ -42,8 +44,8 @@ describe("createRootInstallationStep", () => {
       configWithCustomInstallationSteps,
     );
 
-    expect(result.children.length).toBe(3);
-    const customInstallationStep = result.children[2];
+    expect(result.children.length).toBe(4);
+    const customInstallationStep = result.children[3];
     expect(customInstallationStep.name).toBe("customInstallationSteps");
     expect(customInstallationStep.type).toBe("branch");
 
@@ -65,10 +67,11 @@ describe("createRootUninstallationStep", () => {
     expect(result.type).toBe("branch");
     expect(result.name).toBe("uninstallation");
 
-    expect(result.children.length).toBe(3);
+    expect(result.children.length).toBe(4);
     expect(result.children[0]).toBe(eventingStep);
     expect(result.children[1]).toBe(webhooksStep);
-    expect(result.children[2].name).toBe("customInstallationSteps");
+    expect(result.children[2]).toBe(adminUiStep);
+    expect(result.children[3].name).toBe("customInstallationSteps");
   });
 
   test("should have correct meta label for uninstallation", () => {
@@ -87,8 +90,8 @@ describe("createRootUninstallationStep", () => {
       configWithCustomInstallationSteps,
     );
 
-    expect(result.children.length).toBe(3);
-    const customInstallationStep = result.children[2];
+    expect(result.children.length).toBe(4);
+    const customInstallationStep = result.children[3];
     expect(customInstallationStep.name).toBe("customInstallationSteps");
     expect(customInstallationStep.type).toBe("branch");
 

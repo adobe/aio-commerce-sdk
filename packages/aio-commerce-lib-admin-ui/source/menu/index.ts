@@ -10,15 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
+/** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the menu entrypoint. */
 
-export default mergeConfig(baseConfig, {
-  entry: [
-    "./source/api/index.ts",
-    "./source/grid-columns/index.ts",
-    "./source/mass-actions/index.ts",
-    "./source/menu/index.ts",
-    "./source/order-view-buttons/index.ts",
-  ],
-});
+/**
+ * Helpers and constants for working with the Adobe Commerce admin menu.
+ *
+ * Provides named constants for many menu IDs in the Adobe Commerce Admin,
+ * as well as type guards for distinguishing menu IDs at runtime.
+ *
+ * @packageDocumentation
+ */
+
+export * from "./paths";

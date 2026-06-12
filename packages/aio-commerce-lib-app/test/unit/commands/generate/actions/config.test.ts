@@ -17,16 +17,23 @@ import {
   buildAdminUiV2ExtConfig,
   buildAppManagementExtConfig,
   buildBusinessConfigurationExtConfig,
+  collectUniqueRuntimeActions,
   getRuntimeActions,
+  requiresWebSource,
 } from "#commands/generate/actions/config";
 import {
-  configWithAdminUi,
+  configWithAdminUiAllGrids,
+  configWithAdminUiMenu,
   configWithAdminUiSingleGrid,
-  configWithAdminUiV2,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
   configWithExternalEventing,
   configWithFullAdminUiV2,
+  configWithMultipleWorkerMassActions,
+  configWithOrderViewButtons,
+  configWithOrderViewTypeButtons,
+  configWithOrderWorkerTypeButtons,
+  configWithViewMassActions,
   configWithWebhooks,
   minimalValidConfig,
 } from "#test/fixtures/config";
@@ -58,7 +65,7 @@ describe("buildAppManagementExtConfig", () => {
       config: configWithCustomInstallationSteps,
     },
     { label: "webhooks", config: configWithWebhooks },
-    { label: "adminUi", config: configWithAdminUiV2 },
+    { label: "adminUi", config: configWithViewMassActions },
   ])("includes installation action when $label is configured", ({ config }) => {
     const result = buildAppManagementExtConfig(config);
 
@@ -74,7 +81,7 @@ describe("buildAppManagementExtConfig", () => {
       config: configWithCustomInstallationSteps,
     },
     { label: "webhooks", config: configWithWebhooks },
-    { label: "adminUi", config: configWithAdminUiV2 },
+    { label: "adminUi", config: configWithViewMassActions },
   ])("includes installation workerProcess entry when $label is configured", ({
     config,
   }) => {
@@ -149,13 +156,13 @@ describe("buildAppManagementExtConfig", () => {
 
 describe("buildAdminUiV2ExtConfig", () => {
   test("pre-app-build hook uses backend-ui/2", () => {
-    const config = buildAdminUiV2ExtConfig(configWithAdminUi);
+    const config = buildAdminUiV2ExtConfig(configWithFullAdminUiV2);
     const preBuildHook = config.hooks?.["pre-app-build"] ?? "";
     expect(preBuildHook).toMatch(BACKEND_UI_V2_EXTENSION_MATCHER);
   });
 
   test("declares one workerProcess entry per unique runtimeAction (3 grids)", () => {
-    const config = buildAdminUiV2ExtConfig(configWithAdminUi);
+    const config = buildAdminUiV2ExtConfig(configWithAdminUiAllGrids);
     const workerImpls =
       config.operations?.workerProcess?.map((op) => op.impl) ?? [];
 
@@ -204,9 +211,70 @@ describe("buildAdminUiV2ExtConfig", () => {
     expect(workerImpls).toContain(sharedRuntimeAction);
   });
 
-  test("workerProcess is empty when adminUi has no grids", () => {
+  test("workerProcess is absent when there are no runtime actions", () => {
     const config = buildAdminUiV2ExtConfig(minimalValidConfig);
-    expect(config.operations?.workerProcess).toHaveLength(0);
+    expect(config.operations?.workerProcess).toBeUndefined();
+  });
+
+  test("worker view buttons produce workerProcess entries", () => {
+    const config = buildAdminUiV2ExtConfig(configWithOrderWorkerTypeButtons);
+    const workerImpls =
+      config.operations?.workerProcess?.map((op) => op.impl) ?? [];
+
+    expect(workerImpls).toContain("orders/sync-inventory");
+  });
+
+  test("view view buttons add operations.view pointing at index.html", () => {
+    const config = buildAdminUiV2ExtConfig(configWithOrderViewTypeButtons);
+    expect(config.operations?.view).toEqual([
+      { type: "web", impl: "index.html" },
+    ]);
+  });
+
+  test("worker view buttons do not add operations.view", () => {
+    const config = buildAdminUiV2ExtConfig(configWithOrderWorkerTypeButtons);
+    expect(config.operations?.view).toBeUndefined();
+  });
+
+  test("mixed view buttons produce both workerProcess and view entries", () => {
+    const config = buildAdminUiV2ExtConfig(configWithOrderViewButtons);
+    const workerImpls =
+      config.operations?.workerProcess?.map((op) => op.impl) ?? [];
+
+    expect(config.operations?.view).toEqual([
+      { type: "web", impl: "index.html" },
+    ]);
+    expect(workerImpls).toContain("orders/sync-inventory");
+  });
+
+  test("deduplicates workerProcess when grid column and view button share the same runtimeAction", () => {
+    const sharedAction = "orders/shared-action";
+    const config = buildAdminUiV2ExtConfig({
+      ...minimalValidConfig,
+      adminUi: {
+        order: {
+          gridColumns: {
+            label: "L",
+            description: "D",
+            runtimeAction: sharedAction,
+            columns: [{ id: "k", label: "K", type: "string", align: "left" }],
+          },
+          viewButtons: [
+            {
+              type: "worker",
+              id: "btn",
+              label: "Btn",
+              runtimeAction: sharedAction,
+            },
+          ],
+        },
+      },
+    });
+    const workerImpls =
+      config.operations?.workerProcess?.map((op) => op.impl) ?? [];
+
+    expect(workerImpls).toHaveLength(1);
+    expect(workerImpls).toContain(sharedAction);
   });
 
   test("includes workerProcess entries for worker mass actions", () => {
@@ -224,12 +292,69 @@ describe("buildAdminUiV2ExtConfig", () => {
     expect(config.web).toBeUndefined();
   });
 
+  test("declares web property when adminUi.menu is present", () => {
+    const config = buildAdminUiV2ExtConfig(configWithAdminUiMenu);
+    expect(config.web).toBe("web-src");
+  });
+
+  test("workerProcess is omitted when adminUi has only menu (no grids or worker mass actions)", () => {
+    const config = buildAdminUiV2ExtConfig(configWithAdminUiMenu);
+    expect(config.operations?.workerProcess).toBeUndefined();
+  });
+
   test("includes view and web when view mass actions are configured", () => {
-    const config = buildAdminUiV2ExtConfig(configWithAdminUiV2);
+    const config = buildAdminUiV2ExtConfig(configWithViewMassActions);
     expect(config.operations?.view).toEqual([
       { type: "web", impl: "index.html" },
     ]);
     expect(config.web).toBe("web-src");
+  });
+
+  test("all worker mass action runtimeActions from multiple entities appear in workerProcess", () => {
+    const config = buildAdminUiV2ExtConfig(configWithMultipleWorkerMassActions);
+    const workerImpls =
+      config.operations?.workerProcess?.map((op) => op.impl) ?? [];
+
+    expect(workerImpls).toHaveLength(2);
+    expect(workerImpls).toContain("orders/export-orders");
+    expect(workerImpls).toContain("customers/export-customers");
+  });
+
+  test("deduplicates workerProcess when a grid runtimeAction matches a worker mass action runtimeAction", () => {
+    const sharedAction = "orders/fetch-order-data";
+    const config = buildAdminUiV2ExtConfig({
+      ...minimalValidConfig,
+      adminUi: {
+        order: {
+          gridColumns: {
+            label: "L",
+            description: "D",
+            runtimeAction: sharedAction,
+            columns: [
+              {
+                id: "k",
+                label: "K",
+                type: "string" as const,
+                align: "left" as const,
+              },
+            ],
+          },
+          massActions: [
+            {
+              id: "fetch",
+              label: "Fetch",
+              type: "worker" as const,
+              runtimeAction: sharedAction,
+            },
+          ],
+        },
+      },
+    });
+    const workerImpls =
+      config.operations?.workerProcess?.map((op) => op.impl) ?? [];
+
+    expect(workerImpls).toHaveLength(1);
+    expect(workerImpls).toContain(sharedAction);
   });
 
   test("deduplicates workerProcess entries when the same runtimeAction appears on multiple entities", () => {
@@ -264,6 +389,88 @@ describe("buildAdminUiV2ExtConfig", () => {
     expect(workerImpls).toEqual(
       [{ type: "action", impl: "pkg/export" }].map((e) => e.impl),
     );
+  });
+
+  test("declares view operation when adminUi.menu is present", () => {
+    const config = buildAdminUiV2ExtConfig(configWithAdminUiMenu);
+    expect(config.operations?.view).toEqual([
+      { type: "web", impl: "index.html" },
+    ]);
+  });
+
+  test("no view operation when adminUi.menu is absent", () => {
+    const config = buildAdminUiV2ExtConfig(configWithAdminUiSingleGrid);
+    expect(config.operations?.view).toBeUndefined();
+  });
+
+  test("view and workerProcess coexist when multiple extension points are configured", () => {
+    const config = buildAdminUiV2ExtConfig(configWithFullAdminUiV2);
+    expect(config.operations?.workerProcess).toHaveLength(2);
+    expect(config.operations?.view).toEqual([
+      { type: "web", impl: "index.html" },
+    ]);
+  });
+});
+
+describe("collectUniqueRuntimeActions", () => {
+  test("returns empty array for undefined", () => {
+    expect(collectUniqueRuntimeActions(undefined)).toEqual([]);
+  });
+
+  test("deduplicates runtimeActions across entities", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiAllGrids.adminUi,
+    );
+    expect(new Set(result).size).toBe(result.length);
+  });
+
+  test("collects all runtimeActions from a realistic adminUi config", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiAllGrids.adminUi,
+    );
+    expect(result).toContain("orders/fetch-order-grid-data");
+    expect(result).toContain("products/fetch-product-grid-data");
+    expect(result).toContain("customers/fetch-customer-grid-data");
+  });
+
+  test("collects runtimeAction from worker view buttons", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithOrderWorkerTypeButtons.adminUi,
+    );
+    expect(result).toContain("orders/sync-inventory");
+  });
+
+  test("does not collect from view type buttons (no runtimeAction field)", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithOrderViewTypeButtons.adminUi,
+    );
+    expect(result).toEqual([]);
+  });
+});
+
+describe("requiresWebSource", () => {
+  test("returns false for undefined", () => {
+    expect(requiresWebSource(undefined)).toBe(false);
+  });
+
+  test("returns true when adminUi has a menu", () => {
+    expect(requiresWebSource(configWithAdminUiMenu.adminUi)).toBe(true);
+  });
+
+  test("returns true for a realistic adminUi config with view type buttons", () => {
+    expect(requiresWebSource(configWithOrderViewTypeButtons.adminUi)).toBe(
+      true,
+    );
+  });
+
+  test("returns false for a realistic adminUi config with only worker type buttons", () => {
+    expect(requiresWebSource(configWithOrderWorkerTypeButtons.adminUi)).toBe(
+      false,
+    );
+  });
+
+  test("returns false for a grid-only adminUi config", () => {
+    expect(requiresWebSource(configWithAdminUiAllGrids.adminUi)).toBe(false);
   });
 });
 

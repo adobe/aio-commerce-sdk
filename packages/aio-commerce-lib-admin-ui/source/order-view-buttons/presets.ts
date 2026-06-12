@@ -13,73 +13,76 @@
 import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
-import { MassActionRequestSchema } from "./schema";
+import { OrderViewButtonRequestSchema } from "./schema";
 
 import type {
   ErrorResponse,
   SuccessResponse,
 } from "@adobe/aio-commerce-lib-core/responses";
 import type {
-  MassActionErrorBody,
-  MassActionRequest,
-  MassActionResponseBody,
+  OrderViewButtonErrorBody,
+  OrderViewButtonRequest,
+  OrderViewButtonSuccessBody,
 } from "./types";
 
 /**
- * Parses and validates the JSON body Commerce POSTs to a worker mass action handler.
+ * Parses and validates the JSON body Commerce POSTs to an order view button handler.
  *
  * Throws a `CommerceSdkValidationError` if the input is malformed.
  *
  * @example
  * ```ts
- * import { parseMassActionRequest } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+ * import { parseOrderViewButtonRequest } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
  *
  * export async function main(params: unknown) {
- *   const { requestId, gridType, ids } = parseMassActionRequest(params);
- *   // process ids...
+ *   const { requestId, id, orderId } = parseOrderViewButtonRequest(params);
+ *   // id identifies which button was clicked
+ *   // orderId is the order currently being viewed
+ *   // ...
  * }
  * ```
  */
-export function parseMassActionRequest(input: unknown): MassActionRequest {
+export function parseOrderViewButtonRequest(
+  input: unknown,
+): OrderViewButtonRequest {
   return parseOrThrow(
-    MassActionRequestSchema,
+    OrderViewButtonRequestSchema,
     input,
-    "Invalid mass action request",
+    "Invalid order view button request",
   );
 }
 
 /**
- * Builds an HTTP 200 success response for a worker mass action.
+ * Builds an HTTP 200 success response for an order view button handler.
  *
- * Commerce determines success from the HTTP status code. You may optionally
- * include any fields in `body` for your own logging or auditing purposes.
+ * Commerce renders `notifications.success` from the registration as the
+ * toast body when present, and a default success toast otherwise.
  *
  * @example
  * ```ts
- * return okMassActionResponse();
- * return okMassActionResponse({ exported: ids.length });
+ * return okOrderViewButtonResponse();
  * ```
  */
-export function okMassActionResponse(
-  body: MassActionResponseBody = {},
-): SuccessResponse<MassActionResponseBody> {
-  return ok<MassActionResponseBody>({ body });
+export function okOrderViewButtonResponse(): SuccessResponse<OrderViewButtonSuccessBody> {
+  return ok<OrderViewButtonSuccessBody>({ body: {} });
 }
 
 /**
- * Builds an error response for a worker mass action with the given HTTP status code.
+ * Builds an error response for a worker order view button handler with the given HTTP status code.
+ *
+ * Commerce uses the HTTP status code to distinguish success from failure.
  *
  * @param statusCode - The HTTP status code to return.
  * @param errorMessage - Error message included in the response body as `{ message }`.
  *
  * @example
  * ```ts
- * return massActionErrorResponse(422, "Request entity is unprocessable");
+ * return orderViewButtonErrorResponse(500, "Could not reach inventory service");
  * ```
  */
-export function massActionErrorResponse(
+export function orderViewButtonErrorResponse(
   statusCode: number,
   errorMessage: string,
-): ErrorResponse<MassActionErrorBody> {
+): ErrorResponse<OrderViewButtonErrorBody> {
   return buildErrorResponse(statusCode, { body: { message: errorMessage } });
 }

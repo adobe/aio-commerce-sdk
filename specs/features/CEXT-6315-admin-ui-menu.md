@@ -2,7 +2,7 @@
 
 - **Ticket:** [CEXT-6315](https://jira.corp.adobe.com/browse/CEXT-6315)
 - **Created:** 2026-06-04
-- [ ] **Implemented**
+- [x] **Implemented**
 
 ## Summary
 
@@ -11,7 +11,7 @@ Adds `menu` support to the v2 Admin UI schema under `adminUi`, on
 single `adminUi.menu` object. A per-app section is created automatically from app metadata when no
 explicit Commerce menu is configured; developers only describe the app's menu entry and target
 page. The v2 shape intentionally breaks from v1 by renaming `title` to `label`, replacing parent
-menu configuration with `commerceMenuId`, adding `description`, flattening the optional
+menu configuration with `parentMenu`, adding `description`, flattening the optional
 `page.title` to `pageTitle`, removing developer-defined sections, and renaming `sandbox` to
 `sandboxPermissions`. No registration action is generated for `commerce/backend-ui/2`; the
 `adminUi` config is read from the existing `app-config` endpoint on `commerce/extensibility/1`.
@@ -48,10 +48,10 @@ This creates avoidable authoring problems:
 - Rename `title` to `label`.
 - Add `description` for installation and permission review surfaces.
 - Validate `id` against the Commerce menu ID character set.
-- Replace `parent` / `parentMenuId` with `commerceMenuId`, an optional reference to an existing
+- Replace `parent` / `parentMenuId` with `parentMenu`, an optional reference to an existing
   Commerce menu where the app menu should be attached.
 - Flatten optional page metadata into `pageTitle`; no nested `page` object is exposed in v2.
-- Remove developer-defined sections. When `commerceMenuId` is omitted, a per-app section is created
+- Remove developer-defined sections. When `parentMenu` is omitted, a per-app section is created
   automatically using the app's metadata ID and display name, and that section becomes the default
   parent for the app menu.
 - Rename `sandbox` to `sandboxPermissions` to make the field's purpose explicit.
@@ -94,7 +94,7 @@ export default defineConfig({
       id: "approval_dashboard",
       label: "Approval Dashboard",
       description: "Review and approve purchase requests from Commerce Admin.",
-      commerceMenuId: "Magento_Sales::sales",
+      parentMenu: "sales",
       sandboxPermissions: ["allow-popups", "allow-downloads"],
     },
   },
@@ -102,7 +102,7 @@ export default defineConfig({
 ```
 
 This creates one Commerce Admin entry for the app and attaches it to the existing
-`Magento_Sales::sales` Commerce menu. When the merchant clicks the entry, the app's registered web
+`Sales` Commerce menu. When the merchant clicks the entry, the app's registered web
 view is loaded.
 
 `id` is a unique app-local ID to identify the application menu in Adobe Commerce Admin. The input
@@ -115,12 +115,12 @@ ID for the final Commerce registration as needed.
 label; it is exposed through app config and OpenAPI so installation and permission-review surfaces
 can describe the menu entry before it is enabled.
 
-`commerceMenuId` is optional. When present, it references an existing Commerce menu item under which
+`parentMenu` is optional. When present, it references an existing Commerce menu item under which
 the app menu should be attached; this lets an app appear under Commerce menus such as Sales,
 Catalog, or any other known Commerce menu ID instead of only under an app-owned section. When
 absent, a dedicated section is created automatically using `metadata.id` and
 `metadata.displayName`, and that generated section becomes the default parent for the app menu.
-The SDK validates that `commerceMenuId`, when provided, is a non-empty string, but does not
+The SDK validates that `parentMenu`, when provided, is a non-empty string, but does not
 validate that the referenced Commerce menu ID exists; that check belongs to Commerce/App Management
 because the available menu tree is Commerce-version and installation dependent.
 
@@ -160,15 +160,15 @@ menu declaration is read from the `app-config` endpoint on `commerce/extensibili
 | `menuItems[].title`                      | `label`                 | Menu label rendered in Commerce Admin                                     |
 | _(absent)_                               | `description`           | Human-readable menu summary for installation and permissions              |
 | `page.title`                             | `pageTitle`             | Optional; flattened into the menu declaration                             |
-| `menuItems[].parent` / `parentMenuId`    | `commerceMenuId`        | Optional existing Commerce menu where the app menu is attached            |
+| `menuItems[].parent` / `parentMenuId`    | `parentMenu`            | Optional existing Commerce menu where the app menu is attached            |
 | `menuItems[].sandbox`                    | `sandboxPermissions`    | Same permission values, now expressed as a string array                   |
-| `menuItems[].isSection`                  | _(removed)_             | Omit `commerceMenuId` to use an app-specific generated section            |
+| `menuItems[].isSection`                  | _(removed)_             | Omit `parentMenu` to use an app-specific generated section                |
 | `menuItems[].sortOrder`                  | _(removed)_             | Ordering is owned by Commerce/App Management                              |
 | Extension point: `commerce/backend-ui/1` | `commerce/backend-ui/2` | Required change in `app.config.yaml` and `install.yaml`                   |
 
 During migration, developers identify the v1 non-section menu item and move its user-facing title
 to `adminUi.menu.label`. The v1 section item is not migrated. If the v1 app used a custom parent
-menu ID, that value moves to `commerceMenuId`; otherwise `commerceMenuId` can be omitted and an
+menu ID, that value moves to `parentMenu`; otherwise `parentMenu` can be omitted and an
 app-specific section is generated automatically from app metadata. If the v1 app configured a page
 title separately through the page extension point, that value moves to `pageTitle`.
 
@@ -189,7 +189,7 @@ const MenuSchema = v.object({
   label: nonEmptyStringValueSchema("menu label"),
   description: nonEmptyStringValueSchema("menu description"),
   pageTitle: v.optional(nonEmptyStringValueSchema("menu page title")),
-  commerceMenuId: v.optional(nonEmptyStringValueSchema("Commerce menu ID")),
+  parentMenu: v.optional(nonEmptyStringValueSchema("Commerce menu ID")),
   sandboxPermissions: v.optional(SandboxPermissionsSchema),
 });
 
@@ -234,10 +234,10 @@ marked `@deprecated`.
 ### App-config payload
 
 The `app-config` endpoint returns `adminUi.menu` as declared by the app after validation. The SDK
-does not prefix `id`, does not synthesize `commerceMenuId`, and does not include the automatically
+does not prefix `id`, does not synthesize `parentMenu`, and does not include the automatically
 created app section in the payload. Commerce/App Management is responsible for interpreting the
-menu declaration, generating the app-specific section when `commerceMenuId` is omitted, and
-resolving `commerceMenuId` against the Commerce menu tree when it is provided.
+menu declaration, generating the app-specific section when `parentMenu` is omitted, and
+resolving `parentMenu` against the Commerce menu tree when it is provided.
 
 Example payload excerpt:
 
@@ -254,7 +254,7 @@ Example payload excerpt:
       "id": "approval_dashboard",
       "label": "Approval Dashboard",
       "description": "Review and approve purchase requests from Commerce Admin.",
-      "commerceMenuId": "Magento_Sales::sales",
+      "parentMenu": "sales",
       "sandboxPermissions": ["allow-popups", "allow-downloads"]
     }
   }
@@ -265,7 +265,7 @@ Example payload excerpt:
 
 The OpenAPI document generated for the `app-config` endpoint must include the `adminUi.menu` schema
 in the same implementation change. The schema marks `id`, `label`, and `description` as required
-strings, exposes `pageTitle` and `commerceMenuId` as optional strings, constrains `id` to the
+strings, exposes `pageTitle` and `parentMenu` as optional strings, constrains `id` to the
 Commerce menu ID character set, and exposes `sandboxPermissions` as an optional array whose items
 are limited to the supported sandbox permission values. The implementation PR is not complete
 unless the OpenAPI generation code and its relevant tests or fixtures are updated with this schema.
@@ -291,7 +291,7 @@ endpoint.
 - `id` must be a unique app-local ID using only uppercase and lowercase letters (`a-z`, `A-Z`),
   digits (`0-9`), forward slash (`/`), colons (`:`), and underscores (`_`).
 - `pageTitle` is optional, but when present must be a non-empty string.
-- `commerceMenuId` is optional, but when present must be a non-empty string. When omitted, the
+- `parentMenu` is optional, but when present must be a non-empty string. When omitted, the
   Commerce-side registration uses a generated app-specific section as the parent menu ID.
 - `sandboxPermissions` is optional, but when present must be an array containing only sandbox values
   from the supported allowlist.
@@ -320,7 +320,7 @@ experimental. The v1 `menuItems` shape stays functional during the deprecation w
 - Apps that previously used multiple `menuItems` in one config cannot express that in v2. This
   matches the documented platform limit of one section and one menu per app, but it means unusual
   v1 configs must be split into separate apps or remain on v1 until a broader menu model exists.
-- `commerceMenuId` can only be validated at runtime by Commerce/App Management. The SDK can enforce
+- `parentMenu` can only be validated at runtime by Commerce/App Management. The SDK can enforce
   that it is a string, but not that the target exists in every Commerce version.
 
 ## Rationale and alternatives
@@ -340,7 +340,7 @@ then names the separate page-level title explicitly.
 
 **Keep `parent` / `parentMenuId`.**
 Rejected. Both names describe generic tree mechanics rather than the developer's intent.
-`commerceMenuId` makes clear that the field references an existing Commerce menu ID. When it is
+`parentMenu` makes clear that the field references an existing Commerce menu ID. When it is
 omitted, the parent menu ID is the generated app-specific section.
 
 **Keep a nested `page: { title }` object.**

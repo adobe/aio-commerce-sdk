@@ -10,8 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the `@adobe/aio-commerce-lib-admin-ui/api` entrypoint. */
+/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the admin-ui module */
 
-export * from "./lib/api-client";
+export { adminUiStep } from "./branch";
 
-export type * from "./api/extensions/schema";
+export type { RegisterExtensionStepData } from "./branch";
+export type { AdminUiConfig } from "./utils";

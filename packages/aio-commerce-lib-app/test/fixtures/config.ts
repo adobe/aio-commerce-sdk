@@ -258,9 +258,31 @@ export function createConfigWithTwoCommerceEventingSources() {
   } satisfies CommerceAppConfigOutputModel;
 }
 
-/** Config fixture with all three adminUi grid column extensions configured. */
-export const configWithAdminUi = {
-  metadata: { ...mockMetadata, id: "test-app-admin-ui" },
+/** Config fixture with only order adminUi grid columns configured. */
+export const configWithAdminUiSingleGrid = {
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-single-grid" },
+  adminUi: {
+    order: {
+      gridColumns: {
+        label: "Order fulfillment data",
+        description: "Adds fulfillment status to the order grid",
+        runtimeAction: "orders/fetch-order-grid-data",
+        columns: [
+          {
+            id: "fulfillment_status",
+            label: "Fulfillment",
+            type: "string" as const,
+            align: "left" as const,
+          },
+        ],
+      },
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with grid columns configured for all three entities (order, product, customer). */
+export const configWithAdminUiAllGrids = {
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-all-grids" },
   adminUi: {
     order: {
       gridColumns: {
@@ -310,30 +332,74 @@ export const configWithAdminUi = {
   },
 } satisfies CommerceAppConfigOutputModel;
 
-/** Config fixture with only order adminUi grid columns configured. */
-export const configWithAdminUiSingleGrid = {
-  metadata: { ...mockMetadata, id: "test-app-admin-ui-single-grid" },
+/** Minimal valid adminUi menu object (required fields only). */
+const adminUiMenuMinimalPart = {
+  id: "approval_dashboard",
+  label: "Approval Dashboard",
+  description: "Review and approve purchase requests from Commerce Admin.",
+} satisfies NonNullable<CommerceAppConfigOutputModel["adminUi"]>["menu"];
+
+/** Full adminUi menu object with all fields populated. */
+const adminUiMenuPart = {
+  ...adminUiMenuMinimalPart,
+  parentMenu: "sales",
+  sandboxPermissions: ["allow-popups", "allow-downloads"] as const,
+} satisfies NonNullable<CommerceAppConfigOutputModel["adminUi"]>["menu"];
+
+/** Config fixture with an adminUi menu declaration (no grid columns). */
+export const configWithAdminUiMenu = {
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-menu" },
+  adminUi: {
+    menu: adminUiMenuPart,
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with only worker mass actions configured (no view mass actions, no grids). */
+export const configWithWorkerMassActions = {
+  metadata: { ...mockMetadata, id: "test-app-worker-mass-actions" },
+  adminUi: {
+    customer: {
+      massActions: [
+        {
+          id: "export-customers",
+          label: "Export Customers",
+          type: "worker" as const,
+          runtimeAction: "customers/export-customers",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with worker mass actions on two different entities with distinct runtimeActions. */
+export const configWithMultipleWorkerMassActions = {
+  metadata: { ...mockMetadata, id: "test-app-multiple-worker-mass-actions" },
   adminUi: {
     order: {
-      gridColumns: {
-        label: "Order fulfillment data",
-        description: "Adds fulfillment status to the order grid",
-        runtimeAction: "orders/fetch-order-grid-data",
-        columns: [
-          {
-            id: "fulfillment_status",
-            label: "Fulfillment",
-            type: "string" as const,
-            align: "left" as const,
-          },
-        ],
-      },
+      massActions: [
+        {
+          id: "export-orders",
+          label: "Export Orders",
+          type: "worker" as const,
+          runtimeAction: "orders/export-orders",
+        },
+      ],
+    },
+    customer: {
+      massActions: [
+        {
+          id: "export-customers",
+          label: "Export Customers",
+          type: "worker" as const,
+          runtimeAction: "customers/export-customers",
+        },
+      ],
     },
   },
 } satisfies CommerceAppConfigOutputModel;
 
 /** v2 Admin UI config fixture with view mass actions and no worker. */
-export const configWithAdminUiV2 = {
+export const configWithViewMassActions = {
   metadata: { ...mockMetadata, id: "test-app-admin-ui-sdk-v2" },
   adminUi: {
     order: {
@@ -377,6 +443,7 @@ export const configWithAdminUiV2 = {
 export const configWithFullAdminUiV2 = {
   metadata: { ...mockMetadata, id: "test-app-full-admin-ui-sdk-v2" },
   adminUi: {
+    menu: adminUiMenuPart,
     order: {
       massActions: [
         {
@@ -429,6 +496,63 @@ export const configWithFullAdminUiV2 = {
             success: "Export complete!",
             error: "Export failed!",
           },
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with order view buttons of type "view". */
+export const configWithOrderViewTypeButtons = {
+  metadata: { ...mockMetadata, id: "test-app-view-buttons-view" },
+  adminUi: {
+    order: {
+      viewButtons: [
+        {
+          type: "view" as const,
+          id: "delete-order",
+          label: "Delete",
+          path: "#/delete-order",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with order view buttons of type "worker". */
+export const configWithOrderWorkerTypeButtons = {
+  metadata: { ...mockMetadata, id: "test-app-view-buttons-worker" },
+  adminUi: {
+    order: {
+      viewButtons: [
+        {
+          type: "worker" as const,
+          id: "sync-inventory",
+          label: "Sync inventory",
+          runtimeAction: "orders/sync-inventory",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with both view and worker order view buttons. */
+export const configWithOrderViewButtons = {
+  metadata: { ...mockMetadata, id: "test-app-view-buttons-mixed" },
+  adminUi: {
+    order: {
+      viewButtons: [
+        {
+          type: "view" as const,
+          id: "delete-order",
+          label: "Delete",
+          path: "#/delete-order",
+        },
+        {
+          type: "worker" as const,
+          id: "sync-inventory",
+          label: "Sync inventory",
+          runtimeAction: "orders/sync-inventory",
         },
       ],
     },

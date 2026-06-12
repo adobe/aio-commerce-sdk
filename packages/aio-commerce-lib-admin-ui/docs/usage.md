@@ -5,10 +5,12 @@
 
 ## Overview
 
-This package provides utilities for interacting with the Admin UI SDK API and the Admin UI grid column extension points:
+This package provides utilities for interacting with the Admin UI SDK API and the Admin UI `commerce/backend-ui/2` extension points:
 
 - **[API Client](#api-client)**: Create typed HTTP clients for the Admin UI SDK API
 - **[Grid Column Wire Contract](#grid-column-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` grid column extensions
+- **[Menu Constants](#menu-constants)**: Named constants and type guards for Commerce Admin menu IDs
+- **[Order View Button Wire Contract](#order-view-button-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` order view button extensions
 
 ## API Reference
 
@@ -101,6 +103,65 @@ import { errorGridResponse } from "@adobe/aio-commerce-lib-admin-ui/grid-columns
 return errorGridResponse("INTERNAL_ERROR", "Could not reach inventory service");
 ```
 
+### Order View Button Wire Contract
+
+Apps that expose a runtime action handler for `commerce/backend-ui/2` order view buttons receive a POST from Commerce when the button is clicked. This package provides typed builders for that JSON wire contract.
+
+#### Iframe buttons
+
+Commerce does not call a server-side handler. Instead, it opens an iframe pointing at the app's web entry with the button `path` appended and `orderId` as a query parameter:
+
+```
+https://<extension-host>/index.html<path>?orderId=<orderId>
+```
+
+The app signals completion to Commerce through the UIX Host connection — calling `close()` to indicate success or `onError()` to indicate failure. Commerce then redirects back to the order view page and renders the appropriate banner notification from the registration. No SDK builders are needed for this variant.
+
+#### Runtime action buttons
+
+When Commerce POSTs to the app's runtime action handler, this package provides typed builders for that JSON wire contract.
+
+##### Parsing the incoming request
+
+Commerce POSTs a body of the shape `{ requestId, id, orderId }` to the handler. Use `parseOrderViewButtonRequest` to validate and narrow it:
+
+```typescript
+import { parseOrderViewButtonRequest } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
+
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+
+export async function main(params: RuntimeActionParams) {
+  const { requestId, id, orderId } = parseOrderViewButtonRequest(params);
+  // id identifies which button was clicked — useful when one handler serves multiple buttons
+  // orderId is the order currently being viewed
+  // ...
+}
+```
+
+`parseOrderViewButtonRequest` throws a `CommerceSdkValidationError` when the input is malformed.
+
+##### Building a success response
+
+`okOrderViewButtonResponse` returns the empty-object body Commerce expects on success:
+
+```typescript
+import { okOrderViewButtonResponse } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
+
+return okOrderViewButtonResponse();
+```
+
+Commerce renders `notifications.success` from the registration as the toast body when present, and a default success toast otherwise.
+
+##### Building an error response
+
+`orderViewButtonErrorResponse` returns an HTTP error response with a `{ message }` body. Commerce uses the HTTP status code to distinguish success from failure.
+
+```typescript
+import { orderViewButtonErrorResponse } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
+
+return orderViewButtonErrorResponse(500, "Could not reach inventory service");
+```
+
 ### Mass Action Worker Contract
 
 Apps that declare `adminUi.<entity>.massActions` with `type: "worker"` expose a runtime
@@ -138,26 +199,50 @@ return okMassActionResponse({ exported: ids.length });
 
 #### Building an error response
 
-Return one of the typed error builders when the action fails. Commerce treats any
+Return `massActionErrorResponse` when the action fails. Commerce treats any
 non-2xx status as failure and surfaces the `notifications.error` message from the app
-config to the user. The response body is always `{ error: string }`.
+config to the user. The response body is always `{ message: string }`.
 
-| Builder                                 | Status |
-| --------------------------------------- | ------ |
-| `badRequestMassActionResponse`          | 400    |
-| `unauthorizedMassActionResponse`        | 401    |
-| `forbiddenMassActionResponse`           | 403    |
-| `notFoundMassActionResponse`            | 404    |
-| `internalServerErrorMassActionResponse` | 500    |
+```typescript
+import { massActionErrorResponse } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+
+return massActionErrorResponse(404, "No records matched the given IDs");
+return massActionErrorResponse(500, "Could not reach the export service");
+```
+
+### Menu Constants
+
+The `./menu` entrypoint provides named constants for Commerce Admin menu IDs, typed collections of those IDs, and type guards for distinguishing menu IDs at runtime.
+
+#### Named constants
+
+Each top-level menu and its sub-menus are available as named exports:
 
 ```typescript
 import {
-  internalServerErrorMassActionResponse,
-  notFoundMassActionResponse,
-} from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+  MENU_SALES,
+  MENU_CATALOG,
+  MENU_CUSTOMERS,
+  MENU_MARKETING,
+} from "@adobe/aio-commerce-lib-admin-ui/menu";
+```
 
-return notFoundMassActionResponse("No records matched the given IDs");
-return internalServerErrorMassActionResponse(
-  "Could not reach the export service",
-);
+#### Collection
+
+`COMMERCE_MENUS` is a readonly tuple of all supported Commerce Admin menu IDs:
+
+```typescript
+import { COMMERCE_MENUS } from "@adobe/aio-commerce-lib-admin-ui/menu";
+```
+
+#### Type guard
+
+`isCommerceMenu` narrows an arbitrary string to the `CommerceMenu` type:
+
+```typescript
+import { isCommerceMenu } from "@adobe/aio-commerce-lib-admin-ui/menu";
+
+if (isCommerceMenu(id)) {
+  // id is CommerceMenu
+}
 ```
