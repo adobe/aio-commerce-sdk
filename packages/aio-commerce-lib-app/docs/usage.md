@@ -784,22 +784,14 @@ try {
 
 ### Accessing the Associated Commerce Instance from Runtime Actions
 
-After an app is associated with a Commerce instance via App Management, the SDK stores the
-Commerce base URL and deployment type (`saas` or `paas`) so any runtime action can retrieve
-them — without custom storage setup or threading parameters through every layer of the call
-stack.
+After an app is associated with a Commerce instance via App Management, the SDK stores the Commerce base URL and deployment type (`saas` or `paas`) so any runtime action can retrieve them — without custom storage setup or threading parameters through every layer of the call stack.
 
 Two helpers are exposed from the root entrypoint:
 
-- `getCommerceClient(params)` — returns a ready-to-use
-  [`AdobeCommerceHttpClient`](../../aio-commerce-lib-api/docs/usage.md). Use this when you
-  need to call the Commerce API.
-- `getCommerceInstance(params)` — returns the raw `{ baseUrl, env }`. Use this when you only
-  need the metadata (e.g. for logging or building a custom client).
+- `getCommerceClient(params)` — returns a ready-to-use [`AdobeCommerceHttpClient`](../../aio-commerce-lib-api/docs/usage.md). Use this when you need to call the Commerce API.
+- `getCommerceInstance(params)` — returns the raw `{ baseUrl, env }`. Use this when you only need the metadata (e.g. for logging or building a custom client).
 
-Both helpers throw `AppNotAssociatedError` if the app is not currently associated, was
-unassociated, or was associated by an older SDK that did not store this data. Re-associating
-the app resolves the error.
+Both helpers throw `AppNotAssociatedError` if the app is not currently associated, was unassociated, or was associated by an older SDK that did not store this data. Re-associating the app resolves the error.
 
 #### Primary pattern — get a ready-to-use client
 
@@ -827,10 +819,10 @@ export async function main(params) {
 
 #### Handling the unassociated state
 
-If your action needs to gracefully handle the case where the app is not associated yet, wrap
-the call in `try/catch`:
+If your action needs to gracefully handle the case where the app is not associated yet, wrap the call in `try/catch`:
 
 ```ts
+import { badRequest, ok } from "@adobe/aio-commerce-lib-core/responses";
 import {
   AppNotAssociatedError,
   getCommerceClient,
@@ -839,48 +831,32 @@ import {
 export async function main(params) {
   try {
     const client = await getCommerceClient(params);
-    return {
-      statusCode: 200,
-      body: await client.get("rest/V1/products").json(),
-    };
+    return ok({ body: await client.get("rest/V1/products").json() });
   } catch (error) {
     if (error instanceof AppNotAssociatedError) {
-      return {
-        statusCode: 400,
-        body: { error: "App is not associated with a Commerce instance." },
-      };
+      return badRequest({
+        body: { message: "App is not associated with a Commerce instance." },
+      });
     }
     throw error;
   }
 }
 ```
 
-The data is managed automatically by the SDK during the app association lifecycle: a
-standalone `association` runtime action (always deployed alongside `app-config`) stores it
-on association and clears it on unassociation. Apps scaffolded with a version of the SDK
-that includes this feature have the `association` action wired in from the start — no extra
-setup beyond your normal deploy.
+The data is managed automatically by the SDK during the app association lifecycle: a standalone `association` runtime action (always deployed alongside `app-config`) stores it on association and clears it on unassociation. Apps scaffolded with a version of the SDK that includes this feature have the `association` action wired in from the start — no extra setup beyond your normal deploy.
 
 #### Adopting association in an existing app
 
-Apps scaffolded before this feature was introduced do not have the `association` action yet.
-After upgrading `@adobe/aio-commerce-lib-app`, regenerate the runtime actions and redeploy so
-the `/association` endpoint exists:
+Apps scaffolded before this feature was introduced do not have the `association` action yet. After upgrading `@adobe/aio-commerce-lib-app`, regenerate the runtime actions and redeploy so the `/association` endpoint exists:
 
 ```bash
 npx @adobe/aio-commerce-lib-app generate actions
 aio app deploy
 ```
 
-A plain `aio app deploy` on its own does not add the action: the `pre-app-build` hook only
-regenerates actions already declared in `ext.config.yaml`. Only `generate actions` (or
-`generate all`) rebuilds the manifest to pick up newly added SDK actions. Until the app is
-redeployed with the endpoint, the App Management client skips the store call and the helpers
-throw `AppNotAssociatedError`.
+A plain `aio app deploy` on its own does not add the action: the `pre-app-build` hook only regenerates actions already declared in `ext.config.yaml`. Only `generate actions` (or `generate all`) rebuilds the manifest to pick up newly added SDK actions. Until the app is redeployed with the endpoint, the App Management client skips the store call and the helpers throw `AppNotAssociatedError`.
 
-For an app that was already associated under the older SDK, re-associate it after redeploying
-so the store call runs and backfills the instance data — a redeploy alone does not populate
-data for an existing association.
+For an app that was already associated under the older SDK, re-associate it after redeploying so the store call runs and backfills the instance data — a redeploy alone does not populate data for an existing association.
 
 ## Best Practices
 
