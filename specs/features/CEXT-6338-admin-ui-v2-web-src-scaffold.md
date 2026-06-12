@@ -265,6 +265,11 @@ if (hasAdminUi(appManifest)) {
 }
 ```
 
+Because each `type: "view"` mass action already declares a `path` in `app.commerce.config.ts`,
+`generateWebSrc` could also generate a page stub for each unique path and pre-populate the
+`routes` array in `app.jsx` accordingly — eliminating the need for manual route wiring when
+multiple view mass actions are configured.
+
 ### Pre-app-build hook
 
 The pre-app-build hook for `backend-ui/2` leverages the same `generateWebSrc` function to guarantee
