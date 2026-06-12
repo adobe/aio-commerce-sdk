@@ -139,6 +139,32 @@ describe("associationRuntimeAction", () => {
       });
       expect(mockSetAssociationData).not.toHaveBeenCalled();
     });
+
+    test("returns 500 when the storage write fails", async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      mockSetAssociationData.mockRejectedValueOnce(new Error("storage down"));
+
+      const action = associationRuntimeAction();
+      const params = createRuntimeActionParams({
+        method: "post",
+        path: "/",
+        body: {
+          commerceBaseUrl: "https://example.com",
+          commerceEnv: "paas",
+        },
+      });
+
+      const result = await action(params);
+
+      expect(result).toMatchObject({
+        type: "error",
+        error: { statusCode: 500 },
+      });
+
+      consoleErrorSpy.mockRestore();
+    });
   });
 
   describe("DELETE /", () => {
@@ -156,6 +182,28 @@ describe("associationRuntimeAction", () => {
         type: "success",
         statusCode: 204,
       });
+    });
+
+    test("returns 500 when clearing the stored data fails", async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      mockClearAssociationData.mockRejectedValueOnce(new Error("storage down"));
+
+      const action = associationRuntimeAction();
+      const params = createRuntimeActionParams({
+        method: "delete",
+        path: "/",
+      });
+
+      const result = await action(params);
+
+      expect(result).toMatchObject({
+        type: "error",
+        error: { statusCode: 500 },
+      });
+
+      consoleErrorSpy.mockRestore();
     });
   });
 });
