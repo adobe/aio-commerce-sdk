@@ -12,12 +12,10 @@
 
 import { CommerceSdkErrorBase } from "@adobe/aio-commerce-lib-core/error";
 
+import type { CommerceSdkErrorBaseOptions } from "@adobe/aio-commerce-lib-core/error";
+
 const DEFAULT_MESSAGE =
   "App is not associated with a Commerce instance. Re-associate the app to resolve this error.";
-
-type AppNotAssociatedErrorOptions = ErrorOptions & {
-  traceId?: string;
-};
 
 /**
  * Thrown when a runtime action calls `getCommerceInstance` or `getCommerceClient`
@@ -45,7 +43,7 @@ type AppNotAssociatedErrorOptions = ErrorOptions & {
 export class AppNotAssociatedError extends CommerceSdkErrorBase {
   public constructor(
     message: string = DEFAULT_MESSAGE,
-    options?: AppNotAssociatedErrorOptions,
+    options?: CommerceSdkErrorBaseOptions,
   ) {
     super(message, options);
   }
