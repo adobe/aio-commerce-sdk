@@ -70,7 +70,7 @@ describe("system-repository", () => {
       expect(mockState.put).not.toHaveBeenCalled();
     });
 
-    test("does not throw if cache write fails", async () => {
+    test("invalidates the cache entry without throwing when the cache write fails", async () => {
       mockState.put.mockRejectedValueOnce(new Error("cache write failed"));
       const { setSystemConfigByKey } = await import(
         "#modules/configuration/system/system-repository"
@@ -80,7 +80,25 @@ describe("system-repository", () => {
         setSystemConfigByKey("system.association", { foo: "bar" }),
       ).resolves.toBeUndefined();
 
+      // Files remain the source of truth, and the stale cache entry is dropped
+      // so it can't shadow the freshly persisted value on the next read.
       expect(mockFiles.write).toHaveBeenCalled();
+      expect(mockState.delete).toHaveBeenCalledWith("system.association");
+    });
+
+    test("clears both files and state when value is undefined", async () => {
+      const { setSystemConfigByKey } = await import(
+        "#modules/configuration/system/system-repository"
+      );
+
+      await setSystemConfigByKey("system.association", undefined);
+
+      expect(mockFiles.delete).toHaveBeenCalledWith(
+        "system/system.association.json",
+      );
+      expect(mockState.delete).toHaveBeenCalledWith("system.association");
+      expect(mockFiles.write).not.toHaveBeenCalled();
+      expect(mockState.put).not.toHaveBeenCalled();
     });
   });
 
@@ -159,6 +177,41 @@ describe("system-repository", () => {
       const result = await getSystemConfigByKey("system.association");
 
       expect(result).toBeNull();
+    });
+
+    test("falls back to files when the cached value is corrupt JSON", async () => {
+      const data = { baseUrl: "https://example.com", env: "paas" };
+      mockState.get.mockResolvedValue({ value: "{not valid json" });
+      mockFiles.read.mockResolvedValue(Buffer.from(JSON.stringify(data)));
+
+      const { getSystemConfigByKey } = await import(
+        "#modules/configuration/system/system-repository"
+      );
+
+      const result = await getSystemConfigByKey("system.association");
+
+      expect(result).toEqual(data);
+      expect(mockFiles.read).toHaveBeenCalledWith(
+        "system/system.association.json",
+      );
+      expect(mockState.put).toHaveBeenCalledWith(
+        "system.association",
+        JSON.stringify(data),
+      );
+    });
+
+    test("returns null when the persisted file holds corrupt JSON", async () => {
+      mockState.get.mockResolvedValue({ value: null });
+      mockFiles.read.mockResolvedValue(Buffer.from("{not valid json"));
+
+      const { getSystemConfigByKey } = await import(
+        "#modules/configuration/system/system-repository"
+      );
+
+      const result = await getSystemConfigByKey("system.association");
+
+      expect(result).toBeNull();
+      expect(mockState.put).not.toHaveBeenCalled();
     });
   });
 });

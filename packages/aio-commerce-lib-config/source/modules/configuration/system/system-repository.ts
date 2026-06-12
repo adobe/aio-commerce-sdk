@@ -23,6 +23,27 @@ function getSystemFilePath(key: string): string {
 }
 
 /**
+ * Parses a stored JSON payload, returning `undefined` instead of throwing when
+ * the payload is corrupt. A malformed entry must never crash a read: callers
+ * treat `undefined` as unusable and fall back to the source of truth. No JSON
+ * text parses to `undefined`, so it is an unambiguous failure sentinel.
+ */
+function safeJsonParse<T>(raw: string): T | undefined {
+  try {
+    return JSON.parse(raw) as T;
+  } catch (error) {
+    const logger = getLogger(
+      "@adobe/aio-commerce-lib-config:system-repository",
+    );
+    logger.debug(
+      "Failed to parse stored system config payload:",
+      error instanceof Error ? error.message : String(error),
+    );
+    return;
+  }
+}
+
+/**
  * Reads a raw payload from the `aio-lib-state` cache. Returns `null` on a cache
  * miss or any read failure, so callers can transparently fall back to files.
  */
@@ -39,6 +60,10 @@ async function readFromCache(key: string): Promise<string | null> {
 /**
  * Writes a payload to the `aio-lib-state` cache. Cache failures are swallowed
  * (logged at debug) since `aio-lib-files` remains the source of truth.
+ *
+ * On a write failure the prior entry is invalidated rather than left in place:
+ * the cache-first read path trusts a cache hit unconditionally, so a stale
+ * value must never be allowed to shadow the freshly persisted source of truth.
  */
 async function writeToCache(key: string, payload: string): Promise<void> {
   const logger = getLogger("@adobe/aio-commerce-lib-config:system-repository");
@@ -47,9 +72,10 @@ async function writeToCache(key: string, payload: string): Promise<void> {
     await state.put(key, payload);
   } catch (error) {
     logger.debug(
-      "Failed to cache system config:",
+      "Failed to cache system config; invalidating cache entry:",
       error instanceof Error ? error.message : String(error),
     );
+    await deleteFromCache(key);
   }
 }
 
@@ -117,17 +143,17 @@ async function deleteFromFiles(key: string): Promise<void> {
  * Stores or clears a system configuration value by key.
  *
  * Persists the value to `aio-lib-files` (source of truth) and writes it to
- * `aio-lib-state` as a performance cache. Passing `null` clears the entry from
- * both storage layers.
+ * `aio-lib-state` as a performance cache. Passing `null` or `undefined` clears
+ * the entry from both storage layers.
  *
  * @param key - The system configuration key (e.g. `"system.association"`).
- * @param value - The value to store, or `null` to clear the entry.
+ * @param value - The value to store, or `null`/`undefined` to clear the entry.
  */
 export async function setSystemConfigByKey(
   key: string,
   value: unknown | null,
 ): Promise<void> {
-  if (value === null) {
+  if (value === null || value === undefined) {
     await deleteFromFiles(key);
     await deleteFromCache(key);
     return;
@@ -151,7 +177,11 @@ export async function setSystemConfigByKey(
 export async function getSystemConfigByKey<T>(key: string): Promise<T | null> {
   const cached = await readFromCache(key);
   if (cached !== null) {
-    return JSON.parse(cached) as T;
+    const parsed = safeJsonParse<T>(cached);
+    if (parsed !== undefined) {
+      return parsed;
+    }
+    // Corrupt cache entry: fall through to the source of truth.
   }
 
   const persisted = await readFromFiles(key);
@@ -159,7 +189,12 @@ export async function getSystemConfigByKey<T>(key: string): Promise<T | null> {
     return null;
   }
 
+  const parsed = safeJsonParse<T>(persisted);
+  if (parsed === undefined) {
+    return null;
+  }
+
   // Re-cache for subsequent reads
   await writeToCache(key, persisted);
-  return JSON.parse(persisted) as T;
+  return parsed;
 }
