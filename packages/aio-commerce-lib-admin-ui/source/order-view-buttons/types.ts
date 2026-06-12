@@ -22,4 +22,4 @@ export type OrderViewButtonRequest = v.InferOutput<
 export type OrderViewButtonSuccessBody = Record<string, never>;
 
 /** Failure body returned to Commerce when a worker order view button handler fails. */
-export type OrderViewButtonErrorBody = { error: string };
+export type OrderViewButtonErrorBody = { message: string };

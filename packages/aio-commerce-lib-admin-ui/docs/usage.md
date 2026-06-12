@@ -154,7 +154,7 @@ Commerce renders `notifications.success` from the registration as the toast body
 
 ##### Building an error response
 
-`orderViewButtonErrorResponse` returns an HTTP error response with a `{ error }` body. Commerce uses the HTTP status code to distinguish success from failure.
+`orderViewButtonErrorResponse` returns an HTTP error response with a `{ message }` body. Commerce uses the HTTP status code to distinguish success from failure.
 
 ```typescript
 import { orderViewButtonErrorResponse } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
@@ -199,28 +199,15 @@ return okMassActionResponse({ exported: ids.length });
 
 #### Building an error response
 
-Return one of the typed error builders when the action fails. Commerce treats any
+Return `massActionErrorResponse` when the action fails. Commerce treats any
 non-2xx status as failure and surfaces the `notifications.error` message from the app
-config to the user. The response body is always `{ error: string }`.
-
-| Builder                                 | Status |
-| --------------------------------------- | ------ |
-| `badRequestMassActionResponse`          | 400    |
-| `unauthorizedMassActionResponse`        | 401    |
-| `forbiddenMassActionResponse`           | 403    |
-| `notFoundMassActionResponse`            | 404    |
-| `internalServerErrorMassActionResponse` | 500    |
+config to the user. The response body is always `{ message: string }`.
 
 ```typescript
-import {
-  internalServerErrorMassActionResponse,
-  notFoundMassActionResponse,
-} from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+import { massActionErrorResponse } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
 
-return notFoundMassActionResponse("No records matched the given IDs");
-return internalServerErrorMassActionResponse(
-  "Could not reach the export service",
-);
+return massActionErrorResponse(404, "No records matched the given IDs");
+return massActionErrorResponse(500, "Could not reach the export service");
 ```
 
 ### Menu Constants
