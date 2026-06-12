@@ -20,6 +20,7 @@ import type {
   SuccessResponse,
 } from "@adobe/aio-commerce-lib-core/responses";
 import type {
+  OrderViewButtonErrorBody,
   OrderViewButtonRequest,
   OrderViewButtonSuccessBody,
 } from "./types";
@@ -72,7 +73,7 @@ export function okOrderViewButtonResponse(): SuccessResponse<OrderViewButtonSucc
  * Commerce uses the HTTP status code to distinguish success from failure.
  *
  * @param statusCode - The HTTP status code to return.
- * @param errorMessage - Error message included in the response body as `{ error }`.
+ * @param errorMessage - Error message included in the response body as `{ message }`.
  *
  * @example
  * ```ts
@@ -82,7 +83,6 @@ export function okOrderViewButtonResponse(): SuccessResponse<OrderViewButtonSucc
 export function orderViewButtonErrorResponse(
   statusCode: number,
   errorMessage: string,
-): ErrorResponse {
-  // @ts-expect-error — Commerce's wire contract uses `{ error }` only; lib-core requires `message`, which is not part of this format.
-  return buildErrorResponse(statusCode, { body: { error: errorMessage } });
+): ErrorResponse<OrderViewButtonErrorBody> {
+  return buildErrorResponse(statusCode, { body: { message: errorMessage } });
 }

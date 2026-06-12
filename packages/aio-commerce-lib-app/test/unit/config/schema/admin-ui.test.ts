@@ -54,7 +54,7 @@ describe("AdminUiSchema", () => {
         "boolean",
         "date",
         "datetime",
-        "decimal",
+        "float",
         "integer",
         "string",
       ] as const) {
@@ -381,7 +381,7 @@ describe("AdminUiSchema", () => {
   });
 
   describe("invalid cases", () => {
-    test("float type is rejected", () => {
+    test("decimal type is rejected", () => {
       const result = v.safeParse(AdminUiSchema, {
         order: {
           gridColumns: {
@@ -389,7 +389,7 @@ describe("AdminUiSchema", () => {
             description: "Adds a column",
             runtimeAction: "orders/fetch",
             columns: [
-              { id: "col", label: "Col", type: "float", align: "left" },
+              { id: "col", label: "Col", type: "decimal", align: "left" },
             ],
           },
         },

@@ -60,7 +60,7 @@ const ColumnTypeSchema = v.picklist([
   "boolean",
   "date",
   "datetime",
-  "decimal",
+  "float",
   "integer",
   "string",
 ]);
