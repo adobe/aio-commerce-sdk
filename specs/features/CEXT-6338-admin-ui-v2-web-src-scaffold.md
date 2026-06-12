@@ -101,20 +101,20 @@ The generated tree under `src/commerce-backend-ui-2/`:
 ```
 web-src/
   index.html
+  index.css
   src/
     app.jsx
     components/
       main-page.jsx
-      extension-page.jsx
 ```
 
 The scaffold is split into two zones with different regeneration semantics:
 
-- **SDK-managed**: `index.html`, `src/app.jsx`, and `src/components/main-page.jsx` are always
-  regenerated on every `generate all` and pre-app-build run. They contain no user logic —
-  developers should not modify them.
-- **User-managed**: `src/components/extension-page.jsx` is generated once and never touched again.
-  This is where developers write their UI.
+- **SDK-managed**: `index.html` and `src/app.jsx` are always regenerated on every `generate all`
+  and pre-app-build run. They contain no user logic — developers should not modify them.
+- **User-managed**: `index.css` and `src/components/main-page.jsx` are generated once and never
+  touched again. This is where developers write their UI and declare their styles. CSS composition
+  via `@import` is the recommended way to add additional stylesheets.
 
 `app.jsx` is the webpack entry point and the equivalent of `App.js` in the raw Commerce sample. It
 reads `metadata.id` from `#app.commerce.config`, imports `MainPage` as the index route component,
@@ -135,8 +135,7 @@ createExtensionApp({
 sample: the `HashRouter`, Spectrum 2 `Provider`, `ErrorBoundary` with a default fallback, UIX
 `register()` call, and the `runtime.on('configuration')` and `runtime.on('history')` EC shell
 event handlers. Developers who need additional routes — for example, separate paths for different mass actions —
-extend the `routes` array in `app.jsx`. `MainPage` is imported here and rendered as the index
-route; it is the SDK-managed bridge between the routing layer and `ExtensionPage`. A real app with
+extend the `routes` array in `app.jsx`. `MainPage` is imported here and rendered as the index route. A real app with
 multiple mass actions typically looks like:
 
 ```jsx
@@ -157,43 +156,26 @@ createExtensionApp({
 ```
 
 Each `path` here corresponds to the hash fragment declared in `app.commerce.config.ts` — for
-example `path: "#/bulk-cancel"` maps to the `"bulk-cancel"` route above. `BulkCancelPage` and
-`ArchivePage` are user-created components; only `MainPage` is SDK-managed.
+example `path: "#/bulk-cancel"` maps to the `"bulk-cancel"` route above. `BulkCancelPage` and `ArchivePage` are additional user-created components.
 
-`main-page.jsx` is SDK-managed: it resolves shared context and forwards the values to
-`<ExtensionPage />`, the component developers fill in:
+`main-page.jsx` is user-managed — generated once and the starting point for all custom UI. It
+is pre-wired with `useSharedContext` so context values are immediately available:
 
 ```jsx
 import { useSharedContext } from "@adobe/aio-commerce-lib-admin-ui/web";
-import { ExtensionPage } from "./extension-page";
+import { View } from "@react-spectrum/s2";
 
 export function MainPage() {
   const { extensionId, imsToken, imsOrgId } = useSharedContext();
-  return (
-    <ExtensionPage
-      extensionId={extensionId}
-      imsToken={imsToken}
-      imsOrgId={imsOrgId}
-    />
-  );
-}
-```
-
-`extension-page.jsx` is the user-managed stub — generated once and the starting point for all
-custom UI:
-
-```jsx
-import { View } from "@react-spectrum/s2";
-
-export function ExtensionPage({ extensionId, imsToken, imsOrgId }) {
   return <View>{/* Add your UI here */}</View>;
 }
 ```
 
-`index.html` is the entry point loaded by the `view` operation URL.
+`index.html` is the entry point loaded by the `view` operation URL. It references `index.css`,
+the user-managed global stylesheet.
 
-On subsequent runs, `generateWebSrc` regenerates the SDK-managed files and skips
-`extension-page.jsx` if it already exists.
+On subsequent runs, `generateWebSrc` regenerates the SDK-managed files and skips `index.css` and
+`main-page.jsx` if they already exist.
 
 ## Design
 
@@ -242,13 +224,13 @@ config parsing.
 `generateActionFiles()` and `updateExtConfig()`. It applies two distinct strategies depending on
 which zone each file belongs to:
 
-**SDK-managed files** (`index.html`, `src/app.jsx`, `src/components/main-page.jsx`) — always
-written, overwriting any previous version. These files are pure boilerplate; regenerating them
-keeps the scaffold in sync with the current `lib-admin-ui/web` API without requiring developer
-intervention.
+**SDK-managed files** (`index.html`, `src/app.jsx`) — always written, overwriting any previous
+version. These files are pure boilerplate; regenerating them keeps the scaffold in sync with the
+current `lib-admin-ui/web` API without requiring developer intervention.
 
-**User-managed files** (`src/components/extension-page.jsx`) — written only if the file does not
-already exist. Once a developer has modified this file, subsequent runs leave it untouched.
+**User-managed files** (`index.css`, `src/components/main-page.jsx`) — written only if the file
+does not already exist. Once a developer has modified these files, subsequent runs leave them
+untouched.
 
 All files are static copies from the package's template directory — no interpolation is needed
 because `app.jsx` reads `metadata.id` from `#app.commerce.config` at runtime.
@@ -258,12 +240,12 @@ into the app using the package manager detected from the app's lock file.
 
 ### Scaffold contents
 
-| File                                | Zone         | Role                                                                                              |
-| ----------------------------------- | ------------ | ------------------------------------------------------------------------------------------------- |
-| `index.html`                        | SDK-managed  | Entry point loaded by the `view` operation URL; mounts the React app                              |
-| `src/app.jsx`                       | SDK-managed  | Reads `metadata.id` from `#app.commerce.config`; calls `createExtensionApp` with a default route  |
-| `src/components/main-page.jsx`      | SDK-managed  | Uses `useSharedContext()` from `lib-admin-ui/web`; forwards context values to `<ExtensionPage />` |
-| `src/components/extension-page.jsx` | User-managed | Stub entry point for custom UI; receives `extensionId`, `imsToken`, `imsOrgId` as props           |
+| File                           | Zone         | Role                                                                                                             |
+| ------------------------------ | ------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `index.html`                   | SDK-managed  | Entry point loaded by the `view` operation URL; mounts the React app; references `index.css`                     |
+| `src/app.jsx`                  | SDK-managed  | Reads `metadata.id` from `#app.commerce.config`; calls `createExtensionApp` with a default route                 |
+| `index.css`                    | User-managed | Global stylesheet; generated once; developers add styles directly or compose additional sheets via CSS `@import` |
+| `src/components/main-page.jsx` | User-managed | Stub entry point for custom UI; pre-wired with `useSharedContext()` to access shared context values              |
 
 ### `generate all` integration
 
@@ -306,11 +288,21 @@ created.
 
 ## Drawbacks
 
-The user-managed zone (`extension-page.jsx`) is never regenerated after initial creation. If the
-props it receives need to change — for example because `useSharedContext()` exposes an additional
-value — existing apps will not receive the update automatically and developers must migrate
-manually. Because the substance of the scaffold lives in the library, these interface-breaking
-changes should be rare in practice.
+The user-managed zone (`main-page.jsx` and `index.css`) is never regenerated after initial
+creation. If `useSharedContext()` exposes an additional value, existing apps will not receive the
+update automatically and developers must add the new value manually. Because the substance of the
+scaffold lives in the library, these interface-breaking changes should be rare in practice.
+
+SDK-managed files (`index.html` and `src/app.jsx`) are unconditionally overwritten on every
+`generate all` and pre-app-build run. There is no mechanism to opt out of scaffolding: manual
+edits to SDK-managed files are silently discarded on the next run. Developers who need a setup
+that diverges from the scaffold have no supported path today. Adding an opt-out mechanism is
+deferred to a future iteration when a concrete need arises.
+
+The current design explicitly ties `web-src` to React: `createExtensionApp` mounts a `HashRouter`
+with a Spectrum 2 `Provider`, `useSharedContext` is a React hook, and the scaffold ships `.jsx`
+files. Apps that want to use a different framework (Vue, Svelte, vanilla JS) have no supported
+path.
 
 ## Rationale and alternatives
 
@@ -345,3 +337,6 @@ manual edits, and establishing a canonical starting point that benefits from lib
   can register multiple hash routes without wiring `HashRouter` manually.
 - As more `backend-ui/2` features use the shared context, `useSharedContext` could be extended to
   return additional context values (e.g., `locale`, `imsProfile`) with typed access.
+- An opt-out mechanism for SDK-managed file generation could be added when a concrete need arises
+  — for example, a flag in `app.commerce.config.ts` that suppresses `generateWebSrc` for apps
+  that manage their own `web-src/` setup.
