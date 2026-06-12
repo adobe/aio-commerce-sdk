@@ -188,14 +188,14 @@ handling across multiple installed apps is Commerce's responsibility.
 
 ### Column types
 
-| `type` value | Description                          |
-| ------------ | ------------------------------------ |
-| `boolean`    | Boolean value                        |
-| `date`       | Date (no time component)             |
-| `datetime`   | Date and time                        |
-| `decimal`    | Decimal number (replaces v1 `float`) |
-| `integer`    | Integer                              |
-| `string`     | Text                                 |
+| `type` value | Description              |
+| ------------ | ------------------------ |
+| `boolean`    | Boolean value            |
+| `date`       | Date (no time component) |
+| `datetime`   | Date and time            |
+| `float`      | Floating-point number    |
+| `integer`    | Integer                  |
+| `string`     | Text                     |
 
 ### Migration from v1
 
@@ -205,7 +205,7 @@ handling across multiple installed apps is Commerce's responsibility.
 | `data.meshId`                            | `runtimeAction`              | Operation name declared in `app.config.yaml`, not a Mesh hash |
 | `properties`                             | `columns`                    | Array of column declarations                                  |
 | `properties[].columnId`                  | `columns[].id`               | Renamed                                                       |
-| `properties[].type: "float"`             | `columns[].type: "decimal"`  | Renamed                                                       |
+| `properties[].type: "float"`             | `columns[].type: "float"`    | Same type name                                                |
 | _(absent)_                               | `columns[].type: "datetime"` | New type in v2                                                |
 | _(absent)_                               | `label`, `description`       | New block-level metadata for App Management installation UI   |
 | Extension point: `commerce/backend-ui/1` | `commerce/backend-ui/2`      | Required change in `app.config.yaml` and `install.yaml`       |
@@ -244,7 +244,7 @@ const GridColumnSchema = v.object({
     "boolean",
     "date",
     "datetime",
-    "decimal",
+    "float",
     "integer",
     "string",
   ]),
