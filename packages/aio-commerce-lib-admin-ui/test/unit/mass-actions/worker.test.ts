@@ -14,13 +14,9 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { describe, expect, it } from "vitest";
 
 import {
-  badRequestMassActionResponse,
-  forbiddenMassActionResponse,
-  internalServerErrorMassActionResponse,
-  notFoundMassActionResponse,
+  massActionErrorResponse,
   okMassActionResponse,
   parseMassActionRequest,
-  unauthorizedMassActionResponse,
 } from "#mass-actions/worker/presets";
 
 import type { MassActionGridType } from "#mass-actions/worker/types";
@@ -96,23 +92,17 @@ describe("okMassActionResponse", () => {
   });
 });
 
-describe.each([
-  { fn: badRequestMassActionResponse, statusCode: 400 },
-  { fn: unauthorizedMassActionResponse, statusCode: 401 },
-  { fn: forbiddenMassActionResponse, statusCode: 403 },
-  { fn: notFoundMassActionResponse, statusCode: 404 },
-  { fn: internalServerErrorMassActionResponse, statusCode: 500 },
-])("$fn.name", ({ fn, statusCode }) => {
-  it(`returns an error response with status ${statusCode}`, () => {
-    const response = fn("something went wrong");
+describe("massActionErrorResponse", () => {
+  it("returns an error response with the given status code", () => {
+    const response = massActionErrorResponse(422, "something went wrong");
     expect(response.type).toBe("error");
-    expect(response.error.statusCode).toBe(statusCode);
+    expect(response.error.statusCode).toBe(422);
   });
 
-  it("puts the errorMessage in the error field of the body", () => {
-    const response = fn("could not reach service");
+  it("puts the errorMessage in the message field of the body", () => {
+    const response = massActionErrorResponse(500, "could not reach service");
     expect(response.error.body).toMatchObject({
-      error: "could not reach service",
+      message: "could not reach service",
     });
   });
 });
