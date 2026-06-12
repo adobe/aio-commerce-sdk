@@ -22,6 +22,8 @@ import {
   logger,
 } from "@aio-commerce-sdk/common-utils/actions";
 
+import { filterSchemaByEnv } from "#config/lib/environment";
+
 import {
   GetConfigurationQuerySchema,
   PatchConfigBodySchema,
@@ -35,7 +37,6 @@ import type {
 } from "@adobe/aio-commerce-lib-config";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
-import type { CommerceEnv } from "./schema";
 
 /** The arguments required to create the runtime action for the config action. */
 export type ConfigActionFactoryArgs = {
@@ -55,23 +56,6 @@ interface ConfigActionContext extends BaseContext {
 
 // Placeholder value for password fields.
 const MASKED_PASSWORD_VALUE = "*****";
-
-/**
- * Filters a business configuration schema to the fields applicable to the
- * given Commerce environment. Fields without an `env` property apply to all
- * environments and are always included.
- *
- * @param schema - The business configuration schema to filter.
- * @param env - The Commerce environment to filter by.
- */
-function filterSchemaByEnv(
-  schema: BusinessConfigSchema,
-  env: CommerceEnv,
-): BusinessConfigSchema {
-  return schema.filter(
-    (field) => field.env === undefined || field.env.includes(env),
-  );
-}
 
 /**
  * Filters password fields from the configuration values.

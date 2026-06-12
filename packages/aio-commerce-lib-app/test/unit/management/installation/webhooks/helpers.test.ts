@@ -93,6 +93,42 @@ describe("createWebhookSubscriptions", () => {
     expect(result.subscribedWebhooks).toHaveLength(config.webhooks.length);
   });
 
+  test("skips webhooks scoped to a different environment", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+    const context = makeContext(
+      subscribeWebhook,
+      vi.fn().mockResolvedValue([]),
+      {
+        ...DEFAULT_PARAMS,
+        AIO_COMMERCE_API_FLAVOR: "saas",
+      },
+    );
+
+    const config = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          label: "PaaS only",
+          env: ["paas"],
+          webhook: { hook_name: "paas_only" },
+        }),
+        createMockRuntimeWebhookEntry({
+          label: "All envs",
+          webhook: { hook_name: "all_envs" },
+        }),
+      ],
+    });
+
+    const result = await createWebhookSubscriptions(config, context);
+
+    expect(subscribeWebhook).toHaveBeenCalledTimes(1);
+    expect(result.subscribedWebhooks).toHaveLength(1);
+    expect(subscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hook_name: expect.stringContaining("all_envs"),
+      }),
+    );
+  });
+
   test("passes webhook.url directly when it is explicitly set", async () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
     const context = makeContext(subscribeWebhook);
@@ -824,6 +860,29 @@ describe("validateWebhookConflicts", () => {
     );
     expect(getWebhookList).not.toHaveBeenCalled();
   });
+
+  test("ignores modification webhooks scoped to a different environment", async () => {
+    const getWebhookList = vi.fn().mockResolvedValue([]);
+    const context = makeContext(vi.fn(), getWebhookList, {
+      ...DEFAULT_PARAMS,
+      AIO_COMMERCE_API_FLAVOR: "saas",
+    });
+
+    const config = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          label: "PaaS only modification",
+          category: "modification",
+          env: ["paas"],
+        }),
+      ],
+    });
+
+    await expect(validateWebhookConflicts(config, context)).resolves.toEqual(
+      [],
+    );
+    expect(getWebhookList).not.toHaveBeenCalled();
+  });
 });
 
 /** Minimal valid IMS params shared across resolveDeveloperConsoleOAuthCredentials tests. */
@@ -962,6 +1021,35 @@ describe("deleteWebhookSubscriptions", () => {
         hook_name: "test_app_webhooks_order_created",
       }),
     );
+    expect(result.unsubscribedWebhooks).toHaveLength(1);
+  });
+
+  test("does not filter by environment (offboards items scoped to other environments)", async () => {
+    const unsubscribeWebhook = vi.fn().mockResolvedValue(null);
+    const existingWebhook = createMockExistingCommerceWebhook();
+    const getWebhookList = vi.fn().mockResolvedValue([existingWebhook]);
+    // Install ran against "saas" but the webhook is scoped to "paas"; uninstall must
+    // still offboard it (offboarding is environment-agnostic and idempotent).
+    const context = makeContext(
+      vi.fn(),
+      getWebhookList,
+      { ...DEFAULT_PARAMS, AIO_COMMERCE_API_FLAVOR: "saas" },
+      unsubscribeWebhook,
+    );
+
+    const config = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          label: "PaaS only",
+          category: "modification",
+          env: ["paas"],
+        }),
+      ],
+    });
+
+    const result = await deleteWebhookSubscriptions(config, context);
+
+    expect(unsubscribeWebhook).toHaveBeenCalledTimes(1);
     expect(result.unsubscribedWebhooks).toHaveLength(1);
   });
 

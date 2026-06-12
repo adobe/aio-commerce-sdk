@@ -15,6 +15,7 @@ import type {
   IntegrationAuthParams,
   IntegrationAuthProvider,
 } from "@adobe/aio-commerce-lib-auth";
+import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
 import type { Options } from "ky";
 import type { ImsAuthParamsWithOptionalScopes } from "#utils/auth/ims-scopes";
 
@@ -53,8 +54,13 @@ export type CommerceHttpClientConfig =
   | CommerceHttpClientConfigPaaS
   | CommerceHttpClientConfigSaaS;
 
-/** Defines the flavor of a Commerce instance. */
-export type CommerceFlavor = CommerceHttpClientConfig["flavor"];
+/**
+ * Defines the flavor of a Commerce instance.
+ *
+ * Aliases the shared `CommerceEnv` from `@adobe/aio-commerce-lib-core/commerce`
+ * so the `"paas" | "saas"` union has a single source of truth across the SDK.
+ */
+export type CommerceFlavor = CommerceEnv;
 
 /** Defines the configuration required to build an Adobe Commerce HTTP client for SaaS. */
 export type SaaSClientParams = {

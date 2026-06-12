@@ -26,6 +26,7 @@ export default defineConfig({
             // rules: [ // optional: filter when the action fires
             //   { field: "order_total", operator: "greaterThan", value: "100" },
             // ],
+            // env: ["saas"], // optional: scope to Commerce environments ("paas" | "saas"); omitted = all
             runtimeActions: ["my-package/handle-order-placed"], // <package>/<action>
           },
         ],
@@ -43,6 +44,7 @@ export default defineConfig({
             name: "erp.inventory_updated", // [\w\-_.]+ pattern; max 180 chars
             label: "Inventory Updated", // max 100 chars
             description: "Triggered when inventory changes in the ERP system.", // max 255 chars
+            // env: ["paas"], // optional: scope to Commerce environments ("paas" | "saas"); omitted = all
             runtimeActions: ["my-package/handle-inventory-updated"], // <package>/<action>
           },
         ],

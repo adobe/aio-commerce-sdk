@@ -198,7 +198,7 @@ describe("scopeTreeRuntimeAction", () => {
           path: "/commerce",
           body: {
             commerceBaseUrl: "https://commerce.example.com",
-            commerceEnv: "stage",
+            commerceEnv: "paas",
           },
           AIO_COMMERCE_AUTH_IMS_TOKEN: "ims-token",
         }),
@@ -217,7 +217,7 @@ describe("scopeTreeRuntimeAction", () => {
           path: "/commerce",
           body: {
             commerceBaseUrl: "https://commerce.example.com",
-            commerceEnv: "stage",
+            commerceEnv: "paas",
           },
         }),
       );
@@ -237,7 +237,7 @@ describe("scopeTreeRuntimeAction", () => {
           path: "/commerce",
           body: {
             commerceBaseUrl: "https://commerce.example.com",
-            commerceEnv: "stage",
+            commerceEnv: "paas",
           },
         }),
       );
@@ -258,7 +258,7 @@ describe("scopeTreeRuntimeAction", () => {
           path: "/commerce",
           body: {
             commerceBaseUrl: "https://commerce.example.com",
-            commerceEnv: "stage",
+            commerceEnv: "paas",
           },
         }),
       );
@@ -278,7 +278,7 @@ describe("scopeTreeRuntimeAction", () => {
           path: "/commerce",
           body: {
             commerceBaseUrl: "https://commerce.example.com",
-            commerceEnv: "stage",
+            commerceEnv: "paas",
           },
         }),
       );

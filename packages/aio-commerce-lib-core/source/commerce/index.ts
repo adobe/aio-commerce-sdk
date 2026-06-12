@@ -10,16 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
-import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
-import * as v from "valibot";
+/**
+ * This module exports the shared Commerce environment schema used to scope SDK
+ * items (configuration fields, webhooks, events) to specific Commerce environments.
+ * @packageDocumentation
+ */
 
-import { AppDataSchema } from "#management/installation/schema";
-
-/** Request body for POST / and POST /validation (shared shape) */
-export const InstallationRequestBodySchema = v.object({
-  appData: AppDataSchema,
-  commerceBaseUrl: v.string(),
-  commerceEnv: CommerceEnvSchema,
-  ioEventsUrl: v.string(),
-  ioEventsEnv: v.string(),
-});
+// biome-ignore lint/performance/noBarrelFile: export as part of the Public API
+export {
+  COMMERCE_ENVS,
+  type CommerceEnv,
+  CommerceEnvArraySchema,
+  CommerceEnvSchema,
+} from "./env";

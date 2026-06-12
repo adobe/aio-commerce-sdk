@@ -2,7 +2,7 @@
 
 - **Ticket:** [CEXT-6269](https://jira.corp.adobe.com/browse/CEXT-6269)
 - **Created:** 2026-06-03
-- [ ] **Implemented**
+- [x] **Implemented**
 
 ## Summary
 
@@ -144,13 +144,13 @@ which already uses valibot. A new additive subpath export (e.g. `./commerce`) pr
 
 - `COMMERCE_ENVS = ["paas", "saas"] as const`
 - `type CommerceEnv = (typeof COMMERCE_ENVS)[number]`
-- `commerceEnvSchema` — a picklist over `COMMERCE_ENVS`
-- `commerceEnvArraySchema` — a non-empty `v.array(commerceEnvSchema)`
+- `CommerceEnvSchema` — a picklist over `COMMERCE_ENVS`
+- `CommerceEnvArraySchema` — a non-empty `v.array(CommerceEnvSchema)`
 
-`commerceEnvSchema`/`commerceEnvArraySchema` are exported as **bare schema constants** (env
+`CommerceEnvSchema`/`CommerceEnvArraySchema` are exported as **bare schema constants** (env
 validators carry fixed messages — "Expected one of: …", "must contain at least one commerce
 environment" — so there is no field `name` to parameterize). Call sites apply the optional
-wrapper themselves: `env: v.optional(commerceEnvArraySchema)`.
+wrapper themselves: `env: v.optional(CommerceEnvArraySchema)`.
 
 Because lib-api depends on lib-core, `CommerceFlavor` becomes an **alias** of lib-core's
 `CommerceEnv` — so there is one type, not two kept in sync, and no drift-assertion is needed.
@@ -160,11 +160,11 @@ from lib-core) so nothing is removed from the public surface and the bump stays 
 
 ### Schema placement
 
-- **Events (per-event):** add `env: v.optional(commerceEnvArraySchema)` to `BaseEventSchema`
+- **Events (per-event):** add `env: v.optional(CommerceEnvArraySchema)` to `BaseEventSchema`
   in `packages/aio-commerce-lib-app/source/config/schema/eventing.ts`, so both
   `CommerceEventSchema` and `ExternalEventSchema` inherit it. The inferred `CommerceEvent`,
   `ExternalEvent`, and `AppEvent` types pick up `env?` automatically.
-- **Webhooks (per-entry):** add `env: v.optional(commerceEnvArraySchema)` to both webhook
+- **Webhooks (per-entry):** add `env: v.optional(CommerceEnvArraySchema)` to both webhook
   entry schemas in `packages/aio-commerce-lib-app/source/config/schema/webhooks.ts`
   (`WebhookEntryWithRuntimeActionSchema`, `WebhookEntryWithUrlSchema`), alongside the
   existing `label` / `description` / `category` fields.
