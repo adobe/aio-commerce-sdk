@@ -247,6 +247,10 @@ into the app using the package manager detected from the app's lock file.
 | `index.css`                    | User-managed | Global stylesheet; generated once; developers add styles directly or compose additional sheets via CSS `@import` |
 | `src/components/main-page.jsx` | User-managed | Stub entry point for custom UI; pre-wired with `useSharedContext()` to access shared context values              |
 
+The scaffold keeps all generated components under `src/components/`. A natural extension would be
+to introduce a `src/pages/` directory for route-level components and reserve `src/components/` for
+shared UI primitives, separating routing concerns from reusable elements.
+
 ### `generate all` integration
 
 `generateWebSrc` is an internal function with no user-facing subcommand. It is called from
