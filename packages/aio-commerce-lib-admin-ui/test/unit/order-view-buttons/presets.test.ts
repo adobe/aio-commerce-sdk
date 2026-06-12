@@ -96,13 +96,13 @@ describe("orderViewButtonErrorResponse", () => {
     expect(response.error.statusCode).toBe(500);
   });
 
-  it("puts the error message in the error field of the body", () => {
+  it("puts the error message in the message field of the body", () => {
     const response = orderViewButtonErrorResponse(
       500,
       "Could not reach inventory service",
     );
     expect(response.error.body).toMatchObject({
-      error: "Could not reach inventory service",
+      message: "Could not reach inventory service",
     });
   });
 
