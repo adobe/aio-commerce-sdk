@@ -1,0 +1,53 @@
+# Admin Menu (`commerce/backend-ui/2`)
+
+Adds a single custom entry to the Commerce Admin menu. The entry opens an iframe into the app's web UI (`web-src`).
+Declared under `adminUi.menu` — a single object, **not an array**. There is no server handler.
+
+## Config (`app.commerce.config.ts`)
+
+```ts
+import { MENU_SALES } from "@adobe/aio-commerce-lib-admin-ui/menu";
+
+adminUi: {
+  menu: {
+    id: "my_app_dashboard",               // required; letters, digits, / : _ only
+    label: "My Dashboard",                 // required, non-empty — menu label
+    description: "Custom dashboard.",       // required, non-empty
+    parentMenu: MENU_SALES,                 // optional; a known Commerce menu (see below)
+    pageTitle: "Dashboard",                 // optional; the page heading
+    sandboxPermissions: ["allow-popups"],   // optional
+  },
+}
+```
+
+### Constraints
+
+| Field                | Constraint                                                    |
+| -------------------- | ------------------------------------------------------------- |
+| `id`                 | Required; matches `^[A-Za-z0-9_/:]+$` — no hyphens or spaces  |
+| `label`              | Required, non-empty                                           |
+| `description`        | Required, non-empty                                           |
+| `parentMenu`         | Optional; one of the `COMMERCE_MENUS` constants               |
+| `pageTitle`          | Optional, non-empty                                           |
+| `sandboxPermissions` | Optional; `allow-downloads` / `allow-modals` / `allow-popups` |
+
+## Parent menu constants
+
+Import from `@adobe/aio-commerce-lib-admin-ui/menu`. Use the named constant rather than the raw string so a typo is a compile error:
+
+| Constant         | Menu      |
+| ---------------- | --------- |
+| `MENU_SALES`     | Sales     |
+| `MENU_CATALOG`   | Catalog   |
+| `MENU_CUSTOMERS` | Customers |
+| `MENU_MARKETING` | Marketing |
+| `MENU_CONTENT`   | Content   |
+| `MENU_REPORTS`   | Reports   |
+| `MENU_STORES`    | Stores    |
+| `MENU_SYSTEM`    | System    |
+
+`COMMERCE_MENUS` is a readonly tuple of all eight; `isCommerceMenu(id)` narrows a string to a known menu ID.
+
+## Rendering
+
+The menu entry opens the app's `web-src` at its route. Build the menu page in the app's web frontend. Because there is no runtime action, no `@adobe/aio-commerce-lib-admin-ui` handler builders are needed for the menu — only the `/menu` constants for `parentMenu`.
