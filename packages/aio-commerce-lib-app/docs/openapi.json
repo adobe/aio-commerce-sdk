@@ -23,8 +23,18 @@
       "get": {
         "operationId": "getAppConfig",
         "summary": "Get Commerce App Configuration",
-        "description": "Returns the Commerce App configuration after resolving and validating it against the schema.",
+        "description": "Returns the Commerce App configuration after resolving and validating it against the schema. When `commerceEnv` is provided, webhooks and events are filtered to that Commerce environment; when omitted, the full, unfiltered configuration is returned.",
         "parameters": [
+          {
+            "name": "commerceEnv",
+            "in": "query",
+            "description": "When provided, filters the returned webhooks and events to those applicable to this Commerce environment. When omitted, the full configuration is returned.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["paas", "saas"]
+            }
+          },
           {
             "name": "x-gw-ims-org-id",
             "in": "header",
@@ -1579,7 +1589,8 @@
                     "type": "string"
                   },
                   "commerceEnv": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": ["paas", "saas"]
                   },
                   "ioEventsUrl": {
                     "type": "string"
@@ -1730,7 +1741,8 @@
                     "type": "string"
                   },
                   "commerceEnv": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": ["paas", "saas"]
                   },
                   "ioEventsUrl": {
                     "type": "string"
@@ -2056,7 +2068,8 @@
                     "type": "string"
                   },
                   "commerceEnv": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": ["paas", "saas"]
                   },
                   "ioEventsUrl": {
                     "type": "string"
@@ -2433,7 +2446,7 @@
                   },
                   "commerceEnv": {
                     "type": "string",
-                    "minLength": 1
+                    "enum": ["paas", "saas"]
                   }
                 },
                 "required": ["commerceBaseUrl"]

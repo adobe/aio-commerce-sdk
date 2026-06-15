@@ -90,7 +90,7 @@ const appData = createMockInstallationContext().appData;
 const requestBody = {
   appData,
   commerceBaseUrl: "https://commerce.example.com",
-  commerceEnv: "stage",
+  commerceEnv: "paas",
   ioEventsUrl: "https://events.example.com",
   ioEventsEnv: "prod",
 };
@@ -262,6 +262,25 @@ describe("installationRuntimeAction", () => {
       expect(result).toMatchObject({
         type: "error",
         error: { statusCode: 409 },
+      });
+    });
+
+    test("returns 400 when commerceEnv is not a valid Commerce flavor", async () => {
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          method: "post",
+          body: { ...requestBody, commerceEnv: "production" },
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        type: "error",
+        error: { statusCode: 400 },
       });
     });
 

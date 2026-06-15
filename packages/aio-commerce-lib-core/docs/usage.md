@@ -8,6 +8,7 @@ This package provides core utilities for the Adobe Commerce SDK libraries:
 - **[Response Helpers](./guides/response-helpers.md)**: Standardized response builders for Adobe I/O Runtime actions
 - **[Params Utilities](./guides/params-utilities.md)**: Runtime action parameter validation helpers
 - **[Headers Utilities](./guides/headers-utilities.md)**: HTTP header extraction and validation helpers
+- **Commerce Environment**: Shared schema and constants for the Commerce environment (`"paas"` / `"saas"`)
 
 ## API Reference
 
@@ -91,3 +92,23 @@ function main(params) {
 ```
 
 [Read the Headers Utilities Guide →](./guides/headers-utilities.md)
+
+### Commerce Environment
+
+```typescript
+import {
+  COMMERCE_ENVS,
+  CommerceEnvSchema,
+  CommerceEnvArraySchema,
+} from "@adobe/aio-commerce-lib-core/commerce";
+import * as v from "valibot";
+
+// The supported Commerce environments: ["paas", "saas"]
+COMMERCE_ENVS;
+
+// Validate a single environment value.
+v.parse(CommerceEnvSchema, "paas");
+
+// Validate a non-empty array of environments (e.g. to scope a field or resource).
+v.parse(CommerceEnvArraySchema, ["paas", "saas"]);
+```

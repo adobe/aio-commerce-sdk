@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
 import { hasCommerceEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
@@ -69,13 +70,26 @@ async function createCommerceEvents(
   // biome-ignore lint/suspicious/noEvolvingTypes: We want the type to be auto-inferred
   const stepData = [];
 
+  const env = getInstallCommerceEnv(context.params);
   const workspaceConfiguration = JSON.stringify(makeWorkspaceConfig(context));
   const existingIoEventsData = await getIoEventsExistingData(context);
   const commerceEventingExistingData =
     await getCommerceEventingExistingData(context);
 
-  for (let i = 0; i < config.eventing.commerce.length; i++) {
-    const { provider, events } = config.eventing.commerce[i];
+  // Decoupled from the loop index: a provider whose events are all scoped to
+  // another environment is skipped, so the one-time eventing-module configuration
+  // runs on the first provider that is actually onboarded.
+  let eventingConfigured = false;
+
+  for (const { provider, events: providerEvents } of config.eventing.commerce) {
+    const events = providerEvents.filter((event) => appliesToEnv(event, env));
+    if (events.length === 0) {
+      logger.debug(
+        `Skipping Commerce event provider "${provider.label}": no events apply to environment "${env}".`,
+      );
+      continue;
+    }
+
     const { providerData, eventsData } = await onboardIoEvents(
       {
         context,
@@ -87,7 +101,7 @@ async function createCommerceEvents(
       existingIoEventsData,
     );
 
-    if (i === 0) {
+    if (!eventingConfigured) {
       // The eventing module must be configured before creating the other entities, and only once.
       await configureCommerceEventing(
         {
@@ -104,6 +118,7 @@ async function createCommerceEvents(
         },
         commerceEventingExistingData,
       );
+      eventingConfigured = true;
     }
 
     const { commerceProvider, subscriptions } = await onboardCommerceEventing(

@@ -287,6 +287,7 @@ eventing: {
 - **prioritary**: Optional boolean value to indicate if the event is prioritary.
 - **force**: Optional boolean value to indicate if the event should be forced.
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
+- **env**: Optional array of Commerce environments the event applies to. See [Environment Scoping (Events)](#environment-scoping-events).
 
 ##### External Events:
 
@@ -294,6 +295,7 @@ eventing: {
 - **label**: Display name for the event (max 100 characters)
 - **description**: Description of the event (max 255 characters)
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
+- **env**: Optional array of Commerce environments the event applies to. See [Environment Scoping (Events)](#environment-scoping-events).
 
 ##### Provider Configuration:
 
@@ -302,6 +304,127 @@ eventing: {
 - **key**: Optional unique key for the provider (max 50 characters, alphanumeric with hyphens)
 
 Both `commerce` and `external` arrays are optional, you can configure one, both, or neither depending on your application's needs.
+
+##### Environment Scoping (Events)
+
+Each event accepts an optional `env` property to scope it to specific Commerce environments. The value is an array of environments (`"paas"`, `"saas"`) and accepts any combination of one or more. This mirrors the [environment scoping available for Business Configuration fields](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-config/docs/usage.md#conditional-fields-by-commerce-environment).
+
+When `env` is omitted, the event applies to all Commerce environments. When `env` is set, the event is only created at install time on the listed environments. If every event in a provider is scoped to environments that do not match the target, the whole provider is skipped: no I/O Events provider is created, and no registration is made.
+
+```javascript
+eventing: {
+  commerce: [
+    {
+      provider: { label: "Orders", description: "Order events" },
+      events: [
+        {
+          name: "observer.sales_order_place_after",
+          description: "Triggered when an order is placed",
+          runtimeActions: ["my-package/on-order"],
+          fields: [{ name: "increment_id" }],
+          env: ["saas"], // only created on SaaS instances
+        },
+        {
+          name: "observer.catalog_product_save_after",
+          description: "Triggered when a product is saved",
+          runtimeActions: ["my-package/on-product"],
+          fields: [{ name: "sku" }],
+          // No `env` -> applies to all Commerce environments
+        },
+      ],
+    },
+  ],
+}
+```
+
+An empty `env` array is rejected at validation time, as is any value other than `"paas"` or `"saas"`.
+
+#### Webhooks Configuration
+
+The `webhooks` field allows you to register [Adobe Commerce webhooks](https://developer.adobe.com/commerce/extensibility/webhooks/) for your application. Each webhook entry either resolves its target URL from a runtime action (`runtimeAction`) or provides an explicit `url` inside the `webhook` object.
+
+```javascript
+webhooks: [
+  {
+    label: "Validate stock",
+    description: "Inventory check before order placement.",
+    runtimeAction: "my-package/validate-stock",
+    webhook: {
+      webhook_method: "observer",
+      webhook_type: "before",
+      batch_name: "stock",
+      hook_name: "validate",
+      method: "POST",
+    },
+  },
+  {
+    label: "Audit log",
+    description: "Posts to an external audit endpoint.",
+    webhook: {
+      webhook_method: "observer",
+      webhook_type: "after",
+      batch_name: "audit",
+      hook_name: "log",
+      method: "POST",
+      url: "https://example.com/audit",
+    },
+  },
+];
+```
+
+Each webhook entry supports:
+
+- **label**: Display name for the webhook.
+- **description**: Description of what the webhook does.
+- **category**: Optional conflict-detection category. One of `"validation"`, `"append"`, `"modification"`.
+- **runtimeAction**: The runtime action that resolves the webhook URL, in the format `<package>/<action>`. The SDK derives the public action URL at install time and injects it into the webhook payload. **Mutually exclusive with `webhook.url`** — use one or the other, never both.
+- **requireAdobeAuth**: Optional boolean (runtime-action webhooks only). When not `false`, the webhook is registered with Adobe OAuth credentials.
+- **webhook**: The webhook payload sent to Commerce (`webhook_method`, `webhook_type`, `batch_name`, `hook_name`, `method`, and optional `url`, `fields`, `rules`, `headers`, `priority`, `required`, timeouts, and `ttl`). When `runtimeAction` is omitted, `webhook.url` is required and must be an explicit HTTPS URL pointing to your handler endpoint.
+- **env**: Optional array of Commerce environments the webhook applies to. See [Environment Scoping (Webhooks)](#environment-scoping-webhooks).
+
+##### `runtimeAction` vs `webhook.url`
+
+These two properties are the mutually exclusive ways to specify where Commerce sends the webhook request:
+
+- **`runtimeAction`** — use this when the handler lives inside your App Builder app. Provide the action path (`<package>/<action>`), and the SDK resolves the public Runtime URL automatically at install time. This is the recommended approach for logic you own and deploy alongside the app.
+
+- **`webhook.url`** — use this when the handler is an external endpoint: a third-party service, a middleware platform, or any HTTPS URL outside of App Builder. The URL is passed to Commerce as-is; the SDK does not validate or modify it.
+
+##### Environment Scoping (Webhooks)
+
+Like events, each webhook entry accepts an optional `env` property (`"paas"`, `"saas"`) to scope it to specific Commerce environments. When omitted, the webhook applies to all environments; when set, it is only subscribed at install time on the listed environments.
+
+```javascript
+webhooks: [
+  {
+    label: "Validate stock on PaaS",
+    description: "Inventory check that only exists on Adobe Commerce (PaaS).",
+    runtimeAction: "my-package/validate-stock",
+    env: ["paas"], // only subscribed on PaaS instances
+    webhook: {
+      webhook_method: "observer",
+      webhook_type: "before",
+      batch_name: "stock",
+      hook_name: "validate",
+      method: "POST",
+    },
+  },
+  {
+    label: "Audit log",
+    description: "Applies to every environment (no env declared).",
+    runtimeAction: "my-package/audit",
+    webhook: {
+      webhook_method: "observer",
+      webhook_type: "after",
+      batch_name: "audit",
+      hook_name: "log",
+      method: "POST",
+    },
+  },
+];
+```
+
+An empty `env` array is rejected at validation time, as is any value other than `"paas"` or `"saas"`.
 
 #### Custom Installation Process
 

@@ -17,6 +17,11 @@ import { getOpenApiCacheKey } from "#actions/app-config/openapi";
 import { getConfigDomains } from "#config/schema/domains";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import {
+  configWithEnvScopedBusinessConfig,
+  configWithEnvScopedEventingAndWebhooks,
+  configWithPaasOnlyWebhook,
+} from "#test/fixtures/app-config-router";
+import {
   configWithDynamicListOptions,
   configWithFullAdminUiV2,
   minimalValidConfig,
@@ -91,6 +96,55 @@ describe("appConfigRuntimeAction", () => {
           },
         },
       });
+    });
+
+    test("filters webhooks and events to the commerceEnv query param", async () => {
+      const handler = appConfigRuntimeAction({
+        appConfig: configWithEnvScopedEventingAndWebhooks,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({ query: "commerceEnv=saas" }),
+      );
+
+      expect.assert(result.type === "success");
+      const body = result.body as {
+        webhooks: { label: string }[];
+        eventing: { commerce: unknown[] };
+      };
+      expect(body.webhooks.map((w) => w.label)).toEqual(["All envs"]);
+      // The single commerce provider has only a PaaS event, so it is dropped on SaaS.
+      expect(body.eventing.commerce).toHaveLength(0);
+    });
+
+    test("filters business-config fields to the commerceEnv query param", async () => {
+      const handler = appConfigRuntimeAction({
+        appConfig: configWithEnvScopedBusinessConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({ query: "commerceEnv=saas" }),
+      );
+
+      expect.assert(result.type === "success");
+      const body = result.body as {
+        businessConfig: { schema: { name: string }[] };
+      };
+      expect(body.businessConfig.schema.map((field) => field.name)).toEqual([
+        "sharedField",
+      ]);
+    });
+
+    test("returns the full config when commerceEnv is omitted", async () => {
+      const handler = appConfigRuntimeAction({
+        appConfig: configWithPaasOnlyWebhook,
+      });
+
+      const result = await handler(createRuntimeActionParams());
+
+      expect.assert(result.type === "success");
+      const body = result.body as { webhooks: { label: string }[] };
+      expect(body.webhooks).toHaveLength(1);
     });
 
     test("includes openApiSpecUrl in the response body", async () => {
