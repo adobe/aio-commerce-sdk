@@ -1,0 +1,29 @@
+{
+  "name": "@adobe/aio-cli-plugin-commerce",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "description": "aio CLI plugin: Adobe Commerce facade aggregating commerce sub-plugins (spike PoC).",
+  "license": "Apache-2.0",
+  "author": "Adobe Inc.",
+  "engines": {
+    "node": ">=22 <=24"
+  },
+  "oclif": {
+    "bin": "aio",
+    "topicSeparator": " ",
+    "plugins": [
+      "@adobe/aio-cli-plugin-commerce-config",
+      "@adobe/aio-cli-plugin-commerce-app"
+    ],
+    "topics": {
+      "commerce": {
+        "description": "Adobe Commerce App Builder commands."
+      }
+    }
+  },
+  "dependencies": {
+    "@adobe/aio-cli-plugin-commerce-app": "workspace:*",
+    "@adobe/aio-cli-plugin-commerce-config": "workspace:*"
+  }
+}

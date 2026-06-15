@@ -1,0 +1,52 @@
+{
+  "name": "@adobe/aio-cli-plugin-commerce-app",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "description": "aio CLI plugin: Adobe Commerce app lifecycle commands (spike PoC).",
+  "license": "Apache-2.0",
+  "author": "Adobe Inc.",
+  "engines": {
+    "node": ">=22 <=24"
+  },
+  "files": [
+    "/bin",
+    "/dist",
+    "/oclif.manifest.json"
+  ],
+  "bin": {
+    "aio-cli-plugin-commerce-app": "./bin/run.mjs"
+  },
+  "oclif": {
+    "bin": "aio",
+    "commands": "./dist/commands",
+    "topicSeparator": " ",
+    "topics": {
+      "commerce": {
+        "description": "Adobe Commerce App Builder commands."
+      },
+      "commerce:app": {
+        "description": "Adobe Commerce app lifecycle commands."
+      },
+      "commerce:app:hooks": {
+        "description": "Internal App Builder lifecycle hooks.",
+        "hidden": true
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsdown && oclif manifest",
+    "clean": "rm -rf dist oclif.manifest.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@oclif/core": "^4",
+    "consola": "catalog:"
+  },
+  "devDependencies": {
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "oclif": "^4",
+    "tsdown": "^0.22.0",
+    "typescript": "catalog:"
+  }
+}

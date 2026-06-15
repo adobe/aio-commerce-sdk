@@ -48,11 +48,22 @@
           "types": "./dist/cjs/index.d.cts",
           "default": "./dist/cjs/index.cjs"
         }
+      },
+      "./cli": {
+        "import": {
+          "types": "./dist/es/cli.d.mts",
+          "default": "./dist/es/cli.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/cli.d.cts",
+          "default": "./dist/cjs/cli.cjs"
+        }
       }
     }
   },
   "exports": {
     ".": "./source/index.ts",
+    "./cli": "./source/cli.ts",
     "./package.json": "./package.json"
   },
   "imports": {

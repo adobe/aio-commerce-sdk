@@ -1,0 +1,63 @@
+{
+  "commands": {
+    "commerce:app:hooks:postinstall": {
+      "aliases": [],
+      "args": {},
+      "description": "Internal: regenerate runtime actions, manifest and schema after install.",
+      "flags": {},
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [],
+      "id": "commerce:app:hooks:postinstall",
+      "pluginAlias": "@adobe/aio-cli-plugin-commerce-app",
+      "pluginName": "@adobe/aio-cli-plugin-commerce-app",
+      "pluginType": "core",
+      "strict": true,
+      "enableJsonFlag": false,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "commerce",
+        "app",
+        "hooks",
+        "postinstall.mjs"
+      ]
+    },
+    "commerce:app:hooks:pre-app-build": {
+      "aliases": [],
+      "args": {},
+      "description": "Internal: prepare runtime artifacts before an App Builder build.",
+      "flags": {
+        "extension": {
+          "description": "Extension point id to prepare.",
+          "env": "EXTENSION",
+          "name": "extension",
+          "required": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [],
+      "id": "commerce:app:hooks:pre-app-build",
+      "pluginAlias": "@adobe/aio-cli-plugin-commerce-app",
+      "pluginName": "@adobe/aio-cli-plugin-commerce-app",
+      "pluginType": "core",
+      "strict": true,
+      "enableJsonFlag": false,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "commerce",
+        "app",
+        "hooks",
+        "pre-app-build.mjs"
+      ]
+    }
+  },
+  "version": "0.0.0"
+}

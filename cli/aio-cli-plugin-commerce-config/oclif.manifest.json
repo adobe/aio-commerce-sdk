@@ -1,0 +1,75 @@
+{
+  "commands": {
+    "commerce:config:encryption:setup": {
+      "aliases": [],
+      "args": {},
+      "description": "Ensure an encryption key is configured for Commerce config password fields.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %>"
+      ],
+      "flags": {
+        "env": {
+          "description": "Path to the .env file to read/update.",
+          "name": "env",
+          "default": ".env",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "commerce:config:encryption:setup",
+      "pluginAlias": "@adobe/aio-cli-plugin-commerce-config",
+      "pluginName": "@adobe/aio-cli-plugin-commerce-config",
+      "pluginType": "core",
+      "strict": true,
+      "enableJsonFlag": false,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "commerce",
+        "config",
+        "encryption",
+        "setup.mjs"
+      ]
+    },
+    "commerce:config:encryption:validate": {
+      "aliases": [],
+      "args": {},
+      "description": "Validate the configured Commerce config encryption key.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %>"
+      ],
+      "flags": {
+        "env": {
+          "description": "Path to the .env file to read.",
+          "name": "env",
+          "default": ".env",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "commerce:config:encryption:validate",
+      "pluginAlias": "@adobe/aio-cli-plugin-commerce-config",
+      "pluginName": "@adobe/aio-cli-plugin-commerce-config",
+      "pluginType": "core",
+      "strict": true,
+      "enableJsonFlag": false,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "commerce",
+        "config",
+        "encryption",
+        "validate.mjs"
+      ]
+    }
+  },
+  "version": "0.0.0"
+}
