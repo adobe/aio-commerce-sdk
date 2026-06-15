@@ -196,6 +196,12 @@ const MenuSchema = v.object({
     ),
   ),
   sandboxPermissions: v.optional(SandboxPermissionsSchema),
+  /**
+   * When `true`, Commerce auto-generates a per-app ACL resource id from `metadata.id`
+   * and injects it into the Magento User Roles permission tree, allowing role-based
+   * access control per app menu.
+   */
+  aclProtected: v.optional(v.boolean()),
 });
 
 // ─── Top-level schema ─────────────────────────────────────────────────────────
@@ -270,6 +276,8 @@ export type Notifications = v.InferInput<typeof NotificationsSchema>;
 
 /**
  * Admin UI menu registration configuration.
+ * Includes the optional `aclProtected` flag — when `true`, Commerce auto-generates
+ * a per-app ACL resource from `metadata.id` for role-based menu access control.
  * @experimental
  */
 export type Menu = v.InferInput<typeof MenuSchema>;
