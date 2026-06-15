@@ -194,7 +194,8 @@ with the given `extensionId`. The `routes` array follows the React Router v6 rou
 and is rendered inside the router — the index route is typically the main page component.
 Alternatively, `rootComponent` can be passed instead of `routes` for apps that manage their own
 routing solution; in that case no `HashRouter` is mounted and `rootComponent` is rendered directly
-inside the provider tree.
+inside the provider tree. `routes` and `rootComponent` are mutually exclusive: passing both is a TypeScript compile error for
+TypeScript consumers, and a thrown error at runtime for JavaScript consumers.
 
 **`useSharedContext()`** — a React hook that calls `attach()` from `@adobe/uix-guest` using the
 extension ID set by `createExtensionApp` via internal context, and returns
