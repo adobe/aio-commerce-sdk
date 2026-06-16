@@ -144,6 +144,26 @@ describe("client.check — TTL cache", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("deduplicates concurrent in-flight requests even when cacheTtlMs is 0", async () => {
+    const fetchMock = vi.fn(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return Response.json({ allowed: true });
+    });
+    const client = getAdminUiPermissionClient({
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
+      cacheTtlMs: 0,
+    });
+
+    const [a, b] = await Promise.all([
+      client.check("Acme_Promotions::dashboard"),
+      client.check("Acme_Promotions::dashboard"),
+    ]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(a).toBe(true);
+    expect(b).toBe(true);
+  });
+
   it("does not cache an in-flight response after invalidation", async () => {
     // biome-ignore lint/suspicious/noEmptyBlockStatements: placeholder reassigned inside the Promise constructor
     let resolveFirstResponse: (response: Response) => void = () => {};

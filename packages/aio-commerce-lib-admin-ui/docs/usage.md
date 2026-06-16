@@ -11,6 +11,7 @@ This package provides utilities for interacting with the Admin UI SDK API and th
 - **[Grid Column Wire Contract](#grid-column-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` grid column extensions
 - **[Menu Constants](#menu-constants)**: Named constants and type guards for Commerce Admin menu IDs
 - **[Order View Button Wire Contract](#order-view-button-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` order view button extensions
+- **[Permission Client](#permission-client)**: Check whether the current Commerce admin user has been granted a per-app ACL resource
 
 ## API Reference
 
@@ -246,3 +247,100 @@ if (isCommerceMenu(id)) {
   // id is CommerceMenu
 }
 ```
+
+### Permission Client
+
+Apps that set `adminUi.menu.aclProtected: true` in their `app.commerce.config.*` receive a dedicated per-app ACL resource node in the Commerce User Roles tree. Admins can grant or deny access to that app's menu on a per-role basis. Use `getAdminUiPermissionClient` from `@adobe/aio-commerce-lib-admin-ui/api` to check whether the current admin user holds that resource before serving menu content from a runtime action.
+
+#### Creating a client
+
+```typescript
+import { getAdminUiPermissionClient } from "@adobe/aio-commerce-lib-admin-ui/api";
+
+const permissionClient = getAdminUiPermissionClient({
+  httpClient, // AdobeCommerceHttpClient — reuse the one from createAdminUiApiClient
+  appId: "acme-promotions", // metadata.id from your app config; enables no-argument calls
+  cacheTtlMs: 300_000, // default: 5 min; set to 0 to disable result caching
+  denyOnError: true, // default: true — returns false on network/parse errors instead of throwing
+});
+```
+
+`appId` is the `metadata.id` of your application (e.g. `"acme-promotions"`). When provided, `check()` and `require()` resolve the ACL resource id automatically — no argument required.
+
+#### Checking a permission
+
+```typescript
+// With appId set — no argument needed:
+const allowed = await permissionClient.check();
+
+// Or provide the full resource id explicitly:
+const allowed = await permissionClient.check(
+  "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions",
+);
+
+if (!allowed) {
+  return { error: "Access denied", statusCode: 403 };
+}
+```
+
+`check()` returns `true` when access is granted and `false` when denied. With `denyOnError: true` (the default) it also returns `false` on network or parse errors. It always throws `AdminUiPermissionError` on 401, regardless of `denyOnError`.
+
+`check()` returns `false` immediately — without a network call — when neither `resource` nor a valid `appId` is available.
+
+#### Requiring a permission
+
+```typescript
+import {
+  AdminUiPermissionDeniedError,
+  AdminUiPermissionError,
+} from "@adobe/aio-commerce-lib-admin-ui/api";
+
+try {
+  await permissionClient.require();
+  // user is allowed — proceed with the request
+} catch (error) {
+  if (error instanceof AdminUiPermissionDeniedError) {
+    return { error: "Forbidden", statusCode: 403 };
+  }
+  if (error instanceof AdminUiPermissionError) {
+    // 401 or network/parse error when denyOnError is false
+    return { error: "Authorization error", statusCode: 401 };
+  }
+  throw error;
+}
+```
+
+`require()` resolves when the user has access. It throws `AdminUiPermissionDeniedError` when the resource is explicitly denied, and `AdminUiPermissionError` on 401 or other failures (when `denyOnError: false`).
+
+`require()` throws `AdminUiPermissionError` immediately — without a network call — when neither `resource` nor a valid `appId` is available.
+
+#### Caching and deduplication
+
+The client caches successful results for `cacheTtlMs` milliseconds (default: 5 minutes). Set `cacheTtlMs: 0` to disable result caching. Regardless of `cacheTtlMs`, **concurrent calls for the same resource share a single in-flight network request** — deduplication remains active even when caching is disabled.
+
+Call `invalidate` to clear cached results:
+
+```typescript
+// Clear a specific resource:
+permissionClient.invalidate(
+  "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions",
+);
+
+// Clear all cached results and in-flight tracking:
+permissionClient.invalidate();
+```
+
+#### Deriving the resource id directly
+
+`getAclResourceId` converts a `metadata.id` value to the Commerce ACL resource id without making an HTTP request:
+
+```typescript
+import { getAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/api";
+
+const resourceId = getAclResourceId("acme-promotions");
+// → "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions"
+```
+
+This produces the same id that Commerce generates on the backend when `aclProtected: true` is configured. Pass it to `check()` or `require()` when you need explicit control, or use it directly for logging.
+
+Returns an empty string when called with a blank `metadataId`; this is the same sentinel that `check()` and `require()` treat as "no resource available."

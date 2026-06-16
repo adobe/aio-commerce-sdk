@@ -27,7 +27,11 @@ const DEFAULT_CACHE_TTL_MS = 300_000;
 export interface AdminUiPermissionClientOptions {
   /** The application's `metadata.id` value. When provided, `check()` and `require()` can be called with no resource argument. */
   appId?: string;
-  /** Milliseconds to cache a permission result. Default: 300_000 (5 minutes). Set to 0 to disable caching. */
+  /**
+   * Milliseconds to cache a permission result. Default: 300_000 (5 minutes).
+   * Set to 0 to disable result caching. Note: in-flight deduplication of concurrent identical
+   * requests is independent of this setting and remains active even when caching is disabled.
+   */
   cacheTtlMs?: number;
   /** Return false instead of throwing when a network or parse error occurs. Default: true. */
   denyOnError?: boolean;
@@ -163,9 +167,18 @@ export function getAdminUiPermissionClient(
     return trackedPromise;
   }
 
+  /**
+   * Resolves the ACL resource id for a call: uses the explicit argument when provided,
+   * otherwise derives it from `appId`. Returns an empty string when neither source yields a
+   * valid id, which callers interpret as "no resource available."
+   */
+  function resolveResource(resource?: string): string {
+    return resource ?? getAclResourceId(appId ?? "");
+  }
+
   return {
     async check(resource?: string) {
-      const resolved = resource ?? getAclResourceId(appId ?? "");
+      const resolved = resolveResource(resource);
       if (resolved === "") {
         return false;
       }
@@ -173,7 +186,7 @@ export function getAdminUiPermissionClient(
       return "error" in result ? false : result.allowed;
     },
     async require(resource?: string) {
-      const resolved = resource ?? getAclResourceId(appId ?? "");
+      const resolved = resolveResource(resource);
       if (resolved === "") {
         throw new AdminUiPermissionError(
           "No ACL resource ID could be resolved: provide a resource argument or set appId in options",
