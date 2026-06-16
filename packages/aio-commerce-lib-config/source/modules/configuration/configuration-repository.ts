@@ -132,6 +132,7 @@ async function deleteCachedConfig(
       "Failed to clear cached configuration:",
       error instanceof Error ? error.message : String(error),
     );
+    // Don't throw - caching failure shouldn't break functionality
   }
 }
 
@@ -202,6 +203,7 @@ async function deletePersistedConfig(
       "Failed to delete persisted configuration:",
       error instanceof Error ? error.message : String(error),
     );
+    // Don't throw - caching failure shouldn't break functionality
   }
 }
 
