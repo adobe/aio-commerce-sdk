@@ -788,8 +788,8 @@ After an app is associated with a Commerce instance via App Management, the SDK 
 
 Two helpers are exposed from the root entrypoint:
 
-- `getCommerceClient(params)` — returns a ready-to-use [`AdobeCommerceHttpClient`](../../aio-commerce-lib-api/docs/usage.md). Use this when you need to call the Commerce API.
-- `getCommerceInstance(params)` — returns the raw `{ baseUrl, env }`. Use this when you only need the metadata (e.g. for logging or building a custom client).
+- `getCommerceClient(auth)` — returns a ready-to-use [`AdobeCommerceHttpClient`](../../aio-commerce-lib-api/docs/usage.md). Use this when you need to call the Commerce API. The base URL and flavor come from the stored association data; you supply the resolved auth credentials (resolve them with `resolveAuthParams` from [`@adobe/aio-commerce-lib-auth`](../../aio-commerce-lib-auth/docs/usage.md)).
+- `getCommerceInstance()` — returns the raw `{ baseUrl, env }`. Use this when you only need the metadata (e.g. for logging or building a custom client).
 
 Both helpers throw `AppNotAssociatedError` if the app is not currently associated, was unassociated, or was associated by an older SDK that did not store this data. Re-associating the app resolves the error.
 
@@ -797,9 +797,10 @@ Both helpers throw `AppNotAssociatedError` if the app is not currently associate
 
 ```ts
 import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
+import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
 
 export async function main(params) {
-  const client = await getCommerceClient(params);
+  const client = await getCommerceClient(resolveAuthParams(params));
   const products = await client.get("rest/V1/products").json();
 }
 ```
@@ -809,8 +810,8 @@ export async function main(params) {
 ```ts
 import { getCommerceInstance } from "@adobe/aio-commerce-lib-app";
 
-export async function main(params) {
-  const instance = await getCommerceInstance(params);
+export async function main() {
+  const instance = await getCommerceInstance();
 
   // instance.baseUrl — Commerce API base URL
   // instance.env     — "saas" | "paas"
@@ -827,10 +828,11 @@ import {
   AppNotAssociatedError,
   getCommerceClient,
 } from "@adobe/aio-commerce-lib-app";
+import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
 
 export async function main(params) {
   try {
-    const client = await getCommerceClient(params);
+    const client = await getCommerceClient(resolveAuthParams(params));
     return ok({ body: await client.get("rest/V1/products").json() });
   } catch (error) {
     if (error instanceof AppNotAssociatedError) {
