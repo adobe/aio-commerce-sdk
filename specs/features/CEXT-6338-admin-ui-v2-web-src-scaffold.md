@@ -119,7 +119,7 @@ scaffold once — when the resolved `view` entrypoint does not yet exist — and
 regenerates anything afterwards. Developers are free to edit any file, including `app.jsx`;
 `src/components/` starts empty as the conventional home for shared UI primitives.
 
-`app.jsx` is the webpack entry point and the equivalent of `App.js` in the raw Commerce sample. It
+`app.jsx` is the Parcel entry point and the equivalent of `App.js` in the raw Commerce sample. It
 reads `metadata.id` from `#app.commerce.config`, imports `MainPage`, and delegates all shell wiring
 to `createExtensionApp` from `@adobe/aio-commerce-lib-admin-ui/web`:
 
@@ -204,18 +204,23 @@ extension ID set by `createExtensionApp` via internal context, and returns
 `imsOrgId` are `null` until the shared context connection is established. Must be called inside a
 component tree rendered by `createExtensionApp`.
 
-React and `@react-spectrum/s2` are declared as `peerDependencies` of `lib-admin-ui` — version
-alignment matters for both (multiple React instances break hooks; Spectrum 2 components must share
-a single provider tree). `@adobe/uix-guest` and `@adobe/exc-app` are regular `dependencies`:
-apps never import them directly and there is no version alignment concern.
+The `/web` entrypoint requires React and `@react-spectrum/s2` at runtime, but they are deliberately
+**not** declared as `peerDependencies` of `lib-admin-ui`. The package exposes several entrypoints
+and most consumers never touch `/web`; declaring React and Spectrum 2 as peers would impose that
+requirement (and the peer warnings that come with it) on every consumer regardless of which
+entrypoint they actually use. Instead, the SDK pins the exact versions the `/web` entrypoint expects
+and installs them into the app during scaffolding — the same approach the `init` workflow already
+uses for its pinned dependencies. `@adobe/uix-guest` and `@adobe/exc-app` are regular
+`dependencies` of `lib-admin-ui`: apps never import them directly.
 
-Because pnpm, yarn, and bun do not auto-install peers, `generateWebSrc` handles peer installation
-explicitly: after copying the scaffold files it reads `lib-admin-ui`'s `peerDependencies`, checks
-which are absent from the app's `package.json`, and installs the missing ones using the package
-manager detected from the app's lock file — the same detection already used by the `init` command.
-This means developers never need to think about peer installation; it happens automatically as part
-of scaffolding. The entrypoint is browser-only (not suitable for server-side rendering or Node.js
-usage paths) and is marked accordingly in `package.json`.
+After copying the scaffold files, `generateWebSrc` installs the pinned `/web` dependencies (React
+and `@react-spectrum/s2`) into the app: it checks which are absent from the app's `package.json`
+and adds them at the SDK-pinned versions, using the package manager detected from the app's lock
+file — the same detection already used by the `init` command. Pinning rather than relying on peer
+resolution keeps these versions aligned across apps (multiple React instances break hooks; Spectrum
+2 components must share a single provider tree) without imposing the dependency on consumers of
+other entrypoints. The entrypoint is browser-only (not suitable for server-side rendering or
+Node.js usage paths) and is marked accordingly in `package.json`.
 
 ### Trigger condition
 
@@ -245,8 +250,9 @@ absent and never overwrites.
 All files are static copies from the package's template directory — no interpolation is needed
 because `app.jsx` reads `metadata.id` from `#app.commerce.config` at runtime.
 
-After copying files, `generateWebSrc` installs any missing `peerDependencies` of `lib-admin-ui`
-into the app using the package manager detected from the app's lock file.
+After copying files, `generateWebSrc` installs any missing pinned `/web` dependencies (React and
+`@react-spectrum/s2`) into the app at the SDK-pinned versions, using the package manager detected
+from the app's lock file.
 
 ### Scaffold contents
 
@@ -352,13 +358,6 @@ SDK could implement. The reason it was set aside is that it couples routing stru
 system layout, forcing a specific code organization on developers who may disagree with that
 convention or need to structure their project differently. The inline `routes` array in `app.jsx`
 keeps routing declarative without dictating where components live.
-
-## Unresolved questions
-
-- The exact API shape of `createExtensionApp` and `useSharedContext` should be finalized before
-  implementation of `lib-admin-ui/web` begins — specifically whether `mainPage` is a component
-  reference or a render function, and what additional shared context values (beyond `imsToken` and
-  `imsOrgId`) `useSharedContext()` should expose.
 
 ## Future possibilities
 
