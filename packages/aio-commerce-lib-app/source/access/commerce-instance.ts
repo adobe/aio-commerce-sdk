@@ -10,21 +10,17 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  AdobeCommerceHttpClient,
-  resolveCommerceHttpClientParams,
-} from "@adobe/aio-commerce-lib-api";
+import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 
-import { AppNotAssociatedError } from "../../errors/app-not-associated-error";
-import { getAssociationData } from "./association-repository";
+import { AppNotAssociatedError } from "../errors/app-not-associated-error";
+import { getAssociationData } from "../modules/association/association-repository";
 
-import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
-import type { AssociatedCommerceInstance } from "./types";
+import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
+import type { AssociatedCommerceInstance } from "../modules/association/types";
 
 /**
  * Returns the Commerce instance this app is currently associated with.
  *
- * @param _params - The standard params object every runtime action receives.
  * @throws {AppNotAssociatedError} If the app is not associated, was
  *   unassociated, or was associated by an older SDK that did not store this
  *   data. Re-associating the app resolves the error.
@@ -33,17 +29,15 @@ import type { AssociatedCommerceInstance } from "./types";
  * ```ts
  * import { getCommerceInstance } from "@adobe/aio-commerce-lib-app";
  *
- * export async function main(params) {
- *   const instance = await getCommerceInstance(params);
+ * export async function main() {
+ *   const instance = await getCommerceInstance();
  *
  *   // instance.baseUrl — e.g. "https://my-store.example.com"
  *   // instance.env     — "saas" | "paas"
  * }
  * ```
  */
-export async function getCommerceInstance(
-  _params: RuntimeActionParams,
-): Promise<AssociatedCommerceInstance> {
+export async function getCommerceInstance(): Promise<AssociatedCommerceInstance> {
   const instance = await getAssociationData();
   if (instance === null) {
     throw new AppNotAssociatedError();
@@ -55,11 +49,13 @@ export async function getCommerceInstance(
  * Returns an initialised `AdobeCommerceHttpClient` for the Commerce instance
  * this app is currently associated with.
  *
- * Internally calls {@link getCommerceInstance} and combines the stored
- * `baseUrl` and `env` with the auth credentials present in `params` to build
- * the client.
+ * The base URL and flavor come from the stored association data
+ * ({@link getCommerceInstance}); only the auth credentials are supplied by the
+ * caller, already resolved. Resolve them outside with `resolveAuthParams` from
+ * `@adobe/aio-commerce-lib-auth` so this helper stays focused on building the
+ * client for the associated instance.
  *
- * @param params - The standard params object every runtime action receives.
+ * @param auth - Resolved Commerce auth credentials.
  * @throws {AppNotAssociatedError} If the app is not associated, was
  *   unassociated, or was associated by an older SDK that did not store this
  *   data. Re-associating the app resolves the error.
@@ -67,23 +63,24 @@ export async function getCommerceInstance(
  * @example
  * ```ts
  * import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
+ * import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
  *
  * export async function main(params) {
- *   const client = await getCommerceClient(params);
+ *   const client = await getCommerceClient(resolveAuthParams(params));
  *   const products = await client.get("rest/V1/products").json();
  * }
  * ```
  */
 export async function getCommerceClient(
-  params: RuntimeActionParams,
+  auth: CommerceHttpClientParams["auth"],
 ): Promise<AdobeCommerceHttpClient> {
-  const instance = await getCommerceInstance(params);
+  const instance = await getCommerceInstance();
 
-  const httpClientParams = resolveCommerceHttpClientParams({
-    ...params,
-    AIO_COMMERCE_API_BASE_URL: instance.baseUrl,
-    AIO_COMMERCE_API_FLAVOR: instance.env,
-  });
-
-  return new AdobeCommerceHttpClient(httpClientParams);
+  // `CommerceHttpClientParams` is a flavor-discriminated union; the stored env
+  // is a runtime value TypeScript cannot narrow against the auth union, so the
+  // assembled params are asserted to the resolved shape.
+  return new AdobeCommerceHttpClient({
+    auth,
+    config: { baseUrl: instance.baseUrl, flavor: instance.env },
+  } as CommerceHttpClientParams);
 }

@@ -12,22 +12,18 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const {
-  mockGetAssociationData,
-  mockResolveCommerceHttpClientParams,
-  MockAdobeCommerceHttpClient,
-} = vi.hoisted(() => ({
-  mockGetAssociationData: vi.fn(),
-  mockResolveCommerceHttpClientParams: vi.fn(),
-  MockAdobeCommerceHttpClient: vi.fn(),
-}));
+const { mockGetAssociationData, MockAdobeCommerceHttpClient } = vi.hoisted(
+  () => ({
+    mockGetAssociationData: vi.fn(),
+    MockAdobeCommerceHttpClient: vi.fn(),
+  }),
+);
 
 vi.mock("#modules/association/association-repository", () => ({
   getAssociationData: mockGetAssociationData,
 }));
 
 vi.mock("@adobe/aio-commerce-lib-api", () => ({
-  resolveCommerceHttpClientParams: mockResolveCommerceHttpClientParams,
   AdobeCommerceHttpClient: MockAdobeCommerceHttpClient,
 }));
 
@@ -36,7 +32,8 @@ import {
   getCommerceClient,
   getCommerceInstance,
 } from "#index";
-import { createRuntimeActionParams } from "#test/fixtures/actions";
+
+const auth = { strategy: "ims" } as never;
 
 describe("getCommerceInstance", () => {
   beforeEach(() => {
@@ -50,7 +47,7 @@ describe("getCommerceInstance", () => {
     };
     mockGetAssociationData.mockResolvedValue(data);
 
-    const result = await getCommerceInstance(createRuntimeActionParams());
+    const result = await getCommerceInstance();
 
     expect(result).toEqual(data);
   });
@@ -62,7 +59,7 @@ describe("getCommerceInstance", () => {
     };
     mockGetAssociationData.mockResolvedValue(data);
 
-    const result = await getCommerceInstance(createRuntimeActionParams());
+    const result = await getCommerceInstance();
 
     expect(result).toEqual(data);
   });
@@ -70,9 +67,9 @@ describe("getCommerceInstance", () => {
   test("throws AppNotAssociatedError when no data is stored", async () => {
     mockGetAssociationData.mockResolvedValue(null);
 
-    await expect(
-      getCommerceInstance(createRuntimeActionParams()),
-    ).rejects.toBeInstanceOf(AppNotAssociatedError);
+    await expect(getCommerceInstance()).rejects.toBeInstanceOf(
+      AppNotAssociatedError,
+    );
   });
 });
 
@@ -81,56 +78,44 @@ describe("getCommerceClient", () => {
     vi.clearAllMocks();
   });
 
-  test("returns an AdobeCommerceHttpClient when association data is present", async () => {
+  test("builds the client from the stored instance and supplied auth", async () => {
     const data = {
       baseUrl: "https://example.com",
       env: "paas" as const,
     };
-    const resolvedParams = {
-      auth: {},
-      config: { baseUrl: data.baseUrl, flavor: "paas" },
-    };
     mockGetAssociationData.mockResolvedValue(data);
-    mockResolveCommerceHttpClientParams.mockReturnValue(resolvedParams);
 
-    const result = await getCommerceClient(createRuntimeActionParams());
+    const result = await getCommerceClient(auth);
 
-    expect(mockResolveCommerceHttpClientParams).toHaveBeenCalledWith(
-      expect.objectContaining({
-        AIO_COMMERCE_API_BASE_URL: data.baseUrl,
-        AIO_COMMERCE_API_FLAVOR: data.env,
-      }),
-    );
-    expect(MockAdobeCommerceHttpClient).toHaveBeenCalledWith(resolvedParams);
+    expect(MockAdobeCommerceHttpClient).toHaveBeenCalledWith({
+      auth,
+      config: { baseUrl: data.baseUrl, flavor: "paas" },
+    });
     expect(result).toBeInstanceOf(MockAdobeCommerceHttpClient);
   });
 
-  test("passes saas env to resolveCommerceHttpClientParams", async () => {
+  test("passes the saas flavor from the stored env", async () => {
     const data = {
       baseUrl: "https://saas.example.com",
       env: "saas" as const,
     };
     mockGetAssociationData.mockResolvedValue(data);
-    mockResolveCommerceHttpClientParams.mockReturnValue({});
 
-    await getCommerceClient(createRuntimeActionParams());
+    await getCommerceClient(auth);
 
-    expect(mockResolveCommerceHttpClientParams).toHaveBeenCalledWith(
-      expect.objectContaining({
-        AIO_COMMERCE_API_BASE_URL: data.baseUrl,
-        AIO_COMMERCE_API_FLAVOR: "saas",
-      }),
-    );
+    expect(MockAdobeCommerceHttpClient).toHaveBeenCalledWith({
+      auth,
+      config: { baseUrl: data.baseUrl, flavor: "saas" },
+    });
   });
 
   test("throws AppNotAssociatedError when no data is stored", async () => {
     mockGetAssociationData.mockResolvedValue(null);
 
-    await expect(
-      getCommerceClient(createRuntimeActionParams()),
-    ).rejects.toBeInstanceOf(AppNotAssociatedError);
+    await expect(getCommerceClient(auth)).rejects.toBeInstanceOf(
+      AppNotAssociatedError,
+    );
 
-    expect(mockResolveCommerceHttpClientParams).not.toHaveBeenCalled();
     expect(MockAdobeCommerceHttpClient).not.toHaveBeenCalled();
   });
 });

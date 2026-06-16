@@ -19,10 +19,10 @@
  */
 
 // biome-ignore lint/performance/noBarrelFile: export as part of the Public API
-export { AppNotAssociatedError } from "./errors/app-not-associated-error";
 export {
   getCommerceClient,
   getCommerceInstance,
-} from "./modules/association/commerce-instance";
+} from "./access/commerce-instance";
+export { AppNotAssociatedError } from "./errors/app-not-associated-error";
 
 export type { AssociatedCommerceInstance } from "./modules/association/types";
