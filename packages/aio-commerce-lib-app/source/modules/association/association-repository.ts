@@ -13,7 +13,7 @@
 import {
   getSystemConfigByKey,
   setSystemConfigByKey,
-} from "@adobe/aio-commerce-lib-config/system";
+} from "@adobe/aio-commerce-lib-config";
 
 import type { AssociatedCommerceInstance } from "./types";
 

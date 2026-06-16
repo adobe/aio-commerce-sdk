@@ -30,6 +30,10 @@ export {
   type SelectorByScopeId,
 } from "./config-utils";
 export {
+  getSystemConfigByKey,
+  setSystemConfigByKey,
+} from "./modules/configuration/system-config";
+export {
   hasDynamicSchema,
   resolveBusinessConfigSchema,
   SchemaBusinessConfig,

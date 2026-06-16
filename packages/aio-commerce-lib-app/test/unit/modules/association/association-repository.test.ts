@@ -19,7 +19,7 @@ const { mockGetSystemConfigByKey, mockSetSystemConfigByKey } = vi.hoisted(
   }),
 );
 
-vi.mock("@adobe/aio-commerce-lib-config/system", () => ({
+vi.mock("@adobe/aio-commerce-lib-config", () => ({
   getSystemConfigByKey: mockGetSystemConfigByKey,
   setSystemConfigByKey: mockSetSystemConfigByKey,
 }));

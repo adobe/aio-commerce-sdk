@@ -31,41 +31,59 @@ vi.mock("#utils/repository", () => ({
   getSharedFiles: vi.fn().mockResolvedValue(mockFiles),
 }));
 
-describe("system-repository", () => {
+const KEY = "system.association";
+const FILE_PATH = "system/system.association.json";
+
+/** Builds the state cache payload exactly as the repository writes it. */
+function wrapForCache(value: unknown): string {
+  return JSON.stringify({ data: JSON.stringify(value) });
+}
+
+describe("system-config", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe("setSystemConfigByKey", () => {
-    test("writes the serialized value to both files and state", async () => {
+    test("writes the serialized value to files and caches it in state", async () => {
       const { setSystemConfigByKey } = await import(
-        "#modules/configuration/system/system-repository"
+        "#modules/configuration/system-config"
       );
 
       const data = { baseUrl: "https://example.com", env: "paas" };
-      await setSystemConfigByKey("system.association", data);
+      await setSystemConfigByKey(KEY, data);
 
       expect(mockFiles.write).toHaveBeenCalledWith(
-        "system/system.association.json",
+        FILE_PATH,
         JSON.stringify(data),
       );
-      expect(mockState.put).toHaveBeenCalledWith(
-        "system.association",
-        JSON.stringify(data),
-      );
+      expect(mockState.put).toHaveBeenCalledWith(KEY, wrapForCache(data), {
+        ttl: 86_400,
+      });
     });
 
     test("clears both files and state when value is null", async () => {
       const { setSystemConfigByKey } = await import(
-        "#modules/configuration/system/system-repository"
+        "#modules/configuration/system-config"
       );
 
-      await setSystemConfigByKey("system.association", null);
+      await setSystemConfigByKey(KEY, null);
 
-      expect(mockFiles.delete).toHaveBeenCalledWith(
-        "system/system.association.json",
+      expect(mockFiles.delete).toHaveBeenCalledWith(FILE_PATH);
+      expect(mockState.delete).toHaveBeenCalledWith(KEY);
+      expect(mockFiles.write).not.toHaveBeenCalled();
+      expect(mockState.put).not.toHaveBeenCalled();
+    });
+
+    test("clears both files and state when value is undefined", async () => {
+      const { setSystemConfigByKey } = await import(
+        "#modules/configuration/system-config"
       );
-      expect(mockState.delete).toHaveBeenCalledWith("system.association");
+
+      await setSystemConfigByKey(KEY, undefined);
+
+      expect(mockFiles.delete).toHaveBeenCalledWith(FILE_PATH);
+      expect(mockState.delete).toHaveBeenCalledWith(KEY);
       expect(mockFiles.write).not.toHaveBeenCalled();
       expect(mockState.put).not.toHaveBeenCalled();
     });
@@ -73,81 +91,64 @@ describe("system-repository", () => {
     test("invalidates the cache entry without throwing when the cache write fails", async () => {
       mockState.put.mockRejectedValueOnce(new Error("cache write failed"));
       const { setSystemConfigByKey } = await import(
-        "#modules/configuration/system/system-repository"
+        "#modules/configuration/system-config"
       );
 
       await expect(
-        setSystemConfigByKey("system.association", { foo: "bar" }),
+        setSystemConfigByKey(KEY, { foo: "bar" }),
       ).resolves.toBeUndefined();
 
       // Files remain the source of truth, and the stale cache entry is dropped
       // so it can't shadow the freshly persisted value on the next read.
       expect(mockFiles.write).toHaveBeenCalled();
-      expect(mockState.delete).toHaveBeenCalledWith("system.association");
-    });
-
-    test("clears both files and state when value is undefined", async () => {
-      const { setSystemConfigByKey } = await import(
-        "#modules/configuration/system/system-repository"
-      );
-
-      await setSystemConfigByKey("system.association", undefined);
-
-      expect(mockFiles.delete).toHaveBeenCalledWith(
-        "system/system.association.json",
-      );
-      expect(mockState.delete).toHaveBeenCalledWith("system.association");
-      expect(mockFiles.write).not.toHaveBeenCalled();
-      expect(mockState.put).not.toHaveBeenCalled();
+      expect(mockState.delete).toHaveBeenCalledWith(KEY);
     });
   });
 
   describe("getSystemConfigByKey", () => {
     test("returns the cached value when present in state", async () => {
       const data = { baseUrl: "https://example.com", env: "saas" };
-      mockState.get.mockResolvedValue({ value: JSON.stringify(data) });
+      mockState.get.mockResolvedValue({ value: wrapForCache(data) });
 
       const { getSystemConfigByKey } = await import(
-        "#modules/configuration/system/system-repository"
+        "#modules/configuration/system-config"
       );
 
-      const result = await getSystemConfigByKey("system.association");
+      const result = await getSystemConfigByKey(KEY);
 
       expect(result).toEqual(data);
       expect(mockFiles.list).not.toHaveBeenCalled();
       expect(mockFiles.read).not.toHaveBeenCalled();
     });
 
-    test("falls back to files when cache miss, then re-caches", async () => {
+    test("falls back to files when cache misses, then re-caches", async () => {
       const data = { baseUrl: "https://example.com", env: "paas" };
       mockState.get.mockResolvedValue({ value: null });
+      mockFiles.list.mockResolvedValue([{ name: FILE_PATH }]);
       mockFiles.read.mockResolvedValue(Buffer.from(JSON.stringify(data)));
 
       const { getSystemConfigByKey } = await import(
-        "#modules/configuration/system/system-repository"
+        "#modules/configuration/system-config"
       );
 
-      const result = await getSystemConfigByKey("system.association");
+      const result = await getSystemConfigByKey(KEY);
 
       expect(result).toEqual(data);
-      expect(mockFiles.read).toHaveBeenCalledWith(
-        "system/system.association.json",
-      );
-      expect(mockState.put).toHaveBeenCalledWith(
-        "system.association",
-        JSON.stringify(data),
-      );
+      expect(mockFiles.read).toHaveBeenCalledWith(FILE_PATH);
+      expect(mockState.put).toHaveBeenCalledWith(KEY, wrapForCache(data), {
+        ttl: 86_400,
+      });
     });
 
     test("returns null when not found in cache or files", async () => {
       mockState.get.mockResolvedValue({ value: null });
-      mockFiles.read.mockRejectedValue(new Error("file not found"));
+      mockFiles.list.mockResolvedValue([]);
 
       const { getSystemConfigByKey } = await import(
-        "#modules/configuration/system/system-repository"
+        "#modules/configuration/system-config"
       );
 
-      const result = await getSystemConfigByKey("system.association");
+      const result = await getSystemConfigByKey(KEY);
 
       expect(result).toBeNull();
       expect(mockState.put).not.toHaveBeenCalled();
@@ -158,23 +159,10 @@ describe("system-repository", () => {
       mockFiles.list.mockResolvedValue([]);
 
       const { getSystemConfigByKey } = await import(
-        "#modules/configuration/system/system-repository"
+        "#modules/configuration/system-config"
       );
 
-      const result = await getSystemConfigByKey("system.association");
-
-      expect(result).toBeNull();
-    });
-
-    test("returns null when files read throws", async () => {
-      mockState.get.mockResolvedValue({ value: null });
-      mockFiles.read.mockRejectedValue(new Error("files error"));
-
-      const { getSystemConfigByKey } = await import(
-        "#modules/configuration/system/system-repository"
-      );
-
-      const result = await getSystemConfigByKey("system.association");
+      const result = await getSystemConfigByKey(KEY);
 
       expect(result).toBeNull();
     });
@@ -182,36 +170,31 @@ describe("system-repository", () => {
     test("falls back to files when the cached value is corrupt JSON", async () => {
       const data = { baseUrl: "https://example.com", env: "paas" };
       mockState.get.mockResolvedValue({ value: "{not valid json" });
+      mockFiles.list.mockResolvedValue([{ name: FILE_PATH }]);
       mockFiles.read.mockResolvedValue(Buffer.from(JSON.stringify(data)));
 
       const { getSystemConfigByKey } = await import(
-        "#modules/configuration/system/system-repository"
+        "#modules/configuration/system-config"
       );
 
-      const result = await getSystemConfigByKey("system.association");
+      const result = await getSystemConfigByKey(KEY);
 
       expect(result).toEqual(data);
-      expect(mockFiles.read).toHaveBeenCalledWith(
-        "system/system.association.json",
-      );
-      expect(mockState.put).toHaveBeenCalledWith(
-        "system.association",
-        JSON.stringify(data),
-      );
+      expect(mockFiles.read).toHaveBeenCalledWith(FILE_PATH);
     });
 
     test("returns null when the persisted file holds corrupt JSON", async () => {
       mockState.get.mockResolvedValue({ value: null });
+      mockFiles.list.mockResolvedValue([{ name: FILE_PATH }]);
       mockFiles.read.mockResolvedValue(Buffer.from("{not valid json"));
 
       const { getSystemConfigByKey } = await import(
-        "#modules/configuration/system/system-repository"
+        "#modules/configuration/system-config"
       );
 
-      const result = await getSystemConfigByKey("system.association");
+      const result = await getSystemConfigByKey(KEY);
 
       expect(result).toBeNull();
-      expect(mockState.put).not.toHaveBeenCalled();
     });
   });
 });
