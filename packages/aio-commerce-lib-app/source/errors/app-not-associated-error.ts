@@ -18,6 +18,13 @@ const DEFAULT_MESSAGE =
   "App is not associated with a Commerce instance. Re-associate the app to resolve this error.";
 
 /**
+ * Options accepted by {@link AppNotAssociatedError}. Aliases
+ * {@link CommerceSdkErrorBaseOptions} for now, kept as a named seam so future
+ * error-specific options can be added without changing the constructor contract.
+ */
+type AppNotAssociatedErrorOptions = CommerceSdkErrorBaseOptions;
+
+/**
  * Thrown when a runtime action calls `getCommerceInstance` or `getCommerceClient`
  * but the app has no stored association data — for example, when the app has
  * never been associated, has been unassociated, or was associated by an older
@@ -28,9 +35,10 @@ const DEFAULT_MESSAGE =
  * @example
  * ```ts
  * import { getCommerceClient, AppNotAssociatedError } from "@adobe/aio-commerce-lib-app";
+ * import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
  *
  * try {
- *   const client = await getCommerceClient(params);
+ *   const client = await getCommerceClient(resolveAuthParams(params));
  *   // ... use client
  * } catch (error) {
  *   if (error instanceof AppNotAssociatedError) {
@@ -43,7 +51,7 @@ const DEFAULT_MESSAGE =
 export class AppNotAssociatedError extends CommerceSdkErrorBase {
   public constructor(
     message: string = DEFAULT_MESSAGE,
-    options?: CommerceSdkErrorBaseOptions,
+    options?: AppNotAssociatedErrorOptions,
   ) {
     super(message, options);
   }
