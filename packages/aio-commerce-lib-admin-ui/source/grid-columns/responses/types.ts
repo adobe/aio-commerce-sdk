@@ -25,7 +25,4 @@ export type GridSuccessBody = {
 };
 
 /** Failure body returned to Commerce. */
-export type GridErrorBody = {
-  errorStatus: string;
-  errorMessage?: string;
-};
+export type GridErrorBody = { message: string };
