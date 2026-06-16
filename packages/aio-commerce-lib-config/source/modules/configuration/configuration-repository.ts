@@ -170,8 +170,9 @@ export async function saveConfig(
 }
 
 /**
- * Removes a configuration entry's file from storage. Failures are swallowed
- * (logged at debug) so clearing a non-existent entry is a no-op.
+ * Removes a configuration entry's file from storage. Clearing an entry that was
+ * never persisted is a no-op since `aio-lib-files` delete is idempotent; any
+ * real failure surfaces to the caller, since files are the source of truth.
  *
  * @param scopeCode - Scope code identifier.
  * @param namespace - Storage namespace to delete from.
@@ -180,19 +181,8 @@ async function deletePersistedConfig(
   scopeCode: string,
   namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
 ) {
-  const logger = getLogger(
-    "@adobe/aio-commerce-lib-config:configuration-repository",
-  );
-  try {
-    const files = await getSharedFiles();
-    await files.delete(namespace.filePath(scopeCode));
-  } catch (error) {
-    logger.debug(
-      "Failed to delete persisted configuration:",
-      error instanceof Error ? error.message : String(error),
-    );
-    // Don't throw - caching failure shouldn't break functionality
-  }
+  const files = await getSharedFiles();
+  await files.delete(namespace.filePath(scopeCode));
 }
 
 /**

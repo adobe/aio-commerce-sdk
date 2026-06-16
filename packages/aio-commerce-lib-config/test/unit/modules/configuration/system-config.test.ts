@@ -87,6 +87,17 @@ describe("system-config", () => {
       expect(mockState.put).not.toHaveBeenCalled();
     });
 
+    test("propagates the error when deleting the persisted file fails", async () => {
+      mockFiles.delete.mockRejectedValueOnce(new Error("permission denied"));
+      const { setSystemConfigByKey } = await import(
+        "#modules/configuration/system-config"
+      );
+
+      await expect(setSystemConfigByKey(KEY, null)).rejects.toThrow(
+        "permission denied",
+      );
+    });
+
     test("invalidates the cache entry without throwing when the cache write fails", async () => {
       mockState.put.mockRejectedValueOnce(new Error("cache write failed"));
       const { setSystemConfigByKey } = await import(
