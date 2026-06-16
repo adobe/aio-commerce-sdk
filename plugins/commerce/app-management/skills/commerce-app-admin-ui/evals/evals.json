@@ -118,7 +118,7 @@
       "assertions": [
         "Declares adminUi.order.viewButtons as an array containing a type: \"view\" entry",
         "View button has required id, label, and path fields",
-        "View button includes sandboxPermissions for iframe behavior",
+        "View button has a valid path field (a web-src route); sandboxPermissions, if present, uses only valid values (allow-downloads, allow-modals, allow-popups)",
         "View button does NOT include worker-only fields (no runtimeAction, no timeout)",
         "Does not scaffold or register a backend worker action for the view button",
         "Does not declare viewButtons under product or customer because only order supports view buttons",
@@ -136,7 +136,7 @@
       "assertions": [
         "Preserves the existing adminUi.order.gridColumns entry while adding new adminUi.product.gridColumns and adminUi.customer.massActions entries",
         "Uses the v2 adminUi shape and does not introduce adminUiSdk.registration or commerce/backend-ui/1",
-        "Product grid column has id, label, type, align, and runtimeAction fields",
+        "Product grid column object has id, label, type, and align fields (runtimeAction belongs to the gridColumns group, not individual columns)",
         "Customer mass action is type: \"worker\" with id, label, and runtimeAction fields",
         "Product grid handler imports builders from @adobe/aio-commerce-sdk/admin-ui/grid-columns",
         "Customer mass-action handler imports builders from @adobe/aio-commerce-sdk/admin-ui/mass-actions",
