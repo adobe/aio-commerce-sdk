@@ -59,7 +59,7 @@ adminUi: {
 
 ## Worker handler wire contract
 
-Import from `@adobe/aio-commerce-lib-admin-ui/order-view-buttons`.
+Import from `@adobe/aio-commerce-sdk/admin-ui/order-view-buttons`.
 
 Commerce POSTs `{ requestId, id, orderId }` — `id` identifies which button was clicked (useful when one handler serves several). The HTTP status code conveys success vs. failure.
 
@@ -72,9 +72,9 @@ import {
   parseOrderViewButtonRequest,
   okOrderViewButtonResponse,
   orderViewButtonErrorResponse,
-} from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
+} from "@adobe/aio-commerce-sdk/admin-ui/order-view-buttons";
 
-import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+import type { RuntimeActionParams } from "@adobe/aio-commerce-sdk/core/params";
 
 export async function main(params: RuntimeActionParams) {
   const { id, orderId } = parseOrderViewButtonRequest(params);

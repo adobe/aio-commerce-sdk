@@ -9,16 +9,16 @@ description: >
   view page, or add a custom menu item or page — even when they don't name the
   extension point. Declares the adminUi block in app.commerce.config.ts and
   scaffolds the runtime action handlers (grid columns, worker mass actions,
-  worker view buttons) with @adobe/aio-commerce-lib-admin-ui. Requires a base
-  app initialized with commerce-app-init.
+  worker view buttons) with @adobe/aio-commerce-sdk/admin-ui entrypoints.
+  Requires a base app initialized with commerce-app-init.
 license: Apache-2.0
 compatibility: >
   Requires Node.js 22+, aio CLI, @adobe/aio-commerce-lib-app, and
-  @adobe/aio-commerce-lib-admin-ui (for runtime action handlers).
+  @adobe/aio-commerce-sdk (for Admin UI runtime action handlers).
   Requires a base app initialized with commerce-app-init.
 metadata:
   author: adobe
-  sdk-package: "@adobe/aio-commerce-lib-admin-ui"
+  sdk-package: "@adobe/aio-commerce-sdk"
   version: "0.0.1"
 ---
 
@@ -73,7 +73,7 @@ These fields are shared across the extension points:
 Minimal example covering each feature (use only the parts you need):
 
 ```ts
-import { MENU_SALES } from "@adobe/aio-commerce-lib-admin-ui/menu";
+import { MENU_SALES } from "@adobe/aio-commerce-sdk/admin-ui/menu";
 
 // inside defineConfig({ ... }):
 adminUi: {
@@ -148,7 +148,8 @@ runtimeManifest:
 
 The `<package>/<action>` in `runtimeAction` maps directly: `my-app/order-grid` → package `my-app`, action `order-grid`. Commerce invokes these worker actions with an Adobe IMS token, so they need `require-adobe-auth: true` (and `final: true` to lock the bound inputs).
 
-Implement the handler with the wire-contract builders from `@adobe/aio-commerce-lib-admin-ui`. The builders differ per extension point — the reference file gives the exact request shape and response builders. Grid columns example:
+Implement the handler with the wire-contract builders from the `@adobe/aio-commerce-sdk/admin-ui/*` entrypoints.
+The builders differ per extension point — the reference file gives the exact request shape and response builders. Grid columns example:
 
 ```typescript
 // src/commerce-backend-ui-2/actions/order-grid/index.ts
@@ -156,7 +157,7 @@ import {
   parseGridRequest,
   okGridResponse,
   errorGridResponse,
-} from "@adobe/aio-commerce-lib-admin-ui/grid-columns";
+} from "@adobe/aio-commerce-sdk/admin-ui/grid-columns";
 
 export async function main(params: unknown) {
   const { gridType, ids } = parseGridRequest(params);

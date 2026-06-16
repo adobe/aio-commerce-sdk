@@ -5,13 +5,13 @@
       "id": 0,
       "name": "order-grid-column",
       "prompt": "I've got a base Commerce app scaffolded with the aio-commerce-sdk (app.commerce.config.ts exists and the project is initialized). I need to add a 'Fulfillment' column to the Admin order grid — the value for each order comes from our warehouse API. Wire up the config and the runtime action handler.",
-      "expected_output": "adminUi.order.gridColumns declared in app.commerce.config.ts with a single column (id, label, type, align) and a runtimeAction in <package>/<action> form. A handler under src/commerce-backend-ui-2/actions/ using parseGridRequest + okGridResponse/errorGridResponse from @adobe/aio-commerce-lib-admin-ui/grid-columns, with row keys matching the column id. The action registered under runtimeManifest in src/commerce-backend-ui-2/ext.config.yaml. Mentions running npx @adobe/aio-commerce-lib-app init and aio app build.",
+      "expected_output": "adminUi.order.gridColumns declared in app.commerce.config.ts with a single column (id, label, type, align) and a runtimeAction in <package>/<action> form. A handler under src/commerce-backend-ui-2/actions/ using parseGridRequest + okGridResponse/errorGridResponse from @adobe/aio-commerce-sdk/admin-ui/grid-columns, with row keys matching the column id. The action registered under runtimeManifest in src/commerce-backend-ui-2/ext.config.yaml. Mentions running npx @adobe/aio-commerce-lib-app init and aio app build.",
       "files": [],
       "assertions": [
         "Declares adminUi.order.gridColumns in app.commerce.config.ts",
         "Grid column has all required fields: id, label, type (one of boolean/date/datetime/float/integer/string), and align (one of left/center/right)",
         "gridColumns includes a runtimeAction in <package>/<action> form",
-        "Handler imports parseGridRequest and okGridResponse (and/or errorGridResponse) from @adobe/aio-commerce-lib-admin-ui/grid-columns",
+        "Handler imports parseGridRequest and okGridResponse (and/or errorGridResponse) from @adobe/aio-commerce-sdk/admin-ui/grid-columns",
         "okGridResponse rows are keyed by entity id, and each row's value keys match the declared column id",
         "Handler action source lives under src/commerce-backend-ui-2/actions/ (NOT src/commerce-extensibility-1/)",
         "Action is registered under runtimeManifest in src/commerce-backend-ui-2/ext.config.yaml, with a function path relative to that folder",
@@ -22,13 +22,13 @@
       "id": 1,
       "name": "customer-mass-action-worker",
       "prompt": "Add a bulk 'Archive' action to the customer grid in my Commerce admin app. When an admin selects some customers and clicks it, it should call a backend runtime action that archives them. The app is already initialized with the aio-commerce-sdk.",
-      "expected_output": "adminUi.customer.massActions with a type:\"worker\" entry (id, label, runtimeAction, optionally selectionLimit/confirm/notifications). A handler under src/commerce-backend-ui-2/actions/ using parseMassActionRequest + okMassActionResponse/massActionErrorResponse from @adobe/aio-commerce-lib-admin-ui/mass-actions. Action registered under runtimeManifest in src/commerce-backend-ui-2/ext.config.yaml. Does NOT invent a view/path for a worker action.",
+      "expected_output": "adminUi.customer.massActions with a type:\"worker\" entry (id, label, runtimeAction, optionally selectionLimit/confirm/notifications). A handler under src/commerce-backend-ui-2/actions/ using parseMassActionRequest + okMassActionResponse/massActionErrorResponse from @adobe/aio-commerce-sdk/admin-ui/mass-actions. Action registered under runtimeManifest in src/commerce-backend-ui-2/ext.config.yaml. Does NOT invent a view/path for a worker action.",
       "files": [],
       "assertions": [
         "Declares adminUi.customer.massActions as an array containing a type:\"worker\" entry",
         "Worker mass action has required id, label, and runtimeAction (<package>/<action>) fields",
         "Worker entry does NOT include view-only fields (no path, no sandboxPermissions)",
-        "Handler imports parseMassActionRequest and okMassActionResponse/massActionErrorResponse from @adobe/aio-commerce-lib-admin-ui/mass-actions",
+        "Handler imports parseMassActionRequest and okMassActionResponse/massActionErrorResponse from @adobe/aio-commerce-sdk/admin-ui/mass-actions",
         "Handler action source lives under src/commerce-backend-ui-2/actions/ and is registered under runtimeManifest in src/commerce-backend-ui-2/ext.config.yaml",
         "Uses the v2 adminUi shape (no commerce/backend-ui/1 or adminUiSdk.registration legacy API)"
       ]
@@ -37,15 +37,15 @@
       "id": 2,
       "name": "menu-and-order-view-button",
       "prompt": "Two things for my Commerce admin app (already initialized with the SDK): add a custom dashboard page under the Sales menu, and add a 'Sync inventory' button on the order detail page that triggers a backend action to push the order to our warehouse.",
-      "expected_output": "adminUi.menu with id (valid charset), label, description, parentMenu: MENU_SALES imported from @adobe/aio-commerce-lib-admin-ui/menu, and no handler (iframe into web-src). adminUi.order.viewButtons with a type:\"worker\" entry (id, label, runtimeAction) and a handler under src/commerce-backend-ui-2/actions/ using parseOrderViewButtonRequest + okOrderViewButtonResponse/orderViewButtonErrorResponse from @adobe/aio-commerce-lib-admin-ui/order-view-buttons. Worker action registered under runtimeManifest in src/commerce-backend-ui-2/ext.config.yaml.",
+      "expected_output": "adminUi.menu with id (valid charset), label, description, parentMenu: MENU_SALES imported from @adobe/aio-commerce-sdk/admin-ui/menu, and no handler (iframe into web-src). adminUi.order.viewButtons with a type:\"worker\" entry (id, label, runtimeAction) and a handler under src/commerce-backend-ui-2/actions/ using parseOrderViewButtonRequest + okOrderViewButtonResponse/orderViewButtonErrorResponse from @adobe/aio-commerce-sdk/admin-ui/order-view-buttons. Worker action registered under runtimeManifest in src/commerce-backend-ui-2/ext.config.yaml.",
       "files": [],
       "assertions": [
         "Declares adminUi.menu (single object) with id, label, and description",
-        "Sets parentMenu to MENU_SALES imported from @adobe/aio-commerce-lib-admin-ui/menu",
+        "Sets parentMenu to MENU_SALES imported from @adobe/aio-commerce-sdk/admin-ui/menu",
         "Menu id uses only valid characters (letters, digits, /, :, _) — no hyphens or spaces",
         "Recognizes the menu has no runtime action handler (iframe into web-src); does not scaffold a handler action for the menu",
         "Declares adminUi.order.viewButtons with a type:\"worker\" entry (id, label, runtimeAction)",
-        "View button handler imports parseOrderViewButtonRequest and okOrderViewButtonResponse/orderViewButtonErrorResponse from @adobe/aio-commerce-lib-admin-ui/order-view-buttons",
+        "View button handler imports parseOrderViewButtonRequest and okOrderViewButtonResponse/orderViewButtonErrorResponse from @adobe/aio-commerce-sdk/admin-ui/order-view-buttons",
         "Worker view-button action lives under src/commerce-backend-ui-2/actions/ and is registered under runtimeManifest in src/commerce-backend-ui-2/ext.config.yaml"
       ]
     }

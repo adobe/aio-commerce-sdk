@@ -59,7 +59,7 @@ Available on `order`, `product`, and `customer`.
 
 ## Worker handler wire contract
 
-Import from `@adobe/aio-commerce-lib-admin-ui/mass-actions`.
+Import from `@adobe/aio-commerce-sdk/admin-ui/mass-actions`.
 
 Commerce POSTs `{ requestId, gridType, ids }` (`ids` is non-empty). The HTTP status code conveys success vs. failure.
 
@@ -72,7 +72,7 @@ import {
   parseMassActionRequest,
   okMassActionResponse,
   massActionErrorResponse,
-} from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+} from "@adobe/aio-commerce-sdk/admin-ui/mass-actions";
 
 export async function main(params: unknown) {
   const { gridType, ids } = parseMassActionRequest(params);
@@ -90,7 +90,7 @@ export async function main(params: unknown) {
 No server handler. Commerce opens the iframe at `path` and appends the selection as a JSON-encoded `selection` query parameter. Read it inside the iframe with `parseMassActionSelection`:
 
 ```typescript
-import { parseMassActionSelection } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+import { parseMassActionSelection } from "@adobe/aio-commerce-sdk/admin-ui/mass-actions";
 
 const raw = new URLSearchParams(window.location.search).get("selection");
 const { ids, gridType } = parseMassActionSelection(raw); // ids: string[], gridType: "order" | "product" | "customer"

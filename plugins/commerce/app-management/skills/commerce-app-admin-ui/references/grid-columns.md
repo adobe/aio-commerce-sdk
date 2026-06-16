@@ -38,7 +38,7 @@ adminUi: {
 
 ## Handler wire contract
 
-Import from `@adobe/aio-commerce-lib-admin-ui/grid-columns`.
+Import from `@adobe/aio-commerce-sdk/admin-ui/grid-columns`.
 
 Commerce POSTs `{ requestId, gridType, ids }`:
 
@@ -56,7 +56,7 @@ import {
   parseGridRequest,
   okGridResponse,
   errorGridResponse,
-} from "@adobe/aio-commerce-lib-admin-ui/grid-columns";
+} from "@adobe/aio-commerce-sdk/admin-ui/grid-columns";
 
 export async function main(params: unknown) {
   const { gridType, ids } = parseGridRequest(params);

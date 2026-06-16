@@ -6,7 +6,7 @@ Declared under `adminUi.menu` — a single object, **not an array**. There is no
 ## Config (`app.commerce.config.ts`)
 
 ```ts
-import { MENU_SALES } from "@adobe/aio-commerce-lib-admin-ui/menu";
+import { MENU_SALES } from "@adobe/aio-commerce-sdk/admin-ui/menu";
 
 adminUi: {
   menu: {
@@ -33,7 +33,7 @@ adminUi: {
 
 ## Parent menu constants
 
-Import from `@adobe/aio-commerce-lib-admin-ui/menu`. Use the named constant rather than the raw string so a typo is a compile error:
+Import from `@adobe/aio-commerce-sdk/admin-ui/menu`. Use the named constant rather than the raw string so a typo is a compile error:
 
 | Constant         | Menu      |
 | ---------------- | --------- |
@@ -50,4 +50,4 @@ Import from `@adobe/aio-commerce-lib-admin-ui/menu`. Use the named constant rath
 
 ## Rendering
 
-The menu entry opens the app's `web-src` at its route. Build the menu page in the app's web frontend. Because there is no runtime action, no `@adobe/aio-commerce-lib-admin-ui` handler builders are needed for the menu — only the `/menu` constants for `parentMenu`.
+The menu entry opens the app's `web-src` at its route. Build the menu page in the app's web frontend. Because there is no runtime action, no Admin UI handler builders are needed for the menu — only the `/admin-ui/menu` constants for `parentMenu`.
