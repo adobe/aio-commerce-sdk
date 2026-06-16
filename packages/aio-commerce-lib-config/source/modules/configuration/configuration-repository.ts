@@ -27,8 +27,6 @@ export type RepositoryNamespace = {
   stateKey: (id: string) => string;
   /** Builds the `aio-lib-files` path for an id. */
   filePath: (id: string) => string;
-  /** Prefix used to list the namespace's files. */
-  filesPrefix: string;
 };
 
 /** Storage layout for scope-keyed Business Configuration. */
@@ -36,7 +34,6 @@ const CONFIGURATION_NAMESPACE: RepositoryNamespace = {
   stateKey: (scopeCode) => `configuration.${scopeCode}`,
   filePath: (scopeCode) =>
     `scope/${scopeCode.toLowerCase()}/configuration.json`,
-  filesPrefix: "scope/",
 };
 
 /**
@@ -47,7 +44,6 @@ const CONFIGURATION_NAMESPACE: RepositoryNamespace = {
 export const SYSTEM_NAMESPACE: RepositoryNamespace = {
   stateKey: (key) => key,
   filePath: (key) => `system/${key}.json`,
-  filesPrefix: "system/",
 };
 
 /**
@@ -149,15 +145,7 @@ export async function getPersistedConfig(
 ) {
   try {
     const files = await getSharedFiles();
-    const filePath = namespace.filePath(scopeCode);
-    const filesList = await files.list(namespace.filesPrefix);
-    const fileObject = filesList.find((file) => file.name === filePath);
-
-    if (!fileObject) {
-      return null;
-    }
-
-    const content = await files.read(filePath);
+    const content = await files.read(namespace.filePath(scopeCode));
     return content ? content.toString("utf8") : null;
   } catch {
     return null;

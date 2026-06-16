@@ -19,7 +19,6 @@ const { mockState, mockFiles } = vi.hoisted(() => ({
     delete: vi.fn(),
   },
   mockFiles: {
-    list: vi.fn(),
     read: vi.fn(),
     write: vi.fn(),
     delete: vi.fn(),
@@ -117,14 +116,12 @@ describe("system-config", () => {
       const result = await getSystemConfigByKey(KEY);
 
       expect(result).toEqual(data);
-      expect(mockFiles.list).not.toHaveBeenCalled();
       expect(mockFiles.read).not.toHaveBeenCalled();
     });
 
     test("falls back to files when cache misses, then re-caches", async () => {
       const data = { baseUrl: "https://example.com", env: "paas" };
       mockState.get.mockResolvedValue({ value: null });
-      mockFiles.list.mockResolvedValue([{ name: FILE_PATH }]);
       mockFiles.read.mockResolvedValue(Buffer.from(JSON.stringify(data)));
 
       const { getSystemConfigByKey } = await import(
@@ -142,7 +139,7 @@ describe("system-config", () => {
 
     test("returns null when not found in cache or files", async () => {
       mockState.get.mockResolvedValue({ value: null });
-      mockFiles.list.mockResolvedValue([]);
+      mockFiles.read.mockRejectedValue({ code: "ENOENT" });
 
       const { getSystemConfigByKey } = await import(
         "#modules/configuration/system-config"
@@ -156,7 +153,7 @@ describe("system-config", () => {
 
     test("returns null when state read throws", async () => {
       mockState.get.mockRejectedValue(new Error("state error"));
-      mockFiles.list.mockResolvedValue([]);
+      mockFiles.read.mockRejectedValue({ code: "ENOENT" });
 
       const { getSystemConfigByKey } = await import(
         "#modules/configuration/system-config"
@@ -170,7 +167,6 @@ describe("system-config", () => {
     test("falls back to files when the cached value is corrupt JSON", async () => {
       const data = { baseUrl: "https://example.com", env: "paas" };
       mockState.get.mockResolvedValue({ value: "{not valid json" });
-      mockFiles.list.mockResolvedValue([{ name: FILE_PATH }]);
       mockFiles.read.mockResolvedValue(Buffer.from(JSON.stringify(data)));
 
       const { getSystemConfigByKey } = await import(
@@ -185,7 +181,6 @@ describe("system-config", () => {
 
     test("returns null when the persisted file holds corrupt JSON", async () => {
       mockState.get.mockResolvedValue({ value: null });
-      mockFiles.list.mockResolvedValue([{ name: FILE_PATH }]);
       mockFiles.read.mockResolvedValue(Buffer.from("{not valid json"));
 
       const { getSystemConfigByKey } = await import(
