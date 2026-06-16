@@ -6,19 +6,22 @@
 
 ## Summary
 
-The `generate all` command for `commerce/backend-ui/2` already emits a `view` operation and
-`web: "web-src"` into `ext.config.yaml` whenever the app config requires iframe-based UI —
-currently view-type mass actions (CEXT-6095), the Admin UI menu (CEXT-6315), and order view buttons
-(CEXT-6316). Without a corresponding `web-src/` directory, the `view` operation is non-functional:
-Commerce cannot open the iframe at all, so the registered menu item, view button, or view mass
-action simply does not work.
+The `generate all` command for `commerce/backend-ui/2` already emits a `view` operation into
+`ext.config.yaml` whenever the app config requires iframe-based UI — currently view-type mass
+actions (CEXT-6095), the Admin UI menu (CEXT-6315), and order view buttons (CEXT-6316). Without a
+corresponding `web-src/` directory, the `view` operation is non-functional: Commerce cannot open
+the iframe at all, so the registered menu item, view button, or view mass action simply does not
+work.
 
 This spec adds an idempotent `generateWebSrc` function to `lib-app`'s generate layer. When invoked
-— either by `generate all` or by the pre-app-build hook — it creates a minimal runnable `web-src/`
-scaffold under `src/commerce-backend-ui-2/` if the directory does not yet exist. The
-scaffold is deliberately thin: the Experience Cloud shell bootstrap, UIX registration, and shared
-context access are encapsulated in a new `@adobe/aio-commerce-lib-admin-ui/web` entrypoint, so the
-generated files are lightweight wrappers rather than full implementations.
+— either by `generate all` or by the pre-app-build hook — it generates a minimal runnable `web-src/`
+scaffold under `src/commerce-backend-ui-2/`, but only when the resolved `view` entrypoint does not
+already exist on disk. Generation is non-destructive: the SDK never overwrites a file a developer
+already has. The scaffold is deliberately thin: the Experience Cloud shell bootstrap, UIX
+registration, and shared context access are encapsulated in a new
+`@adobe/aio-commerce-lib-admin-ui/web` entrypoint, so the generated files are lightweight wrappers
+rather than full implementations. The entrypoint provides React with Spectrum 2 building blocks; it
+does not support other frameworks, but developers who bring their own `web-src/` are left untouched.
 
 ## Motivation
 
@@ -53,13 +56,15 @@ transitive dependencies themselves.
 - Generate a runnable `web-src/` scaffold the first time a `view` operation is written.
 - Use `metadata.id` from the app manifest as the extension ID so the scaffold is correct for the
   app without any manual edits.
-- Keep SDK-managed files always up to date while preserving developer-authored files.
+- Never overwrite existing files: generate only when the resolved `view` entrypoint is absent, so
+  developers can take full ownership of their `web-src/`.
 - Keep the scaffolded files thin by encapsulating the UIX and EC shell boilerplate in
   `@adobe/aio-commerce-lib-admin-ui/web`.
 
 **Non-goals**
 
-- Regenerating or merging into an existing `web-src/` after SDK updates.
+- Regenerating, merging into, or updating an existing `web-src/` after SDK updates.
+- Built-in support for non-React frameworks; the scaffold and library are React plus Spectrum 2.
 - Scaffolding UI logic beyond what is needed to register the extension and provide a starting point.
 - Scaffolding web source for extension points other than `commerce/backend-ui/2`.
 
@@ -104,62 +109,60 @@ web-src/
   index.css
   src/
     app.jsx
-    routes.jsx
     pages/
       main-page.jsx
     components/
 ```
 
-The scaffold is split into two zones with different regeneration semantics:
-
-- **SDK-managed**: `index.html` and `src/app.jsx` are always regenerated on every `generate all`
-  and pre-app-build run. They contain no user logic — developers should not modify them.
-- **User-managed**: `index.css`, `src/routes.jsx`, and `src/pages/main-page.jsx` are generated
-  once and never touched again. This is where developers declare their routes, write their UI, and
-  add their styles. CSS composition via `@import` is the recommended way to add additional
-  stylesheets. `src/components/` is left empty for developers to add shared UI primitives.
+Every generated file is owned by the developer from the moment it lands. The SDK generates the
+scaffold once — when the resolved `view` entrypoint does not yet exist — and never overwrites or
+regenerates anything afterwards. Developers are free to edit any file, including `app.jsx`;
+`src/components/` starts empty as the conventional home for shared UI primitives.
 
 `app.jsx` is the webpack entry point and the equivalent of `App.js` in the raw Commerce sample. It
-reads `metadata.id` from `#app.commerce.config`, imports the routes from the user-managed
-`routes.jsx`, and delegates all shell wiring to `createExtensionApp` from
-`@adobe/aio-commerce-lib-admin-ui/web`:
+reads `metadata.id` from `#app.commerce.config`, imports `MainPage`, and delegates all shell wiring
+to `createExtensionApp` from `@adobe/aio-commerce-lib-admin-ui/web`:
 
 ```jsx
 import { createExtensionApp } from "@adobe/aio-commerce-lib-admin-ui/web";
-import routes from "./routes";
+import { MainPage } from "./pages/main-page";
 import config from "#app.commerce.config";
 
 createExtensionApp({
   extensionId: config.metadata.id,
-  routes,
+  routes: [{ index: true, element: <MainPage /> }],
 });
 ```
 
 `createExtensionApp` handles all the wiring that `App.js` previously owned in the raw Commerce
 sample: the `HashRouter`, Spectrum 2 `Provider`, `ErrorBoundary` with a default fallback, UIX
 `register()` call, and the `runtime.on('configuration')` and `runtime.on('history')` EC shell
-event handlers. Route definitions live in `routes.jsx`, which is user-managed. The generated
-`routes.jsx` starts with `MainPage` as the index route and is the file developers extend when adding
-paths for additional mass actions:
+event handlers. The generated `routes` array starts with `MainPage` as the index route; developers
+extend it inline when adding paths for additional mass actions:
 
 ```jsx
+import { createExtensionApp } from "@adobe/aio-commerce-lib-admin-ui/web";
 import { MainPage } from "./pages/main-page";
 import { BulkCancelPage } from "./pages/bulk-cancel-page";
 import { ArchivePage } from "./pages/archive-page";
+import config from "#app.commerce.config";
 
-export default [
-  { index: true, element: <MainPage /> },
-  { path: "bulk-cancel", element: <BulkCancelPage /> },
-  { path: "archive", element: <ArchivePage /> },
-];
+createExtensionApp({
+  extensionId: config.metadata.id,
+  routes: [
+    { index: true, element: <MainPage /> },
+    { path: "bulk-cancel", element: <BulkCancelPage /> },
+    { path: "archive", element: <ArchivePage /> },
+  ],
+});
 ```
 
 Each `path` here corresponds to the hash fragment declared in `app.commerce.config.ts` — for
 example `path: "#/bulk-cancel"` maps to the `"bulk-cancel"` route above. `BulkCancelPage` and
 `ArchivePage` are additional user-created components.
 
-`pages/main-page.jsx` is user-managed — generated once and the starting point for all custom UI. It
-is pre-wired with `useSharedContext` so context values are immediately available:
+`pages/main-page.jsx` is the starting point for all custom UI. It is pre-wired with
+`useSharedContext` so context values are immediately available:
 
 ```jsx
 import { useSharedContext } from "@adobe/aio-commerce-lib-admin-ui/web";
@@ -172,10 +175,10 @@ export function MainPage() {
 ```
 
 `index.html` is the entry point loaded by the `view` operation URL. It references `index.css`,
-the user-managed global stylesheet.
+the global stylesheet.
 
-On subsequent runs, `generateWebSrc` regenerates the SDK-managed files and skips `index.css`,
-`routes.jsx`, and `pages/main-page.jsx` if they already exist.
+On subsequent runs, `generateWebSrc` finds the resolved `view` entrypoint already present and does
+nothing.
 
 ## Design
 
@@ -191,11 +194,9 @@ fallback to a mock runtime for local development, mounts a `HashRouter` with a S
 `Provider` and a default `ErrorBoundary`, registers `runtime.on('configuration')` and
 `runtime.on('history')` EC shell event handlers, and calls `register()` from `@adobe/uix-guest`
 with the given `extensionId`. The `routes` array follows the React Router v6 route object format
-and is rendered inside the router — the index route is typically the main page component.
-Alternatively, `rootComponent` can be passed instead of `routes` for apps that manage their own
-routing solution; in that case no `HashRouter` is mounted and `rootComponent` is rendered directly
-inside the provider tree. `routes` and `rootComponent` are mutually exclusive: passing both is a TypeScript compile error for
-TypeScript consumers, and a thrown error at runtime for JavaScript consumers.
+and is rendered inside the router — the index route is typically the main page component. Because
+the scaffold is fully developer-owned, apps that want a different routing setup edit `app.jsx`
+directly: drop the `routes` array, mount their own router, or render a single root component.
 
 **`useSharedContext()`** — a React hook that calls `attach()` from `@adobe/uix-guest` using the
 extension ID set by `createExtensionApp` via internal context, and returns
@@ -218,23 +219,28 @@ usage paths) and is marked accordingly in `package.json`.
 
 ### Trigger condition
 
-`generateWebSrc` is called when `updateExtConfig()` returns an `ExtConfig` with
-`operations.view` defined. This is a direct read of the value already in memory — no additional
-config parsing.
+`generateWebSrc` is called when `updateExtConfig()` returns an `ExtConfig` with `operations.view`
+defined. As part of writing that operation, the SDK also writes the `web` key explicitly into
+`ext.config.yaml` — until now it relied on App Builder's implicit `web-src` default. Making the
+value explicit means `generateWebSrc` can resolve the scaffold location deterministically from the
+config rather than assuming the default.
 
 ### `generateWebSrc` function
 
 `generateWebSrc(extensionPointId)` lives in the generate layer of `lib-app` alongside
-`generateActionFiles()` and `updateExtConfig()`. It applies two distinct strategies depending on
-which zone each file belongs to:
+`generateActionFiles()` and `updateExtConfig()`. It first resolves the `view` entrypoint by
+combining the `web` key value with the HTML entrypoint declared by the `view` operation — for
+example `web-src` + `index.html` resolves to `web-src/index.html`. This resolved path is the
+single source of truth for whether scaffolding is needed:
 
-**SDK-managed files** (`index.html`, `src/app.jsx`) — always written, overwriting any previous
-version. These files are pure boilerplate; regenerating them keeps the scaffold in sync with the
-current `lib-admin-ui/web` API without requiring developer intervention.
+- If the resolved entrypoint **already exists**, `generateWebSrc` is a complete no-op. Nothing is
+  written, nothing is overwritten.
+- If it **does not exist**, the full scaffold is generated.
 
-**User-managed files** (`index.css`, `src/routes.jsx`, `src/pages/main-page.jsx`) — written only if
-the file does not already exist. Once a developer has modified these files, subsequent runs leave
-them untouched.
+This existence check is both the idempotency mechanism and the opt-out: a developer who provides
+their own entrypoint — a custom React setup, a different framework, or a hand-written `web-src/` —
+is detected and left entirely untouched, because the SDK only generates when the entrypoint is
+absent and never overwrites.
 
 All files are static copies from the package's template directory — no interpolation is needed
 because `app.jsx` reads `metadata.id` from `#app.commerce.config` at runtime.
@@ -244,13 +250,12 @@ into the app using the package manager detected from the app's lock file.
 
 ### Scaffold contents
 
-| File                      | Zone         | Role                                                                                                             |
-| ------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------- |
-| `index.html`              | SDK-managed  | Entry point loaded by the `view` operation URL; mounts the React app; references `index.css`                     |
-| `src/app.jsx`             | SDK-managed  | Reads `metadata.id` from `#app.commerce.config`; imports routes from `routes.jsx`; calls `createExtensionApp`    |
-| `index.css`               | User-managed | Global stylesheet; generated once; developers add styles directly or compose additional sheets via CSS `@import` |
-| `src/routes.jsx`          | User-managed | Route definitions; generated once; developers add entries for each additional view path                          |
-| `src/pages/main-page.jsx` | User-managed | Stub entry point for custom UI; pre-wired with `useSharedContext()` to access shared context values              |
+| File                      | Role                                                                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `index.html`              | Entry point loaded by the `view` operation URL; mounts the React app; references `index.css`             |
+| `src/app.jsx`             | Reads `metadata.id` from `#app.commerce.config`; declares the `routes` array; calls `createExtensionApp` |
+| `index.css`               | Global stylesheet; developers add styles directly or compose additional sheets via CSS `@import`         |
+| `src/pages/main-page.jsx` | Stub entry point for custom UI; pre-wired with `useSharedContext()` to access shared context values      |
 
 ### `generate all` integration
 
@@ -293,27 +298,24 @@ if (hasAdminUi(appManifest)) {
 }
 ```
 
-Because `generateWebSrc` is idempotent, the hook invocation is a no-op once `web-src/` has been
-created.
+Because `generateWebSrc` is idempotent, the hook invocation is a no-op once the resolved `view`
+entrypoint exists.
 
 ## Drawbacks
 
-The user-managed zone (`pages/main-page.jsx`, `routes.jsx`, and `index.css`) is never regenerated
-after initial creation. If `useSharedContext()` exposes an additional value, existing apps will not receive the
-update automatically and developers must add the new value manually. Because the substance of the
-scaffold lives in the library, these interface-breaking changes should be rare in practice.
+Nothing is ever regenerated after the initial scaffold. The generated wrapper files (`app.jsx`,
+`index.html`) are frozen at the template version that produced them, so improvements or fixes to
+the template itself do not reach existing apps — only changes that live inside `lib-admin-ui/web`
+propagate through a package upgrade. Because the substance of the scaffold lives in the library,
+the frozen wrappers are intentionally thin and such template-level changes should be rare.
 
-SDK-managed files (`index.html` and `src/app.jsx`) are unconditionally overwritten on every
-`generate all` and pre-app-build run. Moving route definitions to the user-managed `routes.jsx`
-avoids the most common reason to edit `app.jsx`, but there is still no mechanism to opt out of
-scaffolding entirely: manual edits to SDK-managed files are silently discarded on the next run.
-Developers who need a setup that diverges from the scaffold have no supported path today. Adding an
-opt-out mechanism is deferred to a future iteration when a concrete need arises.
-
-The current design explicitly ties `web-src` to React: `createExtensionApp` mounts a `HashRouter`
-with a Spectrum 2 `Provider`, `useSharedContext` is a React hook, and the scaffold ships `.jsx`
-files. Apps that want to use a different framework (Vue, Svelte, vanilla JS) have no supported
-path.
+The current design ties the scaffold to React: `createExtensionApp` mounts a `HashRouter` with a
+Spectrum 2 `Provider`, `useSharedContext` is a React hook, and the scaffold ships `.jsx` files.
+Spectrum 2 is a deliberate requirement — Admin UI extensions should look consistent across vendors —
+so there is no built-in support for other frameworks. The escape hatch is all-or-nothing: a
+developer who wants a different framework (or any setup the scaffold does not provide) must own the
+entire `view` entrypoint themselves, forgoing the library's shell and shared-context helpers
+entirely. There is no partial path that keeps the EC shell wiring while swapping the UI layer.
 
 ## Rationale and alternatives
 
@@ -323,38 +325,33 @@ EC shell integration pattern would require developers to manually update their g
 Encapsulating those concerns in the library means apps get updates at package upgrade time, not
 through a regenerate flow.
 
-**Why zone-based regeneration rather than a coarse skip-if-exists?** A single skip-if-exists guard
-on the whole `web-src/` directory protects user files but also prevents the SDK from keeping its
-own boilerplate current. Separating the scaffold into SDK-managed and user-managed zones makes the
-contract explicit: the SDK always owns `index.html` and `src/app.jsx`, developers always own
-`src/pages/main-page.jsx`. Merging generated content with developer-authored content in a
-single file would require tracking which lines are generated — significant complexity with no clear
-benefit, and the zone separation avoids it entirely.
+**Why generate-once rather than zone-based regeneration?** An earlier design split the scaffold
+into SDK-managed files (always regenerated) and user-managed files (generated once) so the SDK
+could keep its own boilerplate current. That was dropped for two reasons. First, regenerating files
+means silently discarding developer edits to anything the SDK claims to own, which has no opt-out
+and surprises developers. Second, the boilerplate the SDK would want to keep current already lives
+in `lib-admin-ui/web`, not in the generated files — the wrappers are thin enough that there is
+little to keep in sync. A single existence check keyed off the resolved `view` entrypoint is
+simpler, never destroys work, and doubles as the opt-out for developers who bring their own setup.
 
 **Could this be solved in user-space?** Yes — copying from the Commerce sample is the current
 workaround. The SDK adds value by automating the step, using the correct `extensionId` without
 manual edits, and establishing a canonical starting point that benefits from library updates.
 
-**Why provide any routing abstraction at all — no routing?** `createExtensionApp` could accept only
-a `rootComponent` and render it directly with no router mounted. This is the simplest possible
-contract and is already supported via the `rootComponent` prop. It is the right choice for apps
-with a single view that have no need for multiple paths. The `routes` shorthand exists because the
-common case — one hash-fragment path per view mass action — is pure boilerplate with no meaningful
-design decisions to make.
-
-**Why not leave routing fully developer-managed?** Developers could wire their own router —
-React Router, TanStack Router, or any other library — inside `rootComponent`, keeping the SDK out
-of routing entirely. This gives maximum flexibility and no opinion on router choice. The tradeoff
-is that every app reimplements the same `HashRouter` + provider setup for what is ultimately the
-same structural requirement. The `routes` prop is an opt-in convenience, not a constraint: apps
-that prefer their own router pass `rootComponent` instead and the SDK steps aside.
+**Why a `routes` prop rather than a dedicated routing API?** The `routes` array is just a
+convenience for the common case — one hash-fragment path per view mass action, which is pure
+boilerplate with no meaningful design decisions. It is not a constraint. Because the scaffold is
+fully developer-owned, apps that want something else edit `app.jsx` directly: render a single root
+component with no router, or wire their own router (React Router, TanStack Router, or anything else)
+around the provider tree. The SDK does not need a separate prop or contract for these cases — owning
+the file already grants full freedom, so no additional API surface is warranted.
 
 **Why not file-based routing?** A file-based convention (one file per route under `src/pages/`,
-auto-discovered at build time) would eliminate manual `routes.jsx` maintenance and is a viable
-alternative the SDK could implement. The reason it was set aside is that it couples routing
-structure to file system layout, forcing a specific code organization on developers who may
-disagree with that convention or need to structure their project differently. The explicit
-`routes.jsx` file keeps routing declarative without dictating where components live.
+auto-discovered at build time) would eliminate manual route wiring and is a viable alternative the
+SDK could implement. The reason it was set aside is that it couples routing structure to file
+system layout, forcing a specific code organization on developers who may disagree with that
+convention or need to structure their project differently. The inline `routes` array in `app.jsx`
+keeps routing declarative without dictating where components live.
 
 ## Unresolved questions
 
@@ -369,6 +366,6 @@ disagree with that convention or need to structure their project differently. Th
   can register multiple hash routes without wiring `HashRouter` manually.
 - As more `backend-ui/2` features use the shared context, `useSharedContext` could be extended to
   return additional context values (e.g., `locale`, `imsProfile`) with typed access.
-- An opt-out mechanism for SDK-managed file generation could be added when a concrete need arises
-  — for example, a flag in `app.commerce.config.ts` that suppresses `generateWebSrc` for apps
-  that manage their own `web-src/` setup.
+- A partial escape hatch could let developers keep the library's EC shell wiring and shared-context
+  helpers while supplying their own UI layer, rather than the current all-or-nothing choice between
+  the full React scaffold and owning the entire `view` entrypoint.
