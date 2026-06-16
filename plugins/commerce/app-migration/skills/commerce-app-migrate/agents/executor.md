@@ -589,7 +589,7 @@ After this command completes successfully, check which directories were created:
 
 - `src/commerce-extensibility-1/` — always expected
 - `src/commerce-configuration-1/` — present only if `businessConfig` was defined
-- `src/commerce-backend-ui-1/` — present only if `adminUiSdk.registration` was defined
+- `src/commerce-backend-ui-2/` — present only if `adminUi` was defined
 
 Note which directories exist — you will need this in Steps 6 and 7.
 
@@ -612,9 +612,9 @@ exist (from Step 5):
       # Include below only if src/commerce-configuration-1/ was generated:
       commerce/configuration/1:
         $include: "src/commerce-configuration-1/ext.config.yaml"
-      # Include below only if src/commerce-backend-ui-1/ was generated:
-      commerce/backend-ui/1:
-        $include: "src/commerce-backend-ui-1/ext.config.yaml"
+      # Include below only if src/commerce-backend-ui-2/ was generated:
+      commerce/backend-ui/2:
+        $include: "src/commerce-backend-ui-2/ext.config.yaml"
 
 **Case B — `extensions:` block already exists:**
 
@@ -636,6 +636,10 @@ Add the new entries below the existing ones:
         $include: "src/commerce-extensibility-1/ext.config.yaml"
 
 Do not duplicate entries that are already present.
+
+**V1 → V2 replacement:** If the existing `app.config.yaml` already contains a `commerce/backend-ui/1` entry AND `src/commerce-backend-ui-2/` was generated (Step 5), REPLACE the `commerce/backend-ui/1` entry with `commerce/backend-ui/2` rather than keeping both. Update its `$include` path to `"src/commerce-backend-ui-2/ext.config.yaml"`. Do not leave the old `commerce/backend-ui/1` entry in the file.
+
+**`pre-app-build` hook cleanup:** If `app.config.yaml` contains a `pre-app-build` hook that references `commerce-backend-ui-1` or the v1 registration action path (e.g. a script under `src/commerce-backend-ui-1/`), remove that hook entry. The v1 registration action is no longer generated in v2 and the hook will fail the build if left in place.
 
 **Do not modify or remove any other existing content in `app.config.yaml`.**
 
@@ -672,7 +676,7 @@ extension points whose directories exist (from Step 5):
 Add additional lines if generated:
 
       - extensionPointId: commerce/configuration/1
-      - extensionPointId: commerce/backend-ui/1
+      - extensionPointId: commerce/backend-ui/2
 
 **Never create both `install.yml` and `install.yaml` — use whichever already
 exists, or create `install.yaml` if neither exists.**
@@ -990,7 +994,11 @@ constraints, Next steps) when in doc-scan-only mode.
          ← omit this entire section if generate failed →
       src/commerce-extensibility-1/
       [src/commerce-configuration-1/]   ← only if generated
-      [src/commerce-backend-ui-1/]      ← only if generated
+      [src/commerce-backend-ui-2/]      ← only if generated
+
+    ── Safe to delete ─────────────────────────────────────────────────
+         ← omit this entire section if src/commerce-backend-ui-1/ does not exist →
+      src/commerce-backend-ui-1/        ← v1 generated directory; no longer used
 
     ── Modified ───────────────────────────────────────────────────────
          ← omit app.config.yaml line if generate failed →
