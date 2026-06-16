@@ -49,7 +49,7 @@ Builders:
 
 - `parseGridRequest(params)` → `{ requestId, gridType, ids }`; throws `CommerceSdkValidationError` on malformed input.
 - `okGridResponse(data, defaults?)` → success envelope. `data` is keyed by entity id; each value is an object keyed by column id. The optional `defaults` bag is serialized as the `"*"` key and applied to ids missing from `data` and to cells whose value does not match the declared column `type`.
-- `errorGridResponse(errorStatus, errorMessage?)` → handler-level failure envelope (`{ errorStatus, errorMessage }`), returned with HTTP 200 so Commerce can log a specific code.
+- `errorGridResponse(statusCode, errorMessage)` → non-2xx HTTP response. Commerce uses the status code to distinguish success from failure. Body shape: `{ message }`.
 
 ```typescript
 import {
@@ -67,7 +67,7 @@ export async function main(params: unknown) {
       { fulfillment_status: "unknown", risk_score: 0 }, // optional defaults ("*")
     );
   } catch (error) {
-    return errorGridResponse("INTERNAL_ERROR", (error as Error).message);
+    return errorGridResponse(500, (error as Error).message);
   }
 }
 ```

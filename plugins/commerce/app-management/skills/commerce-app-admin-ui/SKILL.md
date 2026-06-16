@@ -165,7 +165,7 @@ export async function main(params: unknown) {
     // row keys must match the column ids declared in config
     return okGridResponse(rows, { fulfillment_status: "unknown" });
   } catch (error) {
-    return errorGridResponse("INTERNAL_ERROR", (error as Error).message);
+    return errorGridResponse(500, (error as Error).message);
   }
 }
 ```
