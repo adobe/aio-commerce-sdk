@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { adminUiSdkStep } from "./admin-ui-sdk";
+import { adminUiStep } from "./admin-ui";
 import { createCustomInstallationStep } from "./custom-installation";
 import { eventingStep } from "./events";
 import { webhooksStep } from "./webhooks";
@@ -28,7 +28,7 @@ function createDefaultChildSteps(
   return [
     eventingStep,
     webhooksStep,
-    adminUiSdkStep,
+    adminUiStep,
     createCustomInstallationStep(config),
   ];
 }

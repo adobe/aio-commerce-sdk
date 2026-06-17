@@ -33,12 +33,12 @@
     "exports": {
       "./api": {
         "import": {
-          "types": "./dist/es/index.d.mts",
-          "default": "./dist/es/index.mjs"
+          "types": "./dist/es/api/index.d.mts",
+          "default": "./dist/es/api/index.mjs"
         },
         "require": {
-          "types": "./dist/cjs/index.d.cts",
-          "default": "./dist/cjs/index.cjs"
+          "types": "./dist/cjs/api/index.d.cts",
+          "default": "./dist/cjs/api/index.cjs"
         }
       },
       "./grid-columns": {
@@ -51,12 +51,45 @@
           "default": "./dist/cjs/grid-columns/index.cjs"
         }
       },
+      "./mass-actions": {
+        "import": {
+          "types": "./dist/es/mass-actions/index.d.mts",
+          "default": "./dist/es/mass-actions/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/mass-actions/index.d.cts",
+          "default": "./dist/cjs/mass-actions/index.cjs"
+        }
+      },
+      "./menu": {
+        "import": {
+          "types": "./dist/es/menu/index.d.mts",
+          "default": "./dist/es/menu/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/menu/index.d.cts",
+          "default": "./dist/cjs/menu/index.cjs"
+        }
+      },
+      "./order-view-buttons": {
+        "import": {
+          "types": "./dist/es/order-view-buttons/index.d.mts",
+          "default": "./dist/es/order-view-buttons/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/order-view-buttons/index.d.cts",
+          "default": "./dist/cjs/order-view-buttons/index.cjs"
+        }
+      },
       "./package.json": "./package.json"
     }
   },
   "exports": {
-    "./api": "./source/index.ts",
+    "./api": "./source/api/index.ts",
     "./grid-columns": "./source/grid-columns/index.ts",
+    "./mass-actions": "./source/mass-actions/index.ts",
+    "./menu": "./source/menu/index.ts",
+    "./order-view-buttons": "./source/order-view-buttons/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {

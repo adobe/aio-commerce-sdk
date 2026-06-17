@@ -17,26 +17,24 @@ import { join } from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
-  BACKEND_UI_EXTENSION_POINT_ID,
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   GENERATED_ACTIONS_PATH,
   getExtensionPointFolderPath,
 } from "#commands/constants";
 import { exec, run } from "#commands/generate/actions/main";
-import {
-  getAdminUiSdkRegistrationActionPath,
-  getRuntimeAppConfigPath,
-} from "#commands/utils";
+import { getRuntimeAppConfigPath } from "#commands/utils";
 import {
   dynamicOptionsConfigFile,
   dynamicOptionsConfigFileTs,
 } from "#test/fixtures/business-config";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
+  configWithAdminUiMenu,
   configWithBusinessConfig,
   configWithDynamicListOptions,
-  configWithFullAdminUiSdk,
+  configWithFullAdminUiV2,
   configWithOneScript,
   minimalValidConfig,
 } from "#test/fixtures/config";
@@ -279,28 +277,74 @@ describe("commands/generate/actions", () => {
       );
     });
 
-    test("generates backend-ui registration action when adminUiSdk is configured", async () => {
+    test("includes workerProcess for worker mass actions in backend-ui/2 ext.config.yaml", async () => {
       await withTempProject(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await run(configWithFullAdminUiSdk, tempDir);
+          await run(configWithFullAdminUiV2, tempDir);
 
-          const registrationPath = join(
-            tempDir,
-            getAdminUiSdkRegistrationActionPath(BACKEND_UI_EXTENSION_POINT_ID),
-          );
           const extConfigPath = join(
             tempDir,
-            getExtensionPointFolderPath(BACKEND_UI_EXTENSION_POINT_ID),
+            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
             "ext.config.yaml",
           );
 
-          expect(existsSync(registrationPath)).toBe(true);
+          const content = await readFile(extConfigPath, "utf-8");
+          expect(content).toContain("workerProcess");
+          expect(content).toContain("customers/export-customers");
+        },
+      );
+    });
+
+    test("generates ext.config.yaml for backend-ui/2 with view and web but no workerProcess when only adminUi.menu is configured", async () => {
+      await withTempProject(
+        { ...EMPTY_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await run(configWithAdminUiMenu, tempDir);
+
+          const extConfigPath = join(
+            tempDir,
+            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+            "ext.config.yaml",
+          );
+
           expect(existsSync(extConfigPath)).toBe(true);
 
-          const content = await readFile(registrationPath, "utf-8");
-          expect(content).toContain("registrationRuntimeAction");
-          expect(content).toContain("my-app::first");
+          const content = await readFile(extConfigPath, "utf-8");
+          expect(content).toContain("backend-ui/2");
+          expect(content).toContain("index.html");
+          expect(content).toContain("web-src");
+          expect(content).not.toContain("workerProcess");
+        },
+      );
+    });
+
+    test("generates ext.config.yaml for backend-ui/2 when adminUi is configured", async () => {
+      await withTempProject(
+        { ...EMPTY_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await run(configWithFullAdminUiV2, tempDir);
+
+          const extConfigPath = join(
+            tempDir,
+            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+            "ext.config.yaml",
+          );
+
+          expect(existsSync(extConfigPath)).toBe(true);
+
+          // No registration action should be generated
+          const legacyRegistrationPath = join(
+            tempDir,
+            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+            ".generated/actions/registration/index.js",
+          );
+          expect(existsSync(legacyRegistrationPath)).toBe(false);
+
+          const content = await readFile(extConfigPath, "utf-8");
+          expect(content).toContain("backend-ui/2");
+          expect(content).toContain("index.html");
+          expect(content).not.toContain("registration");
         },
       );
     });

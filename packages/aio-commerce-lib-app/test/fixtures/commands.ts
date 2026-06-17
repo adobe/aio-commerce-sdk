@@ -1,6 +1,4 @@
 // @ts-expect-error - Importing the template as a raw string for testing purposes.
-import registrationTemplate from "#templates/admin-ui-sdk/registration.js?raw";
-// @ts-expect-error - Importing the template as a raw string for testing purposes.
 import appConfigTemplate from "#templates/app-management/app-config.js?raw";
 // @ts-expect-error - Importing the template as a raw string for testing purposes.
 import associationTemplate from "#templates/app-management/association.js?raw";
@@ -19,7 +17,6 @@ export const templates = {
   installation: installationTemplate as string,
   customScripts: customScripts as string,
   businessConfig: businessConfigTemplate as string,
-  registration: registrationTemplate as string,
   scopeTree: scopeTreeTemplate as string,
 };
 
@@ -33,7 +30,6 @@ export function makeTemplateFiles(): Record<string, string> {
     "app-management/association.js.template": templates.association,
     "app-management/installation.js.template": templates.installation,
     "app-management/custom-scripts.js.template": templates.customScripts,
-    "admin-ui-sdk/registration.js.template": templates.registration,
     "business-configuration/config.js.template": templates.businessConfig,
     "business-configuration/scope-tree.js.template": templates.scopeTree,
   };

@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import * as v from "valibot";
 
 import { AppDataSchema } from "#management/installation/schema";
@@ -18,7 +19,7 @@ import { AppDataSchema } from "#management/installation/schema";
 export const InstallationRequestBodySchema = v.object({
   appData: AppDataSchema,
   commerceBaseUrl: v.string(),
-  commerceEnv: v.string(),
+  commerceEnv: CommerceEnvSchema,
   ioEventsUrl: v.string(),
   ioEventsEnv: v.string(),
 });

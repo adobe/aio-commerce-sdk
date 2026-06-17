@@ -16,9 +16,8 @@ import { buildOpenApiSpec } from "#actions/app-config/openapi";
 import { getConfigDomains } from "#config/schema/domains";
 import openApiSpec from "#openapi.json" with { type: "json" };
 import {
-  configWithAdminUi,
+  configWithAdminUiAllGrids,
   configWithBusinessConfig,
-  configWithFullAdminUiSdk,
   configWithOneScript,
   minimalValidConfig,
   mockMetadata,
@@ -31,8 +30,7 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 const fullyCapableConfig = {
   metadata: mockMetadata,
   businessConfig: configWithBusinessConfig.businessConfig,
-  adminUiSdk: configWithFullAdminUiSdk.adminUiSdk,
-  adminUi: configWithAdminUi.adminUi,
+  adminUi: configWithAdminUiAllGrids.adminUi,
   installation: configWithOneScript.installation,
 } satisfies CommerceAppConfigOutputModel;
 
@@ -63,7 +61,6 @@ describe("buildOpenApiSpec", () => {
     expect(paths).not.toContain("/config");
     expect(paths).not.toContain("/scope-tree");
     expect(paths).not.toContain("/scope-tree/commerce");
-    expect(paths).not.toContain("/registration");
     expect(paths).not.toContain("/installation");
   });
 
@@ -94,10 +91,9 @@ describe("buildOpenApiSpec", () => {
     }
 
     // Still reachable from `/app-config` (its error response and the
-    // eventing / Admin UI SDK / Admin UI / webhook payloads it documents).
+    // eventing / Admin UI / webhook payloads it documents).
     for (const retained of [
       "ErrorResponse",
-      "AdminUiSdkRegistration",
       "AdminUiGridColumns",
       "EventProvider",
       "RuntimeActionWebhookConfig",
@@ -118,7 +114,6 @@ describe("buildOpenApiSpec", () => {
     expect(tagNames).toContain("App Metadata");
     expect(tagNames).toContain("Business Configuration");
     expect(tagNames).toContain("Management");
-    expect(tagNames).toContain("Admin UI");
   });
 
   test("prunes tags left unreferenced by the stripped paths", async () => {
@@ -132,7 +127,6 @@ describe("buildOpenApiSpec", () => {
     expect(tagNames).toContain("App Metadata");
     expect(tagNames).not.toContain("Business Configuration");
     expect(tagNames).not.toContain("Management");
-    expect(tagNames).not.toContain("Admin UI");
   });
 
   test("does not mutate the shared spec import", async () => {

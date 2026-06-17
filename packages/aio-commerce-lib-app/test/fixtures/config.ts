@@ -1,5 +1,6 @@
 import { schemaWithDynamicListOptions } from "#test/fixtures/business-config";
 
+import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
 import type { ApplicationMetadata } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
@@ -123,239 +124,6 @@ export const configWithExternalEventing = {
   eventing: externalEventingPart,
 } satisfies CommerceAppConfigOutputModel;
 
-/** Config fixture with Admin UI SDK configured. */
-export const configWithAdminUiSdk = {
-  metadata: { ...mockMetadata, id: "test-app-admin-ui-sdk" },
-  adminUiSdk: {
-    registration: {
-      menuItems: [
-        {
-          id: "test-app::menu",
-          title: "Test App",
-          sortOrder: 1,
-          isSection: false,
-        },
-      ],
-      order: {
-        massActions: [
-          {
-            actionId: "test-app::order-mass-action",
-            label: "Order Mass Action",
-            path: "#/order-mass-action",
-            selectionLimit: 1,
-            confirm: { title: "Confirm", message: "Are you sure?" },
-          },
-        ],
-        gridColumns: {
-          data: { meshId: "mesh-123" },
-          properties: [
-            {
-              label: "Col 1",
-              columnId: "col_1",
-              type: "string",
-              align: "left",
-            },
-          ],
-        },
-        viewButtons: [
-          {
-            buttonId: "test-app::delete-order",
-            label: "Delete",
-            path: "#/delete",
-            level: 0,
-            confirm: { message: "Are you sure?" },
-          },
-        ],
-        customFees: [
-          {
-            id: "test-app::fee",
-            label: "Test Fee",
-            value: 5.0,
-            applyFeeOnLastCreditMemo: false,
-          },
-        ],
-      },
-      product: {
-        massActions: [
-          {
-            actionId: "test-app::product-mass-action",
-            label: "Product Mass Action",
-            path: "#/product-mass-action",
-          },
-        ],
-        gridColumns: {
-          data: { meshId: "mesh-456" },
-          properties: [
-            { label: "Col", columnId: "col", type: "integer", align: "right" },
-          ],
-        },
-      },
-      customer: {
-        massActions: [
-          {
-            actionId: "test-app::customer-mass-action",
-            label: "Customer Mass Action",
-            path: "#/customer-mass-action",
-          },
-        ],
-        gridColumns: {
-          data: { meshId: "mesh-789" },
-          properties: [
-            { label: "Col", columnId: "col", type: "boolean", align: "center" },
-          ],
-        },
-      },
-      bannerNotification: {
-        massActions: {
-          order: [
-            {
-              actionId: "test-app::order-mass-action",
-              successMessage: "Done!",
-            },
-          ],
-        },
-        orderViewButtons: [
-          {
-            buttonId: "test-app::delete-order",
-            successMessage: "Done!",
-            errorMessage: "Failed!",
-          },
-        ],
-      },
-    },
-  },
-} satisfies CommerceAppConfigOutputModel;
-
-/** Full Admin UI SDK config fixture covering all extension points. */
-export const configWithFullAdminUiSdk = {
-  metadata: { ...mockMetadata, id: "test-app-full-admin-ui-sdk" },
-  adminUiSdk: {
-    registration: {
-      menuItems: [
-        {
-          id: "my-app::first",
-          title: "App on App Builder",
-          parent: "my-app::apps",
-          sortOrder: 1,
-          isSection: false,
-          sandbox: "allow-modals",
-        },
-      ],
-      order: {
-        massActions: [
-          {
-            actionId: "my-app::order-mass-action",
-            label: "Order Mass Action",
-            title: "Page Title",
-            confirm: { title: "Confirm", message: "Are you sure?" },
-            path: "#/order-mass-action",
-            selectionLimit: 1,
-            displayIframe: true,
-            timeout: 10,
-            sandbox: "allow-modals",
-          },
-        ],
-        gridColumns: {
-          data: { meshId: "MESH_ID" },
-          properties: [
-            {
-              label: "Column Name",
-              columnId: "column_id",
-              type: "string" as const,
-              align: "left" as const,
-            },
-          ],
-        },
-        viewButtons: [
-          {
-            buttonId: "my-app::delete-order",
-            label: "Delete",
-            confirm: { message: "Are you sure?" },
-            path: "#/delete-order",
-            level: 0 as const,
-            sortOrder: 80,
-            displayIframe: true,
-            timeout: 10,
-            sandbox: "allow-modals",
-          },
-        ],
-        customFees: [
-          {
-            id: "fee-1",
-            label: "Test Fee",
-            value: 1.0,
-            orderMinimumAmount: 0,
-            applyFeeOnLastInvoice: false,
-            applyFeeOnLastCreditMemo: true,
-          },
-        ],
-      },
-      product: {
-        massActions: [
-          {
-            actionId: "my-app::product-mass-action",
-            label: "Product Mass Action",
-            path: "#/mass-action",
-            productSelectLimit: 1,
-          },
-        ],
-        gridColumns: {
-          data: { meshId: "MESH_ID" },
-          properties: [
-            {
-              label: "Column",
-              columnId: "col_id",
-              type: "string" as const,
-              align: "left" as const,
-            },
-          ],
-        },
-      },
-      customer: {
-        massActions: [
-          {
-            actionId: "my-app::customer-mass-action",
-            label: "Customer Mass Action",
-            path: "#/customer-mass-action",
-            customerSelectLimit: 1,
-          },
-        ],
-        gridColumns: {
-          data: { meshId: "MESH_ID" },
-          properties: [
-            {
-              label: "Column",
-              columnId: "col_id",
-              type: "string" as const,
-              align: "left" as const,
-            },
-          ],
-        },
-      },
-      bannerNotification: {
-        massActions: {
-          order: [
-            {
-              actionId: "my-app::order-mass-action",
-              successMessage: "Done!",
-              errorMessage: "Failed!",
-            },
-          ],
-          product: [{ actionId: "my-app::product-mass-action" }],
-          customer: [{ actionId: "my-app::customer-mass-action" }],
-        },
-        orderViewButtons: [
-          {
-            buttonId: "my-app::delete-order",
-            successMessage: "Done!",
-            errorMessage: "Failed!",
-          },
-        ],
-      },
-    },
-  },
-} satisfies CommerceAppConfigOutputModel;
-
 /** Config fixture with webhooks configured. */
 export const configWithWebhooks = {
   metadata: { ...mockMetadata, id: "test-app-webhooks" },
@@ -437,6 +205,7 @@ export function createCommerceEventConfig(
     description: string;
     runtimeActions: string[];
     fields: Array<{ name: string }>;
+    env: CommerceEnv[];
   }>,
 ) {
   return {
@@ -457,6 +226,7 @@ export function createCommerceEventConfig(
                 "my-package/action",
               ],
               description: overrides?.description ?? "Plugin event",
+              ...(overrides?.env !== undefined && { env: overrides.env }),
             },
           ],
         },
@@ -465,12 +235,61 @@ export function createCommerceEventConfig(
   };
 }
 
-export function createConfigWithTwoCommerceEventingSources() {
+export function createExternalEventConfig(
+  name: string,
+  overrides?: Partial<{
+    label: string;
+    description: string;
+    runtimeActions: string[];
+    env: CommerceEnv[];
+  }>,
+) {
+  return {
+    metadata: minimalValidConfig.metadata,
+    eventing: {
+      external: [
+        {
+          provider: {
+            label: "External Provider",
+            description: "External events",
+          },
+          events: [
+            {
+              name,
+              label: overrides?.label ?? "External Event",
+              description: overrides?.description ?? "An external event",
+              runtimeActions: overrides?.runtimeActions ?? [
+                "my-package/action",
+              ],
+              ...(overrides?.env && { env: overrides.env }),
+            },
+          ],
+        },
+      ],
+    },
+  };
+}
+
+export function createConfigWithTwoCommerceEventingSources(options?: {
+  firstSourceEnv?: CommerceEnv[];
+}) {
+  const [firstSource] = configWithCommerceEventing.eventing.commerce;
+  const firstSourceEnv = options?.firstSourceEnv;
+  const scopedFirstSource = firstSourceEnv
+    ? {
+        ...firstSource,
+        events: firstSource.events.map((event) => ({
+          ...event,
+          env: firstSourceEnv,
+        })),
+      }
+    : firstSource;
+
   return {
     ...configWithCommerceEventing,
     eventing: {
       commerce: [
-        ...configWithCommerceEventing.eventing.commerce,
+        scopedFirstSource,
         {
           provider: {
             label: "Second Commerce Events Provider",
@@ -491,9 +310,31 @@ export function createConfigWithTwoCommerceEventingSources() {
   } satisfies CommerceAppConfigOutputModel;
 }
 
-/** Config fixture with all three adminUi grid column extensions configured. */
-export const configWithAdminUi = {
-  metadata: { ...mockMetadata, id: "test-app-admin-ui" },
+/** Config fixture with only order adminUi grid columns configured. */
+export const configWithAdminUiSingleGrid = {
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-single-grid" },
+  adminUi: {
+    order: {
+      gridColumns: {
+        label: "Order fulfillment data",
+        description: "Adds fulfillment status to the order grid",
+        runtimeAction: "orders/fetch-order-grid-data",
+        columns: [
+          {
+            id: "fulfillment_status",
+            label: "Fulfillment",
+            type: "string" as const,
+            align: "left" as const,
+          },
+        ],
+      },
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with grid columns configured for all three entities (order, product, customer). */
+export const configWithAdminUiAllGrids = {
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-all-grids" },
   adminUi: {
     order: {
       gridColumns: {
@@ -543,24 +384,229 @@ export const configWithAdminUi = {
   },
 } satisfies CommerceAppConfigOutputModel;
 
-/** Config fixture with only order adminUi grid columns configured. */
-export const configWithAdminUiSingleGrid = {
-  metadata: { ...mockMetadata, id: "test-app-admin-ui-single-grid" },
+/** Minimal valid adminUi menu object (required fields only). */
+const adminUiMenuMinimalPart = {
+  id: "approval_dashboard",
+  label: "Approval Dashboard",
+  description: "Review and approve purchase requests from Commerce Admin.",
+} satisfies NonNullable<CommerceAppConfigOutputModel["adminUi"]>["menu"];
+
+/** Full adminUi menu object with all fields populated. */
+const adminUiMenuPart = {
+  ...adminUiMenuMinimalPart,
+  parentMenu: "sales",
+  sandboxPermissions: ["allow-popups", "allow-downloads"] as const,
+} satisfies NonNullable<CommerceAppConfigOutputModel["adminUi"]>["menu"];
+
+/** Config fixture with an adminUi menu declaration (no grid columns). */
+export const configWithAdminUiMenu = {
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-menu" },
+  adminUi: {
+    menu: adminUiMenuPart,
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with only worker mass actions configured (no view mass actions, no grids). */
+export const configWithWorkerMassActions = {
+  metadata: { ...mockMetadata, id: "test-app-worker-mass-actions" },
+  adminUi: {
+    customer: {
+      massActions: [
+        {
+          id: "export-customers",
+          label: "Export Customers",
+          type: "worker" as const,
+          runtimeAction: "customers/export-customers",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with worker mass actions on two different entities with distinct runtimeActions. */
+export const configWithMultipleWorkerMassActions = {
+  metadata: { ...mockMetadata, id: "test-app-multiple-worker-mass-actions" },
   adminUi: {
     order: {
+      massActions: [
+        {
+          id: "export-orders",
+          label: "Export Orders",
+          type: "worker" as const,
+          runtimeAction: "orders/export-orders",
+        },
+      ],
+    },
+    customer: {
+      massActions: [
+        {
+          id: "export-customers",
+          label: "Export Customers",
+          type: "worker" as const,
+          runtimeAction: "customers/export-customers",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** v2 Admin UI config fixture with view mass actions and no worker. */
+export const configWithViewMassActions = {
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-sdk-v2" },
+  adminUi: {
+    order: {
+      massActions: [
+        {
+          id: "order-mass-action",
+          label: "Order Mass Action",
+          description: "Adds a bulk order action.",
+          type: "view" as const,
+          path: "#/order-mass-action",
+          selectionLimit: 1,
+          confirm: { title: "Confirm", message: "Are you sure?" },
+          notifications: { success: "Done!" },
+        },
+      ],
+    },
+    product: {
+      massActions: [
+        {
+          id: "product-mass-action",
+          label: "Product Mass Action",
+          type: "view" as const,
+          path: "#/product-mass-action",
+        },
+      ],
+    },
+    customer: {
+      massActions: [
+        {
+          id: "customer-mass-action",
+          label: "Customer Mass Action",
+          type: "view" as const,
+          path: "#/customer-mass-action",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Full v2 Admin UI config fixture covering all extension points including a worker mass action. */
+export const configWithFullAdminUiV2 = {
+  metadata: { ...mockMetadata, id: "test-app-full-admin-ui-sdk-v2" },
+  adminUi: {
+    menu: adminUiMenuPart,
+    order: {
+      massActions: [
+        {
+          id: "order-mass-action",
+          label: "Order Mass Action",
+          description: "Registers an order bulk action.",
+          type: "view" as const,
+          path: "#/order-mass-action",
+          selectionLimit: 1,
+          confirm: { title: "Confirm", message: "Are you sure?" },
+          notifications: { success: "Done!", error: "Failed!" },
+        },
+      ],
       gridColumns: {
         label: "Order fulfillment data",
         description: "Adds fulfillment status to the order grid",
-        runtimeAction: "orders/fetch-order-grid-data",
+        runtimeAction: "orders/fetch-order-data",
         columns: [
           {
-            id: "fulfillment_status",
-            label: "Fulfillment",
+            id: "poc_status",
+            label: "PoC Status",
             type: "string" as const,
             align: "left" as const,
           },
         ],
       },
+    },
+    product: {
+      massActions: [
+        {
+          id: "product-mass-action",
+          label: "Product Mass Action",
+          type: "view" as const,
+          path: "#/mass-action",
+          selectionLimit: 1,
+        },
+      ],
+    },
+    customer: {
+      massActions: [
+        {
+          id: "export-customers",
+          label: "Customer Mass Action",
+          description: "Exports selected customers.",
+          type: "worker" as const,
+          runtimeAction: "customers/export-customers",
+          timeout: 30,
+          selectionLimit: 1,
+          notifications: {
+            success: "Export complete!",
+            error: "Export failed!",
+          },
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with order view buttons of type "view". */
+export const configWithOrderViewTypeButtons = {
+  metadata: { ...mockMetadata, id: "test-app-view-buttons-view" },
+  adminUi: {
+    order: {
+      viewButtons: [
+        {
+          type: "view" as const,
+          id: "delete-order",
+          label: "Delete",
+          path: "#/delete-order",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with order view buttons of type "worker". */
+export const configWithOrderWorkerTypeButtons = {
+  metadata: { ...mockMetadata, id: "test-app-view-buttons-worker" },
+  adminUi: {
+    order: {
+      viewButtons: [
+        {
+          type: "worker" as const,
+          id: "sync-inventory",
+          label: "Sync inventory",
+          runtimeAction: "orders/sync-inventory",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with both view and worker order view buttons. */
+export const configWithOrderViewButtons = {
+  metadata: { ...mockMetadata, id: "test-app-view-buttons-mixed" },
+  adminUi: {
+    order: {
+      viewButtons: [
+        {
+          type: "view" as const,
+          id: "delete-order",
+          label: "Delete",
+          path: "#/delete-order",
+        },
+        {
+          type: "worker" as const,
+          id: "sync-inventory",
+          label: "Sync inventory",
+          runtimeAction: "orders/sync-inventory",
+        },
+      ],
     },
   },
 } satisfies CommerceAppConfigOutputModel;

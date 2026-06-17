@@ -7,7 +7,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
-- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions; mass actions, menus, view buttons, and custom fees will follow.
+- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order view buttons, and menu declarations.
 - **Admin UI SDK Configuration** (`commerce/backend-ui/1`, _deprecated_): Generate and manage the runtime action for the legacy Admin UI SDK extension point. Will be removed from the SDK — use `adminUi` and `commerce/backend-ui/2` for new apps.
 - **Association Helpers**: Retrieve the Commerce instance the app is associated with from any runtime action via `getCommerceClient` and `getCommerceInstance`.
 
@@ -101,11 +101,6 @@ This produces the following files, organized by extension point:
 > [!NOTE]
 > When the business config schema contains `dynamicList` fields, the manifest is emitted as an ESM module (`app.commerce.manifest.js`) instead of JSON, and no separate `configuration-schema.json` is generated. Generated actions resolve `dynamicList` fields on every request. Any external credentials a factory uses must be declared as `inputs` for each action that resolves the schema (in the corresponding `ext.config.yaml` of each action).
 
-**`commerce/backend-ui/1`**: Admin UI SDK registration — _deprecated, will be removed from the SDK_ (generated when `adminUiSdk.registration` is defined):
-
-- `src/commerce-backend-ui-1/.generated/actions/registration/index.js`: serves the Admin UI SDK registration object to Adobe Commerce
-- `src/commerce-backend-ui-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
-
 **`commerce/backend-ui/2`**: Admin UI registration (generated when `adminUi` is defined):
 
 - `src/commerce-backend-ui-2/ext.config.yaml`: extension manifest with the `pre-app-build` hook and `workerProcess` declarations derived from `runtimeAction` values
@@ -122,9 +117,6 @@ extensions:
   # Only include this if businessConfig is defined in your app.commerce.config.*:
   commerce/configuration/1:
     $include: "src/commerce-configuration-1/ext.config.yaml"
-  # Only include this if adminUiSdk.registration is defined in your app.commerce.config.*:
-  commerce/backend-ui/1:
-    $include: "src/commerce-backend-ui-1/ext.config.yaml"
   # Only include this if adminUi is defined in your app.commerce.config.*:
   commerce/backend-ui/2:
     $include: "src/commerce-backend-ui-2/ext.config.yaml"
@@ -137,8 +129,6 @@ extensions:
   - extensionPointId: commerce/extensibility/1
   # Only include this if businessConfig is defined in your app.commerce.config.*:
   - extensionPointId: commerce/configuration/1
-  # Only include this if adminUiSdk.registration is defined in your app.commerce.config.*:
-  - extensionPointId: commerce/backend-ui/1
   # Only include this if adminUi is defined in your app.commerce.config.*:
   - extensionPointId: commerce/backend-ui/2
 ```
@@ -151,7 +141,6 @@ The current app configuration definition contains the following sections:
 - **businessConfig**: Business configuration schema
 - **eventing**: Eventing configuration
 - **installation**: Installation configuration
-- **adminUiSdk**: Admin UI SDK registration on `commerce/backend-ui/1` (deprecated, will be removed from the SDK)
 - **adminUi**: Admin UI registration on `commerce/backend-ui/2`
 
 #### Application Metadata
@@ -300,6 +289,7 @@ eventing: {
 - **prioritary**: Optional boolean value to indicate if the event is prioritary.
 - **force**: Optional boolean value to indicate if the event should be forced.
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
+- **env**: Optional array of Commerce environments the event applies to. See [Environment Scoping (Events)](#environment-scoping-events).
 
 ##### External Events:
 
@@ -307,6 +297,7 @@ eventing: {
 - **label**: Display name for the event (max 100 characters)
 - **description**: Description of the event (max 255 characters)
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
+- **env**: Optional array of Commerce environments the event applies to. See [Environment Scoping (Events)](#environment-scoping-events).
 
 ##### Provider Configuration:
 
@@ -315,6 +306,127 @@ eventing: {
 - **key**: Optional unique key for the provider (max 50 characters, alphanumeric with hyphens)
 
 Both `commerce` and `external` arrays are optional, you can configure one, both, or neither depending on your application's needs.
+
+##### Environment Scoping (Events)
+
+Each event accepts an optional `env` property to scope it to specific Commerce environments. The value is an array of environments (`"paas"`, `"saas"`) and accepts any combination of one or more. This mirrors the [environment scoping available for Business Configuration fields](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-config/docs/usage.md#conditional-fields-by-commerce-environment).
+
+When `env` is omitted, the event applies to all Commerce environments. When `env` is set, the event is only created at install time on the listed environments. If every event in a provider is scoped to environments that do not match the target, the whole provider is skipped: no I/O Events provider is created, and no registration is made.
+
+```javascript
+eventing: {
+  commerce: [
+    {
+      provider: { label: "Orders", description: "Order events" },
+      events: [
+        {
+          name: "observer.sales_order_place_after",
+          description: "Triggered when an order is placed",
+          runtimeActions: ["my-package/on-order"],
+          fields: [{ name: "increment_id" }],
+          env: ["saas"], // only created on SaaS instances
+        },
+        {
+          name: "observer.catalog_product_save_after",
+          description: "Triggered when a product is saved",
+          runtimeActions: ["my-package/on-product"],
+          fields: [{ name: "sku" }],
+          // No `env` -> applies to all Commerce environments
+        },
+      ],
+    },
+  ],
+}
+```
+
+An empty `env` array is rejected at validation time, as is any value other than `"paas"` or `"saas"`.
+
+#### Webhooks Configuration
+
+The `webhooks` field allows you to register [Adobe Commerce webhooks](https://developer.adobe.com/commerce/extensibility/webhooks/) for your application. Each webhook entry either resolves its target URL from a runtime action (`runtimeAction`) or provides an explicit `url` inside the `webhook` object.
+
+```javascript
+webhooks: [
+  {
+    label: "Validate stock",
+    description: "Inventory check before order placement.",
+    runtimeAction: "my-package/validate-stock",
+    webhook: {
+      webhook_method: "observer",
+      webhook_type: "before",
+      batch_name: "stock",
+      hook_name: "validate",
+      method: "POST",
+    },
+  },
+  {
+    label: "Audit log",
+    description: "Posts to an external audit endpoint.",
+    webhook: {
+      webhook_method: "observer",
+      webhook_type: "after",
+      batch_name: "audit",
+      hook_name: "log",
+      method: "POST",
+      url: "https://example.com/audit",
+    },
+  },
+];
+```
+
+Each webhook entry supports:
+
+- **label**: Display name for the webhook.
+- **description**: Description of what the webhook does.
+- **category**: Optional conflict-detection category. One of `"validation"`, `"append"`, `"modification"`.
+- **runtimeAction**: The runtime action that resolves the webhook URL, in the format `<package>/<action>`. The SDK derives the public action URL at install time and injects it into the webhook payload. **Mutually exclusive with `webhook.url`** — use one or the other, never both.
+- **requireAdobeAuth**: Optional boolean (runtime-action webhooks only). When not `false`, the webhook is registered with Adobe OAuth credentials.
+- **webhook**: The webhook payload sent to Commerce (`webhook_method`, `webhook_type`, `batch_name`, `hook_name`, `method`, and optional `url`, `fields`, `rules`, `headers`, `priority`, `required`, timeouts, and `ttl`). When `runtimeAction` is omitted, `webhook.url` is required and must be an explicit HTTPS URL pointing to your handler endpoint.
+- **env**: Optional array of Commerce environments the webhook applies to. See [Environment Scoping (Webhooks)](#environment-scoping-webhooks).
+
+##### `runtimeAction` vs `webhook.url`
+
+These two properties are the mutually exclusive ways to specify where Commerce sends the webhook request:
+
+- **`runtimeAction`** — use this when the handler lives inside your App Builder app. Provide the action path (`<package>/<action>`), and the SDK resolves the public Runtime URL automatically at install time. This is the recommended approach for logic you own and deploy alongside the app.
+
+- **`webhook.url`** — use this when the handler is an external endpoint: a third-party service, a middleware platform, or any HTTPS URL outside of App Builder. The URL is passed to Commerce as-is; the SDK does not validate or modify it.
+
+##### Environment Scoping (Webhooks)
+
+Like events, each webhook entry accepts an optional `env` property (`"paas"`, `"saas"`) to scope it to specific Commerce environments. When omitted, the webhook applies to all environments; when set, it is only subscribed at install time on the listed environments.
+
+```javascript
+webhooks: [
+  {
+    label: "Validate stock on PaaS",
+    description: "Inventory check that only exists on Adobe Commerce (PaaS).",
+    runtimeAction: "my-package/validate-stock",
+    env: ["paas"], // only subscribed on PaaS instances
+    webhook: {
+      webhook_method: "observer",
+      webhook_type: "before",
+      batch_name: "stock",
+      hook_name: "validate",
+      method: "POST",
+    },
+  },
+  {
+    label: "Audit log",
+    description: "Applies to every environment (no env declared).",
+    runtimeAction: "my-package/audit",
+    webhook: {
+      webhook_method: "observer",
+      webhook_type: "after",
+      batch_name: "audit",
+      hook_name: "log",
+      method: "POST",
+    },
+  },
+];
+```
+
+An empty `env` array is rejected at validation time, as is any value other than `"paas"` or `"saas"`.
 
 #### Custom Installation Process
 
@@ -480,214 +592,68 @@ export default defineCustomInstallationStep(async (config, context) => {
 - If any script throws an error, the entire installation fails and subsequent scripts are not executed
 - Scripts have access to the complete app configuration and can use it to make decisions
 
-#### Admin UI SDK Configuration
-
-> **Deprecated:** `adminUiSdk` and `commerce/backend-ui/1` will be removed from the SDK. Migrate to the `adminUi` config key and `commerce/backend-ui/2` extension point. Grid columns are already supported — see [Admin UI Configuration](#admin-ui-configuration) below. Support for migrating remaining extension points (mass actions, menus, view buttons, custom fees) to `commerce/backend-ui/2` will follow in subsequent releases.
-
-The `adminUiSdk.registration` field declares the registration payload served by the Admin UI SDK runtime action. When defined, `init` and `generate all` automatically wire up the `commerce/backend-ui/1` extension, including the generated runtime action and the `pre-app-build` hook that keeps it in sync with your config. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
-
-```javascript
-adminUiSdk: {
-  registration: {
-    menuItems: [
-      {
-        id: "my-app::menu",
-        title: "My App",
-        parent: "my-app::apps",
-        sortOrder: 1,
-        isSection: false,
-        sandbox: "allow-modals",
-      },
-    ],
-
-    order: {
-      massActions: [
-        {
-          actionId: "my-app::order-mass-action",
-          label: "Order Mass Action",
-          title: "Page Title",
-          path: "#/order-mass-action",
-          selectionLimit: 1,
-          confirm: { title: "Confirm", message: "Are you sure?" },
-          displayIframe: true,
-          timeout: 10,
-          sandbox: "allow-modals",
-        },
-      ],
-      gridColumns: {
-        data: { meshId: "MESH_ID" },
-        properties: [
-          {
-            label: "Column Name",
-            columnId: "column_id",
-            type: "string",
-            align: "left",
-          },
-        ],
-      },
-      viewButtons: [
-        {
-          buttonId: "my-app::delete-order",
-          label: "Delete",
-          path: "#/delete-order",
-          level: 0,
-          sortOrder: 80,
-          confirm: { message: "Are you sure?" },
-          displayIframe: true,
-          timeout: 10,
-          sandbox: "allow-modals",
-        },
-      ],
-      customFees: [
-        {
-          id: "fee-1",
-          label: "My Custom Fee",
-          value: 1.0,
-          orderMinimumAmount: 0,
-          applyFeeOnLastInvoice: false,
-          applyFeeOnLastCreditMemo: true,
-        },
-      ],
-    },
-
-    product: {
-      massActions: [
-        {
-          actionId: "my-app::product-mass-action",
-          label: "Product Mass Action",
-          path: "#/product-mass-action",
-          productSelectLimit: 1,
-        },
-      ],
-      gridColumns: {
-        data: { meshId: "MESH_ID" },
-        properties: [
-          { label: "Column Name", columnId: "column_id", type: "string", align: "left" },
-        ],
-      },
-    },
-
-    customer: {
-      massActions: [
-        {
-          actionId: "my-app::customer-mass-action",
-          label: "Customer Mass Action",
-          path: "#/customer-mass-action",
-          customerSelectLimit: 1,
-        },
-      ],
-      gridColumns: {
-        data: { meshId: "MESH_ID" },
-        properties: [
-          { label: "Column Name", columnId: "column_id", type: "string", align: "left" },
-        ],
-      },
-    },
-
-    bannerNotification: {
-      massActions: {
-        order: [
-          {
-            actionId: "my-app::order-mass-action",
-            successMessage: "Order action completed.",
-            errorMessage: "Order action failed.",
-          },
-        ],
-        product: [{ actionId: "my-app::product-mass-action" }],
-        customer: [{ actionId: "my-app::customer-mass-action" }],
-      },
-      orderViewButtons: [
-        {
-          buttonId: "my-app::delete-order",
-          successMessage: "Order deleted.",
-          errorMessage: "Delete failed.",
-        },
-      ],
-    },
-  },
-}
-```
-
-##### Menu Items:
-
-- **id**: Required, non-empty string
-- **title**, **parent**: Optional, non-empty string
-- **sortOrder**: Optional number
-- **isSection**: Optional boolean
-- **sandbox**: Optional; space-separated combination of `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
-
-##### Order Extension Points:
-
-- **massActions** (optional array): **`actionId`**, **`label`**, **`path`** required; `title` optional; `selectionLimit` optional positive number; `confirm.title` and `confirm.message` optional; `displayIframe` optional boolean; `timeout` optional positive number; `sandbox` optional (see above)
-- **gridColumns** (optional): `data.meshId` required; `properties` must contain at least one entry; each property requires `label`, `columnId`, `type` (`"boolean"`, `"date"`, `"float"`, `"integer"`, or `"string"`), and `align` (`"left"`, `"right"`, or `"center"`)
-- **viewButtons** (optional array): **`buttonId`**, **`label`**, **`path`** required; `level` optional (`-1`, `0`, or `1`); `sortOrder` optional; `confirm.message` optional; `displayIframe`, `timeout`, `sandbox` optional
-- **customFees** (optional array): **`id`**, **`label`** required; **`value`** required number; `orderMinimumAmount` optional number; `applyFeeOnLastInvoice`, `applyFeeOnLastCreditMemo` optional boolean
-
-##### Product Extension Points:
-
-- **massActions** (optional array): same fields as order mass actions, but uses `productSelectLimit` instead of `selectionLimit`
-- **gridColumns** (optional): same shape as order grid columns
-
-##### Customer Extension Points:
-
-- **massActions** (optional array): same fields as order mass actions, but uses `customerSelectLimit` instead of `selectionLimit`
-- **gridColumns** (optional): same shape as order grid columns
-
-##### Banner Notifications:
-
-- **massActions.order**, **massActions.product**, **massActions.customer** (optional arrays): each entry requires **`actionId`**; `successMessage` and `errorMessage` are optional non-empty strings
-- **orderViewButtons** (optional array): each entry requires **`buttonId`**; `successMessage` and `errorMessage` are optional non-empty strings
-
-##### Cross-Field Rules:
-
-- `sandbox` is only relevant when `displayIframe` is set to `true`; this applies to all mass actions and view button entries
-
-Every field of `adminUiSdk.registration` is optional — configure only the extension points your application needs.
-
 #### Admin UI Configuration
 
+> [!WARNING]
 > **Experimental:** Admin UI support on `commerce/backend-ui/2` is not yet production-ready. The API may change in future releases.
 
-The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. When defined, `init` and `generate all` automatically wire up the extension, including the generated runtime action, the `pre-app-build` hook, and the `workerProcess` declarations in `ext.config.yaml`. Currently supported: grid column extensions. Mass actions, menus, view buttons, and custom fees will follow.
+The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ##### Grid Columns
 
 The `workerProcess` entries are derived automatically from the `runtimeAction` values — you only need to provide the handler implementations.
 
-```javascript
-adminUi: {
-  order: {
-    gridColumns: {
-      label: "Order fulfillment data",
-      description: "Adds fulfillment status and risk score to the order grid",
-      runtimeAction: "orders/fetch-order-grid-data",
-      columns: [
-        { columnId: "fulfillment_status", label: "Fulfillment", type: "string", align: "left" },
-        { columnId: "risk_score", label: "Risk", type: "integer", align: "right" },
-      ],
+```ts
+export default defineConfig({
+  adminUi: {
+    order: {
+      gridColumns: {
+        label: "Order fulfillment data",
+        description: "Adds fulfillment status and risk score to the order grid",
+        runtimeAction: "orders/fetch-order-grid-data",
+        columns: [
+          {
+            id: "fulfillment_status",
+            label: "Fulfillment",
+            type: "string",
+            align: "left",
+          },
+          { id: "risk_score", label: "Risk", type: "integer", align: "right" },
+        ],
+      },
+    },
+    product: {
+      gridColumns: {
+        label: "Product inventory data",
+        description: "Adds inventory status to the product grid",
+        runtimeAction: "products/fetch-product-grid-data",
+        columns: [
+          {
+            id: "inventory_status",
+            label: "Inventory",
+            type: "string",
+            align: "left",
+          },
+        ],
+      },
+    },
+    customer: {
+      gridColumns: {
+        label: "Customer loyalty data",
+        description: "Adds loyalty tier to the customer grid",
+        runtimeAction: "customers/fetch-customer-grid-data",
+        columns: [
+          {
+            id: "loyalty_tier",
+            label: "Loyalty Tier",
+            type: "string",
+            align: "left",
+          },
+        ],
+      },
     },
   },
-  product: {
-    gridColumns: {
-      label: "Product inventory data",
-      description: "Adds inventory status to the product grid",
-      runtimeAction: "products/fetch-product-grid-data",
-      columns: [
-        { columnId: "inventory_status", label: "Inventory", type: "string", align: "left" },
-      ],
-    },
-  },
-  customer: {
-    gridColumns: {
-      label: "Customer loyalty data",
-      description: "Adds loyalty tier to the customer grid",
-      runtimeAction: "customers/fetch-customer-grid-data",
-      columns: [
-        { columnId: "loyalty_tier", label: "Loyalty Tier", type: "string", align: "left" },
-      ],
-    },
-  },
-}
+});
 ```
 
 ###### Field Reference:
@@ -696,12 +662,181 @@ adminUi: {
 - **description**: Required, non-empty string — displayed in App Management during installation
 - **runtimeAction**: Required — `<package>/<action>` path matching a handler you implement; the SDK registers it as a `workerProcess` operation automatically
 - **columns**: Required array (at least one entry); each column requires:
-  - **columnId**: non-empty string — stable column identifier, also used as the response data key
+  - **id**: non-empty string — stable column identifier, also used as the response data key
   - **label**: non-empty string — column header displayed in the grid
-  - **type**: one of `"boolean"`, `"date"`, `"datetime"`, `"decimal"`, `"integer"`, `"string"`
+  - **type**: one of `"boolean"`, `"date"`, `"datetime"`, `"float"`, `"integer"`, `"string"`
   - **align**: one of `"left"`, `"center"`, `"right"`
 
 Each of `order`, `product`, and `customer` is optional — configure only the grids your application extends.
+
+##### Order View Buttons
+
+`adminUi.order.viewButtons` declares buttons that appear on the order detail page in Commerce Admin. Each entry has a `type` discriminator:
+
+- **`type: "view"`** — loads the in-app URL given by `path` inside an iframe. The SDK automatically adds a `view` operation pointing at `index.html` when at least one view button is present.
+- **`type: "worker"`** — invokes the `workerProcess` operation named by `runtimeAction`, resolved by App Registry at runtime. The SDK registers the `workerProcess` entry automatically.
+
+```javascript
+adminUi: {
+  order: {
+    viewButtons: [
+      {
+        type: "view",
+        id: "delete-order",
+        label: "Delete",
+        description: "Permanently removes the order and its associated records.",
+        path: "#/delete-order",
+        level: 0,
+        sortOrder: 80,
+        sandboxPermissions: ["allow-modals", "allow-popups"],
+        confirm: { message: "Are you sure you want to delete this order?" },
+      },
+      {
+        type: "worker",
+        id: "sync-inventory",
+        label: "Sync inventory",
+        description: "Pushes the latest stock counts for this order's items to the ERP.",
+        runtimeAction: "orders/sync-inventory",
+        timeout: 15,
+        level: 1,
+        sortOrder: 10,
+        notifications: {
+          success: "Inventory synced successfully.",
+          error: "Inventory sync failed. Check the runtime logs.",
+        },
+      },
+    ],
+  },
+}
+```
+
+###### Field Reference:
+
+Shared fields (both types):
+
+- **id**: Required — stable button identifier served to Commerce as-is
+- **label**: Required — on-button text rendered in Admin
+- **description**: Optional — human-readable summary exposed via `app-config` for installation tooling
+- **level**: Optional — `-1`, `0`, or `1`
+- **sortOrder**: Optional — positive number controlling display order
+- **confirm**: Optional — `{ title?, message? }` confirmation dialog before the handler runs
+- **notifications**: Optional — `{ success?, error? }` toast strings displayed after the handler returns
+
+`type: "view"` specific:
+
+- **path**: Required — in-app iframe URL (e.g. `#/delete-order`)
+- **sandboxPermissions**: Optional — array of `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
+
+`type: "worker"` specific:
+
+- **runtimeAction**: Required — `<package>/<action>` path; the SDK registers it as a `workerProcess` operation automatically
+- **timeout**: Optional — positive number (seconds)
+
+For the handler wire contract (request/response shapes), see `@adobe/aio-commerce-lib-admin-ui/order-view-buttons`.
+
+##### Mass Actions
+
+Mass actions are declared with an explicit `type` field that determines which variant applies:
+
+- `type: "view"` — renders an iframe at the given `path` (optional `sandboxPermissions` attribute).
+- `type: "worker"` — invokes a runtime action specified by `runtimeAction` (optional `timeout`).
+
+The `id` field is authored as a bare name (e.g. `"export-orders"`). The SDK serves the bare `id` as-is in the `app-config` response; the Commerce backend extension handles prefixing and collision resolution when rendering the final Admin UI configuration.
+
+For worker mass actions, `generate` automatically adds the corresponding `workerProcess` entries to the `commerce/backend-ui/2` ext.config.yaml based on the `runtimeAction` fields. The `pre-app-build` hook keeps them in sync at build time.
+
+```yaml
+# src/commerce-backend-ui-2/ext.config.yaml (auto-generated by `generate`)
+operations:
+  view:
+    - type: web
+      impl: index.html
+  workerProcess:
+    - type: action
+      impl: my-app/archive-orders
+```
+
+###### Field applicability by variant
+
+| Field                | Common | `view` only | `worker` only |
+| :------------------- | :----: | :---------: | :-----------: |
+| `id`                 |   x    |             |               |
+| `label`              |   x    |             |               |
+| `title`              |   x    |             |               |
+| `confirm`            |   x    |             |               |
+| `notifications`      |   x    |             |               |
+| `selectionLimit`     |   x    |             |               |
+| `path`               |        |      x      |               |
+| `sandboxPermissions` |        |      x      |               |
+| `runtimeAction`      |        |             |       x       |
+| `timeout`            |        |             |       x       |
+
+The `view` and `worker` variants are strict: `path`/`sandboxPermissions` on a `worker` action and `runtimeAction`/`timeout` on a `view` action are rejected at validation time.
+
+When a mass action of `type: "view"` is present, the SDK automatically adds a `view` operation pointing at `index.html` to `ext.config.yaml`.
+
+###### Field Reference:
+
+Shared fields (both types):
+
+- **id**: Required — stable action identifier served to Commerce as-is
+- **label**: Required — action label rendered in the Admin UI
+- **description**: Optional — human-readable summary exposed via `app-config` for installation tooling
+- **title**: Optional — page title rendered in the iframe (view) or confirmation surface (worker)
+- **confirm**: Optional — `{ title?, message? }` confirmation dialog shown before the action runs
+- **notifications**: Optional — `{ success?, error? }` toast strings displayed after the action completes
+- **selectionLimit**: Optional — positive number capping how many records may be selected at once
+
+`type: "view"` specific:
+
+- **path**: Required — in-app iframe URL (e.g. `#/export-orders`)
+- **sandboxPermissions**: Optional — non-empty array of one or more of `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
+
+`type: "worker"` specific:
+
+- **runtimeAction**: Required — `<package>/<action>` path; the SDK registers it as a `workerProcess` operation automatically
+- **timeout**: Optional — positive number (seconds)
+
+##### Menu
+
+Declare a single Commerce Admin menu entry for the application. Similarly to mass actions of `type: "view"`, when `adminUi.menu` is present the SDK automatically adds a `view` operation pointing at `index.html` to `ext.config.yaml`.
+
+```javascript
+adminUi: {
+  menu: {
+    id: "approval_dashboard",
+    label: "Approval Dashboard",
+    description: "Review and approve purchase requests from Commerce Admin.",
+    parentMenu: "catalog",
+    sandboxPermissions: ["allow-popups", "allow-downloads"],
+  },
+}
+```
+
+###### Field Reference:
+
+- **id**: Required — app-local menu identifier; allowed characters: `a-z`, `A-Z`, `0-9`, `/`, `:`, `_`
+- **label**: Required, non-empty string — menu label rendered in Commerce Admin
+- **description**: Required, non-empty string — summary shown in installation and permission-review surfaces
+- **pageTitle** (optional): non-empty string — page title for the menu entry
+- **parentMenu** (optional): existing Commerce menu ID under which the app menu is attached; when omitted, a per-app section is generated automatically from the information in the `metadata`. Use the named constants from `@adobe/aio-commerce-lib-admin-ui/menu` instead of raw strings:
+
+  ```typescript
+  import { MENU_SALES } from "@adobe/aio-commerce-lib-admin-ui/menu";
+
+  export default defineConfig({
+    adminUi: {
+      menu: {
+        id: "approval_dashboard",
+        label: "Approval Dashboard",
+        description: "Review and approve purchase requests.",
+        parentMenu: MENU_SALES,
+      },
+    },
+  });
+  ```
+
+- **sandboxPermissions** (optional): array of iframe sandbox permissions; allowed values: `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
 
 ### CLI Commands
 

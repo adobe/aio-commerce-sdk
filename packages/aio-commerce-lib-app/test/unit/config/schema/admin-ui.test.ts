@@ -15,22 +15,35 @@ import { describe, expect, test } from "vitest";
 
 import { AdminUiSchema, hasAdminUi } from "#config/schema/admin-ui";
 import {
-  configWithAdminUi,
-  configWithAdminUiSdk,
+  viewButtonViewBase,
+  viewButtonWorkerBase,
+} from "#test/fixtures/admin-ui";
+import {
+  configWithAdminUiAllGrids,
+  configWithAdminUiMenu,
+  configWithFullAdminUiV2,
+  configWithViewMassActions,
+  configWithWorkerMassActions,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
 describe("hasAdminUi", () => {
-  test("returns true for configWithAdminUi", () => {
-    expect(hasAdminUi(configWithAdminUi)).toBe(true);
+  test.each([
+    {
+      config: configWithAdminUiAllGrids,
+      label: "grid columns for all entities",
+    },
+    { config: configWithAdminUiMenu, label: "menu only" },
+    { config: configWithViewMassActions, label: "view mass actions" },
+    { config: configWithWorkerMassActions, label: "worker mass actions" },
+  ])("returns true when adminUi has $label", ({ config }) => {
+    expect(hasAdminUi(config)).toBe(true);
   });
 
-  test("returns false for minimalValidConfig", () => {
-    expect(hasAdminUi(minimalValidConfig)).toBe(false);
-  });
-
-  test("returns false for configWithAdminUiSdk (different key)", () => {
-    expect(hasAdminUi(configWithAdminUiSdk)).toBe(false);
+  test.each([
+    { config: minimalValidConfig, label: "no adminUi property" },
+  ])("returns false when config has $label", ({ config }) => {
+    expect(hasAdminUi(config)).toBe(false);
   });
 });
 
@@ -41,7 +54,7 @@ describe("AdminUiSchema", () => {
         "boolean",
         "date",
         "datetime",
-        "decimal",
+        "float",
         "integer",
         "string",
       ] as const) {
@@ -60,7 +73,10 @@ describe("AdminUiSchema", () => {
     });
 
     test("all three grids configured", () => {
-      const result = v.safeParse(AdminUiSchema, configWithAdminUi.adminUi);
+      const result = v.safeParse(
+        AdminUiSchema,
+        configWithAdminUiAllGrids.adminUi,
+      );
       expect(result.success).toBe(true);
     });
 
@@ -106,10 +122,30 @@ describe("AdminUiSchema", () => {
       });
       expect(result.success).toBe(true);
     });
-  });
 
-  describe("invalid cases", () => {
-    test("float type is rejected", () => {
+    test("menu with required fields only", () => {
+      const { id, label, description } = configWithAdminUiMenu.adminUi.menu;
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { id, label, description },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    test("menu with all optional fields", () => {
+      const result = v.safeParse(AdminUiSchema, configWithAdminUiMenu.adminUi);
+      expect(result.success).toBe(true);
+    });
+
+    test("different extension points coexist", () => {
+      const result = v.safeParse(
+        AdminUiSchema,
+        configWithFullAdminUiV2.adminUi,
+      );
+      expect(result.success).toBe(true);
+    });
+
+    test("grid columns and mass actions coexist on the same entity", () => {
       const result = v.safeParse(AdminUiSchema, {
         order: {
           gridColumns: {
@@ -117,7 +153,243 @@ describe("AdminUiSchema", () => {
             description: "Adds a column",
             runtimeAction: "orders/fetch",
             columns: [
-              { id: "col", label: "Col", type: "float", align: "left" },
+              { id: "col", label: "Col", type: "string", align: "left" },
+            ],
+          },
+          massActions: [
+            { id: "action", label: "Action", type: "view", path: "#/action" },
+          ],
+        },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test.each([
+      "letters_only",
+      "with/slash",
+      "with:colon",
+      "With_Mixed/Case:123",
+    ])("valid menu id %s is accepted", (id) => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, id },
+      });
+      expect(result.success, `id "${id}" should be valid`).toBe(true);
+    });
+  });
+
+  describe("order.viewButtons", () => {
+    describe("valid cases", () => {
+      test("type: view with required fields only", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: { viewButtons: [viewButtonViewBase] },
+        });
+        expect(result.success).toBe(true);
+      });
+
+      test("type: worker with required fields only", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: { viewButtons: [viewButtonWorkerBase] },
+        });
+        expect(result.success).toBe(true);
+      });
+
+      test("type: view with all optional fields", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [
+              {
+                ...viewButtonViewBase,
+                description: "Permanently removes the order.",
+                level: 0,
+                sortOrder: 80,
+                sandboxPermissions: ["allow-modals", "allow-popups"],
+                confirm: { message: "Are you sure?" },
+                notifications: {
+                  success: "Done.",
+                  error: "Failed.",
+                },
+              },
+            ],
+          },
+        });
+        expect(result.success).toBe(true);
+      });
+
+      test("type: worker with all optional fields", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [
+              {
+                ...viewButtonWorkerBase,
+                description: "Pushes stock counts.",
+                level: 1,
+                sortOrder: 10,
+                timeout: 15,
+                confirm: { message: "Sync now?" },
+                notifications: {
+                  success: "Synced.",
+                  error: "Sync failed.",
+                },
+              },
+            ],
+          },
+        });
+        expect(result.success).toBe(true);
+      });
+
+      test("all three sandboxPermissions values are valid", () => {
+        for (const perm of [
+          "allow-downloads",
+          "allow-modals",
+          "allow-popups",
+        ] as const) {
+          const result = v.safeParse(AdminUiSchema, {
+            order: {
+              viewButtons: [
+                { ...viewButtonViewBase, sandboxPermissions: [perm] },
+              ],
+            },
+          });
+          expect(result.success, `"${perm}" should be valid`).toBe(true);
+        }
+      });
+
+      test("notifications with only success", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [
+              { ...viewButtonWorkerBase, notifications: { success: "Done." } },
+            ],
+          },
+        });
+        expect(result.success).toBe(true);
+      });
+
+      test("notifications with only error", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [
+              { ...viewButtonWorkerBase, notifications: { error: "Failed." } },
+            ],
+          },
+        });
+        expect(result.success).toBe(true);
+      });
+
+      test("gridColumns and viewButtons can coexist on order", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            gridColumns: {
+              label: "Order grid",
+              description: "Adds a column",
+              runtimeAction: "orders/fetch",
+              columns: [
+                { id: "col", label: "Col", type: "string", align: "left" },
+              ],
+            },
+            viewButtons: [viewButtonWorkerBase],
+          },
+        });
+        expect(result.success).toBe(true);
+      });
+    });
+
+    describe("invalid cases", () => {
+      test("type: view with runtimeAction is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [
+              { ...viewButtonViewBase, runtimeAction: "orders/delete" },
+            ],
+          },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("type: view with timeout is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: { viewButtons: [{ ...viewButtonViewBase, timeout: 10 }] },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("type: view missing path is rejected", () => {
+        const { path: _, ...withoutPath } = viewButtonViewBase;
+        const result = v.safeParse(AdminUiSchema, {
+          order: { viewButtons: [withoutPath] },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("type: worker with path is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [{ ...viewButtonWorkerBase, path: "#/something" }],
+          },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("type: worker with sandboxPermissions is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [
+              { ...viewButtonWorkerBase, sandboxPermissions: ["allow-modals"] },
+            ],
+          },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("type: worker missing runtimeAction is rejected", () => {
+        const { runtimeAction: _, ...withoutAction } = viewButtonWorkerBase;
+        const result = v.safeParse(AdminUiSchema, {
+          order: { viewButtons: [withoutAction] },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("empty notifications.success string is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [
+              { ...viewButtonWorkerBase, notifications: { success: "" } },
+            ],
+          },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("invalid sandboxPermissions value is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [
+              { ...viewButtonViewBase, sandboxPermissions: ["allow-scripts"] },
+            ],
+          },
+        });
+        expect(result.success).toBe(false);
+      });
+
+      test("invalid level value is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: { viewButtons: [{ ...viewButtonViewBase, level: 2 }] },
+        });
+        expect(result.success).toBe(false);
+      });
+    });
+  });
+
+  describe("invalid cases", () => {
+    test("decimal type is rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          gridColumns: {
+            label: "Order grid",
+            description: "Adds a column",
+            runtimeAction: "orders/fetch",
+            columns: [
+              { id: "col", label: "Col", type: "decimal", align: "left" },
             ],
           },
         },
@@ -200,6 +472,335 @@ describe("AdminUiSchema", () => {
             columns: [{ label: "Col", type: "string", align: "left" }],
           },
         },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("missing menu id is rejected", () => {
+      const { id: _, ...noId } = configWithAdminUiMenu.adminUi.menu;
+      const result = v.safeParse(AdminUiSchema, { menu: noId });
+      expect(result.success).toBe(false);
+    });
+
+    test("missing menu label is rejected", () => {
+      const { label: _, ...noLabel } = configWithAdminUiMenu.adminUi.menu;
+      const result = v.safeParse(AdminUiSchema, { menu: noLabel });
+      expect(result.success).toBe(false);
+    });
+
+    test("missing menu description is rejected", () => {
+      const { description: _, ...noDesc } = configWithAdminUiMenu.adminUi.menu;
+      const result = v.safeParse(AdminUiSchema, { menu: noDesc });
+      expect(result.success).toBe(false);
+    });
+
+    test.each([
+      "with space",
+      "with-dash",
+      "with@at",
+      "with.dot",
+    ])("invalid menu id %s is rejected", (id) => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, id },
+      });
+      expect(result.success, `id "${id}" should be rejected`).toBe(false);
+    });
+
+    test("empty menu id is rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, id: "" },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("empty menu label is rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, label: "" },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("empty menu description is rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, description: "" },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("empty pageTitle is rejected when provided", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, pageTitle: "" },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("unknown parentMenu is rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: {
+          ...configWithAdminUiMenu.adminUi.menu,
+          parentMenu: "unknown.menu",
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("invalid sandboxPermissions value is rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: {
+          ...configWithAdminUiMenu.adminUi.menu,
+          sandboxPermissions: ["allow-scripts"],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("duplicate sandboxPermissions values are rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: {
+          ...configWithAdminUiMenu.adminUi.menu,
+          sandboxPermissions: ["allow-popups", "allow-popups"],
+        },
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    test("empty sandboxPermissions array is rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, sandboxPermissions: [] },
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+});
+
+describe("AdminUiSchema — mass actions", () => {
+  describe("valid cases", () => {
+    test("view mass action with path and sandboxPermissions parses successfully", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "view",
+              path: "#/action",
+              sandboxPermissions: ["allow-modals"],
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("worker mass action with runtimeAction parses successfully", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "worker",
+              runtimeAction: "my-pkg/my-action",
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("configWithAdminUiV2 fixture parses", () => {
+      const result = v.safeParse(
+        AdminUiSchema,
+        configWithViewMassActions.adminUi,
+      );
+      expect(result.success).toBe(true);
+    });
+
+    test("configWithFullAdminUiV2 fixture parses", () => {
+      const result = v.safeParse(
+        AdminUiSchema,
+        configWithFullAdminUiV2.adminUi,
+      );
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("invalid cases", () => {
+    test("view mass action with runtimeAction fails (strict, wrong variant)", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "view",
+              path: "#/action",
+              runtimeAction: "pkg/action",
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("worker mass action with path fails (strict, wrong variant)", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "worker",
+              runtimeAction: "pkg/action",
+              path: "#/action",
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("view mass action missing path fails", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [{ id: "action", label: "Action", type: "view" }],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("worker mass action missing runtimeAction fails", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [{ id: "action", label: "Action", type: "worker" }],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("mass action missing type fails", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [{ id: "action", label: "Action", path: "#/action" }],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("view mass action with timeout field is rejected (strict)", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "view",
+              path: "#/action",
+              timeout: 30,
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test.each([
+      { value: ["allow-scripts"], label: "invalid permission value" },
+      {
+        value: ["allow-popups", "allow-popups"],
+        label: "duplicate permissions",
+      },
+      { value: [], label: "empty permissions array" },
+    ])("view mass action sandboxPermissions rejected when $label", ({
+      value,
+    }) => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "view",
+              path: "#/action",
+              sandboxPermissions: value,
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("worker mass action with sandboxPermissions is rejected (strict)", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "worker",
+              runtimeAction: "pkg/action",
+              sandboxPermissions: ["allow-popups"],
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test.each([
+      { timeout: -1, label: "negative" },
+    ])("worker mass action with $label timeout is rejected", ({ timeout }) => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              id: "action",
+              label: "Action",
+              type: "worker",
+              runtimeAction: "pkg/action",
+              timeout,
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test.each([
+      {
+        massAction: {
+          id: "a",
+          label: "A",
+          type: "view" as const,
+          path: "#/a",
+          confirm: { message: "" },
+        },
+        label: "empty confirm.message",
+      },
+      {
+        massAction: {
+          id: "a",
+          label: "A",
+          type: "view" as const,
+          path: "#/a",
+          notifications: { success: "" },
+        },
+        label: "empty notifications.success",
+      },
+      {
+        massAction: {
+          id: "a",
+          label: "A",
+          type: "view" as const,
+          path: "#/a",
+          selectionLimit: -1,
+        },
+        label: "negative selectionLimit",
+      },
+    ])("mass action with $label is rejected", ({ massAction }) => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: { massActions: [massAction] },
       });
       expect(result.success).toBe(false);
     });

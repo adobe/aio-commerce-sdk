@@ -59,6 +59,7 @@ For each event source, gather:
 - Provider label, description, and optional key
 - For each event: name, label, description, and which runtime action(s) should handle it (format: `<package>/<action>`)
 - For Commerce events only: fields to extract from the event payload (empty array captures the full payload), and any optional filter rules
+- Optionally, which Commerce environments the event applies to (`env`)
 
 ## Step 2 — Derive config values
 
@@ -76,6 +77,7 @@ Apply the following validation rules before writing the config. Surface any issu
 | Field name           | `[a-zA-Z0-9_\-.[\]]+` or `*`                                                        |
 | Rule operator        | `greaterThan`, `lessThan`, `equal`, `regex`, `in`, or `onChange`                    |
 | Runtime action       | `<package>/<action>` (e.g., `my-package/handle-order-placed`)                       |
+| Event env (optional) | Non-empty array of `"paas"` / `"saas"`; omitted = all environments                  |
 
 ## Step 3 — Update `app.commerce.config.ts`
 

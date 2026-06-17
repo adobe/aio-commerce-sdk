@@ -14,6 +14,8 @@ import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 
+import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
+
 import type {
   CommerceWebhook,
   WebhookSubscribeParams,
@@ -78,10 +80,11 @@ export async function validateWebhookConflicts(
   config: WebhooksConfig,
   context: WebhooksExecutionContext,
 ): Promise<ValidationIssue[]> {
-  const { logger, commerceWebhooksClient } = context;
+  const { logger, commerceWebhooksClient, params } = context;
 
+  const env = getInstallCommerceEnv(params);
   const modificationWebhooks = config.webhooks.filter(
-    (entry) => entry.category === "modification",
+    (entry) => entry.category === "modification" && appliesToEnv(entry, env),
   );
 
   if (modificationWebhooks.length === 0) {
@@ -150,16 +153,24 @@ export async function createWebhookSubscriptions(
 ): Promise<WebhookSubscriptionResult> {
   const { logger, commerceWebhooksClient, params } = context;
 
-  logger.info(
-    `Subscribing ${config.webhooks.length} webhook(s) to Commerce...`,
-  );
+  const env = getInstallCommerceEnv(params);
+  const webhooks = config.webhooks.filter((entry) => appliesToEnv(entry, env));
+
+  if (webhooks.length === 0) {
+    logger.info(
+      "No webhooks apply to this environment, skipping subscription.",
+    );
+    return { subscribedWebhooks: [] };
+  }
+
+  logger.info(`Subscribing ${webhooks.length} webhook(s) to Commerce...`);
 
   const idPrefix = buildWebhookIdPrefix(config.metadata.id);
   const subscribedWebhooks: WebhookSubscribeParams[] = [];
 
   const existingWebhooks = await commerceWebhooksClient.getWebhookList();
 
-  for (const entry of config.webhooks) {
+  for (const entry of webhooks) {
     const { webhook } = entry;
     const resolvedUrl =
       "runtimeAction" in entry
