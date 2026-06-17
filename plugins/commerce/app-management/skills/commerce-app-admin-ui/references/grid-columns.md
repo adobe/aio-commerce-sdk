@@ -57,8 +57,9 @@ import {
   okGridResponse,
   errorGridResponse,
 } from "@adobe/aio-commerce-sdk/admin-ui/grid-columns";
+import type { RuntimeActionParams } from "@adobe/aio-commerce-sdk/core/params";
 
-export async function main(params: unknown) {
+export async function main(params: RuntimeActionParams) {
   const { gridType, ids } = parseGridRequest(params);
   try {
     const byId = await fetchFulfillment(gridType, ids);
@@ -67,7 +68,10 @@ export async function main(params: unknown) {
       { fulfillment_status: "unknown", risk_score: 0 }, // optional defaults ("*")
     );
   } catch (error) {
-    return errorGridResponse(500, (error as Error).message);
+    return errorGridResponse(
+      500,
+      error instanceof Error ? error.message : String(error),
+    );
   }
 }
 ```

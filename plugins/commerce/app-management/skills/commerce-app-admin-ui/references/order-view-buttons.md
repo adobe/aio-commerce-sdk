@@ -82,7 +82,10 @@ export async function main(params: RuntimeActionParams) {
     await sync(orderId);
     return okOrderViewButtonResponse();
   } catch (error) {
-    return orderViewButtonErrorResponse(500, (error as Error).message);
+    return orderViewButtonErrorResponse(
+      500,
+      error instanceof Error ? error.message : String(error),
+    );
   }
 }
 ```

@@ -7,10 +7,7 @@ description: >
   wants to extend the Commerce Admin — add a column to the order, product, or
   customer grid, add a bulk/mass action to a grid, add a button to the order
   view page, or add a custom menu item or page — even when they don't name the
-  extension point. Declares the adminUi block in app.commerce.config.ts and
-  scaffolds the runtime action handlers (grid columns, worker mass actions,
-  worker view buttons) with @adobe/aio-commerce-sdk/admin-ui entrypoints.
-  Requires a base app initialized with commerce-app-init.
+  extension point.
 license: Apache-2.0
 compatibility: >
   Requires Node.js 22+, aio CLI, @adobe/aio-commerce-lib-app, and
@@ -122,7 +119,7 @@ The build derives the extension's `ext.config.yaml` from your `adminUi` config: 
 
 ## Step 4 — Implement the handlers
 
-What you implement depends on the variant.
+What you implement depends on the variant. Examples below are in TypeScript; if the project uses JavaScript, omit type imports and annotations.
 
 ### Worker variants (grid columns, worker mass actions, worker view buttons)
 
@@ -158,15 +155,19 @@ import {
   okGridResponse,
   errorGridResponse,
 } from "@adobe/aio-commerce-sdk/admin-ui/grid-columns";
+import type { RuntimeActionParams } from "@adobe/aio-commerce-sdk/core/params";
 
-export async function main(params: unknown) {
+export async function main(params: RuntimeActionParams) {
   const { gridType, ids } = parseGridRequest(params);
   try {
     const rows = await fetchRows(gridType, ids);
     // row keys must match the column ids declared in config
     return okGridResponse(rows, { fulfillment_status: "unknown" });
   } catch (error) {
-    return errorGridResponse(500, (error as Error).message);
+    return errorGridResponse(
+      500,
+      error instanceof Error ? error.message : String(error),
+    );
   }
 }
 ```

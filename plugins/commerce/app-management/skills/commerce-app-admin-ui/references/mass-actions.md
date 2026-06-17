@@ -73,14 +73,18 @@ import {
   okMassActionResponse,
   massActionErrorResponse,
 } from "@adobe/aio-commerce-sdk/admin-ui/mass-actions";
+import type { RuntimeActionParams } from "@adobe/aio-commerce-sdk/core/params";
 
-export async function main(params: unknown) {
+export async function main(params: RuntimeActionParams) {
   const { gridType, ids } = parseMassActionRequest(params);
   try {
     const archived = await archive(gridType, ids);
     return okMassActionResponse({ archived });
   } catch (error) {
-    return massActionErrorResponse(500, (error as Error).message);
+    return massActionErrorResponse(
+      500,
+      error instanceof Error ? error.message : String(error),
+    );
   }
 }
 ```
@@ -92,6 +96,6 @@ No server handler. Commerce opens the iframe at `path` and appends the selection
 ```typescript
 import { parseMassActionSelection } from "@adobe/aio-commerce-sdk/admin-ui/mass-actions";
 
-const raw = new URLSearchParams(window.location.search).get("selection");
+const raw = new URLSearchParams(globalThis.location.search).get("selection");
 const { ids, gridType } = parseMassActionSelection(raw); // ids: string[], gridType: "order" | "product" | "customer"
 ```
