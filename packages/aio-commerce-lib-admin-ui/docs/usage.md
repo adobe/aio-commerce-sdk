@@ -96,12 +96,12 @@ The column keys inside each row must match the `id` values declared in the corre
 
 #### Building an error response
 
-`errorGridResponse` produces the `{ errorStatus, errorMessage }` envelope Commerce recognises as a handler-level failure. The response is returned with HTTP status 200 so the handler can convey a specific error code Commerce can log:
+`errorGridResponse` returns a non-2xx HTTP response. Commerce uses the status code to distinguish success from failure:
 
 ```typescript
 import { errorGridResponse } from "@adobe/aio-commerce-lib-admin-ui/grid-columns";
 
-return errorGridResponse("INTERNAL_ERROR", "Could not reach inventory service");
+return errorGridResponse(500, "Could not reach inventory service");
 ```
 
 ### Order View Button Wire Contract
