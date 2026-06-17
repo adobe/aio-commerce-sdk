@@ -807,6 +807,7 @@ adminUi: {
     description: "Review and approve purchase requests from Commerce Admin.",
     parentMenu: "catalog",
     sandboxPermissions: ["allow-popups", "allow-downloads"],
+    aclProtected: true,
   },
 }
 ```
@@ -835,6 +836,27 @@ adminUi: {
   ```
 
 - **sandboxPermissions** (optional): array of iframe sandbox permissions; allowed values: `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
+- **aclProtected** (optional): boolean — when `true`, Commerce auto-generates a per-app ACL resource id from `metadata.id` and registers it in the Magento User Roles permission tree. Admins can then grant or deny access to the app's menu on a per-role basis; users without the resource see neither the menu item nor its content.
+
+  The generated resource id follows the pattern `Magento_CommerceBackendUix::adminuisdk_app_<sanitized-id>`, where `<sanitized-id>` is `metadata.id` lowercased with non-alphanumeric characters replaced by `_`. Use `getAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api` to derive it programmatically, and `getAdminUiPermissionClient` to check access from your runtime actions. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client) for details.
+
+  ```typescript
+  import {
+    getAclResourceId,
+    getAdminUiPermissionClient,
+  } from "@adobe/aio-commerce-lib-admin-ui/api";
+
+  // Derive the resource id from metadata.id:
+  getAclResourceId("acme-promotions");
+  // → "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions"
+
+  // Check access in a runtime action:
+  const client = getAdminUiPermissionClient({
+    httpClient,
+    appId: "acme-promotions",
+  });
+  const allowed = await client.check(); // uses appId to resolve the resource id
+  ```
 
 ### CLI Commands
 
