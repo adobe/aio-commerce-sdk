@@ -28,10 +28,10 @@ vi.mock("@adobe/aio-commerce-lib-api", () => ({
 }));
 
 import {
-  AppNotAssociatedError,
   getCommerceClient,
   getCommerceInstance,
-} from "#index";
+} from "#access/commerce-instance";
+import { AppNotAssociatedError } from "#errors/app-not-associated-error";
 
 const auth = { strategy: "ims" } as never;
 
