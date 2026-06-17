@@ -10,13 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
+// INTERNAL: The prefix and per-segment sanitization below are a cross-repo contract with the
+// Commerce module's (Magento_CommerceBackendUix) ACL id generator. Both sides must produce the
+// exact same id for the same input — any change here must be coordinated with the Commerce module.
 const PREFIX = "Magento_CommerceBackendUix::adminuisdk_app_";
 
 /**
  * Sanitizes a single ACL id segment: trims whitespace, lowercases, and replaces every
  * character outside [a-z0-9_] with an underscore.
- *
- * This mirrors the per-segment sanitization in the Commerce module's ACL id generator.
  */
 function sanitizeSegment(segment: string): string {
   return segment
@@ -27,10 +28,6 @@ function sanitizeSegment(segment: string): string {
 
 /**
  * Derives the deterministic Commerce ACL resource id for an app from its metadata id.
- *
- * This is a cross-repo contract shared with the Commerce module. Both sides must produce
- * the exact same output for the same input. Any change here must be coordinated with the
- * Commerce module's ACL id generator.
  *
  * @param metadataId - The application's `metadata.id` value (e.g. `"approval-dashboard-app"`).
  * @returns The full Commerce ACL resource id (e.g.
@@ -46,10 +43,6 @@ export function getAclResourceId(metadataId: string): string {
 
 /**
  * Derives the deterministic Commerce ACL resource id for a specific menu item.
- *
- * This is a cross-repo contract shared with the Commerce module. Both sides must produce
- * the exact same output for the same input. Any change here must be coordinated with the
- * Commerce module's ACL id generator.
  *
  * @param metadataId - The application's `metadata.id` value (e.g. `"approval-dashboard-app"`).
  * @param menuId - The menu item's `id` value from `adminUi.menu.id` (e.g. `"approval_dashboard"`).
