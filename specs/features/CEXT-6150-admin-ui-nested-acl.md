@@ -2,7 +2,7 @@
 
 - **Ticket:** [CEXT-6150](https://jira.corp.adobe.com/browse/CEXT-6150)
 - **Created:** 2026-06-16
-- [ ] **Implemented** (menu branch only; grid columns, view buttons, mass actions deferred)
+- [x] **Implemented** (menu branch only; grid columns, view buttons, mass actions deferred)
 
 ## Summary
 

@@ -12,8 +12,13 @@
 
 import { CommerceSdkErrorBase } from "@adobe/aio-commerce-lib-core/error";
 
+import type { CommerceSdkErrorOptions } from "@adobe/aio-commerce-lib-core/error";
+
 /** Base error for Admin UI SDK permission helper failures. */
 export class AdminUiPermissionError extends CommerceSdkErrorBase {}
+
+/** Options for {@link AdminUiPermissionDeniedError}. */
+export type AdminUiPermissionDeniedErrorOptions = CommerceSdkErrorOptions;
 
 /** Error thrown when the current user is denied access to an Admin UI SDK ACL resource. */
 export class AdminUiPermissionDeniedError extends AdminUiPermissionError {
@@ -21,7 +26,7 @@ export class AdminUiPermissionDeniedError extends AdminUiPermissionError {
 
   public constructor(
     resource: string,
-    options?: ErrorOptions & { traceId?: string },
+    options?: AdminUiPermissionDeniedErrorOptions,
   ) {
     super(`Admin UI SDK permission denied for resource: ${resource}`, options);
     this.resource = resource;
