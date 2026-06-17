@@ -344,3 +344,31 @@ const resourceId = getAclResourceId("acme-promotions");
 This produces the same id that Commerce generates on the backend when `aclProtected: true` is configured. Pass it to `check()` or `require()` when you need explicit control, or use it directly for logging.
 
 Returns an empty string when called with a blank `metadataId`; this is the same sentinel that `check()` and `require()` treat as "no resource available."
+
+#### App-level vs menu-level resource ids
+
+The ACL tree Commerce builds for an app is hierarchical: the **app-root** node sits above a per-item **menu leaf** node. Granting a parent node covers everything beneath it, so checking the app-root answers "can this user reach _any_ of the app's protected items", while checking the menu leaf answers "can this user reach _this specific_ menu entry".
+
+- `getAclResourceId(metadataId)` returns the **app-root** id.
+- `getMenuAclResourceId(metadataId, menuId)` returns the **menu leaf** id for a single `adminUi.menu` item, where `menuId` is its `adminUi.menu.id`.
+
+```typescript
+import {
+  getAclResourceId,
+  getMenuAclResourceId,
+} from "@adobe/aio-commerce-lib-admin-ui/api";
+
+getAclResourceId("approval-dashboard-app");
+// → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app"
+
+getMenuAclResourceId("approval-dashboard-app", "approval_dashboard");
+// → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_menu_approval_dashboard"
+```
+
+Each segment is sanitized independently (trimmed, lowercased, non-`[a-z0-9_]` characters replaced with `_`), mirroring the Commerce module's id generator exactly. `getMenuAclResourceId` returns an empty string when `metadataId` is blank. Pass either id to `check()` or `require()`:
+
+```typescript
+const allowed = await permissionClient.check(
+  getMenuAclResourceId("approval-dashboard-app", "approval_dashboard"),
+);
+```
