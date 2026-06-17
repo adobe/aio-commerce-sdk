@@ -15,6 +15,7 @@ import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 import { permissionCheckResponseSchema } from "./schema";
 
 import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
+import type { HTTPError } from "ky";
 import type { PermissionCheckResponse } from "./schema";
 
 /** Parameters for POST /V1/adminuisdk/permission/check. */
@@ -29,7 +30,7 @@ type PermissionCheckParams = {
  * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
  * @param params - The resource to check.
  *
- * @throws An `HTTPError` if the status code is not 2XX.
+ * @throws {@link HTTPError} if the response status is not in the 2xx range.
  */
 export async function checkPermission(
   httpClient: AdobeCommerceHttpClient,
@@ -39,7 +40,7 @@ export async function checkPermission(
     .post("adminuisdk/permission/check", {
       json: { resource: params.resource },
     })
-    .json<unknown>();
+    .json();
 
   return parseOrThrow(permissionCheckResponseSchema, raw);
 }
