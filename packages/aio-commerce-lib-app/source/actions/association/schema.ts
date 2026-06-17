@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import * as v from "valibot";
 
 /** Request body for POST / — store association data. */
@@ -20,5 +21,5 @@ export const AssociationRequestBodySchema = v.object({
       "The 'commerceBaseUrl' field must be a valid absolute URL (e.g., 'https://my-store.example.com')",
     ),
   ),
-  commerceEnv: v.picklist(["saas", "paas"]),
+  commerceEnv: CommerceEnvSchema,
 });

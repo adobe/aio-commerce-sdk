@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
+
 /**
  * The Commerce instance an app is associated with.
  */
@@ -17,5 +19,5 @@ export type AssociatedCommerceInstance = {
   /** Commerce API base URL. */
   baseUrl: string;
   /** Deployment type of the Commerce instance. */
-  env: "saas" | "paas";
+  env: CommerceEnv;
 };
