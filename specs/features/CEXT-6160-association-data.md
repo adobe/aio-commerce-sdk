@@ -48,11 +48,11 @@ setup or client construction boilerplate.
 
 ```ts
 import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
-import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 
 export async function main(params) {
-  const client = await getCommerceClient(resolveAuthParams(params));
-  const products = await client.get("rest/V1/products").json();
+  const client = await getCommerceClient(resolveImsAuthParams(params));
+  const products = await client.get("products").json();
 }
 ```
 
@@ -77,10 +77,10 @@ package the action belongs to.
 
 **Available fields** on the `AssociatedCommerceInstance` object:
 
-| Field     | Type               | Description                              |
-| --------- | ------------------ | ---------------------------------------- |
-| `baseUrl` | `string`           | Commerce API base URL                    |
-| `env`     | `"saas" \| "paas"` | Deployment type of the Commerce instance |
+| Field     | Type          | Description                              |
+| --------- | ------------- | ---------------------------------------- |
+| `baseUrl` | `string`      | Commerce API base URL                    |
+| `env`     | `CommerceEnv` | Deployment type of the Commerce instance |
 
 ## Design
 
@@ -147,9 +147,11 @@ the public-facing helpers. The public exports developers use are `getCommerceIns
 The stored type is:
 
 ```ts
+import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
+
 type AssociatedCommerceInstance = {
   baseUrl: string;
-  env: "saas" | "paas";
+  env: CommerceEnv;
 };
 ```
 
@@ -173,15 +175,16 @@ Request body:
 ```ts
 {
   commerceBaseUrl: string;
-  commerceEnv: "saas" | "paas";
+  commerceEnv: CommerceEnv;
 }
 ```
 
-The handler validates the body and calls `setAssociationData` from the new
-`aio-commerce-lib-app` association module. The operation is idempotent — re-associating
-with a different instance overwrites the previous values.
+The `commerceEnv` field is validated with `CommerceEnvSchema` from
+`@adobe/aio-commerce-lib-core/commerce`. The handler validates the body and calls
+`setAssociationData` from the new `aio-commerce-lib-app` association module. The operation
+is idempotent — re-associating with a different instance overwrites the previous values.
 
-Response: `200 OK`.
+Response: `204 No Content`.
 
 **`DELETE /`** — Clear association data
 
@@ -223,27 +226,31 @@ A higher-level export from `@adobe/aio-commerce-lib-app` that builds on
  * Returns an initialised AdobeCommerceHttpClient for the Commerce instance this app
  * is currently associated with.
  *
- * @param auth - Resolved Commerce auth credentials.
+ * @param auth - Resolved IMS auth params or an IMS auth provider.
+ * @param fetchOptions - Optional global fetch options forwarded to the underlying
+ *   AdobeCommerceHttpClient (e.g. `headers`, `timeout`, `retry`).
  * @throws {AppNotAssociatedError} If the app is not associated, was unassociated,
  *   or was associated by an older SDK that didn't store this data.
  */
 export async function getCommerceClient(
-  auth: CommerceHttpClientParams["auth"],
+  auth: ImsAuthParams | ImsAuthProvider,
+  fetchOptions?: CommerceHttpClientParams["fetchOptions"],
 ): Promise<AdobeCommerceHttpClient>;
 ```
 
 The base URL and flavor come from the stored association data (`getCommerceInstance`); only
-the auth credentials are supplied by the caller, already resolved. Auth is resolved outside
-the helper with `resolveAuthParams` from `@adobe/aio-commerce-lib-auth`, keeping
-`getCommerceClient` composable and single-purpose — it builds the client for the associated
-instance and nothing else. If `getCommerceInstance` throws, the error propagates to the
-caller.
+the auth credentials are supplied by the caller, already resolved. App Management requires
+IMS, so the helper accepts only IMS auth: resolve params outside the helper with
+`resolveImsAuthParams` from `@adobe/aio-commerce-lib-auth`, or pass an `ImsAuthProvider`
+built with `getImsAuthProvider` / `forwardImsAuthProvider`. This keeps `getCommerceClient`
+composable and single-purpose — it builds the client for the associated instance and nothing
+else. If `getCommerceInstance` throws, the error propagates to the caller.
 
 ```ts
 import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
-import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 
-const client = await getCommerceClient(resolveAuthParams(params));
+const client = await getCommerceClient(resolveImsAuthParams(params));
 ```
 
 This eliminates the repeated boilerplate of combining stored instance details with the
