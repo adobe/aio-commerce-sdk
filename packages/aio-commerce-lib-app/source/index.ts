@@ -25,4 +25,4 @@ export {
 } from "./access/commerce-instance";
 export { AppNotAssociatedError } from "./errors/app-not-associated-error";
 
-export type { AssociatedCommerceInstance } from "./modules/association/types";
+export type { AssociatedCommerceInstance } from "./management/association/types";
