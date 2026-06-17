@@ -10,9 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-import { ok } from "@adobe/aio-commerce-lib-core/responses";
+import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
 
-import type { SuccessResponse } from "@adobe/aio-commerce-lib-core/responses";
+import type {
+  ErrorResponse,
+  SuccessResponse,
+} from "@adobe/aio-commerce-lib-core/responses";
 import type { GridErrorBody, GridRow, GridSuccessBody } from "./types";
 
 /**
@@ -45,25 +48,21 @@ export function okGridResponse(
 }
 
 /**
- * Builds an HTTP 200 response carrying a handler-level failure envelope.
+ * Builds an error response for a grid column handler with the given HTTP status code.
  *
- * Commerce treats any decoded body containing `errorStatus` as a failure
- * regardless of HTTP status, so returning 200 lets the handler convey a
- * specific error code and message that Commerce can log.
+ * Commerce uses the HTTP status code to distinguish success from failure.
+ *
+ * @param statusCode - The HTTP status code to return.
+ * @param errorMessage - Error message included in the response body as `{ message }`.
  *
  * @example
  * ```ts
- * return errorGridResponse("INTERNAL_ERROR", "Could not reach inventory service");
+ * return errorGridResponse(500, "Could not reach inventory service");
  * ```
  */
 export function errorGridResponse(
-  errorStatus: string,
-  errorMessage?: string,
-): SuccessResponse<GridErrorBody> {
-  const body: GridErrorBody =
-    errorMessage === undefined
-      ? { errorStatus }
-      : { errorStatus, errorMessage };
-
-  return ok<GridErrorBody>({ body });
+  statusCode: number,
+  errorMessage: string,
+): ErrorResponse<GridErrorBody> {
+  return buildErrorResponse(statusCode, { body: { message: errorMessage } });
 }
