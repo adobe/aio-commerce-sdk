@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { noContent, ok } from "@adobe/aio-commerce-lib-core/responses";
+import { noContent } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
   logger,
@@ -19,7 +19,7 @@ import {
 import {
   clearAssociationData,
   setAssociationData,
-} from "#modules/association/association-repository";
+} from "#management/association/association-repository";
 
 import { AssociationRequestBodySchema } from "./schema";
 
@@ -56,9 +56,7 @@ router.post("/", {
 
     await setAssociationData({ baseUrl: commerceBaseUrl, env: commerceEnv });
 
-    return ok({
-      body: { baseUrl: commerceBaseUrl, env: commerceEnv },
-    });
+    return noContent();
   },
 });
 
