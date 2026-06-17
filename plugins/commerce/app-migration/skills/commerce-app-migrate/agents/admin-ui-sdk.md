@@ -261,6 +261,123 @@ See: [Custom fees — Checkout Totals Collector](https://developer.adobe.com/com
 
 ---
 
+## Handler Migration
+
+After producing the `configFragment`, update the runtime action handler source files.
+Only **worker** entries require a handler — `view` entries (iframe) have no server handler.
+
+Use your Write tool to update or create each handler file described below.
+
+### Worker mass actions
+
+For each worker mass action in the v1 registration, find the existing handler file.
+The file is typically referenced by the `path` field in the v1 config (an HTTP URL whose
+path segment maps to an action under `actions/`), or discoverable via `app.config.yaml` or
+`ext.config.yaml`. Update it to use the v2 wire-contract builders:
+
+```typescript
+import {
+  parseMassActionRequest,
+  okMassActionResponse,
+  massActionErrorResponse,
+} from "@adobe/aio-commerce-sdk/admin-ui/mass-actions";
+
+export async function main(params: unknown) {
+  const { gridType, ids } = parseMassActionRequest(params);
+  try {
+    // existing business logic — replace direct params access with the parsed values above
+    await processEntities(gridType, ids);
+    return okMassActionResponse();
+  } catch (error) {
+    return massActionErrorResponse(500, (error as Error).message);
+  }
+}
+```
+
+- `parseMassActionRequest(params)` → `{ requestId, gridType, ids }` — validates the incoming shape; throws `CommerceSdkValidationError` on bad input.
+- `okMassActionResponse(body?)` → HTTP 200; optional body for logging.
+- `massActionErrorResponse(statusCode, message)` → non-2xx; body is `{ message }`.
+
+### Worker view buttons
+
+For each worker view button (`displayIframe: false`) in the v1 registration, find the
+existing handler file and update it:
+
+```typescript
+import {
+  parseOrderViewButtonRequest,
+  okOrderViewButtonResponse,
+  orderViewButtonErrorResponse,
+} from "@adobe/aio-commerce-sdk/admin-ui/order-view-buttons";
+
+export async function main(params: unknown) {
+  const { id, orderId } = parseOrderViewButtonRequest(params);
+  try {
+    // existing business logic — id is the buttonId, orderId is the order
+    await handleButton(id, orderId);
+    return okOrderViewButtonResponse();
+  } catch (error) {
+    return orderViewButtonErrorResponse(500, (error as Error).message);
+  }
+}
+```
+
+- `parseOrderViewButtonRequest(params)` → `{ requestId, id, orderId }` — `id` identifies which button was clicked (useful when one handler serves multiple buttons).
+- `okOrderViewButtonResponse()` → success; empty `{}` body.
+- `orderViewButtonErrorResponse(statusCode, message)` → error; `{ message }` body.
+
+### Grid columns (new handler)
+
+V1 grid columns used API Mesh — there is no existing handler to migrate. Once the developer
+provides the `runtimeAction` name (via the `adminUi.<entity>.gridColumns.runtimeAction`
+unresolved question), scaffold a new handler under
+`src/commerce-backend-ui-2/actions/<action>/index.ts`:
+
+```typescript
+import {
+  parseGridRequest,
+  okGridResponse,
+  errorGridResponse,
+} from "@adobe/aio-commerce-sdk/admin-ui/grid-columns";
+
+export async function main(params: unknown) {
+  const { gridType, ids } = parseGridRequest(params);
+  try {
+    // fetch column data for the visible entity ids
+    const rows = await fetchColumnData(gridType, ids);
+    // rows keyed by entity id; each value keyed by the column ids declared in config
+    return okGridResponse(rows);
+  } catch (error) {
+    return errorGridResponse(500, (error as Error).message);
+  }
+}
+```
+
+- `parseGridRequest(params)` → `{ requestId, gridType, ids }` — `ids` are the visible entity IDs.
+- `okGridResponse(data, defaults?)` → success envelope. Row object keys must match the `id` values declared in `gridColumns.columns`, or cells render empty.
+- `errorGridResponse(statusCode, message)` → non-2xx error response.
+
+Also register the action in `src/commerce-backend-ui-2/ext.config.yaml` under `runtimeManifest`:
+
+```yaml
+runtimeManifest:
+  packages:
+    <package>: # must match the <package> portion of runtimeAction
+      actions:
+        <action>:
+          function: actions/<action>/index.js
+          web: "yes"
+          annotations:
+            require-adobe-auth: true
+            final: true
+```
+
+If the developer has not yet answered the `runtimeAction` unresolved question, skip creating
+the handler file — leave a `<FILL_IN>` placeholder in the config and note that the handler
+must be scaffolded once the action name is confirmed.
+
+---
+
 ## Output
 
 The `domain` field must be `"adminUi"` (v2 key).
