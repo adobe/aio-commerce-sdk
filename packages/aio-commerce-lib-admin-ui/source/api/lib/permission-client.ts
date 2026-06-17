@@ -42,24 +42,28 @@ export interface AdminUiPermissionClientOptions {
 /** Client for checking the current user's Admin UI SDK resource permissions. */
 export interface AdminUiPermissionClient {
   /**
-   * Returns `true` if the current user has the given resource granted, `false` if denied.
-   * Returns `false` on network or parse errors when `denyOnError: true` (default).
-   * Always throws `AdminUiPermissionError` on 401, regardless of `denyOnError`.
-   * When called with no argument, defaults to the ACL resource id derived from `appId`.
-   * Returns `false` immediately when neither `resource` nor a valid `appId` is available.
+   * Checks whether the current user has the given ACL resource granted.
+   *
+   * @param resource - The ACL resource id to check. When omitted, defaults to the id derived from `appId`.
+   * @returns `true` when granted; `false` when denied, on network or parse errors while `denyOnError` is
+   *   `true` (the default), or immediately when neither `resource` nor a valid `appId` is available.
+   * @throws {@link AdminUiPermissionError} on HTTP 401, regardless of `denyOnError`.
    */
   check(resource?: string): Promise<boolean>;
   /**
-   * Clears the cached result for `resource`. If called without an argument, clears
-   * all cached entries and in-flight tracking without aborting outstanding HTTP requests.
+   * Clears cached permission results.
+   *
+   * @param resource - The ACL resource id whose cached result to clear. When omitted, clears all cached
+   *   entries and in-flight tracking without aborting outstanding HTTP requests.
    */
   invalidate(resource?: string): void;
   /**
-   * Resolves when the current user has the given resource granted.
-   * Throws `AdminUiPermissionDeniedError` if denied.
-   * Throws `AdminUiPermissionError` on 401, network, and parse errors.
-   * When called with no argument, defaults to the ACL resource id derived from `appId`.
-   * Throws `AdminUiPermissionError` immediately when neither `resource` nor a valid `appId` is available.
+   * Resolves when the current user has the given ACL resource granted.
+   *
+   * @param resource - The ACL resource id to require. When omitted, defaults to the id derived from `appId`.
+   * @throws {@link AdminUiPermissionDeniedError} when the resource is explicitly denied.
+   * @throws {@link AdminUiPermissionError} on HTTP 401, on network or parse errors while `denyOnError` is
+   *   `false`, or immediately when neither `resource` nor a valid `appId` is available.
    */
   require(resource?: string): Promise<void>;
 }
@@ -88,7 +92,12 @@ function toPermissionError(error: unknown) {
       });
 }
 
-/** Creates a client for checking Admin UI SDK ACL resources. */
+/**
+ * Creates a client for checking Admin UI SDK ACL resources.
+ *
+ * @param options - Client configuration; see {@link AdminUiPermissionClientOptions}.
+ * @returns An {@link AdminUiPermissionClient} for checking and requiring ACL resources.
+ */
 export function getAdminUiPermissionClient(
   options: AdminUiPermissionClientOptions,
 ): AdminUiPermissionClient {
