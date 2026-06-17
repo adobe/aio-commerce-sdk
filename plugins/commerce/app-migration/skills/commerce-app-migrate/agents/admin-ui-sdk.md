@@ -100,6 +100,14 @@ V1 mass actions used `displayIframe` to distinguish iframe vs. worker handlers. 
 - `displayIframe: true` or `displayIframe` absent → `type: "view"`
 - `displayIframe: false` → `type: "worker"`
 
+**`runtimeAction` for worker mass actions:** V1 `path` on a `displayIframe: false` mass action was a full HTTP URL to the runtime action endpoint, not a runtime action name. V2 `runtimeAction` requires a `<package>/<action>` name resolved by App Registry. Add an unresolved question and set `runtimeAction` to `"<FILL_IN>"`:
+
+    {
+      "id": "adminUi.<entity>.massActions.<actionId>.runtimeAction",
+      "prompt": "V1 mass action \"<actionId>\" was a worker (displayIframe: false) with path \"<path>\". V2 requires a runtimeAction name (e.g. \"<package>/<action-name>\"). What is the runtime action name?",
+      "default": ""
+    }
+
 **`sandbox` / `sandboxPermissions`:** Valid values are `"allow-downloads"`, `"allow-modals"`, and `"allow-popups"`.
 If the v1 value is a space-separated string, split it and keep only values from this list, discarding any others.
 If the v1 value is already an array, use it as-is (filtering out invalid values as above).
@@ -226,7 +234,7 @@ non-section item.
 
     {
       "id": "adminUi.menu.id",
-      "prompt": "The first non-section menu item has no id. What id should the v2 menu use (e.g. \"my-app::menu\")?",
+      "prompt": "The first non-section menu item has no id. What id should the v2 menu use (e.g. \"dashboard\")?",
       "default": ""
     }
 
@@ -391,7 +399,7 @@ Example when order mass actions and product grid columns are found:
           "order": {
             "massActions": [
               {
-                "id": "my-app::export-orders",
+                "id": "export-orders",
                 "label": "Export Orders",
                 "type": "view",
                 "path": "#/export",
@@ -445,7 +453,7 @@ Example when a menu item is found:
       "configFragment": {
         "adminUi": {
           "menu": {
-            "id": "my-app::menu",
+            "id": "dashboard",
             "label": "My App",
             "description": "<FILL_IN>",
             "parentMenu": "sales"
