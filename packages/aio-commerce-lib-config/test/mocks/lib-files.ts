@@ -55,6 +55,12 @@ export function createMockLibFiles() {
           return bytes;
         },
       );
+
+      public delete = vi.fn(async (path: string) => {
+        // Mirror aio-lib-files, whose delete is idempotent: removing a
+        // missing path is a no-op rather than an error.
+        this.files.delete(path);
+      });
     },
   );
 

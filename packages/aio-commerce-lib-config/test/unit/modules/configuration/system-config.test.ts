@@ -12,22 +12,18 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const { mockState, mockFiles } = vi.hoisted(() => ({
-  mockState: {
-    get: vi.fn(),
-    put: vi.fn(),
-    delete: vi.fn(),
-  },
-  mockFiles: {
-    read: vi.fn(),
-    write: vi.fn(),
-    delete: vi.fn(),
-  },
-}));
+import { createMockLibFiles } from "#test/mocks/lib-files";
+import { createMockLibState } from "#test/mocks/lib-state";
+
+const MockState = createMockLibState();
+const MockFiles = createMockLibFiles();
+
+let mockState = new MockState();
+let mockFiles = new MockFiles();
 
 vi.mock("#utils/repository", () => ({
-  getSharedState: vi.fn().mockResolvedValue(mockState),
-  getSharedFiles: vi.fn().mockResolvedValue(mockFiles),
+  getSharedState: vi.fn(async () => mockState),
+  getSharedFiles: vi.fn(async () => mockFiles),
 }));
 
 const KEY = "system.association";
@@ -41,6 +37,8 @@ function wrapForCache(value: unknown): string {
 describe("system-config", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockState = new MockState();
+    mockFiles = new MockFiles();
   });
 
   describe("setSystemConfigByKey", () => {
@@ -118,7 +116,7 @@ describe("system-config", () => {
   describe("getSystemConfigByKey", () => {
     test("returns the cached value when present in state", async () => {
       const data = { baseUrl: "https://example.com", env: "saas" };
-      mockState.get.mockResolvedValue({ value: wrapForCache(data) });
+      await mockState.put(KEY, wrapForCache(data));
 
       const { getSystemConfigByKey } = await import(
         "#modules/configuration/system-config"
@@ -132,8 +130,7 @@ describe("system-config", () => {
 
     test("falls back to files when cache misses, then re-caches", async () => {
       const data = { baseUrl: "https://example.com", env: "paas" };
-      mockState.get.mockResolvedValue({ value: null });
-      mockFiles.read.mockResolvedValue(Buffer.from(JSON.stringify(data)));
+      await mockFiles.write(FILE_PATH, JSON.stringify(data));
 
       const { getSystemConfigByKey } = await import(
         "#modules/configuration/system-config"
@@ -149,9 +146,6 @@ describe("system-config", () => {
     });
 
     test("returns null when not found in cache or files", async () => {
-      mockState.get.mockResolvedValue({ value: null });
-      mockFiles.read.mockRejectedValue({ code: "ENOENT" });
-
       const { getSystemConfigByKey } = await import(
         "#modules/configuration/system-config"
       );
@@ -163,8 +157,7 @@ describe("system-config", () => {
     });
 
     test("returns null when state read throws", async () => {
-      mockState.get.mockRejectedValue(new Error("state error"));
-      mockFiles.read.mockRejectedValue({ code: "ENOENT" });
+      mockState.get.mockRejectedValueOnce(new Error("state error"));
 
       const { getSystemConfigByKey } = await import(
         "#modules/configuration/system-config"
@@ -177,8 +170,8 @@ describe("system-config", () => {
 
     test("falls back to files when the cached value is corrupt JSON", async () => {
       const data = { baseUrl: "https://example.com", env: "paas" };
-      mockState.get.mockResolvedValue({ value: "{not valid json" });
-      mockFiles.read.mockResolvedValue(Buffer.from(JSON.stringify(data)));
+      mockState.get.mockResolvedValueOnce({ value: "{not valid json" });
+      await mockFiles.write(FILE_PATH, JSON.stringify(data));
 
       const { getSystemConfigByKey } = await import(
         "#modules/configuration/system-config"
@@ -191,8 +184,7 @@ describe("system-config", () => {
     });
 
     test("returns null when the persisted file holds corrupt JSON", async () => {
-      mockState.get.mockResolvedValue({ value: null });
-      mockFiles.read.mockResolvedValue(Buffer.from("{not valid json"));
+      await mockFiles.write(FILE_PATH, "{not valid json");
 
       const { getSystemConfigByKey } = await import(
         "#modules/configuration/system-config"
