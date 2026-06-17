@@ -12,7 +12,10 @@
 
 import { describe, expect, it } from "vitest";
 
-import { getAclResourceId } from "#api/lib/acl-resource-id";
+import {
+  getAclResourceId,
+  getMenuAclResourceId,
+} from "#api/lib/acl-resource-id";
 
 describe("getAclResourceId", () => {
   it("converts hyphens to underscores and lowercases (cross-repo contract fixture)", () => {
@@ -21,7 +24,7 @@ describe("getAclResourceId", () => {
     );
   });
 
-  it("trims whitespace before sanitizing (cross-repo contract with AclResourceIdGenerator)", () => {
+  it("trims whitespace before sanitizing (cross-repo contract with Commerce module)", () => {
     expect(getAclResourceId("  acme-promotions  ")).toBe(
       "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions",
     );
@@ -36,5 +39,45 @@ describe("getAclResourceId", () => {
   it("returns empty string for blank input", () => {
     expect(getAclResourceId("")).toBe("");
     expect(getAclResourceId("   ")).toBe("");
+  });
+});
+
+describe("getMenuAclResourceId", () => {
+  it("produces the menu leaf id (cross-repo contract fixture)", () => {
+    expect(
+      getMenuAclResourceId("approval-dashboard-app", "approval_dashboard"),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_menu_approval_dashboard",
+    );
+  });
+
+  it("sanitizes hyphens in both metadataId and menuId independently", () => {
+    expect(getMenuAclResourceId("My-App", "My-Item")).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_my_app_menu_my_item",
+    );
+  });
+
+  it("trims whitespace in both segments before sanitizing", () => {
+    expect(
+      getMenuAclResourceId(
+        "  approval-dashboard-app  ",
+        "  approval_dashboard  ",
+      ),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_menu_approval_dashboard",
+    );
+  });
+
+  it("produces the same id whether menuId uses hyphens or underscores", () => {
+    expect(
+      getMenuAclResourceId("approval-dashboard-app", "approval-dashboard"),
+    ).toBe(
+      getMenuAclResourceId("approval-dashboard-app", "approval_dashboard"),
+    );
+  });
+
+  it("returns empty string when metadataId is blank", () => {
+    expect(getMenuAclResourceId("", "approval_dashboard")).toBe("");
+    expect(getMenuAclResourceId("   ", "approval_dashboard")).toBe("");
   });
 });

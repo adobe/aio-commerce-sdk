@@ -74,10 +74,12 @@ type PermissionCheckResult =
       cacheable: false;
     };
 
+/** Returns true when the error is an HTTP 401 Unauthorized response from ky. */
 function isUnauthorizedError(error: unknown) {
   return error instanceof HTTPError && error.response.status === 401;
 }
 
+/** Wraps an arbitrary thrown value in an `AdminUiPermissionError`, passing through instances that are already one. */
 function toPermissionError(error: unknown) {
   return error instanceof AdminUiPermissionError
     ? error
@@ -99,6 +101,11 @@ export function getAdminUiPermissionClient(
   const cache = new Map<string, { value: boolean; expiresAt: number }>();
   const inFlight = new Map<string, Promise<PermissionCheckResult>>();
 
+  /**
+   * Performs the network request for `resource` and maps the outcome to a `PermissionCheckResult`.
+   * Always throws `AdminUiPermissionError` on 401. On other errors, returns a non-cacheable error
+   * result when `denyOnError` is true, or re-throws otherwise.
+   */
   async function fetchCheck(resource: string): Promise<PermissionCheckResult> {
     try {
       const result = await checkPermission(httpClient, { resource });
@@ -123,6 +130,11 @@ export function getAdminUiPermissionClient(
     }
   }
 
+  /**
+   * Returns a permission check result for `resource`, serving from the TTL cache or an
+   * in-flight request when available, and falling back to a fresh `fetchCheck` call otherwise.
+   * Successful cacheable results are written to the TTL cache once the in-flight promise settles.
+   */
   function resolveCheck(resource: string) {
     if (cacheTtlMs > 0) {
       const cached = cache.get(resource);

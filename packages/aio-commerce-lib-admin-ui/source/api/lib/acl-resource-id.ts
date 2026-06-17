@@ -10,26 +10,59 @@
  * governing permissions and limitations under the License.
  */
 
+const PREFIX = "Magento_CommerceBackendUix::adminuisdk_app_";
+
+/**
+ * Sanitizes a single ACL id segment: trims whitespace, lowercases, and replaces every
+ * character outside [a-z0-9_] with an underscore.
+ *
+ * This mirrors the per-segment sanitization in the Commerce module's ACL id generator.
+ */
+function sanitizeSegment(segment: string): string {
+  return segment
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "_");
+}
+
 /**
  * Derives the deterministic Commerce ACL resource id for an app from its metadata id.
  *
- * This is a cross-repo contract shared with
- * `Magento\CommerceBackendUix\Model\Acl\AclResourceIdGenerator` in
- * `magento/module-commerce-backend-uix`. Both sides must produce the exact same output
- * for the same input. Any change here must be coordinated with that PHP class.
+ * This is a cross-repo contract shared with the Commerce module. Both sides must produce
+ * the exact same output for the same input. Any change here must be coordinated with the
+ * Commerce module's ACL id generator.
  *
- * @param metadataId - The application's `metadata.id` value (e.g. `"acme-promotions"`).
+ * @param metadataId - The application's `metadata.id` value (e.g. `"approval-dashboard-app"`).
  * @returns The full Commerce ACL resource id (e.g.
- *   `"Magento_CommerceBackendUix::adminuisdk_app_acme_promotions"`),
+ *   `"Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app"`),
  *   or an empty string when `metadataId` is blank.
  */
 export function getAclResourceId(metadataId: string): string {
-  const trimmed = metadataId.trim();
-  if (trimmed === "") {
+  if (metadataId.trim() === "") {
     return "";
   }
-  // Note: both hyphens and underscores normalize to "_", so "acme-app" and "acme_app"
-  // produce the same id. The App Registry is expected to enforce uniqueness upstream.
-  const sanitized = trimmed.toLowerCase().replace(/[^a-z0-9_]/g, "_");
-  return `Magento_CommerceBackendUix::adminuisdk_app_${sanitized}`;
+  return `${PREFIX}${sanitizeSegment(metadataId)}`;
+}
+
+/**
+ * Derives the deterministic Commerce ACL resource id for a specific menu item.
+ *
+ * This is a cross-repo contract shared with the Commerce module. Both sides must produce
+ * the exact same output for the same input. Any change here must be coordinated with the
+ * Commerce module's ACL id generator.
+ *
+ * @param metadataId - The application's `metadata.id` value (e.g. `"approval-dashboard-app"`).
+ * @param menuId - The menu item's `id` value from `adminUi.menu.id` (e.g. `"approval_dashboard"`).
+ * @returns The full Commerce ACL resource id for the menu leaf node (e.g.
+ *   `"Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_menu_approval_dashboard"`).
+ */
+export function getMenuAclResourceId(
+  metadataId: string,
+  menuId: string,
+): string {
+  const appRoot = getAclResourceId(metadataId);
+  if (appRoot === "") {
+    return "";
+  }
+  return `${appRoot}_menu_${sanitizeSegment(menuId)}`;
 }
