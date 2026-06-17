@@ -14,13 +14,24 @@ import {
   deleteConfig,
   loadConfig,
   persistConfig,
-  SYSTEM_NAMESPACE,
 } from "./configuration-repository";
+
+import type { RepositoryNamespace } from "./configuration-repository";
 
 // Matches `aio-lib-state`'s own default TTL, which the system config previously
 // relied on by omitting the TTL; set explicitly here since `persistConfig`
 // always passes one through.
 const SYSTEM_CONFIG_CACHE_TTL_SECONDS = 86_400;
+
+/**
+ * Storage layout for SDK-managed system config. The key already carries the
+ * `system.` prefix (e.g. `system.association`), so it doubles as the cache key
+ * and keeps these entries cleanly separated from `configuration.*`.
+ */
+const SYSTEM_NAMESPACE: RepositoryNamespace = {
+  stateKey: (key) => key,
+  filePath: (key) => `system/${key}.json`,
+};
 
 /**
  * Stores or clears a system configuration value by key.
@@ -59,7 +70,9 @@ export async function setSystemConfigByKey(
  * @param key - The system configuration key (e.g. `"system.association"`).
  * @returns The stored value cast to `T`, or `null` if not found.
  */
-export async function getSystemConfigByKey<T>(key: string): Promise<T | null> {
+export async function getSystemConfigByKey<T = unknown>(
+  key: string,
+): Promise<T | null> {
   return (await loadConfig(
     key,
     SYSTEM_CONFIG_CACHE_TTL_SECONDS,

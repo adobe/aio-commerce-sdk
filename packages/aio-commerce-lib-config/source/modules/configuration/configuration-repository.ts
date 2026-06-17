@@ -37,16 +37,6 @@ const CONFIGURATION_NAMESPACE: RepositoryNamespace = {
 };
 
 /**
- * Storage layout for SDK-managed system config. The key already carries the
- * `system.` prefix (e.g. `system.association`), so it doubles as the cache key
- * and keeps these entries cleanly separated from `configuration.*`.
- */
-export const SYSTEM_NAMESPACE: RepositoryNamespace = {
-  stateKey: (key) => key,
-  filePath: (key) => `system/${key}.json`,
-};
-
-/**
  * Gets cached configuration payload from state store.
  *
  * @param scopeCode - Scope code identifier.
