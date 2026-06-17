@@ -17,7 +17,7 @@ const { mockSetAssociationData, mockClearAssociationData } = vi.hoisted(() => ({
   mockClearAssociationData: vi.fn(),
 }));
 
-vi.mock("#modules/association/association-repository", () => ({
+vi.mock("#management/association/association-repository", () => ({
   setAssociationData: mockSetAssociationData,
   clearAssociationData: mockClearAssociationData,
 }));
@@ -31,7 +31,7 @@ describe("associationRuntimeAction", () => {
   });
 
   describe("POST /", () => {
-    test("stores valid association data and returns 200 with the saved values", async () => {
+    test("stores valid association data and returns 204", async () => {
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
         method: "post",
@@ -50,11 +50,7 @@ describe("associationRuntimeAction", () => {
       });
       expect(result).toMatchObject({
         type: "success",
-        statusCode: 200,
-        body: {
-          baseUrl: "https://example.com",
-          env: "paas",
-        },
+        statusCode: 204,
       });
     });
 
@@ -77,7 +73,7 @@ describe("associationRuntimeAction", () => {
       });
       expect(result).toMatchObject({
         type: "success",
-        statusCode: 200,
+        statusCode: 204,
       });
     });
 

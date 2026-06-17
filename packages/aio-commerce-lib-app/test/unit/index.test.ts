@@ -19,7 +19,7 @@ const { mockGetAssociationData, MockAdobeCommerceHttpClient } = vi.hoisted(
   }),
 );
 
-vi.mock("#modules/association/association-repository", () => ({
+vi.mock("#management/association/association-repository", () => ({
   getAssociationData: mockGetAssociationData,
 }));
 
@@ -106,6 +106,23 @@ describe("getCommerceClient", () => {
     expect(MockAdobeCommerceHttpClient).toHaveBeenCalledWith({
       auth,
       config: { baseUrl: data.baseUrl, flavor: "saas" },
+    });
+  });
+
+  test("forwards optional fetch options to the client", async () => {
+    const data = {
+      baseUrl: "https://example.com",
+      env: "paas" as const,
+    };
+    mockGetAssociationData.mockResolvedValue(data);
+
+    const fetchOptions = { timeout: 5000, headers: { "x-trace": "abc" } };
+    await getCommerceClient(auth, fetchOptions);
+
+    expect(MockAdobeCommerceHttpClient).toHaveBeenCalledWith({
+      auth,
+      config: { baseUrl: data.baseUrl, flavor: "paas" },
+      fetchOptions,
     });
   });
 

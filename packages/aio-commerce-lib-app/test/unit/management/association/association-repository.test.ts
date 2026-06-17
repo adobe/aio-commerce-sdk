@@ -28,7 +28,7 @@ import {
   clearAssociationData,
   getAssociationData,
   setAssociationData,
-} from "#modules/association/association-repository";
+} from "#management/association/association-repository";
 
 describe("association-repository", () => {
   beforeEach(() => {

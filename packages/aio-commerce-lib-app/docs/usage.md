@@ -788,7 +788,7 @@ After an app is associated with a Commerce instance via App Management, the SDK 
 
 Two helpers are exposed from the root entrypoint:
 
-- `getCommerceClient(auth)` — returns a ready-to-use [`AdobeCommerceHttpClient`](../../aio-commerce-lib-api/docs/usage.md). Use this when you need to call the Commerce API. The base URL and flavor come from the stored association data; you supply the resolved auth credentials (resolve them with `resolveAuthParams` from [`@adobe/aio-commerce-lib-auth`](../../aio-commerce-lib-auth/docs/usage.md)).
+- `getCommerceClient(auth, fetchOptions?)` — returns a ready-to-use [`AdobeCommerceHttpClient`](../../aio-commerce-lib-api/docs/usage.md). Use this when you need to call the Commerce API. The base URL and flavor come from the stored association data; you supply the resolved IMS auth. App Management requires IMS, so this accepts only IMS auth: resolve params with `resolveImsAuthParams`, or pass an `ImsAuthProvider` built with `getImsAuthProvider` / `forwardImsAuthProvider` from [`@adobe/aio-commerce-lib-auth`](../../aio-commerce-lib-auth/docs/usage.md). The optional `fetchOptions` are forwarded to the underlying client (e.g. `headers`, `timeout`, `retry`).
 - `getCommerceInstance()` — returns the raw `{ baseUrl, env }`. Use this when you only need the metadata (e.g. for logging or building a custom client).
 
 Both helpers throw `AppNotAssociatedError` if the app is not currently associated, was unassociated, or was associated by an older SDK that did not store this data. Re-associating the app resolves the error.
@@ -797,11 +797,11 @@ Both helpers throw `AppNotAssociatedError` if the app is not currently associate
 
 ```ts
 import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
-import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 
 export async function main(params) {
-  const client = await getCommerceClient(resolveAuthParams(params));
-  const products = await client.get("rest/V1/products").json();
+  const client = await getCommerceClient(resolveImsAuthParams(params));
+  const products = await client.get("products").json();
 }
 ```
 
@@ -828,12 +828,12 @@ import {
   AppNotAssociatedError,
   getCommerceClient,
 } from "@adobe/aio-commerce-lib-app";
-import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 
 export async function main(params) {
   try {
-    const client = await getCommerceClient(resolveAuthParams(params));
-    return ok({ body: await client.get("rest/V1/products").json() });
+    const client = await getCommerceClient(resolveImsAuthParams(params));
+    return ok({ body: await client.get("products").json() });
   } catch (error) {
     if (error instanceof AppNotAssociatedError) {
       return badRequest({

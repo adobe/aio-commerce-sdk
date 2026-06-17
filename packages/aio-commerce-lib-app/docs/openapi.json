@@ -2709,25 +2709,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Association data stored successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "baseUrl": {
-                      "type": "string"
-                    },
-                    "env": {
-                      "type": "string",
-                      "enum": ["saas", "paas"]
-                    }
-                  },
-                  "required": ["baseUrl", "env"]
-                }
-              }
-            }
+          "204": {
+            "description": "Association data stored successfully."
           },
           "400": {
             "description": "Bad request, the request body is invalid.",

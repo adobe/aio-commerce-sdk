@@ -13,10 +13,14 @@
 import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 
 import { AppNotAssociatedError } from "../errors/app-not-associated-error";
-import { getAssociationData } from "../modules/association/association-repository";
+import { getAssociationData } from "../management/association/association-repository";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
-import type { AssociatedCommerceInstance } from "../modules/association/types";
+import type {
+  ImsAuthParams,
+  ImsAuthProvider,
+} from "@adobe/aio-commerce-lib-auth";
+import type { AssociatedCommerceInstance } from "../management/association/types";
 
 /**
  * Returns the Commerce instance this app is currently associated with.
@@ -51,11 +55,14 @@ export async function getCommerceInstance(): Promise<AssociatedCommerceInstance>
  *
  * The base URL and flavor come from the stored association data
  * ({@link getCommerceInstance}); only the auth credentials are supplied by the
- * caller, already resolved. Resolve them outside with `resolveAuthParams` from
- * `@adobe/aio-commerce-lib-auth` so this helper stays focused on building the
- * client for the associated instance.
+ * caller, already resolved. App Management requires IMS, so this accepts only
+ * IMS auth: resolve params with `resolveImsAuthParams`, or pass an
+ * `ImsAuthProvider` built with `getImsAuthProvider` / `forwardImsAuthProvider`
+ * from `@adobe/aio-commerce-lib-auth`.
  *
- * @param auth - Resolved Commerce auth credentials.
+ * @param auth - Resolved IMS auth params or an IMS auth provider.
+ * @param fetchOptions - Optional global fetch options forwarded to the
+ *   underlying `AdobeCommerceHttpClient` (e.g. `headers`, `timeout`, `retry`).
  * @throws {AppNotAssociatedError} If the app is not associated, was
  *   unassociated, or was associated by an older SDK that did not store this
  *   data. Re-associating the app resolves the error.
@@ -63,16 +70,17 @@ export async function getCommerceInstance(): Promise<AssociatedCommerceInstance>
  * @example
  * ```ts
  * import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
- * import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+ * import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
  *
  * export async function main(params) {
- *   const client = await getCommerceClient(resolveAuthParams(params));
- *   const products = await client.get("rest/V1/products").json();
+ *   const client = await getCommerceClient(resolveImsAuthParams(params));
+ *   const products = await client.get("products").json();
  * }
  * ```
  */
 export async function getCommerceClient(
-  auth: CommerceHttpClientParams["auth"],
+  auth: ImsAuthParams | ImsAuthProvider,
+  fetchOptions?: CommerceHttpClientParams["fetchOptions"],
 ): Promise<AdobeCommerceHttpClient> {
   const instance = await getCommerceInstance();
 
@@ -82,5 +90,6 @@ export async function getCommerceClient(
   return new AdobeCommerceHttpClient({
     auth,
     config: { baseUrl: instance.baseUrl, flavor: instance.env },
+    fetchOptions,
   } as CommerceHttpClientParams);
 }
