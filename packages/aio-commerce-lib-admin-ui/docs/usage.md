@@ -259,7 +259,7 @@ import { getAdminUiPermissionClient } from "@adobe/aio-commerce-lib-admin-ui/api
 
 const permissionClient = getAdminUiPermissionClient({
   httpClient, // AdobeCommerceHttpClient — reuse the one from createAdminUiApiClient
-  appId: "acme-promotions", // metadata.id from your app config; enables no-argument calls
+  appId: "acme-promotions", // app id used to derive the ACL resource; enables no-argument check()/require(). Optional — or pass an explicit resource instead.
   cacheTtlMs: 300_000, // default: 5 min; set to 0 to disable result caching
   denyOnError: true, // default: true — returns false on network/parse errors instead of throwing
 });
