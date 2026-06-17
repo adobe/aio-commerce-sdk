@@ -12,12 +12,26 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const { mockGetSystemConfigByKey, mockSetSystemConfigByKey } = vi.hoisted(
-  () => ({
-    mockGetSystemConfigByKey: vi.fn(),
-    mockSetSystemConfigByKey: vi.fn(),
-  }),
-);
+// Stateful fake for the system-config storage: keyed by whatever key the
+// repository chooses, so the tests assert round-trip behavior instead of
+// coupling to the internal storage key.
+const { store, mockGetSystemConfigByKey, mockSetSystemConfigByKey } =
+  vi.hoisted(() => {
+    const store = new Map<string, unknown>();
+    return {
+      store,
+      mockGetSystemConfigByKey: vi.fn(async (key: string) =>
+        store.has(key) ? store.get(key) : null,
+      ),
+      mockSetSystemConfigByKey: vi.fn(async (key: string, value: unknown) => {
+        if (value === null || value === undefined) {
+          store.delete(key);
+        } else {
+          store.set(key, value);
+        }
+      }),
+    };
+  });
 
 vi.mock("@adobe/aio-commerce-lib-config", () => ({
   getSystemConfigByKey: mockGetSystemConfigByKey,
@@ -33,56 +47,45 @@ import {
 describe("association-repository", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    store.clear();
   });
 
-  describe("setAssociationData", () => {
-    test("writes the data under the system.association key", async () => {
-      const data = {
-        baseUrl: "https://example.com",
-        env: "paas" as const,
-      };
-      await setAssociationData(data);
+  test("stores association data and reads it back unchanged", async () => {
+    const data = {
+      baseUrl: "https://example.com",
+      env: "paas" as const,
+    };
+    await setAssociationData(data);
 
-      expect(mockSetSystemConfigByKey).toHaveBeenCalledWith(
-        "system.association",
-        data,
-      );
-    });
+    expect(await getAssociationData()).toEqual(data);
   });
 
-  describe("getAssociationData", () => {
-    test("reads from the system.association key", async () => {
-      const data = {
-        baseUrl: "https://example.com",
-        env: "saas" as const,
-      };
-      mockGetSystemConfigByKey.mockResolvedValue(data);
-
-      const result = await getAssociationData();
-
-      expect(mockGetSystemConfigByKey).toHaveBeenCalledWith(
-        "system.association",
-      );
-      expect(result).toEqual(data);
-    });
-
-    test("returns null when no data is stored", async () => {
-      mockGetSystemConfigByKey.mockResolvedValue(null);
-
-      const result = await getAssociationData();
-
-      expect(result).toBeNull();
-    });
+  test("returns null when no association data has been stored", async () => {
+    expect(await getAssociationData()).toBeNull();
   });
 
-  describe("clearAssociationData", () => {
-    test("clears the system.association key by setting it to null", async () => {
-      await clearAssociationData();
-
-      expect(mockSetSystemConfigByKey).toHaveBeenCalledWith(
-        "system.association",
-        null,
-      );
+  test("overwrites previously stored association data", async () => {
+    await setAssociationData({
+      baseUrl: "https://first.example.com",
+      env: "paas",
     });
+
+    const updated = {
+      baseUrl: "https://second.example.com",
+      env: "saas" as const,
+    };
+    await setAssociationData(updated);
+
+    expect(await getAssociationData()).toEqual(updated);
+  });
+
+  test("clears stored association data", async () => {
+    await setAssociationData({
+      baseUrl: "https://example.com",
+      env: "saas",
+    });
+    await clearAssociationData();
+
+    expect(await getAssociationData()).toBeNull();
   });
 });
