@@ -62,28 +62,19 @@ describe("okGridResponse", () => {
 });
 
 describe("errorGridResponse", () => {
-  it("produces a 200 response carrying errorStatus only when no message is given", () => {
-    const result = errorGridResponse("INTERNAL_ERROR");
+  it("returns the given HTTP status code", () => {
+    const result = errorGridResponse(500, "Could not reach inventory service");
     expect(result).toEqual({
-      type: "success",
-      statusCode: 200,
-      body: { errorStatus: "INTERNAL_ERROR" },
+      type: "error",
+      error: {
+        statusCode: 500,
+        body: { message: "Could not reach inventory service" },
+      },
     });
   });
 
-  it("includes errorMessage when provided", () => {
-    const result = errorGridResponse(
-      "INTERNAL_ERROR",
-      "Could not reach inventory service",
-    );
-    expect(result.body).toEqual({
-      errorStatus: "INTERNAL_ERROR",
-      errorMessage: "Could not reach inventory service",
-    });
-  });
-
-  it("preserves an explicit empty errorMessage", () => {
-    const result = errorGridResponse("X", "");
-    expect(result.body).toEqual({ errorStatus: "X", errorMessage: "" });
+  it("wraps the error message in a message field", () => {
+    const result = errorGridResponse(422, "Unprocessable entity");
+    expect(result.error?.body).toEqual({ message: "Unprocessable entity" });
   });
 });
