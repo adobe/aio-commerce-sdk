@@ -199,6 +199,7 @@ After `aio app build` passes:
 
 - **Add webhook interceptors** — invoke `commerce-app-webhooks` to intercept Commerce operations before or after they execute
 - **Add event subscriptions** — invoke `commerce-app-eventing` to subscribe to Commerce or external events
+- **Extend the Admin UI** — invoke `commerce-app-admin-ui` to add custom columns, mass actions, order view buttons, or menu entries in Commerce Admin
 
 ## References
 

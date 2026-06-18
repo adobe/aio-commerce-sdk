@@ -15,6 +15,8 @@ commerce-app-init
   └─→ commerce-app-eventing
   └─→ commerce-app-webhooks
   └─→ commerce-app-business-config
+  └─→ commerce-app-admin-ui
+  └─→ commerce-app-storage
 ```
 
 A developer creating an app that needs events and webhooks would run `commerce-app-init` first, then chain to `commerce-app-eventing` and `commerce-app-webhooks` in any order.
