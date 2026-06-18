@@ -28,6 +28,7 @@ A developer creating an app that needs events and webhooks would run `commerce-a
 | [commerce-app-webhooks](./skills/commerce-app-webhooks/)               | Manage webhook interception                | Available |
 | [commerce-app-business-config](./skills/commerce-app-business-config/) | Manage custom business configuration       | Available |
 | [commerce-app-storage](./skills/commerce-app-storage/)                 | Integrate App Builder Database Storage     | Available |
+| [commerce-app-admin-ui](./skills/commerce-app-admin-ui/)               | Extend the Commerce Admin UI               | Available |
 
 ## Installation
 
@@ -52,4 +53,5 @@ npx skills add adobe/aio-commerce-sdk --skill commerce-app-eventing
 npx skills add adobe/aio-commerce-sdk --skill commerce-app-webhooks
 npx skills add adobe/aio-commerce-sdk --skill commerce-app-business-config
 npx skills add adobe/aio-commerce-sdk --skill commerce-app-storage
+npx skills add adobe/aio-commerce-sdk --skill commerce-app-admin-ui
 ```
