@@ -57,3 +57,47 @@ npx skills add adobe/aio-commerce-sdk --skill commerce-app-business-config
 npx skills add adobe/aio-commerce-sdk --skill commerce-app-storage
 npx skills add adobe/aio-commerce-sdk --skill commerce-app-admin-ui
 ```
+
+## Contributing
+
+### Local testing
+
+Install skills directly from a local checkout into a target project:
+
+```sh
+cd ~/my-commerce-app
+
+# Install all skills
+npx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-management --yes
+
+# Install a specific skill only
+npx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-management --yes --skill commerce-app-init
+```
+
+### Quality review
+
+Before shipping a skill, run the tessl reviewer to catch structural and quality issues:
+
+```sh
+npx tessl skill review skills/<skill-name>
+```
+
+A passing skill has 0 errors and 0 warnings. The judge score should be ≥ 90%.
+
+### Evaluations
+
+Implemented skills ship with evals in `skills/<skill-name>/evals/evals.json`, following the [agentskills.io eval format](https://agentskills.io/skill-creation/evaluating-skills.md).
+
+Install the `skill-creator` skill to automate the eval loop:
+
+```sh
+npx skills add anthropics/skills --skill skill-creator
+```
+
+Then ask your agent:
+
+```
+Run evals for the commerce-app-init skill
+```
+
+The agent runs each prompt with and without the skill, grades assertions, and writes results to `skills/<skill-name>-workspace/`. Eval results are excluded from version control — only `evals/evals.json` is committed.
