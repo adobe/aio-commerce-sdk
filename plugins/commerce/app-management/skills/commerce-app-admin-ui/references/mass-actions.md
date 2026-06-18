@@ -40,20 +40,21 @@ adminUi: {
 
 ### Constraints
 
-| Field                | Applies to | Constraint                                                                 |
-| -------------------- | ---------- | -------------------------------------------------------------------------- |
-| `type`               | both       | `"worker"` or `"view"` (strict — keys from the other variant are rejected) |
-| `id`                 | both       | Required, non-empty                                                        |
-| `label`              | both       | Required, non-empty                                                        |
-| `description`        | both       | Optional, non-empty                                                        |
-| `title`              | both       | Optional page title                                                        |
-| `confirm`            | both       | Optional `{ title?, message? }`                                            |
-| `notifications`      | both       | Optional `{ success?, error? }`                                            |
-| `selectionLimit`     | both       | Optional positive number — max selectable records                          |
-| `runtimeAction`      | worker     | Required; `<package>/<action>`                                             |
-| `timeout`            | worker     | Optional positive number (seconds)                                         |
-| `path`               | view       | Required; route into `web-src`                                             |
-| `sandboxPermissions` | view       | Optional; `allow-downloads` / `allow-modals` / `allow-popups`              |
+| Field                | Applies to | Constraint                                                                                                                          |
+| -------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `type`               | both       | `"worker"` or `"view"` (strict — keys from the other variant are rejected)                                                          |
+| `id`                 | both       | Required, non-empty                                                                                                                 |
+| `label`              | both       | Required, non-empty                                                                                                                 |
+| `description`        | both       | Optional, non-empty                                                                                                                 |
+| `title`              | both       | Optional page title                                                                                                                 |
+| `confirm`            | both       | Optional `{ title?, message? }`                                                                                                     |
+| `notifications`      | both       | Optional `{ success?, error? }`                                                                                                     |
+| `selectionLimit`     | both       | Optional positive number — max selectable records                                                                                   |
+| `aclProtected`       | both       | Optional boolean; when `true`, Commerce generates a per-app nested ACL resource for the action so admins can grant/deny it per role |
+| `runtimeAction`      | worker     | Required; `<package>/<action>`                                                                                                      |
+| `timeout`            | worker     | Optional positive number (seconds)                                                                                                  |
+| `path`               | view       | Required; route into `web-src`                                                                                                      |
+| `sandboxPermissions` | view       | Optional; `allow-downloads` / `allow-modals` / `allow-popups`                                                                       |
 
 Available on `order`, `product`, and `customer`.
 

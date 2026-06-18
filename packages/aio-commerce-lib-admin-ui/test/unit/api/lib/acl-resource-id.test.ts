@@ -151,8 +151,17 @@ describe("getMassActionAclResourceId", () => {
     );
   });
 
+  it("trims and sanitizes both metadataId and actionId", () => {
+    expect(
+      getMassActionAclResourceId("  My-App  ", "order", "  Bulk Approve  "),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_my_app_order_massactions_bulk_approve",
+    );
+  });
+
   it("returns empty string when metadataId is blank", () => {
     expect(getMassActionAclResourceId("", "order", "bulk-approve")).toBe("");
+    expect(getMassActionAclResourceId("   ", "order", "bulk-approve")).toBe("");
   });
 });
 
@@ -178,5 +187,6 @@ describe("getOrderViewButtonAclResourceId", () => {
 
   it("returns empty string when metadataId is blank", () => {
     expect(getOrderViewButtonAclResourceId("", "approve-order")).toBe("");
+    expect(getOrderViewButtonAclResourceId("   ", "approve-order")).toBe("");
   });
 });
