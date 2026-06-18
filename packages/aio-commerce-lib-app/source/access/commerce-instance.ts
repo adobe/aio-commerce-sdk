@@ -12,15 +12,15 @@
 
 import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 
-import { AppNotAssociatedError } from "../errors/app-not-associated-error";
-import { getAssociationData } from "../management/association/association-repository";
+import { AppNotAssociatedError } from "#errors/app-not-associated-error";
+import { getAssociationData } from "#management/association/association-repository";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type {
   ImsAuthParams,
   ImsAuthProvider,
 } from "@adobe/aio-commerce-lib-auth";
-import type { AssociatedCommerceInstance } from "../management/association/types";
+import type { AssociatedCommerceInstance } from "#management/association/types";
 
 /**
  * Returns the Commerce instance this app is currently associated with.
@@ -54,11 +54,7 @@ export async function getCommerceInstance(): Promise<AssociatedCommerceInstance>
  * this app is currently associated with.
  *
  * The base URL and flavor come from the stored association data
- * ({@link getCommerceInstance}); only the auth credentials are supplied by the
- * caller, already resolved. App Management requires IMS, so this accepts only
- * IMS auth: resolve params with `resolveImsAuthParams`, or pass an
- * `ImsAuthProvider` built with `getImsAuthProvider` / `forwardImsAuthProvider`
- * from `@adobe/aio-commerce-lib-auth`.
+ * ({@link getCommerceInstance}); the caller supplies the resolved IMS auth.
  *
  * @param auth - Resolved IMS auth params or an IMS auth provider.
  * @param fetchOptions - Optional global fetch options forwarded to the
