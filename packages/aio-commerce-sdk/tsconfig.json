@@ -1,3 +1,6 @@
 {
-  "extends": "@aio-commerce-sdk/config-typescript/tsconfig.base.json"
+  "extends": "@aio-commerce-sdk/config-typescript/tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM", "DOM.Iterable"]
+  }
 }

@@ -1,6 +1,6 @@
 # `@adobe/aio-commerce-lib-admin-ui`
 
-This package provides utilities for interacting with the Adobe Commerce Admin UI SDK API.
+This package provides utilities for interacting with the Adobe Commerce Admin UI SDK API, the extension points (grid columns, mass actions, menu, order view buttons), and browser-side helpers for Admin UI iframe extensions.
 
 ## Installation
 
