@@ -113,18 +113,15 @@ describe("system-config", () => {
     });
 
     test("forwards a custom cache TTL to state", async () => {
-      const { MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS, setSystemConfigByKey } =
-        await import("#modules/configuration/system-config");
-
-      const data = { baseUrl: "https://example.com", env: "paas" };
-      await setSystemConfigByKey(
-        KEY,
-        data,
-        MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS,
+      const { setSystemConfigByKey } = await import(
+        "#modules/configuration/system-config"
       );
 
+      const data = { baseUrl: "https://example.com", env: "paas" };
+      await setSystemConfigByKey(KEY, data, 31_536_000);
+
       expect(mockState.put).toHaveBeenCalledWith(KEY, wrapForCache(data), {
-        ttl: MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS,
+        ttl: 31_536_000,
       });
     });
   });
@@ -165,17 +162,15 @@ describe("system-config", () => {
       const data = { baseUrl: "https://example.com", env: "paas" };
       await mockFiles.write(FILE_PATH, JSON.stringify(data));
 
-      const { MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS, getSystemConfigByKey } =
-        await import("#modules/configuration/system-config");
-
-      const result = await getSystemConfigByKey(
-        KEY,
-        MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS,
+      const { getSystemConfigByKey } = await import(
+        "#modules/configuration/system-config"
       );
+
+      const result = await getSystemConfigByKey(KEY, 31_536_000);
 
       expect(result).toEqual(data);
       expect(mockState.put).toHaveBeenCalledWith(KEY, wrapForCache(data), {
-        ttl: MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS,
+        ttl: 31_536_000,
       });
     });
 

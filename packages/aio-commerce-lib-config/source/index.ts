@@ -31,7 +31,6 @@ export {
 } from "./config-utils";
 export {
   getSystemConfigByKey,
-  MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS,
   setSystemConfigByKey,
 } from "./modules/configuration/system-config";
 export {

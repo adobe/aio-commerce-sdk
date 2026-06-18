@@ -12,9 +12,9 @@
 
 import {
   getSystemConfigByKey,
-  MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS,
   setSystemConfigByKey,
 } from "@adobe/aio-commerce-lib-config";
+import * as libState from "@adobe/aio-lib-state";
 
 import type { AssociatedCommerceInstance } from "./types";
 
@@ -24,7 +24,11 @@ const ASSOCIATION_KEY = "system.association";
 // Association data changes rarely and `aio-lib-files` is the source of truth,
 // so cache it for the maximum TTL to keep reads served from `aio-lib-state`
 // rather than falling back to files once the default daily cache expires.
-const ASSOCIATION_CACHE_TTL_SECONDS = MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS;
+// `aio-lib-state` exports `MAX_TTL` at runtime but omits it from its type
+// definitions, so it is read through a cast.
+const ASSOCIATION_CACHE_TTL_SECONDS = (
+  libState as unknown as { MAX_TTL: number }
+).MAX_TTL;
 
 /**
  * Stores the Commerce instance the app is associated with.

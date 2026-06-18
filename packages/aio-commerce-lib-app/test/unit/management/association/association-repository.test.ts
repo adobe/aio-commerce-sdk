@@ -10,8 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS } from "@adobe/aio-commerce-lib-config";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+
+// `aio-lib-state`'s MAX_TTL (one year); the repository caches association data
+// at this value.
+const MAX_TTL = 31_536_000;
 
 // Mock the underlying storage layer (`aio-lib-state` / `aio-lib-files`) rather
 // than the `system-config` helpers the repository calls, so the real config
@@ -55,6 +58,7 @@ const { state, files, mockState, mockFiles } = vi.hoisted(() => {
 
 vi.mock("@adobe/aio-lib-state", () => ({
   init: vi.fn(async () => mockState),
+  MAX_TTL: 31_536_000,
 }));
 
 vi.mock("@adobe/aio-lib-files", () => ({
@@ -113,7 +117,9 @@ describe("association-repository", () => {
     expect(mockState.put).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
-      { ttl: MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS },
+      {
+        ttl: MAX_TTL,
+      },
     );
   });
 
@@ -130,7 +136,7 @@ describe("association-repository", () => {
     expect(mockState.put).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
-      { ttl: MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS },
+      { ttl: MAX_TTL },
     );
   });
 });
