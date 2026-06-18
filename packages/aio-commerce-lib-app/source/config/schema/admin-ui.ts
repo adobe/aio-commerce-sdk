@@ -72,6 +72,7 @@ const GridColumnSchema = v.object({
   label: nonEmptyStringValueSchema("column label"),
   type: ColumnTypeSchema,
   align: ColumnAlignSchema,
+  aclProtected: v.optional(v.boolean()),
 });
 
 const GridColumnsSchema = v.object({
@@ -95,6 +96,7 @@ const massActionCommonEntries = {
   confirm: v.optional(ConfirmSchema),
   notifications: v.optional(NotificationsSchema),
   selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
+  aclProtected: v.optional(v.boolean()),
 };
 
 /** `type: "view"` mass action — renders an iframe at `path`. */
@@ -141,6 +143,7 @@ const OrderViewButtonSchema = v.variant("type", [
     confirm: v.optional(ConfirmSchema),
     sandboxPermissions: v.optional(SandboxPermissionsSchema),
     notifications: v.optional(NotificationsSchema),
+    aclProtected: v.optional(v.boolean()),
   }),
   v.strictObject({
     type: v.literal("worker"),
@@ -155,6 +158,7 @@ const OrderViewButtonSchema = v.variant("type", [
     confirm: v.optional(ConfirmSchema),
     timeout: v.optional(positiveNumberValueSchema("timeout")),
     notifications: v.optional(NotificationsSchema),
+    aclProtected: v.optional(v.boolean()),
   }),
 ]);
 

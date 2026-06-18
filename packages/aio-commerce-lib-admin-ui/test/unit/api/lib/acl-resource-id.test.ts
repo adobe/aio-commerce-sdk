@@ -14,7 +14,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   getAclResourceId,
+  getGridColumnAclResourceId,
+  getMassActionAclResourceId,
   getMenuAclResourceId,
+  getOrderViewButtonAclResourceId,
 } from "#api/lib/acl-resource-id";
 
 describe("getAclResourceId", () => {
@@ -79,5 +82,101 @@ describe("getMenuAclResourceId", () => {
   it("returns empty string when metadataId is blank", () => {
     expect(getMenuAclResourceId("", "approval_dashboard")).toBe("");
     expect(getMenuAclResourceId("   ", "approval_dashboard")).toBe("");
+  });
+});
+
+describe("getGridColumnAclResourceId", () => {
+  it("produces the order grid-column leaf id (cross-repo contract fixture)", () => {
+    expect(
+      getGridColumnAclResourceId(
+        "approval-dashboard-app",
+        "order",
+        "order_status",
+      ),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_gridcolumns_order_status",
+    );
+  });
+
+  it("supports product and customer entities", () => {
+    expect(
+      getGridColumnAclResourceId("acme-promotions", "product", "approval-req"),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_product_gridcolumns_approval_req",
+    );
+    expect(
+      getGridColumnAclResourceId("acme-promotions", "customer", "Tier"),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_customer_gridcolumns_tier",
+    );
+  });
+
+  it("trims and sanitizes both metadataId and columnId", () => {
+    expect(
+      getGridColumnAclResourceId("  My-App  ", "order", "  My-Col  "),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_my_app_order_gridcolumns_my_col",
+    );
+  });
+
+  it("returns empty string when metadataId is blank", () => {
+    expect(getGridColumnAclResourceId("", "order", "order_status")).toBe("");
+    expect(getGridColumnAclResourceId("   ", "order", "order_status")).toBe("");
+  });
+});
+
+describe("getMassActionAclResourceId", () => {
+  it("produces the order mass-action leaf id (cross-repo contract fixture)", () => {
+    expect(
+      getMassActionAclResourceId(
+        "approval-dashboard-app",
+        "order",
+        "bulk-approve",
+      ),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_massactions_bulk_approve",
+    );
+  });
+
+  it("supports product and customer entities", () => {
+    expect(
+      getMassActionAclResourceId("acme-promotions", "product", "flag-review"),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_product_massactions_flag_review",
+    );
+    expect(
+      getMassActionAclResourceId("acme-promotions", "customer", "assign-tier"),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_customer_massactions_assign_tier",
+    );
+  });
+
+  it("returns empty string when metadataId is blank", () => {
+    expect(getMassActionAclResourceId("", "order", "bulk-approve")).toBe("");
+  });
+});
+
+describe("getOrderViewButtonAclResourceId", () => {
+  it("produces the order view-button leaf id (cross-repo contract fixture)", () => {
+    expect(
+      getOrderViewButtonAclResourceId(
+        "approval-dashboard-app",
+        "approve-order",
+      ),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_viewbuttons_approve_order",
+    );
+  });
+
+  it("trims and sanitizes both segments", () => {
+    expect(
+      getOrderViewButtonAclResourceId("  My-App  ", "  Approve Order  "),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_my_app_order_viewbuttons_approve_order",
+    );
+  });
+
+  it("returns empty string when metadataId is blank", () => {
+    expect(getOrderViewButtonAclResourceId("", "approve-order")).toBe("");
   });
 });

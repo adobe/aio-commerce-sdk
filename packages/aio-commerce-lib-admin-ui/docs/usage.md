@@ -375,3 +375,30 @@ const allowed = await permissionClient.check(
   getMenuAclResourceId("approval-dashboard-app", "approval_dashboard"),
 );
 ```
+
+#### Resource ids for grid columns, view buttons, and mass actions
+
+The same hierarchical scheme extends to the other Admin UI components. Each helper returns the **leaf** id for a single protected item, nested under its entity (`order` / `product` / `customer`) and item-type group in the Commerce ACL tree:
+
+- `getGridColumnAclResourceId(metadataId, entity, columnId)` — a grid column, where `columnId` is its `adminUi.<entity>.gridColumns.columns[].id`.
+- `getMassActionAclResourceId(metadataId, entity, actionId)` — a mass action, where `actionId` is its `adminUi.<entity>.massActions[].id`.
+- `getOrderViewButtonAclResourceId(metadataId, buttonId)` — an order view button (view buttons exist only on the order entity), where `buttonId` is its `adminUi.order.viewButtons[].id`.
+
+```typescript
+import {
+  getGridColumnAclResourceId,
+  getMassActionAclResourceId,
+  getOrderViewButtonAclResourceId,
+} from "@adobe/aio-commerce-lib-admin-ui/api";
+
+getGridColumnAclResourceId("approval-dashboard-app", "order", "order_status");
+// → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_gridcolumns_order_status"
+
+getMassActionAclResourceId("approval-dashboard-app", "order", "bulk-approve");
+// → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_massactions_bulk_approve"
+
+getOrderViewButtonAclResourceId("approval-dashboard-app", "approve-order");
+// → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_viewbuttons_approve_order"
+```
+
+Like the menu helper, each segment is sanitized independently and a blank `metadataId` yields an empty string. Pass any of these ids to `check()` or `require()`.
