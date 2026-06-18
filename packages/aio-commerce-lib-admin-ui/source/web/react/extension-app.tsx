@@ -50,13 +50,13 @@ export function ExtensionApp(props: Readonly<ExtensionAppProps>) {
 
   return (
     <ExtensionErrorBoundary>
-      <Provider background="base" router={spectrumRouter}>
-        <SharedContextProvider
-          extensionId={extensionId}
-          shellConfiguration={shellConfiguration}>
+      <SharedContextProvider
+        extensionId={extensionId}
+        shellConfiguration={shellConfiguration}>
+        <Provider background="base" router={spectrumRouter}>
           <Outlet />
-        </SharedContextProvider>
-      </Provider>
+        </Provider>
+      </SharedContextProvider>
     </ExtensionErrorBoundary>
   );
 }

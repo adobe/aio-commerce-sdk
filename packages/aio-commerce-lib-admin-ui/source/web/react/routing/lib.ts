@@ -11,7 +11,7 @@
  */
 
 import {
-  createMemoryHistory,
+  createHashHistory,
   createRootRoute,
   createRoute,
   createRouter,
@@ -74,7 +74,7 @@ export function createExtensionRouter(
   );
 
   return createRouter({
-    history: createMemoryHistory(),
+    history: createHashHistory(),
     routeTree: rootRoute.addChildren(routes),
   });
 }

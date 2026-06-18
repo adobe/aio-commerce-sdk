@@ -13,6 +13,8 @@
 import { useRouter } from "@tanstack/react-router";
 import { useMemo } from "react";
 
+import { getRouteTo } from "#web/react/routing/lib";
+
 import type { NavigateOptions, ToOptions } from "@tanstack/react-router";
 
 /**
@@ -28,7 +30,7 @@ export function useSpectrumRouter() {
         options?: Omit<NavigateOptions, keyof ToOptions>,
       ) => {
         if (typeof href === "string") {
-          return;
+          return router.navigate({ to: getRouteTo(href), ...options });
         }
 
         return router.navigate({ ...href, ...options });
