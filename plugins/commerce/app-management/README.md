@@ -47,15 +47,15 @@ A developer creating an app that needs events and webhooks would run `commerce-a
 tessl install github:adobe/aio-commerce-sdk --skills commerce-app-management
 ```
 
-**npx skills:**
+**pnpx skills:**
 
 ```sh
-npx skills add adobe/aio-commerce-sdk --skill commerce-app-init
-npx skills add adobe/aio-commerce-sdk --skill commerce-app-eventing
-npx skills add adobe/aio-commerce-sdk --skill commerce-app-webhooks
-npx skills add adobe/aio-commerce-sdk --skill commerce-app-business-config
-npx skills add adobe/aio-commerce-sdk --skill commerce-app-storage
-npx skills add adobe/aio-commerce-sdk --skill commerce-app-admin-ui
+pnpx skills add adobe/aio-commerce-sdk --skill commerce-app-init
+pnpx skills add adobe/aio-commerce-sdk --skill commerce-app-eventing
+pnpx skills add adobe/aio-commerce-sdk --skill commerce-app-webhooks
+pnpx skills add adobe/aio-commerce-sdk --skill commerce-app-business-config
+pnpx skills add adobe/aio-commerce-sdk --skill commerce-app-storage
+pnpx skills add adobe/aio-commerce-sdk --skill commerce-app-admin-ui
 ```
 
 ## Contributing
@@ -68,10 +68,10 @@ Install skills directly from a local checkout into a target project:
 cd ~/my-commerce-app
 
 # Install all skills
-npx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-management --yes
+pnpx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-management --yes
 
 # Install a specific skill only
-npx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-management --yes --skill commerce-app-init
+pnpx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-management --yes --skill commerce-app-init
 ```
 
 ### Quality review
@@ -91,7 +91,7 @@ Implemented skills ship with evals in `skills/<skill-name>/evals/evals.json`, fo
 Install the `skill-creator` skill to automate the eval loop:
 
 ```sh
-npx skills add anthropics/skills --skill skill-creator
+pnpx skills add anthropics/skills --skill skill-creator
 ```
 
 Then ask your agent:
