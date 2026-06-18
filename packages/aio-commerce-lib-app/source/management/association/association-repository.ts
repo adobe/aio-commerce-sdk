@@ -12,6 +12,7 @@
 
 import {
   getSystemConfigByKey,
+  MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS,
   setSystemConfigByKey,
 } from "@adobe/aio-commerce-lib-config";
 
@@ -19,6 +20,11 @@ import type { AssociatedCommerceInstance } from "./types";
 
 /** Reserved key under which association data is stored. */
 const ASSOCIATION_KEY = "system.association";
+
+// Association data changes rarely and `aio-lib-files` is the source of truth,
+// so cache it for the maximum TTL to keep reads served from `aio-lib-state`
+// rather than falling back to files once the default daily cache expires.
+const ASSOCIATION_CACHE_TTL_SECONDS = MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS;
 
 /**
  * Stores the Commerce instance the app is associated with.
@@ -31,7 +37,11 @@ const ASSOCIATION_KEY = "system.association";
 export async function setAssociationData(
   data: AssociatedCommerceInstance,
 ): Promise<void> {
-  await setSystemConfigByKey(ASSOCIATION_KEY, data);
+  await setSystemConfigByKey(
+    ASSOCIATION_KEY,
+    data,
+    ASSOCIATION_CACHE_TTL_SECONDS,
+  );
 }
 
 /**
@@ -40,7 +50,10 @@ export async function setAssociationData(
  * @returns The stored association data, or `null` if the app is not associated.
  */
 export async function getAssociationData(): Promise<AssociatedCommerceInstance | null> {
-  return getSystemConfigByKey<AssociatedCommerceInstance>(ASSOCIATION_KEY);
+  return getSystemConfigByKey<AssociatedCommerceInstance>(
+    ASSOCIATION_KEY,
+    ASSOCIATION_CACHE_TTL_SECONDS,
+  );
 }
 
 /**

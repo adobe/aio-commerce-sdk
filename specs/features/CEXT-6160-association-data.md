@@ -94,6 +94,15 @@ truth, no TTL) and `lib-state` as a performance cache (with TTL). When a cached 
 expires, `lib-config` falls back to `lib-files` and re-caches automatically — so the data
 is not lost when the cache entry expires.
 
+The cache TTL defaults to 24 hours (`SYSTEM_CONFIG_CACHE_TTL_SECONDS`), and
+`getSystemConfigByKey` / `setSystemConfigByKey` accept an optional `ttlSeconds` argument to
+override it. Association data is written and read with the maximum TTL `aio-lib-state`
+allows — one year (`MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS` = 31_536_000s, mirroring
+`aio-lib-state`'s `MAX_TTL`, which it exports at runtime but does not declare in its types).
+Because association data changes only on associate/unassociate, the long TTL keeps reads
+served from the cache instead of falling back to `lib-files`, while `lib-files` remains the
+no-TTL source of truth so correctness never depends on the cache entry surviving.
+
 Generic `getSystemConfigByKey` / `setSystemConfigByKey` primitives are added to
 `aio-commerce-lib-config` for any SDK-managed system data. Rather than reimplementing the
 two-layer cache, they reuse `configuration-repository`'s `loadConfig` / `persistConfig` /
@@ -125,8 +134,8 @@ operation:
 
 ```ts
 // aio-commerce-lib-config (generic primitives, exported from the package root)
-setSystemConfigByKey(key: string, value: unknown | null): Promise<void>
-getSystemConfigByKey<T>(key: string): Promise<T | null>
+setSystemConfigByKey(key: string, value: unknown | null, ttlSeconds?: number): Promise<void>
+getSystemConfigByKey<T>(key: string, ttlSeconds?: number): Promise<T | null>
 ```
 
 **`aio-commerce-lib-app`** exposes typed, domain-aware wrappers on top of those primitives —
@@ -135,6 +144,7 @@ runtime actions get a strongly-typed API:
 
 ```ts
 // aio-commerce-lib-app (association module)
+// set/get pass MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS so association data stays cached for a year
 setAssociationData(data: AssociatedCommerceInstance): Promise<void>
 getAssociationData(): Promise<AssociatedCommerceInstance | null>
 clearAssociationData(): Promise<void> // calls setSystemConfigByKey("system.association", null)
