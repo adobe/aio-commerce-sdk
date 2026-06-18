@@ -18,3 +18,8 @@
 // biome-ignore lint/performance/noBarrelFile: export as part of the Public API
 export { CommerceSdkErrorBase } from "./base-error";
 export { CommerceSdkValidationError } from "./validation-error";
+
+export type {
+  CommerceSdkErrorBaseOptions,
+  CommerceSdkErrorOptions,
+} from "./base-error";
