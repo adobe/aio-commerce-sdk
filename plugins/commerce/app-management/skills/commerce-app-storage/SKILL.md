@@ -14,7 +14,7 @@ compatibility: >
 metadata:
   author: adobe
   sdk-package: "@adobe/aio-commerce-lib-app"
-  version: "0.0.1"
+  version: "0.0.2"
 ---
 
 # Add Database Storage to a Commerce App
@@ -291,6 +291,7 @@ A build failure points directly to the offending config field. To exercise the a
 
 - **Wire the action to an event** — invoke `commerce-app-eventing` and reference this action in an event's `runtimeActions`.
 - **Wire the action to a webhook** — invoke `commerce-app-webhooks` and reference this action via `runtimeAction`.
+- **Trigger the action from Admin UI** — invoke `commerce-app-admin-ui` to add a mass action, order view button, or grid column that invokes this runtime action.
 
 ## References
 
