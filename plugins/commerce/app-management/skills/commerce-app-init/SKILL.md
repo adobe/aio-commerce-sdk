@@ -7,7 +7,8 @@ description: >
   app project. After scaffolding, chains to appbuilder-project-init for Developer
   Console setup (project, workspace, API subscriptions) when the user wants to deploy.
   Does not configure extensibility domains — use commerce-app-eventing,
-  commerce-app-webhooks, or commerce-app-business-config for that.
+  commerce-app-webhooks, commerce-app-business-config, commerce-app-admin-ui,
+  or commerce-app-storage for that.
 license: Apache-2.0
 compatibility: >
   Requires Node.js 22+, aio CLI, and @adobe/aio-commerce-lib-app.
@@ -17,7 +18,7 @@ compatibility: >
 metadata:
   author: adobe
   sdk-package: "@adobe/aio-commerce-lib-app"
-  version: "0.0.1"
+  version: "0.0.2"
 ---
 
 # Initialize a new Commerce App
@@ -103,6 +104,8 @@ After `aio app build` passes:
    - `commerce-app-eventing` — manage Commerce and external event sources
    - `commerce-app-webhooks` — manage webhook interception
    - `commerce-app-business-config` — manage custom business configuration
+   - `commerce-app-admin-ui` — extend the Commerce Admin UI with custom columns, mass actions, order view buttons, or menu entries
+   - `commerce-app-storage` — back runtime actions with persistent, queryable DB storage
 
 ## References
 
