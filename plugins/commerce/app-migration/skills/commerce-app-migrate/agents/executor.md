@@ -627,17 +627,21 @@ preserving all existing entries. For example, if the file has:
       commerce/backend-ui/1:
         $include: "src/..."
 
-Add the new entries below the existing ones:
+Insert only the missing entries. If `src/commerce-backend-ui-2/` was generated (Step 5), replace `commerce/backend-ui/1` with `commerce/backend-ui/2` at the same time — do not keep both. For example, if the file has:
 
     extensions:
       commerce/backend-ui/1:
-        $include: "src/..."
+        $include: "src/commerce-backend-ui-1/ext.config.yaml"
+
+The result after migration is:
+
+    extensions:
+      commerce/backend-ui/2:
+        $include: "src/commerce-backend-ui-2/ext.config.yaml"
       commerce/extensibility/1:
         $include: "src/commerce-extensibility-1/ext.config.yaml"
 
-Do not duplicate entries that are already present.
-
-**V1 → V2 replacement:** If the existing `app.config.yaml` already contains a `commerce/backend-ui/1` entry AND `src/commerce-backend-ui-2/` was generated (Step 5), REPLACE the `commerce/backend-ui/1` entry with `commerce/backend-ui/2` rather than keeping both. Update its `$include` path to `"src/commerce-backend-ui-2/ext.config.yaml"`. Do not leave the old `commerce/backend-ui/1` entry in the file.
+Do not duplicate entries that are already present. Do not leave the old `commerce/backend-ui/1` entry in the file.
 
 **`pre-app-build` hook cleanup:** If `app.config.yaml` contains a `pre-app-build` hook that references `commerce-backend-ui-1` or the v1 registration action path (e.g. a script under `src/commerce-backend-ui-1/`), remove that hook entry. The v1 registration action is no longer generated in v2 and the hook will fail the build if left in place.
 
