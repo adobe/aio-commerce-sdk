@@ -22,4 +22,4 @@ For most developers, install from `adobe/skills`. The commands in each plugin's 
 
 ## Contributing
 
-See [DEVELOPMENT.md](./DEVELOPMENT.md).
+See [AGENTS.md](./AGENTS.md) for authoring guidelines.

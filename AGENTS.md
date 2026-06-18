@@ -117,8 +117,6 @@ For source code comments, follow these rules:
 
 Agentic tooling lives under `plugins/`. Each subdirectory is a self-contained plugin with its own `.claude-plugin/plugin.json` manifest and installable content (skills, MCP configs, etc.).
 
-@plugins/commerce/README.md
-
 When making changes to the SDK that affect a plugin's domain (e.g. changes to config schemas, CLI flags, installation APIs), update the relevant plugin content in the same PR. Plugin content must stay in sync with the SDK it describes — stale plugin content is treated the same as stale documentation.
 
 ### Breaking changes
