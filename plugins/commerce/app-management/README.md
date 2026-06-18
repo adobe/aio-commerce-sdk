@@ -79,7 +79,7 @@ pnpx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-management --yes 
 Before shipping a skill, run the tessl reviewer to catch structural and quality issues:
 
 ```sh
-npx tessl skill review skills/<skill-name>
+pnpx tessl skill review skills/<skill-name>
 ```
 
 A passing skill has 0 errors and 0 warnings. The judge score should be ≥ 90%.
