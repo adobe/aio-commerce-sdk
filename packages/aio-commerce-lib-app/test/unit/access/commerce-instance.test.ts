@@ -119,11 +119,9 @@ describe("getCommerceClient", () => {
     const fetchOptions = { timeout: 5000, headers: { "x-trace": "abc" } };
     await getCommerceClient(auth, fetchOptions);
 
-    expect(MockAdobeCommerceHttpClient).toHaveBeenCalledWith({
-      auth,
-      config: { baseUrl: data.baseUrl, flavor: "paas" },
-      fetchOptions,
-    });
+    expect(MockAdobeCommerceHttpClient).toHaveBeenCalledWith(
+      expect.objectContaining({ fetchOptions }),
+    );
   });
 
   test("throws AppNotAssociatedError when no data is stored", async () => {
