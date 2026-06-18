@@ -119,6 +119,8 @@ Agentic tooling lives under `plugins/`. Each subdirectory is a self-contained pl
 
 @plugins/commerce/README.md
 
+@plugins/commerce/DEVELOPMENT.md
+
 When making changes to the SDK that affect a plugin's domain (e.g. changes to config schemas, CLI flags, installation APIs), update the relevant plugin content in the same PR. Plugin content must stay in sync with the SDK it describes — stale plugin content is treated the same as stale documentation.
 
 ### Breaking changes
