@@ -18,11 +18,17 @@ import {
 
 import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 import type { CommerceWebhook } from "@adobe/aio-commerce-lib-webhooks/api";
-import type { DiffResult, UpstreamOutputs } from "@aio-commerce-sdk/iacly";
+import type {
+  DiffResult,
+  Resource,
+  UpstreamOutputs,
+} from "@aio-commerce-sdk/iacly";
 import type { LibIaclyConfig } from "../index";
 import type { WebhookConfig } from "./types";
 
-export class WebhookResource {
+export class WebhookResource
+  implements Resource<LibIaclyConfig, WebhookConfig, CommerceWebhook>
+{
   public readonly kind = "webhooks/webhook";
   public readonly dependsOn: readonly string[] = [];
 
