@@ -19,16 +19,14 @@ import type { ReleaseNotes } from "./schema.ts";
  */
 export function renderMarkdown(notes: ReleaseNotes): string {
   const sections: string[] = [];
-
-  sections.push(`## ${notes.headline}`);
+  sections.push(`${notes.headline}`);
 
   if (notes.highlights.length > 0) {
     sections.push("## Highlights");
     for (const h of notes.highlights) {
-      const prLinksText =
-        h.prLinks.length > 0
-          ? ` (${h.prLinks.map((url) => `[PR](${url})`).join(", ")})`
-          : "";
+      const prLinks = h.prLinks.map((url) => `[PR](${url})`).join(", ");
+      const prLinksText = `(${prLinks})`;
+
       sections.push(
         `### ${h.title}${prLinksText}\n\n${h.whatChanged}\n\n**Why it matters:** ${h.whyItMatters}\n\n**Packages:** ${h.packages.join(", ")}`,
       );
@@ -55,8 +53,10 @@ export function renderMarkdown(notes: ReleaseNotes): string {
       } else {
         bumpLabel = "Patch";
       }
+
+      const entries = pkg.entries.map((e) => `- ${e}`).join("\n");
       sections.push(
-        `### \`${pkg.name}@${pkg.version}\` (${bumpLabel})\n\n${pkg.entries.map((e) => `- ${e}`).join("\n")}`,
+        `### \`${pkg.name}@${pkg.version}\` (${bumpLabel})\n\n${entries}`,
       );
     }
   }
