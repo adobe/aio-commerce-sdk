@@ -10,16 +10,17 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the package API entrypoint. */
+import { WebhookResource } from "./resource";
 
-import type { WebhookConfig } from "./webhooks/types";
+import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
+import type { Provider } from "@aio-commerce-sdk/iacly";
+import type { LibIaclyConfig } from "../index";
 
-export { WebhooksProvider } from "./webhooks/provider";
+export class WebhooksProvider implements Provider<LibIaclyConfig> {
+  public readonly name = "webhooks";
+  public readonly resources: readonly [WebhookResource];
 
-export type { WebhookConfig } from "./webhooks/types";
-
-export type LibIaclyConfig = {
-  webhooks?: readonly WebhookConfig[];
-  // ioEvents and commerceEvents added in later tasks
-  adminUi?: unknown; // placeholder; narrowed in Task 7
-};
+  public constructor(client: AdobeCommerceHttpClient) {
+    this.resources = [new WebhookResource(client)];
+  }
+}

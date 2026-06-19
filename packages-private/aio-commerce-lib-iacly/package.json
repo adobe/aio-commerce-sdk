@@ -33,6 +33,7 @@
   "dependencies": {
     "@aio-commerce-sdk/iacly": "workspace:*",
     "@adobe/aio-commerce-lib-admin-ui": "workspace:*",
+    "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-events": "workspace:*",
     "@adobe/aio-commerce-lib-webhooks": "workspace:*"
   },

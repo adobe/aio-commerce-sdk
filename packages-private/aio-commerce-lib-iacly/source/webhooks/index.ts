@@ -10,16 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the package API entrypoint. */
+/** biome-ignore-all lint/performance/noBarrelFile: This is the webhooks module entrypoint. */
 
-import type { WebhookConfig } from "./webhooks/types";
+export { WebhooksProvider } from "./provider";
 
-export { WebhooksProvider } from "./webhooks/provider";
-
-export type { WebhookConfig } from "./webhooks/types";
-
-export type LibIaclyConfig = {
-  webhooks?: readonly WebhookConfig[];
-  // ioEvents and commerceEvents added in later tasks
-  adminUi?: unknown; // placeholder; narrowed in Task 7
-};
+export type { WebhookConfig } from "./types";
