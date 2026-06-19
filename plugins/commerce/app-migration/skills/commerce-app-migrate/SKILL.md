@@ -77,7 +77,7 @@ The Analyzer reads the current directory and returns a `ProjectSnapshot` JSON ob
 
     Re-running migration would overwrite your existing configuration.
     If you want to re-generate specific sections, please specify which
-    section to update: metadata / eventing / installation / adminUiSdk / businessConfig
+    section to update: metadata / eventing / installation / adminUi / businessConfig
 
 Then apply any applicable Cross-cutting Warnings (see subsection below).
 
@@ -132,9 +132,9 @@ Then ask:
 **Handle unknown starterKitType:**
 If `starterKitType === "unknown"`, check `extensionPointsInUse`:
 
-- If `"commerce/backend-ui/1"` is present → this is an **Admin UI SDK extension**, not a
-  Starter Kit. Proceed with `starterKitType = "unknown"` — the domain agents will handle it.
-  Print a note: "Detected an Admin UI SDK extension project. Proceeding with adminUiSdk migration."
+- If `"commerce/backend-ui/1"` is present → this is an **Admin UI SDK v1 extension**. Proceed
+  with `starterKitType = "unknown"` — the admin-ui-sdk domain agent will migrate it to v2.
+  Print a note: "Detected Admin UI SDK v1 (commerce/backend-ui/1). Migrating to v2 (commerce/backend-ui/2)."
 - If all confidence values are `"none"` AND `extensionPointsInUse` is empty:
   Output:
 
@@ -274,7 +274,7 @@ export default defineConfig({
   },
   // eventing: { ... }          ← from events DomainResult, if present
   // installation: { ... }      ← from webhooks DomainResult, if present
-  // adminUiSdk: { ... }        ← from admin-ui-sdk DomainResult, if present
+  // adminUi: { ... }           ← from admin-ui-sdk DomainResult (migrated from v1), if present
   // businessConfig: { ... }    ← from business-config DomainResult, if present
 });
 ```
@@ -332,7 +332,7 @@ Print the assembled TypeScript content to the terminal:
 
 **Handle rejection:**
 If the developer says no, ask: "Which section needs updating? (metadata / eventing /
-installation / adminUiSdk / businessConfig)"
+installation / adminUi / businessConfig)"
 
 Then ask the specific corrective question for that section, update the assembled
 config accordingly, re-print, and ask for confirmation again.

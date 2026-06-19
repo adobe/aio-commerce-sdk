@@ -12,7 +12,7 @@ compatibility: >
 metadata:
   author: adobe
   sdk-package: "@adobe/aio-commerce-lib-app"
-  version: "0.0.1"
+  version: "0.0.2"
 ---
 
 # Configure Commerce App Webhooks
@@ -199,6 +199,8 @@ After `aio app build` passes:
 
 - **Add merchant settings** — invoke `commerce-app-business-config` to expose configurable settings in Commerce Admin
 - **Add event subscriptions** — invoke `commerce-app-eventing` to subscribe to Commerce or external events
+- **Extend the Admin UI** — invoke `commerce-app-admin-ui` to add custom columns, mass actions, order view buttons, or menu entries in Commerce Admin
+- **Add persistent storage** — invoke `commerce-app-storage` to back webhook handlers with queryable DB storage
 
 ## References
 

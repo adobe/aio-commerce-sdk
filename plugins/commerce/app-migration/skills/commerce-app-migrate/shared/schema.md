@@ -186,14 +186,14 @@ Consumed by the **main orchestrator** to assemble the final `app.commerce.config
 
 ```typescript
 interface DomainResult {
-  domain: "events" | "webhooks" | "adminUiSdk" | "businessConfig";
+  domain: "events" | "webhooks" | "adminUi" | "businessConfig";
 
   // Partial app.commerce.config.* content for this domain.
   // Will be merged with other domain fragments by the orchestrator.
   // Keys match top-level app.commerce.config.* fields:
   //   events domain     → { eventing: { commerce: [...], external: [...] } }
   //   webhooks domain   → { installation: { customInstallationSteps: [...] } }
-  //   adminUiSdk domain → { adminUiSdk: { registration: { ... } } }
+  //   adminUi domain    → { adminUi: { menu?: {...}, order?: {...}, product?: {...}, customer?: {...} } }
   //   businessConfig    → { businessConfig: { schema: [...] } }
   configFragment: Record<string, unknown>;
 

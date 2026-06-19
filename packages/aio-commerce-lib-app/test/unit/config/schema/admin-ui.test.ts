@@ -137,6 +137,28 @@ describe("AdminUiSchema", () => {
       expect(result.success).toBe(true);
     });
 
+    test("menu aclProtected: true is accepted", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, aclProtected: true },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("menu aclProtected: false is accepted", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, aclProtected: false },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("menu aclProtected omitted is accepted (optional)", () => {
+      const { id, label, description } = configWithAdminUiMenu.adminUi.menu;
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { id, label, description },
+      });
+      expect(result.success).toBe(true);
+    });
+
     test("different extension points coexist", () => {
       const result = v.safeParse(
         AdminUiSchema,
@@ -568,6 +590,20 @@ describe("AdminUiSchema", () => {
     test("empty sandboxPermissions array is rejected", () => {
       const result = v.safeParse(AdminUiSchema, {
         menu: { ...configWithAdminUiMenu.adminUi.menu, sandboxPermissions: [] },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("menu aclProtected: 'yes' (non-boolean string) is rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, aclProtected: "yes" },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("menu aclProtected: 1 (number) is rejected", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: { ...configWithAdminUiMenu.adminUi.menu, aclProtected: 1 },
       });
       expect(result.success).toBe(false);
     });
