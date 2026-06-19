@@ -378,7 +378,7 @@ workspace. No runtime dependencies.
 ```
 source/
   provider.ts     — Resource, Provider, DiffResult, ProviderOutputs, UpstreamOutputs
-  plan.ts         — PlanAction, Plan
+  plan.ts         — PlanAction (with dependsOn DAG), Plan
   reconciler.ts   — Lock, ReconcileOptions, ReconcileResult, ReconcileEvent,
                     AppliedSnapshot, ProviderSnapshot, ResourceRecord
   index.ts        — re-exports all public types
@@ -462,16 +462,40 @@ export interface Provider<TConfig> {
 
 `PlanAction` extends `DiffResult`'s four variants with `delete` (engine-generated for resources
 present in the live system or snapshot that are absent from desired). Each action carries the
-resource kind and item key for serialization, logging, and progress reporting.
+resource kind, item key, and `dependsOn` — the specific action IDs (format:
+`"${resource}:${key}"`) that must complete before this action may start. The executor is a pure
+DAG runner: it reads no topo-sort metadata and knows nothing about resource kinds, only the
+action graph.
+
+`dependsOn` is computed by the engine during planning from the kind-level `Resource.dependsOn`
+declarations. An item of resource B that declares `dependsOn: ['A']` depends conservatively on
+**all** resolved actions of kind A. Per-item narrowing (item B₁ depends only on A₁, not A₂) is
+a future extension.
+
+For `delete` actions the semantics are identical — "these must complete before I run" — so the
+engine emits delete deps in reverse topo order automatically: a delete of `io-events/provider:X`
+lists the corresponding metadata and registration deletes in its `dependsOn`.
 
 ```ts
 export type PlanAction<TDesired = unknown, TState = unknown> =
-  | { kind: "noop"; resource: string; key: string }
-  | { kind: "create"; resource: string; key: string; desired: TDesired }
+  | {
+      kind: "noop";
+      resource: string;
+      key: string;
+      dependsOn: readonly string[];
+    }
+  | {
+      kind: "create";
+      resource: string;
+      key: string;
+      dependsOn: readonly string[];
+      desired: TDesired;
+    }
   | {
       kind: "update";
       resource: string;
       key: string;
+      dependsOn: readonly string[];
       current: TState;
       desired: TDesired;
     }
@@ -479,14 +503,20 @@ export type PlanAction<TDesired = unknown, TState = unknown> =
       kind: "replace";
       resource: string;
       key: string;
+      dependsOn: readonly string[];
       current: TState;
       desired: TDesired;
     }
-  | { kind: "delete"; resource: string; key: string; current: TState };
+  | {
+      kind: "delete";
+      resource: string;
+      key: string;
+      dependsOn: readonly string[];
+      current: TState;
+    };
 
 export interface Plan {
   readonly actions: readonly PlanAction[];
-  readonly resourceOrder: readonly string[]; // resource kinds in topo-sorted execution order
 }
 ```
 
@@ -741,6 +771,7 @@ it("creates a webhook on first reconcile", async () => {
       kind: "create",
       resource: "webhooks/webhook",
       key: "order.created",
+      dependsOn: [],
       desired: expect.any(Object),
     },
   ]);
@@ -825,6 +856,8 @@ accepts both as first-class options; neither is deprecated.
 - **Install orchestration layer.** A higher-level API that accepts a union of `Provider` and
   `ImperativeStep`, sequences them, and manages the snapshot lifecycle end-to-end. This is
   where the install/uninstall runtime actions eventually converge.
-- **Per-resource dependency tracking.** The current model blocks an entire provider when any
-  upstream provider fails. Finer-grained dependency declarations (resource A depends on resource
-  B, not on the whole provider) would reduce unnecessary blocking in large plans.
+- **Per-item dependency narrowing.** The engine currently generates conservative deps: an item of
+  kind B that declares `dependsOn: ['A']` depends on all A-kind actions, not just the one it
+  logically relates to. An optional `depsForDesired?(desired: TDesired): string[]` method on
+  `Resource` would let each resource express per-item deps precisely, enabling even more
+  parallelism (e.g. metadataA unblocked by providerA without waiting for providerB).
