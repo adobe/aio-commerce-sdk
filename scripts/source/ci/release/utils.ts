@@ -35,18 +35,3 @@ export function parseReleaseChannel(value: string | undefined): ReleaseChannel {
     `Unsupported channel "${value ?? ""}". Expected "internal" or "public".`,
   );
 }
-
-/**
- * Asserts that the given value is truthy, throwing an error with the given message if not.
- * @param value - The value to check for truthiness.
- * @param message - The error message to throw if the value is not truthy.
- * @throws {Error} If the value is not truthy.
- */
-export function assertTruthy<T>(
-  value: T | undefined,
-  message: string,
-): asserts value is T {
-  if (!value) {
-    throw new Error(message);
-  }
-}

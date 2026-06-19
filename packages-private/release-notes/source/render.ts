@@ -25,7 +25,7 @@ export function renderMarkdown(notes: ReleaseNotes): string {
     sections.push("## Highlights");
     for (const h of notes.highlights) {
       const prLinks = h.prLinks.map((url) => `[PR](${url})`).join(", ");
-      const prLinksText = `(${prLinks})`;
+      const prLinksText = prLinks ? ` (${prLinks})` : "";
 
       sections.push(
         `### ${h.title}${prLinksText}\n\n${h.whatChanged}\n\n**Why it matters:** ${h.whyItMatters}\n\n**Packages:** ${h.packages.join(", ")}`,

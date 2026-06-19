@@ -120,14 +120,14 @@ export function assembleReleaseNotes(
     `Release: ${packageList}`;
 
   const highlights = sorted.flatMap(({ entry, notes }) =>
-    notes.highlights.map((h: PackageNotes["highlights"][number]) => ({
+    notes.highlights.map((h) => ({
       ...h,
       packages: [entry.package],
     })),
   );
 
   const breakingChanges = sorted.flatMap(({ entry, notes }) =>
-    notes.breakingChanges.map((b: PackageNotes["breakingChanges"][number]) => ({
+    notes.breakingChanges.map((b) => ({
       ...b,
       packages: [entry.package],
     })),
