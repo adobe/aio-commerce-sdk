@@ -431,9 +431,11 @@ access `current` to obtain the system-assigned API identifier for actual mutatio
 `list?()` is optional. When implemented, the engine uses it for live discovery: drift detection,
 orphan detection, and idempotency across runs. When absent, the engine operates in
 **snapshot-only mode**: it creates resources not present in the previous snapshot and deletes
-resources present in the snapshot using the `state` stored in `ResourceRecord`. Drift detection
-and live orphan detection are unavailable in snapshot-only mode. Resources without a list API
-(e.g. Admin UI extensions) use snapshot-only mode.
+resources present in the snapshot using the `state` stored in `ResourceRecord`. In snapshot-only
+mode `diff()` is still called, with `current` set to the `state` from the previous
+`ResourceRecord` (not live state); if no snapshot exists, `current` is `null` and the engine
+always creates. Drift detection and live orphan detection are unavailable in snapshot-only mode.
+Resources without a list API (e.g. Admin UI extensions) use snapshot-only mode.
 
 `update?()` is optional. Most Commerce and I/O Events APIs do not support in-place update;
 changes require delete + recreate. A resource whose `diff()` never returns `update` need not
@@ -446,7 +448,9 @@ result into `UpstreamOutputs` under the resource's `kind`. `create()` and `updat
 accumulated upstream outputs so downstream resources can resolve cross-resource references without
 extra API calls. The engine asserts at apply time that any resource reading from
 `upstream.get(kind)` declared that `kind` in its `dependsOn`; accessing an undeclared kind throws
-rather than returning silently empty.
+rather than returning silently empty. Enforcing this requires the engine to hand each resource a
+wrapped `UpstreamOutputs` that records which keys are accessed — a real implementation constraint
+for iteration B.
 
 `Provider` is a named container that groups related resources. It is the composition root: it
 takes shared clients in its constructor and wires them into each resource it creates internally.
@@ -800,9 +804,10 @@ it("creates a webhook on first reconcile", async () => {
   const config: AppConfig = {
     webhooks: [
       {
-        code: "order.created",
-        url: "https://example.com",
-        method: "POST",
+        webhook_method: "observer",
+        batch_name: "myapp",
+        hook_name: "order_place",
+        url: "https://example.com/webhooks/orders",
         fields: [],
       },
     ],
@@ -815,24 +820,21 @@ it("creates a webhook on first reconcile", async () => {
     {
       kind: "create",
       resource: "webhooks/webhook",
-      key: "order.created",
+      key: "observer:myapp:order_place",
       dependsOn: [],
       desired: expect.any(Object),
     },
   ]);
-  expect(result.outcomes.get("webhooks/webhook:order.created")?.status).toBe(
-    "created",
-  );
   expect(result.snapshot.providers[0].resources[0]).toMatchObject({
-    key: "order.created",
-    outcome: "created",
+    key: "observer:myapp:order_place",
+    outcome: { status: "created" },
   });
 });
 ```
 
 The `combined.test.ts` test additionally asserts that blocked resources appear in the snapshot
-with `outcome: 'blocked'`, confirming that the snapshot is a complete record of every declared
-resource regardless of whether it was successfully applied.
+with `outcome: { status: 'blocked', blockedBy: '…' }`, confirming that the snapshot is a
+complete record of every declared resource regardless of whether it was successfully applied.
 
 ## Drawbacks
 
