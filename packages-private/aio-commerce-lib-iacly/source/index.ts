@@ -12,13 +12,21 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: This is the package API entrypoint. */
 
+import type { CommerceEventsConfig } from "./events/commerce-events/types";
 import type { IoEventsConfig } from "./events/io-events/types";
 import type { WebhookConfig } from "./webhooks/types";
 
+export { CommerceEventsProvider } from "./events/commerce-events/provider";
 export { IoEventsOutputs } from "./events/io-events/outputs";
 export { IOEventsProvider } from "./events/io-events/provider";
 export { WebhooksProvider } from "./webhooks/provider";
 
+export type {
+  CommerceEventingSetupConfig,
+  CommerceEventProviderConfig,
+  CommerceEventSubscriptionConfig,
+  CommerceEventsConfig,
+} from "./events/commerce-events/types";
 export type {
   IoEventsConfig,
   IoEventsEventMetadataConfig,
@@ -29,5 +37,6 @@ export type { WebhookConfig } from "./webhooks/types";
 export type LibIaclyConfig = {
   webhooks?: readonly WebhookConfig[];
   ioEvents?: IoEventsConfig;
+  commerceEvents?: CommerceEventsConfig;
   adminUi?: unknown; // placeholder; narrowed in Task 7
 };
