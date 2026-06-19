@@ -15,16 +15,24 @@ import { describe, expectTypeOf, it } from "vitest";
 import type {
   AppliedSnapshot,
   ApplyFn,
+  ApplyOptions,
   DiffResult,
+  Lock,
   Plan,
   PlanAction,
   PlanFn,
+  PlanOptions,
   Provider,
+  ProviderOutputs,
+  ProviderSnapshot,
+  ReconcileEvent,
   ReconcileFn,
+  ReconcileOptions,
   ReconcileResult,
   Resource,
   ResourceOutcome,
   ResourceRecord,
+  UpstreamOutputs,
 } from "@aio-commerce-sdk/iacly";
 
 describe("iacly type exports", () => {
@@ -90,5 +98,58 @@ describe("iacly type exports", () => {
       readonly plan: Plan;
       readonly snapshot: AppliedSnapshot;
     }>();
+  });
+});
+
+describe("additional type exports", () => {
+  it("Lock has acquire, release, forceRelease", () => {
+    expectTypeOf<Lock>().toMatchTypeOf<{
+      acquire(): Promise<void>;
+      release(): Promise<void>;
+      forceRelease(): Promise<void>;
+    }>();
+  });
+
+  it("PlanOptions has optional previousSnapshot", () => {
+    expectTypeOf<PlanOptions>().toMatchTypeOf<{
+      previousSnapshot?: AppliedSnapshot;
+    }>();
+  });
+
+  it("ApplyOptions has lock, force, maxConcurrency, onEvent", () => {
+    expectTypeOf<ApplyOptions>().toMatchTypeOf<{
+      lock?: Lock;
+      force?: boolean;
+      maxConcurrency?: number;
+    }>();
+  });
+
+  it("ReconcileOptions is assignable to both PlanOptions and ApplyOptions", () => {
+    expectTypeOf<ReconcileOptions>().toMatchTypeOf<PlanOptions>();
+    expectTypeOf<ReconcileOptions>().toMatchTypeOf<ApplyOptions>();
+  });
+
+  it("ProviderOutputs is a string-keyed record", () => {
+    expectTypeOf<ProviderOutputs>().toMatchTypeOf<Record<string, unknown>>();
+  });
+
+  it("UpstreamOutputs is a ReadonlyMap of ProviderOutputs", () => {
+    expectTypeOf<UpstreamOutputs>().toMatchTypeOf<
+      ReadonlyMap<string, ProviderOutputs>
+    >();
+  });
+
+  it("ProviderSnapshot has kind and resources", () => {
+    expectTypeOf<ProviderSnapshot>().toMatchTypeOf<{
+      readonly kind: string;
+      readonly resources: readonly ResourceRecord[];
+    }>();
+  });
+
+  it("ReconcileEvent is a discriminated union on type", () => {
+    expectTypeOf<ReconcileEvent>().toMatchTypeOf<{ type: string }>();
+    // Verify the plan-ready variant exists and the type discriminant is a string literal union
+    expectTypeOf<ReconcileEvent["type"]>().toMatchTypeOf<string>();
+    expectTypeOf<"plan-ready">().toMatchTypeOf<ReconcileEvent["type"]>();
   });
 });
