@@ -172,8 +172,6 @@ using the instance ID they already carry in their own desired config:
 
 ```ts
 // source/events/io-events/provider-resource.ts  (internal)
-// Creates the I/O Events provider and its event-type metadata as a compound unit.
-// Metadata shares the provider lifecycle: always created after and deleted before the provider.
 class IoEventsProviderResource implements Resource<
   AppConfig,
   IoEventProviderConfig,
@@ -193,16 +191,34 @@ class IoEventsProviderResource implements Resource<
     desired: IoEventProviderConfig,
     _upstream: UpstreamOutputs,
   ): Promise<IoEventProvider> {
-    const provider = await this.client.createEventProvider(desired);
-    await Promise.all(
-      desired.events.map((e) =>
-        this.client.createEventMetadataForProvider({
-          providerId: provider.id,
-          ...e,
-        }),
-      ),
+    return this.client.createEventProvider(desired);
+  }
+  // ...
+}
+
+// source/events/io-events/event-metadata-resource.ts  (internal)
+// One item per (provider × event type). Must complete before io-events/registration —
+// registrations reference event codes by value, so those codes must already exist.
+class IoEventsEventMetadataResource implements Resource<
+  AppConfig,
+  IoEventMetadataConfig,
+  IoEventMetadata
+> {
+  readonly kind = "io-events/event-metadata";
+  readonly dependsOn = ["io-events/provider"] as const;
+
+  async create(
+    desired: IoEventMetadataConfig,
+    upstream: UpstreamOutputs,
+  ): Promise<IoEventMetadata> {
+    const { providerId } = IoEventsOutputs.provider(
+      upstream,
+      desired.providerInstanceId,
     );
-    return provider;
+    return this.client.createEventMetadataForProvider({
+      providerId,
+      ...desired,
+    });
   }
   // ...
 }
@@ -617,8 +633,9 @@ source/
     index.ts
   events/
     io-events/
-      provider-resource.ts   — IoEventsProviderResource (internal; creates provider + event metadata)
-      registration-resource.ts — IoEventsRegistrationResource (internal)
+      provider-resource.ts        — IoEventsProviderResource (internal)
+      event-metadata-resource.ts — IoEventsEventMetadataResource (internal)
+      registration-resource.ts   — IoEventsRegistrationResource (internal)
       types.ts               — IoEventProviderConfig, IoEventRegistrationConfig, …
       outputs.ts             — IoEventsOutputs (exported typed accessor)
       provider.ts            — IOEventsProvider (public; handles both Commerce and external sources)
@@ -645,11 +662,12 @@ Dependencies are declared between resource kinds, not providers. The `provider/r
 convention makes cross-provider dependencies readable.
 
 ```
-io-events/provider           (no deps)    — creates I/O Events provider + event metadata; exposes providerId map
+io-events/provider           (no deps)    — creates I/O Events provider; exposes providerId map
+io-events/event-metadata     dependsOn: ['io-events/provider']
 commerce-events/setup        (no deps)    — configures Commerce eventing module (singleton)
 webhooks/webhook             (no deps)
 admin-ui/extension           (no deps)
-io-events/registration       dependsOn: ['io-events/provider']
+io-events/registration       dependsOn: ['io-events/event-metadata']
 commerce-events/provider     dependsOn: ['io-events/provider', 'commerce-events/setup']
 commerce-events/subscription dependsOn: ['commerce-events/provider']
 ```
@@ -657,21 +675,24 @@ commerce-events/subscription dependsOn: ['commerce-events/provider']
 `io-events/provider` is shared: `IOEventsProvider` uses it for both Commerce and external event
 sources (the same I/O Events API, different `providerType`). `IOEventsProvider.check()` extracts
 all event sources from config regardless of type; `CommerceEventsProvider.check()` extracts only
-Commerce-specific sources. External-only configs register an I/O Events provider and its
-registrations but never touch `CommerceEventsProvider`.
+Commerce-specific sources. External-only configs register `io-events/*` resources only and never
+touch `CommerceEventsProvider`.
 
-`io-events/registration` and `commerce-events/setup` have no dependency on each other and run
-in parallel after `io-events/provider` completes.
+`io-events/registration` depends on `io-events/event-metadata` (registrations reference event
+codes by value; the codes must already exist). `commerce-events/provider` can run in parallel
+with `io-events/event-metadata` and `io-events/registration` — it only needs the I/O Events
+provider ID, not the metadata or registrations.
 
-For 2 Commerce event sources (each with 1 event and 1 runtime action), the engine executes 8
-requests — the two independent setups run in parallel, then the dependent resources in order:
+For 2 Commerce event sources (each with 1 event and 1 runtime action), the engine executes 9
+requests — the independent setups run first in parallel, then dependent resources in topo order:
 
 ```
-io-events/provider:           createEventProvider() + createEventMetadata()  // × 2, parallel
-commerce-events/setup:        updateEventingConfiguration()                  // × 1, parallel
-io-events/registration:       createRegistration()                           // × 2 (one per source)
-commerce-events/provider:     createEventProvider() (Commerce API)           // × 2 (one per source)
-commerce-events/subscription: createEventSubscription()                      // × 2 (one per event)
+io-events/provider:           createEventProvider()              // × 2, parallel with setup
+commerce-events/setup:        updateEventingConfiguration()      // × 1, parallel
+io-events/event-metadata:     createEventMetadataForProvider()   // × 2 (one per source)
+io-events/registration:       createRegistration()               // × 2 (one per source)
+commerce-events/provider:     createEventProvider() (Commerce)   // × 2 (after provider + setup)
+commerce-events/subscription: createEventSubscription()          // × 2 (one per event)
 ```
 
 #### Test structure
@@ -687,7 +708,7 @@ test/
     admin-ui.ts
   integration/
     webhooks.test.ts        — 1 webhook: create, update, noop, delete
-    events-commerce.test.ts — 1 Commerce event source: all 5 resource kinds exercised
+    events-commerce.test.ts — 1 Commerce event source: all 6 resource kinds exercised
     events-external.test.ts — 1 external event source: only io-events/* resources; no commerce-events/*
     admin-ui.test.ts        — 1 Admin UI extension registration
     combined.test.ts        — all providers together; validates topo-sort, partial failure
@@ -756,7 +777,7 @@ resource regardless of whether it was successfully applied.
 
 **Why types-only for the first iteration?** Implementing the reconcile engine before the provider
 interface is validated by real implementations risks locking in the wrong shape. The four providers
-and seven resource kinds in `aio-commerce-lib-iacly` will surface any interface gaps before the
+and eight resource kinds in `aio-commerce-lib-iacly` will surface any interface gaps before the
 engine lands.
 
 **Why caller-managed snapshot persistence (Option B) over engine-managed (Option D)?** Option D
