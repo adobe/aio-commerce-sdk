@@ -68,10 +68,7 @@ export type AdminUiEntity = "order" | "product" | "customer";
  *
  * @param metadataId - The application's `metadata.id` value (e.g. `"approval-dashboard-app"`).
  * @param entity - The grid's Commerce entity (`"order"`, `"product"`, or `"customer"`).
- * @param columnId - The column's `id` value from `adminUi.<entity>.gridColumns.columns[].id`. A blank
- *   value yields a trailing-underscore id (e.g. `..._order_gridcolumns_`), matching the Commerce
- *   `AclResourceIdGenerator::generatePath()` contract; config-driven usage cannot hit this because
- *   the schema requires a non-empty `id`.
+ * @param columnId - The column's `id` value from `adminUi.<entity>.gridColumns.columns[].id`.
  * @returns The full Commerce ACL resource id for the grid-column leaf node (e.g.
  *   `"Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_gridcolumns_order_status"`),
  *   or an empty string when `metadataId` is blank.
@@ -93,10 +90,7 @@ export function getGridColumnAclResourceId(
  *
  * @param metadataId - The application's `metadata.id` value (e.g. `"approval-dashboard-app"`).
  * @param entity - The grid's Commerce entity (`"order"`, `"product"`, or `"customer"`).
- * @param actionId - The action's `id` value from `adminUi.<entity>.massActions[].id`. A blank value
- *   yields a trailing-underscore id (e.g. `..._order_massactions_`), matching the Commerce
- *   `AclResourceIdGenerator::generatePath()` contract; config-driven usage cannot hit this because
- *   the schema requires a non-empty `id`.
+ * @param actionId - The action's `id` value from `adminUi.<entity>.massActions[].id`.
  * @returns The full Commerce ACL resource id for the mass-action leaf node (e.g.
  *   `"Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_massactions_bulk_approve"`),
  *   or an empty string when `metadataId` is blank.
@@ -119,10 +113,7 @@ export function getMassActionAclResourceId(
  * View buttons exist only on the order entity, so no entity discriminator is needed.
  *
  * @param metadataId - The application's `metadata.id` value (e.g. `"approval-dashboard-app"`).
- * @param buttonId - The button's `id` value from `adminUi.order.viewButtons[].id`. A blank value
- *   yields a trailing-underscore id (e.g. `..._order_viewbuttons_`), matching the Commerce
- *   `AclResourceIdGenerator::generatePath()` contract; config-driven usage cannot hit this because
- *   the schema requires a non-empty `id`.
+ * @param buttonId - The button's `id` value from `adminUi.order.viewButtons[].id`.
  * @returns The full Commerce ACL resource id for the view-button leaf node (e.g.
  *   `"Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_viewbuttons_approve_order"`),
  *   or an empty string when `metadataId` is blank.
