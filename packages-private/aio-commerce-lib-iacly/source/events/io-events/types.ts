@@ -36,6 +36,7 @@ export type IoEventsRegistrationConfig = {
   readonly eventCodes: readonly string[];
   readonly deliveryType: "webhook" | "webhook_batch" | "journal";
   readonly webhookUrl?: string;
+  readonly clientId: string;
 };
 
 /** Live state for event metadata — enriched with providerInstanceId and apiProviderId during list(). */

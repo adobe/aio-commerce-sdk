@@ -12,6 +12,7 @@
 
 import { IoEventsEventMetadataResource } from "./event-metadata-resource";
 import { IoEventsProviderResource } from "./provider-resource";
+import { IoEventsRegistrationResource } from "./registration-resource";
 
 import type { AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api";
 import type { Provider } from "@aio-commerce-sdk/iacly";
@@ -23,12 +24,14 @@ export class IOEventsProvider implements Provider<LibIaclyConfig> {
   public readonly resources: readonly [
     IoEventsProviderResource,
     IoEventsEventMetadataResource,
+    IoEventsRegistrationResource,
   ];
 
   public constructor(client: AdobeIoEventsHttpClient, org: IoEventsOrgContext) {
     this.resources = [
       new IoEventsProviderResource(client, org),
       new IoEventsEventMetadataResource(client, org),
+      new IoEventsRegistrationResource(client, org),
     ];
   }
 }

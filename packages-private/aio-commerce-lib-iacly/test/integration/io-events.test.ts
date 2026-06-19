@@ -284,4 +284,60 @@ describe("IOEventsProvider — provider resource", () => {
       );
     });
   });
+
+  const registrationResource = () => provider.resources[2];
+
+  describe("registration resource", () => {
+    it("depends on io-events/event-metadata", () => {
+      expect(registrationResource().dependsOn).toEqual([
+        "io-events/event-metadata",
+      ]);
+    });
+
+    it("check() returns registrations from config", async () => {
+      const config = {
+        ioEvents: {
+          providers: [],
+          eventMetadata: [],
+          registrations: [ioEventsFixtures.desired.registration],
+        },
+      };
+      const desired = await registrationResource().check(config);
+      expect(desired).toHaveLength(1);
+      expect(desired[0].name).toBe("My Registration");
+    });
+
+    it("diff() creates when current is null", () => {
+      const result = registrationResource().diff(
+        null,
+        ioEventsFixtures.desired.registration,
+      );
+      expect(result.kind).toBe("create");
+    });
+
+    it("create() calls createRegistration using upstream event codes", async () => {
+      server.use(...ioEventsHandlers.createRegistration);
+      const upstream = new Map([
+        [
+          "io-events/provider",
+          { "my-instance": { providerId: "api-provider-id-123" } },
+        ],
+      ]);
+      const state = await registrationResource().create(
+        ioEventsFixtures.desired.registration,
+        upstream,
+      );
+      expect(state.id).toBe("reg-id-456");
+    });
+
+    it("delete() calls deleteRegistration", async () => {
+      server.use(...ioEventsHandlers.deleteRegistration);
+      await expect(
+        registrationResource().delete(
+          "My Registration",
+          ioEventsFixtures.state.registration,
+        ),
+      ).resolves.toBeUndefined();
+    });
+  });
 });

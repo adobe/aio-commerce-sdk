@@ -13,10 +13,14 @@
 import { AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api";
 import { HttpResponse, http } from "msw";
 
-import type { IoEventProvider } from "@adobe/aio-commerce-lib-events/io-events";
+import type {
+  IoEventProvider,
+  IoEventRegistration,
+} from "@adobe/aio-commerce-lib-events/io-events";
 import type {
   IoEventsEventMetadataConfig,
   IoEventsProviderConfig,
+  IoEventsRegistrationConfig,
 } from "../../source/events/io-events/types";
 
 const BASE = "https://api.adobe.io/events";
@@ -50,6 +54,16 @@ export const ioEventsFixtures = {
       label: "Order Placed",
       description: "Fired when an order is placed",
     } satisfies IoEventsEventMetadataConfig,
+
+    registration: {
+      name: "My Registration",
+      description: "Test registration",
+      providerInstanceId: "my-instance",
+      eventCodes: ["com.adobe.commerce.order.placed"],
+      deliveryType: "webhook",
+      webhookUrl: "https://example.com/runtime/webhook",
+      clientId: "test-client-id",
+    } satisfies IoEventsRegistrationConfig,
   },
 
   state: {
@@ -63,6 +77,26 @@ export const ioEventsFixtures = {
       provider_metadata: "dx_commerce_events",
       event_delivery_format: "commerce",
     } satisfies IoEventProvider,
+
+    registration: {
+      id: "reg-id-456",
+      registration_id: "reg-id-456",
+      name: "My Registration",
+      description: "Test registration",
+      client_id: "test-client-id",
+      webhook_url: "https://example.com/runtime/webhook",
+      status: "ENABLED",
+      type: "APP_REGISTRATION",
+      integration_status: "ENABLED",
+      events_of_interest: [
+        {
+          provider_id: "api-provider-id-123",
+          event_code: "com.adobe.commerce.order.placed",
+        },
+      ],
+      delivery_type: "webhook",
+      enabled: true,
+    } satisfies IoEventRegistration,
   },
 };
 
@@ -124,6 +158,32 @@ export const ioEventsHandlers = {
   deleteMetadata: [
     http.delete(
       `${BASE}/test-org/test-project/test-workspace/providers/api-provider-id-123/eventmetadata/com.adobe.commerce.order.placed`,
+      () => new HttpResponse(null, { status: 204 }),
+    ),
+  ],
+  createRegistration: [
+    http.post(
+      `${BASE}/test-org/test-project/test-workspace/registrations`,
+      () =>
+        HttpResponse.json({
+          id: "reg-id-456",
+          registration_id: "reg-id-456",
+          name: "My Registration",
+          description: "Test registration",
+          client_id: "test-client-id",
+          webhook_url: "https://example.com/runtime/webhook",
+          status: "ENABLED",
+          type: "APP_REGISTRATION",
+          integration_status: "ENABLED",
+          events_of_interest: [],
+          delivery_type: "webhook",
+          _links: { self: { href: "" } },
+        }),
+    ),
+  ],
+  deleteRegistration: [
+    http.delete(
+      `${BASE}/test-org/test-project/test-workspace/registrations/reg-id-456`,
       () => new HttpResponse(null, { status: 204 }),
     ),
   ],
