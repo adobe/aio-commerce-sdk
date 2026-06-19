@@ -12,7 +12,13 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: This is the entrypoint of the package API */
 
-export { assembleReleaseNotes, generateAllNotes } from "./formatter.ts";
+export {
+  assembleReleaseNotes,
+  generateAllNotes,
+  generateReleaseSummary,
+} from "./formatter.ts";
 export { collectEntries } from "./input.ts";
 export { selectModel } from "./model.ts";
-export { renderMarkdown } from "./render.ts";
+export { renderSlack } from "./render.ts";
+
+export type { RenderContext } from "./render.ts";

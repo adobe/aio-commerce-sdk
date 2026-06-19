@@ -22,11 +22,21 @@ import type { ChangelogEntry } from "./types.ts";
 const META_PACKAGE = "@adobe/aio-commerce-sdk";
 
 const PACKAGE_NOTES_SYSTEM =
-  "You write release notes for a TypeScript monorepo package. " +
-  "Use ONLY the supplied CHANGELOG text — never invent features, links, PR numbers, or handles. " +
-  "Copy PR links and @handles verbatim from the input. " +
-  "Lead every highlight with the user-facing impact. " +
-  "Populate breakingChanges only for major version bumps; use an empty array otherwise.";
+  "You write release notes for a TypeScript monorepo package aimed at developers who consume it as a library. " +
+  "Use ONLY the supplied CHANGELOG text — never invent features, links, or PR numbers. " +
+  "Copy PR links verbatim from the input. " +
+  "Include ONLY changes that directly affect consumers of the public API: new exports, changed behavior, bug fixes observable from outside, performance improvements, and breaking changes. " +
+  "EXCLUDE internal refactors, test changes, CI/CD configuration, dependency bumps (unless they change behavior), added files that are not part of the public API, and any change a consumer would never notice. " +
+  "If a release contains only excluded changes, set highlights to an empty array. " +
+  "For each included highlight, classify it with a conventional commit kind (feat, fix, perf, docs, etc.) and write one concise sentence as its description — no sub-paragraphs. " +
+  "Populate breakingChanges only for major version bumps; use an empty array otherwise. " +
+  "Write a summary paragraph explaining the user-facing impact and motivation for this package's release overall, focusing only on what consumers need to know.";
+
+const RELEASE_SUMMARY_SYSTEM =
+  "You write a concise 'why it matters' paragraph for a multi-package TypeScript SDK release. " +
+  "Given the per-package summaries and key highlights across all packages, explain in 2-3 sentences what this release means for developers who consume the SDK. " +
+  "Be concrete — name the specific capabilities unlocked or problems solved, not generic statements like 'improvements were made'. " +
+  "Write plain prose, no bullet points or markdown formatting.";
 
 export type PackageNotesResult = {
   entry: ChangelogEntry;
@@ -54,33 +64,59 @@ export async function generatePackageNotes(
 }
 
 /**
- * Generates notes for all packages in parallel.
- * Any per-package failure rejects the whole call.
+ * Generates a holistic release summary across all packages via one LLM call.
+ * Uses per-package summaries and highlights as context.
+ */
+export async function generateReleaseSummary(
+  results: PackageNotesResult[],
+  model: LanguageModel,
+): Promise<{ summary: string; usage: LanguageModelUsage }> {
+  const packageSection = results
+    .map((r) => `${r.entry.package}: ${r.notes.summary}`)
+    .join("\n");
+
+  const highlights = results.flatMap((r) =>
+    r.notes.highlights.map((h) => `${h.kind}: ${h.description}`),
+  );
+  const highlightSection =
+    highlights.length > 0 ? highlights.join("\n") : "(none)";
+
+  const result = await generateText({
+    model,
+    temperature: 0,
+    system: RELEASE_SUMMARY_SYSTEM,
+    prompt: `Package summaries:\n${packageSection}\n\nKey highlights:\n${highlightSection}`,
+  });
+
+  return { summary: result.text, usage: result.usage };
+}
+
+/**
+ * Generates notes for all packages in parallel, then synthesizes a holistic summary.
+ * Any failure rejects the whole call.
  */
 export async function generateAllNotes(
   entries: ChangelogEntry[],
   model: LanguageModel,
 ): Promise<{
   results: PackageNotesResult[];
+  summary: string;
   totalUsage: LanguageModelUsage;
 }> {
   const results = await Promise.all(
     entries.map((entry) => generatePackageNotes(entry, model)),
   );
 
+  const { summary, usage: summaryUsage } = await generateReleaseSummary(
+    results,
+    model,
+  );
+
+  const allUsages = [...results.map((r) => r.usage), summaryUsage];
   const totalUsage: LanguageModelUsage = {
-    inputTokens: results.reduce(
-      (sum, r) => sum + (r.usage.inputTokens ?? 0),
-      0,
-    ),
-    outputTokens: results.reduce(
-      (sum, r) => sum + (r.usage.outputTokens ?? 0),
-      0,
-    ),
-    totalTokens: results.reduce(
-      (sum, r) => sum + (r.usage.totalTokens ?? 0),
-      0,
-    ),
+    inputTokens: allUsages.reduce((sum, u) => sum + (u.inputTokens ?? 0), 0),
+    outputTokens: allUsages.reduce((sum, u) => sum + (u.outputTokens ?? 0), 0),
+    totalTokens: allUsages.reduce((sum, u) => sum + (u.totalTokens ?? 0), 0),
     inputTokenDetails: {
       noCacheTokens: undefined,
       cacheReadTokens: undefined,
@@ -89,15 +125,16 @@ export async function generateAllNotes(
     outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
   };
 
-  return { results, totalUsage };
+  return { results, summary, totalUsage };
 }
 
 /**
- * Assembles the final `ReleaseNotes` object deterministically from per-package results.
- * No second LLM call is made here.
+ * Assembles the final `ReleaseNotes` object deterministically from per-package results
+ * and the holistic summary produced by `generateReleaseSummary`.
  */
 export function assembleReleaseNotes(
   results: PackageNotesResult[],
+  summary: string,
 ): ReleaseNotes {
   // Meta-package first, then alphabetically.
   const sorted = [...results].sort((a, b) => {
@@ -133,16 +170,5 @@ export function assembleReleaseNotes(
     })),
   );
 
-  const byPackage = sorted.map(({ entry, notes }) => ({
-    name: entry.package,
-    version: entry.version,
-    bump: notes.bump,
-    entries: notes.entries,
-  }));
-
-  const contributors = [
-    ...new Set(sorted.flatMap(({ notes }) => notes.contributors)),
-  ];
-
-  return { headline, highlights, breakingChanges, byPackage, contributors };
+  return { headline, summary, highlights, breakingChanges };
 }

@@ -12,11 +12,22 @@
 
 import * as v from "valibot";
 
+const HighlightKindSchema = v.picklist([
+  "feat",
+  "fix",
+  "perf",
+  "refactor",
+  "docs",
+  "chore",
+  "ci",
+  "build",
+  "style",
+  "test",
+  "other",
+]);
+
 /**
  * Per-package structured notes produced by a single parallel LLM call.
- *
- * This leaner schema (no top-level headline aggregation) is the target of
- * the per-package `generateText + Output.object()` calls.
  */
 export const PackageNotesSchema = v.object({
   packageName: v.pipe(
@@ -34,16 +45,23 @@ export const PackageNotesSchema = v.object({
       "One sentence summarizing the most important user-facing change in this package.",
     ),
   ),
+  summary: v.pipe(
+    v.string(),
+    v.description(
+      "One paragraph explaining the user-facing impact and motivation for this package's changes.",
+    ),
+  ),
   highlights: v.array(
     v.object({
-      title: v.string(),
-      whatChanged: v.pipe(
-        v.string(),
-        v.description("Plain-language description of the change."),
+      kind: v.pipe(
+        HighlightKindSchema,
+        v.description("Conventional commit type (feat, fix, perf, etc.)."),
       ),
-      whyItMatters: v.pipe(
+      description: v.pipe(
         v.string(),
-        v.description("User-facing impact or motivation."),
+        v.description(
+          "One concise sentence describing the change and its user-facing impact.",
+        ),
       ),
       prLinks: v.array(
         v.pipe(
@@ -69,20 +87,6 @@ export const PackageNotesSchema = v.object({
     ),
     v.description("Empty array unless this is a major bump."),
   ),
-  entries: v.array(
-    v.pipe(
-      v.string(),
-      v.description("Raw bullet points from the CHANGELOG for this version."),
-    ),
-  ),
-  contributors: v.array(
-    v.pipe(
-      v.string(),
-      v.description(
-        "GitHub handles like @username, copied verbatim from the CHANGELOG. Empty array if none. Exclude bots (if any), like Dependabot or Renovate, as they are not human contributors.",
-      ),
-    ),
-  ),
 });
 
 export type PackageNotes = v.InferOutput<typeof PackageNotesSchema>;
@@ -98,11 +102,11 @@ export const ReleaseNotesSchema = v.object({
       "One-sentence TL;DR of the release, user-impact first. No version numbers as the lead.",
     ),
   ),
+  summary: v.string(),
   highlights: v.array(
     v.object({
-      title: v.string(),
-      whatChanged: v.string(),
-      whyItMatters: v.string(),
+      kind: HighlightKindSchema,
+      description: v.string(),
       packages: v.array(v.string()),
       prLinks: v.array(v.string()),
     }),
@@ -117,15 +121,6 @@ export const ReleaseNotesSchema = v.object({
     ),
     v.description("Empty array if no major bumps in this release."),
   ),
-  byPackage: v.array(
-    v.object({
-      name: v.string(),
-      version: v.string(),
-      bump: v.picklist(["major", "minor", "patch"]),
-      entries: v.array(v.string()),
-    }),
-  ),
-  contributors: v.array(v.string()),
 });
 
 export type ReleaseNotes = v.InferOutput<typeof ReleaseNotesSchema>;

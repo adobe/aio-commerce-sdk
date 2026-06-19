@@ -20,40 +20,32 @@ const VALID_PACKAGE_NOTES = {
   version: "2.1.0",
   bump: "minor",
   headline: "Nested ACL permissions are now supported.",
+  summary:
+    "This release adds hierarchical permission checks, enabling granular admin access delegation without requiring root access.",
   highlights: [
     {
-      title: "Nested ACL",
-      whatChanged: "Added hierarchical permission checks.",
-      whyItMatters: "Enables granular admin access delegation.",
+      kind: "feat",
+      description:
+        "Added hierarchical permission checks, enabling admins to delegate access to sub-resources.",
       prLinks: ["https://github.com/adobe/aio-commerce-sdk/pull/42"],
     },
   ],
   breakingChanges: [],
-  entries: ["Added nested ACL permission helpers."],
-  contributors: ["@contributor"],
 };
 
 const VALID_RELEASE_NOTES = {
   headline: "Nested ACL permissions and webhooks are now available.",
+  summary:
+    "This release introduces nested ACL permissions and environment-scoped webhooks, reducing integration complexity.",
   highlights: [
     {
-      title: "Nested ACL",
-      whatChanged: "Added hierarchical permission checks.",
-      whyItMatters: "Enables granular admin access delegation.",
+      kind: "feat",
+      description: "Added hierarchical permission checks.",
       packages: ["@adobe/aio-commerce-lib-admin-ui"],
       prLinks: [],
     },
   ],
   breakingChanges: [],
-  byPackage: [
-    {
-      name: "@adobe/aio-commerce-sdk",
-      version: "2.1.0",
-      bump: "minor",
-      entries: ["Added nested ACL permission helpers."],
-    },
-  ],
-  contributors: [],
 };
 
 describe("PackageNotesSchema", () => {
@@ -77,6 +69,14 @@ describe("PackageNotesSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  test("rejects an invalid highlight kind", () => {
+    const result = v.safeParse(PackageNotesSchema, {
+      ...VALID_PACKAGE_NOTES,
+      highlights: [{ kind: "hotfix", description: "Something.", prLinks: [] }],
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("ReleaseNotesSchema", () => {
@@ -91,19 +91,31 @@ describe("ReleaseNotesSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  test("accepts an empty contributors array", () => {
+  test("rejects a missing summary", () => {
+    const { summary: _, ...withoutSummary } = VALID_RELEASE_NOTES;
+    const result = v.safeParse(ReleaseNotesSchema, withoutSummary);
+    expect(result.success).toBe(false);
+  });
+
+  test("accepts empty highlights and breakingChanges arrays", () => {
     const result = v.safeParse(ReleaseNotesSchema, {
       ...VALID_RELEASE_NOTES,
-      contributors: [],
+      highlights: [],
+      breakingChanges: [],
     });
     expect(result.success).toBe(true);
   });
 
-  test("rejects an invalid bump in byPackage", () => {
+  test("rejects an invalid highlight kind in ReleaseNotesSchema", () => {
     const result = v.safeParse(ReleaseNotesSchema, {
       ...VALID_RELEASE_NOTES,
-      byPackage: [
-        { name: "x", version: "1.0.0", bump: "invalid", entries: [] },
+      highlights: [
+        {
+          kind: "invalid",
+          description: "Something.",
+          packages: [],
+          prLinks: [],
+        },
       ],
     });
     expect(result.success).toBe(false);

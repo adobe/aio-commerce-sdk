@@ -14,7 +14,7 @@ import {
   assembleReleaseNotes,
   collectEntries,
   generateAllNotes,
-  renderMarkdown,
+  renderSlack,
   selectModel,
 } from "@aio-commerce-sdk/release-notes";
 
@@ -73,9 +73,15 @@ export default async function main(
     core.info(`Generating release notes with model=${modelId}`);
 
     const entries = await collectEntries(exec, publishedPackages);
-    const { results, totalUsage } = await generateAllNotes(entries, model);
-    const notes = assembleReleaseNotes(results);
-    const markdown = renderMarkdown(notes);
+    const { results, summary, totalUsage } = await generateAllNotes(
+      entries,
+      model,
+    );
+    const notes = assembleReleaseNotes(results, summary);
+    const markdown = renderSlack(notes, {
+      date: new Date().toISOString().split("T")[0],
+      publishedPackages,
+    });
 
     core.info(
       `Token usage — input: ${totalUsage.inputTokens ?? 0}, output: ${totalUsage.outputTokens ?? 0}, total: ${totalUsage.totalTokens ?? 0}`,

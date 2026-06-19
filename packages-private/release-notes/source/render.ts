@@ -12,60 +12,119 @@
 
 import type { ReleaseNotes } from "./schema.ts";
 
+const REPOSITORY = "adobe/aio-commerce-sdk";
+const REPOSITORY_URL = `https://github.com/${REPOSITORY}`;
+const PACKAGE_BASE_URL = "https://www.npmjs.com/package";
+const META_PACKAGE = "@adobe/aio-commerce-sdk";
+const OWNERS = "@decepticons @mercury";
+const COMPATIBILITY = ":white_check_mark: PAAS | :white_check_mark: ACCS";
+
+const KIND_EMOJI: Record<string, string> = {
+  feat: ":sparkles:",
+  fix: ":bug:",
+  perf: ":rocket:",
+  refactor: ":recycle:",
+  docs: ":scroll:",
+  chore: ":wrench:",
+  ci: ":construction_worker:",
+  build: ":package:",
+  style: ":art:",
+  test: ":white_check_mark:",
+  other: ":small_blue_diamond:",
+};
+
+const KIND_LABEL: Record<string, string> = {
+  feat: "New Features",
+  fix: "Bug Fixes",
+  perf: "Performance",
+  refactor: "Refactoring",
+  docs: "Documentation",
+  chore: "Maintenance",
+  ci: "CI/CD",
+  build: "Build",
+  style: "Code Style",
+  test: "Tests",
+  other: "Other",
+};
+
+export type RenderContext = {
+  date: string;
+  publishedPackages: ReadonlyArray<{ name: string; version: string }>;
+};
+
 /**
- * Renders a `ReleaseNotes` object to a GitHub-flavored markdown string.
+ * Renders a `ReleaseNotes` object as a Slack mrkdwn string.
  *
- * Render order: TL;DR > Highlights > Breaking changes > By package > Contributors.
+ * Render order: header > metadata > headline > highlights > summary > links > footer.
  */
-export function renderMarkdown(notes: ReleaseNotes): string {
-  const sections: string[] = [];
-  sections.push(`${notes.headline}`);
+export function renderSlack(notes: ReleaseNotes, ctx: RenderContext): string {
+  const lines: string[] = [];
+  lines.push(
+    ":mega: Adobe Commerce SDK for App Builder Release :tada:",
+    "",
+    `*Date:* ${ctx.date}`,
+    `*Owner:* ${OWNERS}`,
+    "*Status:* :white_check_mark: Released",
+    `*Compatibility:* ${COMPATIBILITY}`,
+    "",
+    notes.headline,
+    "",
+  );
 
-  if (notes.highlights.length > 0) {
-    sections.push("## Highlights");
-    for (const h of notes.highlights) {
-      const prLinks = h.prLinks.map((url) => `[PR](${url})`).join(", ");
-      const prLinksText = prLinks ? ` (${prLinks})` : "";
+  if (notes.highlights.length > 0 || notes.breakingChanges.length > 0) {
+    lines.push("*Highlights*", "");
 
-      sections.push(
-        `### ${h.title}${prLinksText}\n\n${h.whatChanged}\n\n**Why it matters:** ${h.whyItMatters}\n\n**Packages:** ${h.packages.join(", ")}`,
-      );
-    }
-  }
-
-  if (notes.breakingChanges.length > 0) {
-    sections.push("## Breaking Changes");
-    for (const b of notes.breakingChanges) {
-      sections.push(
-        `### ${b.title}\n\n**Packages:** ${b.packages.join(", ")}\n\n**Migration:** ${b.migration}`,
-      );
-    }
-  }
-
-  if (notes.byPackage.length > 0) {
-    sections.push("## By Package");
-    for (const pkg of notes.byPackage) {
-      let bumpLabel: string;
-      if (pkg.bump === "major") {
-        bumpLabel = "Major";
-      } else if (pkg.bump === "minor") {
-        bumpLabel = "Minor";
-      } else {
-        bumpLabel = "Patch";
+    if (notes.breakingChanges.length > 0) {
+      lines.push(":warning: Breaking Changes :warning:", "");
+      for (const bc of notes.breakingChanges) {
+        lines.push(`  - ${bc.title}`);
       }
+      lines.push("");
+    }
 
-      const entries = pkg.entries.map((e) => `- ${e}`).join("\n");
-      sections.push(
-        `### \`${pkg.name}@${pkg.version}\` (${bumpLabel})\n\n${entries}`,
-      );
+    const groups = new Map<string, typeof notes.highlights>();
+    for (const h of notes.highlights) {
+      const group = groups.get(h.kind) ?? [];
+      group.push(h);
+      groups.set(h.kind, group);
+    }
+
+    for (const [kind, items] of groups) {
+      const emoji = KIND_EMOJI[kind] ?? ":small_blue_diamond:";
+      const label = KIND_LABEL[kind] ?? "Other";
+      lines.push(`${emoji} ${label} ${emoji}`, "");
+      for (const h of items) {
+        lines.push(`  - ${h.description}`);
+      }
+      lines.push("");
     }
   }
 
-  if (notes.contributors.length > 0) {
-    sections.push(
-      `## Contributors\n\nThanks to ${notes.contributors.join(", ")} for contributing to this release!`,
+  lines.push("*Why it matters*", notes.summary, "");
+  const sortedPackages = [...ctx.publishedPackages].sort((a, b) => {
+    if (a.name === META_PACKAGE) {
+      return -1;
+    }
+
+    if (b.name === META_PACKAGE) {
+      return 1;
+    }
+
+    return a.name.localeCompare(b.name);
+  });
+
+  lines.push("*Links*", `Github: <${REPOSITORY_URL}|${REPOSITORY}>`);
+
+  for (const pkg of sortedPackages) {
+    const tag = `${pkg.name}@${pkg.version}`;
+    const releaseUrl = `${REPOSITORY_URL}/releases/tag/${tag}`;
+    const pkgUrl = `${PACKAGE_BASE_URL}/${pkg.name}`;
+
+    lines.push(
+      `• \`${tag}\` — <${releaseUrl}|Release notes> · <${pkgUrl}|npm>`,
     );
   }
 
-  return sections.join("\n\n");
+  lines.push("", ":speech_balloon: #commerce-app-mgmt for questions");
+  return lines.join("\n");
 }

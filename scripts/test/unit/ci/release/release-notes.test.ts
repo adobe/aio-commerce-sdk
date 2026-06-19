@@ -17,16 +17,16 @@ vi.mock("@aio-commerce-sdk/release-notes", () => ({
   collectEntries: vi.fn().mockResolvedValue([]),
   generateAllNotes: vi.fn().mockResolvedValue({
     results: [],
+    summary: "Test holistic summary.",
     totalUsage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 },
   }),
   assembleReleaseNotes: vi.fn().mockReturnValue({
     headline: "Test Release",
+    summary: "This test release contains no changes.",
     highlights: [],
     breakingChanges: [],
-    byPackage: [],
-    contributors: [],
   }),
-  renderMarkdown: vi.fn().mockReturnValue("## Test Release\n"),
+  renderSlack: vi.fn().mockReturnValue(":mega: Test Release :tada:\n"),
 }));
 
 import main from "#ci/release/release-notes";
